@@ -1,0 +1,36 @@
+<style>
+.graphs {
+  margin: 100px;
+  border: 1px solid lightgrey;
+  background: whitesmoke;
+  border-radius: 10px;
+  display: inline-block;
+  padding: 20px;
+}
+.graphs > div {
+  margin-left: 20px;
+  margin-right: 20px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.graphs .priors {
+  text-align: right;
+}
+</style>
+
+<div class="graphs">
+  <div class="priors">
+    <div class="prior" ng-repeat="prior in graph.priors">
+      <a href="/#/graph/{{prior.id}}">{{prior.name}} &larr;</a>
+    </div>
+  </div>
+  <div class="stats">
+    <h1>{{graph.name}}</h1>
+    {{graph.stats}}
+  </div>
+  <div class="ops">
+    <div class="op" ng-repeat="op in graph.ops">
+      <a href="/#/graph/{{op.id}}">&rarr; {{op.name}}</a>
+    </div>
+  </div>
+</div>
