@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+import org.apache.spark
 import org.apache.spark.graphx
 import org.apache.spark.rdd
 import scala.collection.mutable
@@ -23,8 +24,8 @@ abstract class GraphOperation {
  * a BigGraph object either via the GraphManager using the gUID or
  * deriving it from (0 or more) existing BigGraphs via an operation.
  */
-class BigGraph(val sources: Seq[BigGraph],
-               val operation: GraphOperation) {
+class BigGraph private[graph_api] (val sources: Seq[BigGraph],
+                                   val operation: GraphOperation) {
   assert(operation.areSourcesCompatible(sources))
 
   private lazy val gUID: UUID = {
@@ -54,7 +55,12 @@ trait GraphData {
   type EdgeRDD = rdd.RDD[graphx.Edge[DenseAttributes]]
   type TripletRDD = rdd.RDD[graphx.EdgeTriplet[DenseAttributes, DenseAttributes]]
 
+  val bigGraph: BigGraph
+
   def vertices: VertexRDD
   def edges: EdgeRDD
   def triplets: TripletRDD
+
+  def persist(level: spark.storage.StorageLevel)
+  def unPersist()
 }
