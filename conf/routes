@@ -1,0 +1,4 @@
+POST /test-post    	com.lynxanalytics.biggraph.serving.JsonServer.testPost
+GET  /                  controllers.Assets.at(path="/public", file="index.html")
+GET  /*file             controllers.Assets.at(path="/public", file)
+
