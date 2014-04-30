@@ -2,6 +2,7 @@
 *.log
 
 # sbt specific
+.cache
 .cache/
 .history/
 .lib/
@@ -18,3 +19,10 @@ project/plugins/project/
 
 *~
 .*.swp
+/.target
+/bin
+
+# Eclipse specific
+.project
+.classpath
+.settings/*
