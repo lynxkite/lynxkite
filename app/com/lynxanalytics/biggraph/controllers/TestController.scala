@@ -1,4 +1,4 @@
-package com.lynxanalytics.biggraph.controllers // any better package name idea perhaps?
+package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.serving
@@ -19,4 +19,3 @@ object TestController {
     TestPostResponse("POST test string: " + request.attr)
   }
 }
-
