@@ -45,7 +45,10 @@ object JsonServer extends mvc.Controller {
               "message" -> "Bad JSON",
               "details" -> json.JsError.toFlatJson(errors))),
             result => Ok(json.Json.toJson(action(result))))
-        case None => Ok(json.JsNull) // whatever we want to respond
+        case None => BadRequest(json.Json.obj(
+              "status" -> "Error",
+              "message" -> "Bad query string",
+              "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
       }
     }
 
