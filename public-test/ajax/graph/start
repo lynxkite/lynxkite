@@ -1,9 +1,9 @@
 {
-  "name": "Root node",
+  "title": "Root node",
   "stats": "Where it all begins",
   "priors": [],
   "ops": [
-    {"name": "Import from foo.csv", "id": "csvimport-foo"},
-    {"name": "Random graph", "id": "random-1000"}
+    {"title": "Import from foo.csv", "id": "csvimport-foo"},
+    {"title": "Random graph", "id": "random-1000"}
   ]
 }
