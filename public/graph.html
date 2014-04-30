@@ -13,24 +13,24 @@
   display: inline-block;
   vertical-align: middle;
 }
-.graphs .priors {
+.graphs .sources {
   text-align: right;
 }
 </style>
 
 <div class="graphs">
-  <div class="priors">
-    <div class="prior" ng-repeat="prior in graph.priors">
-      <a href="/#/graph/{{prior.id}}">{{prior.name}} &larr;</a>
+  <div class="sources">
+    <div class="source" ng-repeat="source in graph.sources">
+      <a href="/#/graph/{{source.id}}">{{source.title}} &larr;</a>
     </div>
   </div>
   <div class="stats">
-    <h1>{{graph.name}}</h1>
+    <h1>{{graph.title}}</h1>
     {{graph.stats}}
   </div>
   <div class="ops">
     <div class="op" ng-repeat="op in graph.ops">
-      <a href="/#/graph/{{op.id}}">&rarr; {{op.name}}</a>
+      <a href="/#/graph/{{op.id}}">&rarr; {{op.title}}</a>
     </div>
   </div>
 </div>

@@ -1,9 +1,9 @@
 {
-  "name": "Random graph",
+  "title": "Random graph",
   "stats": "1000 nodes",
-  "priors": [{"name": "Root node", "id": "start"}],
+  "sources": [{"title": "Root node", "id": "start"}],
   "ops": [
-    {"name": "Find cliques", "id": "random-1000-cliques"},
-    {"name": "Filter by gender", "id": "random-1000-gender=male"}
+    {"title": "Find cliques", "id": "random-1000-cliques"},
+    {"title": "Filter by gender", "id": "random-1000-gender=male"}
   ]
 }
