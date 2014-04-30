@@ -5,6 +5,9 @@ import org.apache.spark.graphx
 import org.apache.spark.rdd
 import scala.collection.mutable
 
+import attributes.DenseAttributes
+import attributes.AttributeSignature
+
 // TODO(xandrew)
 abstract class GraphOperation {
   def gUID: UUID
@@ -12,9 +15,6 @@ abstract class GraphOperation {
   def vertexProperties(sources: Seq[BigGraph]): AttributeSignature
   def edgeProperties(sources: Seq[BigGraph]): AttributeSignature
 }
-class DenseAttributes
-
-class AttributeSignature
 
 /**
  * BigGraph represents the lineage of a graph.
