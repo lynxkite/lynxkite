@@ -1,8 +1,10 @@
 package com.lynxanalytics.biggraph.graph_api.attributes
 
+import scala.reflect.runtime.universe._
+
 /* A trait that can read some value of type T from a DenseAttributes object.
  *
- * Similar to a AttributeReadIndex, but it is able to do some conversion/transformation
+ * Similar to an AttributeReadIndex, but it is able to do some conversion/transformation
  * on the raw value and/or combine multiple attributes to a single value.
  */
 trait AttributeReader[T] extends Serializable {
@@ -11,11 +13,11 @@ trait AttributeReader[T] extends Serializable {
 object AttributeReader {
   def getDoubleReader(sig: AttributeSignature, name: String)
       : Option[AttributeReader[Double]] = {
-    if (sig.isReadableAs[Double](name)) {
-      Some(new SimpleReader[Double](sig.getReadIndexFor[Double](name)))
-    } else if (sig.isReadableAs[Long](name)) {
+    if (sig.canRead[Double](name)) {
+      Some(new SimpleReader[Double](sig.readIndex[Double](name)))
+    } else if (sig.canRead[Long](name)) {
       Some(new ConvertedAttributeReader[Long, Double](
-        sig.getReadIndexFor[Long](name), x => x.toDouble))
+        sig.readIndex[Long](name), x => x.toDouble))
     } else {
       None
     }
@@ -41,5 +43,20 @@ class ConvertedAttributeReader[S,T](
     idx: AttributeReadIndex[S], conversion: S => T) extends AttributeReader[T] {
   def readFrom(attr: DenseAttributes): T = {
     return conversion(attr(idx))
+  }
+}
+
+object AttributeUtil {
+  /**
+   * Returns all attributes of a given type with their values.
+   * Convenience method, this cannot be used on workers as signatures are not
+   * serializable, so normally they are not available in closures.
+   * Also first getting the indexes and then using those to get value from the
+   * individual DenseAttributes objects is faster.
+   */
+  def getAttributeValues[T](sig: AttributeSignature, attr: DenseAttributes)(implicit c: TypeTag[T])
+      : Map[String, T] = {
+    sig.getAttributesReadableAs[T]
+      .map(name => (name, attr(sig.readIndex[T](name)))).toMap
   }
 }
