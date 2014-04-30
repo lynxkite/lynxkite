@@ -1,4 +1,4 @@
-package com.lynxanalytics.biggraph.controllers
+package com.lynxanalytics.biggraph.controllers // any better package name idea perhaps?
 
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.serving
@@ -10,8 +10,13 @@ import com.lynxanalytics.biggraph.serving
 case class TestPostRequest(attr: String)
 case class TestPostResponse(attr: String)
 
-object TestController extends serving.PrettyContoller[TestPostRequest, TestPostResponse] {
+/**
+ * Logic for processing requests
+ */
+
+object TestController {
   def process(request: TestPostRequest): TestPostResponse = {
     TestPostResponse("POST test string: " + request.attr)
   }
 }
+
