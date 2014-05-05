@@ -15,7 +15,7 @@ import com.lynxanalytics.biggraph.serving.JsonServer
 
 
 class ControllerTest extends FunSuite {
-  test("call testPost with a fake POST message") {
+  test("call testPost with a valid fake POST message") {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
     val request = FakeRequest(POST,
                               "/api/test",
@@ -24,6 +24,40 @@ class ControllerTest extends FunSuite {
     val result = JsonServer.testPost(request)
     assert(Helpers.status(result) === OK)
     assert((Json.parse(Helpers.contentAsString(result)) \ ("attr")).toString
-        === "\"POST test string: Hello BigGraph!\"")
+        === "\"test string: Hello BigGraph!\"")
   }
+
+  test("call testGet with a valid fake GET message") {
+    val jsonString = """{"attr":"Hello BigGraph!"}"""
+    val request = FakeRequest(GET, "/api/test?q=" + jsonString)
+    val result = JsonServer.testGet(request)
+    assert(Helpers.status(result) === OK)
+    assert((Json.parse(Helpers.contentAsString(result)) \ ("attr")).toString
+        === "\"test string: Hello BigGraph!\"")
+  }
+
+  test("testPost should respond with BAD_REQUEST if JSON is incorrect") {
+    val jsonString = """{"bad attr":"Hello BigGraph!"}"""
+    val request = FakeRequest(POST,
+                              "/api/test",
+                              FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
+                              Json.parse(jsonString))
+    val result = JsonServer.testPost(request)
+    assert(Helpers.status(result) === BAD_REQUEST)
+  }
+
+  test("testGet should respond with BAD_REQUEST if JSON is incorrect") {
+    val jsonString = """{"bad attr":"Hello BigGraph!"}"""
+    val request = FakeRequest(GET, "/api/test?q=" + jsonString)
+    val result = JsonServer.testGet(request)
+    assert(Helpers.status(result) === BAD_REQUEST)
+  }
+
+  test("testGet should respond with BAD_REQUEST if query parameter is incorrect") {
+    val jsonString = """{"attr":"Hello BigGraph!"}"""
+    val request = FakeRequest(GET, "/api/test?gugu=" + jsonString)
+    val result = JsonServer.testGet(request)
+    assert(Helpers.status(result) === BAD_REQUEST)
+  }
+
 }
