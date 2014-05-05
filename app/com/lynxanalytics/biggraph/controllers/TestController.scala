@@ -10,7 +10,11 @@ import com.lynxanalytics.biggraph.serving
 case class TestPostRequest(attr: String)
 case class TestPostResponse(attr: String)
 
-object TestController extends serving.PrettyContoller[TestPostRequest, TestPostResponse] {
+/**
+ * Logic for processing requests
+ */
+
+object TestController {
   def process(request: TestPostRequest): TestPostResponse = {
     TestPostResponse("POST test string: " + request.attr)
   }

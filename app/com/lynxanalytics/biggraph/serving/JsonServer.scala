@@ -2,14 +2,11 @@ package com.lynxanalytics.biggraph.serving
 
 import play.api.mvc
 import play.api.libs.json
+import play.api.libs.json._
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
-
-trait PrettyContoller[Q, S] {
-  def process(request: Q): S
-}
 
 object JsonServer extends mvc.Controller {
 
@@ -29,16 +26,33 @@ object JsonServer extends mvc.Controller {
  * Play! uses the routings in /conf/routes to execute actions
  */
 
-  def testPost = mvc.Action(parse.json) { request =>
-    request.body.validate[controllers.TestPostRequest].fold({ errors =>
-      BadRequest(json.Json.obj(
+  def jsonPost[I : json.Reads, O : json.Writes](action: I => O) = mvc.Action(parse.json) {
+    request => request.body.validate[I].fold(
+      errors => BadRequest(json.Json.obj(
         "status" -> "Error",
         "message" -> "Bad JSON",
-        "details" -> json.JsError.toFlatJson(errors)
-      ))
-    }, { request =>
-      Ok(json.Json.toJson(controllers.TestController.process(request)))
-    })
+        "details" -> json.JsError.toFlatJson(errors))),
+      result => Ok(json.Json.toJson(action(result))))
   }
+
+  def jsonGet[I : json.Reads, O : json.Writes](action: I => O, key: String) =
+    mvc.Action { request =>
+      request.getQueryString(key) match {
+        case Some(s) =>
+          Json.parse(s).validate[I].fold(
+            errors => BadRequest(json.Json.obj(
+              "status" -> "Error",
+              "message" -> "Bad JSON",
+              "details" -> json.JsError.toFlatJson(errors))),
+            result => Ok(json.Json.toJson(action(result))))
+        case None => BadRequest(json.Json.obj(
+              "status" -> "Error",
+              "message" -> "Bad query string",
+              "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
+      }
+    }
+
+  def testPost = jsonPost(controllers.TestController.process)
+  def testGet = jsonGet(controllers.TestController.process, "q")
 
 }
