@@ -1,20 +1,9 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
-import org.apache.spark.graphx
-import org.apache.spark.rdd
 import scala.collection.mutable
 
-import attributes.DenseAttributes
 import attributes.AttributeSignature
-
-// TODO(xandrew)
-abstract class GraphOperation {
-  def gUID: UUID
-  def areSourcesCompatible(sources: Seq[BigGraph]): Boolean
-  def vertexProperties(sources: Seq[BigGraph]): AttributeSignature
-  def edgeProperties(sources: Seq[BigGraph]): AttributeSignature
-}
 
 /**
  * BigGraph represents the lineage of a graph.
@@ -23,9 +12,10 @@ abstract class GraphOperation {
  * a BigGraph object either via the GraphManager using the gUID or
  * deriving it from (0 or more) existing BigGraphs via an operation.
  */
-class BigGraph(val sources: Seq[BigGraph],
-               val operation: GraphOperation) {
-  assert(operation.areSourcesCompatible(sources))
+class BigGraph private[graph_api] (val sources: Seq[BigGraph],
+                                   val operation: GraphOperation) {
+
+  assert(operation.isSourceListValid(sources))
 
   private lazy val gUID: UUID = {
     val collector = mutable.ArrayBuffer[Byte]()
@@ -36,25 +26,30 @@ class BigGraph(val sources: Seq[BigGraph],
     UUID.nameUUIDFromBytes(collector.toArray)
   }
 
-  lazy val vertexProperties: AttributeSignature =
-      operation.vertexProperties(sources)
+  lazy val vertexAttributes: AttributeSignature =
+      operation.vertexAttributes(sources)
 
-  lazy val edgeProperties: AttributeSignature =
-      operation.edgeProperties(sources)
+  lazy val edgeAttributes: AttributeSignature =
+      operation.edgeAttributes(sources)
 }
 
-/**
- * Generic representation of a graph as RDDs.
+/*
+ * Interface for a repository of BigGraph objects.
  *
- * Different implementations might have different performance tradeoffs.
- * Use GraphDataManager to get the data for a BigGraph.
+ * The methods in this class do not actually do any computation,
+ * you need to use a GraphDataManager to obtain the actual data for a
+ * BigGraph.
  */
-trait GraphData {
-  type VertexRDD = rdd.RDD[(graphx.VertexId, DenseAttributes)]
-  type EdgeRDD = rdd.RDD[graphx.Edge[DenseAttributes]]
-  type TripletRDD = rdd.RDD[graphx.EdgeTriplet[DenseAttributes, DenseAttributes]]
+abstract class BigGraphManager {
+  // Creates a BigGraph object by applying the given operation
+  // to the given source graphs.
+  def deriveGraph(sources: Seq[BigGraph],
+                  operation: GraphOperation): BigGraph
 
-  def vertices: VertexRDD
-  def edges: EdgeRDD
-  def triplets: TripletRDD
+  // Returns the BigGraph corresponding to a given GUID.
+  def graphForGUID(gUID: UUID): BigGraph
+
+  // Returns all graphs in the meta graph known to this manager that has the given
+  // graph as one of its sources.
+  def knownDerivatives(graph: BigGraph): Seq[BigGraph]
 }
