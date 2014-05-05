@@ -20,5 +20,5 @@ libraryDependencies ++= Seq(
 
 play.Project.playScalaSettings
 
+// org.scalatest does not take testOptions.
 testOptions in Test := Nil
-
