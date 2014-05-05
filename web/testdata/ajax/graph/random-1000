@@ -1,0 +1,9 @@
+{
+  "title": "Random graph",
+  "stats": "1000 nodes",
+  "sources": [{"title": "Root node", "id": "start"}],
+  "ops": [
+    {"title": "Find cliques", "id": "random-1000-cliques"},
+    {"title": "Filter by gender", "id": "random-1000-gender=male"}
+  ]
+}
