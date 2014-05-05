@@ -1,0 +1,16 @@
+<div class="graphs">
+  <div class="sources">
+    <div class="source" ng-repeat="source in graph.sources">
+      <a href="/#/graph/{{source.id}}">{{source.title}} &larr;</a>
+    </div>
+  </div>
+  <div class="stats">
+    <h1>{{graph.title}}</h1>
+    {{graph.stats}}
+  </div>
+  <div class="ops">
+    <div class="op" ng-repeat="op in graph.ops">
+      <a href="/#/graph/{{op.id}}">&rarr; {{op.title}}</a>
+    </div>
+  </div>
+</div>
