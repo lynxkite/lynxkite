@@ -30,8 +30,7 @@ trait GraphData {
 abstract class GraphDataManager {
   def obtainData(bigGraph: BigGraph): GraphData
 
-  // Makes this graph manager to save the given BigGraph
-  // to disk. This triggers a computation if necessary.
+  // Saves the given BigGraph's data to disk.
   def saveDataToDisk(bigGraph: BigGraph)
 
   // Returns information about the current running enviroment.
@@ -42,13 +41,12 @@ object GraphDataManager {
   def apply(repositoryPath: String): GraphDataManager = new GraphDataManagerImpl(repositoryPath)
 }
 
-class RuntimeContext(val sparkContext: spark.SparkContext) {
+case class RuntimeContext(
+  sparkContext: spark.SparkContext,
   // The number of cores available for computaitons.
-  def numAvailableCores() = ???
-
+  numAvailableCores: Int,
   // Total memory  available for RDD operations.
-  def availableTransientMemoryGB() = ???
-
+  availableTransientMemoryGB: Float,
   // Total memory available for caching RDDs.
-  def availableCacheMemoryGB() = ???
-}
+  availableCacheMemoryGB: Float)
+

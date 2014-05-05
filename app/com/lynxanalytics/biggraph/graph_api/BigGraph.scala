@@ -15,7 +15,7 @@ import attributes.AttributeSignature
 class BigGraph private[graph_api] (val sources: Seq[BigGraph],
                                    val operation: GraphOperation) {
 
-  assert(operation.areSourcesCompatible(sources))
+  assert(operation.isSourceListValid(sources))
 
   private lazy val gUID: UUID = {
     val collector = mutable.ArrayBuffer[Byte]()
@@ -26,21 +26,30 @@ class BigGraph private[graph_api] (val sources: Seq[BigGraph],
     UUID.nameUUIDFromBytes(collector.toArray)
   }
 
-  lazy val vertexProperties: AttributeSignature =
-      operation.vertexProperties(sources)
+  lazy val vertexAttributes: AttributeSignature =
+      operation.vertexAttributes(sources)
 
-  lazy val edgeProperties: AttributeSignature =
-      operation.edgeProperties(sources)
+  lazy val edgeAttributes: AttributeSignature =
+      operation.edgeAttributes(sources)
 }
 
 /*
  * Interface for a repository of BigGraph objects.
+ *
+ * The methods in this class do not actually do any computation,
+ * you need to use a GraphDataManager to obtain the actual data for a
+ * BigGraph.
  */
 abstract class BigGraphManager {
+  // Creates a BigGraph object by applying the given operation
+  // to the given source graphs.
   def deriveGraph(sources: Seq[BigGraph],
                   operation: GraphOperation): BigGraph
 
+  // Returns the BigGraph corresponding to a given GUID.
   def graphForGUID(gUID: UUID): BigGraph
 
-  def knownDerivates(graph: BigGraph): Seq[BigGraph]
+  // Returns all graphs in the meta graph known to this manager that has the given
+  // graph as one of its sources.
+  def knownDerivatives(graph: BigGraph): Seq[BigGraph]
 }

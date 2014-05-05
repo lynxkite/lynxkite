@@ -6,17 +6,17 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 
 abstract class GraphOperation extends Serializable {
-  def areSourcesCompatible(sources: Seq[BigGraph]): Boolean
+  def isSourceListValid(sources: Seq[BigGraph]): Boolean
 
-  def apply(sources: Seq[BigGraph], manager: GraphDataManager): GraphData
+  def execute(sources: Seq[BigGraph], manager: GraphDataManager): GraphData
 
-  // The vertex property signature of the graph resulting from
+  // The vertex attribute signature of the graph resulting from
   // this operation.
-  def vertexProperties(sources: Seq[BigGraph]): AttributeSignature
+  def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature
 
-  // The edge property signature of the graph resulting from
+  // The edge attribute signature of the graph resulting from
   // this operation.
-  def edgeProperties(sources: Seq[BigGraph]): AttributeSignature
+  def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature
 
   def gUID(): UUID = {
     val buffer = new ByteArrayOutputStream
