@@ -39,8 +39,9 @@ class BigGraphManagerImpl(repositoryPath: String) extends BigGraphManager {
 
 
   private def updateDeriatives(graph: BigGraph): Unit = {
-    graph.sources.foreach(
-      source => derivatives.getOrElseUpdate(source.gUID, mutable.Buffer()) += graph)
+    for (source <- graph.sources) {
+      derivatives.getOrElseUpdate(source.gUID, mutable.Buffer()) += graph
+    }
   }
 
   private def saveToDisk(): Unit = {
