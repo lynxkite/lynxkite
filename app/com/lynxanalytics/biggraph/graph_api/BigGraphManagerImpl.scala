@@ -20,7 +20,7 @@ class BigGraphManagerImpl(repositoryPath: String) extends BigGraphManager {
     val gUID = newGraph.gUID
     if (!bigGraphs.contains(gUID)) {
       bigGraphs(gUID) = newGraph
-      updateDeriatives(newGraph)
+      updateDerivatives(newGraph)
       saveToDisk
     }
     return bigGraphs(gUID)
@@ -38,7 +38,7 @@ class BigGraphManagerImpl(repositoryPath: String) extends BigGraphManager {
   }
 
 
-  private def updateDeriatives(graph: BigGraph): Unit = {
+  private def updateDerivatives(graph: BigGraph): Unit = {
     graph.sources.foreach(
       source => derivatives.getOrElseUpdate(source.gUID, mutable.Buffer()) += graph)
   }
@@ -61,7 +61,7 @@ class BigGraphManagerImpl(repositoryPath: String) extends BigGraphManager {
       val file = new File(repo, snapshots.last)
       val stream = new ObjectInputStream(new FileInputStream(file))
       bigGraphs ++= stream.readObject().asInstanceOf[mutable.Map[UUID, BigGraph]]
-      bigGraphs.values.foreach(updateDeriatives)
+      bigGraphs.values.foreach(updateDerivatives)
     }
   }
 }
