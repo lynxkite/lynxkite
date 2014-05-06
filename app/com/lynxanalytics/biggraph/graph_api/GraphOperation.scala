@@ -8,7 +8,7 @@ import java.io.ObjectOutputStream
 abstract class GraphOperation extends Serializable {
   def isSourceListValid(sources: Seq[BigGraph]): Boolean
 
-  def execute(sources: Seq[BigGraph], manager: GraphDataManager): GraphData
+  def execute(target: BigGraph, manager: GraphDataManager): GraphData
 
   // The vertex attribute signature of the graph resulting from
   // this operation.

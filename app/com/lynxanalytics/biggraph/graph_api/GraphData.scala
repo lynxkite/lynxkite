@@ -13,10 +13,6 @@ import attributes.DenseAttributes
  * Use GraphDataManager to get the data for a BigGraph.
  */
 trait GraphData {
-  type VertexRDD = rdd.RDD[(graphx.VertexId, DenseAttributes)]
-  type EdgeRDD = rdd.RDD[graphx.Edge[DenseAttributes]]
-  type TripletRDD = rdd.RDD[graphx.EdgeTriplet[DenseAttributes, DenseAttributes]]
-
   val bigGraph: BigGraph
 
   def vertices: VertexRDD
@@ -37,16 +33,16 @@ abstract class GraphDataManager {
   // Typically used by operations to optimize their execution.
   def runtimeContext: RuntimeContext
 }
+
 object GraphDataManager {
-  def apply(repositoryPath: String): GraphDataManager = new GraphDataManagerImpl(repositoryPath)
+  def apply(sparkContext: spark.SparkContext, repositoryPath: String): GraphDataManager =
+    new GraphDataManagerImpl(sparkContext, repositoryPath)
 }
 
 case class RuntimeContext(
   sparkContext: spark.SparkContext,
   // The number of cores available for computaitons.
   numAvailableCores: Int,
-  // Total memory  available for RDD operations.
-  availableTransientMemoryGB: Float,
   // Total memory available for caching RDDs.
-  availableCacheMemoryGB: Float)
+  availableCacheMemoryGB: Double)
 
