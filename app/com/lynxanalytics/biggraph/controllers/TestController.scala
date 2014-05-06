@@ -7,15 +7,15 @@ import com.lynxanalytics.biggraph.serving
  * Case classes used by the JsonServer to communicate with the web application
  */
 
-case class TestPostRequest(attr: String)
-case class TestPostResponse(attr: String)
+case class TestRequest(attr: String)
+case class TestResponse(attr: String)
 
 /**
  * Logic for processing requests
  */
 
 object TestController {
-  def process(request: TestPostRequest): TestPostResponse = {
-    TestPostResponse("POST test string: " + request.attr)
+  def process(request: TestRequest): TestResponse = {
+    TestResponse("test string: " + request.attr)
   }
 }
