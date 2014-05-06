@@ -24,10 +24,10 @@ describe('metagraph navigation', function () {
     });
   }));
 
-  afterEach(inject(function($httpBackend) {
+  afterEach(function() {
     $httpBackend.verifyNoOutstandingExpectation();
     $httpBackend.verifyNoOutstandingRequest();
-  }));
+  });
 
   it('should make an HTTP request', function() {
     $httpBackend.flush();
