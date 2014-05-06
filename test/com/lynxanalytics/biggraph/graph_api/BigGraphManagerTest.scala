@@ -95,7 +95,7 @@ class BigGraphManagerTest extends FunSuite {
 private case class FromNothing() extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]) = sources.isEmpty
 
-  def execute(sources: Seq[BigGraph], manager: GraphDataManager): GraphData = ???
+  def execute(target: BigGraph, manager: GraphDataManager): GraphData = ???
 
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = AttributeSignature.empty
 
@@ -105,7 +105,7 @@ private case class FromNothing() extends GraphOperation {
 private case class FromAnother() extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]) = sources.size == 1
 
-  def execute(sources: Seq[BigGraph], manager: GraphDataManager): GraphData = ???
+  def execute(target: BigGraph, manager: GraphDataManager): GraphData = ???
 
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = sources.head.vertexAttributes
 
@@ -115,7 +115,7 @@ private case class FromAnother() extends GraphOperation {
 private case class FromTwoOthers() extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]) = sources.size == 2
 
-  def execute(sources: Seq[BigGraph], manager: GraphDataManager): GraphData = ???
+  def execute(target: BigGraph, manager: GraphDataManager): GraphData = ???
 
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = sources.head.vertexAttributes
 
