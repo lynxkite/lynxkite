@@ -12,12 +12,12 @@ import attributes.AttributeSignature
  * a BigGraph object either via the GraphManager using the gUID or
  * deriving it from (0 or more) existing BigGraphs via an operation.
  */
-class BigGraph private[graph_api] (val sources: Seq[BigGraph],
-                                   val operation: GraphOperation) {
+class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: GraphOperation)
+    extends Serializable {
 
   assert(operation.isSourceListValid(sources))
 
-  private lazy val gUID: UUID = {
+  lazy val gUID: UUID = {
     val collector = mutable.ArrayBuffer[Byte]()
     for (graph <- sources) {
       collector.appendAll(graph.gUID.toString.getBytes)
@@ -47,9 +47,14 @@ abstract class BigGraphManager {
                   operation: GraphOperation): BigGraph
 
   // Returns the BigGraph corresponding to a given GUID.
-  def graphForGUID(gUID: UUID): BigGraph
+  def graphForGUID(gUID: UUID): Option[BigGraph]
 
   // Returns all graphs in the meta graph known to this manager that has the given
   // graph as one of its sources.
-  def knownDerivatives(graph: BigGraph): Seq[BigGraph]
+  def knownDirectDerivatives(graph: BigGraph): Seq[BigGraph]
+}
+object BigGraphManager {
+  def apply(repositoryPath: String): BigGraphManager = {
+    new BigGraphManagerImpl(repositoryPath)
+  }
 }
