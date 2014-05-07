@@ -78,16 +78,10 @@ class BigGraphManagerTest extends FunSuite {
     val g5 = manager.deriveGraph(Seq(g2, g2), FromTwoOthers())
 
     val derivatives1 = manager.knownDirectDerivatives(g1).toSet
-    assert(derivatives1.size == 3)
-    assert(derivatives1.contains(g2))
-    assert(derivatives1.contains(g3))
-    assert(derivatives1.contains(g4))
+    assert(derivatives1 == Set(g2, g3, g4))
 
     val derivatives2 = manager.knownDirectDerivatives(g2).toSet
-    assert(derivatives2.size == 2)
-    assert(derivatives2.contains(g4))
-    assert(derivatives2.contains(g5))
-
+    assert(derivatives2 == Set(g4, g5))
   }
 
 }
