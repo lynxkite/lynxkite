@@ -12,11 +12,14 @@ import attributes.DenseAttributes
 
 
 object GraphIO {
+  def verticesPath(pathPrefix: String): String = pathPrefix + ".vertices"
+  def edgesPath(pathPrefix: String): String = pathPrefix + ".edges"
+
   def loadFromObjectFile(sc: spark.SparkContext, pathPrefix: String): (VertexRDD, EdgeRDD) = {
     val vertices = RDDUtils.objectFile[(graphx.VertexId, DenseAttributes)](
-        sc, pathPrefix + ".vertices")
+        sc, verticesPath(pathPrefix))
     val edges = RDDUtils.objectFile[graphx.Edge[DenseAttributes]](
-        sc, pathPrefix + ".edges")
+        sc, edgesPath(pathPrefix))
     return (vertices, edges)
   }
 
@@ -57,9 +60,9 @@ object GraphIO {
   def saveAsObjectFile(data: GraphData, pathPrefix: String) {
     coalesceToPartitionSize(
       data.vertices,
-      64 * 1024 * 1024).saveAsObjectFile(pathPrefix + ".vertices")
+      64 * 1024 * 1024).saveAsObjectFile(verticesPath(pathPrefix))
     coalesceToPartitionSize(
-      data.edges.map(_.copy()),
-      64 * 1024 * 1024).saveAsObjectFile(pathPrefix + ".edges")
+      data.edges,
+      64 * 1024 * 1024).saveAsObjectFile(edgesPath(pathPrefix))
   }
 }
