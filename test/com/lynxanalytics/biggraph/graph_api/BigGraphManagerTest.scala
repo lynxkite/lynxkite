@@ -6,26 +6,15 @@ import org.scalatest.FunSuite
 
 import attributes.AttributeSignature
 
-class BigGraphManagerTest extends FunSuite {
-  val sysTempDir = System.getProperty("java.io.tmpdir")
-  val myTempDir = new File("%s/bgmtest-%d".format(sysTempDir, scala.compat.Platform.currentTime))
-  myTempDir.mkdir
-
-  def tempDir(dirName: String) = new File(myTempDir, dirName)
-  def cleanManager(dirName: String): BigGraphManager = {
-    val managerDir = tempDir(dirName)
-    managerDir.mkdir
-    BigGraphManager(managerDir.toString)
-  }
-
+class BigGraphManagerTest extends FunSuite with TestBigGraphManager {
   test("We can derive a new graph from nothing and derive an other graph from it.") {
-    val manager = cleanManager("fromnothing")
+    val manager = cleanGraphManager("fromnothing")
     val g1 = manager.deriveGraph(Seq(), FromNothing())
     val g2 = manager.deriveGraph(Seq(g1), FromAnother())
   }
 
   test("Retrieving by GUID give the same instance") {
-    val manager = cleanManager("guidsameinstance")
+    val manager = cleanGraphManager("guidsameinstance")
     val g1 = manager.deriveGraph(Seq(), FromNothing())
     val g2 = manager.deriveGraph(Seq(g1), FromAnother())
     val g3 = manager.graphForGUID(g2.gUID).get
@@ -33,7 +22,7 @@ class BigGraphManagerTest extends FunSuite {
   }
 
   test("Source list validity is checked.") {
-    val manager = cleanManager("validity")
+    val manager = cleanGraphManager("validity")
     val g1 = manager.deriveGraph(Seq(), FromNothing())
     intercept[AssertionError] {
       val g2 = manager.deriveGraph(Seq(g1), FromNothing())
@@ -41,19 +30,15 @@ class BigGraphManagerTest extends FunSuite {
   }
 
   test("Sometimes, there is no such graph") {
-    val manager = cleanManager("nosuchgraph")
+    val manager = cleanGraphManager("nosuchgraph")
     val g1 = manager.deriveGraph(Seq(), FromNothing())
     assert(manager.graphForGUID(UUID.randomUUID) == None)
   }
 
   test("Save and load works") {
-    val d1 = tempDir("sld1")
-    d1.mkdir
-    val d2 = tempDir("sld2")
-    d2.mkdir
-    val m1o = BigGraphManager(d1.toString)
+    val m1o = cleanGraphManager("d1")
     val g1 = m1o.deriveGraph(Seq(), FromNothing())
-    val m1c = BigGraphManager(d1.toString)
+    val m1c = BigGraphManager(m1o.repositoryPath)
     // We have the graph for the UUID.
     val g1c = m1c.graphForGUID(g1.gUID).get
 
@@ -65,12 +50,12 @@ class BigGraphManagerTest extends FunSuite {
     assert(!(g1 eq g1c))
 
     // It didn't leak over to an unrelated manager.
-    val m2o = BigGraphManager(d2.toString)
+    val m2o = cleanGraphManager("d2")
     assert(m2o.graphForGUID(g1.gUID) == None)
   }
 
   test("Derivatives work") {
-    val manager = cleanManager("derivatives")
+    val manager = cleanGraphManager("derivatives")
     val g1 = manager.deriveGraph(Seq(), FromNothing())
     val g2 = manager.deriveGraph(Seq(g1), FromAnother())
     val g3 = manager.deriveGraph(Seq(g1, g1), FromTwoOthers())
