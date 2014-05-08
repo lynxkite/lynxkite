@@ -13,22 +13,22 @@ private[graph_api] class GraphDataManagerImpl(sc: spark.SparkContext,
 
   private val dataCache = mutable.Map[UUID, GraphData]()
 
-  private def pathPrefix(graph: BigGraph) = "%s/%s".format(repositoryPath, graph.gUID)
-  private def verticesPath(graph: BigGraph) = pathPrefix(graph) + ".vertices"
-  private def edgesPath(graph: BigGraph) = pathPrefix(graph) + ".edges"
+  private def pathPrefix(bigGraph: BigGraph) = "%s/%s".format(repositoryPath, bigGraph.gUID)
+  private def verticesPath(bigGraph: BigGraph) = GraphIO.verticesPath(pathPrefix(bigGraph))
+  private def edgesPath(bigGraph: BigGraph) = GraphIO.edgesPath(pathPrefix(bigGraph))
 
-  private def hasGraph(graph: BigGraph): Boolean = {
+  private def hasGraph(bigGraph: BigGraph): Boolean = {
     val verticesHadoopPath = new hadoop.fs.Path(
-        verticesPath(graph) + "/_SUCCESS")
-    val edgesHadoopPath = new hadoop.fs.Path(edgesPath(graph) + "/_SUCCESS")
+        verticesPath(bigGraph) + "/_SUCCESS")
+    val edgesHadoopPath = new hadoop.fs.Path(edgesPath(bigGraph) + "/_SUCCESS")
     val fs = verticesHadoopPath.getFileSystem(new hadoop.conf.Configuration())
     return fs.exists(verticesHadoopPath) && fs.exists(edgesHadoopPath)
   }
 
-  private def tryToLoadGraphData(graph: BigGraph): Option[GraphData] = {
-    if (hasGraph(graph)) {
-      val (vertices, edges) = GraphIO.loadFromObjectFile(sc, pathPrefix(graph))
-      Some(new SimpleGraphData(graph, vertices, edges))
+  private def tryToLoadGraphData(bigGraph: BigGraph): Option[GraphData] = {
+    if (hasGraph(bigGraph)) {
+      val (vertices, edges) = GraphIO.loadFromObjectFile(sc, pathPrefix(bigGraph))
+      Some(new SimpleGraphData(bigGraph, vertices, edges))
     } else {
       None
     }
