@@ -123,6 +123,10 @@ class DenseAttributes private[attributes] (data: Array[Any])
     new DenseAttributes(Array.concat(
       data, Array.fill[Any](numAdditionalAttributes)(null)))
   }
+
+  override def toString: String = {
+    data.map(_.toString).mkString(",")
+  }
 }
 
 private[attributes] case class PrimitiveCloner(numNewAttributes: Int) extends ExtensionCloner {

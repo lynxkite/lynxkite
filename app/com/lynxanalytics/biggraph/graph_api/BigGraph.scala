@@ -52,6 +52,8 @@ abstract class BigGraphManager {
   // Returns all graphs in the meta graph known to this manager that has the given
   // graph as one of its sources.
   def knownDirectDerivatives(graph: BigGraph): Seq[BigGraph]
+
+  def repositoryPath: String
 }
 object BigGraphManager {
   def apply(repositoryPath: String): BigGraphManager = {
