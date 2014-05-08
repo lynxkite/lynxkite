@@ -10,12 +10,10 @@ abstract class GraphOperation extends Serializable {
 
   def execute(target: BigGraph, manager: GraphDataManager): GraphData
 
-  // The vertex attribute signature of the graph resulting from
-  // this operation.
+  // The vertex attribute signature of the graph resulting from this operation.
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature
 
-  // The edge attribute signature of the graph resulting from
-  // this operation.
+  // The edge attribute signature of the graph resulting from this operation.
   def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature
 
   def gUID(): UUID = {
