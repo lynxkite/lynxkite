@@ -28,7 +28,7 @@ object RDDUtils {
   }
 
   def numbered[T](rdd: spark.rdd.RDD[T]): spark.rdd.RDD[(Long, T)] = {
-    val localCounts = rdd.glom().map(_.length).collect().scan(0)(_ + _)
+    val localCounts = rdd.glom().map(_.size).collect().scan(0)(_ + _)
     val counts = rdd.sparkContext.broadcast(localCounts)
     rdd.mapPartitionsWithIndex((i, p) => {
       (counts.value(i) until counts.value(i + 1)).map(_.toLong).toIterator zip p
