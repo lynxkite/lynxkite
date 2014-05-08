@@ -44,6 +44,8 @@ trait TestGraphDataManager extends TestTempDir with TestSparkContext {
 }
 
 class InstantiateSimpleGraph extends GraphOperation {
+  @transient var executionCounter = 0
+
   def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 0)
 
   def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
@@ -65,6 +67,8 @@ class InstantiateSimpleGraph extends GraphOperation {
         new Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
         new Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
         new Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
+
+    executionCounter += 1
 
     return new SimpleGraphData(target, sc.parallelize(vertices), sc.parallelize(edges))
   }
