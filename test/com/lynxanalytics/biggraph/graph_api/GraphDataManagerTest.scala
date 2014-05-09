@@ -1,10 +1,8 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import java.io.File
-import org.apache.spark
-import org.apache.spark.graphx
-import org.apache.spark.rdd
 import org.scalatest.FunSuite
+
+import com.lynxanalytics.biggraph.TestUtils
 
 class GraphDataManagerTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   test("We can obtain a simple new graph") {
