@@ -17,7 +17,7 @@ class EdgeGraph extends GraphOperation {
   def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
     val rc = manager.runtimeContext
     val sc = rc.sparkContext
-    val edgePartitioner = rc.defaultEdgePartitioner
+    val edgePartitioner = rc.defaultPartitioner
     val sourceData = manager.obtainData(target.sources.head)
     val edgesWithIds = RDDUtils.fastNumbered(sourceData.edges)
     val newVertices = edgesWithIds.map{case (id, edge) => (id, edge.attr)}
