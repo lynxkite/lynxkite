@@ -32,6 +32,8 @@ abstract class GraphDataManager {
   // Returns information about the current running enviroment.
   // Typically used by operations to optimize their execution.
   def runtimeContext: RuntimeContext
+
+  def repositoryPath: String
 }
 
 object GraphDataManager {

@@ -9,10 +9,12 @@ describe('metagraph navigation', function () {
     scope = $rootScope.$new();
     // Mock $httpBackend.
     $httpBackend = $injector.get('$httpBackend');
-    $httpBackend.when('GET', '/ajax/graph/test').respond({
+
+    // $httpBackend.when('GET', '/ajax/graph?q={"id":"test"}').respond({
+    $httpBackend.when('GET', '/ajax/graph?q=%7B%22id%22:%22test%22%7D').respond({
       'title': 'test node',
       'stats': 'test stats',
-      'priors': [],
+      'sources': [],
       'ops': [
         {'title': 'op 1', 'id': 'op1'},
         {'title': 'op 2', 'id': 'op2'},
