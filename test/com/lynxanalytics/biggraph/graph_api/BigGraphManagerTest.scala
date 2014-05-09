@@ -4,6 +4,8 @@ import java.io.File
 import java.util.UUID
 import org.scalatest.FunSuite
 
+import com.lynxanalytics.biggraph.TestUtils
+
 import attributes.AttributeSignature
 
 class BigGraphManagerTest extends FunSuite with TestBigGraphManager {

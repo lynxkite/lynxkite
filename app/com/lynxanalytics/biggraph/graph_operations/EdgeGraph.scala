@@ -28,11 +28,13 @@ class EdgeGraph extends GraphOperation {
     val edgesByDest = edgesWithIds.map{
         case (id, edge) => (edge.dstId, id)
       }.groupByKey(edgePartitioner)
+
     val newEdges = edgesBySource.join(edgesByDest).join(sourceData.vertices).flatMap{
         case (vid, ((outgoings, incommings), vattr)) =>
           for (outgoing <- outgoings;
                incomming <- incommings) yield new graphx.Edge(incomming, outgoing, vattr)
       }
+
     return new SimpleGraphData(target, newVertices, newEdges)
   }
 
