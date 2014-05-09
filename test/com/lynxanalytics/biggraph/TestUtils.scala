@@ -19,11 +19,6 @@ trait TestTempDir {
 }
 
 private object SparkContextContainer {
-  // lazy val sparkContext = new spark.SparkContext(
-  //     "spark://lyhara:7077",
-  //     "BigGraphTests",
-  //     "",
-  //     Seq("target/scala-2.10/biggraph_2.10-0.1-SNAPSHOT.jar"))
   lazy val sparkContext = new spark.SparkContext("local", "BigGraphTests")
 }
 trait TestSparkContext {
