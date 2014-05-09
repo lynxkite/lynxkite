@@ -46,7 +46,7 @@ class GraphDataManagerTest extends FunSuite with TestBigGraphManager with TestGr
     val myData = dataManager1.obtainData(myGraph)
     dataManager1.saveDataToDisk(myGraph)
     val myData2 = dataManager2.obtainData(myGraph)
-    assert(!(myData eq myData2))
+    assert(myData ne myData2)
     assert(TestUtils.RDDToSortedString(myData.triplets) ==
              TestUtils.RDDToSortedString(myData2.triplets))
     assert(operation.executionCounter == 1)
