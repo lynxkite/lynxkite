@@ -41,8 +41,7 @@ object JsonServer extends mvc.Controller {
     }
 
   def jsonGet[I : json.Reads, O : json.Writes](action: I => O, key: String) =
-    mvc.Action { request => {
-      println("Hello JSON!", request.getQueryString(key))
+    mvc.Action { request =>
       request.getQueryString(key) match {
         case Some(s) =>
           Json.parse(s).validate[I].fold(
@@ -55,7 +54,6 @@ object JsonServer extends mvc.Controller {
               "status" -> "Error",
               "message" -> "Bad query string",
               "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
-      }
       }
     }
 
