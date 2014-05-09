@@ -20,6 +20,10 @@ object JsonServer extends mvc.Controller {
   implicit val rTest = json.Json.reads[controllers.TestRequest]
   implicit val wTest = json.Json.writes[controllers.TestResponse]
 
+  implicit val rBigGraph = json.Json.reads[controllers.BigGraphRequest]
+  implicit val wGraphMeta = json.Json.writes[controllers.GraphBasicData]
+  implicit val wBigGraph = json.Json.writes[controllers.BigGraphResponse]
+
 /**
  * Actions called by the web framework
  *
@@ -37,7 +41,8 @@ object JsonServer extends mvc.Controller {
     }
 
   def jsonGet[I : json.Reads, O : json.Writes](action: I => O, key: String) =
-    mvc.Action { request =>
+    mvc.Action { request => {
+      println("Hello JSON!", request.getQueryString(key))
       request.getQueryString(key) match {
         case Some(s) =>
           Json.parse(s).validate[I].fold(
@@ -51,9 +56,12 @@ object JsonServer extends mvc.Controller {
               "message" -> "Bad query string",
               "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
       }
+      }
     }
 
   def testPost = jsonPost(controllers.TestController.process)
   def testGet = jsonGet(controllers.TestController.process, "q")
+
+  def bigGraphGet = jsonGet(controllers.BigGraphController.process, "q")
 
 }
