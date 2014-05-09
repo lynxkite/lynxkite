@@ -119,6 +119,8 @@ class DenseAttributes private[attributes] (data: Array[Any])
     return this
   }
 
+  override def clone(): DenseAttributes = new DenseAttributes(data.clone)
+
   private[attributes] def cloneWithAdditionalAttributes(numAdditionalAttributes: Int) = {
     new DenseAttributes(Array.concat(
       data, Array.fill[Any](numAdditionalAttributes)(null)))

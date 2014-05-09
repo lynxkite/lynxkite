@@ -39,10 +39,14 @@ object GraphDataManager {
     new GraphDataManagerImpl(sparkContext, repositoryPath)
 }
 
-case class RuntimeContext(
-  sparkContext: spark.SparkContext,
-  // The number of cores available for computaitons.
-  numAvailableCores: Int,
-  // Total memory available for caching RDDs.
-  availableCacheMemoryGB: Double)
+case class RuntimeContext(sparkContext: spark.SparkContext,
+                          // The number of cores available for computaitons.
+                          numAvailableCores: Int,
+                          // Total memory available for caching RDDs.
+                          availableCacheMemoryGB: Double) {
+  lazy val defaultVertexPartitioner: spark.Partitioner =
+    new spark.HashPartitioner(numAvailableCores * 3)
+  lazy val defaultEdgePartitioner: spark.Partitioner =
+    new spark.HashPartitioner(numAvailableCores * 3)
+}
 
