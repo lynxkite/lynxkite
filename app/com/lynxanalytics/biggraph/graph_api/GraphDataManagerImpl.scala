@@ -8,7 +8,7 @@ import org.apache.spark.rdd
 import scala.collection.mutable
 
 private[graph_api] class GraphDataManagerImpl(sc: spark.SparkContext,
-                                              repositoryPath: String)
+                                              val repositoryPath: String)
     extends GraphDataManager {
 
   private val dataCache = mutable.Map[UUID, GraphData]()

@@ -8,7 +8,7 @@ import java.io.ObjectOutputStream
 import java.util.UUID
 import scala.collection.mutable
 
-class BigGraphManagerImpl(repositoryPath: String) extends BigGraphManager {
+class BigGraphManagerImpl(val repositoryPath: String) extends BigGraphManager {
   private val bigGraphs = mutable.Map[UUID, BigGraph]()
   private val derivatives = mutable.Map[UUID, mutable.Buffer[BigGraph]]()
 
