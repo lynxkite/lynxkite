@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.graph_api
+import com.lynxanalytics.biggraph.BigGraphSingleton
 import com.lynxanalytics.biggraph.serving
 import java.util.UUID
 import scala.util.Try
@@ -22,24 +22,18 @@ case class GraphStatsResponse(id: String,
  */
 
 object GraphStatsController {
-  val repositoryPath = ??? // todo: set repository path
-  val sc = ??? // todo: create spark context
-  val bigGraphManager = graph_api.BigGraphManager(repositoryPath)
-  val graphDataManager = graph_api.GraphDataManager(sc, repositoryPath)
+  val bigGraphManager = BigGraphSingleton.bigGraphManager
+  val graphDataManager = BigGraphSingleton.graphDataManager
 
-  def process(request: GraphStatsRequest): Option[GraphStatsResponse] = {
-    bigGraphManager.graphForGUID(UUID.fromString(request.id)) match {
-      case Some(bigGraph) =>
-        val graphData = graphDataManager.obtainData(bigGraph)
-        val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
-        val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]
-        Some(GraphStatsResponse(request.id,
-                                graphData.vertices.count,
-                                graphData.edges.count,
-                                vAttrs,
-                                eAttrs))
-      case None => None
-    }
+  def process(request: GraphStatsRequest): GraphStatsResponse = {
+    val bigGraph = bigGraphManager.graphForGUID(UUID.fromString(request.id)).get
+    val graphData = graphDataManager.obtainData(bigGraph)
+    val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
+    val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]
+    GraphStatsResponse(request.id,
+                       graphData.vertices.count,
+                       graphData.edges.count,
+                       vAttrs,
+                       eAttrs)
   }
-
 }
