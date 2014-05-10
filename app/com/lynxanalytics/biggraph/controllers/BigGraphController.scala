@@ -28,22 +28,22 @@ object BigGraphController {
 
   // TODO(forevian): remove this block once standalone graph stats ready.
   val graphDataManager = BigGraphSingleton.graphDataManager
-  def fakeGraphStats(graph: BigGraph): String = {
-    val data = graphDataManager.obtainData(graph)
-    "Vertices: %d Edges: %s".format(data.vertices.count, data.edges.count)
+  def fakeGraphStats(bigGraph: BigGraph): String = {
+    val graphData = graphDataManager.obtainData(bigGraph)
+    "Vertices: %d Edges: %s".format(graphData.vertices.count, graphData.edges.count)
   }
 
-  def basicDataFromGraph(graph: BigGraph): GraphBasicData = {
-    GraphBasicData(graph.toLongString, graph.gUID.toString)
+  def basicDataFromGraph(bigGraph: BigGraph): GraphBasicData = {
+    GraphBasicData(bigGraph.toLongString, bigGraph.gUID.toString)
   }
 
-  private def responseFromGraph(graph: BigGraph): BigGraphResponse = {
+  private def responseFromGraph(bigGraph: BigGraph): BigGraphResponse = {
     BigGraphResponse(
-      title = graph.toLongString,
-      stats = fakeGraphStats(graph),
-      sources = graph.sources.map(basicDataFromGraph(_)),
+      title = bigGraph.toLongString,
+      stats = fakeGraphStats(bigGraph),
+      sources = bigGraph.sources.map(basicDataFromGraph(_)),
       ops = Seq(basicDataFromGraph(bigGraphManager.deriveGraph(
-                                 Seq(graph), new graph_operations.EdgeGraph))))
+                                 Seq(bigGraph), new graph_operations.EdgeGraph))))
   }
 
   def process(request: BigGraphRequest): BigGraphResponse = {
