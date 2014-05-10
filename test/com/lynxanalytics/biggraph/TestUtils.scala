@@ -21,6 +21,7 @@ trait TestTempDir {
 private object SparkContextContainer {
   lazy val sparkContext = new spark.SparkContext("local", "BigGraphTests")
 }
+
 trait TestSparkContext {
   val sparkContext = SparkContextContainer.sparkContext
 }

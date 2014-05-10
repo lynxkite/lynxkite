@@ -59,32 +59,10 @@ object JsonServer extends mvc.Controller {
       }
     }
 
-  def jsonGetOption[I : json.Reads, O : json.Writes](action: I => Option[O], key: String) =
-    mvc.Action { request =>
-      request.getQueryString(key) match {
-        case Some(s) => Json.parse(s).validate[I].fold(
-            errors => BadRequest(json.Json.obj(
-              "status" -> "Error",
-              "message" -> "Bad JSON",
-              "details" -> json.JsError.toFlatJson(errors))),
-            result => action(result) match {
-              case Some(jsonResponse) => Ok(json.Json.toJson(jsonResponse))
-              case None => BadRequest(json.Json.obj(
-                "status" -> "Error",
-                "message" -> "Backend error",
-                "details" -> "There was an error during processing the request"))
-            })
-        case None => BadRequest(json.Json.obj(
-              "status" -> "Error",
-              "message" -> "Bad query string",
-              "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
-      }
-    }
-
   def testPost = jsonPost(controllers.TestController.process)
   def testGet = jsonGet(controllers.TestController.process, "q")
 
   def bigGraphGet = jsonGet(controllers.BigGraphController.process, "q")
-  def graphStatsGet = jsonGetOption(controllers.GraphStatsController.process, "q")
+  def graphStatsGet = jsonGet(controllers.GraphStatsController.process, "q")
 
 }

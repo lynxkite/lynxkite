@@ -15,7 +15,6 @@ case class GraphBasicData(
 
 case class BigGraphResponse(
   title: String,
-  stats: String,
   sources: Seq[GraphBasicData],
   ops: Seq[GraphBasicData])
 
@@ -26,13 +25,6 @@ case class BigGraphResponse(
 object BigGraphController {
   val bigGraphManager = BigGraphSingleton.bigGraphManager
 
-  // TODO(forevian): remove this block once standalone graph stats ready.
-  val graphDataManager = BigGraphSingleton.graphDataManager
-  def fakeGraphStats(bigGraph: BigGraph): String = {
-    val graphData = graphDataManager.obtainData(bigGraph)
-    "Vertices: %d Edges: %s".format(graphData.vertices.count, graphData.edges.count)
-  }
-
   def basicDataFromGraph(bigGraph: BigGraph): GraphBasicData = {
     GraphBasicData(bigGraph.toLongString, bigGraph.gUID.toString)
   }
@@ -40,7 +32,6 @@ object BigGraphController {
   private def responseFromGraph(bigGraph: BigGraph): BigGraphResponse = {
     BigGraphResponse(
       title = bigGraph.toLongString,
-      stats = fakeGraphStats(bigGraph),
       sources = bigGraph.sources.map(basicDataFromGraph(_)),
       ops = Seq(basicDataFromGraph(bigGraphManager.deriveGraph(
                                  Seq(bigGraph), new graph_operations.EdgeGraph))))
