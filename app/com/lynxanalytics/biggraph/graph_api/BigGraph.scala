@@ -31,6 +31,10 @@ class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: Gr
 
   lazy val edgeAttributes: AttributeSignature =
       operation.edgeAttributes(sources)
+
+  lazy val toLongString: String = "[%s](%s)".format(
+      operation.toString,
+      sources.map(_.toLongString).mkString(","))
 }
 
 /*

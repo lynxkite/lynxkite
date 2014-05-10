@@ -1,7 +1,11 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.BigGraphSingleton
 import com.lynxanalytics.biggraph.graph_api
+import com.lynxanalytics.biggraph.graph_api.BigGraph
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.serving
+import java.util.UUID
 
 case class BigGraphRequest(id: String)
 
@@ -20,15 +24,82 @@ case class BigGraphResponse(
  */
 
 object BigGraphController {
-  def process(request: BigGraphRequest): BigGraphResponse = {
+  val bigGraphManager = BigGraphSingleton.bigGraphManager
+
+  // TODO(forevian): remove this block once standalone graph stats ready.
+  val graphDataManager = BigGraphSingleton.graphDataManager
+  def fakeGraphStats(bigGraph: BigGraph): String = {
+    val graphData = graphDataManager.obtainData(bigGraph)
+    "Vertices: %d Edges: %s".format(graphData.vertices.count, graphData.edges.count)
+  }
+
+  def basicDataFromGraph(bigGraph: BigGraph): GraphBasicData = {
+    GraphBasicData(bigGraph.toLongString, bigGraph.gUID.toString)
+  }
+
+  private def responseFromGraph(bigGraph: BigGraph): BigGraphResponse = {
     BigGraphResponse(
-      title = request.id,
-      stats = "Stats of " + request.id,
-      sources = Seq(
-          GraphBasicData(request.id + "pre1", request.id + "pre1"),
-          GraphBasicData(request.id + "pre2", request.id + "pre2")),
-      ops = Seq(
-          GraphBasicData(request.id + "post1", request.id + "post1"),
-          GraphBasicData(request.id + "post2", request.id + "post2")))
+      title = bigGraph.toLongString,
+      stats = fakeGraphStats(bigGraph),
+      sources = bigGraph.sources.map(basicDataFromGraph(_)),
+      ops = Seq(basicDataFromGraph(bigGraphManager.deriveGraph(
+                                 Seq(bigGraph), new graph_operations.EdgeGraph))))
+  }
+
+  def process(request: BigGraphRequest): BigGraphResponse = {
+    if (request.id == "x") {
+      responseFromGraph(bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph2))
+    } else {
+      responseFromGraph(bigGraphManager.graphForGUID(UUID.fromString(request.id)).get)
+    }
   }
 }
+
+
+// TODO: remove this once we have some more sane starting operations.
+// For now this is a copy of the same class created in GraphTestUtils. The reason for the copy
+// is that prod code cannot (or at least should not) depend on test code, but I don't want
+// to move this out to some permanent non-test location as it will go away from prod code
+// but will stick around in test code.
+import graph_api._
+import org.apache.spark.graphx.Edge
+import attributes.AttributeSignature
+import attributes.DenseAttributes
+
+class InstantiateSimpleGraph2 extends GraphOperation {
+  @transient var executionCounter = 0
+
+  def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 0)
+
+  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
+    val sc = manager.runtimeContext.sparkContext
+    val vertexSig = vertexAttributes(target.sources)
+    val edgeSig = edgeAttributes(target.sources)
+
+    val vertexMaker = vertexSig.maker
+    val nameIdx = vertexSig.writeIndex[String]("name")
+    val vertices = Seq(
+        (0l, vertexMaker.make.set(nameIdx, "Adam")),
+        (1l, vertexMaker.make.set(nameIdx, "Eve")),
+        (2l, vertexMaker.make.set(nameIdx, "Bob")))
+
+    val edgeMaker = edgeSig.maker
+    val commentIdx = edgeSig.writeIndex[String]("comment")
+    val edges = Seq(
+        new Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
+        new Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
+        new Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
+        new Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
+
+    executionCounter += 1
+
+    return new SimpleGraphData(target, sc.parallelize(vertices), sc.parallelize(edges))
+  }
+
+  def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature =
+    AttributeSignature.empty.addAttribute[String]("name").signature
+
+  def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature =
+    AttributeSignature.empty.addAttribute[String]("comment").signature
+}
+
