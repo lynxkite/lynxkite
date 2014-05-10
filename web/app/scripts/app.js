@@ -12,6 +12,6 @@ angular
         controller: 'GraphViewCtrl'
       })
       .otherwise({
-        redirectTo: '/graph/start'
+        redirectTo: '/graph/x'
       });
   });
