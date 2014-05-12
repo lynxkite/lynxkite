@@ -13,12 +13,17 @@ describe('metagraph navigation', function () {
     // $httpBackend.when('GET', '/ajax/graph?q={"id":"test"}').respond({
     $httpBackend.when('GET', '/ajax/graph?q=%7B%22id%22:%22test%22%7D').respond({
       'title': 'test node',
-      'stats': 'test stats',
       'sources': [],
       'ops': [
         {'title': 'op 1', 'id': 'op1'},
         {'title': 'op 2', 'id': 'op2'},
       ],
+    });
+    // $httpBackend.when('GET', '/ajax/stats?q={"id":"test"}').respond({
+    $httpBackend.when('GET', '/ajax/stats?q=%7B%22id%22:%22test%22%7D').respond({
+      'id': 'test id',
+      'vertices_count': '100',
+      'edges_count': '1000',
     });
     ctrl = $controller('GraphViewCtrl', {
       $scope: scope,
