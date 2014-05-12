@@ -19,9 +19,25 @@ trait TestTempDir {
 }
 
 private object SparkContextContainer {
-  lazy val sparkContext = new spark.SparkContext("local", "BigGraphTests")
+  lazy val sparkContext = new spark.SparkContext("local", "BigGraphTestEnviroment")
 }
 
 trait TestSparkContext {
   val sparkContext = SparkContextContainer.sparkContext
+}
+
+object BigGraphTestEnviroment extends BigGraphEnviroment {
+  lazy val sparkContext = SparkContextContainer.sparkContext
+
+  private val sysTempDir = System.getProperty("java.io.tmpdir")
+  private val myTempDir = new File(
+      "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
+  myTempDir.mkdir
+  private val graphDir = new File(myTempDir, "graph")
+  graphDir.mkdir
+  private val dataDir = new File(myTempDir, "data")
+  dataDir.mkdir
+
+  lazy val bigGraphManager = graph_api.BigGraphManager(graphDir.toString)
+  lazy val graphDataManager = graph_api.GraphDataManager(sparkContext, dataDir.toString)
 }

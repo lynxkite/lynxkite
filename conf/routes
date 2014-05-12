@@ -1,7 +1,5 @@
-POST /test-post         com.lynxanalytics.biggraph.serving.JsonServer.testPost
-GET  /test-get          com.lynxanalytics.biggraph.serving.JsonServer.testGet
-GET  /ajax/graph        com.lynxanalytics.biggraph.serving.JsonServer.bigGraphGet
-GET  /ajax/stats        com.lynxanalytics.biggraph.serving.JsonServer.graphStatsGet
+GET  /ajax/graph        com.lynxanalytics.biggraph.serving.ProductionJsonServer.bigGraphGet
+GET  /ajax/stats        com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphStatsGet
 GET  /                  controllers.Assets.at(path="/public", file="index.html")
 GET  /*file             controllers.Assets.at(path="/public", file)
 

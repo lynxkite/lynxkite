@@ -13,15 +13,32 @@ import com.lynxanalytics.biggraph.serving.JsonServer
  * More information: https://groups.google.com/forum/#!topic/scalatest-users/u7LKrKcV1k
  */
 
+case class TestRequest(attr: String)
+case class TestResponse(attr: String)
 
-class ControllerTest extends FunSuite {
+class TestController {
+  def process(request: TestRequest): TestResponse = {
+    TestResponse("test string: " + request.attr)
+  }
+}
+
+object TestJsonServer extends JsonServer {
+  implicit val rTest = Json.reads[TestRequest]
+  implicit val wTest = Json.writes[TestResponse]
+
+  val testController = new TestController
+  def testPost = jsonPost(testController.process)
+  def testGet = jsonGet(testController.process, "q")
+}
+
+class JsonTest extends FunSuite {
   test("call testPost with a valid fake POST message") {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
     val request = FakeRequest(POST,
                               "/api/test",
                               FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
                               Json.parse(jsonString))
-    val result = JsonServer.testPost(request)
+    val result = TestJsonServer.testPost(request)
     assert(Helpers.status(result) === OK)
     assert((Json.parse(Helpers.contentAsString(result)) \ ("attr")).toString
         === "\"test string: Hello BigGraph!\"")
@@ -30,7 +47,7 @@ class ControllerTest extends FunSuite {
   test("call testGet with a valid fake GET message") {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
     val request = FakeRequest(GET, "/api/test?q=" + jsonString)
-    val result = JsonServer.testGet(request)
+    val result = TestJsonServer.testGet(request)
     assert(Helpers.status(result) === OK)
     assert((Json.parse(Helpers.contentAsString(result)) \ ("attr")).toString
         === "\"test string: Hello BigGraph!\"")
@@ -42,21 +59,21 @@ class ControllerTest extends FunSuite {
                               "/api/test",
                               FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
                               Json.parse(jsonString))
-    val result = JsonServer.testPost(request)
+    val result = TestJsonServer.testPost(request)
     assert(Helpers.status(result) === BAD_REQUEST)
   }
 
   test("testGet should respond with BAD_REQUEST if JSON is incorrect") {
     val jsonString = """{"bad attr":"Hello BigGraph!"}"""
     val request = FakeRequest(GET, "/api/test?q=" + jsonString)
-    val result = JsonServer.testGet(request)
+    val result = TestJsonServer.testGet(request)
     assert(Helpers.status(result) === BAD_REQUEST)
   }
 
   test("testGet should respond with BAD_REQUEST if query parameter is incorrect") {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
     val request = FakeRequest(GET, "/api/test?gugu=" + jsonString)
-    val result = JsonServer.testGet(request)
+    val result = TestJsonServer.testGet(request)
     assert(Helpers.status(result) === BAD_REQUEST)
   }
 

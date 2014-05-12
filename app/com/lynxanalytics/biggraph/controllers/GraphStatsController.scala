@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.BigGraphSingleton
+import com.lynxanalytics.biggraph.BigGraphEnviroment
 import com.lynxanalytics.biggraph.serving
 import java.util.UUID
 
@@ -20,13 +20,10 @@ case class GraphStatsResponse(id: String,
  * Logic for processing requests
  */
 
-object GraphStatsController {
-  val bigGraphManager = BigGraphSingleton.bigGraphManager
-  val graphDataManager = BigGraphSingleton.graphDataManager
-
+class GraphStatsController(enviroment: BigGraphEnviroment) {
   def process(request: GraphStatsRequest): GraphStatsResponse = {
-    val bigGraph = bigGraphManager.graphForGUID(UUID.fromString(request.id)).get
-    val graphData = graphDataManager.obtainData(bigGraph)
+    val bigGraph = enviroment.bigGraphManager.graphForGUID(UUID.fromString(request.id)).get
+    val graphData = enviroment.graphDataManager.obtainData(bigGraph)
     val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
     val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]
     GraphStatsResponse(request.id,
