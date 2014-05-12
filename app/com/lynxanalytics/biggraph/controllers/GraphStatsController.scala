@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.BigGraphSingleton
 import com.lynxanalytics.biggraph.serving
 import java.util.UUID
-import scala.util.Try
 
 /**
  * Case classes used by the JsonServer to communicate with the web application
@@ -12,8 +11,8 @@ import scala.util.Try
 case class GraphStatsRequest(id: String)
 
 case class GraphStatsResponse(id: String,
-                              vertices_size: Long,
-                              edges_size: Long,
+                              vertices_count: Long,
+                              edges_count: Long,
                               vertex_attributes: Seq[String],
                               edge_attributes: Seq[String])
 
