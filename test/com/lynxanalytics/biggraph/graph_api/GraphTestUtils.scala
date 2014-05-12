@@ -1,5 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
+import java.io.File
+
 import org.apache.spark
 import org.apache.spark.graphx.Edge
 
@@ -24,6 +26,11 @@ trait TestGraphDataManager extends TestTempDir with TestSparkContext {
     managerDir.mkdir
     GraphDataManager(sparkContext, managerDir.toString)
   }
+}
+
+class BigGraphTestEnviroment(dirName: String) extends BigGraphEnviroment with TestBigGraphManager with TestGraphDataManager {
+  lazy val bigGraphManager = cleanGraphManager(dirName)
+  lazy val graphDataManager = cleanDataManager(dirName)
 }
 
 class InstantiateSimpleGraph extends GraphOperation {
