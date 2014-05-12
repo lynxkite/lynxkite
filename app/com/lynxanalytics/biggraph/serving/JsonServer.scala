@@ -11,26 +11,6 @@ import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
 class JsonServer extends mvc.Controller {
 
-/**
- * Implicit JSON inception
- *
- * json.Json.toJson needs one for every incepted case class,
- * they need to be ordered so that everything is declared before use.
- */
-
-  implicit val rBigGraph = json.Json.reads[controllers.BigGraphRequest]
-  implicit val wGraphMeta = json.Json.writes[controllers.GraphBasicData]
-  implicit val wBigGraph = json.Json.writes[controllers.BigGraphResponse]
-
-  implicit val rGraphStats = json.Json.reads[controllers.GraphStatsRequest]
-  implicit val wGraphStats = json.Json.writes[controllers.GraphStatsResponse]
-
-/**
- * Actions called by the web framework
- *
- * Play! uses the routings in /conf/routes to execute actions
- */
-
   def jsonPost[I : json.Reads, O : json.Writes](action: I => O) =
     mvc.Action(parse.json) {
       request => request.body.validate[I].fold(
@@ -59,6 +39,26 @@ class JsonServer extends mvc.Controller {
 }
 
 object ProductionJsonServer extends JsonServer {
+ /**
+ * Implicit JSON inception
+ *
+ * json.Json.toJson needs one for every incepted case class,
+ * they need to be ordered so that everything is declared before use.
+ */
+
+  implicit val rBigGraph = json.Json.reads[controllers.BigGraphRequest]
+  implicit val wGraphMeta = json.Json.writes[controllers.GraphBasicData]
+  implicit val wBigGraph = json.Json.writes[controllers.BigGraphResponse]
+
+  implicit val rGraphStats = json.Json.reads[controllers.GraphStatsRequest]
+  implicit val wGraphStats = json.Json.writes[controllers.GraphStatsResponse]
+
+ /**
+ * Methods called by the web framework
+ *
+ * Play! uses the routings in /conf/routes to execute actions
+ */
+
   val bigGraphController = new controllers.BigGraphController(BigGraphProductionEnviroment)
   def bigGraphGet = jsonGet(bigGraphController.process, "q")
 
