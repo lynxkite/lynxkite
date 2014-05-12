@@ -10,8 +10,8 @@ describe('metagraph navigation', function () {
     // Mock $httpBackend.
     $httpBackend = $injector.get('$httpBackend');
 
-    // $httpBackend.when('GET', '/ajax/graph?q={"id":"test"}').respond({
-    $httpBackend.when('GET', '/ajax/graph?q=%7B%22id%22:%22test%22%7D').respond({
+    var testJson = encodeURIComponent('{"id":"test"}')
+    $httpBackend.when('GET', '/ajax/graph?q=' + testJson).respond({
       'title': 'test node',
       'sources': [],
       'ops': [
@@ -19,8 +19,7 @@ describe('metagraph navigation', function () {
         {'title': 'op 2', 'id': 'op2'},
       ],
     });
-    // $httpBackend.when('GET', '/ajax/stats?q={"id":"test"}').respond({
-    $httpBackend.when('GET', '/ajax/stats?q=%7B%22id%22:%22test%22%7D').respond({
+    $httpBackend.when('GET', '/ajax/stats?q=' + testJson).respond({
       'id': 'test id',
       'vertices_count': '100',
       'edges_count': '1000',

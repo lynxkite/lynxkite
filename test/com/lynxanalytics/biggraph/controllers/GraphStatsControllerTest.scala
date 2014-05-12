@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.controllers
 import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.BigGraphTestEnviroment
 import play.api.test.FakeRequest
 import play.api.test.FakeHeaders
 import play.api.test.Helpers
@@ -17,8 +16,9 @@ import play.api.libs.json.Json
 
 class GraphStatsControllerTest extends FunSuite {
   test("get stats for the test graph") {
-    val bigGraph = BigGraphTestEnviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
-    val testGraphStatsController = new GraphStatsController(BigGraphTestEnviroment)
+    val testEnviroment = new BigGraphTestEnviroment("graphstatscontroller")
+    val bigGraph = testEnviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
+    val testGraphStatsController = new GraphStatsController(testEnviroment)
     val id = bigGraph.gUID.toString
     val result = testGraphStatsController.process(GraphStatsRequest(id))
     assert(result.id === id)

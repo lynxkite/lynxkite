@@ -6,7 +6,11 @@ angular.module('biggraph')
     var request = {id: id};
     var requestJson = JSON.stringify(request);
     var Graph = $resource('/ajax/graph?q=:request');
-    $scope.graph = Graph.get({request: requestJson});
+    Graph.get({request: requestJson}).$promise.then(function (response) {
+      $scope.graph = response;
+    });
     var Stats = $resource('/ajax/stats?q=:request');
-    $scope.stats = Stats.get({request: requestJson});
+    Stats.get({request: requestJson}).$promise.then(function (response) {
+      $scope.stats = response;
+    });
   });
