@@ -5,7 +5,7 @@ import org.apache.spark.graphx.Edge
 
 import com.lynxanalytics.biggraph.TestTempDir
 import com.lynxanalytics.biggraph.TestSparkContext
-
+import com.lynxanalytics.biggraph.BigGraphEnviroment
 
 import attributes.AttributeSignature
 import attributes.DenseAttributes

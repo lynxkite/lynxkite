@@ -3,12 +3,13 @@ package com.lynxanalytics.biggraph.serving
 import play.api.mvc
 import play.api.libs.json
 import play.api.libs.json._
+import com.lynxanalytics.biggraph.BigGraphProductionEnviroment
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
-object JsonServer extends mvc.Controller {
+class JsonServer extends mvc.Controller {
 
 /**
  * Implicit JSON inception
@@ -16,9 +17,6 @@ object JsonServer extends mvc.Controller {
  * json.Json.toJson needs one for every incepted case class,
  * they need to be ordered so that everything is declared before use.
  */
-
-  implicit val rTest = json.Json.reads[controllers.TestRequest]
-  implicit val wTest = json.Json.writes[controllers.TestResponse]
 
   implicit val rBigGraph = json.Json.reads[controllers.BigGraphRequest]
   implicit val wGraphMeta = json.Json.writes[controllers.GraphBasicData]
@@ -58,11 +56,12 @@ object JsonServer extends mvc.Controller {
               "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
       }
     }
+}
 
-  def testPost = jsonPost(controllers.TestController.process)
-  def testGet = jsonGet(controllers.TestController.process, "q")
+object ProductionJsonServer extends JsonServer {
+  val bigGraphController = new controllers.BigGraphController(BigGraphProductionEnviroment)
+  def bigGraphGet = jsonGet(bigGraphController.process, "q")
 
-  def bigGraphGet = jsonGet(controllers.BigGraphController.process, "q")
-  def graphStatsGet = jsonGet(controllers.GraphStatsController.process, "q")
-
+  val graphStatsController = new controllers.GraphStatsController(BigGraphProductionEnviroment)
+  def graphStatsGet = jsonGet(graphStatsController.process, "q")
 }

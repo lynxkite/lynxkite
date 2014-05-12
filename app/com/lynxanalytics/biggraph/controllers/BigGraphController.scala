@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.BigGraphSingleton
+import com.lynxanalytics.biggraph.BigGraphEnviroment
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_api.BigGraph
 import com.lynxanalytics.biggraph.graph_operations
@@ -22,9 +22,7 @@ case class BigGraphResponse(
  * Logic for processing requests
  */
 
-object BigGraphController {
-  val bigGraphManager = BigGraphSingleton.bigGraphManager
-
+class BigGraphController(enviroment: BigGraphEnviroment) {
   def basicDataFromGraph(bigGraph: BigGraph): GraphBasicData = {
     GraphBasicData(bigGraph.toLongString, bigGraph.gUID.toString)
   }
@@ -33,15 +31,15 @@ object BigGraphController {
     BigGraphResponse(
       title = bigGraph.toLongString,
       sources = bigGraph.sources.map(basicDataFromGraph(_)),
-      ops = Seq(basicDataFromGraph(bigGraphManager.deriveGraph(
+      ops = Seq(basicDataFromGraph(enviroment.bigGraphManager.deriveGraph(
                                  Seq(bigGraph), new graph_operations.EdgeGraph))))
   }
 
   def process(request: BigGraphRequest): BigGraphResponse = {
     if (request.id == "x") {
-      responseFromGraph(bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph2))
+      responseFromGraph(enviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph2))
     } else {
-      responseFromGraph(bigGraphManager.graphForGUID(UUID.fromString(request.id)).get)
+      responseFromGraph(enviroment.bigGraphManager.graphForGUID(UUID.fromString(request.id)).get)
     }
   }
 }
