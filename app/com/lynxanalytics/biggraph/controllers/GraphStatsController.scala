@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.BigGraphEnviroment
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.graph_api._
 import java.util.UUID
 
 /**
@@ -22,7 +23,21 @@ case class GraphStatsResponse(id: String,
 
 class GraphStatsController(enviroment: BigGraphEnviroment) {
   def process(request: GraphStatsRequest): GraphStatsResponse = {
-    val bigGraph = enviroment.bigGraphManager.graphForGUID(UUID.fromString(request.id)).get
+    // testing some async behavior, remove later
+    var maybeBigGraph: Option[BigGraph] = None
+    var t = 100;
+    while (maybeBigGraph == None && t > 0) {
+      // TODO: hack for starting condition, see BigGraphController for details
+      if (request.id == "x") {
+        maybeBigGraph = Some(enviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph2))
+      } else {
+        maybeBigGraph = enviroment.bigGraphManager.graphForGUID(UUID.fromString(request.id))
+      }
+      Thread.sleep(10L)
+      t -= 1
+    }
+
+    val bigGraph = maybeBigGraph.get
     val graphData = enviroment.graphDataManager.obtainData(bigGraph)
     val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
     val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]

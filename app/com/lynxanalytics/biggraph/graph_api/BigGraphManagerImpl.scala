@@ -8,6 +8,8 @@ import java.io.ObjectOutputStream
 import java.util.UUID
 import scala.collection.mutable
 
+import play.api.Logger
+
 class BigGraphManagerImpl(val repositoryPath: String) extends BigGraphManager {
   private val bigGraphs = mutable.Map[UUID, BigGraph]()
   private val derivatives = mutable.Map[UUID, mutable.Buffer[BigGraph]]()
@@ -18,6 +20,9 @@ class BigGraphManagerImpl(val repositoryPath: String) extends BigGraphManager {
                   operation: GraphOperation): BigGraph = {
     val newGraph = new BigGraph(sources, operation)
     val gUID = newGraph.gUID
+    Logger.info(s"Graph gUID: $gUID")
+    Logger.info(s"Repository path: $repositoryPath")
+    Logger.info(s"Cached BigGraphs: ${bigGraphs.keySet}")
     if (!bigGraphs.contains(gUID)) {
       bigGraphs(gUID) = newGraph
       updateDerivatives(newGraph)
@@ -48,6 +53,7 @@ class BigGraphManagerImpl(val repositoryPath: String) extends BigGraphManager {
     val dumpFile = new File("%s/dump-%13d".format(repositoryPath, time))
     val finalFile = new File("%s/save-%13d".format(repositoryPath, time))
     val stream = new ObjectOutputStream(new FileOutputStream(dumpFile))
+    Logger.info(s"dump filename: ${dumpFile.getName}")
     stream.writeObject(bigGraphs)
     stream.close()
     dumpFile.renameTo(finalFile)

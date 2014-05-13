@@ -71,6 +71,14 @@ class BigGraphManagerTest extends FunSuite with TestBigGraphManager {
     assert(derivatives2 == Set(g4, g5))
   }
 
+  test("No graph should be calculated twice") {
+    val manager = cleanGraphManager("gUID")
+    val g1 = manager.deriveGraph(Seq(), FromNothing())
+    val g2 = manager.deriveGraph(Seq(), FromNothing())
+
+    assert(g1 eq g2)
+  }
+
 }
 
 private case class FromNothing() extends GraphOperation {
