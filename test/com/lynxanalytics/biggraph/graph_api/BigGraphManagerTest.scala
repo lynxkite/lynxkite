@@ -79,6 +79,27 @@ class BigGraphManagerTest extends FunSuite with TestBigGraphManager {
     assert(g1 eq g2)
   }
 
+  test("using attributes of BigGraphs wont screw with serialization") {
+    val manager = cleanGraphManager("noattributeserialization")
+    val g1 = manager.deriveGraph(Seq(), FromNothing())
+    val bla = g1.vertexAttributes
+    val g2 = manager.deriveGraph(Seq(g1), FromAnother())
+  }
+
+  test("attributes work both after creation and after reload") {
+    val manager = cleanGraphManager("noattributeserialization")
+    val g1 = manager.deriveGraph(Seq(), FromNothingWithAttributes())
+    assert(g1.vertexAttributes.getAttributesReadableAs[String] == Seq("sattr"))
+    val g2 = manager.deriveGraph(Seq(g1), FromAnother())
+    assert(g1.vertexAttributes.getAttributesReadableAs[String] == Seq("sattr"))
+    assert(g2.vertexAttributes.getAttributesReadableAs[String] == Seq("sattr"))
+
+    val reloadedManager = BigGraphManager(manager.repositoryPath)
+    val g1r = reloadedManager.graphForGUID(g1.gUID).get
+    val g2r = reloadedManager.graphForGUID(g2.gUID).get
+    assert(g1r.vertexAttributes.getAttributesReadableAs[String] == Seq("sattr"))
+    assert(g2r.vertexAttributes.getAttributesReadableAs[String] == Seq("sattr"))
+  }
 }
 
 private case class FromNothing() extends GraphOperation {
@@ -87,6 +108,17 @@ private case class FromNothing() extends GraphOperation {
   def execute(target: BigGraph, manager: GraphDataManager): GraphData = ???
 
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = AttributeSignature.empty
+
+  def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = AttributeSignature.empty
+}
+
+private case class FromNothingWithAttributes() extends GraphOperation {
+  def isSourceListValid(sources: Seq[BigGraph]) = sources.isEmpty
+
+  def execute(target: BigGraph, manager: GraphDataManager): GraphData = ???
+
+  def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature =
+    AttributeSignature.empty.addAttribute[String]("sattr").signature
 
   def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = AttributeSignature.empty
 }
