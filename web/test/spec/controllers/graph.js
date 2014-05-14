@@ -9,9 +9,9 @@ describe('metagraph navigation', function () {
     scope = $rootScope.$new();
     // Mock $httpBackend.
     $httpBackend = $injector.get('$httpBackend');
-
-    var testJson = encodeURIComponent('{"id":"test"}')
-    $httpBackend.when('GET', '/ajax/graph?q=' + testJson).respond({
+    var request = {id: 'test'};
+    var requestJson = encodeURI(JSON.stringify(request));
+    $httpBackend.when('GET', '/ajax/graph?q=' + requestJson).respond({
       'title': 'test node',
       'sources': [],
       'ops': [
@@ -19,7 +19,7 @@ describe('metagraph navigation', function () {
         {'title': 'op 2', 'id': 'op2'},
       ],
     });
-    $httpBackend.when('GET', '/ajax/stats?q=' + testJson).respond({
+    $httpBackend.when('GET', '/ajax/stats?q=' + requestJson).respond({
       'id': 'test id',
       'vertices_count': '100',
       'edges_count': '1000',
@@ -38,5 +38,6 @@ describe('metagraph navigation', function () {
   it('should make an HTTP request', function() {
     $httpBackend.flush();
     expect(scope.graph.ops.length).toBe(2);
+    expect(scope.stats.vertices_count).toBe('100');
   });
 });
