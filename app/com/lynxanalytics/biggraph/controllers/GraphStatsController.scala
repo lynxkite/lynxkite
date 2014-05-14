@@ -22,22 +22,14 @@ case class GraphStatsResponse(id: String,
  */
 
 class GraphStatsController(enviroment: BigGraphEnviroment) {
-  def process(request: GraphStatsRequest): GraphStatsResponse = {
-    // testing some async behavior, remove later
-    var maybeBigGraph: Option[BigGraph] = None
-    var t = 100;
-    while (maybeBigGraph == None && t > 0) {
-      // TODO: hack for starting condition, see BigGraphController for details
+  def getStats(request: GraphStatsRequest): GraphStatsResponse = {
+    val bigGraph = {
       if (request.id == "x") {
-        maybeBigGraph = Some(enviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph2))
+        enviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph2)
       } else {
-        maybeBigGraph = enviroment.bigGraphManager.graphForGUID(UUID.fromString(request.id))
+        enviroment.bigGraphManager.graphForGUID(UUID.fromString(request.id)).get
       }
-      Thread.sleep(10L)
-      t -= 1
     }
-
-    val bigGraph = maybeBigGraph.get
     val graphData = enviroment.graphDataManager.obtainData(bigGraph)
     val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
     val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]

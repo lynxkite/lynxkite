@@ -35,7 +35,7 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
                                  Seq(bigGraph), new graph_operations.EdgeGraph))))
   }
 
-  def process(request: BigGraphRequest): BigGraphResponse = {
+  def getGraph(request: BigGraphRequest): BigGraphResponse = {
     if (request.id == "x") {
       responseFromGraph(enviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph2))
     } else {
