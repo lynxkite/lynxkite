@@ -1,6 +1,5 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.biggraph._
 import java.util.UUID
 import scala.collection.mutable
 
@@ -60,7 +59,6 @@ abstract class BigGraphManager {
 
   def repositoryPath: String
 }
-
 object BigGraphManager {
   def apply(repositoryPath: String): BigGraphManager = {
     new BigGraphManagerImpl(repositoryPath)
