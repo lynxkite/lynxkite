@@ -26,13 +26,13 @@ class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: Gr
     UUID.nameUUIDFromBytes(collector.toArray)
   }
 
-  lazy val vertexAttributes: AttributeSignature =
+  @transient lazy val vertexAttributes: AttributeSignature =
       operation.vertexAttributes(sources)
 
-  lazy val edgeAttributes: AttributeSignature =
+  @transient lazy val edgeAttributes: AttributeSignature =
       operation.edgeAttributes(sources)
 
-  lazy val toLongString: String = "[%s](%s)".format(
+  @transient lazy val toLongString: String = "[%s](%s)".format(
       operation.toString,
       sources.map(_.toLongString).mkString(","))
 }
