@@ -1,5 +1,4 @@
 package com.lynxanalytics.biggraph
-// TODO: rename file
 
 import java.io.File
 import org.apache.spark
