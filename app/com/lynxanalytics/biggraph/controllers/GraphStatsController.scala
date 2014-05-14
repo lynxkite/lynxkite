@@ -23,7 +23,7 @@ case class GraphStatsResponse(id: String,
 
 class GraphStatsController(enviroment: BigGraphEnviroment) {
   def getStats(request: GraphStatsRequest): GraphStatsResponse = {
-    val bigGraph = BigGraphManager.getBigGraphForId(request.id, enviroment)
+    val bigGraph = BigGraphController.getBigGraphForId(request.id, enviroment)
     val graphData = enviroment.graphDataManager.obtainData(bigGraph)
     val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
     val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]
