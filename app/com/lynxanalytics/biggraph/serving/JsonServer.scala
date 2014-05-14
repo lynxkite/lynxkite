@@ -60,8 +60,8 @@ object ProductionJsonServer extends JsonServer {
  */
 
   val bigGraphController = new controllers.BigGraphController(BigGraphProductionEnviroment)
-  def bigGraphGet = jsonGet(bigGraphController.process, "q")
+  def bigGraphGet = jsonGet(bigGraphController.getGraph, "q")
 
   val graphStatsController = new controllers.GraphStatsController(BigGraphProductionEnviroment)
-  def graphStatsGet = jsonGet(graphStatsController.process, "q")
+  def graphStatsGet = jsonGet(graphStatsController.getStats, "q")
 }
