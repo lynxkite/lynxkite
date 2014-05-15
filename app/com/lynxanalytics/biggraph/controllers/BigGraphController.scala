@@ -101,7 +101,7 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
 
   def deriveGraph(request: DeriveBigGraphRequest): GraphBasicData = {
     val sourceGraphs = request.sourceIds.map(
-        id => enviroment.bigGraphManager.graphForGUID(UUID.fromString(id)).get)
+        id => BigGraphController.getBigGraphForId(id, enviroment))
     val op = FEOperations.getGraphOperation(request.operation)
     basicDataFromGraph(enviroment.bigGraphManager.deriveGraph(sourceGraphs, op))
   }
