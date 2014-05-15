@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.serving
 import java.util.UUID
+import scala.collection.mutable
 
 case class BigGraphRequest(id: String)
 
@@ -13,20 +14,68 @@ case class GraphBasicData(
   title: String,
   id: String)
 
-case class FEOperationParameter(
+case class FEOperationParameterMeta(
   title: String,
-  parameterType: String,
   defaultValue: String)
 
-case class FEOperation(
+case class FEOperationMeta(
+  operationId: Int,
   name: String,
-  parameters: Seq[FEOperationParameter])
+  parameters: Seq[FEOperationParameterMeta])
 
 case class BigGraphResponse(
   title: String,
   sources: Seq[GraphBasicData],
   derivatives: Seq[GraphBasicData],
-  ops: Seq[FEOperation])
+  ops: Seq[FEOperationMeta])
+
+case class FEOperationSpec(
+  operationId: Int,
+  parameters: Seq[String])
+
+case class DeriveBigGraphRequest(
+  sourceIds: Seq[String],
+  operation: FEOperationSpec)
+
+trait FEOperation {
+  def applicableTo(bigGraph: BigGraph): Boolean = true
+  val name: String
+  val parameters: Seq[FEOperationParameterMeta]
+  def toGraphOperation(parameters: Seq[String]): GraphOperation
+}
+
+
+class FEOperationRepository {
+  def registerOperation(op: FEOperation): Unit = operations += op
+
+  def getApplicableOperationMetas(bigGraph: BigGraph): Seq[FEOperationMeta] =
+      operations
+        .zipWithIndex
+        .filter(_._1.applicableTo(bigGraph))
+        .map{case (op, id) => FEOperationMeta(id, op.name, op.parameters)}
+
+  def getGraphOperation(spec: FEOperationSpec): GraphOperation = {
+    operations(spec.operationId).toGraphOperation(spec.parameters)
+  }
+
+  private val operations = mutable.Buffer[FEOperation]()
+}
+
+object FEOperations extends FEOperationRepository {
+  /*registerOperation(
+    new FEOperation {
+      val name = "Find Maximal Cliques"
+      val parameters = Seq(
+          FEOperationParameterMeta("Minimum Clique Size", "3"))
+      def getGraphOperation(parameters: Seq[String]) = new FindMaxCliques(parameters.head.toInt)
+    })*/
+  registerOperation(
+    new FEOperation {
+      val name = "Edge Graph"
+      val parameters = Seq()
+      def toGraphOperation(parameters: Seq[String]) = new graph_operations.EdgeGraph()
+    })
+}
 
 /**
  * Logic for processing requests
@@ -43,13 +92,18 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
       sources = bigGraph.sources.map(basicDataFromGraph(_)),
       derivatives = enviroment.bigGraphManager
         .knownDirectDerivatives(bigGraph).map(basicDataFromGraph(_)),
-      ops = Seq(FEOperation("CliqueGraph", Seq()),
-                FEOperation(
-                  "Cliques", Seq(FEOperationParameter("Minimum clique size", "int", "3")))))
+      ops = FEOperations.getApplicableOperationMetas(bigGraph))
   }
 
   def getGraph(request: BigGraphRequest): BigGraphResponse = {
     responseFromGraph(BigGraphController.getBigGraphForId(request.id, enviroment))
+  }
+
+  def deriveGraph(request: DeriveBigGraphRequest): GraphBasicData = {
+    val sourceGraphs = request.sourceIds.map(
+        id => enviroment.bigGraphManager.graphForGUID(UUID.fromString(id)).get)
+    val op = FEOperations.getGraphOperation(request.operation)
+    basicDataFromGraph(enviroment.bigGraphManager.deriveGraph(sourceGraphs, op))
   }
 }
 object BigGraphController {
