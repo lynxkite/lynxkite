@@ -42,12 +42,12 @@ class CliquesTest extends FunSuite with TestBigGraphManager with TestGraphDataMa
       resultsFromChildren
     }
   }
+
   private def localNaiveCliques(data: GraphData, minCliqueSize: Int): Seq[Seq[VertexId]] = {
     val vertices = data.vertices.collect.toSeq.map(_._1).sorted
     val edges = data.edges.collect.map(edge => (edge.srcId, edge.dstId)).toSet
     childMaxCliquesOf(Seq(), vertices, edges).filter(_.size >= minCliqueSize)
   }
-
 
   test("Check for a few random graphs") {
     val graphManager = cleanGraphManager("checkrandomgraphcliques")

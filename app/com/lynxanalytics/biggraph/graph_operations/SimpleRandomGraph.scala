@@ -18,7 +18,7 @@ case class SimpleRandomGraph(size: Int, seed: Int, density: Float) extends Graph
     val edges = for (
         src <- vertexIds;
         dst <- vertexIds;
-        if rand.nextFloat < density) yield new graphx.Edge(src,dst, maker.make)
+        if rand.nextFloat < density) yield new graphx.Edge(src, dst, maker.make)
     return new SimpleGraphData(target, sc.parallelize(vertices), sc.parallelize(edges))
   }
 
