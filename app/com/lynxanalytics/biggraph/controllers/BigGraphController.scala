@@ -13,10 +13,20 @@ case class GraphBasicData(
   title: String,
   id: String)
 
+case class FEOperationParameter(
+  title: String,
+  parameterType: String,
+  defaultValue: String)
+
+case class FEOperation(
+  name: String,
+  parameters: Seq[FEOperationParameter])
+
 case class BigGraphResponse(
   title: String,
   sources: Seq[GraphBasicData],
-  ops: Seq[GraphBasicData])
+  derivatives: Seq[GraphBasicData],
+  ops: Seq[FEOperation])
 
 /**
  * Logic for processing requests
@@ -31,8 +41,11 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
     BigGraphResponse(
       title = bigGraph.toLongString,
       sources = bigGraph.sources.map(basicDataFromGraph(_)),
-      ops = Seq(basicDataFromGraph(enviroment.bigGraphManager.deriveGraph(
-                                 Seq(bigGraph), new graph_operations.EdgeGraph))))
+      derivatives = enviroment.bigGraphManager
+        .knownDirectDerivatives(bigGraph).map(basicDataFromGraph(_)),
+      ops = Seq(FEOperation("CliqueGraph", Seq()),
+                FEOperation(
+                  "Cliques", Seq(FEOperationParameter("Minimum clique size", "int", "3")))))
   }
 
   def getGraph(request: BigGraphRequest): BigGraphResponse = {

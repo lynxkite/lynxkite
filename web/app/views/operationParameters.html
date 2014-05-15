@@ -1,0 +1,11 @@
+<div class="operationParameters">
+  <h3>{{operation.name}}</h>
+  <div class="params">
+    <div class="param" ng-repeat="param in operation.parameters">
+      {{param.title}}: <input type="text" class="btn btn-default" ng-model="result[$index]"/>
+    </div>
+  </div>
+
+  <button class="btn btn-default" ng-click="close()">OK</button>
+  <button class="btn btn-default" ng-click="$dismiss('canceled')">Cancel</button>
+</div>
