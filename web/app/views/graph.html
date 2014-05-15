@@ -8,9 +8,15 @@
     <h1>{{graph.title}}</h1>
     <p>Vertices: {{stats.vertices_count}} - Edges: {{stats.edges_count}}</p>
   </div>
-  <div class="ops">
-    <div class="op" ng-repeat="op in graph.ops">
-      <a href="/#/graph/{{op.id}}">&rarr; {{op.title}}</a>
+  <div class="derivatives">
+    <div class="derivative" ng-repeat="derivative in graph.derivatives">
+      <a href="/#/graph/{{derivative.id}}">&rarr; {{derivative.title}}</a>
     </div>
   </div>
+  <div class="ops">
+    <div class="op" ng-repeat="op in graph.ops">
+      <button class="btn btn-default" ng-click="openModal(op)">{{op.name}}</button>
+    </div>
+  </div>
+  <div>Alma: {{modalResult}} korte</div>
 </div>

@@ -34,7 +34,7 @@ class BigGraphManagerImpl(val repositoryPath: String) extends BigGraphManager {
   // Returns all graphs in the meta graph known to this manager that has the given
   // graph as one of its sources.
   def knownDirectDerivatives(graph: BigGraph): Seq[BigGraph] = {
-    derivatives(graph.gUID)
+    derivatives.getOrElse(graph.gUID, Seq())
   }
 
   private def updateDerivatives(graph: BigGraph): Unit = {

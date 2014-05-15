@@ -46,12 +46,14 @@ object ProductionJsonServer extends JsonServer {
  * they need to be ordered so that everything is declared before use.
  */
 
-  implicit val rBigGraph = json.Json.reads[controllers.BigGraphRequest]
-  implicit val wGraphMeta = json.Json.writes[controllers.GraphBasicData]
-  implicit val wBigGraph = json.Json.writes[controllers.BigGraphResponse]
+  implicit val rBigGraphRequest = json.Json.reads[controllers.BigGraphRequest]
+  implicit val wGraphBasicData = json.Json.writes[controllers.GraphBasicData]
+  implicit val wFEOperationParameter = json.Json.writes[controllers.FEOperationParameter]
+  implicit val wFEOperation = json.Json.writes[controllers.FEOperation]
+  implicit val wBigGraphResponse = json.Json.writes[controllers.BigGraphResponse]
 
-  implicit val rGraphStats = json.Json.reads[controllers.GraphStatsRequest]
-  implicit val wGraphStats = json.Json.writes[controllers.GraphStatsResponse]
+  implicit val rGraphStatsRequest = json.Json.reads[controllers.GraphStatsRequest]
+  implicit val wGraphStatsResponse = json.Json.writes[controllers.GraphStatsResponse]
 
  /**
  * Methods called by the web framework
