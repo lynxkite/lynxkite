@@ -48,9 +48,12 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rBigGraphRequest = json.Json.reads[controllers.BigGraphRequest]
   implicit val wGraphBasicData = json.Json.writes[controllers.GraphBasicData]
-  implicit val wFEOperationParameter = json.Json.writes[controllers.FEOperationParameter]
-  implicit val wFEOperation = json.Json.writes[controllers.FEOperation]
+  implicit val wFEOperationParameterMeta = json.Json.writes[controllers.FEOperationParameterMeta]
+  implicit val wFEOperationMeta = json.Json.writes[controllers.FEOperationMeta]
   implicit val wBigGraphResponse = json.Json.writes[controllers.BigGraphResponse]
+
+  implicit val rFEOperationSpec = json.Json.reads[controllers.FEOperationSpec]
+  implicit val rDeriveBigGraphRequest = json.Json.reads[controllers.DeriveBigGraphRequest]
 
   implicit val rGraphStatsRequest = json.Json.reads[controllers.GraphStatsRequest]
   implicit val wGraphStatsResponse = json.Json.writes[controllers.GraphStatsResponse]
@@ -63,6 +66,7 @@ object ProductionJsonServer extends JsonServer {
 
   val bigGraphController = new controllers.BigGraphController(BigGraphProductionEnviroment)
   def bigGraphGet = jsonGet(bigGraphController.getGraph, "q")
+  def deriveBigGraphGet = jsonGet(bigGraphController.deriveGraph, "q")
 
   val graphStatsController = new controllers.GraphStatsController(BigGraphProductionEnviroment)
   def graphStatsGet = jsonGet(graphStatsController.getStats, "q")
