@@ -20,7 +20,7 @@ class PlayServer:
 
   def __enter__(self):
     return self
-    
+
   def __exit__(self, exception_type, exception_value, traceback):
     if self.serv != None:
       os.killpg(self.serv.pid, signal.SIGTERM)
@@ -32,7 +32,7 @@ class PlayServer:
     cmd = 'run %s' % self.port
     self.serv = subprocess.Popen(['sbt', cmd], cwd=self.path, stdout=self.playlog, preexec_fn=os.setsid)
     start = time.time()
-    while (time.time() - start <= timeout):  
+    while (time.time() - start <= timeout):
       time.sleep(interval)
       try:
         self.conn.connect()
@@ -41,7 +41,7 @@ class PlayServer:
       except:
         print 'Waiting for the server to start...'
     raise Exception('Connection timed out')
-    
+
   def get_json_data(self, URI):
     self.conn.request('GET', URI)
     res = self.conn.getresponse()
