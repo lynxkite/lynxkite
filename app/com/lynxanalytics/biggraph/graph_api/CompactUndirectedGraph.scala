@@ -35,28 +35,24 @@ object CompactUndirectedGraph {
 
     val perPartitionData = compact.collect
     val numVertices = perPartitionData
-      .map({
-        case ((ids, indices), neighbors) => ids.size
-      })
+      .map{ case ((ids, indices), neighbors) => ids.size }
       .sum
     val numEdges = perPartitionData
-      .map({
-        case ((ids, indices), neighbors) => neighbors.size
-      })
+      .map{ case ((ids, indices), neighbors) => neighbors.size }
       .sum
 
-    val full_neighbors = Array.ofDim[VertexId](numEdges)
-    val pindices = Array.ofDim[(VertexId, Int)](numVertices)
+    val fullNeighbors = Array.ofDim[VertexId](numEdges)
+    val vertexIndices = Array.ofDim[(VertexId, Int)](numVertices)
     val starts = Array.ofDim[Int](numVertices + 1)
 
     var offset = 0
     var index = 0
     perPartitionData.foreach({
       case ((ids, indices), neighbors) => {
-        Array.copy(neighbors, 0, full_neighbors, offset, neighbors.size)
+        Array.copy(neighbors, 0, fullNeighbors, offset, neighbors.size)
         for (i <- 0 until ids.size) {
           starts(index + i) = indices(i) + offset
-          pindices(index + i) = (ids(i), index + i)
+          vertexIndices(index + i) = (ids(i), index + i)
         }
         offset += neighbors.size
         index += ids.size
@@ -64,15 +60,15 @@ object CompactUndirectedGraph {
     })
     starts(index) = offset
 
-    Sorting.quickSort(pindices)
+    Sorting.quickSort(vertexIndices)
 
     return new CompactUndirectedGraph(
-      full_neighbors, pindices, starts)
+      fullNeighbors, vertexIndices, starts)
   }
 }
 
 class CompactUndirectedGraph(
-    full_neighbors: Array[VertexId],
+    fullNeighbors: Array[VertexId],
     indices: Array[(VertexId, Int)],
     starts: Array[Int]) extends Serializable {
 
@@ -82,10 +78,10 @@ class CompactUndirectedGraph(
 
     while (lb < ub) {
       val mid = (lb + ub) / 2
-      val (aid, aidx) = indices(mid)
-      if (aid == id) {
-        return aidx
-      } else if (aid > id) {
+      val (currId, currIndex) = indices(mid)
+      if (currId == id) {
+        return currIndex
+      } else if (currId > id) {
         ub = mid
       } else {
         lb = mid + 1
@@ -99,7 +95,7 @@ class CompactUndirectedGraph(
     if (idx == -1) {
       Seq()
     } else {
-      full_neighbors.view.slice(starts(idx), starts(idx + 1))
+      fullNeighbors.view.slice(starts(idx), starts(idx + 1))
     }
   }
 }
