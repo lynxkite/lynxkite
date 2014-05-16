@@ -30,8 +30,8 @@ class PlayServer:
     self.playlog.flush()
 
   def start(self, timeout=10, interval=2):
-    cmd = 'run %s' % self.port
-    self.serv = subprocess.Popen(['sbt', cmd], cwd=self.path, stdout=self.playlog, preexec_fn=os.setsid)
+    self.serv = subprocess.Popen(['stage/bin/biggraph', '-Dhttp.port=%s' % self.port],
+                                 cwd=self.path, stdout=self.playlog, preexec_fn=os.setsid)
     start = time.time()
     while (time.time() - start <= timeout):
       time.sleep(interval)

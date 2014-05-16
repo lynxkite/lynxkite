@@ -25,6 +25,16 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
     kryo.setRegistrationRequired(true)
     kryo.register(classOf[graphx.Edge[_]])
+    kryo.register(classOf[graphx.EdgeTriplet[_, _]])
+    kryo.register(classOf[Array[graphx.Edge[_]]])
+    kryo.register(classOf[Array[graphx.EdgeTriplet[_, _]]])
+    kryo.register(classOf[attributes.DenseAttributes])
+    kryo.register(classOf[Array[Any]])
+    kryo.register(classOf[mutable.WrappedArray$ofRef])
+    kryo.register(classOf[Array[Int]])
+    kryo.register(classOf[Array[Long]])
+    kryo.register(classOf[Array[Tuple2[_, _]]])
+    kryo.register(classOf[scala.runtime.BoxedUnit])
     kryo.register(classOf[graph_api.CompactUndirectedGraph])
   }
 }
