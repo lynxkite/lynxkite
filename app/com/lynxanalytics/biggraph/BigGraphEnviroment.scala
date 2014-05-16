@@ -16,10 +16,9 @@ trait BigGraphEnviroment {
  * TODO: figure out what is the best practice for this in play.
  */
 object BigGraphProductionEnviroment extends BigGraphEnviroment {
-  // TODO: make all this more production like and configurable.
-  // Btw, it sucks that you need to specify the jar even in local mode. Not sure why. For now,
-  // one need to do sbt package before sbt run. :(
-  lazy val sparkContext = BigGraphSparkContext("BigGraphServer", "local")
+  lazy val sparkContext = BigGraphSparkContext(
+      "BigGraphServer",
+      scala.util.Properties.envOrElse("SPARK_MASTER", "local"))
 
   private val sysTempDir = System.getProperty("java.io.tmpdir")
   private val myTempDir = new File(
