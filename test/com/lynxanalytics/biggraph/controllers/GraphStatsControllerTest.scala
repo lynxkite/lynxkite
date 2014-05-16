@@ -12,9 +12,9 @@ class GraphStatsControllerTest extends FunSuite {
     val id = bigGraph.gUID.toString
     val result = testGraphStatsController.getStats(GraphStatsRequest(id))
     assert(result.id === id)
-    assert(result.vertices_count === 3)
-    assert(result.edges_count === 4)
-    assert(result.vertex_attributes === Seq("name"))
-    assert(result.edge_attributes === Seq("comment"))
+    assert(result.verticesCount === 3)
+    assert(result.edgesCount === 4)
+    assert(result.vertexAttributes === Seq("name"))
+    assert(result.edgeAttributes === Seq("comment"))
   }
 }

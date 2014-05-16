@@ -6,7 +6,7 @@
   </div>
   <div class="stats">
     <h1>{{graph.title}}</h1>
-    <p>Vertices: {{stats.vertices_count}} - Edges: {{stats.edges_count}}</p>
+    <p>Vertices: {{stats.verticesCount}} - Edges: {{stats.edgesCount}}</p>
   </div>
   <div class="derivatives">
     <div class="derivative" ng-repeat="derivative in graph.derivatives">
@@ -18,5 +18,4 @@
       <button class="btn btn-default" ng-click="openModal(op)">{{op.name}}</button>
     </div>
   </div>
-  <div>Alma: {{modalResult}} korte</div>
 </div>

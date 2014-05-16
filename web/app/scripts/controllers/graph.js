@@ -1,8 +1,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('GraphViewCtrl', function (
-      $scope, $routeParams, $resource, $modal, $controller, $location) {
+  .controller('GraphViewCtrl', function ($scope, $routeParams, $resource, $modal, $location) {
     var id = $routeParams.graph;
     var request = {id: id};
     var requestJson = JSON.stringify(request);
@@ -13,33 +12,29 @@ angular.module('biggraph')
     $scope.graph = Graph.get({request: requestJson});
     $scope.stats = Stats.get({request: requestJson});
 
-    $scope.modalResult = 'nothing';
     $scope.openModal = function(operation) {
-      alert(JSON.stringify(operation))
       var modalInstance = $modal.open({
-	templateUrl: 'views/operationParameters.html',
-	controller: 'OperationParametersCtrl',
-	resolve: {
-	  operation: function() {
-	    return operation
-	  }
-	}
+        templateUrl: 'views/operationParameters.html',
+        controller: 'OperationParametersCtrl',
+        resolve: {
+          operation: function() {
+            return operation;
+          }
+        }
       });
 
       modalInstance.result.then(function (result) {
-	var deriveRequest = {
-	  sourceIds: [id],
-	  operation: {
-	    operationId: operation.operationId,
-	    parameters: result
-	  }
-	};
-	var deriveRequestJson = JSON.stringify(deriveRequest);
-	alert(deriveRequestJson)
-	$scope.modalResult = result
-	DerivedGraph.get({request: deriveRequestJson}, function(derivedGraph) {
-	  $location.url('/graph/' + derivedGraph.id)
-	})
+        var deriveRequest = {
+          sourceIds: [id],
+          operation: {
+            operationId: operation.operationId,
+            parameters: result
+          }
+        };
+        var deriveRequestJson = JSON.stringify(deriveRequest);
+        DerivedGraph.get({request: deriveRequestJson}, function(derivedGraph) {
+          $location.url('/graph/' + derivedGraph.id);
+        });
       });
-    }
+    };
   });
