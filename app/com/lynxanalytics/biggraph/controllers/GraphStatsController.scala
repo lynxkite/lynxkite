@@ -12,10 +12,10 @@ import java.util.UUID
 case class GraphStatsRequest(id: String)
 
 case class GraphStatsResponse(id: String,
-                              vertices_count: Long,
-                              edges_count: Long,
-                              vertex_attributes: Seq[String],
-                              edge_attributes: Seq[String])
+                              verticesCount: Long,
+                              edgesCount: Long,
+                              vertexAttributes: Seq[String],
+                              edgeAttributes: Seq[String])
 
 /**
  * Logic for processing requests

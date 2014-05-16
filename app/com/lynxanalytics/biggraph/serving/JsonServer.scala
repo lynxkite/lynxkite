@@ -58,11 +58,9 @@ object ProductionJsonServer extends JsonServer {
   implicit val rGraphStatsRequest = json.Json.reads[controllers.GraphStatsRequest]
   implicit val wGraphStatsResponse = json.Json.writes[controllers.GraphStatsResponse]
 
- /**
- * Methods called by the web framework
- *
- * Play! uses the routings in /conf/routes to execute actions
- */
+  // Methods called by the web framework
+  //
+  // Play! uses the routings in /conf/routes to execute actions
 
   val bigGraphController = new controllers.BigGraphController(BigGraphProductionEnviroment)
   def bigGraphGet = jsonGet(bigGraphController.getGraph, "q")

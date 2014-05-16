@@ -62,13 +62,14 @@ class FEOperationRepository {
 }
 
 object FEOperations extends FEOperationRepository {
-  /*registerOperation(
+  registerOperation(
     new FEOperation {
       val name = "Find Maximal Cliques"
       val parameters = Seq(
           FEOperationParameterMeta("Minimum Clique Size", "3"))
-      def getGraphOperation(parameters: Seq[String]) = new FindMaxCliques(parameters.head.toInt)
-    })*/
+      def toGraphOperation(parameters: Seq[String]) =
+        new graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
+    })
   registerOperation(
     new FEOperation {
       val name = "Edge Graph"
