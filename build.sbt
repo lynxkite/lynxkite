@@ -20,11 +20,19 @@ libraryDependencies ++= Seq(
   cache,
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
-  "org.apache.spark" %% "spark-core" % "0.9.1",
-  "org.apache.spark" %% "spark-graphx" % "0.9.1",
-  "org.scalatest" %% "scalatest" % "2.1.5" % "test")
+  "org.apache.spark" %% "spark-core" % "0.9.1" excludeAll(
+    ExclusionRule(name = "slf4j-log4j12"),
+    ExclusionRule(name = "log4j")),
+  "org.apache.spark" %% "spark-graphx" % "0.9.1" excludeAll(
+    ExclusionRule(name = "slf4j-log4j12"),
+    ExclusionRule(name = "log4j")),
+  "org.scalatest" %% "scalatest" % "2.1.5" % "test",
+  "org.slf4j" % "log4j-over-slf4j" % "1.7.6")
 
 play.Project.playScalaSettings
 
 // org.scalatest does not take testOptions.
 testOptions in Test := Nil
+
+// dependency graph visualizer setting, usage example 'sbt dependency-tree'
+net.virtualvoid.sbt.graph.Plugin.graphSettings
