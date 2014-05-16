@@ -44,7 +44,7 @@ class PlayServer:
     raise Exception('Connection timed out')
 
   def get_json_data(self, URI):
-    print 'Sending requet: [%s]' % URI
+    print 'Sending request: [%s]' % URI
     self.conn.request('GET', URI)
     res = self.conn.getresponse()
     print res.status, res.reason
@@ -80,7 +80,7 @@ def main(argv):
       print 'Requesting derived EdgeGraph data...'
       data = server.get_json_data('/ajax/stats?q={"id":"%s"}' % guid)
       assert (data['verticesCount'] == 4), 'Vertices count should be 4'
-      assert (data['edgesCount'] == 4), 'Vertices count should be 4'
+      assert (data['edgesCount'] == 4), 'Edges count should be 4'
       print 'Test succeeded'
   except Exception as e:
     print 'ERROR: Test failed with:', e.message
