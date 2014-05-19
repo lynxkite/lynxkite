@@ -4,6 +4,8 @@ import com.lynxanalytics.biggraph.BigGraphEnviroment
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_api._
 import java.util.UUID
+import play.api.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Case classes used by the JsonServer to communicate with the web application
@@ -23,6 +25,10 @@ case class GraphStatsResponse(id: String,
 
 class GraphStatsController(enviroment: BigGraphEnviroment) {
   def getStats(request: GraphStatsRequest): GraphStatsResponse = {
+    Logger.error("ERROR: SUCCESSFULLY LOGGING SOMETHING")
+    val l = LoggerFactory.getLogger("test")
+    l.error("************** YAY *****************")
+
     val bigGraph = BigGraphController.getBigGraphForId(request.id, enviroment)
     val graphData = enviroment.graphDataManager.obtainData(bigGraph)
     val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
