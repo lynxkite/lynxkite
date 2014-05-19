@@ -38,20 +38,27 @@ case class DeriveBigGraphRequest(
   operation: FEOperationSpec)
 
 trait FEOperation {
-  def applicableTo(bigGraph: BigGraph): Boolean = true
+  def applicableTo(bigGraphs: Seq[BigGraph]): Boolean
   val name: String
   val parameters: Seq[FEOperationParameterMeta]
   def toGraphOperation(parameters: Seq[String]): GraphOperation
+}
+
+trait SingleGraphFEOperation extends FEOperation {
+  def applicableTo(bigGraphs: Seq[BigGraph]) = (bigGraphs.size == 1)
+}
+trait StartingFEOperation extends FEOperation {
+  def applicableTo(bigGraphs: Seq[BigGraph]) = bigGraphs.isEmpty
 }
 
 
 class FEOperationRepository {
   def registerOperation(op: FEOperation): Unit = operations += op
 
-  def getApplicableOperationMetas(bigGraph: BigGraph): Seq[FEOperationMeta] =
+  def getApplicableOperationMetas(bigGraphs: Seq[BigGraph]): Seq[FEOperationMeta] =
       operations
         .zipWithIndex
-        .filter(_._1.applicableTo(bigGraph))
+        .filter(_._1.applicableTo(bigGraphs))
         .map{case (op, id) => FEOperationMeta(id, op.name, op.parameters)}
 
   def getGraphOperation(spec: FEOperationSpec): GraphOperation = {
@@ -63,7 +70,7 @@ class FEOperationRepository {
 
 object FEOperations extends FEOperationRepository {
   registerOperation(
-    new FEOperation {
+    new SingleGraphFEOperation {
       val name = "Find Maximal Cliques"
       val parameters = Seq(
           FEOperationParameterMeta("Minimum Clique Size", "3"))
@@ -71,10 +78,22 @@ object FEOperations extends FEOperationRepository {
         new graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
     })
   registerOperation(
-    new FEOperation {
+    new SingleGraphFEOperation {
       val name = "Edge Graph"
       val parameters = Seq()
       def toGraphOperation(parameters: Seq[String]) = new graph_operations.EdgeGraph()
+    })
+  registerOperation(
+    new StartingFEOperation {
+      val name = "Uniform Random Graph"
+      val parameters = Seq(
+        FEOperationParameterMeta("Number of vertices", "10"),
+        FEOperationParameterMeta("Random seed", "0"),
+        FEOperationParameterMeta("Edge probability", "0.5"))
+      def toGraphOperation(parameters: Seq[String]) =
+        new graph_operations.SimpleRandomGraph(parameters(0).toInt,
+                                               parameters(1).toInt,
+                                               parameters(2).toFloat)
     })
 }
 
@@ -93,7 +112,7 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
       sources = bigGraph.sources.map(basicDataFromGraph(_)),
       derivatives = enviroment.bigGraphManager
         .knownDirectDerivatives(bigGraph).map(basicDataFromGraph(_)),
-      ops = FEOperations.getApplicableOperationMetas(bigGraph))
+      ops = FEOperations.getApplicableOperationMetas(Seq(bigGraph)))
   }
 
   def getGraph(request: BigGraphRequest): BigGraphResponse = {
@@ -106,6 +125,9 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
     val op = FEOperations.getGraphOperation(request.operation)
     basicDataFromGraph(enviroment.bigGraphManager.deriveGraph(sourceGraphs, op))
   }
+
+  def startingOperations(request: serving.EmptyRequest): Seq[FEOperationMeta] =
+    FEOperations.getApplicableOperationMetas(Seq())
 }
 object BigGraphController {
   // TODO: currently a hack for handling "x" initial request
