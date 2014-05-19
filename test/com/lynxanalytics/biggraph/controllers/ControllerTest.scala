@@ -7,7 +7,6 @@ import play.api.test.Helpers
 import play.api.test.Helpers._
 import play.api.libs.json.Json
 import com.lynxanalytics.biggraph.serving.JsonServer
-import play.api.Logger
 
 /* play.api.test should be replaced with https://github.com/scalatest/scalatestplus-play
  * as soon as it is published with documentation. Should happen any day.
@@ -77,5 +76,4 @@ class JsonTest extends FunSuite {
     val result = TestJsonServer.testGet(request)
     assert(Helpers.status(result) === BAD_REQUEST)
   }
-
 }
