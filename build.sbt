@@ -10,10 +10,6 @@ scalaVersion := "2.10.4"
 
 ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="2.5.0.v201103041518"><artifact name="javax.servlet" type="orbit" ext="jar"/></dependency> // eclipse needs this
 
-// We might need something like these:
-//  "com.typesafe.akka" %% "akka-actor" % "2.2.3",
-//  "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
-
 libraryDependencies ++= Seq(
   jdbc,
   anorm,
@@ -35,7 +31,8 @@ play.Project.playScalaSettings
 // org.scalatest does not take the same testOptions as the one included in Play!
 testOptions in Test := Nil
 
-testOptions in Test += Tests.Argument("-fWDF", "logs/scalatest.log")
+// write sbt test stdout to file
+testOptions in Test += Tests.Argument("-fWDF", "logs/sbttest.out")
 
 // for additional fancy html reporting using pegdown
 testOptions in Test += Tests.Argument("-h", "logs/html")

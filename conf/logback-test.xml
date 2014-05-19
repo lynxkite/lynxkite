@@ -1,10 +1,12 @@
 <configuration>
 
+  <timestamp key="byDay" datePattern="yyyyMMdd"/>
+
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
     <encoder>
-      <pattern>[%-5level] %d{HH:mm:ss.SSS} %logger{36} - %msg%n</pattern>
+      <pattern>[%level] %date %logger{36} - %message%n%xException%n</pattern>
     </encoder>
-    <file>logs/test.log</file>
+    <file>logs/test-${byDay}.log</file>
   </appender>
 
   <root level="debug">
