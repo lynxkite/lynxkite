@@ -28,6 +28,9 @@ describe('metagraph navigation', function () {
       'verticesCount': '100',
       'edgesCount': '1000',
     });
+    var emptyRequest = {fake: 0};
+    var emptyRequestJson = encodeURI(JSON.stringify(emptyRequest));
+    $httpBackend.when('GET', '/ajax/startingOps?q=' + emptyRequestJson).respond([]);
     ctrl = $controller('GraphViewCtrl', {
       $scope: scope,
       $routeParams: {graph: 'test'},

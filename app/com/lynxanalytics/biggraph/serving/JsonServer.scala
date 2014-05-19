@@ -38,13 +38,18 @@ class JsonServer extends mvc.Controller {
     }
 }
 
+case class EmptyRequest(
+  fake: Int = 0)  // Needs fake field as JSON inception doesn't work otherwise.
+
 object ProductionJsonServer extends JsonServer {
- /**
- * Implicit JSON inception
- *
- * json.Json.toJson needs one for every incepted case class,
- * they need to be ordered so that everything is declared before use.
- */
+  /**
+   * Implicit JSON inception
+   *
+   * json.Json.toJson needs one for every incepted case class,
+   * they need to be ordered so that everything is declared before use.
+   */
+
+  implicit val rEmptyRequest = json.Json.reads[EmptyRequest]
 
   implicit val rBigGraphRequest = json.Json.reads[controllers.BigGraphRequest]
   implicit val wGraphBasicData = json.Json.writes[controllers.GraphBasicData]
@@ -65,6 +70,7 @@ object ProductionJsonServer extends JsonServer {
   val bigGraphController = new controllers.BigGraphController(BigGraphProductionEnviroment)
   def bigGraphGet = jsonGet(bigGraphController.getGraph, "q")
   def deriveBigGraphGet = jsonGet(bigGraphController.deriveGraph, "q")
+  def startingOperationsGet = jsonGet(bigGraphController.startingOperations, "q")
 
   val graphStatsController = new controllers.GraphStatsController(BigGraphProductionEnviroment)
   def graphStatsGet = jsonGet(graphStatsController.getStats, "q")
