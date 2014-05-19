@@ -43,9 +43,9 @@ angular.module('biggraph')
     };
 
     $scope.openNewGraphModal = function(operation) {
-      openModal(operation, [])
-    }
+      openModal(operation, []);
+    };
     $scope.openDerivationModal = function(operation) {
-      openModal(operation, [id])
-    }
+      openModal(operation, [id]);
+    };
   });
