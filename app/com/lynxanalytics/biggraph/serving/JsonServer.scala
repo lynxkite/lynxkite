@@ -59,17 +59,17 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rEmptyRequest = json.Json.reads[EmptyRequest]
 
-  implicit val rBigGraphRequest = json.Json.reads[controllers.BigGraphRequest]
-  implicit val wGraphBasicData = json.Json.writes[controllers.GraphBasicData]
-  implicit val wFEOperationParameterMeta = json.Json.writes[controllers.FEOperationParameterMeta]
-  implicit val wFEOperationMeta = json.Json.writes[controllers.FEOperationMeta]
-  implicit val wBigGraphResponse = json.Json.writes[controllers.BigGraphResponse]
+  implicit val rBigGraphRequest = json.Json.reads[BigGraphRequest]
+  implicit val wGraphBasicData = json.Json.writes[GraphBasicData]
+  implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
+  implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
+  implicit val wBigGraphResponse = json.Json.writes[BigGraphResponse]
 
-  implicit val rFEOperationSpec = json.Json.reads[controllers.FEOperationSpec]
-  implicit val rDeriveBigGraphRequest = json.Json.reads[controllers.DeriveBigGraphRequest]
+  implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
+  implicit val rDeriveBigGraphRequest = json.Json.reads[DeriveBigGraphRequest]
 
-  implicit val rGraphStatsRequest = json.Json.reads[controllers.GraphStatsRequest]
-  implicit val wGraphStatsResponse = json.Json.writes[controllers.GraphStatsResponse]
+  implicit val rGraphStatsRequest = json.Json.reads[GraphStatsRequest]
+  implicit val wGraphStatsResponse = json.Json.writes[GraphStatsResponse]
 
   // Methods called by the web framework
   //
