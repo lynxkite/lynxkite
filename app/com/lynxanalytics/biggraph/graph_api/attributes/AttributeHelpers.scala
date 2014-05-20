@@ -2,15 +2,7 @@ package com.lynxanalytics.biggraph.graph_api.attributes
 
 import scala.reflect.runtime.universe._
 
-/* A trait that can read some value of type T from a DenseAttributes object.
- *
- * Similar to an AttributeReadIndex, but it is able to do some conversion/transformation
- * on the raw value and/or combine multiple attributes to a single value.
- */
-trait AttributeReader[T] extends Serializable {
-  def readFrom(attr: DenseAttributes): T
-}
-object AttributeReader {
+object DoubleAttributeReader {
   def getDoubleReader(sig: AttributeSignature, name: String)
       : Option[AttributeReader[Double]] = {
     if (sig.canRead[Double](name)) {

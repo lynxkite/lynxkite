@@ -45,10 +45,11 @@ class InstantiateSimpleGraph extends GraphOperation {
 
     val vertexMaker = vertexSig.maker
     val nameIdx = vertexSig.writeIndex[String]("name")
+    val idIdx = vertexSig.writeIndex[Int]("id")
     val vertices = Seq(
-        (0l, vertexMaker.make.set(nameIdx, "Adam")),
-        (1l, vertexMaker.make.set(nameIdx, "Eve")),
-        (2l, vertexMaker.make.set(nameIdx, "Bob")))
+        (0l, vertexMaker.make.set(nameIdx, "Adam").set(idIdx, 0)),
+        (1l, vertexMaker.make.set(nameIdx, "Eve").set(idIdx, 1)),
+        (2l, vertexMaker.make.set(nameIdx, "Bob").set(idIdx, 2)))
 
     val edgeMaker = edgeSig.maker
     val commentIdx = edgeSig.writeIndex[String]("comment")
@@ -63,11 +64,11 @@ class InstantiateSimpleGraph extends GraphOperation {
     return new SimpleGraphData(target, sc.parallelize(vertices), sc.parallelize(edges))
   }
 
-  private lazy val internalVertexAttributes =
-    AttributeSignature.empty.addAttribute[String]("name").signature
+  @transient private lazy val internalVertexAttributes =
+    AttributeSignature.empty.addAttribute[String]("name").addAttribute[Int]("id").signature
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = internalVertexAttributes
 
-  private lazy val internalEdgeAttributes =
+  @transient private lazy val internalEdgeAttributes =
     AttributeSignature.empty.addAttribute[String]("comment").signature
   def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = internalEdgeAttributes
 }

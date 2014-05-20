@@ -14,7 +14,7 @@ class GraphStatsControllerTest extends FunSuite {
     assert(result.id === id)
     assert(result.verticesCount === 3)
     assert(result.edgesCount === 4)
-    assert(result.vertexAttributes === Seq("name"))
+    assert(result.vertexAttributes === Seq("name", "id"))
     assert(result.edgeAttributes === Seq("comment"))
   }
 }
