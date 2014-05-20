@@ -52,14 +52,15 @@ object ProductionJsonServer extends JsonServer {
  *
  * json.Json.toJson needs one for every incepted case class,
  * they need to be ordered so that everything is declared before use.
+ * The case classes can be found in the controller package.
  */
 
-  implicit val rBigGraph = json.Json.reads[controllers.BigGraphRequest]
-  implicit val wGraphMeta = json.Json.writes[controllers.GraphBasicData]
-  implicit val wBigGraph = json.Json.writes[controllers.BigGraphResponse]
+  implicit val rBigGraph = json.Json.reads[BigGraphRequest]
+  implicit val wGraphMeta = json.Json.writes[GraphBasicData]
+  implicit val wBigGraph = json.Json.writes[BigGraphResponse]
 
-  implicit val rGraphStats = json.Json.reads[controllers.GraphStatsRequest]
-  implicit val wGraphStats = json.Json.writes[controllers.GraphStatsResponse]
+  implicit val rGraphStats = json.Json.reads[GraphStatsRequest]
+  implicit val wGraphStats = json.Json.writes[GraphStatsResponse]
 
  /**
  * Methods called by the web framework
