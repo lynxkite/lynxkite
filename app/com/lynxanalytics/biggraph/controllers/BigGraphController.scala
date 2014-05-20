@@ -129,6 +129,7 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
   def startingOperations(request: serving.EmptyRequest): Seq[FEOperationMeta] =
     FEOperations.getApplicableOperationMetas(Seq())
 }
+
 object BigGraphController {
   // TODO: currently a hack for handling "x" initial request
   def getBigGraphForId(id: String, enviroment: BigGraphEnviroment): BigGraph = {
