@@ -2,8 +2,7 @@ package com.lynxanalytics.biggraph.graph_api.attributes
 
 import scala.reflect.runtime.universe._
 
-private[attributes] case class TypedAttributeIndex[T](idx: Int,
-                                                      private implicit val tt: TypeTag[T]) {
+private[attributes] case class TypedAttributeIndex[T: TypeTag](idx: Int) {
   def forClassRead[S: TypeTag]: AttributeReadIndex[S] = {
     if (typeOf[T] <:< typeOf[S])
       new AttributeIndex[T](idx).asInstanceOf[AttributeReadIndex[S]]
