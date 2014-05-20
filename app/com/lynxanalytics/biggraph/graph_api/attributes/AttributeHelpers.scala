@@ -46,7 +46,7 @@ object AttributeUtil {
    * Also first getting the indexes and then using those to get value from the
    * individual DenseAttributes objects is faster.
    */
-  def getAttributeValues[T](sig: AttributeSignature, attr: DenseAttributes)(implicit c: TypeTag[T])
+  def getAttributeValues[T: TypeTag](sig: AttributeSignature, attr: DenseAttributes)
       : Map[String, T] = {
     sig.getAttributesReadableAs[T]
       .map(name => (name, attr(sig.readIndex[T](name)))).toMap

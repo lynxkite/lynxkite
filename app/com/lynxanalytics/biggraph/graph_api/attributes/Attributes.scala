@@ -41,8 +41,7 @@ class AttributeSignature private (
   def addAttribute[T: TypeTag](name: String): SignatureExtension = {
     SignatureExtension(
       new AttributeSignature(attributes +
-                               (name -> TypedAttributeIndex[T](
-                                  attributeSeq.size, typeTag[T])),
+                               (name -> TypedAttributeIndex[T](attributeSeq.size)),
                              attributeSeq :+ name),
       PrimitiveCloner(1))
   }
