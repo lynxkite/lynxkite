@@ -4,7 +4,6 @@ set -e
 cd `dirname $0`
 
 sbt test
-sbt stage
 
 ./e2etest/test_server.py
 
