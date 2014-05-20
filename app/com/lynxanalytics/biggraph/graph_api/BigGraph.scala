@@ -59,6 +59,7 @@ abstract class BigGraphManager {
 
   def repositoryPath: String
 }
+
 object BigGraphManager {
   def apply(repositoryPath: String): BigGraphManager = {
     new BigGraphManagerImpl(repositoryPath)
