@@ -39,3 +39,4 @@ testOptions in Test += Tests.Argument("-fWDF", "logs/sbttest.out")
 
 // dependency graph visualizer setting, usage example 'sbt dependency-tree'
 net.virtualvoid.sbt.graph.Plugin.graphSettings
+
