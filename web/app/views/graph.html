@@ -1,16 +1,31 @@
 <div class="graphs">
+  <h3>Create new graph</h3>
+  <div class="ops">
+    <div class="op" ng-repeat="op in startingOps">
+      <button class="btn btn-default" ng-click="openNewGraphModal(op)">{{op.name}}</button>
+    </div>
+  </div>
+  <h3>Sources</h3>
   <div class="sources">
     <div class="source" ng-repeat="source in graph.sources">
       <a href="/#/graph/{{source.id}}">{{source.title}} &larr;</a>
     </div>
   </div>
+  <h3>Current graph</h3>
   <div class="stats">
-    <h1>{{graph.title}}</h1>
-    <p>Vertices: {{stats.vertices_count}} - Edges: {{stats.edges_count}}</p>
+    <h4>{{graph.title}}</h4>
+    <p>Vertices: {{stats.verticesCount}} - Edges: {{stats.edgesCount}}</p>
   </div>
+  <h3>Known derivatives</h3>
+  <div class="derivatives">
+    <div class="derivative" ng-repeat="derivative in graph.derivatives">
+      <a href="/#/graph/{{derivative.id}}">&rarr; {{derivative.title}}</a>
+    </div>
+  </div>
+  <h3>Applicable derivations</h3>
   <div class="ops">
     <div class="op" ng-repeat="op in graph.ops">
-      <a href="/#/graph/{{op.id}}">&rarr; {{op.title}}</a>
+      <button class="btn btn-default" ng-click="openDerivationModal(op)">{{op.name}}</button>
     </div>
   </div>
 </div>
