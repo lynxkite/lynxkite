@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph
 
 import java.io.File
 import org.apache.spark
+import org.slf4j.LoggerFactory
 
 trait BigGraphEnviroment {
   val sparkContext: spark.SparkContext
@@ -30,4 +31,8 @@ object BigGraphProductionEnviroment extends BigGraphEnviroment {
 
   lazy val bigGraphManager = graph_api.BigGraphManager(graphDir.toString)
   lazy val graphDataManager = graph_api.GraphDataManager(sparkContext, dataDir.toString)
+}
+
+object BigGraphLogger {
+  val bigGraphLogger = LoggerFactory.getLogger("BigGraph logger")
 }
