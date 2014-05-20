@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph
 import java.io.File
 import org.apache.spark
 
+import spark_util.BigGraphSparkContext
+
 object TestUtils {
   def RDDToSortedString(rdd: spark.rdd.RDD[_]): String = {
     rdd.collect.toSeq.map(_.toString).sorted.mkString("\n")
@@ -19,7 +21,11 @@ trait TestTempDir {
 }
 
 private object SparkContextContainer {
-  lazy val sparkContext = new spark.SparkContext("local", "BigGraphTestEnviroment")
+  lazy val sparkContext = BigGraphSparkContext(
+      "BigGraphTests",
+      "local",
+      useJars = false,
+      debugKryo = false)  // Set this to true if you are debugging kryo issues.
 }
 
 trait TestSparkContext {

@@ -1,5 +1,7 @@
-GET  /ajax/graph        com.lynxanalytics.biggraph.serving.ProductionJsonServer.bigGraphGet
-GET  /ajax/stats        com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphStatsGet
-GET  /                  controllers.Assets.at(path="/public", file="index.html")
-GET  /*file             controllers.Assets.at(path="/public", file)
+GET  /ajax/graph       com.lynxanalytics.biggraph.serving.ProductionJsonServer.bigGraphGet
+GET  /ajax/derive      com.lynxanalytics.biggraph.serving.ProductionJsonServer.deriveBigGraphGet
+GET  /ajax/stats       com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphStatsGet
+GET  /ajax/startingOps com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingOperationsGet
+GET  /                 controllers.Assets.at(path="/public", file="index.html")
+GET  /*file            controllers.Assets.at(path="/public", file)
 

@@ -46,29 +46,39 @@ class JsonServer extends mvc.Controller {
   }
 }
 
+case class EmptyRequest(
+  fake: Int = 0)  // Needs fake field as JSON inception doesn't work otherwise.
+
 object ProductionJsonServer extends JsonServer {
- /**
- * Implicit JSON inception
- *
- * json.Json.toJson needs one for every incepted case class,
- * they need to be ordered so that everything is declared before use.
- */
+  /**
+   * Implicit JSON inception
+   *
+   * json.Json.toJson needs one for every incepted case class,
+   * they need to be ordered so that everything is declared before use.
+   */
 
-  implicit val rBigGraph = json.Json.reads[controllers.BigGraphRequest]
-  implicit val wGraphMeta = json.Json.writes[controllers.GraphBasicData]
-  implicit val wBigGraph = json.Json.writes[controllers.BigGraphResponse]
+  implicit val rEmptyRequest = json.Json.reads[EmptyRequest]
 
-  implicit val rGraphStats = json.Json.reads[controllers.GraphStatsRequest]
-  implicit val wGraphStats = json.Json.writes[controllers.GraphStatsResponse]
+  implicit val rBigGraphRequest = json.Json.reads[controllers.BigGraphRequest]
+  implicit val wGraphBasicData = json.Json.writes[controllers.GraphBasicData]
+  implicit val wFEOperationParameterMeta = json.Json.writes[controllers.FEOperationParameterMeta]
+  implicit val wFEOperationMeta = json.Json.writes[controllers.FEOperationMeta]
+  implicit val wBigGraphResponse = json.Json.writes[controllers.BigGraphResponse]
 
- /**
- * Methods called by the web framework
- *
- * Play! uses the routings in /conf/routes to execute actions
- */
+  implicit val rFEOperationSpec = json.Json.reads[controllers.FEOperationSpec]
+  implicit val rDeriveBigGraphRequest = json.Json.reads[controllers.DeriveBigGraphRequest]
+
+  implicit val rGraphStatsRequest = json.Json.reads[controllers.GraphStatsRequest]
+  implicit val wGraphStatsResponse = json.Json.writes[controllers.GraphStatsResponse]
+
+  // Methods called by the web framework
+  //
+  // Play! uses the routings in /conf/routes to execute actions
 
   val bigGraphController = new BigGraphController(BigGraphProductionEnviroment)
   def bigGraphGet = jsonGet(bigGraphController.getGraph, "q")
+  def deriveBigGraphGet = jsonGet(bigGraphController.deriveGraph, "q")
+  def startingOperationsGet = jsonGet(bigGraphController.startingOperations, "q")
 
   val graphStatsController = new GraphStatsController(BigGraphProductionEnviroment)
   def graphStatsGet = jsonGet(graphStatsController.getStats, "q")
