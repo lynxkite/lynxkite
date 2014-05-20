@@ -18,10 +18,10 @@ class EdgeGraphTest extends FunSuite with TestBigGraphManager with TestGraphData
              "(2,Bob envies Adam)\n" +
              "(3,Bob loves Eve)")
     assert(TestUtils.RDDToSortedString(edgeGraphData.edges) ==
-             "Edge(0,1,Eve)\n" +
-             "Edge(1,0,Adam)\n" +
-             "Edge(2,0,Adam)\n" +
-             "Edge(3,1,Eve)")
+             "Edge(0,1,Eve,1)\n" +
+             "Edge(1,0,Adam,0)\n" +
+             "Edge(2,0,Adam,0)\n" +
+             "Edge(3,1,Eve,1)")
   }
 }
 

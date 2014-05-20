@@ -11,19 +11,19 @@ class GraphDataManagerTest extends FunSuite with TestBigGraphManager with TestGr
     val myGraph = graphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
     val myData = dataManager.obtainData(myGraph)
     assert(TestUtils.RDDToSortedString(myData.vertices) ==
-             "(0,Adam)\n" +
-             "(1,Eve)\n" +
-             "(2,Bob)")
+             "(0,Adam,0)\n" +
+             "(1,Eve,1)\n" +
+             "(2,Bob,2)")
     assert(TestUtils.RDDToSortedString(myData.edges) ==
              "Edge(0,1,Adam loves Eve)\n" +
              "Edge(1,0,Eve loves Adam)\n" +
              "Edge(2,0,Bob envies Adam)\n" +
              "Edge(2,1,Bob loves Eve)")
     assert(TestUtils.RDDToSortedString(myData.triplets) ==
-             "((0,Adam),(1,Eve),Adam loves Eve)\n" +
-             "((1,Eve),(0,Adam),Eve loves Adam)\n" +
-             "((2,Bob),(0,Adam),Bob envies Adam)\n" +
-             "((2,Bob),(1,Eve),Bob loves Eve)")
+             "((0,Adam,0),(1,Eve,1),Adam loves Eve)\n" +
+             "((1,Eve,1),(0,Adam,0),Eve loves Adam)\n" +
+             "((2,Bob,2),(0,Adam,0),Bob envies Adam)\n" +
+             "((2,Bob,2),(1,Eve,1),Bob loves Eve)")
   }
 
   test("We can reload a graph from memory without recomputing it") {
