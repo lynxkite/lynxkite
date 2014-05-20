@@ -54,7 +54,7 @@ class PlayServer:
 def main(argv):
   port = '9005' if (len(argv) == 1) else argv[1]
   path = os.path.dirname(os.path.abspath(__file__)) + '/..'
-  subprocess.Popen(['sbt', 'package'], cwd=path).wait()
+  subprocess.check_call(['sbt', 'stage'], cwd=path)
   try:
     with PlayServer(path, port) as server:
       server.start()
