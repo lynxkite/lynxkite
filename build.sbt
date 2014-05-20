@@ -34,8 +34,8 @@ testOptions in Test := Nil
 // write sbt test stdout to file
 testOptions in Test += Tests.Argument("-fWDF", "logs/sbttest.out")
 
-// for additional fancy html reporting using pegdown
-testOptions in Test += Tests.Argument("-h", "logs/html")
+// additional fancy html reporting using pegdown (todo: parboiled throws an exception now)
+// testOptions in Test += Tests.Argument("-h", "logs/html")
 
 // dependency graph visualizer setting, usage example 'sbt dependency-tree'
 net.virtualvoid.sbt.graph.Plugin.graphSettings
