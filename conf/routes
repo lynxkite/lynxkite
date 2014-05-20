@@ -2,6 +2,7 @@ GET  /ajax/graph       com.lynxanalytics.biggraph.serving.ProductionJsonServer.b
 GET  /ajax/derive      com.lynxanalytics.biggraph.serving.ProductionJsonServer.deriveBigGraphGet
 GET  /ajax/stats       com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphStatsGet
 GET  /ajax/startingOps com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingOperationsGet
+GET  /data/verticesCSV com.lynxanalytics.biggraph.serving.CSVServer.verticesCSVGet
+GET  /data/edgesCSV    com.lynxanalytics.biggraph.serving.CSVServer.edgesCSVGet
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            controllers.Assets.at(path="/public", file)
-

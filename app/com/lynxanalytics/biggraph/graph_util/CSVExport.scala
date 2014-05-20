@@ -40,12 +40,15 @@ object CSVExport {
 
   private object CSVCellConverter extends TypeDependentOperation[String] {
     def getReaderForIndex[S: TypeTag](idx: AttributeReadIndex[S]): AttributeReader[String] = {
-      if (typeOf[S] =:= typeOf[String]) {
-        new ConvertedAttributeReader[S, String](
-          idx, value => quoteString(value.asInstanceOf[String]))
-      } else {
-        new ConvertedAttributeReader[S, String](idx, _.toString)
-      }
+      new ConvertedAttributeReader[S, String](
+        idx,
+        if (typeOf[S] =:= typeOf[String]) {
+          stringValue => quoteString(stringValue.asInstanceOf[String])
+        } else if (typeOf[S] =:= typeOf[Array[Long]]) {
+          arrayValue => arrayValue.asInstanceOf[Array[Long]].mkString(";")
+        } else {
+          objectValue => objectValue.toString
+        })
     }
   }
 }
