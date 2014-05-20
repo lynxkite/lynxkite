@@ -75,13 +75,13 @@ object FEOperations extends FEOperationRepository {
       val parameters = Seq(
           FEOperationParameterMeta("Minimum Clique Size", "3"))
       def toGraphOperation(parameters: Seq[String]) =
-        new graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
+        graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
     })
   registerOperation(
     new SingleGraphFEOperation {
       val name = "Edge Graph"
       val parameters = Seq()
-      def toGraphOperation(parameters: Seq[String]) = new graph_operations.EdgeGraph()
+      def toGraphOperation(parameters: Seq[String]) = graph_operations.EdgeGraph()
     })
   registerOperation(
     new StartingFEOperation {
@@ -91,9 +91,15 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Random seed", "0"),
         FEOperationParameterMeta("Edge probability", "0.5"))
       def toGraphOperation(parameters: Seq[String]) =
-        new graph_operations.SimpleRandomGraph(parameters(0).toInt,
-                                               parameters(1).toInt,
-                                               parameters(2).toFloat)
+        graph_operations.SimpleRandomGraph(parameters(0).toInt,
+                                           parameters(1).toInt,
+                                           parameters(2).toFloat)
+    })
+  registerOperation(
+    new StartingFEOperation {
+      val name = "Simple Example Graph With Attributes"
+      val parameters = Seq()
+      def toGraphOperation(parameters: Seq[String]) = InstantiateSimpleGraph2()
     })
 }
 
@@ -130,13 +136,8 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
     FEOperations.getApplicableOperationMetas(Seq())
 }
 object BigGraphController {
-  // TODO: currently a hack for handling "x" initial request
   def getBigGraphForId(id: String, enviroment: BigGraphEnviroment): BigGraph = {
-    if (id == "x") {
-      enviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph2)
-    } else {
-      enviroment.bigGraphManager.graphForGUID(UUID.fromString(id)).get
-    }
+    enviroment.bigGraphManager.graphForGUID(UUID.fromString(id)).get
   }
 }
 
@@ -150,7 +151,7 @@ import org.apache.spark.graphx.Edge
 import attributes.AttributeSignature
 import attributes.DenseAttributes
 
-class InstantiateSimpleGraph2 extends GraphOperation {
+case class InstantiateSimpleGraph2() extends GraphOperation {
   @transient var executionCounter = 0
 
   def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 0)
@@ -170,10 +171,10 @@ class InstantiateSimpleGraph2 extends GraphOperation {
     val edgeMaker = edgeSig.maker
     val commentIdx = edgeSig.writeIndex[String]("comment")
     val edges = Seq(
-        new Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
-        new Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
-        new Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
-        new Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
+        Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
+        Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
+        Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
+        Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
 
     executionCounter += 1
 

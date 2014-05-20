@@ -11,7 +11,7 @@ import graph_api._
 import graph_api.attributes._
 import spark_util.RDDUtils
 
-class EdgeGraph extends GraphOperation {
+case class EdgeGraph() extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 1)
 
   def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
