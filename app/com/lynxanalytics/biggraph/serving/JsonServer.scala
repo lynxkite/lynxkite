@@ -3,8 +3,7 @@ package com.lynxanalytics.biggraph.serving
 import play.api.mvc
 import play.api.libs.json
 import play.api.libs.json._
-import com.lynxanalytics.biggraph.BigGraphProductionEnviroment
-import com.lynxanalytics.biggraph.BigGraphLogger.bigGraphLogger
+import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.functional.syntax.toContraFunctorOps
@@ -68,9 +67,9 @@ object ProductionJsonServer extends JsonServer {
  * Play! uses the routings in /conf/routes to execute actions
  */
 
-  val bigGraphController = new controllers.BigGraphController(BigGraphProductionEnviroment)
+  val bigGraphController = new BigGraphController(BigGraphProductionEnviroment)
   def bigGraphGet = jsonGet(bigGraphController.getGraph, "q")
 
-  val graphStatsController = new controllers.GraphStatsController(BigGraphProductionEnviroment)
+  val graphStatsController = new GraphStatsController(BigGraphProductionEnviroment)
   def graphStatsGet = jsonGet(graphStatsController.getStats, "q")
 }
