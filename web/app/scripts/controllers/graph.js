@@ -11,6 +11,7 @@ angular.module('biggraph')
     var emptyRequestJson = JSON.stringify(emptyRequest);
     $scope.startingOps = StartingOps.query({request: emptyRequestJson});
     var id = $routeParams.graph;
+    $scope.id = id
     var request = {id: id};
     var requestJson = JSON.stringify(request);
     $scope.graph = Graph.get({request: requestJson});
