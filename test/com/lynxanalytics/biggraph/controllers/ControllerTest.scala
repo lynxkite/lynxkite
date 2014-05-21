@@ -76,5 +76,4 @@ class JsonTest extends FunSuite {
     val result = TestJsonServer.testGet(request)
     assert(Helpers.status(result) === BAD_REQUEST)
   }
-
 }

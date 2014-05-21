@@ -45,11 +45,11 @@ class InstantiateSimpleGraph extends GraphOperation {
 
     val vertexMaker = vertexSig.maker
     val nameIdx = vertexSig.writeIndex[String]("name")
-    val idIdx = vertexSig.writeIndex[Int]("id")
+    val ageIdx = vertexSig.writeIndex[Double]("age")
     val vertices = Seq(
-        (0l, vertexMaker.make.set(nameIdx, "Adam").set(idIdx, 0)),
-        (1l, vertexMaker.make.set(nameIdx, "Eve").set(idIdx, 1)),
-        (2l, vertexMaker.make.set(nameIdx, "Bob").set(idIdx, 2)))
+        (0l, vertexMaker.make.set(nameIdx, "Adam").set(ageIdx, 20.3)),
+        (1l, vertexMaker.make.set(nameIdx, "Eve").set(ageIdx, 18.2)),
+        (2l, vertexMaker.make.set(nameIdx, "Bob").set(ageIdx, 50.3)))
 
     val edgeMaker = edgeSig.maker
     val commentIdx = edgeSig.writeIndex[String]("comment")
@@ -65,7 +65,7 @@ class InstantiateSimpleGraph extends GraphOperation {
   }
 
   @transient private lazy val internalVertexAttributes =
-    AttributeSignature.empty.addAttribute[String]("name").addAttribute[Int]("id").signature
+    AttributeSignature.empty.addAttribute[String]("name").addAttribute[Double]("age").signature
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = internalVertexAttributes
 
   @transient private lazy val internalEdgeAttributes =
