@@ -14,6 +14,10 @@ case class CSVData(val header: Seq[String],
                    val data: rdd.RDD[Seq[String]]) {
   override def toString: String =
     CSVData.lineToString(header) + data.map(CSVData.lineToString(_)).collect.mkString
+
+  def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
+
+  def saveDataToDir(path: String) = toStringRDD.saveAsTextFile(path)
 }
 object CSVData {
   def lineToStringNoNewLine(line: Seq[String]): String = line.mkString(",")
@@ -53,17 +57,13 @@ object CSVExport {
     writeStringToFile(fs,
                       new hadoop.fs.Path(directoryHadoopPath, "vertex-header"),
                       CSVData.lineToString(vertexCsvData.header))
-    vertexCsvData.data
-      .map(CSVData.lineToStringNoNewLine(_))
-      .saveAsTextFile(directoryPath + "/vertex-data")
+    vertexCsvData.saveDataToDir(directoryPath + "/vertex-data")
 
     val edgeCsvData = exportEdges(graphData)
     writeStringToFile(fs,
                       new hadoop.fs.Path(directoryHadoopPath, "edge-header"),
                       CSVData.lineToString(edgeCsvData.header))
-    edgeCsvData.data
-      .map(CSVData.lineToStringNoNewLine(_))
-      .saveAsTextFile(directoryPath + "/edge-data")
+    edgeCsvData.saveDataToDir(directoryPath + "/edge-data")
   }
 
   private def quoteString(s: String) = "\"" + StringEscapeUtils.escapeJava(s) + "\""
