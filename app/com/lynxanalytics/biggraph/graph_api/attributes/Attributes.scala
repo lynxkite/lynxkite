@@ -48,9 +48,9 @@ class AttributeSignature private (
   }
 
   def getAttributesReadableAs[T](implicit c: TypeTag[T]): Seq[String] = {
-    attributes.flatMap({
+    attributes.flatMap {
       case (name, tidx) => if (tidx.readableAs(c)) Some(name) else None
-    }).toSeq
+    }.toSeq
   }
 
   def maker: DenseAttributesMaker = new PrimitiveMaker(size)
@@ -62,6 +62,7 @@ class AttributeSignature private (
 
   val size = attributeSeq.size
 }
+
 object AttributeSignature {
   def empty = new AttributeSignature(Map(), immutable.Seq())
 }
