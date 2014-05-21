@@ -6,6 +6,7 @@ import signal
 import subprocess
 import sys
 import time
+import textwrap
 import traceback
 import urllib
 
@@ -68,13 +69,14 @@ def main(argv):
       request = (
         '/ajax/derive?' +
         urllib.urlencode({
-          'q': ('{\n'
-                '  "sourceIds": [],\n'
-                '  "operation": {\n'
-                '    "operationId": %d,\n'
-                '    "parameters": []\n'
-                '  }\n'
-                '}' % opid)}))
+          'q': (textwrap.dedent('''\
+              {
+                "sourceIds": [],
+                "operation": {
+                  "operationId": %d,
+                  "parameters": []
+                 }
+              }''') % opid)}))
       basics = server.get_json_data(request)
       guid = basics["id"]
       print 'Requesting graph data...'
