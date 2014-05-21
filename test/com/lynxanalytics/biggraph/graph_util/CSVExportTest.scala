@@ -11,10 +11,10 @@ class CSVExportTest extends FunSuite with TestBigGraphManager with TestGraphData
     val myGraph = graphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
     val myData = dataManager.obtainData(myGraph)
     assert(CSVExport.exportVertices(myData).toString ==
-             """|"vertexId","name","id"
-                |0,"Adam",0
-                |1,"Eve",1
-                |2,"Bob",2
+             """|"vertexId","name","age"
+                |0,"Adam",20.3
+                |1,"Eve",18.2
+                |2,"Bob",50.3
                 |""".stripMargin)
     assert(CSVExport.exportEdges(myData).toString ==
              """|"srcVertexId","dstVertexId","comment"
