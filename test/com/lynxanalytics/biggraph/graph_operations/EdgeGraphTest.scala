@@ -24,4 +24,3 @@ class EdgeGraphTest extends FunSuite with TestBigGraphManager with TestGraphData
              "Edge(3,1,Eve)")
   }
 }
-
