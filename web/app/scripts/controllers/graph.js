@@ -2,14 +2,7 @@
 
 angular.module('biggraph')
   .controller('GraphViewCtrl', function ($scope, $routeParams, $resource, $modal, $location) {
-    var StartingOps = $resource('/ajax/startingOps?q=:request');
-    var DerivedGraph = $resource('/ajax/derive?q=:request');
-
-    var emptyRequest = {fake: 0};
-    var emptyRequestJson = JSON.stringify(emptyRequest);
-    $scope.startingOps = StartingOps.query({request: emptyRequestJson});
-
-    var openModal = function(operation, sourceIds) {
+    function openOperationModal(operation) {
       var modalInstance = $modal.open({
         templateUrl: 'views/operationParameters.html',
         controller: 'OperationParametersCtrl',
@@ -19,24 +12,37 @@ angular.module('biggraph')
           }
         }
       });
+      return modalInstance.result;
+    }
 
-      modalInstance.result.then(function (result) {
-        var deriveRequest = {
-          sourceIds: sourceIds,
-          operation: {
-            operationId: operation.operationId,
-            parameters: result
-          }
-        };
-        var deriveRequestJson = JSON.stringify(deriveRequest);
-        DerivedGraph.get({request: deriveRequestJson}, function(derivedGraph) {
-          $location.url('/graph/' + derivedGraph.id);
-        });
+    var DerivedGraph = $resource('/ajax/derive?q=:request');
+    function jumpToDerivedGraph(operation, modalResult, sourceIds) {
+      var deriveRequest = {
+        sourceIds: sourceIds,
+        operation: {
+          operationId: operation.operationId,
+          parameters: modalResult
+        }
+      };
+      var deriveRequestJson = JSON.stringify(deriveRequest);
+      DerivedGraph.get({request: deriveRequestJson}, function(derivedGraph) {
+        $location.url('/graph/' + derivedGraph.id);
       });
-    };
+    }
+
+    function deriveGraphFlow(operation, sourceIds) {
+      openOperationModal(operation).then(function(modalResult) {
+        jumpToDerivedGraph(operation, modalResult, sourceIds);
+      });
+    }
+
+    var StartingOps = $resource('/ajax/startingOps?q=:request');
+    var emptyRequest = {fake: 0};
+    var emptyRequestJson = JSON.stringify(emptyRequest);
+    $scope.startingOps = StartingOps.query({request: emptyRequestJson});
 
     $scope.openNewGraphModal = function(operation) {
-      openModal(operation, []);
+      deriveGraphFlow(operation, []);
     };
 
     var id = $routeParams.graph;
@@ -51,7 +57,7 @@ angular.module('biggraph')
       $scope.stats = Stats.get({request: requestJson});
 
       $scope.openDerivationModal = function(operation) {
-        openModal(operation, [id]);
+        deriveGraphFlow(operation, [id]);
       };
     }
   });
