@@ -25,10 +25,18 @@ case class ImportGraph(
 
     // TODO: refine this type mapping.
     sigType match {
-      case "BIGINT" | "DECIMAL" | "DOUBLE" | "FLOAT" | "INTEGER" | "NUMERIC" | "REAL" | "SMALLINT" | "SMALLUINT" | "TINYINT" | "TINYUINT" | "UINTEGER" =>
+      case "DECIMAL" | "DOUBLE" | "FLOAT" | "NUMERIC" | "REAL" =>
         SignatureReader.signature.addAttribute[Double](sigName: String)
         val idx = SignatureReader.signature.writeIndex[Double](sigName)
         reader = SignatureReader.readDouble(idx, _: DenseAttributes, _: String)
+      case "BIGINT" | "INTEGER" | "SMALLINT" | "SMALLUINT" | "TINYINT" | "TINYUINT" | "UINTEGER" =>
+        SignatureReader.signature.addAttribute[Long](sigName: String)
+        val idx = SignatureReader.signature.writeIndex[Long](sigName)
+        reader = SignatureReader.readLong(idx, _: DenseAttributes, _: String)
+      case "BOOLEAN" =>
+        SignatureReader.signature.addAttribute[Boolean](sigName: String)
+        val idx = SignatureReader.signature.writeIndex[Boolean](sigName)
+        reader = SignatureReader.readBoolean(idx, _: DenseAttributes, _: String)
       case _ => // default to string
         SignatureReader.signature.addAttribute[String](sigName: String)
         val idx = SignatureReader.signature.writeIndex[String](sigName)
@@ -41,13 +49,23 @@ case class ImportGraph(
   object SignatureReader {
     var signature = AttributeSignature.empty
 
-    def readString(idx: AttributeWriteIndex[String], attributesData: DenseAttributes, value: String): Unit = {
-      val convertedValue = value.stripPrefix("\"").stripSuffix("\"")
+    def readDouble(idx: AttributeWriteIndex[Double], attributesData: DenseAttributes, value: String): Unit = {
+      val convertedValue = if (value == "") 0 else value.toDouble
       attributesData.set(idx, convertedValue)
     }
 
-    def readDouble(idx: AttributeWriteIndex[Double], attributesData: DenseAttributes, value: String): Unit = {
-      val convertedValue = if (value == "") 0 else value.toDouble
+    def readLong(idx: AttributeWriteIndex[Long], attributesData: DenseAttributes, value: String): Unit = {
+      val convertedValue = if (value == "") 0 else value.toLong
+      attributesData.set(idx, convertedValue)
+    }
+
+    def readBoolean(idx: AttributeWriteIndex[Boolean], attributesData: DenseAttributes, value: String): Unit = {
+      val convertedValue = if (value.toLowerCase == "true") true else false
+      attributesData.set(idx, convertedValue)
+    }
+
+    def readString(idx: AttributeWriteIndex[String], attributesData: DenseAttributes, value: String): Unit = {
+      val convertedValue = value.stripPrefix("\"").stripSuffix("\"")
       attributesData.set(idx, convertedValue)
     }
   }
@@ -59,12 +77,15 @@ case class ImportGraph(
 
     val signatureReaders = inputSignatures.map(x => new SignatureReader(x._1, x._2))
 
-    val excludedData = inputData.map { line =>
+    // reads and stores the data, the unprocessed lines can be used for logging
+    val excludedData = inputData.flatMap { line =>
       if (line.size == signatureReaders.size) {
-        signatureReaders.zip(line).flatMap {
-          case (reader, data) => { reader.read(data); None }
-          case _ => Some(_)
+        signatureReaders.zip(line).foreach {
+          case (reader, data) => reader.read(data)
         }
+        None
+      } else {
+        Some(line)
       }
     }
 
@@ -90,9 +111,6 @@ case class ImportGraph(
   - vertex/edge attributes as header
   - as JSON from FE
   */
-
-
-
 
   // The vertex attribute signature of the graph resulting from this operation.
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = ???
