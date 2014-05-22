@@ -1,31 +1,42 @@
 <div class="graphs">
-  <h3>Create new graph</h3>
-  <div class="ops">
+  <div class="newgraph">
+    <h2>Create new graph</h2>
     <div class="op" ng-repeat="op in startingOps">
       <button class="btn btn-default" ng-click="openNewGraphModal(op)">{{op.name}}</button>
     </div>
   </div>
-  <h3>Sources</h3>
-  <div class="sources">
-    <div class="source" ng-repeat="source in graph.sources">
-      <a href="/#/graph/{{source.id}}">{{source.title}} &larr;</a>
+  <div class="graph" ng-if="id">
+    <h2>Current graph</h2>
+    <h3>Sources</h3>
+    <div class="sources">
+      <div class="source" ng-repeat="source in graph.sources">
+	<a href="/#/graph/{{source.id}}">{{source.title}} &larr;</a>
+      </div>
     </div>
-  </div>
-  <h3>Current graph</h3>
-  <div class="stats">
-    <h4>{{graph.title}}</h4>
-    <p>Vertices: {{stats.verticesCount}} - Edges: {{stats.edgesCount}}</p>
-  </div>
-  <h3>Known derivatives</h3>
-  <div class="derivatives">
-    <div class="derivative" ng-repeat="derivative in graph.derivatives">
-      <a href="/#/graph/{{derivative.id}}">&rarr; {{derivative.title}}</a>
+    <h3>Metadata</h3>
+    <div class="stats">
+      <h4>{{graph.title}}</h4>
+      <p>Vertices: {{stats.verticesCount}} - Edges: {{stats.edgesCount}}</p>
+      <p>Vertex attributes:
+	<span class="attributes" ng-repeat="attr in stats.vertexAttributes">{{attr}}</span>
+      </p>
+      <p>Edge attributes:
+	<span class="attributes" ng-repeat="attr in stats.edgeAttributes">{{attr}}</span>
+      </p>
+      <p><a href="/data/verticesCSV?guid={{id}}">Download vertices as CSV</a></p>
+      <p><a href="/data/edgesCSV?guid={{id}}">Download edges as CSV</a></p>
     </div>
-  </div>
-  <h3>Applicable derivations</h3>
-  <div class="ops">
-    <div class="op" ng-repeat="op in graph.ops">
-      <button class="btn btn-default" ng-click="openDerivationModal(op)">{{op.name}}</button>
+    <h3>Known derivatives</h3>
+    <div class="derivatives">
+      <div class="derivative" ng-repeat="derivative in graph.derivatives">
+	<a href="/#/graph/{{derivative.id}}">&rarr; {{derivative.title}}</a>
+      </div>
+    </div>
+    <h3>Applicable derivations</h3>
+    <div class="ops">
+      <div class="op" ng-repeat="op in graph.ops">
+	<button class="btn btn-default" ng-click="openDerivationModal(op)">{{op.name}}</button>
+      </div>
     </div>
   </div>
 </div>

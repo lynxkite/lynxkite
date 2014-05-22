@@ -22,35 +22,34 @@ class AttributeIndex[T](private[attributes] val idx: Int) extends Serializable
 class AttributeSignature private (
     attributes: Map[String, TypedAttributeIndex[_]],
     val attributeSeq: immutable.Seq[String]) {
-  def readIndex[T](name: String)(implicit c: TypeTag[T]): AttributeReadIndex[T] = {
-    attributes(name).forClassRead(c)
+  def readIndex[T: TypeTag](name: String): AttributeReadIndex[T] = {
+    attributes(name).forClassRead
   }
 
-  def canRead[T](name: String)(implicit c: TypeTag[T]): Boolean = {
-    attributes.contains(name) && attributes(name).readableAs(c)
+  def canRead[T: TypeTag](name: String): Boolean = {
+    attributes.contains(name) && attributes(name).readableAs[T]
   }
 
-  def writeIndex[T](name: String)(implicit c: TypeTag[T]): AttributeWriteIndex[T] = {
-    attributes(name).forClassWrite(c)
+  def writeIndex[T: TypeTag](name: String): AttributeWriteIndex[T] = {
+    attributes(name).forClassWrite
   }
 
-  def canWrite[T](name: String)(implicit c: TypeTag[T]): Boolean = {
-    attributes.contains(name) && attributes(name).writableAs(c)
+  def canWrite[T: TypeTag](name: String): Boolean = {
+    attributes.contains(name) && attributes(name).writableAs[T]
   }
 
-  def addAttribute[T](name: String)(implicit c: TypeTag[T]): SignatureExtension = {
+  def addAttribute[T: TypeTag](name: String): SignatureExtension = {
     SignatureExtension(
       new AttributeSignature(attributes +
-                               (name -> TypedAttributeIndex[T](
-                                  attributeSeq.size, c)),
+                               (name -> TypedAttributeIndex[T](attributeSeq.size)),
                              attributeSeq :+ name),
       PrimitiveCloner(1))
   }
 
-  def getAttributesReadableAs[T](implicit c: TypeTag[T]): Seq[String] = {
-    attributes.flatMap {
-      case (name, tidx) => if (tidx.readableAs(c)) Some(name) else None
-    }.toSeq
+  def getAttributesReadableAs[T: TypeTag]: Seq[String] = {
+    attributes.flatMap({
+      case (name, tidx) => if (tidx.readableAs[T]) Some(name) else None
+    }).toSeq
   }
 
   def maker: DenseAttributesMaker = new PrimitiveMaker(size)
@@ -61,6 +60,10 @@ class AttributeSignature private (
   }
 
   val size = attributeSeq.size
+
+  def getReadersForOperation[S](op: TypeDependentOperation[S]): Seq[AttributeReader[S]] = {
+    attributeSeq.map(attributes(_).getReaderForOperation(op))
+  }
 }
 
 object AttributeSignature {
@@ -96,7 +99,7 @@ trait DenseAttributesMaker extends Serializable {
  */
 case class SignatureExtension(signature: AttributeSignature,
                               cloner: ExtensionCloner) {
-  def addAttribute[T](name: String)(implicit c: TypeTag[T]): SignatureExtension = {
+  def addAttribute[T: TypeTag](name: String): SignatureExtension = {
     val oneStepExtension = signature.addAttribute[T](name)
     SignatureExtension(oneStepExtension.signature, cloner.composeWith(oneStepExtension.cloner))
   }
@@ -146,4 +149,26 @@ private[attributes] class PrimitiveMaker(size: Int) extends DenseAttributesMaker
   def make(): DenseAttributes = {
     new DenseAttributes(Array.fill[Any](size)(null))
   }
+}
+
+/*
+ * A trait that can read some value of type T from a DenseAttributes object.
+ *
+ * Similar to an AttributeReadIndex, but it is able to do some conversion/transformation
+ * on the raw value and/or combine multiple attributes to a single value.
+ */
+trait AttributeReader[T] extends Serializable {
+  def readFrom(attr: DenseAttributes): T
+}
+
+/*
+ * This trait represents some operation on attributes where what needs to happen may depend on
+ * the type of the attribute.
+ *
+ * The getReaderForIndex method gets an index for an attribute and also (implicitly) a TypeTag for
+ * the (signature) type of the attribute. This TypeTag can be used to implement different
+ * operations based on the signature type of the attribute.
+ */
+trait TypeDependentOperation[T] {
+  def getReaderForIndex[S: TypeTag](idx: AttributeReadIndex[S]): AttributeReader[T]
 }
