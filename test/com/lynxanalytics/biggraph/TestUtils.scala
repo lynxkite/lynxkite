@@ -9,6 +9,14 @@ object TestUtils {
   def RDDToSortedString(rdd: spark.rdd.RDD[_]): String = {
     rdd.collect.toSeq.map(_.toString).sorted.mkString("\n")
   }
+
+  /*
+   * Runs a shell command and returns its stdout as a string.
+   */
+  def runShellCommand(command: String): String = {
+    import scala.sys.process._
+    Seq("sh", "-c", command).!!
+  }
 }
 
 trait TestTempDir {

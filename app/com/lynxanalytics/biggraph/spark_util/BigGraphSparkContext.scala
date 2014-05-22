@@ -34,6 +34,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[Int]])
     kryo.register(classOf[Array[Long]])
     kryo.register(classOf[Array[Tuple2[_, _]]])
+    kryo.register(classOf[Array[String]])
     kryo.register(classOf[scala.runtime.BoxedUnit])
     kryo.register(classOf[graph_api.CompactUndirectedGraph])
   }

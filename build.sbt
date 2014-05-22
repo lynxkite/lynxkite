@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
   cache,
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
+  "org.apache.commons" % "commons-lang3" % "3.3",
   "org.apache.spark" %% "spark-core" % "0.9.1" excludeAll(
     ExclusionRule(name = "slf4j-log4j12"),
     ExclusionRule(name = "log4j")),

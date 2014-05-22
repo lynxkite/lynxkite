@@ -6,6 +6,7 @@ import signal
 import subprocess
 import sys
 import time
+import textwrap
 import traceback
 import urllib
 
@@ -58,28 +59,29 @@ def main(argv):
   try:
     with PlayServer(path, port) as server:
       server.start()
-      print 'Requesting initial biggraph metadata...'
-      data = server.get_json_data('/ajax/graph?q={"id":"x"}')
+      print 'Requesting starting operations...'
+      data = server.get_json_data('/ajax/startingOps?q={"fake":0}')
       opid = -1
-      for op in data['ops']:
-        if op['name'] == 'Edge Graph':
+      for op in data:
+        if op['name'] == 'Simple Example Graph With Attributes':
           opid = op['operationId']
-      assert opid >= 0, 'Edge Graph operation not found'
+      assert opid >= 0, 'Simple Example Graph operation not found'
       request = (
         '/ajax/derive?' +
         urllib.urlencode({
-          'q': ('{\n'
-                '  "sourceIds": ["x"],\n'
-                '  "operation": {\n'
-                '    "operationId": %d,\n'
-                '    "parameters": []\n'
-                '  }\n'
-                '}' % opid)}))
+          'q': (textwrap.dedent('''\
+              {
+                "sourceIds": [],
+                "operation": {
+                  "operationId": %d,
+                  "parameters": []
+                 }
+              }''') % opid)}))
       basics = server.get_json_data(request)
       guid = basics["id"]
-      print 'Requesting derived EdgeGraph data...'
+      print 'Requesting graph data...'
       data = server.get_json_data('/ajax/stats?q={"id":"%s"}' % guid)
-      assert (data['verticesCount'] == 4), 'Vertices count should be 4'
+      assert (data['verticesCount'] == 3), 'Vertices count should be 3'
       assert (data['edgesCount'] == 4), 'Edges count should be 4'
       print 'Test succeeded'
   except Exception as e:

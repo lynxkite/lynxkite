@@ -8,4 +8,5 @@ sbt test
 ./e2etest/test_server.py
 
 cd web
+grunt jshint
 grunt test
