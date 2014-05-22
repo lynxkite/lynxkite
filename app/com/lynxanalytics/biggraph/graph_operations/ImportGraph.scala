@@ -5,6 +5,90 @@ import com.lynxanalytics.biggraph.graph_api.attributes._
 import scala.util.matching.Regex
 import org.apache.spark.rdd.RDD
 
+trait AttributeSnatcher[T] {
+  def snatch(input: T, target: DenseAttribute)
+}
+class SimpleStringSnatcher(idx: AttributeWriteIndex[String]) {
+  def snatch(input: String, target: DenseAttribute) = target.set(idx, input)
+}
+
+trait CSVMetaDataReader {
+  def computeSnatchingPlan(): (AttributeSignature, Seq[AttributeSnatcher[String]])
+}
+case class StringOnlyHeaderMetaReader(inputFile: String) extends CSVMetaDataReader {
+  ...
+}
+
+trait RawDataProvider {
+  def getRawStream: RDD[Seq[String]]
+}
+case class ConcatenateCSVsDataProvider(inputPaths: Seq[String]) {
+  def getRawStream: RDD[Seq[String]] = ???
+}
+
+trait GraphWirer {
+  def wireGraph(vertexDataSig: AttributeSignature,
+                vertexData: RDD[DenseAttributes],
+                edgeDataSig: AttributeSignature,
+                edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
+}
+case class IdByNameWirer(vertexIdFieldName: String,
+                         sourceVertexIdFieldName: String,
+                         destVertexIdFieldName: String) {
+  def wireGraph(vertexDataSig: AttributeSignature,
+                vertexData: RDD[DenseAttributes],
+                edgeDataSig: AttributeSignature,
+                edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
+}
+
+
+class ReadCSV(vertexDataProvider: RawDataProvider,
+                   vertexMetaProvider: CSVMetaDataReader,
+                   edgeDataProvider: RawDataProvider,
+                   edgeMetaProvider: CSVMetaDataReader,
+                   wirer: GraphWirer) extends GraphOperation = {
+  def execute(...) = {
+  private def readToDenseAttributes[T](inputData: RDD[Seq[T]], sig: AttributeSignature, Seq[AttributeSnatcher[T]]): RDD[DenseAttribute] = ???
+}
+
+
+case class GlobeImport(....) extends ReadCSV(TGZDataProvider(files, filepattern), )
+
+
+
+
+trait CSVSignature {
+  def getFieldSequence
+}
+
+
+
+
+  object SignatureReader {
+    def readDouble(idx: AttributeWriteIndex[Double], value: String): Unit = {
+      val convertedValue = if (value == "") 0 else value.toDouble
+      attributesData.set(idx, convertedValue)
+    }
+
+    def readLong(idx: AttributeWriteIndex[Long], value: String): Unit = {
+      val convertedValue = if (value == "") 0 else value.toLong
+      attributesData.set(idx, convertedValue)
+    }
+
+    def readBoolean(idx: AttributeWriteIndex[Boolean], value: String): Unit = {
+      val convertedValue = if (value.toLowerCase == "true") true else false
+      attributesData.set(idx, convertedValue)
+    }
+
+    def readString(idx: AttributeWriteIndex[String], value: String): Unit = {
+      val convertedValue = value.stripPrefix("\"").stripSuffix("\"")
+      attributesData.set(idx, convertedValue)
+    }
+  }
+
+
+
+
 case class ImportGraph(
   vertexFiles: Seq[String] = Seq(),
   edgeFiles: Seq[String] = Seq(),
@@ -36,6 +120,8 @@ case class ImportGraph(
     }
   }
 
+  var signature = AttributeSignature.empty
+
   class SignatureReader(sigName: String, sigType: String) {
     var reader: String => Unit = null
 
@@ -61,30 +147,6 @@ case class ImportGraph(
     def read(value: String) = reader(value)
   }
 
-  object SignatureReader {
-    var signature = AttributeSignature.empty
-    lazy val attributesData: DenseAttributes = signature.maker.make
-
-    def readDouble(idx: AttributeWriteIndex[Double], value: String): Unit = {
-      val convertedValue = if (value == "") 0 else value.toDouble
-      attributesData.set(idx, convertedValue)
-    }
-
-    def readLong(idx: AttributeWriteIndex[Long], value: String): Unit = {
-      val convertedValue = if (value == "") 0 else value.toLong
-      attributesData.set(idx, convertedValue)
-    }
-
-    def readBoolean(idx: AttributeWriteIndex[Boolean], value: String): Unit = {
-      val convertedValue = if (value.toLowerCase == "true") true else false
-      attributesData.set(idx, convertedValue)
-    }
-
-    def readString(idx: AttributeWriteIndex[String], value: String): Unit = {
-      val convertedValue = value.stripPrefix("\"").stripSuffix("\"")
-      attributesData.set(idx, convertedValue)
-    }
-  }
 
   // TODO: should this go into the graph_util or spark_util package?
   import org.apache.hadoop
