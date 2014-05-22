@@ -71,6 +71,9 @@ object ProductionJsonServer extends JsonServer {
   implicit val rGraphStatsRequest = json.Json.reads[GraphStatsRequest]
   implicit val wGraphStatsResponse = json.Json.writes[GraphStatsResponse]
 
+  implicit val rSaveGraphAsCSVRequest = json.Json.reads[SaveGraphAsCSVRequest]
+  implicit val wSaveGraphAsCSVResponse = json.Json.writes[SaveGraphAsCSVResponse]
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
@@ -82,4 +85,7 @@ object ProductionJsonServer extends JsonServer {
 
   val graphStatsController = new GraphStatsController(BigGraphProductionEnviroment)
   def graphStatsGet = jsonGet(graphStatsController.getStats, "q")
+
+  val graphExportController = new GraphExportController(BigGraphProductionEnviroment)
+  def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV, "q")
 }

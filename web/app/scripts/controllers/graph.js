@@ -36,6 +36,42 @@ angular.module('biggraph')
       });
     }
 
+    function openSaveToCSVModal() {
+      var modalInstance = $modal.open({
+        templateUrl: 'views/fileDialog.html',
+        controller: 'FileDialogCtrl',
+        resolve: {
+          question: function() {
+            return 'Enter directory name for saving current graph';
+          }
+        }
+      });
+      return modalInstance.result;
+    }
+
+    var SaveGraphAsCSV = $resource('/ajax/saveAsCSV?q=:request');
+    function sendSaveToCSVRequest(id, path) {
+      var saveRequest = {
+        id: id,
+        targetDirPath: path
+      };
+      var saveRequestJson = JSON.stringify(saveRequest);
+      SaveGraphAsCSV.get({request: saveRequestJson}, function(response) {
+        // TODO: report in the status bar instead once we have one.
+        if (response.success) {
+          window.alert('Graph saved successfully');
+        } else {
+          window.alert('Graph saving failed: ' + response.failureReason);
+        }
+      });
+    }
+
+    function saveCSVFlow(id) {
+      openSaveToCSVModal().then(function(path) {
+        sendSaveToCSVRequest(id, path);
+      });
+    }
+
     var StartingOps = $resource('/ajax/startingOps?q=:request');
     var emptyRequest = {fake: 0};
     var emptyRequestJson = JSON.stringify(emptyRequest);
@@ -55,6 +91,10 @@ angular.module('biggraph')
       var requestJson = JSON.stringify(request);
       $scope.graph = Graph.get({request: requestJson});
       $scope.stats = Stats.get({request: requestJson});
+ 
+      $scope.saveCSV = function() {
+        saveCSVFlow(id);
+      };
 
       $scope.openDerivationModal = function(operation) {
         deriveGraphFlow(operation, [id]);
