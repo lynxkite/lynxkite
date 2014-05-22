@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.BigGraphEnviroment
-import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.serving
@@ -146,7 +145,6 @@ object BigGraphController {
 // is that prod code cannot (or at least should not) depend on test code, but I don't want
 // to move this out to some permanent non-test location as it will go away from prod code
 // but will stick around in test code.
-import graph_api._
 import org.apache.spark.graphx.Edge
 import attributes.AttributeSignature
 import attributes.DenseAttributes
