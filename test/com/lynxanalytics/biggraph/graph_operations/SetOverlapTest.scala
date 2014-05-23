@@ -37,12 +37,12 @@ case class InputGraph(attr: String, nodes: Seq[(Int, Seq[Int])]) extends GraphOp
 class SetOverlapTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   // Creates the graph specified by `nodes` and applies SetOverlap to it.
   // Returns the resulting edges in an easy-to-use format.
-  def getOverlaps(nodes: Seq[(Int, Seq[Int])], minOverlap: Int): Seq[(Int, Int, Double)] = {
+  def getOverlaps(nodes: Seq[(Int, Seq[Int])], minOverlap: Int): Seq[(Int, Int, Int)] = {
     val graphManager = cleanGraphManager("SetOverlapTest")
     val dataManager = cleanDataManager("SetOverlapTest")
     val inputGraph = graphManager.deriveGraph(Seq(), InputGraph("set", nodes))
     val outputGraph = graphManager.deriveGraph(Seq(inputGraph), SetOverlap("set", minOverlap))
-    val idx = outputGraph.edgeAttributes.readIndex[Double]("set_overlap")
+    val idx = outputGraph.edgeAttributes.readIndex[Int]("set_overlap")
     val edges = dataManager.obtainData(outputGraph).edges
     return edges.map(e => (e.srcId.toInt, e.dstId.toInt, e.attr(idx))).collect.sorted.toSeq
   }
@@ -52,7 +52,7 @@ class SetOverlapTest extends FunSuite with TestBigGraphManager with TestGraphDat
                                    1 -> Seq(2, 3),
                                    2 -> Seq(1, 3)),
                                minOverlap = 1)
-    assert(overlaps == Seq((0, 1, 1.0), (0, 2, 1.0), (1, 0, 1.0), (1, 2, 1.0), (2, 0, 1.0), (2, 1, 1.0)))
+    assert(overlaps == Seq((0, 1, 1), (0, 2, 1), (1, 0, 1), (1, 2, 1), (2, 0, 1), (2, 1, 1)))
   }
 
   test("minOverlap too high") {
@@ -66,14 +66,14 @@ class SetOverlapTest extends FunSuite with TestBigGraphManager with TestGraphDat
   test("> 70 nodes") {
     // Tries to trigger the use of longer prefixes.
     val N = 100
-    assert(SetOverlap.SetListSizeLimit < N)
+    assert(SetOverlap.SetListBruteForceLimit < N)
     val overlaps = getOverlaps((0 to N).map(i => i -> Seq(-3, -2, -1, i)),
-                               minOverlap = 3)
+                               minOverlap = 2)
     val expected = for {
       a <- (0 to N)
       b <- (0 to N)
       if a != b
-    } yield (a, b, 3.0)
+    } yield (a, b, 3)
     assert(overlaps == expected)
   }
 }

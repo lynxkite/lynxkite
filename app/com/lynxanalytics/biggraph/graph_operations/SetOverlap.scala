@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 // Generates edges between vertices by the amount of overlap in an attribute.
 object SetOverlap {
   // Maximum number of sets to be O(n^2) compared.
-  val SetListSizeLimit = 70
+  val SetListBruteForceLimit = 70
 }
 case class SetOverlap(
     attribute: String,
@@ -25,8 +25,8 @@ case class SetOverlap(
   type Sets = Seq[(VertexId, Array[Long])]
   // The generated edges have a single attribute, the overlap size.
   val outputAttribute = attribute + "_overlap"
-  @transient lazy val sig = AttributeSignature
-      .empty.addAttribute[Double](outputAttribute).signature
+  @transient lazy val outputSig = AttributeSignature
+      .empty.addAttribute[Int](outputAttribute).signature
 
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = (
     sources.size == 1
@@ -51,10 +51,11 @@ case class SetOverlap(
         case (vid, set) => set.map(i => (Seq(i), (vid, set)))
       }).groupByKey(partitioner)
     // Increase prefix length until all set lists are short.
+    // We cannot use a prefix longer than minOverlap.
     for (iteration <- (2 to minOverlap)) {
       // Move over short lists.
-      short ++= long.filter(_._2.size <= SetOverlap.SetListSizeLimit)
-      long = long.filter(_._2.size > SetOverlap.SetListSizeLimit)
+      short ++= long.filter(_._2.size <= SetOverlap.SetListBruteForceLimit)
+      long = long.filter(_._2.size > SetOverlap.SetListBruteForceLimit)
       // Increase prefix length.
       long = long.flatMap({
         case (prefix, sets) => sets.flatMap({
@@ -65,7 +66,7 @@ case class SetOverlap(
         })
       }).groupByKey(partitioner)
     }
-    // We cannot use a prefix longer than minOverlap. Accept the remaining sets.
+    // Accept the remaining large set lists. We cannot split them further.
     short ++= long
 
     val edges: rdd.RDD[Edge[DenseAttributes]] = short.flatMap({
@@ -76,7 +77,7 @@ case class SetOverlap(
 
   def vertexAttributes(input: Seq[BigGraph]) = input.head.vertexAttributes
 
-  def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) = sig
+  def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) = outputSig
 
   // Generates the edges for a set of sets. This is O(n^2), but the set should
   // be small.
@@ -90,42 +91,36 @@ case class SetOverlap(
   }
 
   // Set up for writing the result into DenseAttributes.
-  @transient private lazy val outputMaker = sig.maker
-  @transient private lazy val outputIdx = sig.writeIndex[Double](outputAttribute)
+  @transient private lazy val outputMaker = outputSig.maker
+  @transient private lazy val outputIdx = outputSig.writeIndex[Int](outputAttribute)
   // Not a method, to avoid serializing the whole class.
   protected val DA = (overlap: Int) => {
     val da = outputMaker.make()
-    da.set(outputIdx, overlap.toDouble)
+    da.set(outputIdx, overlap)
     da
   }
 
-  // Fast intersection size calculator.
+  // Intersection size calculator. The same a-b pair will show up under multiple
+  // prefixes if they have more nodes in common than the prefix length. To avoid
+  // reporting them multiple times, SortedIntersectionSize() returns 0 unless
+  // `pref` is a prefix of the overlap.
   protected def SortedIntersectionSize(
     a: Array[Long], b: Array[Long], pref: Seq[Long]): Int = {
     var ai = 0
     var bi = 0
-    val prefi = pref.iterator.buffered
+    val prefi = pref.iterator
     var res = 0
     while (ai < a.length && bi < b.length) {
       if (a(ai) == b(bi)) {
-        if (prefi.hasNext && a(ai) != prefi.head) {
-          return 0
+        if (prefi.hasNext && a(ai) != prefi.next) {
+          return 0  // `pref` is not a prefix of the overlap.
         }
         res += 1
-        if (prefi.hasNext) {
-          prefi.next
-        }
         ai += 1
         bi += 1
       } else if (a(ai) < b(bi)) {
-        if (prefi.hasNext && b(bi) > prefi.head) {
-          return 0
-        }
         ai += 1
       } else {
-        if (prefi.hasNext && a(ai) > prefi.head) {
-          return 0
-        }
         bi += 1
       }
     }
