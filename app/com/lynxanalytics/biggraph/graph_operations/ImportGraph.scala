@@ -1,90 +1,151 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_api.attributes._
-import scala.util.matching.Regex
+import com.lynxanalytics.biggraph.spark_util
+//import scala.util.matching.Regex
 import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext._
+import org.apache.spark
+import org.apache.spark.graphx
 
+/*
+ * For a sequence of raw input meta data strings a sequence of AttributeSnatchers
+ * will be instantiated. These will format their given input string to the provided
+ * type and write the data into a DenseAttribute object at a given index as a side effect.
+ * The sequence usually corresponds to a line of input file, the data will result
+ * one or two DenseAttribute objects (for vertex and/or edge attributes).
+ */
 trait AttributeSnatcher[T] {
-  def snatch(input: T, target: DenseAttribute)
+  def apply(input: T, attributes: DenseAttributes): Unit
 }
-class SimpleStringSnatcher(idx: AttributeWriteIndex[String]) {
-  def snatch(input: String, target: DenseAttribute) = target.set(idx, input)
+case class StringSnatcher(idx: AttributeWriteIndex[String]) extends AttributeSnatcher[String] {
+  def apply(input: String, attributes: DenseAttributes): Unit = {
+    val strippedInput = input.stripPrefix("\"").stripSuffix("\"")
+    attributes.set(idx, strippedInput)
+  }
 }
 
-trait CSVMetaDataReader {
-  def computeSnatchingPlan(): (AttributeSignature, Seq[AttributeSnatcher[String]])
+trait MetaDataReader {
+  val signature: AttributeSignature = AttributeSignature.empty
+  def createSnatchers(): Seq[AttributeSnatcher[String]]
 }
-case class StringOnlyHeaderMetaReader(inputFile: String) extends CSVMetaDataReader {
-  ...
+case class HeaderAsStringCSVReader(sc: spark.SparkContext, inputFile: Filename, delimiter: String = ",") extends MetaDataReader {
+  val header = sc.textFile(inputFile.path.toString).first.split("""\""" + delimiter)
+  def createSnatchers: Seq[AttributeSnatcher[String]] = {
+    header.map { sigName =>
+      signature.addAttribute[String](sigName: String)
+      val idx = signature.writeIndex[String](sigName)
+      StringSnatcher(idx)
+    }
+  }
 }
 
 trait RawDataProvider {
-  def getRawStream: RDD[Seq[String]]
+  def getRawData(sc: spark.SparkContext): RDD[Seq[String]]
 }
-case class ConcatenateCSVsDataProvider(inputPaths: Seq[String]) {
-  def getRawStream: RDD[Seq[String]] = ???
-}
-
-trait GraphWirer {
-  def wireGraph(vertexDataSig: AttributeSignature,
-                vertexData: RDD[DenseAttributes],
-                edgeDataSig: AttributeSignature,
-                edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
-}
-case class IdByNameWirer(vertexIdFieldName: String,
-                         sourceVertexIdFieldName: String,
-                         destVertexIdFieldName: String) {
-  def wireGraph(vertexDataSig: AttributeSignature,
-                vertexData: RDD[DenseAttributes],
-                edgeDataSig: AttributeSignature,
-                edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
+case class ConcatenateCSVsDataProvider(files: Seq[Filename], delimiter: String = ",") {
+  def getRawData(sc: spark.SparkContext, bytesPerPartition: Long = 10000000L): RDD[Seq[String]] = {
+    // what happens to partitioning after union?
+    val lines = sc.union(files.map { filename =>
+      val partitions = (filename.fileSize / bytesPerPartition + 1).toInt
+      sc.textFile(filename.path.toString, partitions)
+    })
+    lines.map(_.split("""\""" + delimiter))
+  }
 }
 
+trait GraphBuilder {
+  def buildGraph(vertexDataSig: AttributeSignature,
+                 vertexData: RDD[DenseAttributes],
+                 edgeDataSig: AttributeSignature,
+                 edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
+}
+case class NumberedIdFromVertexField(vertexIdFieldName: String,
+                                     sourceEdgeFieldName: String,
+                                     destEdgeFieldName: String) {
+  def buildGraph(vertexDataSig: AttributeSignature,
+                 vertexData: RDD[DenseAttributes],
+                 edgeDataSig: AttributeSignature,
+                 edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
+    val vertices: VertexRDD = spark_util.RDDUtils.fastNumbered(vertexData)
+    val vIdx = vertexDataSig.readIndex[String](vertexIdFieldName)
+    // propagate new ids to edges
+    val vertexFieldToId = vertices.map { case (vertexId, vertexAttributes) =>
+      vertexAttributes(vIdx) -> vertexId
+    } // will need to be cached?
+    val eSrcIdx = edgeDataSig.readIndex[String](sourceEdgeFieldName)
+    val eDstIdx = edgeDataSig.readIndex[String](destEdgeFieldName)
+    val edgesBySource = edgeData.map( edgeAttributes =>
+      edgeAttributes(eSrcIdx) -> (edgeAttributes(eDstIdx), edgeAttributes)
+    )
+    val edgesByDest = edgesBySource.join(vertexFieldToId).map {
+      case (src, ((dst, eAttr), srcId)) => dst -> (srcId, eAttr)
+    }
+    val edges: EdgeRDD = edgesByDest.join(vertexFieldToId).map {
+      case (dst, ((srcId, eAttr), dstId)) => graphx.Edge(srcId, dstId, eAttr)
+    }
+
+    // TODO: handle partitioning
+    // TODO: what if field is not String?
+    return (vertices, edges)
+  }
+}
 
 class ReadCSV(vertexDataProvider: RawDataProvider,
-                   vertexMetaProvider: CSVMetaDataReader,
-                   edgeDataProvider: RawDataProvider,
-                   edgeMetaProvider: CSVMetaDataReader,
-                   wirer: GraphWirer) extends GraphOperation = {
-  def execute(...) = {
-  private def readToDenseAttributes[T](inputData: RDD[Seq[T]], sig: AttributeSignature, Seq[AttributeSnatcher[T]]): RDD[DenseAttribute] = ???
-}
+              vertexMetaProvider: MetaDataReader,
+              edgeDataProvider: RawDataProvider,
+              edgeMetaProvider: MetaDataReader,
+              graphLinker: GraphBuilder)
+    extends GraphOperation {
+  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
+    val sc = manager.runtimeContext.sparkContext
+    return ???
+  }
 
-
-case class GlobeImport(....) extends ReadCSV(TGZDataProvider(files, filepattern), )
-
-
-
-
-trait CSVSignature {
-  def getFieldSequence
-}
-
-
-
-
-  object SignatureReader {
-    def readDouble(idx: AttributeWriteIndex[Double], value: String): Unit = {
-      val convertedValue = if (value == "") 0 else value.toDouble
-      attributesData.set(idx, convertedValue)
-    }
-
-    def readLong(idx: AttributeWriteIndex[Long], value: String): Unit = {
-      val convertedValue = if (value == "") 0 else value.toLong
-      attributesData.set(idx, convertedValue)
-    }
-
-    def readBoolean(idx: AttributeWriteIndex[Boolean], value: String): Unit = {
-      val convertedValue = if (value.toLowerCase == "true") true else false
-      attributesData.set(idx, convertedValue)
-    }
-
-    def readString(idx: AttributeWriteIndex[String], value: String): Unit = {
-      val convertedValue = value.stripPrefix("\"").stripSuffix("\"")
-      attributesData.set(idx, convertedValue)
+  private def readToDenseAttributes[T](inputData: RDD[Seq[T]],
+                                       inputSignatures: AttributeSignature,
+                                       snatchers: Seq[AttributeSnatcher[T]]): RDD[DenseAttributes] = {
+    // TODO: this is obviously not good like this, will continue from here...
+    inputData.foreach { line =>
+      if (line.size == snatchers.size) {
+        snatchers.zip(line).foreach { valid =>
+          val empty = AttributeSignature.empty.maker.make
+          valid match { case (snatcher, data) => snatcher(data, empty) }
+        }
+      }
     }
   }
+}
+
+//case class GlobeImport(...) extends ReadCSV(TGZDataProvider(files, filepattern), )
+
+//***********************************************
+
+
+/*
+object SignatureReader {
+  def snatchDouble(idx: AttributeWriteIndex[Double], value: String): Unit = {
+    val convertedValue = if (value == "") 0 else value.toDouble
+    attributesData.set(idx, convertedValue)
+  }
+
+  def snatchLong(idx: AttributeWriteIndex[Long], value: String): Unit = {
+    val convertedValue = if (value == "") 0 else value.toLong
+    attributesData.set(idx, convertedValue)
+  }
+
+  def snatchBoolean(idx: AttributeWriteIndex[Boolean], value: String): Unit = {
+    val convertedValue = if (value.toLowerCase == "true") true else false
+    attributesData.set(idx, convertedValue)
+  }
+
+  def snatchString(idx: AttributeWriteIndex[String], value: String): Unit = {
+    val convertedValue = value.stripPrefix("\"").stripSuffix("\"")
+    attributesData.set(idx, convertedValue)
+  }
+}
 
 
 
@@ -213,3 +274,4 @@ case class ImportGraph(
   // The edge attribute signature of the graph resulting from this operation.
   def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = ???
 }
+*/
