@@ -41,6 +41,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_api.CompactUndirectedGraph])
     kryo.register(classOf[::[_]])
     kryo.register(Nil.getClass)
+    kryo.register(None.getClass)
+    // Set.EmptySet[_] is private.
+    kryo.register(Set.empty[Int].getClass)
   }
 }
 
