@@ -9,6 +9,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 import org.apache.spark
 import org.apache.spark.graphx
+import java.util.regex.Pattern
 
 /*
  * For a sequence of raw input meta data strings a sequence of AttributeSnatchers
@@ -27,53 +28,74 @@ case class StringSnatcher(idx: AttributeWriteIndex[String]) extends AttributeSna
   }
 }
 
-trait MetaDataReader {
-  val signature: AttributeSignature = AttributeSignature.empty
-  def createSnatchers(): Seq[AttributeSnatcher[String]]
+trait MetaDataParser {
+  def getSignature(): AttributeSignature
+  def createSnatchers(signature: AttributeSignature): Seq[AttributeSnatcher[String]]
 }
-case class HeaderAsStringCSVReader(sc: spark.SparkContext, inputFile: Filename, delimiter: String = ",") extends MetaDataReader {
-  val header = sc.textFile(inputFile.path.toString).first.split("""\""" + delimiter)
-  def createSnatchers: Seq[AttributeSnatcher[String]] = {
-    header.map { sigName =>
-      signature.addAttribute[String](sigName: String)
+case class HeaderAsStringCSVParser(inputFile: Filename, delimiter: String) extends MetaDataParser {
+  val csvHeader = inputFile.open.readLine // deprecated
+    .split(Pattern.quote(delimiter))
+    .map(sigName => sigName.stripPrefix("\"").stripSuffix("\""))
+
+  def getSignature(): AttributeSignature = {
+    var signature: AttributeSignature = AttributeSignature.empty
+    csvHeader.foreach { sigName =>
+      signature = signature.addAttribute[String](sigName).signature
+    }
+    signature
+  }
+
+  def createSnatchers(signature: AttributeSignature): Seq[AttributeSnatcher[String]] = {
+    csvHeader.map { sigName =>
       val idx = signature.writeIndex[String](sigName)
       StringSnatcher(idx)
     }
   }
 }
+case class DummyMetaParser() extends MetaDataParser {
+  def getSignature(): AttributeSignature = AttributeSignature.empty
+  def createSnatchers(signature: AttributeSignature): Seq[AttributeSnatcher[String]] = Seq()
+}
 
-trait RawDataProvider {
+trait RawDataParser {
   def getRawData(sc: spark.SparkContext): RDD[Seq[String]]
 }
-case class ConcatenateCSVsDataProvider(files: Seq[Filename], delimiter: String = ",") {
-  def getRawData(sc: spark.SparkContext, bytesPerPartition: Long = 10000000L): RDD[Seq[String]] = {
-    // what happens to partitioning after union?
-    val lines = sc.union(files.map { filename =>
-      val partitions = (filename.fileSize / bytesPerPartition + 1).toInt
-      sc.textFile(filename.path.toString, partitions)
-    })
-    lines.map(_.split("""\""" + delimiter))
+case class ConcatenateCSVsDataParser(inputFiles: Seq[Filename],
+                                     delimiter: String,
+                                     skipFirstRow: Boolean) extends RawDataParser {
+  def getRawData(sc: spark.SparkContext): RDD[Seq[String]] = {
+    val header = if (skipFirstRow) sc.textFile(inputFiles.head.filename).first else null
+    val lines = sc.union(inputFiles.map(file => sc.textFile(file.filename).filter(_ != header)))
+    lines.map(_.split(Pattern.quote(delimiter)))
   }
 }
+case class DummyDataParser() extends RawDataParser {
+  def getRawData(sc: spark.SparkContext): RDD[Seq[String]] = sc.parallelize(Seq())
+}
+
+/*
+ * The GraphBuilder wires together the parsed meta and raw data into BigGraph graph format,
+ * also handles reindexing the vertex ids if needed.
+ */
 
 trait GraphBuilder {
-  def buildGraph(vertexDataSig: AttributeSignature,
-                 vertexData: RDD[DenseAttributes],
-                 edgeDataSig: AttributeSignature,
-                 edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
+  def build(vertexDataSig: AttributeSignature,
+            vertexData: RDD[DenseAttributes],
+            edgeDataSig: AttributeSignature,
+            edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
 }
 case class NumberedIdFromVertexField(vertexIdFieldName: String,
                                      sourceEdgeFieldName: String,
-                                     destEdgeFieldName: String) {
-  def buildGraph(vertexDataSig: AttributeSignature,
-                 vertexData: RDD[DenseAttributes],
-                 edgeDataSig: AttributeSignature,
-                 edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
+                                     destEdgeFieldName: String) extends GraphBuilder {
+  def build(vertexDataSig: AttributeSignature,
+            vertexData: RDD[DenseAttributes],
+            edgeDataSig: AttributeSignature,
+            edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
     val vertices: VertexRDD = spark_util.RDDUtils.fastNumbered(vertexData)
     val vIdx = vertexDataSig.readIndex[String](vertexIdFieldName)
     // propagate new ids to edges
-    val vertexFieldToId = vertices.map { case (vertexId, vertexAttributes) =>
-      vertexAttributes(vIdx) -> vertexId
+    val vertexFieldToId = vertices.map {
+      case (vertexId, vertexAttributes) => vertexAttributes(vIdx) -> vertexId
     } // will need to be cached?
     val eSrcIdx = edgeDataSig.readIndex[String](sourceEdgeFieldName)
     val eDstIdx = edgeDataSig.readIndex[String](destEdgeFieldName)
@@ -86,46 +108,144 @@ case class NumberedIdFromVertexField(vertexIdFieldName: String,
     val edges: EdgeRDD = edgesByDest.join(vertexFieldToId).map {
       case (dst, ((srcId, eAttr), dstId)) => graphx.Edge(srcId, dstId, eAttr)
     }
-
+    // TODO: handle partitioning
+    // TODO: what if field is not String?
+    return (vertices, edges)
+  }
+}
+case class IdFromEdgeFields(vertexIdFieldName: String,
+                            sourceEdgeFieldName: String,
+                            destEdgeFieldName: String) extends GraphBuilder {
+  def build(vertexDataSig: AttributeSignature,
+            vertexData: RDD[DenseAttributes],
+            edgeDataSig: AttributeSignature,
+            edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
+    val newVertexSig = vertexDataSig.addAttribute[String](vertexIdFieldName).signature
+    val maker = newVertexSig.maker
+    val vWriteIdx = newVertexSig.writeIndex[String](vertexIdFieldName)
+    val vReadIdx = newVertexSig.readIndex[String](vertexIdFieldName)
+    val eSrcIdx = edgeDataSig.readIndex[String](sourceEdgeFieldName)
+    val eDstIdx = edgeDataSig.readIndex[String](destEdgeFieldName)
+    // could be made faster probably by avoiding a DA read?
+    val verticesData = edgeData.flatMap(edgeAttributes =>
+      Seq(edgeAttributes(eSrcIdx), edgeAttributes(eDstIdx))).distinct
+    val verticesFromEdges = verticesData.map(maker.make.set(vWriteIdx, _))
+    val vertices: VertexRDD = spark_util.RDDUtils.fastNumbered(verticesFromEdges)
+    // propagate new ids to edges
+    val vertexFieldToId = vertices.map {
+      case (vertexId, vertexAttributes) => vertexAttributes(vReadIdx) -> vertexId
+    } // will need to be cached?
+    val edgesBySource = edgeData.map( edgeAttributes =>
+      edgeAttributes(eSrcIdx) -> (edgeAttributes(eDstIdx), edgeAttributes)
+    )
+    val edgesByDest = edgesBySource.join(vertexFieldToId).map {
+      case (src, ((dst, eAttr), srcId)) => dst -> (srcId, eAttr)
+    }
+    val edges: EdgeRDD = edgesByDest.join(vertexFieldToId).map {
+      case (dst, ((srcId, eAttr), dstId)) => graphx.Edge(srcId, dstId, eAttr)
+    }
     // TODO: handle partitioning
     // TODO: what if field is not String?
     return (vertices, edges)
   }
 }
 
-class ReadCSV(vertexDataProvider: RawDataProvider,
-              vertexMetaProvider: MetaDataReader,
-              edgeDataProvider: RawDataProvider,
-              edgeMetaProvider: MetaDataReader,
-              graphLinker: GraphBuilder)
-    extends GraphOperation {
+/*
+ * The actual importers are composed of various Parser and Builder implementations.
+ * These must extend the ImportGraph which provides the actual implementation for
+ * wiring the components together.
+ */
+
+class ImportGraph(vertexMeta: MetaDataParser,
+                  vertexData: RawDataParser,
+                  edgeMeta: MetaDataParser,
+                  edgeData: RawDataParser,
+                  graphBuilder: GraphBuilder) extends GraphOperation {
+
+  @transient lazy val vertexSignature = vertexMeta.getSignature
+
+  @transient lazy val edgeSignature = edgeMeta.getSignature
+
+  def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.isEmpty
+
   def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
     val sc = manager.runtimeContext.sparkContext
-    return ???
+
+    val vertexSignature = vertexMeta.getSignature
+    val edgeSignature = edgeMeta.getSignature
+    val vertexSnatchers = vertexMeta.createSnatchers(vertexSignature)
+    val edgeSnatchers = edgeMeta.createSnatchers(edgeSignature)
+    val rawVertices = vertexData.getRawData(sc)
+    val rawEdges = edgeData.getRawData(sc)
+    val vertexDenseAttributes = rawToDenseAttributes(vertexSignature.maker, vertexSnatchers, rawVertices)
+    val edgeDenseAttributes = rawToDenseAttributes(edgeSignature.maker, edgeSnatchers, rawEdges)
+    val (vertices, edges) = graphBuilder.build(vertexSignature, vertexDenseAttributes, edgeSignature, edgeDenseAttributes)
+    new SimpleGraphData(target, vertices, edges) // later optional triplets?
   }
 
-  private def readToDenseAttributes[T](inputData: RDD[Seq[T]],
-                                       inputSignatures: AttributeSignature,
-                                       snatchers: Seq[AttributeSnatcher[T]]): RDD[DenseAttributes] = {
-    // TODO: this is obviously not good like this, will continue from here...
-    inputData.foreach { line =>
+  // The vertex attribute signature of the graph resulting from this operation.
+  def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = vertexSignature
+
+  // The edge attribute signature of the graph resulting from this operation.
+  def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = edgeSignature
+
+  private def rawToDenseAttributes[T](attributesMaker: DenseAttributesMaker,
+                                      snatchers: Seq[AttributeSnatcher[T]],
+                                      inputData: RDD[Seq[T]]): RDD[DenseAttributes] = {
+    inputData.flatMap { line =>
       if (line.size == snatchers.size) {
-        snatchers.zip(line).foreach { valid =>
-          val empty = AttributeSignature.empty.maker.make
-          valid match { case (snatcher, data) => snatcher(data, empty) }
+        val attributes = attributesMaker.make
+        snatchers.zip(line).foreach {
+          case (snatcher, data) => snatcher(data, attributes)
         }
+        Some(attributes)
+      } else {
+        None // might be nice to log this
       }
     }
   }
 }
 
-//case class GlobeImport(...) extends ReadCSV(TGZDataProvider(files, filepattern), )
+case class CSVImport(vertexHeader: Filename,
+                     vertexCSVs: Seq[Filename],
+                     edgeHeader: Filename,
+                     edgeCSVs: Seq[Filename],
+                     vertexIdFieldName: String,
+                     sourceEdgeFieldName: String,
+                     destEdgeFieldName: String,
+                     delimiter: String,
+                     skipFirstRow: Boolean)
+    extends ImportGraph(HeaderAsStringCSVParser(vertexHeader, delimiter),
+                        ConcatenateCSVsDataParser(vertexCSVs, delimiter, skipFirstRow),
+                        HeaderAsStringCSVParser(edgeHeader, delimiter),
+                        ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
+                        NumberedIdFromVertexField(vertexIdFieldName,
+                                                  sourceEdgeFieldName,
+                                                  destEdgeFieldName))
 
-//***********************************************
+case class EdgeCSVImport(edgeHeader: Filename,
+                         edgeCSVs: Seq[Filename],
+                         vertexIdFieldName: String,
+                         sourceEdgeFieldName: String,
+                         destEdgeFieldName: String,
+                         delimiter: String,
+                         skipFirstRow: Boolean)
+    extends ImportGraph(DummyMetaParser(),
+                        DummyDataParser(),
+                        HeaderAsStringCSVParser(edgeHeader, delimiter),
+                        ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
+                        IdFromEdgeFields(vertexIdFieldName,
+                                         sourceEdgeFieldName,
+                                         destEdgeFieldName))
+
+
+//**** DEV NOTES:
+
+//case class GlobeImport(...) extends ReadCSV(TGZDataProvider(files, filepattern), )
 
 
 /*
-object SignatureReader {
+object Snatchers {
   def snatchDouble(idx: AttributeWriteIndex[Double], value: String): Unit = {
     val convertedValue = if (value == "") 0 else value.toDouble
     attributesData.set(idx, convertedValue)
@@ -148,40 +268,6 @@ object SignatureReader {
 }
 
 
-
-
-case class ImportGraph(
-  vertexFiles: Seq[String] = Seq(),
-  edgeFiles: Seq[String] = Seq(),
-  vertexSigFile: String = "",
-  edgeSigFile: String = "",
-  // true: csv header parsing, false: regex parsing
-  vertexIsCSV: Boolean = true,
-  edgeIsCSV: Boolean = true,
-  vertexParser: String = ",",
-  edgeParser: String = ","
-    ) extends GraphOperation {
-
-  def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.isEmpty
-
-  def readGraph(
-    inputSignatures: Iterator[(String, String)],
-    inputData: RDD[Iterator[String]]) = {
-    val signatureReaders = inputSignatures.map(x => new SignatureReader(x._1, x._2))
-
-    val excludedData = inputData.flatMap { line =>
-      if (line.size == signatureReaders.size) {
-        signatureReaders.zip(line).foreach {
-          case (reader, data) => reader.read(data) // stores valid data
-        }
-        None
-      } else {
-        Some(line) // we can log the excluded data
-      }
-    }
-  }
-
-  var signature = AttributeSignature.empty
 
   class SignatureReader(sigName: String, sigType: String) {
     var reader: String => Unit = null
@@ -209,17 +295,6 @@ case class ImportGraph(
   }
 
 
-  // TODO: should this go into the graph_util or spark_util package?
-  import org.apache.hadoop
-  import org.apache.spark
-
-  def fileSize(filename: String, sc: spark.SparkContext = null): Long = {
-    val hconf = if (sc != null) sc.hadoopConfiguration else new hadoop.conf.Configuration()
-    val fs = hadoop.fs.FileSystem.get(new java.net.URI(filename), hconf)
-    val status = fs.getFileStatus(new hadoop.fs.Path(filename))
-    return status.getLen
-  }
-
   def getRawDataRDD(
       sc: spark.SparkContext,
       files: Seq[String],
@@ -242,36 +317,11 @@ case class ImportGraph(
   }
 
 
-  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
-    val sc = manager.runtimeContext.sparkContext
-    //getRawDataRDD to get edges and vertices as RDD[Iterator[String]]
-    //readGraph to create reader objects, read signature and set DenseAttributes
-
-    // We cannot have more vertex partitions than edge partitions. (SPARK-1329)
-    // val xParts = vertexParts max edgeParts
-
-    // handle various compressions
-    // we don't need to include AWS data in order to cope with AWS, do we now?
-
-    // reindex vertices in case needed
-    // after attributes are all set, parse edge and vertex information and create final edge and vertex RDDs
-    // create final graph objects
-
-    /*
-     * nice to have: handling bad ids, bad files etc. + nice logging
-     * optionally provide triplets (we don't have them implemented in GraphDataManager yet)
-     * optional: handle adjacency list instead edge list
-     * FE idea: load sample of a file, visualize as table, user can set the type of the fields and send that as a JSON in case types are missing
-     * FE idea: test regex on a small sample
-     */
-
-    return ???
-  }
-
-  // The vertex attribute signature of the graph resulting from this operation.
-  def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = ???
-
-  // The edge attribute signature of the graph resulting from this operation.
-  def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = ???
-}
+  /*
+   * nice to have: handling bad ids, bad files etc. + nice logging
+   * optionally provide triplets (we don't have them implemented in GraphDataManager yet)
+   * optional: handle adjacency list instead edge list
+   * FE idea: load sample of a file, visualize as table, user can set the type of the fields and send that as a JSON in case types are missing
+   * FE idea: test regex on a small sample
+   */
 */

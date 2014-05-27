@@ -5,10 +5,9 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 case class Filename(
-  val filename: String,
-  val awsAccessKeyId: String = "",
-  val awsSecretAccessKey: String = ""
-) {
+    val filename: String,
+    val awsAccessKeyId: String = "",
+    val awsSecretAccessKey: String = "") {
   override def toString() = filename
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = new hadoop.conf.Configuration()
@@ -19,7 +18,7 @@ case class Filename(
   def fs() = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
   def uri() = new java.net.URI(filename)
   def path() = new hadoop.fs.Path(filename)
-  def open() = fs.open(path) // shouldn't we close this file after using it?
+  def open() = fs.open(path)
 
   def saveAsTextFile(lines: spark.rdd.RDD[String]): Unit = {
     // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
@@ -38,6 +37,4 @@ case class Filename(
   }
 
   val fileSize: Long = fs.getFileStatus(path).getLen
-
 }
-
