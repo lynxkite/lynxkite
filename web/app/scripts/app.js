@@ -12,6 +12,10 @@ angular
         templateUrl: 'views/graph.html',
         controller: 'GraphViewCtrl'
       })
+      .when('/cluster/:password', {
+        templateUrl: 'views/clusterManager.html',
+        controller: 'ClusterManagerCtrl'
+      })
       .otherwise({
         redirectTo: '/graph/x'
       });

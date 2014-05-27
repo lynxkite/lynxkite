@@ -19,7 +19,7 @@ class JsonServer extends mvc.Controller {
     }
   }
 
-  def jsonGet[I : json.Reads, O : json.Writes](action: I => O, key: String) = {
+  def jsonGet[I : json.Reads, O : json.Writes](action: I => O, key: String = "q") = {
     mvc.Action { request =>
       bigGraphLogger.info("JSON GET event received")
       request.getQueryString(key) match {
@@ -46,7 +46,7 @@ class JsonServer extends mvc.Controller {
   }
 }
 
-case class EmptyRequest(
+case class Empty(
   fake: Int = 0)  // Needs fake field as JSON inception doesn't work otherwise.
 
 object ProductionJsonServer extends JsonServer {
@@ -57,7 +57,9 @@ object ProductionJsonServer extends JsonServer {
    * they need to be ordered so that everything is declared before use.
    */
 
-  implicit val rEmptyRequest = json.Json.reads[EmptyRequest]
+  // TODO: do this without a fake field, e.g. by not using inception.
+  implicit val rEmpty = json.Json.reads[Empty]
+  implicit val wEmpty = json.Json.writes[Empty]
 
   implicit val rBigGraphRequest = json.Json.reads[BigGraphRequest]
   implicit val wGraphBasicData = json.Json.writes[GraphBasicData]
@@ -74,18 +76,25 @@ object ProductionJsonServer extends JsonServer {
   implicit val rSaveGraphAsCSVRequest = json.Json.reads[SaveGraphAsCSVRequest]
   implicit val wSaveGraphAsCSVResponse = json.Json.writes[SaveGraphAsCSVResponse]
 
+  implicit val rSetClusterNumInstanceRequest = json.Json.reads[SetClusterNumInstanceRequest]
+  implicit val wSparkClusterStatusResponse = json.Json.writes[SparkClusterStatusResponse]
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
 
   val bigGraphController = new BigGraphController(BigGraphProductionEnviroment)
-  def bigGraphGet = jsonGet(bigGraphController.getGraph, "q")
-  def deriveBigGraphGet = jsonGet(bigGraphController.deriveGraph, "q")
-  def startingOperationsGet = jsonGet(bigGraphController.startingOperations, "q")
+  def bigGraphGet = jsonGet(bigGraphController.getGraph)
+  def deriveBigGraphGet = jsonGet(bigGraphController.deriveGraph)
+  def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
 
   val graphStatsController = new GraphStatsController(BigGraphProductionEnviroment)
-  def graphStatsGet = jsonGet(graphStatsController.getStats, "q")
+  def graphStatsGet = jsonGet(graphStatsController.getStats)
 
   val graphExportController = new GraphExportController(BigGraphProductionEnviroment)
-  def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV, "q")
+  def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV)
+
+  val sparkClusterController = new SparkClusterController(BigGraphProductionEnviroment)
+  def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
+  def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
 }
