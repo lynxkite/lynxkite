@@ -32,20 +32,18 @@ case class ConnectedComponents(
     val sc = runtimeContext.sparkContext
     val cores = runtimeContext.numAvailableCores
     val partitioner = new spark.HashPartitioner(cores * 5)
-    // Graph as edge lists. Empty lists are generated for degree-0 nodes.
+    // Graph as edge lists. Does not include degree-0 vertices.
     val edges = inputData.edges.map(e => (e.srcId, e.dstId))
     val graph = edges.groupByKey()
                      .mapValues(_.toSet)
-                     .rightOuterJoin(inputData.vertices)
-                     .mapValues(_._1.getOrElse(Set[VertexId]()))
     // Get VertexId -> ComponentId map.
     val components = getComponents(graph)
-    // Put ComponentId in the new attribute.
+    // Put ComponentId in the new attribute. Degree-0 vertices are restored.
     val SignatureExtension(sig, cloner) = vertexExtension(target.sources.head)
     val idx = sig.writeIndex[ComponentId](outputAttribute)
-    val vertices = inputData.vertices.join(components).mapValues({
-      case (da, cid) =>
-        cloner.clone(da).set(idx, cid)
+    val vertices = inputData.vertices.leftOuterJoin(components).map({
+      case (vid, (da, cid)) =>
+        (vid, cloner.clone(da).set(idx, cid.getOrElse(vid)))
     })
     return new SimpleGraphData(target, vertices, inputData.edges)
   }
