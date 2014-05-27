@@ -31,6 +31,9 @@ case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation 
       sc.parallelize(edges)
     )
   }
+
+  override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
+    new BigGraphProperties(symmetricEdges = true)
 }
 
 class ConnectedComponentsTest
