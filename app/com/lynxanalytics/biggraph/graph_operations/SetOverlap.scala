@@ -26,15 +26,16 @@ case class SetOverlap(
   // The generated edges have a single attribute, the overlap size.
   val outputAttribute = attribute + "_overlap"
   @transient lazy val outputSig = AttributeSignature
-      .empty.addAttribute[Int](outputAttribute).signature
+    .empty.addAttribute[Int](outputAttribute).signature
 
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = (
     sources.size == 1
     && sources.head.vertexAttributes.canRead[Set](attribute)
   )
 
-  def execute(target: BigGraph,
-              manager: GraphDataManager): GraphData = {
+  def execute(
+    target: BigGraph,
+    manager: GraphDataManager): GraphData = {
     val inputGraph = target.sources.head
     val inputData = manager.obtainData(inputGraph)
     val runtimeContext = manager.runtimeContext
@@ -60,8 +61,9 @@ case class SetOverlap(
       long = long.flatMap({
         case (prefix, sets) => sets.flatMap({
           case (vid, set) => {
-            set.filter(node => node > prefix.last)
-               .map(next => (prefix :+ next, (vid, set)))
+            set
+              .filter(node => node > prefix.last)
+              .map(next => (prefix :+ next, (vid, set)))
           }
         })
       }).groupByKey(partitioner)
@@ -113,7 +115,7 @@ case class SetOverlap(
     while (ai < a.length && bi < b.length) {
       if (a(ai) == b(bi)) {
         if (prefi.hasNext && a(ai) != prefi.next) {
-          return 0  // `pref` is not a prefix of the overlap.
+          return 0 // `pref` is not a prefix of the overlap.
         }
         res += 1
         ai += 1
@@ -137,8 +139,9 @@ class SetOverlapForConnectedComponents(
     if (prefix.size == minOverlap) {
       val center: Long = sets.head._1
       sets.flatMap({
-        case (vid, set) => List(Edge(vid, center, DA(minOverlap)),
-                                Edge(center, vid, DA(minOverlap)))
+        case (vid, set) => List(
+          Edge(vid, center, DA(minOverlap)),
+          Edge(center, vid, DA(minOverlap)))
       })
     } else {
       super.edgesFor(prefix, sets)

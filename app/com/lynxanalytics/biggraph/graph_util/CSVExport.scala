@@ -10,8 +10,9 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.attributes._
 
-case class CSVData(val header: Seq[String],
-                   val data: rdd.RDD[Seq[String]]) {
+case class CSVData(
+    val header: Seq[String],
+    val data: rdd.RDD[Seq[String]]) {
   override def toString: String =
     CSVData.lineToString(header) + data.map(CSVData.lineToString(_)).collect.mkString
 
@@ -44,8 +45,9 @@ object CSVExport {
       })
   }
 
-  def exportToDirectory(graphData: GraphData,
-                        directoryPath: String): Unit = {
+  def exportToDirectory(
+    graphData: GraphData,
+    directoryPath: String): Unit = {
     val directoryHadoopPath = new hadoop.fs.Path(directoryPath)
     val fs = directoryHadoopPath.getFileSystem(new hadoop.conf.Configuration())
     if (fs.exists(directoryHadoopPath)) {
@@ -54,15 +56,17 @@ object CSVExport {
     fs.mkdirs(directoryHadoopPath)
 
     val vertexCsvData = exportVertices(graphData)
-    writeStringToFile(fs,
-                      new hadoop.fs.Path(directoryHadoopPath, "vertex-header"),
-                      CSVData.lineToString(vertexCsvData.header))
+    writeStringToFile(
+      fs,
+      new hadoop.fs.Path(directoryHadoopPath, "vertex-header"),
+      CSVData.lineToString(vertexCsvData.header))
     vertexCsvData.saveDataToDir(directoryPath + "/vertex-data")
 
     val edgeCsvData = exportEdges(graphData)
-    writeStringToFile(fs,
-                      new hadoop.fs.Path(directoryHadoopPath, "edge-header"),
-                      CSVData.lineToString(edgeCsvData.header))
+    writeStringToFile(
+      fs,
+      new hadoop.fs.Path(directoryHadoopPath, "edge-header"),
+      CSVData.lineToString(edgeCsvData.header))
     edgeCsvData.saveDataToDir(directoryPath + "/edge-data")
   }
 
@@ -82,9 +86,10 @@ object CSVExport {
     }
   }
 
-  private def writeStringToFile(fs: hadoop.fs.FileSystem,
-                                path: hadoop.fs.Path,
-                                contents: String): Unit = {
+  private def writeStringToFile(
+    fs: hadoop.fs.FileSystem,
+    path: hadoop.fs.Path,
+    contents: String): Unit = {
     val stream = fs.create(path)
     stream.write(contents.getBytes("UTF-8"))
     stream.close()

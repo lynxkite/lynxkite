@@ -40,9 +40,9 @@ class AttributeSignature private (
 
   def addAttribute[T: TypeTag](name: String): SignatureExtension = {
     SignatureExtension(
-      new AttributeSignature(attributes +
-                               (name -> TypedAttributeIndex[T](attributeSeq.size)),
-                             attributeSeq :+ name),
+      new AttributeSignature(
+        attributes + (name -> TypedAttributeIndex[T](attributeSeq.size)),
+        attributeSeq :+ name),
       PrimitiveCloner(1))
   }
 
@@ -96,14 +96,16 @@ trait DenseAttributesMaker extends Serializable {
  * This is used to conveniently create new signatures from old
  * ones together with the cloner using the builder pattern.
  */
-case class SignatureExtension(signature: AttributeSignature,
-                              cloner: ExtensionCloner) {
+case class SignatureExtension(
+    signature: AttributeSignature,
+    cloner: ExtensionCloner) {
   def addAttribute[T: TypeTag](name: String): SignatureExtension = {
     val oneStepExtension = signature.addAttribute[T](name)
-    SignatureExtension(oneStepExtension.signature, cloner.composeWith(oneStepExtension.cloner))
+    SignatureExtension(
+      oneStepExtension.signature,
+      cloner.composeWith(oneStepExtension.cloner))
   }
 }
-
 
 /*
  * Class used to represent raw attribute data on entities (e.g. nodes, edges).
@@ -136,10 +138,11 @@ private[attributes] case class PrimitiveCloner(numNewAttributes: Int) extends Ex
   def clone(original: DenseAttributes): DenseAttributes = {
     original.cloneWithAdditionalAttributes(numNewAttributes)
   }
+
   def composeWith(nextCloner: ExtensionCloner): ExtensionCloner = {
     nextCloner match {
-      case PrimitiveCloner(otherNumNewAttributes)
-          => PrimitiveCloner(numNewAttributes + otherNumNewAttributes)
+      case PrimitiveCloner(otherNumNewAttributes) =>
+        PrimitiveCloner(numNewAttributes + otherNumNewAttributes)
     }
   }
 }
