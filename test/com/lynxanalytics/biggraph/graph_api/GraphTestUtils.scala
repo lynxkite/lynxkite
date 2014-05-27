@@ -47,17 +47,17 @@ class InstantiateSimpleGraph extends GraphOperation {
     val nameIdx = vertexSig.writeIndex[String]("name")
     val ageIdx = vertexSig.writeIndex[Double]("age")
     val vertices = Seq(
-      (0l, vertexMaker.make.set(nameIdx, "Adam").set(ageIdx, 20.3)),
-      (1l, vertexMaker.make.set(nameIdx, "Eve").set(ageIdx, 18.2)),
-      (2l, vertexMaker.make.set(nameIdx, "Bob").set(ageIdx, 50.3)))
+        (0l, vertexMaker.make.set(nameIdx, "Adam").set(ageIdx, 20.3)),
+        (1l, vertexMaker.make.set(nameIdx, "Eve").set(ageIdx, 18.2)),
+        (2l, vertexMaker.make.set(nameIdx, "Bob").set(ageIdx, 50.3)))
 
     val edgeMaker = edgeSig.maker
     val commentIdx = edgeSig.writeIndex[String]("comment")
     val edges = Seq(
-      new Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
-      new Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
-      new Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
-      new Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
+        new Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
+        new Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
+        new Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
+        new Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
 
     executionCounter += 1
 
