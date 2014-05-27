@@ -22,8 +22,9 @@ case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation 
     val sig = vertexAttributes(Seq())
     val maker = sig.maker
     val vertices = nodes.map({ case (n, edges) => (n.toLong, maker.make()) })
-    val edges = nodes.flatMap({ case (n, edges) =>
-      edges.map(e => Edge(n.toLong, e.toLong, maker.make()))
+    val edges = nodes.flatMap({
+      case (n, edges) =>
+        edges.map(e => Edge(n.toLong, e.toLong, maker.make()))
     })
     return new SimpleGraphData(
       target,
@@ -34,7 +35,7 @@ case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation 
 }
 
 class ConnectedComponentsTest
-  extends FunSuite with TestBigGraphManager with TestGraphDataManager {
+    extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   // Creates the graph specified by `nodes` and applies ConnectedComponents to it.
   // Returns the resulting component attributes in an easy-to-use format.
   def getComponents(nodes: Seq[(Int, Seq[Int])], local: Boolean): Map[Int, Int] = {
