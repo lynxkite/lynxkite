@@ -41,9 +41,9 @@ class ConnectedComponentsTest extends FunSuite with TestBigGraphManager
     val graphManager = cleanGraphManager("SetOverlapTest")
     val dataManager = cleanDataManager("SetOverlapTest")
     val inputGraph = graphManager.deriveGraph(Seq(), GraphByEdgeLists(nodes))
-    val limit = if (local) 100000 else 0
+    ConnectedComponents.maxEdgesProcessedLocally = if (local) 100000 else 0
     val outputGraph = graphManager.deriveGraph(
-      Seq(inputGraph), ConnectedComponents("component", limit))
+      Seq(inputGraph), ConnectedComponents("component"))
     val idx = outputGraph.vertexAttributes.readIndex[Long]("component")
     val vertices = dataManager.obtainData(outputGraph).vertices
     return vertices.map({ case (n, da) => (n.toInt, da(idx).toInt) }).collect.toMap

@@ -13,10 +13,12 @@ import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
 import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 
 // Generates a new vertex attribute, that is a component ID.
+private object ConnectedComponents {
+  // A "constant", but we want to use a small value in the unit tests.
+  var maxEdgesProcessedLocally = 100000
+}
 case class ConnectedComponents(
-    attribute: String,
-    // This parameter is basically for testing.
-    maxEdgesProcessedLocally: Int = 100000) extends GraphOperation {
+    attribute: String) extends GraphOperation {
   type ComponentId = VertexId
 
   @transient lazy val outputSig = AttributeSignature
@@ -60,7 +62,7 @@ case class ConnectedComponents(
       return new spark.rdd.EmptyRDD[(VertexId, ComponentId)](graph.sparkContext)
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
-    if (edgeCount <= maxEdgesProcessedLocally) {
+    if (edgeCount <= ConnectedComponents.maxEdgesProcessedLocally) {
       return getComponentsLocal(graph)
     } else {
       return getComponentsDist(graph)
