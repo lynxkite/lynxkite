@@ -22,7 +22,7 @@ object TestUtils {
 trait TestTempDir {
   val sysTempDir = System.getProperty("java.io.tmpdir")
   val myTempDir = new File(
-      "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
+    "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
   myTempDir.mkdir
 
   def tempDir(dirName: String): File = new File(myTempDir, dirName)
@@ -30,10 +30,10 @@ trait TestTempDir {
 
 private object SparkContextContainer {
   lazy val sparkContext = BigGraphSparkContext(
-      "BigGraphTests",
-      "local",
-      useJars = false,
-      debugKryo = false)  // Set this to true if you are debugging kryo issues.
+    "BigGraphTests",
+    "local",
+    useJars = false,
+    debugKryo = false) // Set this to true if you are debugging kryo issues.
 }
 
 trait TestSparkContext {

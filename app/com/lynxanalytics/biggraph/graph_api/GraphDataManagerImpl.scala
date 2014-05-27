@@ -19,7 +19,7 @@ private[graph_api] class GraphDataManagerImpl(sc: spark.SparkContext,
 
   private def hasGraph(bigGraph: BigGraph): Boolean = {
     val verticesHadoopPath = new hadoop.fs.Path(
-        verticesPath(bigGraph) + "/_SUCCESS")
+      verticesPath(bigGraph) + "/_SUCCESS")
     val edgesHadoopPath = new hadoop.fs.Path(edgesPath(bigGraph) + "/_SUCCESS")
     val fs = verticesHadoopPath.getFileSystem(new hadoop.conf.Configuration())
     return fs.exists(verticesHadoopPath) && fs.exists(edgesHadoopPath)
@@ -39,7 +39,7 @@ private[graph_api] class GraphDataManagerImpl(sc: spark.SparkContext,
     this.synchronized {
       if (!dataCache.contains(gUID)) {
         dataCache(gUID) = tryToLoadGraphData(bigGraph).getOrElse(
-            bigGraph.operation.execute(bigGraph, this))
+          bigGraph.operation.execute(bigGraph, this))
       }
     }
     dataCache(gUID)
@@ -53,7 +53,7 @@ private[graph_api] class GraphDataManagerImpl(sc: spark.SparkContext,
 
   // This is pretty sad, but I haven't find an automatic way to get the number of cores.
   private val numCoresPerExecutor = scala.util.Properties.envOrElse(
-      "NUM_CORES_PER_EXECUTOR", "4").toInt
+    "NUM_CORES_PER_EXECUTOR", "4").toInt
   private val bytesInGb = scala.math.pow(2, 30)
   def runtimeContext =
     RuntimeContext(

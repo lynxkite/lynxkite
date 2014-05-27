@@ -3,8 +3,7 @@ package com.lynxanalytics.biggraph.graph_api.attributes
 import scala.reflect.runtime.universe._
 
 object DoubleAttributeReader {
-  def getDoubleReader(sig: AttributeSignature, name: String)
-      : Option[AttributeReader[Double]] = {
+  def getDoubleReader(sig: AttributeSignature, name: String): Option[AttributeReader[Double]] = {
     if (sig.canRead[Double](name)) {
       Some(new SimpleReader[Double](sig.readIndex[Double](name)))
     } else if (sig.canRead[Long](name)) {
@@ -15,8 +14,7 @@ object DoubleAttributeReader {
     }
   }
 
-  def getDoubleReaders(sig: AttributeSignature)
-      : (Seq[String], Seq[AttributeReader[Double]]) = {
+  def getDoubleReaders(sig: AttributeSignature): (Seq[String], Seq[AttributeReader[Double]]) = {
     sig.attributeSeq
       .flatMap({
         name => getDoubleReader(sig, name).map(reader => (name, reader))
@@ -31,7 +29,7 @@ class SimpleReader[T](idx: AttributeReadIndex[T]) extends AttributeReader[T] {
   }
 }
 
-class ConvertedAttributeReader[S,T](
+class ConvertedAttributeReader[S, T](
     idx: AttributeReadIndex[S], conversion: S => T) extends AttributeReader[T] {
   def readFrom(attr: DenseAttributes): T = {
     return conversion(attr(idx))
@@ -46,8 +44,7 @@ object AttributeUtil {
    * Also first getting the indexes and then using those to get value from the
    * individual DenseAttributes objects is faster.
    */
-  def getAttributeValues[T: TypeTag](sig: AttributeSignature, attr: DenseAttributes)
-      : Map[String, T] = {
+  def getAttributeValues[T: TypeTag](sig: AttributeSignature, attr: DenseAttributes): Map[String, T] = {
     sig.getAttributesReadableAs[T]
       .map(name => (name, attr(sig.readIndex[T](name)))).toMap
   }
