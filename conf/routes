@@ -9,5 +9,4 @@ GET  /data/verticesCSV com.lynxanalytics.biggraph.serving.CSVServer.verticesCSVG
 GET  /data/edgesCSV    com.lynxanalytics.biggraph.serving.CSVServer.edgesCSVGet
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
-GET  /UCU8HB0d6fQJwyD8 controllers.Assets.at(path="/public", file="clusterManager.html")
 GET  /*file            controllers.Assets.at(path="/public", file)
