@@ -32,10 +32,24 @@ class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: Gr
   @transient lazy val edgeAttributes: AttributeSignature =
       operation.edgeAttributes(sources)
 
+  @transient lazy val properties: BigGraphProperties =
+      operation.targetProperties(sources)
+
   @transient lazy val toLongString: String = "[%s](%s)".format(
       operation.toString,
       sources.map(_.toLongString).mkString(","))
 }
+
+/*
+ * Class used to characterize certain special classes of BigGraphs.
+ *
+ * If a property below is true, it means the graph is guaranteed to have that propery. False
+ * does not mean that the graph is guaranteed to not have the property, it only means it is not
+ * known.
+ */
+case class BigGraphProperties(
+  // If there is an edge A->B then there is also an edge B->A.
+  symmetricEdges: Boolean = false)
 
 /*
  * Interface for a repository of BigGraph objects.
