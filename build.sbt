@@ -29,6 +29,8 @@ libraryDependencies ++= Seq(
 
 play.Project.playScalaSettings
 
+scalariformSettings
+
 // org.scalatest does not take the same testOptions as the one included in Play!
 testOptions in Test := Nil
 
