@@ -21,13 +21,11 @@ case class GraphBySetAttribute(attr: String, nodes: Seq[(Int, Seq[Int])]) extend
     val sig = vertexAttributes(Seq())
     val maker = sig.maker
     val idx = sig.writeIndex[Array[Long]](attr)
-    val vertices = nodes.map({
-      case (vid, set) => {
-        val da = maker.make()
-        da.set(idx, set.map(_.toLong).toArray)
-        (vid.toLong, da)
-      }
-    })
+    val vertices = nodes.map({ case (vid, set) => {
+      val da = maker.make()
+      da.set(idx, set.map(_.toLong).toArray)
+      (vid.toLong, da)
+    }})
     return new SimpleGraphData(
       target,
       sc.parallelize(vertices),
@@ -50,20 +48,18 @@ class SetOverlapTest extends FunSuite with TestBigGraphManager with TestGraphDat
   }
 
   test("triangle") {
-    val overlaps = getOverlaps(Seq(
-      0 -> Seq(1, 2),
-      1 -> Seq(2, 3),
-      2 -> Seq(1, 3)),
-      minOverlap = 1)
+    val overlaps = getOverlaps(Seq(0 -> Seq(1, 2),
+                                   1 -> Seq(2, 3),
+                                   2 -> Seq(1, 3)),
+                               minOverlap = 1)
     assert(overlaps == Seq((0, 1, 1), (0, 2, 1), (1, 0, 1), (1, 2, 1), (2, 0, 1), (2, 1, 1)))
   }
 
   test("minOverlap too high") {
-    val overlaps = getOverlaps(Seq(
-      0 -> Seq(1, 2),
-      1 -> Seq(2, 3),
-      2 -> Seq(1, 3)),
-      minOverlap = 2)
+    val overlaps = getOverlaps(Seq(0 -> Seq(1, 2),
+                                   1 -> Seq(2, 3),
+                                   2 -> Seq(1, 3)),
+                               minOverlap = 2)
     assert(overlaps == Seq())
   }
 
@@ -71,8 +67,8 @@ class SetOverlapTest extends FunSuite with TestBigGraphManager with TestGraphDat
     // Tries to trigger the use of longer prefixes.
     val N = 100
     assert(SetOverlap.SetListBruteForceLimit < N)
-    val overlaps = getOverlaps(
-      (0 to N).map(i => i -> Seq(-3, -2, -1, i)), minOverlap = 2)
+    val overlaps = getOverlaps((0 to N).map(i => i -> Seq(-3, -2, -1, i)),
+                               minOverlap = 2)
     val expected = for {
       a <- (0 to N)
       b <- (0 to N)

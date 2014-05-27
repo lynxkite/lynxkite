@@ -10,33 +10,32 @@ import com.lynxanalytics.biggraph.graph_api._
 class CliquesTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   private def allConnected(
     set: Seq[VertexId], v: VertexId, edges: Set[(VertexId, VertexId)]): Boolean = {
-    set.forall(u => edges.contains((u, v)) && edges.contains((v, u)))
+    set.forall(u => edges.contains((u,v)) && edges.contains((v,u)))
   }
 
-  private def childMaxCliquesOf(
-    currentSet: Seq[VertexId],
-    vertices: Seq[VertexId],
-    edges: Set[(VertexId, VertexId)]): Seq[Seq[VertexId]] = {
+  private def childMaxCliquesOf(currentSet: Seq[VertexId],
+                                vertices: Seq[VertexId],
+                                edges: Set[(VertexId, VertexId)]): Seq[Seq[VertexId]] = {
     var reportCurrent = true
     val csi = currentSet.iterator.buffered
     val resultsFromChildren = vertices.flatMap(
-      v => {
-        if (csi.hasNext && csi.head == v) { // We already have this vertex
-          csi.next
-          Seq()
-        } else {
-          if (allConnected(currentSet, v, edges)) {
-            reportCurrent = false
-            if (currentSet.lastOption.forall(_ < v)) { // currentSet + {v} is a child set
-              childMaxCliquesOf(currentSet :+ v, vertices, edges)
+        v => {
+          if (csi.hasNext && csi.head == v) { // We already have this vertex
+            csi.next
+            Seq()
+          } else {
+            if (allConnected(currentSet, v, edges)) {
+              reportCurrent = false
+              if (currentSet.lastOption.forall(_ < v)) { // currentSet + {v} is a child set
+                childMaxCliquesOf(currentSet :+ v, vertices, edges)
+              } else {
+                Seq()
+              }
             } else {
               Seq()
             }
-          } else {
-            Seq()
           }
-        }
-      })
+        })
     if (reportCurrent) {
       resultsFromChildren :+ currentSet
     } else {
@@ -55,9 +54,9 @@ class CliquesTest extends FunSuite with TestBigGraphManager with TestGraphDataMa
     val dataManager = cleanDataManager("checkrandomgraphcliques")
     val rnd = new Random(0)
     for (i <- (0 until 20)) {
-      val graph = graphManager.deriveGraph(
-        Seq(),
-        SimpleRandomGraph(rnd.nextInt(20), rnd.nextInt(), rnd.nextFloat()))
+      val graph = graphManager.deriveGraph(Seq(), SimpleRandomGraph(rnd.nextInt(20),
+                                                                    rnd.nextInt(),
+                                                                    rnd.nextFloat()))
       val graphData = dataManager.obtainData(graph)
       val minCliqueSize = rnd.nextInt(5) + 1
       val cliquesBG = graphManager.deriveGraph(Seq(graph), FindMaxCliques("cliques", minCliqueSize))
