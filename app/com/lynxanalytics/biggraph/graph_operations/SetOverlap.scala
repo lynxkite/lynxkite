@@ -74,7 +74,9 @@ case class SetOverlap(
     val edges: rdd.RDD[Edge[DenseAttributes]] = short.flatMap({
       case (prefix, sets) => edgesFor(prefix, sets)
     })
-    return new SimpleGraphData(target, inputData.vertices, edges)
+    // Wrap the vertex RDD in a UnionRDD. This way it can have a distinct name.
+    val vertices = sc.union(inputData.vertices)
+    return new SimpleGraphData(target, vertices, edges)
   }
 
   def vertexAttributes(input: Seq[BigGraph]) = input.head.vertexAttributes

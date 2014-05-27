@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.attributes._
 
 // Quick way to make a graph where the nodes have a set-valued attribute.
-case class InputGraph(attr: String, nodes: Seq[(Int, Seq[Int])]) extends GraphOperation {
+case class GraphBySetAttribute(attr: String, nodes: Seq[(Int, Seq[Int])]) extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 0)
   def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature =
     AttributeSignature.empty.addAttribute[Array[Long]](attr).signature
@@ -40,7 +40,7 @@ class SetOverlapTest extends FunSuite with TestBigGraphManager with TestGraphDat
   def getOverlaps(nodes: Seq[(Int, Seq[Int])], minOverlap: Int): Seq[(Int, Int, Int)] = {
     val graphManager = cleanGraphManager("SetOverlapTest")
     val dataManager = cleanDataManager("SetOverlapTest")
-    val inputGraph = graphManager.deriveGraph(Seq(), InputGraph("set", nodes))
+    val inputGraph = graphManager.deriveGraph(Seq(), GraphBySetAttribute("set", nodes))
     val outputGraph = graphManager.deriveGraph(Seq(inputGraph), SetOverlap("set", minOverlap))
     val idx = outputGraph.edgeAttributes.readIndex[Int]("set_overlap")
     val edges = dataManager.obtainData(outputGraph).edges
