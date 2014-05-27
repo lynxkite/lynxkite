@@ -16,6 +16,8 @@ abstract class GraphOperation extends Serializable {
   // The edge attribute signature of the graph resulting from this operation.
   def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature
 
+  def targetProperties(sources: Seq[BigGraph]): BigGraphProperties = BigGraphProperties()
+
   def gUID(): UUID = {
     val buffer = new ByteArrayOutputStream
     val objectStream = new ObjectOutputStream(buffer)

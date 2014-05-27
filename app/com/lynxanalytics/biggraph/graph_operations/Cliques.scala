@@ -49,6 +49,8 @@ case class FindMaxCliques(
   def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) =
     AttributeSignature.empty
 
+  override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
+    new BigGraphProperties(symmetricEdges = true)
 
   // Implementaion of the actual algorithm.
 
