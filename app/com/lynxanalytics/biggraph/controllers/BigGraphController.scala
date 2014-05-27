@@ -131,7 +131,7 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
     basicDataFromGraph(enviroment.bigGraphManager.deriveGraph(sourceGraphs, op))
   }
 
-  def startingOperations(request: serving.EmptyRequest): Seq[FEOperationMeta] =
+  def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
     FEOperations.getApplicableOperationMetas(Seq())
 }
 object BigGraphController {

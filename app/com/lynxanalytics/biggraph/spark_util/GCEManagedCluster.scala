@@ -6,21 +6,63 @@ import scala.util.Random
 import scala.util.Try
 import scala.sys.process._
 
-case class SlaveStatus(machineType: String, seenBySparkMaster: Boolean) {}
+import com.lynxanalytics.biggraph.bigGraphLogger
+import com.lynxanalytics.biggraph.SparkContextProvider
 
-case class ManagedSparkCluster(clusterName: String,
-                               applicationName: String,
-                               masterMachineType: String = "n1-standard-1",
-                               slaveMachineType: String = "n1-standard-1") {
+/*
+ * Represents a SPARK cluster using Google Compute Engine instances as master and workers.
+ *
+ * Linkage between masters and workers are done via host naming convention. Masters are
+ * always called ${clusterName}-master and workers are called ${clusterName}-${workerName} where
+ * workerName is lowercase alphanumeric, pariculary not containing dash. We use pre-created disk
+ * snapshots that are aware of this naming convention and does the wiring of the cluster on boot
+ * of the worker instances.
+ */
+case class GCEManagedCluster(clusterName: String,
+                             applicationName: String,
+                             isMasterStarted: Boolean,
+                             masterMachineType: String = "n1-standard-1",
+                             slaveMachineType: String = "n1-standard-1")
+    extends SparkContextProvider {
   val slaveNamePrefix = clusterName + "-"
   val masterName = clusterName + "-master"
   val clusterURL = "spark://" + masterName + ":7077"
   val clusterUI = "http://" + masterName + ":8080"
 
-  def isClusterUp: Boolean =
+  if (!isMasterStarted) startUpCluster
+
+  waitUp
+
+  val sparkContext: SparkContext = BigGraphSparkContext(applicationName, clusterURL)
+
+  override def allowsClusterResize: Boolean = true
+
+  override def numInstances: Int = {
+    synchronized {
+      runningSlaveInstances.size
+    }
+  }
+
+  override def setNumInstances(desiredNumInstances: Int): Unit = {
+    synchronized {
+      val instances = runningSlaveInstances
+      startSlaves((0 until (desiredNumInstances - instances.size)).map(i => nextInstanceName))
+      killSlaves(Random.shuffle(instances).dropRight(desiredNumInstances))
+    }
+  }
+
+  private def isClusterUp: Boolean =
     Try(Source.fromURL(clusterUI).mkString).getOrElse("").contains(clusterURL)
 
-  def startUpCluster: Unit = {
+  private def waitUp: Unit = {
+    while (!isClusterUp) {
+      bigGraphLogger.info("Spark cluster is not up yet, waiting for a second")
+      Thread.sleep(1000)
+    }
+    bigGraphLogger.info("Spark cluster is finally up!")
+  }
+
+  private def startUpCluster: Unit = {
     synchronized {
       Seq("gcutil",
           "--service_version=v1",
@@ -41,10 +83,12 @@ case class ManagedSparkCluster(clusterName: String,
           "--service_account_scopes=https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.full_control",
           s"--disk=$masterName,deviceName=$masterName,mode=READ_WRITE,boot",
           masterName).!
+
+      waitUp
     }
   }
 
-  def shutDownCluster: Unit = {
+  private def shutDownCluster: Unit = {
     synchronized {
       killAllSlaves()
       Seq("gcutil",
@@ -52,35 +96,6 @@ case class ManagedSparkCluster(clusterName: String,
           "-f",
           "--delete_boot_pd",
           masterName).!
-    }
-  }
-
-  private var internalSparkContext: SparkContext = null
-  def sparkContext: SparkContext = internalSparkContext
-
-  def connect: SparkContext = {
-    assert(internalSparkContext == null)
-    internalSparkContext = BigGraphSparkContext(applicationName, clusterURL)
-    internalSparkContext
-  }
-
-  def disconnect: Unit = {
-    assert(internalSparkContext != null)
-    internalSparkContext.stop
-    internalSparkContext = null
-  }
-
-  def numInstances: Int = {
-    synchronized {
-      runningSlaveInstances.size
-    }
-  }
-
-  def setNumInstances(desiredNumInstances: Int): Unit = {
-    synchronized {
-      val instances = runningSlaveInstances
-      startSlaves((0 until (desiredNumInstances - instances.size)).map(i => nextInstanceName))
-      killSlaves(Random.shuffle(instances).dropRight(desiredNumInstances))
     }
   }
 
