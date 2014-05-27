@@ -73,14 +73,14 @@ case class ConnectedComponents(
     // Each node decides if it is hosting a party or going out as a guest.
     val invitations = graph.flatMap({ case (n, edges) =>
       if (Random.nextBoolean()) { // Host. All the neighbors are invited.
-        (edges.map((_, n))
-         ++ Seq((n, -1l)))  // -1 is note to self: stay at home, host party.
+        (edges.map((_, n)) +
+         ((n, -1l)))  // -1 is note to self: stay at home, host party.
       } else {  // Guest. Can always stay at home at least.
         Seq((n, n))
       }
     })
     // Accept invitations.
-    val parties = invitations.groupByKey().map({ case (n, invitations) =>
+    val moves = invitations.groupByKey().map({ case (n, invitations) =>
       if (invitations.size == 1 || invitations.contains(-1l)) {
         // Nowhere to go, or we are hosting a party. Stay at home.
         (n, n)
@@ -90,20 +90,23 @@ case class ConnectedComponents(
       }
     })
     // Update edges. First, update the source (n->c) and flip the direction.
-    val halfDone = graph.join(parties).flatMap({ case (n, (edges, c)) =>
+    val halfDone = graph.join(moves).flatMap({ case (n, (edges, c)) =>
       edges.map((_, c))
     }).groupByKey().mapValues(_.toSet)
     // Second, update the source, and merge the edge lists.
-    val almostDone = halfDone.join(parties).map({ case (n, (edges, c)) =>
+    val almostDone = halfDone.join(moves).map({ case (n, (edges, c)) =>
       (c, edges)
-    }).groupByKey().map({ case (c, edges) => (c, edges.toSet.flatten - c) })
+    }).groupByKey().map({ case (c, edgesList) =>
+      (c, edgesList.toSet.flatten - c)
+    })
     // Third, remove finished components.
     val newGraph = almostDone.filter({ case (n, edges) => edges.nonEmpty })
     // Recursion.
     val newComponents: RDD[(VertexId, ComponentId)] = getComponents(newGraph)
     // We just have to map back the component IDs to the vertices.
-    val guests = parties.map({ case (n, party) => (party, n) }).groupByKey()
-    val components = guests.leftOuterJoin(newComponents).flatMap({
+    val reverseMoves = moves.map({ case (n, party) => (party, n) })
+    val parties = reverseMoves.groupByKey()
+    val components = parties.leftOuterJoin(newComponents).flatMap({
       case (party, (guests, component)) =>
         guests.map((_, component.getOrElse(party)))
     })
