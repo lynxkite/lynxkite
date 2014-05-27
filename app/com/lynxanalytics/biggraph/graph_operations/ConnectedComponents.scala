@@ -11,6 +11,7 @@ import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
 import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
+import com.lynxanalytics.biggraph.graph_api.attributes.SignatureExtension
 
 // Generates a new vertex attribute, that is a component ID.
 private object ConnectedComponents {
@@ -18,14 +19,8 @@ private object ConnectedComponents {
   var maxEdgesProcessedLocally = 100000
 }
 case class ConnectedComponents(
-    attribute: String) extends GraphOperation {
+    outputAttribute: String) extends GraphOperation {
   type ComponentId = VertexId
-
-  @transient lazy val outputSig = AttributeSignature
-      .empty.addAttribute[Long](attribute).signature
-  @transient lazy val outputCloner = AttributeSignature
-      .empty.addAttribute[Long](attribute).cloner
-  @transient lazy val outputIdx = outputSig.writeIndex[Long](attribute)
 
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.size == 1
 
@@ -46,9 +41,11 @@ case class ConnectedComponents(
     // Get VertexId -> ComponentId map.
     val components = getComponents(graph)
     // Put ComponentId in the new attribute.
+    val SignatureExtension(sig, cloner) = vertexExtension(target.sources.head)
+    val idx = sig.writeIndex[ComponentId](outputAttribute)
     val vertices = inputData.vertices.join(components).mapValues({
       case (da, cid) =>
-        outputCloner.clone(da).set(outputIdx, cid)
+        cloner.clone(da).set(idx, cid)
     })
     return new SimpleGraphData(target, vertices, inputData.edges)
   }
@@ -137,7 +134,11 @@ case class ConnectedComponents(
     return rdd.sparkContext.parallelize(components.toSeq)
   }
 
-  def vertexAttributes(input: Seq[BigGraph]) = outputSig
+  private def vertexExtension(input: BigGraph) =
+    input.vertexAttributes.addAttribute[ComponentId](outputAttribute)
+
+  def vertexAttributes(input: Seq[BigGraph]) =
+    vertexExtension(input.head).signature
 
   def edgeAttributes(input: Seq[BigGraph]) = input.head.edgeAttributes
 }
