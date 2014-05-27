@@ -38,8 +38,7 @@ case class ConnectedComponents(
     val partitioner = new spark.HashPartitioner(cores * 5)
     // Graph as edge lists. Does not include degree-0 vertices.
     val inputEdges = inputData.edges.map(e => (e.srcId, e.dstId))
-    val graph = inputEdges.groupByKey(partitioner)
-                          .mapValues(_.toSet)
+    val graph = inputEdges.groupByKey(partitioner).mapValues(_.toSet)
     // Get VertexId -> ComponentId map.
     val components = getComponents(graph)
     // Put ComponentId in the new attribute. Degree-0 vertices are restored.
@@ -73,33 +72,38 @@ case class ConnectedComponents(
   def getComponentsDist(
     graph: RDD[(VertexId, Set[VertexId])]): RDD[(VertexId, ComponentId)] = {
     // Each node decides if it is hosting a party or going out as a guest.
-    val invitations = graph.flatMap({ case (n, edges) =>
-      if (Random.nextBoolean()) { // Host. All the neighbors are invited.
-        (edges.map((_, n)) +
-         ((n, -1l)))  // -1 is note to self: stay at home, host party.
-      } else {  // Guest. Can always stay at home at least.
-        Seq((n, n))
-      }
+    val invitations = graph.flatMap({
+      case (n, edges) =>
+        if (Random.nextBoolean()) { // Host. All the neighbors are invited.
+          (edges.map((_, n)) +
+            ((n, -1l))) // -1 is note to self: stay at home, host party.
+        } else { // Guest. Can always stay at home at least.
+          Seq((n, n))
+        }
     })
     // Accept invitations.
-    val moves = invitations.groupByKey().map({ case (n, invitations) =>
-      if (invitations.size == 1 || invitations.contains(-1l)) {
-        // Nowhere to go, or we are hosting a party. Stay at home.
-        (n, n)
-      } else {
-        // Free to go. Go somewhere else.
-        (n, invitations.find(_ != n).get)
-      }
+    val moves = invitations.groupByKey().map({
+      case (n, invitations) =>
+        if (invitations.size == 1 || invitations.contains(-1l)) {
+          // Nowhere to go, or we are hosting a party. Stay at home.
+          (n, n)
+        } else {
+          // Free to go. Go somewhere else.
+          (n, invitations.find(_ != n).get)
+        }
     })
     // Update edges. First, update the source (n->c) and flip the direction.
-    val halfDone = graph.join(moves).flatMap({ case (n, (edges, c)) =>
-      edges.map((_, c))
+    val halfDone = graph.join(moves).flatMap({
+      case (n, (edges, c)) =>
+        edges.map((_, c))
     }).groupByKey().mapValues(_.toSet)
     // Second, update the source, and merge the edge lists.
-    val almostDone = halfDone.join(moves).map({ case (n, (edges, c)) =>
-      (c, edges)
-    }).groupByKey().map({ case (c, edgesList) =>
-      (c, edgesList.toSet.flatten - c)
+    val almostDone = halfDone.join(moves).map({
+      case (n, (edges, c)) =>
+        (c, edges)
+    }).groupByKey().map({
+      case (c, edgesList) =>
+        (c, edgesList.toSet.flatten - c)
     })
     // Third, remove finished components.
     val newGraph = almostDone.filter({ case (n, edges) => edges.nonEmpty })
