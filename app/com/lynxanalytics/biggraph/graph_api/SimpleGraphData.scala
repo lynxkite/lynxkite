@@ -7,11 +7,10 @@ import org.apache.spark.rdd
 
 import attributes.DenseAttributes
 
-class SimpleGraphData(
-  val bigGraph: BigGraph,
-  val vertices: VertexRDD,
-  val edges: EdgeRDD,
-  userProvidedTriplets: TripletRDD = null)
+class SimpleGraphData(val bigGraph: BigGraph,
+                      val vertices: VertexRDD,
+                      val edges: EdgeRDD,
+                      userProvidedTriplets: TripletRDD = null)
     extends GraphData {
   val triplets: TripletRDD =
     if (userProvidedTriplets != null) {

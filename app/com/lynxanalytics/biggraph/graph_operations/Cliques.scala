@@ -18,20 +18,19 @@ case class FindMaxCliques(
     minCliqueSize: Int) extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = (sources.size == 1)
 
-  def execute(
-    target: BigGraph,
-    manager: GraphDataManager): GraphData = {
+  def execute(target: BigGraph,
+              manager: GraphDataManager): GraphData = {
     val inputGraph = target.sources.head
     val inputData = manager.obtainData(inputGraph)
     val runtimeContext = manager.runtimeContext
     val sc = runtimeContext.sparkContext
     val cug = CompactUndirectedGraph(inputData)
     val cliqueLists = computeCliques(
-      inputData,
-      cug,
-      runtimeContext.sparkContext,
-      minCliqueSize,
-      runtimeContext.numAvailableCores * 5)
+        inputData,
+        cug,
+        runtimeContext.sparkContext,
+        minCliqueSize,
+        runtimeContext.numAvailableCores * 5)
     val newSig = vertexAttributes(target.sources)
     val maker = newSig.maker
     val idx = newSig.writeIndex[Array[graphx.VertexId]](targetElementsAttribute)
@@ -50,6 +49,7 @@ case class FindMaxCliques(
   def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) =
     AttributeSignature.empty
 
+
   // Implementaion of the actual algorithm.
 
   /*
@@ -66,11 +66,10 @@ case class FindMaxCliques(
    * are in neighbors back to markedCandidates starting at position end.
    * Extends markedCandidates if necessary. Returns the new end position.
    */
-  private def SmartIntersectNA(
-    markedCandidates: mutable.ArrayBuffer[(VertexId, Boolean)],
-    start: Int,
-    end: Int,
-    neighbours: Seq[VertexId]): Int = {
+  private def SmartIntersectNA(markedCandidates: mutable.ArrayBuffer[(VertexId, Boolean)],
+                               start: Int,
+                               end: Int,
+                               neighbours: Seq[VertexId]): Int = {
     var source = start
     var target = end
     val nit = neighbours.iterator.buffered
@@ -104,14 +103,13 @@ case class FindMaxCliques(
    * end. Basically the single ArrayBuffer is used as a stack to store the
    * state of the recursion.
    */
-  private def SmartBKNA(
-    currentClique: List[VertexId],
-    markedCandidates: mutable.ArrayBuffer[(VertexId, Boolean)],
-    start: Int,
-    end: Int,
-    fullGraph: CompactUndirectedGraph,
-    cliqueCollector: mutable.ArrayBuffer[List[VertexId]],
-    minCliqueSize: Int) {
+  private def SmartBKNA(currentClique: List[VertexId],
+                        markedCandidates: mutable.ArrayBuffer[(VertexId, Boolean)],
+                        start: Int,
+                        end: Int,
+                        fullGraph: CompactUndirectedGraph,
+                        cliqueCollector: mutable.ArrayBuffer[List[VertexId]],
+                        minCliqueSize: Int) {
     if (start == end) {
       if (currentClique.size >= minCliqueSize) cliqueCollector += currentClique
       return
@@ -127,27 +125,25 @@ case class FindMaxCliques(
         if (!pit.hasNext || pit.head != id) {
           val neighbours = fullGraph.getNeighbors(id)
           val nextEnd = SmartIntersectNA(
-            markedCandidates, start, end, neighbours)
-          SmartBKNA(
-            id :: currentClique,
-            markedCandidates,
-            end,
-            nextEnd,
-            fullGraph,
-            cliqueCollector,
-            minCliqueSize)
+              markedCandidates, start, end, neighbours)
+          SmartBKNA(id :: currentClique,
+                    markedCandidates,
+                    end,
+                    nextEnd,
+                    fullGraph,
+                    cliqueCollector,
+                    minCliqueSize)
           markedCandidates(idx) = (id, true)
         }
       }
     }
   }
 
-  private def computeCliques(
-    g: GraphData,
-    cug: CompactUndirectedGraph,
-    sc: spark.SparkContext,
-    minCliqueSize: Int,
-    numTasks: Int): rdd.RDD[List[VertexId]] = {
+  private def computeCliques(g: GraphData,
+                             cug: CompactUndirectedGraph,
+                             sc: spark.SparkContext,
+                             minCliqueSize: Int,
+                             numTasks: Int): rdd.RDD[List[VertexId]] = {
     val broadcastGraph = sc.broadcast(cug)
     g.vertices.map(_._1).repartition(numTasks).flatMap(
       v => {
@@ -155,14 +151,13 @@ case class FindMaxCliques(
         val markedCandidates =
           mutable.ArrayBuffer.concat(fullGraph.getNeighbors(v).map(n => (n, n < v)))
         val collector = mutable.ArrayBuffer[List[VertexId]]()
-        SmartBKNA(
-          List(v),
-          markedCandidates,
-          0, // start
-          markedCandidates.size, // end
-          fullGraph,
-          collector,
-          minCliqueSize)
+        SmartBKNA(List(v),
+                  markedCandidates,
+                  0,  // start
+                  markedCandidates.size,  // end
+                  fullGraph,
+                  collector,
+                  minCliqueSize)
         collector
       }
     )

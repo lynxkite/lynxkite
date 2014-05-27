@@ -10,15 +10,16 @@ import org.apache.spark.rdd
 
 import attributes.DenseAttributes
 
+
 object GraphIO {
   def verticesPath(pathPrefix: String): String = pathPrefix + ".vertices"
   def edgesPath(pathPrefix: String): String = pathPrefix + ".edges"
 
   def loadFromObjectFile(sc: spark.SparkContext, pathPrefix: String): (VertexRDD, EdgeRDD) = {
     val vertices = RDDUtils.objectFile[(graphx.VertexId, DenseAttributes)](
-      sc, verticesPath(pathPrefix))
+        sc, verticesPath(pathPrefix))
     val edges = RDDUtils.objectFile[graphx.Edge[DenseAttributes]](
-      sc, edgesPath(pathPrefix))
+        sc, edgesPath(pathPrefix))
     return (vertices, edges)
   }
 
@@ -32,7 +33,8 @@ object GraphIO {
 
   def coalesceToPartitionSize[T](
     source: rdd.RDD[T],
-    desiredSizeInBytes: Int): rdd.RDD[T] = {
+    desiredSizeInBytes: Int)
+      : rdd.RDD[T] = {
     val (firstElem, firstPartSize) = source.glom.map(arr => {
       val size = arr.size
       if (size > 0) {
@@ -53,6 +55,7 @@ object GraphIO {
     else source.coalesce(
       if (desiredParitions < 1) 1 else desiredParitions.toInt)
   }
+
 
   def saveAsObjectFile(data: GraphData, pathPrefix: String) {
     coalesceToPartitionSize(
