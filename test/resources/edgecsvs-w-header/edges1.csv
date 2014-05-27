@@ -1,0 +1,6 @@
+srcVertexId|dstVertexId|comment
+10|11|Voldemort loves Harry
+11|10|Harry loves Voldemort
+21|0|Darth Vader envies Adam
+2|21|Bob loves Darth Vader
+
