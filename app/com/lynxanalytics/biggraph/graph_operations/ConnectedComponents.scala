@@ -115,28 +115,32 @@ case class ConnectedComponents(
 
   def getComponentsLocal(
     graphRDD: RDD[(VertexId, Set[VertexId])]): RDD[(VertexId, ComponentId)] = {
-    import scala.collection.mutable
-    val graph = graphRDD.collect.toMap
-    val components = mutable.Map[Long, Long]()
-    var idx = 0
-    // Breadth-first search.
-    for (node <- graph.keys) {
-      if (!components.contains(node)) {
-        components(node) = node
-        val todo = mutable.Queue(node)
-        while (todo.size > 0) {
-          val v = todo.dequeue()
-          for (u <- graph(v)) {
-            if (!components.contains(u)) {
-              components(u) = node
-              todo.enqueue(u)
+    // Moves all the data to a single worker and processes it there.
+    val componentsRDD = graphRDD.coalesce(1).mapPartitions(p => {
+      import scala.collection.mutable
+      val graph = p.toMap
+      val components = mutable.Map[Long, Long]()
+      var idx = 0
+      // Breadth-first search.
+      for (node <- graph.keys) {
+        if (!components.contains(node)) {
+          components(node) = node
+          val todo = mutable.Queue(node)
+          while (todo.size > 0) {
+            val v = todo.dequeue()
+            for (u <- graph(v)) {
+              if (!components.contains(u)) {
+                components(u) = node
+                todo.enqueue(u)
+              }
             }
           }
         }
       }
-    }
-    assert(components.size == graph.size, s"${components.size} != ${graph.size}")
-    return graphRDD.context.parallelize(components.toSeq)
+      assert(components.size == graph.size, s"${components.size} != ${graph.size}")
+      components.iterator
+    })
+    return componentsRDD
   }
 
   private def vertexExtension(input: BigGraph) =
