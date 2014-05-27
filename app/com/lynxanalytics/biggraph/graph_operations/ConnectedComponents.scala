@@ -142,7 +142,8 @@ case class ConnectedComponents(
       assert(components.size == graph.size, s"${components.size} != ${graph.size}")
       components.iterator
     })
-    return componentsRDD
+    // Split up the result by the same partitioner as was used in the input.
+    return componentsRDD.partitionBy(graphRDD.partitioner.get)
   }
 
   private def vertexExtension(input: BigGraph) =
