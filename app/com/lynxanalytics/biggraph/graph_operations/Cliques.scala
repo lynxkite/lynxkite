@@ -26,11 +26,11 @@ case class FindMaxCliques(
     val sc = runtimeContext.sparkContext
     val cug = CompactUndirectedGraph(inputData)
     val cliqueLists = computeCliques(
-        inputData,
-        cug,
-        runtimeContext.sparkContext,
-        minCliqueSize,
-        runtimeContext.numAvailableCores * 5)
+      inputData,
+      cug,
+      runtimeContext.sparkContext,
+      minCliqueSize,
+      runtimeContext.numAvailableCores * 5)
     val newSig = vertexAttributes(target.sources)
     val maker = newSig.maker
     val idx = newSig.writeIndex[Array[graphx.VertexId]](targetElementsAttribute)
@@ -48,7 +48,6 @@ case class FindMaxCliques(
 
   def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) =
     AttributeSignature.empty
-
 
   // Implementaion of the actual algorithm.
 
@@ -125,14 +124,15 @@ case class FindMaxCliques(
         if (!pit.hasNext || pit.head != id) {
           val neighbours = fullGraph.getNeighbors(id)
           val nextEnd = SmartIntersectNA(
-              markedCandidates, start, end, neighbours)
-          SmartBKNA(id :: currentClique,
-                    markedCandidates,
-                    end,
-                    nextEnd,
-                    fullGraph,
-                    cliqueCollector,
-                    minCliqueSize)
+            markedCandidates, start, end, neighbours)
+          SmartBKNA(
+            id :: currentClique,
+            markedCandidates,
+            end,
+            nextEnd,
+            fullGraph,
+            cliqueCollector,
+            minCliqueSize)
           markedCandidates(idx) = (id, true)
         }
       }
@@ -151,13 +151,14 @@ case class FindMaxCliques(
         val markedCandidates =
           mutable.ArrayBuffer.concat(fullGraph.getNeighbors(v).map(n => (n, n < v)))
         val collector = mutable.ArrayBuffer[List[VertexId]]()
-        SmartBKNA(List(v),
-                  markedCandidates,
-                  0,  // start
-                  markedCandidates.size,  // end
-                  fullGraph,
-                  collector,
-                  minCliqueSize)
+        SmartBKNA(
+          List(v),
+          markedCandidates,
+          0, // start
+          markedCandidates.size, // end
+          fullGraph,
+          collector,
+          minCliqueSize)
         collector
       }
     )

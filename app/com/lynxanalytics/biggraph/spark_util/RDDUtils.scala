@@ -8,10 +8,9 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 object RDDUtils {
   // TODO(darabos): Remove this once https://github.com/apache/spark/pull/181 is in place.
   def objectFile[T: scala.reflect.ClassTag](
-      sc: spark.SparkContext,
-      path: String,
-      minSplits: Int = -1
-      ): spark.rdd.RDD[T] = {
+    sc: spark.SparkContext,
+    path: String,
+    minSplits: Int = -1): spark.rdd.RDD[T] = {
     val sf = sc.sequenceFile(
       path,
       classOf[hadoop.io.NullWritable],
