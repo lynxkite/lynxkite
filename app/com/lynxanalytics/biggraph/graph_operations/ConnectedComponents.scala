@@ -22,6 +22,8 @@ case class ConnectedComponents(
     outputAttribute: String) extends GraphOperation {
   type ComponentId = VertexId
 
+  // TODO(darabos): Let it also check that the graph is undirected
+  //                once we have properties on BigGraphs.
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.size == 1
 
   def execute(target: BigGraph,
