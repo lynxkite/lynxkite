@@ -35,9 +35,9 @@ case class ConnectedComponents(
     // in getComponentsDist() are going to be fast.
     val partitioner = new spark.HashPartitioner(cores * 5)
     // Graph as edge lists. Does not include degree-0 vertices.
-    val edges = inputData.edges.map(e => (e.srcId, e.dstId))
-    val graph = edges.groupByKey(partitioner)
-                     .mapValues(_.toSet)
+    val inputEdges = inputData.edges.map(e => (e.srcId, e.dstId))
+    val graph = inputEdges.groupByKey(partitioner)
+                          .mapValues(_.toSet)
     // Get VertexId -> ComponentId map.
     val components = getComponents(graph)
     // Put ComponentId in the new attribute. Degree-0 vertices are restored.
@@ -47,7 +47,9 @@ case class ConnectedComponents(
       case (vid, (da, cid)) =>
         (vid, cloner.clone(da).set(idx, cid.getOrElse(vid)))
     })
-    return new SimpleGraphData(target, vertices, inputData.edges)
+    // Wrap the edge RDD in a UnionRDD. This way it can have a distinct name.
+    val edges = sc.union(inputData.edges)
+    return new SimpleGraphData(target, vertices, edges)
   }
 
   def getComponents(
