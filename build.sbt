@@ -29,8 +29,6 @@ libraryDependencies ++= Seq(
 
 play.Project.playScalaSettings
 
-scalariformSettings
-
 // org.scalatest does not take the same testOptions as the one included in Play!
 testOptions in Test := Nil
 
@@ -43,3 +41,8 @@ testOptions in Test += Tests.Argument("-fWDF", "logs/sbttest.out")
 // dependency graph visualizer setting, usage example 'sbt dependency-tree'
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
+scalariformSettings
+
+ScalariformKeys.preferences := ScalariformKeys.preferences.value
+  .setPreference(scalariform.formatter.preferences.AlignParameters, true)
+  .setPreference(scalariform.formatter.preferences.DoubleIndentClassDeclaration, true)
