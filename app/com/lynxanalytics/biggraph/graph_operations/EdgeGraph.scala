@@ -20,22 +20,20 @@ case class EdgeGraph() extends GraphOperation {
     val edgePartitioner = rc.defaultPartitioner
     val sourceData = manager.obtainData(target.sources.head)
     val edgesWithIds = RDDUtils.fastNumbered(sourceData.edges)
-    val newVertices = edgesWithIds.map { case (id, edge) => (id, edge.attr) }
+    val newVertices = edgesWithIds.map{case (id, edge) => (id, edge.attr)}
 
-    val edgesBySource = edgesWithIds.map {
-      case (id, edge) => (edge.srcId, id)
-    }.groupByKey(edgePartitioner)
-    val edgesByDest = edgesWithIds.map {
-      case (id, edge) => (edge.dstId, id)
-    }.groupByKey(edgePartitioner)
+    val edgesBySource = edgesWithIds.map{
+        case (id, edge) => (edge.srcId, id)
+      }.groupByKey(edgePartitioner)
+    val edgesByDest = edgesWithIds.map{
+        case (id, edge) => (edge.dstId, id)
+      }.groupByKey(edgePartitioner)
 
-    val newEdges = edgesBySource.join(edgesByDest).join(sourceData.vertices).flatMap {
-      case (vid, ((outgoings, incommings), vattr)) =>
-        for {
-          outgoing <- outgoings
-          incomming <- incommings
-        } yield new graphx.Edge(incomming, outgoing, vattr)
-    }
+    val newEdges = edgesBySource.join(edgesByDest).join(sourceData.vertices).flatMap{
+        case (vid, ((outgoings, incommings), vattr)) =>
+          for (outgoing <- outgoings;
+               incomming <- incommings) yield new graphx.Edge(incomming, outgoing, vattr)
+      }
 
     return new SimpleGraphData(target, newVertices, newEdges)
   }

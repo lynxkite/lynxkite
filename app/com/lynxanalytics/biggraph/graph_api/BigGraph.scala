@@ -27,14 +27,14 @@ class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: Gr
   }
 
   @transient lazy val vertexAttributes: AttributeSignature =
-    operation.vertexAttributes(sources)
+      operation.vertexAttributes(sources)
 
   @transient lazy val edgeAttributes: AttributeSignature =
-    operation.edgeAttributes(sources)
+      operation.edgeAttributes(sources)
 
   @transient lazy val toLongString: String = "[%s](%s)".format(
-    operation.toString,
-    sources.map(_.toLongString).mkString(","))
+      operation.toString,
+      sources.map(_.toLongString).mkString(","))
 }
 
 /*
@@ -47,9 +47,8 @@ class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: Gr
 abstract class BigGraphManager {
   // Creates a BigGraph object by applying the given operation
   // to the given source graphs.
-  def deriveGraph(
-    sources: Seq[BigGraph],
-    operation: GraphOperation): BigGraph
+  def deriveGraph(sources: Seq[BigGraph],
+                  operation: GraphOperation): BigGraph
 
   // Returns the BigGraph corresponding to a given GUID.
   def graphForGUID(gUID: UUID): Option[BigGraph]

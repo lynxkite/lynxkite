@@ -11,12 +11,11 @@ import java.util.UUID
 
 case class GraphStatsRequest(id: String)
 
-case class GraphStatsResponse(
-  id: String,
-  verticesCount: Long,
-  edgesCount: Long,
-  vertexAttributes: Seq[String],
-  edgeAttributes: Seq[String])
+case class GraphStatsResponse(id: String,
+                              verticesCount: Long,
+                              edgesCount: Long,
+                              vertexAttributes: Seq[String],
+                              edgeAttributes: Seq[String])
 
 /**
  * Logic for processing requests
@@ -28,11 +27,10 @@ class GraphStatsController(enviroment: BigGraphEnviroment) {
     val graphData = enviroment.graphDataManager.obtainData(bigGraph)
     val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
     val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]
-    GraphStatsResponse(
-      request.id,
-      graphData.vertices.count,
-      graphData.edges.count,
-      vAttrs,
-      eAttrs)
+    GraphStatsResponse(request.id,
+                       graphData.vertices.count,
+                       graphData.edges.count,
+                       vAttrs,
+                       eAttrs)
   }
 }
