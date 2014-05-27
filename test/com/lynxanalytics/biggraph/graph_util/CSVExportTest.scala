@@ -36,7 +36,7 @@ class CSVExportTest extends FunSuite with TestBigGraphManager with TestGraphData
 
     val dirSnapshot = TestUtils.runShellCommand(
         """|cd %s
-           |for file in `find . -type f | grep -v crc`; do
+           |for file in `find . -type f | sort | grep -v crc`; do
            |  echo $file
            |  echo '========'
            |  cat $file
