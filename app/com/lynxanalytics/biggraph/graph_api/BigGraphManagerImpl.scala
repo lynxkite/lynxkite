@@ -14,8 +14,9 @@ class BigGraphManagerImpl(val repositoryPath: String) extends BigGraphManager {
 
   loadFromDisk()
 
-  def deriveGraph(sources: Seq[BigGraph],
-                  operation: GraphOperation): BigGraph = {
+  def deriveGraph(
+    sources: Seq[BigGraph],
+    operation: GraphOperation): BigGraph = {
     val newGraph = new BigGraph(sources, operation)
     val gUID = newGraph.gUID
     if (!bigGraphs.contains(gUID)) {

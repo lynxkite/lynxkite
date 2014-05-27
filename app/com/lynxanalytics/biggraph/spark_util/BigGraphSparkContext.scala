@@ -14,11 +14,11 @@ import com.lynxanalytics.biggraph.graph_api.attributes
 
 private object SparkStageJars {
   val classesToBundle = Seq(
-      getClass(),
-      classOf[gcs.GoogleHadoopFileSystem])
+    getClass(),
+    classOf[gcs.GoogleHadoopFileSystem])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
   require(jars.forall(_.endsWith(".jar")),
-          "You need to run this from a jar. Use 'sbt stage' to get one.")
+    "You need to run this from a jar. Use 'sbt stage' to get one.")
 }
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
@@ -56,11 +56,11 @@ class BigGraphKryoRegistratorWithDebug extends BigGraphKryoRegistrator {
 
 object BigGraphSparkContext {
   def apply(
-      appName: String,
-      masterURL: String,
-      useKryo: Boolean = true,
-      debugKryo: Boolean = false,
-      useJars: Boolean = true): SparkContext = {
+    appName: String,
+    masterURL: String,
+    useKryo: Boolean = true,
+    debugKryo: Boolean = false,
+    useJars: Boolean = true): SparkContext = {
     var sparkConf = new SparkConf()
       .setMaster(masterURL)
       .setAppName(appName)
@@ -72,10 +72,10 @@ object BigGraphSparkContext {
     if (useKryo) {
       sparkConf = sparkConf
         .set("spark.serializer",
-             "org.apache.spark.serializer.KryoSerializer")
+          "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator",
-             if (debugKryo) "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistratorWithDebug"
-             else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator")
+          if (debugKryo) "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistratorWithDebug"
+          else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator")
     }
     if (useJars) {
       sparkConf = sparkConf.setJars(SparkStageJars.jars)
