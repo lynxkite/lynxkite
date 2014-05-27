@@ -31,10 +31,12 @@ case class ConnectedComponents(
     val runtimeContext = manager.runtimeContext
     val sc = runtimeContext.sparkContext
     val cores = runtimeContext.numAvailableCores
+    // This partitioner will be inherited by all derived RDDs, so joins
+    // in getComponentsDist() are going to be fast.
     val partitioner = new spark.HashPartitioner(cores * 5)
     // Graph as edge lists. Does not include degree-0 vertices.
     val edges = inputData.edges.map(e => (e.srcId, e.dstId))
-    val graph = edges.groupByKey()
+    val graph = edges.groupByKey(partitioner)
                      .mapValues(_.toSet)
     // Get VertexId -> ComponentId map.
     val components = getComponents(graph)
