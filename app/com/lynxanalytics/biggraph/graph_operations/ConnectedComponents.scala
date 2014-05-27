@@ -114,9 +114,9 @@ case class ConnectedComponents(
   }
 
   def getComponentsLocal(
-    rdd: RDD[(VertexId, Set[VertexId])]): RDD[(VertexId, ComponentId)] = {
+    graphRDD: RDD[(VertexId, Set[VertexId])]): RDD[(VertexId, ComponentId)] = {
     import scala.collection.mutable
-    val graph = rdd.collect.toMap
+    val graph = graphRDD.collect.toMap
     val components = mutable.Map[Long, Long]()
     var idx = 0
     // Breadth-first search.
@@ -136,7 +136,7 @@ case class ConnectedComponents(
       }
     }
     assert(components.size == graph.size, s"${components.size} != ${graph.size}")
-    return rdd.sparkContext.parallelize(components.toSeq)
+    return graphRDD.context.parallelize(components.toSeq)
   }
 
   private def vertexExtension(input: BigGraph) =
