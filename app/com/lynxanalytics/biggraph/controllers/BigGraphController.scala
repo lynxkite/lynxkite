@@ -51,15 +51,14 @@ trait StartingFEOperation extends FEOperation {
   def applicableTo(bigGraphs: Seq[BigGraph]) = bigGraphs.isEmpty
 }
 
-
 class FEOperationRepository {
   def registerOperation(op: FEOperation): Unit = operations += op
 
   def getApplicableOperationMetas(bigGraphs: Seq[BigGraph]): Seq[FEOperationMeta] =
-      operations
-        .zipWithIndex
-        .filter(_._1.applicableTo(bigGraphs))
-        .map{case (op, id) => FEOperationMeta(id, op.name, op.parameters(bigGraphs))}
+    operations
+      .zipWithIndex
+      .filter(_._1.applicableTo(bigGraphs))
+      .map{case (op, id) => FEOperationMeta(id, op.name, op.parameters(bigGraphs))}
 
   def getGraphOperation(spec: FEOperationSpec): GraphOperation = {
     operations(spec.operationId).toGraphOperation(spec.parameters)
@@ -122,9 +121,10 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Random seed", "0"),
         FEOperationParameterMeta("Edge probability", "0.5"))
       def toGraphOperation(parameters: Seq[String]) =
-        graph_operations.SimpleRandomGraph(parameters(0).toInt,
-                                           parameters(1).toInt,
-                                           parameters(2).toFloat)
+        graph_operations.SimpleRandomGraph(
+          parameters(0).toInt,
+          parameters(1).toInt,
+          parameters(2).toFloat)
     })
   registerOperation(
     new StartingFEOperation {
@@ -158,7 +158,7 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
 
   def deriveGraph(request: DeriveBigGraphRequest): GraphBasicData = {
     val sourceGraphs = request.sourceIds.map(
-        id => BigGraphController.getBigGraphForId(id, enviroment))
+      id => BigGraphController.getBigGraphForId(id, enviroment))
     val op = FEOperations.getGraphOperation(request.operation)
     basicDataFromGraph(enviroment.bigGraphManager.deriveGraph(sourceGraphs, op))
   }
@@ -194,17 +194,17 @@ case class InstantiateSimpleGraph2() extends GraphOperation {
     val vertexMaker = vertexSig.maker
     val nameIdx = vertexSig.writeIndex[String]("name")
     val vertices = Seq(
-        (0l, vertexMaker.make.set(nameIdx, "Adam")),
-        (1l, vertexMaker.make.set(nameIdx, "Eve")),
-        (2l, vertexMaker.make.set(nameIdx, "Bob")))
+      (0l, vertexMaker.make.set(nameIdx, "Adam")),
+      (1l, vertexMaker.make.set(nameIdx, "Eve")),
+      (2l, vertexMaker.make.set(nameIdx, "Bob")))
 
     val edgeMaker = edgeSig.maker
     val commentIdx = edgeSig.writeIndex[String]("comment")
     val edges = Seq(
-        Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
-        Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
-        Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
-        Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
+      Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
+      Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
+      Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
+      Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
 
     executionCounter += 1
 
