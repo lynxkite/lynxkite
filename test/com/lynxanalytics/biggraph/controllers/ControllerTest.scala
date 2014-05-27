@@ -34,14 +34,15 @@ object TestJsonServer extends JsonServer {
 class JsonTest extends FunSuite {
   test("call testPost with a valid fake POST message") {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
-    val request = FakeRequest(POST,
-                              "/api/test",
-                              FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
-                              Json.parse(jsonString))
+    val request = FakeRequest(
+      POST,
+      "/api/test",
+      FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
+      Json.parse(jsonString))
     val result = TestJsonServer.testPost(request)
     assert(Helpers.status(result) === OK)
     assert((Json.parse(Helpers.contentAsString(result)) \ ("attr")).toString
-        === "\"test string: Hello BigGraph!\"")
+      === "\"test string: Hello BigGraph!\"")
   }
 
   test("call testGet with a valid fake GET message") {
@@ -50,15 +51,16 @@ class JsonTest extends FunSuite {
     val result = TestJsonServer.testGet(request)
     assert(Helpers.status(result) === OK)
     assert((Json.parse(Helpers.contentAsString(result)) \ ("attr")).toString
-        === "\"test string: Hello BigGraph!\"")
+      === "\"test string: Hello BigGraph!\"")
   }
 
   test("testPost should respond with BAD_REQUEST if JSON is incorrect") {
     val jsonString = """{"bad attr":"Hello BigGraph!"}"""
-    val request = FakeRequest(POST,
-                              "/api/test",
-                              FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
-                              Json.parse(jsonString))
+    val request = FakeRequest(
+      POST,
+      "/api/test",
+      FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
+      Json.parse(jsonString))
     val result = TestJsonServer.testPost(request)
     assert(Helpers.status(result) === BAD_REQUEST)
   }
