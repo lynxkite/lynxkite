@@ -33,7 +33,7 @@ class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: Gr
     operation.edgeAttributes(sources)
 
   @transient lazy val properties: BigGraphProperties =
-      operation.targetProperties(sources)
+    operation.targetProperties(sources)
 
   @transient lazy val toLongString: String = "[%s](%s)".format(
     operation.toString,
