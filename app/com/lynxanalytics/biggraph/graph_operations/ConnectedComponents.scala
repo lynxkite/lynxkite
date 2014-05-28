@@ -24,7 +24,8 @@ case class ConnectedComponents(
 
   // TODO(darabos): Let it also check that the graph is undirected
   //                once we have properties on BigGraphs.
-  def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.size == 1
+  def isSourceListValid(sources: Seq[BigGraph]): Boolean =
+    (sources.size == 1) && sources.head.properties.symmetricEdges
 
   def execute(target: BigGraph,
               manager: GraphDataManager): GraphData = {
@@ -157,4 +158,6 @@ case class ConnectedComponents(
     vertexExtension(input.head).signature
 
   def edgeAttributes(input: Seq[BigGraph]) = input.head.edgeAttributes
+
+  override def targetProperties(input: Seq[BigGraph]) = input.head.properties
 }
