@@ -5,7 +5,6 @@ import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_api.attributes._
 import com.lynxanalytics.biggraph.spark_util
 import com.lynxanalytics.biggraph.bigGraphLogger
-//import scala.util.matching.Regex
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 import org.apache.spark
@@ -85,7 +84,6 @@ case class DummyDataParser() extends RawDataParser {
  * The GraphBuilder wires together the parsed meta and raw data into BigGraph graph format,
  * also handles reindexing the vertex ids if needed.
  */
-
 trait GraphBuilder {
   def build(vertexDataSig: AttributeSignature,
             vertexData: RDD[DenseAttributes],
@@ -102,9 +100,10 @@ trait GraphIndexer {
                               vertexFieldToId: RDD[(A, Long)]): EdgeRDD = {
     val edgesBySource: RDD[(A, (A, DenseAttributes))] = edgeData.map(edgeAttributes =>
       edgeAttributes(eSrcIdx) -> (edgeAttributes(eDstIdx), edgeAttributes))
+      .partitionBy(vertexFieldToId.partitioner.get)
     val edgesByDest: RDD[(A, (Long, DenseAttributes))] = edgesBySource.join(vertexFieldToId).map {
       case (src, ((dst, eAttr), srcId)) => dst -> (srcId, eAttr)
-    }
+    }.partitionBy(vertexFieldToId.partitioner.get)
     edgesByDest.join(vertexFieldToId).map {
       case (dst, ((srcId, eAttr), dstId)) => graphx.Edge(srcId, dstId, eAttr)
     }
@@ -118,12 +117,12 @@ case class NumberedIdFromVertexField(vertexIdFieldName: String,
             vertexData: RDD[DenseAttributes],
             edgeDataSig: AttributeSignature,
             edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
-    //val vertexIdPartitioner = new spark.HashPartitioner()
     val vertices: VertexRDD = indexVertices(vertexData)
     val vIdx = vertexDataSig.readIndex[String](vertexIdFieldName)
+    val vertexAttrPartitioner = new spark.HashPartitioner(edgeData.partitions.size)
     val vertexFieldToId = vertices.map {
       case (vertexId, vertexAttributes) => vertexAttributes(vIdx) -> vertexId
-    }
+    }.partitionBy(vertexAttrPartitioner)
     val eSrcIdx = edgeDataSig.readIndex[String](sourceEdgeFieldName)
     val eDstIdx = edgeDataSig.readIndex[String](destEdgeFieldName)
     val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexFieldToId)
@@ -142,14 +141,14 @@ case class IdFromEdgeFields(vertexIdFieldName: String,
     val vIdx = newVertexSig.writeIndex[String](vertexIdFieldName)
     val eSrcIdx = edgeDataSig.readIndex[String](sourceEdgeFieldName)
     val eDstIdx = edgeDataSig.readIndex[String](destEdgeFieldName)
-    // could be made faster probably by avoiding a DA read?
     val verticesData = edgeData.flatMap(edgeAttributes =>
       Seq(edgeAttributes(eSrcIdx), edgeAttributes(eDstIdx))).distinct
     val verticesFromEdges: RDD[(Long, (String, DenseAttributes))] =
       indexVertices(verticesData.map(id => (id, maker.make.set(vIdx, id))))
+    val vertexAttrPartitioner = new spark.HashPartitioner(edgeData.partitions.size)
     val vertexFieldToId = verticesFromEdges.map {
       case (vertexId, (field, attr)) => (field, vertexId)
-    }
+    }.partitionBy(vertexAttrPartitioner)
     val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexFieldToId)
     val vertices: VertexRDD = verticesFromEdges.map {
       case (vertexId, (field, attr)) => (vertexId, attr)
