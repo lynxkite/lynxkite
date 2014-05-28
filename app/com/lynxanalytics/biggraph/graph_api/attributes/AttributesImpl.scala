@@ -27,4 +27,6 @@ private[attributes] case class TypedAttributeIndex[T: TypeTag](idx: Int) {
   def getReaderForOperation[S](op: TypeDependentOperation[S]): AttributeReader[S] = {
     op.getReaderForIndex(new AttributeIndex[T](idx))
   }
+
+  override def toString(): String = s"TypedAttributeIndex[${typeOf[T]}]($idx)"
 }

@@ -40,9 +40,9 @@ class AttributeSignature private (
 
   def addAttribute[T: TypeTag](name: String): SignatureExtension = {
     SignatureExtension(
-      new AttributeSignature(attributes +
-                               (name -> TypedAttributeIndex[T](attributeSeq.size)),
-                             attributeSeq :+ name),
+      new AttributeSignature(
+        attributes + (name -> TypedAttributeIndex[T](attributeSeq.size)),
+        attributeSeq :+ name),
       PrimitiveCloner(1))
   }
 
@@ -105,7 +105,6 @@ case class SignatureExtension(signature: AttributeSignature,
   }
 }
 
-
 /*
  * Class used to represent raw attribute data on entities (e.g. nodes, edges).
  *
@@ -139,8 +138,8 @@ private[attributes] case class PrimitiveCloner(numNewAttributes: Int) extends Ex
   }
   def composeWith(nextCloner: ExtensionCloner): ExtensionCloner = {
     nextCloner match {
-      case PrimitiveCloner(otherNumNewAttributes)
-          => PrimitiveCloner(numNewAttributes + otherNumNewAttributes)
+      case PrimitiveCloner(otherNumNewAttributes) =>
+        PrimitiveCloner(numNewAttributes + otherNumNewAttributes)
     }
   }
 }
