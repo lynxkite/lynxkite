@@ -39,7 +39,8 @@ case class DeriveBigGraphRequest(
 trait FEOperation {
   def applicableTo(bigGraphs: Seq[BigGraph]): Boolean
   val name: String
-  val parameters: Seq[FEOperationParameterMeta]
+  def parameters(bigGraphs: Seq[BigGraph]): Seq[FEOperationParameterMeta] = parameters
+  def parameters: Seq[FEOperationParameterMeta] = ???
   def toGraphOperation(parameters: Seq[String]): GraphOperation
 }
 
@@ -57,7 +58,7 @@ class FEOperationRepository {
     operations
       .zipWithIndex
       .filter(_._1.applicableTo(bigGraphs))
-      .map { case (op, id) => FEOperationMeta(id, op.name, op.parameters) }
+      .map { case (op, id) => FEOperationMeta(id, op.name, op.parameters(bigGraphs)) }
 
   def getGraphOperation(spec: FEOperationSpec): GraphOperation = {
     operations(spec.operationId).toGraphOperation(spec.parameters)
@@ -70,7 +71,7 @@ object FEOperations extends FEOperationRepository {
   registerOperation(
     new SingleGraphFEOperation {
       val name = "Find Maximal Cliques"
-      val parameters = Seq(
+      override val parameters = Seq(
         FEOperationParameterMeta("Minimum Clique Size", "3"))
       def toGraphOperation(parameters: Seq[String]) =
         graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
@@ -78,13 +79,44 @@ object FEOperations extends FEOperationRepository {
   registerOperation(
     new SingleGraphFEOperation {
       val name = "Edge Graph"
-      val parameters = Seq()
+      override val parameters = Seq()
       def toGraphOperation(parameters: Seq[String]) = graph_operations.EdgeGraph()
+    })
+  registerOperation(
+    new FEOperation {
+      val name = "Remove non-symmetric edges"
+      private val operation = new graph_operations.RemoveNonSymmetricEdges()
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        (bigGraphs.size) == 1 && !bigGraphs.head.properties.symmetricEdges
+      override val parameters = Seq()
+      def toGraphOperation(parameters: Seq[String]) = operation
+    })
+  registerOperation(
+    new FEOperation {
+      val name = "Connected Components"
+      private val operation = new graph_operations.ConnectedComponents("component_id")
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean = operation.isSourceListValid(bigGraphs)
+      override val parameters = Seq()
+      def toGraphOperation(parameters: Seq[String]) = operation
+    })
+  registerOperation(
+    new FEOperation {
+      val name = "Edges from set overlap"
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        (bigGraphs.size) == 1 &&
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].size > 0
+      override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
+        FEOperationParameterMeta(
+          "Set attribute name",
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].head),
+        FEOperationParameterMeta("Minimum Overlap", "3"))
+      def toGraphOperation(parameters: Seq[String]) =
+        new graph_operations.SetOverlap(parameters(0), parameters(1).toInt)
     })
   registerOperation(
     new StartingFEOperation {
       val name = "Uniform Random Graph"
-      val parameters = Seq(
+      override val parameters = Seq(
         FEOperationParameterMeta("Number of vertices", "10"),
         FEOperationParameterMeta("Random seed", "0"),
         FEOperationParameterMeta("Edge probability", "0.5"))
@@ -97,7 +129,7 @@ object FEOperations extends FEOperationRepository {
   registerOperation(
     new StartingFEOperation {
       val name = "Simple Example Graph With Attributes"
-      val parameters = Seq()
+      override val parameters = Seq()
       def toGraphOperation(parameters: Seq[String]) = InstantiateSimpleGraph2()
     })
 }
