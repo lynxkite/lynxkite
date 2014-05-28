@@ -11,7 +11,7 @@ trait SparkContextProvider {
   def setNumInstances(numInstances: Int): Unit = ???
 }
 
-class StaticSparkContextProvider(master: String) {
+class StaticSparkContextProvider(master: String) extends SparkContextProvider {
   val sparkContext = spark_util.BigGraphSparkContext("BigGraphServer", master)
 }
 
