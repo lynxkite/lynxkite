@@ -21,9 +21,7 @@ case class Filename(
   def uri() = new java.net.URI(filename)
   def path() = new hadoop.fs.Path(filename)
   def open() = fs.open(path)
-  def close() = fs.close()
-
-  lazy val reader = new BufferedReader(new InputStreamReader(open))
+  def reader() = new BufferedReader(new InputStreamReader(open))
 
   def saveAsTextFile(lines: spark.rdd.RDD[String]): Unit = {
     // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.

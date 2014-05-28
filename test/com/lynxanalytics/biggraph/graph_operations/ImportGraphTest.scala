@@ -29,14 +29,14 @@ class ImportGraphTest extends FunSuite with TestBigGraphManager with TestGraphDa
     assert(graphData.vertices.count === 3)
     assert(graphData.edges.count === 4)
     assert(TestUtils.RDDToSortedString(graphData.vertices).matches(
-      """|\(([0-9]+),0,Adam,20.3\)
-         |\(([0-9]+),1,Eve,18.2\)
-         |\(([0-9]+),2,Bob,50.3\)""".stripMargin))
+      """|\(\d+,0,Adam,20.3\)
+         |\(\d+,1,Eve,18.2\)
+         |\(\d+,2,Bob,50.3\)""".stripMargin))
     assert(TestUtils.RDDToSortedString(graphData.edges).matches(
-      """|Edge\(([0-9]+),([0-9]+),0,1,Adam loves Eve\)
-         |Edge\(([0-9]+),([0-9]+),1,0,Eve loves Adam\)
-         |Edge\(([0-9]+),([0-9]+),2,0,Bob envies Adam\)
-         |Edge\(([0-9]+),([0-9]+),2,1,Bob loves Eve\)""".stripMargin))
+      """|Edge\(\d+,\d+,0,1,Adam loves Eve\)
+         |Edge\(\d+,\d+,1,0,Eve loves Adam\)
+         |Edge\(\d+,\d+,2,0,Bob envies Adam\)
+         |Edge\(\d+,\d+,2,1,Bob loves Eve\)""".stripMargin))
   }
   test("import graph from csv as two edge files including header") {
     // different separator, no quotes around strings, newline at eof

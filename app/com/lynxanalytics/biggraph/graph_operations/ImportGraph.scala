@@ -37,7 +37,6 @@ case class HeaderAsStringCSVParser(inputFile: Filename, delimiter: String) exten
   lazy val csvHeader = inputFile.reader.readLine
     .split(Pattern.quote(delimiter))
     .map(sigName => sigName.stripPrefix("\"").stripSuffix("\""))
-  inputFile.close
 
   def getSignature(): AttributeSignature = csvHeader.foldLeft(AttributeSignature.empty) {
     case (sig, name) => sig.addAttribute[String](name).signature
@@ -66,7 +65,7 @@ case class ConcatenateCSVsDataParser(inputFiles: Seq[Filename],
       if (skipFirstRow) {
         sc.textFile(file.filename).mapPartitionsWithIndex(
           (p: Int, lines: Iterator[String]) => if (p == 0) lines.drop(1) else lines,
-          true)
+          preservesPartitioning = true)
       } else {
         sc.textFile(file.filename)
       }
@@ -219,7 +218,8 @@ case class CSVImport(vertexHeader: Filename,
                      destEdgeFieldName: String,
                      delimiter: String,
                      skipFirstRow: Boolean)
-    extends ImportGraph(HeaderAsStringCSVParser(vertexHeader, delimiter),
+    extends ImportGraph(
+      HeaderAsStringCSVParser(vertexHeader, delimiter),
       ConcatenateCSVsDataParser(vertexCSVs, delimiter, skipFirstRow),
       HeaderAsStringCSVParser(edgeHeader, delimiter),
       ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
@@ -232,7 +232,8 @@ case class EdgeCSVImport(edgeHeader: Filename,
                          destEdgeFieldName: String,
                          delimiter: String,
                          skipFirstRow: Boolean)
-    extends ImportGraph(DummyMetaParser(),
+    extends ImportGraph(
+      DummyMetaParser(),
       DummyDataParser(),
       HeaderAsStringCSVParser(edgeHeader, delimiter),
       ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
