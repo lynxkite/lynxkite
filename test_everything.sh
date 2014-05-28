@@ -3,6 +3,7 @@ set -e
 
 cd `dirname $0`
 
+mkdir logs
 sbt test
 
 ./e2etest/test_server.py
