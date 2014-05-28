@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph.graph_util
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 case class Filename(
     val filename: String,
@@ -19,6 +21,9 @@ case class Filename(
   def uri() = new java.net.URI(filename)
   def path() = new hadoop.fs.Path(filename)
   def open() = fs.open(path)
+  def close() = fs.close()
+
+  lazy val reader = new BufferedReader(new InputStreamReader(open))
 
   def saveAsTextFile(lines: spark.rdd.RDD[String]): Unit = {
     // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
