@@ -58,7 +58,7 @@ class FEOperationRepository {
     operations
       .zipWithIndex
       .filter(_._1.applicableTo(bigGraphs))
-      .map{case (op, id) => FEOperationMeta(id, op.name, op.parameters(bigGraphs))}
+      .map { case (op, id) => FEOperationMeta(id, op.name, op.parameters(bigGraphs)) }
 
   def getGraphOperation(spec: FEOperationSpec): GraphOperation = {
     operations(spec.operationId).toGraphOperation(spec.parameters)
@@ -72,7 +72,7 @@ object FEOperations extends FEOperationRepository {
     new SingleGraphFEOperation {
       val name = "Find Maximal Cliques"
       override val parameters = Seq(
-          FEOperationParameterMeta("Minimum Clique Size", "3"))
+        FEOperationParameterMeta("Minimum Clique Size", "3"))
       def toGraphOperation(parameters: Seq[String]) =
         graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
     })
@@ -111,7 +111,7 @@ object FEOperations extends FEOperationRepository {
           bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].head),
         FEOperationParameterMeta("Minimum Overlap", "3"))
       def toGraphOperation(parameters: Seq[String]) =
-          new graph_operations.SetOverlap(parameters(0), parameters(1).toInt)
+        new graph_operations.SetOverlap(parameters(0), parameters(1).toInt)
     })
   registerOperation(
     new StartingFEOperation {

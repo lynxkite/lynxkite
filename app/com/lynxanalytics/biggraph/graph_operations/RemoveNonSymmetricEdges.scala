@@ -18,9 +18,10 @@ case class RemoveNonSymmetricEdges() extends GraphOperation {
     val sourceData = manager.obtainData(source)
     val bySource = sourceData.edges.map(e => (e.srcId, e)).groupByKey()
     val byDest = sourceData.edges.map(e => (e.dstId, e.srcId)).groupByKey().mapValues(_.toSet)
-    val edges = bySource.join(byDest).flatMap { case (vertexId, (outEdges, inEdgeSources)) =>
+    val edges = bySource.join(byDest).flatMap {
+      case (vertexId, (outEdges, inEdgeSources)) =>
         outEdges.filter(outEdge => inEdgeSources.contains(outEdge.dstId))
-      }
+    }
     return new SimpleGraphData(target, sc.union(sourceData.vertices), edges)
   }
 
