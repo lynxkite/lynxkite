@@ -20,14 +20,12 @@ package object biggraph {
   private val newGCEPattern = "newGCE<(.+)>".r
 
   lazy val BigGraphProductionEnviroment: BigGraphEnviroment =
-      scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
-        case staticPattern(master) =>
-          new StaticSparkContextProvider(master) with TemporaryDirEnviroment
-        case standingGCEPattern(clusterName) =>
-          new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", true)
-              with TemporaryDirEnviroment
-        case newGCEPattern(clusterName) =>
-          new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", false)
-              with TemporaryDirEnviroment
-      }
+    scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
+      case staticPattern(master) =>
+        new StaticSparkContextProvider(master) with TemporaryDirEnviroment
+      case standingGCEPattern(clusterName) =>
+        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", true) with TemporaryDirEnviroment
+      case newGCEPattern(clusterName) =>
+        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", false) with TemporaryDirEnviroment
+    }
 }

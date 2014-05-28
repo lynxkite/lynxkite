@@ -64,25 +64,27 @@ case class GCEManagedCluster(clusterName: String,
 
   private def startUpCluster: Unit = {
     synchronized {
-      Seq("gcutil",
-          "--service_version=v1",
-          "--project=big-graph-gc1",
-          "adddisk",
-          "--zone=europe-west1-b",
-          "--source_snapshot=spark-0-9-1-master",
-          masterName).!
+      Seq(
+        "gcutil",
+        "--service_version=v1",
+        "--project=big-graph-gc1",
+        "adddisk",
+        "--zone=europe-west1-b",
+        "--source_snapshot=spark-0-9-1-master",
+        masterName).!
 
-      Seq("gcutil",
-          "--service_version=v1",
-          "--project=big-graph-gc1",
-          "addinstance",
-          "--zone=europe-west1-b",
-          s"--machine_type=$masterMachineType",
-          "--network=default",
-          "--external_ip_address=ephemeral",
-          "--service_account_scopes=https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.full_control",
-          s"--disk=$masterName,deviceName=$masterName,mode=READ_WRITE,boot",
-          masterName).!
+      Seq(
+        "gcutil",
+        "--service_version=v1",
+        "--project=big-graph-gc1",
+        "addinstance",
+        "--zone=europe-west1-b",
+        s"--machine_type=$masterMachineType",
+        "--network=default",
+        "--external_ip_address=ephemeral",
+        "--service_account_scopes=https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.full_control",
+        s"--disk=$masterName,deviceName=$masterName,mode=READ_WRITE,boot",
+        masterName).!
 
       waitUp
     }
@@ -91,11 +93,12 @@ case class GCEManagedCluster(clusterName: String,
   private def shutDownCluster: Unit = {
     synchronized {
       killAllSlaves()
-      Seq("gcutil",
-          "deleteinstance",
-          "-f",
-          "--delete_boot_pd",
-          masterName).!
+      Seq(
+        "gcutil",
+        "deleteinstance",
+        "-f",
+        "--delete_boot_pd",
+        masterName).!
     }
   }
 
@@ -108,16 +111,18 @@ case class GCEManagedCluster(clusterName: String,
 
     val fullSlaveNames = slaveNames.map(slaveNamePrefix + _)
     val diskCmd =
-      Seq("gcutil",
-          "--service_version=v1",
-          "--project=big-graph-gc1",
-          "adddisk",
-          "--zone=europe-west1-b",
-          "--source_snapshot=spark-0-9-1-slave") ++ fullSlaveNames
+      Seq(
+        "gcutil",
+        "--service_version=v1",
+        "--project=big-graph-gc1",
+        "adddisk",
+        "--zone=europe-west1-b",
+        "--source_snapshot=spark-0-9-1-slave") ++ fullSlaveNames
     diskCmd.!
     for (slaveName <- fullSlaveNames) {
-    val instanceCmd: Seq[String] =
-      Seq("gcutil",
+      val instanceCmd: Seq[String] =
+        Seq(
+          "gcutil",
           "--service_version=v1",
           "--project=big-graph-gc1",
           "addinstance",
@@ -136,16 +141,18 @@ case class GCEManagedCluster(clusterName: String,
   private def killSlaves(slaveNames: Seq[String]): Unit = {
     if (slaveNames.isEmpty) return
     val fullNames = slaveNames.map(slaveNamePrefix + _)
-    (Seq("gcutil",
-         "deleteinstance",
-         "-f",
-         "--delete_boot_pd") ++ fullNames).!
+    (Seq(
+      "gcutil",
+      "deleteinstance",
+      "-f",
+      "--delete_boot_pd") ++ fullNames).!
   }
 
   private def runningSlaveInstances(): Seq[String] = {
-    val cmd = Seq("sh", "-c",
-      "gcutil listinstances --columns name 2> /dev/null | " +
-      "grep -v \"+-\"")
+    val cmd = Seq(
+      "sh",
+      "-c",
+      "gcutil listinstances --columns name 2> /dev/null | grep -v \"+-\"")
     val slave_list = cmd.!!
 
     slave_list.split("\n")
