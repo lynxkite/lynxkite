@@ -54,15 +54,17 @@ object CSVExport {
     fs.mkdirs(directoryHadoopPath)
 
     val vertexCsvData = exportVertices(graphData)
-    writeStringToFile(fs,
-                      new hadoop.fs.Path(directoryHadoopPath, "vertex-header"),
-                      CSVData.lineToString(vertexCsvData.header))
+    writeStringToFile(
+      fs,
+      new hadoop.fs.Path(directoryHadoopPath, "vertex-header"),
+      CSVData.lineToString(vertexCsvData.header))
     vertexCsvData.saveDataToDir(directoryPath + "/vertex-data")
 
     val edgeCsvData = exportEdges(graphData)
-    writeStringToFile(fs,
-                      new hadoop.fs.Path(directoryHadoopPath, "edge-header"),
-                      CSVData.lineToString(edgeCsvData.header))
+    writeStringToFile(
+      fs,
+      new hadoop.fs.Path(directoryHadoopPath, "edge-header"),
+      CSVData.lineToString(edgeCsvData.header))
     edgeCsvData.saveDataToDir(directoryPath + "/edge-data")
   }
 
