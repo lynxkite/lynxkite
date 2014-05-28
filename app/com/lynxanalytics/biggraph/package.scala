@@ -7,17 +7,17 @@ package object biggraph {
 
   // static<hostname_of_master>
   // We just connect to a standing spark cluster, no resize support.
-  private val staticPattern = "static<([^<]+)>".r
+  private val staticPattern = "static<(.+)>".r
 
   // standingGCE<name_of_cluster>
-  // We just connect to an already initated spark cluster running on Google Compute Engine.
+  // We just connect to an already initiated spark cluster running on Google Compute Engine.
   // Supports resizing.
-  private val standingGCEPattern = "standingGCE<([^<]+)>".r
+  private val standingGCEPattern = "standingGCE<(.+)>".r
 
   // newGCE<name_of_cluster>
   // We need to create a new spark cluster running on Google Compute Engine.
   // Supports resizing.
-  private val newGCEPattern = "newGCE<([^<]+)>".r
+  private val newGCEPattern = "newGCE<(.+)>".r
 
   lazy val BigGraphProductionEnviroment: BigGraphEnviroment =
       scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {

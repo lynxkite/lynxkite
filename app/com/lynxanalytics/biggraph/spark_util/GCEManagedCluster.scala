@@ -147,8 +147,9 @@ case class GCEManagedCluster(clusterName: String,
       "gcutil listinstances --columns name 2> /dev/null | " +
       "grep -v \"+-\"")
     val slave_list = cmd.!!
-      slave_list.split("\n")
-      .filter(!_.isEmpty())
+
+    slave_list.split("\n")
+      .filter(_.nonEmpty)
       .map { slave_line =>
         val Array(_, name) = slave_line.split("\\|").map(_.trim)
         name
