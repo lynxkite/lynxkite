@@ -1,0 +1,9 @@
+<div class="fileDialog">
+  <h3>{{question}}</h3>
+  <form role="form" class="params">
+    <input type="text" class="form-control" ng-model="results.fileName"/>
+
+    <button class="btn btn-default" ng-click="close()">OK</button>
+    <button class="btn btn-default" ng-click="$dismiss('canceled')">Cancel</button>
+  </form>
+</div>

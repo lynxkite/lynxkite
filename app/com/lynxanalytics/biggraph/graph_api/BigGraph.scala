@@ -27,14 +27,14 @@ class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: Gr
   }
 
   @transient lazy val vertexAttributes: AttributeSignature =
-      operation.vertexAttributes(sources)
+    operation.vertexAttributes(sources)
 
   @transient lazy val edgeAttributes: AttributeSignature =
-      operation.edgeAttributes(sources)
+    operation.edgeAttributes(sources)
 
   @transient lazy val toLongString: String = "[%s](%s)".format(
-      operation.toString,
-      sources.map(_.toLongString).mkString(","))
+    operation.toString,
+    sources.map(_.toLongString).mkString(","))
 }
 
 /*

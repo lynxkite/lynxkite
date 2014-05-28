@@ -1,0 +1,8 @@
+<configuration>
+  <property>
+    <name>fs.gs.impl</name>
+    <value>com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem</value>
+  </property>
+  <property><name>fs.gs.project.id</name><value>big-graph-gc1</value></property>
+  <property><name>fs.gs.system.bucket</name><value>euspark</value></property>
+</configuration>

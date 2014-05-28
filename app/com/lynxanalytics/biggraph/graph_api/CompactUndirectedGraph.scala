@@ -16,29 +16,30 @@ object CompactUndirectedGraph {
         case (v, (outs, ins)) => (v, (outs.toSet & ins.toSet - v).toArray.sorted)
       })
     val compact = adjList.mapPartitions({
-      it: Iterator[(graphx.VertexId, Array[VertexId])] => {
-        val neighbors = mutable.ArrayBuffer[VertexId]()
-        val indices = mutable.ArrayBuffer[Int]()
-        val ids = mutable.ArrayBuffer[VertexId]()
-        var index = 0
-        it.foreach{
-          case (v, ns) => {
-            ids += v
-            indices += index
-            neighbors ++= ns
-            index += ns.size
+      it: Iterator[(graphx.VertexId, Array[VertexId])] =>
+        {
+          val neighbors = mutable.ArrayBuffer[VertexId]()
+          val indices = mutable.ArrayBuffer[Int]()
+          val ids = mutable.ArrayBuffer[VertexId]()
+          var index = 0
+          it.foreach {
+            case (v, ns) => {
+              ids += v
+              indices += index
+              neighbors ++= ns
+              index += ns.size
+            }
           }
+          Iterator(((ids.toArray, indices.toArray), neighbors.toArray))
         }
-        Iterator(((ids.toArray, indices.toArray), neighbors.toArray))
-      }
     })
 
     val perPartitionData = compact.collect
     val numVertices = perPartitionData
-      .map{ case ((ids, indices), neighbors) => ids.size }
+      .map { case ((ids, indices), neighbors) => ids.size }
       .sum
     val numEdges = perPartitionData
-      .map{ case ((ids, indices), neighbors) => neighbors.size }
+      .map { case ((ids, indices), neighbors) => neighbors.size }
       .sum
 
     val fullNeighbors = Array.ofDim[VertexId](numEdges)

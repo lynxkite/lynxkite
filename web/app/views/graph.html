@@ -23,6 +23,7 @@
       <p>Edge attributes:
 	<span class="attributes" ng-repeat="attr in stats.edgeAttributes">{{attr}}</span>
       </p>
+      <button class="btn btn-default" ng-click="saveCSV()">Save as CSV</button>
       <p><a href="/data/verticesCSV?guid={{id}}">Download vertices as CSV</a></p>
       <p><a href="/data/edgesCSV?guid={{id}}">Download edges as CSV</a></p>
     </div>
