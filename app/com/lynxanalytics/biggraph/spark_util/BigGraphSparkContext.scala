@@ -14,11 +14,12 @@ import com.lynxanalytics.biggraph.graph_api.attributes
 
 private object SparkStageJars {
   val classesToBundle = Seq(
-      getClass(),
-      classOf[gcs.GoogleHadoopFileSystem])
+    getClass(),
+    classOf[gcs.GoogleHadoopFileSystem])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
-  require(jars.forall(_.endsWith(".jar")),
-          "You need to run this from a jar. Use 'sbt stage' to get one.")
+  require(
+    jars.forall(_.endsWith(".jar")),
+    "You need to run this from a jar. Use 'sbt stage' to get one.")
 }
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
@@ -33,10 +34,17 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[mutable.WrappedArray$ofRef])
     kryo.register(classOf[Array[Int]])
     kryo.register(classOf[Array[Long]])
+    kryo.register(classOf[Array[Double]])
     kryo.register(classOf[Array[Tuple2[_, _]]])
+    kryo.register(classOf[Array[Tuple3[_, _, _]]])
     kryo.register(classOf[Array[String]])
     kryo.register(classOf[scala.runtime.BoxedUnit])
     kryo.register(classOf[graph_api.CompactUndirectedGraph])
+    kryo.register(classOf[::[_]])
+    kryo.register(Nil.getClass)
+    kryo.register(None.getClass)
+    // Set.EmptySet[_] is private.
+    kryo.register(Set.empty[Int].getClass)
   }
 }
 
@@ -52,11 +60,11 @@ class BigGraphKryoRegistratorWithDebug extends BigGraphKryoRegistrator {
 
 object BigGraphSparkContext {
   def apply(
-      appName: String,
-      masterURL: String,
-      useKryo: Boolean = true,
-      debugKryo: Boolean = false,
-      useJars: Boolean = true): SparkContext = {
+    appName: String,
+    masterURL: String,
+    useKryo: Boolean = true,
+    debugKryo: Boolean = false,
+    useJars: Boolean = true): SparkContext = {
     var sparkConf = new SparkConf()
       .setMaster(masterURL)
       .setAppName(appName)
@@ -68,10 +76,10 @@ object BigGraphSparkContext {
     if (useKryo) {
       sparkConf = sparkConf
         .set("spark.serializer",
-             "org.apache.spark.serializer.KryoSerializer")
+          "org.apache.spark.serializer.KryoSerializer")
         .set("spark.kryo.registrator",
-             if (debugKryo) "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistratorWithDebug"
-             else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator")
+          if (debugKryo) "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistratorWithDebug"
+          else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator")
     }
     if (useJars) {
       sparkConf = sparkConf.setJars(SparkStageJars.jars)

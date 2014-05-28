@@ -27,10 +27,11 @@ class GraphStatsController(enviroment: BigGraphEnviroment) {
     val graphData = enviroment.graphDataManager.obtainData(bigGraph)
     val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
     val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]
-    GraphStatsResponse(request.id,
-                       graphData.vertices.count,
-                       graphData.edges.count,
-                       vAttrs,
-                       eAttrs)
+    GraphStatsResponse(
+      request.id,
+      graphData.vertices.count,
+      graphData.edges.count,
+      vAttrs,
+      eAttrs)
   }
 }

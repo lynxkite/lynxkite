@@ -10,34 +10,35 @@ import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
 class JsonServer extends mvc.Controller {
-  def jsonPost[I : json.Reads, O : json.Writes](action: I => O) = {
+  def jsonPost[I: json.Reads, O: json.Writes](action: I => O) = {
     bigGraphLogger.info("JSON POST event received")
     mvc.Action(parse.json) {
-      request => request.body.validate[I].fold(
-        errors => JsonBadRequest("Error", "Bad JSON", errors),
-        result => Ok(json.Json.toJson(action(result))))
+      request =>
+        request.body.validate[I].fold(
+          errors => JsonBadRequest("Error", "Bad JSON", errors),
+          result => Ok(json.Json.toJson(action(result))))
     }
   }
 
-  def jsonGet[I : json.Reads, O : json.Writes](action: I => O, key: String = "q") = {
+  def jsonGet[I: json.Reads, O: json.Writes](action: I => O, key: String = "q") = {
     mvc.Action { request =>
       bigGraphLogger.info("JSON GET event received")
       request.getQueryString(key) match {
         case Some(s) => Json.parse(s).validate[I].fold(
-            errors => JsonBadRequest("Error", "Bad JSON", errors),
-            result => Ok(json.Json.toJson(action(result))))
+          errors => JsonBadRequest("Error", "Bad JSON", errors),
+          result => Ok(json.Json.toJson(action(result))))
         case None => BadRequest(json.Json.obj(
-              "status" -> "Error",
-              "message" -> "Bad query string",
-              "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
+          "status" -> "Error",
+          "message" -> "Bad query string",
+          "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
       }
     }
   }
 
   def JsonBadRequest(
-      status: String,
-      message: String,
-      details: Seq[(play.api.libs.json.JsPath, Seq[play.api.data.validation.ValidationError])]) = {
+    status: String,
+    message: String,
+    details: Seq[(play.api.libs.json.JsPath, Seq[play.api.data.validation.ValidationError])]) = {
     bigGraphLogger.error("Bad request: " + message)
     BadRequest(json.Json.obj(
       "status" -> status,
@@ -47,7 +48,7 @@ class JsonServer extends mvc.Controller {
 }
 
 case class Empty(
-  fake: Int = 0)  // Needs fake field as JSON inception doesn't work otherwise.
+  fake: Int = 0) // Needs fake field as JSON inception doesn't work otherwise.
 
 object ProductionJsonServer extends JsonServer {
   /**

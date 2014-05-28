@@ -23,7 +23,7 @@ trait BigGraphEnviroment extends SparkContextProvider {
 trait TemporaryDirEnviroment extends BigGraphEnviroment {
   private val sysTempDir = System.getProperty("java.io.tmpdir")
   private val myTempDir = new File(
-      "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
+    "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
   myTempDir.mkdir
   private val graphDir = new File(myTempDir, "graph")
   graphDir.mkdir
