@@ -10,8 +10,6 @@ import org.apache.spark.SparkContext._
 import org.apache.spark
 import org.apache.spark.graphx
 import java.util.regex.Pattern
-import java.io.InputStreamReader
-import java.io.BufferedReader
 import scala.reflect.ClassTag
 
 /*
