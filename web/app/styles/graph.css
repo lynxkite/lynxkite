@@ -36,9 +36,19 @@ a.graphlink:hover {
   margin: 2px;
   background: lightblue;
 }
-.graph-view {
+
+svg.graph-view {
   display: inline-block;
   vertical-align: top;
   width: 500px;
   height: 500px;
+}
+
+svg .root {
+  transform: translate(250px, 250px) scale(250);
+}
+
+svg .edge {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.5);
 }
