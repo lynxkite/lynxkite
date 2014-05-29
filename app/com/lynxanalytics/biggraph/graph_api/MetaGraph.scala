@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import java.util.UUIDx
+import java.util.UUID
 
 import attributes.AttributeSignature
 
