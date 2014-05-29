@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.BigGraphEnviroment
+import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_util
 import scala.util.Failure
 import scala.util.Success
@@ -14,7 +14,7 @@ case class SaveGraphAsCSVResponse(
   success: Boolean = true,
   failureReason: String = "")
 
-class GraphExportController(enviroment: BigGraphEnviroment) {
+class GraphExportController(enviroment: BigGraphEnvironment) {
   def saveGraphAsCSV(request: SaveGraphAsCSVRequest): SaveGraphAsCSVResponse = {
     val graph = BigGraphController.getBigGraphForId(request.id, enviroment)
     val data = enviroment.graphDataManager.obtainData(graph)

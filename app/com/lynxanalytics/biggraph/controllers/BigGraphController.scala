@@ -1,8 +1,9 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.BigGraphEnviroment
+import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import java.util.UUID
 import scala.collection.mutable
@@ -132,13 +133,38 @@ object FEOperations extends FEOperationRepository {
       override val parameters = Seq()
       def toGraphOperation(parameters: Seq[String]) = InstantiateSimpleGraph2()
     })
+  registerOperation(
+    new StartingFEOperation {
+      val name = "Import Graph from CSV"
+      override val parameters = Seq(
+        FEOperationParameterMeta("Vertex header file", ""),
+        FEOperationParameterMeta("Vertex CSV files separated by ','", ""),
+        FEOperationParameterMeta("Edge header file", ""),
+        FEOperationParameterMeta("Edge CSV files separated by ','", ""),
+        FEOperationParameterMeta("Vertex id field name", ""),
+        FEOperationParameterMeta("Source edge field name", ""),
+        FEOperationParameterMeta("Destination edge field name", ""),
+        FEOperationParameterMeta("Delimiter", ","),
+        FEOperationParameterMeta("Skip header row while processing data (true/false)", "true"))
+      def toGraphOperation(parameters: Seq[String]) =
+        graph_operations.CSVImport(
+          graph_util.Filename(parameters(0)),
+          parameters(1).split(",").map(graph_util.Filename(_)),
+          graph_util.Filename(parameters(2)),
+          parameters(3).split(",").map(graph_util.Filename(_)),
+          parameters(4),
+          parameters(5),
+          parameters(6),
+          parameters(7),
+          parameters(8).toBoolean)
+    })
 }
 
 /**
  * Logic for processing requests
  */
 
-class BigGraphController(enviroment: BigGraphEnviroment) {
+class BigGraphController(environment: BigGraphEnvironment) {
   def basicDataFromGraph(bigGraph: BigGraph): GraphBasicData = {
     GraphBasicData(bigGraph.toLongString, bigGraph.gUID.toString)
   }
@@ -147,20 +173,20 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
     BigGraphResponse(
       title = bigGraph.toLongString,
       sources = bigGraph.sources.map(basicDataFromGraph(_)),
-      derivatives = enviroment.bigGraphManager
+      derivatives = environment.bigGraphManager
         .knownDirectDerivatives(bigGraph).map(basicDataFromGraph(_)),
       ops = FEOperations.getApplicableOperationMetas(Seq(bigGraph)))
   }
 
   def getGraph(request: BigGraphRequest): BigGraphResponse = {
-    responseFromGraph(BigGraphController.getBigGraphForId(request.id, enviroment))
+    responseFromGraph(BigGraphController.getBigGraphForId(request.id, environment))
   }
 
   def deriveGraph(request: DeriveBigGraphRequest): GraphBasicData = {
     val sourceGraphs = request.sourceIds.map(
-      id => BigGraphController.getBigGraphForId(id, enviroment))
+      id => BigGraphController.getBigGraphForId(id, environment))
     val op = FEOperations.getGraphOperation(request.operation)
-    basicDataFromGraph(enviroment.bigGraphManager.deriveGraph(sourceGraphs, op))
+    basicDataFromGraph(environment.bigGraphManager.deriveGraph(sourceGraphs, op))
   }
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
@@ -168,8 +194,8 @@ class BigGraphController(enviroment: BigGraphEnviroment) {
 }
 
 object BigGraphController {
-  def getBigGraphForId(id: String, enviroment: BigGraphEnviroment): BigGraph = {
-    enviroment.bigGraphManager.graphForGUID(UUID.fromString(id)).get
+  def getBigGraphForId(id: String, environment: BigGraphEnvironment): BigGraph = {
+    environment.bigGraphManager.graphForGUID(UUID.fromString(id)).get
   }
 }
 

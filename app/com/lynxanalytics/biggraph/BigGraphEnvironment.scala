@@ -15,12 +15,12 @@ class StaticSparkContextProvider(master: String) extends SparkContextProvider {
   val sparkContext = spark_util.BigGraphSparkContext("BigGraphServer", master)
 }
 
-trait BigGraphEnviroment extends SparkContextProvider {
+trait BigGraphEnvironment extends SparkContextProvider {
   val bigGraphManager: graph_api.BigGraphManager
   val graphDataManager: graph_api.GraphDataManager
 }
 
-trait TemporaryDirEnviroment extends BigGraphEnviroment {
+trait TemporaryDirEnvironment extends BigGraphEnvironment {
   private val sysTempDir = System.getProperty("java.io.tmpdir")
   private val myTempDir = new File(
     "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
