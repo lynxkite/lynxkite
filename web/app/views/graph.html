@@ -9,17 +9,17 @@
     <h2>Current graph</h2>
     <h3>Sources</h3>
     <div class="sources">
-      <a class="graphlink" ng-repeat="source in graph.sources" href="/#/graph/{{source.id}}">{{source.title}}</a>
+      <a class="graphlink token" ng-repeat="source in graph.sources" href="/#/graph/{{source.id}}">{{source.title}}</a>
     </div>
     <h3>Metadata</h3>
     <div class="stats">
       <h4>{{graph.title}}</h4>
       <p>Vertices: {{stats.verticesCount}} - Edges: {{stats.edgesCount}}</p>
       <p>Vertex attributes:
-        <span class="attributes" ng-repeat="attr in stats.vertexAttributes">{{attr}}</span>
+        <span class="token" ng-repeat="attr in stats.vertexAttributes">{{attr}}</span>
       </p>
       <p>Edge attributes:
-        <span class="attributes" ng-repeat="attr in stats.edgeAttributes">{{attr}}</span>
+        <span class="token" ng-repeat="attr in stats.edgeAttributes">{{attr}}</span>
       </p>
       <button class="btn btn-default" ng-click="saveCSV()">Save as CSV</button>
       <p><a href="/data/verticesCSV?guid={{id}}">Download vertices as CSV</a></p>
@@ -27,7 +27,7 @@
     </div>
     <h3>Known derivatives</h3>
     <div class="derivatives">
-      <a class="graphlink" ng-repeat="derivative in graph.derivatives" href="/#/graph/{{derivative.id}}">{{derivative.title}}</a>
+      <a class="graphlink token" ng-repeat="derivative in graph.derivatives" href="/#/graph/{{derivative.id}}">{{derivative.title}}</a>
     </div>
     <h3>Applicable derivations</h3>
     <div class="ops">
