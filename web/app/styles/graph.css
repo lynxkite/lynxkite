@@ -15,11 +15,6 @@ body > .container {
 }
 
 a.graphlink {
-  display: inline-block;
-  border-radius: 3px;
-  padding: 3px;
-  margin-right: 3px;
-  background: lightblue;
   color: navy;
 }
 
@@ -29,6 +24,14 @@ a.graphlink:hover {
   background: navy;
 }
 
+.token {
+  display: inline-block;
+  border-radius: 3px;
+  padding-left: 3px;
+  padding-right: 3px;
+  margin: 2px;
+  background: lightblue;
+}
 .graph-view {
   display: inline-block;
   vertical-align: middle;
