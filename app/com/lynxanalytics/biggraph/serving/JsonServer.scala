@@ -11,7 +11,7 @@ import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
 class JsonServer extends mvc.Controller {
   def jsonPost[I: json.Reads, O: json.Writes](action: I => O) = {
-    bigGraphLogger.info("JSON POST event received")
+    bigGraphLogger.info("JSON POST event received, function: " + action.getClass.toString())
     mvc.Action(parse.json) {
       request =>
         request.body.validate[I].fold(
@@ -22,7 +22,8 @@ class JsonServer extends mvc.Controller {
 
   def jsonGet[I: json.Reads, O: json.Writes](action: I => O, key: String = "q") = {
     mvc.Action { request =>
-      bigGraphLogger.info("JSON GET event received")
+      bigGraphLogger.info("JSON GET event received, function: %s, query key: %s"
+        .format(action.getClass.toString(), key))
       request.getQueryString(key) match {
         case Some(s) => Json.parse(s).validate[I].fold(
           errors => JsonBadRequest("Error", "Bad JSON", errors),
