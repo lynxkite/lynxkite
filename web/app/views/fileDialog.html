@@ -1,9 +1,12 @@
-<div class="fileDialog">
-  <h3>{{question}}</h3>
-  <form role="form" class="params">
+<form role="form" class="params">
+  <div class="modal-header">
+    <h3>{{question}}</h3>
+  </div>
+  <div class="modal-body">
     <input type="text" class="form-control" ng-model="results.fileName"/>
-
+  </div>
+  <div class="modal-footer">
     <button class="btn btn-default" ng-click="close()">OK</button>
     <button class="btn btn-default" ng-click="$dismiss('canceled')">Cancel</button>
-  </form>
-</div>
+  </div>
+</form>
