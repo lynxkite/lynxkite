@@ -21,4 +21,12 @@ package object graph_api {
    * RDD type for representing graph triplets. (A triplet is an edge togetger with its endpoints.)
    */
   type TripletRDD = rdd.RDD[graphx.EdgeTriplet[DenseAttributes, DenseAttributes]]
+
+  type ID = Long
+
+  type VertexSetRDD = rdd.RDD[(ID, Unit)]
+
+  type AttributeRDD[T] = rdd.RDD[(ID, T)]
+
+  type EdgeBundleRDD = rdd.RDD[(ID, (ID, ID))]
 }
