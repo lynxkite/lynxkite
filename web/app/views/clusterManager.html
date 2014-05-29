@@ -1,10 +1,14 @@
-<div class="clusterManager">
-  <h3>Current cluster status</h3>
-  <p><b>Master:</b> {{status.master}}</p>
-  <p><b>Number of worker instances:</b> {{status.workerInstances}}</p>
-  <h3>Change number of workers</h3>
-  <form role="form" class="numWorkers">
+<form role="form" class="numWorkers">
+  <div class="modal-header">
+    <h3>Current cluster status</h3>
+    <p><b>Master:</b> {{status.master}}</p>
+    <p><b>Number of worker instances:</b> {{status.workerInstances}}</p>
+    <h3>Change number of workers</h3>
+  </div>
+  <div class="modal-body">
     <input type="number" class="form-control" ng-model="numWorkersInput"/>
+  </div>
+  <div class="modal-footer">
     <button class="btn btn-default" ng-click="setWorkers(numWorkersInput)">Go!</button>
-  </form>
-</div>
+  </div>
+</form>
