@@ -3,7 +3,7 @@ package com.lynxanalytics
 import org.slf4j.LoggerFactory
 
 package object biggraph {
-  val bigGraphLogger = LoggerFactory.getLogger("BigGraph logger")
+  val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
 
   // static<hostname_of_master>
   // We just connect to a standing spark cluster, no resize support.

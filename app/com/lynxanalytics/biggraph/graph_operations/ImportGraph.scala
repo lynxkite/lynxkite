@@ -39,14 +39,14 @@ case class HeaderAsStringCSVParser(inputFile: Filename, delimiter: String) exten
     .map(sigName => sigName.stripPrefix("\"").stripSuffix("\""))
 
   def getSignature(): AttributeSignature = {
-    bigGraphLogger.debug("header: %s\n".format(csvHeader.toSeq.toString))
+    bigGraphLogger.debug("Parsing %s - getSignature method called with header: %s"
+      .format(inputFile.filename, csvHeader.toSeq.toString))
     csvHeader.foldLeft(AttributeSignature.empty) {
       case (sig, name) => sig.addAttribute[String](name).signature
     }
   }
 
   def createWriters(signature: AttributeSignature): Seq[AttributeWriter[String]] = {
-    bigGraphLogger.debug("header: %s\n".format(csvHeader.toSeq.toString))
     csvHeader.map { sigName =>
       val idx = signature.writeIndex[String](sigName)
       StringWriter(idx)
@@ -168,6 +168,8 @@ class ImportGraph(vertexMeta: MetaDataParser,
                   edgeMeta: MetaDataParser,
                   edgeData: RawDataParser,
                   graphBuilder: GraphBuilder) extends GraphOperation {
+  // we force the recalculation of signatures after deserialization in order to make them thread safe
+  // TODO: find a nicer solution
   @transient lazy val vertexSignature = vertexMeta.getSignature
   vertexSignature
   @transient lazy val edgeSignature = edgeMeta.getSignature
