@@ -6,9 +6,9 @@ import com.lynxanalytics.biggraph.graph_api._
 
 class GraphStatsControllerTest extends FunSuite {
   test("get stats for the test graph") {
-    val testEnviroment = new BigGraphTestEnviroment("graphstatscontroller")
-    val bigGraph = testEnviroment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
-    val testGraphStatsController = new GraphStatsController(testEnviroment)
+    val testEnvironment = new BigGraphTestEnvironment("graphstatscontroller")
+    val bigGraph = testEnvironment.bigGraphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
+    val testGraphStatsController = new GraphStatsController(testEnvironment)
     val id = bigGraph.gUID.toString
     val result = testGraphStatsController.getStats(GraphStatsRequest(id))
     assert(result.id === id)

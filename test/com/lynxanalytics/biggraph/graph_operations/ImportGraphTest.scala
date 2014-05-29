@@ -9,8 +9,8 @@ import com.lynxanalytics.biggraph.graph_api._
 class ImportGraphTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
     val dir = "/graph_operations/ImportGraphTest/testgraph/"
-    val graphManager = cleanGraphManager("importgraph")
-    val dataManager = cleanDataManager("importgraph")
+    val bigGraphManager = cleanGraphManager("importgraph")
+    val graphDataManager = cleanDataManager("importgraph")
     val vertexCSVs = Seq(Filename(getClass.getResource(dir + "vertex-data/part-00000").getFile))
     val edgeCSVs = Seq(Filename(getClass.getResource(dir + "edge-data/part-00000").getFile))
     val vertexHeader = Filename(getClass.getResource(dir + "vertex-header").getFile)
@@ -20,12 +20,12 @@ class ImportGraphTest extends FunSuite with TestBigGraphManager with TestGraphDa
     val destEdgeFieldName = "dstVertexId"
     val delimiter = ","
     val skipFirstRow = false
-    val importedGraph = graphManager.deriveGraph(Seq(), CSVImport(
+    val importedGraph = bigGraphManager.deriveGraph(Seq(), CSVImport(
       vertexHeader, vertexCSVs,
       edgeHeader, edgeCSVs,
       vertexIdFieldName, sourceEdgeFieldName, destEdgeFieldName,
       delimiter, skipFirstRow))
-    val graphData = dataManager.obtainData(importedGraph)
+    val graphData = graphDataManager.obtainData(importedGraph)
     assert(graphData.vertices.count === 3)
     assert(graphData.edges.count === 4)
     assert(TestUtils.RDDToSortedString(graphData.vertices).matches(
@@ -41,8 +41,8 @@ class ImportGraphTest extends FunSuite with TestBigGraphManager with TestGraphDa
   test("import graph from csv as two edge files including header") {
     // different separator, no quotes around strings, newline at eof
     val dir = "/graph_operations/ImportGraphTest/two-edge-csv/"
-    val graphManager = cleanGraphManager("importgraph")
-    val dataManager = cleanDataManager("importgraph")
+    val bigGraphManager = cleanGraphManager("importgraph")
+    val graphDataManager = cleanDataManager("importgraph")
     val edgeCSVs = Seq(
       Filename(getClass.getResource(dir + "edges1.csv").getFile),
       Filename(getClass.getResource(dir + "edges2.csv").getFile))
@@ -52,11 +52,11 @@ class ImportGraphTest extends FunSuite with TestBigGraphManager with TestGraphDa
     val destEdgeFieldName = "dstVertexId"
     val delimiter = "|"
     val skipFirstRow = true
-    val importedGraph = graphManager.deriveGraph(Seq(), EdgeCSVImport(
+    val importedGraph = bigGraphManager.deriveGraph(Seq(), EdgeCSVImport(
       edgeHeader, edgeCSVs,
       vertexIdFieldName, sourceEdgeFieldName, destEdgeFieldName,
       delimiter, skipFirstRow))
-    val graphData = dataManager.obtainData(importedGraph)
+    val graphData = graphDataManager.obtainData(importedGraph)
     assert(graphData.vertices.count === 6)
     assert(graphData.edges.count === 8)
   }

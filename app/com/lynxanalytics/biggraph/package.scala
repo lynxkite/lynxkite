@@ -19,13 +19,13 @@ package object biggraph {
   // Supports resizing.
   private val newGCEPattern = "newGCE<(.+)>".r
 
-  lazy val BigGraphProductionEnviroment: BigGraphEnviroment =
+  lazy val BigGraphProductionEnvironment: BigGraphEnvironment =
     scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
       case staticPattern(master) =>
-        new StaticSparkContextProvider(master) with TemporaryDirEnviroment
+        new StaticSparkContextProvider(master) with TemporaryDirEnvironment
       case standingGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", true) with TemporaryDirEnviroment
+        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", true) with TemporaryDirEnvironment
       case newGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", false) with TemporaryDirEnviroment
+        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", false) with TemporaryDirEnvironment
     }
 }

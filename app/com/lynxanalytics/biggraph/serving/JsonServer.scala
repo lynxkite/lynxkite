@@ -84,18 +84,18 @@ object ProductionJsonServer extends JsonServer {
   //
   // Play! uses the routings in /conf/routes to execute actions
 
-  val bigGraphController = new BigGraphController(BigGraphProductionEnviroment)
+  val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
   def bigGraphGet = jsonGet(bigGraphController.getGraph)
   def deriveBigGraphGet = jsonGet(bigGraphController.deriveGraph)
   def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
 
-  val graphStatsController = new GraphStatsController(BigGraphProductionEnviroment)
+  val graphStatsController = new GraphStatsController(BigGraphProductionEnvironment)
   def graphStatsGet = jsonGet(graphStatsController.getStats)
 
-  val graphExportController = new GraphExportController(BigGraphProductionEnviroment)
+  val graphExportController = new GraphExportController(BigGraphProductionEnvironment)
   def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV)
 
-  val sparkClusterController = new SparkClusterController(BigGraphProductionEnviroment)
+  val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
   def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
 }

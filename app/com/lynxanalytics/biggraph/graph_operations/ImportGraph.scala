@@ -38,11 +38,15 @@ case class HeaderAsStringCSVParser(inputFile: Filename, delimiter: String) exten
     .split(Pattern.quote(delimiter))
     .map(sigName => sigName.stripPrefix("\"").stripSuffix("\""))
 
-  def getSignature(): AttributeSignature = csvHeader.foldLeft(AttributeSignature.empty) {
-    case (sig, name) => sig.addAttribute[String](name).signature
+  def getSignature(): AttributeSignature = {
+    bigGraphLogger.debug("header: %s\n".format(csvHeader.toSeq.toString))
+    csvHeader.foldLeft(AttributeSignature.empty) {
+      case (sig, name) => sig.addAttribute[String](name).signature
+    }
   }
 
   def createWriters(signature: AttributeSignature): Seq[AttributeWriter[String]] = {
+    bigGraphLogger.debug("header: %s\n".format(csvHeader.toSeq.toString))
     csvHeader.map { sigName =>
       val idx = signature.writeIndex[String](sigName)
       StringWriter(idx)
@@ -165,7 +169,9 @@ class ImportGraph(vertexMeta: MetaDataParser,
                   edgeData: RawDataParser,
                   graphBuilder: GraphBuilder) extends GraphOperation {
   @transient lazy val vertexSignature = vertexMeta.getSignature
+  vertexSignature
   @transient lazy val edgeSignature = edgeMeta.getSignature
+  edgeSignature
 
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.isEmpty
 
