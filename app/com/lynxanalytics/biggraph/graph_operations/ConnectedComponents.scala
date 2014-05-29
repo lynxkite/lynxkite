@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.runtime.universe._
 import scala.util.Random
 
 import org.apache.spark
@@ -19,19 +20,18 @@ private object ConnectedComponents {
   var maxEdgesProcessedLocally = 100000
 }
 case class ConnectedComponents(
-    outputAttribute: String) extends GraphOperation {
+    outputAttribute: String) extends NewVertexAttributeOperation[VertexId] {
+  @transient lazy val tt = typeTag[VertexId]
+
   type ComponentId = VertexId
 
   // TODO(darabos): Let it also check that the graph is undirected
   //                once we have properties on BigGraphs.
-  def isSourceListValid(sources: Seq[BigGraph]): Boolean =
-    (sources.size == 1) && sources.head.properties.symmetricEdges
+  override def isSourceListValid(sources: Seq[BigGraph]): Boolean =
+    super.isSourceListValid(sources) && sources.head.properties.symmetricEdges
 
-  def execute(target: BigGraph,
-              manager: GraphDataManager): GraphData = {
-    val inputGraph = target.sources.head
-    val inputData = manager.obtainData(inputGraph)
-    val runtimeContext = manager.runtimeContext
+  def computeAttribute(inputData: GraphData,
+                       runtimeContext: RuntimeContext): RDD[(VertexId, ComponentId)] = {
     val sc = runtimeContext.sparkContext
     val cores = runtimeContext.numAvailableCores
     // This partitioner will be inherited by all derived RDDs, so joins
@@ -41,17 +41,11 @@ case class ConnectedComponents(
     val inputEdges = inputData.edges.map(e => (e.srcId, e.dstId))
     val graph = inputEdges.groupByKey(partitioner).mapValues(_.toSet)
     // Get VertexId -> ComponentId map.
-    val components = getComponents(graph)
-    // Put ComponentId in the new attribute. Degree-0 vertices are restored.
-    val SignatureExtension(sig, cloner) = vertexExtension(target.sources.head)
-    val idx = sig.writeIndex[ComponentId](outputAttribute)
-    val vertices = inputData.vertices.leftOuterJoin(components).map({
-      case (vid, (da, cid)) =>
-        (vid, cloner.clone(da).set(idx, cid.getOrElse(vid)))
-    })
-    // Wrap the edge RDD in a UnionRDD. This way it can have a distinct name.
-    val edges = sc.union(inputData.edges)
-    return new SimpleGraphData(target, vertices, edges)
+    return getComponents(graph)
+  }
+
+  override def defaultValue(vid: VertexId, da: DenseAttributes): ComponentId = {
+    vid
   }
 
   def getComponents(
@@ -150,14 +144,4 @@ case class ConnectedComponents(
     // Split up the result by the same partitioner as was used in the input.
     return componentsRDD.partitionBy(graphRDD.partitioner.get)
   }
-
-  private def vertexExtension(input: BigGraph) =
-    input.vertexAttributes.addAttribute[ComponentId](outputAttribute)
-
-  def vertexAttributes(input: Seq[BigGraph]) =
-    vertexExtension(input.head).signature
-
-  def edgeAttributes(input: Seq[BigGraph]) = input.head.edgeAttributes
-
-  override def targetProperties(input: Seq[BigGraph]) = input.head.properties
 }
