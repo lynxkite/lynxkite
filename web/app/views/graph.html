@@ -6,30 +6,28 @@
 </div>
 <div class="graph" ng-if="id">
   <div class="metadata bubble">
-    <h2>Current graph</h2>
-    <h3>Sources</h3>
-    <div class="sources">
-      <a class="graphlink" ng-repeat="source in graph.sources" href="/#/graph/{{source.id}}">{{source.title}}</a>
-    </div>
-    <h3>Metadata</h3>
+    <h2>{{graph.title}}</h2>
     <div class="stats">
-      <h4>{{graph.title}}</h4>
       <p>Vertices: {{stats.verticesCount}} - Edges: {{stats.edgesCount}}</p>
       <p>Vertex attributes:
-        <span class="attributes" ng-repeat="attr in stats.vertexAttributes">{{attr}}</span>
+        <span class="token" ng-repeat="attr in stats.vertexAttributes">{{attr}}</span>
       </p>
       <p>Edge attributes:
-        <span class="attributes" ng-repeat="attr in stats.edgeAttributes">{{attr}}</span>
+        <span class="token" ng-repeat="attr in stats.edgeAttributes">{{attr}}</span>
       </p>
       <button class="btn btn-default" ng-click="saveCSV()">Save as CSV</button>
       <p><a href="/data/verticesCSV?guid={{id}}">Download vertices as CSV</a></p>
       <p><a href="/data/edgesCSV?guid={{id}}">Download edges as CSV</a></p>
     </div>
-    <h3>Known derivatives</h3>
-    <div class="derivatives">
-      <a class="graphlink" ng-repeat="derivative in graph.derivatives" href="/#/graph/{{derivative.id}}">{{derivative.title}}</a>
+    <h3 ng-show="graph.sources">Sources</h3>
+    <div class="sources">
+      <a class="graphlink token" ng-repeat="source in graph.sources" href="/#/graph/{{source.id}}">{{source.title}}</a>
     </div>
-    <h3>Applicable derivations</h3>
+    <h3 ng-show="graph.derivatives">Known derivatives</h3>
+    <div class="derivatives">
+      <a class="graphlink token" ng-repeat="derivative in graph.derivatives" href="/#/graph/{{derivative.id}}">{{derivative.title}}</a>
+    </div>
+    <h3 ng-show="graph.ops">Applicable derivations</h3>
     <div class="ops">
       <div class="op" ng-repeat="op in graph.ops">
         <button class="btn btn-default" ng-click="openDerivationModal(op)">{{op.name}}</button>
