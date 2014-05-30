@@ -38,6 +38,4 @@ case class Filename(
   def addSuffix(suffix: String): Filename = {
     Filename(filename + suffix, awsAccessKeyId, awsSecretAccessKey)
   }
-
-  val fileSize: Long = fs.getFileStatus(path).getLen
 }
