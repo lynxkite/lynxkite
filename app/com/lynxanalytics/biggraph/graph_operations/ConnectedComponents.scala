@@ -30,8 +30,8 @@ case class ConnectedComponents(
   override def isSourceListValid(sources: Seq[BigGraph]): Boolean =
     super.isSourceListValid(sources) && sources.head.properties.symmetricEdges
 
-  def computeAttribute(inputData: GraphData,
-                       runtimeContext: RuntimeContext): RDD[(VertexId, ComponentId)] = {
+  override def computeHollistically(inputData: GraphData,
+                                    runtimeContext: RuntimeContext): RDD[(VertexId, ComponentId)] = {
     val sc = runtimeContext.sparkContext
     val cores = runtimeContext.numAvailableCores
     // This partitioner will be inherited by all derived RDDs, so joins
@@ -44,9 +44,7 @@ case class ConnectedComponents(
     return getComponents(graph)
   }
 
-  override def defaultValue(vid: VertexId, da: DenseAttributes): ComponentId = {
-    vid
-  }
+  override def computeLocally(vid: VertexId, da: DenseAttributes): ComponentId = vid
 
   def getComponents(
     graph: RDD[(VertexId, Set[VertexId])]): RDD[(VertexId, ComponentId)] = {
