@@ -39,13 +39,11 @@ class ImportGraphTest extends FunSuite with TestBigGraphManager with TestGraphDa
          |Edge\(\d+,\d+,2,1,Bob loves Eve\)""".stripMargin))
   }
   test("import graph from csv as two edge files including header") {
-    // different separator, no quotes around strings, newline at eof
+    // different separator, no quotes around strings, newline at eof, files with wildchar
     val dir = "/graph_operations/ImportGraphTest/two-edge-csv/"
     val bigGraphManager = cleanGraphManager("importgraph")
     val graphDataManager = cleanDataManager("importgraph")
-    val edgeCSVs = Seq(
-      Filename(getClass.getResource(dir + "edges1.csv").getFile),
-      Filename(getClass.getResource(dir + "edges2.csv").getFile))
+    val edgeCSVs = Seq(Filename(getClass.getResource(dir).toString + "*"))
     val edgeHeader = Filename(getClass.getResource(dir + "edges1.csv").getFile)
     val vertexIdFieldName = "vertexId"
     val sourceEdgeFieldName = "srcVertexId"

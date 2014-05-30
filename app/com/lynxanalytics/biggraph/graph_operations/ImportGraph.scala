@@ -65,16 +65,17 @@ case class ConcatenateCSVsDataParser(inputFiles: Seq[Filename],
                                      delimiter: String,
                                      skipFirstRow: Boolean) extends RawDataParser {
   def getRawData(sc: spark.SparkContext): RDD[Seq[String]] = {
-    val lines = sc.union(inputFiles.map(file => {
+    val lines = sc.union(inputFiles.map(file => sc.textFile(file.filename)))
+    // we need to filter out the header as textFile method can read multiple files using * wildchar
+    val filteredLines = {
       if (skipFirstRow) {
-        sc.textFile(file.filename).mapPartitionsWithIndex(
-          (p: Int, lines: Iterator[String]) => if (p == 0) lines.drop(1) else lines,
-          preservesPartitioning = true)
+        val header = lines.first
+        lines.filter(line => line != header)
       } else {
-        sc.textFile(file.filename)
+        lines
       }
-    }))
-    lines.map(_.split(Pattern.quote(delimiter)))
+    }
+    filteredLines.map(_.split(Pattern.quote(delimiter)))
   }
 }
 case class DummyDataParser() extends RawDataParser {
