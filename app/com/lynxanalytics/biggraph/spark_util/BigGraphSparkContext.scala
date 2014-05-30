@@ -32,6 +32,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[attributes.DenseAttributes])
     kryo.register(classOf[Array[Any]])
     kryo.register(classOf[mutable.WrappedArray$ofRef])
+    kryo.register(classOf[mutable.ArrayBuffer[_]])
+    kryo.register(classOf[Array[mutable.ArrayBuffer[_]]])
     kryo.register(classOf[Array[Int]])
     kryo.register(classOf[Array[Long]])
     kryo.register(classOf[Array[Double]])
