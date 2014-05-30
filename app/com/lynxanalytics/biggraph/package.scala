@@ -1,9 +1,19 @@
 package com.lynxanalytics
 
 import org.slf4j.LoggerFactory
+import scala.reflect.runtime.universe._
 
 package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
+
+  scala.reflect.runtime.universe
+
+  def printType[T: TypeTag]: Unit = bigGraphLogger.debug("initialize reflection for type: " + typeOf[T])
+
+  printType[Long]
+  printType[String]
+  printType[Double]
+  printType[Array[Long]]
 
   // static<hostname_of_master>
   // We just connect to a standing spark cluster, no resize support.
