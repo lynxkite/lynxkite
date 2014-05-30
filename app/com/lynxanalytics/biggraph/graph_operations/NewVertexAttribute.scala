@@ -28,7 +28,8 @@ abstract class NewVertexAttributeOperation[T]
   // for computeLocally will be called. Returning null means that all values should be
   // computed locally.
   def computeHollistically(inputData: GraphData,
-                           runtimeContext: RuntimeContext): rdd.RDD[(graphx.VertexId, T)] = null
+                           runtimeContext: RuntimeContext,
+                           vertexPartitioner: spark.Partitioner): rdd.RDD[(graphx.VertexId, T)] = null
 
   // Override this if you don't return an attribute value for all vertices in computeHollistically.
   // In that case this function will determine the value of the attribute.
@@ -44,7 +45,9 @@ abstract class NewVertexAttributeOperation[T]
     val SignatureExtension(sig, cloner) = vertexExtension(target.sources.head)
     val idx = sig.writeIndex[T](outputAttribute)
 
-    val hollisticValues = computeHollistically(inputData, runtimeContext)
+    val vertexPartitioner =
+      inputData.vertices.partitioner.getOrElse(runtimeContext.defaultPartitioner)
+    val hollisticValues = computeHollistically(inputData, runtimeContext, vertexPartitioner)
     val vertices =
       if (hollisticValues != null) {
         inputData.vertices.leftOuterJoin(hollisticValues).map {

@@ -25,21 +25,19 @@ case class ConnectedComponents(
 
   type ComponentId = VertexId
 
-  // TODO(darabos): Let it also check that the graph is undirected
-  //                once we have properties on BigGraphs.
   override def isSourceListValid(sources: Seq[BigGraph]): Boolean =
     super.isSourceListValid(sources) && sources.head.properties.symmetricEdges
 
   override def computeHollistically(inputData: GraphData,
-                                    runtimeContext: RuntimeContext): RDD[(VertexId, ComponentId)] = {
+                                    runtimeContext: RuntimeContext,
+                                    vertexPartitioner: spark.Partitioner): RDD[(VertexId, ComponentId)] = {
     val sc = runtimeContext.sparkContext
     val cores = runtimeContext.numAvailableCores
-    // This partitioner will be inherited by all derived RDDs, so joins
-    // in getComponentsDist() are going to be fast.
-    val partitioner = new spark.HashPartitioner(cores * 5)
-    // Graph as edge lists. Does not include degree-0 vertices.
     val inputEdges = inputData.edges.map(e => (e.srcId, e.dstId))
-    val graph = inputEdges.groupByKey(partitioner).mapValues(_.toSet)
+    // vertexPartitioner will be inherited by all derived RDDs, so joins
+    // in getComponentsDist() are going to be fast.
+    // Graph as edge lists. Does not include degree-0 vertices.
+    val graph = inputEdges.groupByKey(vertexPartitioner).mapValues(_.toSet)
     // Get VertexId -> ComponentId map.
     return getComponents(graph)
   }
