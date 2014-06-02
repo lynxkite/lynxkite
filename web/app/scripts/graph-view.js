@@ -15,55 +15,56 @@ angular.module('biggraph').directive('graphView', function() {
       },
     };
 
-  var GRAD = gradient(hsl(0, 50, 70), hsl(0, 50, 10));
-
   function GraphView(element) {
     var svg = angular.element(element);
-
-    var defs = svg.find('defs');
-    defs.append(GRAD);
-
-    this.edges = create('g', {'class': 'edge'});
-    this.vertices = create('g', {'class': 'vertex'});
+    this.edges = create('g');
+    this.vertices = create('g');
     this.root = svg.find('g.root');
+    this.zoom = 250;
     this.root.append([this.edges, this.vertices]);
   }
 
   GraphView.prototype.update = function(graph) {
     this.vertices.empty();
     this.edges.empty();
-    var vertexScale = 0.01 / minmax(graph.vertices.map(function(n) { return n.count; })).max;
+    var vertexScale = this.zoom * 2 / minmax(graph.vertices.map(function(n) { return n.count; })).max;
     var xb = minmax(graph.vertices.map(function(n) { return n.x; }));
     var yb = minmax(graph.vertices.map(function(n) { return n.y; }));
     for (var i = 0; i < graph.vertices.length; ++i) {
       var vertex = graph.vertices[i];
-      var v = new Vertex(normalize(vertex.x, xb), normalize(vertex.y, yb),
-                         Math.sqrt(vertexScale * vertex.count));
+      var v = new Vertex(this.zoom * normalize(vertex.x, xb), this.zoom * normalize(vertex.y, yb),
+                         Math.sqrt(vertexScale * vertex.count),
+                         vertex.count);
       this.vertices.append(v.dom);
     }
-    var edgeScale = 0.005 / minmax(graph.vertices.map(function(n) { return n.count; })).max;
+    var edgeScale = this.zoom * 0.005 / minmax(graph.vertices.map(function(n) { return n.count; })).max;
     for (i = 0; i < graph.edges.length; ++i) {
       var edge = graph.edges[i];
+      if (edgeScale * edge.count < 1) {
+        continue;
+      }
       var a = graph.vertices[edge.a];
       var b = graph.vertices[edge.b];
-      var e = new Edge(normalize(a.x, xb), normalize(a.y, yb),
-                       normalize(b.x, xb), normalize(b.y, yb),
-                       edgeScale * edge.count);
+      var e = new Edge(this.zoom * normalize(a.x, xb), this.zoom * normalize(a.y, yb),
+                       this.zoom * normalize(b.x, xb), this.zoom * normalize(b.y, yb),
+                       edgeScale * edge.count, this.zoom);
       this.edges.append(e.dom);
     }
   };
 
-  function Vertex(x, y, r) {
+  function Vertex(x, y, r, text) {
     this.x = x;
     this.y = y;
     this.r = r;
-    var c = create('circle', {cx: x, cy: y, r: r, fill: GRAD.color});
-    var highlight = create('circle', {cx: x - 0.4 * r, cy: y - 0.4 * r, r: r * 0.1, fill: 'white'});
-    this.dom = group([c, highlight]);
+    var c = create('circle', {cx: x, cy: y, r: r, 'class': 'vertex'});
+    var t = create('text', {x: x, y: y, text: text, 'class': 'vertex-label'});
+    t.text(text);
+    this.dom = group([c, t]);
   }
 
-  function Edge(x1, y1, x2, y2, w) {
-    this.dom = arrow(x1, y1, x2, y2, w);
+  function Edge(x1, y1, x2, y2, w, zoom) {
+    this.dom = arrow(x1, y1, x2, y2, w, zoom);
+    this.dom.attr('class', 'edge');
   }
 
   function draw() {
@@ -72,9 +73,9 @@ angular.module('biggraph').directive('graphView', function() {
 
   function arc(r, x, y) { return draw('A', r, r, 0, 0, 0, x, y); }
 
-  function arcParams(ax, ay, bx, by) {
+  function arcParams(ax, ay, bx, by, zoom) {
     if (ax === bx && ay === by) {
-      return {r: 0.01, x: ax + 0.02, y: ay};
+      return {r: 0.1 * zoom, x: ax + 0.2 * zoom, y: ay};
     } else {
       var dx = bx - ax, dy = by - ay;
       var h = 1 - Math.sqrt(3) / 2;
@@ -86,13 +87,13 @@ angular.module('biggraph').directive('graphView', function() {
     }
   }
 
-  function arrow1(ax, ay, bx, by) {
-    var a = arcParams(ax, ay, bx, by);
+  function arrow1(ax, ay, bx, by, zoom) {
+    var a = arcParams(ax, ay, bx, by, zoom);
     return draw('M', ax, ay) + arc(a.r, a.x, a.y);
   }
 
-  function arrow2(ax, ay, bx, by) {
-    var a = arcParams(ax, ay, bx, by);
+  function arrow2(ax, ay, bx, by, zoom) {
+    var a = arcParams(ax, ay, bx, by, zoom);
     return draw('M', a.x, a.y) + arc(a.r, bx, by);
   }
 
@@ -102,26 +103,12 @@ angular.module('biggraph').directive('graphView', function() {
     return g;
   }
 
-  function arrow(ax, ay, bx, by, w) {
-    var l1 = create('path', {'class': 'first', 'd': arrow1(ax, ay, bx, by), 'stroke-width': w});
+  function arrow(ax, ay, bx, by, w, zoom) {
+    var l1 = create('path', {'class': 'first', 'd': arrow1(ax, ay, bx, by, zoom), 'stroke-width': w});
     l1.data({x: ax, y: ay});
-    var l2 = create('path', {'class': 'second', 'd': arrow2(ax, ay, bx, by), 'stroke-width': w});
+    var l2 = create('path', {'class': 'second', 'd': arrow2(ax, ay, bx, by, zoom), 'stroke-width': w});
     l2.data({x: bx, y: by});
     return group([l1, l2]);
-  }
-
-  function gradient(from, to) {
-    var id = 'grad-' + btoa(from) + btoa(to);
-    var g = create('radialGradient', {id: id, cx: 0.5, cy: 0.5, r: 0.5, fx: 0.5, fy: 0.5});
-    var s1 = create('stop', {offset: '0%', 'stop-color': from});
-    var s2 = create('stop', {offset: '100%', 'stop-color': to});
-    g.append([s1, s2]);
-    g.color = 'url(#' + id + ')';
-    return g;
-  }
-
-  function hsl(h, s, l) {
-    return 'hsl(' + Math.floor(h) + ', ' + Math.floor(s) + '%, ' + Math.floor(l) + '%)';
   }
 
   function create(tag, attrs) {
