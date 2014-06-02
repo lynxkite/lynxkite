@@ -17,9 +17,9 @@ case class ClusteringCoefficient(outputAttribute: String)
     extends NewVertexAttributeOperation[Double] {
   @transient lazy val tt = typeTag[Double]
 
-  override def computeHollistically(inputData: GraphData,
-                                    runtimeContext: RuntimeContext,
-                                    vertexPartitioner: spark.Partitioner): RDD[(VertexId, Double)] = {
+  override def computeHolistically(inputData: GraphData,
+                                   runtimeContext: RuntimeContext,
+                                   vertexPartitioner: spark.Partitioner): RDD[(VertexId, Double)] = {
     val nonLoopEdges = inputData.edges.filter(e => e.srcId != e.dstId)
 
     val outNeighbors = nonLoopEdges
@@ -41,10 +41,10 @@ case class ClusteringCoefficient(outputAttribute: String)
     }.groupByKey(vertexPartitioner)
 
     neighbors.join(outNeighborsOfNeighbors).mapValues {
-      case (all, it) =>
-        val numNeighbors = all.size
+      case (mine, theirs) =>
+        val numNeighbors = mine.size
         if (numNeighbors > 1) {
-          it.map(ns => (ns & all).size).sum / numNeighbors / (numNeighbors - 1)
+          theirs.map(his => (his & mine).size).sum / numNeighbors / (numNeighbors - 1)
         } else {
           1.0
         }

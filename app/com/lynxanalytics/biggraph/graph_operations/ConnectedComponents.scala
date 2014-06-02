@@ -28,9 +28,9 @@ case class ConnectedComponents(
   override def isSourceListValid(sources: Seq[BigGraph]): Boolean =
     super.isSourceListValid(sources) && sources.head.properties.symmetricEdges
 
-  override def computeHollistically(inputData: GraphData,
-                                    runtimeContext: RuntimeContext,
-                                    vertexPartitioner: spark.Partitioner): RDD[(VertexId, ComponentId)] = {
+  override def computeHolistically(inputData: GraphData,
+                                   runtimeContext: RuntimeContext,
+                                   vertexPartitioner: spark.Partitioner): RDD[(VertexId, ComponentId)] = {
     val sc = runtimeContext.sparkContext
     val cores = runtimeContext.numAvailableCores
     val inputEdges = inputData.edges.map(e => (e.srcId, e.dstId))

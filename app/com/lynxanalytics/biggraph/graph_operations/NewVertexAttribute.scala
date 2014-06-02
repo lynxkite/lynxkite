@@ -27,11 +27,12 @@ abstract class NewVertexAttributeOperation[T]
   // the source graph as a whole. For vertices that this function does not return any value
   // for computeLocally will be called. Returning null means that all values should be
   // computed locally.
-  def computeHollistically(inputData: GraphData,
-                           runtimeContext: RuntimeContext,
-                           vertexPartitioner: spark.Partitioner): rdd.RDD[(graphx.VertexId, T)] = null
+  def computeHolistically(inputData: GraphData,
+                          runtimeContext: RuntimeContext,
+                          vertexPartitioner: spark.Partitioner): rdd.RDD[(graphx.VertexId, T)] =
+    null
 
-  // Override this if you don't return an attribute value for all vertices in computeHollistically.
+  // Override this if you don't return an attribute value for all vertices in computeHolistically.
   // In that case this function will determine the value of the attribute.
   def computeLocally(vid: graphx.VertexId, da: DenseAttributes): T = ???
 
@@ -47,10 +48,10 @@ abstract class NewVertexAttributeOperation[T]
 
     val vertexPartitioner =
       inputData.vertices.partitioner.getOrElse(runtimeContext.defaultPartitioner)
-    val hollisticValues = computeHollistically(inputData, runtimeContext, vertexPartitioner)
+    val holisticValues = computeHolistically(inputData, runtimeContext, vertexPartitioner)
     val vertices =
-      if (hollisticValues != null) {
-        inputData.vertices.leftOuterJoin(hollisticValues).map {
+      if (holisticValues != null) {
+        inputData.vertices.leftOuterJoin(holisticValues).map {
           case (vid, (da, attrOption)) =>
             (vid, cloner.clone(da).set(idx, attrOption.getOrElse(computeLocally(vid, da))))
         }
