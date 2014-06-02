@@ -69,11 +69,13 @@ angular.module('biggraph').directive('graphView', function() {
     this.hoverListeners = [];
     var that = this;
     this.circle.mouseenter(function() {
+      addClass(that.dom, 'highlight');
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
     });
     this.circle.mouseleave(function() {
+      removeClass(that.dom, 'highlight');
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].off(that);
       }
