@@ -20,9 +20,9 @@ case class AddReversedEdges() extends GraphOperation {
     return new SimpleGraphData(target, sc.union(sourceData.vertices), edges)
   }
 
-  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
+  def edgeAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
 
-  def edgeAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
+  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
 
   override def targetProperties(sources: Seq[BigGraph]) =
     sources.head.properties.copy(symmetricEdges = true)

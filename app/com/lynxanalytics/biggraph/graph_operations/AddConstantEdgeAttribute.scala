@@ -9,9 +9,12 @@ import com.lynxanalytics.biggraph.graph_api
 import graph_api._
 import graph_api.attributes._
 
-case class AddConstantEdgeAttribute[T: TypeTag](attributeName: String,
-                                                value: T)
-    extends GraphOperation {
+abstract class AddConstantEdgeAttribute[T] extends GraphOperation {
+  implicit def tt: TypeTag[T]
+
+  val attributeName: String
+  val value: T
+
   def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 1)
 
   def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
@@ -28,9 +31,16 @@ case class AddConstantEdgeAttribute[T: TypeTag](attributeName: String,
 
   private def edgeExtension(input: BigGraph) = input.edgeAttributes.addAttribute[T](attributeName)
 
-  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
+  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
 
   def edgeAttributes(sources: Seq[BigGraph]) = edgeExtension(sources.head).signature
 
   override def targetProperties(sources: Seq[BigGraph]) = sources.head.properties
+}
+
+case class ConstantDoubleEdgeAttribute(
+  attributeName: String,
+  value: Double)
+    extends AddConstantEdgeAttribute[Double] {
+  @transient lazy val tt = typeTag[Double]
 }
