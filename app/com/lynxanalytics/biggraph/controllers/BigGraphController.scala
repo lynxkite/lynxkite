@@ -114,7 +114,7 @@ object FEOperations extends FEOperationRepository {
     new SingleGraphFEOperation {
       val name = "Add constant edge attribute"
       override val parameters = Seq(
-        FEOperationParameterMeta("Name of new attribute", ""),
+        FEOperationParameterMeta("Name of new attribute", "weight"),
         FEOperationParameterMeta("Value", "1"))
       override def toGraphOperation(parameters: Seq[String]) =
         new graph_operations.ConstantDoubleEdgeAttribute(parameters(0), parameters(1).toDouble)
@@ -148,6 +148,23 @@ object FEOperations extends FEOperationRepository {
     new SingleGraphFEOperation {
       val name = "Reverse edges"
       override val operation = graph_operations.ReverseEdges()
+    })
+  registerOperation(
+    new FEOperation {
+      val name = "Page Rank"
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        bigGraphs.size == 1 &&
+          bigGraphs.head.edgeAttributes.getAttributesReadableAs[Double].size > 0
+      override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
+        FEOperationParameterMeta(
+          "Weight attribute",
+          bigGraphs.head.edgeAttributes.getAttributesReadableAs[Double].head),
+        FEOperationParameterMeta("Target attribute name", "page_rank"),
+        FEOperationParameterMeta("Damping factor", "0.85"),
+        FEOperationParameterMeta("Number of iterations", "10"))
+      override def toGraphOperation(parameters: Seq[String]) =
+        graph_operations.PageRank(
+          parameters(0), parameters(1), parameters(2).toDouble, parameters(3).toInt)
     })
 
   registerOperation(
