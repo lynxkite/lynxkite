@@ -20,9 +20,9 @@ case class WeightedOutDegree(weightAttribute: String, outputAttribute: String)
   override def isSourceListValid(sources: Seq[BigGraph]): Boolean =
     super.isSourceListValid(sources) && sources.head.edgeAttributes.canRead[Double](weightAttribute)
 
-  override def computeHollistically(inputData: GraphData,
-                                    runtimeContext: RuntimeContext,
-                                    vertexPartitioner: spark.Partitioner): RDD[(VertexId, Double)] = {
+  override def computeHolistically(inputData: GraphData,
+                                   runtimeContext: RuntimeContext,
+                                   vertexPartitioner: spark.Partitioner): RDD[(VertexId, Double)] = {
     val readIdx = inputData.bigGraph.edgeAttributes.readIndex[Double](weightAttribute)
     inputData.edges
       .map(e => (e.srcId, e.attr(readIdx)))

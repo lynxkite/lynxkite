@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api
 import graph_api._
 import graph_api.attributes._
 
-case class RemoveDirection() extends GraphOperation {
+case class AddReversedEdges() extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 1)
 
   def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
