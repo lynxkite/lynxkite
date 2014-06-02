@@ -4,6 +4,7 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.graphx
 import org.apache.spark.rdd
+import org.apache.spark.storage.StorageLevel
 
 import attributes.DenseAttributes
 
@@ -38,6 +39,8 @@ class SimpleGraphData(val bigGraph: BigGraph,
         })
     }
 
+  cache()
+
   // Set RDD names.
   private val namePrefix = "Graph %s".format(bigGraph.gUID)
   vertices.name = namePrefix + " Vertices"
@@ -46,4 +49,13 @@ class SimpleGraphData(val bigGraph: BigGraph,
 
   lazy val numVertices = vertices.count
   lazy val numEdges = edges.count
+
+  private def cacheIfUncached(rddToCache: rdd.RDD[_]): Unit =
+    if (rddToCache.getStorageLevel == StorageLevel.NONE) rddToCache.cache()
+
+  private def cache(): Unit = {
+    cacheIfUncached(vertices)
+    cacheIfUncached(edges)
+    cacheIfUncached(triplets)
+  }
 }
