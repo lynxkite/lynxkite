@@ -27,6 +27,7 @@ angular.module('biggraph').directive('graphView', function() {
   GraphView.prototype.update = function(graph) {
     this.vertices.empty();
     this.edges.empty();
+    var vertices = [];
     var vertexScale = this.zoom * 2 / minmax(graph.vertices.map(function(n) { return n.count; })).max;
     var xb = minmax(graph.vertices.map(function(n) { return n.x; }));
     var yb = minmax(graph.vertices.map(function(n) { return n.y; }));
@@ -35,6 +36,7 @@ angular.module('biggraph').directive('graphView', function() {
       var v = new Vertex(this.zoom * normalize(vertex.x, xb), this.zoom * normalize(vertex.y, yb),
                          Math.sqrt(vertexScale * vertex.count),
                          vertex.count);
+      vertices.push(v);
       this.vertices.append(v.dom);
     }
     var edgeScale = this.zoom * 0.005 / minmax(graph.vertices.map(function(n) { return n.count; })).max;
@@ -43,11 +45,9 @@ angular.module('biggraph').directive('graphView', function() {
       if (edgeScale * edge.count < 1) {
         continue;
       }
-      var a = graph.vertices[edge.a];
-      var b = graph.vertices[edge.b];
-      var e = new Edge(this.zoom * normalize(a.x, xb), this.zoom * normalize(a.y, yb),
-                       this.zoom * normalize(b.x, xb), this.zoom * normalize(b.y, yb),
-                       edgeScale * edge.count, this.zoom);
+      var a = vertices[edge.a];
+      var b = vertices[edge.b];
+      var e = new Edge(a, b, edgeScale * edge.count, this.zoom);
       this.edges.append(e.dom);
     }
   };
@@ -56,15 +56,40 @@ angular.module('biggraph').directive('graphView', function() {
     this.x = x;
     this.y = y;
     this.r = r;
-    var c = create('circle', {cx: x, cy: y, r: r, 'class': 'vertex'});
-    var t = create('text', {x: x, y: y, text: text, 'class': 'vertex-label'});
-    t.text(text);
-    this.dom = group([c, t]);
+    this.circle = create('circle', {r: r, 'class': 'vertex'});
+    this.label = create('text', {text: text, 'class': 'vertex-label'});
+    this.label.text(text);
+    this.dom = group([this.circle, this.label]);
+    this.moveListeners = [];
+    this.moveTo(x, y);
+  }
+  Vertex.prototype.addMoveListener = function(ml) {
+    this.moveListeners.push(ml);
+    ml(this);
+  }
+  Vertex.prototype.moveTo = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.circle.attr({cx: x, cy: y});
+    this.label.attr({x: x, y: y});
+    for (var i = 0; i < this.moveListeners.length; ++i) {
+      this.moveListeners[i](this);
+    }
   }
 
-  function Edge(x1, y1, x2, y2, w, zoom) {
-    this.dom = arrow(x1, y1, x2, y2, w, zoom);
-    this.dom.attr('class', 'edge');
+  function Edge(src, dst, w, zoom) {
+    this.src = src;
+    this.dst = dst;
+    this.first = create('path', {'class': 'first', 'stroke-width': w});
+    this.second = create('path', {'class': 'second', 'stroke-width': w});
+    this.dom = group([this.first, this.second], {'class': 'edge'});
+    var that = this
+    src.addMoveListener(function() { that.reposition(zoom); });
+    dst.addMoveListener(function() { that.reposition(zoom); });
+  }
+  Edge.prototype.reposition = function(zoom) {
+    this.first.attr('d', arrow1(this.src.x, this.src.y, this.dst.x, this.dst.y, zoom));
+    this.second.attr('d', arrow2(this.src.x, this.src.y, this.dst.x, this.dst.y, zoom));
   }
 
   function draw() {
@@ -97,18 +122,10 @@ angular.module('biggraph').directive('graphView', function() {
     return draw('M', a.x, a.y) + arc(a.r, bx, by);
   }
 
-  function group(l) {
-    var g = create('g');
+  function group(l, attrs) {
+    var g = create('g', attrs);
     g.append(l);
     return g;
-  }
-
-  function arrow(ax, ay, bx, by, w, zoom) {
-    var l1 = create('path', {'class': 'first', 'd': arrow1(ax, ay, bx, by, zoom), 'stroke-width': w});
-    l1.data({x: ax, y: ay});
-    var l2 = create('path', {'class': 'second', 'd': arrow2(ax, ay, bx, by, zoom), 'stroke-width': w});
-    l2.data({x: bx, y: by});
-    return group([l1, l2]);
   }
 
   function create(tag, attrs) {
