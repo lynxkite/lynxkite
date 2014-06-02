@@ -49,6 +49,11 @@ svg .edge.highlight-in {
 svg .vertex {
   fill: lightgrey;
 }
+svg .highlight .vertex {
+  fill: white;
+  stroke: orange;
+  stroke-width: 4px;
+}
 
 svg .vertex-label {
   font-size: 15px;
