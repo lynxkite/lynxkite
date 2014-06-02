@@ -66,7 +66,7 @@ case class ConcatenateCSVsDataParser(inputFiles: Seq[Filename],
                                      skipFirstRow: Boolean) extends RawDataParser {
   def getRawData(sc: spark.SparkContext): RDD[Seq[String]] = {
     val lines = sc.union(inputFiles.map(file => sc.textFile(file.filename)))
-    // we need to filter out the header as textFile method can read multiple files using * wildchar
+    // we need to filter out the header as textFile method can read multiple files using * wildcard
     val filteredLines = {
       if (skipFirstRow) {
         val header = lines.first
@@ -99,22 +99,22 @@ trait GraphIndexer {
   def indexEdges[A: ClassTag](edgeData: RDD[DenseAttributes],
                               eSrcIdx: attributes.AttributeReadIndex[A],
                               eDstIdx: attributes.AttributeReadIndex[A],
-                              vertexFieldToId: RDD[(A, Long)]): EdgeRDD = {
+                              vertexAttrToId: RDD[(A, Long)]): EdgeRDD = {
     val edgesBySource: RDD[(A, (A, DenseAttributes))] = edgeData.map(edgeAttributes =>
       edgeAttributes(eSrcIdx) -> (edgeAttributes(eDstIdx), edgeAttributes))
-      .partitionBy(vertexFieldToId.partitioner.get)
-    val edgesByDest: RDD[(A, (Long, DenseAttributes))] = edgesBySource.join(vertexFieldToId).map {
+      .partitionBy(vertexAttrToId.partitioner.get)
+    val edgesByDest: RDD[(A, (Long, DenseAttributes))] = edgesBySource.join(vertexAttrToId).map {
       case (src, ((dst, eAttr), srcId)) => dst -> (srcId, eAttr)
-    }.partitionBy(vertexFieldToId.partitioner.get)
-    edgesByDest.join(vertexFieldToId).map {
+    }.partitionBy(vertexAttrToId.partitioner.get)
+    edgesByDest.join(vertexAttrToId).map {
       case (dst, ((srcId, eAttr), dstId)) => graphx.Edge(srcId, dstId, eAttr)
     }
   }
 }
 
 case class NumberedIdFromVertexField(vertexIdFieldName: String,
-                                     sourceEdgeFieldName: String,
-                                     destEdgeFieldName: String) extends GraphBuilder with GraphIndexer {
+                                     edgeSourceFieldName: String,
+                                     edgeDestFieldName: String) extends GraphBuilder with GraphIndexer {
   def build(vertexDataSig: AttributeSignature,
             vertexData: RDD[DenseAttributes],
             edgeDataSig: AttributeSignature,
@@ -125,33 +125,33 @@ case class NumberedIdFromVertexField(vertexIdFieldName: String,
     val vertexFieldToId = vertices.map {
       case (vertexId, vertexAttributes) => vertexAttributes(vIdx) -> vertexId
     }.partitionBy(vertexAttrPartitioner)
-    val eSrcIdx = edgeDataSig.readIndex[String](sourceEdgeFieldName)
-    val eDstIdx = edgeDataSig.readIndex[String](destEdgeFieldName)
+    val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
+    val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
     val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexFieldToId)
     (vertices, edges)
   }
 }
-case class IdFromEdgeFields(vertexIdFieldName: String,
-                            sourceEdgeFieldName: String,
-                            destEdgeFieldName: String) extends GraphBuilder with GraphIndexer {
+case class IdFromEdgeFields(vertexIdAttrName: String,
+                            edgeSourceFieldName: String,
+                            edgeDestFieldName: String) extends GraphBuilder with GraphIndexer {
   def build(vertexDataSig: AttributeSignature,
             vertexData: RDD[DenseAttributes],
             edgeDataSig: AttributeSignature,
             edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
-    val newVertexSig = vertexDataSig.addAttribute[String](vertexIdFieldName).signature
+    val newVertexSig = vertexDataSig.addAttribute[String](vertexIdAttrName).signature
     val maker = newVertexSig.maker
-    val vIdx = newVertexSig.writeIndex[String](vertexIdFieldName)
-    val eSrcIdx = edgeDataSig.readIndex[String](sourceEdgeFieldName)
-    val eDstIdx = edgeDataSig.readIndex[String](destEdgeFieldName)
+    val vIdx = newVertexSig.writeIndex[String](vertexIdAttrName)
+    val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
+    val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
     val verticesData = edgeData.flatMap(edgeAttributes =>
       Seq(edgeAttributes(eSrcIdx), edgeAttributes(eDstIdx))).distinct
     val verticesFromEdges: RDD[(Long, (String, DenseAttributes))] =
       indexVertices(verticesData.map(id => (id, maker.make.set(vIdx, id))))
     val vertexAttrPartitioner = new spark.HashPartitioner(edgeData.partitions.size)
-    val vertexFieldToId = verticesFromEdges.map {
+    val vertexAttrToId = verticesFromEdges.map {
       case (vertexId, (field, attr)) => (field, vertexId)
     }.partitionBy(vertexAttrPartitioner)
-    val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexFieldToId)
+    val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexAttrToId)
     val vertices: VertexRDD = verticesFromEdges.map {
       case (vertexId, (field, attr)) => (vertexId, attr)
     }
@@ -225,8 +225,8 @@ case class CSVImport(vertexHeader: Filename,
                      edgeHeader: Filename,
                      edgeCSVs: Seq[Filename],
                      vertexIdFieldName: String,
-                     sourceEdgeFieldName: String,
-                     destEdgeFieldName: String,
+                     edgeSourceFieldName: String,
+                     edgeDestFieldName: String,
                      delimiter: String,
                      skipFirstRow: Boolean)
     extends ImportGraph(
@@ -234,20 +234,20 @@ case class CSVImport(vertexHeader: Filename,
       ConcatenateCSVsDataParser(vertexCSVs, delimiter, skipFirstRow),
       HeaderAsStringCSVParser(edgeHeader, delimiter),
       ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
-      NumberedIdFromVertexField(vertexIdFieldName, sourceEdgeFieldName, destEdgeFieldName))
+      NumberedIdFromVertexField(vertexIdFieldName, edgeSourceFieldName, edgeDestFieldName))
 
 /*
  * Imports from csv edge list using custom delimiter, header can be included in the data files,
  * in that case set skipFirstRow = true. Vertices will be generated by parsing the edges, their
- * only attribute will be the vertexIdFieldName.
- * Every field will be treated as a string, the vertexIdFieldName will be the basis for indexing
+ * only attribute will be the vertexIdAttrName.
+ * Every field will be treated as a string, the vertexIdAttrName will be the basis for indexing
  * the graph.
  */
 case class EdgeCSVImport(edgeHeader: Filename,
                          edgeCSVs: Seq[Filename],
-                         vertexIdFieldName: String,
-                         sourceEdgeFieldName: String,
-                         destEdgeFieldName: String,
+                         vertexIdAttrName: String,
+                         edgeSourceFieldName: String,
+                         edgeDestFieldName: String,
                          delimiter: String,
                          skipFirstRow: Boolean)
     extends ImportGraph(
@@ -255,4 +255,4 @@ case class EdgeCSVImport(edgeHeader: Filename,
       DummyDataParser(),
       HeaderAsStringCSVParser(edgeHeader, delimiter),
       ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
-      IdFromEdgeFields(vertexIdFieldName, sourceEdgeFieldName, destEdgeFieldName))
+      IdFromEdgeFields(vertexIdAttrName, edgeSourceFieldName, edgeDestFieldName))
