@@ -21,7 +21,24 @@ svg .edge {
   fill: none;
   stroke: whitesmoke;
 }
-
+svg #arrow {
+  fill: whitesmoke;
+}
+svg #arrow-highlight-out {
+  fill: orange;
+}
+svg #arrow-highlight-in {
+  fill: lightblue;
+}
+svg .edge .first {
+  marker-end: url(#arrow);
+}
+svg .edge.highlight-out .first {
+  marker-end: url(#arrow-highlight-out);
+}
+svg .edge.highlight-in .first {
+  marker-end: url(#arrow-highlight-in);
+}
 svg .edge.highlight-out {
   stroke: orange;
 }
