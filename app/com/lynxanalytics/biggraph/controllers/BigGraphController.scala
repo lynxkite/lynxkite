@@ -138,12 +138,12 @@ object FEOperations extends FEOperationRepository {
       val name = "Import Graph from CSV"
       override val parameters = Seq(
         FEOperationParameterMeta("Vertex header file", ""),
-        FEOperationParameterMeta("Vertex CSV file(s) separated by ',' or matched by '*'", ""),
+        FEOperationParameterMeta("Vertex CSV file(s) separated by ',' and/or matched by '*'", ""),
         FEOperationParameterMeta("Edge header file", ""),
-        FEOperationParameterMeta("Edge CSV file(s) separated by ',' or matched by '*'", ""),
+        FEOperationParameterMeta("Edge CSV file(s) separated by ',' and/or matched by '*'", ""),
         FEOperationParameterMeta("Vertex id field name", ""),
-        FEOperationParameterMeta("Source edge field name", ""),
-        FEOperationParameterMeta("Destination edge field name", ""),
+        FEOperationParameterMeta("Edge source field name", ""),
+        FEOperationParameterMeta("Edge destination field name", ""),
         FEOperationParameterMeta("Delimiter", ","),
         FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"))
       def toGraphOperation(parameters: Seq[String]) =
@@ -163,10 +163,10 @@ object FEOperations extends FEOperationRepository {
       val name = "Import Graph from Edge List CSV"
       override val parameters = Seq(
         FEOperationParameterMeta("Edge header file", ""),
-        FEOperationParameterMeta("Edge CSV file(s) separated by ',' or matched by '*'", ""),
-        FEOperationParameterMeta("Vertex id field name", "vertexId"),
-        FEOperationParameterMeta("Source edge field name", ""),
-        FEOperationParameterMeta("Destination edge field name", ""),
+        FEOperationParameterMeta("Edge CSV file(s) separated by ',' and/or matched by '*'", ""),
+        FEOperationParameterMeta("Vertex id attribute name", "vertexId"),
+        FEOperationParameterMeta("Edge source field name", ""),
+        FEOperationParameterMeta("Edge destination field name", ""),
         FEOperationParameterMeta("Delimiter", ","),
         FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"))
       def toGraphOperation(parameters: Seq[String]) =

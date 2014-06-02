@@ -6,8 +6,8 @@ import scala.reflect.runtime.universe._
 package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
 
-  scala.reflect.runtime.universe
-
+  // Initialize reflection to avoid thread-safety issues
+  // TODO: ditch this when we get to Scala 2.11
   def printType[T: TypeTag]: Unit = bigGraphLogger.debug("initialize reflection for type: " + typeOf[T])
 
   printType[Long]
