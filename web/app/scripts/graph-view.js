@@ -17,8 +17,8 @@ angular.module('biggraph').directive('graphView', function() {
 
   function GraphView(element) {
     var svg = angular.element(element);
-    this.edges = create('g');
-    this.vertices = create('g');
+    this.edges = create('g', {'class': 'edges'});
+    this.vertices = create('g', {'class': 'nodes'});
     this.root = svg.find('g.root');
     this.zoom = 250;
     this.root.append([this.edges, this.vertices]);
@@ -37,6 +37,9 @@ angular.module('biggraph').directive('graphView', function() {
                          Math.sqrt(vertexScale * vertex.count),
                          vertex.count);
       vertices.push(v);
+      if (vertex.count === 0) {
+        continue;
+      }
       this.vertices.append(v.dom);
     }
     var edgeScale = this.zoom * 0.005 / minmax(graph.vertices.map(function(n) { return n.count; })).max;
@@ -62,11 +65,26 @@ angular.module('biggraph').directive('graphView', function() {
     this.dom = group([this.circle, this.label]);
     this.moveListeners = [];
     this.moveTo(x, y);
+    this.hoverListeners = [];
+    var that = this;
+    this.circle.mouseenter(function() {
+      for (var i = 0; i < that.hoverListeners.length; ++i) {
+        that.hoverListeners[i].on(that);
+      }
+    });
+    this.circle.mouseleave(function() {
+      for (var i = 0; i < that.hoverListeners.length; ++i) {
+        that.hoverListeners[i].off(that);
+      }
+    });
   }
+  Vertex.prototype.addHoverListener = function(hl) {
+    this.hoverListeners.push(hl);
+  };
   Vertex.prototype.addMoveListener = function(ml) {
     this.moveListeners.push(ml);
     ml(this);
-  }
+  };
   Vertex.prototype.moveTo = function(x, y) {
     this.x = x;
     this.y = y;
@@ -75,6 +93,34 @@ angular.module('biggraph').directive('graphView', function() {
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }
+  };
+
+  // JQuery addClass/removeClass does not work on SVG elements. (They are in
+  // another namespace, but he "class" attribute is in the default namespace.)
+  function classesOf(e) {
+    var l = e[0].getAttributeNS(null, 'class').split(' ');
+    l.plus = function(cls) {
+      if (l.indexOf(cls) === -1) {
+        return l.concat(cls);
+      } else {
+        return l;
+      }
+    };
+    l.minus = function(cls) {
+      var i = l.indexOf(cls);
+      if (i === -1) {
+        return l;
+      } else {
+        return l.slice(0, i).concat(l.slice(i + 1));
+      }
+    };
+    return l;
+  }
+  function addClass(e, cls) {
+    e[0].setAttributeNS(null, 'class', classesOf(e).plus(cls).join(' '));
+  }
+  function removeClass(e, cls) {
+    e[0].setAttributeNS(null, 'class', classesOf(e).minus(cls).join(' '));
   }
 
   function Edge(src, dst, w, zoom) {
@@ -83,14 +129,21 @@ angular.module('biggraph').directive('graphView', function() {
     this.first = create('path', {'class': 'first', 'stroke-width': w});
     this.second = create('path', {'class': 'second', 'stroke-width': w});
     this.dom = group([this.first, this.second], {'class': 'edge'});
-    var that = this
+    var that = this;
     src.addMoveListener(function() { that.reposition(zoom); });
     dst.addMoveListener(function() { that.reposition(zoom); });
+    src.addHoverListener({on: function() { addClass(that.dom, 'highlight-out'); that.toFront(); },
+                          off: function() { removeClass(that.dom, 'highlight-out'); }});
+    dst.addHoverListener({on: function() { addClass(that.dom, 'highlight-in'); that.toFront(); },
+                          off: function() { removeClass(that.dom, 'highlight-in'); }});
   }
+  Edge.prototype.toFront = function() {
+    this.dom.parent().append(this.dom);
+  };
   Edge.prototype.reposition = function(zoom) {
     this.first.attr('d', arrow1(this.src.x, this.src.y, this.dst.x, this.dst.y, zoom));
     this.second.attr('d', arrow2(this.src.x, this.src.y, this.dst.x, this.dst.y, zoom));
-  }
+  };
 
   function draw() {
     return ' ' + Array.prototype.slice.call(arguments).join(' ') + ' ';
