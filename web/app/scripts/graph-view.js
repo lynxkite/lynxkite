@@ -17,6 +17,7 @@ angular.module('biggraph').directive('graphView', function() {
 
   function GraphView(element) {
     var svg = angular.element(element);
+    svg.append([marker('arrow'), marker('arrow-highlight-in'), marker('arrow-highlight-out')]);
     this.edges = create('g', {'class': 'edges'});
     this.vertices = create('g', {'class': 'nodes'});
     this.root = svg.find('g.root');
@@ -179,6 +180,16 @@ angular.module('biggraph').directive('graphView', function() {
     var g = create('g', attrs);
     g.append(l);
     return g;
+  }
+
+  function marker(id) {
+    var m = create('marker');
+    m.attr({'id': id, 'orient': 'auto'});
+    m[0].setAttributeNS(null, 'viewBox', '-3 -5 7 10');
+    var p = create('path');
+    p.attr({'d': 'M -3 -5 l 10 5 l -10 5 z'});
+    m.append(p);
+    return m;
   }
 
   function create(tag, attrs) {
