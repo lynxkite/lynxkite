@@ -41,8 +41,9 @@ trait FEOperation {
   def applicableTo(bigGraphs: Seq[BigGraph]): Boolean
   val name: String
   def parameters(bigGraphs: Seq[BigGraph]): Seq[FEOperationParameterMeta] = parameters
-  def parameters: Seq[FEOperationParameterMeta] = ???
-  def toGraphOperation(parameters: Seq[String]): GraphOperation
+  def parameters: Seq[FEOperationParameterMeta] = Seq()
+  def toGraphOperation(parameters: Seq[String]): GraphOperation = operation
+  def operation: GraphOperation = ???
 }
 
 trait SingleGraphFEOperation extends FEOperation {
@@ -74,46 +75,81 @@ object FEOperations extends FEOperationRepository {
       val name = "Find Maximal Cliques"
       override val parameters = Seq(
         FEOperationParameterMeta("Minimum Clique Size", "3"))
-      def toGraphOperation(parameters: Seq[String]) =
+      override def toGraphOperation(parameters: Seq[String]) =
         graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
     })
   registerOperation(
     new SingleGraphFEOperation {
       val name = "Edge Graph"
-      override val parameters = Seq()
-      def toGraphOperation(parameters: Seq[String]) = graph_operations.EdgeGraph()
+      override val operation = graph_operations.EdgeGraph()
     })
   registerOperation(
     new FEOperation {
       val name = "Remove non-symmetric edges"
-      private val operation = new graph_operations.RemoveNonSymmetricEdges()
+      override val operation = new graph_operations.RemoveNonSymmetricEdges()
       def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
-        (bigGraphs.size) == 1 && !bigGraphs.head.properties.symmetricEdges
-      override val parameters = Seq()
-      def toGraphOperation(parameters: Seq[String]) = operation
+        bigGraphs.size == 1 && !bigGraphs.head.properties.symmetricEdges
     })
   registerOperation(
     new FEOperation {
       val name = "Connected Components"
-      private val operation = new graph_operations.ConnectedComponents("component_id")
+      override val operation = new graph_operations.ConnectedComponents("component_id")
       def applicableTo(bigGraphs: Seq[BigGraph]): Boolean = operation.isSourceListValid(bigGraphs)
-      override val parameters = Seq()
-      def toGraphOperation(parameters: Seq[String]) = operation
     })
   registerOperation(
     new FEOperation {
       val name = "Edges from set overlap"
       def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
-        (bigGraphs.size) == 1 &&
+        bigGraphs.size == 1 &&
           bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].size > 0
       override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
         FEOperationParameterMeta(
           "Set attribute name",
           bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].head),
         FEOperationParameterMeta("Minimum Overlap", "3"))
-      def toGraphOperation(parameters: Seq[String]) =
+      override def toGraphOperation(parameters: Seq[String]) =
         new graph_operations.SetOverlap(parameters(0), parameters(1).toInt)
     })
+  registerOperation(
+    new SingleGraphFEOperation {
+      val name = "Add constant edge attribute"
+      override val parameters = Seq(
+        FEOperationParameterMeta("Name of new attribute", ""),
+        FEOperationParameterMeta("Value", "1"))
+      override def toGraphOperation(parameters: Seq[String]) =
+        new graph_operations.ConstantDoubleEdgeAttribute(parameters(0), parameters(1).toDouble)
+    })
+  registerOperation(
+    new SingleGraphFEOperation {
+      val name = "Add reversed edges"
+      override val operation = graph_operations.AddReversedEdges()
+      override val parameters = Seq()
+    })
+  registerOperation(
+    new SingleGraphFEOperation {
+      val name = "Compute clustering coefficient"
+      override val operation = graph_operations.ClusteringCoefficient("clustering_coefficient")
+    })
+  registerOperation(
+    new FEOperation {
+      val name = "Weighted out-degree"
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        bigGraphs.size == 1 &&
+          bigGraphs.head.edgeAttributes.getAttributesReadableAs[Double].size > 0
+      override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
+        FEOperationParameterMeta(
+          "Weight attribute",
+          bigGraphs.head.edgeAttributes.getAttributesReadableAs[Double].head),
+        FEOperationParameterMeta("Target attribute name", "weighted_out_degree"))
+      override def toGraphOperation(parameters: Seq[String]) =
+        graph_operations.WeightedOutDegree(parameters(0), parameters(1))
+    })
+  registerOperation(
+    new SingleGraphFEOperation {
+      val name = "Reverse edges"
+      override val operation = graph_operations.ReverseEdges()
+    })
+
   registerOperation(
     new StartingFEOperation {
       val name = "Uniform Random Graph"
@@ -121,7 +157,7 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Number of vertices", "10"),
         FEOperationParameterMeta("Random seed", "0"),
         FEOperationParameterMeta("Edge probability", "0.5"))
-      def toGraphOperation(parameters: Seq[String]) =
+      override def toGraphOperation(parameters: Seq[String]) =
         graph_operations.SimpleRandomGraph(
           parameters(0).toInt,
           parameters(1).toInt,
@@ -130,8 +166,7 @@ object FEOperations extends FEOperationRepository {
   registerOperation(
     new StartingFEOperation {
       val name = "Simple Example Graph With Attributes"
-      override val parameters = Seq()
-      def toGraphOperation(parameters: Seq[String]) = InstantiateSimpleGraph2()
+      override val operation = InstantiateSimpleGraph2()
     })
   registerOperation(
     new StartingFEOperation {
@@ -146,7 +181,7 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Destination edge field name", ""),
         FEOperationParameterMeta("Delimiter", ","),
         FEOperationParameterMeta("Skip header row while processing data (true/false)", "true"))
-      def toGraphOperation(parameters: Seq[String]) =
+      override def toGraphOperation(parameters: Seq[String]) =
         graph_operations.CSVImport(
           graph_util.Filename(parameters(0)),
           parameters(1).split(",").map(graph_util.Filename(_)),

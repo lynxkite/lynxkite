@@ -22,19 +22,20 @@ case class ClusteringCoefficient(outputAttribute: String)
                                    vertexPartitioner: spark.Partitioner): RDD[(VertexId, Double)] = {
     val nonLoopEdges = inputData.edges.filter(e => e.srcId != e.dstId)
 
-    val outNeighbors = nonLoopEdges
+    val inNeighbors = nonLoopEdges
       .map(e => (e.dstId, e.srcId))
       .groupByKey(vertexPartitioner)
       .mapValues(_.toSet)
 
-    val inNeighbors = nonLoopEdges
+    val outNeighbors = nonLoopEdges
       .map(e => (e.srcId, e.dstId))
       .groupByKey(vertexPartitioner)
       .mapValues(_.toSet)
 
-    val neighbors = outNeighbors.join(inNeighbors).mapValues {
-      case (outs, ins) => outs ++ ins
-    }
+    val neighbors = inputData.vertices.leftOuterJoin(outNeighbors).leftOuterJoin(inNeighbors)
+      .mapValues {
+        case ((id, outs), ins) => outs.getOrElse(Set()) ++ ins.getOrElse(Set())
+      }
 
     val outNeighborsOfNeighbors = neighbors.join(outNeighbors).flatMap {
       case (vid, (all, outs)) => all.map((_, outs))
@@ -44,7 +45,7 @@ case class ClusteringCoefficient(outputAttribute: String)
       case (mine, theirs) =>
         val numNeighbors = mine.size
         if (numNeighbors > 1) {
-          theirs.map(his => (his & mine).size).sum / numNeighbors / (numNeighbors - 1)
+          theirs.map(his => (his & mine).size).sum * 1.0 / numNeighbors / (numNeighbors - 1)
         } else {
           1.0
         }
