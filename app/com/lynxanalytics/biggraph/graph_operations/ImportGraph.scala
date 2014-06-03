@@ -93,7 +93,7 @@ trait GraphBuilder {
             edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
 }
 trait GraphIndexer {
-  def indexVertices[A: ClassTag](vertexData: RDD[A]): RDD[(Long, A)] =
+  def indexVertices[A](vertexData: RDD[A]): RDD[(Long, A)] =
     spark_util.RDDUtils.fastNumbered(vertexData)
 
   def indexEdges[A: ClassTag](edgeData: RDD[DenseAttributes],
@@ -133,16 +133,23 @@ case class NumberedIdFromVertexField(vertexIdFieldName: String,
 }
 case class IdFromEdgeFields(vertexIdAttrName: String,
                             edgeSourceFieldName: String,
-                            edgeDestFieldName: String) extends GraphBuilder with GraphIndexer {
+                            edgeDestFieldName: String,
+                            disallowedVertexIds: Set[String] = null)
+    extends GraphBuilder with GraphIndexer {
   def build(vertexDataSig: AttributeSignature,
             vertexData: RDD[DenseAttributes],
             edgeDataSig: AttributeSignature,
             edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
-    val newVertexSig = vertexDataSig.addAttribute[String](vertexIdAttrName).signature
+    val newVertexSig = AttributeSignature.empty.addAttribute[String](vertexIdAttrName).signature
     val maker = newVertexSig.maker
     val vIdx = newVertexSig.writeIndex[String](vertexIdAttrName)
     val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
     val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
+    val filteredEdgeData =
+      if (disallowedVertexIds == null) edgeData
+      else edgeData.filter(da =>
+        !disallowedVertexIds.contains(da(eSrcIdx)) && !disallowedVertexIds.contains(da(eDstIdx)))
+
     val verticesData = edgeData.flatMap(edgeAttributes =>
       Seq(edgeAttributes(eSrcIdx), edgeAttributes(eDstIdx))).distinct
     val verticesFromEdges: RDD[(Long, (String, DenseAttributes))] =
@@ -249,10 +256,12 @@ case class EdgeCSVImport(edgeHeader: Filename,
                          edgeSourceFieldName: String,
                          edgeDestFieldName: String,
                          delimiter: String,
-                         skipFirstRow: Boolean)
+                         skipFirstRow: Boolean,
+                         disallowedVertexIds: Set[String])
     extends ImportGraph(
       DummyMetaParser(),
       DummyDataParser(),
       HeaderAsStringCSVParser(edgeHeader, delimiter),
       ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
-      IdFromEdgeFields(vertexIdAttrName, edgeSourceFieldName, edgeDestFieldName))
+      IdFromEdgeFields(
+        vertexIdAttrName, edgeSourceFieldName, edgeDestFieldName, disallowedVertexIds))
