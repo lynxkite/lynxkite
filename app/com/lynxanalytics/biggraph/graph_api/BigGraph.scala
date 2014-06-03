@@ -15,7 +15,7 @@ import attributes.AttributeSignature
 class BigGraph private[graph_api] (val sources: Seq[BigGraph], val operation: GraphOperation)
     extends Serializable {
 
-  assert(operation.isSourceListValid(sources))
+  assert(operation.isSourceListValid(sources), s"Invalid source list: $sources")
 
   lazy val gUID: UUID = {
     val collector = mutable.ArrayBuffer[Byte]()

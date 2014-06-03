@@ -27,16 +27,19 @@ case class PageRank(weightAttribute: String,
       .map(e => (e.srcId, (e.dstId, e.attr(readIdx))))
       .groupByKey(vertexPartitioner)
       .mapValues { it =>
-        val seq = it.toSeq
-        val wSum = seq.map(_._2).sum
-        seq.groupBy(_._1).mapValues(_.map(_._2).sum / wSum).iterator.toArray
+        val dstW = it.toSeq
+        def sumWeights(s: Seq[(VertexId, Double)]) = s.map({ case (dst, w) => w }).sum
+        val total = sumWeights(dstW)
+        // Collapse parallel edges.
+        val collapsed = dstW.groupBy({ case (dst, w) => dst }).mapValues(sumWeights(_))
+        collapsed.mapValues(w => w / total).toArray
       }
 
     var pageRank = inputData.vertices.mapValues(attr => 1.0).partitionBy(vertexPartitioner)
     val vertexCount = inputData.vertices.count
 
     for (i <- 0 until iterations) {
-      val incommingRank = pageRank.join(targetsWithWeights)
+      val incomingRank = pageRank.join(targetsWithWeights)
         .flatMap {
           case (id, (pr, targets)) =>
             targets.map { case (tid, weight) => (tid, pr * weight * dampingFactor) }
@@ -44,12 +47,12 @@ case class PageRank(weightAttribute: String,
         .groupByKey(vertexPartitioner)
         .mapValues(_.sum)
 
-      val totalIncomming = incommingRank.map(_._2).aggregate(0.0)(_ + _, _ + _)
-      val distributedExtraWeight = (vertexCount - totalIncomming) / vertexCount
+      val totalIncoming = incomingRank.map(_._2).aggregate(0.0)(_ + _, _ + _)
+      val distributedExtraWeight = (vertexCount - totalIncoming) / vertexCount
 
-      pageRank = pageRank.leftOuterJoin(incommingRank)
+      pageRank = pageRank.leftOuterJoin(incomingRank)
         .mapValues {
-          case (oldRank, incomming) => distributedExtraWeight + incomming.getOrElse(0.0)
+          case (oldRank, incoming) => distributedExtraWeight + incoming.getOrElse(0.0)
         }
     }
     pageRank
