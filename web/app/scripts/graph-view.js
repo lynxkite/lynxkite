@@ -87,7 +87,6 @@ angular.module('biggraph').directive('graphView', function() {
   };
   Vertex.prototype.addMoveListener = function(ml) {
     this.moveListeners.push(ml);
-    ml(this);
   };
   Vertex.prototype.moveTo = function(x, y) {
     this.x = x;
@@ -136,6 +135,7 @@ angular.module('biggraph').directive('graphView', function() {
     var that = this;
     src.addMoveListener(function() { that.reposition(zoom); });
     dst.addMoveListener(function() { that.reposition(zoom); });
+    this.reposition(zoom);
     src.addHoverListener({on: function() { addClass(that.dom, 'highlight-out'); that.toFront(); },
                           off: function() { removeClass(that.dom, 'highlight-out'); }});
     dst.addHoverListener({on: function() { addClass(that.dom, 'highlight-in'); that.toFront(); },
