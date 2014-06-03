@@ -1,0 +1,87 @@
+'use strict';
+
+var svgUtil = {
+  // JQuery addClass/removeClass does not work on SVG elements. (They are in
+  // another namespace, but he "class" attribute is in the default namespace.)
+  classesOf: function(e) {
+    var l = e[0].getAttributeNS(null, 'class').split(' ');
+    l.plus = function(cls) {
+      if (l.indexOf(cls) === -1) {
+        return l.concat(cls);
+      } else {
+        return l;
+      }
+    };
+    l.minus = function(cls) {
+      var i = l.indexOf(cls);
+      if (i === -1) {
+        return l;
+      } else {
+        return l.slice(0, i).concat(l.slice(i + 1));
+      }
+    };
+    return l;
+  },
+
+  addClass: function(e, cls) {
+    e[0].setAttributeNS(null, 'class', svgUtil.classesOf(e).plus(cls).join(' '));
+  },
+
+  removeClass: function(e, cls) {
+    e[0].setAttributeNS(null, 'class', svgUtil.classesOf(e).minus(cls).join(' '));
+  },
+
+  draw: function() {
+    return ' ' + Array.prototype.slice.call(arguments).join(' ') + ' ';
+  },
+
+  arc: function(r, x, y) { return svgUtil.draw('A', r, r, 0, 0, 0, x, y); },
+
+  arcParams: function(ax, ay, bx, by, zoom) {
+    if (ax === bx && ay === by) {
+      return {r: 0.1 * zoom, x: ax + 0.2 * zoom, y: ay};
+    } else {
+      var dx = bx - ax, dy = by - ay;
+      var h = 1 - Math.sqrt(3) / 2;
+      return {
+        r: Math.sqrt(dx * dx + dy * dy),
+        x: ax + 0.5 * dx - h * dy,
+        y: ay + 0.5 * dy + h * dx,
+      };
+    }
+  },
+
+  arrow1: function(ax, ay, bx, by, zoom) {
+    var a = svgUtil.arcParams(ax, ay, bx, by, zoom);
+    return svgUtil.draw('M', ax, ay) + svgUtil.arc(a.r, a.x, a.y);
+  },
+
+  arrow2: function(ax, ay, bx, by, zoom) {
+    var a = svgUtil.arcParams(ax, ay, bx, by, zoom);
+    return svgUtil.draw('M', a.x, a.y) + svgUtil.arc(a.r, bx, by);
+  },
+
+  group: function(l, attrs) {
+    var g = svgUtil.create('g', attrs);
+    g.append(l);
+    return g;
+  },
+
+  marker: function(id) {
+    var m = svgUtil.create('marker');
+    m.attr({'id': id, 'orient': 'auto'});
+    m[0].setAttributeNS(null, 'viewBox', '-3 -5 7 10');
+    var p = svgUtil.create('path');
+    p.attr({'d': 'M -3 -5 l 10 5 l -10 5 z'});
+    m.append(p);
+    return m;
+  },
+
+  create: function(tag, attrs) {
+    var e = angular.element(document.createElementNS('http://www.w3.org/2000/svg', tag));
+    if (attrs !== undefined) {
+      e.attr(attrs);
+    }
+    return e;
+  },
+};
