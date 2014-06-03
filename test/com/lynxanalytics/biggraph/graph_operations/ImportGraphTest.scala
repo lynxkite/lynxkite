@@ -53,7 +53,7 @@ class ImportGraphTest extends FunSuite with TestBigGraphManager with TestGraphDa
     val importedGraph = bigGraphManager.deriveGraph(Seq(), EdgeCSVImport(
       edgeHeader, edgeCSVs,
       vertexIdAttrName, edgeSourceFieldName, edgeDestFieldName,
-      delimiter, skipFirstRow))
+      delimiter, skipFirstRow, Set()))
     val graphData = graphDataManager.obtainData(importedGraph)
     assert(graphData.vertices.count === 6)
     assert(graphData.edges.count === 8)
