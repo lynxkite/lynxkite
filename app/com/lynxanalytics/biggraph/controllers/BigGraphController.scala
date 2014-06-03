@@ -166,6 +166,21 @@ object FEOperations extends FEOperationRepository {
         graph_operations.PageRank(
           parameters(0), parameters(1), parameters(2).toDouble, parameters(3).toInt)
     })
+  registerOperation(
+    new FEOperation {
+      val name = "Expand vertex sets"
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        bigGraphs.size == 1 &&
+          bigGraphs.head.edgeAttributes.getAttributesReadableAs[Array[Long]].size > 0
+      override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
+        FEOperationParameterMeta(
+          "ID set attribute",
+          bigGraphs.head.edgeAttributes.getAttributesReadableAs[Array[Long]].head),
+        FEOperationParameterMeta("New attribute with old IDs", "containers"))
+      override def toGraphOperation(parameters: Seq[String]) =
+        graph_operations.ExpandVertexSet(
+          parameters(0), parameters(1))
+    })
 
   registerOperation(
     new StartingFEOperation {
