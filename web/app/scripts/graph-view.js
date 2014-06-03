@@ -82,6 +82,7 @@ angular.module('biggraph').directive('graphView', function() {
       }
     });
   }
+  // Hover listeners must have an `on()` and an `off()` method.
   Vertex.prototype.addHoverListener = function(hl) {
     this.hoverListeners.push(hl);
   };
