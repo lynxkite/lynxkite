@@ -1,8 +1,9 @@
 'use strict';
 
 angular.module('biggraph').directive('graphView', function() {
-  var svg = svgUtil
-  var util = commonUtil
+  /* global SVG_UTIL, COMMON_UTIL */
+  var svg = SVG_UTIL;
+  var util = COMMON_UTIL;
   var directive = {
       template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
       require: '^ngModel',

@@ -1,6 +1,7 @@
 'use strict';
 
-var commonUtil = {
+/* exported COMMON_UTIL */
+var COMMON_UTIL = {
   minmax: function(xs) {
     var Inf = parseFloat('Infinity');
     var min = Inf, max = -Inf;
