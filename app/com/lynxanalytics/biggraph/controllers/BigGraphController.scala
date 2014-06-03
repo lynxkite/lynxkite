@@ -180,13 +180,15 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Edge source field name", ""),
         FEOperationParameterMeta("Edge destination field name", ""),
         FEOperationParameterMeta("Delimiter", ","),
-        FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"))
+        FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"),
+        FEOperationParameterMeta("AWS Access Key ID (optional)", ""),
+        FEOperationParameterMeta("AWS Secret Access Key (optional)", ""))
       override def toGraphOperation(parameters: Seq[String]) =
         graph_operations.CSVImport(
           graph_util.Filename(parameters(0)),
-          parameters(1).split(",").map(graph_util.Filename(_)),
+          parameters(1).split(",").map(graph_util.Filename(_, parameters(9), parameters(10))),
           graph_util.Filename(parameters(2)),
-          parameters(3).split(",").map(graph_util.Filename(_)),
+          parameters(3).split(",").map(graph_util.Filename(_, parameters(9), parameters(10))),
           parameters(4),
           parameters(5),
           parameters(6),
@@ -203,11 +205,13 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Edge source field name", ""),
         FEOperationParameterMeta("Edge destination field name", ""),
         FEOperationParameterMeta("Delimiter", ","),
-        FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"))
+        FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"),
+        FEOperationParameterMeta("AWS Access Key ID (optional)", ""),
+        FEOperationParameterMeta("AWS Secret Access Key (optional)", ""))
       override def toGraphOperation(parameters: Seq[String]) =
         graph_operations.EdgeCSVImport(
           graph_util.Filename(parameters(0)),
-          parameters(1).split(",").map(graph_util.Filename(_)),
+          parameters(1).split(",").map(graph_util.Filename(_, parameters(7), parameters(8))),
           parameters(2),
           parameters(3),
           parameters(4),
