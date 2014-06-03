@@ -28,9 +28,9 @@ describe('metagraph navigation', function () {
       'verticesCount': '100',
       'edgesCount': '1000',
     });
-    var emptyRequest = {fake: 0};
-    var emptyRequestJson = encodeURI(JSON.stringify(emptyRequest));
-    $httpBackend.when('GET', '/ajax/startingOps?q=' + emptyRequestJson).respond([]);
+    $httpBackend.when('GET', /ajax.startingOps/).respond([]);
+    // Anything else gets an empty response.
+    $httpBackend.when('GET', /ajax.*/).respond({});
     ctrl = $controller('GraphViewCtrl', {
       $scope: scope,
       $routeParams: {graph: 'test'},
@@ -42,7 +42,7 @@ describe('metagraph navigation', function () {
     $httpBackend.verifyNoOutstandingRequest();
   });
 
-  it('should make an HTTP request', function() {
+  it('should load graph and stats data', function() {
     $httpBackend.flush();
     expect(scope.graph.ops.length).toBe(1);
     expect(scope.stats.verticesCount).toBe('100');
