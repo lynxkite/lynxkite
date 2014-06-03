@@ -2,7 +2,7 @@
 
 angular.module('biggraph').directive('graphView', function() {
   var directive = {
-      template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"><defs></defs><g class="root"></g></svg>',
+      template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
       require: '^ngModel',
       replace: true,
       link: function(scope, element, attrs) {
@@ -20,9 +20,10 @@ angular.module('biggraph').directive('graphView', function() {
     svg.append([marker('arrow'), marker('arrow-highlight-in'), marker('arrow-highlight-out')]);
     this.edges = create('g', {'class': 'edges'});
     this.vertices = create('g', {'class': 'nodes'});
-    this.root = svg.find('g.root');
+    this.root = create('g', {'class': 'root'});
     this.zoom = 250;
     this.root.append([this.edges, this.vertices]);
+    svg.append(this.root);
   }
 
   GraphView.prototype.update = function(graph) {
