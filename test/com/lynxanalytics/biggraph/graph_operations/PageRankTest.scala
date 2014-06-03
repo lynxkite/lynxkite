@@ -14,8 +14,8 @@ class PageRankTest
   // Creates the graph specified by `nodes` and applies PageRank to it.
   // Returns the resulting attribute in an easy-to-use format.
   def getPageRank(nodes: Seq[(Int, Seq[Int])]): Map[Int, Int] = {
-    val graphManager = cleanGraphManager("SetOverlapTest")
-    val dataManager = cleanDataManager("SetOverlapTest")
+    val graphManager = cleanGraphManager("PageRankTest")
+    val dataManager = cleanDataManager("PageRankTest")
     val bareGraph = graphManager.deriveGraph(Seq(), GraphByEdgeLists(nodes))
     val inputGraph = graphManager.deriveGraph(
       Seq(bareGraph), ConstantDoubleEdgeAttribute("weight", 1.0))
