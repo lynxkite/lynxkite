@@ -44,7 +44,7 @@ angular.module('biggraph').directive('graphView', function() {
       }
       this.vertices.append(v.dom);
     }
-    var edgeScale = this.zoom * 0.005 / minmax(graph.vertices.map(function(n) { return n.count; })).max;
+    var edgeScale = this.zoom * 0.05 / minmax(graph.edges.map(function(n) { return n.count; })).max;
     for (i = 0; i < graph.edges.length; ++i) {
       var edge = graph.edges[i];
       if (edgeScale * edge.count < 1) {
