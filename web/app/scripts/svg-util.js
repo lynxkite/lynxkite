@@ -1,6 +1,7 @@
 'use strict';
 
-var svgUtil = {
+/* exported  SVG_UTIL */
+var SVG_UTIL = {
   // JQuery addClass/removeClass does not work on SVG elements. (They are in
   // another namespace, but he "class" attribute is in the default namespace.)
   classesOf: function(e) {
@@ -24,18 +25,18 @@ var svgUtil = {
   },
 
   addClass: function(e, cls) {
-    e[0].setAttributeNS(null, 'class', svgUtil.classesOf(e).plus(cls).join(' '));
+    e[0].setAttributeNS(null, 'class', SVG_UTIL.classesOf(e).plus(cls).join(' '));
   },
 
   removeClass: function(e, cls) {
-    e[0].setAttributeNS(null, 'class', svgUtil.classesOf(e).minus(cls).join(' '));
+    e[0].setAttributeNS(null, 'class', SVG_UTIL.classesOf(e).minus(cls).join(' '));
   },
 
   draw: function() {
     return ' ' + Array.prototype.slice.call(arguments).join(' ') + ' ';
   },
 
-  arc: function(r, x, y) { return svgUtil.draw('A', r, r, 0, 0, 0, x, y); },
+  arc: function(r, x, y) { return SVG_UTIL.draw('A', r, r, 0, 0, 0, x, y); },
 
   arcParams: function(ax, ay, bx, by, zoom) {
     if (ax === bx && ay === by) {
@@ -52,26 +53,26 @@ var svgUtil = {
   },
 
   arrow1: function(ax, ay, bx, by, zoom) {
-    var a = svgUtil.arcParams(ax, ay, bx, by, zoom);
-    return svgUtil.draw('M', ax, ay) + svgUtil.arc(a.r, a.x, a.y);
+    var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
+    return SVG_UTIL.draw('M', ax, ay) + SVG_UTIL.arc(a.r, a.x, a.y);
   },
 
   arrow2: function(ax, ay, bx, by, zoom) {
-    var a = svgUtil.arcParams(ax, ay, bx, by, zoom);
-    return svgUtil.draw('M', a.x, a.y) + svgUtil.arc(a.r, bx, by);
+    var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
+    return SVG_UTIL.draw('M', a.x, a.y) + SVG_UTIL.arc(a.r, bx, by);
   },
 
   group: function(l, attrs) {
-    var g = svgUtil.create('g', attrs);
+    var g = SVG_UTIL.create('g', attrs);
     g.append(l);
     return g;
   },
 
   marker: function(id) {
-    var m = svgUtil.create('marker');
+    var m = SVG_UTIL.create('marker');
     m.attr({'id': id, 'orient': 'auto'});
     m[0].setAttributeNS(null, 'viewBox', '-3 -5 7 10');
-    var p = svgUtil.create('path');
+    var p = SVG_UTIL.create('path');
     p.attr({'d': 'M -3 -5 l 10 5 l -10 5 z'});
     m.append(p);
     return m;
