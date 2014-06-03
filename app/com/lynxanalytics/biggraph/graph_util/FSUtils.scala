@@ -23,18 +23,9 @@ case class Filename(
   def open() = fs.open(path)
   def reader() = new BufferedReader(new InputStreamReader(open))
 
-  /**
-   * Read a text file from HDFS, a local file system (available on all nodes), or any
-   * Hadoop-supported file system URI, and return it as an RDD of Strings.
-   */
-  /*
-  def textFile(path: String, minSplits: Int = sc.defaultMinSplits): RDD[String] = {
-    hadoopFile(path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text],
-      minSplits).map(pair => pair._2.toString)
-  }*/
-
-  // TODO: set default splits?
   def loadAsTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
+    // SparkContext.textfile does not accept hadoop configuration as a parameter (we need to pass AWS credentials)
+    // textfile calls hadoopfile that uses MRv1 while the newAPIHadoopFile uses the MRv2 API (and accepts conf)
     sc.newAPIHadoopFile(
       filename,
       kClass = classOf[hadoop.io.LongWritable],
