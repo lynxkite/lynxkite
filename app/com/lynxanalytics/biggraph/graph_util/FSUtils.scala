@@ -6,6 +6,8 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+
 case class Filename(
     val filename: String,
     val awsAccessKeyId: String = "",
@@ -17,13 +19,14 @@ case class Filename(
     conf.set("fs.s3n.awsSecretAccessKey", awsSecretAccessKey)
     return conf
   }
-  def fs() = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
-  def uri() = new java.net.URI(filename)
-  def path() = new hadoop.fs.Path(filename)
-  def open() = fs.open(path)
-  def reader() = new BufferedReader(new InputStreamReader(open))
+  def fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
+  def uri = new java.net.URI(filename)
+  def path = new hadoop.fs.Path(filename)
+  def open = fs.open(path)
+  def exists = fs.exists(path)
+  def reader = new BufferedReader(new InputStreamReader(open))
 
-  def loadAsTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
+  def loadTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
     // SparkContext.textfile does not accept hadoop configuration as a parameter (we need to pass AWS credentials)
     // textfile calls hadoopfile that uses MRv1 while the newAPIHadoopFile uses the MRv2 API (and accepts conf)
     sc.newAPIHadoopFile(
@@ -46,7 +49,47 @@ case class Filename(
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
+  def loadObjectFile[T: scala.reflect.ClassTag](sc: spark.SparkContext): spark.rdd.RDD[T] = {
+    import hadoop.mapreduce.lib.input.SequenceFileInputFormat
+
+    sc.newAPIHadoopFile(
+      filename,
+      kClass = classOf[hadoop.io.NullWritable],
+      vClass = classOf[hadoop.io.BytesWritable],
+      fClass = classOf[SequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
+      conf = hadoopConfiguration)
+      .map(pair => RDDUtils.deserialize[T](pair._2.getBytes))
+  }
+
+  def saveAsObjectFile(data: spark.rdd.RDD[_]): Unit = {
+    import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
+
+    val hadoopData = data.map(x =>
+      (hadoop.io.NullWritable.get(), new hadoop.io.BytesWritable(RDDUtils.serialize(x))))
+    hadoopData.saveAsNewAPIHadoopFile(
+      filename,
+      keyClass = classOf[hadoop.io.NullWritable],
+      valueClass = classOf[hadoop.io.BytesWritable],
+      outputFormatClass =
+        classOf[SequenceFileOutputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
+      conf = new hadoop.mapred.JobConf(hadoopConfiguration))
+  }
+
   def addSuffix(suffix: String): Filename = {
     Filename(filename + suffix, awsAccessKeyId, awsSecretAccessKey)
+  }
+
+  def addPathElement(path_element: String): Filename = {
+    addSuffix("/" + path_element)
+  }
+}
+object Filename {
+  private val filenamePattern = "(s3n?)://(.+):(.+)@(.+)".r
+  def fromString(str: String): Filename = {
+    str match {
+      case filenamePattern(protocol, id, key, path) =>
+        Filename(protocol + "://" + path, id, key)
+      case _ => Filename(str)
+    }
   }
 }
