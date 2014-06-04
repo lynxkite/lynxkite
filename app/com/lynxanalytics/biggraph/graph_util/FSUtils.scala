@@ -19,12 +19,12 @@ case class Filename(
     conf.set("fs.s3n.awsSecretAccessKey", awsSecretAccessKey)
     return conf
   }
-  def fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
-  def uri = new java.net.URI(filename)
-  def path = new hadoop.fs.Path(filename)
-  def open = fs.open(path)
-  def exists = fs.exists(path)
-  def reader = new BufferedReader(new InputStreamReader(open))
+  @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
+  @transient lazy val uri = new java.net.URI(filename)
+  @transient lazy val path = new hadoop.fs.Path(filename)
+  def open() = fs.open(path)
+  def exists() = fs.exists(path)
+  def reader() = new BufferedReader(new InputStreamReader(open))
 
   def loadTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
     // SparkContext.textfile does not accept hadoop configuration as a parameter (we need to pass AWS credentials)

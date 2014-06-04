@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph
 import java.io.File
 import org.apache.spark
 
-import graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.Filename
 
 trait SparkContextProvider {
   val sparkContext: spark.SparkContext
