@@ -9,6 +9,8 @@ import com.lynxanalytics.biggraph.TestTempDir
 import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 
+import com.lynxanalytics.biggraph.graph_util.Filename
+
 import attributes.AttributeSignature
 import attributes.DenseAttributes
 
@@ -24,7 +26,7 @@ trait TestGraphDataManager extends TestTempDir with TestSparkContext {
   def cleanDataManager(dirName: String): GraphDataManager = {
     val managerDir = tempDir("dataManager." + dirName)
     managerDir.mkdir
-    GraphDataManager(sparkContext, managerDir.toString)
+    GraphDataManager(sparkContext, Filename(managerDir.toString))
   }
 }
 

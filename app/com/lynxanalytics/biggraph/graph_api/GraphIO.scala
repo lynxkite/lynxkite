@@ -8,17 +8,17 @@ import org.apache.spark
 import org.apache.spark.graphx
 import org.apache.spark.rdd
 
+import com.lynxanalytics.biggraph.graph_util.Filename
+
 import attributes.DenseAttributes
 
 object GraphIO {
-  def verticesPath(pathPrefix: String): String = pathPrefix + ".vertices"
-  def edgesPath(pathPrefix: String): String = pathPrefix + ".edges"
+  def verticesPath(pathPrefix: Filename): Filename = pathPrefix.addSuffix(".vertices")
+  def edgesPath(pathPrefix: Filename): Filename = pathPrefix.addSuffix(".edges")
 
-  def loadFromObjectFile(sc: spark.SparkContext, pathPrefix: String): (VertexRDD, EdgeRDD) = {
-    val vertices = RDDUtils.objectFile[(graphx.VertexId, DenseAttributes)](
-      sc, verticesPath(pathPrefix))
-    val edges = RDDUtils.objectFile[graphx.Edge[DenseAttributes]](
-      sc, edgesPath(pathPrefix))
+  def loadFromObjectFile(sc: spark.SparkContext, pathPrefix: Filename): (VertexRDD, EdgeRDD) = {
+    val vertices = verticesPath(pathPrefix).loadObjectFile[(graphx.VertexId, DenseAttributes)](sc)
+    val edges = edgesPath(pathPrefix).loadObjectFile[graphx.Edge[DenseAttributes]](sc)
     return (vertices, edges)
   }
 
@@ -54,12 +54,14 @@ object GraphIO {
       if (desiredParitions < 1) 1 else desiredParitions.toInt)
   }
 
-  def saveAsObjectFile(data: GraphData, pathPrefix: String) {
-    coalesceToPartitionSize(
-      data.vertices,
-      64 * 1024 * 1024).saveAsObjectFile(verticesPath(pathPrefix))
-    coalesceToPartitionSize(
-      data.edges,
-      64 * 1024 * 1024).saveAsObjectFile(edgesPath(pathPrefix))
+  def saveAsObjectFile(data: GraphData, pathPrefix: Filename) {
+    verticesPath(pathPrefix).saveAsObjectFile(
+      coalesceToPartitionSize(
+        data.vertices,
+        64 * 1024 * 1024))
+    edgesPath(pathPrefix).saveAsObjectFile(
+      coalesceToPartitionSize(
+        data.edges,
+        64 * 1024 * 1024))
   }
 }

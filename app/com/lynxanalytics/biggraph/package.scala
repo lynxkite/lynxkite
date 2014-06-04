@@ -4,6 +4,8 @@ import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
 package object biggraph {
+  import graph_util.Filename
+
   val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
 
   // Initialize reflection to avoid thread-safety issues
@@ -14,6 +16,19 @@ package object biggraph {
   printType[String]
   printType[Double]
   printType[Array[Long]]
+
+  // static<big_graph_dir,graph_data_dir>
+  private val staticRepoPattern = "static<(.+),(.+)>".r
+
+  val repoDirs =
+    scala.util.Properties.envOrElse("REPOSITORY_MODE", "local_random") match {
+      case staticRepoPattern(bigGraphDir, graphDataDir) =>
+        new RepositoryDirs {
+          val graphDir = bigGraphDir
+          val dataDir = Filename.fromString(graphDataDir)
+        }
+      case "local_random" => new TemporaryRepositoryDirs
+    }
 
   // static<hostname_of_master>
   // We just connect to a standing spark cluster, no resize support.
@@ -32,10 +47,16 @@ package object biggraph {
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment =
     scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
       case staticPattern(master) =>
-        new StaticSparkContextProvider(master) with TemporaryDirEnvironment
+        new StaticSparkContextProvider(master) with StaticDirEnvironment {
+          val repositoryDirs = repoDirs
+        }
       case standingGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", true) with TemporaryDirEnvironment
+        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", true) with StaticDirEnvironment {
+          val repositoryDirs = repoDirs
+        }
       case newGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", false) with TemporaryDirEnvironment
+        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", false) with StaticDirEnvironment {
+          val repositoryDirs = repoDirs
+        }
     }
 }
