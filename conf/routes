@@ -5,6 +5,7 @@ GET  /ajax/startingOps com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET  /ajax/saveAsCSV   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveGraphAsCSV
 GET  /ajax/sparkStatus com.lynxanalytics.biggraph.serving.ProductionJsonServer.getClusterStatus
 GET  /ajax/setWorkers  com.lynxanalytics.biggraph.serving.ProductionJsonServer.setClusterNumInstances
+GET  /ajax/save        com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveGraph
 GET  /data/verticesCSV com.lynxanalytics.biggraph.serving.CSVServer.verticesCSVGet
 GET  /data/edgesCSV    com.lynxanalytics.biggraph.serving.CSVServer.edgesCSVGet
 

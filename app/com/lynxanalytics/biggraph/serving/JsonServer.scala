@@ -11,7 +11,7 @@ import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
 class JsonServer extends mvc.Controller {
   def jsonPost[I: json.Reads, O: json.Writes](action: I => O) = {
-    bigGraphLogger.info("JSON POST event received")
+    bigGraphLogger.info("JSON POST event received, function: " + action.getClass.toString())
     mvc.Action(parse.json) {
       request =>
         request.body.validate[I].fold(
@@ -22,7 +22,8 @@ class JsonServer extends mvc.Controller {
 
   def jsonGet[I: json.Reads, O: json.Writes](action: I => O, key: String = "q") = {
     mvc.Action { request =>
-      bigGraphLogger.info("JSON GET event received")
+      bigGraphLogger.info("JSON GET event received, function: %s, query key: %s"
+        .format(action.getClass.toString(), key))
       request.getQueryString(key) match {
         case Some(s) => Json.parse(s).validate[I].fold(
           errors => JsonBadRequest("Error", "Bad JSON", errors),
@@ -80,22 +81,27 @@ object ProductionJsonServer extends JsonServer {
   implicit val rSetClusterNumInstanceRequest = json.Json.reads[SetClusterNumInstanceRequest]
   implicit val wSparkClusterStatusResponse = json.Json.writes[SparkClusterStatusResponse]
 
+  implicit val rSaveGraphRequest = json.Json.reads[SaveGraphRequest]
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
 
-  val bigGraphController = new BigGraphController(BigGraphProductionEnviroment)
+  val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
   def bigGraphGet = jsonGet(bigGraphController.getGraph)
   def deriveBigGraphGet = jsonGet(bigGraphController.deriveGraph)
   def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
 
-  val graphStatsController = new GraphStatsController(BigGraphProductionEnviroment)
+  val graphStatsController = new GraphStatsController(BigGraphProductionEnvironment)
   def graphStatsGet = jsonGet(graphStatsController.getStats)
 
-  val graphExportController = new GraphExportController(BigGraphProductionEnviroment)
+  val graphExportController = new GraphExportController(BigGraphProductionEnvironment)
   def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV)
 
-  val sparkClusterController = new SparkClusterController(BigGraphProductionEnviroment)
+  val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
   def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
+
+  val persistenceController = new PersistenceController(BigGraphProductionEnvironment)
+  def saveGraph = jsonGet(persistenceController.saveGraph)
 }

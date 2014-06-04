@@ -26,6 +26,14 @@ object RDDUtils {
     ois.readObject.asInstanceOf[T]
   }
 
+  def serialize[T](obj: Any): Array[Byte] = {
+    val bos = new java.io.ByteArrayOutputStream
+    val oos = new java.io.ObjectOutputStream(bos)
+    oos.writeObject(obj)
+    oos.close
+    bos.toByteArray
+  }
+
   def numbered[T](rdd: spark.rdd.RDD[T]): spark.rdd.RDD[(Long, T)] = {
     val localCounts = rdd.glom().map(_.size).collect().scan(0)(_ + _)
     val counts = rdd.sparkContext.broadcast(localCounts)

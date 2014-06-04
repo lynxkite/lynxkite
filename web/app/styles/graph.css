@@ -1,18 +1,38 @@
-.graphs {
-  margin: 100px;
+/* Unlike text-oriented pages, we can use horizontal space well.
+ * Make the top-level container stretch to full width. */
+body > .container {
+  width: 100%;
+}
+
+.bubble {
+  margin-top: 20px;
   border: 1px solid lightgrey;
   background: whitesmoke;
   border-radius: 10px;
   display: inline-block;
   padding: 20px;
+  vertical-align: top;
 }
 
-.graphs > div {
-  margin-left: 20px;
-  margin-right: 20px;
-  vertical-align: middle;
+.bubble h2 {
+  margin-top: 0;
 }
 
-.graphs .sources {
-  text-align: right;
+a.graphlink {
+  color: navy;
+}
+
+a.graphlink:hover {
+  text-decoration: none;
+  color: lightblue;
+  background: navy;
+}
+
+.token {
+  display: inline-block;
+  border-radius: 3px;
+  padding-left: 3px;
+  padding-right: 3px;
+  margin: 2px;
+  background: lightblue;
 }

@@ -15,7 +15,7 @@ angular.module('biggraph')
       return modalInstance.result;
     }
 
-    var DerivedGraph = $resource('/ajax/derive?q=:request');
+    var DerivedGraph = $resource('/ajax/derive');
     function jumpToDerivedGraph(operation, modalResult, sourceIds) {
       var deriveRequest = {
         sourceIds: sourceIds,
@@ -24,8 +24,7 @@ angular.module('biggraph')
           parameters: modalResult
         }
       };
-      var deriveRequestJson = JSON.stringify(deriveRequest);
-      DerivedGraph.get({request: deriveRequestJson}, function(derivedGraph) {
+      DerivedGraph.get({q: deriveRequest}, function(derivedGraph) {
         $location.url('/graph/' + derivedGraph.id);
       });
     }
@@ -49,14 +48,15 @@ angular.module('biggraph')
       return modalInstance.result;
     }
 
-    var SaveGraphAsCSV = $resource('/ajax/saveAsCSV?q=:request');
-    function sendSaveToCSVRequest(id, path) {
+    var SaveGraphAsCSV = $resource('/ajax/saveAsCSV');
+    function sendSaveToCSVRequest(id, path, awsAccessKeyId, awsSecretAccessKey) {
       var saveRequest = {
         id: id,
-        targetDirPath: path
+        targetDirPath: path,
+        awsAccessKeyId: awsAccessKeyId,
+        awsSecretAccessKey: awsSecretAccessKey
       };
-      var saveRequestJson = JSON.stringify(saveRequest);
-      SaveGraphAsCSV.get({request: saveRequestJson}, function(response) {
+      SaveGraphAsCSV.get({q: saveRequest}, function(response) {
         // TODO: report in the status bar instead once we have one.
         if (response.success) {
           window.alert('Graph saved successfully');
@@ -67,15 +67,21 @@ angular.module('biggraph')
     }
 
     function saveCSVFlow(id) {
-      openSaveToCSVModal().then(function(path) {
-        sendSaveToCSVRequest(id, path);
+      openSaveToCSVModal().then(function(result) {
+        sendSaveToCSVRequest(id, result.targetDirPath, result.awsAccessKeyId, result.awsSecretAccessKey);
       });
     }
 
-    var StartingOps = $resource('/ajax/startingOps?q=:request');
-    var emptyRequest = {fake: 0};
-    var emptyRequestJson = JSON.stringify(emptyRequest);
-    $scope.startingOps = StartingOps.query({request: emptyRequestJson});
+    var SaveGraph = $resource('/ajax/save');
+    function sendSaveRequest(id) {
+      var saveRequest = {
+        id: id
+      };
+      SaveGraph.get({q: saveRequest});
+    }
+
+    var StartingOps = $resource('/ajax/startingOps');
+    $scope.startingOps = StartingOps.query({q: {fake: 0}});
 
     $scope.openNewGraphModal = function(operation) {
       deriveGraphFlow(operation, []);
@@ -83,17 +89,21 @@ angular.module('biggraph')
 
     var id = $routeParams.graph;
     if (id !== 'x') {
-      var Graph = $resource('/ajax/graph?q=:request');
-      var Stats = $resource('/ajax/stats?q=:request');
+      var Graph = $resource('/ajax/graph');
+      var Stats = $resource('/ajax/stats');
 
       $scope.id = id;
-      var request = {id: id};
-      var requestJson = JSON.stringify(request);
-      $scope.graph = Graph.get({request: requestJson});
-      $scope.stats = Stats.get({request: requestJson});
+      $scope.graph = Graph.get({q: {id: id}});
+      $scope.stats = Stats.get({q: {id: id}});
+
+      $scope.graphView = $resource('/ajax/bucketed').get({q: {axisX: 'age', axisY: 'income', filters: []}});
  
       $scope.saveCSV = function() {
         saveCSVFlow(id);
+      };
+
+      $scope.save = function() {
+        sendSaveRequest(id);
       };
 
       $scope.openDerivationModal = function(operation) {

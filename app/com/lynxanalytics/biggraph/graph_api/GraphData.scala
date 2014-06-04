@@ -4,6 +4,8 @@ import org.apache.spark
 import org.apache.spark.graphx
 import org.apache.spark.rdd
 
+import com.lynxanalytics.biggraph.graph_util.Filename
+
 import attributes.DenseAttributes
 
 /**
@@ -33,11 +35,11 @@ abstract class GraphDataManager {
   // Typically used by operations to optimize their execution.
   def runtimeContext: RuntimeContext
 
-  def repositoryPath: String
+  def repositoryPath: Filename
 }
 
 object GraphDataManager {
-  def apply(sparkContext: spark.SparkContext, repositoryPath: String): GraphDataManager =
+  def apply(sparkContext: spark.SparkContext, repositoryPath: Filename): GraphDataManager =
     new GraphDataManagerImpl(sparkContext, repositoryPath)
 }
 

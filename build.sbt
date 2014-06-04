@@ -1,5 +1,7 @@
 name := "biggraph"
 
+javaOptions in Test := Seq("-Dsun.io.serialization.extendedDebugInfo=true")
+
 version := "0.1-SNAPSHOT"
 
 sources in doc in Compile := List()  // Disable doc generation.

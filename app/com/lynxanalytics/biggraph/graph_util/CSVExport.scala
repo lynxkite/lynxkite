@@ -1,6 +1,5 @@
 package com.lynxanalytics.biggraph.graph_util
 
-import java.io.IOException
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.hadoop
 import org.apache.spark.graphx
@@ -17,7 +16,7 @@ case class CSVData(val header: Seq[String],
 
   def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
 
-  def saveDataToDir(path: String) = toStringRDD.saveAsTextFile(path)
+  def saveDataToDir(path: Filename) = path.saveAsTextFile(toStringRDD)
 }
 object CSVData {
   def lineToStringNoNewLine(line: Seq[String]): String = line.mkString(",")
@@ -45,27 +44,16 @@ object CSVExport {
   }
 
   def exportToDirectory(graphData: GraphData,
-                        directoryPath: String): Unit = {
-    val directoryHadoopPath = new hadoop.fs.Path(directoryPath)
-    val fs = directoryHadoopPath.getFileSystem(new hadoop.conf.Configuration())
-    if (fs.exists(directoryHadoopPath)) {
-      throw new IOException("Directory already exists")
-    }
-    fs.mkdirs(directoryHadoopPath)
+                        directoryPath: Filename): Unit = {
+    directoryPath.makeDir
 
     val vertexCsvData = exportVertices(graphData)
-    writeStringToFile(
-      fs,
-      new hadoop.fs.Path(directoryHadoopPath, "vertex-header"),
-      CSVData.lineToString(vertexCsvData.header))
-    vertexCsvData.saveDataToDir(directoryPath + "/vertex-data")
+    directoryPath.addPathElement("vertex-header").createFromStrings(CSVData.lineToString(vertexCsvData.header))
+    vertexCsvData.saveDataToDir(directoryPath.addPathElement("vertex-data"))
 
     val edgeCsvData = exportEdges(graphData)
-    writeStringToFile(
-      fs,
-      new hadoop.fs.Path(directoryHadoopPath, "edge-header"),
-      CSVData.lineToString(edgeCsvData.header))
-    edgeCsvData.saveDataToDir(directoryPath + "/edge-data")
+    directoryPath.addPathElement("edge-header").createFromStrings(CSVData.lineToString(edgeCsvData.header))
+    edgeCsvData.saveDataToDir(directoryPath.addPathElement("edge-data"))
   }
 
   private def quoteString(s: String) = "\"" + StringEscapeUtils.escapeJava(s) + "\""
@@ -82,13 +70,5 @@ object CSVExport {
           objectValue => objectValue.toString
         })
     }
-  }
-
-  private def writeStringToFile(fs: hadoop.fs.FileSystem,
-                                path: hadoop.fs.Path,
-                                contents: String): Unit = {
-    val stream = fs.create(path)
-    stream.write(contents.getBytes("UTF-8"))
-    stream.close()
   }
 }
