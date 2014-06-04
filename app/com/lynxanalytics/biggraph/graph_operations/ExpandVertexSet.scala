@@ -32,7 +32,6 @@ case class ExpandVertexSet[T](
     val runtimeContext = manager.runtimeContext
     val sc = runtimeContext.sparkContext
     val cores = runtimeContext.numAvailableCores
-    val partitioner = new spark.HashPartitioner(cores * 5)
     val inputSig = inputGraph.vertexAttributes
     val inputIdx = inputSig.readIndex[VSet](inputAttribute)
     val outputSig = vertexAttributes(target.sources)
@@ -45,7 +44,8 @@ case class ExpandVertexSet[T](
       }
 
     val expanded = inputData.vertices.flatMap { case (id, attr) => attr(inputIdx).map(_ -> (id, attr)) }
-    val vertices = expanded.groupByKey(partitioner).mapValues {
+    val grouped = expanded.groupByKey(runtimeContext.defaultPartitioner)
+    val vertices = grouped.mapValues {
       group =>
         val (ids, attrs) = group.unzip
         val da = maker.make
