@@ -1,6 +1,5 @@
 package com.lynxanalytics.biggraph.graph_util
 
-import java.io.IOException
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.hadoop
 import org.apache.spark.graphx
@@ -46,10 +45,7 @@ object CSVExport {
 
   def exportToDirectory(graphData: GraphData,
                         directoryPath: Filename): Unit = {
-    if (directoryPath.fs.exists(directoryPath.path)) {
-      throw new IOException("Directory already exists")
-    }
-    directoryPath.fs.mkdirs(directoryPath.path)
+    directoryPath.makeDir
 
     val vertexCsvData = exportVertices(graphData)
     directoryPath.addPathElement("vertex-header").createFromStrings(CSVData.lineToString(vertexCsvData.header))
