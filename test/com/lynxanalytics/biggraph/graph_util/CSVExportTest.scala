@@ -32,7 +32,7 @@ class CSVExportTest extends FunSuite with TestBigGraphManager with TestGraphData
     val myGraph = graphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
     val myData = dataManager.obtainData(myGraph)
     val targetDir = tempDir("csv_save_target_dir")
-    CSVExport.exportToDirectory(myData, targetDir.toString)
+    CSVExport.exportToDirectory(myData, Filename(targetDir.toString))
 
     val dirSnapshot = TestUtils.runShellCommand(
       """|cd %s
