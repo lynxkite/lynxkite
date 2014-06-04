@@ -3,9 +3,9 @@ package com.lynxanalytics
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
-package object biggraph {
-  import graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.Filename
 
+package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
 
   // Initialize reflection to avoid thread-safety issues
