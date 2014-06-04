@@ -224,7 +224,8 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Delimiter", ","),
         FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"),
         FEOperationParameterMeta("AWS Access Key ID (optional)", ""),
-        FEOperationParameterMeta("AWS Secret Access Key (optional)", ""))
+        FEOperationParameterMeta("AWS Secret Access Key (optional)", ""),
+        FEOperationParameterMeta("Disallowed vertex IDs (optional, comma separated list)", ""))
       override def toGraphOperation(parameters: Seq[String]) =
         graph_operations.EdgeCSVImport(
           graph_util.Filename(parameters(0)),
@@ -233,7 +234,8 @@ object FEOperations extends FEOperationRepository {
           parameters(3),
           parameters(4),
           parameters(5),
-          parameters(6).toBoolean)
+          parameters(6).toBoolean,
+          parameters(9).split(",").toSet)
     })
 }
 
