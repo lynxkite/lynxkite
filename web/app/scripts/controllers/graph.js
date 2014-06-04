@@ -75,7 +75,7 @@ angular.module('biggraph')
       var saveRequest = {
         id: id
       };
-      SaveGraph.get({q: saveRequest})
+      SaveGraph.get({q: saveRequest});
     }
 
     var StartingOps = $resource('/ajax/startingOps');
