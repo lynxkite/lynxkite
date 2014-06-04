@@ -93,6 +93,8 @@ angular.module('biggraph')
       $scope.id = id;
       $scope.graph = Graph.get({q: {id: id}});
       $scope.stats = Stats.get({q: {id: id}});
+
+      $scope.graphView = $resource('/ajax/bucketed').get({q: {axisX: 'age', axisY: 'income', filters: []}});
  
       $scope.saveCSV = function() {
         saveCSVFlow(id);
