@@ -150,6 +150,11 @@ object FEOperations extends FEOperationRepository {
       override val operation = graph_operations.ReverseEdges()
     })
   registerOperation(
+    new SingleGraphFEOperation {
+      val name = "Drop attributes"
+      override val operation = graph_operations.DropAttributes()
+    })
+  registerOperation(
     new FEOperation {
       val name = "Page Rank"
       def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
