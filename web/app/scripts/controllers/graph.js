@@ -56,7 +56,6 @@ angular.module('biggraph')
         awsAccessKeyId: awsAccessKeyId,
         awsSecretAccessKey: awsSecretAccessKey
       };
-      console.log(saveRequest);
       SaveGraphAsCSV.get({q: saveRequest}, function(response) {
         // TODO: report in the status bar instead once we have one.
         if (response.success) {

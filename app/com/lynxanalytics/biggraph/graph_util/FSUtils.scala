@@ -49,6 +49,12 @@ case class Filename(
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
+  def createFromStrings(contents: String): Unit = {
+    val stream = fs.create(path)
+    stream.write(contents.getBytes("UTF-8"))
+    stream.close()
+  }
+
   def loadObjectFile[T: scala.reflect.ClassTag](sc: spark.SparkContext): spark.rdd.RDD[T] = {
     import hadoop.mapreduce.lib.input.SequenceFileInputFormat
 
