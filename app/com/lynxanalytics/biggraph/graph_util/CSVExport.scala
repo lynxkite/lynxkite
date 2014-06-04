@@ -17,7 +17,7 @@ case class CSVData(val header: Seq[String],
 
   def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
 
-  def saveDataToDir(path: String) = toStringRDD.saveAsTextFile(path)
+  def saveDataToDir(path: Filename) = path.saveAsTextFile(toStringRDD)
 }
 object CSVData {
   def lineToStringNoNewLine(line: Seq[String]): String = line.mkString(",")
@@ -45,27 +45,25 @@ object CSVExport {
   }
 
   def exportToDirectory(graphData: GraphData,
-                        directoryPath: String): Unit = {
-    val directoryHadoopPath = new hadoop.fs.Path(directoryPath)
-    val fs = directoryHadoopPath.getFileSystem(new hadoop.conf.Configuration())
-    if (fs.exists(directoryHadoopPath)) {
+                        directoryPath: Filename): Unit = {
+    if (directoryPath.fs.exists(directoryPath.path)) {
       throw new IOException("Directory already exists")
     }
-    fs.mkdirs(directoryHadoopPath)
+    directoryPath.fs.mkdirs(directoryPath.path)
 
     val vertexCsvData = exportVertices(graphData)
     writeStringToFile(
-      fs,
-      new hadoop.fs.Path(directoryHadoopPath, "vertex-header"),
+      directoryPath.fs,
+      new hadoop.fs.Path(directoryPath.path, "vertex-header"),
       CSVData.lineToString(vertexCsvData.header))
-    vertexCsvData.saveDataToDir(directoryPath + "/vertex-data")
+    vertexCsvData.saveDataToDir(Filename(directoryPath.filename + "/vertex-data", directoryPath.awsAccessKeyId, directoryPath.awsSecretAccessKey))
 
     val edgeCsvData = exportEdges(graphData)
     writeStringToFile(
-      fs,
-      new hadoop.fs.Path(directoryHadoopPath, "edge-header"),
+      directoryPath.fs,
+      new hadoop.fs.Path(directoryPath.path, "edge-header"),
       CSVData.lineToString(edgeCsvData.header))
-    edgeCsvData.saveDataToDir(directoryPath + "/edge-data")
+    edgeCsvData.saveDataToDir(Filename(directoryPath.filename + "/edge-data", directoryPath.awsAccessKeyId, directoryPath.awsSecretAccessKey))
   }
 
   private def quoteString(s: String) = "\"" + StringEscapeUtils.escapeJava(s) + "\""
