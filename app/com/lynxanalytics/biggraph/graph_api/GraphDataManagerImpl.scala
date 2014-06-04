@@ -7,22 +7,21 @@ import org.apache.spark.graphx
 import org.apache.spark.rdd
 import scala.collection.mutable
 
+import com.lynxanalytics.biggraph.graph_util.Filename
+
 private[graph_api] class GraphDataManagerImpl(sc: spark.SparkContext,
-                                              val repositoryPath: String)
+                                              val repositoryPath: Filename)
     extends GraphDataManager {
 
   private val dataCache = mutable.Map[UUID, GraphData]()
 
-  private def pathPrefix(bigGraph: BigGraph) = "%s/%s".format(repositoryPath, bigGraph.gUID)
+  private def pathPrefix(bigGraph: BigGraph) = repositoryPath.addPathElement(bigGraph.gUID.toString)
   private def verticesPath(bigGraph: BigGraph) = GraphIO.verticesPath(pathPrefix(bigGraph))
   private def edgesPath(bigGraph: BigGraph) = GraphIO.edgesPath(pathPrefix(bigGraph))
+  private def successPath(basePath: Filename): Filename = basePath.addPathElement("_SUCCESS")
 
   private def hasGraph(bigGraph: BigGraph): Boolean = {
-    val verticesHadoopPath = new hadoop.fs.Path(
-      verticesPath(bigGraph) + "/_SUCCESS")
-    val edgesHadoopPath = new hadoop.fs.Path(edgesPath(bigGraph) + "/_SUCCESS")
-    val fs = verticesHadoopPath.getFileSystem(new hadoop.conf.Configuration())
-    return fs.exists(verticesHadoopPath) && fs.exists(edgesHadoopPath)
+    return successPath(verticesPath(bigGraph)).exists && successPath(edgesPath(bigGraph)).exists
   }
 
   private def tryToLoadGraphData(bigGraph: BigGraph): Option[GraphData] = {

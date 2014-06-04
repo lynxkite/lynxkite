@@ -81,6 +81,8 @@ object ProductionJsonServer extends JsonServer {
   implicit val rSetClusterNumInstanceRequest = json.Json.reads[SetClusterNumInstanceRequest]
   implicit val wSparkClusterStatusResponse = json.Json.writes[SparkClusterStatusResponse]
 
+  implicit val rSaveGraphRequest = json.Json.reads[SaveGraphRequest]
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
@@ -99,4 +101,7 @@ object ProductionJsonServer extends JsonServer {
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
   def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
+
+  val persistenceController = new PersistenceController(BigGraphProductionEnvironment)
+  def saveGraph = jsonGet(persistenceController.saveGraph)
 }

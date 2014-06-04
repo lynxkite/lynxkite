@@ -73,6 +73,14 @@ angular.module('biggraph')
       });
     }
 
+    var SaveGraph = $resource('/ajax/save');
+    function sendSaveRequest(id) {
+      var saveRequest = {
+        id: id
+      };
+      SaveGraph.get({q: saveRequest});
+    }
+
     var StartingOps = $resource('/ajax/startingOps');
     $scope.startingOps = StartingOps.query({q: {fake: 0}});
 
@@ -91,6 +99,10 @@ angular.module('biggraph')
  
       $scope.saveCSV = function() {
         saveCSVFlow(id);
+      };
+
+      $scope.save = function() {
+        sendSaveRequest(id);
       };
 
       $scope.openDerivationModal = function(operation) {
