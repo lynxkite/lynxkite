@@ -5,6 +5,7 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.io.IOException
 
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
@@ -53,6 +54,10 @@ case class Filename(
     val stream = fs.create(path)
     stream.write(contents.getBytes("UTF-8"))
     stream.close()
+  }
+
+  def makeDir(): Unit = {
+    if (fs.exists(path)) throw new IOException("Directory already exists") else fs.mkdirs(path)
   }
 
   def loadObjectFile[T: scala.reflect.ClassTag](sc: spark.SparkContext): spark.rdd.RDD[T] = {
