@@ -49,11 +49,14 @@ angular.module('biggraph')
     }
 
     var SaveGraphAsCSV = $resource('/ajax/saveAsCSV');
-    function sendSaveToCSVRequest(id, path) {
+    function sendSaveToCSVRequest(id, path, awsAccessKeyId, awsSecretAccessKey) {
       var saveRequest = {
         id: id,
-        targetDirPath: path
+        targetDirPath: path,
+        awsAccessKeyId: awsAccessKeyId,
+        awsSecretAccessKey: awsSecretAccessKey
       };
+      console.log(saveRequest);
       SaveGraphAsCSV.get({q: saveRequest}, function(response) {
         // TODO: report in the status bar instead once we have one.
         if (response.success) {
@@ -65,8 +68,8 @@ angular.module('biggraph')
     }
 
     function saveCSVFlow(id) {
-      openSaveToCSVModal().then(function(path) {
-        sendSaveToCSVRequest(id, path);
+      openSaveToCSVModal().then(function(result) {
+        sendSaveToCSVRequest(id, result.targetDirPath, result.awsAccessKeyId, result.awsSecretAccessKey);
       });
     }
 

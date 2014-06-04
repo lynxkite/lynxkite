@@ -3,7 +3,11 @@
     <h3>{{question}}</h3>
   </div>
   <div class="modal-body">
-    <input type="text" class="form-control" ng-model="results.fileName"/>
+    <input type="text" class="form-control" ng-model="results.targetDirPath"/>
+    <label for="param1">awsAccessKeyId (optional)</label>
+    <input type="text" id="param1" class="form-control" ng-model="results.awsAccessKeyId"/>
+    <label for="param2">awsSecretAccessKey (optional)</label>
+    <input type="text" id="param2" class="form-control" ng-model="results.awsSecretAccessKey"/>
   </div>
   <div class="modal-footer">
     <button class="btn btn-default" ng-click="close()">OK</button>
