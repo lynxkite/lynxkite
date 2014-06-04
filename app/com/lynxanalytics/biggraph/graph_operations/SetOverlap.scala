@@ -78,9 +78,12 @@ case class SetOverlap(
     return new SimpleGraphData(target, vertices, edges)
   }
 
-  def vertexAttributes(input: Seq[BigGraph]) = input.head.vertexAttributes
+  def vertexAttributes(inputGraphSpecs: Seq[BigGraph]) = inputGraphSpecs.head.vertexAttributes
 
   def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) = outputSig
+
+  override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
+    new BigGraphProperties(symmetricEdges = true)
 
   // Generates the edges for a set of sets. This is O(n^2), but the set should
   // be small.

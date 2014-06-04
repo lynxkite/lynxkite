@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.BigGraphEnviroment
+import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
 
 case class SparkClusterStatusResponse(
@@ -11,15 +11,15 @@ case class SetClusterNumInstanceRequest(
   password: String,
   workerInstances: Int)
 
-class SparkClusterController(enviroment: BigGraphEnviroment) {
+class SparkClusterController(environment: BigGraphEnvironment) {
   def getClusterStatus(request: serving.Empty): SparkClusterStatusResponse = {
-    SparkClusterStatusResponse(enviroment.sparkContext.master, enviroment.numInstances)
+    SparkClusterStatusResponse(environment.sparkContext.master, environment.numInstances)
   }
 
   def setClusterNumInstances(request: SetClusterNumInstanceRequest): SparkClusterStatusResponse = {
     if (request.password != "UCU8HB0d6fQJwyD8UAdDb")
       throw new IllegalArgumentException("Bad password!")
-    enviroment.setNumInstances(request.workerInstances)
+    environment.setNumInstances(request.workerInstances)
     return getClusterStatus(serving.Empty())
   }
 }

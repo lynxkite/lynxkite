@@ -65,6 +65,7 @@ class AttributeSignature private (
     attributeSeq.map(attributes(_).getReaderForOperation(op))
   }
 }
+
 object AttributeSignature {
   def empty = new AttributeSignature(Map(), immutable.Seq())
 }

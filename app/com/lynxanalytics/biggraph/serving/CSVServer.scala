@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.serving
 import java.util.UUID
 import play.api.mvc
 
-import com.lynxanalytics.biggraph.BigGraphProductionEnviroment._
+import com.lynxanalytics.biggraph.BigGraphProductionEnvironment._
 import com.lynxanalytics.biggraph.graph_api.GraphData
 import com.lynxanalytics.biggraph.graph_util.CSVExport
 
