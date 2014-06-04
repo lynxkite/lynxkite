@@ -22,6 +22,7 @@ case class ExpandVertexSet[T](
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = (
     sources.size == 1
     && sources.head.vertexAttributes.canRead[VSet](inputAttribute)
+    && !sources.head.vertexAttributes.canRead[Long](outputAttribute)
   )
 
   def execute(target: BigGraph,
