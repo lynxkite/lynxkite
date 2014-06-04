@@ -52,18 +52,12 @@ object CSVExport {
     directoryPath.fs.mkdirs(directoryPath.path)
 
     val vertexCsvData = exportVertices(graphData)
-    writeStringToFile(
-      directoryPath.fs,
-      new hadoop.fs.Path(directoryPath.path, "vertex-header"),
-      CSVData.lineToString(vertexCsvData.header))
-    vertexCsvData.saveDataToDir(Filename(directoryPath.filename + "/vertex-data", directoryPath.awsAccessKeyId, directoryPath.awsSecretAccessKey))
+    directoryPath.addPathElement("vertex-header").createFromStrings(CSVData.lineToString(vertexCsvData.header))
+    vertexCsvData.saveDataToDir(directoryPath.addPathElement("vertex-data"))
 
     val edgeCsvData = exportEdges(graphData)
-    writeStringToFile(
-      directoryPath.fs,
-      new hadoop.fs.Path(directoryPath.path, "edge-header"),
-      CSVData.lineToString(edgeCsvData.header))
-    edgeCsvData.saveDataToDir(Filename(directoryPath.filename + "/edge-data", directoryPath.awsAccessKeyId, directoryPath.awsSecretAccessKey))
+    directoryPath.addPathElement("edge-header").createFromStrings(CSVData.lineToString(edgeCsvData.header))
+    edgeCsvData.saveDataToDir(directoryPath.addPathElement("edge-data"))
   }
 
   private def quoteString(s: String) = "\"" + StringEscapeUtils.escapeJava(s) + "\""
@@ -80,13 +74,5 @@ object CSVExport {
           objectValue => objectValue.toString
         })
     }
-  }
-
-  private def writeStringToFile(fs: hadoop.fs.FileSystem,
-                                path: hadoop.fs.Path,
-                                contents: String): Unit = {
-    val stream = fs.create(path)
-    stream.write(contents.getBytes("UTF-8"))
-    stream.close()
   }
 }
