@@ -13,46 +13,104 @@ import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
 import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-case class FindMaxCliques(
-    targetElementsAttribute: String,
-    minCliqueSize: Int) extends GraphOperation {
-  def isSourceListValid(sources: Seq[BigGraph]): Boolean = (sources.size == 1)
+trait GraphTransformation extends MetaGraphOperation {
+  override def inputVertexSetNames = Set("input")
+  override def inputEdgeBundleDefs = Map("input" -> ("input", "input"))
+  override def outputVertexSetNames = Set("output")
+  override def outputEdgeBundleDefs = Set("output" -> ("output", "output"), "link" -> ("input", "output"))
+}
 
-  def execute(target: BigGraph,
-              manager: GraphDataManager): GraphData = {
-    val inputGraph = target.sources.head
-    val inputData = manager.obtainData(inputGraph)
+case class DataSet(vertexSets: Map[String, VertexSetData] = Map(),
+                   edgeBundles: Map[String, EdgeBundleData] = Map(),
+                   vertexAttributes: Map[String, VertexAttributeData[_]] = Map(),
+                   edgeAttributes: Map[String, EdgeAttributeData[_]] = Map()) {
+  // Convenience constructor.
+  def this(inst: MetaGraphOperationInstance,
+           vertexSets: Map[String, VertexRDD] = Map(),
+           edgeBundles: Map[String, EdgeBundleRDD] = Map(),
+           vertexAttributes: Map[String, AttributeRDD[_]] = Map(),
+           edgeAttributes: Map[String, AttributeRDD[_]] = Map()) =
+    this(
+      vertexSets.map { case (name, rdd) => VertexSetData(inst.vertexSet(name), rdd) },
+      edgeBundles.map { case (name, rdd) => EdgeBundleData(inst.edgeBundle(name), rdd) },
+      vertexAttributes.map { case (name, rdd) => VertexAttributeData(inst.vertexAttribute(name), rdd) },
+      edgeAttributes.map { case (name, rdd) => EdgeAttriuteData(inst.edgeAttribute(name), rdd) }
+    )
+}
+
+trait Execution {
+  def execute(inst: MetaGraphOperationInstance, dataManager: DataManager): DataSet
+
+  def createInstance(
+    inputVertexSets: Map[String, VertexSet],
+    inputEdgeBundles: Map[String, EdgeBundle],
+    inputVertexAttributes: Map[String, VertexAttribute[_]],
+    inputEdgeAttributes: Map[String, EdgeAttribute[_]]
+  ): MetaGraphOperationInstance = {
+    MetaGraphOperationResult(this, inputVertexSets, inputEdgeBundles, inputVertexAttributes, inputEdgeAttributes)
+  }
+}
+
+case class MetaGraphOperationResult(
+  val operation: MetaGraphOperation with Execution,
+  val inputVertexSets: Map[String, VertexSet],
+  val inputEdgeBundles: Map[String, EdgeBundle],
+  val inputVertexAttributes: Map[String, VertexAttribute[_]],
+  val inputEdgeAttributes: Map[String, EdgeAttribute[_]]
+) extends MetaGraphOperationInstance {
+  override def vertexSetForName(name: String): VertexSet = {
+    assert(operation.inputVertexSetNames.contains(name)
+           || operation.outputVertexSetNames.contains(name),
+           s"No vertex set called $name.")
+    return VertexSet(operation, name)
+  }
+  override def edgeBundleForName(name: String): EdgeBundle = {
+    assert(operation.inputEdgeBundleDefs.contains(name)
+           || operation.outputEdgeBundleDefs.contains(name),
+           s"No edge bundle called $name.")
+    return EdgeBundle(operation, name)
+  }
+  override def vertexAttribute[T : TypeTag](name: String): VertexAttribute[T] = {
+    assert(operation.inputVertexAttributeDefs.contains(name)
+           || operation.outputVertexAttributeDefs.contains(name),
+           s"No vertex attribute called $name.")
+    return VertexAttribute[T](operation, name)
+  }
+  override def edgeAttribute[T : TypeTag](name: String): EdgeAttribute[T] = {
+    assert(operation.inputEdgeAttributeDefs.contains(name)
+           || operation.outputEdgeAttributeDefs.contains(name),
+           s"No edge attribute called $name.")
+    return EdgeAttribute[T](operation, name)
+  }
+  override def execute(dataManager: DataManager): DataSet =
+    operation.execute(this, dataManager)
+}
+
+case class FindMaxCliques(minCliqueSize: Int) extends GraphTransformation with Execution {
+  def execute(inst: MetaGraphOperationInstance, manager: DataManager): DataSet = {
     val runtimeContext = manager.runtimeContext
     val sc = runtimeContext.sparkContext
-    val cug = CompactUndirectedGraph(inputData)
+    val cug = CompactUndirectedGraph(inst.edgeBundle("input"))
     val cliqueLists = computeCliques(
-      inputData,
+      inst.vertexSet("input"),
       cug,
-      runtimeContext.sparkContext,
+      sc,
       minCliqueSize,
       runtimeContext.numAvailableCores * 5)
-    val newSig = vertexAttributes(target.sources)
-    val maker = newSig.maker
-    val idx = newSig.writeIndex[Array[graphx.VertexId]](targetElementsAttribute)
     val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists)
-    val vertices = indexedCliqueLists.mapValues(clq => maker.make.set(idx, clq.toArray.sorted))
-    val edges = new rdd.EmptyRDD[graphx.Edge[DenseAttributes]](sc)
-    return new SimpleGraphData(target, vertices, edges)
+    val vertices = indexedCliqueLists.mapValues(x => Unit)
+    val edges = RDDUtils.empty[EdgeBundleRDD]
+    val links = indexedCliqueLists.flatMap {
+      case (cid, vids) => vids.map(vid => (42, (vid, cid)))
+    }
+    return DataSet(inst, Map("output" -> vertices), Map("output" -> edges, "link" -> links))
   }
 
-  def vertexAttributes(inputGraphSpecs: Seq[BigGraph]) =
-    AttributeSignature
-      .empty
-      .addAttribute[Array[graphx.VertexId]](targetElementsAttribute)
-      .signature
-
-  def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) =
-    AttributeSignature.empty
-
+  // TODO: Put this into the EdgeBundle?
   override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
     new BigGraphProperties(symmetricEdges = true)
 
-  // Implementaion of the actual algorithm.
+  // Implementation of the actual algorithm.
 
   /*
    * Finds best pivot among given candidates based on degree.
@@ -142,13 +200,13 @@ case class FindMaxCliques(
     }
   }
 
-  private def computeCliques(g: GraphData,
+  private def computeCliques(g: VertexSetData,
                              cug: CompactUndirectedGraph,
                              sc: spark.SparkContext,
                              minCliqueSize: Int,
                              numTasks: Int): rdd.RDD[List[VertexId]] = {
     val broadcastGraph = sc.broadcast(cug)
-    g.vertices.map(_._1).repartition(numTasks).flatMap(
+    g.rdd.map(_._1).repartition(numTasks).flatMap(
       v => {
         val fullGraph = broadcastGraph.value
         val markedCandidates =
