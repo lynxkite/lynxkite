@@ -1,11 +1,25 @@
 package com.lynxanalytics.biggraph.spark_util
 
+import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.graphx
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import scala.reflect._
+
+class MyKryo {
+}
 
 object RDDUtils {
+  val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
+    override def initialValue(): kryo.Kryo = {
+      val myKryo = new kryo.Kryo()
+      myKryo.setInstantiatorStrategy(new org.objenesis.strategy.StdInstantiatorStrategy());
+      new BigGraphKryoRegistrator().registerClasses(myKryo)
+      myKryo
+    }
+  }
+
   // TODO(darabos): Remove this once https://github.com/apache/spark/pull/181 is in place.
   def objectFile[T: scala.reflect.ClassTag](
     sc: spark.SparkContext,
@@ -30,6 +44,19 @@ object RDDUtils {
     val bos = new java.io.ByteArrayOutputStream
     val oos = new java.io.ObjectOutputStream(bos)
     oos.writeObject(obj)
+    oos.close
+    bos.toByteArray
+  }
+
+  def kryoDeserialize[T: ClassTag](bytes: Array[Byte]): T = {
+    val ois = new kryo.io.Input(bytes)
+    threadLocalKryo.get.readObject(ois, classTag[T].runtimeClass).asInstanceOf[T]
+  }
+
+  def kryoSerialize[T](obj: Any): Array[Byte] = {
+    val bos = new java.io.ByteArrayOutputStream
+    val oos = new kryo.io.Output(bos)
+    threadLocalKryo.get.writeObject(oos, obj)
     oos.close
     bos.toByteArray
   }
