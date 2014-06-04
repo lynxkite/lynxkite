@@ -11,6 +11,7 @@
     <!-- endbuild -->
     <!-- build:css({.tmp,app}) styles/graph.css -->
     <link rel="stylesheet" href="styles/graph.css">
+    <link rel="stylesheet" href="styles/graph-view.css">
     <!-- endbuild -->
   </head>
   <body ng-app="biggraph">
@@ -32,7 +33,10 @@
     <!-- endbuild -->
 
     <!-- build:js({.tmp,app}) scripts/scripts.js -->
+    <script src="scripts/svg-util.js"></script>
+    <script src="scripts/common-util.js"></script>
     <script src="scripts/app.js"></script>
+    <script src="scripts/graph-view.js"></script>
     <script src="scripts/controllers/graph.js"></script>
     <script src="scripts/controllers/fileDialog.js"></script>
     <script src="scripts/controllers/operationParameters.js"></script>

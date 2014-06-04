@@ -36,9 +36,3 @@ a.graphlink:hover {
   margin: 2px;
   background: lightblue;
 }
-.graph-view {
-  display: inline-block;
-  vertical-align: top;
-  width: 500px;
-  height: 500px;
-}
