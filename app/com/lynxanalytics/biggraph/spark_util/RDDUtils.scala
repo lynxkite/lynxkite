@@ -7,9 +7,6 @@ import org.apache.spark.graphx
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect._
 
-class MyKryo {
-}
-
 object RDDUtils {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
     override def initialValue(): kryo.Kryo = {
