@@ -1,5 +1,7 @@
 package com.lynxanalytics.biggraph.spark_util
 
+import com.lynxanalytics.biggraph.graph_api._
+
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.graphx
@@ -49,4 +51,9 @@ object RDDUtils {
       }
     }
   }
+
+  // TODO: Do this in a parametric way.
+  def emptyEdgeBundleRDD(sc: spark.SparkContext): EdgeBundleRDD =
+    new spark.rdd.EmptyRDD[(ID, Edge)](sc)
+
 }
