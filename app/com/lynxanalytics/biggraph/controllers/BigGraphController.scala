@@ -72,14 +72,6 @@ class FEOperationRepository {
 object FEOperations extends FEOperationRepository {
   registerOperation(
     new SingleGraphFEOperation {
-      val name = "Find Maximal Cliques"
-      override val parameters = Seq(
-        FEOperationParameterMeta("Minimum Clique Size", "3"))
-      override def toGraphOperation(parameters: Seq[String]) =
-        graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
-    })
-  registerOperation(
-    new SingleGraphFEOperation {
       val name = "Edge Graph"
       override val operation = graph_operations.EdgeGraph()
     })
