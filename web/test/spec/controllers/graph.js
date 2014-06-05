@@ -23,11 +23,6 @@ describe('metagraph navigation', function () {
         }
       ],
     });
-    $httpBackend.when('GET', '/ajax/stats?q=' + requestJson).respond({
-      'id': 'test',
-      'verticesCount': '100',
-      'edgesCount': '1000',
-    });
     $httpBackend.when('GET', /ajax.startingOps/).respond([]);
     // Anything else gets an empty response.
     $httpBackend.when('GET', /ajax.*/).respond({});
@@ -45,6 +40,5 @@ describe('metagraph navigation', function () {
   it('should load graph and stats data', function() {
     $httpBackend.flush();
     expect(scope.graph.ops.length).toBe(1);
-    expect(scope.stats.verticesCount).toBe('100');
   });
 });

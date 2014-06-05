@@ -7,7 +7,7 @@
 <div class="graph" ng-if="id">
   <div class="metadata bubble">
     <h2>{{graph.title}}</h2>
-    <div class="stats">
+    <div class="stats" ng-show="stats">
       <p>Vertices: {{stats.verticesCount}} - Edges: {{stats.edgesCount}}</p>
       <p>Vertex attributes:
         <span class="token" ng-repeat="attr in stats.vertexAttributes">{{attr}}</span>
@@ -15,6 +15,9 @@
       <p>Edge attributes:
         <span class="token" ng-repeat="attr in stats.edgeAttributes">{{attr}}</span>
       </p>
+    </div>
+    <button class="btn btn-default" ng-click="getStats()" ng-hide="stats">Get statistics</button>
+    <div class="commands">
       <button class="btn btn-default" ng-click="save()">Save to repository</button>
       <button class="btn btn-default" ng-click="saveCSV()">Save as CSV</button>
       <p><a href="/data/verticesCSV?guid={{id}}">Download vertices as CSV</a></p>

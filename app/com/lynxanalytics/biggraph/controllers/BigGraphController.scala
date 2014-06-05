@@ -186,6 +186,20 @@ object FEOperations extends FEOperationRepository {
         graph_operations.ExpandVertexSet(
           parameters(0), parameters(1))
     })
+  registerOperation(
+    new FEOperation {
+      val name = "Vertex attribute upper bound"
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        bigGraphs.size == 1 &&
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Double].size > 0
+      override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
+        FEOperationParameterMeta(
+          "Attribute",
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Double].head),
+        FEOperationParameterMeta("Bound", "0"))
+      override def toGraphOperation(parameters: Seq[String]) =
+        graph_operations.UpperBoundFilter(parameters(0), parameters(1).toDouble)
+    })
 
   registerOperation(
     new StartingFEOperation {
