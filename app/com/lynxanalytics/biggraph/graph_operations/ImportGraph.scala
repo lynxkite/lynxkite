@@ -173,6 +173,34 @@ case class IdFromEdgeFields(vertexIdAttrName: String,
   }
 }
 
+case class EdgeFieldsAsId(edgeSourceFieldName: String,
+                          edgeDestFieldName: String,
+                          disallowedVertexIds: Set[String] = null)
+    extends GraphBuilder {
+  def build(vertexDataSig: AttributeSignature,
+            vertexData: RDD[DenseAttributes],
+            edgeDataSig: AttributeSignature,
+            edgeData: RDD[DenseAttributes],
+            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD) = {
+    val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
+    val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
+    val filteredEdgeData =
+      if (disallowedVertexIds == null) edgeData
+      else edgeData.filter(da =>
+        !disallowedVertexIds.contains(da(eSrcIdx)) && !disallowedVertexIds.contains(da(eDstIdx)))
+    val edges: EdgeRDD = filteredEdgeData.map {
+      da => graphx.Edge(da(eSrcIdx).toLong, da(eDstIdx).toLong, da)
+    }.repartition(runtimeContext.defaultPartitioner.numPartitions)
+    val vertexMaker = AttributeSignature.empty.maker
+    val vertices: VertexRDD = edges.flatMap {
+      e => Seq(e.srcId, e.dstId)
+    }.distinct.map {
+      id => (id, vertexMaker.make)
+    }
+    (vertices, edges)
+  }
+}
+
 /*
  * The actual importers are composed of various Parser and Builder implementations.
  * These must extend the ImportGraph which provides the actual implementation for
@@ -273,3 +301,19 @@ case class EdgeCSVImport(edgeHeader: Filename,
       ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
       IdFromEdgeFields(
         vertexIdAttrName, edgeSourceFieldName, edgeDestFieldName, disallowedVertexIds))
+
+// Same as EdgeCSVImport, but for cases with numerical ID fields.
+case class EdgeCSVImportNum(edgeHeader: Filename,
+                            edgeCSVs: Seq[Filename],
+                            edgeSourceFieldName: String,
+                            edgeDestFieldName: String,
+                            delimiter: String,
+                            skipFirstRow: Boolean,
+                            disallowedVertexIds: Set[String])
+    extends ImportGraph(
+      DummyMetaParser(),
+      DummyDataParser(),
+      HeaderAsStringCSVParser(edgeHeader, delimiter),
+      ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
+      EdgeFieldsAsId(
+        edgeSourceFieldName, edgeDestFieldName, disallowedVertexIds))
