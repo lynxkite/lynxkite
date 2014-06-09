@@ -141,17 +141,17 @@ trait MetaGraphManager {
   def dependentOperations(component: MetaGraphComponent): Seq[MetaGraphOperationInstance]
 }
 
-case class VertexSetData(val vertexSet: VertexSet,
-                         val rdd: VertexSetRDD)
+class VertexSetData(val vertexSet: VertexSet,
+                    val rdd: VertexSetRDD)
 
-case class EdgeBundleData(val edgeBundle: EdgeBundle,
-                          val rdd: EdgeBundleRDD)
+class EdgeBundleData(val edgeBundle: EdgeBundle,
+                     val rdd: EdgeBundleRDD)
 
-case class VertexAttributeData[T](val vertexSet: VertexSet,
-                                  val rdd: AttributeRDD[T])
+class VertexAttributeData[T](val vertexSet: VertexSet,
+                             val rdd: AttributeRDD[T])
 
-case class EdgeAttributeData[T](val edgeBundle: EdgeBundle,
-                                val rdd: AttributeRDD[T])
+class EdgeAttributeData[T](val edgeBundle: EdgeBundle,
+                           val rdd: AttributeRDD[T])
 
 trait DataManager {
   def get(vertexSet: VertexSet): VertexSetData
@@ -204,18 +204,18 @@ object DataSet {
     new DataSet(
       vertexSets.map {
         case (name, rdd) =>
-          name -> VertexSetData(inst.components.vertexSets(name), rdd)
+          name -> new VertexSetData(inst.components.vertexSets(name), rdd)
       }, edgeBundles.map {
         case (name, rdd) =>
-          name -> EdgeBundleData(inst.components.edgeBundles(name), rdd)
+          name -> new EdgeBundleData(inst.components.edgeBundles(name), rdd)
       }, vertexAttributes.map {
         case (name, rdd) =>
           val attr = inst.components.vertexAttributes(name)
-          name -> VertexAttributeData(attr.vertexSet, rdd)
+          name -> new VertexAttributeData(attr.vertexSet, rdd)
       }.toMap, edgeAttributes.map {
         case (name, rdd) =>
           val attr = inst.components.edgeAttributes(name)
-          name -> EdgeAttributeData(attr.edgeBundle, rdd)
+          name -> new EdgeAttributeData(attr.edgeBundle, rdd)
       }.toMap)
   }
 }
