@@ -105,18 +105,6 @@ trait MetaGraphOperation extends Serializable {
 
   val gUID: UUID
 
-  def outputs(inst: MetaGraphOperationInstance): MetaDataSet = {
-    return MetaDataSet(
-      outputVertexSets.map(n => n -> VertexSet(inst, n)).toMap,
-      outputEdgeBundles.keys.map(n => n -> EdgeBundle(inst, n)).toMap,
-      outputVertexAttributes.map {
-        case (n, (vs, tt)) => n -> VertexAttribute(inst, n)(tt)
-      }.toMap,
-      outputEdgeAttributes.map {
-        case (n, (vs, tt)) => n -> EdgeAttribute(inst, n)(tt)
-      }.toMap)
-  }
-
   def execute(inst: MetaGraphOperationInstance, dataManager: DataManager): DataSet
 }
 
@@ -130,7 +118,16 @@ case class MetaGraphOperationInstance(
 
   val gUID: UUID = null // TODO implement here from guids of inputs and operation.
 
-  val outputs = operation.outputs(this)
+  val outputs = MetaDataSet(
+    operation.outputVertexSets.map(n => n -> VertexSet(this, n)).toMap,
+    operation.outputEdgeBundles.keys.map(n => n -> EdgeBundle(this, n)).toMap,
+    operation.outputVertexAttributes.map {
+      case (n, (vs, tt)) => n -> VertexAttribute(this, n)(tt)
+    }.toMap,
+    operation.outputEdgeAttributes.map {
+      case (n, (vs, tt)) => n -> EdgeAttribute(this, n)(tt)
+    }.toMap)
+
   val components = inputs ++ outputs
 }
 
