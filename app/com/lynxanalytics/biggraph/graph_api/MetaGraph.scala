@@ -7,20 +7,20 @@ import scala.reflect.runtime.universe._
 import attributes.AttributeSignature
 
 sealed trait MetaGraphEntity extends Serializable {
-  val sourceOperation: MetaGraphOperationInstance
+  val source: MetaGraphOperationInstance
   val name: String
   // Implement from source operation's GUID, name and the actual class of this component.
   val gUID: UUID = null
 }
 
-case class VertexSet(sourceOperation: MetaGraphOperationInstance,
+case class VertexSet(source: MetaGraphOperationInstance,
                      name: String) extends MetaGraphEntity
 
-case class EdgeBundle(sourceOperation: MetaGraphOperationInstance,
+case class EdgeBundle(source: MetaGraphOperationInstance,
                       name: String) extends MetaGraphEntity {
-  @transient lazy val (srcName, dstName) = sourceOperation.operation.outputEdgeBundles(name)
-  @transient lazy val srcVertexSet: VertexSet = sourceOperation.entities.vertexSets(srcName)
-  @transient lazy val dstVertexSet: VertexSet = sourceOperation.entities.vertexSets(dstName)
+  @transient lazy val (srcName, dstName) = source.operation.outputEdgeBundles(name)
+  @transient lazy val srcVertexSet: VertexSet = source.entities.vertexSets(srcName)
+  @transient lazy val dstVertexSet: VertexSet = source.entities.vertexSets(dstName)
   @transient lazy val isLocal = srcVertexSet == dstVertexSet
 }
 
@@ -28,18 +28,18 @@ class Attribute[+T: TypeTag] {
   def typeTag: TypeTag[_ <: T] = implicitly[TypeTag[T]]
 }
 
-case class VertexAttribute[T: TypeTag](sourceOperation: MetaGraphOperationInstance,
+case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                        name: String)
     extends Attribute with MetaGraphEntity {
   @transient lazy val vertexSet: VertexSet =
-    sourceOperation.entities.vertexSets(sourceOperation.operation.outputVertexAttributes(name)._1)
+    source.entities.vertexSets(source.operation.outputVertexAttributes(name)._1)
 }
 
-case class EdgeAttribute[T: TypeTag](sourceOperation: MetaGraphOperationInstance,
+case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                      name: String)
     extends Attribute with MetaGraphEntity {
   @transient lazy val edgeBundle: EdgeBundle =
-    sourceOperation.entities.edgeBundles(sourceOperation.operation.outputEdgeAttributes(name)._1)
+    source.entities.edgeBundles(source.operation.outputEdgeAttributes(name)._1)
 }
 
 trait MetaGraphOperation extends Serializable {
