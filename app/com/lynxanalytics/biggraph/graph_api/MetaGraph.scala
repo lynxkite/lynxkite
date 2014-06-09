@@ -44,37 +44,73 @@ case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
 
 trait MetaGraphOperation extends Serializable {
   // Names of vertex set inputs for this operation.
-  def inputVertexSets: Set[String] = Set()
+  def inputVertexSets: Set[String] = inputs.flatMap {
+    case Name.VS(name) => Some(name)
+    case _ => None
+  }.toSet
 
-  // Names of input bundles together with their source and desination vertex set names (which all
-  // must be elements of inputVertexSetNames).
-  def inputEdgeBundles: Map[String, (String, String)] = Map()
+  // Names of input bundles together with their source and destination vertex set names (which all
+  // must be elements of inputVertexSets).
+  def inputEdgeBundles: Map[String, (String, String)] = inputs.flatMap {
+    case Name.EB(name, srcDst) => Some(name -> srcDst)
+    case _ => None
+  }.toMap
 
   // Names of input vertex attributes together with their corresponding VertexSet names (which all
-  // must be elements of inputVertexSetNames) and the types of the attributes.
-  def inputVertexAttributes: Map[String, (String, TypeTag[_])] = Map()
+  // must be elements of inputVertexSets) and the types of the attributes.
+  def inputVertexAttributes: Map[String, (String, TypeTag[_])] = inputs.filter(_.isInstanceOf[Name.VA]).map {
+    e =>
+      val va = e.asInstanceOf[Name.VA]
+      va.bundleName -> (va.attrName, va.tt)
+  }.toMap
 
   // Names of input edge attributes together with their corresponding EdgeBundle names (which all
-  // must be keys of inputEdgeBundleDefs) and the types of the attributes.
-  def inputEdgeAttributes: Map[String, (String, TypeTag[_])] = Map()
+  // must be keys of inputEdgeBundles) and the types of the attributes.
+  def inputEdgeAttributes: Map[String, (String, TypeTag[_])] = inputs.filter(_.isInstanceOf[Name.EA]).map {
+    e =>
+      val ea = e.asInstanceOf[Name.EA]
+      ea.bundleName -> (ea.attrName, ea.tt)
+  }.toMap
 
   // Names of vertex sets newly created by this operation.
-  // (outputVertexSetNamess /\ inputVertexSetNames needs to be empty).
-  def outputVertexSets: Set[String] = Set()
+  // (outputVertexSets /\ inputVertexSets needs to be empty).
+  def outputVertexSets: Set[String] = outputs.flatMap {
+    case Name.VS(name) => Some(name)
+    case _ => None
+  }.toSet
 
-  // Names of bundles newly created by this operation together with their source and desination
-  // vertex set names (which all must be elements of inputVertexSetNames \/ outputVertexSetNames).
-  def outputEdgeBundles: Map[String, (String, String)] = Map()
+  // Names of bundles newly created by this operation together with their source and destination
+  // vertex set names (which all must be elements of inputVertexSets \/ outputVertexSets).
+  def outputEdgeBundles: Map[String, (String, String)] = outputs.flatMap {
+    case Name.EB(name, srcDst) => Some(name -> srcDst)
+    case _ => None
+  }.toMap
 
   // Names of vertex attributes newly created by this operation together with their corresponding
-  // VertexSet names (which all must be elements of inputVertexSetNames \/ outputVertexSetNames)
+  // VertexSet names (which all must be elements of inputVertexSets \/ outputVertexSets)
   // and the types of the attributes.
-  def outputVertexAttributes: Map[String, (String, TypeTag[_])] = Map()
+  def outputVertexAttributes: Map[String, (String, TypeTag[_])] = outputs.filter(_.isInstanceOf[Name.VA]).map {
+    e =>
+      val va = e.asInstanceOf[Name.VA]
+      va.bundleName -> (va.attrName, va.tt)
+  }.toMap
 
   // Names of edge attributes newly created by this operation together with their corresponding
-  // EdgeBundle names (which all must be keys of inputEdgeBundleDefs \/ outputEdgeBundleDefs)
+  // EdgeBundle names (which all must be keys of inputEdgeBundles \/ outputEdgeBundles)
   // and the types of the attributes.
-  def outputEdgeAttributes: Map[String, (String, TypeTag[_])] = Map()
+  def outputEdgeAttributes: Map[String, (String, TypeTag[_])] = outputs.filter(_.isInstanceOf[Name.EA]).map {
+    e =>
+      val ea = e.asInstanceOf[Name.EA]
+      ea.bundleName -> (ea.attrName, ea.tt)
+  }.toMap
+
+  // Use Name for quickly constructing inputs and outputs in subclasses. E.g.:
+  //     class MyOp extends GraphOperation {
+  //       override def inputs = (Name.vertexSet("graph-1") ++ Name.vertexSet("graph-2") ++
+  //                              Name.EdgeBundle("input-edges", "graph-1" -> "graph-2"))
+  //       override def outputs = Name.vertexAttribute[Double]("graph-1")("something")
+  def inputs = Seq[Name.Entity]()
+  def outputs = Seq[Name.Entity]()
 
   // Checks whether the complete input signature is valid for this operation.
   // Concrete MetaGraphOperation instances may either override this method or
@@ -106,6 +142,21 @@ trait MetaGraphOperation extends Serializable {
   val gUID: UUID
 
   def execute(inst: MetaGraphOperationInstance, dataManager: DataManager): DataSet
+}
+
+object Name {
+  def vertexSet(name: String): Seq[Entity] = Seq(VS(name))
+  def edgeBundle(name: String, srcDst: (String, String)): Seq[Entity] = Seq(EB(name, srcDst))
+  def edgeAttribute[T: TypeTag](bundleName: String)(attrName: String): Seq[Entity] =
+    Seq(EA(bundleName, attrName, typeTag[T]))
+  def vertexAttribute[T: TypeTag](bundleName: String)(attrName: String): Seq[Entity] =
+    Seq(VA(bundleName, attrName, typeTag[T]))
+  private[graph_api] trait Entity
+  private[graph_api] case class VS(name: String) extends Entity
+  private[graph_api] case class EB(name: String, srcDst: (String, String)) extends Entity
+  import scala.language.existentials
+  private[graph_api] case class VA(bundleName: String, attrName: String, tt: TypeTag[_]) extends Entity
+  private[graph_api] case class EA(bundleName: String, attrName: String, tt: TypeTag[_]) extends Entity
 }
 
 /*
@@ -190,32 +241,50 @@ case class MetaDataSet(val vertexSets: Map[String, VertexSet] = Map(),
 }
 
 // A bundle of data types.
-case class DataSet(val vertexSets: Map[String, VertexSetData] = Map(),
-                   val edgeBundles: Map[String, EdgeBundleData] = Map(),
-                   val vertexAttributes: Map[String, VertexAttributeData[_]] = Map(),
-                   val edgeAttributes: Map[String, EdgeAttributeData[_]] = Map())
+case class DataSet(vertexSets: Map[String, VertexSetData] = Map(),
+                   edgeBundles: Map[String, EdgeBundleData] = Map(),
+                   vertexAttributes: Map[String, VertexAttributeData[_]] = Map(),
+                   edgeAttributes: Map[String, EdgeAttributeData[_]] = Map())
 object DataSet {
-  // Convenience constructor.
-  def forInstance(inst: MetaGraphOperationInstance)(
-    vertexSets: Map[String, VertexSetRDD] = Map(),
-    edgeBundles: Map[String, EdgeBundleRDD] = Map(),
-    vertexAttributes: Map[String, AttributeRDD[_]] = Map(),
-    edgeAttributes: Map[String, AttributeRDD[_]] = Map()) = {
-    new DataSet(
-      vertexSets.map {
-        case (name, rdd) =>
-          name -> new VertexSetData(inst.entities.vertexSets(name), rdd)
-      }, edgeBundles.map {
-        case (name, rdd) =>
-          name -> new EdgeBundleData(inst.entities.edgeBundles(name), rdd)
-      }, vertexAttributes.map {
-        case (name, rdd) =>
-          val attr = inst.entities.vertexAttributes(name)
-          name -> new VertexAttributeData(attr.vertexSet, rdd)
-      }.toMap, edgeAttributes.map {
-        case (name, rdd) =>
-          val attr = inst.entities.edgeAttributes(name)
-          name -> new EdgeAttributeData(attr.edgeBundle, rdd)
-      }.toMap)
-  }
+  def apply(inst: MetaGraphOperationInstance) = new DataSetBuilder(inst)
+}
+
+class DataSetBuilder(inst: MetaGraphOperationInstance,
+                     vertexSets: Map[String, VertexSetData] = Map(),
+                     edgeBundles: Map[String, EdgeBundleData] = Map(),
+                     vertexAttributes: Map[String, VertexAttributeData[_]] = Map(),
+                     edgeAttributes: Map[String, EdgeAttributeData[_]] = Map()) extends DataSet(vertexSets, edgeBundles, vertexAttributes, edgeAttributes) {
+  def vertexSet(name: String, rdd: VertexSetRDD) =
+    new DataSetBuilder(
+      inst,
+      vertexSets + (name -> new VertexSetData(inst.entities.vertexSets(name), rdd)),
+      edgeBundles,
+      vertexAttributes,
+      edgeAttributes)
+
+  def edgeBundle(name: String, rdd: EdgeBundleRDD) =
+    new DataSetBuilder(
+      inst,
+      vertexSets,
+      edgeBundles + (name -> new EdgeBundleData(inst.entities.edgeBundles(name), rdd)),
+      vertexAttributes,
+      edgeAttributes)
+
+  def vertexAttribute(name: String, rdd: AttributeRDD[_]) =
+    new DataSetBuilder(
+      inst,
+      vertexSets,
+      edgeBundles,
+      vertexAttributes + (name -> new VertexAttributeData(
+        inst.entities.vertexAttributes(name).vertexSet, rdd)),
+      edgeAttributes)
+
+  def edgeAttribute(name: String, rdd: AttributeRDD[_]) =
+    new DataSetBuilder(
+      inst,
+      vertexSets,
+      edgeBundles,
+      vertexAttributes,
+      edgeAttributes + (name -> new EdgeAttributeData(
+        inst.entities.edgeAttributes(name).edgeBundle, rdd)))
 }

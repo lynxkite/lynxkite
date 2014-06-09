@@ -13,34 +13,28 @@ import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
 import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-trait GraphTransformation extends MetaGraphOperation {
-  override def inputVertexSets = Set("input")
-  override def inputEdgeBundles = Map("input" -> ("input", "input"))
-  override def outputVertexSets = Set("output")
-  override def outputEdgeBundles = Map("output" -> ("output", "output"), "link" -> ("input", "output"))
-}
-
-case class FindMaxCliques(minCliqueSize: Int) extends GraphTransformation {
+case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
+  override def inputs = Name.vertexSet("input-vs") ++ Name.edgeBundle("input-es", "input-vs" -> "input-vs")
+  override def outputs = Name.vertexSet("output-vs") ++ Name.edgeBundle("link", "input-vs" -> "output-vs")
   val gUID = null
   def execute(inst: MetaGraphOperationInstance, manager: DataManager): DataSet = {
     val runtimeContext = manager.runtimeContext
     val sc = runtimeContext.sparkContext
-    val cug = CompactUndirectedGraph(manager.get(inst.inputs.edgeBundles("input")))
+    val cug = CompactUndirectedGraph(manager.get(inst.inputs.edgeBundles("input-es")))
     val cliqueLists = computeCliques(
-      manager.get(inst.inputs.vertexSets("input")),
+      manager.get(inst.inputs.vertexSets("input-vs")),
       cug,
       sc,
       minCliqueSize,
       runtimeContext.numAvailableCores * 5)
     val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists)
     val vertices: VertexSetRDD = indexedCliqueLists.mapValues(x => Unit)
-    //    val edges = RDDUtils.empty[EdgeBundleRDD](sc)
-    val edges: EdgeBundleRDD = RDDUtils.emptyEdgeBundleRDD(sc)
     val links = indexedCliqueLists.flatMap {
       case (cid, vids) => vids.map(vid => 42l -> Edge(vid, cid))
     }
-    return DataSet.forInstance(inst)(
-      Map("output" -> vertices), Map("output" -> edges, "link" -> links))
+    return DataSet(inst)
+      .vertexSet("output-vs", vertices)
+      .edgeBundle("link", links)
   }
 
   // TODO: Put this into the EdgeBundle?

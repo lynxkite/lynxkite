@@ -7,14 +7,12 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
 
 case class SmallGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
-  override def outputVertexSets = Set("output")
-  override def outputEdgeBundles = Map("output" -> ("output", "output"))
+  override def outputs = Name.vertexSet("vs") ++ Name.edgeBundle("es", "vs" -> "vs")
   def execute(inst: MetaGraphOperationInstance, manager: DataManager): DataSet = {
     val sc = manager.runtimeContext.sparkContext
     val vertices = sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
     val edges = sc.parallelize(edgeLists.toSeq.flatMap { case (i, es) => es.map(e => (0l, Edge(i, e))) })
-    return DataSet.forInstance(inst)(
-      Map("output" -> vertices), Map("output" -> edges))
+    return DataSet(inst).vertexSet("vs", vertices).edgeBundle("es", edges)
   }
   val gUID = null
 }
@@ -36,15 +34,15 @@ class FindMaxCliquesTest extends FunSuite {
     val sgi = MetaGraphOperationInstance(sg, MetaDataSet())
     val manager = new TestManager(RuntimeContext(new SparkContext("local", "test"), 1, 100.0))
     val input = sg.execute(sgi, manager)
-    val inputVS = input.vertexSets("output")
-    val inputEB = input.edgeBundles("output")
+    val inputVS = input.vertexSets("vs")
+    val inputEB = input.edgeBundles("es")
     manager.vertexSets(inputVS.vertexSet) = inputVS
     manager.edgeBundles(inputEB.edgeBundle) = inputEB
     val fmc = FindMaxCliques(3)
     val fmci = MetaGraphOperationInstance(fmc,
-      MetaDataSet(Map("input" -> inputVS.vertexSet), Map("input" -> inputEB.edgeBundle)))
+      MetaDataSet(Map("input-vs" -> inputVS.vertexSet), Map("input-es" -> inputEB.edgeBundle)))
     val output = fmc.execute(fmci, manager)
-    val outputVS = output.vertexSets("output")
+    val outputVS = output.vertexSets("output-vs")
     assert(outputVS.rdd.count == 1)
   }
 }
