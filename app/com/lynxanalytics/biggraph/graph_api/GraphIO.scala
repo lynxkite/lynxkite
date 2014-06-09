@@ -55,13 +55,7 @@ object GraphIO {
   }
 
   def saveAsObjectFile(data: GraphData, pathPrefix: Filename) {
-    verticesPath(pathPrefix).saveAsObjectFile(
-      coalesceToPartitionSize(
-        data.vertices,
-        64 * 1024 * 1024))
-    edgesPath(pathPrefix).saveAsObjectFile(
-      coalesceToPartitionSize(
-        data.edges,
-        64 * 1024 * 1024))
+    verticesPath(pathPrefix).saveAsObjectFile(data.vertices)
+    edgesPath(pathPrefix).saveAsObjectFile(data.edges)
   }
 }
