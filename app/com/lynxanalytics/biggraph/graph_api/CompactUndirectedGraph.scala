@@ -9,6 +9,7 @@ import scala.util.Sorting
 
 object CompactUndirectedGraph {
   def apply(edges: EdgeBundleData): CompactUndirectedGraph = {
+    assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
     val outEdges = edges.rdd.map {
       case (id, edge) => (edge.src, edge.dst)
     }.groupByKey()

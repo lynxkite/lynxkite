@@ -21,6 +21,7 @@ case class EdgeBundle(sourceOperation: MetaGraphOperationInstance,
   @transient lazy val (srcName, dstName) = sourceOperation.operation.outputEdgeBundles(name)
   @transient lazy val srcVertexSet: VertexSet = sourceOperation.components.vertexSets(srcName)
   @transient lazy val dstVertexSet: VertexSet = sourceOperation.components.vertexSets(dstName)
+  @transient lazy val isLocal = srcVertexSet == dstVertexSet
 }
 
 class Attribute[+T: TypeTag] {
