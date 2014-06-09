@@ -26,7 +26,7 @@ class TestManager(rc: RuntimeContext) extends DataManager {
   def get(edgeBundle: EdgeBundle): EdgeBundleData = edgeBundles(edgeBundle)
   def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T] = ???
   def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T] = ???
-  def saveDataToDisk(component: MetaGraphComponent) = ???
+  def saveDataToDisk(component: MetaGraphEntity) = ???
   def runtimeContext: RuntimeContext = rc
 }
 

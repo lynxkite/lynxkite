@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe._
 
 import attributes.AttributeSignature
 
-sealed trait MetaGraphComponent extends Serializable {
+sealed trait MetaGraphEntity extends Serializable {
   val sourceOperation: MetaGraphOperationInstance
   val name: String
   // Implement from source operation's GUID, name and the actual class of this component.
@@ -14,13 +14,13 @@ sealed trait MetaGraphComponent extends Serializable {
 }
 
 case class VertexSet(sourceOperation: MetaGraphOperationInstance,
-                     name: String) extends MetaGraphComponent
+                     name: String) extends MetaGraphEntity
 
 case class EdgeBundle(sourceOperation: MetaGraphOperationInstance,
-                      name: String) extends MetaGraphComponent {
+                      name: String) extends MetaGraphEntity {
   @transient lazy val (srcName, dstName) = sourceOperation.operation.outputEdgeBundles(name)
-  @transient lazy val srcVertexSet: VertexSet = sourceOperation.components.vertexSets(srcName)
-  @transient lazy val dstVertexSet: VertexSet = sourceOperation.components.vertexSets(dstName)
+  @transient lazy val srcVertexSet: VertexSet = sourceOperation.entities.vertexSets(srcName)
+  @transient lazy val dstVertexSet: VertexSet = sourceOperation.entities.vertexSets(dstName)
   @transient lazy val isLocal = srcVertexSet == dstVertexSet
 }
 
@@ -30,16 +30,16 @@ class Attribute[+T: TypeTag] {
 
 case class VertexAttribute[T: TypeTag](sourceOperation: MetaGraphOperationInstance,
                                        name: String)
-    extends Attribute with MetaGraphComponent {
+    extends Attribute with MetaGraphEntity {
   @transient lazy val vertexSet: VertexSet =
-    sourceOperation.components.vertexSets(sourceOperation.operation.outputVertexAttributes(name)._1)
+    sourceOperation.entities.vertexSets(sourceOperation.operation.outputVertexAttributes(name)._1)
 }
 
 case class EdgeAttribute[T: TypeTag](sourceOperation: MetaGraphOperationInstance,
                                      name: String)
-    extends Attribute with MetaGraphComponent {
+    extends Attribute with MetaGraphEntity {
   @transient lazy val edgeBundle: EdgeBundle =
-    sourceOperation.components.edgeBundles(sourceOperation.operation.outputEdgeAttributes(name)._1)
+    sourceOperation.entities.edgeBundles(sourceOperation.operation.outputEdgeAttributes(name)._1)
 }
 
 trait MetaGraphOperation extends Serializable {
@@ -128,7 +128,7 @@ case class MetaGraphOperationInstance(
       case (n, (vs, tt)) => n -> EdgeAttribute(this, n)(tt)
     }.toMap)
 
-  val components = inputs ++ outputs
+  val entities = inputs ++ outputs
 }
 
 trait MetaGraphManager {
@@ -138,7 +138,7 @@ trait MetaGraphManager {
 
   def incomingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
   def outgoingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
-  def dependentOperations(component: MetaGraphComponent): Seq[MetaGraphOperationInstance]
+  def dependentOperations(component: MetaGraphEntity): Seq[MetaGraphOperationInstance]
 }
 
 class VertexSetData(val vertexSet: VertexSet,
@@ -160,7 +160,7 @@ trait DataManager {
   def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T]
 
   // Saves the given component's data to disk.
-  def saveDataToDisk(component: MetaGraphComponent)
+  def saveDataToDisk(component: MetaGraphEntity)
 
   // Returns information about the current running enviroment.
   // Typically used by operations to optimize their execution.
@@ -204,17 +204,17 @@ object DataSet {
     new DataSet(
       vertexSets.map {
         case (name, rdd) =>
-          name -> new VertexSetData(inst.components.vertexSets(name), rdd)
+          name -> new VertexSetData(inst.entities.vertexSets(name), rdd)
       }, edgeBundles.map {
         case (name, rdd) =>
-          name -> new EdgeBundleData(inst.components.edgeBundles(name), rdd)
+          name -> new EdgeBundleData(inst.entities.edgeBundles(name), rdd)
       }, vertexAttributes.map {
         case (name, rdd) =>
-          val attr = inst.components.vertexAttributes(name)
+          val attr = inst.entities.vertexAttributes(name)
           name -> new VertexAttributeData(attr.vertexSet, rdd)
       }.toMap, edgeAttributes.map {
         case (name, rdd) =>
-          val attr = inst.components.edgeAttributes(name)
+          val attr = inst.entities.edgeAttributes(name)
           name -> new EdgeAttributeData(attr.edgeBundle, rdd)
       }.toMap)
   }
