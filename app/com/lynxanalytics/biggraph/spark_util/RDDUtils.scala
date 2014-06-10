@@ -74,9 +74,4 @@ object RDDUtils {
       }
     }
   }
-
-  // TODO: Do this in a parametric way.
-  def emptyEdgeBundleRDD(sc: spark.SparkContext): EdgeBundleRDD =
-    new spark.rdd.EmptyRDD[(ID, Edge)](sc)
-
 }
