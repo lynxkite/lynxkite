@@ -48,7 +48,9 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           numAvailableCores: Int,
                           // Total memory available for caching RDDs.
                           availableCacheMemoryGB: Double) {
+  // This is set to 1 in tests to improve their performance on small data.
+  private lazy val defaultPartitionsPerCore =
+    System.getProperty("biggraph.default.partitions.per.core", "3").toInt
   lazy val defaultPartitioner: spark.Partitioner =
-    new spark.HashPartitioner(numAvailableCores * 3)
+    new spark.HashPartitioner(numAvailableCores * defaultPartitionsPerCore)
 }
-
