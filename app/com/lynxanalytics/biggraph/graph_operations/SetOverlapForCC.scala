@@ -81,7 +81,7 @@ abstract class SetOverlapForCC extends GraphOperation {
   def edgesFor(vid: Long, sets: Sets): Seq[Edge[DenseAttributes]] = {
     val res = mutable.Buffer[Edge[DenseAttributes]]()
 
-    // Array of set indices that still need to checked when considering the neighbors of
+    // Array of set indices that still need to be checked when considering the neighbors of
     // a new node. idxs contains the number of valid elements in idxa.
     val idxa = (0 until sets.size).toArray
     var idxs = idxa.size
