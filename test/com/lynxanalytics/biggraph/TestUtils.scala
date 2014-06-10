@@ -33,6 +33,7 @@ private object SparkContextContainer {
     "BigGraphTests",
     "local",
     useJars = false,
+    useKryo = false, // TODO(darabos): Figure out why Kryo gets stuck.
     debugKryo = false) // Set this to true if you are debugging kryo issues.
 }
 
