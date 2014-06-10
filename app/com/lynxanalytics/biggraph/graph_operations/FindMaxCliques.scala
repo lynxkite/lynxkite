@@ -14,27 +14,21 @@ import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
-  override def inputs = Name.vertexSet("input-vs") ++ Name.edgeBundle("input-es", "input-vs" -> "input-vs")
-  override def outputs = Name.vertexSet("output-vs") ++ Name.edgeBundle("link", "input-vs" -> "output-vs")
+  override def signature = newSignature
+    .inputGraph("vsIn", "esIn")
+    .outputVertexSet("vsOut")
+    .outputEdgeBundle("link", "vsIn" -> "vsOut")
   val gUID = null
-  def execute(inst: MetaGraphOperationInstance, manager: DataManager): DataSet = {
-    val runtimeContext = manager.runtimeContext
-    val sc = runtimeContext.sparkContext
-    val cug = CompactUndirectedGraph(manager.get(inst.inputs.edgeBundles("input-es")))
+
+  def execute(inputs: DataSet, outputs: DataSet, rc: RuntimeContext): Unit = {
+    val cug = CompactUndirectedGraph(inputs.edgeBundles("esIn"))
     val cliqueLists = computeCliques(
-      manager.get(inst.inputs.vertexSets("input-vs")),
-      cug,
-      sc,
-      minCliqueSize,
-      runtimeContext.numAvailableCores * 5)
+      inputs.vertexSets("vsIn"), cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
     val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists)
-    val vertices: VertexSetRDD = indexedCliqueLists.mapValues(x => Unit)
-    val links = indexedCliqueLists.flatMap {
+    outputs.putVertexSet("vsOut", indexedCliqueLists.mapValues(_ => Unit))
+    outputs.putEdgeBundle("link", indexedCliqueLists.flatMap {
       case (cid, vids) => vids.map(vid => 42l -> Edge(vid, cid))
-    }
-    return DataSet(inst)
-      .vertexSet("output-vs", vertices)
-      .edgeBundle("link", links)
+    })
   }
 
   // TODO: Put this into the EdgeBundle?
