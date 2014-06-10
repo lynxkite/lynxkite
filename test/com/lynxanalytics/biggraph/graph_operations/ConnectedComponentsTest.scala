@@ -28,8 +28,8 @@ case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation 
     })
     return new SimpleGraphData(
       target,
-      sc.parallelize(vertices),
-      sc.parallelize(edges)
+      sc.parallelize(vertices, 1),
+      sc.parallelize(edges, 1)
     )
   }
 

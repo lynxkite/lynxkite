@@ -50,9 +50,9 @@ private[graph_api] class GraphDataManagerImpl(sc: spark.SparkContext,
     }
   }
 
-  // This is pretty sad, but I haven't find an automatic way to get the number of cores.
+  // Cannot set this automatically (SPARK-2095). Default to a low value for tests.
   private val numCoresPerExecutor = scala.util.Properties.envOrElse(
-    "NUM_CORES_PER_EXECUTOR", "4").toInt
+    "NUM_CORES_PER_EXECUTOR", "1").toInt
   private val bytesInGb = scala.math.pow(2, 30)
   def runtimeContext =
     RuntimeContext(
