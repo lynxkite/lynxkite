@@ -15,18 +15,18 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
   override def signature = newSignature
-    .inputGraph("vsIn", "esIn")
-    .outputVertexSet("vsOut")
-    .outputEdgeBundle("link", "vsIn" -> "vsOut")
+    .inputGraph('vsIn, 'esIn)
+    .outputVertexSet('vsOut)
+    .outputEdgeBundle('link, 'vsIn -> 'vsOut)
   val gUID = null
 
   def execute(inputs: DataSet, outputs: DataSet, rc: RuntimeContext): Unit = {
-    val cug = CompactUndirectedGraph(inputs.edgeBundles("esIn"))
+    val cug = CompactUndirectedGraph(inputs.edgeBundles('esIn))
     val cliqueLists = computeCliques(
-      inputs.vertexSets("vsIn"), cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
+      inputs.vertexSets('vsIn), cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
     val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists)
-    outputs.putVertexSet("vsOut", indexedCliqueLists.mapValues(_ => Unit))
-    outputs.putEdgeBundle("link", indexedCliqueLists.flatMap {
+    outputs.putVertexSet('vsOut, indexedCliqueLists.mapValues(_ => Unit))
+    outputs.putEdgeBundle('link, indexedCliqueLists.flatMap {
       case (cid, vids) => vids.map(vid => 42l -> Edge(vid, cid))
     })
   }
