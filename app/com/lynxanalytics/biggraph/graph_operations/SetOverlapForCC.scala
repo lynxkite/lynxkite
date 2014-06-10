@@ -11,9 +11,9 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
 import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 
-class SetOverlapForCC(
-    attribute: String,
-    minOverlapFn: (Int, Int) => Int) extends GraphOperation {
+abstract class SetOverlapForCC extends GraphOperation {
+  val attribute: String
+  def minOverlapFn(aSize: Int, bSize: Int): Int
 
   // Set-valued attributes are represented as sorted Array[Long].
   type Set = Array[Long]
@@ -37,10 +37,10 @@ class SetOverlapForCC(
     val inputIdx = inputGraph.vertexAttributes.readIndex[Set](attribute)
     val sets = inputData.vertices.mapValues(_(inputIdx))
     val partitioner = runtimeContext.defaultPartitioner
-    var byMemeberNode = sets
+    var byMemberNode = sets
       .flatMap { case (sid, set) => set.map(i => (i, (sid, set))) }
       .groupByKey(partitioner)
-    val edges: rdd.RDD[Edge[DenseAttributes]] = byMemeberNode.flatMap {
+    val edges: rdd.RDD[Edge[DenseAttributes]] = byMemberNode.flatMap {
       case (vid, sets) => edgesFor(vid, sets)
     }
     return new SimpleGraphData(target, inputData.vertices, edges)
@@ -53,6 +53,8 @@ class SetOverlapForCC(
   override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
     new BigGraphProperties(symmetricEdges = true)
 
+  // Checks if the two sorted array has an intersection of at least minOverlap. If yes,
+  // returns the minimal element of the intesection. If no, returns None.
   private def hasEnoughIntersection(a: Array[Long],
                                     b: Array[Long],
                                     minOverlap: Int): Option[Long] = {
@@ -63,10 +65,10 @@ class SetOverlapForCC(
     while (ai < a.length && bi < b.length) {
       if (a(ai) == b(bi)) {
         res += 1
-        ai += 1
-        bi += 1
         if (smallest > a(ai)) smallest = a(ai)
         if (res >= minOverlap) return Some(smallest)
+        ai += 1
+        bi += 1
       } else if (a(ai) < b(bi)) {
         ai += 1
       } else {
@@ -78,17 +80,22 @@ class SetOverlapForCC(
 
   def edgesFor(vid: Long, sets: Sets): Seq[Edge[DenseAttributes]] = {
     val res = mutable.Buffer[Edge[DenseAttributes]]()
-    val idxa = (1 until sets.size).toArray
+
+    // Array of set indices that still need to checked when considering the neighbors of
+    // a new node. idxs contains the number of valid elements in idxa.
+    val idxa = (0 until sets.size).toArray
+    var idxs = idxa.size
+
     def minimalElementInIs(current: Int, other: Int): Option[Long] = {
-      val cs = sets(idxa(current))._2
-      val os = sets(idxa(other))._2
+      val cs = sets(current)._2
+      val os = sets(other)._2
       hasEnoughIntersection(cs, os, minOverlapFn(cs.size, os.size))
     }
     def addEdges(current: Int, other: Int): Unit = {
-      res += new Edge(sets(idxa(current))._1, sets(idxa(other))._1, outputMaker.make)
+      res += new Edge(sets(current)._1, sets(other)._1, outputMaker.make)
+      res += new Edge(sets(other)._1, sets(current)._1, outputMaker.make)
     }
 
-    var idxs = idxa.size
     while (idxs > 0) {
       val todo = mutable.Queue[Int]()
       todo.enqueue(idxa(0))
@@ -101,9 +108,15 @@ class SetOverlapForCC(
             minimalElementInIs(current, other) match {
               case Some(minimal) => {
                 todo.enqueue(other)
+                // If minimal < vid, then this edge (or some other path between the two end nodes)
+                // will be added in the sets with smaller vid.
                 if (minimal >= vid) addEdges(current, other)
+                // We found the component of this vertex, no need to check for edges going into
+                // it anymore.
               }
               case None => {
+                // We still need to consider this vertex, so we copy it over to the start of the
+                // array.
                 idxa(writeIdx) = other
                 writeIdx += 1
               }
@@ -117,6 +130,6 @@ class SetOverlapForCC(
   }
 }
 
-case class UniformOverlapForCC(
-  attribute: String,
-  overlapSize: Int) extends SetOverlapForCC(attribute, (a: Int, b: Int) => overlapSize)
+case class UniformOverlapForCC(attribute: String, overlapSize: Int) extends SetOverlapForCC {
+  def minOverlapFn(a: Int, b: Int): Int = overlapSize
+}
