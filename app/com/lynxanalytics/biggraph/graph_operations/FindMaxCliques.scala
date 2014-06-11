@@ -13,46 +13,29 @@ import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
 import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-case class FindMaxCliques(
-    targetElementsAttribute: String,
-    minCliqueSize: Int) extends GraphOperation {
-  def isSourceListValid(sources: Seq[BigGraph]): Boolean = (sources.size == 1)
+case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
+  override def signature = newSignature
+    .inputGraph('vsIn, 'esIn)
+    .outputVertexSet('vsOut)
+    .outputEdgeBundle('link, 'vsIn -> 'vsOut)
+  val gUID = null
 
-  def execute(target: BigGraph,
-              manager: GraphDataManager): GraphData = {
-    val inputGraph = target.sources.head
-    val inputData = manager.obtainData(inputGraph)
-    val runtimeContext = manager.runtimeContext
-    val sc = runtimeContext.sparkContext
-    val cug = CompactUndirectedGraph(inputData)
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val cug = CompactUndirectedGraph(inputs.edgeBundles('esIn))
     val cliqueLists = computeCliques(
-      inputData,
-      cug,
-      runtimeContext.sparkContext,
-      minCliqueSize,
-      runtimeContext.numAvailableCores * 5)
-    val newSig = vertexAttributes(target.sources)
-    val maker = newSig.maker
-    val idx = newSig.writeIndex[Array[graphx.VertexId]](targetElementsAttribute)
+      inputs.vertexSets('vsIn), cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
     val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists)
-    val vertices = indexedCliqueLists.mapValues(clq => maker.make.set(idx, clq.toArray.sorted))
-    val edges = new rdd.EmptyRDD[graphx.Edge[DenseAttributes]](sc)
-    return new SimpleGraphData(target, vertices, edges)
+    outputs.putVertexSet('vsOut, indexedCliqueLists.mapValues(_ => Unit))
+    outputs.putEdgeBundle('link, indexedCliqueLists.flatMap {
+      case (cid, vids) => vids.map(vid => 42l -> Edge(vid, cid))
+    })
   }
 
-  def vertexAttributes(inputGraphSpecs: Seq[BigGraph]) =
-    AttributeSignature
-      .empty
-      .addAttribute[Array[graphx.VertexId]](targetElementsAttribute)
-      .signature
-
-  def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) =
-    AttributeSignature.empty
-
-  override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
+  // TODO: Put this into the EdgeBundle?
+  def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
     new BigGraphProperties(symmetricEdges = true)
 
-  // Implementaion of the actual algorithm.
+  // Implementation of the actual algorithm.
 
   /*
    * Finds best pivot among given candidates based on degree.
@@ -142,13 +125,13 @@ case class FindMaxCliques(
     }
   }
 
-  private def computeCliques(g: GraphData,
+  private def computeCliques(g: VertexSetData,
                              cug: CompactUndirectedGraph,
                              sc: spark.SparkContext,
                              minCliqueSize: Int,
                              numTasks: Int): rdd.RDD[List[VertexId]] = {
     val broadcastGraph = sc.broadcast(cug)
-    g.vertices.map(_._1).repartition(numTasks).flatMap(
+    g.rdd.map(_._1).repartition(numTasks).flatMap(
       v => {
         val fullGraph = broadcastGraph.value
         val markedCandidates =

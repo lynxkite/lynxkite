@@ -36,35 +36,35 @@ class CSVExportTest extends FunSuite with TestBigGraphManager with TestGraphData
 
     val dirSnapshot = TestUtils.runShellCommand(
       """|cd %s
-         |for file in `find . -type f | sort | grep -v crc`; do
+         |for file in `find . -type f | LC_COLLATE=C sort | grep -v crc`; do
          |  echo $file
          |  echo '========'
          |  cat $file
          |  echo '********'
          |done""".stripMargin.format(targetDir.toString))
     assert(dirSnapshot ==
-      """|./edge-data/part-00000
+      """|./edge-data/_SUCCESS
+         |========
+         |********
+         |./edge-data/part-00000
          |========
          |0,1,"Adam loves Eve"
          |1,0,"Eve loves Adam"
          |2,0,"Bob envies Adam"
          |2,1,"Bob loves Eve"
          |********
-         |./edge-data/_SUCCESS
-         |========
-         |********
          |./edge-header
          |========
          |"srcVertexId","dstVertexId","comment"
+         |********
+         |./vertex-data/_SUCCESS
+         |========
          |********
          |./vertex-data/part-00000
          |========
          |0,"Adam",20.3
          |1,"Eve",18.2
          |2,"Bob",50.3
-         |********
-         |./vertex-data/_SUCCESS
-         |========
          |********
          |./vertex-header
          |========

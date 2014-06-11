@@ -80,6 +80,11 @@ angular.module('biggraph')
       SaveGraph.get({q: saveRequest});
     }
 
+    var Stats = $resource('/ajax/stats');
+    function getStatsRequest(id) {
+      $scope.stats = Stats.get({q: {id: id}});
+    }
+
     var StartingOps = $resource('/ajax/startingOps');
     $scope.startingOps = StartingOps.query({q: {fake: 0}});
 
@@ -90,11 +95,9 @@ angular.module('biggraph')
     var id = $routeParams.graph;
     if (id !== 'x') {
       var Graph = $resource('/ajax/graph');
-      var Stats = $resource('/ajax/stats');
 
       $scope.id = id;
       $scope.graph = Graph.get({q: {id: id}});
-      $scope.stats = Stats.get({q: {id: id}});
 
       $scope.graphView = $resource('/ajax/bucketed').get({q: {axisX: 'age', axisY: 'income', filters: []}});
  
@@ -104,6 +107,10 @@ angular.module('biggraph')
 
       $scope.save = function() {
         sendSaveRequest(id);
+      };
+
+      $scope.getStats = function() {
+        getStatsRequest(id);
       };
 
       $scope.openDerivationModal = function(operation) {

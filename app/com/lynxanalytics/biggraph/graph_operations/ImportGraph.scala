@@ -90,7 +90,8 @@ trait GraphBuilder {
   def build(vertexDataSig: AttributeSignature,
             vertexData: RDD[DenseAttributes],
             edgeDataSig: AttributeSignature,
-            edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD)
+            edgeData: RDD[DenseAttributes],
+            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD)
 }
 trait GraphIndexer {
   def indexVertices[A](vertexData: RDD[A]): RDD[(Long, A)] =
@@ -118,8 +119,10 @@ case class NumberedIdFromVertexField(vertexIdFieldName: String,
   def build(vertexDataSig: AttributeSignature,
             vertexData: RDD[DenseAttributes],
             edgeDataSig: AttributeSignature,
-            edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
+            edgeData: RDD[DenseAttributes],
+            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD) = {
     val vertices: VertexRDD = indexVertices(vertexData)
+      .repartition(runtimeContext.defaultPartitioner.numPartitions)
     val vIdx = vertexDataSig.readIndex[String](vertexIdFieldName)
     val vertexAttrPartitioner = new spark.HashPartitioner(edgeData.partitions.size)
     val vertexFieldToId = vertices.map {
@@ -128,6 +131,7 @@ case class NumberedIdFromVertexField(vertexIdFieldName: String,
     val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
     val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
     val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexFieldToId)
+      .repartition(runtimeContext.defaultPartitioner.numPartitions)
     (vertices, edges)
   }
 }
@@ -139,7 +143,8 @@ case class IdFromEdgeFields(vertexIdAttrName: String,
   def build(vertexDataSig: AttributeSignature,
             vertexData: RDD[DenseAttributes],
             edgeDataSig: AttributeSignature,
-            edgeData: RDD[DenseAttributes]): (VertexRDD, EdgeRDD) = {
+            edgeData: RDD[DenseAttributes],
+            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD) = {
     val newVertexSig = AttributeSignature.empty.addAttribute[String](vertexIdAttrName).signature
     val maker = newVertexSig.maker
     val vIdx = newVertexSig.writeIndex[String](vertexIdAttrName)
@@ -159,8 +164,38 @@ case class IdFromEdgeFields(vertexIdAttrName: String,
       case (vertexId, (field, attr)) => (field, vertexId)
     }.partitionBy(vertexAttrPartitioner)
     val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexAttrToId)
+      .repartition(runtimeContext.defaultPartitioner.numPartitions)
     val vertices: VertexRDD = verticesFromEdges.map {
       case (vertexId, (field, attr)) => (vertexId, attr)
+    }
+      .repartition(runtimeContext.defaultPartitioner.numPartitions)
+    (vertices, edges)
+  }
+}
+
+case class EdgeFieldsAsId(edgeSourceFieldName: String,
+                          edgeDestFieldName: String,
+                          disallowedVertexIds: Set[String] = null)
+    extends GraphBuilder {
+  def build(vertexDataSig: AttributeSignature,
+            vertexData: RDD[DenseAttributes],
+            edgeDataSig: AttributeSignature,
+            edgeData: RDD[DenseAttributes],
+            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD) = {
+    val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
+    val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
+    val filteredEdgeData =
+      if (disallowedVertexIds == null) edgeData
+      else edgeData.filter(da =>
+        !disallowedVertexIds.contains(da(eSrcIdx)) && !disallowedVertexIds.contains(da(eDstIdx)))
+    val edges: EdgeRDD = filteredEdgeData.map {
+      da => graphx.Edge(da(eSrcIdx).toLong, da(eDstIdx).toLong, da)
+    }.repartition(runtimeContext.defaultPartitioner.numPartitions)
+    val vertexMaker = AttributeSignature.empty.maker
+    val vertices: VertexRDD = edges.flatMap {
+      e => Seq(e.srcId, e.dstId)
+    }.distinct.map {
+      id => (id, vertexMaker.make)
     }
     (vertices, edges)
   }
@@ -182,7 +217,8 @@ class ImportGraph(vertexMeta: MetaDataParser,
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.isEmpty
 
   def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
-    val sc = manager.runtimeContext.sparkContext
+    val runtimeContext = manager.runtimeContext
+    val sc = runtimeContext.sparkContext
 
     val vertexWriters = vertexMeta.createWriters(vertexSignature)
     val edgeWriters = edgeMeta.createWriters(edgeSignature)
@@ -193,7 +229,7 @@ class ImportGraph(vertexMeta: MetaDataParser,
     val edgeDenseAttributes = rawToDenseAttributes(
       edgeSignature.maker, edgeWriters, rawEdges)
     val (vertices, edges) = graphBuilder.build(
-      vertexSignature, vertexDenseAttributes, edgeSignature, edgeDenseAttributes)
+      vertexSignature, vertexDenseAttributes, edgeSignature, edgeDenseAttributes, runtimeContext)
     new SimpleGraphData(target, vertices, edges) // TODO(forevian): add support for optional triplets
   }
 
@@ -265,3 +301,19 @@ case class EdgeCSVImport(edgeHeader: Filename,
       ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
       IdFromEdgeFields(
         vertexIdAttrName, edgeSourceFieldName, edgeDestFieldName, disallowedVertexIds))
+
+// Same as EdgeCSVImport, but for cases with numerical ID fields.
+case class EdgeCSVImportNum(edgeHeader: Filename,
+                            edgeCSVs: Seq[Filename],
+                            edgeSourceFieldName: String,
+                            edgeDestFieldName: String,
+                            delimiter: String,
+                            skipFirstRow: Boolean,
+                            disallowedVertexIds: Set[String])
+    extends ImportGraph(
+      DummyMetaParser(),
+      DummyDataParser(),
+      HeaderAsStringCSVParser(edgeHeader, delimiter),
+      ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
+      EdgeFieldsAsId(
+        edgeSourceFieldName, edgeDestFieldName, disallowedVertexIds))

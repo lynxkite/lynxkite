@@ -3,83 +3,95 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 import org.apache.spark.rdd
 import scala.reflect.runtime.universe._
+import scala.Symbol // There is a Symbol in the universe package too.
+import scala.collection.mutable
 
 import attributes.AttributeSignature
 
-sealed trait MetaGraphComponent extends Serializable {
-  val sourceOperation: MetaGraphOperationInstance
-  val name: String
+sealed trait MetaGraphEntity extends Serializable {
+  val source: MetaGraphOperationInstance
+  val name: Symbol
   // Implement from source operation's GUID, name and the actual class of this component.
-  val gUID: UUID = ???
+  val gUID: UUID = null
 }
 
-case class VertexSet(sourceOperation: MetaGraphOperationInstance,
-                     name: String) extends MetaGraphComponent
+case class VertexSet(source: MetaGraphOperationInstance,
+                     name: Symbol) extends MetaGraphEntity
 
-case class EdgeBundle(sourceOperation: MetaGraphOperationInstance,
-                      name: String) extends MetaGraphComponent {
-  @transient lazy val (srcName, dstName) = sourceOperation.operation.outputEdgeBundleDefs(name)
-  @transient lazy val srcVertexSet: VertexSet = sourceOperation.vertexSetForName(srcName)
-  @transient lazy val dstVertexSet: VertexSet = sourceOperation.vertexSetForName(dstName)
+case class EdgeBundle(source: MetaGraphOperationInstance,
+                      name: Symbol) extends MetaGraphEntity {
+  @transient lazy val (srcName, dstName) = source.operation.outputEdgeBundles(name)
+  @transient lazy val srcVertexSet: VertexSet = source.entities.vertexSets(srcName)
+  @transient lazy val dstVertexSet: VertexSet = source.entities.vertexSets(dstName)
+  @transient lazy val isLocal = srcVertexSet == dstVertexSet
 }
 
 class Attribute[+T: TypeTag] {
   def typeTag: TypeTag[_ <: T] = implicitly[TypeTag[T]]
 }
 
-case class VertexAttribute[T: TypeTag](sourceOperation: MetaGraphOperationInstance,
-                                       name: String)
-    extends Attribute with MetaGraphComponent {
+case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
+                                       name: Symbol)
+    extends Attribute with MetaGraphEntity {
   @transient lazy val vertexSet: VertexSet =
-    sourceOperation.vertexSetForName(sourceOperation.operation.outputVertexAttributeDefs(name)._1)
+    source.entities.vertexSets(source.operation.outputVertexAttributes(name)._1)
 }
 
-case class EdgeAttribute[T: TypeTag](sourceOperation: MetaGraphOperationInstance,
-                                     name: String)
-    extends Attribute with MetaGraphComponent {
+case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
+                                     name: Symbol)
+    extends Attribute with MetaGraphEntity {
   @transient lazy val edgeBundle: EdgeBundle =
-    sourceOperation.edgeBundleForName(sourceOperation.operation.outputEdgeAttributeDefs(name)._1)
+    source.entities.edgeBundles(source.operation.outputEdgeAttributes(name)._1)
 }
 
 trait MetaGraphOperation extends Serializable {
-  // Names of vertex set inputs for this operation.
-  def inputVertexSetNames: Set[String] = Set()
+  // Override "signature" to easily describe the inputs and outputs of your operation. E.g.:
+  //     class MyOperation extends MetaGraphOperation {
+  //       def signature = newSignature
+  //         .inputGraph("input-vertices", "input-edges")
+  //         .outputVertexAttribute[Double]("input-vertices", "my-attribute")
+  //     }
+  protected def signature: MetaGraphOperationSignature
+  protected def newSignature = new MetaGraphOperationSignature
 
-  // Names of input bundles together with their source and desination vertex set names (which all
-  // must be elements of inputVertexSetNames).
-  def inputEdgeBundleDefs: Map[String, (String, String)] = Map()
+  // Names of vertex set inputs for this operation.
+  def inputVertexSets: Set[Symbol] = signature.inputVertexSets.toSet
+
+  // Names of input bundles together with their source and destination vertex set names (which all
+  // must be elements of inputVertexSets).
+  def inputEdgeBundles: Map[Symbol, (Symbol, Symbol)] = signature.inputEdgeBundles.toMap
 
   // Names of input vertex attributes together with their corresponding VertexSet names (which all
-  // must be elements of inputVertexSetNames) and the types of the attributes.
-  def inputVertexAttributeDefs: Map[String, (String, TypeTag[_])] = Map()
+  // must be elements of inputVertexSets) and the types of the attributes.
+  def inputVertexAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.inputVertexAttributes.toMap
 
   // Names of input edge attributes together with their corresponding EdgeBundle names (which all
-  // must be keys of inputEdgeBundleDefs) and the types of the attributes.
-  def inputEdgeAttributeDefs: Map[String, (String, TypeTag[_])] = Map()
+  // must be keys of inputEdgeBundles) and the types of the attributes.
+  def inputEdgeAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.inputEdgeAttributes.toMap
 
   // Names of vertex sets newly created by this operation.
-  // (outputVertexSetNamess /\ inputVertexSetNames needs to be empty).
-  def outputVertexSetNames: Set[String] = Set()
+  // (outputVertexSets /\ inputVertexSets needs to be empty).
+  def outputVertexSets: Set[Symbol] = signature.outputVertexSets.toSet
 
-  // Names of bundles newly created by this operation together with their source and desination
-  // vertex set names (which all must be elements of inputVertexSetNames \/ outputVertexSetNames).
-  def outputEdgeBundleDefs: Map[String, (String, String)] = Map()
+  // Names of bundles newly created by this operation together with their source and destination
+  // vertex set names (which all must be elements of inputVertexSets \/ outputVertexSets).
+  def outputEdgeBundles: Map[Symbol, (Symbol, Symbol)] = signature.outputEdgeBundles.toMap
 
   // Names of vertex attributes newly created by this operation together with their corresponding
-  // VertexSet names (which all must be elements of inputVertexSetNames \/ outputVertexSetNames)
+  // VertexSet names (which all must be elements of inputVertexSets \/ outputVertexSets)
   // and the types of the attributes.
-  def outputVertexAttributeDefs: Map[String, (String, TypeTag[_])] = Map()
+  def outputVertexAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.outputVertexAttributes.toMap
 
   // Names of edge attributes newly created by this operation together with their corresponding
-  // EdgeBundle names (which all must be keys of inputEdgeBundleDefs \/ outputEdgeBundleDefs)
+  // EdgeBundle names (which all must be keys of inputEdgeBundles \/ outputEdgeBundles)
   // and the types of the attributes.
-  def outputEdgeAttributeDefs: Map[String, (String, TypeTag[_])] = Map()
+  def outputEdgeAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.outputEdgeAttributes.toMap
 
   // Checks whether the complete input signature is valid for this operation.
   // Concrete MetaGraphOperation instances may either override this method or
   // validateInputVertexSet and validateInputEdgeBundle.
-  def validateInput(inputVertexSets: Map[String, VertexSet],
-                    inputEdgeBundles: Map[String, EdgeBundle]): Boolean = {
+  def validateInput(inputVertexSets: Map[Symbol, VertexSet],
+                    inputEdgeBundles: Map[Symbol, EdgeBundle]): Boolean = {
     validateInputStructure(inputVertexSets, inputEdgeBundles) &&
       inputVertexSets.forall {
         case (name, vertexSet) => validateInputVertexSet(name, vertexSet)
@@ -90,13 +102,13 @@ trait MetaGraphOperation extends Serializable {
   }
 
   // Validates the signature of a single input VertexSet.
-  def validateInputVertexSet(name: String, vertexSet: VertexSet): Boolean = true
+  def validateInputVertexSet(name: Symbol, vertexSet: VertexSet): Boolean = true
 
   // Validates the signature of a single input EdgeBundle.
-  def validateInputEdgeBundle(name: String, edgeBundle: EdgeBundle): Boolean = true
+  def validateInputEdgeBundle(name: Symbol, edgeBundle: EdgeBundle): Boolean = true
 
-  protected def validateInputStructure(inputVertexSets: Map[String, VertexSet],
-                                       inputEdgeBundles: Map[String, EdgeBundle]): Boolean = {
+  protected def validateInputStructure(inputVertexSets: Map[Symbol, VertexSet],
+                                       inputEdgeBundles: Map[Symbol, EdgeBundle]): Boolean = {
     // Checks that all required inputs are defined and that bundles connect the right sets.
     // Implemented here....
     true
@@ -104,32 +116,98 @@ trait MetaGraphOperation extends Serializable {
 
   val gUID: UUID
 
-  def createInstance(inputVertexSets: Map[String, VertexSet] = Map(),
-                     inputEdgeBundles: Map[String, EdgeBundle] = Map(),
-                     inputVertexAttributes: Map[String, VertexAttribute[_]] = Map(),
-                     inputEdgeAttributes: Map[String, EdgeAttribute[_]] = Map()): MetaGraphOperationInstance
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
+}
+
+class MetaGraphOperationSignature private[graph_api] {
+  val inputVertexSets: mutable.Set[Symbol] = mutable.Set()
+  val inputEdgeBundles: mutable.Map[Symbol, (Symbol, Symbol)] = mutable.Map()
+  val inputVertexAttributes: mutable.Map[Symbol, (Symbol, TypeTag[_])] = mutable.Map()
+  val inputEdgeAttributes: mutable.Map[Symbol, (Symbol, TypeTag[_])] = mutable.Map()
+  val outputVertexSets: mutable.Set[Symbol] = mutable.Set()
+  val outputEdgeBundles: mutable.Map[Symbol, (Symbol, Symbol)] = mutable.Map()
+  val outputVertexAttributes: mutable.Map[Symbol, (Symbol, TypeTag[_])] = mutable.Map()
+  val outputEdgeAttributes: mutable.Map[Symbol, (Symbol, TypeTag[_])] = mutable.Map()
+  val allNames: mutable.Set[Symbol] = mutable.Set()
+  def inputVertexSet(name: Symbol) = {
+    assert(!allNames.contains(name), s"Double-defined: $name")
+    inputVertexSets += name
+    allNames += name
+    this
+  }
+  def inputEdgeBundle(name: Symbol, srcDst: (Symbol, Symbol)) = {
+    assert(!allNames.contains(name), s"Double-defined: $name")
+    inputEdgeBundles(name) = srcDst
+    allNames += name
+    this
+  }
+  def inputGraph(vertexSetName: Symbol, edgeBundleName: Symbol) = {
+    inputVertexSet(vertexSetName)
+    inputEdgeBundle(edgeBundleName, vertexSetName -> vertexSetName)
+  }
+  def inputVertexAttribute[T: TypeTag](vertexSetName: Symbol, attributeName: Symbol) = {
+    assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
+    inputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
+    allNames += attributeName
+    this
+  }
+  def inputEdgeAttribute[T: TypeTag](edgeBundleName: Symbol, attributeName: Symbol) = {
+    assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
+    inputEdgeAttributes(attributeName) = edgeBundleName -> typeTag[T]
+    allNames += attributeName
+    this
+  }
+  def outputVertexSet(name: Symbol) = {
+    assert(!allNames.contains(name), s"Double-defined: $name")
+    outputVertexSets += name
+    allNames += name
+    this
+  }
+  def outputEdgeBundle(name: Symbol, srcDst: (Symbol, Symbol)) = {
+    assert(!allNames.contains(name), s"Double-defined: $name")
+    outputEdgeBundles(name) = srcDst
+    allNames += name
+    this
+  }
+  def outputGraph(vertexSetName: Symbol, edgeBundleName: Symbol) = {
+    outputVertexSet(vertexSetName)
+    outputEdgeBundle(edgeBundleName, vertexSetName -> vertexSetName)
+  }
+  def outputVertexAttribute[T: TypeTag](vertexSetName: Symbol, attributeName: Symbol) = {
+    assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
+    outputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
+    allNames += attributeName
+    this
+  }
+  def outputEdgeAttribute[T: TypeTag](edgeBundleName: Symbol, attributeName: Symbol) = {
+    assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
+    outputEdgeAttributes(attributeName) = edgeBundleName -> typeTag[T]
+    allNames += attributeName
+    this
+  }
 }
 
 /*
  * Base class for concrete instances of MetaGraphOperations. An instance of an operation is
  * the operation together with concrete input vertex sets and edge bundles.
  */
-abstract class MetaGraphOperationInstance(
+case class MetaGraphOperationInstance(
     val operation: MetaGraphOperation,
-    val inputVertexSets: Map[String, VertexSet],
-    val inputEdgeBundles: Map[String, EdgeBundle],
-    val inputVertexAttributes: Map[String, VertexAttribute[_]],
-    val inputEdgeAttributes: Map[String, EdgeAttribute[_]]) extends Serializable {
+    val inputs: MetaDataSet) {
 
-  val gUID = ??? // TODO implement here from guids of inputs and operation.
+  val gUID: UUID = null // TODO implement here from guids of inputs and operation.
 
-  def vertexSetForName(name: String): VertexSet
-  def edgeBundleForName(name: String): EdgeBundle
+  val outputs = MetaDataSet(
+    operation.outputVertexSets.map(n => n -> VertexSet(this, n)).toMap,
+    operation.outputEdgeBundles.keys.map(n => n -> EdgeBundle(this, n)).toMap,
+    operation.outputVertexAttributes.map {
+      case (n, (vs, tt)) => n -> VertexAttribute(this, n)(tt)
+    }.toMap,
+    operation.outputEdgeAttributes.map {
+      case (n, (vs, tt)) => n -> EdgeAttribute(this, n)(tt)
+    }.toMap)
 
-  def vertexSetAttributes(name: String): AttributeSignature
-  def edgeBundleAttributes(name: String): AttributeSignature
-
-  def execute(dataManager: DataManager): (Map[String, VertexSetData], Map[String, EdgeBundleData])
+  val entities = inputs ++ outputs
 }
 
 trait MetaGraphManager {
@@ -140,48 +218,94 @@ trait MetaGraphManager {
   def vertexAttribute(gUID: UUID): VertexAttribute[_]
   def edgeAttribute(gUID: UUID): EdgeAttribute[_]
 
-  def incommingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
+  def incomingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
   def outgoingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
   def attributes(vertexSet: VertexSet): Seq[VertexAttribute[_]]
   def attributes(edgeBundle: EdgeBundle): Seq[EdgeAttribute[_]]
 
-  def dependentOperations(component: MetaGraphComponent): Seq[MetaGraphOperationInstance]
+  def dependentOperations(component: MetaGraphEntity): Seq[MetaGraphOperationInstance]
 }
 
-trait VertexSetData {
-  val vertexSet: VertexSet
+class VertexSetData(val vertexSet: VertexSet,
+                    val rdd: VertexSetRDD)
 
-  val rdd: VertexSetRDD
-}
+class EdgeBundleData(val edgeBundle: EdgeBundle,
+                     val rdd: EdgeBundleRDD)
 
-trait EdgeBundleData {
-  val edgeBundle: EdgeBundle
+class VertexAttributeData[T](val vertexSet: VertexSet,
+                             val rdd: AttributeRDD[T])
 
-  val rdd: EdgeBundleRDD
-}
-
-trait VertexAttributeData[+T] {
-  val vertexSet: VertexSet
-
-  val rdd: AttributeRDD[_ <: T]
-}
-
-trait EdgeAttributeData[T] {
-  val edgeBundle: EdgeBundle
-
-  val rdd: AttributeRDD[T]
-}
+class EdgeAttributeData[T](val edgeBundle: EdgeBundle,
+                           val rdd: AttributeRDD[T])
 
 trait DataManager {
-  def obtainVertexSetData(vertexSet: VertexSet): VertexSetData
-  def obtainEdgeBundleData(edgeBundle: EdgeBundle): EdgeBundleData
-  def obtainVertexAttributeData[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T]
-  def obtainEdgeAttributeData[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T]
+  def get(vertexSet: VertexSet): VertexSetData
+  def get(edgeBundle: EdgeBundle): EdgeBundleData
+  def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T]
+  def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T]
 
   // Saves the given component's data to disk.
-  def saveDataToDisk(component: MetaGraphComponent)
+  def saveDataToDisk(component: MetaGraphEntity)
 
   // Returns information about the current running enviroment.
   // Typically used by operations to optimize their execution.
   def runtimeContext: RuntimeContext
+}
+
+// A bundle of metadata types.
+case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
+                       edgeBundles: Map[Symbol, EdgeBundle] = Map(),
+                       vertexAttributes: Map[Symbol, VertexAttribute[_]] = Map(),
+                       edgeAttributes: Map[Symbol, EdgeAttribute[_]] = Map()) {
+  def ++(mds: MetaDataSet): MetaDataSet = {
+    assert((vertexSets.keySet & mds.vertexSets.keySet).isEmpty,
+      "Collision: " + (vertexSets.keySet & mds.vertexSets.keySet).toSeq)
+    assert((edgeBundles.keySet & mds.edgeBundles.keySet).isEmpty,
+      "Collision: " + (edgeBundles.keySet & mds.edgeBundles.keySet).toSeq)
+    assert((vertexAttributes.keySet & mds.vertexAttributes.keySet).isEmpty,
+      "Collision: " + (vertexAttributes.keySet & mds.vertexAttributes.keySet).toSeq)
+    assert((edgeAttributes.keySet & mds.edgeAttributes.keySet).isEmpty,
+      "Collision: " + (edgeAttributes.keySet & mds.edgeAttributes.keySet).toSeq)
+    return MetaDataSet(
+      vertexSets ++ mds.vertexSets,
+      edgeBundles ++ mds.edgeBundles,
+      vertexAttributes ++ mds.vertexAttributes,
+      edgeAttributes ++ mds.edgeAttributes)
+  }
+}
+
+// A bundle of data types.
+case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
+                   edgeBundles: Map[Symbol, EdgeBundleData] = Map(),
+                   vertexAttributes: Map[Symbol, VertexAttributeData[_]] = Map(),
+                   edgeAttributes: Map[Symbol, EdgeAttributeData[_]] = Map()) {
+  def metaDataSet = MetaDataSet(
+    vertexSets.mapValues(_.vertexSet),
+    edgeBundles.mapValues(_.edgeBundle)) // TODO: Attributes.
+}
+
+class DataSetBuilder(instance: MetaGraphOperationInstance) {
+  val vertexSets = mutable.Map[Symbol, VertexSetData]()
+  val edgeBundles = mutable.Map[Symbol, EdgeBundleData]()
+  val vertexAttributes = mutable.Map[Symbol, VertexAttributeData[_]]()
+  val edgeAttributes = mutable.Map[Symbol, EdgeAttributeData[_]]()
+
+  def toDataSet = DataSet(vertexSets.toMap, edgeBundles.toMap, vertexAttributes.toMap, edgeAttributes.toMap)
+
+  def putVertexSet(name: Symbol, rdd: VertexSetRDD) = {
+    vertexSets(name) = new VertexSetData(instance.entities.vertexSets(name), rdd)
+    this
+  }
+  def putEdgeBundle(name: Symbol, rdd: EdgeBundleRDD) = {
+    edgeBundles(name) = new EdgeBundleData(instance.entities.edgeBundles(name), rdd)
+    this
+  }
+  def putVertexAttribute(name: Symbol, rdd: AttributeRDD[_]) = {
+    vertexAttributes(name) = new VertexAttributeData(instance.entities.vertexAttributes(name).vertexSet, rdd)
+    this
+  }
+  def putEdgeAttribute(name: Symbol, rdd: AttributeRDD[_]) = {
+    edgeAttributes(name) = new EdgeAttributeData(instance.entities.edgeAttributes(name).edgeBundle, rdd)
+    this
+  }
 }

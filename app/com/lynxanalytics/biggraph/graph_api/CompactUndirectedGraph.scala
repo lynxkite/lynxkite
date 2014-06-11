@@ -8,15 +8,20 @@ import scala.collection.mutable
 import scala.util.Sorting
 
 object CompactUndirectedGraph {
-  def apply(graph: GraphData): CompactUndirectedGraph = {
-    val outEdges = graph.edges.map(edge => (edge.srcId, edge.dstId)).groupByKey()
-    val inEdges = graph.edges.map(edge => (edge.dstId, edge.srcId)).groupByKey()
+  def apply(edges: EdgeBundleData): CompactUndirectedGraph = {
+    assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
+    val outEdges = edges.rdd.map {
+      case (id, edge) => (edge.src, edge.dst)
+    }.groupByKey()
+    val inEdges = edges.rdd.map {
+      case (id, edge) => (edge.dst, edge.src)
+    }.groupByKey()
     val adjList = outEdges.join(inEdges)
       .map({
         case (v, (outs, ins)) => (v, (outs.toSet & ins.toSet - v).toArray.sorted)
       })
     val compact = adjList.mapPartitions({
-      it: Iterator[(graphx.VertexId, Array[VertexId])] =>
+      it: Iterator[(ID, Array[ID])] =>
         {
           val neighbors = mutable.ArrayBuffer[VertexId]()
           val indices = mutable.ArrayBuffer[Int]()
@@ -69,11 +74,11 @@ object CompactUndirectedGraph {
 }
 
 class CompactUndirectedGraph(
-    fullNeighbors: Array[VertexId],
-    indices: Array[(VertexId, Int)],
+    fullNeighbors: Array[ID],
+    indices: Array[(ID, Int)],
     starts: Array[Int]) extends Serializable {
 
-  def findId(id: VertexId): Int = {
+  def findId(id: ID): Int = {
     var lb = 0
     var ub = indices.size
 
@@ -91,7 +96,7 @@ class CompactUndirectedGraph(
     return -1
   }
 
-  def getNeighbors(vid: VertexId): Seq[VertexId] = {
+  def getNeighbors(vid: ID): Seq[VertexId] = {
     val idx = findId(vid)
     if (idx == -1) {
       Seq()
