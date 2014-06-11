@@ -145,13 +145,13 @@ class MetaGraphOperationSignature private[graph_api] {
     inputVertexSet(vertexSetName)
     inputEdgeBundle(edgeBundleName, vertexSetName -> vertexSetName)
   }
-  def inputVertexAttribute[T: TypeTag](vertexSetName: Symbol, attributeName: Symbol) = {
+  def inputVertexAttribute[T: TypeTag](attributeName: Symbol, vertexSetName: Symbol) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     inputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
     allNames += attributeName
     this
   }
-  def inputEdgeAttribute[T: TypeTag](edgeBundleName: Symbol, attributeName: Symbol) = {
+  def inputEdgeAttribute[T: TypeTag](attributeName: Symbol, edgeBundleName: Symbol) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     inputEdgeAttributes(attributeName) = edgeBundleName -> typeTag[T]
     allNames += attributeName
@@ -173,13 +173,13 @@ class MetaGraphOperationSignature private[graph_api] {
     outputVertexSet(vertexSetName)
     outputEdgeBundle(edgeBundleName, vertexSetName -> vertexSetName)
   }
-  def outputVertexAttribute[T: TypeTag](vertexSetName: Symbol, attributeName: Symbol) = {
+  def outputVertexAttribute[T: TypeTag](attributeName: Symbol, vertexSetName: Symbol) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     outputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
     allNames += attributeName
     this
   }
-  def outputEdgeAttribute[T: TypeTag](edgeBundleName: Symbol, attributeName: Symbol) = {
+  def outputEdgeAttribute[T: TypeTag](attributeName: Symbol, edgeBundleName: Symbol) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     outputEdgeAttributes(attributeName) = edgeBundleName -> typeTag[T]
     allNames += attributeName
