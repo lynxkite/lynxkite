@@ -26,6 +26,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
     kryo.setRegistrationRequired(true)
     kryo.register(classOf[graphx.Edge[_]])
+    kryo.register(classOf[scala.Tuple2[_, _]])
     kryo.register(classOf[graphx.EdgeTriplet[_, _]])
     kryo.register(classOf[Array[graphx.Edge[_]]])
     kryo.register(classOf[Array[graphx.EdgeTriplet[_, _]]])
@@ -73,6 +74,7 @@ object BigGraphSparkContext {
       .setAppName(appName)
       .set("spark.executor.memory",
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
+      .set("spark.kryoserializer.buffer.mb", "256")
       .set("spark.akka.threads",
         scala.util.Properties.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
       .set("spark.local.dir", scala.util.Properties.envOrElse("SPARK_DIR", "/tmp"))

@@ -58,4 +58,22 @@ class ImportGraphTest extends FunSuite with TestBigGraphManager with TestGraphDa
     assert(graphData.vertices.count === 6)
     assert(graphData.edges.count === 8)
   }
+  test("import graph from csv with numerical IDs") {
+    val dir = "/graph_operations/ImportGraphTest/num-ids/"
+    val bigGraphManager = cleanGraphManager("importgraph")
+    val graphDataManager = cleanDataManager("importgraph")
+    val csv = Filename(getClass.getResource(dir + "edges.csv").getFile)
+    val edgeSourceFieldName = "srcVertexId"
+    val edgeDestFieldName = "dstVertexId"
+    val delimiter = "|"
+    val skipFirstRow = true
+    val importedGraph = bigGraphManager.deriveGraph(Seq(), EdgeCSVImportNum(
+      csv, Seq(csv),
+      edgeSourceFieldName, edgeDestFieldName,
+      delimiter, skipFirstRow, Set()))
+    val graphData = graphDataManager.obtainData(importedGraph)
+    assert(graphData.vertices.count === 5)
+    assert(graphData.vertices.map(_._1).collect.toSet == Set(100, 200, 300, 400, 500))
+    assert(graphData.edges.count === 4)
+  }
 }

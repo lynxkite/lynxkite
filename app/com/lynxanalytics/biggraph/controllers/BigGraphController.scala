@@ -72,14 +72,6 @@ class FEOperationRepository {
 object FEOperations extends FEOperationRepository {
   registerOperation(
     new SingleGraphFEOperation {
-      val name = "Find Maximal Cliques"
-      override val parameters = Seq(
-        FEOperationParameterMeta("Minimum Clique Size", "3"))
-      override def toGraphOperation(parameters: Seq[String]) =
-        graph_operations.FindMaxCliques("clique_members", parameters.head.toInt)
-    })
-  registerOperation(
-    new SingleGraphFEOperation {
       val name = "Edge Graph"
       override val operation = graph_operations.EdgeGraph()
     })
@@ -186,6 +178,20 @@ object FEOperations extends FEOperationRepository {
         graph_operations.ExpandVertexSet(
           parameters(0), parameters(1))
     })
+  registerOperation(
+    new FEOperation {
+      val name = "Vertex attribute upper bound"
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        bigGraphs.size == 1 &&
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Double].size > 0
+      override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
+        FEOperationParameterMeta(
+          "Attribute",
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Double].head),
+        FEOperationParameterMeta("Bound", "0"))
+      override def toGraphOperation(parameters: Seq[String]) =
+        graph_operations.UpperBoundFilter(parameters(0), parameters(1).toDouble)
+    })
 
   registerOperation(
     new StartingFEOperation {
@@ -238,7 +244,6 @@ object FEOperations extends FEOperationRepository {
       override val parameters = Seq(
         FEOperationParameterMeta("Edge header file", ""),
         FEOperationParameterMeta("Edge CSV file(s) separated by ',' and/or matched by '*'", ""),
-        FEOperationParameterMeta("Vertex id attribute name", "vertexId"),
         FEOperationParameterMeta("Edge source field name", ""),
         FEOperationParameterMeta("Edge destination field name", ""),
         FEOperationParameterMeta("Delimiter", ","),
@@ -247,15 +252,14 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("AWS Secret Access Key (optional)", ""),
         FEOperationParameterMeta("Disallowed vertex IDs (optional, comma separated list)", ""))
       override def toGraphOperation(parameters: Seq[String]) =
-        graph_operations.EdgeCSVImport(
+        graph_operations.EdgeCSVImportNum(
           graph_util.Filename(parameters(0)),
-          parameters(1).split(",").map(graph_util.Filename(_, parameters(7), parameters(8))),
+          parameters(1).split(",").map(graph_util.Filename(_, parameters(6), parameters(7))),
           parameters(2),
           parameters(3),
           parameters(4),
-          parameters(5),
-          parameters(6).toBoolean,
-          parameters(9).split(",").toSet)
+          parameters(5).toBoolean,
+          parameters(8).split(",").toSet)
     })
 }
 

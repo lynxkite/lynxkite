@@ -28,5 +28,6 @@ package object graph_api {
 
   type AttributeRDD[T] = rdd.RDD[(ID, T)]
 
-  type EdgeBundleRDD = rdd.RDD[(ID, (ID, ID))]
+  case class Edge(val src: ID, val dst: ID)
+  type EdgeBundleRDD = rdd.RDD[(ID, Edge)]
 }

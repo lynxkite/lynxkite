@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_api
 import java.io.File
 
 import org.apache.spark
-import org.apache.spark.graphx.Edge
+import org.apache.spark.graphx
 
 import com.lynxanalytics.biggraph.TestTempDir
 import com.lynxanalytics.biggraph.TestSparkContext
@@ -56,10 +56,10 @@ class InstantiateSimpleGraph extends GraphOperation {
     val edgeMaker = edgeSig.maker
     val commentIdx = edgeSig.writeIndex[String]("comment")
     val edges = Seq(
-      new Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
-      new Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
-      new Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
-      new Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
+      new graphx.Edge(0l, 1l, edgeMaker.make.set(commentIdx, "Adam loves Eve")),
+      new graphx.Edge(1l, 0l, edgeMaker.make.set(commentIdx, "Eve loves Adam")),
+      new graphx.Edge(2l, 0l, edgeMaker.make.set(commentIdx, "Bob envies Adam")),
+      new graphx.Edge(2l, 1l, edgeMaker.make.set(commentIdx, "Bob loves Eve")))
 
     executionCounter += 1
 

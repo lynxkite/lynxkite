@@ -69,14 +69,14 @@ case class Filename(
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[SequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
       conf = hadoopConfiguration)
-      .map(pair => RDDUtils.deserialize[T](pair._2.getBytes))
+      .map(pair => RDDUtils.kryoDeserialize[T](pair._2.getBytes))
   }
 
   def saveAsObjectFile(data: spark.rdd.RDD[_]): Unit = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
     val hadoopData = data.map(x =>
-      (hadoop.io.NullWritable.get(), new hadoop.io.BytesWritable(RDDUtils.serialize(x))))
+      (hadoop.io.NullWritable.get(), new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(x))))
     hadoopData.saveAsNewAPIHadoopFile(
       filename,
       keyClass = classOf[hadoop.io.NullWritable],
