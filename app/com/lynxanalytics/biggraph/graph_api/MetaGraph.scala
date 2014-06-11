@@ -134,11 +134,17 @@ abstract class MetaGraphOperationInstance(
 
 trait MetaGraphManager {
   def apply(operationInstance: MetaGraphOperationInstance): Unit
-  def vertexSetForGUID(gUID: UUID): VertexSet
-  def edgeBundleForGUID(gUID: UUID): EdgeBundle
+
+  def vertexSet(gUID: UUID): VertexSet
+  def edgeBundle(gUID: UUID): EdgeBundle
+  def vertexAttribute(gUID: UUID): VertexAttribute[_]
+  def edgeAttribute(gUID: UUID): EdgeAttribute[_]
 
   def incommingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
   def outgoingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
+  def attributes(vertexSet: VertexSet): Seq[VertexAttribute[_]]
+  def attributes(edgeBundle: EdgeBundle): Seq[EdgeAttribute[_]]
+
   def dependentOperations(component: MetaGraphComponent): Seq[MetaGraphOperationInstance]
 }
 
