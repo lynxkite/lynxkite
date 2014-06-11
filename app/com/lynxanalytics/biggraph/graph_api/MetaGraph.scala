@@ -51,8 +51,8 @@ trait MetaGraphOperation extends Serializable {
   //         .inputGraph("input-vertices", "input-edges")
   //         .outputVertexAttribute[Double]("input-vertices", "my-attribute")
   //     }
-  def signature: MetaGraphOperationSignature
-  def newSignature = new MetaGraphOperationSignature
+  protected def signature: MetaGraphOperationSignature
+  protected def newSignature = new MetaGraphOperationSignature
 
   // Names of vertex set inputs for this operation.
   def inputVertexSets: Set[Symbol] = signature.inputVertexSets.toSet
