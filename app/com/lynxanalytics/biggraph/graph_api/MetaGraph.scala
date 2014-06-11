@@ -298,11 +298,13 @@ class DataSetBuilder(instance: MetaGraphOperationInstance) {
   }
   def putVertexAttribute[T](name: Symbol, rdd: AttributeRDD[T]) = {
     vertexAttributes(name) = new VertexAttributeData(
+      // TODO(darabos): Make this type-safe.
       instance.entities.vertexAttributes(name).asInstanceOf[VertexAttribute[T]], rdd)
     this
   }
   def putEdgeAttribute[T](name: Symbol, rdd: AttributeRDD[T]) = {
     edgeAttributes(name) = new EdgeAttributeData(
+      // TODO(darabos): Make this type-safe.
       instance.entities.edgeAttributes(name).asInstanceOf[EdgeAttribute[T]], rdd)
     this
   }
