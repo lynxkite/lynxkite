@@ -18,7 +18,6 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
     .inputGraph('vsIn, 'esIn)
     .outputVertexSet('vsOut)
     .outputEdgeBundle('link, 'vsIn -> 'vsOut)
-  val gUID = null
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val cug = CompactUndirectedGraph(inputs.edgeBundles('esIn))

@@ -19,7 +19,6 @@ case class SmallGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation 
       case ((a, b), i) => i.toLong -> Edge(a, b)
     }))
   }
-  val gUID = null
 }
 
 object TestWizard extends TestSparkContext {
