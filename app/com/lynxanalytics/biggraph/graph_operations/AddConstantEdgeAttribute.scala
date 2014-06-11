@@ -11,7 +11,6 @@ abstract class AddConstantEdgeAttribute[T] extends MetaGraphOperation {
     .outputEdgeAttribute[T]('attr, 'edges)
   implicit def tt: TypeTag[T]
 
-  val gUID: java.util.UUID = null
   val value: T
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {

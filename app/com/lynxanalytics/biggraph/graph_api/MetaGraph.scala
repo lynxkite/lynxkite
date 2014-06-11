@@ -114,7 +114,7 @@ trait MetaGraphOperation extends Serializable {
     true
   }
 
-  val gUID: UUID
+  val gUID: UUID = null // TODO: default implementation.
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
 }
