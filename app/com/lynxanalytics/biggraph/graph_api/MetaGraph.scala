@@ -116,7 +116,7 @@ trait MetaGraphOperation extends Serializable {
 
   val gUID: UUID
 
-  def execute(inputs: DataSet, outputs: DataSet, rc: RuntimeContext): Unit
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
 }
 
 class MetaGraphOperationSignature private[graph_api] {
@@ -268,30 +268,38 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
   }
 }
 
-// A mutable bundle of data types.
-case class DataSet(vertexSets: mutable.Map[Symbol, VertexSetData] = mutable.Map(),
-                   edgeBundles: mutable.Map[Symbol, EdgeBundleData] = mutable.Map(),
-                   vertexAttributes: mutable.Map[Symbol, VertexAttributeData[_]] = mutable.Map(),
-                   edgeAttributes: mutable.Map[Symbol, EdgeAttributeData[_]] = mutable.Map(),
-                   defaultInstance: Option[MetaGraphOperationInstance] = None) {
+// A bundle of data types.
+case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
+                   edgeBundles: Map[Symbol, EdgeBundleData] = Map(),
+                   vertexAttributes: Map[Symbol, VertexAttributeData[_]] = Map(),
+                   edgeAttributes: Map[Symbol, EdgeAttributeData[_]] = Map()) {
   def metaDataSet = MetaDataSet(
-    vertexSets.mapValues(_.vertexSet).toMap,
-    edgeBundles.mapValues(_.edgeBundle).toMap) // TODO: Attributes.
+    vertexSets.mapValues(_.vertexSet),
+    edgeBundles.mapValues(_.edgeBundle)) // TODO: Attributes.
+}
+
+class DataSetBuilder(instance: MetaGraphOperationInstance) {
+  val vertexSets = mutable.Map[Symbol, VertexSetData]()
+  val edgeBundles = mutable.Map[Symbol, EdgeBundleData]()
+  val vertexAttributes = mutable.Map[Symbol, VertexAttributeData[_]]()
+  val edgeAttributes = mutable.Map[Symbol, EdgeAttributeData[_]]()
+
+  def toDataSet = DataSet(vertexSets.toMap, edgeBundles.toMap, vertexAttributes.toMap, edgeAttributes.toMap)
 
   def putVertexSet(name: Symbol, rdd: VertexSetRDD) = {
-    vertexSets(name) = new VertexSetData(defaultInstance.get.entities.vertexSets(name), rdd)
+    vertexSets(name) = new VertexSetData(instance.entities.vertexSets(name), rdd)
     this
   }
   def putEdgeBundle(name: Symbol, rdd: EdgeBundleRDD) = {
-    edgeBundles(name) = new EdgeBundleData(defaultInstance.get.entities.edgeBundles(name), rdd)
+    edgeBundles(name) = new EdgeBundleData(instance.entities.edgeBundles(name), rdd)
     this
   }
   def putVertexAttribute(name: Symbol, rdd: AttributeRDD[_]) = {
-    vertexAttributes(name) = new VertexAttributeData(defaultInstance.get.entities.vertexAttributes(name).vertexSet, rdd)
+    vertexAttributes(name) = new VertexAttributeData(instance.entities.vertexAttributes(name).vertexSet, rdd)
     this
   }
   def putEdgeAttribute(name: Symbol, rdd: AttributeRDD[_]) = {
-    edgeAttributes(name) = new EdgeAttributeData(defaultInstance.get.entities.edgeAttributes(name).edgeBundle, rdd)
+    edgeAttributes(name) = new EdgeAttributeData(instance.entities.edgeAttributes(name).edgeBundle, rdd)
     this
   }
 }
