@@ -51,7 +51,7 @@ class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager 
     operationInstance.outputs.all.values.foreach { entity =>
       val gUID = entity.gUID
       assert(
-        entities.contains(gUID),
+        !entities.contains(gUID),
         "Fatal conflict %s <=> %s".format(entity, entities(gUID)))
       entities(gUID) = entity
     }
