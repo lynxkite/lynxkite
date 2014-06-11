@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_api.attributes
 
 private object SparkStageJars {
-  val classesToBundle = Seq(
+  val classesToBundle: Seq[Class[_]] = Seq(
     getClass(),
     classOf[gcs.GoogleHadoopFileSystem])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())

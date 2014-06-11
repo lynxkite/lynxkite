@@ -257,15 +257,15 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
                        vertexAttributes: Map[Symbol, VertexAttribute[_]] = Map(),
                        edgeAttributes: Map[Symbol, EdgeAttribute[_]] = Map()) {
+  val all = vertexSets ++ edgeAttributes ++ vertexAttributes ++ edgeAttributes
+  assert(all.size ==
+    vertexSets.size + edgeAttributes.size + vertexAttributes.size + edgeAttributes.size,
+    "Cross type collision %s %s %s %s".format(
+      vertexSets, edgeBundles, vertexAttributes, edgeAttributes))
   def ++(mds: MetaDataSet): MetaDataSet = {
-    assert((vertexSets.keySet & mds.vertexSets.keySet).isEmpty,
-      "Collision: " + (vertexSets.keySet & mds.vertexSets.keySet).toSeq)
-    assert((edgeBundles.keySet & mds.edgeBundles.keySet).isEmpty,
-      "Collision: " + (edgeBundles.keySet & mds.edgeBundles.keySet).toSeq)
-    assert((vertexAttributes.keySet & mds.vertexAttributes.keySet).isEmpty,
-      "Collision: " + (vertexAttributes.keySet & mds.vertexAttributes.keySet).toSeq)
-    assert((edgeAttributes.keySet & mds.edgeAttributes.keySet).isEmpty,
-      "Collision: " + (edgeAttributes.keySet & mds.edgeAttributes.keySet).toSeq)
+    assert(
+      (all.keySet & mds.all.keySet).isEmpty,
+      "Collision: " + (all.keySet & mds.all.keySet).toSeq)
     return MetaDataSet(
       vertexSets ++ mds.vertexSets,
       edgeBundles ++ mds.edgeBundles,
