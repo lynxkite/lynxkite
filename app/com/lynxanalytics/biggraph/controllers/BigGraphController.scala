@@ -88,7 +88,7 @@ object FEOperations extends FEOperationRepository {
       val name = "Remove non-symmetric edges"
       override val operation = new graph_operations.RemoveNonSymmetricEdges()
       def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
-        bigGraphs.size == 1 && !bigGraphs.head.properties.symmetricEdges
+        bigGraphs.size == 1 // && !bigGraphs.head.properties.symmetricEdges
     })
   registerOperation(
     new FEOperation {
@@ -109,6 +109,20 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Minimum Overlap", "3"))
       override def toGraphOperation(parameters: Seq[String]) =
         new graph_operations.SetOverlap(parameters(0), parameters(1).toInt)
+    })
+  registerOperation(
+    new FEOperation {
+      val name = "Edges from set overlap for connected components"
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        bigGraphs.size == 1 &&
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].size > 0
+      override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
+        FEOperationParameterMeta(
+          "Set attribute name",
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].head),
+        FEOperationParameterMeta("Minimum Overlap", "3"))
+      override def toGraphOperation(parameters: Seq[String]) =
+        new graph_operations.UniformOverlapForCC(parameters(0), parameters(1).toInt)
     })
   registerOperation(
     new SingleGraphFEOperation {
