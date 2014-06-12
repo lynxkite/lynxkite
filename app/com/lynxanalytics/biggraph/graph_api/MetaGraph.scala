@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
-import org.apache.spark.rdd
+import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
 import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
@@ -226,6 +226,10 @@ trait MetaGraphManager {
   def dependentOperations(component: MetaGraphEntity): Seq[MetaGraphOperationInstance]
 }
 
+sealed trait EntityData {
+  val rdd: RDD[_]
+}
+
 class VertexSetData(val vertexSet: VertexSet,
                     val rdd: VertexSetRDD)
 
@@ -243,9 +247,10 @@ trait DataManager {
   def get(edgeBundle: EdgeBundle): EdgeBundleData
   def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T]
   def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T]
+  def get(entity: MetaGraphEntity): EntityData
 
   // Saves the given component's data to disk.
-  def saveDataToDisk(component: MetaGraphEntity)
+  def saveToDisk(component: MetaGraphEntity): Unit
 
   // Returns information about the current running enviroment.
   // Typically used by operations to optimize their execution.
