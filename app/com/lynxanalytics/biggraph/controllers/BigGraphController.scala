@@ -104,15 +104,6 @@ object FEOperations extends FEOperationRepository {
     })
   registerOperation(
     new SingleGraphFEOperation {
-      val name = "Add constant edge attribute"
-      override val parameters = Seq(
-        FEOperationParameterMeta("Name of new attribute", "weight"),
-        FEOperationParameterMeta("Value", "1"))
-      override def toGraphOperation(parameters: Seq[String]) =
-        new graph_operations.ConstantDoubleEdgeAttribute(parameters(0), parameters(1).toDouble)
-    })
-  registerOperation(
-    new SingleGraphFEOperation {
       val name = "Add reversed edges"
       override val operation = graph_operations.AddReversedEdges()
       override val parameters = Seq()

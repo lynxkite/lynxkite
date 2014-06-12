@@ -49,6 +49,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // Set.EmptySet[_] is private.
     kryo.register(Set.empty[Int].getClass)
     kryo.register(classOf[mutable.ArrayBuffer[Any]])
+    kryo.register(classOf[graph_api.Edge])
   }
 }
 
