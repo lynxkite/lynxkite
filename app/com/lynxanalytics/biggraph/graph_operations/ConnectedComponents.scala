@@ -134,7 +134,6 @@ private object ConnectedComponents {
     val p = graphRDD.collect
 
     val graph = p.toMap
-    println("graph: ", graph)
     val components = mutable.Map[Long, Long]()
     var idx = 0
     // Breadth-first search.
