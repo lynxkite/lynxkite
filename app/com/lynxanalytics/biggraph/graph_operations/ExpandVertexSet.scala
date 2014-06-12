@@ -50,9 +50,9 @@ case class ExpandVertexSet[T](
         val (ids, attrs) = group.unzip
         val da = maker.make
         indices.foreach {
-          case (src, dst) => da.set(dst, attrs.map(_(src)).toArray)
+          case (src, dst) => da.set(dst, attrs.map(_(src)).toSet.toArray.sorted)
         }
-        da.set(outputIdx, ids.toArray)
+        da.set(outputIdx, ids.toArray.sorted)
     }
     return new SimpleGraphData(
       target,
