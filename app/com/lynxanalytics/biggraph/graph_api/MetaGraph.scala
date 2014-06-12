@@ -26,20 +26,16 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
   @transient lazy val isLocal = srcVertexSet == dstVertexSet
 }
 
-class Attribute[+T: TypeTag] {
-  def typeTag: TypeTag[_ <: T] = implicitly[TypeTag[T]]
-}
-
-case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
-                                       name: Symbol)
-    extends Attribute with MetaGraphEntity {
+case class VertexAttribute[+T: TypeTag](source: MetaGraphOperationInstance,
+                                        name: Symbol)
+    extends MetaGraphEntity {
   @transient lazy val vertexSet: VertexSet =
     source.entities.vertexSets(source.operation.outputVertexAttributes(name)._1)
 }
 
-case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
-                                     name: Symbol)
-    extends Attribute with MetaGraphEntity {
+case class EdgeAttribute[+T: TypeTag](source: MetaGraphOperationInstance,
+                                      name: Symbol)
+    extends MetaGraphEntity {
   @transient lazy val edgeBundle: EdgeBundle =
     source.entities.edgeBundles(source.operation.outputEdgeAttributes(name)._1)
 }

@@ -35,6 +35,17 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
     }
   }
 
+  private def tryToLoadVertexAttributeData[T](
+    vertexAttribute: VertexAttribute[T]): Option[VertexAttributeData[T]] = {
+    if (hasEntity(vertexAttribute)) {
+      Some(new VertexAttributeData[T](
+        vertexAttribute,
+        entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)))
+    } else {
+      None
+    }
+  }
+
   def execute(instance: MetaGraphOperationInstance): DataSet = ???
 
   def get(vertexSet: VertexSet): VertexSetData = {
@@ -50,7 +61,16 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
 
   def get(edgeBundle: EdgeBundle): EdgeBundleData = ???
 
-  def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T] = ???
+  def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T] = {
+    val gUID = vertexAttribute.gUID
+    this.synchronized {
+      if (!vertexAttributeCache.contains(gUID)) {
+        vertexAttributeCache(gUID) = tryToLoadVertexAttributeData(vertexAttribute).getOrElse(
+          execute(vertexAttribute.source).vertexAttributes(vertexAttribute.name))
+      }
+    }
+    vertexAttributeCache(gUID).asInstanceOf[VertexAttributeData[T]]
+  }
 
   def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T] = ???
 
