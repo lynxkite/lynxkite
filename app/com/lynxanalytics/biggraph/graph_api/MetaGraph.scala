@@ -229,20 +229,20 @@ sealed trait EntityData {
 }
 
 class VertexSetData(val vertexSet: VertexSet,
-                    val rdd: VertexSetRDD)
+                    val rdd: VertexSetRDD) extends EntityData
 
 class EdgeBundleData(val edgeBundle: EdgeBundle,
-                     val rdd: EdgeBundleRDD)
+                     val rdd: EdgeBundleRDD) extends EntityData
 
 class VertexAttributeData[T](val vertexAttribute: VertexAttribute[T],
                              val rdd: AttributeRDD[T])
-    extends RuntimeSafeCastable[T, VertexAttributeData] {
+    extends RuntimeSafeCastable[T, VertexAttributeData] with EntityData {
   val typeTag = vertexAttribute.typeTag
 }
 
 class EdgeAttributeData[T](val edgeAttribute: EdgeAttribute[T],
                            val rdd: AttributeRDD[T])
-    extends RuntimeSafeCastable[T, EdgeAttributeData] {
+    extends RuntimeSafeCastable[T, EdgeAttributeData] with EntityData {
   val typeTag = edgeAttribute.typeTag
 }
 

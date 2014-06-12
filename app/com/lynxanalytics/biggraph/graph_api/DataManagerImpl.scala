@@ -67,7 +67,17 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
     }
   }
 
-  def execute(instance: MetaGraphOperationInstance): DataSet = ???
+  def execute(instance: MetaGraphOperationInstance): DataSet = {
+    val inputs = instance.inputs
+    val inputDatas = DataSet(
+      inputs.vertexSets.mapValues(get(_)),
+      inputs.edgeBundles.mapValues(get(_)),
+      inputs.vertexAttributes.mapValues(get(_)),
+      inputs.edgeAttributes.mapValues(get(_)))
+    val outputBuilder = new DataSetBuilder(instance)
+    instance.operation.execute(inputDatas, outputBuilder, runtimeContext)
+    outputBuilder.toDataSet
+  }
 
   def get(vertexSet: VertexSet): VertexSetData = {
     val gUID = vertexSet.gUID
