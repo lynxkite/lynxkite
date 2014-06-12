@@ -23,7 +23,7 @@ case class SmallGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation 
 
 object TestWizard extends TestSparkContext {
   def rc = RuntimeContext(sparkContext, numAvailableCores = 1, availableCacheMemoryGB = 100.0)
-  def run(op: MetaGraphOperation, inputs: DataSet): DataSet = {
+  def run(op: MetaGraphOperation, inputs: DataSet = DataSet()): DataSet = {
     val outputs = new DataSetBuilder(MetaGraphOperationInstance(op, inputs.metaDataSet))
     op.execute(inputs, outputs, rc)
     return outputs.toDataSet
@@ -32,7 +32,7 @@ object TestWizard extends TestSparkContext {
 
 class FindMaxCliquesTest extends FunSuite {
   test("triangle") {
-    val sg = TestWizard.run(SmallGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))), DataSet())
+    val sg = TestWizard.run(SmallGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))))
     val fmc = TestWizard.run(FindMaxCliques(3), DataSet(
       vertexSets = Map('vsIn -> sg.vertexSets('vs)),
       edgeBundles = Map('esIn -> sg.edgeBundles('es))))
