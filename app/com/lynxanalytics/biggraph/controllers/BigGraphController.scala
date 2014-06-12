@@ -202,56 +202,6 @@ object FEOperations extends FEOperationRepository {
       val name = "Simple Example Graph With Attributes"
       override val operation = InstantiateSimpleGraph2()
     })
-  registerOperation(
-    new StartingFEOperation {
-      val name = "Import Graph from CSV"
-      override val parameters = Seq(
-        FEOperationParameterMeta("Vertex header file", ""),
-        FEOperationParameterMeta("Vertex CSV file(s) separated by ',' and/or matched by '*'", ""),
-        FEOperationParameterMeta("Edge header file", ""),
-        FEOperationParameterMeta("Edge CSV file(s) separated by ',' and/or matched by '*'", ""),
-        FEOperationParameterMeta("Vertex id field name", ""),
-        FEOperationParameterMeta("Edge source field name", ""),
-        FEOperationParameterMeta("Edge destination field name", ""),
-        FEOperationParameterMeta("Delimiter", ","),
-        FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"),
-        FEOperationParameterMeta("AWS Access Key ID (optional)", ""),
-        FEOperationParameterMeta("AWS Secret Access Key (optional)", ""))
-      override def toGraphOperation(parameters: Seq[String]) =
-        graph_operations.CSVImport(
-          graph_util.Filename(parameters(0)),
-          parameters(1).split(",").map(graph_util.Filename(_, parameters(9), parameters(10))),
-          graph_util.Filename(parameters(2)),
-          parameters(3).split(",").map(graph_util.Filename(_, parameters(9), parameters(10))),
-          parameters(4),
-          parameters(5),
-          parameters(6),
-          parameters(7),
-          parameters(8).toBoolean)
-    })
-  registerOperation(
-    new StartingFEOperation {
-      val name = "Import Graph from Edge List CSV"
-      override val parameters = Seq(
-        FEOperationParameterMeta("Edge header file", ""),
-        FEOperationParameterMeta("Edge CSV file(s) separated by ',' and/or matched by '*'", ""),
-        FEOperationParameterMeta("Edge source field name", ""),
-        FEOperationParameterMeta("Edge destination field name", ""),
-        FEOperationParameterMeta("Delimiter", ","),
-        FEOperationParameterMeta("Skip header row while processing data (true/false)", "false"),
-        FEOperationParameterMeta("AWS Access Key ID (optional)", ""),
-        FEOperationParameterMeta("AWS Secret Access Key (optional)", ""),
-        FEOperationParameterMeta("Disallowed vertex IDs (optional, comma separated list)", ""))
-      override def toGraphOperation(parameters: Seq[String]) =
-        graph_operations.EdgeCSVImportNum(
-          graph_util.Filename(parameters(0)),
-          parameters(1).split(",").map(graph_util.Filename(_, parameters(6), parameters(7))),
-          parameters(2),
-          parameters(3),
-          parameters(4),
-          parameters(5).toBoolean,
-          parameters(8).split(",").toSet)
-    })
 }
 
 /**
