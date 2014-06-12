@@ -1,6 +1,8 @@
 name := "biggraph"
 
-javaOptions in Test := Seq("-Dsun.io.serialization.extendedDebugInfo=true")
+javaOptions in Test := Seq(
+  "-Dsun.io.serialization.extendedDebugInfo=true",
+  "-Dbiggraph.default.partitions.per.core=1")
 
 scalacOptions ++= Seq("-feature", "-deprecation")
 
