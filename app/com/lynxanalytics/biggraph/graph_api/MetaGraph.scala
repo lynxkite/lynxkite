@@ -257,9 +257,9 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
                        vertexAttributes: Map[Symbol, VertexAttribute[_]] = Map(),
                        edgeAttributes: Map[Symbol, EdgeAttribute[_]] = Map()) {
-  val all = vertexSets ++ edgeAttributes ++ vertexAttributes ++ edgeAttributes
+  val all = vertexSets ++ edgeBundles ++ vertexAttributes ++ edgeAttributes
   assert(all.size ==
-    vertexSets.size + edgeAttributes.size + vertexAttributes.size + edgeAttributes.size,
+    vertexSets.size + edgeBundles.size + vertexAttributes.size + edgeAttributes.size,
     "Cross type collision %s %s %s %s".format(
       vertexSets, edgeBundles, vertexAttributes, edgeAttributes))
   def ++(mds: MetaDataSet): MetaDataSet = {
