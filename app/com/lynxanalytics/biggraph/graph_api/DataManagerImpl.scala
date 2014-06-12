@@ -35,12 +35,33 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
     }
   }
 
+  private def tryToLoadEdgeBundleData(edgeBundle: EdgeBundle): Option[EdgeBundleData] = {
+    if (hasEntity(edgeBundle)) {
+      Some(new EdgeBundleData(
+        edgeBundle,
+        entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)))
+    } else {
+      None
+    }
+  }
+
   private def tryToLoadVertexAttributeData[T](
     vertexAttribute: VertexAttribute[T]): Option[VertexAttributeData[T]] = {
     if (hasEntity(vertexAttribute)) {
       Some(new VertexAttributeData[T](
         vertexAttribute,
         entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)))
+    } else {
+      None
+    }
+  }
+
+  private def tryToLoadEdgeAttributeData[T](
+    edgeAttribute: EdgeAttribute[T]): Option[EdgeAttributeData[T]] = {
+    if (hasEntity(edgeAttribute)) {
+      Some(new EdgeAttributeData[T](
+        edgeAttribute,
+        entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)))
     } else {
       None
     }
@@ -59,7 +80,16 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
     vertexSetCache(gUID)
   }
 
-  def get(edgeBundle: EdgeBundle): EdgeBundleData = ???
+  def get(edgeBundle: EdgeBundle): EdgeBundleData = {
+    val gUID = edgeBundle.gUID
+    this.synchronized {
+      if (!edgeBundleCache.contains(gUID)) {
+        edgeBundleCache(gUID) = tryToLoadEdgeBundleData(edgeBundle).getOrElse(
+          execute(edgeBundle.source).edgeBundles(edgeBundle.name))
+      }
+    }
+    edgeBundleCache(gUID)
+  }
 
   def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T] = {
     val gUID = vertexAttribute.gUID
@@ -69,10 +99,21 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
           execute(vertexAttribute.source).vertexAttributes(vertexAttribute.name))
       }
     }
-    vertexAttributeCache(gUID).asInstanceOf[VertexAttributeData[T]]
+    implicit val tagForT = vertexAttribute.typeTag
+    vertexAttributeCache(gUID).runtimeSafeCast[T]
   }
 
-  def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T] = ???
+  def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T] = {
+    val gUID = edgeAttribute.gUID
+    this.synchronized {
+      if (!edgeAttributeCache.contains(gUID)) {
+        edgeAttributeCache(gUID) = tryToLoadEdgeAttributeData(edgeAttribute).getOrElse(
+          execute(edgeAttribute.source).edgeAttributes(edgeAttribute.name))
+      }
+    }
+    implicit val tagForT = edgeAttribute.typeTag
+    edgeAttributeCache(gUID).runtimeSafeCast[T]
+  }
 
   def get(entity: MetaGraphEntity): EntityData = {
     entity match {
