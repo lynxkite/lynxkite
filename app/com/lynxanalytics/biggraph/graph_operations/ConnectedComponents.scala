@@ -130,7 +130,7 @@ private object ConnectedComponents {
 
   def getComponentsLocal(
     graphRDD: RDD[(VertexId, Set[VertexId])]): RDD[(VertexId, ComponentId)] = {
-    // Moves all the data to a single worker and processes it there.
+    // Moves all the data to the dirver and processes it there.
     val p = graphRDD.collect
 
     val graph = p.toMap
