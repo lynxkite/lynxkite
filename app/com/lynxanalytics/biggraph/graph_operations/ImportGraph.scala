@@ -111,6 +111,7 @@ case class ImportVertexList(csv: CSV) extends MetaGraphOperation {
 
   def read(sc: SparkContext): Map[String, RDD[(Long, String)]] = csv.read(sc)
 
+  // A subclass of ImportVertexList, which uses a numeric field for the vertex ID.
   def withNumericId(field: String): ImportVertexList = new ImportVertexList(csv) {
     val idIdx = csv.fields.indexOf(field)
     override def read(sc: SparkContext) = csv.readAs(sc, {
@@ -129,10 +130,14 @@ case class ImportEdgeList(csv: CSV, srcId: String, dstId: String) extends MetaGr
 
   def signature = {
     val s = newSignature.outputGraph('vertices, 'edges)
+    addEdgeAttributes(s)
+    s
+  }
+
+  def addEdgeAttributes(s: MetaGraphOperationSignature) = {
     for (field <- csv.fields) {
       s.outputEdgeAttribute[String](Symbol(field), 'edges)
     }
-    s
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
@@ -162,6 +167,7 @@ case class ImportEdgeList(csv: CSV, srcId: String, dstId: String) extends MetaGr
 
   def read(sc: SparkContext): Map[String, RDD[(Long, String)]] = csv.read(sc)
 
+  // A subclass of ImportEdgeList, which identifies vertices by strings.
   def withStringId(vertexAttr: String): ImportEdgeList = new ImportEdgeList(csv, srcId, dstId) {
     assert(!csv.fields.contains(vertexAttr), "Name collision on: $vertexAttr")
     assert(vertexAttr != "vertices",
@@ -191,5 +197,34 @@ case class ImportEdgeList(csv: CSV, srcId: String, dstId: String) extends MetaGr
         case (dst, ((edge, sid), did)) => edge -> Edge(sid, did)
       }
     }
+
+    override def forVertexSet = ??? // Cannot be combined.
+  }
+
+  // A subclass of ImportEdgeList, which adds the edge bundle to an existing vertex set.
+  def forVertexSet: ImportEdgeList = new ImportEdgeList(csv, srcId, dstId) {
+    assert(!csv.fields.contains("sources"),
+      "'sources' is a reserved name and cannot be the name of a column.")
+    assert(!csv.fields.contains("destinations"),
+      "'destinations' is a reserved name and cannot be the name of a column.")
+
+    override def signature = {
+      val s = newSignature
+        .inputVertexSet('sources)
+        .inputVertexSet('destinations)
+        .outputEdgeBundle('edges, 'sources -> 'destinations)
+      addEdgeAttributes(s)
+      s
+    }
+
+    override def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+      val sc = rc.sparkContext
+      for ((field, rdd) <- csv.read(sc)) {
+        outputs.putEdgeAttribute(Symbol(field), rdd)
+      }
+      outputs.putEdgeBundle('edges, edges(sc))
+    }
+
+    override def withStringId(vertexAttr: String) = ??? // Cannot be combined.
   }
 }

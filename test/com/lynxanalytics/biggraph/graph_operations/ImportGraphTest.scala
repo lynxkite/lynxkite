@@ -20,9 +20,12 @@ class ImportGraphTest extends FunSuite with com.lynxanalytics.biggraph.TestSpark
     val delimiter = ","
     val vertexData = TestWizard.run(ImportVertexList(
       CSV(vertexCSVs, delimiter, ImportUtil.header(vertexHeader))).withNumericId(vertexIdFieldName))
-    val edgeData = TestWizard.run(ImportEdgeList(
-      CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
-      sourceEdgeFieldName, destEdgeFieldName))
+    val vs = vertexData.vertexSets('vertices)
+    val edgeData = TestWizard.run(
+      ImportEdgeList(
+        CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
+        sourceEdgeFieldName, destEdgeFieldName).forVertexSet,
+      DataSet(vertexSets = Map('sources -> vs, 'destinations -> vs)))
     assert(TestUtils.RDDToSortedString(vertexData.vertexAttributes('name).rdd) ==
       """|(0,Adam)
          |(1,Eve)
