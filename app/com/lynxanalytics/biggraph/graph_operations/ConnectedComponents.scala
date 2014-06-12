@@ -52,7 +52,7 @@ private object ConnectedComponents {
     // We best cache it here.
     graph.persist(StorageLevel.MEMORY_AND_DISK)
     if (graph.count == 0) {
-      return new spark.rdd.EmptyRDD[(VertexId, ComponentId)](graph.sparkContext)
+      return graph.sparkContext.emptyRDD[(VertexId, ComponentId)]
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
     if (edgeCount <= ConnectedComponents.maxEdgesProcessedLocally) {
@@ -85,13 +85,14 @@ private object ConnectedComponents {
     // Accept invitations.
     val moves = invitations.groupByKey(partitioner).mapPartitions(pit =>
       pit.map {
-        case (n, invitations) =>
-          if (invitations.size == 1 || invitations.contains(-1l)) {
+        case (n, invIt) =>
+          val invSeq = invIt.toSeq.sorted
+          if (invSeq.size == 1 || invSeq.contains(-1l)) {
             // Nowhere to go, or we are hosting a party. Stay at home.
             (n, n)
           } else {
             // Free to go. Go somewhere else.
-            (n, invitations.sorted.find(_ != n).get)
+            (n, invSeq.find(_ != n).get)
           }
       },
       preservesPartitioning = true

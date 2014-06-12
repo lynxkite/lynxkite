@@ -22,7 +22,7 @@ case class SetOverlap(
   // Set-valued attributes are represented as sorted Array[Long].
   type Set = Array[Long]
   // When dealing with multiple sets, they are identified by their VertexIds.
-  type Sets = Seq[(VertexId, Array[Long])]
+  type Sets = Iterable[(VertexId, Array[Long])]
   // The generated edges have a single attribute, the overlap size.
   val outputAttribute = attribute + "_overlap"
   @transient lazy val outputSig = AttributeSignature
@@ -45,7 +45,7 @@ case class SetOverlap(
     val partitioner = new spark.HashPartitioner(cores * 5)
     type SetsByPrefix = rdd.RDD[(Seq[Long], Sets)]
     // Start with prefixes of length 1.
-    var short: SetsByPrefix = new rdd.EmptyRDD[(Seq[Long], Sets)](sc)
+    var short: SetsByPrefix = sc.emptyRDD[(Seq[Long], Sets)]
     var long: SetsByPrefix =
       sets.flatMap({
         case (vid, set) => set.map(i => (Seq(i), (vid, set)))
@@ -88,9 +88,10 @@ case class SetOverlap(
   // Generates the edges for a set of sets. This is O(n^2), but the set should
   // be small.
   protected def edgesFor(prefix: Seq[Long], sets: Sets): Seq[Edge[DenseAttributes]] = {
+    val setSeq = sets.toSeq
     for {
-      (vid1, set1) <- sets
-      (vid2, set2) <- sets
+      (vid1, set1) <- setSeq
+      (vid2, set2) <- setSeq
       overlap = SortedIntersectionSize(set1, set2, prefix)
       if vid1 != vid2 && overlap >= minOverlap
     } yield Edge(vid1, vid2, DA(overlap))
@@ -140,9 +141,10 @@ class SetOverlapForConnectedComponents(
     attribute: String,
     minOverlap: Int) extends SetOverlap(attribute, minOverlap) {
   override def edgesFor(prefix: Seq[Long], sets: Sets): Seq[Edge[DenseAttributes]] = {
+    val setSeq = sets.toSeq
     if (prefix.size == minOverlap) {
-      val center: Long = sets.head._1
-      sets.flatMap({
+      val center: Long = setSeq.head._1
+      setSeq.flatMap({
         case (vid, set) => List(
           Edge(vid, center, DA(minOverlap)),
           Edge(center, vid, DA(minOverlap)))
