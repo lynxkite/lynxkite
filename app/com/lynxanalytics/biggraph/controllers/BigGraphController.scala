@@ -88,7 +88,7 @@ object FEOperations extends FEOperationRepository {
       val name = "Remove non-symmetric edges"
       override val operation = new graph_operations.RemoveNonSymmetricEdges()
       def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
-        bigGraphs.size == 1 // && !bigGraphs.head.properties.symmetricEdges
+        bigGraphs.size == 1 && !bigGraphs.head.properties.symmetricEdges
     })
   registerOperation(
     new FEOperation {
