@@ -28,8 +28,8 @@ case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation 
     })
     return new SimpleGraphData(
       target,
-      sc.parallelize(vertices),
-      sc.parallelize(edges)
+      sc.parallelize(vertices, 1),
+      sc.parallelize(edges, 1)
     )
   }
 
@@ -37,22 +37,7 @@ case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation 
     new BigGraphProperties(symmetricEdges = true)
 }
 
-class ConnectedComponentsTest
-    extends FunSuite with TestBigGraphManager with TestGraphDataManager {
-  // Creates the graph specified by `nodes` and applies ConnectedComponents to it.
-  // Returns the resulting component attributes in an easy-to-use format.
-  def getComponents(nodes: Seq[(Int, Seq[Int])], local: Boolean): Map[Int, Int] = {
-    val graphManager = cleanGraphManager("SetOverlapTest")
-    val dataManager = cleanDataManager("SetOverlapTest")
-    val inputGraph = graphManager.deriveGraph(Seq(), GraphByEdgeLists(nodes))
-    ConnectedComponents.maxEdgesProcessedLocally = if (local) 100000 else 0
-    val outputGraph = graphManager.deriveGraph(
-      Seq(inputGraph), ConnectedComponents("component"))
-    val idx = outputGraph.vertexAttributes.readIndex[Long]("component")
-    val vertices = dataManager.obtainData(outputGraph).vertices
-    return vertices.map({ case (n, da) => (n.toInt, da(idx).toInt) }).collect.toMap
-  }
-
+object ConnectedComponentsTest {
   def assertSameComponents(comp1: Map[Int, Int], comp2: Map[Int, Int]): Unit = {
     val mapping = scala.collection.mutable.Map[Int, Int]()
     assert(comp1.size == comp2.size, "Unexpected size")
@@ -66,6 +51,24 @@ class ConnectedComponentsTest
         mapping(c1) = c2
       }
     }
+  }
+}
+class ConnectedComponentsTest
+    extends FunSuite with TestBigGraphManager with TestGraphDataManager {
+  import ConnectedComponentsTest._
+
+  // Creates the graph specified by `nodes` and applies ConnectedComponents to it.
+  // Returns the resulting component attributes in an easy-to-use format.
+  def getComponents(nodes: Seq[(Int, Seq[Int])], local: Boolean): Map[Int, Int] = {
+    val graphManager = cleanGraphManager("SetOverlapTest")
+    val dataManager = cleanDataManager("SetOverlapTest")
+    val inputGraph = graphManager.deriveGraph(Seq(), GraphByEdgeLists(nodes))
+    ConnectedComponents.maxEdgesProcessedLocally = if (local) 100000 else 0
+    val outputGraph = graphManager.deriveGraph(
+      Seq(inputGraph), ConnectedComponents("component"))
+    val idx = outputGraph.vertexAttributes.readIndex[Long]("component")
+    val vertices = dataManager.obtainData(outputGraph).vertices
+    return vertices.map({ case (n, da) => (n.toInt, da(idx).toInt) }).collect.toMap
   }
 
   test("three islands") {
