@@ -96,7 +96,7 @@ class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager 
       } catch {
         // TODO(xandrew): Be more selective here...
         case e: Exception =>
-          bigGraphLogger.error("Error loading operation from file: %s", fileName, e)
+          bigGraphLogger.error(s"Error loading operation from file: $fileName", e)
       }
     }
   }
