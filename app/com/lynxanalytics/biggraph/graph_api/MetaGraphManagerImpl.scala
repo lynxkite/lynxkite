@@ -24,13 +24,13 @@ class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager 
     entities(gUID).asInstanceOf[EdgeAttribute[_]]
 
   def incomingBundles(vertexSet: VertexSet): Seq[EdgeBundle] =
-    incomingBundlesMap.getOrElse(vertexSet.gUID, Seq())
+    incomingBundlesMap(vertexSet.gUID)
   def outgoingBundles(vertexSet: VertexSet): Seq[EdgeBundle] =
-    outgoingBundlesMap.getOrElse(vertexSet.gUID, Seq())
+    outgoingBundlesMap(vertexSet.gUID)
   def attributes(vertexSet: VertexSet): Seq[VertexAttribute[_]] =
-    vertexAttributesMap.getOrElse(vertexSet.gUID, Seq())
+    vertexAttributesMap(vertexSet.gUID)
   def attributes(edgeBundle: EdgeBundle): Seq[EdgeAttribute[_]] =
-    edgeAttributesMap.getOrElse(edgeBundle.gUID, Seq())
+    edgeAttributesMap(edgeBundle.gUID)
 
   def dependentOperations(component: MetaGraphEntity): Seq[MetaGraphOperationInstance] =
     dependentOperationsMap.getOrElse(component.gUID, Seq())
@@ -39,10 +39,14 @@ class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager 
 
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
 
-  private val outgoingBundlesMap = mutable.Map[UUID, mutable.Buffer[EdgeBundle]]()
-  private val incomingBundlesMap = mutable.Map[UUID, mutable.Buffer[EdgeBundle]]()
-  private val vertexAttributesMap = mutable.Map[UUID, mutable.Buffer[VertexAttribute[_]]]()
-  private val edgeAttributesMap = mutable.Map[UUID, mutable.Buffer[EdgeAttribute[_]]]()
+  private val outgoingBundlesMap =
+    mutable.Map[UUID, mutable.Buffer[EdgeBundle]]().withDefaultValue(mutable.Buffer())
+  private val incomingBundlesMap =
+    mutable.Map[UUID, mutable.Buffer[EdgeBundle]]().withDefaultValue(mutable.Buffer())
+  private val vertexAttributesMap =
+    mutable.Map[UUID, mutable.Buffer[VertexAttribute[_]]]().withDefaultValue(mutable.Buffer())
+  private val edgeAttributesMap =
+    mutable.Map[UUID, mutable.Buffer[EdgeAttribute[_]]]().withDefaultValue(mutable.Buffer())
 
   private val dependentOperationsMap =
     mutable.Map[UUID, mutable.Buffer[MetaGraphOperationInstance]]()
@@ -56,17 +60,17 @@ class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager 
       entities(gUID) = entity
     }
     operationInstance.outputs.edgeBundles.values.foreach { eb =>
-      outgoingBundlesMap.getOrElseUpdate(eb.srcVertexSet.gUID, mutable.Buffer()) += eb
-      incomingBundlesMap.getOrElseUpdate(eb.dstVertexSet.gUID, mutable.Buffer()) += eb
+      outgoingBundlesMap(eb.srcVertexSet.gUID) += eb
+      incomingBundlesMap(eb.dstVertexSet.gUID) += eb
     }
     operationInstance.outputs.vertexAttributes.values.foreach { va =>
-      vertexAttributesMap.getOrElseUpdate(va.vertexSet.gUID, mutable.Buffer()) += va
+      vertexAttributesMap(va.vertexSet.gUID) += va
     }
     operationInstance.outputs.edgeAttributes.values.foreach { ea =>
-      edgeAttributesMap.getOrElseUpdate(ea.edgeBundle.gUID, mutable.Buffer()) += ea
+      edgeAttributesMap(ea.edgeBundle.gUID) += ea
     }
     operationInstance.inputs.all.values.foreach { entity =>
-      dependentOperationsMap.getOrElseUpdate(entity.gUID, mutable.Buffer()) += operationInstance
+      dependentOperationsMap(entity.gUID) += operationInstance
     }
   }
 
