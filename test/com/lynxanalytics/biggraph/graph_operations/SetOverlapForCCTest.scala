@@ -25,7 +25,7 @@ case class RandomSets(size: Int, vsize: Int, seed: Int) extends GraphOperation {
         rand.shuffle(elementIds.toSeq).take(rand.nextInt(elementIds.size + 1)).sorted.toArray
       (id.toLong, maker.make.set(idx, set))
     }
-    val edges = new rdd.EmptyRDD[Edge[DenseAttributes]](sc)
+    val edges = sc.emptyRDD[Edge[DenseAttributes]]
     return new SimpleGraphData(target, sc.parallelize(vertices), edges)
   }
 

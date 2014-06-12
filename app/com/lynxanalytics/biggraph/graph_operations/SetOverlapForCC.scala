@@ -17,8 +17,6 @@ abstract class SetOverlapForCC extends GraphOperation {
 
   // Set-valued attributes are represented as sorted Array[Long].
   type Set = Array[Long]
-  // When dealing with multiple sets, they are identified by their VertexIds.
-  type Sets = Seq[(VertexId, Array[Long])]
 
   @transient private lazy val outputSig = AttributeSignature.empty
   @transient private lazy val outputMaker = outputSig.maker
@@ -41,7 +39,7 @@ abstract class SetOverlapForCC extends GraphOperation {
       .flatMap { case (sid, set) => set.map(i => (i, (sid, set))) }
       .groupByKey(partitioner)
     val edges: rdd.RDD[Edge[DenseAttributes]] = byMemberNode.flatMap {
-      case (vid, sets) => edgesFor(vid, sets)
+      case (vid, sets) => edgesFor(vid, sets.toSeq)
     }
     return new SimpleGraphData(target, inputData.vertices, edges)
   }
@@ -78,7 +76,7 @@ abstract class SetOverlapForCC extends GraphOperation {
     return None
   }
 
-  def edgesFor(vid: Long, sets: Sets): Seq[Edge[DenseAttributes]] = {
+  def edgesFor(vid: Long, sets: Seq[(VertexId, Array[Long])]): Seq[Edge[DenseAttributes]] = {
     val res = mutable.Buffer[Edge[DenseAttributes]]()
 
     // Array of set indices that still need to be checked when considering the neighbors of

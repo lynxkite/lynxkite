@@ -27,7 +27,7 @@ object RDDUtils {
       path,
       classOf[hadoop.io.NullWritable],
       classOf[hadoop.io.BytesWritable],
-      if (minSplits != -1) minSplits else sc.defaultMinSplits)
+      if (minSplits != -1) minSplits else sc.defaultMinPartitions)
     sf.flatMap(x => deserialize[Array[T]](x._2.getBytes))
   }
 

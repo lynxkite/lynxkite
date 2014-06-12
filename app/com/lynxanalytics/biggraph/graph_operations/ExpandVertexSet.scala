@@ -57,7 +57,7 @@ case class ExpandVertexSet[T](
     return new SimpleGraphData(
       target,
       vertices,
-      new spark.rdd.EmptyRDD[spark.graphx.Edge[DenseAttributes]](sc))
+      sc.emptyRDD[spark.graphx.Edge[DenseAttributes]])
   }
 
   def vertexAttributes(inputGraphSpecs: Seq[BigGraph]) = {
