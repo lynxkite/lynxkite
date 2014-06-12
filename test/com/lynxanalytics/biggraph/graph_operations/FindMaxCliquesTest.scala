@@ -12,15 +12,17 @@ case class SmallGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
     outputs.putVertexSet('vs, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
-    outputs.putEdgeBundle('es, sc.parallelize(edgeLists.toSeq.flatMap {
-      case (i, es) => es.map(e => (0l, Edge(i, e)))
+    val nodePairs = edgeLists.toSeq.flatMap {
+      case (i, es) => es.map(e => i -> e)
+    }
+    outputs.putEdgeBundle('es, sc.parallelize(nodePairs.zipWithIndex.map {
+      case ((a, b), i) => i.toLong -> Edge(a, b)
     }))
   }
-  val gUID = null
 }
 
 object TestWizard extends TestSparkContext {
-  def rc = RuntimeContext(sparkContext, 1, 100.0)
+  def rc = RuntimeContext(sparkContext, numAvailableCores = 1, availableCacheMemoryGB = 100.0)
   def run(op: MetaGraphOperation, inputs: DataSet): DataSet = {
     val outputs = new DataSetBuilder(MetaGraphOperationInstance(op, inputs.metaDataSet))
     op.execute(inputs, outputs, rc)

@@ -114,7 +114,7 @@ trait MetaGraphOperation extends Serializable {
     true
   }
 
-  val gUID: UUID
+  val gUID: UUID = null // TODO: default implementation.
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
 }
@@ -145,13 +145,13 @@ class MetaGraphOperationSignature private[graph_api] {
     inputVertexSet(vertexSetName)
     inputEdgeBundle(edgeBundleName, vertexSetName -> vertexSetName)
   }
-  def inputVertexAttribute[T: TypeTag](vertexSetName: Symbol, attributeName: Symbol) = {
+  def inputVertexAttribute[T: TypeTag](attributeName: Symbol, vertexSetName: Symbol) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     inputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
     allNames += attributeName
     this
   }
-  def inputEdgeAttribute[T: TypeTag](edgeBundleName: Symbol, attributeName: Symbol) = {
+  def inputEdgeAttribute[T: TypeTag](attributeName: Symbol, edgeBundleName: Symbol) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     inputEdgeAttributes(attributeName) = edgeBundleName -> typeTag[T]
     allNames += attributeName
@@ -173,13 +173,13 @@ class MetaGraphOperationSignature private[graph_api] {
     outputVertexSet(vertexSetName)
     outputEdgeBundle(edgeBundleName, vertexSetName -> vertexSetName)
   }
-  def outputVertexAttribute[T: TypeTag](vertexSetName: Symbol, attributeName: Symbol) = {
+  def outputVertexAttribute[T: TypeTag](attributeName: Symbol, vertexSetName: Symbol) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     outputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
     allNames += attributeName
     this
   }
-  def outputEdgeAttribute[T: TypeTag](edgeBundleName: Symbol, attributeName: Symbol) = {
+  def outputEdgeAttribute[T: TypeTag](attributeName: Symbol, edgeBundleName: Symbol) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     outputEdgeAttributes(attributeName) = edgeBundleName -> typeTag[T]
     allNames += attributeName
@@ -232,10 +232,10 @@ class VertexSetData(val vertexSet: VertexSet,
 class EdgeBundleData(val edgeBundle: EdgeBundle,
                      val rdd: EdgeBundleRDD)
 
-class VertexAttributeData[T](val vertexSet: VertexSet,
+class VertexAttributeData[T](val vertexAttribute: VertexAttribute[T],
                              val rdd: AttributeRDD[T])
 
-class EdgeAttributeData[T](val edgeBundle: EdgeBundle,
+class EdgeAttributeData[T](val edgeAttribute: EdgeAttribute[T],
                            val rdd: AttributeRDD[T])
 
 trait DataManager {
@@ -281,7 +281,9 @@ case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
                    edgeAttributes: Map[Symbol, EdgeAttributeData[_]] = Map()) {
   def metaDataSet = MetaDataSet(
     vertexSets.mapValues(_.vertexSet),
-    edgeBundles.mapValues(_.edgeBundle)) // TODO: Attributes.
+    edgeBundles.mapValues(_.edgeBundle),
+    vertexAttributes.mapValues(_.vertexAttribute),
+    edgeAttributes.mapValues(_.edgeAttribute))
 }
 
 class DataSetBuilder(instance: MetaGraphOperationInstance) {
@@ -300,12 +302,16 @@ class DataSetBuilder(instance: MetaGraphOperationInstance) {
     edgeBundles(name) = new EdgeBundleData(instance.entities.edgeBundles(name), rdd)
     this
   }
-  def putVertexAttribute(name: Symbol, rdd: AttributeRDD[_]) = {
-    vertexAttributes(name) = new VertexAttributeData(instance.entities.vertexAttributes(name).vertexSet, rdd)
+  def putVertexAttribute[T](name: Symbol, rdd: AttributeRDD[T]) = {
+    vertexAttributes(name) = new VertexAttributeData(
+      // TODO(darabos): Make this type-safe.
+      instance.entities.vertexAttributes(name).asInstanceOf[VertexAttribute[T]], rdd)
     this
   }
-  def putEdgeAttribute(name: Symbol, rdd: AttributeRDD[_]) = {
-    edgeAttributes(name) = new EdgeAttributeData(instance.entities.edgeAttributes(name).edgeBundle, rdd)
+  def putEdgeAttribute[T](name: Symbol, rdd: AttributeRDD[T]) = {
+    edgeAttributes(name) = new EdgeAttributeData(
+      // TODO(darabos): Make this type-safe.
+      instance.entities.edgeAttributes(name).asInstanceOf[EdgeAttribute[T]], rdd)
     this
   }
 }
