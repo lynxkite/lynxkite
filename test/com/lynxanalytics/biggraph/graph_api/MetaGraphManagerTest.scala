@@ -57,7 +57,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val manager = cleanMetaManager
     val instance = manager.apply(new CreateSomeGraph())
     intercept[java.util.NoSuchElementException] {
-      manager.entity(UUID.randomUUID)
+      manager.entity(new UUID(0, 0))
     }
   }
 
@@ -82,7 +82,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
       assert(clonedEntity.getClass == entity.getClass)
       // But they are not the same!
       assert(!(clonedEntity eq entity))
-      // Nothing leaked over to an unrelared manager.
+      // Nothing leaked over to an unrelated manager.
       intercept[java.util.NoSuchElementException] {
         m2o.entity(entity.gUID)
       }
