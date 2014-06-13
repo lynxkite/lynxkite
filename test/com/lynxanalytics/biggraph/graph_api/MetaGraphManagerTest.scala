@@ -13,7 +13,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val manager = cleanMetaGraphManager("fromnothing")
 
     // We can add two dependent operation.
-    val firstInstance = manager.apply(new CreateSomeGraph(), MetaDataSet())
+    val firstInstance = manager.apply(new CreateSomeGraph())
     val firstVertices = firstInstance.outputs.vertexSets('vertices)
     val firstEdges = firstInstance.outputs.edgeBundles('edges)
     val firstVattr = firstInstance.outputs.vertexAttributes('vattr)
@@ -55,7 +55,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
   test("Sometimes, there is no such component") {
     val manager = cleanMetaGraphManager("nosuchgraph")
-    val instance = manager.apply(new CreateSomeGraph(), MetaDataSet())
+    val instance = manager.apply(new CreateSomeGraph())
     intercept[java.util.NoSuchElementException] {
       manager.entity(UUID.randomUUID)
     }
@@ -64,7 +64,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   test("Save and load works") {
     val m1o = cleanMetaGraphManager("d1")
 
-    val firstInstance = m1o.apply(new CreateSomeGraph(), MetaDataSet())
+    val firstInstance = m1o.apply(new CreateSomeGraph())
     val firstVertices = firstInstance.outputs.vertexSets('vertices)
     val firstVattr = firstInstance.outputs.vertexAttributes('vattr)
     val secondInstance = m1o.apply(
@@ -91,8 +91,8 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
   test("No operation should be calculated twice") {
     val manager = cleanMetaGraphManager("nosuchgraph")
-    val instance1 = manager.apply(new CreateSomeGraph(), MetaDataSet())
-    val instance2 = manager.apply(new CreateSomeGraph(), MetaDataSet())
+    val instance1 = manager.apply(new CreateSomeGraph())
+    val instance2 = manager.apply(new CreateSomeGraph())
     assert(instance1 eq instance2)
   }
 }
