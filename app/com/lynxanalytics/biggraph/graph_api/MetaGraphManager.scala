@@ -11,7 +11,8 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.bigGraphLogger
 
 class MetaGraphManager(val repositoryPath: String) {
-  def apply(operation: MetaGraphOperation, inputs: MetaDataSet): MetaGraphOperationInstance = {
+  def apply(operation: MetaGraphOperation,
+            inputs: MetaDataSet = MetaDataSet()): MetaGraphOperationInstance = {
     val operationInstance = MetaGraphOperationInstance(operation, inputs)
     val gUID = operationInstance.gUID
     if (!operationInstances.contains(gUID)) {
@@ -59,7 +60,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   initializeFromDisk()
 
-  def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
+  private def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
     operationInstances(operationInstance.gUID) = operationInstance
     operationInstance.outputs.all.values.foreach { entity =>
       val gUID = entity.gUID

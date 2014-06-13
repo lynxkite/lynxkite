@@ -10,10 +10,10 @@ import attributes.AttributeSignature
 
 class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   test("Basic application flow works as expected.") {
-    val manager = cleanMetaGraphManager("fromnothing")
+    val manager = cleanMetaManager
 
     // We can add two dependent operation.
-    val firstInstance = manager.apply(new CreateSomeGraph(), MetaDataSet())
+    val firstInstance = manager.apply(new CreateSomeGraph())
     val firstVertices = firstInstance.outputs.vertexSets('vertices)
     val firstEdges = firstInstance.outputs.edgeBundles('edges)
     val firstVattr = firstInstance.outputs.vertexAttributes('vattr)
@@ -54,17 +54,17 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   }
 
   test("Sometimes, there is no such component") {
-    val manager = cleanMetaGraphManager("nosuchgraph")
-    val instance = manager.apply(new CreateSomeGraph(), MetaDataSet())
+    val manager = cleanMetaManager
+    val instance = manager.apply(new CreateSomeGraph())
     intercept[java.util.NoSuchElementException] {
-      manager.entity(UUID.randomUUID)
+      manager.entity(new UUID(0, 0))
     }
   }
 
   test("Save and load works") {
-    val m1o = cleanMetaGraphManager("d1")
+    val m1o = cleanMetaManager
 
-    val firstInstance = m1o.apply(new CreateSomeGraph(), MetaDataSet())
+    val firstInstance = m1o.apply(new CreateSomeGraph())
     val firstVertices = firstInstance.outputs.vertexSets('vertices)
     val firstVattr = firstInstance.outputs.vertexAttributes('vattr)
     val secondInstance = m1o.apply(
@@ -74,7 +74,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
         vertexAttributes = Map('inputAttr -> firstVattr)))
 
     val m1c = new MetaGraphManager(m1o.repositoryPath)
-    val m2o = cleanMetaGraphManager("d2")
+    val m2o = cleanMetaManager
     (firstInstance.entities.all.values ++ secondInstance.entities.all.values).foreach { entity =>
       // We have an entity of the GUID of all entities.
       val clonedEntity = m1c.entity(entity.gUID)
@@ -82,7 +82,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
       assert(clonedEntity.getClass == entity.getClass)
       // But they are not the same!
       assert(!(clonedEntity eq entity))
-      // Nothing leaked over to an unrelared manager.
+      // Nothing leaked over to an unrelated manager.
       intercept[java.util.NoSuchElementException] {
         m2o.entity(entity.gUID)
       }
@@ -90,9 +90,9 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   }
 
   test("No operation should be calculated twice") {
-    val manager = cleanMetaGraphManager("nosuchgraph")
-    val instance1 = manager.apply(new CreateSomeGraph(), MetaDataSet())
-    val instance2 = manager.apply(new CreateSomeGraph(), MetaDataSet())
+    val manager = cleanMetaManager
+    val instance1 = manager.apply(new CreateSomeGraph())
+    val instance2 = manager.apply(new CreateSomeGraph())
     assert(instance1 eq instance2)
   }
 }
