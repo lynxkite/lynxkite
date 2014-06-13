@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
-import org.apache.spark.rdd
+import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
 import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
@@ -26,20 +26,18 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
   @transient lazy val isLocal = srcVertexSet == dstVertexSet
 }
 
-class Attribute[+T: TypeTag] {
-  def typeTag: TypeTag[_ <: T] = implicitly[TypeTag[T]]
-}
-
 case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                        name: Symbol)
-    extends Attribute with MetaGraphEntity {
+    extends MetaGraphEntity with RuntimeSafeCastable[T, VertexAttribute] {
+  val typeTag = implicitly[TypeTag[T]]
   @transient lazy val vertexSet: VertexSet =
     source.entities.vertexSets(source.operation.outputVertexAttributes(name)._1)
 }
 
 case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                      name: Symbol)
-    extends Attribute with MetaGraphEntity {
+    extends MetaGraphEntity with RuntimeSafeCastable[T, EdgeAttribute] {
+  val typeTag = implicitly[TypeTag[T]]
   @transient lazy val edgeBundle: EdgeBundle =
     source.entities.edgeBundles(source.operation.outputEdgeAttributes(name)._1)
 }
@@ -226,26 +224,37 @@ trait MetaGraphManager {
   def dependentOperations(component: MetaGraphEntity): Seq[MetaGraphOperationInstance]
 }
 
+sealed trait EntityData {
+  val rdd: RDD[_]
+}
+
 class VertexSetData(val vertexSet: VertexSet,
-                    val rdd: VertexSetRDD)
+                    val rdd: VertexSetRDD) extends EntityData
 
 class EdgeBundleData(val edgeBundle: EdgeBundle,
-                     val rdd: EdgeBundleRDD)
+                     val rdd: EdgeBundleRDD) extends EntityData
 
 class VertexAttributeData[T](val vertexAttribute: VertexAttribute[T],
                              val rdd: AttributeRDD[T])
+    extends RuntimeSafeCastable[T, VertexAttributeData] with EntityData {
+  val typeTag = vertexAttribute.typeTag
+}
 
 class EdgeAttributeData[T](val edgeAttribute: EdgeAttribute[T],
                            val rdd: AttributeRDD[T])
+    extends RuntimeSafeCastable[T, EdgeAttributeData] with EntityData {
+  val typeTag = edgeAttribute.typeTag
+}
 
 trait DataManager {
   def get(vertexSet: VertexSet): VertexSetData
   def get(edgeBundle: EdgeBundle): EdgeBundleData
   def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T]
   def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T]
+  def get(entity: MetaGraphEntity): EntityData
 
   // Saves the given component's data to disk.
-  def saveDataToDisk(component: MetaGraphEntity)
+  def saveToDisk(component: MetaGraphEntity): Unit
 
   // Returns information about the current running enviroment.
   // Typically used by operations to optimize their execution.
@@ -294,24 +303,22 @@ class DataSetBuilder(instance: MetaGraphOperationInstance) {
 
   def toDataSet = DataSet(vertexSets.toMap, edgeBundles.toMap, vertexAttributes.toMap, edgeAttributes.toMap)
 
-  def putVertexSet(name: Symbol, rdd: VertexSetRDD) = {
+  def putVertexSet(name: Symbol, rdd: VertexSetRDD): DataSetBuilder = {
     vertexSets(name) = new VertexSetData(instance.entities.vertexSets(name), rdd)
     this
   }
-  def putEdgeBundle(name: Symbol, rdd: EdgeBundleRDD) = {
+  def putEdgeBundle(name: Symbol, rdd: EdgeBundleRDD): DataSetBuilder = {
     edgeBundles(name) = new EdgeBundleData(instance.entities.edgeBundles(name), rdd)
     this
   }
-  def putVertexAttribute[T](name: Symbol, rdd: AttributeRDD[T]) = {
-    vertexAttributes(name) = new VertexAttributeData(
-      // TODO(darabos): Make this type-safe.
-      instance.entities.vertexAttributes(name).asInstanceOf[VertexAttribute[T]], rdd)
+  def putVertexAttribute[T: TypeTag](name: Symbol, rdd: AttributeRDD[T]): DataSetBuilder = {
+    val vertexAttribute = instance.entities.vertexAttributes(name).runtimeSafeCast[T]
+    vertexAttributes(name) = new VertexAttributeData[T](vertexAttribute, rdd)
     this
   }
-  def putEdgeAttribute[T](name: Symbol, rdd: AttributeRDD[T]) = {
-    edgeAttributes(name) = new EdgeAttributeData(
-      // TODO(darabos): Make this type-safe.
-      instance.entities.edgeAttributes(name).asInstanceOf[EdgeAttribute[T]], rdd)
+  def putEdgeAttribute[T: TypeTag](name: Symbol, rdd: AttributeRDD[T]): DataSetBuilder = {
+    val edgeAttribute = instance.entities.edgeAttributes(name).runtimeSafeCast[T]
+    edgeAttributes(name) = new EdgeAttributeData[T](edgeAttribute, rdd)
     this
   }
 }
