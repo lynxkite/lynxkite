@@ -10,10 +10,15 @@ import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.bigGraphLogger
 
-class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager {
-  def apply(operationInstance: MetaGraphOperationInstance): Unit = {
-    internalApply(operationInstance)
-    saveInstanceToDisk(operationInstance)
+class MetaGraphManager(val repositoryPath: String) {
+  def apply(operation: MetaGraphOperation, inputs: MetaDataSet): MetaGraphOperationInstance = {
+    val operationInstance = MetaGraphOperationInstance(operation, inputs)
+    val gUID = operationInstance.gUID
+    if (!operationInstances.contains(gUID)) {
+      internalApply(operationInstance)
+      saveInstanceToDisk(operationInstance)
+    }
+    operationInstances(gUID)
   }
 
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
@@ -22,6 +27,7 @@ class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager 
     entities(gUID).asInstanceOf[VertexAttribute[_]]
   def edgeAttribute(gUID: UUID): EdgeAttribute[_] =
     entities(gUID).asInstanceOf[EdgeAttribute[_]]
+  def entity(gUID: UUID): MetaGraphEntity = entities(gUID)
 
   def incomingBundles(vertexSet: VertexSet): Seq[EdgeBundle] =
     incomingBundlesMap(vertexSet.gUID)
@@ -32,26 +38,29 @@ class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager 
   def attributes(edgeBundle: EdgeBundle): Seq[EdgeAttribute[_]] =
     edgeAttributesMap(edgeBundle.gUID)
 
-  def dependentOperations(component: MetaGraphEntity): Seq[MetaGraphOperationInstance] =
-    dependentOperationsMap.getOrElse(component.gUID, Seq())
+  def dependentOperations(entity: MetaGraphEntity): Seq[MetaGraphOperationInstance] =
+    dependentOperationsMap.getOrElse(entity.gUID, Seq())
 
-  initializeFromDisk()
+  private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
 
   private val outgoingBundlesMap =
-    mutable.Map[UUID, mutable.Buffer[EdgeBundle]]().withDefaultValue(mutable.Buffer())
+    mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
   private val incomingBundlesMap =
-    mutable.Map[UUID, mutable.Buffer[EdgeBundle]]().withDefaultValue(mutable.Buffer())
+    mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
   private val vertexAttributesMap =
-    mutable.Map[UUID, mutable.Buffer[VertexAttribute[_]]]().withDefaultValue(mutable.Buffer())
+    mutable.Map[UUID, List[VertexAttribute[_]]]().withDefaultValue(List())
   private val edgeAttributesMap =
-    mutable.Map[UUID, mutable.Buffer[EdgeAttribute[_]]]().withDefaultValue(mutable.Buffer())
+    mutable.Map[UUID, List[EdgeAttribute[_]]]().withDefaultValue(List())
 
   private val dependentOperationsMap =
-    mutable.Map[UUID, mutable.Buffer[MetaGraphOperationInstance]]()
+    mutable.Map[UUID, List[MetaGraphOperationInstance]]().withDefaultValue(List())
+
+  initializeFromDisk()
 
   def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
+    operationInstances(operationInstance.gUID) = operationInstance
     operationInstance.outputs.all.values.foreach { entity =>
       val gUID = entity.gUID
       assert(
@@ -60,17 +69,17 @@ class MetaGraphManagerImpl(val repositoryPath: String) extends MetaGraphManager 
       entities(gUID) = entity
     }
     operationInstance.outputs.edgeBundles.values.foreach { eb =>
-      outgoingBundlesMap(eb.srcVertexSet.gUID) += eb
-      incomingBundlesMap(eb.dstVertexSet.gUID) += eb
+      outgoingBundlesMap(eb.srcVertexSet.gUID) ::= eb
+      incomingBundlesMap(eb.dstVertexSet.gUID) ::= eb
     }
     operationInstance.outputs.vertexAttributes.values.foreach { va =>
-      vertexAttributesMap(va.vertexSet.gUID) += va
+      vertexAttributesMap(va.vertexSet.gUID) ::= va
     }
     operationInstance.outputs.edgeAttributes.values.foreach { ea =>
-      edgeAttributesMap(ea.edgeBundle.gUID) += ea
+      edgeAttributesMap(ea.edgeBundle.gUID) ::= ea
     }
     operationInstance.inputs.all.values.foreach { entity =>
-      dependentOperationsMap(entity.gUID) += operationInstance
+      dependentOperationsMap(entity.gUID) ::= operationInstance
     }
   }
 
@@ -118,7 +127,8 @@ private case class SerializedOperation(operation: MetaGraphOperation,
 }
 private object SerializedOperation {
   def apply(inst: MetaGraphOperationInstance): SerializedOperation = {
-    SerializedOperation(inst.operation,
-      inst.inputs.all.mapValues(_.gUID))
+    SerializedOperation(
+      inst.operation,
+      inst.inputs.all.map { case (name, entity) => name -> entity.gUID })
   }
 }
