@@ -30,9 +30,7 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
       Some(new VertexSetData(
         vertexSet,
         entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)))
-    } else {
-      None
-    }
+    } else None
   }
 
   private def tryToLoadEdgeBundleData(edgeBundle: EdgeBundle): Option[EdgeBundleData] = {
@@ -40,9 +38,7 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
       Some(new EdgeBundleData(
         edgeBundle,
         entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)))
-    } else {
-      None
-    }
+    } else None
   }
 
   private def tryToLoadVertexAttributeData[T](
@@ -51,9 +47,7 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
       Some(new VertexAttributeData[T](
         vertexAttribute,
         entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)))
-    } else {
-      None
-    }
+    } else None
   }
 
   private def tryToLoadEdgeAttributeData[T](
@@ -62,9 +56,7 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
       Some(new EdgeAttributeData[T](
         edgeAttribute,
         entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)))
-    } else {
-      None
-    }
+    } else None
   }
 
   def execute(instance: MetaGraphOperationInstance): DataSet = {
@@ -136,11 +128,11 @@ private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
 
   def saveToDisk(entity: MetaGraphEntity): Unit = {
     if (!hasEntity(entity)) {
-      bigGraphLogger.info(s"Saving entity %entity ...")
+      bigGraphLogger.info(s"Saving entity $entity ...")
       entityPath(entity).saveAsObjectFile(get(entity).rdd)
-      bigGraphLogger.info(s"Entity %entity saved.")
+      bigGraphLogger.info(s"Entity $entity saved.")
     } else {
-      bigGraphLogger.info(s"Skip saving entity %entity as it's already saved.")
+      bigGraphLogger.info(s"Skip saving entity $entity as it's already saved.")
     }
   }
 
