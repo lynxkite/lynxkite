@@ -6,8 +6,8 @@ import com.lynxanalytics.biggraph.TestUtils
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
   test("We can obtain a simple new graph") {
-    val metaManager = cleanMetaGraphManager("createone")
-    val dataManager = cleanDataManager("createone")
+    val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
     val instance = metaManager.apply(CreateExampleGraphOperation(), MetaDataSet())
 
     assert(TestUtils.RDDToSortedString(
@@ -39,30 +39,20 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       "(2,Bob envies Adam)\n" +
       "(3,Bob loves Eve)")
   }
-  /*
-  test("We can reload a graph from memory without recomputing it") {
-    val graphManager = cleanGraphManager("memorycaching")
-    val dataManager = cleanDataManager("memorycaching")
-    val operation = new InstantiateSimpleGraph
-    val myGraph = graphManager.deriveGraph(Seq(), operation)
-    val myData = dataManager.obtainData(myGraph)
-    val myData2 = dataManager.obtainData(myGraph)
-    assert(myData eq myData2)
-    assert(operation.executionCounter == 1)
-  }
 
   test("We can reload a graph from disk without recomputing it") {
-    val graphManager = cleanGraphManager("diskcaching")
-    val dataManager1 = cleanDataManager("diskcaching")
-    val dataManager2 = GraphDataManager(sparkContext, dataManager1.repositoryPath)
-    val operation = new InstantiateSimpleGraph
-    val myGraph = graphManager.deriveGraph(Seq(), operation)
-    val myData = dataManager1.obtainData(myGraph)
-    dataManager1.saveDataToDisk(myGraph)
-    val myData2 = dataManager2.obtainData(myGraph)
-    assert(myData ne myData2)
-    assert(TestUtils.RDDToSortedString(myData.triplets) ==
-      TestUtils.RDDToSortedString(myData2.triplets))
+    val metaManager = cleanMetaManager
+    val dataManager1 = cleanDataManager
+    val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
+    val operation = CreateExampleGraphOperation()
+    val instance = metaManager.apply(operation)
+    val names = instance.outputs.vertexAttributes('name).runtimeSafeCast[String]
+    val data1: VertexAttributeData[String] = dataManager1.get(names)
+    dataManager1.saveToDisk(names)
+    val data2 = dataManager2.get(names)
+    assert(data1 ne data2)
+    assert(TestUtils.RDDToSortedString(data1.rdd) ==
+      TestUtils.RDDToSortedString(data2.rdd))
     assert(operation.executionCounter == 1)
-  }*/
+  }
 }
