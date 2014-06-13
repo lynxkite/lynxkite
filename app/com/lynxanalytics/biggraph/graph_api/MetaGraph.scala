@@ -1,5 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
+import java.io.ByteArrayOutputStream
+import java.io.ObjectOutputStream
 import java.util.UUID
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
@@ -12,7 +14,15 @@ sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
   val name: Symbol
   // Implement from source operation's GUID, name and the actual class of this component.
-  val gUID: UUID = null
+  val gUID: UUID = {
+    val buffer = new ByteArrayOutputStream
+    val objectStream = new ObjectOutputStream(buffer)
+    objectStream.writeObject(name)
+    objectStream.writeObject(source.gUID)
+    objectStream.writeObject(this.getClass.toString)
+    objectStream.close()
+    UUID.nameUUIDFromBytes(buffer.toByteArray)
+  }
 }
 
 case class VertexSet(source: MetaGraphOperationInstance,
@@ -86,33 +96,15 @@ trait MetaGraphOperation extends Serializable {
   def outputEdgeAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.outputEdgeAttributes.toMap
 
   // Checks whether the complete input signature is valid for this operation.
-  // Concrete MetaGraphOperation instances may either override this method or
-  // validateInputVertexSet and validateInputEdgeBundle.
-  def validateInput(inputVertexSets: Map[Symbol, VertexSet],
-                    inputEdgeBundles: Map[Symbol, EdgeBundle]): Boolean = {
-    validateInputStructure(inputVertexSets, inputEdgeBundles) &&
-      inputVertexSets.forall {
-        case (name, vertexSet) => validateInputVertexSet(name, vertexSet)
-      } &&
-      inputEdgeBundles.forall {
-        case (name, edgeBundle) => validateInputEdgeBundle(name, edgeBundle)
-      }
+  def validateInput(input: MetaDataSet): Boolean = ???
+
+  val gUID: UUID = {
+    val buffer = new ByteArrayOutputStream
+    val objectStream = new ObjectOutputStream(buffer)
+    objectStream.writeObject(this)
+    objectStream.close()
+    UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
-
-  // Validates the signature of a single input VertexSet.
-  def validateInputVertexSet(name: Symbol, vertexSet: VertexSet): Boolean = true
-
-  // Validates the signature of a single input EdgeBundle.
-  def validateInputEdgeBundle(name: Symbol, edgeBundle: EdgeBundle): Boolean = true
-
-  protected def validateInputStructure(inputVertexSets: Map[Symbol, VertexSet],
-                                       inputEdgeBundles: Map[Symbol, EdgeBundle]): Boolean = {
-    // Checks that all required inputs are defined and that bundles connect the right sets.
-    // Implemented here....
-    true
-  }
-
-  val gUID: UUID = null // TODO: default implementation.
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
 }
@@ -193,7 +185,17 @@ case class MetaGraphOperationInstance(
     val operation: MetaGraphOperation,
     val inputs: MetaDataSet) {
 
-  val gUID: UUID = null // TODO implement here from guids of inputs and operation.
+  val gUID: UUID = {
+    val buffer = new ByteArrayOutputStream
+    val objectStream = new ObjectOutputStream(buffer)
+    objectStream.writeObject(operation.gUID)
+    inputs.all.keys.toSeq.map(_ match { case Symbol(s) => s }).sorted.foreach { name =>
+      objectStream.writeObject(name)
+      objectStream.writeObject(inputs.all(Symbol(name)).gUID)
+    }
+    objectStream.close()
+    UUID.nameUUIDFromBytes(buffer.toByteArray)
+  }
 
   val outputs = MetaDataSet(
     operation.outputVertexSets.map(n => n -> VertexSet(this, n)).toMap,
@@ -206,22 +208,6 @@ case class MetaGraphOperationInstance(
     }.toMap)
 
   val entities = inputs ++ outputs
-}
-
-trait MetaGraphManager {
-  def apply(operationInstance: MetaGraphOperationInstance): Unit
-
-  def vertexSet(gUID: UUID): VertexSet
-  def edgeBundle(gUID: UUID): EdgeBundle
-  def vertexAttribute(gUID: UUID): VertexAttribute[_]
-  def edgeAttribute(gUID: UUID): EdgeAttribute[_]
-
-  def incomingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
-  def outgoingBundles(vertexSet: VertexSet): Seq[EdgeBundle]
-  def attributes(vertexSet: VertexSet): Seq[VertexAttribute[_]]
-  def attributes(edgeBundle: EdgeBundle): Seq[EdgeAttribute[_]]
-
-  def dependentOperations(component: MetaGraphEntity): Seq[MetaGraphOperationInstance]
 }
 
 sealed trait EntityData {
@@ -244,21 +230,6 @@ class EdgeAttributeData[T](val edgeAttribute: EdgeAttribute[T],
                            val rdd: AttributeRDD[T])
     extends RuntimeSafeCastable[T, EdgeAttributeData] with EntityData {
   val typeTag = edgeAttribute.typeTag
-}
-
-trait DataManager {
-  def get(vertexSet: VertexSet): VertexSetData
-  def get(edgeBundle: EdgeBundle): EdgeBundleData
-  def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T]
-  def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T]
-  def get(entity: MetaGraphEntity): EntityData
-
-  // Saves the given component's data to disk.
-  def saveToDisk(component: MetaGraphEntity): Unit
-
-  // Returns information about the current running enviroment.
-  // Typically used by operations to optimize their execution.
-  def runtimeContext: RuntimeContext
 }
 
 // A bundle of metadata types.

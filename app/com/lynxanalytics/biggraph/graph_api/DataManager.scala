@@ -9,10 +9,8 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.graph_util.Filename
 
-private[graph_api] class DataManagerImpl(sc: spark.SparkContext,
-                                         val repositoryPath: Filename)
-    extends DataManager {
-
+class DataManager(sc: spark.SparkContext,
+                  val repositoryPath: Filename) {
   private val vertexSetCache = mutable.Map[UUID, VertexSetData]()
   private val edgeBundleCache = mutable.Map[UUID, EdgeBundleData]()
   private val vertexAttributeCache = mutable.Map[UUID, VertexAttributeData[_]]()

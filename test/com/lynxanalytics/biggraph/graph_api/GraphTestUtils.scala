@@ -22,6 +22,14 @@ trait TestBigGraphManager extends TestTempDir {
   }
 }
 
+trait TestMetaGraphManager extends TestTempDir {
+  def cleanMetaGraphManager(dirName: String): MetaGraphManager = {
+    val managerDir = tempDir("metaGraphManager." + dirName)
+    managerDir.mkdir
+    new MetaGraphManager(managerDir.toString)
+  }
+}
+
 trait TestGraphDataManager extends TestTempDir with TestSparkContext {
   def cleanDataManager(dirName: String): GraphDataManager = {
     val managerDir = tempDir("dataManager." + dirName)
