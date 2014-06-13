@@ -1,9 +1,9 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
-
 import org.apache.spark
 import org.apache.spark.graphx
+import scala.util.Random
 
 import com.lynxanalytics.biggraph.TestTempDir
 import com.lynxanalytics.biggraph.TestSparkContext
@@ -23,7 +23,8 @@ trait TestBigGraphManager extends TestTempDir {
 }
 
 trait TestMetaGraphManager extends TestTempDir {
-  def cleanMetaGraphManager(dirName: String): MetaGraphManager = {
+  def cleanMetaManager: MetaGraphManager = {
+    val dirName = getClass.toString + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("metaGraphManager." + dirName)
     managerDir.mkdir
     new MetaGraphManager(managerDir.toString)
