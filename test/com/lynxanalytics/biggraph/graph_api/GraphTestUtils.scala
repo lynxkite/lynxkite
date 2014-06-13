@@ -24,7 +24,7 @@ trait TestBigGraphManager extends TestTempDir {
 
 trait TestMetaGraphManager extends TestTempDir {
   def cleanMetaManager: MetaGraphManager = {
-    val dirName = getClass.toString + "." + Random.alphanumeric.take(5).mkString
+    val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("metaGraphManager." + dirName)
     managerDir.mkdir
     new MetaGraphManager(managerDir.toString)
@@ -40,7 +40,8 @@ trait TestGraphDataManager extends TestTempDir with TestSparkContext {
 }
 
 trait TestDataManager extends TestTempDir with TestSparkContext {
-  def cleanDataManager(dirName: String): DataManager = {
+  def cleanDataManager: DataManager = {
+    val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("dataManager." + dirName)
     managerDir.mkdir
     new DataManager(sparkContext, Filename(managerDir.toString))
@@ -93,6 +94,8 @@ class InstantiateSimpleGraph extends GraphOperation {
 }
 
 case class CreateExampleGraphOperation() extends MetaGraphOperation {
+  @transient var executionCounter = 0
+
   def signature = newSignature
     .outputGraph('vertices, 'edges)
     .outputVertexAttribute[String]('name, 'vertices)
@@ -100,6 +103,8 @@ case class CreateExampleGraphOperation() extends MetaGraphOperation {
     .outputEdgeAttribute[String]('comment, 'edges)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    executionCounter += 1
+
     val sc = rc.sparkContext
     outputs.putVertexSet('vertices, sc.parallelize(Seq(0l, 1l, 2l).map((_, ()))))
     outputs.putEdgeBundle('edges, sc.parallelize(Seq(
