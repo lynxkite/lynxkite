@@ -38,6 +38,14 @@ trait TestGraphDataManager extends TestTempDir with TestSparkContext {
   }
 }
 
+trait TestDataManager extends TestTempDir with TestSparkContext {
+  def cleanDataManager(dirName: String): DataManager = {
+    val managerDir = tempDir("dataManager." + dirName)
+    managerDir.mkdir
+    new DataManager(sparkContext, Filename(managerDir.toString))
+  }
+}
+
 class BigGraphTestEnvironment(dirName: String) extends BigGraphEnvironment with TestBigGraphManager with TestGraphDataManager {
   lazy val bigGraphManager = cleanGraphManager(dirName)
   lazy val graphDataManager = cleanDataManager(dirName)
@@ -81,4 +89,35 @@ class InstantiateSimpleGraph extends GraphOperation {
   @transient private lazy val internalEdgeAttributes =
     AttributeSignature.empty.addAttribute[String]("comment").signature
   def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = internalEdgeAttributes
+}
+
+case class CreateExampleGraphOperation() extends MetaGraphOperation {
+  def signature = newSignature
+    .outputGraph('vertices, 'edges)
+    .outputVertexAttribute[String]('name, 'vertices)
+    .outputVertexAttribute[Double]('age, 'vertices)
+    .outputEdgeAttribute[String]('comment, 'edges)
+
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val sc = rc.sparkContext
+    outputs.putVertexSet('vertices, sc.parallelize(Seq(0l, 1l, 2l).map((_, ()))))
+    outputs.putEdgeBundle('edges, sc.parallelize(Seq(
+      (0l, Edge(0l, 1l)),
+      (1l, Edge(1l, 0l)),
+      (2l, Edge(2l, 0l)),
+      (3l, Edge(2l, 1l)))))
+    outputs.putVertexAttribute[String]('name, sc.parallelize(Seq(
+      (0l, "Adam"),
+      (1l, "Eve"),
+      (2l, "Bob"))))
+    outputs.putVertexAttribute[Double]('age, sc.parallelize(Seq(
+      (0l, 20.3),
+      (1l, 18.2),
+      (2l, 50.3))))
+    outputs.putEdgeAttribute[String]('comment, sc.parallelize(Seq(
+      (0l, "Adam loves Eve"),
+      (1l, "Eve loves Adam"),
+      (2l, "Bob envies Adam"),
+      (3l, "Bob loves Eve"))))
+  }
 }
