@@ -12,12 +12,15 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends MetaGraphOp
     .outputEdgeBundle('es, 'vsSrc -> 'vsDst)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val rand = new Random(seed)
-    val edges = for {
-      src <- inputs.vertexSets('vsSrc).rdd
-      dst <- inputs.vertexSets('vsDst).rdd.collect
-      if rand.nextFloat < density
-    } yield Edge(src._1, dst._1)
-    outputs.putEdgeBundle('es, RDDUtils.fastNumbered(edges))
+    val allEdges = inputs.vertexSets('vsSrc).rdd.cartesian(inputs.vertexSets('vsDst).rdd)
+
+    val randomEdges = allEdges.mapPartitionsWithIndex {
+      case (pidx, it) =>
+        val rand = new Random((pidx << 16) + seed)
+        it.map { case ((srcId, _), (dstId, _)) => Edge(srcId, dstId) }
+          .filter(_ => rand.nextFloat < density)
+    }
+
+    outputs.putEdgeBundle('es, RDDUtils.fastNumbered(randomEdges))
   }
 }
