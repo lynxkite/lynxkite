@@ -18,13 +18,6 @@ case class SaveGraphAsCSVResponse(
   failureReason: String = "")
 
 class GraphExportController(enviroment: BigGraphEnvironment) {
-  def saveGraphAsCSV(request: SaveGraphAsCSVRequest): SaveGraphAsCSVResponse = {
-    val graph = BigGraphController.getBigGraphForId(request.id, enviroment)
-    val data = enviroment.graphDataManager.obtainData(graph)
-    Try(graph_util.CSVExport.exportToDirectory(data, Filename(request.targetDirPath, request.awsAccessKeyId, request.awsSecretAccessKey))) match {
-      case Success(_) => SaveGraphAsCSVResponse()
-      case Failure(e) => SaveGraphAsCSVResponse(false, e.toString)
-    }
-  }
+  def saveGraphAsCSV(request: SaveGraphAsCSVRequest): SaveGraphAsCSVResponse = ???
 }
 
