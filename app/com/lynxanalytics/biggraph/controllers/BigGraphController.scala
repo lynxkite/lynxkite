@@ -77,7 +77,10 @@ case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
 class FEOperationRepository {
   val manager = PlaceHolderMetaGraphManagerFactory.get
 
-  def registerOperation(op: FEOperation): Unit = operations += ((op.id, op))
+  def registerOperation(op: FEOperation): Unit = {
+    assert(!operations.contains(op.id), s"Already registered: ${op.id}")
+    operations(op.id) = op
+  }
 
   def getStartingOperationMetas: Seq[FEOperationMeta] = {
     operations.values.toSeq.filter(_.starting).map {
