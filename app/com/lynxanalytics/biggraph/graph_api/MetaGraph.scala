@@ -128,24 +128,30 @@ class MetaGraphOperationSignature private[graph_api] {
     allNames += name
     this
   }
-  def inputEdgeBundle(name: Symbol, srcDst: (Symbol, Symbol)) = {
+  def inputEdgeBundle(name: Symbol, srcDst: (Symbol, Symbol), create: Boolean = false) = {
     assert(!allNames.contains(name), s"Double-defined: $name")
     inputEdgeBundles(name) = srcDst
     val (src, dst) = srcDst
     allNames += name
-    if (!inputVertexSets.contains(src)) { inputVertexSet(src) }
-    if (!inputVertexSets.contains(dst)) { inputVertexSet(dst) }
+    if (create) {
+      inputVertexSet(src)
+      inputVertexSet(dst)
+    }
     this
   }
   def inputGraph(vertexSetName: Symbol, edgeBundleName: Symbol) = {
     inputVertexSet(vertexSetName)
     inputEdgeBundle(edgeBundleName, vertexSetName -> vertexSetName)
   }
-  def inputVertexAttribute[T: TypeTag](attributeName: Symbol, vertexSetName: Symbol) = {
+  def inputVertexAttribute[T: TypeTag](attributeName: Symbol,
+                                       vertexSetName: Symbol,
+                                       create: Boolean = false) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     inputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
     allNames += attributeName
-    if (!inputVertexSets.contains(vertexSetName)) { inputVertexSet(vertexSetName) }
+    if (create) {
+      inputVertexSet(vertexSetName)
+    }
     this
   }
   def inputEdgeAttribute[T: TypeTag](attributeName: Symbol, edgeBundleName: Symbol) = {

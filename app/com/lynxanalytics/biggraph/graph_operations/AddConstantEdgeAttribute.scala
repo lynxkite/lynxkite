@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 
 abstract class AddConstantEdgeAttribute[T] extends MetaGraphOperation {
   def signature = newSignature
-    .inputEdgeBundle('edges, 'ignoredSrc -> 'ignoredDst)
+    .inputEdgeBundle('edges, 'ignoredSrc -> 'ignoredDst, create = true)
     .outputEdgeAttribute[T]('attr, 'edges)
   implicit def tt: TypeTag[T]
 
