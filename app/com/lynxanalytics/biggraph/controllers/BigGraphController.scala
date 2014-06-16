@@ -92,7 +92,7 @@ class FEOperationRepository {
     val neighbors = in.map(_.srcVertexSet) ++ out.map(_.dstVertexSet) - vs
     val strangers = manager.allVertexSets - vs
     // List every vertex set if there are no neighbors.
-    val vertexSets = vs +: (if (neighbors.nonEmpty) neighbors.toSeq else strangers.toSeq)
+    val vertexSets = if (neighbors.nonEmpty) vs +: neighbors.toSeq else vs +: strangers.toSeq
     val edgeBundles = (in ++ out).toSeq
     val vertexAttributes = vertexSets.flatMap(manager.attributes(_))
     val edgeAttributes = edgeBundles.flatMap(manager.attributes(_))
