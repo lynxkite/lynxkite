@@ -49,14 +49,11 @@ case class FEOperationSpec(
   id: String,
   parameters: Map[String, String])
 
-case class DeriveBigGraphRequest(
-  operation: FEOperationSpec)
-
 trait FEOperation {
   val id: String = title
   val title: String
-  val starting = parameters.find(_.kind != "scalar").isEmpty
   val parameters: Seq[FEOperationParameterMeta]
+  val starting = parameters.find(_.kind != "scalar").isEmpty
   // Use `require()` to perform parameter validation.
   def instance(params: Map[String, String]): MetaGraphOperationInstance
   def isValid(params: Map[String, String]): Boolean = {
@@ -193,12 +190,12 @@ class BigGraphController(environment: BigGraphEnvironment) {
       destination = UIValue.fromEntity(eb.dstVertexSet))
   }
 
-  def getGraph(request: BigGraphRequest): FEVertexSet = {
+  def vertexSet(request: BigGraphRequest): FEVertexSet = {
     toFE(manager.vertexSet(request.id.asUUID))
   }
 
-  def deriveGraph(request: DeriveBigGraphRequest): FEVertexSet = {
-    val instance = FEOperations.getGraphOperationInstance(request.operation)
+  def applyOp(request: FEOperationSpec): FEVertexSet = {
+    val instance = FEOperations.getGraphOperationInstance(request)
     manager.apply(instance)
     // Move to an output, or to an input if there is no output.
     val vs = instance.outputs.vertexSets.values.toSeq ++ instance.inputs.vertexSets.values.toSeq
