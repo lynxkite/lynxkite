@@ -4,7 +4,7 @@ import org.apache.spark.graphx
 import scala.util.Random
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
+import com.lynxanalytics.biggraph.graph_api.attributes._
 
 case class SimpleRandomGraph(size: Int, seed: Int, density: Float) extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.isEmpty
