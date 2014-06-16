@@ -112,7 +112,7 @@ object FEOperations extends FEOperationRepository {
     })
   registerOperation(
     new FEOperation {
-      val name = "Edges from set overlap for connected components"
+      val name = "Edges from uniform set overlap for connected components"
       def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
         bigGraphs.size == 1 &&
           bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].size > 0
@@ -123,6 +123,20 @@ object FEOperations extends FEOperationRepository {
         FEOperationParameterMeta("Minimum Overlap", "3"))
       override def toGraphOperation(parameters: Seq[String]) =
         new graph_operations.UniformOverlapForCC(parameters(0), parameters(1).toInt)
+    })
+  registerOperation(
+    new FEOperation {
+      val name = "Edges from infocom set overlap for connected components"
+      def applicableTo(bigGraphs: Seq[BigGraph]): Boolean =
+        bigGraphs.size == 1 &&
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].size > 0
+      override def parameters(bigGraphs: Seq[BigGraph]) = Seq(
+        FEOperationParameterMeta(
+          "Set attribute name",
+          bigGraphs.head.vertexAttributes.getAttributesReadableAs[Array[Long]].head),
+        FEOperationParameterMeta("Adjacency Threshold", "0.6"))
+      override def toGraphOperation(parameters: Seq[String]) =
+        new graph_operations.InfocomOverlapForCC(parameters(0), parameters(1).toDouble)
     })
   registerOperation(
     new SingleGraphFEOperation {
