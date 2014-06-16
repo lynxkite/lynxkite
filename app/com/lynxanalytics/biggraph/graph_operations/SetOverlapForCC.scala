@@ -133,3 +133,9 @@ abstract class SetOverlapForCC extends GraphOperation {
 case class UniformOverlapForCC(attribute: String, overlapSize: Int) extends SetOverlapForCC {
   def minOverlapFn(a: Int, b: Int): Int = overlapSize
 }
+
+case class InfocomOverlapForCC(attribute: String, adjacencyThreshold: Double)
+    extends SetOverlapForCC {
+  def minOverlapFn(a: Int, b: Int): Int =
+    (adjacencyThreshold * (a + b) * (a * a + b * b) / (4 * a * b)).toInt
+}
