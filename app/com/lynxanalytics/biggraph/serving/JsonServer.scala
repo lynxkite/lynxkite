@@ -64,10 +64,12 @@ object ProductionJsonServer extends JsonServer {
   implicit val wEmpty = json.Json.writes[Empty]
 
   implicit val rBigGraphRequest = json.Json.reads[BigGraphRequest]
-  implicit val wGraphBasicData = json.Json.writes[GraphBasicData]
-  implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
+  implicit val wUIValue = json.Json.writes[UIValue]
+  import FEOperationMeta.Param
+  implicit val wFEOperationMetaParam = json.Json.writes[Param]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
-  implicit val wBigGraphResponse = json.Json.writes[BigGraphResponse]
+  implicit val wFEEdgeBundle = json.Json.writes[FEEdgeBundle]
+  implicit val wFEVertexSet = json.Json.writes[FEVertexSet]
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
   implicit val rDeriveBigGraphRequest = json.Json.reads[DeriveBigGraphRequest]
