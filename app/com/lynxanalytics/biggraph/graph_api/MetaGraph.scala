@@ -312,3 +312,9 @@ class DataSetBuilder(instance: MetaGraphOperationInstance) {
     this
   }
 }
+
+// An ordered bundle of metadata types.
+case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
+                       edgeBundles: Seq[EdgeBundle] = Seq(),
+                       vertexAttributes: Seq[VertexAttribute[_]] = Seq(),
+                       edgeAttributes: Seq[EdgeAttribute[_]] = Seq())
