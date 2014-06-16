@@ -24,7 +24,11 @@ object CSVData {
 }
 
 object CSVExport {
-  def exportVertices(graphData: GraphData): CSVData = {
+  def exportVertexAttributes(attributes: Seq[VertexAttribute],
+                             dataManager: DataManager): CSVData = {
+    assert(attributes.size > 0)
+    val vertexSet = attributes.head.vertexSet
+    assert(data.forall(_.vertexSet == vertexSet))
     val readers = graphData.bigGraph.vertexAttributes.getReadersForOperation(CSVCellConverter)
     CSVData(
       ("vertexId" +: graphData.bigGraph.vertexAttributes.attributeSeq).map(quoteString),
