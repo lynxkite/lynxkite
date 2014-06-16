@@ -12,8 +12,10 @@ import com.lynxanalytics.biggraph.bigGraphLogger
 
 class MetaGraphManager(val repositoryPath: String) {
   def apply(operation: MetaGraphOperation,
-            inputs: MetaDataSet = MetaDataSet()): MetaGraphOperationInstance = {
-    val operationInstance = MetaGraphOperationInstance(operation, inputs)
+            inputs: MetaDataSet = MetaDataSet()): MetaGraphOperationInstance =
+    apply(MetaGraphOperationInstance(operation, inputs))
+
+  def apply(operationInstance: MetaGraphOperationInstance): MetaGraphOperationInstance = {
     val gUID = operationInstance.gUID
     if (!operationInstances.contains(gUID)) {
       internalApply(operationInstance)
