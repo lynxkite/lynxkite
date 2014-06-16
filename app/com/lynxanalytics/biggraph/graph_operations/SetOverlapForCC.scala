@@ -6,6 +6,7 @@ import org.apache.spark.graphx.Edge
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.rdd
 import scala.collection.mutable
+import scala.math
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
@@ -137,5 +138,5 @@ case class UniformOverlapForCC(attribute: String, overlapSize: Int) extends SetO
 case class InfocomOverlapForCC(attribute: String, adjacencyThreshold: Double)
     extends SetOverlapForCC {
   def minOverlapFn(a: Int, b: Int): Int =
-    (adjacencyThreshold * (a + b) * (a * a + b * b) / (4 * a * b)).toInt
+    math.ceil(adjacencyThreshold * (a + b) * (a * a + b * b) / (4 * a * b)).toInt
 }
