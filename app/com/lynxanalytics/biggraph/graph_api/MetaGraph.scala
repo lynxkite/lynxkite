@@ -23,7 +23,7 @@ sealed trait MetaGraphEntity extends Serializable {
     objectStream.close()
     UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
-  def toString = s"$source/${name.name}"
+  override def toString = s"$source/${name.name}"
 }
 
 case class VertexSet(source: MetaGraphOperationInstance,
@@ -109,7 +109,7 @@ trait MetaGraphOperation extends Serializable {
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
 
-  def toString = getClass.getName
+  override def toString = getClass.getName
 }
 
 class MetaGraphOperationSignature private[graph_api] {
@@ -216,7 +216,7 @@ case class MetaGraphOperationInstance(
 
   val entities = inputs ++ outputs
 
-  def toString = s"[$operation]($inputs)"
+  override def toString = s"[$operation]($inputs)"
 }
 
 sealed trait EntityData {
@@ -261,7 +261,7 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
       vertexAttributes ++ mds.vertexAttributes,
       edgeAttributes ++ mds.edgeAttributes)
   }
-  def toString = all.toString
+  override def toString = all.toString
 }
 object MetaDataSet {
   def apply(all: Iterable[(Symbol, MetaGraphEntity)]): MetaDataSet = {
