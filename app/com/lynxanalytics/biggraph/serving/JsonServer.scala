@@ -71,7 +71,6 @@ object ProductionJsonServer extends JsonServer {
   implicit val wFEVertexSet = json.Json.writes[FEVertexSet]
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
-  implicit val rDeriveBigGraphRequest = json.Json.reads[DeriveBigGraphRequest]
 
   implicit val rGraphStatsRequest = json.Json.reads[GraphStatsRequest]
   implicit val wGraphStatsResponse = json.Json.writes[GraphStatsResponse]
@@ -89,8 +88,8 @@ object ProductionJsonServer extends JsonServer {
   // Play! uses the routings in /conf/routes to execute actions
 
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
-  def bigGraphGet = jsonGet(bigGraphController.getGraph)
-  def deriveBigGraphGet = jsonGet(bigGraphController.deriveGraph)
+  def vertexSetGet = jsonGet(bigGraphController.vertexSet)
+  def applyOpGet = jsonGet(bigGraphController.applyOp)
   def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
 
   val graphStatsController = new GraphStatsController(BigGraphProductionEnvironment)
