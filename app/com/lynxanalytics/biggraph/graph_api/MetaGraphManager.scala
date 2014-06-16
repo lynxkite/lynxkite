@@ -111,6 +111,11 @@ class MetaGraphManager(val repositoryPath: String) {
     }
   }
 }
+object MetaGraphManager {
+  implicit class StringAsUUID(s: String) {
+    def asUUID: UUID = UUID.fromString(s)
+  }
+}
 
 private case class SerializedOperation(operation: MetaGraphOperation,
                                        inputs: Map[Symbol, UUID]) extends Serializable {
