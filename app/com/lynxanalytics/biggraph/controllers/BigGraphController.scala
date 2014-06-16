@@ -10,45 +10,31 @@ import scala.collection.mutable
 
 case class BigGraphRequest(id: String)
 
-// Something with a display name and an internal ID.
-case class UIValue(
-  id: String,
-  title: String)
-object UIValue {
-  def apply(e: MetaGraphEntity): UIValue = UIValue(e.gUID, e.toString)
-}
+case class GraphBasicData(
+  title: String,
+  id: String)
 
 case class FEOperationParameterMeta(
-  id: String,
   title: String,
-  kind: String = "scalar", // vertex-set, edge-bundle, ...
-  defaultValue: String = "",
-  options: Seq[UIValue] = Seq())
+  defaultValue: String)
 
 case class FEOperationMeta(
-  id: String,
-  title: String,
+  operationId: Int,
+  name: String,
   parameters: Seq[FEOperationParameterMeta])
 
-case class FEEdgeBundle(
-  id: String,
+case class BigGraphResponse(
   title: String,
-  source: UIValue,
-  destination: UIValue)
-
-case class FEVertexSet(
-  id: String,
-  title: String,
-  inEdges: Seq[FEEdgeBundle],
-  outEdges: Seq[FEEdgeBundle],
-  localEdges: Seq[FEEdgeBundle],
+  sources: Seq[GraphBasicData],
+  derivatives: Seq[GraphBasicData],
   ops: Seq[FEOperationMeta])
 
 case class FEOperationSpec(
-  id: String,
-  parameters: Map[String, String])
+  operationId: Int,
+  parameters: Seq[String])
 
 case class DeriveBigGraphRequest(
+  sourceIds: Seq[String],
   operation: FEOperationSpec)
 
 trait FEOperation {
