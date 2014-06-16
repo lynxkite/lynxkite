@@ -22,6 +22,10 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(gUID)
   }
 
+  def allVertexSets: Set[VertexSet] = {
+    val everything: Set[MetaGraphEntity] = entities.values.toSet
+    everything.collect { case e: VertexSet => e }
+  }
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
   def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
   def vertexAttribute(gUID: UUID): VertexAttribute[_] =
