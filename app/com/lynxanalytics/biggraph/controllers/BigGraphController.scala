@@ -22,16 +22,14 @@ object UIValue {
 case class FEOperationMeta(
   id: String,
   title: String,
-  parameters: Seq[FEOperationMeta.Param])
+  parameters: Seq[FEOperationParameterMeta])
 
-object FEOperationMeta {
-  case class Param(
-    id: String,
-    title: String,
-    kind: String = "scalar", // vertex-set, edge-bundle, ...
-    defaultValue: String = "",
-    options: Seq[UIValue] = Seq())
-}
+case class FEOperationParameterMeta(
+  id: String,
+  title: String,
+  kind: String = "scalar", // vertex-set, edge-bundle, ...
+  defaultValue: String = "",
+  options: Seq[UIValue] = Seq())
 
 case class FEEdgeBundle(
   id: String,
@@ -58,7 +56,7 @@ trait FEOperation {
   val id: String = title
   val title: String
   val starting = parameters.find(_.kind != "scalar").isEmpty
-  val parameters: Seq[FEOperationMeta.Param]
+  val parameters: Seq[FEOperationParameterMeta]
   // Use `require()` to perform parameter validation.
   def instance(params: Map[String, String]): MetaGraphOperationInstance
   def isValid(params: Map[String, String]): Boolean = {
@@ -107,7 +105,7 @@ class FEOperationRepository {
     val vertexAttributes = options.vertexAttributes.map(UIValue.fromEntity(_))
     val edgeAttributes = options.edgeAttributes.map(UIValue.fromEntity(_))
     operations.values.toSeq.filterNot(_.starting).flatMap { op =>
-      val params: Seq[FEOperationMeta.Param] = op.parameters.flatMap {
+      val params: Seq[FEOperationParameterMeta] = op.parameters.flatMap {
         case p if p.kind == "vertex-set" => vertexSets.headOption.map(
           first => p.copy(options = vertexSets, defaultValue = first.id))
         case p if p.kind == "edge-bundle" => edgeBundles.headOption.map(
@@ -135,7 +133,7 @@ class FEOperationRepository {
 }
 
 object FEOperations extends FEOperationRepository {
-  import FEOperationMeta.Param
+  val Param = FEOperationParameterMeta // Short alias.
 
   registerOperation(new FEOperation {
     val title = "Find maximal cliques"
