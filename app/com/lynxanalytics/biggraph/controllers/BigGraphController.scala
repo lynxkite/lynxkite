@@ -41,6 +41,7 @@ case class FEVertexSet(
   title: String,
   inEdges: Seq[FEEdgeBundle],
   outEdges: Seq[FEEdgeBundle],
+  localEdges: Seq[FEEdgeBundle],
   ops: Seq[FEOperationMeta])
 
 case class FEOperationSpec(

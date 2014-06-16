@@ -4,8 +4,18 @@
   </div>
   <div class="modal-body">
     <div class="param form-group" ng-repeat="param in operation.parameters">
-      <label for="param{{$index}}">{{param.title}}</label>
-      <input type="text" id="param{{$index}}" class="form-control" ng-model="result[$index]"/>
+      <label for="param{{param.id}}">{{param.title}}</label>
+      <input ng-if="param.options.length == 0"
+	     type="text"
+	     id="param{{param.id}}"
+	     class="form-control"
+	     ng-model="result[param.id]"/>
+      <select ng-if="param.options.length > 0"
+	      id="param{{param.id}}"
+	      class="form-control"
+	      ng-model="result[param.id]"
+	      ng-options="option.id as option.title for option in param.options">
+      </select>
     </div>
   </div>
   <div class="modal-footer">
