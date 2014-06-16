@@ -263,6 +263,15 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
   }
   def toString = all.toString
 }
+object MetaDataSet {
+  def apply(all: Iterable[(Symbol, MetaGraphEntity)]): MetaDataSet = {
+    MetaDataSet(
+      vertexSets = all.collect { case (k, v: VertexSet) => (k, v) },
+      edgeBundles = all.collect { case (k, v: EdgeBundle) => (k, v) },
+      vertexAttributes = all.collect { case (k, v: VertexAttribute[_]) => (k, v) },
+      edgeAttributes = all.collect { case (k, v: EdgeAttribute[_]) => (k, v) })
+  }
+}
 
 // A bundle of data types.
 case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
