@@ -63,8 +63,6 @@ trait FEOperation {
       case Failure(e) => throw e
     }
   }
-  protected def makeInstance(op: MetaGraphOperation, inputs: (Symbol, MetaGraphEntity)*) =
-    MetaGraphOperationInstance(op, MetaDataSet(inputs.toMap))
 }
 
 class FEOperationRepository {
@@ -138,7 +136,7 @@ object FEOperations extends FEOperationRepository {
       Param("vs", "Vertex set", kind = "vertex-set"),
       Param("es", "Edge bundle", kind = "edge-bundle"),
       Param("min", "Minimum clique size", "3"))
-    def instance(params: Map[String, String]) = makeInstance(
+    def instance(params: Map[String, String]) = manager.apply(
       graph_operations.FindMaxCliques(params("min").toInt),
       'vsIn -> manager.vertexSet(params("vs").asUUID),
       'esIn -> manager.edgeBundle(params("es").asUUID))
@@ -151,7 +149,7 @@ object FEOperations extends FEOperationRepository {
       Param("v", "Value", "1"))
     override def instance(params: Map[String, String]) = {
       val edges = manager.edgeBundle(params("eb").asUUID)
-      makeInstance(
+      manager.apply(
         graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
         'edges -> edges, 'ignoredSrc -> edges.srcVertexSet, 'ignoredDst -> edges.dstVertexSet)
     }
@@ -196,7 +194,6 @@ class BigGraphController(environment: BigGraphEnvironment) {
 
   def applyOp(request: FEOperationSpec): FEVertexSet = {
     val instance = FEOperations.getGraphOperationInstance(request)
-    manager.apply(instance)
     // Move to an output, or to an input if there is no output.
     val vs = instance.outputs.vertexSets.values.toSeq ++ instance.inputs.vertexSets.values.toSeq
     return toFE(vs.head)
