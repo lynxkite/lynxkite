@@ -200,7 +200,11 @@ class BigGraphController(environment: BigGraphEnvironment) {
   }
 
   def deriveGraph(request: DeriveBigGraphRequest): FEVertexSet = {
-    ???
+    val instance = FEOperations.getGraphOperationInstance(request.operation)
+    manager.apply(instance)
+    // Move to an output, or to an input if there is no output.
+    val vs = instance.outputs.vertexSets.values.toSeq ++ instance.inputs.vertexSets.values.toSeq
+    return toFE(vs.head)
   }
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
