@@ -128,7 +128,10 @@ class MetaGraphOperationSignature private[graph_api] {
   def inputEdgeBundle(name: Symbol, srcDst: (Symbol, Symbol)) = {
     assert(!allNames.contains(name), s"Double-defined: $name")
     inputEdgeBundles(name) = srcDst
+    val (src, dst) = srcDst
     allNames += name
+    if (!inputVertexSets.contains(src)) { inputVertexSet(src) }
+    if (!inputVertexSets.contains(dst)) { inputVertexSet(dst) }
     this
   }
   def inputGraph(vertexSetName: Symbol, edgeBundleName: Symbol) = {
@@ -139,6 +142,7 @@ class MetaGraphOperationSignature private[graph_api] {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     inputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
     allNames += attributeName
+    if (!inputVertexSets.contains(vertexSetName)) { inputVertexSet(vertexSetName) }
     this
   }
   def inputEdgeAttribute[T: TypeTag](attributeName: Symbol, edgeBundleName: Symbol) = {
