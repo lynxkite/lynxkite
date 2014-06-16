@@ -23,6 +23,7 @@ sealed trait MetaGraphEntity extends Serializable {
     objectStream.close()
     UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
+  override def toString = s"$source/${name.name}"
 }
 
 case class VertexSet(source: MetaGraphOperationInstance,
@@ -125,20 +126,30 @@ class MetaGraphOperationSignature private[graph_api] {
     allNames += name
     this
   }
-  def inputEdgeBundle(name: Symbol, srcDst: (Symbol, Symbol)) = {
+  def inputEdgeBundle(name: Symbol, srcDst: (Symbol, Symbol), create: Boolean = false) = {
     assert(!allNames.contains(name), s"Double-defined: $name")
     inputEdgeBundles(name) = srcDst
+    val (src, dst) = srcDst
     allNames += name
+    if (create) {
+      inputVertexSet(src)
+      inputVertexSet(dst)
+    }
     this
   }
   def inputGraph(vertexSetName: Symbol, edgeBundleName: Symbol) = {
     inputVertexSet(vertexSetName)
     inputEdgeBundle(edgeBundleName, vertexSetName -> vertexSetName)
   }
-  def inputVertexAttribute[T: TypeTag](attributeName: Symbol, vertexSetName: Symbol) = {
+  def inputVertexAttribute[T: TypeTag](attributeName: Symbol,
+                                       vertexSetName: Symbol,
+                                       create: Boolean = false) = {
     assert(!allNames.contains(attributeName), s"Double-defined: $attributeName")
     inputVertexAttributes(attributeName) = vertexSetName -> typeTag[T]
     allNames += attributeName
+    if (create) {
+      inputVertexSet(vertexSetName)
+    }
     this
   }
   def inputEdgeAttribute[T: TypeTag](attributeName: Symbol, edgeBundleName: Symbol) = {
@@ -208,6 +219,8 @@ case class MetaGraphOperationInstance(
     }.toMap)
 
   val entities = inputs ++ outputs
+
+  override def toString = s"[$operation]($inputs)"
 }
 
 sealed trait EntityData {
@@ -251,6 +264,16 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
       edgeBundles ++ mds.edgeBundles,
       vertexAttributes ++ mds.vertexAttributes,
       edgeAttributes ++ mds.edgeAttributes)
+  }
+  override def toString = all.toString
+}
+object MetaDataSet {
+  def apply(all: Map[Symbol, MetaGraphEntity]): MetaDataSet = {
+    MetaDataSet(
+      vertexSets = all.collect { case (k, v: VertexSet) => (k, v) },
+      edgeBundles = all.collect { case (k, v: EdgeBundle) => (k, v) },
+      vertexAttributes = all.collect { case (k, v: VertexAttribute[_]) => (k, v) }.toMap,
+      edgeAttributes = all.collect { case (k, v: EdgeAttribute[_]) => (k, v) }.toMap)
   }
 }
 
