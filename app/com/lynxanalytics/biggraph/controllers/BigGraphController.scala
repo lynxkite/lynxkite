@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
 import scala.util.{ Failure, Success, Try }
 
-case class BigGraphRequest(id: String)
+case class VertexSetRequest(id: String)
 
 // Something with a display name and an internal ID.
 case class UIValue(
@@ -188,7 +188,7 @@ class BigGraphController(environment: BigGraphEnvironment) {
       destination = UIValue.fromEntity(eb.dstVertexSet))
   }
 
-  def vertexSet(request: BigGraphRequest): FEVertexSet = {
+  def vertexSet(request: VertexSetRequest): FEVertexSet = {
     toFE(manager.vertexSet(request.id.asUUID))
   }
 
