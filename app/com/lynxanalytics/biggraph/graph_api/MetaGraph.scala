@@ -108,8 +108,6 @@ trait MetaGraphOperation extends Serializable {
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
-
-  override def toString = getClass.getName
 }
 
 class MetaGraphOperationSignature private[graph_api] {
