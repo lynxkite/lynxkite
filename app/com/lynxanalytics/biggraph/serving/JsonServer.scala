@@ -95,8 +95,8 @@ object ProductionJsonServer extends JsonServer {
   val graphStatsController = new GraphStatsController(BigGraphProductionEnvironment)
   def graphStatsGet = jsonGet(graphStatsController.getStats)
 
-  val graphExportController = new GraphExportController(BigGraphProductionEnvironment)
-  def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV)
+  //val graphExportController = new GraphExportController(BigGraphProductionEnvironment)
+  //def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)

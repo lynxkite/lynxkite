@@ -6,7 +6,7 @@ import play.api.mvc
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment._
 import com.lynxanalytics.biggraph.graph_api.GraphData
 import com.lynxanalytics.biggraph.graph_util.CSVExport
-
+/*
 object CSVServer extends mvc.Controller {
   def verticesCSVGet = dataGet { data =>
     Ok(CSVExport.exportVertices(data).toString)
@@ -30,3 +30,4 @@ object CSVServer extends mvc.Controller {
       responseRenderer(data)
     }
 }
+ */

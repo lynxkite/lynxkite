@@ -16,7 +16,7 @@ case class SaveGraphAsCSVRequest(
 case class SaveGraphAsCSVResponse(
   success: Boolean = true,
   failureReason: String = "")
-
+/*
 class GraphExportController(enviroment: BigGraphEnvironment) {
   def saveGraphAsCSV(request: SaveGraphAsCSVRequest): SaveGraphAsCSVResponse = {
     val graph = BigGraphController.getBigGraphForId(request.id, enviroment)
@@ -28,3 +28,4 @@ class GraphExportController(enviroment: BigGraphEnvironment) {
   }
 }
 
+ */
