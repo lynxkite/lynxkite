@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
@@ -25,11 +24,15 @@ case class FEOperationMeta(
   parameters: Seq[FEOperationParameterMeta])
 
 case class FEOperationParameterMeta(
-  id: String,
-  title: String,
-  kind: String = "scalar", // vertex-set, edge-bundle, ...
-  defaultValue: String = "",
-  options: Seq[UIValue] = Seq())
+    id: String,
+    title: String,
+    kind: String = "scalar", // vertex-set, edge-bundle, ...
+    defaultValue: String = "",
+    options: Seq[UIValue] = Seq()) {
+
+  val validKinds = Seq("scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute")
+  require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
+}
 
 case class FEEdgeBundle(
   id: String,
@@ -50,10 +53,10 @@ case class FEOperationSpec(
   parameters: Map[String, String])
 
 trait FEOperation {
-  val id: String = title
+  val id: String = getClass.getName
   val title: String
   val parameters: Seq[FEOperationParameterMeta]
-  val starting = parameters.find(_.kind != "scalar").isEmpty
+  lazy val starting = parameters.forall(_.kind == "scalar")
   // Use `require()` to perform parameter validation.
   def instance(params: Map[String, String]): MetaGraphOperationInstance
   def isValid(params: Map[String, String]): Boolean = {
@@ -131,35 +134,6 @@ class FEOperationRepository {
   }
 
   private val operations = mutable.Map[String, FEOperation]()
-}
-
-object FEOperations extends FEOperationRepository {
-  val Param = FEOperationParameterMeta // Short alias.
-
-  registerOperation(new FEOperation {
-    val title = "Find maximal cliques"
-    val parameters = Seq(
-      Param("vs", "Vertex set", kind = "vertex-set"),
-      Param("es", "Edge bundle", kind = "edge-bundle"),
-      Param("min", "Minimum clique size", "3"))
-    def instance(params: Map[String, String]) = manager.apply(
-      graph_operations.FindMaxCliques(params("min").toInt),
-      'vsIn -> manager.vertexSet(params("vs").asUUID),
-      'esIn -> manager.edgeBundle(params("es").asUUID))
-  })
-
-  registerOperation(new FEOperation {
-    val title = "Add constant edge attribute"
-    val parameters = Seq(
-      Param("eb", "Edge bundle", kind = "edge-bundle"),
-      Param("v", "Value", "1"))
-    override def instance(params: Map[String, String]) = {
-      val edges = manager.edgeBundle(params("eb").asUUID)
-      manager.apply(
-        graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
-        'edges -> edges, 'ignoredSrc -> edges.srcVertexSet, 'ignoredDst -> edges.dstVertexSet)
-    }
-  })
 }
 
 object PlaceHolderMetaGraphManagerFactory {
