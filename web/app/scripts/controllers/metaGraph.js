@@ -7,11 +7,11 @@ angular.module('biggraph')
     var VertexSet = $resource('/ajax/vertexSet');
     function loadGraph() {
       VertexSet.get(
-	{q: {id: id}},
-	function(vertexSet) {
-	  $scope.vertexSet = vertexSet;
-	  $scope.allOps = $scope.startingOps.concat(vertexSet.ops);
-	});
+        {q: {id: id}},
+        function(vertexSet) {
+          $scope.vertexSet = vertexSet;
+          $scope.allOps = $scope.startingOps.concat(vertexSet.ops);
+        });
     }
 
     function openOperationModal(operation) {
@@ -34,7 +34,7 @@ angular.module('biggraph')
         parameters: modalResult
       };
       ApplyOperation.get({q: request}, function(fake) {
-	loadGraph()
+        loadGraph()
       });
     }
 
