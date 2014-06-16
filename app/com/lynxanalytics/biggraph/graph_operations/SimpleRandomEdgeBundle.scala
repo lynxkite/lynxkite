@@ -17,8 +17,8 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends MetaGraphOp
     val randomEdges = allEdges.mapPartitionsWithIndex {
       case (pidx, it) =>
         val rand = new Random((pidx << 16) + seed)
-        it.map { case ((srcId, _), (dstId, _)) => Edge(srcId, dstId) }
-          .filter(_ => rand.nextFloat < density)
+        it.filter(_ => rand.nextFloat < density)
+          .map { case ((srcId, _), (dstId, _)) => Edge(srcId, dstId) }
     }
 
     outputs.putEdgeBundle('es, RDDUtils.fastNumbered(randomEdges))
