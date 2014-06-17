@@ -24,6 +24,8 @@ private object SparkStageJars {
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
+    // Adding one more line? Do it at the bottom!
+    // Types will change IDs otherwise.
     kryo.setRegistrationRequired(true)
     kryo.register(classOf[graphx.Edge[_]])
     kryo.register(classOf[scala.Tuple2[_, _]])
@@ -50,6 +52,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Set.empty[Int].getClass)
     kryo.register(classOf[mutable.ArrayBuffer[Any]])
     kryo.register(classOf[graph_api.Edge])
+    kryo.register(classOf[Array[Seq[_]]])
   }
 }
 
