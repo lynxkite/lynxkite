@@ -6,53 +6,41 @@ import scala.util.Random
 
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx.Edge
-import org.apache.spark.graphx.VertexId
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
-import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
-import com.lynxanalytics.biggraph.graph_api.attributes.SignatureExtension
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-// Generates a new vertex attribute, that is a component ID.
 private object ConnectedComponents {
   // A "constant", but we want to use a small value in the unit tests.
-  var maxEdgesProcessedLocally = 100000
+  var maxEdgesProcessedLocally = 20000000
 }
-@SerialVersionUID(6278532261938949359l) case class ConnectedComponents(
-    outputAttribute: String) extends NewVertexAttributeOperation[VertexId] {
-  @transient lazy val tt = typeTag[VertexId]
+case class ConnectedComponents() extends MetaGraphOperation {
+  def signature = newSignature
+    .inputGraph('vs, 'es)
+    .outputVertexSet('cc)
+    .outputEdgeBundle('link, 'vs -> 'cc)
 
-  type ComponentId = VertexId
-
-  override def isSourceListValid(sources: Seq[BigGraph]): Boolean =
-    super.isSourceListValid(sources) && sources.head.properties.symmetricEdges
-
-  override def computeHolistically(inputData: GraphData,
-                                   runtimeContext: RuntimeContext,
-                                   vertexPartitioner: spark.Partitioner): RDD[(VertexId, ComponentId)] = {
-    val sc = runtimeContext.sparkContext
-    val cores = runtimeContext.numAvailableCores
-    val inputEdges = inputData.edges.map(e => (e.srcId, e.dstId))
-    // vertexPartitioner will be inherited by all derived RDDs, so joins
-    // in getComponentsDist() are going to be fast.
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val partitioner = rc.defaultPartitioner
+    val inputEdges = inputs.edgeBundles('es).rdd.values
+      .map(edge => (edge.src, edge.dst))
     // Graph as edge lists. Does not include degree-0 vertices.
-    val graph = inputEdges.groupByKey(vertexPartitioner).mapValues(_.toSet)
-    // Get VertexId -> ComponentId map.
-    return getComponents(graph, 0)
+    val graph = inputEdges.groupByKey(partitioner).mapValues(_.toSet)
+    val edges = getComponents(graph, 0).map { case(vId, cId) => Edge(vId, cId) }
+    outputs.putEdgeBundle('link, RDDUtils.fastNumbered(edges))
   }
 
-  override def computeLocally(vid: VertexId, da: DenseAttributes): ComponentId = vid
+  type ComponentID = ID
 
   def getComponents(
-    graph: RDD[(VertexId, Set[VertexId])], iteration: Int): RDD[(VertexId, ComponentId)] = {
+    graph: RDD[(ID, Set[ID])], iteration: Int): RDD[(ID, ComponentID)] = {
     // Need to take a count of edges, and then operate on the graph.
     // We best cache it here.
     graph.persist(StorageLevel.MEMORY_AND_DISK)
     if (graph.count == 0) {
-      return graph.sparkContext.emptyRDD[(VertexId, ComponentId)]
+      return graph.sparkContext.emptyRDD[(ID, ComponentID)]
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
     if (edgeCount <= ConnectedComponents.maxEdgesProcessedLocally) {
@@ -62,8 +50,7 @@ private object ConnectedComponents {
     }
   }
 
-  def getComponentsDist(
-    graph: RDD[(VertexId, Set[VertexId])], iteration: Int): RDD[(VertexId, ComponentId)] = {
+  def getComponentsDist(graph: RDD[(ID, Set[ID])], iteration: Int): RDD[(ID, ComponentID)] = {
 
     val partitioner = graph.partitioner.get
 
@@ -95,8 +82,7 @@ private object ConnectedComponents {
             (n, invSeq.find(_ != n).get)
           }
       },
-      preservesPartitioning = true
-    ).persist(StorageLevel.MEMORY_AND_DISK)
+      preservesPartitioning = true).persist(StorageLevel.MEMORY_AND_DISK)
 
     // Update edges. First, update the source (n->c) and flip the direction.
     val halfDone = graph.join(moves).flatMap({
@@ -112,13 +98,12 @@ private object ConnectedComponents {
         case (c, edgesList) =>
           (c, edgesList.toSet.flatten - c)
       },
-      preservesPartitioning = true
-    )
+      preservesPartitioning = true)
 
     // Third, remove finished components.
     val newGraph = almostDone.filter({ case (n, edges) => edges.nonEmpty })
     // Recursion.
-    val newComponents: RDD[(VertexId, ComponentId)] = getComponents(newGraph, iteration + 1)
+    val newComponents: RDD[(ID, ComponentID)] = getComponents(newGraph, iteration + 1)
     // We just have to map back the component IDs to the vertices.
     val reverseMoves = moves.map({ case (n, party) => (party, n) })
     val parties = reverseMoves.groupByKey(partitioner)
@@ -126,16 +111,16 @@ private object ConnectedComponents {
       case (party, (guests, component)) =>
         guests.map((_, component.getOrElse(party)))
     }).partitionBy(partitioner)
-    return components
+    components
   }
 
   def getComponentsLocal(
-    graphRDD: RDD[(VertexId, Set[VertexId])]): RDD[(VertexId, ComponentId)] = {
-    // Moves all the data to the dirver and processes it there.
+    graphRDD: RDD[(ID, Set[ID])]): RDD[(ID, ComponentID)] = {
+    // Moves all the data to the driver and processes it there.
     val p = graphRDD.collect
 
     val graph = p.toMap
-    val components = mutable.Map[Long, Long]()
+    val components = mutable.Map[ID, ComponentID]()
     var idx = 0
     // Breadth-first search.
     for (node <- graph.keys) {
@@ -155,6 +140,6 @@ private object ConnectedComponents {
     }
     assert(components.size == graph.size, s"${components.size} != ${graph.size}")
 
-    return graphRDD.sparkContext.parallelize(components.toSeq).partitionBy(graphRDD.partitioner.get)
+    graphRDD.sparkContext.parallelize(components.toSeq).partitionBy(graphRDD.partitioner.get)
   }
 }
