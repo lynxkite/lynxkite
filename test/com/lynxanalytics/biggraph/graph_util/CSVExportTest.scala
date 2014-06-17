@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
-
+/*
 class CSVExportTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   test("We can export a simple graph") {
     val graphManager = cleanGraphManager("csvexport")
@@ -73,3 +73,4 @@ class CSVExportTest extends FunSuite with TestBigGraphManager with TestGraphData
          |""".stripMargin)
   }
 }
+ */
