@@ -4,29 +4,33 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
-/*
-class CSVExportTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
-  test("We can export a simple graph") {
-    val graphManager = cleanGraphManager("csvexport")
-    val dataManager = cleanDataManager("csvexport")
-    val myGraph = graphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
-    val myData = dataManager.obtainData(myGraph)
-    assert(CSVExport.exportVertices(myData).toString ==
+
+class CSVExportTest extends FunSuite with TestGraphOperation {
+  test("We can export attributes") {
+    val helper = cleanHelper
+    val sampleOut = helper.apply(CreateExampleGraphOperation())
+    assert(CSVExport.exportVertexAttributes(
+      Seq(sampleOut.vertexAttributes('name), sampleOut.vertexAttributes('age)),
+      Seq("name", "age"),
+      helper.dataManager).toString ==
       """|"vertexId","name","age"
          |0,"Adam",20.3
          |1,"Eve",18.2
          |2,"Bob",50.3
          |""".stripMargin)
-    assert(CSVExport.exportEdges(myData).toString ==
-      """|"srcVertexId","dstVertexId","comment"
-         |0,1,"Adam loves Eve"
-         |1,0,"Eve loves Adam"
-         |2,0,"Bob envies Adam"
-         |2,1,"Bob loves Eve"
+    assert(CSVExport.exportEdgeAttributes(
+      Seq(sampleOut.edgeAttributes('comment)),
+      Seq("comment"),
+      helper.dataManager).toString ==
+      """|"edgeId","srcVertexId","dstVertexId","comment"
+         |0,0,1,"Adam loves Eve"
+         |1,1,0,"Eve loves Adam"
+         |3,2,1,"Bob loves Eve"
+         |2,2,0,"Bob envies Adam"
          |""".stripMargin)
   }
 
-  test("We can save a simple graph to files") {
+  /*  test("We can save a simple graph to files") {
     val graphManager = cleanGraphManager("csvsave")
     val dataManager = cleanDataManager("csvsave")
     val myGraph = graphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
@@ -71,6 +75,6 @@ class CSVExportTest extends FunSuite with TestBigGraphManager with TestGraphData
          |"vertexId","name","age"
          |********
          |""".stripMargin)
-  }
+  }*/
 }
- */
+

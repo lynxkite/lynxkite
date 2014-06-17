@@ -62,7 +62,7 @@ object CSVExport {
         preservesPartitioning = true)
 
     CSVData(
-      ("edgeId" +: "srcVertex" +: "dstVertex" +: attributeLabels).map(quoteString),
+      ("edgeId" +: "srcVertexId" +: "dstVertexId" +: attributeLabels).map(quoteString),
       attachAttributeData(indexedEdges, attributes, dataManager).values)
   }
 
@@ -86,13 +86,16 @@ object CSVExport {
     indexedData
   }
 
-  private def stringRDDFromAttribute[T: TypeTag: ClassTag](
+  private def stringRDDFromAttribute[T: ClassTag](
     dataManager: DataManager, attribute: Attribute[T]): rdd.RDD[(ID, String)] = {
+    implicit val tagForT = attribute.typeTag
     val op = toCSVStringOperation[T]
     dataManager.get(attribute).rdd.mapValues(op)
   }
 
   private def toCSVStringOperation[T: TypeTag]: T => String = {
+    println("Getting CSV string operation for", typeOf[T])
+    println("Type of string", typeOf[String])
     if (typeOf[T] =:= typeOf[String]) {
       stringValue => quoteString(stringValue.asInstanceOf[String])
     } else {
