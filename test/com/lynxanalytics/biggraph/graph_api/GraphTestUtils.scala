@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
 import org.apache.spark
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.graphx
 import scala.util.Random
 
@@ -46,6 +47,59 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
     managerDir.mkdir
     new DataManager(sparkContext, Filename(managerDir.toString))
   }
+}
+
+class GraphOperationTestHelper(val metaManager: MetaGraphManager,
+                               val dataManager: DataManager) {
+  def apply(operation: MetaGraphOperation,
+            inputs: MetaDataSet = MetaDataSet()): MetaDataSet = {
+    metaManager.apply(operation, inputs).outputs
+  }
+
+  def apply(operation: MetaGraphOperation,
+            all: Map[Symbol, MetaGraphEntity]): MetaDataSet = {
+    apply(operation, MetaDataSet(all))
+  }
+
+  def apply(operation: MetaGraphOperation,
+            all: (Symbol, MetaGraphEntity)*): MetaDataSet = apply(operation, all.toMap)
+
+  def smallGraph(edgeLists: Map[Int, Seq[Int]]): (VertexSet, EdgeBundle) = {
+    val outs = apply(SmallTestGraph(edgeLists))
+    (outs.vertexSets('vs), outs.edgeBundles('es))
+  }
+
+  def localData(vertexSet: VertexSet): Set[Long] = {
+    dataManager.get(vertexSet).rdd.keys.collect.toSet
+  }
+  def localData(edgeBundle: EdgeBundle): Set[(Long, Long)] = {
+    dataManager
+      .get(edgeBundle)
+      .rdd
+      .collect
+      .map { case (id, edge) => (edge.src, edge.dst) }
+      .toSet
+  }
+  def localData[T](vertexAttribute: VertexAttribute[T]): Map[Long, T] = {
+    dataManager.get(vertexAttribute).rdd.collect.toMap
+  }
+  def localData[T](edgeAttribute: EdgeAttribute[T]): Map[(Long, Long), T] = {
+    val edgesRDD = dataManager.get(edgeAttribute.edgeBundle).rdd
+    val attrRDD = dataManager.get(edgeAttribute).rdd
+    edgesRDD.join(attrRDD).map {
+      case (id, (edge, value)) =>
+        (edge.src, edge.dst) -> value
+    }.collect.toMap
+  }
+}
+
+object HelperSingletonProvider extends TestMetaGraphManager with TestDataManager {
+  lazy val helper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
+}
+
+trait TestGraphOperation extends TestMetaGraphManager with TestDataManager {
+  val helper = HelperSingletonProvider.helper
+  def cleanHelper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
 }
 
 class BigGraphTestEnvironment(dirName: String) extends BigGraphEnvironment with TestBigGraphManager with TestGraphDataManager {
@@ -125,5 +179,19 @@ case class CreateExampleGraphOperation() extends MetaGraphOperation {
       (1l, "Eve loves Adam"),
       (2l, "Bob envies Adam"),
       (3l, "Bob loves Eve"))))
+  }
+}
+
+case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
+  def signature = newSignature.outputGraph('vs, 'es)
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
+    val sc = rc.sparkContext
+    outputs.putVertexSet('vs, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
+    val nodePairs = edgeLists.toSeq.flatMap {
+      case (i, es) => es.map(e => i -> e)
+    }
+    outputs.putEdgeBundle('es, sc.parallelize(nodePairs.zipWithIndex.map {
+      case ((a, b), i) => i.toLong -> Edge(a, b)
+    }))
   }
 }

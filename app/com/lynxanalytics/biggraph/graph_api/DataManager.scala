@@ -115,12 +115,18 @@ class DataManager(sc: spark.SparkContext,
     edgeAttributeCache(gUID).runtimeSafeCast[T]
   }
 
+  def get[T](entity: Attribute[T]): AttributeData[T] = {
+    entity match {
+      case va: VertexAttribute[_] => get(va)
+      case ea: EdgeAttribute[_] => get(ea)
+    }
+  }
+
   def get(entity: MetaGraphEntity): EntityData = {
     entity match {
       case vs: VertexSet => get(vs)
       case eb: EdgeBundle => get(eb)
-      case va: VertexAttribute[_] => get(va)
-      case ea: EdgeAttribute[_] => get(ea)
+      case a: Attribute[_] => get(a)
     }
   }
 

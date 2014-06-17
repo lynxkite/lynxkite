@@ -8,7 +8,7 @@ import java.io.ObjectOutputStream
 import java.util.UUID
 import scala.collection.mutable
 
-import com.lynxanalytics.biggraph.bigGraphLogger
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 class MetaGraphManager(val repositoryPath: String) {
   def apply(operation: MetaGraphOperation,
@@ -72,6 +72,7 @@ class MetaGraphManager(val repositoryPath: String) {
       assert(
         !entities.contains(gUID),
         "Fatal conflict %s <=> %s".format(entity, entities(gUID)))
+      log.info(s"Stored $entity with GUID $gUID")
       entities(gUID) = entity
     }
     operationInstance.outputs.edgeBundles.values.foreach { eb =>
@@ -90,9 +91,10 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
-    val time = scala.compat.Platform.currentTime
-    val dumpFile = new File("%s/dump-%13d".format(repositoryPath, time))
-    val finalFile = new File("%s/save-%13d".format(repositoryPath, time))
+    log.info(s"Saving $inst to disk.")
+    val time = Timestamp.toString
+    val dumpFile = new File(s"$repositoryPath/dump-$time")
+    val finalFile = new File(s"$repositoryPath/save-$time")
     val stream = new ObjectOutputStream(new FileOutputStream(dumpFile))
     stream.writeObject(SerializedOperation(inst))
     stream.close()
@@ -103,6 +105,7 @@ class MetaGraphManager(val repositoryPath: String) {
     val repo = new File(repositoryPath)
     val operationFileNames = repo.list.filter(_.startsWith("save-")).sorted
     operationFileNames.foreach { fileName =>
+      log.info(s"Loading operation from: $fileName")
       try {
         val file = new File(repo, fileName)
         val stream = new ObjectInputStream(new FileInputStream(file))
@@ -111,7 +114,7 @@ class MetaGraphManager(val repositoryPath: String) {
       } catch {
         // TODO(xandrew): Be more selective here...
         case e: Exception =>
-          bigGraphLogger.error(s"Error loading operation from file: $fileName", e)
+          log.error(s"Error loading operation from file: $fileName", e)
       }
     }
   }
@@ -119,6 +122,18 @@ class MetaGraphManager(val repositoryPath: String) {
 object MetaGraphManager {
   implicit class StringAsUUID(s: String) {
     def asUUID: UUID = UUID.fromString(s)
+  }
+}
+
+object Timestamp {
+  private var lastTime = 0L
+  // Returns a millisecond timestamp as a string. It is guaranteed to be unique
+  // for each call.
+  override def toString: String = this.synchronized {
+    val time = scala.compat.Platform.currentTime
+    val fixed = if (lastTime < time) time else lastTime + 1
+    lastTime = fixed
+    return "%013d".format(fixed)
   }
 }
 
