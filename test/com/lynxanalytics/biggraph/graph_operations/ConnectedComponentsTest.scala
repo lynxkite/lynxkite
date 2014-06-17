@@ -1,14 +1,14 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
-import org.apache.spark.graphx.VertexId
-import org.apache.spark.graphx.Edge
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.attributes._
 
+/*
 // Quick way to make a graph with no attributes from edge lists.
 case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation {
   def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 0)
@@ -29,13 +29,12 @@ case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation 
     return new SimpleGraphData(
       target,
       sc.parallelize(vertices, 1),
-      sc.parallelize(edges, 1)
-    )
+      sc.parallelize(edges, 1))
   }
 
   override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
     new BigGraphProperties(symmetricEdges = true)
-}
+}*/
 
 object ConnectedComponentsTest {
   def assertSameComponents(comp1: Map[Int, Int], comp2: Map[Int, Int]): Unit = {
@@ -53,49 +52,45 @@ object ConnectedComponentsTest {
     }
   }
 }
-/*class ConnectedComponentsTest
-    extends FunSuite with TestBigGraphManager with TestGraphDataManager {
+class ConnectedComponentsTest extends FunSuite {
   import ConnectedComponentsTest._
 
   // Creates the graph specified by `nodes` and applies ConnectedComponents to it.
   // Returns the resulting component attributes in an easy-to-use format.
-  def getComponents(nodes: Seq[(Int, Seq[Int])], local: Boolean): Map[Int, Int] = {
-    val graphManager = cleanGraphManager("SetOverlapTest")
-    val dataManager = cleanDataManager("SetOverlapTest")
-    val inputGraph = graphManager.deriveGraph(Seq(), GraphByEdgeLists(nodes))
+  def getComponents(nodes: Map[Int, Seq[Int]], local: Boolean): Map[Int, Int] = {
     ConnectedComponents.maxEdgesProcessedLocally = if (local) 100000 else 0
-    val outputGraph = graphManager.deriveGraph(
-      Seq(inputGraph), ConnectedComponents("component"))
-    val idx = outputGraph.vertexAttributes.readIndex[Long]("component")
-    val vertices = dataManager.obtainData(outputGraph).vertices
-    vertices.map({ case (n, da) => (n.toInt, da(idx).toInt) }).collect.toMap
+    val sg = TestWizard.run(SmallGraph(nodes), DataSet())
+    val cc = TestWizard.run(ConnectedComponents(), sg)
+    val links = cc.edgeBundles('links).rdd
+
+    links.values.map(e => (e.src.toInt, e.dst.toInt)).collect.toMap
   }
 
   test("three islands") {
-    val nodes = Seq(0 -> Seq(), 1 -> Seq(), 2 -> Seq())
+    val nodes = Map(0 -> Seq(), 1 -> Seq(), 2 -> Seq())
     val expectation = Map(0 -> 0, 1 -> 1, 2 -> 2)
     assertSameComponents(getComponents(nodes, local = true), expectation)
     assertSameComponents(getComponents(nodes, local = false), expectation)
   }
 
   test("triangle") {
-    val nodes = Seq(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))
+    val nodes = Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))
     val expectation = Map(0 -> 0, 1 -> 0, 2 -> 0)
     assertSameComponents(getComponents(nodes, local = true), expectation)
     assertSameComponents(getComponents(nodes, local = false), expectation)
   }
 
   test("island and line") {
-    val nodes = Seq(0 -> Seq(), 1 -> Seq(2), 2 -> Seq(1))
+    val nodes = Map(0 -> Seq(), 1 -> Seq(2), 2 -> Seq(1))
     val expectation = Map(0 -> 0, 1 -> 1, 2 -> 1)
     assertSameComponents(getComponents(nodes, local = true), expectation)
     assertSameComponents(getComponents(nodes, local = false), expectation)
   }
 
   test("long line") {
-    val nodes = Seq(0 -> Seq(1), 1 -> Seq(0, 2), 2 -> Seq(1, 3), 3 -> Seq(2))
+    val nodes = Map(0 -> Seq(1), 1 -> Seq(0, 2), 2 -> Seq(1, 3), 3 -> Seq(2))
     val expectation = Map(0 -> 0, 1 -> 0, 2 -> 0, 3 -> 0)
     assertSameComponents(getComponents(nodes, local = true), expectation)
     assertSameComponents(getComponents(nodes, local = false), expectation)
   }
-}*/
+}

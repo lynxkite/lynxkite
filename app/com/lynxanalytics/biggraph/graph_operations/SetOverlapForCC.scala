@@ -14,13 +14,13 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
   def signature = newSignature
     .inputVertexSet('vs)
     .inputVertexSet('sets)
-    .inputEdgeBundle('link, 'vs -> 'sets)
-    .outputEdgeBundle('overlap, 'sets -> 'sets)
+    .inputEdgeBundle('links, 'vs -> 'sets)
+    .outputEdgeBundle('overlaps, 'sets -> 'sets)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val partitioner = rc.defaultPartitioner
 
-    val byMemberNode = inputs.edgeBundles('link).rdd.values
+    val byMemberNode = inputs.edgeBundles('links).rdd.values
       .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
       .flatMap { case (setId, set) => set.map(vId => (vId, (setId, set.toArray[ID]))) }
@@ -28,7 +28,7 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
     val edges: RDD[Edge] = byMemberNode.flatMap {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
-    outputs.putEdgeBundle('overlap, RDDUtils.fastNumbered(edges))
+    outputs.putEdgeBundle('overlaps, RDDUtils.fastNumbered(edges))
   }
 
   // Override this with the actual overlap function implementations

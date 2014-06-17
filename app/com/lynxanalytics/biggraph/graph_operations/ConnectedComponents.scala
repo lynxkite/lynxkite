@@ -20,16 +20,19 @@ case class ConnectedComponents() extends MetaGraphOperation {
   def signature = newSignature
     .inputGraph('vs, 'es)
     .outputVertexSet('cc)
-    .outputEdgeBundle('link, 'vs -> 'cc)
+    .outputEdgeBundle('links, 'vs -> 'cc)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val partitioner = rc.defaultPartitioner
     val inputEdges = inputs.edgeBundles('es).rdd.values
       .map(edge => (edge.src, edge.dst))
-    // Graph as edge lists. Does not include degree-0 vertices.
     val graph = inputEdges.groupByKey(partitioner).mapValues(_.toSet)
-    val edges = getComponents(graph, 0).map { case(vId, cId) => Edge(vId, cId) }
-    outputs.putEdgeBundle('link, RDDUtils.fastNumbered(edges))
+    println("cc input edges: " + inputs.edgeBundles('es).rdd.collect.toSeq)
+    val ccEdges = getComponents(graph, 0).map { case (vId, cId) => Edge(vId, cId) }
+    // islands are not represented in the edge bundle as they have degree 0
+    val zeroDegree = inputs.vertexSets('vs).rdd.keys.subtract(ccEdges.map(_.src))
+    val allEdges = ccEdges ++ zeroDegree.map(e => Edge(e, e))
+    outputs.putEdgeBundle('links, RDDUtils.fastNumbered(allEdges))
   }
 
   type ComponentID = ID
