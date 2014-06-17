@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx
 import org.apache.spark.rdd
 import scala.collection.mutable
 
@@ -23,8 +22,8 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val partitioner = rc.defaultPartitioner
 
-    val byMemberNode = inputs.edgeBundles('link).rdd
-      .map { case (_, Edge(vId, setId)) => setId -> vId }
+    val byMemberNode = inputs.edgeBundles('link).rdd.values
+      .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
       .flatMap { case (setId, set) => set.map(vId => (vId, (setId, set.toArray[Long]))) }
       .groupByKey(partitioner)
@@ -62,7 +61,7 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
     return None
   }
 
-  def edgesFor(vid: Long, sets: Seq[(graphx.VertexId, Array[Long])]): Seq[Edge] = {
+  def edgesFor(vid: Long, sets: Seq[(Long, Array[Long])]): Seq[Edge] = {
     val res = mutable.Buffer[Edge]()
 
     // Array of set indices that still need to be checked when considering the neighbors of
