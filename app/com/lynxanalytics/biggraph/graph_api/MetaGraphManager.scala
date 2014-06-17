@@ -87,9 +87,9 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
     log.info(s"Saving $inst to disk.")
-    val time = scala.compat.Platform.currentTime
-    val dumpFile = new File("%s/dump-%13d".format(repositoryPath, time))
-    val finalFile = new File("%s/save-%13d".format(repositoryPath, time))
+    val time = Timestamp.toString
+    val dumpFile = new File(s"$repositoryPath/dump-$time")
+    val finalFile = new File(s"$repositoryPath/save-$time")
     val stream = new ObjectOutputStream(new FileOutputStream(dumpFile))
     stream.writeObject(SerializedOperation(inst))
     stream.close()
@@ -112,6 +112,18 @@ class MetaGraphManager(val repositoryPath: String) {
           log.error(s"Error loading operation from file: $fileName", e)
       }
     }
+  }
+}
+
+object Timestamp {
+  private var lastTime = 0L
+  // Returns a millisecond timestamp as a string. It is guaranteed to be unique
+  // for each call.
+  override def toString: String = this.synchronized {
+    val time = scala.compat.Platform.currentTime
+    val fixed = if (lastTime < time) time else lastTime + 1
+    lastTime = fixed
+    return "%013d".format(fixed)
   }
 }
 
