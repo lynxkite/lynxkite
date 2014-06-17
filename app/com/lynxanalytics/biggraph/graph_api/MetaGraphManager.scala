@@ -12,6 +12,10 @@ import com.lynxanalytics.biggraph.bigGraphLogger
 
 class MetaGraphManager(val repositoryPath: String) {
   def apply(operation: MetaGraphOperation,
+            inputs: (Symbol, MetaGraphEntity)*): MetaGraphOperationInstance =
+    apply(operation, MetaDataSet(inputs.toMap))
+
+  def apply(operation: MetaGraphOperation,
             inputs: MetaDataSet = MetaDataSet()): MetaGraphOperationInstance = {
     val operationInstance = MetaGraphOperationInstance(operation, inputs)
     val gUID = operationInstance.gUID
@@ -22,6 +26,7 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(gUID)
   }
 
+  def allVertexSets: Set[VertexSet] = entities.values.collect { case e: VertexSet => e }.toSet
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
   def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
   def vertexAttribute(gUID: UUID): VertexAttribute[_] =
@@ -109,6 +114,11 @@ class MetaGraphManager(val repositoryPath: String) {
           bigGraphLogger.error(s"Error loading operation from file: $fileName", e)
       }
     }
+  }
+}
+object MetaGraphManager {
+  implicit class StringAsUUID(s: String) {
+    def asUUID: UUID = UUID.fromString(s)
   }
 }
 

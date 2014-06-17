@@ -14,7 +14,7 @@ import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
-  override def signature = newSignature
+  def signature = newSignature
     .inputGraph('vsIn, 'esIn)
     .outputVertexSet('vsOut)
     .outputEdgeBundle('link, 'vsIn -> 'vsOut)

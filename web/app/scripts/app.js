@@ -8,15 +8,15 @@ angular
   ])
   .config(function ($routeProvider) {
     $routeProvider
-      .when('/graph/:graph', {
-        templateUrl: 'views/graph.html',
-        controller: 'GraphViewCtrl'
+      .when('/metaGraph/:vertexSet', {
+        templateUrl: 'views/metaGraph.html',
+        controller: 'MetaGraphViewCtrl'
       })
       .when('/cluster/:password', {
         templateUrl: 'views/clusterManager.html',
         controller: 'ClusterManagerCtrl'
       })
       .otherwise({
-        redirectTo: '/graph/x'
+        redirectTo: '/metaGraph/x'
       });
   });

@@ -1,5 +1,5 @@
-GET  /ajax/graph       com.lynxanalytics.biggraph.serving.ProductionJsonServer.bigGraphGet
-GET  /ajax/derive      com.lynxanalytics.biggraph.serving.ProductionJsonServer.deriveBigGraphGet
+GET  /ajax/vertexSet   com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexSetGet
+GET  /ajax/applyOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.applyOpGet
 GET  /ajax/stats       com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphStatsGet
 GET  /ajax/startingOps com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingOperationsGet
 #GET  /ajax/saveAsCSV   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveGraphAsCSV

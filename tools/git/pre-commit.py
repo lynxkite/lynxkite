@@ -14,7 +14,7 @@ def warn(msg):
   else:
     print(msg, file=sys.stderr)
 
-protected_branches = ['master']
+protected_branches = ['master', 'brave-new-world']
 branch = subprocess.check_output('git rev-parse --abbrev-ref=strict HEAD'.split()).strip()
 if branch in protected_branches:
   warn('You cannot commit directly to {0!r}.'.format(branch))
