@@ -64,6 +64,11 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
   def apply(operation: MetaGraphOperation,
             all: (Symbol, MetaGraphEntity)*): MetaDataSet = apply(operation, all.toMap)
 
+  def apply(operation: MetaGraphOperation,
+            all: (VertexSet, EdgeBundle)): MetaDataSet = {
+    apply(operation, MetaDataSet(Map('vs -> all._1), Map('es -> all._2)))
+  }
+
   def smallGraph(edgeLists: Map[Int, Seq[Int]]): (VertexSet, EdgeBundle) = {
     val outs = apply(SmallTestGraph(edgeLists))
     (outs.vertexSets('vs), outs.edgeBundles('es))

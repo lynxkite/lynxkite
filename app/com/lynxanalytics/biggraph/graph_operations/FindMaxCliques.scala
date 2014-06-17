@@ -13,7 +13,7 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
   def signature = newSignature
     .inputGraph('vsIn, 'esIn)
     .outputVertexSet('cliques)
-    .outputEdgeBundle('link, 'vsIn -> 'cliques)
+    .outputEdgeBundle('links, 'vsIn -> 'cliques)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val cug = CompactUndirectedGraph(inputs.edgeBundles('esIn))
@@ -21,9 +21,9 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
       inputs.vertexSets('vsIn), cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
     val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists)
     outputs.putVertexSet('cliques, indexedCliqueLists.mapValues(_ => Unit))
-    outputs.putEdgeBundle('link, indexedCliqueLists.flatMap {
-      case (cid, vids) => vids.map(vid => 42l -> Edge(vid, cid))
-    })
+    outputs.putEdgeBundle('links, RDDUtils.fastNumbered(indexedCliqueLists.flatMap {
+      case (cid, vids) => vids.map(vid => Edge(vid, cid))
+    }))
   }
 
   // TODO: Put this into the EdgeBundle?
