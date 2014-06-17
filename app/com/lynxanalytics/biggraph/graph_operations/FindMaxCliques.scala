@@ -2,15 +2,11 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx
-import org.apache.spark.graphx.VertexId
 import org.apache.spark.rdd
 import scala.collection.immutable
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
-import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
@@ -39,7 +35,7 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
   /*
    * Finds best pivot among given candidates based on degree.
    */
-  private def FindPivot(candidates: Seq[VertexId], fullGraph: CompactUndirectedGraph): VertexId = {
+  private def FindPivot(candidates: Seq[ID], fullGraph: CompactUndirectedGraph): ID = {
     return candidates
       .map(id => (id, fullGraph.getNeighbors(id).length))
       .maxBy(_._2)._1
@@ -50,10 +46,10 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
    * are in neighbors back to markedCandidates starting at position end.
    * Extends markedCandidates if necessary. Returns the new end position.
    */
-  private def SmartIntersectNA(markedCandidates: mutable.ArrayBuffer[(VertexId, Boolean)],
+  private def SmartIntersectNA(markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
                                start: Int,
                                end: Int,
-                               neighbours: Seq[VertexId]): Int = {
+                               neighbours: Seq[ID]): Int = {
     var source = start
     var target = end
     val nit = neighbours.iterator.buffered
@@ -87,12 +83,12 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
    * end. Basically the single ArrayBuffer is used as a stack to store the
    * state of the recursion.
    */
-  private def SmartBKNA(currentClique: List[VertexId],
-                        markedCandidates: mutable.ArrayBuffer[(VertexId, Boolean)],
+  private def SmartBKNA(currentClique: List[ID],
+                        markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
                         start: Int,
                         end: Int,
                         fullGraph: CompactUndirectedGraph,
-                        cliqueCollector: mutable.ArrayBuffer[List[VertexId]],
+                        cliqueCollector: mutable.ArrayBuffer[List[ID]],
                         minCliqueSize: Int) {
     if (start == end) {
       if (currentClique.size >= minCliqueSize) cliqueCollector += currentClique
@@ -128,14 +124,14 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
                              cug: CompactUndirectedGraph,
                              sc: spark.SparkContext,
                              minCliqueSize: Int,
-                             numTasks: Int): rdd.RDD[List[VertexId]] = {
+                             numTasks: Int): rdd.RDD[List[ID]] = {
     val broadcastGraph = sc.broadcast(cug)
     g.rdd.map(_._1).repartition(numTasks).flatMap(
       v => {
         val fullGraph = broadcastGraph.value
         val markedCandidates =
           mutable.ArrayBuffer.concat(fullGraph.getNeighbors(v).map(n => (n, n < v)))
-        val collector = mutable.ArrayBuffer[List[VertexId]]()
+        val collector = mutable.ArrayBuffer[List[ID]]()
         SmartBKNA(
           List(v),
           markedCandidates,

@@ -6,8 +6,6 @@ import org.apache.spark.rdd
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
-import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 
 import org.apache.spark.rdd._
 import com.lynxanalytics.biggraph.spark_util._
@@ -25,7 +23,7 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
     val byMemberNode = inputs.edgeBundles('link).rdd.values
       .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
-      .flatMap { case (setId, set) => set.map(vId => (vId, (setId, set.toArray[Long]))) }
+      .flatMap { case (setId, set) => set.map(vId => (vId, (setId, set.toArray[ID]))) }
       .groupByKey(partitioner)
     val edges: RDD[Edge] = byMemberNode.flatMap {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
@@ -38,8 +36,8 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
 
   // Checks if the two sorted array has an intersection of at least minOverlap. If yes,
   // returns the minimal element of the intesection. If no, returns None.
-  private def hasEnoughIntersection(a: Array[Long],
-                                    b: Array[Long],
+  private def hasEnoughIntersection(a: Array[ID],
+                                    b: Array[ID],
                                     minOverlap: Int): Option[Long] = {
     var ai = 0
     var bi = 0
@@ -61,7 +59,7 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
     return None
   }
 
-  def edgesFor(vid: Long, sets: Seq[(Long, Array[Long])]): Seq[Edge] = {
+  def edgesFor(vid: ID, sets: Seq[(ID, Array[ID])]): Seq[Edge] = {
     val res = mutable.Buffer[Edge]()
 
     // Array of set indices that still need to be checked when considering the neighbors of

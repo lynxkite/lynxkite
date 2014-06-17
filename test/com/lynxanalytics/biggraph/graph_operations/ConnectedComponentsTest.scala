@@ -53,7 +53,7 @@ object ConnectedComponentsTest {
     }
   }
 }
-class ConnectedComponentsTest
+/*class ConnectedComponentsTest
     extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   import ConnectedComponentsTest._
 
@@ -68,7 +68,7 @@ class ConnectedComponentsTest
       Seq(inputGraph), ConnectedComponents("component"))
     val idx = outputGraph.vertexAttributes.readIndex[Long]("component")
     val vertices = dataManager.obtainData(outputGraph).vertices
-    return vertices.map({ case (n, da) => (n.toInt, da(idx).toInt) }).collect.toMap
+    vertices.map({ case (n, da) => (n.toInt, da(idx).toInt) }).collect.toMap
   }
 
   test("three islands") {
@@ -98,4 +98,4 @@ class ConnectedComponentsTest
     assertSameComponents(getComponents(nodes, local = true), expectation)
     assertSameComponents(getComponents(nodes, local = false), expectation)
   }
-}
+}*/
