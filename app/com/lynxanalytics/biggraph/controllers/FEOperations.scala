@@ -8,6 +8,29 @@ import scala.reflect.runtime.universe.typeOf
 object FEOperations extends FEOperationRepository {
   val Param = FEOperationParameterMeta // Short alias.
 
+  registerOperation(CreateVertexSet)
+  object CreateVertexSet extends FEOperation {
+    val title = "Create a new vertex set"
+    val parameters = Seq(
+      Param("size", "Vertex set size"))
+    def instance(params: Map[String, String]) = manager.apply(
+      graph_operations.CreateVertexSet(params("size").toInt))
+  }
+
+  registerOperation(RandomEdgeBundle)
+  object RandomEdgeBundle extends FEOperation {
+    val title = "Create a random edge bundle"
+    val parameters = Seq(
+      Param("vsSrc", "Source vertex set", kind = "vertex-set"),
+      Param("vsDst", "Destination vertex set", kind = "vertex-set"),
+      Param("density", "density", defaultValue = "0.5"),
+      Param("seed", "Seed", defaultValue = "0"))
+    def instance(params: Map[String, String]) = manager.apply(
+      graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat),
+      'vsSrc -> manager.vertexSet(params("vsSrc").asUUID),
+      'vsDst -> manager.vertexSet(params("vsDst").asUUID))
+  }
+
   registerOperation(FindMaxCliques)
   object FindMaxCliques extends FEOperation {
     val title = "Find maximal cliques"

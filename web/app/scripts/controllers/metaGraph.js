@@ -1,16 +1,24 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('MetaGraphViewCtrl', function ($scope, $routeParams, $resource, $modal, $location) {
+  .controller('MetaGraphViewCtrl', function ($scope, $routeParams, $resource, $modal) {
     var id = $routeParams.vertexSet;
 
     var VertexSet = $resource('/ajax/vertexSet');
-    function loadGraph() {
+    function loadCurrentVertexSet() {
       VertexSet.get(
         {q: {id: id}},
         function(vertexSet) {
           $scope.vertexSet = vertexSet;
           $scope.allOps = $scope.startingOps.concat(vertexSet.ops);
+        });
+    }
+    var StartingVertexSets = $resource('/ajax/startingVs');
+    function loadStartingVertexSets() {
+      StartingVertexSets.query(
+        {q: {fake: 0}},
+        function(vertexSets) {
+          $scope.startingVertexSets = vertexSets;
         });
     }
 
@@ -33,8 +41,11 @@ angular.module('biggraph')
         id: operation.id,
         parameters: modalResult
       };
-      ApplyOperation.get({q: request}, function(fake) {
-        loadGraph()
+      ApplyOperation.get({q: request}, function() {
+        if (id !== 'x') {
+	  loadCurrentVertexSet();
+	}
+	loadStartingVertexSets();
       });
     }
 
@@ -48,9 +59,10 @@ angular.module('biggraph')
     $scope.startingOps = StartingOps.query({q: {fake: 0}});
     $scope.allOps = $scope.startingOps;
     $scope.apply = applyOperationFlow;
+    loadStartingVertexSets();
 
     if (id !== 'x') {
       $scope.id = id;
-      loadGraph(id)
+      loadCurrentVertexSet();
     }
   });

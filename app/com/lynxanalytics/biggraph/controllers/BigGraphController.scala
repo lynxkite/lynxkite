@@ -184,4 +184,7 @@ class BigGraphController(environment: BigGraphEnvironment) {
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
     FEOperations.getStartingOperationMetas
+
+  def startingVertexSets(request: serving.Empty): Seq[UIValue] =
+    manager.allVertexSets.filter(_.source.inputs.all.isEmpty).map(UIValue.fromEntity(_)).toSeq
 }

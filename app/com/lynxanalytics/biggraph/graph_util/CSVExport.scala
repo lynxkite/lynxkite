@@ -2,8 +2,10 @@ package com.lynxanalytics.biggraph.graph_util
 
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.hadoop
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.graphx
 import org.apache.spark.rdd
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -24,51 +26,80 @@ object CSVData {
 }
 
 object CSVExport {
-  def exportVertices(graphData: GraphData): CSVData = {
-    val readers = graphData.bigGraph.vertexAttributes.getReadersForOperation(CSVCellConverter)
+  def exportVertexAttributes(attributes: Seq[VertexAttribute[_]],
+                             attributeLabels: Seq[String],
+                             dataManager: DataManager): CSVData = {
+    assert(attributes.size > 0)
+    assert(attributes.size == attributeLabels.size)
+    val vertexSet = attributes.head.vertexSet
+    assert(attributes.forall(_.vertexSet == vertexSet))
+    val indexedVertexIds: rdd.RDD[(ID, Seq[String])] =
+      dataManager.get(vertexSet).rdd.mapPartitions(it =>
+        it.map {
+          case (id, _) =>
+            (id, Vector(id.toString))
+        },
+        preservesPartitioning = true)
+
     CSVData(
-      ("vertexId" +: graphData.bigGraph.vertexAttributes.attributeSeq).map(quoteString),
-      graphData.vertices.map {
-        case (id, attr) => id.toString +: readers.map(_.readFrom(attr))
-      })
+      ("vertexId" +: attributeLabels).map(quoteString),
+      attachAttributeData(indexedVertexIds, attributes, dataManager).values)
   }
-  def exportEdges(graphData: GraphData): CSVData = {
-    val readers = graphData.bigGraph.edgeAttributes.getReadersForOperation(CSVCellConverter)
+
+  def exportEdgeAttributes(attributes: Seq[EdgeAttribute[_]],
+                           attributeLabels: Seq[String],
+                           dataManager: DataManager): CSVData = {
+    assert(attributes.size > 0)
+    assert(attributes.size == attributeLabels.size)
+    val edgeBundle = attributes.head.edgeBundle
+    assert(attributes.forall(_.edgeBundle == edgeBundle))
+    val indexedEdges: rdd.RDD[(ID, Seq[String])] =
+      dataManager.get(edgeBundle).rdd.mapPartitions(it =>
+        it.map {
+          case (id, edge) =>
+            (id, Vector(id.toString, edge.src.toString, edge.dst.toString))
+        },
+        preservesPartitioning = true)
+
     CSVData(
-      ("srcVertexId" +: "dstVertexId" +: graphData.bigGraph.edgeAttributes.attributeSeq)
-        .map(quoteString),
-      graphData.edges.map {
-        case graphx.Edge(srcId, dstId, attr) =>
-          srcId.toString +: dstId.toString +: readers.map(_.readFrom(attr))
-      })
+      ("edgeId" +: "srcVertex" +: "dstVertex" +: attributeLabels).map(quoteString),
+      attachAttributeData(indexedEdges, attributes, dataManager).values)
   }
 
-  def exportToDirectory(graphData: GraphData,
-                        directoryPath: Filename): Unit = {
-    directoryPath.makeDir
+  private def attachAttributeData(
+    keyData: rdd.RDD[(ID, Seq[String])],
+    attributes: Seq[Attribute[_]],
+    dataManager: DataManager): rdd.RDD[(ID, Seq[String])] = {
 
-    val vertexCsvData = exportVertices(graphData)
-    directoryPath.addPathElement("vertex-header").createFromStrings(CSVData.lineToString(vertexCsvData.header))
-    vertexCsvData.saveDataToDir(directoryPath.addPathElement("vertex-data"))
+    var indexedData = keyData
+    for (attribute <- attributes) {
+      indexedData = indexedData
+        .leftOuterJoin(stringRDDFromAttribute(dataManager, attribute))
+        .mapValues {
+          case (prev, current) =>
+            current match {
+              case Some(value) => prev :+ value
+              case None => prev :+ ""
+            }
+        }
+    }
+    indexedData
+  }
 
-    val edgeCsvData = exportEdges(graphData)
-    directoryPath.addPathElement("edge-header").createFromStrings(CSVData.lineToString(edgeCsvData.header))
-    edgeCsvData.saveDataToDir(directoryPath.addPathElement("edge-data"))
+  private def stringRDDFromAttribute[T: TypeTag: ClassTag](
+    dataManager: DataManager, attribute: Attribute[T]): rdd.RDD[(ID, String)] = {
+    val op = toCSVStringOperation[T]
+    dataManager.get(attribute).rdd.mapValues(op)
+  }
+
+  private def toCSVStringOperation[T: TypeTag]: T => String = {
+    if (typeOf[T] =:= typeOf[String]) {
+      stringValue => quoteString(stringValue.asInstanceOf[String])
+    } else {
+      objectValue => objectValue.toString
+    }
   }
 
   private def quoteString(s: String) = "\"" + StringEscapeUtils.escapeJava(s) + "\""
 
-  private object CSVCellConverter extends TypeDependentOperation[String] {
-    def getReaderForIndex[S: TypeTag](idx: AttributeReadIndex[S]): AttributeReader[String] = {
-      new ConvertedAttributeReader[S, String](
-        idx,
-        if (typeOf[S] =:= typeOf[String]) {
-          stringValue => quoteString(stringValue.asInstanceOf[String])
-        } else if (typeOf[S] =:= typeOf[Array[Long]]) {
-          arrayValue => arrayValue.asInstanceOf[Array[Long]].mkString(";")
-        } else {
-          objectValue => objectValue.toString
-        })
-    }
-  }
 }
