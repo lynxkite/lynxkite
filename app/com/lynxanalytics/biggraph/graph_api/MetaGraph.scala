@@ -261,7 +261,8 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
                        vertexAttributes: Map[Symbol, VertexAttribute[_]] = Map(),
                        edgeAttributes: Map[Symbol, EdgeAttribute[_]] = Map()) {
-  val all = vertexSets ++ edgeBundles ++ vertexAttributes ++ edgeAttributes
+  val all: Map[Symbol, MetaGraphEntity] =
+    vertexSets ++ edgeBundles ++ vertexAttributes ++ edgeAttributes
   assert(all.size ==
     vertexSets.size + edgeBundles.size + vertexAttributes.size + edgeAttributes.size,
     "Cross type collision %s %s %s %s".format(
@@ -277,16 +278,11 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
       edgeAttributes ++ mds.edgeAttributes)
   }
 
-  def mapNames(mapping: Map[Symbol, Symbol]): MetaDataSet = {
-    val res = MetaDataSet(all.flatMap {
-      case (name, entity) =>
-        if (mapping.contains(name)) Some(mapping(name) -> entity) else None
-    })
-    assert(res.all.size == mapping.size)
-    res
+  def mapNames(mapping: (Symbol, Symbol)*): MetaDataSet = {
+    MetaDataSet(mapping.map {
+      case (from, to) => to -> all(from)
+    }.toMap)
   }
-
-  def mapNames(mapping: (Symbol, Symbol)*): MetaDataSet = mapNames(mapping.toMap)
 
   override def toString = all.toString
 }
