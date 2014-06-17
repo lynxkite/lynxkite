@@ -2,6 +2,7 @@ GET  /ajax/vertexSet   com.lynxanalytics.biggraph.serving.ProductionJsonServer.v
 GET  /ajax/applyOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.applyOpGet
 GET  /ajax/stats       com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphStatsGet
 GET  /ajax/startingOps com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingOperationsGet
+GET  /ajax/startingVs  com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingVertexSetsGet
 #GET  /ajax/saveAsCSV   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveGraphAsCSV
 GET  /ajax/sparkStatus com.lynxanalytics.biggraph.serving.ProductionJsonServer.getClusterStatus
 GET  /ajax/setWorkers  com.lynxanalytics.biggraph.serving.ProductionJsonServer.setClusterNumInstances

@@ -25,3 +25,11 @@
     <button class="btn btn-default" ng-click="apply(op)">{{op.title}}</button>
   </div>
 </div>
+<div class="startingvs bubble">
+  <h2>Starting Vertex Sets</h2>
+  <a class="vertexset token"
+     ng-repeat="vs in startingVertexSets"
+     href="/#/metaGraph/{{vs.id}}">
+    {{vs.title}}
+  </a>
+</div>
