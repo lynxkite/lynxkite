@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_api._
 
-class ImportGraphTest extends FunSuite with com.lynxanalytics.biggraph.TestSparkContext {
+class ImportGraphTest extends FunSuite with TestGraphOperation {
   test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
     val dir = "/graph_operations/ImportGraphTest/testgraph/"
     val vertexCSVs = Filename(getClass.getResource(dir + "vertex-data/part-00000").getFile)
@@ -18,20 +18,22 @@ class ImportGraphTest extends FunSuite with com.lynxanalytics.biggraph.TestSpark
     val sourceEdgeFieldName = "srcVertexId"
     val destEdgeFieldName = "dstVertexId"
     val delimiter = ","
-    val vertexData = TestWizard.run(ImportVertexList(
-      CSV(vertexCSVs, delimiter, ImportUtil.header(vertexHeader))).withNumericId(vertexIdFieldName))
+    val vertexData = helper.apply(
+      ImportVertexListWithNumericIDs(
+        CSV(vertexCSVs, delimiter, ImportUtil.header(vertexHeader)),
+        vertexIdFieldName))
     val vs = vertexData.vertexSets('vertices)
-    val edgeData = TestWizard.run(
-      ImportEdgeList(
+    val edgeData = helper.apply(
+      ImportEdgeListWithNumericIDsForExistingVertexSet(
         CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
-        sourceEdgeFieldName, destEdgeFieldName).forVertexSet,
-      DataSet(vertexSets = Map('sources -> vs, 'destinations -> vs)))
-    assert(TestUtils.RDDToSortedString(vertexData.vertexAttributes('name).rdd) ==
+        sourceEdgeFieldName, destEdgeFieldName),
+      vertexData.mapNames('vertices -> 'sources, 'vertices -> 'destinations))
+    assert(TestUtils.RDDToSortedString(helper.rdd(vertexData.vertexAttributes('name))) ==
       """|(0,Adam)
          |(1,Eve)
          |(2,Bob)""".stripMargin)
-    val edges = edgeData.edgeBundles('edges).rdd
-    val comments: AttributeRDD[_] = edgeData.edgeAttributes('comment).rdd
+    val edges = helper.rdd(edgeData.edgeBundles('edges))
+    val comments: AttributeRDD[_] = helper.rdd(edgeData.edgeAttributes('comment))
     assert(TestUtils.RDDToSortedString(edges.join(comments).values) ==
       """|(Edge(0,1),Adam loves Eve)
          |(Edge(1,0),Eve loves Adam)
@@ -47,14 +49,14 @@ class ImportGraphTest extends FunSuite with com.lynxanalytics.biggraph.TestSpark
     val edgeSourceFieldName = "srcVertexId"
     val edgeDestFieldName = "dstVertexId"
     val delimiter = "|"
-    val data = TestWizard.run(ImportEdgeList(
+    val data = helper.apply(ImportEdgeListWithNumericIDs(
       CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
       edgeSourceFieldName, edgeDestFieldName))
-    val vertices = data.vertexSets('vertices).rdd
-    val edges = data.edgeBundles('edges).rdd
+    val vertices = helper.rdd(data.vertexSets('vertices))
+    val edges = helper.rdd(data.edgeBundles('edges))
     assert(vertices.count === 6)
     assert(edges.count === 8)
-    val comments: AttributeRDD[_] = data.edgeAttributes('comment).rdd
+    val comments: AttributeRDD[_] = helper.rdd(data.edgeAttributes('comment))
     assert(TestUtils.RDDToSortedString(edges.join(comments).values) ==
       """|(Edge(0,1),Adam loves Eve)
          |(Edge(1,0),Eve loves Adam)
@@ -74,13 +76,13 @@ class ImportGraphTest extends FunSuite with com.lynxanalytics.biggraph.TestSpark
     val edgeDestFieldName = "dstVertexId"
     val delimiter = "|"
     val skipFirstRow = true
-    val data = TestWizard.run(ImportEdgeList(
+    val data = helper.apply(ImportEdgeListWithStringIDs(
       CSV(csv, delimiter, ImportUtil.header(csv)),
-      edgeSourceFieldName, edgeDestFieldName).withStringId(vertexIdAttrName))
-    val vs = data.vertexSets('vertices).rdd
-    val es = data.edgeBundles('edges).rdd
-    val names = data.vertexAttributes('name).rdd.asInstanceOf[AttributeRDD[String]]
-    val comments: AttributeRDD[_] = data.edgeAttributes('comment).rdd
+      edgeSourceFieldName, edgeDestFieldName, vertexIdAttrName))
+    val vs = helper.rdd(data.vertexSets('vertices))
+    val es = helper.rdd(data.edgeBundles('edges))
+    val names = helper.rdd(data.vertexAttributes('name)).asInstanceOf[AttributeRDD[String]]
+    val comments: AttributeRDD[_] = helper.rdd(data.edgeAttributes('comment))
     val bySrc = es.map { case (e, Edge(s, d)) => s -> (e, d) }
     val byDst = bySrc.join(names).map { case (s, ((e, d), ns)) => d -> (e, ns) }
     val named = byDst.join(names).map { case (d, ((e, ns), nd)) => e -> (ns, nd) }
@@ -105,8 +107,8 @@ class ImportGraphTest extends FunSuite with com.lynxanalytics.biggraph.TestSpark
       "|",
       ImportUtil.header(path),
       Javascript("comment.indexOf('loves') != -1"))
-    val comments = csv.read(sparkContext)("comment")
-    assert(TestUtils.RDDToSortedString(comments.values) ==
+    val comments = csv.lines(sparkContext).map(_(2))
+    assert(TestUtils.RDDToSortedString(comments) ==
       """|Bob loves Darth Vader
          |Harry loves Voldemort
          |Voldemort loves Harry""".stripMargin)

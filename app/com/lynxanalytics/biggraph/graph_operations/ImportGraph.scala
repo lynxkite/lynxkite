@@ -97,21 +97,13 @@ case class CSV(file: Filename,
                filter: Javascript = Javascript("")) {
   val fields = ImportUtil.split(header, delimiter)
 
-  def readAs[T](sc: SparkContext, extract: (Long, Seq[String], Int) => (Long, T)): Map[String, RDD[(Long, T)]] = {
+  def lines(sc: SparkContext): RDD[Seq[String]] = {
     val lines = file.loadTextFile(sc)
-    val filtered = lines
+    return lines
       .filter(_ != header)
       .map(ImportUtil.split(_, delimiter))
       .filter(jsFilter(_))
-    val numbered = RDDUtils.fastNumbered(filtered)
-    return fields.zipWithIndex.map {
-      case (field, idx) => field -> numbered.map { case (id, line) => extract(id, line, idx) }
-    }.toMap
   }
-
-  def read(sc: SparkContext) = readAs(sc, {
-    (id, line, idx) => id -> line(idx)
-  })
 
   def jsFilter(line: Seq[String]): Boolean = {
     if (line.length != fields.length) {
@@ -122,9 +114,34 @@ case class CSV(file: Filename,
   }
 }
 
-case class ImportVertexList(csv: CSV) extends MetaGraphOperation {
-  assert(!csv.fields.contains("vertices"),
-    "'vertices' is a reserved name and cannot be the name of a column.")
+abstract class ImportCommon(csv: CSV) extends MetaGraphOperation {
+  type Columns = Map[String, RDD[(Long, String)]]
+
+  protected def mustHaveField(field: String) = {
+    assert(csv.fields.contains(field), s"No such field: $field in ${csv.fields}")
+  }
+  protected def mustNotHaveField(field: String) = {
+    assert(!csv.fields.contains(field),
+      s"'$field' is a reserved name and cannot be the name of a column.")
+  }
+
+  protected def splitGenerateIDs(lines: RDD[Seq[String]]): Columns = {
+    val numbered = RDDUtils.fastNumbered(lines)
+    return csv.fields.zipWithIndex.map {
+      case (field, idx) => field -> numbered.map { case (id, line) => id -> line(idx) }
+    }.toMap
+  }
+
+  protected def splitWithIDField(lines: RDD[Seq[String]], idField: String): Columns = {
+    val idIdx = csv.fields.indexOf(idField)
+    return csv.fields.zipWithIndex.map {
+      case (field, idx) => field -> lines.map { line => line(idIdx).toLong -> line(idx) }
+    }.toMap
+  }
+}
+
+abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv) {
+  mustNotHaveField("vertices")
 
   def signature = {
     val s = newSignature.outputVertexSet('vertices)
@@ -135,128 +152,114 @@ case class ImportVertexList(csv: CSV) extends MetaGraphOperation {
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    for ((field, rdd) <- read(rc.sparkContext)) {
+    val columns = readColumns(rc.sparkContext)
+    for ((field, rdd) <- columns) {
       outputs.putVertexAttribute(Symbol(field), rdd)
-      outputs.putVertexSet('vertices, rdd.keys.map((_, Unit))) // Doesn't matter which one.
     }
+    outputs.putVertexSet('vertices, columns.values.head.keys.map((_, Unit)))
   }
 
-  def read(sc: SparkContext): Map[String, RDD[(Long, String)]] = csv.read(sc)
+  // Override this.
+  def readColumns(sc: SparkContext): Columns
+}
 
-  // A subclass of ImportVertexList, which uses a numeric field for the vertex ID.
-  def withNumericId(field: String): ImportVertexList = new ImportVertexList(csv) {
-    val idIdx = csv.fields.indexOf(field)
-    override def read(sc: SparkContext) = csv.readAs(sc, {
-      (id, line, idx) => line(idIdx).toLong -> line(idx)
+case class ImportVertexListWithStringIDs(csv: CSV) extends ImportVertexList(csv) {
+  def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
+}
+
+case class ImportVertexListWithNumericIDs(csv: CSV, id: String) extends ImportVertexList(csv) {
+  mustHaveField(id)
+  def readColumns(sc: SparkContext): Columns = splitWithIDField(csv.lines(sc), id)
+}
+
+abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
+  mustNotHaveField("edges")
+
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val columns = readColumns(rc.sparkContext)
+    execute(columns, outputs)
+  }
+
+  // Override these.
+  def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
+  def execute(columns: Columns, outputs: DataSetBuilder): Unit = {
+    for ((field, rdd) <- columns) {
+      outputs.putEdgeAttribute(Symbol(field), rdd)
+    }
+  }
+  def signature = {
+    val s = newSignature
+    for (field <- csv.fields) {
+      // Subclass has to define 'edges.
+      s.outputEdgeAttribute[String](Symbol(field), 'edges)
+    }
+    s
+  }
+}
+
+case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String) extends ImportEdgeList(csv) {
+  mustHaveField(src)
+  mustHaveField(dst)
+
+  override def signature = super.signature.outputGraph('vertices, 'edges)
+
+  override def execute(columns: Columns, outputs: DataSetBuilder) = {
+    super.execute(columns, outputs)
+    outputs.putVertexSet('vertices,
+      (columns(src).values ++ columns(dst).values).distinct.map(_.toLong -> ()))
+    outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
+      case (src, dst) => Edge(src.toLong, dst.toLong)
     })
   }
 }
 
-case class ImportEdgeList(csv: CSV, srcId: String, dstId: String) extends MetaGraphOperation {
-  assert(!csv.fields.contains("vertices"),
-    "'vertices' is a reserved name and cannot be the name of a column.")
-  assert(!csv.fields.contains("edges"),
-    "'edges' is a reserved name and cannot be the name of a column.")
-  assert(csv.fields.contains(srcId), s"No such field: $srcId in ${csv.fields}")
-  assert(csv.fields.contains(dstId), s"No such field: $dstId in ${csv.fields}")
+case class ImportEdgeListWithStringIDs(
+    csv: CSV, src: String, dst: String, vertexAttr: String) extends ImportEdgeList(csv) {
+  mustHaveField(src)
+  mustHaveField(dst)
+  mustNotHaveField(vertexAttr)
 
-  def signature = {
-    val s = newSignature.outputGraph('vertices, 'edges)
-    addEdgeAttributes(s)
-    s
+  override def signature = super.signature
+    .outputGraph('vertices, 'edges)
+    .outputVertexAttribute[String](Symbol(vertexAttr), 'vertices)
+
+  override def execute(columns: Columns, outputs: DataSetBuilder) = {
+    super.execute(columns, outputs)
+    val names = (columns(src).values ++ columns(dst).values).distinct
+    val idToName = RDDUtils.fastNumbered(names)
+    val nameToId = idToName.map { case (id, name) => (name, id) }
+    val edgeSrcDst = columns(src).join(columns(dst))
+    val bySrc = edgeSrcDst.map {
+      case (edge, (src, dst)) => src -> (edge, dst)
+    }
+    val byDst = bySrc.join(nameToId).map {
+      case (src, ((edge, dst), sid)) => dst -> (edge, sid)
+    }
+    val edges = byDst.join(nameToId).map {
+      case (dst, ((edge, sid), did)) => edge -> Edge(sid, did)
+    }
+    outputs.putEdgeBundle('edges, edges)
+    outputs.putVertexSet('vertices, idToName.mapValues(_ => ()))
+    outputs.putVertexAttribute(Symbol(vertexAttr), idToName)
   }
+}
 
-  def addEdgeAttributes(s: MetaGraphOperationSignature) = {
-    for (field <- csv.fields) {
-      s.outputEdgeAttribute[String](Symbol(field), 'edges)
-    }
-  }
+case class ImportEdgeListWithNumericIDsForExistingVertexSet(
+    csv: CSV, src: String, dst: String) extends ImportEdgeList(csv) {
+  mustHaveField(src)
+  mustHaveField(dst)
+  mustNotHaveField("sources")
+  mustNotHaveField("destinations")
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val sc = rc.sparkContext
-    for ((field, rdd) <- csv.read(sc)) {
-      outputs.putEdgeAttribute(Symbol(field), rdd)
-    }
-    outputs.putVertexSet('vertices, vertices(sc).map((_, Unit)))
-    outputs.putEdgeBundle('edges, edges(sc))
-  }
+  override def signature = super.signature
+    .inputVertexSet('sources)
+    .inputVertexSet('destinations)
+    .outputEdgeBundle('edges, 'sources -> 'destinations)
 
-  def edgeSrcDst(sc: SparkContext): RDD[(Long, (String, String))] =
-    csv.read(sc)(srcId).join(csv.read(sc)(dstId))
-
-  def idToName(sc: SparkContext): RDD[(Long, String)] = {
-    val vertices = edgeSrcDst(sc).flatMap {
-      case (edge, (src, dst)) => Seq(src, dst)
-    }
-    return RDDUtils.fastNumbered(vertices.distinct)
-  }
-
-  def vertices(sc: SparkContext) = idToName(sc).values.map(_.toLong)
-
-  def edges(sc: SparkContext) = edgeSrcDst(sc).mapValues {
-    case (src, dst) => Edge(src.toLong, dst.toLong)
-  }
-
-  def read(sc: SparkContext): Map[String, RDD[(Long, String)]] = csv.read(sc)
-
-  // A subclass of ImportEdgeList, which identifies vertices by strings.
-  def withStringId(vertexAttr: String): ImportEdgeList = new ImportEdgeList(csv, srcId, dstId) {
-    assert(!csv.fields.contains(vertexAttr), "Name collision on: $vertexAttr")
-    assert(vertexAttr != "vertices",
-      "'vertices' is a reserved name and cannot be the name of a column.")
-    assert(vertexAttr != "edges",
-      "'edges' is a reserved name and cannot be the name of a column.")
-
-    override def signature =
-      super.signature.outputVertexAttribute[String](Symbol(vertexAttr), 'vertices)
-
-    override def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-      super.execute(inputs, outputs, rc)
-      outputs.putVertexAttribute(Symbol(vertexAttr), idToName(rc.sparkContext))
-    }
-
-    override def vertices(sc: SparkContext): RDD[Long] = idToName(sc).keys
-
-    override def edges(sc: SparkContext): EdgeBundleRDD = {
-      val nameToId = idToName(sc).map { case (id, name) => (name, id) }
-      val bySrc = edgeSrcDst(sc).map {
-        case (edge, (src, dst)) => src -> (edge, dst)
-      }
-      val byDst = bySrc.join(nameToId).map {
-        case (src, ((edge, dst), sid)) => dst -> (edge, sid)
-      }
-      return byDst.join(nameToId).map {
-        case (dst, ((edge, sid), did)) => edge -> Edge(sid, did)
-      }
-    }
-
-    override def forVertexSet = ??? // Cannot be combined.
-  }
-
-  // A subclass of ImportEdgeList, which adds the edge bundle to an existing vertex set.
-  def forVertexSet: ImportEdgeList = new ImportEdgeList(csv, srcId, dstId) {
-    assert(!csv.fields.contains("sources"),
-      "'sources' is a reserved name and cannot be the name of a column.")
-    assert(!csv.fields.contains("destinations"),
-      "'destinations' is a reserved name and cannot be the name of a column.")
-
-    override def signature = {
-      val s = newSignature
-        .inputVertexSet('sources)
-        .inputVertexSet('destinations)
-        .outputEdgeBundle('edges, 'sources -> 'destinations)
-      addEdgeAttributes(s)
-      s
-    }
-
-    override def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-      val sc = rc.sparkContext
-      for ((field, rdd) <- csv.read(sc)) {
-        outputs.putEdgeAttribute(Symbol(field), rdd)
-      }
-      outputs.putEdgeBundle('edges, edges(sc))
-    }
-
-    override def withStringId(vertexAttr: String) = ??? // Cannot be combined.
+  override def execute(columns: Columns, outputs: DataSetBuilder) = {
+    super.execute(columns, outputs)
+    outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
+      case (src, dst) => Edge(src.toLong, dst.toLong)
+    })
   }
 }
