@@ -92,9 +92,9 @@ class ImportGraphTest extends FunSuite with com.lynxanalytics.biggraph.TestSpark
   }
 
   test("Splitting with quoted delimiters") {
-    val input = """name,"Doe, John",""What now?"",the end"""
+    val input = """ "hello, "mr, smith"",how are you "doing","okay, thanks" """.trim
     assert(ImportUtil.split(input, delimiter = ",") ==
-      Seq("name", "Doe, John", "\"What now?\"", "the end"))
+      Seq("hello, \"mr, smith\"", "how are you \"doing\"", "okay, thanks"))
   }
 
   test("Javascript filtering") {

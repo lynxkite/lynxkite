@@ -19,21 +19,47 @@ object ImportUtil {
     split(header(file), delimiter)
 
   // Splits a line of CSV, respecting double quotes.
-  private[graph_operations] def split(line: String, delimiter: String): Stream[String] = {
+  private[graph_operations] def split(line: String, delimiter: String): Seq[String] = {
+    require(delimiter.length == 1)
+    val delim = delimiter(0)
+    val quote = '"'
     var i = 0
-    var quoted = false
     val l = line.length
-    while (i < l && (quoted || !line.startsWith(delimiter, i))) {
-      quoted ^= line(i) == '"'
-      i += 1
+    val results = collection.mutable.Buffer[String]()
+    while (i < l) {
+      var start = i
+      var end = l
+      if (line(i) == quote) {
+        // Quoted field.
+        start += 1
+        i += 1
+        while (i < l && end == l) {
+          if (line(i) == quote) {
+            // It is a closing quote if the line ends or a delimiter follows.
+            if (i == l - 1) {
+              end = i
+              i += 1
+            } else if (line(i + 1) == delim) {
+              end = i
+              i += 1
+            }
+          }
+          i += 1
+        }
+      } else {
+        // Unquoted field.
+        while (i < l && end == l) {
+          // Break at next delimiter.
+          if (line(i) == delim) {
+            end = i
+          }
+          i += 1
+        }
+      }
+      results += line.slice(start, end)
     }
-    if (i == l) {
-      Stream(strip(line))
-    } else {
-      strip(line.take(i)) #:: split(line.drop(i + delimiter.length), delimiter)
-    }
+    return results
   }
-  private[graph_operations] def strip(s: String) = s.stripPrefix("\"").stripSuffix("\"")
 }
 
 case class Javascript(expression: String) {
