@@ -63,9 +63,12 @@ object ImportUtil {
 }
 
 case class Javascript(expression: String) {
+  def isEmpty = expression.isEmpty
+  def nonEmpty = expression.nonEmpty
+
   def isTrue(mapping: (String, String)*): Boolean = isTrue(mapping.toMap)
   def isTrue(mapping: Map[String, String]): Boolean = {
-    if (expression.isEmpty) {
+    if (isEmpty) {
       return true
     }
     val bindings = Javascript.engine.createBindings
