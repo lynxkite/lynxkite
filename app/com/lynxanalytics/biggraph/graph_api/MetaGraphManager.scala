@@ -8,7 +8,7 @@ import java.io.ObjectOutputStream
 import java.util.UUID
 import scala.collection.mutable
 
-import com.lynxanalytics.biggraph.bigGraphLogger
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 class MetaGraphManager(val repositoryPath: String) {
   def apply(operation: MetaGraphOperation,
@@ -67,6 +67,7 @@ class MetaGraphManager(val repositoryPath: String) {
       assert(
         !entities.contains(gUID),
         "Fatal conflict %s <=> %s".format(entity, entities(gUID)))
+      log.info(s"Stored $entity with GUID $gUID")
       entities(gUID) = entity
     }
     operationInstance.outputs.edgeBundles.values.foreach { eb =>
@@ -85,6 +86,7 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
+    log.info(s"Saving $inst to disk.")
     val time = scala.compat.Platform.currentTime
     val dumpFile = new File("%s/dump-%13d".format(repositoryPath, time))
     val finalFile = new File("%s/save-%13d".format(repositoryPath, time))
@@ -98,6 +100,7 @@ class MetaGraphManager(val repositoryPath: String) {
     val repo = new File(repositoryPath)
     val operationFileNames = repo.list.filter(_.startsWith("save-")).sorted
     operationFileNames.foreach { fileName =>
+      log.info(s"Loading operation from: $fileName")
       try {
         val file = new File(repo, fileName)
         val stream = new ObjectInputStream(new FileInputStream(file))
@@ -106,7 +109,7 @@ class MetaGraphManager(val repositoryPath: String) {
       } catch {
         // TODO(xandrew): Be more selective here...
         case e: Exception =>
-          bigGraphLogger.error(s"Error loading operation from file: $fileName", e)
+          log.error(s"Error loading operation from file: $fileName", e)
       }
     }
   }
