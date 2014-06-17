@@ -91,12 +91,13 @@ object ProductionJsonServer extends JsonServer {
   def vertexSetGet = jsonGet(bigGraphController.vertexSet)
   def applyOpGet = jsonGet(bigGraphController.applyOp)
   def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
+  def startingVertexSetsGet = jsonGet(bigGraphController.startingVertexSets)
 
   val graphStatsController = new GraphStatsController(BigGraphProductionEnvironment)
   def graphStatsGet = jsonGet(graphStatsController.getStats)
 
-  val graphExportController = new GraphExportController(BigGraphProductionEnvironment)
-  def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV)
+  //val graphExportController = new GraphExportController(BigGraphProductionEnvironment)
+  //def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
