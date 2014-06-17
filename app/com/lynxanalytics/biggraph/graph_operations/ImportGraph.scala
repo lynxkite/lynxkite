@@ -63,8 +63,8 @@ object ImportUtil {
 }
 
 case class Javascript(expression: String) {
-  def isTrue(mapping: (String, Any)*): Boolean = isTrue(mapping.toMap)
-  def isTrue(mapping: Map[String, Any]): Boolean = {
+  def isTrue(mapping: (String, String)*): Boolean = isTrue(mapping.toMap)
+  def isTrue(mapping: Map[String, String]): Boolean = {
     if (expression.isEmpty) {
       return true
     }
