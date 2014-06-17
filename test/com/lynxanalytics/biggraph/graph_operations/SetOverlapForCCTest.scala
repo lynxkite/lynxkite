@@ -35,6 +35,7 @@ case class RandomSets(size: Int, vsize: Int, seed: Int) extends GraphOperation {
   def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = AttributeSignature.empty
 }
 
+/*
 class SetOverlapForCCTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   test("Check for a few random sets") {
     val graphManager = cleanGraphManager("checkrandomsofcc")
@@ -61,4 +62,4 @@ class SetOverlapForCCTest extends FunSuite with TestBigGraphManager with TestGra
       ConnectedComponentsTest.assertSameComponents(getCCMap(normalSOCC), getCCMap(forCCSOCC))
     }
   }
-}
+}*/

@@ -2,8 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx.Edge
-import org.apache.spark.graphx.VertexId
+import org.apache.spark.graphx
 import org.apache.spark.rdd
 import scala.collection.mutable
 
@@ -11,45 +10,32 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
 import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
 
-abstract class SetOverlapForCC extends GraphOperation {
-  val attribute: String
-  def minOverlapFn(aSize: Int, bSize: Int): Int
+import org.apache.spark.rdd._
+import com.lynxanalytics.biggraph.spark_util._
 
-  // Set-valued attributes are represented as sorted Array[Long].
-  type Set = Array[Long]
+abstract class SetOverlapForCC extends MetaGraphOperation {
+  def signature = newSignature
+    .inputVertexSet('vs)
+    .inputVertexSet('sets)
+    .inputEdgeBundle('link, 'vs -> 'sets)
+    .outputEdgeBundle('overlap, 'sets -> 'sets)
 
-  @transient private lazy val outputSig = AttributeSignature.empty
-  @transient private lazy val outputMaker = outputSig.maker
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val partitioner = rc.defaultPartitioner
 
-  def isSourceListValid(sources: Seq[BigGraph]): Boolean = (
-    sources.size == 1
-    && sources.head.vertexAttributes.canRead[Set](attribute)
-  )
-
-  def execute(target: BigGraph,
-              manager: GraphDataManager): GraphData = {
-    val inputGraph = target.sources.head
-    val inputData = manager.obtainData(inputGraph)
-    val runtimeContext = manager.runtimeContext
-    val sc = runtimeContext.sparkContext
-    val inputIdx = inputGraph.vertexAttributes.readIndex[Set](attribute)
-    val sets = inputData.vertices.mapValues(_(inputIdx))
-    val partitioner = runtimeContext.defaultPartitioner
-    var byMemberNode = sets
-      .flatMap { case (sid, set) => set.map(i => (i, (sid, set))) }
+    val byMemberNode = inputs.edgeBundles('link).rdd
+      .map { case (_, Edge(vId, setId)) => setId -> vId }
       .groupByKey(partitioner)
-    val edges: rdd.RDD[Edge[DenseAttributes]] = byMemberNode.flatMap {
-      case (vid, sets) => edgesFor(vid, sets.toSeq)
+      .flatMap { case (setId, set) => set.map(vId => (vId, (setId, set.toArray[Long]))) }
+      .groupByKey(partitioner)
+    val edges: RDD[Edge] = byMemberNode.flatMap {
+      case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
-    return new SimpleGraphData(target, inputData.vertices, edges)
+    outputs.putEdgeBundle('overlap, RDDUtils.fastNumbered(edges))
   }
 
-  def vertexAttributes(inputGraphSpecs: Seq[BigGraph]) = inputGraphSpecs.head.vertexAttributes
-
-  def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) = outputSig
-
-  override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
-    new BigGraphProperties(symmetricEdges = true)
+  // Override this with the actual overlap function implementations
+  def minOverlapFn(aSize: Int, bSize: Int): Int
 
   // Checks if the two sorted array has an intersection of at least minOverlap. If yes,
   // returns the minimal element of the intesection. If no, returns None.
@@ -76,8 +62,8 @@ abstract class SetOverlapForCC extends GraphOperation {
     return None
   }
 
-  def edgesFor(vid: Long, sets: Seq[(VertexId, Array[Long])]): Seq[Edge[DenseAttributes]] = {
-    val res = mutable.Buffer[Edge[DenseAttributes]]()
+  def edgesFor(vid: Long, sets: Seq[(graphx.VertexId, Array[Long])]): Seq[Edge] = {
+    val res = mutable.Buffer[Edge]()
 
     // Array of set indices that still need to be checked when considering the neighbors of
     // a new node. idxs contains the number of valid elements in idxa.
@@ -90,8 +76,8 @@ abstract class SetOverlapForCC extends GraphOperation {
       hasEnoughIntersection(cs, os, minOverlapFn(cs.size, os.size))
     }
     def addEdges(current: Int, other: Int): Unit = {
-      res += new Edge(sets(current)._1, sets(other)._1, outputMaker.make)
-      res += new Edge(sets(other)._1, sets(current)._1, outputMaker.make)
+      res += Edge(sets(current)._1, sets(other)._1)
+      res += Edge(sets(other)._1, sets(current)._1)
     }
 
     while (idxs > 0) {
@@ -128,6 +114,12 @@ abstract class SetOverlapForCC extends GraphOperation {
   }
 }
 
-case class UniformOverlapForCC(attribute: String, overlapSize: Int) extends SetOverlapForCC {
+case class UniformOverlapForCC(overlapSize: Int) extends SetOverlapForCC {
   def minOverlapFn(a: Int, b: Int): Int = overlapSize
+}
+
+case class InfocomOverlapForCC(adjacencyThreshold: Double)
+    extends SetOverlapForCC {
+  def minOverlapFn(a: Int, b: Int): Int =
+    math.ceil(adjacencyThreshold * (a + b) * (a * a + b * b) / (4 * a * b)).toInt
 }
