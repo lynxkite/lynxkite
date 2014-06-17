@@ -25,9 +25,9 @@ case class RemoveNonSymmetricEdges() extends GraphOperation {
     return new SimpleGraphData(target, sc.union(sourceData.vertices), edges)
   }
 
-  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
+  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
 
-  def edgeAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
+  def edgeAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
 
   override def targetProperties(sources: Seq[BigGraph]) =
     new BigGraphProperties(symmetricEdges = true)

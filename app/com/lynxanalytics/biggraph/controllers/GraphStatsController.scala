@@ -22,16 +22,5 @@ case class GraphStatsResponse(id: String,
  */
 
 class GraphStatsController(enviroment: BigGraphEnvironment) {
-  def getStats(request: GraphStatsRequest): GraphStatsResponse = {
-    val bigGraph = BigGraphController.getBigGraphForId(request.id, enviroment)
-    val graphData = enviroment.graphDataManager.obtainData(bigGraph)
-    val vAttrs = bigGraph.vertexAttributes.getAttributesReadableAs[Any]
-    val eAttrs = bigGraph.edgeAttributes.getAttributesReadableAs[Any]
-    GraphStatsResponse(
-      request.id,
-      graphData.vertices.count,
-      graphData.edges.count,
-      vAttrs,
-      eAttrs)
-  }
+  def getStats(request: GraphStatsRequest): GraphStatsResponse = ???
 }
