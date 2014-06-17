@@ -37,9 +37,14 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
   @transient lazy val isLocal = srcVertexSet == dstVertexSet
 }
 
+sealed trait Attribute[T] extends MetaGraphEntity {
+  val typeTag: TypeTag[T]
+  def runtimeSafeCast[S: TypeTag]: Attribute[S]
+}
+
 case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                        name: Symbol)
-    extends MetaGraphEntity with RuntimeSafeCastable[T, VertexAttribute] {
+    extends Attribute[T] with RuntimeSafeCastable[T, VertexAttribute] {
   val typeTag = implicitly[TypeTag[T]]
   @transient lazy val vertexSet: VertexSet =
     source.entities.vertexSets(source.operation.outputVertexAttributes(name)._1)
@@ -47,7 +52,7 @@ case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
 
 case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                      name: Symbol)
-    extends MetaGraphEntity with RuntimeSafeCastable[T, EdgeAttribute] {
+    extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] {
   val typeTag = implicitly[TypeTag[T]]
   @transient lazy val edgeBundle: EdgeBundle =
     source.entities.edgeBundles(source.operation.outputEdgeAttributes(name)._1)
@@ -233,15 +238,21 @@ class VertexSetData(val vertexSet: VertexSet,
 class EdgeBundleData(val edgeBundle: EdgeBundle,
                      val rdd: EdgeBundleRDD) extends EntityData
 
+sealed trait AttributeData[T] extends EntityData {
+  val typeTag: TypeTag[T]
+  def runtimeSafeCast[S: TypeTag]: AttributeData[S]
+  val rdd: AttributeRDD[T]
+}
+
 class VertexAttributeData[T](val vertexAttribute: VertexAttribute[T],
                              val rdd: AttributeRDD[T])
-    extends RuntimeSafeCastable[T, VertexAttributeData] with EntityData {
+    extends AttributeData[T] with RuntimeSafeCastable[T, VertexAttributeData] {
   val typeTag = vertexAttribute.typeTag
 }
 
 class EdgeAttributeData[T](val edgeAttribute: EdgeAttribute[T],
                            val rdd: AttributeRDD[T])
-    extends RuntimeSafeCastable[T, EdgeAttributeData] with EntityData {
+    extends AttributeData[T] with RuntimeSafeCastable[T, EdgeAttributeData] {
   val typeTag = edgeAttribute.typeTag
 }
 
