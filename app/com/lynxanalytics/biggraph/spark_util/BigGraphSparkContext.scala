@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_api.attributes
 
 private object SparkStageJars {
-  val classesToBundle = Seq(
+  val classesToBundle: Seq[Class[_]] = Seq(
     getClass(),
     classOf[gcs.GoogleHadoopFileSystem])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
@@ -79,6 +79,10 @@ object BigGraphSparkContext {
       .set("spark.akka.threads",
         scala.util.Properties.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
       .set("spark.local.dir", scala.util.Properties.envOrElse("SPARK_DIR", "/tmp"))
+      .set("spark.speculation", "true")
+      .set("spark.speculation.interval", "1000")
+      .set("spark.speculation.quantile", "0.90")
+      .set("spark.speculation.multiplier", "2")
     if (useKryo) {
       sparkConf = sparkConf
         .set("spark.serializer",

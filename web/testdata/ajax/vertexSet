@@ -1,0 +1,86 @@
+{
+  "id": "alma",
+  "title": "Alma Graph",
+  "inEdges": [
+    {
+      "id": "a",
+      "title": "beel kortebol",
+      "source": {
+        "id": "korte",
+        "title": "korte graf"
+      },
+      "destination": {
+        "id": "alma",
+        "title": "Alma Graph"
+      }
+    }
+  ],
+  "outEdges": [
+    {
+      "id": "b",
+      "title": "kiel barackba",
+      "source": {
+        "id": "alma",
+        "title": "Alma Graph"
+      },
+      "destination": {
+        "id": "barack",
+        "title": "barackbarackbarack"
+      }
+    },
+    {
+      "id": "c",
+      "title": "kiel a fenebe",
+      "source": {
+        "id": "alma",
+        "title": "Alma Graph"
+      },
+      "destination": {
+        "id": "franc",
+        "title": "radai rosseb"
+      }
+    }
+  ],
+  "localEdges": [
+    {
+      "id": "d",
+      "title": "korbekoreb",
+      "source": {
+        "id": "alma",
+        "title": "Alma Graph"
+      },
+      "destination": {
+        "id": "alma",
+        "title": "Alma Graph"
+      }
+    }
+  ],
+  "ops": [
+    {
+      "id": "42",
+      "title": "Relevant to Alma!",
+      "parameters": [
+        {
+          "id": "friend",
+          "title": "Who is your friend",
+          "kind": "vertex-set",
+          "defaultValue": "alma",
+          "options": [
+           {
+             "id": "korte",
+	     "title": "Korte"
+            },
+            {
+              "id": "alma",
+              "title": "Alma"
+            },
+            {
+              "id": "barack",
+              "title": "Barackbarackkortebarack"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

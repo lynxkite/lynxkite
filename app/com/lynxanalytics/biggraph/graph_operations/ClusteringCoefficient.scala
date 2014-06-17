@@ -27,12 +27,12 @@ import com.lynxanalytics.biggraph.graph_api.attributes.SignatureExtension
     val inNeighbors = nonLoopEdges
       .map(e => (e.dstId, e.srcId))
       .groupByKey(vertexPartitioner)
-      .mapValues(SortedSet(_: _*).toArray)
+      .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
     val outNeighbors = nonLoopEdges
       .map(e => (e.srcId, e.dstId))
       .groupByKey(vertexPartitioner)
-      .mapValues(SortedSet(_: _*).toArray)
+      .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
     val neighbors = inputData.vertices.leftOuterJoin(outNeighbors).leftOuterJoin(inNeighbors)
       .mapValues {

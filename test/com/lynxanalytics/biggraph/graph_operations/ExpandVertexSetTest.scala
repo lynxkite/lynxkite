@@ -36,7 +36,7 @@ case class ExpandVertexSetTestGraph(
     return new SimpleGraphData(
       target,
       sc.parallelize(vertices),
-      new spark.rdd.EmptyRDD[spark.graphx.Edge[DenseAttributes]](sc)
+      sc.emptyRDD[spark.graphx.Edge[DenseAttributes]]
     )
   }
 }

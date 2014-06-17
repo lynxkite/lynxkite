@@ -1,0 +1,27 @@
+<div class="vertexSet" ng-if="vertexSet">
+  <div class="metadata bubble">
+    <h2>{{vertexSet.title}}</h2>
+    <h3 ng-show="vertexSet.localEdges">Local Edge Bundles</h3>
+    <ul class="bundles">
+      <li class="bundle token" ng-repeat="bundle in vertexSet.localEdges">{{bundle.title}}</li>
+    </ul>
+    <h3 ng-show="vertexSet.inEdges">Incoming Edge Bundles</h3>
+    <a class="bundle token"
+       ng-repeat="bundle in vertexSet.inEdges"
+       href="/#/metaGraph/{{bundle.source.id}}">
+      {{bundle.title}} <== {{bundle.source.title}}
+    </a>
+    <h3 ng-show="vertexSet.outEdges">Outgoing Edge Bundles</h3>
+    <a class="bundle token"
+       ng-repeat="bundle in vertexSet.outEdges"
+       href="/#/metaGraph/{{bundle.destination.id}}">
+      {{bundle.title}} ==> {{bundle.destination.title}}
+    </a>
+  </div>
+</div>
+<div class="operations bubble">
+  <h2>Available operations</h2>
+  <div class="op" ng-repeat="op in allOps">
+    <button class="btn btn-default" ng-click="apply(op)">{{op.title}}</button>
+  </div>
+</div>

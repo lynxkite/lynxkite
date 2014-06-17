@@ -1,6 +1,8 @@
 name := "biggraph"
 
-javaOptions in Test := Seq("-Dsun.io.serialization.extendedDebugInfo=true")
+javaOptions in Test := Seq(
+  "-Dsun.io.serialization.extendedDebugInfo=true",
+  "-Dbiggraph.default.partitions.per.core=1")
 
 scalacOptions ++= Seq("-feature", "-deprecation")
 
@@ -21,12 +23,14 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
   "org.apache.commons" % "commons-lang3" % "3.3",
-  "org.apache.spark" %% "spark-core" % "0.9.1" excludeAll(
+  "org.apache.spark" %% "spark-core" % "1.0.0" excludeAll(
     ExclusionRule(name = "slf4j-log4j12"),
-    ExclusionRule(name = "log4j")),
-  "org.apache.spark" %% "spark-graphx" % "0.9.1" excludeAll(
+    ExclusionRule(name = "log4j"),
+    ExclusionRule(name = "jackson-databind")),
+  "org.apache.spark" %% "spark-graphx" % "1.0.0" excludeAll(
     ExclusionRule(name = "slf4j-log4j12"),
-    ExclusionRule(name = "log4j")),
+    ExclusionRule(name = "log4j"),
+    ExclusionRule(name = "jackson-databind")),
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.pegdown" % "pegdown" % "1.4.2" % "test",
   "org.slf4j" % "log4j-over-slf4j" % "1.7.6")
