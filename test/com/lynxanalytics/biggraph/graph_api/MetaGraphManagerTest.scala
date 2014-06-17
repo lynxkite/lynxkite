@@ -31,6 +31,9 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     firstInstance.entities.all.values.foreach { entity =>
       assert(manager.entity(entity.gUID) == entity)
     }
+    secondInstance.entities.all.values.foreach { entity =>
+      assert(manager.entity(entity.gUID) == entity)
+    }
 
     // VertexSets and EdgeBundles are linked as expected.
     assert(firstEdges.srcVertexSet == firstVertices)
@@ -63,6 +66,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
   test("Save and load works") {
     val m1o = cleanMetaManager
+    val m2o = cleanMetaManager
 
     val firstInstance = m1o.apply(new CreateSomeGraph())
     val firstVertices = firstInstance.outputs.vertexSets('vertices)
@@ -74,14 +78,14 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
         vertexAttributes = Map('inputAttr -> firstVattr)))
 
     val m1c = new MetaGraphManager(m1o.repositoryPath)
-    val m2o = cleanMetaManager
+
     (firstInstance.entities.all.values ++ secondInstance.entities.all.values).foreach { entity =>
       // We have an entity of the GUID of all entities.
       val clonedEntity = m1c.entity(entity.gUID)
       // They look similar.
       assert(clonedEntity.getClass == entity.getClass)
       // But they are not the same!
-      assert(!(clonedEntity eq entity))
+      assert(clonedEntity ne entity)
       // Nothing leaked over to an unrelated manager.
       intercept[java.util.NoSuchElementException] {
         m2o.entity(entity.gUID)
