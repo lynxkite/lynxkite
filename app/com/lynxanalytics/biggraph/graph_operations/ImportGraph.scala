@@ -73,8 +73,11 @@ case class Javascript(expression: String) {
       bindings.put(key, value)
     }
     return Try(Javascript.engine.eval(expression, bindings)) match {
+      case Success(result: java.lang.Boolean) =>
+        result
       case Success(result) =>
-        result.asInstanceOf[Boolean]
+        log.info(s"JS expression ($expression) returned $result instead of a Boolean")
+        false // Treat errors as "false".
       case Failure(e) =>
         log.info(s"Could not evaluate JS: $expression", e)
         false // Treat errors as "false".
