@@ -19,6 +19,11 @@ case class CSVData(val header: Seq[String],
   def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
 
   def saveDataToDir(path: Filename) = path.saveAsTextFile(toStringRDD)
+
+  def saveToDir(path: Filename) = {
+    path.addPathElement("header").createFromStrings(CSVData.lineToString(header))
+    saveDataToDir(path.addPathElement("data"))
+  }
 }
 object CSVData {
   def lineToStringNoNewLine(line: Seq[String]): String = line.mkString(",")
@@ -62,7 +67,7 @@ object CSVExport {
         preservesPartitioning = true)
 
     CSVData(
-      ("edgeId" +: "srcVertex" +: "dstVertex" +: attributeLabels).map(quoteString),
+      ("edgeId" +: "srcVertexId" +: "dstVertexId" +: attributeLabels).map(quoteString),
       attachAttributeData(indexedEdges, attributes, dataManager).values)
   }
 
@@ -86,8 +91,9 @@ object CSVExport {
     indexedData
   }
 
-  private def stringRDDFromAttribute[T: TypeTag: ClassTag](
+  private def stringRDDFromAttribute[T: ClassTag](
     dataManager: DataManager, attribute: Attribute[T]): rdd.RDD[(ID, String)] = {
+    implicit val tagForT = attribute.typeTag
     val op = toCSVStringOperation[T]
     dataManager.get(attribute).rdd.mapValues(op)
   }
