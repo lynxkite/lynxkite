@@ -1,319 +1,258 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.util.{ Failure, Success, Try }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Filename
-import com.lynxanalytics.biggraph.graph_api.attributes._
-import com.lynxanalytics.biggraph.spark_util
-import com.lynxanalytics.biggraph.bigGraphLogger
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext._
-import org.apache.spark
-import org.apache.spark.graphx
-import java.util.regex.Pattern
-import scala.reflect.ClassTag
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import org.apache.spark.SparkContext
 
-/*
- * For a sequence of raw input meta data strings a sequence of AttributeWriters
- * will be instantiated. These will format their given input string to the provided
- * type and write the data into a DenseAttribute object at a given index as a side effect.
- * The sequence usually corresponds to a line of input file, the data will result
- * one or two DenseAttribute objects (for vertex and/or edge attributes).
- */
-trait AttributeWriter[T] {
-  def apply(input: T, attributes: DenseAttributes): Unit
-}
-case class StringWriter(idx: AttributeWriteIndex[String]) extends AttributeWriter[String] {
-  def apply(input: String, attributes: DenseAttributes): Unit = {
-    val strippedInput = input.stripPrefix("\"").stripSuffix("\"")
-    attributes.set(idx, strippedInput)
-  }
-}
+// Functions for looking at CSV files. The frontend can use these when
+// constructing the import operation.
+object ImportUtil {
+  def header(file: Filename): String =
+    file.reader.readLine
 
-trait MetaDataParser {
-  def getSignature(): AttributeSignature
-  def createWriters(signature: AttributeSignature): Seq[AttributeWriter[String]]
-}
-case class HeaderAsStringCSVParser(inputFile: Filename, delimiter: String) extends MetaDataParser {
-  lazy val csvHeader = inputFile.reader.readLine
-    .split(Pattern.quote(delimiter))
-    .map(sigName => sigName.stripPrefix("\"").stripSuffix("\""))
+  def fields(file: Filename, delimiter: String): Seq[String] =
+    split(header(file), delimiter)
 
-  def getSignature(): AttributeSignature = {
-    bigGraphLogger.debug("Parsing %s - getSignature method called with header: %s"
-      .format(inputFile.filename, csvHeader.toSeq.toString))
-    csvHeader.foldLeft(AttributeSignature.empty) {
-      case (sig, name) => sig.addAttribute[String](name).signature
-    }
-  }
-
-  def createWriters(signature: AttributeSignature): Seq[AttributeWriter[String]] = {
-    csvHeader.map { sigName =>
-      val idx = signature.writeIndex[String](sigName)
-      StringWriter(idx)
-    }
-  }
-}
-case class DummyMetaParser() extends MetaDataParser {
-  def getSignature(): AttributeSignature = AttributeSignature.empty
-  def createWriters(signature: AttributeSignature): Seq[AttributeWriter[String]] = Seq()
-}
-
-trait RawDataParser {
-  def getRawData(sc: spark.SparkContext): RDD[Seq[String]]
-}
-case class ConcatenateCSVsDataParser(inputFiles: Seq[Filename],
-                                     delimiter: String,
-                                     skipFirstRow: Boolean) extends RawDataParser {
-  def getRawData(sc: spark.SparkContext): RDD[Seq[String]] = {
-    val lines = sc.union(inputFiles.map(file => file.loadTextFile(sc)))
-    // we need to filter out the header as textFile method can read multiple files using * wildcard
-    val filteredLines = {
-      if (skipFirstRow) {
-        val header = lines.first
-        lines.filter(line => line != header)
-      } else {
-        lines
+  private[graph_operations] def splitter(delimiter: String): String => Seq[String] = {
+    val delim = java.util.regex.Pattern.quote(delimiter)
+    def oneOf(options: String*) = options.mkString("|")
+    def any(p: String) = capture(p) + "*"
+    def capture(p: String) = "(" + p + ")"
+    def oneField(p: String) = oneOf(p + delim, p + "$") // Delimiter or line end.
+    val quote = "\""
+    val nonQuote = "[^\"]"
+    val doubleQuote = quote + quote
+    val quotedString = capture(quote + any(oneOf(nonQuote, doubleQuote)) + quote)
+    val anyString = capture(".*?")
+    val r = oneOf(oneField(quotedString), oneField(anyString)).r
+    val splitter = { line: String =>
+      val matches = r.findAllMatchIn(line)
+      // Find the top-level group that has matched in each field.
+      val fields = matches.map(_.subgroups.find(_ != null).get).toList
+      val l = fields.length
+      // The last field may be a mistake. (Sorry, I couldn't write a better regex.)
+      val fixed = if (l < 2 || fields(l - 2).endsWith(delimiter)) fields else fields.take(l - 1)
+      // Remove quotes and unescape double-quotes in quoted fields.
+      fixed.map { field =>
+        if (field.startsWith(quote) && field.endsWith(quote)) {
+          field.slice(1, field.length - 1).replace(doubleQuote, quote)
+        } else field
       }
     }
-    filteredLines.map(_.split(Pattern.quote(delimiter)))
+    return splitter
+  }
+
+  private val splitters = collection.mutable.Map[String, String => Seq[String]]()
+
+  // Splits a line by the delimiter. Delimiters inside quoted fields are ignored. (They become part
+  // of the string.) Quotes inside quoted fields must be escaped by doubling them (" -> "").
+  // TODO: Maybe we should use a CSV library.
+  private[graph_operations] def split(line: String, delimiter: String): Seq[String] = {
+    // Cache the regular expressions.
+    if (!splitters.contains(delimiter)) {
+      splitters(delimiter) = splitter(delimiter)
+    }
+    return splitters(delimiter)(line)
   }
 }
-case class DummyDataParser() extends RawDataParser {
-  def getRawData(sc: spark.SparkContext): RDD[Seq[String]] = sc.parallelize(Seq())
-}
 
-/*
- * The GraphBuilder wires together the parsed meta and raw data into BigGraph graph format,
- * also handles reindexing the vertex ids if needed.
- */
-trait GraphBuilder {
-  def build(vertexDataSig: AttributeSignature,
-            vertexData: RDD[DenseAttributes],
-            edgeDataSig: AttributeSignature,
-            edgeData: RDD[DenseAttributes],
-            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD)
-}
-trait GraphIndexer {
-  def indexVertices[A](vertexData: RDD[A]): RDD[(Long, A)] =
-    spark_util.RDDUtils.fastNumbered(vertexData)
+case class Javascript(expression: String) {
+  def isEmpty = expression.isEmpty
+  def nonEmpty = expression.nonEmpty
 
-  def indexEdges[A: ClassTag](edgeData: RDD[DenseAttributes],
-                              eSrcIdx: attributes.AttributeReadIndex[A],
-                              eDstIdx: attributes.AttributeReadIndex[A],
-                              vertexAttrToId: RDD[(A, Long)]): EdgeRDD = {
-    val edgesBySource: RDD[(A, (A, DenseAttributes))] = edgeData.map(edgeAttributes =>
-      edgeAttributes(eSrcIdx) -> (edgeAttributes(eDstIdx), edgeAttributes))
-      .partitionBy(vertexAttrToId.partitioner.get)
-    val edgesByDest: RDD[(A, (Long, DenseAttributes))] = edgesBySource.join(vertexAttrToId).map {
-      case (src, ((dst, eAttr), srcId)) => dst -> (srcId, eAttr)
-    }.partitionBy(vertexAttrToId.partitioner.get)
-    edgesByDest.join(vertexAttrToId).map {
-      case (dst, ((srcId, eAttr), dstId)) => graphx.Edge(srcId, dstId, eAttr)
+  def isTrue(mapping: (String, String)*): Boolean = isTrue(mapping.toMap)
+  def isTrue(mapping: Map[String, String]): Boolean = {
+    if (isEmpty) {
+      return true
+    }
+    val bindings = Javascript.engine.createBindings
+    for ((key, value) <- mapping) {
+      bindings.put(key, value)
+    }
+    return Try(Javascript.engine.eval(expression, bindings)) match {
+      case Success(result: java.lang.Boolean) =>
+        result
+      case Success(result) =>
+        throw Javascript.Error(s"JS expression ($expression) returned $result instead of a Boolean")
+      case Failure(e) =>
+        throw Javascript.Error(s"Could not evaluate JS: $expression", e)
     }
   }
 }
-
-case class NumberedIdFromVertexField(vertexIdFieldName: String,
-                                     edgeSourceFieldName: String,
-                                     edgeDestFieldName: String) extends GraphBuilder with GraphIndexer {
-  def build(vertexDataSig: AttributeSignature,
-            vertexData: RDD[DenseAttributes],
-            edgeDataSig: AttributeSignature,
-            edgeData: RDD[DenseAttributes],
-            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD) = {
-    val vertices: VertexRDD = indexVertices(vertexData)
-      .repartition(runtimeContext.defaultPartitioner.numPartitions)
-    val vIdx = vertexDataSig.readIndex[String](vertexIdFieldName)
-    val vertexAttrPartitioner = new spark.HashPartitioner(edgeData.partitions.size)
-    val vertexFieldToId = vertices.map {
-      case (vertexId, vertexAttributes) => vertexAttributes(vIdx) -> vertexId
-    }.partitionBy(vertexAttrPartitioner)
-    val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
-    val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
-    val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexFieldToId)
-      .repartition(runtimeContext.defaultPartitioner.numPartitions)
-    (vertices, edges)
-  }
+object Javascript {
+  val engine = new javax.script.ScriptEngineManager().getEngineByName("JavaScript")
+  case class Error(msg: String, cause: Throwable = null) extends Exception(msg, cause)
 }
-case class IdFromEdgeFields(vertexIdAttrName: String,
-                            edgeSourceFieldName: String,
-                            edgeDestFieldName: String,
-                            disallowedVertexIds: Set[String] = null)
-    extends GraphBuilder with GraphIndexer {
-  def build(vertexDataSig: AttributeSignature,
-            vertexData: RDD[DenseAttributes],
-            edgeDataSig: AttributeSignature,
-            edgeData: RDD[DenseAttributes],
-            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD) = {
-    val newVertexSig = AttributeSignature.empty.addAttribute[String](vertexIdAttrName).signature
-    val maker = newVertexSig.maker
-    val vIdx = newVertexSig.writeIndex[String](vertexIdAttrName)
-    val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
-    val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
-    val filteredEdgeData =
-      if (disallowedVertexIds == null) edgeData
-      else edgeData.filter(da =>
-        !disallowedVertexIds.contains(da(eSrcIdx)) && !disallowedVertexIds.contains(da(eDstIdx)))
 
-    val verticesData = edgeData.flatMap(edgeAttributes =>
-      Seq(edgeAttributes(eSrcIdx), edgeAttributes(eDstIdx))).distinct
-    val verticesFromEdges: RDD[(Long, (String, DenseAttributes))] =
-      indexVertices(verticesData.map(id => (id, maker.make.set(vIdx, id))))
-    val vertexAttrPartitioner = new spark.HashPartitioner(edgeData.partitions.size)
-    val vertexAttrToId = verticesFromEdges.map {
-      case (vertexId, (field, attr)) => (field, vertexId)
-    }.partitionBy(vertexAttrPartitioner)
-    val edges: EdgeRDD = indexEdges[String](edgeData, eSrcIdx, eDstIdx, vertexAttrToId)
-      .repartition(runtimeContext.defaultPartitioner.numPartitions)
-    val vertices: VertexRDD = verticesFromEdges.map {
-      case (vertexId, (field, attr)) => (vertexId, attr)
+case class CSV(file: Filename,
+               delimiter: String,
+               header: String,
+               filter: Javascript = Javascript("")) {
+  val fields = ImportUtil.split(header, delimiter)
+
+  def lines(sc: SparkContext): RDD[Seq[String]] = {
+    val lines = file.loadTextFile(sc)
+    return lines
+      .filter(_ != header)
+      .map(ImportUtil.split(_, delimiter))
+      .filter(jsFilter(_))
+  }
+
+  def jsFilter(line: Seq[String]): Boolean = {
+    if (line.length != fields.length) {
+      log.info(s"Input line cannot be parsed: $line")
+      return false
     }
-      .repartition(runtimeContext.defaultPartitioner.numPartitions)
-    (vertices, edges)
+    return filter.isTrue(fields.zip(line).toMap)
   }
 }
 
-case class EdgeFieldsAsId(edgeSourceFieldName: String,
-                          edgeDestFieldName: String,
-                          disallowedVertexIds: Set[String] = null)
-    extends GraphBuilder {
-  def build(vertexDataSig: AttributeSignature,
-            vertexData: RDD[DenseAttributes],
-            edgeDataSig: AttributeSignature,
-            edgeData: RDD[DenseAttributes],
-            runtimeContext: RuntimeContext): (VertexRDD, EdgeRDD) = {
-    val eSrcIdx = edgeDataSig.readIndex[String](edgeSourceFieldName)
-    val eDstIdx = edgeDataSig.readIndex[String](edgeDestFieldName)
-    val filteredEdgeData =
-      if (disallowedVertexIds == null) edgeData
-      else edgeData.filter(da =>
-        !disallowedVertexIds.contains(da(eSrcIdx)) && !disallowedVertexIds.contains(da(eDstIdx)))
-    val edges: EdgeRDD = filteredEdgeData.map {
-      da => graphx.Edge(da(eSrcIdx).toLong, da(eDstIdx).toLong, da)
-    }.repartition(runtimeContext.defaultPartitioner.numPartitions)
-    val vertexMaker = AttributeSignature.empty.maker
-    val vertices: VertexRDD = edges.flatMap {
-      e => Seq(e.srcId, e.dstId)
-    }.distinct.map {
-      id => (id, vertexMaker.make)
-    }
-    (vertices, edges)
+abstract class ImportCommon(csv: CSV) extends MetaGraphOperation {
+  type Columns = Map[String, RDD[(Long, String)]]
+
+  protected def mustHaveField(field: String) = {
+    assert(csv.fields.contains(field), s"No such field: $field in ${csv.fields}")
+  }
+
+  protected def toSymbol(field: String) = Symbol("csv_" + field)
+
+  protected def splitGenerateIDs(lines: RDD[Seq[String]]): Columns = {
+    val numbered = RDDUtils.fastNumbered(lines)
+    return csv.fields.zipWithIndex.map {
+      case (field, idx) => field -> numbered.map { case (id, line) => id -> line(idx) }
+    }.toMap
+  }
+
+  protected def splitWithIDField(lines: RDD[Seq[String]], idField: String): Columns = {
+    val idIdx = csv.fields.indexOf(idField)
+    return csv.fields.zipWithIndex.map {
+      case (field, idx) => field -> lines.map { line => line(idIdx).toLong -> line(idx) }
+    }.toMap
   }
 }
 
-/*
- * The actual importers are composed of various Parser and Builder implementations.
- * These must extend the ImportGraph which provides the actual implementation for
- * wiring the components together.
- */
-class ImportGraph(vertexMeta: MetaDataParser,
-                  vertexData: RawDataParser,
-                  edgeMeta: MetaDataParser,
-                  edgeData: RawDataParser,
-                  graphBuilder: GraphBuilder) extends GraphOperation {
-  @transient lazy val vertexSignature = vertexMeta.getSignature
-  @transient lazy val edgeSignature = edgeMeta.getSignature
+abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv) {
 
-  def isSourceListValid(sources: Seq[BigGraph]): Boolean = sources.isEmpty
+  def signature = addVertexAttributes(newSignature.outputVertexSet('vertices))
 
-  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
-    val runtimeContext = manager.runtimeContext
-    val sc = runtimeContext.sparkContext
-
-    val vertexWriters = vertexMeta.createWriters(vertexSignature)
-    val edgeWriters = edgeMeta.createWriters(edgeSignature)
-    val rawVertices = vertexData.getRawData(sc)
-    val rawEdges = edgeData.getRawData(sc)
-    val vertexDenseAttributes = rawToDenseAttributes(
-      vertexSignature.maker, vertexWriters, rawVertices)
-    val edgeDenseAttributes = rawToDenseAttributes(
-      edgeSignature.maker, edgeWriters, rawEdges)
-    val (vertices, edges) = graphBuilder.build(
-      vertexSignature, vertexDenseAttributes, edgeSignature, edgeDenseAttributes, runtimeContext)
-    new SimpleGraphData(target, vertices, edges) // TODO(forevian): add support for optional triplets
-  }
-
-  // The vertex attribute signature of the graph resulting from this operation.
-  def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature = vertexSignature
-
-  // The edge attribute signature of the graph resulting from this operation.
-  def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature = edgeSignature
-
-  private def rawToDenseAttributes[T](attributesMaker: DenseAttributesMaker,
-                                      writers: Seq[AttributeWriter[T]],
-                                      inputData: RDD[Seq[T]]): RDD[DenseAttributes] = {
-    inputData.flatMap { line =>
-      if (line.size == writers.size) {
-        val attributes = attributesMaker.make
-        writers.zip(line).foreach {
-          case (writer, data) => writer(data, attributes)
-        }
-        Some(attributes)
-      } else {
-        bigGraphLogger.info("Input line cannot be parsed: %s".format(line.toString))
-        None
-      }
+  protected def addVertexAttributes(s: MetaGraphOperationSignature) = {
+    csv.fields.foldLeft(s) {
+      (s, field) => s.outputVertexAttribute[String](toSymbol(field), 'vertices)
     }
   }
+
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val columns = readColumns(rc.sparkContext)
+    for ((field, rdd) <- columns) {
+      outputs.putVertexAttribute(toSymbol(field), rdd)
+    }
+    outputs.putVertexSet('vertices, columns.values.head.mapValues(_ => ()))
+  }
+
+  // Override this.
+  def readColumns(sc: SparkContext): Columns
 }
 
-/*
- * Imports from csv files using custom delimiter, header can be included in the data files,
- * in that case set skipFirstRow = true. All files must be provided.
- * Every field will be treated as a string, the vertexIdFieldName will be the basis for indexing
- * the graph.
- */
-case class CSVImport(vertexHeader: Filename,
-                     vertexCSVs: Seq[Filename],
-                     edgeHeader: Filename,
-                     edgeCSVs: Seq[Filename],
-                     vertexIdFieldName: String,
-                     edgeSourceFieldName: String,
-                     edgeDestFieldName: String,
-                     delimiter: String,
-                     skipFirstRow: Boolean)
-    extends ImportGraph(
-      HeaderAsStringCSVParser(vertexHeader, delimiter),
-      ConcatenateCSVsDataParser(vertexCSVs, delimiter, skipFirstRow),
-      HeaderAsStringCSVParser(edgeHeader, delimiter),
-      ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
-      NumberedIdFromVertexField(vertexIdFieldName, edgeSourceFieldName, edgeDestFieldName))
+case class ImportVertexListWithStringIDs(csv: CSV) extends ImportVertexList(csv) {
+  def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
+}
 
-/*
- * Imports from csv edge list using custom delimiter, header can be included in the data files,
- * in that case set skipFirstRow = true. Vertices will be generated by parsing the edges, their
- * only attribute will be the vertexIdAttrName.
- * Every field will be treated as a string, the vertexIdAttrName will be the basis for indexing
- * the graph.
- */
-case class EdgeCSVImport(edgeHeader: Filename,
-                         edgeCSVs: Seq[Filename],
-                         vertexIdAttrName: String,
-                         edgeSourceFieldName: String,
-                         edgeDestFieldName: String,
-                         delimiter: String,
-                         skipFirstRow: Boolean,
-                         disallowedVertexIds: Set[String])
-    extends ImportGraph(
-      DummyMetaParser(),
-      DummyDataParser(),
-      HeaderAsStringCSVParser(edgeHeader, delimiter),
-      ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
-      IdFromEdgeFields(
-        vertexIdAttrName, edgeSourceFieldName, edgeDestFieldName, disallowedVertexIds))
+case class ImportVertexListWithNumericIDs(csv: CSV, id: String) extends ImportVertexList(csv) {
+  mustHaveField(id)
+  def readColumns(sc: SparkContext): Columns = splitWithIDField(csv.lines(sc), id)
+}
 
-// Same as EdgeCSVImport, but for cases with numerical ID fields.
-case class EdgeCSVImportNum(edgeHeader: Filename,
-                            edgeCSVs: Seq[Filename],
-                            edgeSourceFieldName: String,
-                            edgeDestFieldName: String,
-                            delimiter: String,
-                            skipFirstRow: Boolean,
-                            disallowedVertexIds: Set[String])
-    extends ImportGraph(
-      DummyMetaParser(),
-      DummyDataParser(),
-      HeaderAsStringCSVParser(edgeHeader, delimiter),
-      ConcatenateCSVsDataParser(edgeCSVs, delimiter, skipFirstRow),
-      EdgeFieldsAsId(
-        edgeSourceFieldName, edgeDestFieldName, disallowedVertexIds))
+abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
+
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val columns = readColumns(rc.sparkContext)
+    putOutputs(columns, outputs)
+  }
+
+  protected def addEdgeAttributes(s: MetaGraphOperationSignature): MetaGraphOperationSignature = {
+    // Subclass has to define 'edges.
+    csv.fields.foldLeft(s) {
+      (s, field) => s.outputEdgeAttribute[String](toSymbol(field), 'edges)
+    }
+  }
+
+  protected def putEdgeAttributes(columns: Columns, outputs: DataSetBuilder): Unit = {
+    for ((field, rdd) <- columns) {
+      outputs.putEdgeAttribute(toSymbol(field), rdd)
+    }
+  }
+
+  // Override these.
+  def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
+  def putOutputs(columns: Columns, outputs: DataSetBuilder): Unit =
+    putEdgeAttributes(columns, outputs)
+}
+
+case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String) extends ImportEdgeList(csv) {
+  mustHaveField(src)
+  mustHaveField(dst)
+
+  def signature = addEdgeAttributes(newSignature).outputGraph('vertices, 'edges)
+
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
+    super.putOutputs(columns, outputs)
+    outputs.putVertexSet('vertices,
+      (columns(src).values ++ columns(dst).values).distinct.map(_.toLong -> ()))
+    outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
+      case (src, dst) => Edge(src.toLong, dst.toLong)
+    })
+  }
+}
+
+case class ImportEdgeListWithStringIDs(
+    csv: CSV, src: String, dst: String, vertexAttr: String) extends ImportEdgeList(csv) {
+  mustHaveField(src)
+  mustHaveField(dst)
+
+  def signature = addEdgeAttributes(newSignature)
+    .outputGraph('vertices, 'edges)
+    .outputVertexAttribute[String](toSymbol(vertexAttr), 'vertices)
+
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
+    putEdgeAttributes(columns, outputs)
+    val names = (columns(src).values ++ columns(dst).values).distinct
+    val idToName = RDDUtils.fastNumbered(names)
+    val nameToId = idToName.map { case (id, name) => (name, id) }
+    val edgeSrcDst = columns(src).join(columns(dst))
+    val bySrc = edgeSrcDst.map {
+      case (edge, (src, dst)) => src -> (edge, dst)
+    }
+    val byDst = bySrc.join(nameToId).map {
+      case (src, ((edge, dst), sid)) => dst -> (edge, sid)
+    }
+    val edges = byDst.join(nameToId).map {
+      case (dst, ((edge, sid), did)) => edge -> Edge(sid, did)
+    }
+    outputs.putEdgeBundle('edges, edges)
+    outputs.putVertexSet('vertices, idToName.mapValues(_ => ()))
+    outputs.putVertexAttribute(toSymbol(vertexAttr), idToName)
+  }
+}
+
+case class ImportEdgeListWithNumericIDsForExistingVertexSet(
+    csv: CSV, src: String, dst: String) extends ImportEdgeList(csv) {
+  mustHaveField(src)
+  mustHaveField(dst)
+
+  def signature = addEdgeAttributes(newSignature)
+    .inputVertexSet('sources)
+    .inputVertexSet('destinations)
+    .outputEdgeBundle('edges, 'sources -> 'destinations)
+
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
+    putEdgeAttributes(columns, outputs)
+    outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
+      case (src, dst) => Edge(src.toLong, dst.toLong)
+    })
+  }
+}

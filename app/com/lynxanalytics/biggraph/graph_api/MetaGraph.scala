@@ -277,16 +277,11 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
       edgeAttributes ++ mds.edgeAttributes)
   }
 
-  def mapNames(mapping: Map[Symbol, Symbol]): MetaDataSet = {
-    val res = MetaDataSet(all.flatMap {
-      case (name, entity) =>
-        if (mapping.contains(name)) Some(mapping(name) -> entity) else None
-    })
-    assert(res.all.size == mapping.size)
-    res
+  def mapNames(mapping: (Symbol, Symbol)*): MetaDataSet = {
+    MetaDataSet(mapping.map {
+      case (from, to) => to -> all(from)
+    }.toMap)
   }
-
-  def mapNames(mapping: (Symbol, Symbol)*): MetaDataSet = mapNames(mapping.toMap)
 
   override def toString = all.toString
 }
