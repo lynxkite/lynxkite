@@ -19,6 +19,11 @@ case class CSVData(val header: Seq[String],
   def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
 
   def saveDataToDir(path: Filename) = path.saveAsTextFile(toStringRDD)
+
+  def saveToDir(path: Filename) = {
+    path.addPathElement("header").createFromStrings(CSVData.lineToString(header))
+    saveDataToDir(path.addPathElement("data"))
+  }
 }
 object CSVData {
   def lineToStringNoNewLine(line: Seq[String]): String = line.mkString(",")
