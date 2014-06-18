@@ -79,16 +79,15 @@ case class Javascript(expression: String) {
       case Success(result: java.lang.Boolean) =>
         result
       case Success(result) =>
-        log.info(s"JS expression ($expression) returned $result instead of a Boolean")
-        false // Treat errors as "false".
+        throw Javascript.Error(s"JS expression ($expression) returned $result instead of a Boolean")
       case Failure(e) =>
-        log.info(s"Could not evaluate JS: $expression", e)
-        false // Treat errors as "false".
+        throw Javascript.Error(s"Could not evaluate JS: $expression", e)
     }
   }
 }
 object Javascript {
   val engine = new javax.script.ScriptEngineManager().getEngineByName("JavaScript")
+  case class Error(msg: String, cause: Throwable = null) extends Exception(msg, cause)
 }
 
 case class CSV(file: Filename,
