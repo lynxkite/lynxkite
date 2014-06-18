@@ -14,7 +14,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val title = "Create a new vertex set"
     val parameters = Seq(
       Param("size", "Vertex set size"))
-    def instance(params: Map[String, String]) = manager.apply(
+    override def instance(params: Map[String, String]) = manager.apply(
       graph_operations.CreateVertexSet(params("size").toInt))
   }
 
@@ -26,7 +26,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("vsDst", "Destination vertex set", kind = "vertex-set"),
       Param("density", "density", defaultValue = "0.5"),
       Param("seed", "Seed", defaultValue = "0"))
-    def instance(params: Map[String, String]) = manager.apply(
+    override def instance(params: Map[String, String]) = manager.apply(
       graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat),
       'vsSrc -> manager.vertexSet(params("vsSrc").asUUID),
       'vsDst -> manager.vertexSet(params("vsDst").asUUID))
@@ -39,7 +39,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("vs", "Vertex set", kind = "vertex-set"),
       Param("es", "Edge bundle", kind = "edge-bundle"),
       Param("min", "Minimum clique size", defaultValue = "3"))
-    def instance(params: Map[String, String]) = manager.apply(
+    override def instance(params: Map[String, String]) = manager.apply(
       graph_operations.FindMaxCliques(params("min").toInt),
       'vsIn -> manager.vertexSet(params("vs").asUUID),
       'esIn -> manager.edgeBundle(params("es").asUUID))

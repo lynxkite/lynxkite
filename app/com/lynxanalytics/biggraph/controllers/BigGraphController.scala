@@ -52,19 +52,25 @@ case class FEOperationSpec(
   id: String,
   parameters: Map[String, String])
 
-trait FEOperation {
+abstract class FEOperation {
   val id: String = getClass.getName
   val title: String
   val parameters: Seq[FEOperationParameterMeta]
   lazy val starting = parameters.forall(_.kind == "scalar")
   // Use `require()` to perform parameter validation.
-  def instance(params: Map[String, String]): MetaGraphOperationInstance
+  def instance(params: Map[String, String]): MetaGraphOperationInstance = ???
   def isValid(params: Map[String, String]): Boolean = {
     Try(instance(params)) match {
       case Success(_) => true
       case Failure(e: IllegalArgumentException) => false
       case Failure(e) => throw e
     }
+  }
+  def apply(params: Map[String, String]): Option[VertexSet] = {
+    val inst = instance(params)
+    // Redirect to an output, or to an input if there is no output.
+    val vs = inst.outputs.vertexSets.values.toSeq ++ inst.inputs.vertexSets.values.toSeq
+    return vs.headOption
   }
 }
 
@@ -133,9 +139,8 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  def getGraphOperationInstance(spec: FEOperationSpec): MetaGraphOperationInstance = {
-    operations(spec.id).instance(spec.parameters)
-  }
+  def applyOp(spec: FEOperationSpec): Option[VertexSet] =
+    operations(spec.id).apply(spec.parameters)
 
   private val operations = mutable.Map[String, FEOperation]()
 }
@@ -174,10 +179,8 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def applyOp(request: FEOperationSpec): FEVertexSet = {
-    val instance = operations.getGraphOperationInstance(request)
-    // Move to an output, or to an input if there is no output.
-    val vs = instance.outputs.vertexSets.values.toSeq ++ instance.inputs.vertexSets.values.toSeq
-    return toFE(vs.head)
+    val redirect = operations.applyOp(request)
+    return redirect.map(toFE(_)).getOrElse(null)
   }
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
