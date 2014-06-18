@@ -168,12 +168,12 @@ abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val columns = readColumns(rc.sparkContext)
-    execute(columns, outputs)
+    putOutputs(columns, outputs)
   }
 
   // Override these.
   def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
-  def execute(columns: Columns, outputs: DataSetBuilder): Unit = {
+  def putOutputs(columns: Columns, outputs: DataSetBuilder): Unit = {
     for ((field, rdd) <- columns) {
       outputs.putEdgeAttribute(Symbol(field), rdd)
     }
@@ -194,8 +194,8 @@ case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String) exte
 
   override def signature = super.signature.outputGraph('vertices, 'edges)
 
-  override def execute(columns: Columns, outputs: DataSetBuilder) = {
-    super.execute(columns, outputs)
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
+    super.putOutputs(columns, outputs)
     outputs.putVertexSet('vertices,
       (columns(src).values ++ columns(dst).values).distinct.map(_.toLong -> ()))
     outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
@@ -214,8 +214,8 @@ case class ImportEdgeListWithStringIDs(
     .outputGraph('vertices, 'edges)
     .outputVertexAttribute[String](Symbol(vertexAttr), 'vertices)
 
-  override def execute(columns: Columns, outputs: DataSetBuilder) = {
-    super.execute(columns, outputs)
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
+    super.putOutputs(columns, outputs)
     val names = (columns(src).values ++ columns(dst).values).distinct
     val idToName = RDDUtils.fastNumbered(names)
     val nameToId = idToName.map { case (id, name) => (name, id) }
@@ -247,8 +247,8 @@ case class ImportEdgeListWithNumericIDsForExistingVertexSet(
     .inputVertexSet('destinations)
     .outputEdgeBundle('edges, 'sources -> 'destinations)
 
-  override def execute(columns: Columns, outputs: DataSetBuilder) = {
-    super.execute(columns, outputs)
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
+    super.putOutputs(columns, outputs)
     outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
       case (src, dst) => Edge(src.toLong, dst.toLong)
     })
