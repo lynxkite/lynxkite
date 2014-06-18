@@ -18,47 +18,39 @@ object ImportUtil {
   def fields(file: Filename, delimiter: String): Seq[String] =
     split(header(file), delimiter)
 
-  // Splits a line of CSV, respecting double quotes.
-  private[graph_operations] def split(line: String, delimiter: String): Seq[String] = {
-    require(delimiter.length == 1)
-    val delim = delimiter(0)
-    val quote = '"'
-    var i = 0
-    val l = line.length
-    val results = collection.mutable.Buffer[String]()
-    while (i < l) {
-      var start = i
-      var end = l
-      if (line(i) == quote) {
-        // Quoted field.
-        start += 1
-        i += 1
-        while (i < l && end == l) {
-          if (line(i) == quote) {
-            // It is a closing quote if the line ends or a delimiter follows.
-            if (i == l - 1) {
-              end = i
-              i += 1
-            } else if (line(i + 1) == delim) {
-              end = i
-              i += 1
-            }
-          }
-          i += 1
-        }
-      } else {
-        // Unquoted field.
-        while (i < l && end == l) {
-          // Break at next delimiter.
-          if (line(i) == delim) {
-            end = i
-          }
-          i += 1
-        }
-      }
-      results += line.slice(start, end)
+  private[graph_operations] def splitter(delimiter: String): String => Seq[String] = {
+    val delim = java.util.regex.Pattern.quote(delimiter)
+    def oneOf(options: String*) = options.mkString("|")
+    def any(p: String) = capture(p) + "*"
+    def capture(p: String) = "(" + p + ")"
+    def oneField(p: String) = oneOf(p + delim, p + "$")
+    val quote = "\""
+    val nonQuote = "[^\"]"
+    val doubleQuote = quote + quote
+    val quotedString = quote + capture(any(oneOf(nonQuote, doubleQuote))) + quote
+    val anyString = capture(".*?")
+    val r = oneOf(oneField(quotedString), oneField(anyString)).r
+    val splitter = { line: String =>
+      val fields = r.findAllMatchIn(line).map(_.subgroups.find(_ != null).get).toList
+      val l = fields.length
+      // The last field may be a mistake. (Sorry, I couldn't write a better regex.)
+      val fixed = if (l < 2 || fields(l - 2).endsWith(delimiter)) fields else fields.take(l - 1)
+      fixed.map(_.replace(doubleQuote, quote))
     }
-    return results
+    return splitter
+  }
+
+  private val splitters = collection.mutable.Map[String, String => Seq[String]]()
+
+  // Splits a line by the delimiter. Delimiters inside quoted fields are ignored.
+  // (They become part of the string.) Quotes inside fields must be escaped by
+  // doubling them (" -> "").
+  private[graph_operations] def split(line: String, delimiter: String): Seq[String] = {
+    // Cache the regular expressions.
+    if (!splitters.contains(delimiter)) {
+      splitters(delimiter) = splitter(delimiter)
+    }
+    return splitters(delimiter)(line)
   }
 }
 
