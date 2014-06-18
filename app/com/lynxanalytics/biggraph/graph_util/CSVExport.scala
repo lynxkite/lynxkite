@@ -94,8 +94,6 @@ object CSVExport {
   }
 
   private def toCSVStringOperation[T: TypeTag]: T => String = {
-    println("Getting CSV string operation for", typeOf[T])
-    println("Type of string", typeOf[String])
     if (typeOf[T] =:= typeOf[String]) {
       stringValue => quoteString(stringValue.asInstanceOf[String])
     } else {
