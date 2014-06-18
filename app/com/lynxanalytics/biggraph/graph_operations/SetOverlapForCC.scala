@@ -24,7 +24,7 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
       .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
     val byMember = bySet
-      .flatMap { case (setId, set) => set.map(vId => (vId, (setId, set.toArray[ID]))) }
+      .flatMap { case (setId, set) => set.map(vId => (vId, (setId, set.toSeq.sorted.toArray))) }
       .groupByKey(partitioner)
     val edges: RDD[Edge] = byMember.flatMap {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
