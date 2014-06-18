@@ -28,12 +28,12 @@ class ImportGraphTest extends FunSuite with TestGraphOperation {
         CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
         sourceEdgeFieldName, destEdgeFieldName),
       vertexData.mapNames('vertices -> 'sources, 'vertices -> 'destinations))
-    assert(TestUtils.RDDToSortedString(helper.rdd(vertexData.vertexAttributes('name))) ==
+    assert(TestUtils.RDDToSortedString(helper.rdd(vertexData.vertexAttributes('csv_name))) ==
       """|(0,Adam)
          |(1,Eve)
          |(2,Bob)""".stripMargin)
     val edges = helper.rdd(edgeData.edgeBundles('edges))
-    val comments: AttributeRDD[_] = helper.rdd(edgeData.edgeAttributes('comment))
+    val comments: AttributeRDD[_] = helper.rdd(edgeData.edgeAttributes('csv_comment))
     assert(TestUtils.RDDToSortedString(edges.join(comments).values) ==
       """|(Edge(0,1),Adam loves Eve)
          |(Edge(1,0),Eve loves Adam)
@@ -56,7 +56,7 @@ class ImportGraphTest extends FunSuite with TestGraphOperation {
     val edges = helper.rdd(data.edgeBundles('edges))
     assert(vertices.count === 6)
     assert(edges.count === 8)
-    val comments: AttributeRDD[_] = helper.rdd(data.edgeAttributes('comment))
+    val comments: AttributeRDD[_] = helper.rdd(data.edgeAttributes('csv_comment))
     assert(TestUtils.RDDToSortedString(edges.join(comments).values) ==
       """|(Edge(0,1),Adam loves Eve)
          |(Edge(1,0),Eve loves Adam)
@@ -81,8 +81,8 @@ class ImportGraphTest extends FunSuite with TestGraphOperation {
       edgeSourceFieldName, edgeDestFieldName, vertexIdAttrName))
     val vs = helper.rdd(data.vertexSets('vertices))
     val es = helper.rdd(data.edgeBundles('edges))
-    val names = helper.rdd(data.vertexAttributes('name)).asInstanceOf[AttributeRDD[String]]
-    val comments: AttributeRDD[_] = helper.rdd(data.edgeAttributes('comment))
+    val names = helper.rdd(data.vertexAttributes('csv_name)).asInstanceOf[AttributeRDD[String]]
+    val comments: AttributeRDD[_] = helper.rdd(data.edgeAttributes('csv_comment))
     val bySrc = es.map { case (e, Edge(s, d)) => s -> (e, d) }
     val byDst = bySrc.join(names).map { case (s, ((e, d), ns)) => d -> (e, ns) }
     val named = byDst.join(names).map { case (d, ((e, ns), nd)) => e -> (ns, nd) }

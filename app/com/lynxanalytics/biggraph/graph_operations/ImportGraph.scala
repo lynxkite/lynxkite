@@ -111,10 +111,8 @@ abstract class ImportCommon(csv: CSV) extends MetaGraphOperation {
   protected def mustHaveField(field: String) = {
     assert(csv.fields.contains(field), s"No such field: $field in ${csv.fields}")
   }
-  protected def mustNotHaveField(field: String) = {
-    assert(!csv.fields.contains(field),
-      s"'$field' is a reserved name and cannot be the name of a column.")
-  }
+
+  protected def toSymbol(field: String) = Symbol("csv_" + field)
 
   protected def splitGenerateIDs(lines: RDD[Seq[String]]): Columns = {
     val numbered = RDDUtils.fastNumbered(lines)
@@ -132,20 +130,19 @@ abstract class ImportCommon(csv: CSV) extends MetaGraphOperation {
 }
 
 abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv) {
-  mustNotHaveField("vertices")
 
-  def signature = {
-    var s = newSignature.outputVertexSet('vertices)
-    for (field <- csv.fields) {
-      s = s.outputVertexAttribute[String](Symbol(field), 'vertices)
+  def signature = addVertexAttributes(newSignature.outputVertexSet('vertices))
+
+  protected def addVertexAttributes(s: MetaGraphOperationSignature) = {
+    csv.fields.foldLeft(s) {
+      (s, field) => s.outputVertexAttribute[String](toSymbol(field), 'vertices)
     }
-    s
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val columns = readColumns(rc.sparkContext)
     for ((field, rdd) <- columns) {
-      outputs.putVertexAttribute(Symbol(field), rdd)
+      outputs.putVertexAttribute(toSymbol(field), rdd)
     }
     outputs.putVertexSet('vertices, columns.values.head.mapValues(_ => ()))
   }
@@ -164,7 +161,6 @@ case class ImportVertexListWithNumericIDs(csv: CSV, id: String) extends ImportVe
 }
 
 abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
-  mustNotHaveField("edges")
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val columns = readColumns(rc.sparkContext)
@@ -175,16 +171,14 @@ abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
   def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
   def putOutputs(columns: Columns, outputs: DataSetBuilder): Unit = {
     for ((field, rdd) <- columns) {
-      outputs.putEdgeAttribute(Symbol(field), rdd)
+      outputs.putEdgeAttribute(toSymbol(field), rdd)
     }
   }
-  def signature = {
-    var s = newSignature
-    for (field <- csv.fields) {
-      // Subclass has to define 'edges.
-      s = s.outputEdgeAttribute[String](Symbol(field), 'edges)
+  def addEdgeAttributes(s: MetaGraphOperationSignature): MetaGraphOperationSignature = {
+    // Subclass has to define 'edges.
+    csv.fields.foldLeft(s) {
+      (s, field) => s.outputEdgeAttribute[String](toSymbol(field), 'edges)
     }
-    s
   }
 }
 
@@ -192,7 +186,7 @@ case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String) exte
   mustHaveField(src)
   mustHaveField(dst)
 
-  override def signature = super.signature.outputGraph('vertices, 'edges)
+  def signature = addEdgeAttributes(newSignature).outputGraph('vertices, 'edges)
 
   override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
     super.putOutputs(columns, outputs)
@@ -208,11 +202,10 @@ case class ImportEdgeListWithStringIDs(
     csv: CSV, src: String, dst: String, vertexAttr: String) extends ImportEdgeList(csv) {
   mustHaveField(src)
   mustHaveField(dst)
-  mustNotHaveField(vertexAttr)
 
-  override def signature = super.signature
+  def signature = addEdgeAttributes(newSignature)
     .outputGraph('vertices, 'edges)
-    .outputVertexAttribute[String](Symbol(vertexAttr), 'vertices)
+    .outputVertexAttribute[String](toSymbol(vertexAttr), 'vertices)
 
   override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
     super.putOutputs(columns, outputs)
@@ -231,7 +224,7 @@ case class ImportEdgeListWithStringIDs(
     }
     outputs.putEdgeBundle('edges, edges)
     outputs.putVertexSet('vertices, idToName.mapValues(_ => ()))
-    outputs.putVertexAttribute(Symbol(vertexAttr), idToName)
+    outputs.putVertexAttribute(toSymbol(vertexAttr), idToName)
   }
 }
 
@@ -239,10 +232,8 @@ case class ImportEdgeListWithNumericIDsForExistingVertexSet(
     csv: CSV, src: String, dst: String) extends ImportEdgeList(csv) {
   mustHaveField(src)
   mustHaveField(dst)
-  mustNotHaveField("sources")
-  mustNotHaveField("destinations")
 
-  override def signature = super.signature
+  def signature = addEdgeAttributes(newSignature)
     .inputVertexSet('sources)
     .inputVertexSet('destinations)
     .outputEdgeBundle('edges, 'sources -> 'destinations)
