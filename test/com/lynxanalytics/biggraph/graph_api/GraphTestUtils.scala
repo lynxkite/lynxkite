@@ -69,6 +69,11 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
     (outs.vertexSets('vs), outs.edgeBundles('es))
   }
 
+  def groupedGraph(edgeLists: Map[Int, Seq[Int]]): (VertexSet, VertexSet, EdgeBundle) = {
+    val outs = apply(GroupedTestGraph(edgeLists))
+    (outs.vertexSets('vs), outs.vertexSets('sets), outs.edgeBundles('links))
+  }
+
   def localData(vertexSet: VertexSet): Set[Long] = {
     dataManager.get(vertexSet).rdd.keys.collect.toSet
   }
@@ -184,6 +189,7 @@ case class CreateExampleGraphOperation() extends MetaGraphOperation {
 
 case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
   def signature = newSignature.outputGraph('vs, 'es)
+
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
     outputs.putVertexSet('vs, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
@@ -191,6 +197,26 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperat
       case (i, es) => es.map(e => i -> e)
     }
     outputs.putEdgeBundle('es, sc.parallelize(nodePairs.zipWithIndex.map {
+      case ((a, b), i) => i.toLong -> Edge(a, b)
+    }))
+  }
+}
+
+case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
+  def signature = newSignature
+    .outputVertexSet('vs)
+    .outputVertexSet('sets)
+    .outputEdgeBundle('links, 'vs -> 'sets)
+
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
+    val sc = rc.sparkContext
+    outputs.putVertexSet('vs, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
+    val sets = edgeLists.values.toList.flatten.distinct
+    outputs.putVertexSet('sets, sc.parallelize(sets.map(i => (i.toLong, ()))))
+    val nodePairs = edgeLists.toSeq.flatMap {
+      case (i, es) => es.map(e => i -> e)
+    }
+    outputs.putEdgeBundle('links, sc.parallelize(nodePairs.zipWithIndex.map {
       case ((a, b), i) => i.toLong -> Edge(a, b)
     }))
   }
