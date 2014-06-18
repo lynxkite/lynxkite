@@ -1,11 +1,12 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import scala.reflect.runtime.universe.typeOf
 
-object FEOperations extends FEOperationRepository {
+class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) {
   val Param = FEOperationParameterMeta // Short alias.
 
   registerOperation(CreateVertexSet)
