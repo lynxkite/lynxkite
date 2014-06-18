@@ -25,6 +25,15 @@ class SetOverlapTest extends FunSuite with TestGraphOperation {
     assert(overlaps === Map(((0, 1) -> 1), ((0, 2) -> 1), ((1, 0) -> 1), ((1, 2) -> 1), ((2, 0) -> 1), (2, 1) -> 1))
   }
 
+  test("unsorted sets") {
+    val overlaps = getOverlaps(Map(
+      0 -> Seq(2, 1),
+      1 -> Seq(3, 2),
+      2 -> Seq(3, 1)),
+      minOverlap = 1)
+    assert(overlaps === Map(((0, 1) -> 1), ((0, 2) -> 1), ((1, 0) -> 1), ((1, 2) -> 1), ((2, 0) -> 1), (2, 1) -> 1))
+  }
+
   test("minOverlap too high") {
     val overlaps = getOverlaps(Map(
       0 -> Seq(1, 2),
