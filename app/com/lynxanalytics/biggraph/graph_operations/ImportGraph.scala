@@ -147,7 +147,7 @@ abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv) {
     for ((field, rdd) <- columns) {
       outputs.putVertexAttribute(Symbol(field), rdd)
     }
-    outputs.putVertexSet('vertices, columns.values.head.keys.map((_, Unit)))
+    outputs.putVertexSet('vertices, columns.values.head.mapValues(_ => ()))
   }
 
   // Override this.
