@@ -15,10 +15,10 @@ private[graph_api] class GraphDataManagerImpl(sc: spark.SparkContext,
 
   private val dataCache = mutable.Map[UUID, GraphData]()
 
-  private def pathPrefix(bigGraph: BigGraph) = repositoryPath.addPathElement(bigGraph.gUID.toString)
+  private def pathPrefix(bigGraph: BigGraph) = repositoryPath / bigGraph.gUID.toString
   private def verticesPath(bigGraph: BigGraph) = GraphIO.verticesPath(pathPrefix(bigGraph))
   private def edgesPath(bigGraph: BigGraph) = GraphIO.edgesPath(pathPrefix(bigGraph))
-  private def successPath(basePath: Filename): Filename = basePath.addPathElement("_SUCCESS")
+  private def successPath(basePath: Filename): Filename = basePath / "_SUCCESS"
 
   private def hasGraph(bigGraph: BigGraph): Boolean = {
     return successPath(verticesPath(bigGraph)).exists && successPath(edgesPath(bigGraph)).exists

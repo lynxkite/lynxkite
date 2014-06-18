@@ -17,9 +17,9 @@ class DataManager(sc: spark.SparkContext,
   private val edgeAttributeCache = mutable.Map[UUID, EdgeAttributeData[_]]()
 
   private def entityPath(entity: MetaGraphEntity) =
-    repositoryPath.addPathElement(entity.gUID.toString)
+    repositoryPath / entity.gUID.toString
 
-  private def successPath(basePath: Filename): Filename = basePath.addPathElement("_SUCCESS")
+  private def successPath(basePath: Filename): Filename = basePath / "_SUCCESS"
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = successPath(entityPath(entity)).exists
 
