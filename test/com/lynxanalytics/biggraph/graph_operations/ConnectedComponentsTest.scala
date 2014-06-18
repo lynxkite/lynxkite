@@ -33,8 +33,8 @@ class ConnectedComponentsTest extends FunSuite with TestGraphOperation {
   // Returns the resulting component attributes in an easy-to-use format.
   def getComponents(nodes: Map[Int, Seq[Int]], local: Boolean): Map[Long, Long] = {
     ConnectedComponents.maxEdgesProcessedLocally = if (local) 100000 else 0
-    val sg = helper.apply(SmallTestGraph(nodes))
-    val cc = helper.apply(ConnectedComponents(), sg.mapNames('vs -> 'vs, 'es -> 'es))
+    val (vs, es) = helper.smallGraph(nodes)
+    val cc = helper.apply(ConnectedComponents(), 'vs -> vs, 'es -> es)
 
     helper.localData(cc.edgeBundles('links)).toMap
   }
