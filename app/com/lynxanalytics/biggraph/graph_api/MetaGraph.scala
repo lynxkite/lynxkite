@@ -65,7 +65,7 @@ trait MetaGraphOperation extends Serializable {
   //         .inputGraph("input-vertices", "input-edges")
   //         .outputVertexAttribute[Double]("input-vertices", "my-attribute")
   //     }
-  protected def signature: MetaGraphOperationSignature
+  def signature: MetaGraphOperationSignature
   protected def newSignature = new MetaGraphOperationSignature
 
   // Names of vertex set inputs for this operation.
@@ -261,15 +261,16 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
                        vertexAttributes: Map[Symbol, VertexAttribute[_]] = Map(),
                        edgeAttributes: Map[Symbol, EdgeAttribute[_]] = Map()) {
-  val all = vertexSets ++ edgeBundles ++ vertexAttributes ++ edgeAttributes
+  val all: Map[Symbol, MetaGraphEntity] =
+    vertexSets ++ edgeBundles ++ vertexAttributes ++ edgeAttributes
   assert(all.size ==
     vertexSets.size + edgeBundles.size + vertexAttributes.size + edgeAttributes.size,
     "Cross type collision %s %s %s %s".format(
       vertexSets, edgeBundles, vertexAttributes, edgeAttributes))
   def ++(mds: MetaDataSet): MetaDataSet = {
     assert(
-      (all.keySet & mds.all.keySet).isEmpty,
-      "Collision: " + (all.keySet & mds.all.keySet).toSeq)
+      (all.keySet & mds.all.keySet).forall(key => all(key).gUID == mds.all(key).gUID),
+      "Collision: " + (all.keySet & mds.all.keySet).find(key => all(key).gUID == mds.all(key).gUID))
     return MetaDataSet(
       vertexSets ++ mds.vertexSets,
       edgeBundles ++ mds.edgeBundles,
@@ -292,6 +293,42 @@ object MetaDataSet {
       edgeBundles = all.collect { case (k, v: EdgeBundle) => (k, v) },
       vertexAttributes = all.collect { case (k, v: VertexAttribute[_]) => (k, v) }.toMap,
       edgeAttributes = all.collect { case (k, v: EdgeAttribute[_]) => (k, v) }.toMap)
+  }
+  def applyWithSignature(signature: MetaGraphOperationSignature,
+                         all: (Symbol, MetaGraphEntity)*): MetaDataSet = {
+    var res = MetaDataSet()
+    def addVS(name: Symbol, vs: VertexSet) {
+      assert(signature.inputVertexSets.contains(name))
+      res ++= MetaDataSet(vertexSets = Map(name -> vs))
+    }
+    def addEB(name: Symbol, eb: EdgeBundle) {
+      val (srcName, dstName) = signature.inputEdgeBundles(name)
+      res ++= MetaDataSet(edgeBundles = Map(name -> eb))
+      addVS(srcName, eb.srcVertexSet)
+      addVS(dstName, eb.dstVertexSet)
+    }
+    def addVA(name: Symbol, va: VertexAttribute[_]) {
+      val vsName = signature.inputVertexAttributes(name)._1
+      res ++= MetaDataSet(vertexAttributes = Map(name -> va))
+      addVS(vsName, va.vertexSet)
+    }
+    def addEA(name: Symbol, ea: EdgeAttribute[_]) {
+      val ebName = signature.inputEdgeAttributes(name)._1
+      res ++= MetaDataSet(edgeAttributes = Map(name -> ea))
+      addEB(ebName, ea.edgeBundle)
+    }
+
+    all.foreach {
+      case (name, entity) =>
+        entity match {
+          case vs: VertexSet => addVS(name, vs)
+          case eb: EdgeBundle => addEB(name, eb)
+          case va: VertexAttribute[_] => addVA(name, va)
+          case ea: EdgeAttribute[_] => addEA(name, ea)
+        }
+    }
+
+    res
   }
 }
 
