@@ -74,8 +74,9 @@ case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
                        vertexAttributes: Seq[VertexAttribute[_]] = Seq(),
                        edgeAttributes: Seq[EdgeAttribute[_]] = Seq())
 
-class FEOperationRepository {
-  val manager = PlaceHolderMetaGraphManagerFactory.get
+class FEOperationRepository(env: BigGraphEnvironment) {
+  val manager = env.metaGraphManager
+  val dataManager = env.dataManager
 
   def registerOperation(op: FEOperation): Unit = {
     assert(!operations.contains(op.id), s"Already registered: ${op.id}")
@@ -139,16 +140,13 @@ class FEOperationRepository {
   private val operations = mutable.Map[String, FEOperation]()
 }
 
-object PlaceHolderMetaGraphManagerFactory {
-  val get = new MetaGraphManager("/tmp/")
-}
-
 /**
  * Logic for processing requests
  */
 
-class BigGraphController(environment: BigGraphEnvironment) {
-  val manager = PlaceHolderMetaGraphManagerFactory.get
+class BigGraphController(env: BigGraphEnvironment) {
+  val manager = env.metaGraphManager
+  val operations = new FEOperations(env)
 
   private def toFE(vs: VertexSet): FEVertexSet = {
     val in = manager.incomingBundles(vs).toSet
@@ -160,7 +158,7 @@ class BigGraphController(environment: BigGraphEnvironment) {
       inEdges = (in -- local).toSeq.map(toFE(_)),
       outEdges = (out -- local).toSeq.map(toFE(_)),
       localEdges = local.toSeq.map(toFE(_)),
-      ops = FEOperations.getApplicableOperationMetas(vs))
+      ops = operations.getApplicableOperationMetas(vs))
   }
 
   private def toFE(eb: EdgeBundle): FEEdgeBundle = {
@@ -176,14 +174,14 @@ class BigGraphController(environment: BigGraphEnvironment) {
   }
 
   def applyOp(request: FEOperationSpec): FEVertexSet = {
-    val instance = FEOperations.getGraphOperationInstance(request)
+    val instance = operations.getGraphOperationInstance(request)
     // Move to an output, or to an input if there is no output.
     val vs = instance.outputs.vertexSets.values.toSeq ++ instance.inputs.vertexSets.values.toSeq
     return toFE(vs.head)
   }
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
-    FEOperations.getStartingOperationMetas
+    operations.getStartingOperationMetas
 
   def startingVertexSets(request: serving.Empty): Seq[UIValue] =
     manager.allVertexSets.filter(_.source.inputs.all.isEmpty).map(UIValue.fromEntity(_)).toSeq
