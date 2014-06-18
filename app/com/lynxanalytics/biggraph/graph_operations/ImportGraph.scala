@@ -135,9 +135,9 @@ abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv) {
   mustNotHaveField("vertices")
 
   def signature = {
-    val s = newSignature.outputVertexSet('vertices)
+    var s = newSignature.outputVertexSet('vertices)
     for (field <- csv.fields) {
-      s.outputVertexAttribute[String](Symbol(field), 'vertices)
+      s = s.outputVertexAttribute[String](Symbol(field), 'vertices)
     }
     s
   }
@@ -179,10 +179,10 @@ abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
     }
   }
   def signature = {
-    val s = newSignature
+    var s = newSignature
     for (field <- csv.fields) {
       // Subclass has to define 'edges.
-      s.outputEdgeAttribute[String](Symbol(field), 'edges)
+      s = s.outputEdgeAttribute[String](Symbol(field), 'edges)
     }
     s
   }
