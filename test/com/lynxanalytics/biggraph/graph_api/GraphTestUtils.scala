@@ -61,6 +61,9 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
     apply(operation, MetaDataSet(all))
   }
 
+  def apply(operation: MetaGraphOperation,
+            all: (Symbol, MetaGraphEntity)*): MetaDataSet = apply(operation, all.toMap)
+
   def smallGraph(edgeLists: Map[Int, Seq[Int]]): (VertexSet, EdgeBundle) = {
     val outs = apply(SmallTestGraph(edgeLists))
     (outs.vertexSets('vs), outs.edgeBundles('es))
@@ -90,7 +93,12 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
   }
 }
 
+object HelperSingletonProvider extends TestMetaGraphManager with TestDataManager {
+  lazy val helper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
+}
+
 trait TestGraphOperation extends TestMetaGraphManager with TestDataManager {
+  val helper = HelperSingletonProvider.helper
   def cleanHelper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
 }
 
