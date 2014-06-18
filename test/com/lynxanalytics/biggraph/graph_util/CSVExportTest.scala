@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_api._
 
 class CSVExportTest extends FunSuite with TestGraphOperation {
   test("We can export attributes") {
-    val helper = cleanHelper
     val sampleOut = helper.apply(CreateExampleGraphOperation())
     assert(CSVExport.exportVertexAttributes(
       Seq(sampleOut.vertexAttributes('name), sampleOut.vertexAttributes('age)),
@@ -30,13 +29,14 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
          |""".stripMargin)
   }
 
-  /*  test("We can save a simple graph to files") {
-    val graphManager = cleanGraphManager("csvsave")
-    val dataManager = cleanDataManager("csvsave")
-    val myGraph = graphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
-    val myData = dataManager.obtainData(myGraph)
+  test("We can save a CSV to a dir") {
+    val sampleOut = helper.apply(CreateExampleGraphOperation())
+    val cSVData = CSVExport.exportVertexAttributes(
+      Seq(sampleOut.vertexAttributes('name), sampleOut.vertexAttributes('age)),
+      Seq("name", "age"),
+      helper.dataManager)
     val targetDir = tempDir("csv_save_target_dir")
-    CSVExport.exportToDirectory(myData, Filename(targetDir.toString))
+    cSVData.saveToDir(Filename(targetDir.toString))
 
     val dirSnapshot = TestUtils.runShellCommand(
       """|cd %s
@@ -47,34 +47,20 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
          |  echo '********'
          |done""".stripMargin.format(targetDir.toString))
     assert(dirSnapshot ==
-      """|./edge-data/_SUCCESS
+      """|./data/_SUCCESS
          |========
          |********
-         |./edge-data/part-00000
-         |========
-         |0,1,"Adam loves Eve"
-         |1,0,"Eve loves Adam"
-         |2,0,"Bob envies Adam"
-         |2,1,"Bob loves Eve"
-         |********
-         |./edge-header
-         |========
-         |"srcVertexId","dstVertexId","comment"
-         |********
-         |./vertex-data/_SUCCESS
-         |========
-         |********
-         |./vertex-data/part-00000
+         |./data/part-00000
          |========
          |0,"Adam",20.3
          |1,"Eve",18.2
          |2,"Bob",50.3
          |********
-         |./vertex-header
+         |./header
          |========
          |"vertexId","name","age"
          |********
          |""".stripMargin)
-  }*/
+  }
 }
 
