@@ -23,28 +23,35 @@ object ImportUtil {
     def oneOf(options: String*) = options.mkString("|")
     def any(p: String) = capture(p) + "*"
     def capture(p: String) = "(" + p + ")"
-    def oneField(p: String) = oneOf(p + delim, p + "$")
+    def oneField(p: String) = oneOf(p + delim, p + "$") // Delimiter or line end.
     val quote = "\""
     val nonQuote = "[^\"]"
     val doubleQuote = quote + quote
-    val quotedString = quote + capture(any(oneOf(nonQuote, doubleQuote))) + quote
+    val quotedString = capture(quote + any(oneOf(nonQuote, doubleQuote)) + quote)
     val anyString = capture(".*?")
     val r = oneOf(oneField(quotedString), oneField(anyString)).r
     val splitter = { line: String =>
-      val fields = r.findAllMatchIn(line).map(_.subgroups.find(_ != null).get).toList
+      val matches = r.findAllMatchIn(line)
+      // Find the top-level group that has matched in each field.
+      val fields = matches.map(_.subgroups.find(_ != null).get).toList
       val l = fields.length
       // The last field may be a mistake. (Sorry, I couldn't write a better regex.)
       val fixed = if (l < 2 || fields(l - 2).endsWith(delimiter)) fields else fields.take(l - 1)
-      fixed.map(_.replace(doubleQuote, quote))
+      // Remove quotes and unescape double-quotes in quoted fields.
+      fixed.map { field =>
+        if (field.startsWith(quote) && field.endsWith(quote)) {
+          field.slice(1, field.length - 1).replace(doubleQuote, quote)
+        } else field
+      }
     }
     return splitter
   }
 
   private val splitters = collection.mutable.Map[String, String => Seq[String]]()
 
-  // Splits a line by the delimiter. Delimiters inside quoted fields are ignored.
-  // (They become part of the string.) Quotes inside fields must be escaped by
-  // doubling them (" -> "").
+  // Splits a line by the delimiter. Delimiters inside quoted fields are ignored. (They become part
+  // of the string.) Quotes inside quoted fields must be escaped by doubling them (" -> "").
+  // TODO: Maybe we should use a CSV library.
   private[graph_operations] def split(line: String, delimiter: String): Seq[String] = {
     // Cache the regular expressions.
     if (!splitters.contains(delimiter)) {

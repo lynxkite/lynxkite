@@ -94,8 +94,8 @@ class ImportGraphTest extends FunSuite with TestGraphOperation {
   }
 
   test("Splitting with quoted delimiters") {
-    val input = """ "Hello, ""mr, smith""!",How are you "doing"?,"Okay, thanks." """.trim
-    assert(ImportUtil.split(input, delimiter = ",") ==
+    val input = """ "Hello, ""mr, smith""!", How are you "doing"?, "Okay, thanks." """.trim
+    assert(ImportUtil.split(input, delimiter = ", ") ==
       Seq("Hello, \"mr, smith\"!", "How are you \"doing\"?", "Okay, thanks."))
   }
 
