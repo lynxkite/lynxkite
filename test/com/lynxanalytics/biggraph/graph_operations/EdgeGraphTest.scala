@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 class EdgeGraphTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   test("We can get edge graph for simple graph") {
     val graphManager = cleanGraphManager("simpleedgegraph")
-    val dataManager = cleanDataManager("simpleedgegraph")
+    val dataManager = cleanGraphDataManager("simpleedgegraph")
     val origGraph = graphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
     val edgeGraph = graphManager.deriveGraph(Seq(origGraph), new EdgeGraph)
     val edgeGraphData = dataManager.obtainData(edgeGraph)
