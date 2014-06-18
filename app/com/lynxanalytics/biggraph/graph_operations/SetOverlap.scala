@@ -2,54 +2,43 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx.Edge
-import org.apache.spark.graphx.VertexId
-import org.apache.spark.rdd
+import org.apache.spark.rdd._
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
-import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
+import com.lynxanalytics.biggraph.spark_util._
 
 // Generates edges between vertices by the amount of overlap in an attribute.
 object SetOverlap {
   // Maximum number of sets to be O(n^2) compared.
   val SetListBruteForceLimit = 70
 }
-case class SetOverlap(
-    attribute: String,
-    minOverlap: Int) extends GraphOperation {
+case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
+  def signature = newSignature
+    .inputVertexSet('vs)
+    .inputVertexSet('sets)
+    .inputEdgeBundle('links, 'vs -> 'sets)
+    .outputEdgeBundle('overlaps, 'sets -> 'sets)
+    // The generated edges have a single attribute, the overlap size.
+    .outputEdgeAttribute[Int]('overlap_size, 'overlaps)
 
-  // Set-valued attributes are represented as sorted Array[Long].
-  type Set = Array[Long]
+  // Set-valued attributes are represented as sorted Array[ID].
+  type Set = Array[ID]
   // When dealing with multiple sets, they are identified by their VertexIds.
-  type Sets = Iterable[(VertexId, Array[Long])]
-  // The generated edges have a single attribute, the overlap size.
-  val outputAttribute = attribute + "_overlap"
-  @transient lazy val outputSig = AttributeSignature
-    .empty.addAttribute[Int](outputAttribute).signature
+  type Sets = Iterable[(ID, Array[ID])]
 
-  def isSourceListValid(sources: Seq[BigGraph]): Boolean = (
-    sources.size == 1
-    && sources.head.vertexAttributes.canRead[Set](attribute)
-  )
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val partitioner = rc.defaultPartitioner
 
-  def execute(target: BigGraph,
-              manager: GraphDataManager): GraphData = {
-    val inputGraph = target.sources.head
-    val inputData = manager.obtainData(inputGraph)
-    val runtimeContext = manager.runtimeContext
-    val sc = runtimeContext.sparkContext
-    val inputIdx = inputGraph.vertexAttributes.readIndex[Set](attribute)
-    val sets = inputData.vertices.mapValues(_(inputIdx))
-    val cores = runtimeContext.numAvailableCores
-    val partitioner = new spark.HashPartitioner(cores * 5)
-    type SetsByPrefix = rdd.RDD[(Seq[Long], Sets)]
+    val sets = inputs.edgeBundles('links).rdd.values
+      .map { case Edge(vId, setId) => vId -> setId }
+      .groupByKey(partitioner)
+
+    type SetsByPrefix = RDD[(Seq[ID], Sets)]
     // Start with prefixes of length 1.
-    var short: SetsByPrefix = sc.emptyRDD[(Seq[Long], Sets)]
-    var long: SetsByPrefix =
-      sets.flatMap({
-        case (vid, set) => set.map(i => (Seq(i), (vid, set)))
-      }).groupByKey(partitioner)
+    var short: SetsByPrefix = rc.sparkContext.emptyRDD[(Seq[ID], Sets)]
+    var long: SetsByPrefix = sets.flatMap {
+      case (vid, set) => set.map(i => (Seq(i), (vid, set.toSeq.sorted.toArray)))
+    }.groupByKey(partitioner)
     // Increase prefix length until all set lists are short.
     // We cannot use a prefix longer than minOverlap.
     for (iteration <- (2 to minOverlap)) {
@@ -57,54 +46,40 @@ case class SetOverlap(
       short ++= long.filter(_._2.size <= SetOverlap.SetListBruteForceLimit)
       long = long.filter(_._2.size > SetOverlap.SetListBruteForceLimit)
       // Increase prefix length.
-      long = long.flatMap({
-        case (prefix, sets) => sets.flatMap({
+      long = long.flatMap {
+        case (prefix, sets) => sets.flatMap {
           case (vid, set) => {
             set
               .filter(node => node > prefix.last)
               .map(next => (prefix :+ next, (vid, set)))
           }
-        })
-      }).groupByKey(partitioner)
+        }
+      }.groupByKey(partitioner)
     }
     // Accept the remaining large set lists. We cannot split them further.
     short ++= long
 
-    val edges: rdd.RDD[Edge[DenseAttributes]] = short.flatMap({
+    val edgesWithOverlaps: RDD[(Edge, Int)] = short.flatMap {
       case (prefix, sets) => edgesFor(prefix, sets)
-    })
-    // Wrap the vertex RDD in a UnionRDD. This way it can have a distinct name.
-    val vertices = sc.union(inputData.vertices)
-    return new SimpleGraphData(target, vertices, edges)
+    }
+    val numberedEdgesWithOverlaps = RDDUtils.fastNumbered(edgesWithOverlaps)
+
+    outputs.putEdgeBundle(
+      'overlaps, numberedEdgesWithOverlaps.map { case (eId, (edge, overlap)) => eId -> edge })
+    outputs.putEdgeAttribute(
+      'overlap_size, numberedEdgesWithOverlaps.map { case (eId, (edge, overlap)) => eId -> overlap })
   }
-
-  def vertexAttributes(inputGraphSpecs: Seq[BigGraph]) = inputGraphSpecs.head.vertexAttributes
-
-  def edgeAttributes(inputGraphSpecs: Seq[BigGraph]) = outputSig
-
-  override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
-    new BigGraphProperties(symmetricEdges = true)
 
   // Generates the edges for a set of sets. This is O(n^2), but the set should
   // be small.
-  protected def edgesFor(prefix: Seq[Long], sets: Sets): Seq[Edge[DenseAttributes]] = {
+  protected def edgesFor(prefix: Seq[ID], sets: Sets): Seq[(Edge, Int)] = {
     val setSeq = sets.toSeq
     for {
       (vid1, set1) <- setSeq
       (vid2, set2) <- setSeq
       overlap = SortedIntersectionSize(set1, set2, prefix)
       if vid1 != vid2 && overlap >= minOverlap
-    } yield Edge(vid1, vid2, DA(overlap))
-  }
-
-  // Set up for writing the result into DenseAttributes.
-  @transient private lazy val outputMaker = outputSig.maker
-  @transient private lazy val outputIdx = outputSig.writeIndex[Int](outputAttribute)
-  // Not a method, to avoid serializing the whole class.
-  protected val DA = (overlap: Int) => {
-    val da = outputMaker.make()
-    da.set(outputIdx, overlap)
-    da
+    } yield (Edge(vid1, vid2), overlap)
   }
 
   // Intersection size calculator. The same a-b pair will show up under multiple
@@ -112,7 +87,7 @@ case class SetOverlap(
   // reporting them multiple times, SortedIntersectionSize() returns 0 unless
   // `pref` is a prefix of the overlap.
   protected def SortedIntersectionSize(
-    a: Array[Long], b: Array[Long], pref: Seq[Long]): Int = {
+    a: Array[ID], b: Array[ID], pref: Seq[ID]): Int = {
     var ai = 0
     var bi = 0
     val prefi = pref.iterator
@@ -132,25 +107,5 @@ case class SetOverlap(
       }
     }
     return res
-  }
-}
-
-// A faster version, that omits many edges, but the connected components will
-// still be the same in the resulting graph.
-class SetOverlapForConnectedComponents(
-    attribute: String,
-    minOverlap: Int) extends SetOverlap(attribute, minOverlap) {
-  override def edgesFor(prefix: Seq[Long], sets: Sets): Seq[Edge[DenseAttributes]] = {
-    val setSeq = sets.toSeq
-    if (prefix.size == minOverlap) {
-      val center: Long = setSeq.head._1
-      setSeq.flatMap({
-        case (vid, set) => List(
-          Edge(vid, center, DA(minOverlap)),
-          Edge(center, vid, DA(minOverlap)))
-      })
-    } else {
-      super.edgesFor(prefix, sets)
-    }
   }
 }
