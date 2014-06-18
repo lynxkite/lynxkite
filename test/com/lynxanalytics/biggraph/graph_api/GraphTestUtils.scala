@@ -74,23 +74,27 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
     (outs.vertexSets('vs), outs.vertexSets('sets), outs.edgeBundles('links))
   }
 
-  def localData(vertexSet: VertexSet): Set[Long] = {
-    dataManager.get(vertexSet).rdd.keys.collect.toSet
-  }
+  def rdd(vertexSet: VertexSet): VertexSetRDD = dataManager.get(vertexSet).rdd
+  def localData(vertexSet: VertexSet): Set[Long] = rdd(vertexSet).keys.collect.toSet
+
+  def rdd(edgeBundle: EdgeBundle): EdgeBundleRDD = dataManager.get(edgeBundle).rdd
   def localData(edgeBundle: EdgeBundle): Set[(Long, Long)] = {
-    dataManager
-      .get(edgeBundle)
-      .rdd
+    rdd(edgeBundle)
       .collect
       .map { case (id, edge) => (edge.src, edge.dst) }
       .toSet
   }
-  def localData[T](vertexAttribute: VertexAttribute[T]): Map[Long, T] = {
-    dataManager.get(vertexAttribute).rdd.collect.toMap
-  }
+
+  def rdd[T](vertexAttribute: VertexAttribute[T]): AttributeRDD[T] =
+    dataManager.get(vertexAttribute).rdd
+  def localData[T](vertexAttribute: VertexAttribute[T]): Map[Long, T] =
+    rdd(vertexAttribute).collect.toMap
+
+  def rdd[T](edgeAttribute: EdgeAttribute[T]): AttributeRDD[T] =
+    dataManager.get(edgeAttribute).rdd
   def localData[T](edgeAttribute: EdgeAttribute[T]): Map[(Long, Long), T] = {
-    val edgesRDD = dataManager.get(edgeAttribute.edgeBundle).rdd
-    val attrRDD = dataManager.get(edgeAttribute).rdd
+    val edgesRDD = rdd(edgeAttribute.edgeBundle)
+    val attrRDD = rdd(edgeAttribute)
     edgesRDD.join(attrRDD).map {
       case (id, (edge, value)) =>
         (edge.src, edge.dst) -> value
