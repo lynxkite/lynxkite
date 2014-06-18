@@ -41,7 +41,7 @@ class SetOverlapTest extends FunSuite with TestBigGraphManager with TestGraphDat
   // Returns the resulting edges in an easy-to-use format.
   def getOverlaps(nodes: Seq[(Int, Seq[Int])], minOverlap: Int): Seq[(Int, Int, Int)] = {
     val graphManager = cleanGraphManager("SetOverlapTest")
-    val dataManager = cleanDataManager("SetOverlapTest")
+    val dataManager = cleanGraphDataManager("SetOverlapTest")
     val inputGraph = graphManager.deriveGraph(Seq(), GraphBySetAttribute("set", nodes))
     val outputGraph = graphManager.deriveGraph(Seq(inputGraph), SetOverlap("set", minOverlap))
     val idx = outputGraph.edgeAttributes.readIndex[Int]("set_overlap")
