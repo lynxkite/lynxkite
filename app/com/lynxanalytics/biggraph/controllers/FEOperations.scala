@@ -51,7 +51,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val parameters = Seq(
       Param("eb", "Edge bundle", kind = "edge-bundle"),
       Param("v", "Value", defaultValue = "1"))
-    def instance(params: Map[String, String]) = {
+    override def instance(params: Map[String, String]) = {
       val edges = manager.edgeBundle(params("eb").asUUID)
       manager.apply(
         graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
