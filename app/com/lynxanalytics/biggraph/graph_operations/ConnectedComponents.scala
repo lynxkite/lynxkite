@@ -23,16 +23,21 @@ case class ConnectedComponents() extends MetaGraphOperation {
     .outputEdgeBundle('links, 'vs -> 'cc)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val partitioner = rc.defaultPartitioner
     val inputEdges = inputs.edgeBundles('es).rdd.values
       .map(edge => (edge.src, edge.dst))
-    val graph = inputEdges.groupByKey(partitioner).mapValues(_.toSet)
-    println("cc input edges: " + inputs.edgeBundles('es).rdd.collect.toSeq)
-    val ccEdges = getComponents(graph, 0).map { case (vId, cId) => Edge(vId, cId) }
+    val inputVertices = inputs.vertexSets('vs).rdd
+    val graph = inputEdges
+      .groupByKey(inputVertices.partitioner.getOrElse(rc.defaultPartitioner))
+      .mapValues(_.toSet)
     // islands are not represented in the edge bundle as they have degree 0
-    val zeroDegree = inputs.vertexSets('vs).rdd.keys.subtract(ccEdges.map(_.src))
-    val allEdges = ccEdges ++ zeroDegree.map(e => Edge(e, e))
-    outputs.putEdgeBundle('links, RDDUtils.fastNumbered(allEdges))
+    val ccEdges = inputVertices.leftOuterJoin(getComponents(graph, 0))
+      .map {
+        case (vId, (_, Some(cId))) => Edge(vId, cId)
+        case (vId, (_, None)) => Edge(vId, vId)
+      }
+    val ccVertices = ccEdges.map(_.dst -> ()).distinct
+    outputs.putEdgeBundle('links, RDDUtils.fastNumbered(ccEdges))
+    outputs.putVertexSet('cc, ccVertices)
   }
 
   type ComponentID = ID

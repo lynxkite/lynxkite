@@ -9,34 +9,6 @@ import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.attributes._
 
-/*
-// Quick way to make a graph with no attributes from edge lists.
-case class GraphByEdgeLists(nodes: Seq[(Int, Seq[Int])]) extends GraphOperation {
-  def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 0)
-  def vertexAttributes(sources: Seq[BigGraph]): AttributeSignature =
-    AttributeSignature.empty
-  def edgeAttributes(sources: Seq[BigGraph]): AttributeSignature =
-    AttributeSignature.empty
-
-  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
-    val sc = manager.runtimeContext.sparkContext
-    val sig = vertexAttributes(Seq())
-    val maker = sig.maker
-    val vertices = nodes.map({ case (n, edges) => (n.toLong, maker.make()) })
-    val edges = nodes.flatMap({
-      case (n, edges) =>
-        edges.map(e => Edge(n.toLong, e.toLong, maker.make()))
-    })
-    return new SimpleGraphData(
-      target,
-      sc.parallelize(vertices, 1),
-      sc.parallelize(edges, 1))
-  }
-
-  override def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
-    new BigGraphProperties(symmetricEdges = true)
-}*/
-
 object ConnectedComponentsTest {
   def assertSameComponents(comp1: Map[Long, Long], icomp2: Map[Int, Int]): Unit = {
     val comp2 = icomp2.map { case (a, b) => (a.toLong, b.toLong) }
@@ -61,7 +33,7 @@ class ConnectedComponentsTest extends FunSuite with TestGraphOperation {
   // Returns the resulting component attributes in an easy-to-use format.
   def getComponents(nodes: Map[Int, Seq[Int]], local: Boolean): Map[Long, Long] = {
     ConnectedComponents.maxEdgesProcessedLocally = if (local) 100000 else 0
-    val sg = helper.smallGraph(nodes)
+    val sg = helper.apply(SmallTestGraph(nodes))
     val cc = helper.apply(ConnectedComponents(), sg)
 
     helper.localData(cc.edgeBundles('links)).toMap

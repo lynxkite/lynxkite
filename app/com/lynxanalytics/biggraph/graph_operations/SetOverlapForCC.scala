@@ -20,12 +20,13 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val partitioner = rc.defaultPartitioner
 
-    val byMemberNode = inputs.edgeBundles('links).rdd.values
+    val bySet = inputs.edgeBundles('links).rdd.values
       .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
+    val byMember = bySet
       .flatMap { case (setId, set) => set.map(vId => (vId, (setId, set.toArray[ID]))) }
       .groupByKey(partitioner)
-    val edges: RDD[Edge] = byMemberNode.flatMap {
+    val edges: RDD[Edge] = byMember.flatMap {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
     outputs.putEdgeBundle('overlaps, RDDUtils.fastNumbered(edges))
