@@ -167,19 +167,23 @@ abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
     putOutputs(columns, outputs)
   }
 
-  // Override these.
-  def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
-  def putOutputs(columns: Columns, outputs: DataSetBuilder): Unit = {
-    for ((field, rdd) <- columns) {
-      outputs.putEdgeAttribute(toSymbol(field), rdd)
-    }
-  }
-  def addEdgeAttributes(s: MetaGraphOperationSignature): MetaGraphOperationSignature = {
+  protected def addEdgeAttributes(s: MetaGraphOperationSignature): MetaGraphOperationSignature = {
     // Subclass has to define 'edges.
     csv.fields.foldLeft(s) {
       (s, field) => s.outputEdgeAttribute[String](toSymbol(field), 'edges)
     }
   }
+
+  protected def putEdgeAttributes(columns: Columns, outputs: DataSetBuilder): Unit = {
+    for ((field, rdd) <- columns) {
+      outputs.putEdgeAttribute(toSymbol(field), rdd)
+    }
+  }
+
+  // Override these.
+  def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
+  def putOutputs(columns: Columns, outputs: DataSetBuilder): Unit =
+    putEdgeAttributes(columns, outputs)
 }
 
 case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String) extends ImportEdgeList(csv) {
@@ -208,7 +212,7 @@ case class ImportEdgeListWithStringIDs(
     .outputVertexAttribute[String](toSymbol(vertexAttr), 'vertices)
 
   override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
-    super.putOutputs(columns, outputs)
+    putEdgeAttributes(columns, outputs)
     val names = (columns(src).values ++ columns(dst).values).distinct
     val idToName = RDDUtils.fastNumbered(names)
     val nameToId = idToName.map { case (id, name) => (name, id) }
@@ -239,7 +243,7 @@ case class ImportEdgeListWithNumericIDsForExistingVertexSet(
     .outputEdgeBundle('edges, 'sources -> 'destinations)
 
   override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
-    super.putOutputs(columns, outputs)
+    putEdgeAttributes(columns, outputs)
     outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
       case (src, dst) => Edge(src.toLong, dst.toLong)
     })
