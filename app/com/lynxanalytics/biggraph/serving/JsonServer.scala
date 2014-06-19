@@ -64,6 +64,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val wEmpty = json.Json.writes[Empty]
 
   implicit val rVertexSetRequest = json.Json.reads[VertexSetRequest]
+  implicit val wFEStatus = json.Json.writes[FEStatus]
   implicit val wUIValue = json.Json.writes[UIValue]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
