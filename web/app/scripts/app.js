@@ -8,7 +8,7 @@ angular
   ])
   .config(function ($routeProvider) {
     $routeProvider
-      .when('/metaGraph/:vertexSet', {
+      .when('/metaGraph', {
         templateUrl: 'views/metaGraph.html',
         controller: 'MetaGraphViewCtrl'
       })
@@ -17,6 +17,6 @@ angular
         controller: 'ClusterManagerCtrl'
       })
       .otherwise({
-        redirectTo: '/metaGraph/x'
+        redirectTo: '/metaGraph'
       });
   });
