@@ -21,8 +21,8 @@ case class CSVData(val header: Seq[String],
   def saveDataToDir(path: Filename) = path.saveAsTextFile(toStringRDD)
 
   def saveToDir(path: Filename) = {
-    path.addPathElement("header").createFromStrings(CSVData.lineToString(header))
-    saveDataToDir(path.addPathElement("data"))
+    (path / "header").createFromStrings(CSVData.lineToString(header))
+    saveDataToDir(path / "data")
   }
 }
 object CSVData {

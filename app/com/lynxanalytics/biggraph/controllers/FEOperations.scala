@@ -1,11 +1,12 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import scala.reflect.runtime.universe.typeOf
 
-object FEOperations extends FEOperationRepository {
+class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) {
   val Param = FEOperationParameterMeta // Short alias.
 
   registerOperation(CreateVertexSet)
@@ -13,7 +14,7 @@ object FEOperations extends FEOperationRepository {
     val title = "Create a new vertex set"
     val parameters = Seq(
       Param("size", "Vertex set size"))
-    def instance(params: Map[String, String]) = manager.apply(
+    override def instance(params: Map[String, String]) = manager.apply(
       graph_operations.CreateVertexSet(params("size").toInt))
   }
 
@@ -25,7 +26,7 @@ object FEOperations extends FEOperationRepository {
       Param("vsDst", "Destination vertex set", kind = "vertex-set"),
       Param("density", "density", defaultValue = "0.5"),
       Param("seed", "Seed", defaultValue = "0"))
-    def instance(params: Map[String, String]) = manager.apply(
+    override def instance(params: Map[String, String]) = manager.apply(
       graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat),
       'vsSrc -> manager.vertexSet(params("vsSrc").asUUID),
       'vsDst -> manager.vertexSet(params("vsDst").asUUID))
@@ -38,7 +39,7 @@ object FEOperations extends FEOperationRepository {
       Param("vs", "Vertex set", kind = "vertex-set"),
       Param("es", "Edge bundle", kind = "edge-bundle"),
       Param("min", "Minimum clique size", defaultValue = "3"))
-    def instance(params: Map[String, String]) = manager.apply(
+    override def instance(params: Map[String, String]) = manager.apply(
       graph_operations.FindMaxCliques(params("min").toInt),
       'vsIn -> manager.vertexSet(params("vs").asUUID),
       'esIn -> manager.edgeBundle(params("es").asUUID))
@@ -50,7 +51,7 @@ object FEOperations extends FEOperationRepository {
     val parameters = Seq(
       Param("eb", "Edge bundle", kind = "edge-bundle"),
       Param("v", "Value", defaultValue = "1"))
-    def instance(params: Map[String, String]) = {
+    override def instance(params: Map[String, String]) = {
       val edges = manager.edgeBundle(params("eb").asUUID)
       manager.apply(
         graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
