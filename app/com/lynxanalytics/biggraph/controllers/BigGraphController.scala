@@ -66,15 +66,6 @@ abstract class FEOperation {
   val parameters: Seq[FEOperationParameterMeta]
   lazy val starting = parameters.forall(_.kind == "scalar")
   def apply(params: Map[String, String]): FEStatus
-  // To perform parameter validation override validate(), or use require() in apply().
-  // (Only if apply() is idempotent.)
-  def validate(params: Map[String, String]): FEStatus = {
-    Try(apply(params)) match {
-      case Success(_) => FEStatus.success
-      case Failure(e: IllegalArgumentException) => FEStatus.failure(e.getMessage)
-      case Failure(e) => throw e
-    }
-  }
 }
 
 // An ordered bundle of metadata types.

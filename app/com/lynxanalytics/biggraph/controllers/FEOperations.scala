@@ -91,7 +91,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     private def getLabels(params: Map[String, String]) =
       (split(params("v_labels")), split(params("e_labels")))
 
-    override def validate(params: Map[String, String]) = {
+    def validate(params: Map[String, String]) = {
       val (vAttrs, eAttrs) = getAttributes(params)
       val vertexSets = vAttrs.map(_.vertexSet).toSet
       val edgeBundles = eAttrs.map(_.edgeBundle).toSet
