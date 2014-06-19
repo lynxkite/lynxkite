@@ -19,10 +19,11 @@
 <div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>
 <div class="path bubble">
   <li class="bundle token" ng-repeat="step in state.leftToRightPath">
-    {{step.eb.title}} Reversed: {{step.eb.isReversed}}
     <button ng-if="!$first" class="btn btn-default" ng-click="cutPathLeft($index)">
       --&gt;|
     </button>
+    {{step.eb.title}} [{{step.eb.source.title}} => {{step.eb.destination.title}}]
+    <br>Points: <span ng-if="step.pointsLeft">LEFT</span><span ng-if="!step.pointsLeft">RIGHT</span>
     <button ng-if="!$last" class="btn btn-default" ng-click="cutPathRight($index)">
       |&lt;--
     </button>
