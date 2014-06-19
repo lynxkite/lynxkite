@@ -2,6 +2,9 @@
 
 angular.module('biggraph')
   .controller('MetaGraphViewCtrl', function ($scope, $routeParams, $resource, $modal) {
+    $scope.alerts = [];
+    $scope.closeAlert = function(index) { $scope.alerts.splice(index, 1); };
+
     var id = $routeParams.vertexSet;
 
     var VertexSet = $resource('/ajax/vertexSet');
@@ -41,12 +44,21 @@ angular.module('biggraph')
         id: operation.id,
         parameters: modalResult
       };
-      ApplyOperation.get({q: request}, function() {
-        if (id !== 'x') {
-	  loadCurrentVertexSet();
-	}
-	loadStartingVertexSets();
+      ApplyOperation.get({q: request}, function(result) {
+        if (!result.success) {
+          $scope.alerts.push({type: 'danger', msg: result.failureReason});
+        }
+        update();
+      }, function(response) {
+        $scope.alerts.push({type: 'danger', msg: 'Request failed: ' + response.status});
+        update();
       });
+      function update() {
+        if (id !== 'x') {
+          loadCurrentVertexSet();
+        }
+        loadStartingVertexSets();
+      }
     }
 
     function applyOperationFlow(operation) {
