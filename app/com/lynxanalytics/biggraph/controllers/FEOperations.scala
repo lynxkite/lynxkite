@@ -14,8 +14,10 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val title = "Create a new vertex set"
     val parameters = Seq(
       Param("size", "Vertex set size"))
-    def apply(params: Map[String, String]) = manager.apply(
-      graph_operations.CreateVertexSet(params("size").toInt))
+    def apply(params: Map[String, String]) = {
+      manager.apply(graph_operations.CreateVertexSet(params("size").toInt))
+      FEStatus.success
+    }
   }
 
   registerOperation(RandomEdgeBundle)
@@ -26,10 +28,13 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("vsDst", "Destination vertex set", kind = "vertex-set"),
       Param("density", "density", defaultValue = "0.5"),
       Param("seed", "Seed", defaultValue = "0"))
-    def apply(params: Map[String, String]) = manager.apply(
-      graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat),
-      'vsSrc -> manager.vertexSet(params("vsSrc").asUUID),
-      'vsDst -> manager.vertexSet(params("vsDst").asUUID))
+    def apply(params: Map[String, String]) = {
+      manager.apply(
+        graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat),
+        'vsSrc -> manager.vertexSet(params("vsSrc").asUUID),
+        'vsDst -> manager.vertexSet(params("vsDst").asUUID))
+      FEStatus.success
+    }
   }
 
   registerOperation(FindMaxCliques)
@@ -39,10 +44,12 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("vs", "Vertex set", kind = "vertex-set"),
       Param("es", "Edge bundle", kind = "edge-bundle"),
       Param("min", "Minimum clique size", defaultValue = "3"))
-    def apply(params: Map[String, String]) = manager.apply(
-      graph_operations.FindMaxCliques(params("min").toInt),
-      'vsIn -> manager.vertexSet(params("vs").asUUID),
-      'esIn -> manager.edgeBundle(params("es").asUUID))
+    def apply(params: Map[String, String]) = {
+      manager.apply(graph_operations.FindMaxCliques(params("min").toInt),
+        'vsIn -> manager.vertexSet(params("vs").asUUID),
+        'esIn -> manager.edgeBundle(params("es").asUUID))
+      FEStatus.success
+    }
   }
 
   registerOperation(AddConstantDoubleEdgeAttribute)
@@ -56,6 +63,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       manager.apply(
         graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
         'edges -> edges, 'ignoredSrc -> edges.srcVertexSet, 'ignoredDst -> edges.dstVertexSet)
+      FEStatus.success
     }
   }
 }
