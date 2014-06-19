@@ -1,35 +1,27 @@
-<div class="vertexSet" ng-if="vertexSet">
-  <div class="metadata bubble">
-    <h2>{{vertexSet.title}}</h2>
-    <h3 ng-show="vertexSet.localEdges">Local Edge Bundles</h3>
-    <ul class="bundles">
-      <li class="bundle token" ng-repeat="bundle in vertexSet.localEdges">{{bundle.title}}</li>
-    </ul>
-    <h3 ng-show="vertexSet.inEdges">Incoming Edge Bundles</h3>
-    <a class="bundle token"
-       ng-repeat="bundle in vertexSet.inEdges"
-       href="/#/metaGraph/{{bundle.source.id}}">
-      {{bundle.title}} <== {{bundle.source.title}}
-    </a>
-    <h3 ng-show="vertexSet.outEdges">Outgoing Edge Bundles</h3>
-    <a class="bundle token"
-       ng-repeat="bundle in vertexSet.outEdges"
-       href="/#/metaGraph/{{bundle.destination.id}}">
-      {{bundle.title}} ==> {{bundle.destination.title}}
-    </a>
-  </div>
-</div>
 <div class="operations bubble">
   <h2>Available operations</h2>
-  <div class="op" ng-repeat="op in allOps">
+  <div class="op" ng-repeat="op in applicableOperations()">
     <button class="btn btn-default" ng-click="apply(op)">{{op.title}}</button>
   </div>
 </div>
 <div class="startingvs bubble">
   <h2>Starting Vertex Sets</h2>
-  <a class="vertexset token"
-     ng-repeat="vs in startingVertexSets"
-     href="/#/metaGraph/{{vs.id}}">
+  <div class="vertexset token"
+       ng-repeat="vs in startingVertexSets">
     {{vs.title}}
-  </a>
+    <button class="btn btn-default" ng-click="left.setNewVS(vs.id)">Load Left</button>
+    <button class="btn btn-default" ng-click="right.setNewVS(vs.id)">Load Right</button>
+  </div>
+</div>
+<div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>
+<div class="path bubble">
+  <li class="bundle token" ng-repeat="step in state.leftToRightPath">
+    {{step.eb.title}} Reversed: {{step.eb.isReversed}}
+    <button ng-if="!$first" class="btn btn-default" ng-click="cutPathLeft($index)">
+      --&gt;|
+    </button>
+    <button ng-if="!$last" class="btn btn-default" ng-click="cutPathRight($index)">
+      |&lt;--
+    </button>
+  </li>
 </div>
