@@ -10,8 +10,8 @@ angular.module('biggraph')
       $scope.result = {}; // Disengage bindings.
       // Replace arrays with comma-separated lists.
       operation.parameters.forEach(function(p) {
-        if (p.kind.indexOf('multi-') == 0 && typeof result[p.id] === 'object') {
-          result[p.id] = result[p.id].join(',')
+        if (p.kind.indexOf('multi-') === 0 && typeof result[p.id] === 'object') {
+          result[p.id] = result[p.id].join(',');
         }
       });
       $modalInstance.close(result);
