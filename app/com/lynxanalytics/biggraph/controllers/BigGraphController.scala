@@ -36,7 +36,9 @@ case class FEOperationParameterMeta(
     defaultValue: String = "",
     options: Seq[UIValue] = Seq()) {
 
-  val validKinds = Seq("scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute")
+  val validKinds = Seq(
+    "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
+    "multi-vertex-attribute", "multi-edge-attribute")
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
 }
 
@@ -129,6 +131,8 @@ class FEOperationRepository(env: BigGraphEnvironment) {
           first => p.copy(options = vertexAttributes, defaultValue = first.id))
         case p if p.kind == "edge-attribute" => edgeAttributes.headOption.map(
           first => p.copy(options = edgeAttributes, defaultValue = first.id))
+        case p if p.kind == "multi-vertex-attribute" => Some(p.copy(options = vertexAttributes))
+        case p if p.kind == "multi-edge-attribute" => Some(p.copy(options = edgeAttributes))
         case p => Some(p)
       }
       if (params.length == op.parameters.length) {
