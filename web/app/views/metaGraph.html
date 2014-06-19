@@ -1,3 +1,4 @@
+<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</alert>
 <div class="vertexSet" ng-if="vertexSet">
   <div class="metadata bubble">
     <h2>{{vertexSet.title}}</h2>
