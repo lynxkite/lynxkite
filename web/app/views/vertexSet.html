@@ -4,29 +4,29 @@
     <h3 ng-show="side.data.localEdges">Local Edge Bundles</h3>
     <ul class="bundles">
       <li class="bundle token" ng-repeat="bundle in side.data.localEdges">
-	{{bundle.title}}
-	<button class="btn btn-default" ng-click="side.followEB(bundle, true)">
-	  Follow
-	</button>
-	<button class="btn btn-default" ng-click="side.followEB(bundle, false)">
-	  Follow reverse
-	</button>
+        {{bundle.title}}
+        <button class="btn btn-default" ng-click="side.followEB(bundle, true)">
+          Follow
+        </button>
+        <button class="btn btn-default" ng-click="side.followEB(bundle, false)">
+          Follow reverse
+        </button>
       </li>
     </ul>
     <h3 ng-show="side.data.inEdges">Incoming Edge Bundles</h3>
     <ul class="bundles">
       <li class="bundle token" ng-repeat="bundle in side.data.inEdges">
-	{{bundle.title}} &lt;== {{bundle.source.title}}
-	<button class="btn btn-default" ng-click="side.followEB(bundle, false)">Follow</button>
-	<button class="btn btn-default" ng-click="side.showEB(bundle, true)">Show source on opposite side</button>
+        {{bundle.title}} &lt;== {{bundle.source.title}}
+        <button class="btn btn-default" ng-click="side.followEB(bundle, false)">Follow</button>
+        <button class="btn btn-default" ng-click="side.showEB(bundle, true)">Show source on opposite side</button>
       </li>
     </ul>
     <h3 ng-show="side.data.outEdges">Outgoing Edge Bundles</h3>
     <ul class="bundles">
       <li class="bundle token" ng-repeat="bundle in side.data.outEdges">
-	{{bundle.title}} ==&gt; {{bundle.destination.title}}
-	<button class="btn btn-default" ng-click="side.followEB(bundle, true)">Follow</button>
-	<button class="btn btn-default" ng-click="side.showEB(bundle, false)">Show destination on opposite side</button>
+        {{bundle.title}} ==&gt; {{bundle.destination.title}}
+        <button class="btn btn-default" ng-click="side.followEB(bundle, true)">Follow</button>
+        <button class="btn btn-default" ng-click="side.showEB(bundle, false)">Show destination on opposite side</button>
       </li>
     </ul>
   </div>
