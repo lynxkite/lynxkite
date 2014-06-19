@@ -1,3 +1,4 @@
+<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</alert>
 <div class="vertexSet" ng-if="vertexSet">
   <div class="metadata bubble">
     <h2>{{vertexSet.title}}</h2>
@@ -9,13 +10,13 @@
     <a class="bundle token"
        ng-repeat="bundle in vertexSet.inEdges"
        href="/#/metaGraph/{{bundle.source.id}}">
-      {{bundle.title}} <== {{bundle.source.title}}
+      {{bundle.title}} &lt;== {{bundle.source.title}}
     </a>
     <h3 ng-show="vertexSet.outEdges">Outgoing Edge Bundles</h3>
     <a class="bundle token"
        ng-repeat="bundle in vertexSet.outEdges"
        href="/#/metaGraph/{{bundle.destination.id}}">
-      {{bundle.title}} ==> {{bundle.destination.title}}
+      {{bundle.title}} ==&gt; {{bundle.destination.title}}
     </a>
   </div>
 </div>

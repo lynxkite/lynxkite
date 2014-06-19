@@ -8,6 +8,12 @@ import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
 import scala.util.{ Failure, Success, Try }
 
+case class FEStatus(success: Boolean, failureReason: String = "")
+object FEStatus {
+  val success = FEStatus(true)
+  def failure(failureReason: String) = FEStatus(false, failureReason)
+}
+
 case class VertexSetRequest(id: String)
 
 // Something with a display name and an internal ID.
@@ -30,7 +36,9 @@ case class FEOperationParameterMeta(
     defaultValue: String = "",
     options: Seq[UIValue] = Seq()) {
 
-  val validKinds = Seq("scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute")
+  val validKinds = Seq(
+    "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
+    "multi-vertex-attribute", "multi-edge-attribute")
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
 }
 
@@ -57,21 +65,7 @@ abstract class FEOperation {
   val title: String
   val parameters: Seq[FEOperationParameterMeta]
   lazy val starting = parameters.forall(_.kind == "scalar")
-  // Use `require()` to perform parameter validation.
-  def instance(params: Map[String, String]): MetaGraphOperationInstance = ???
-  def isValid(params: Map[String, String]): Boolean = {
-    Try(instance(params)) match {
-      case Success(_) => true
-      case Failure(e: IllegalArgumentException) => false
-      case Failure(e) => throw e
-    }
-  }
-  def apply(params: Map[String, String]): Option[VertexSet] = {
-    val inst = instance(params)
-    // Redirect to an output, or to an input if there is no output.
-    val vs = inst.outputs.vertexSets.values.toSeq ++ inst.inputs.vertexSets.values.toSeq
-    return vs.headOption
-  }
+  def apply(params: Map[String, String]): FEStatus
 }
 
 // An ordered bundle of metadata types.
@@ -128,6 +122,8 @@ class FEOperationRepository(env: BigGraphEnvironment) {
           first => p.copy(options = vertexAttributes, defaultValue = first.id))
         case p if p.kind == "edge-attribute" => edgeAttributes.headOption.map(
           first => p.copy(options = edgeAttributes, defaultValue = first.id))
+        case p if p.kind == "multi-vertex-attribute" => Some(p.copy(options = vertexAttributes))
+        case p if p.kind == "multi-edge-attribute" => Some(p.copy(options = edgeAttributes))
         case p => Some(p)
       }
       if (params.length == op.parameters.length) {
@@ -139,7 +135,7 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  def applyOp(spec: FEOperationSpec): Option[VertexSet] =
+  def applyOp(spec: FEOperationSpec): FEStatus =
     operations(spec.id).apply(spec.parameters)
 
   private val operations = mutable.Map[String, FEOperation]()
@@ -178,10 +174,8 @@ class BigGraphController(env: BigGraphEnvironment) {
     toFE(manager.vertexSet(request.id.asUUID))
   }
 
-  def applyOp(request: FEOperationSpec): FEVertexSet = {
-    val redirect = operations.applyOp(request)
-    return redirect.map(toFE(_)).getOrElse(null)
-  }
+  def applyOp(request: FEOperationSpec): FEStatus =
+    operations.applyOp(request)
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
     operations.getStartingOperationMetas
