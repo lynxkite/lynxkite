@@ -103,6 +103,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def initializeFromDisk(): Unit = {
     val repo = new File(repositoryPath)
+    if (!repo.exists) repo.mkdirs
     val operationFileNames = repo.list.filter(_.startsWith("save-")).sorted
     operationFileNames.foreach { fileName =>
       log.info(s"Loading operation from: $fileName")
