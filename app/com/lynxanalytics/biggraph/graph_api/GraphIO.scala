@@ -13,8 +13,8 @@ import com.lynxanalytics.biggraph.graph_util.Filename
 import attributes.DenseAttributes
 
 object GraphIO {
-  def verticesPath(pathPrefix: Filename): Filename = pathPrefix.addSuffix(".vertices")
-  def edgesPath(pathPrefix: Filename): Filename = pathPrefix.addSuffix(".edges")
+  def verticesPath(pathPrefix: Filename): Filename = pathPrefix + ".vertices"
+  def edgesPath(pathPrefix: Filename): Filename = pathPrefix + ".edges"
 
   def loadFromObjectFile(sc: spark.SparkContext, pathPrefix: Filename): (VertexRDD, EdgeRDD) = {
     val vertices = verticesPath(pathPrefix).loadObjectFile[(graphx.VertexId, DenseAttributes)](sc)
