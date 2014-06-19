@@ -86,12 +86,12 @@ case class Filename(
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
-  def addSuffix(suffix: String): Filename = {
+  def +(suffix: String): Filename = {
     Filename(filename + suffix, awsAccessKeyId, awsSecretAccessKey)
   }
 
-  def addPathElement(path_element: String): Filename = {
-    addSuffix("/" + path_element)
+  def /(path_element: String): Filename = {
+    this + ("/" + path_element)
   }
 }
 object Filename {

@@ -44,7 +44,7 @@ case class ExpandVertexSetTestGraph(
 class ExpandVertexSetTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   def getExpanded(nodes: Seq[(Int, Seq[Int], Int)]): Seq[(Int, Seq[Int], Seq[Int])] = {
     val graphManager = cleanGraphManager("ExpandVertexSetTest")
-    val dataManager = cleanDataManager("ExpandVertexSetTest")
+    val dataManager = cleanGraphDataManager("ExpandVertexSetTest")
     val inputGraph = graphManager.deriveGraph(
       Seq(), ExpandVertexSetTestGraph("recipients", "num", nodes))
     val outputGraph = graphManager.deriveGraph(
