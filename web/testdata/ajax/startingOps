@@ -16,15 +16,31 @@
         "kind": "scalar",
         "defaultValue": "1",
         "options": [
-	  {
-	    "id": "0",
-	    "title": "Leo"
-          },
-	  {
-	    "id": "1",
-	    "title": "Virgin"
-          }
-	]
+        {
+          "id": "0",
+          "title": "Leo"
+        },
+        {
+          "id": "1",
+          "title": "Virgin"
+        }
+        ]
+      },
+      {
+        "id": "x",
+        "title": "Multiple",
+        "kind": "multi-edge-attributes",
+        "defaultValue": "ignored",
+        "options": [
+        {
+          "id": "0",
+          "title": "Leo"
+        },
+        {
+          "id": "1",
+          "title": "Virgin"
+        }
+        ]
       }
     ]
   }
