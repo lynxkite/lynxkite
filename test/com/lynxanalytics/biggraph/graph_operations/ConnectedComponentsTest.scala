@@ -4,22 +4,26 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes._
+
+import scala.language.implicitConversions
 
 object ConnectedComponentsTest {
-  def assertSameComponents(comp1: Map[Long, Long], icomp2: Map[Int, Int]): Unit = {
-    val comp2 = icomp2.map { case (a, b) => (a.toLong, b.toLong) }
-    val mapping = scala.collection.mutable.Map[Long, Long]()
+  // we want to compare Map[Int, Int] and Map[ID, ID] values as well
+  implicit def toLongLong(m: Map[Int, Int]): Map[ID, ID] =
+    m.map { case (a, b) => (a.toLong, b.toLong) }
+
+  def assertSameComponents(comp1: Map[ID, ID], comp2: Map[ID, ID]): Unit = {
+    val mapping = scala.collection.mutable.Map[ID, ID]()
     assert(comp1.size == comp2.size, "Unexpected size")
     for (k <- comp1.keys) {
       assert(comp2.contains(k), s"Missing key: $k")
       val c1 = comp1(k)
       val c2 = comp2(k)
       if (mapping.contains(c1)) {
-        assert(mapping(c1) == c2, s"Unable to match components $c1 and $c2")
+        assert(mapping(c1) == c2,
+          s"Unable to match components $c1 and $c2\ncomp1: ${comp1.toSeq.sorted}\ncomp2: ${comp2.toSeq.sorted}")
       } else {
         mapping(c1) = c2
       }
@@ -31,10 +35,9 @@ class ConnectedComponentsTest extends FunSuite with TestGraphOperation {
 
   // Creates the graph specified by `nodes` and applies ConnectedComponents to it.
   // Returns the resulting component attributes in an easy-to-use format.
-  def getComponents(nodes: Map[Int, Seq[Int]], local: Boolean): Map[Long, Long] = {
-    ConnectedComponents.maxEdgesProcessedLocally = if (local) 100000 else 0
+  def getComponents(nodes: Map[Int, Seq[Int]], local: Boolean): Map[ID, ID] = {
     val (vs, es) = helper.smallGraph(nodes)
-    val cc = helper.apply(ConnectedComponents(), 'vs -> vs, 'es -> es)
+    val cc = helper.apply(ConnectedComponents(if (local) 100000 else 0), 'vs -> vs, 'es -> es)
 
     helper.localData(cc.edgeBundles('links)).toMap
   }

@@ -214,11 +214,12 @@ case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOper
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    outputs.putVertexSet('vs, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
-    val sets = edgeLists.values.toList.flatten.distinct
-    outputs.putVertexSet('sets, sc.parallelize(sets.map(i => (i.toLong, ()))))
+    // edgeList should be: set id -> Seq(vertices)
+    outputs.putVertexSet('sets, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
+    val vs = edgeLists.values.toList.flatten.distinct
+    outputs.putVertexSet('vs, sc.parallelize(vs.map(i => (i.toLong, ()))))
     val nodePairs = edgeLists.toSeq.flatMap {
-      case (i, es) => es.map(e => i -> e)
+      case (i, es) => es.map(e => e -> i)
     }
     outputs.putEdgeBundle('links, sc.parallelize(nodePairs.zipWithIndex.map {
       case ((a, b), i) => i.toLong -> Edge(a, b)
