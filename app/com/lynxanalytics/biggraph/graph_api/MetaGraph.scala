@@ -270,7 +270,8 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
   def ++(mds: MetaDataSet): MetaDataSet = {
     assert(
       (all.keySet & mds.all.keySet).forall(key => all(key).gUID == mds.all(key).gUID),
-      "Collision: " + (all.keySet & mds.all.keySet).find(key => all(key).gUID == mds.all(key).gUID))
+      "Collision: " + (all.keySet & mds.all.keySet).toSeq.filter(
+        key => all(key).gUID != mds.all(key).gUID))
     return MetaDataSet(
       vertexSets ++ mds.vertexSets,
       edgeBundles ++ mds.edgeBundles,
