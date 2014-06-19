@@ -1,3 +1,6 @@
+<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">
+  {{alert.msg}}
+</alert>
 <div class="operations bubble">
   <h2>Available operations</h2>
   <div class="op" ng-repeat="op in applicableOperations()">

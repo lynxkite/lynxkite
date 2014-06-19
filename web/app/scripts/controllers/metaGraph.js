@@ -2,6 +2,9 @@
 
 angular.module('biggraph')
   .controller('MetaGraphViewCtrl', function ($scope, $resource, $modal, $location) {
+    $scope.alerts = [];
+    $scope.closeAlert = function(index) { $scope.alerts.splice(index, 1); };
+
     var defaultState = {
       leftVS: undefined,
       leftEB: undefined,
@@ -44,21 +47,21 @@ angular.module('biggraph')
     $scope.$watch(
       'state.leftVS',
       function() {
-	var leftVS = $scope.state.leftVS
+	var leftVS = $scope.state.leftVS;
 	if (leftVS !== undefined) {
 	  $scope.left.data = loadVertexSet(leftVS.id);
 	} else {
-	  $scope.left.data = undefined
+	  $scope.left.data = undefined;
 	}
       });
     $scope.$watch(
       'state.rightVS',
       function() {
-	var rightVS = $scope.state.rightVS
+	var rightVS = $scope.state.rightVS;
 	if (rightVS !== undefined) {
 	  $scope.right.data = loadVertexSet(rightVS.id);
 	} else {
-	  $scope.right.data = undefined
+	  $scope.right.data = undefined;
 	}
       });
 
@@ -75,7 +78,7 @@ angular.module('biggraph')
       if ($scope.left.data) {
 	res = res.concat($scope.left.data.ops);
       }
-      return res
+      return res;
     };
 
     function openOperationModal(operation) {
@@ -97,7 +100,19 @@ angular.module('biggraph')
         id: operation.id,
         parameters: modalResult
       };
-      ApplyOperation.get({q: request}, function() {
+      ApplyOperation.get(
+	{q: request},
+	function(result) {
+          if (!result.success) {
+            $scope.alerts.push({type: 'danger', msg: result.failureReason});
+          }
+	  update();
+	},
+	function(response) {
+          $scope.alerts.push({type: 'danger', msg: 'Request failed: ' + response.status});
+	  update();
+	});
+      function update() {
 	// Force reloads of graphs by creating new objects.
 	var oldLeftVS = $scope.state.leftVS;
         if (oldLeftVS !== undefined) {
@@ -108,7 +123,7 @@ angular.module('biggraph')
 	  $scope.state.rightVS = { id: oldRightVS.id };
 	}
 	loadStartingVertexSets();
-      });
+      }
     }
 
     function applyOperationFlow(operation) {
@@ -166,7 +181,7 @@ angular.module('biggraph')
 
     function showEB(side) {
       return function(eb, isReversed) {
-	$scope.state.leftToRightPath = []
+	$scope.state.leftToRightPath = [];
 	side.addEBToPath(eb, isReversed);
 	if (isReversed) {
 	  side.other.setVS(eb.source.id);
@@ -179,21 +194,21 @@ angular.module('biggraph')
     $scope.right.showEB = showEB($scope.right);
 
     $scope.cutPathLeft = function(idx) {
-      $scope.state.leftToRightPath.splice(0, idx)
-      var firstStep = $scope.state.leftToRightPath[0]
+      $scope.state.leftToRightPath.splice(0, idx);
+      var firstStep = $scope.state.leftToRightPath[0];
       if (firstStep.isReversed) {
-	$scope.left.setVS(eb.destination.id)
+	$scope.left.setVS(firstStep.eb.destination.id);
       } else {
-	$scope.left.setVS(eb.source.id)
+	$scope.left.setVS(firstStep.eb.source.id);
       }
-    }
+    };
     $scope.cutPathRight = function(idx) {
-      $scope.state.leftToRightPath.splice(idx + 1)
-      var lastStep = $scope.state.leftToRightPath[$scope.state.leftToRightPath.length - 1]
+      $scope.state.leftToRightPath.splice(idx + 1);
+      var lastStep = $scope.state.leftToRightPath[$scope.state.leftToRightPath.length - 1];
       if (lastStep.isReversed) {
-	$scope.right.setVS(eb.source.id)
+	$scope.right.setVS(lastStep.eb.source.id);
       } else {
-	$scope.right.setVS(eb.destination.id)
+	$scope.right.setVS(lastStep.eb.destination.id);
       }
-    }
+    };
   });

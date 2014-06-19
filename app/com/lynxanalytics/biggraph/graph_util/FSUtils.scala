@@ -14,6 +14,7 @@ case class Filename(
     val awsAccessKeyId: String = "",
     val awsSecretAccessKey: String = "") {
   override def toString() = filename
+  def isEmpty = filename.isEmpty
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = new hadoop.conf.Configuration()
     conf.set("fs.s3n.awsAccessKeyId", awsAccessKeyId)
