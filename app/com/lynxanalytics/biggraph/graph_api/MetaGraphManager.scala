@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 class MetaGraphManager(val repositoryPath: String) {
   def apply(operation: MetaGraphOperation,
             inputs: (Symbol, MetaGraphEntity)*): MetaGraphOperationInstance =
-    apply(operation, MetaDataSet(inputs.toMap))
+    apply(operation, MetaDataSet.applyWithSignature(operation.signature, inputs: _*))
 
   def apply(operation: MetaGraphOperation,
             inputs: MetaDataSet = MetaDataSet()): MetaGraphOperationInstance = {

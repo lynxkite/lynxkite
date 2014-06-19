@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.TestUtils
 class GraphDataManagerTest extends FunSuite with TestBigGraphManager with TestGraphDataManager {
   test("We can obtain a simple new graph") {
     val graphManager = cleanGraphManager("createone")
-    val dataManager = cleanDataManager("createone")
+    val dataManager = cleanGraphDataManager("createone")
     val myGraph = graphManager.deriveGraph(Seq(), new InstantiateSimpleGraph)
     val myData = dataManager.obtainData(myGraph)
     assert(TestUtils.RDDToSortedString(myData.vertices) ==
@@ -28,7 +28,7 @@ class GraphDataManagerTest extends FunSuite with TestBigGraphManager with TestGr
 
   test("We can reload a graph from memory without recomputing it") {
     val graphManager = cleanGraphManager("memorycaching")
-    val dataManager = cleanDataManager("memorycaching")
+    val dataManager = cleanGraphDataManager("memorycaching")
     val operation = new InstantiateSimpleGraph
     val myGraph = graphManager.deriveGraph(Seq(), operation)
     val myData = dataManager.obtainData(myGraph)
@@ -39,7 +39,7 @@ class GraphDataManagerTest extends FunSuite with TestBigGraphManager with TestGr
 
   test("We can reload a graph from disk without recomputing it") {
     val graphManager = cleanGraphManager("diskcaching")
-    val dataManager1 = cleanDataManager("diskcaching")
+    val dataManager1 = cleanGraphDataManager("diskcaching")
     val dataManager2 = GraphDataManager(sparkContext, dataManager1.repositoryPath)
     val operation = new InstantiateSimpleGraph
     val myGraph = graphManager.deriveGraph(Seq(), operation)

@@ -33,7 +33,7 @@ trait TestMetaGraphManager extends TestTempDir {
 }
 
 trait TestGraphDataManager extends TestTempDir with TestSparkContext {
-  def cleanDataManager(dirName: String): GraphDataManager = {
+  def cleanGraphDataManager(dirName: String): GraphDataManager = {
     val managerDir = tempDir("dataManager." + dirName)
     managerDir.mkdir
     GraphDataManager(sparkContext, Filename(managerDir.toString))
@@ -111,9 +111,11 @@ trait TestGraphOperation extends TestMetaGraphManager with TestDataManager {
   def cleanHelper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
 }
 
-class BigGraphTestEnvironment(dirName: String) extends BigGraphEnvironment with TestBigGraphManager with TestGraphDataManager {
+class BigGraphTestEnvironment(dirName: String) extends BigGraphEnvironment with TestBigGraphManager with TestGraphDataManager with TestGraphOperation {
   lazy val bigGraphManager = cleanGraphManager(dirName)
-  lazy val graphDataManager = cleanDataManager(dirName)
+  lazy val graphDataManager = cleanGraphDataManager(dirName)
+  lazy val metaGraphManager = cleanMetaManager
+  lazy val dataManager = cleanDataManager
 }
 
 class InstantiateSimpleGraph extends GraphOperation {
