@@ -10,7 +10,8 @@ import scala.util.{ Failure, Success, Try }
 
 case class FEStatus(success: Boolean, failureReason: String = "")
 object FEStatus {
-  val Success = FEStatus(true)
+  val success = FEStatus(true)
+  def failure(failureReason: String) = FEStatus(false, failureReason)
 }
 
 case class VertexSetRequest(id: String)
@@ -62,13 +63,13 @@ abstract class FEOperation {
   val title: String
   val parameters: Seq[FEOperationParameterMeta]
   lazy val starting = parameters.forall(_.kind == "scalar")
-  def apply(params: Map[String, String]): Unit
-  // To perform parameter validation override isValid(), or use require() in apply().
+  def apply(params: Map[String, String]): FEStatus
+  // To perform parameter validation override validate(), or use require() in apply().
   // (Only if apply() is idempotent.)
-  def isValid(params: Map[String, String]): Boolean = {
+  def validate(params: Map[String, String]): FEStatus = {
     Try(apply(params)) match {
-      case Success(_) => true
-      case Failure(e: IllegalArgumentException) => false
+      case Success(_) => FEStatus.success
+      case Failure(e: IllegalArgumentException) => FEStatus.failure(e.getMessage)
       case Failure(e) => throw e
     }
   }
@@ -139,7 +140,7 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  def applyOp(spec: FEOperationSpec): Unit =
+  def applyOp(spec: FEOperationSpec): FEStatus =
     operations(spec.id).apply(spec.parameters)
 
   private val operations = mutable.Map[String, FEOperation]()
@@ -178,10 +179,8 @@ class BigGraphController(env: BigGraphEnvironment) {
     toFE(manager.vertexSet(request.id.asUUID))
   }
 
-  def applyOp(request: FEOperationSpec): FEStatus = {
+  def applyOp(request: FEOperationSpec): FEStatus =
     operations.applyOp(request)
-    return FEStatus.Success
-  }
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
     operations.getStartingOperationMetas
