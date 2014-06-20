@@ -1,7 +1,7 @@
-<div class="vertexSet" ng-if="side.data">
-  <div class="metadata bubble">
+<div class="col-sm-6">
+  <div class="vertexSet" ng-if="side.data">
     <h2>{{side.data.title}}</h2>
-    <h3 ng-show="side.data.localEdges">Local Edge Bundles</h3>
+    <h6 ng-show="side.data.localEdges">Local Edge Bundles</h6>
     <ul class="bundles">
       <li class="bundle token" ng-repeat="bundle in side.data.localEdges">
         {{bundle.title}}
@@ -13,7 +13,7 @@
         </button>
       </li>
     </ul>
-    <h3 ng-show="side.data.inEdges">Incoming Edge Bundles</h3>
+    <h6 ng-show="side.data.inEdges">Incoming Edge Bundles</h6>
     <ul class="bundles">
       <li class="bundle token" ng-repeat="bundle in side.data.inEdges">
         {{bundle.title}} &lt;== {{bundle.source.title}}
@@ -21,7 +21,7 @@
         <button class="btn btn-default" ng-click="side.showEB(bundle, true)">Show source on opposite side</button>
       </li>
     </ul>
-    <h3 ng-show="side.data.outEdges">Outgoing Edge Bundles</h3>
+    <h6 ng-show="side.data.outEdges">Outgoing Edge Bundles</h6>
     <ul class="bundles">
       <li class="bundle token" ng-repeat="bundle in side.data.outEdges">
         {{bundle.title}} ==&gt; {{bundle.destination.title}}
