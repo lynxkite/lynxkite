@@ -42,7 +42,7 @@ class EdgeBundleSample(edgeBundle: EdgeBundle,
   }
 
   val srcVertexPartitioner = dataManager.get(edgeBundle.srcVertexSet).rdd.partitioner.get
-  val dstVertexPartitioner = dataManager.get(edgeBundle.srcVertexSet).rdd.partitioner.get
+  val dstVertexPartitioner = dataManager.get(edgeBundle.dstVertexSet).rdd.partitioner.get
 
   val srcVertexToEdges = servingRDD
     .map { case (id, edge) => (edge.src, id) }
@@ -51,7 +51,7 @@ class EdgeBundleSample(edgeBundle: EdgeBundle,
     .persist(spark.storage.StorageLevel.MEMORY_AND_DISK)
   val dstVertexToEdges = servingRDD
     .map { case (id, edge) => (edge.dst, id) }
-    .groupByKey(srcVertexPartitioner)
+    .groupByKey(dstVertexPartitioner)
     .mapValues(_.toArray)
     .persist(spark.storage.StorageLevel.MEMORY_AND_DISK)
 
