@@ -43,11 +43,14 @@ var SVG_UTIL = {
       return {r: 0.1 * zoom, x: ax + 0.2 * zoom, y: ay};
     } else {
       var dx = bx - ax, dy = by - ay;
-      var h = 1 - Math.sqrt(3) / 2;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      // Use larger radius (less curvature) for long distance edges.
+      var r = d * (d + 1000) / 1000;
+      var h = r - Math.sqrt(r * r - d * d / 4);
       return {
-        r: Math.sqrt(dx * dx + dy * dy),
-        x: ax + 0.5 * dx - h * dy,
-        y: ay + 0.5 * dy + h * dx,
+        r: r,
+        x: ax + 0.5 * dx - h * dy / d,
+        y: ay + 0.5 * dy + h * dx / d,
       };
     }
   },
