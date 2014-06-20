@@ -33,9 +33,12 @@ angular.module('biggraph')
     $scope.$watch(
       'state',
       function() {
+        // Update URL.
         var s = $location.search();
         s.q = JSON.stringify($scope.state);
         $location.search(s);
+        // Update graph view.
+        if ($scope.showGraph) { loadGraphView(); }
       },
       true /* compare by equality rather than identity */);
 
@@ -64,6 +67,13 @@ angular.module('biggraph')
           $scope.right.data = undefined;
         }
       });
+
+    $scope.$watch('showGraph', function() {
+      if ($scope.showGraph) { loadGraphView(); }
+    });
+    function loadGraphView() {
+      $scope.graphView = $resource('/ajax/bucketed').get(); // TODO: parameters.
+    }
 
     var StartingVertexSets = $resource('/ajax/startingVs');
     function loadStartingVertexSets() {
