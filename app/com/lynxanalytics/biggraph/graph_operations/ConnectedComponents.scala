@@ -12,11 +12,7 @@ import org.apache.spark.storage.StorageLevel
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-private object ConnectedComponents {
-  // A "constant", but we want to use a small value in the unit tests.
-  var maxEdgesProcessedLocally = 20000000
-}
-case class ConnectedComponents() extends MetaGraphOperation {
+case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends MetaGraphOperation {
   def signature = newSignature
     .inputGraph('vs, 'es)
     .outputVertexSet('cc)
@@ -51,7 +47,7 @@ case class ConnectedComponents() extends MetaGraphOperation {
       return graph.sparkContext.emptyRDD[(ID, ComponentID)]
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
-    if (edgeCount <= ConnectedComponents.maxEdgesProcessedLocally) {
+    if (edgeCount <= maxEdgesProcessedLocally) {
       return getComponentsLocal(graph)
     } else {
       return getComponentsDist(graph, iteration)
@@ -59,16 +55,18 @@ case class ConnectedComponents() extends MetaGraphOperation {
   }
 
   def getComponentsDist(graph: RDD[(ID, Set[ID])], iteration: Int): RDD[(ID, ComponentID)] = {
-
     val partitioner = graph.partitioner.get
 
     // Each node decides if it is hosting a party or going out as a guest.
     val invitations = graph.mapPartitionsWithIndex {
       case (pidx, it) =>
-        val rnd = new Random((pidx << 16) + iteration)
+        val seed = new Random((pidx << 16) + iteration).nextLong
+        val rnd = new Random(seed)
         it.flatMap {
           case (n, edges) =>
-            if (rnd.nextBoolean()) { // Host. All the neighbors are invited.
+            // nextBoolean is not random enough directly on the seed
+            if (rnd.nextBoolean) {
+              // Host. All the neighbors are invited.
               (edges.map((_, n)) +
                 ((n, -1l))) // -1 is note to self: stay at home, host party.
             } else { // Guest. Can always stay at home at least.
