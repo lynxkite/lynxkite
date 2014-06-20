@@ -1,16 +1,14 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
 
 class SetOverlapTest extends FunSuite with TestGraphOperation {
   // Creates the graph specified by `nodes` and applies SetOverlap to it.
   // Returns the resulting edges in an easy-to-use format.
   def getOverlaps(nodes: Map[Int, Seq[Int]], minOverlap: Int): Map[(Int, Int), Int] = {
-    val (vs, sets, links) = helper.groupedGraph(nodes)
+    val (vs, sets, links, _) = helper.groupedGraph(nodes)
     val so = helper.apply(SetOverlap(minOverlap), 'vs -> vs, 'sets -> sets, 'links -> links)
     helper.localData(so.edgeAttributes('overlap_size).runtimeSafeCast[Int])
       .map { case ((a, b), c) => ((a.toInt, b.toInt), c) }
@@ -23,7 +21,7 @@ class SetOverlapTest extends FunSuite with TestGraphOperation {
       1 -> Seq(20, 30),
       2 -> Seq(10, 30)),
       minOverlap = 1)
-    assert(overlaps === Map(((0, 1) -> 1), ((0, 2) -> 1), ((1, 0) -> 1), ((1, 2) -> 1), ((2, 0) -> 1), (2, 1) -> 1))
+    assert(overlaps === Map((0, 1) -> 1, (0, 2) -> 1, (1, 0) -> 1, (1, 2) -> 1, (2, 0) -> 1, (2, 1) -> 1))
   }
 
   test("unsorted sets") {
@@ -32,7 +30,7 @@ class SetOverlapTest extends FunSuite with TestGraphOperation {
       1 -> Seq(3, 2),
       2 -> Seq(3, 1)),
       minOverlap = 1)
-    assert(overlaps === Map(((0, 1) -> 1), ((0, 2) -> 1), ((1, 0) -> 1), ((1, 2) -> 1), ((2, 0) -> 1), (2, 1) -> 1))
+    assert(overlaps === Map((0, 1) -> 1, (0, 2) -> 1, (1, 0) -> 1, (1, 2) -> 1, (2, 0) -> 1, (2, 1) -> 1))
   }
 
   test("minOverlap too high") {
