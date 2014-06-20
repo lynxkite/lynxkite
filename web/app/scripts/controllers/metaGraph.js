@@ -50,11 +50,10 @@ angular.module('biggraph')
         var leftVS = $scope.state.leftVS;
         if (leftVS !== undefined) {
           $scope.left.data = loadVertexSet(leftVS.id);
+          if ($scope.showGraph) { loadGraphView(); }
         } else {
           $scope.left.data = undefined;
         }
-        $scope.graphView = $resource('/ajax/bucketed').get({q: {axisX: 'age', axisY: 'income', filters: []}});
-        $scope.showGraph = true;
       });
     $scope.$watch(
       'state.rightVS',
@@ -62,10 +61,18 @@ angular.module('biggraph')
         var rightVS = $scope.state.rightVS;
         if (rightVS !== undefined) {
           $scope.right.data = loadVertexSet(rightVS.id);
+          if ($scope.showGraph) { loadGraphView(); }
         } else {
           $scope.right.data = undefined;
         }
       });
+    $scope.$watch('showGraph', function() {
+      if ($scope.showGraph) { loadGraphView(); }
+    });
+
+    function loadGraphView() {
+      $scope.graphView = $resource('/ajax/bucketed').get(); // TODO: parameters.
+    }
 
     var StartingVertexSets = $resource('/ajax/startingVs');
     function loadStartingVertexSets() {
