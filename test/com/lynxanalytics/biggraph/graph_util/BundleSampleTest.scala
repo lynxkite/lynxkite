@@ -21,9 +21,9 @@ class EdgeBundleSampleTest extends FunSuite with TestGraphOperation {
         s"C: $comment sN: $sname sA: $sage dN: $dname")
     assert(TestUtils.RDDToSortedString(resultRDD) ==
       """|(0,C: Adam loves Eve sN: Adam sA: 20.3 dN: Eve)
-                |(1,C: Eve loves Adam sN: Eve sA: 18.2 dN: Adam)
-                |(2,C: Bob envies Adam sN: Bob sA: 50.3 dN: Adam)
-                |(3,C: Bob loves Eve sN: Bob sA: 50.3 dN: Eve)""".stripMargin)
+         |(1,C: Eve loves Adam sN: Eve sA: 18.2 dN: Adam)
+         |(2,C: Bob envies Adam sN: Bob sA: 50.3 dN: Adam)
+         |(3,C: Bob loves Eve sN: Bob sA: 50.3 dN: Eve)""".stripMargin)
   }
 }
 

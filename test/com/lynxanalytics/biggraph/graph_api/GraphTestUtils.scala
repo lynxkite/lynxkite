@@ -230,10 +230,10 @@ case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOper
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    val vs = sc
-      .parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
-      .partitionBy(rc.onePartitionPartitioner)
-    outputs.putVertexSet('vs, vs)
+    outputs.putVertexSet(
+      'vs,
+      sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
+        .partitionBy(rc.onePartitionPartitioner))
     val sets = edgeLists.values.toList.flatten.distinct
     outputs.putVertexSet(
       'sets,
