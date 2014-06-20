@@ -35,8 +35,8 @@ case class ConcatenateBundles() extends MetaGraphOperation {
     val numberedAC = RDDUtils.fastNumbered(AC).partitionBy(rc.defaultPartitioner)
 
     outputs.putEdgeBundle(
-      'edgesAC, numberedAC.map { case (eId, (edge, weight)) => eId -> edge })
+      'edgesAC, numberedAC.mapValues(_._1))
     outputs.putEdgeAttribute(
-      'weightsAC, numberedAC.map { case (eId, (edge, weight)) => eId -> weight })
+      'weightsAC, numberedAC.mapValues(_._2))
   }
 }
