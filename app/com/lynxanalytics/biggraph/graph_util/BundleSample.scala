@@ -92,30 +92,53 @@ class EdgeBundleSample(edgeBundle: EdgeBundle,
       case DstAttr(attr) => dstAttributes.mappedDataFor(attr)
     }
   }
-  def applyOp[P1: ClassTag, R: ClassTag](input1: TripletAttribute[P1],
-                                         op: P1 => R): AttributeRDD[R] = {
+  def applyOp[P1: ClassTag, R: ClassTag](
+    input1: TripletAttribute[P1])(
+      op: P1 => R): AttributeRDD[R] = {
     attrData(input1).mapValues(op)
   }
-  def applyOp[P1: ClassTag, P2: ClassTag, R: ClassTag](input1: TripletAttribute[P1],
-                                                       input2: TripletAttribute[P2],
-                                                       op: (P1, P2) => R): AttributeRDD[R] = {
+
+  def applyOp[P1: ClassTag, P2: ClassTag, R: ClassTag](
+    input1: TripletAttribute[P1],
+    input2: TripletAttribute[P2])(
+      op: (P1, P2) => R): AttributeRDD[R] = {
     attrData(input1).join(attrData(input2)).mapValues { case (i1, i2) => op(i1, i2) }
   }
+  def asFlatTuples[P1: ClassTag, P2: ClassTag](
+    input1: TripletAttribute[P1],
+    input2: TripletAttribute[P2]): AttributeRDD[(P1, P2)] = {
+    applyOp(input1, input2)((a, b) => (a, b))
+  }
+
   def applyOp[P1: ClassTag, P2: ClassTag, P3: ClassTag, R: ClassTag](
     input1: TripletAttribute[P1],
     input2: TripletAttribute[P2],
-    input3: TripletAttribute[P3],
-    op: (P1, P2, P3) => R): AttributeRDD[R] = {
+    input3: TripletAttribute[P3])(
+      op: (P1, P2, P3) => R): AttributeRDD[R] = {
     attrData(input1).join(attrData(input2)).join(attrData(input3))
       .mapValues { case ((i1, i2), i3) => op(i1, i2, i3) }
   }
+  def asFlatTuples[P1: ClassTag, P2: ClassTag, P3: ClassTag](
+    input1: TripletAttribute[P1],
+    input2: TripletAttribute[P2],
+    input3: TripletAttribute[P3]): AttributeRDD[(P1, P2, P3)] = {
+    applyOp(input1, input2, input3)((a, b, c) => (a, b, c))
+  }
+
   def applyOp[P1: ClassTag, P2: ClassTag, P3: ClassTag, P4: ClassTag, R: ClassTag](
     input1: TripletAttribute[P1],
     input2: TripletAttribute[P2],
     input3: TripletAttribute[P3],
-    input4: TripletAttribute[P4],
-    op: (P1, P2, P3, P4) => R): AttributeRDD[R] = {
+    input4: TripletAttribute[P4])(
+      op: (P1, P2, P3, P4) => R): AttributeRDD[R] = {
     attrData(input1).join(attrData(input2)).join(attrData(input3)).join(attrData(input4))
       .mapValues { case (((i1, i2), i3), i4) => op(i1, i2, i3, i4) }
+  }
+  def asFlatTuples[P1: ClassTag, P2: ClassTag, P3: ClassTag, P4: ClassTag](
+    input1: TripletAttribute[P1],
+    input2: TripletAttribute[P2],
+    input3: TripletAttribute[P3],
+    input4: TripletAttribute[P4]): AttributeRDD[(P1, P2, P3, P4)] = {
+    applyOp(input1, input2, input3, input4)((a, b, c, d) => (a, b, c, d))
   }
 }
