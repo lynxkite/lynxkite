@@ -1,21 +1,9 @@
-/* Unlike text-oriented pages, we can use horizontal space well.
- * Make the top-level container stretch to full width. */
-body > .container {
-  width: 100%;
+html {
+  overflow-y: scroll;
 }
 
-.bubble {
-  margin-top: 20px;
-  border: 1px solid lightgrey;
-  background: whitesmoke;
-  border-radius: 10px;
-  display: inline-block;
-  padding: 20px;
-  vertical-align: top;
-}
-
-.bubble h2 {
-  margin-top: 0;
+h6 {
+  font-weight: bold;
 }
 
 a.graphlink {
@@ -35,4 +23,8 @@ a.graphlink:hover {
   padding-right: 3px;
   margin: 2px;
   background: lightblue;
+}
+
+ul.bundles {
+  padding-left: 0;
 }
