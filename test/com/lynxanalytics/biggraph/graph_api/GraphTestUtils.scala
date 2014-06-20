@@ -175,25 +175,31 @@ case class CreateExampleGraphOperation() extends MetaGraphOperation {
     executionCounter += 1
 
     val sc = rc.sparkContext
-    outputs.putVertexSet('vertices, sc.parallelize(Seq(0l, 1l, 2l).map((_, ()))))
-    outputs.putEdgeBundle('edges, sc.parallelize(Seq(
-      (0l, Edge(0l, 1l)),
-      (1l, Edge(1l, 0l)),
-      (2l, Edge(2l, 0l)),
-      (3l, Edge(2l, 1l)))))
+    outputs.putVertexSet(
+      'vertices,
+      sc.parallelize(Seq(0l, 1l, 2l).map((_, ())))
+        .partitionBy(rc.onePartitionPartitioner))
+    outputs.putEdgeBundle(
+      'edges,
+      sc.parallelize(Seq(
+        (0l, Edge(0l, 1l)),
+        (1l, Edge(1l, 0l)),
+        (2l, Edge(2l, 0l)),
+        (3l, Edge(2l, 1l))))
+        .partitionBy(rc.onePartitionPartitioner))
     outputs.putVertexAttribute[String]('name, sc.parallelize(Seq(
       (0l, "Adam"),
       (1l, "Eve"),
-      (2l, "Bob"))))
+      (2l, "Bob"))).partitionBy(rc.onePartitionPartitioner))
     outputs.putVertexAttribute[Double]('age, sc.parallelize(Seq(
       (0l, 20.3),
       (1l, 18.2),
-      (2l, 50.3))))
+      (2l, 50.3))).partitionBy(rc.onePartitionPartitioner))
     outputs.putEdgeAttribute[String]('comment, sc.parallelize(Seq(
       (0l, "Adam loves Eve"),
       (1l, "Eve loves Adam"),
       (2l, "Bob envies Adam"),
-      (3l, "Bob loves Eve"))))
+      (3l, "Bob loves Eve"))).partitionBy(rc.onePartitionPartitioner))
   }
 }
 
@@ -202,13 +208,20 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperat
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    outputs.putVertexSet('vs, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
+    outputs.putVertexSet(
+      'vs,
+      sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
+        .partitionBy(rc.onePartitionPartitioner))
+
     val nodePairs = edgeLists.toSeq.flatMap {
       case (i, es) => es.map(e => i -> e)
     }
-    outputs.putEdgeBundle('es, sc.parallelize(nodePairs.zipWithIndex.map {
-      case ((a, b), i) => i.toLong -> Edge(a, b)
-    }))
+    outputs.putEdgeBundle(
+      'es,
+      sc.parallelize(nodePairs.zipWithIndex.map {
+        case ((a, b), i) => i.toLong -> Edge(a, b)
+      })
+        .partitionBy(rc.onePartitionPartitioner))
   }
 }
 
@@ -222,16 +235,19 @@ case class GroupedTestGraph(edgeLists: Seq[(Seq[Int], Int)]) extends MetaGraphOp
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    outputs.putVertexSet('sets, sc.parallelize(edgeLists.map(i => (i._2.toLong, ()))))
+    outputs.putVertexSet('sets, sc.parallelize(edgeLists.map(i => (i._2.toLong, ())))
+      .partitionBy(rc.onePartitionPartitioner))
     val vs = edgeLists.map(_._1).flatten.distinct
-    outputs.putVertexSet('vs, sc.parallelize(vs.map(i => (i.toLong, ()))))
+    outputs.putVertexSet('vs, sc.parallelize(vs.map(i => (i.toLong, ())))
+      .partitionBy(rc.onePartitionPartitioner))
     val nodePairs = edgeLists.toSeq.flatMap {
       case (srcs, dst) => srcs.map(src => src -> dst)
     }
     outputs.putEdgeBundle('links, sc.parallelize(nodePairs.zipWithIndex.map {
       case ((a, b), i) => i.toLong -> Edge(a, b)
-    }))
+    }).partitionBy(rc.onePartitionPartitioner))
     val constantWeights = sc.parallelize(Seq.range[Long](0, nodePairs.size).map((_, 1.0)))
+      .partitionBy(rc.onePartitionPartitioner)
     outputs.putEdgeAttribute('weights, constantWeights)
   }
 }

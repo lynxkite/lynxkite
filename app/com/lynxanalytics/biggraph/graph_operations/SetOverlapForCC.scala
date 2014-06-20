@@ -29,7 +29,8 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
     val edges: RDD[Edge] = byMember.flatMap {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
-    outputs.putEdgeBundle('overlaps, RDDUtils.fastNumbered(edges))
+    outputs.putEdgeBundle(
+      'overlaps, RDDUtils.fastNumbered(edges).partitionBy(rc.defaultPartitioner))
   }
 
   // Override this with the actual overlap function implementations

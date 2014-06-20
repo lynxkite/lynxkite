@@ -9,7 +9,6 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes._
 
 case class CSVData(val header: Seq[String],
                    val data: rdd.RDD[Seq[String]]) {
