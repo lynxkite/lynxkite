@@ -69,9 +69,12 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
     (outs.vertexSets('vs), outs.edgeBundles('es))
   }
 
-  def groupedGraph(edgeLists: Map[Int, Seq[Int]]): (VertexSet, VertexSet, EdgeBundle, EdgeAttribute[Double]) = {
+  def groupedGraph(edgeLists: Seq[(Seq[Int], Int)]): (VertexSet, VertexSet, EdgeBundle, EdgeAttribute[Double]) = {
     val outs = apply(GroupedTestGraph(edgeLists))
-    (outs.vertexSets('vs), outs.vertexSets('sets), outs.edgeBundles('links), outs.edgeAttributes('weights).runtimeSafeCast[Double])
+    (outs.vertexSets('vs),
+      outs.vertexSets('sets),
+      outs.edgeBundles('links),
+      outs.edgeAttributes('weights).runtimeSafeCast[Double])
   }
 
   def rdd(vertexSet: VertexSet): VertexSetRDD = dataManager.get(vertexSet).rdd
@@ -111,7 +114,8 @@ trait TestGraphOperation extends TestMetaGraphManager with TestDataManager {
   def cleanHelper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
 }
 
-class BigGraphTestEnvironment(dirName: String) extends BigGraphEnvironment with TestBigGraphManager with TestGraphDataManager with TestGraphOperation {
+class BigGraphTestEnvironment(dirName: String)
+    extends BigGraphEnvironment with TestBigGraphManager with TestGraphDataManager with TestGraphOperation {
   lazy val bigGraphManager = cleanGraphManager(dirName)
   lazy val graphDataManager = cleanGraphDataManager(dirName)
   lazy val metaGraphManager = cleanMetaManager
@@ -208,8 +212,8 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperat
   }
 }
 
-// edgeList should be: set id -> Seq(vertices)
-case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
+// edgeList should be: Seq(vertices) -> set id
+case class GroupedTestGraph(edgeLists: Seq[(Seq[Int], Int)]) extends MetaGraphOperation {
   def signature = newSignature
     .outputVertexSet('vs)
     .outputVertexSet('sets)
@@ -218,11 +222,11 @@ case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOper
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    outputs.putVertexSet('sets, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
-    val vs = edgeLists.values.toList.flatten.distinct
+    outputs.putVertexSet('sets, sc.parallelize(edgeLists.map(i => (i._2.toLong, ()))))
+    val vs = edgeLists.map(_._1).flatten.distinct
     outputs.putVertexSet('vs, sc.parallelize(vs.map(i => (i.toLong, ()))))
     val nodePairs = edgeLists.toSeq.flatMap {
-      case (i, es) => es.map(e => e -> i)
+      case (srcs, dst) => srcs.map(src => src -> dst)
     }
     outputs.putEdgeBundle('links, sc.parallelize(nodePairs.zipWithIndex.map {
       case ((a, b), i) => i.toLong -> Edge(a, b)
