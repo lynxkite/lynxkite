@@ -69,9 +69,9 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
     (outs.vertexSets('vs), outs.edgeBundles('es))
   }
 
-  def groupedGraph(edgeLists: Map[Int, Seq[Int]]): (VertexSet, VertexSet, EdgeBundle) = {
+  def groupedGraph(edgeLists: Map[Int, Seq[Int]]): (VertexSet, VertexSet, EdgeBundle, EdgeAttribute[Double]) = {
     val outs = apply(GroupedTestGraph(edgeLists))
-    (outs.vertexSets('vs), outs.vertexSets('sets), outs.edgeBundles('links))
+    (outs.vertexSets('vs), outs.vertexSets('sets), outs.edgeBundles('links), outs.edgeAttributes('weights).runtimeSafeCast[Double])
   }
 
   def rdd(vertexSet: VertexSet): VertexSetRDD = dataManager.get(vertexSet).rdd
@@ -214,6 +214,7 @@ case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOper
     .outputVertexSet('vs)
     .outputVertexSet('sets)
     .outputEdgeBundle('links, 'vs -> 'sets)
+    .outputEdgeAttribute[Double]('weights, 'links)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
@@ -226,5 +227,7 @@ case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOper
     outputs.putEdgeBundle('links, sc.parallelize(nodePairs.zipWithIndex.map {
       case ((a, b), i) => i.toLong -> Edge(a, b)
     }))
+    val constantWeights = sc.parallelize(Seq.range[Long](0, nodePairs.size).map((_, 1.0)))
+    outputs.putEdgeAttribute('weights, constantWeights)
   }
 }

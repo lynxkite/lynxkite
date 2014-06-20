@@ -25,7 +25,7 @@ class SetOverlapForCCTest extends FunSuite with TestGraphOperation {
       val vSize = rnd.nextInt(30) + 1
       val seed = rnd.nextInt()
       val minOverlap = rnd.nextInt(6) + 1
-      val (vs, sets, links) = helper.groupedGraph(RandomSets(eSize, vSize, seed))
+      val (vs, sets, links, _) = helper.groupedGraph(RandomSets(eSize, vSize, seed))
 
       // this is a slow test so lets inform the tester about what is going on
       println(s"Checking graph ${i + 1}/$trials, parameters: $eSize, $vSize, $seed, overlap: $minOverlap")
