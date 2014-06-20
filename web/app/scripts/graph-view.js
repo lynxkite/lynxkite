@@ -41,7 +41,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     var n = data.vertexSets.length;
     for (var i = 0; i < n; ++i) {
       var x_off = (i * 2 + 1) * this.svg.width() / n / 2;
-      var y_off = this.svg.height() / 2;
+      var y_off = 250;
       vertices.push(this.addVertices(data.vertexSets[i].vertices, x_off, y_off));
     }
     for (var i = 0; i < data.edgeBundles.length; ++i) {
