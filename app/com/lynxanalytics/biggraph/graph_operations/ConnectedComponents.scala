@@ -60,11 +60,12 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends
     // Each node decides if it is hosting a party or going out as a guest.
     val invitations = graph.mapPartitionsWithIndex {
       case (pidx, it) =>
-        val rnd = new Random((pidx << 16) + iteration)
+        val seed = new Random((pidx << 16) + iteration).nextLong
+        val rnd = new Random(seed)
         it.flatMap {
           case (n, edges) =>
             // nextBoolean is not random enough directly on the seed
-            if ({ rnd.nextInt; rnd.nextInt; rnd.nextInt; rnd.nextBoolean }) {
+            if (rnd.nextBoolean) {
               // Host. All the neighbors are invited.
               (edges.map((_, n)) +
                 ((n, -1l))) // -1 is note to self: stay at home, host party.

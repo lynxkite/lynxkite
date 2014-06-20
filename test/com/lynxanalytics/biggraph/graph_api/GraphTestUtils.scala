@@ -208,6 +208,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperat
   }
 }
 
+// edgeList should be: set id -> Seq(vertices)
 case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
   def signature = newSignature
     .outputVertexSet('vs)
@@ -216,7 +217,6 @@ case class GroupedTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOper
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    // edgeList should be: set id -> Seq(vertices)
     outputs.putVertexSet('sets, sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ()))))
     val vs = edgeLists.values.toList.flatten.distinct
     outputs.putVertexSet('vs, sc.parallelize(vs.map(i => (i.toLong, ()))))
