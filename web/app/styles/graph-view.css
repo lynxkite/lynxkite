@@ -1,8 +1,13 @@
 svg.graph-view {
   display: inline-block;
   vertical-align: top;
-  width: 500px;
+  width: 100%;
   height: 500px;
+  transition: height 0.5s;
+  background: #222;
+}
+svg.graph-view.collapsed {
+  height: 0px;
 }
 
 svg .root {

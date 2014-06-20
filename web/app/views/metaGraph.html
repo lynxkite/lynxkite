@@ -1,31 +1,43 @@
 <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">
   {{alert.msg}}
 </alert>
-<div class="operations bubble">
-  <h2>Available operations</h2>
-  <div class="op" ng-repeat="op in applicableOperations()">
-    <button class="btn btn-default" ng-click="apply(op)">{{op.title}}</button>
+<div class="row-fluid">
+  <div class="operations col-sm-6">
+    <h6>Available operations</h6>
+    <div class="op" ng-repeat="op in applicableOperations()">
+      <button class="btn btn-default" ng-click="apply(op)">{{op.title}}</button>
+    </div>
+  </div>
+  <div class="startingvs col-sm-6">
+    <h6>Starting Vertex Sets</h6>
+    <div class="vertexset token"
+         ng-repeat="vs in startingVertexSets">
+      {{vs.title}}
+      <button class="btn btn-default" ng-click="left.setNewVS(vs.id)">Load Left</button>
+      <button class="btn btn-default" ng-click="right.setNewVS(vs.id)">Load Right</button>
+    </div>
   </div>
 </div>
-<div class="startingvs bubble">
-  <h2>Starting Vertex Sets</h2>
-  <div class="vertexset token"
-       ng-repeat="vs in startingVertexSets">
-    {{vs.title}}
-    <button class="btn btn-default" ng-click="left.setNewVS(vs.id)">Load Left</button>
-    <button class="btn btn-default" ng-click="right.setNewVS(vs.id)">Load Right</button>
-  </div>
+<div class="row-fluid text-center">
+  <button class="btn" ng-click="showGraph = !showGraph">{{showGraph ? '&#x25b2;' : '&#x25bc;'}}</button>
+  <svg class="graph-view" ng-class="{ 'collapsed': !showGraph }"
+    graph-view ng-model="graphView" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
 </div>
-<div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>
-<div class="path bubble">
-  <li class="bundle token" ng-repeat="step in state.leftToRightPath">
-    <button ng-if="!$first" class="btn btn-default" ng-click="cutPathLeft($index)">
-      --&gt;|
-    </button>
-    {{step.eb.title}} [{{step.eb.source.title}} => {{step.eb.destination.title}}]
-    <br>Points: <span ng-if="step.pointsLeft">LEFT</span><span ng-if="!step.pointsLeft">RIGHT</span>
-    <button ng-if="!$last" class="btn btn-default" ng-click="cutPathRight($index)">
-      |&lt;--
-    </button>
-  </li>
+<div class="row-fluid">
+  <div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>
+</div>
+<div class="path row-fluid text-center" ng-if="state.leftToRightPath">
+  <h6>Connecting path</h6>
+  <ul>
+    <li class="bundle token" ng-repeat="step in state.leftToRightPath">
+      <button ng-if="!$first" class="btn btn-default" ng-click="cutPathLeft($index)">
+        --&gt;|
+      </button>
+      {{step.eb.title}} [{{step.eb.source.title}} =&gt; {{step.eb.destination.title}}]
+      <br>Points: <span ng-if="step.pointsLeft">LEFT</span><span ng-if="!step.pointsLeft">RIGHT</span>
+      <button ng-if="!$last" class="btn btn-default" ng-click="cutPathRight($index)">
+        |&lt;--
+      </button>
+    </li>
+  </ul>
 </div>
