@@ -53,6 +53,8 @@ angular.module('biggraph')
         } else {
           $scope.left.data = undefined;
         }
+        $scope.graphView = $resource('/ajax/bucketed').get({q: {axisX: 'age', axisY: 'income', filters: []}});
+        $scope.showGraph = true;
       });
     $scope.$watch(
       'state.rightVS',
