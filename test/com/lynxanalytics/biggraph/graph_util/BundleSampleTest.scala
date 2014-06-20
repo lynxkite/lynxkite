@@ -16,9 +16,9 @@ class EdgeBundleSampleTest extends FunSuite with TestGraphOperation {
       graph.edgeAttributes('comment).runtimeSafeCast[String],
       SrcAttr(graph.vertexAttributes('name).runtimeSafeCast[String]),
       SrcAttr(graph.vertexAttributes('age).runtimeSafeCast[Double]),
-      DstAttr(graph.vertexAttributes('name).runtimeSafeCast[String]),
-      (comment: String, sname: String, sage: Double, dname: String) =>
-        s"C: $comment sN: $sname sA: $sage dN: $dname")
+      DstAttr(graph.vertexAttributes('name).runtimeSafeCast[String])) {
+        (comment, sname, sage, dname) => s"C: $comment sN: $sname sA: $sage dN: $dname"
+      }
     assert(TestUtils.RDDToSortedString(resultRDD) ==
       """|(0,C: Adam loves Eve sN: Adam sA: 20.3 dN: Eve)
          |(1,C: Eve loves Adam sN: Eve sA: 18.2 dN: Adam)
