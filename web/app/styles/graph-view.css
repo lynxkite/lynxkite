@@ -10,11 +10,6 @@ svg.graph-view.collapsed {
   height: 0px;
 }
 
-svg .root {
-  /* For easier arithmetics put the origin in the middle. */
-  transform: translate(250px, 250px);
-}
-
 svg text {
   text-anchor: middle;
   dominant-baseline: middle;

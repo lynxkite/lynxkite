@@ -3,7 +3,7 @@
 /* exported  SVG_UTIL */
 var SVG_UTIL = {
   // JQuery addClass/removeClass does not work on SVG elements. (They are in
-  // another namespace, but he "class" attribute is in the default namespace.)
+  // another namespace, but the "class" attribute is in the default namespace.)
   classesOf: function(e) {
     var l = e[0].getAttributeNS(null, 'class').split(' ');
     l.plus = function(cls) {
