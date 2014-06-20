@@ -2,6 +2,8 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.util.Random
 
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
+
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util._
 
@@ -21,6 +23,6 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends MetaGraphOp
           .map { case ((srcId, _), (dstId, _)) => Edge(srcId, dstId) }
     }
 
-    outputs.putEdgeBundle('es, RDDUtils.fastNumbered(randomEdges))
+    outputs.putEdgeBundle('es, RDDUtils.fastNumbered(randomEdges).partitionBy(rc.defaultPartitioner))
   }
 }
