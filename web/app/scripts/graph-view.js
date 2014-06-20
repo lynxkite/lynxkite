@@ -50,7 +50,7 @@ angular.module('biggraph').directive('graphView', function() {
     var edgeScale = this.zoom * 0.05 / util.minmax(graph.edges.map(function(n) { return n.count; })).max;
     for (i = 0; i < graph.edges.length; ++i) {
       var edge = graph.edges[i];
-      if (edgeScale * edge.count < 1) {
+      if (edgeScale * edge.count < 0.1) {
         continue;
       }
       var a = vertices[edge.a];
@@ -64,10 +64,10 @@ angular.module('biggraph').directive('graphView', function() {
     this.x = x;
     this.y = y;
     this.r = r;
-    this.circle = svg.create('circle', {r: r, 'class': 'vertex'});
-    this.label = svg.create('text', {text: text, 'class': 'vertex-label'});
+    this.circle = svg.create('circle', {r: r});
+    this.label = svg.create('text', {text: text});
     this.label.text(text);
-    this.dom = svg.group([this.circle, this.label]);
+    this.dom = svg.group([this.circle, this.label], {'class': 'vertex' });
     this.moveListeners = [];
     this.moveTo(x, y);
     this.hoverListeners = [];
@@ -114,8 +114,10 @@ angular.module('biggraph').directive('graphView', function() {
     this.reposition(zoom);
     src.addHoverListener({on: function() { svg.addClass(that.dom, 'highlight-out'); that.toFront(); },
                           off: function() { svg.removeClass(that.dom, 'highlight-out'); }});
-    dst.addHoverListener({on: function() { svg.addClass(that.dom, 'highlight-in'); that.toFront(); },
-                          off: function() { svg.removeClass(that.dom, 'highlight-in'); }});
+    if (src !== dst) {
+      dst.addHoverListener({on: function() { svg.addClass(that.dom, 'highlight-in'); that.toFront(); },
+                            off: function() { svg.removeClass(that.dom, 'highlight-in'); }});
+    }
   }
   Edge.prototype.toFront = function() {
     this.dom.parent().append(this.dom);
