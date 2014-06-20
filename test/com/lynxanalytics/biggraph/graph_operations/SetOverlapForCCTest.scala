@@ -8,13 +8,13 @@ import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
 
 class SetOverlapForCCTest extends FunSuite with TestGraphOperation {
-  def RandomSets(esize: Int, vsize: Int, seed: Int): Map[Int, Seq[Int]] = {
+  def RandomSets(esize: Int, vsize: Int, seed: Int): Seq[(Seq[Int], Int)] = {
     val rand = new Random(seed)
     val elementIds = Seq.range[Int](0, vsize)
 
     (0 until esize).map { id =>
-      (id, rand.shuffle(elementIds.toSeq).take(rand.nextInt(elementIds.size + 1)))
-    }.toMap
+      (rand.shuffle(elementIds.toSeq).take(rand.nextInt(elementIds.size + 1)), id)
+    }
   }
 
   test("Check for a few random sets") {
