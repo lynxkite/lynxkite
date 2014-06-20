@@ -16,11 +16,12 @@ class SetOverlapTest extends FunSuite with TestGraphOperation {
       .map { case ((a, b), c) => ((a.toInt, b.toInt), c) }
   }
 
+  // set id -> Seq(vertices)
   test("triangle") {
     val overlaps = getOverlaps(Map(
-      0 -> Seq(1, 2),
-      1 -> Seq(2, 3),
-      2 -> Seq(1, 3)),
+      0 -> Seq(10, 20),
+      1 -> Seq(20, 30),
+      2 -> Seq(10, 30)),
       minOverlap = 1)
     assert(overlaps === Map(((0, 1) -> 1), ((0, 2) -> 1), ((1, 0) -> 1), ((1, 2) -> 1), ((2, 0) -> 1), (2, 1) -> 1))
   }

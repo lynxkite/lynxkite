@@ -30,14 +30,14 @@ case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
     val partitioner = rc.defaultPartitioner
 
     val sets = inputs.edgeBundles('links).rdd.values
-      .map { case Edge(vId, setId) => vId -> setId }
+      .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
 
     type SetsByPrefix = RDD[(Seq[ID], Sets)]
     // Start with prefixes of length 1.
     var short: SetsByPrefix = rc.sparkContext.emptyRDD[(Seq[ID], Sets)]
     var long: SetsByPrefix = sets.flatMap {
-      case (vid, set) => set.map(i => (Seq(i), (vid, set.toSeq.sorted.toArray)))
+      case (setId, set) => set.map(i => (Seq(i), (setId, set.toSeq.sorted.toArray)))
     }.groupByKey(partitioner)
     // Increase prefix length until all set lists are short.
     // We cannot use a prefix longer than minOverlap.
@@ -48,10 +48,10 @@ case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
       // Increase prefix length.
       long = long.flatMap {
         case (prefix, sets) => sets.flatMap {
-          case (vid, set) => {
+          case (setId, set) => {
             set
               .filter(node => node > prefix.last)
-              .map(next => (prefix :+ next, (vid, set)))
+              .map(next => (prefix :+ next, (setId, set)))
           }
         }
       }.groupByKey(partitioner)
@@ -62,6 +62,7 @@ case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
     val edgesWithOverlaps: RDD[(Edge, Int)] = short.flatMap {
       case (prefix, sets) => edgesFor(prefix, sets)
     }
+
     val numberedEdgesWithOverlaps = RDDUtils.fastNumbered(edgesWithOverlaps)
 
     outputs.putEdgeBundle(
