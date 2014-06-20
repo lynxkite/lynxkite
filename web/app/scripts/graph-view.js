@@ -1,44 +1,64 @@
 'use strict';
 
-angular.module('biggraph').directive('graphView', function() {
+angular.module('biggraph').directive('graphView', function($window) {
   /* global SVG_UTIL, COMMON_UTIL */
   var svg = SVG_UTIL;
   var util = COMMON_UTIL;
   var directive = {
       template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
-      require: '^ngModel',
+      scope: { ngModel: '=' },
       replace: true,
       link: function(scope, element, attrs) {
         var gv = new GraphView(element);
-        scope.$watch(attrs.ngModel, function(data) {
+        scope.$watch('ngModel', function(data) {
           if (data.$resolved) {
             gv.update(data);
           }
         }, true);
+        angular.element($window).bind('resize', function() {
+          if (scope.ngModel.$resolved) {
+            gv.update(scope.ngModel);
+          }
+        });
       },
     };
 
   function GraphView(element) {
-    var svgtag = angular.element(element);
-    svgtag.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
+    this.svg = angular.element(element);
+    this.svg.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
     this.root = svg.create('g', {'class': 'root'});
     this.zoom = 250;
     this.root.append([this.edges, this.vertices]);
-    svgtag.append(this.root);
+    this.svg.append(this.root);
   }
 
-  GraphView.prototype.update = function(graph) {
+  GraphView.prototype.update = function(data) {
     this.vertices.empty();
     this.edges.empty();
     var vertices = [];
-    var vertexScale = this.zoom * 2 / util.minmax(graph.vertices.map(function(n) { return n.count; })).max;
-    var xb = util.minmax(graph.vertices.map(function(n) { return n.x; }));
-    var yb = util.minmax(graph.vertices.map(function(n) { return n.y; }));
-    for (var i = 0; i < graph.vertices.length; ++i) {
-      var vertex = graph.vertices[i];
-      var v = new Vertex(this.zoom * util.normalize(vertex.x, xb), this.zoom * util.normalize(vertex.y, yb),
+    var n = data.vertexSets.length;
+    for (var i = 0; i < n; ++i) {
+      var x_off = (i * 2 + 1) * this.svg.width() / n / 2;
+      var y_off = this.svg.height() / 2;
+      vertices.push(this.addVertices(data.vertexSets[i].vertices, x_off, y_off));
+    }
+    for (var i = 0; i < data.edgeBundles.length; ++i) {
+      var e = data.edgeBundles[i];
+      this.addEdges(e.edges, vertices[e.srcs], vertices[e.dsts]);
+    }
+  };
+
+  GraphView.prototype.addVertices = function(data, x_off, y_off) {
+    var vertices = [];
+    var vertexScale = this.zoom * 2 / util.minmax(data.map(function(n) { return n.count; })).max;
+    var xb = util.minmax(data.map(function(n) { return n.x; }));
+    var yb = util.minmax(data.map(function(n) { return n.y; }));
+    for (var i = 0; i < data.length; ++i) {
+      var vertex = data[i];
+      var v = new Vertex(x_off + this.zoom * util.normalize(vertex.x, xb),
+                         y_off + this.zoom * util.normalize(vertex.y, yb),
                          Math.sqrt(vertexScale * vertex.count),
                          vertex.count);
       vertices.push(v);
@@ -47,14 +67,18 @@ angular.module('biggraph').directive('graphView', function() {
       }
       this.vertices.append(v.dom);
     }
-    var edgeScale = this.zoom * 0.05 / util.minmax(graph.edges.map(function(n) { return n.count; })).max;
-    for (i = 0; i < graph.edges.length; ++i) {
-      var edge = graph.edges[i];
+    return vertices;
+  };
+
+  GraphView.prototype.addEdges = function(edges, srcs, dsts) {
+    var edgeScale = this.zoom * 0.05 / util.minmax(edges.map(function(n) { return n.count; })).max;
+    for (var i = 0; i < edges.length; ++i) {
+      var edge = edges[i];
       if (edgeScale * edge.count < 0.1) {
         continue;
       }
-      var a = vertices[edge.a];
-      var b = vertices[edge.b];
+      var a = srcs[edge.a];
+      var b = dsts[edge.b];
       var e = new Edge(a, b, edgeScale * edge.count, this.zoom);
       this.edges.append(e.dom);
     }
