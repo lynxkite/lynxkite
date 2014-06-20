@@ -53,4 +53,6 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
     System.getProperty("biggraph.default.partitions.per.core", "3").toInt
   lazy val defaultPartitioner: spark.Partitioner =
     new spark.HashPartitioner(numAvailableCores * defaultPartitionsPerCore)
+  lazy val onePartitionPartitioner: spark.Partitioner =
+    new spark.HashPartitioner(1)
 }
