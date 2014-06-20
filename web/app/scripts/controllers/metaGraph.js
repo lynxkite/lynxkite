@@ -33,9 +33,12 @@ angular.module('biggraph')
     $scope.$watch(
       'state',
       function() {
+        // Update URL.
         var s = $location.search();
         s.q = JSON.stringify($scope.state);
         $location.search(s);
+        // Update graph view.
+        if ($scope.showGraph) { loadGraphView(); }
       },
       true /* compare by equality rather than identity */);
 
@@ -50,7 +53,6 @@ angular.module('biggraph')
         var leftVS = $scope.state.leftVS;
         if (leftVS !== undefined) {
           $scope.left.data = loadVertexSet(leftVS.id);
-          if ($scope.showGraph) { loadGraphView(); }
         } else {
           $scope.left.data = undefined;
         }
@@ -61,15 +63,14 @@ angular.module('biggraph')
         var rightVS = $scope.state.rightVS;
         if (rightVS !== undefined) {
           $scope.right.data = loadVertexSet(rightVS.id);
-          if ($scope.showGraph) { loadGraphView(); }
         } else {
           $scope.right.data = undefined;
         }
       });
+
     $scope.$watch('showGraph', function() {
       if ($scope.showGraph) { loadGraphView(); }
     });
-
     function loadGraphView() {
       $scope.graphView = $resource('/ajax/bucketed').get(); // TODO: parameters.
     }
