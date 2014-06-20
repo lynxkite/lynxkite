@@ -8,7 +8,7 @@ angular.module('biggraph').directive('graphView', function($window) {
       template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
       scope: { ngModel: '=' },
       replace: true,
-      link: function(scope, element, attrs) {
+      link: function(scope, element) {
         var gv = new GraphView(element);
         scope.$watch('ngModel', function(data) {
           if (data.$resolved) {
@@ -40,25 +40,25 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertices = [];
     var n = data.vertexSets.length;
     for (var i = 0; i < n; ++i) {
-      var x_off = (i * 2 + 1) * this.svg.width() / n / 2;
-      var y_off = 250;
-      vertices.push(this.addVertices(data.vertexSets[i].vertices, x_off, y_off));
+      var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
+      var yOff = 250;
+      vertices.push(this.addVertices(data.vertexSets[i].vertices, xOff, yOff));
     }
-    for (var i = 0; i < data.edgeBundles.length; ++i) {
+    for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
       this.addEdges(e.edges, vertices[e.srcs], vertices[e.dsts]);
     }
   };
 
-  GraphView.prototype.addVertices = function(data, x_off, y_off) {
+  GraphView.prototype.addVertices = function(data, xOff, yOff) {
     var vertices = [];
     var vertexScale = this.zoom * 2 / util.minmax(data.map(function(n) { return n.count; })).max;
     var xb = util.minmax(data.map(function(n) { return n.x; }));
     var yb = util.minmax(data.map(function(n) { return n.y; }));
     for (var i = 0; i < data.length; ++i) {
       var vertex = data[i];
-      var v = new Vertex(x_off + this.zoom * util.normalize(vertex.x, xb),
-                         y_off + this.zoom * util.normalize(vertex.y, yb),
+      var v = new Vertex(xOff + this.zoom * util.normalize(vertex.x, xb),
+                         yOff + this.zoom * util.normalize(vertex.y, yb),
                          Math.sqrt(vertexScale * vertex.count),
                          vertex.count);
       vertices.push(v);
