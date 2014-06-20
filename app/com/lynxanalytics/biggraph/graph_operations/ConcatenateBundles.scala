@@ -32,7 +32,7 @@ case class ConcatenateBundles() extends MetaGraphOperation {
       case (_, ((vertexA, weightAB), (vertexC, weightBC))) => (Edge(vertexA, vertexC), weightAB * weightBC)
     }.reduceByKey(_ + _) // TODO: possibility to define arbitrary concat functions as JS
 
-    val numberedAC = RDDUtils.fastNumbered(AC)
+    val numberedAC = RDDUtils.fastNumbered(AC).partitionBy(rc.defaultPartitioner)
 
     outputs.putEdgeBundle(
       'edgesAC, numberedAC.map { case (eId, (edge, weight)) => eId -> edge })

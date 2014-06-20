@@ -42,6 +42,11 @@ sealed trait Attribute[T] extends MetaGraphEntity {
   def runtimeSafeCast[S: TypeTag]: Attribute[S]
 }
 
+// Marker trait for possible attributes of a triplet. It's either a vertex attribute
+// belonging to the source vertex, a vertex attribute belonging to the destination vertex
+// or an edge attribute.
+sealed trait TripletAttribute[T]
+
 case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                        name: Symbol)
     extends Attribute[T] with RuntimeSafeCastable[T, VertexAttribute] {
@@ -50,9 +55,12 @@ case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
     source.entities.vertexSets(source.operation.outputVertexAttributes(name)._1)
 }
 
+case class SrcAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]
+case class DstAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]
+
 case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                      name: Symbol)
-    extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] {
+    extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] with TripletAttribute[T] {
   val typeTag = implicitly[TypeTag[T]]
   @transient lazy val edgeBundle: EdgeBundle =
     source.entities.edgeBundles(source.operation.outputEdgeAttributes(name)._1)
