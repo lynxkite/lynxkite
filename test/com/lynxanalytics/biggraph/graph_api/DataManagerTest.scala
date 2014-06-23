@@ -38,6 +38,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       "(1,Eve loves Adam)\n" +
       "(2,Bob envies Adam)\n" +
       "(3,Bob loves Eve)")
+    assert(dataManager.get(instance.outputs.scalars('greeting)).value == "Hello world!")
   }
 
   test("We can reload a graph from disk without recomputing it") {
@@ -47,12 +48,18 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val operation = CreateExampleGraphOperation()
     val instance = metaManager.apply(operation)
     val names = instance.outputs.vertexAttributes('name).runtimeSafeCast[String]
+    val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
     val data1: VertexAttributeData[String] = dataManager1.get(names)
     dataManager1.saveToDisk(names)
+    val scalarData1: ScalarData[String] = dataManager1.get(greeting)
+    dataManager1.saveToDisk(greeting)
     val data2 = dataManager2.get(names)
+    val scalarData2 = dataManager2.get(greeting)
     assert(data1 ne data2)
     assert(TestUtils.RDDToSortedString(data1.rdd) ==
       TestUtils.RDDToSortedString(data2.rdd))
+    assert(scalarData1 ne scalarData2)
+    assert(scalarData1.value == scalarData2.value)
     assert(operation.executionCounter == 1)
   }
 }
