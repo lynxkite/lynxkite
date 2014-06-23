@@ -38,7 +38,7 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def loadVertexSetData(vertexSet: VertexSet): Unit = {
+  private def load(vertexSet: VertexSet): Unit = {
     vertexSetCache(vertexSet.gUID) = new VertexSetData(
       vertexSet,
       entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc))

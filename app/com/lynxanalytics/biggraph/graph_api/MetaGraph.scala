@@ -31,7 +31,7 @@ case class VertexSet(source: MetaGraphOperationInstance,
 
 case class EdgeBundle(source: MetaGraphOperationInstance,
                       name: Symbol) extends MetaGraphEntity {
-  @transient lazy val (srcName, dstName) = source.operation.outputEdgeBundles(name)
+  @transient lazy val (srcName, dstName) = source.operation.signature.outputEdgeBundles(name)
   @transient lazy val srcVertexSet: VertexSet = source.entities.vertexSets(srcName)
   @transient lazy val dstVertexSet: VertexSet = source.entities.vertexSets(dstName)
   @transient lazy val isLocal = srcVertexSet == dstVertexSet
@@ -52,7 +52,7 @@ case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
     extends Attribute[T] with RuntimeSafeCastable[T, VertexAttribute] {
   val typeTag = implicitly[TypeTag[T]]
   @transient lazy val vertexSet: VertexSet =
-    source.entities.vertexSets(source.operation.outputVertexAttributes(name)._1)
+    source.entities.vertexSets(source.operation.signature.outputVertexAttributes(name)._1)
 }
 
 case class SrcAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]
@@ -63,7 +63,7 @@ case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
     extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] with TripletAttribute[T] {
   val typeTag = implicitly[TypeTag[T]]
   @transient lazy val edgeBundle: EdgeBundle =
-    source.entities.edgeBundles(source.operation.outputEdgeAttributes(name)._1)
+    source.entities.edgeBundles(source.operation.signature.outputEdgeAttributes(name)._1)
 }
 
 case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
@@ -81,39 +81,6 @@ trait MetaGraphOperation extends Serializable {
   //     }
   def signature: MetaGraphOperationSignature
   protected def newSignature = new MetaGraphOperationSignature
-
-  // Names of vertex set inputs for this operation.
-  def inputVertexSets: Set[Symbol] = signature.inputVertexSets.toSet
-
-  // Names of input bundles together with their source and destination vertex set names (which all
-  // must be elements of inputVertexSets).
-  def inputEdgeBundles: Map[Symbol, (Symbol, Symbol)] = signature.inputEdgeBundles.toMap
-
-  // Names of input vertex attributes together with their corresponding VertexSet names (which all
-  // must be elements of inputVertexSets) and the types of the attributes.
-  def inputVertexAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.inputVertexAttributes.toMap
-
-  // Names of input edge attributes together with their corresponding EdgeBundle names (which all
-  // must be keys of inputEdgeBundles) and the types of the attributes.
-  def inputEdgeAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.inputEdgeAttributes.toMap
-
-  // Names of vertex sets newly created by this operation.
-  // (outputVertexSets /\ inputVertexSets needs to be empty).
-  def outputVertexSets: Set[Symbol] = signature.outputVertexSets.toSet
-
-  // Names of bundles newly created by this operation together with their source and destination
-  // vertex set names (which all must be elements of inputVertexSets \/ outputVertexSets).
-  def outputEdgeBundles: Map[Symbol, (Symbol, Symbol)] = signature.outputEdgeBundles.toMap
-
-  // Names of vertex attributes newly created by this operation together with their corresponding
-  // VertexSet names (which all must be elements of inputVertexSets \/ outputVertexSets)
-  // and the types of the attributes.
-  def outputVertexAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.outputVertexAttributes.toMap
-
-  // Names of edge attributes newly created by this operation together with their corresponding
-  // EdgeBundle names (which all must be keys of inputEdgeBundles \/ outputEdgeBundles)
-  // and the types of the attributes.
-  def outputEdgeAttributes: Map[Symbol, (Symbol, TypeTag[_])] = signature.outputEdgeAttributes.toMap
 
   // Checks whether the complete input signature is valid for this operation.
   def validateInput(input: MetaDataSet): Boolean = ???
