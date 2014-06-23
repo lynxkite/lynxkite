@@ -8,7 +8,7 @@
           ng-click="setViewSetting(side, 'xAttribute', attr)">Graph on X</button>
       <button class="btn btn-default" ng-class="{ 'btn-primary': side.viewSettings.yAttribute === attr }"
           ng-click="setViewSetting(side, 'yAttribute', attr)">Graph on Y</button>
-      <input class="form-control filter" ng-model="side.viewSettings.filters[attr.id]">
+      <input class="form-control filter" placeholder="filter" ng-model="side.viewSettings.filters[attr.id]">
     </div>
     <h6 ng-show="side.data.localEdges">Local Edge Bundles</h6>
     <ul class="bundles">
