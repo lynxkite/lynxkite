@@ -79,7 +79,7 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  def execute(instance: MetaGraphOperationInstance): Unit = {
+  private def execute(instance: MetaGraphOperationInstance): Unit = {
     val inputs = instance.inputs
     val inputDatas = DataSet(
       inputs.vertexSets.mapValues(get(_)),
@@ -97,7 +97,7 @@ class DataManager(sc: spark.SparkContext,
     output.scalars.values.foreach(sc => scalarCache(sc.gUID) = sc)
   }
 
-  def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = {
+  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = {
     this.synchronized {
       if (!hasEntity(entity)) {
         if (hasEntityOnDisk(entity)) {
