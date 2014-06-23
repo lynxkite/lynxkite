@@ -9,6 +9,16 @@
      </encoder>
    </appender>
 
+   <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+       <level>ERROR</level>
+     </filter>
+     <target>System.err</target>
+     <encoder>
+       <pattern>%date - [%level] - from %logger in %thread %n%message%n%xException%n</pattern>
+     </encoder>
+   </appender>
+
   <logger name="play" level="INFO" />
   <logger name="application" level="INFO" />
   <logger name="org.apache.spark" level="INFO" />
@@ -16,6 +26,7 @@
 
   <root level="ERROR">
     <appender-ref ref="FILE" />
+    <appender-ref ref="STDERR" />
   </root>
   
 </configuration>
