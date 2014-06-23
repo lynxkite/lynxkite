@@ -52,8 +52,16 @@
       "destination": {
         "id": "alma",
         "title": "Alma Graph"
-      }
+      },
+      "attributes": [
+        { "id": "eattr1", "title": "Edge Attribute 1" },
+        { "id": "eattr2", "title": "Edge Attribute 2" }
+      ]
     }
+  ],
+  "attributes": [
+    { "id": "vattr1", "title": "Vertex Attribute 1" },
+    { "id": "vattr2", "title": "Vertex Attribute 2" }
   ],
   "ops": [
     {
