@@ -147,7 +147,7 @@ abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv) {
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc.sparkContext)
+    val columns = readColumns(rc.sparkContext).mapValues(_.partitionBy(rc.defaultPartitioner))
     for ((field, rdd) <- columns) {
       outputs.putVertexAttribute(toSymbol(field), rdd)
     }
@@ -170,8 +170,8 @@ case class ImportVertexListWithNumericIDs(csv: CSV, id: String) extends ImportVe
 abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc.sparkContext)
-    putOutputs(columns, outputs)
+    val columns = readColumns(rc.sparkContext).mapValues(_.partitionBy(rc.defaultPartitioner))
+    putOutputs(columns, outputs, rc)
   }
 
   protected def addEdgeAttributes(s: MetaGraphOperationSignature): MetaGraphOperationSignature = {
@@ -189,7 +189,7 @@ abstract class ImportEdgeList(csv: CSV) extends ImportCommon(csv) {
 
   // Override these.
   def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
-  def putOutputs(columns: Columns, outputs: DataSetBuilder): Unit =
+  def putOutputs(columns: Columns, outputs: DataSetBuilder, rc: RuntimeContext): Unit =
     putEdgeAttributes(columns, outputs)
 }
 
@@ -199,10 +199,11 @@ case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String) exte
 
   def signature = addEdgeAttributes(newSignature).outputGraph('vertices, 'edges)
 
-  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
-    super.putOutputs(columns, outputs)
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder, rc: RuntimeContext) = {
+    super.putOutputs(columns, outputs, rc)
     outputs.putVertexSet('vertices,
-      (columns(src).values ++ columns(dst).values).distinct.map(_.toLong -> ()))
+      (columns(src).values ++ columns(dst).values).distinct.map(_.toLong -> ())
+        .partitionBy(rc.defaultPartitioner))
     outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
       case (src, dst) => Edge(src.toLong, dst.toLong)
     })
@@ -218,10 +219,10 @@ case class ImportEdgeListWithStringIDs(
     .outputGraph('vertices, 'edges)
     .outputVertexAttribute[String](toSymbol(vertexAttr), 'vertices)
 
-  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder, rc: RuntimeContext) = {
     putEdgeAttributes(columns, outputs)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = RDDUtils.fastNumbered(names)
+    val idToName = RDDUtils.fastNumbered(names).partitionBy(rc.defaultPartitioner)
     val nameToId = idToName.map { case (id, name) => (name, id) }
     val edgeSrcDst = columns(src).join(columns(dst))
     val bySrc = edgeSrcDst.map {
@@ -233,7 +234,7 @@ case class ImportEdgeListWithStringIDs(
     val edges = byDst.join(nameToId).map {
       case (dst, ((edge, sid), did)) => edge -> Edge(sid, did)
     }
-    outputs.putEdgeBundle('edges, edges)
+    outputs.putEdgeBundle('edges, edges.partitionBy(rc.defaultPartitioner))
     outputs.putVertexSet('vertices, idToName.mapValues(_ => ()))
     outputs.putVertexAttribute(toSymbol(vertexAttr), idToName)
   }
@@ -249,7 +250,7 @@ case class ImportEdgeListWithNumericIDsForExistingVertexSet(
     .inputVertexSet('destinations)
     .outputEdgeBundle('edges, 'sources -> 'destinations)
 
-  override def putOutputs(columns: Columns, outputs: DataSetBuilder) = {
+  override def putOutputs(columns: Columns, outputs: DataSetBuilder, rc: RuntimeContext) = {
     putEdgeAttributes(columns, outputs)
     outputs.putEdgeBundle('edges, columns(src).join(columns(dst)).mapValues {
       case (src, dst) => Edge(src.toLong, dst.toLong)
