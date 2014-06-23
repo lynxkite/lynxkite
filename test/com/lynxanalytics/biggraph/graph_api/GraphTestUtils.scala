@@ -166,6 +166,7 @@ case class CreateExampleGraphOperation() extends MetaGraphOperation {
     .outputVertexAttribute[String]('name, 'vertices)
     .outputVertexAttribute[Double]('age, 'vertices)
     .outputEdgeAttribute[String]('comment, 'edges)
+    .outputScalar[String]('greeting)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     executionCounter += 1
@@ -196,6 +197,7 @@ case class CreateExampleGraphOperation() extends MetaGraphOperation {
       (1l, "Eve loves Adam"),
       (2l, "Bob envies Adam"),
       (3l, "Bob loves Eve"))).partitionBy(rc.onePartitionPartitioner))
+    outputs.putScalar('greeting, "Hello world!")
   }
 }
 
