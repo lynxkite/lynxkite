@@ -25,6 +25,7 @@ case class Filename(
   @transient lazy val uri = new java.net.URI(filename)
   @transient lazy val path = new hadoop.fs.Path(filename)
   def open() = fs.open(path)
+  def create() = fs.create(path)
   def exists() = fs.exists(path)
   def reader() = new BufferedReader(new InputStreamReader(open))
 
@@ -52,13 +53,13 @@ case class Filename(
   }
 
   def createFromStrings(contents: String): Unit = {
-    val stream = fs.create(path)
+    val stream = create()
     stream.write(contents.getBytes("UTF-8"))
     stream.close()
   }
 
-  def makeDir(): Unit = {
-    if (fs.exists(path)) throw new IOException("Directory already exists") else fs.mkdirs(path)
+  def mkdirs(): Unit = {
+    fs.mkdirs(path)
   }
 
   def loadObjectFile[T: scala.reflect.ClassTag](sc: spark.SparkContext): spark.rdd.RDD[T] = {
