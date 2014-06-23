@@ -101,7 +101,6 @@ angular.module('biggraph')
           yBucketingAttributeId: side.viewSettings.yAttribute,
         });
       }
-      console.log('loadGraphView', q);
       $scope.graphView = $resource('/ajax/bucketed').get({ q: q });
     }
 
