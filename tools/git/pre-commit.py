@@ -21,10 +21,18 @@ if branch in protected_branches:
   warn('Please create a new branch, commit there, and send a pull request on GitHub.')
 
 diff = subprocess.check_output('git diff --staged'.split())
-if 'DO NOT SUBMIT' in diff:
-  lines = [l for l in diff.split('\n') if 'DO NOT SUBMIT' in l]
+new_lines = [l for l in diff.split('\n') if l.startswith('+')]
+
+bad_lines = [l for l in new_lines if 'DO NOT SUBMIT' in l]
+if bad_lines:
   warn('"DO NOT SUBMIT" found in your diff:')
-  for l in lines:
+  for l in bad_lines:
+    warn('  ' + l)
+
+bad_lines = [l for l in new_lines if '\t' in l]
+if bad_lines:
+  warn('TAB found in your diff:')
+  for l in bad_lines:
     warn('  ' + l)
 
 if warned:
