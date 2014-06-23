@@ -33,6 +33,8 @@ class MetaGraphManager(val repositoryPath: String) {
     entities(gUID).asInstanceOf[VertexAttribute[_]]
   def edgeAttribute(gUID: UUID): EdgeAttribute[_] =
     entities(gUID).asInstanceOf[EdgeAttribute[_]]
+  def scalar(gUID: UUID): Scalar[_] =
+    entities(gUID).asInstanceOf[Scalar[_]]
   def entity(gUID: UUID): MetaGraphEntity = entities(gUID)
 
   def incomingBundles(vertexSet: VertexSet): Seq[EdgeBundle] =
@@ -144,12 +146,16 @@ private case class SerializedOperation(operation: MetaGraphOperation,
     MetaGraphOperationInstance(
       operation,
       MetaDataSet(
-        operation.inputVertexSets.map(n => n -> manager.vertexSet(inputs(n))).toMap,
-        operation.inputEdgeBundles.keys.map(n => n -> manager.edgeBundle(inputs(n))).toMap,
-        operation.inputVertexAttributes.keys
+        operation.signature.inputVertexSets
+          .map(n => n -> manager.vertexSet(inputs(n))).toMap,
+        operation.signature.inputEdgeBundles.keys
+          .map(n => n -> manager.edgeBundle(inputs(n))).toMap,
+        operation.signature.inputVertexAttributes.keys
           .map(n => n -> manager.vertexAttribute(inputs(n))).toMap,
-        operation.inputEdgeAttributes.keys
-          .map(n => n -> manager.edgeAttribute(inputs(n))).toMap))
+        operation.signature.inputEdgeAttributes.keys
+          .map(n => n -> manager.edgeAttribute(inputs(n))).toMap,
+        operation.signature.inputScalars.keys
+          .map(n => n -> manager.scalar(inputs(n))).toMap))
   }
 }
 private object SerializedOperation {
