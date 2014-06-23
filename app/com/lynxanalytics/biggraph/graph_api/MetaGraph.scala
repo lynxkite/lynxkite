@@ -362,19 +362,23 @@ class DataSetBuilder(instance: MetaGraphOperationInstance) {
   def toDataSet = DataSet(vertexSets.toMap, edgeBundles.toMap, vertexAttributes.toMap, edgeAttributes.toMap)
 
   def putVertexSet(name: Symbol, rdd: VertexSetRDD): DataSetBuilder = {
+    assert(rdd.partitioner.isDefined)
     vertexSets(name) = new VertexSetData(instance.entities.vertexSets(name), rdd)
     this
   }
   def putEdgeBundle(name: Symbol, rdd: EdgeBundleRDD): DataSetBuilder = {
+    assert(rdd.partitioner.isDefined)
     edgeBundles(name) = new EdgeBundleData(instance.entities.edgeBundles(name), rdd)
     this
   }
   def putVertexAttribute[T: TypeTag](name: Symbol, rdd: AttributeRDD[T]): DataSetBuilder = {
+    assert(rdd.partitioner.isDefined)
     val vertexAttribute = instance.entities.vertexAttributes(name).runtimeSafeCast[T]
     vertexAttributes(name) = new VertexAttributeData[T](vertexAttribute, rdd)
     this
   }
   def putEdgeAttribute[T: TypeTag](name: Symbol, rdd: AttributeRDD[T]): DataSetBuilder = {
+    assert(rdd.partitioner.isDefined)
     val edgeAttribute = instance.entities.edgeAttributes(name).runtimeSafeCast[T]
     edgeAttributes(name) = new EdgeAttributeData[T](edgeAttribute, rdd)
     this
