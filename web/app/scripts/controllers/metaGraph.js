@@ -151,6 +151,9 @@ angular.module('biggraph')
       $scope.state.leftToRightPath = undefined;
     };
 
+    $scope.left.opposite = 'right';
+    $scope.right.opposite = 'left';
+
     $scope.left.setVS = function(id) {
       $scope.state.leftVS = { id: id };
     };
