@@ -15,7 +15,7 @@ class VertexBucketerTest extends FunSuite {
     assert(new NumericBucketer[Long](1, 6, 3).bounds == Seq(3, 5))
   }
   test("Double bucketer works as expected") {
-    val fb = new FractionalBucketer[Double](1, 6, 3)
+    var fb = new FractionalBucketer[Double](1, 6, 3)
     assert(fb.bounds == Seq(1 + 5.0 / 3, 1 + 2 * 5.0 / 3))
     assert(fb.whichBucket(1.00) == 0)
     assert(fb.whichBucket(2.66) == 0)
@@ -23,6 +23,8 @@ class VertexBucketerTest extends FunSuite {
     assert(fb.whichBucket(4.33) == 1)
     assert(fb.whichBucket(4.34) == 2)
     assert(fb.whichBucket(6.00) == 2)
+    fb = new FractionalBucketer[Double](0.2, 0.9, 7)
+    assert(fb.bounds == Seq(0.3, 0.4, 0.5, 0.6, 0.7, 0.8))
   }
   test("Bucketing labels are wonderful") {
     assert(new NumericVertexBucketing(null, new NumericBucketer[Long](1, 8, 3)).bucketLabels ==
