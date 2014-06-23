@@ -38,7 +38,7 @@ angular.module('biggraph')
         s.q = JSON.stringify($scope.state);
         $location.search(s);
         // Update graph view.
-        if ($scope.showGraph) { loadGraphView(); }
+        loadGraphView();
       },
       true /* compare by equality rather than identity */);
 
@@ -51,6 +51,7 @@ angular.module('biggraph')
       'state.leftVS',
       function() {
         var leftVS = $scope.state.leftVS;
+        $scope.left.vertexSet = leftVS;
         if (leftVS !== undefined) {
           $scope.left.data = loadVertexSet(leftVS.id);
         } else {
@@ -61,6 +62,7 @@ angular.module('biggraph')
       'state.rightVS',
       function() {
         var rightVS = $scope.state.rightVS;
+        $scope.right.vertexSet = rightVS;
         if (rightVS !== undefined) {
           $scope.right.data = loadVertexSet(rightVS.id);
         } else {
@@ -68,11 +70,39 @@ angular.module('biggraph')
         }
       });
 
-    $scope.$watch('showGraph', function() {
-      if ($scope.showGraph) { loadGraphView(); }
-    });
+    $scope.viewSettings = { left: { filters: {} }, right: { filters: {} } };
+    $scope.$watch('showGraph', loadGraphView);
+    $scope.$watch('viewSettings', loadGraphView, true);
     function loadGraphView() {
-      $scope.graphView = $resource('/ajax/bucketed').get(); // TODO: parameters.
+      if (!$scope.showGraph) { return; }
+      var sides = [];
+      if ($scope.left.vertexSet !== undefined) { sides.push($scope.left); }
+      if ($scope.right.vertexSet !== undefined) { sides.push($scope.right); }
+      if (sides.length === 0) { return; }
+      var q = { vertexSets: [], edgeBundles: [] };
+      for (var i = 0; i < sides.length; ++i) {
+        var side = sides[i];
+        if (side.viewSettings.edgeBundle !== undefined) {
+          q.edgeBundles.push({
+            srcDiagramId: 'idx[' + i + ']',
+            dstDiagramId: 'idx[' + i + ']',
+            bundleIdSequence: [side.viewSettings.edgeBundle]
+          });
+        }
+        var filters = [];
+        for (var attr in side.viewSettings.filters) {
+          filters.push({ attributeId: attr, valueSpec: side.viewSettings.filters[attr] });
+        }
+        q.vertexSets.push({
+          vertexSetId: side.vertexSet.id,
+          filters: filters,
+          mode: 'bucketed',
+          xBucketingAttributeId: side.viewSettings.xAttribute,
+          yBucketingAttributeId: side.viewSettings.yAttribute,
+        });
+      }
+      console.log('loadGraphView', q);
+      $scope.graphView = $resource('/ajax/bucketed').get({ q: q });
     }
 
     var StartingVertexSets = $resource('/ajax/startingVs');
@@ -149,6 +179,18 @@ angular.module('biggraph')
     $scope.apply = applyOperationFlow;
     $scope.removePath = function() {
       $scope.state.leftToRightPath = undefined;
+    };
+
+    $scope.left.viewSettings = $scope.viewSettings.left;
+    $scope.right.viewSettings = $scope.viewSettings.right;
+    $scope.setViewSetting = function(side, setting, value) {
+      if (side.viewSettings[setting] === value) {
+        // Clicking the same setting again turns it off.
+        delete side.viewSettings[setting];
+      } else {
+        $scope.showGraph = true;
+        side.viewSettings[setting] = value;
+      }
     };
 
     $scope.left.opposite = 'right';
