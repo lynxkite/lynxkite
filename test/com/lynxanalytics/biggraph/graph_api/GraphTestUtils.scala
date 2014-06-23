@@ -100,6 +100,8 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
         (edge.src, edge.dst) -> value
     }.collect.toMap
   }
+
+  def localData[T](scalar: Scalar[T]): T = dataManager.get(scalar).value
 }
 
 object HelperSingletonProvider extends TestMetaGraphManager with TestDataManager {
