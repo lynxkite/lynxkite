@@ -33,7 +33,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends
       }
     val ccVertices = ccEdges.map(_.dst -> ()).distinct
     outputs.putEdgeBundle('links, RDDUtils.fastNumbered(ccEdges).partitionBy(rc.defaultPartitioner))
-    outputs.putVertexSet('cc, ccVertices.partitionBy(inputVertices.partitioner.get))
+    outputs.putVertexSet('cc, ccVertices.partitionBy(rc.defaultPartitioner))
   }
 
   type ComponentID = ID
