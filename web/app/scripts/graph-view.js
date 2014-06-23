@@ -10,16 +10,13 @@ angular.module('biggraph').directive('graphView', function($window) {
       replace: true,
       link: function(scope, element) {
         var gv = new GraphView(element);
-        scope.$watch('ngModel', function(data) {
-          if (data.$resolved) {
-            gv.update(data);
-          }
-        }, true);
-        angular.element($window).bind('resize', function() {
-          if (scope.ngModel.$resolved) {
+        function updateGraph() {
+          if (scope.ngModel !== undefined && scope.ngModel.$resolved) {
             gv.update(scope.ngModel);
           }
-        });
+        }
+        scope.$watch('ngModel', updateGraph, true);
+        angular.element($window).bind('resize', updateGraph);
       },
     };
 
