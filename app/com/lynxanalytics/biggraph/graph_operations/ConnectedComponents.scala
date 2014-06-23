@@ -23,7 +23,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends
       .map(edge => (edge.src, edge.dst))
     val inputVertices = inputs.vertexSets('vs).rdd
     val graph = inputEdges
-      .groupByKey(inputVertices.partitioner.getOrElse(rc.defaultPartitioner))
+      .groupByKey(inputVertices.partitioner.get)
       .mapValues(_.toSet)
     // islands are not represented in the edge bundle as they have degree 0
     val ccEdges = inputVertices.leftOuterJoin(getComponents(graph, 0))
@@ -32,8 +32,8 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends
         case (vId, (_, None)) => Edge(vId, vId)
       }
     val ccVertices = ccEdges.map(_.dst -> ()).distinct
-    outputs.putEdgeBundle('links, RDDUtils.fastNumbered(ccEdges))
-    outputs.putVertexSet('cc, ccVertices)
+    outputs.putEdgeBundle('links, RDDUtils.fastNumbered(ccEdges).partitionBy(rc.defaultPartitioner))
+    outputs.putVertexSet('cc, ccVertices.partitionBy(rc.defaultPartitioner))
   }
 
   type ComponentID = ID

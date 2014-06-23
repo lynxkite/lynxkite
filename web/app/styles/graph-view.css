@@ -1,34 +1,40 @@
 svg.graph-view {
   display: inline-block;
   vertical-align: top;
-  width: 500px;
+  width: 100%;
   height: 500px;
+  transition: height 0.5s;
+  background: #222;
 }
-
-svg .root {
-  /* For easier arithmetics put the origin in the middle. */
-  transform: translate(250px, 250px);
+svg.graph-view.collapsed {
+  height: 0px;
 }
 
 svg text {
   text-anchor: middle;
   dominant-baseline: middle;
-  text-shadow: 0 0 1px white;
   pointer-events: none;
+  fill: white;
 }
 
 svg .edge {
   fill: none;
-  stroke: whitesmoke;
+  stroke: #444;
 }
 svg #arrow {
-  fill: whitesmoke;
+  fill: #444;
 }
 svg #arrow-highlight-out {
-  fill: orange;
+  fill: white;
+}
+svg .edge.highlight-out {
+  stroke: white;
 }
 svg #arrow-highlight-in {
-  fill: lightblue;
+  fill: #888;
+}
+svg .edge.highlight-in {
+  stroke: #888;
 }
 svg .edge .first {
   marker-end: url(#arrow);
@@ -39,22 +45,17 @@ svg .edge.highlight-out .first {
 svg .edge.highlight-in .first {
   marker-end: url(#arrow-highlight-in);
 }
-svg .edge.highlight-out {
-  stroke: orange;
-}
-svg .edge.highlight-in {
-  stroke: lightblue;
-}
 
-svg .vertex {
-  fill: lightgrey;
+svg .vertex circle {
+  fill: #444;
 }
-svg .highlight .vertex {
-  fill: white;
-  stroke: orange;
-  stroke-width: 4px;
-}
-
-svg .vertex-label {
+svg .vertex text {
+  font-family: 'Arial Black', sans-serif;
   font-size: 15px;
+}
+svg .vertex.highlight circle {
+  fill: white;
+}
+svg .vertex.highlight text {
+  fill: black;
 }

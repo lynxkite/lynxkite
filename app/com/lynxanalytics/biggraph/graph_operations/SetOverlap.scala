@@ -63,12 +63,12 @@ case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
       case (prefix, sets) => edgesFor(prefix, sets)
     }
 
-    val numberedEdgesWithOverlaps = RDDUtils.fastNumbered(edgesWithOverlaps)
+    val numberedEdgesWithOverlaps = RDDUtils.fastNumbered(edgesWithOverlaps).partitionBy(rc.defaultPartitioner)
 
     outputs.putEdgeBundle(
-      'overlaps, numberedEdgesWithOverlaps.map { case (eId, (edge, overlap)) => eId -> edge })
+      'overlaps, numberedEdgesWithOverlaps.mapValues(_._1))
     outputs.putEdgeAttribute(
-      'overlap_size, numberedEdgesWithOverlaps.map { case (eId, (edge, overlap)) => eId -> overlap })
+      'overlap_size, numberedEdgesWithOverlaps.mapValues(_._2))
   }
 
   // Generates the edges for a set of sets. This is O(n^2), but the set should

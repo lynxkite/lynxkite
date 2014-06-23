@@ -19,11 +19,11 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
     val cug = CompactUndirectedGraph(inputs.edgeBundles('esIn))
     val cliqueLists = computeCliques(
       inputs.vertexSets('vsIn), cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
-    val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists)
+    val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists).partitionBy(rc.defaultPartitioner)
     outputs.putVertexSet('cliques, indexedCliqueLists.mapValues(_ => Unit))
     outputs.putEdgeBundle('links, RDDUtils.fastNumbered(indexedCliqueLists.flatMap {
       case (cid, vids) => vids.map(vid => Edge(vid, cid))
-    }))
+    }).partitionBy(rc.defaultPartitioner))
   }
 
   // TODO: Put this into the EdgeBundle?
