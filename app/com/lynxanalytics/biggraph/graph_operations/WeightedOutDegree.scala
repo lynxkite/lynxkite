@@ -7,9 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 
 case class WeightedOutDegree() extends MetaGraphOperation {
   def signature = newSignature
-    .inputVertexSet('vsA)
-    .inputVertexSet('vsB)
-    .inputEdgeBundle('edges, 'vsA -> 'vsB)
+    .inputEdgeBundle('edges, 'vsA -> 'vsB, create = true)
     .inputEdgeAttribute[Double]('weights, 'edges)
     .outputVertexAttribute[Double]('outdegrees, 'vsA)
 
