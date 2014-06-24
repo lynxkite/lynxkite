@@ -4,6 +4,7 @@ angular.module('biggraph')
   .controller('MetaGraphViewCtrl', function ($scope, $resource, $modal, $location) {
     $scope.alerts = [];
     $scope.closeAlert = function(index) { $scope.alerts.splice(index, 1); };
+    $scope.deepWatch = function(expression, fn) { $scope.$watch(expression, fn, true); };
 
     var defaultState = {
       leftVS: undefined,
@@ -19,7 +20,7 @@ angular.module('biggraph')
     $scope.left.other = $scope.right;
     $scope.right.other = $scope.left;
 
-    $scope.$watch(
+    $scope.deepWatch(
       function() { return $location.search(); },
       function() {
         if (!$location.search().q) {
@@ -27,10 +28,9 @@ angular.module('biggraph')
         } else {
           $scope.state = JSON.parse($location.search().q);
         }
-      },
-      true /* compare by equality rather than identity */);
+      });
     
-    $scope.$watch(
+    $scope.deepWatch(
       'state',
       function() {
         // Update URL.
@@ -39,8 +39,7 @@ angular.module('biggraph')
         $location.search(s);
         // Update graph view.
         loadGraphView();
-      },
-      true /* compare by equality rather than identity */);
+      });
 
     var VertexSet = $resource('/ajax/vertexSet');
     function loadVertexSet(id) {
@@ -72,7 +71,7 @@ angular.module('biggraph')
 
     $scope.viewSettings = { left: { filters: {} }, right: { filters: {} } };
     $scope.$watch('showGraph', loadGraphView);
-    $scope.$watch('viewSettings', loadGraphView, true);
+    $scope.deepWatch('viewSettings', loadGraphView);
     function loadGraphView() {
       if (!$scope.showGraph) { return; }
       var sides = [];
