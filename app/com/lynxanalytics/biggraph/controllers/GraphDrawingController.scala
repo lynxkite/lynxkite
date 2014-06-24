@@ -48,6 +48,9 @@ case class EdgeDiagramSpec(
   // Otherwise a UUID obtained by a previous vertex diagram request.
   val srcDiagramId: String,
   val dstDiagramId: String,
+  // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
+  val srcIdx: Int,
+  val dstIdx: Int,
   val bundleIdSequence: Seq[String])
 
 case class FEEdge(
@@ -60,6 +63,11 @@ case class FEEdge(
 case class EdgeDiagramResponse(
   val srcDiagramId: String,
   val dstDiagramId: String,
+
+  // Copied from the request.
+  val srcIdx: Int,
+  val dstIdx: Int,
+
   val edges: Seq[FEEdge])
 
 case class FEGraphRequest(
@@ -168,20 +176,22 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def mappedAttribute(mapping: VertexAttribute[Array[ID]],
-                              attr: VertexAttribute[Int]): EdgeAttribute[Int] =
+                              attr: VertexAttribute[Int],
+                              target: EdgeBundle): EdgeAttribute[Int] =
     metaManager.apply(
       new graph_operations.VertexToEdgeIntAttribute(),
       'mapping -> mapping,
-      'original -> attr).outputs.edgeAttributes('mapped_attribute).runtimeSafeCast[Int]
+      'original -> attr,
+      'target -> target).outputs.edgeAttributes('mapped_attribute).runtimeSafeCast[Int]
 
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
-    val dstOp = metaManager.scalar(request.srcDiagramId.asUUID).source
+    val dstOp = metaManager.scalar(request.dstDiagramId.asUUID).source
     val bundleWeights = getCompositeBundle(request.bundleIdSequence)
     val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
     val (srcMapping, dstMapping) = tripletMapping(induced)
-    val srcIdxs = mappedAttribute(srcMapping, idxsFromInst(srcOp))
-    val dstIdxs = mappedAttribute(dstMapping, idxsFromInst(dstOp))
+    val srcIdxs = mappedAttribute(srcMapping, idxsFromInst(srcOp), induced)
+    val dstIdxs = mappedAttribute(dstMapping, idxsFromInst(dstOp), induced)
     val srcIdxsRDD = dataManager.get(srcIdxs).rdd
     val dstIdxsRDD = dataManager.get(dstIdxs).rdd
     val idxPairBuckets = srcIdxsRDD.join(dstIdxsRDD)
@@ -191,12 +201,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
+      request.srcIdx,
+      request.dstIdx,
       idxPairBuckets.map { case ((s, d), c) => FEEdge(s, d, c) })
   }
 
   def getComplexView(request: FEGraphRequest): FEGraphRespone = {
     val vertexDiagrams = request.vertexSets.map(getVertexDiagram(_))
-    val idxPattern = "idx\\[(d+)\\]".r
+    val idxPattern = "idx\\[(\\d+)\\]".r
     def resolveDiagramId(reference: String): String = {
       reference match {
         case idxPattern(idx) => vertexDiagrams(idx.toInt).diagramId

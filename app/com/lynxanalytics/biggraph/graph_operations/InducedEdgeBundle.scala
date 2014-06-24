@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class InducedEdgeBundle() extends MetaGraphOperation {
-  val signature = newSignature
+  def signature = newSignature
     .inputEdgeBundle('input, 'src -> 'dst, create = true)
     .inputVertexSet('srcSubset) // The user needs to make sure it's a subset of 'src
     .inputVertexSet('dstSubset) // The user needs to make sure it's a subset of 'dst

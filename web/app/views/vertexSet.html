@@ -4,11 +4,11 @@
     <h6 ng-show="side.data.attributes">Vertex Attributes</h6>
     <div class="attribute token" ng-repeat="attr in side.data.attributes">
       {{attr.title}}
-      <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.xAttribute === attr }"
+      <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().xAttribute === attr }"
           ng-click="setState(side, 'xAttribute', attr)">Graph on X</button>
-      <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.yAttribute === attr }"
+      <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().yAttribute === attr }"
           ng-click="setState(side, 'yAttribute', attr)">Graph on Y</button>
-      <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]">
+      <input class="form-control filter" placeholder="filter" ng-model="side.state().filters[attr.id]">
     </div>
     <h6 ng-show="side.data.localEdges">Local Edge Bundles</h6>
     <ul class="bundles">
@@ -20,7 +20,7 @@
         <button class="btn btn-default" ng-click="side.followEB(bundle, false)">
           Follow reverse
         </button>
-        <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.edgeBundle === bundle }"
+        <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().edgeBundle === bundle }"
             ng-click="setState(side, 'edgeBundle', bundle)">Graph</button>
       </li>
     </ul>

@@ -89,7 +89,9 @@ angular.module('biggraph')
           q.edgeBundles.push({
             srcDiagramId: 'idx[' + i + ']',
             dstDiagramId: 'idx[' + i + ']',
-            bundleIdSequence: [side.edgeBundle]
+	    srcIdx: i,
+	    dstIdx: i,
+            bundleIdSequence: [side.edgeBundle.id]
           });
         }
         var filters = [];
@@ -102,19 +104,23 @@ angular.module('biggraph')
           vertexSetId: side.vs.id,
           filters: filters,
           mode: 'bucketed',
-          xBucketingAttributeId: side.xAttribute || '',
-          yBucketingAttributeId: side.yAttribute || '',
+          xBucketingAttributeId: (side.xAttribute || { id: '' }).id,
+          yBucketingAttributeId: (side.yAttribute || { id: '' }).id,
           xNumBuckets: side.xAttribute === undefined ? 1 : 5,
           yNumBuckets: side.yAttribute === undefined ? 1 : 5,
           // Sampled view parameters.
           radius: 0, centralVertexId: '', sampleSmearEdgeBundleId: '',
         });
       }
-      if ($scope.leftToRightPath !== undefined) {
-        var ids = $scope.leftToRightPath.map(function(step) { return step.eb.id; });
+      if ($scope.state.leftToRightPath !== undefined) {
+	// TODO: we will need to communicate bundle directions here and flip them
+	// back in the backend if necessary.
+        var ids = $scope.state.leftToRightPath.map(function(step) { return step.eb.id; });
         q.edgeBundles.push({
           srcDiagramId: 'idx[0]',
           dstDiagramId: 'idx[1]',
+	  srcIdx: 0,
+	  dstIdx: 1,
           bundleIdSequence: ids
         });
       }
@@ -197,15 +203,19 @@ angular.module('biggraph')
       $scope.state.leftToRightPath = undefined;
     };
 
-    $scope.left.state = $scope.state.left;
-    $scope.right.state = $scope.state.right;
+    $scope.left.state = function() {
+      return $scope.state.left;
+    };
+    $scope.right.state = function() {
+      return $scope.state.right;
+    };
     $scope.setState = function(side, setting, value) {
-      if (side.state[setting] === value) {
+      if (side.state()[setting] === value) {
         // Clicking the same setting again turns it off.
-        delete side.state[setting];
+        delete side.state()[setting];
       } else {
         $scope.state.showGraph = true;
-        side.state[setting] = value;
+        side.state()[setting] = value;
       }
     };
 
