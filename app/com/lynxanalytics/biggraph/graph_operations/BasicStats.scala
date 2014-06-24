@@ -22,8 +22,7 @@ abstract class ComputeMinMax[T: Numeric: ClassTag] extends MetaGraphOperation {
   implicit def tt: TypeTag[T]
 
   def signature = newSignature
-    .inputVertexSet('vertices)
-    .inputVertexAttribute[T]('attribute, 'vertices)
+    .inputVertexAttribute[T]('attribute, 'vertices, create = true)
     .outputScalar[T]('min)
     .outputScalar[T]('max)
 
