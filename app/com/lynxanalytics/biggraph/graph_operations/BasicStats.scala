@@ -15,6 +15,17 @@ case class CountVertices() extends MetaGraphOperation {
     outputs.putScalar[Long]('count, inputs.vertexSets('vertices).rdd.count)
   }
 }
+object CountVertices {
+  def apply(metaManager: MetaGraphManager,
+            dataManager: DataManager,
+            vertexSet: VertexSet): Long = {
+    val countMeta = metaManager
+      .apply(CountVertices(), 'vertices -> vertexSet)
+      .outputs
+      .scalars('count).runtimeSafeCast[Long]
+    dataManager.get(countMeta).value
+  }
+}
 
 abstract class ComputeMinMax[T: Numeric: ClassTag] extends MetaGraphOperation {
   val MinValue: T
@@ -54,4 +65,14 @@ case class ComputeMinMaxLong() extends ComputeMinMax[Long] {
   val MinValue = Long.MinValue
   val MaxValue = Long.MaxValue
   @transient lazy val tt = typeTag[Long]
+}
+
+object ComputeMinMax {
+  def apply(metaManager: MetaGraphManager,
+            dataManager: DataManager,
+            attr: VertexAttribute[Double]): (Double, Double) = {
+    val metaOuts = metaManager.apply(ComputeMinMaxDouble(), 'attribute -> attr).outputs
+    (dataManager.get(metaOuts.scalars('min).runtimeSafeCast[Double]).value,
+      dataManager.get(metaOuts.scalars('max).runtimeSafeCast[Double]).value)
+  }
 }
