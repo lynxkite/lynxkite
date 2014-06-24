@@ -13,9 +13,9 @@ class UpperBoundFilterTest extends FunSuite with TestGraphOperation {
     val graph = helper.apply(CreateExampleGraphOperation())
     val filtered = helper.apply(UpperBoundFilter(21), graph.mapNames('age -> 'attr, 'vertices -> 'vs))
     val joined = helper.apply(
-      EdgesToSubset(),
-      graph.mapNames('edges -> 'es, 'vertices -> 'vs, 'vertices -> 'dst)
-        ++ filtered.mapNames('fvs -> 'vsSubset, 'projection -> 'projection))
-    assert(helper.localData(joined.edgeBundles('esSubset)) == Set(0L -> 1L, 1L -> 0L))
+      InducedEdgeBundle(),
+      graph.mapNames('edges -> 'input, 'vertices -> 'src, 'vertices -> 'dst)
+        ++ filtered.mapNames('fvs -> 'srcSubset, 'fvs -> 'dstSubset))
+    assert(helper.localData(joined.edgeBundles('induced)) == Set(0L -> 1L, 1L -> 0L))
   }
 }
