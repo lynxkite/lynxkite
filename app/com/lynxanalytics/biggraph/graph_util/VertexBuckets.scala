@@ -15,7 +15,7 @@ trait Bucketer[T] extends Serializable {
   def whichBucket(value: T): Int
 }
 
-class NumericBucketer[T: Numeric](val min: T, val max: T, numBuckets: Int) extends Bucketer[T] {
+class NumericBucketer[T: Numeric](val min: T, val max: T, val numBuckets: Int) extends Bucketer[T] {
   protected val num: Numeric[T] = implicitly[Numeric[T]]
   protected implicit val ops = num.mkNumericOps _
 
