@@ -1,6 +1,7 @@
-package com.lynxanalytics.biggraph.graph_api
+package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import com.lynxanalytics.biggraph.graph_api._
 
 // A small graph with all sorts of attributes. Used for testing.
 case class ExampleGraph() extends MetaGraphOperation {
