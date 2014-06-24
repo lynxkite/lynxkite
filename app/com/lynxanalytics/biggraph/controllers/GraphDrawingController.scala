@@ -91,7 +91,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         'vertices -> vertexSet).outputs.vertexSets('sampled)
 
     var (xMin, xMax, yMin, yMax) = (-1.0, -1.0, -1.0, -1.0)
-    var inputs = MetaDataSet()
+    var inputs = MetaDataSet(Map('vertices -> sampled))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute =
         metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID).runtimeSafeCast[Double]
@@ -138,7 +138,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getComplexView(request: FEGraphRequest): FEGraphRespone = {
     val vertexDiagrams = request.vertexSets.map(getVertexDiagram(_))
-    val idxPattern = "idx\\[\\(d+)\\]".r
+    val idxPattern = "idx\\[(d+)\\]".r
     def resolveDiagramId(reference: String): String = {
       reference match {
         case idxPattern(idx) => vertexDiagrams(idx.toInt).diagramId
