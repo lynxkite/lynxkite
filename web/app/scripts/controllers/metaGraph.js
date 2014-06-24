@@ -100,6 +100,14 @@ angular.module('biggraph')
           yBucketingAttributeId: side.viewSettings.yAttribute,
         });
       }
+      if ($scope.state.leftToRightPath !== undefined) {
+        var ids = $scope.state.leftToRightPath.map(function(step) { return step.eb.id; });
+        q.edgeBundles.push({
+          srcDiagramId: 'idx[0]',
+          dstDiagramId: 'idx[1]',
+          bundleIdSequence: ids
+        });
+      }
       $scope.graphView = $resource('/ajax/bucketed').get({ q: q });
     }
 
