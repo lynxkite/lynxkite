@@ -250,4 +250,14 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       return FEStatus.success
     }
   }
+
+  registerOperation(ExampleGraph)
+  object ExampleGraph extends FEOperation {
+    val title = "Example Graph"
+    val parameters = Seq()
+    def apply(params: Map[String, String]) = {
+      manager.apply(graph_operations.ExampleGraph())
+      FEStatus.success
+    }
+  }
 }
