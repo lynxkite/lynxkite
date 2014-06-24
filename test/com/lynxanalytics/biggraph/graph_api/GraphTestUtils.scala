@@ -62,16 +62,13 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
   }
 
   def apply(operation: MetaGraphOperation,
-            all: (Symbol, MetaGraphEntity)*): MetaDataSet = apply(operation, all.toMap)
+            all: (Symbol, MetaGraphEntity)*): MetaDataSet = {
+    metaManager.apply(operation, all: _*).outputs
+  }
 
   def smallGraph(edgeLists: Map[Int, Seq[Int]]): (VertexSet, EdgeBundle) = {
     val outs = apply(SmallTestGraph(edgeLists))
     (outs.vertexSets('vs), outs.edgeBundles('es))
-  }
-
-  def weightedGraph(edgeLists: Map[Int, Seq[(Int, Double)]]): (VertexSet, EdgeBundle, EdgeAttribute[Double]) = {
-    val outs = apply(SmallWeightedTestGraph(edgeLists))
-    (outs.vertexSets('vs), outs.edgeBundles('es), outs.edgeAttributes('weights).runtimeSafeCast[Double])
   }
 
   def groupedGraph(edgeLists: Seq[(Seq[Int], Int)]): (VertexSet, VertexSet, EdgeBundle, EdgeAttribute[Double]) = {
@@ -186,36 +183,6 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperat
       'es,
       sc.parallelize(nodePairs.zipWithIndex.map {
         case ((a, b), i) => i.toLong -> Edge(a, b)
-      })
-        .partitionBy(rc.onePartitionPartitioner))
-  }
-}
-
-case class SmallWeightedTestGraph(edgeLists: Map[Int, Seq[(Int, Double)]]) extends MetaGraphOperation {
-  def signature = newSignature
-    .outputGraph('vs, 'es)
-    .outputEdgeAttribute[Double]('weights, 'es)
-
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
-    val sc = rc.sparkContext
-    outputs.putVertexSet(
-      'vs,
-      sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
-        .partitionBy(rc.onePartitionPartitioner))
-
-    val nodePairs = edgeLists.toSeq.flatMap {
-      case (i, es) => es.map(e => i -> e)
-    }
-    outputs.putEdgeBundle(
-      'es,
-      sc.parallelize(nodePairs.zipWithIndex.map {
-        case ((a, b), i) => i.toLong -> Edge(a, b._1)
-      })
-        .partitionBy(rc.onePartitionPartitioner))
-    outputs.putEdgeAttribute(
-      'weights,
-      sc.parallelize(nodePairs.zipWithIndex.map {
-        case ((a, b), i) => i.toLong -> b._2
       })
         .partitionBy(rc.onePartitionPartitioner))
   }
