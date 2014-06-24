@@ -11,6 +11,7 @@ import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 
 import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 import attributes.AttributeSignature
 import attributes.DenseAttributes
@@ -72,11 +73,12 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
   }
 
   def groupedGraph(edgeLists: Seq[(Seq[Int], Int)]): (VertexSet, VertexSet, EdgeBundle, EdgeAttribute[Double]) = {
-    val outs = apply(GroupedTestGraph(edgeLists))
-    (outs.vertexSets('vs),
-      outs.vertexSets('sets),
-      outs.edgeBundles('links),
-      outs.edgeAttributes('weights).runtimeSafeCast[Double])
+    val (srcs, dsts) = edgeLists.unzip
+    val (vs, _) = smallGraph(srcs.flatten.map(_ -> Seq()).toMap)
+    val (sets, _) = smallGraph(dsts.map(_ -> Seq()).toMap)
+    val es = edgeLists.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
+    val edges = apply(AddWeightedEdges(es, 1.0), 'src -> vs, 'dst -> sets)
+    (vs, sets, edges.edgeBundles('es), edges.edgeAttributes('weight).runtimeSafeCast[Double])
   }
 
   def rdd(vertexSet: VertexSet): VertexSetRDD = dataManager.get(vertexSet).rdd
@@ -188,29 +190,18 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperat
   }
 }
 
-// edgeList should be: Seq(vertices) -> set id
-case class GroupedTestGraph(edgeLists: Seq[(Seq[Int], Int)]) extends MetaGraphOperation {
+case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double) extends MetaGraphOperation {
   def signature = newSignature
-    .outputVertexSet('vs)
-    .outputVertexSet('sets)
-    .outputEdgeBundle('links, 'vs -> 'sets)
-    .outputEdgeAttribute[Double]('weights, 'links)
+    .inputVertexSet('src)
+    .inputVertexSet('dst)
+    .outputEdgeBundle('es, 'src -> 'dst)
+    .outputEdgeAttribute[Double]('weight, 'es)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
-    val sc = rc.sparkContext
-    outputs.putVertexSet('sets, sc.parallelize(edgeLists.map(i => (i._2.toLong, ())))
-      .partitionBy(rc.onePartitionPartitioner))
-    val vs = edgeLists.map(_._1).flatten.distinct
-    outputs.putVertexSet('vs, sc.parallelize(vs.map(i => (i.toLong, ())))
-      .partitionBy(rc.onePartitionPartitioner))
-    val nodePairs = edgeLists.toSeq.flatMap {
-      case (srcs, dst) => srcs.map(src => src -> dst)
-    }
-    outputs.putEdgeBundle('links, sc.parallelize(nodePairs.zipWithIndex.map {
-      case ((a, b), i) => i.toLong -> Edge(a, b)
-    }).partitionBy(rc.onePartitionPartitioner))
-    val constantWeights = sc.parallelize(Seq.range[Long](0, nodePairs.size).map((_, 1.0)))
-      .partitionBy(rc.onePartitionPartitioner)
-    outputs.putEdgeAttribute('weights, constantWeights)
+    val es = RDDUtils.fastNumbered(rc.sparkContext.parallelize(edges.map {
+      case (a, b) => Edge(a, b)
+    })).partitionBy(rc.onePartitionPartitioner)
+    outputs.putEdgeBundle('es, es)
+    outputs.putEdgeAttribute('weight, es.mapValues(_ => weight))
   }
 }

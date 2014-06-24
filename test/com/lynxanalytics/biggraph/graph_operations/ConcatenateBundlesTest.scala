@@ -7,14 +7,24 @@ import scala.language.implicitConversions
 import com.lynxanalytics.biggraph.graph_api._
 
 class ConcatenateBundlesTest extends FunSuite with TestGraphOperation {
-  def concatEdges(AB: Seq[(Seq[Int], Int)], BC: Seq[(Seq[Int], Int)]): Map[(Int, Int), Double] = {
-    val (vsA, vsB, edgesAB, weightsAB) = helper.groupedGraph(AB)
-    val (_, vsC, edgesBC, weightsBC) = helper.groupedGraph(BC)
+  def concatEdges(abSeq: Seq[(Seq[Int], Int)], bcSeq: Seq[(Seq[Int], Int)]): Map[(Int, Int), Double] = {
+    val abES = abSeq.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
+    val bcES = bcSeq.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
+    val aVS = abES.map(_._1)
+    val bVS = abES.map(_._2) ++ bcES.map(_._1)
+    val cVS = bcES.map(_._2)
+    // Create three vertex sets.
+    val a = helper.apply(SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap))
+    val b = helper.apply(SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap))
+    val c = helper.apply(SmallTestGraph(cVS.map(_.toInt -> Seq()).toMap))
+    // Add two edge bundles.
+    val ab = helper.apply(AddWeightedEdges(abES, 1.0), 'src -> a.vertexSets('vs), 'dst -> b.vertexSets('vs))
+    val bc = helper.apply(AddWeightedEdges(bcES, 1.0), 'src -> b.vertexSets('vs), 'dst -> c.vertexSets('vs))
+    // Concatenate!
     val cb = helper.apply(
       ConcatenateBundles(),
-      'vsA -> vsA, 'vsB -> vsB, 'vsC -> vsC,
-      'edgesAB -> edgesAB, 'edgesBC -> edgesBC,
-      'weightsAB -> weightsAB, 'weightsBC -> weightsBC)
+      'weightsAB -> ab.edgeAttributes('weight),
+      'weightsBC -> bc.edgeAttributes('weight))
     helper.localData(cb.edgeAttributes('weightsAC).runtimeSafeCast[Double])
       .map { case ((a, b), c) => ((a.toInt, b.toInt), c) }
   }
