@@ -23,7 +23,10 @@ case class VertexBucketGrid(xSize: Int,
     if (ySize > 1) {
       sig = sig.inputVertexAttribute[Double]('yAttribute, 'vertices)
     }
-    sig.outputScalar[Map[(Int, Int), Int]]('bucketSizes)
+    sig
+      .outputScalar[Map[(Int, Int), Int]]('bucketSizes)
+      .outputVertexAttribute[Int]('xBuckets)
+      .outputVertexAttribute[Int]('yBuckets)
   }
 
   val xBucketLabels = if (xSize == 1) {
@@ -54,7 +57,8 @@ case class VertexBucketGrid(xSize: Int,
       val yAttr = inputs.vertexAttributes('yAttribute).runtimeSafeCast[Double].rdd
       vertices.join(yAttr).mapValues { case (_, value) => bucketer.whichBucket(value) }
     }
-
+    outputs.putVertexAttribute('xBuckets, xBuckets)
+    outputs.putVertexAttribute('yBuckets, yBuckets)
     outputs.putScalar('bucketSizes,
       xBuckets.join(yBuckets)
         .map { case (vid, (xB, yB)) => ((xB, yB), 1) }
