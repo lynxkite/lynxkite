@@ -119,8 +119,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
-    val srcMeta = metaManager.scalar(request.srcDiagramId).runtimeSafeCast[Map[(Int, Int), Int]]
-    val dstMeta = metaManager.scalar(request.srcDiagramId).runtimeSafeCast[Map[(Int, Int), Int]]
+    val srcMeta = metaManager.scalar(request.srcDiagramId.asUUID)
+      .runtimeSafeCast[Map[(Int, Int), Int]]
+    val dstMeta = metaManager.scalar(request.srcDiagramId.asUUID)
+      .runtimeSafeCast[Map[(Int, Int), Int]]
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
