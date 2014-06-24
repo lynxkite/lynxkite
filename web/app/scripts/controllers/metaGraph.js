@@ -102,8 +102,12 @@ angular.module('biggraph')
           vertexSetId: side.vs.id,
           filters: filters,
           mode: 'bucketed',
-          xBucketingAttributeId: side.xAttribute,
-          yBucketingAttributeId: side.yAttribute,
+          xBucketingAttributeId: side.xAttribute || '',
+          yBucketingAttributeId: side.yAttribute || '',
+          xNumBuckets: side.xAttribute === undefined ? 1 : 5,
+          yNumBuckets: side.yAttribute === undefined ? 1 : 5,
+          // Sampled view parameters.
+          radius: 0, centralVertexId: '', sampleSmearEdgeBundleId: '',
         });
       }
       if ($scope.leftToRightPath !== undefined) {
@@ -114,7 +118,7 @@ angular.module('biggraph')
           bundleIdSequence: ids
         });
       }
-      $scope.graphView = $resource('/ajax/bucketed').get({ q: q });
+      $scope.graphView = $resource('/ajax/complexView').get({ q: q });
     }
 
     var StartingVertexSets = $resource('/ajax/startingVs');
