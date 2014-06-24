@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 
 class CSVExportTest extends FunSuite with TestGraphOperation {
   test("We can export attributes") {
