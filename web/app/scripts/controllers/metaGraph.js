@@ -94,7 +94,9 @@ angular.module('biggraph')
         }
         var filters = [];
         for (var attr in side.filters) {
-          filters.push({ attributeId: attr, valueSpec: side.filters[attr] });
+          if (side.filters[attr] !== '') {
+            filters.push({ attributeId: attr, valueSpec: side.filters[attr] });
+          }
         }
         q.vertexSets.push({
           vertexSetId: side.vs.id,
