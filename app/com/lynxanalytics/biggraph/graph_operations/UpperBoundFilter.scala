@@ -23,21 +23,3 @@ case class UpperBoundFilter(bound: Double) extends MetaGraphOperation {
     outputs.putEdgeBundle('projection, projection)
   }
 }
-
-case class EdgesToSubset() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputEdgeBundle('es, 'vs -> 'dst, create = true)
-    .inputVertexSet('vsSubset)
-    .inputEdgeBundle('projection, 'vs -> 'vsSubset)
-    .outputEdgeBundle('esSubset, 'vsSubset -> 'dst)
-
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val es = inputs.edgeBundles('es).rdd
-    val vsSubset = inputs.vertexSets('vsSubset).rdd
-    val bySrc = es.map { case (id, e) => e.src -> (e.dst, id) }
-    val esSubset = bySrc.join(vsSubset).map {
-      case (vid, ((dst, eid), unit)) => eid -> Edge(vid, dst)
-    }
-    outputs.putEdgeBundle('esSubset, esSubset.partitionBy(es.partitioner.get))
-  }
-}
