@@ -46,7 +46,8 @@ case class FEEdgeBundle(
   id: String,
   title: String,
   source: UIValue,
-  destination: UIValue)
+  destination: UIValue,
+  attributes: Seq[UIValue])
 
 case class FEVertexSet(
   id: String,
@@ -54,6 +55,7 @@ case class FEVertexSet(
   inEdges: Seq[FEEdgeBundle],
   outEdges: Seq[FEEdgeBundle],
   localEdges: Seq[FEEdgeBundle],
+  attributes: Seq[UIValue],
   ops: Seq[FEOperationMeta])
 
 case class FEOperationSpec(
@@ -164,6 +166,7 @@ class BigGraphController(env: BigGraphEnvironment) {
       inEdges = (in -- local).toSeq.map(toFE(_)),
       outEdges = (out -- local).toSeq.map(toFE(_)),
       localEdges = local.toSeq.map(toFE(_)),
+      attributes = manager.attributes(vs).map(UIValue.fromEntity(_)),
       ops = operations.getApplicableOperationMetas(vs))
   }
 
@@ -172,7 +175,8 @@ class BigGraphController(env: BigGraphEnvironment) {
       id = eb.gUID.toString,
       title = eb.toString,
       source = UIValue.fromEntity(eb.srcVertexSet),
-      destination = UIValue.fromEntity(eb.dstVertexSet))
+      destination = UIValue.fromEntity(eb.dstVertexSet),
+      attributes = manager.attributes(eb).map(UIValue.fromEntity(_)))
   }
 
   def vertexSet(request: VertexSetRequest): FEVertexSet = {

@@ -28,3 +28,8 @@ a.graphlink:hover {
 ul.bundles {
   padding-left: 0;
 }
+
+input.form-control.filter {
+  width: 60px;
+  display: inline-block;
+}

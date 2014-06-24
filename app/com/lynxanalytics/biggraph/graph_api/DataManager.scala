@@ -15,104 +15,126 @@ class DataManager(sc: spark.SparkContext,
   private val edgeBundleCache = mutable.Map[UUID, EdgeBundleData]()
   private val vertexAttributeCache = mutable.Map[UUID, VertexAttributeData[_]]()
   private val edgeAttributeCache = mutable.Map[UUID, EdgeAttributeData[_]]()
+  private val scalarCache = mutable.Map[UUID, ScalarData[_]]()
 
   private def entityPath(entity: MetaGraphEntity) =
     repositoryPath / entity.gUID.toString
 
   private def successPath(basePath: Filename): Filename = basePath / "_SUCCESS"
 
-  private def hasEntity(entity: MetaGraphEntity): Boolean = successPath(entityPath(entity)).exists
+  private def serializedScalarFileName(basePath: Filename): Filename = basePath / "serialized_data"
 
-  private def tryToLoadVertexSetData(vertexSet: VertexSet): Option[VertexSetData] = {
-    if (hasEntity(vertexSet)) {
-      Some(new VertexSetData(
-        vertexSet,
-        entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)))
-    } else None
+  private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
+    successPath(entityPath(entity)).exists
+
+  private def hasEntity(entity: MetaGraphEntity): Boolean = {
+    val gUID = entity.gUID
+    entity match {
+      case vs: VertexSet => vertexSetCache.contains(gUID)
+      case eb: EdgeBundle => edgeBundleCache.contains(gUID)
+      case va: VertexAttribute[_] => vertexAttributeCache.contains(gUID)
+      case ea: EdgeAttribute[_] => edgeAttributeCache.contains(gUID)
+      case sc: Scalar[_] => scalarCache.contains(gUID)
+    }
   }
 
-  private def tryToLoadEdgeBundleData(edgeBundle: EdgeBundle): Option[EdgeBundleData] = {
-    if (hasEntity(edgeBundle)) {
-      Some(new EdgeBundleData(
-        edgeBundle,
-        entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)))
-    } else None
+  private def load(vertexSet: VertexSet): Unit = {
+    vertexSetCache(vertexSet.gUID) = new VertexSetData(
+      vertexSet,
+      entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc))
   }
 
-  private def tryToLoadVertexAttributeData[T](
-    vertexAttribute: VertexAttribute[T]): Option[VertexAttributeData[T]] = {
-    if (hasEntity(vertexAttribute)) {
-      Some(new VertexAttributeData[T](
-        vertexAttribute,
-        entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)))
-    } else None
+  private def load(edgeBundle: EdgeBundle): Unit = {
+    edgeBundleCache(edgeBundle.gUID) = new EdgeBundleData(
+      edgeBundle,
+      entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc))
   }
 
-  private def tryToLoadEdgeAttributeData[T](
-    edgeAttribute: EdgeAttribute[T]): Option[EdgeAttributeData[T]] = {
-    if (hasEntity(edgeAttribute)) {
-      Some(new EdgeAttributeData[T](
-        edgeAttribute,
-        entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)))
-    } else None
+  private def load[T](vertexAttribute: VertexAttribute[T]): Unit = {
+    vertexAttributeCache(vertexAttribute.gUID) = new VertexAttributeData[T](
+      vertexAttribute,
+      entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc))
   }
 
-  def execute(instance: MetaGraphOperationInstance): DataSet = {
+  private def load[T](edgeAttribute: EdgeAttribute[T]): Unit = {
+    edgeAttributeCache(edgeAttribute.gUID) = new EdgeAttributeData[T](
+      edgeAttribute,
+      entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc))
+  }
+
+  private def load[T](scalar: Scalar[T]): Unit = {
+    val ois = new java.io.ObjectInputStream(serializedScalarFileName(entityPath(scalar)).open())
+    val value = ois.readObject.asInstanceOf[T]
+    ois.close()
+    scalarCache(scalar.gUID) = new ScalarData[T](scalar, value)
+  }
+
+  private def load(entity: MetaGraphEntity): Unit = {
+    entity match {
+      case vs: VertexSet => load(vs)
+      case eb: EdgeBundle => load(eb)
+      case va: VertexAttribute[_] => load(va)
+      case ea: EdgeAttribute[_] => load(ea)
+      case sc: Scalar[_] => load(sc)
+    }
+  }
+
+  private def execute(instance: MetaGraphOperationInstance): Unit = {
     val inputs = instance.inputs
     val inputDatas = DataSet(
       inputs.vertexSets.mapValues(get(_)),
       inputs.edgeBundles.mapValues(get(_)),
       inputs.vertexAttributes.mapValues(get(_)),
-      inputs.edgeAttributes.mapValues(get(_)))
+      inputs.edgeAttributes.mapValues(get(_)),
+      inputs.scalars.mapValues(get(_)))
     val outputBuilder = new DataSetBuilder(instance)
     instance.operation.execute(inputDatas, outputBuilder, runtimeContext)
-    outputBuilder.toDataSet
+    val output = outputBuilder.toDataSet
+    output.vertexSets.values.foreach(vs => vertexSetCache(vs.gUID) = vs)
+    output.edgeBundles.values.foreach(eb => edgeBundleCache(eb.gUID) = eb)
+    output.vertexAttributes.values.foreach(va => vertexAttributeCache(va.gUID) = va)
+    output.edgeAttributes.values.foreach(ea => edgeAttributeCache(ea.gUID) = ea)
+    output.scalars.values.foreach(sc => scalarCache(sc.gUID) = sc)
+  }
+
+  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = {
+    this.synchronized {
+      if (!hasEntity(entity)) {
+        if (hasEntityOnDisk(entity)) {
+          load(entity)
+        } else {
+          execute(entity.source)
+        }
+      }
+    }
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
-    val gUID = vertexSet.gUID
-    this.synchronized {
-      if (!vertexSetCache.contains(gUID)) {
-        vertexSetCache(gUID) = tryToLoadVertexSetData(vertexSet).getOrElse(
-          execute(vertexSet.source).vertexSets(vertexSet.name))
-      }
-    }
-    vertexSetCache(gUID)
+    loadOrExecuteIfNecessary(vertexSet)
+    vertexSetCache(vertexSet.gUID)
   }
 
   def get(edgeBundle: EdgeBundle): EdgeBundleData = {
-    val gUID = edgeBundle.gUID
-    this.synchronized {
-      if (!edgeBundleCache.contains(gUID)) {
-        edgeBundleCache(gUID) = tryToLoadEdgeBundleData(edgeBundle).getOrElse(
-          execute(edgeBundle.source).edgeBundles(edgeBundle.name))
-      }
-    }
-    edgeBundleCache(gUID)
+    loadOrExecuteIfNecessary(edgeBundle)
+    edgeBundleCache(edgeBundle.gUID)
   }
 
   def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T] = {
-    val gUID = vertexAttribute.gUID
-    this.synchronized {
-      if (!vertexAttributeCache.contains(gUID)) {
-        vertexAttributeCache(gUID) = tryToLoadVertexAttributeData(vertexAttribute).getOrElse(
-          execute(vertexAttribute.source).vertexAttributes(vertexAttribute.name))
-      }
-    }
+    loadOrExecuteIfNecessary(vertexAttribute)
     implicit val tagForT = vertexAttribute.typeTag
-    vertexAttributeCache(gUID).runtimeSafeCast[T]
+    vertexAttributeCache(vertexAttribute.gUID).runtimeSafeCast[T]
   }
 
   def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T] = {
-    val gUID = edgeAttribute.gUID
-    this.synchronized {
-      if (!edgeAttributeCache.contains(gUID)) {
-        edgeAttributeCache(gUID) = tryToLoadEdgeAttributeData(edgeAttribute).getOrElse(
-          execute(edgeAttribute.source).edgeAttributes(edgeAttribute.name))
-      }
-    }
+    loadOrExecuteIfNecessary(edgeAttribute)
     implicit val tagForT = edgeAttribute.typeTag
-    edgeAttributeCache(gUID).runtimeSafeCast[T]
+    edgeAttributeCache(edgeAttribute.gUID).runtimeSafeCast[T]
+  }
+
+  def get[T](scalar: Scalar[T]): ScalarData[T] = {
+    loadOrExecuteIfNecessary(scalar)
+    implicit val tagForT = scalar.typeTag
+    scalarCache(scalar.gUID).runtimeSafeCast[T]
   }
 
   def get[T](entity: Attribute[T]): AttributeData[T] = {
@@ -127,13 +149,26 @@ class DataManager(sc: spark.SparkContext,
       case vs: VertexSet => get(vs)
       case eb: EdgeBundle => get(eb)
       case a: Attribute[_] => get(a)
+      case sc: Scalar[_] => get(sc)
     }
   }
 
   def saveToDisk(entity: MetaGraphEntity): Unit = {
-    if (!hasEntity(entity)) {
+    if (!hasEntityOnDisk(entity)) {
       bigGraphLogger.info(s"Saving entity $entity ...")
-      entityPath(entity).saveAsObjectFile(get(entity).rdd)
+      val data = get(entity)
+      data match {
+        case rddData: EntityRDDData =>
+          entityPath(entity).saveAsObjectFile(rddData.rdd)
+        case scalarData: ScalarData[_] => {
+          val targetDir = entityPath(entity)
+          targetDir.mkdirs
+          val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
+          oos.writeObject(scalarData.value)
+          oos.close()
+          successPath(targetDir).createFromStrings("")
+        }
+      }
       bigGraphLogger.info(s"Entity $entity saved.")
     } else {
       bigGraphLogger.info(s"Skip saving entity $entity as it's already saved.")
