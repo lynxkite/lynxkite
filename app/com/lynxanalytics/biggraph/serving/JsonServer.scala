@@ -4,6 +4,7 @@ import play.api.mvc
 import play.api.libs.json
 import play.api.libs.json._
 import com.lynxanalytics.biggraph._
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.functional.syntax.toContraFunctorOps
@@ -15,7 +16,10 @@ class JsonServer extends mvc.Controller {
     mvc.Action(parse.json) {
       request =>
         request.body.validate[I].fold(
-          errors => JsonBadRequest("Error", "Bad JSON", errors),
+          errors => {
+            log.error(errors.toString)
+            JsonBadRequest("Error", "Bad JSON", errors)
+          },
           result => Ok(json.Json.toJson(action(result))))
     }
   }
@@ -26,7 +30,10 @@ class JsonServer extends mvc.Controller {
         .format(action.getClass.toString(), key))
       request.getQueryString(key) match {
         case Some(s) => Json.parse(s).validate[I].fold(
-          errors => JsonBadRequest("Error", "Bad JSON", errors),
+          errors => {
+            log.error(errors.toString)
+            JsonBadRequest("Error", "Bad JSON", errors)
+          },
           result => Ok(json.Json.toJson(action(result))))
         case None => BadRequest(json.Json.obj(
           "status" -> "Error",
