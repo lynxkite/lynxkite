@@ -153,6 +153,11 @@ class BigGraphController(env: BigGraphEnvironment) {
     val in = manager.incomingBundles(vs).toSet
     val out = manager.outgoingBundles(vs).toSet
     val local = in & out
+
+    env.dataManager.saveToDisk(vs)
+    in.foreach(env.dataManager.saveToDisk(_))
+    out.foreach(env.dataManager.saveToDisk(_))
+
     FEVertexSet(
       id = vs.gUID.toString,
       title = vs.toString,
