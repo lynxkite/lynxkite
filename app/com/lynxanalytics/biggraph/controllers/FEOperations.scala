@@ -247,26 +247,18 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
     def apply(params: Map[String, String]) = {
       val attr = manager.vertexAttribute(params("attr").asUUID).runtimeSafeCast[Double]
-      manager.apply(
+      val filter = manager.apply(
         graph_operations.UpperBoundFilter(params("max").toDouble),
         'attr -> attr)
-      FEStatus.success
-    }
-  }
-
-  registerOperation(EdgesToSubset)
-  object EdgesToSubset extends FEOperation {
-    val title = "Transfer Edge Bundle to a Vertex Set subset"
-    val parameters = Seq(
-      Param("es", "Edge bundle to transfer", kind = "edge-bundle"),
-      Param("projection", "Narrowing projection", kind = "edge-bundle"))
-
-    def apply(params: Map[String, String]) = {
-      val es = manager.edgeBundle(params("es").asUUID)
-      val projection = manager.edgeBundle(params("projection").asUUID)
-      manager.apply(
-        graph_operations.EdgesToSubset(),
-        'es -> es, 'projection -> projection)
+      val orig = attr.vertexSet
+      val filtered = filter.vertexSets('fvs)
+      // Filter all the edge bundles too.
+      for (eb <- manager.incomingEdgeBundles(orig) ++ manager.outgoingEdgeBundles(orig)) {
+        def f(vs: VertexSet) = if (vs == orig) filtered else vs
+        manager.apply(
+          graph_operations.InducedEdgeBundle(),
+          'input -> eb, 'srcSubset -> f(eb.srcVertexSet), 'dstSubset -> f(eb.dstVertexSet))
+      }
       FEStatus.success
     }
   }
