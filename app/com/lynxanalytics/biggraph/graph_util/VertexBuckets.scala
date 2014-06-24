@@ -36,23 +36,19 @@ class NumericBucketer[T: Numeric](val min: T, val max: T, numBuckets: Int) exten
   @transient lazy val bounds: Seq[T] =
     (1 until numBuckets).map(idx => min + num.fromInt(idx) * bucketSize)
 }
+object NumericBucketer {
+  def bucketLabels(bucketer: NumericBucketer[_]): Seq[String] = {
+    val normalLabels = (Seq(bucketer.min) ++ bucketer.bounds.dropRight(1)).zip(bucketer.bounds)
+      .map { case (lowerBound, upperBound) => s"[$lowerBound, $upperBound)" }
+    val lastLabel = "[%s, %s]".format(bucketer.bounds.last, bucketer.max)
+    normalLabels :+ lastLabel
+  }
+}
+
 class FractionalBucketer[T: Fractional](min: T, max: T, numBuckets: Int)
     extends NumericBucketer[T](min, max, numBuckets) {
   private val frac: Fractional[T] = implicitly[Fractional[T]]
   private implicit val fops = frac.mkNumericOps _
   override val bucketSize: T = (max - min) / num.fromInt(numBuckets)
   override def divideByBucketSize(value: T): Int = (value / bucketSize).toInt
-}
-
-trait VertexAttributeBucketing[T] {
-  val attribute: VertexAttribute[T]
-  val bucketLabels: Seq[String]
-  val bucketer: Bucketer[T]
-}
-
-class NumericVertexBucketing[T](val attribute: VertexAttribute[T],
-                                val bucketer: NumericBucketer[T]) {
-  val bucketLabels = (Seq(bucketer.min) ++ bucketer.bounds.dropRight(1)).zip(bucketer.bounds)
-    .map { case (lowerBound, upperBound) => s"[$lowerBound, $upperBound)" } ++
-    Seq("[%s, %s]".format(bucketer.bounds.last, bucketer.max))
 }

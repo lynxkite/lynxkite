@@ -27,7 +27,7 @@ class VertexBucketerTest extends FunSuite {
     assert(fb.bounds == Seq(0.3, 0.4, 0.5, 0.6, 0.7, 0.8))
   }
   test("Bucketing labels are wonderful") {
-    assert(new NumericVertexBucketing(null, new NumericBucketer[Long](1, 8, 3)).bucketLabels ==
-      Seq("[1, 4)", "[4, 7)", "[7, 8]"))
+    assert(NumericBucketer.bucketLabels(new NumericBucketer[Long](1, 8, 3)) ==
+             Seq("[1, 4)", "[4, 7)", "[7, 8]"))
   }
 }
