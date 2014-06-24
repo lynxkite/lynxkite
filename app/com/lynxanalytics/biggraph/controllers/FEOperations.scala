@@ -237,4 +237,37 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       return FEStatus.success
     }
   }
+
+  registerOperation(UpperBoundFilter)
+  object UpperBoundFilter extends FEOperation {
+    val title = "Filter by Vertex Attribute"
+    val parameters = Seq(
+      Param("attr", "Vertex Attribute", kind = "vertex-attribute"),
+      Param("max", "Upper bound"))
+
+    def apply(params: Map[String, String]) = {
+      val attr = manager.vertexAttribute(params("attr").asUUID).runtimeSafeCast[Double]
+      manager.apply(
+        graph_operations.UpperBoundFilter(params("max").toDouble),
+        'attr -> attr)
+      FEStatus.success
+    }
+  }
+
+  registerOperation(EdgesToSubset)
+  object EdgesToSubset extends FEOperation {
+    val title = "Transfer Edge Bundle to a Vertex Set subset"
+    val parameters = Seq(
+      Param("es", "Edge bundle to transfer", kind = "edge-bundle"),
+      Param("projection", "Narrowing projection", kind = "edge-bundle"))
+
+    def apply(params: Map[String, String]) = {
+      val es = manager.edgeBundle(params("es").asUUID)
+      val projection = manager.edgeBundle(params("projection").asUUID)
+      manager.apply(
+        graph_operations.EdgesToSubset(),
+        'es -> es, 'projection -> projection)
+      FEStatus.success
+    }
+  }
 }
