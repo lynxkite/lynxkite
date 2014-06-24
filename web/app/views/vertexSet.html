@@ -4,11 +4,11 @@
     <h6 ng-show="side.data.attributes">Vertex Attributes</h6>
     <div class="attribute token" ng-repeat="attr in side.data.attributes">
       {{attr.title}}
-      <button class="btn btn-default" ng-class="{ 'btn-primary': side.viewSettings.xAttribute === attr }"
-          ng-click="setViewSetting(side, 'xAttribute', attr)">Graph on X</button>
-      <button class="btn btn-default" ng-class="{ 'btn-primary': side.viewSettings.yAttribute === attr }"
-          ng-click="setViewSetting(side, 'yAttribute', attr)">Graph on Y</button>
-      <input class="form-control filter" placeholder="filter" ng-model="side.viewSettings.filters[attr.id]">
+      <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.xAttribute === attr }"
+          ng-click="setState(side, 'xAttribute', attr)">Graph on X</button>
+      <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.yAttribute === attr }"
+          ng-click="setState(side, 'yAttribute', attr)">Graph on Y</button>
+      <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]">
     </div>
     <h6 ng-show="side.data.localEdges">Local Edge Bundles</h6>
     <ul class="bundles">
@@ -20,8 +20,8 @@
         <button class="btn btn-default" ng-click="side.followEB(bundle, false)">
           Follow reverse
         </button>
-        <button class="btn btn-default" ng-class="{ 'btn-primary': side.viewSettings.edgeBundle === bundle }"
-            ng-click="setViewSetting(side, 'edgeBundle', bundle)">Graph</button>
+        <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.edgeBundle === bundle }"
+            ng-click="setState(side, 'edgeBundle', bundle)">Graph</button>
       </li>
     </ul>
     <h6 ng-show="side.data.inEdges">Incoming Edge Bundles</h6>

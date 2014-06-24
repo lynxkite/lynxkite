@@ -7,12 +7,18 @@ angular.module('biggraph')
     $scope.deepWatch = function(expression, fn) { $scope.$watch(expression, fn, true); };
 
     var defaultState = {
-      leftVS: undefined,
-      leftEB: undefined,
-      rightVSId: undefined,
-      rightEBId: undefined,
-      leftToRightPath: undefined
+      leftToRightPath: undefined,
+      showGraph: false,
+      left: {
+        vs: undefined,
+        filters: {}
+      },
+      right: {
+        vs: undefined,
+        filters: {}
+      },
     };
+    $scope.state = defaultState;
 
     $scope.left = {};
     $scope.right = {};
@@ -47,9 +53,9 @@ angular.module('biggraph')
     }
 
     $scope.$watch(
-      'state.leftVS',
+      'state.left.vs',
       function() {
-        var leftVS = $scope.state.leftVS;
+        var leftVS = $scope.state.left.vs;
         $scope.left.vertexSet = leftVS;
         if (leftVS !== undefined) {
           $scope.left.data = loadVertexSet(leftVS.id);
@@ -58,9 +64,9 @@ angular.module('biggraph')
         }
       });
     $scope.$watch(
-      'state.rightVS',
+      'state.right.vs',
       function() {
-        var rightVS = $scope.state.rightVS;
+        var rightVS = $scope.state.right.vs;
         $scope.right.vertexSet = rightVS;
         if (rightVS !== undefined) {
           $scope.right.data = loadVertexSet(rightVS.id);
@@ -69,39 +75,37 @@ angular.module('biggraph')
         }
       });
 
-    $scope.viewSettings = { left: { filters: {} }, right: { filters: {} } };
-    $scope.$watch('showGraph', loadGraphView);
-    $scope.deepWatch('viewSettings', loadGraphView);
+    $scope.deepWatch('state', loadGraphView);
     function loadGraphView() {
-      if (!$scope.showGraph) { return; }
+      if (!$scope.state.showGraph) { return; }
       var sides = [];
-      if ($scope.left.vertexSet !== undefined) { sides.push($scope.left); }
-      if ($scope.right.vertexSet !== undefined) { sides.push($scope.right); }
+      if ($scope.state.left.vs !== undefined) { sides.push($scope.state.left); }
+      if ($scope.state.right.vs !== undefined) { sides.push($scope.state.right); }
       if (sides.length === 0) { return; }
       var q = { vertexSets: [], edgeBundles: [] };
       for (var i = 0; i < sides.length; ++i) {
         var side = sides[i];
-        if (side.viewSettings.edgeBundle !== undefined) {
+        if (side.edgeBundle !== undefined) {
           q.edgeBundles.push({
             srcDiagramId: 'idx[' + i + ']',
             dstDiagramId: 'idx[' + i + ']',
-            bundleIdSequence: [side.viewSettings.edgeBundle]
+            bundleIdSequence: [side.edgeBundle]
           });
         }
         var filters = [];
-        for (var attr in side.viewSettings.filters) {
-          filters.push({ attributeId: attr, valueSpec: side.viewSettings.filters[attr] });
+        for (var attr in side.filters) {
+          filters.push({ attributeId: attr, valueSpec: side.filters[attr] });
         }
         q.vertexSets.push({
-          vertexSetId: side.vertexSet.id,
+          vertexSetId: side.vs.id,
           filters: filters,
           mode: 'bucketed',
-          xBucketingAttributeId: side.viewSettings.xAttribute,
-          yBucketingAttributeId: side.viewSettings.yAttribute,
+          xBucketingAttributeId: side.xAttribute,
+          yBucketingAttributeId: side.yAttribute,
         });
       }
-      if ($scope.state.leftToRightPath !== undefined) {
-        var ids = $scope.state.leftToRightPath.map(function(step) { return step.eb.id; });
+      if ($scope.leftToRightPath !== undefined) {
+        var ids = $scope.leftToRightPath.map(function(step) { return step.eb.id; });
         q.edgeBundles.push({
           srcDiagramId: 'idx[0]',
           dstDiagramId: 'idx[1]',
@@ -187,15 +191,15 @@ angular.module('biggraph')
       $scope.state.leftToRightPath = undefined;
     };
 
-    $scope.left.viewSettings = $scope.viewSettings.left;
-    $scope.right.viewSettings = $scope.viewSettings.right;
-    $scope.setViewSetting = function(side, setting, value) {
-      if (side.viewSettings[setting] === value) {
+    $scope.left.state = $scope.state.left;
+    $scope.right.state = $scope.state.right;
+    $scope.setState = function(side, setting, value) {
+      if (side.state[setting] === value) {
         // Clicking the same setting again turns it off.
-        delete side.viewSettings[setting];
+        delete side.state[setting];
       } else {
-        $scope.showGraph = true;
-        side.viewSettings[setting] = value;
+        $scope.state.showGraph = true;
+        side.state[setting] = value;
       }
     };
 
@@ -203,10 +207,10 @@ angular.module('biggraph')
     $scope.right.oppositeName = 'left';
 
     $scope.left.setVS = function(id) {
-      $scope.state.leftVS = { id: id };
+      $scope.state.left.vs = { id: id };
     };
     $scope.right.setVS = function(id) {
-      $scope.state.rightVS = { id: id };
+      $scope.state.right.vs = { id: id };
     };
 
     function setNewVS(side) {
