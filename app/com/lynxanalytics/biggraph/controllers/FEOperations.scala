@@ -182,6 +182,19 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
+  registerOperation(WeightedOutDegree)
+  object WeightedOutDegree extends FEOperation {
+    val title = "Weighted out degree"
+    val parameters = Seq(
+      Param("w", "Weighted edges", kind = "multi-edge-attribute"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(
+        graph_operations.WeightedOutDegree(),
+        'weights -> manager.edgeBundle(params("w").asUUID))
+      FEStatus.success
+    }
+  }
+
   registerOperation(ExportCSVVertices)
   object ExportCSVVertices extends FEOperation {
     val title = "Export vertex attributes to CSV"
