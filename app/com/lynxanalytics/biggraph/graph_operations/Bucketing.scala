@@ -23,7 +23,19 @@ case class VertexBucketGrid(xSize: Int,
     if (ySize > 1) {
       sig = sig.inputVertexAttribute[Double]('yAttribute, 'vertices)
     }
-    sig.outputScalar[Map[(Int, Int), Long]]('bucketSizes)
+    sig.outputScalar[Map[(Int, Int), Int]]('bucketSizes)
+  }
+
+  val xBucketLabels = if (xSize == 1) {
+    Seq("")
+  } else {
+    NumericBucketer.bucketLabels(new FractionalBucketer[Double](xMin, xMax, xSize))
+  }
+
+  val yBucketLabels = if (ySize == 1) {
+    Seq("")
+  } else {
+    NumericBucketer.bucketLabels(new FractionalBucketer[Double](yMin, yMax, ySize))
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
