@@ -10,5 +10,9 @@ GET  /ajax/save        com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 #GET  /data/verticesCSV com.lynxanalytics.biggraph.serving.CSVServer.verticesCSVGet
 #GET  /data/edgesCSV    com.lynxanalytics.biggraph.serving.CSVServer.edgesCSVGet
 
+GET  /ajax/vertexDiag  com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexDiagram
+GET  /ajax/edgeDiag    com.lynxanalytics.biggraph.serving.ProductionJsonServer.edgeDiagram
+GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
+
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            controllers.Assets.at(path="/public", file)
