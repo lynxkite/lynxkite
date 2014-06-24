@@ -59,3 +59,11 @@ svg .vertex.highlight circle {
 svg .vertex.highlight text {
   fill: black;
 }
+
+svg .bucket {
+  font-size: 12px;
+  fill: #888;
+}
+svg .bucket.highlight {
+  fill: white;
+}

@@ -39,7 +39,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     for (var i = 0; i < n; ++i) {
       var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
       var yOff = 250;
-      vertices.push(this.addVertices(data.vertexSets[i].vertices, xOff, yOff));
+      vertices.push(this.addVertices(data.vertexSets[i], xOff, yOff));
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
@@ -49,11 +49,28 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.addVertices = function(data, xOff, yOff) {
     var vertices = [];
-    var vertexScale = this.zoom * 2 / util.minmax(data.map(function(n) { return n.count; })).max;
-    var xb = util.minmax(data.map(function(n) { return n.x; }));
-    var yb = util.minmax(data.map(function(n) { return n.y; }));
-    for (var i = 0; i < data.length; ++i) {
-      var vertex = data[i];
+    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.count; })).max;
+    var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
+    var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
+    var xBuckets = [], yBuckets = [];
+    for (var i = 0; i < data.xBuckets.length; ++i) {
+      var x = xOff + this.zoom * util.normalize(i, xb)
+      var y = yOff + this.zoom * util.normalize(yb.max + 1, yb)
+      var l = new Label(x, y, data.xBuckets[i]);
+      xBuckets.push(l);
+      this.vertices.append(l.dom);
+    }
+    for (var i = 0; i < data.yBuckets.length; ++i) {
+      // Labels on the left on the left and on the right on the right.
+      var pos = xOff < this.svg.width() / 2 ? xb.min - 1 : xb.max + 1;
+      var x = xOff + this.zoom * util.normalize(pos, xb)
+      var y = yOff + this.zoom * util.normalize(i, yb)
+      var l = new Label(x, y, data.yBuckets[i]);
+      yBuckets.push(l);
+      this.vertices.append(l.dom);
+    }
+    for (var i = 0; i < data.vertices.length; ++i) {
+      var vertex = data.vertices[i];
       var v = new Vertex(xOff + this.zoom * util.normalize(vertex.x, xb),
                          yOff + this.zoom * util.normalize(vertex.y, yb),
                          Math.sqrt(vertexScale * vertex.count),
@@ -63,6 +80,8 @@ angular.module('biggraph').directive('graphView', function($window) {
         continue;
       }
       this.vertices.append(v.dom);
+      if (xBuckets.length !== 0) { v.addHoverListener(xBuckets[vertex.x]); }
+      if (yBuckets.length !== 0) { v.addHoverListener(yBuckets[vertex.y]); }
     }
     return vertices;
   };
@@ -81,13 +100,19 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
   };
 
+  function Label(x, y, text) {
+    console.log(text);
+    this.dom = svg.create('text', {'class': 'bucket', x: x, y: y}).text(text);
+  }
+  Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); }
+  Label.prototype.off = function() { svg.removeClass(this.dom, 'highlight'); }
+
   function Vertex(x, y, r, text) {
     this.x = x;
     this.y = y;
     this.r = r;
     this.circle = svg.create('circle', {r: r});
-    this.label = svg.create('text', {text: text});
-    this.label.text(text);
+    this.label = svg.create('text').text(text);
     this.dom = svg.group([this.circle, this.label], {'class': 'vertex' });
     this.moveListeners = [];
     this.moveTo(x, y);
