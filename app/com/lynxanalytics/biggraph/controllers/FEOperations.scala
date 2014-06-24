@@ -68,8 +68,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val title = "Import edge list with string IDs "
     val parameters = Seq(
       Param("data", "Input data path (use * for wildcard)"),
-      Param("awsId", "AWS Access Key ID (optional)"),
-      Param("awsKey", "AWS Secret Access Key (optional)"),
       Param("header", """Header string (ie. "src","dst","age","gender")"""),
       Param("delimiter", "Delimiter to use for parsing", defaultValue = ","),
       Param("src", "Source ID field name (without quotation marks)"),
@@ -80,7 +78,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       manager.apply(
         graph_operations.ImportEdgeListWithStringIDs(
           graph_operations.CSV(
-            Filename(params("data"), params("awsId"), params("awsKey")),
+            Filename.fromString(params("data")),
             params("delimiter"),
             params("header"),
             graph_operations.Javascript(params("filter"))),
@@ -95,12 +93,10 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object FindMaxCliques extends FEOperation {
     val title = "Maximal cliques"
     val parameters = Seq(
-      Param("vs", "Vertex set", kind = "vertex-set"),
       Param("es", "Edge bundle", kind = "edge-bundle"),
       Param("min", "Minimum clique size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
       manager.apply(graph_operations.FindMaxCliques(params("min").toInt),
-        'vsIn -> manager.vertexSet(params("vs").asUUID),
         'esIn -> manager.edgeBundle(params("es").asUUID))
       FEStatus.success
     }
@@ -149,11 +145,9 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ConnectedComponents extends FEOperation {
     val title = "Connected components"
     val parameters = Seq(
-      Param("vs", "Vertex set", kind = "vertex-set"),
       Param("es", "Edge bundle", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
       manager.apply(graph_operations.ConnectedComponents(),
-        'vs -> manager.vertexSet(params("vs").asUUID),
         'es -> manager.edgeBundle(params("es").asUUID))
       FEStatus.success
     }
@@ -184,6 +178,19 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       manager.apply(
         graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
         'edges -> edges, 'ignoredSrc -> edges.srcVertexSet, 'ignoredDst -> edges.dstVertexSet)
+      FEStatus.success
+    }
+  }
+
+  registerOperation(WeightedOutDegree)
+  object WeightedOutDegree extends FEOperation {
+    val title = "Weighted out degree"
+    val parameters = Seq(
+      Param("w", "Weighted edges", kind = "multi-edge-attribute"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(
+        graph_operations.WeightedOutDegree(),
+        'weights -> manager.edgeBundle(params("w").asUUID))
       FEStatus.success
     }
   }
