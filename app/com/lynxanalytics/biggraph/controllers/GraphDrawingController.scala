@@ -125,11 +125,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       yBuckets = op.yBucketLabels)
   }
 
-  def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse =
+  def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
+    val srcMeta = metaManager.scalar(request.srcDiagramId.asUUID)
+      .runtimeSafeCast[Map[(Int, Int), Int]]
+    val dstMeta = metaManager.scalar(request.srcDiagramId.asUUID)
+      .runtimeSafeCast[Map[(Int, Int), Int]]
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
       Seq(FEEdge(0, 0, 10)))
+  }
 
   def getComplexView(request: FEGraphRequest): FEGraphRespone = {
     val vertexDiagrams = request.vertexSets.map(getVertexDiagram(_))
