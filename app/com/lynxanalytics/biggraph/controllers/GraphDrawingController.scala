@@ -181,7 +181,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
     val (srcMapping, dstMapping) = tripletMapping(induced)
     val srcIdxs = mappedAttribute(srcMapping, idxsFromInst(srcOp))
-    val dstIdxs = mappedAttribute(dstMapping, idxsFromInst(srcOp))
+    val dstIdxs = mappedAttribute(dstMapping, idxsFromInst(dstOp))
     val srcIdxsRDD = dataManager.get(srcIdxs).rdd
     val dstIdxsRDD = dataManager.get(dstIdxs).rdd
     val idxPairBuckets = srcIdxsRDD.join(dstIdxsRDD)
