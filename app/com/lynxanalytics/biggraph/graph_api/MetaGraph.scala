@@ -8,8 +8,6 @@ import scala.reflect.runtime.universe._
 import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
 
-import attributes.AttributeSignature
-
 sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
   val name: Symbol
