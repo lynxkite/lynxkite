@@ -157,8 +157,19 @@ class BigGraphController(env: BigGraphEnvironment) {
     val local = in & out
 
     env.dataManager.saveToDisk(vs)
-    in.foreach(env.dataManager.saveToDisk(_))
-    out.foreach(env.dataManager.saveToDisk(_))
+    in.foreach { e =>
+      env.dataManager.saveToDisk(e)
+      env.dataManager.saveToDisk(e.srcVertexSet)
+      manager.attributes(e).foreach(env.dataManager.saveToDisk(_))
+      manager.attributes(e.srcVertexSet).foreach(env.dataManager.saveToDisk(_))
+    }
+    out.foreach { e =>
+      env.dataManager.saveToDisk(e)
+      env.dataManager.saveToDisk(e.dstVertexSet)
+      manager.attributes(e).foreach(env.dataManager.saveToDisk(_))
+      manager.attributes(e.dstVertexSet).foreach(env.dataManager.saveToDisk(_))
+    }
+    manager.attributes(vs).foreach(env.dataManager.saveToDisk(_))
 
     FEVertexSet(
       id = vs.gUID.toString,

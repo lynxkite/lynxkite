@@ -79,6 +79,7 @@ case class Filename(
 
     val hadoopData = data.map(x =>
       (hadoop.io.NullWritable.get(), new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(x))))
+    if (fs.exists(path)) fs.delete(path, true)
     hadoopData.saveAsNewAPIHadoopFile(
       filename,
       keyClass = classOf[hadoop.io.NullWritable],
