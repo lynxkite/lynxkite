@@ -251,9 +251,9 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
         graph_operations.UpperBoundFilter(params("max").toDouble),
         'attr -> attr)
       val orig = attr.vertexSet
-      val filtered = filter.vertexSets('fvs)
+      val filtered = filter.outputs.vertexSets('fvs)
       // Filter all the edge bundles too.
-      for (eb <- manager.incomingEdgeBundles(orig) ++ manager.outgoingEdgeBundles(orig)) {
+      for (eb <- manager.incomingBundles(orig) ++ manager.outgoingBundles(orig)) {
         def f(vs: VertexSet) = if (vs == orig) filtered else vs
         manager.apply(
           graph_operations.InducedEdgeBundle(),
