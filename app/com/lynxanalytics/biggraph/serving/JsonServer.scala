@@ -84,6 +84,18 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rSaveGraphRequest = json.Json.reads[SaveGraphRequest]
 
+  implicit val rVertexAttributeFilter = json.Json.reads[VertexAttributeFilter]
+  implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
+  implicit val wFEVertex = json.Json.writes[FEVertex]
+  implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
+
+  implicit val rEdgeDiagramSpec = json.Json.reads[EdgeDiagramSpec]
+  implicit val wFEEdge = json.Json.writes[FEEdge]
+  implicit val wEdgeDiagramResponse = json.Json.writes[EdgeDiagramResponse]
+
+  implicit val rFEGraphRequest = json.Json.reads[FEGraphRequest]
+  implicit val wFEGraphRespone = json.Json.writes[FEGraphRespone]
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
@@ -106,4 +118,9 @@ object ProductionJsonServer extends JsonServer {
 
   val persistenceController = new PersistenceController(BigGraphProductionEnvironment)
   def saveGraph = jsonGet(persistenceController.saveGraph)
+
+  val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
+  def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
+  def edgeDiagram = jsonGet(drawingController.getEdgeDiagram)
+  def complexView = jsonGet(drawingController.getComplexView)
 }
