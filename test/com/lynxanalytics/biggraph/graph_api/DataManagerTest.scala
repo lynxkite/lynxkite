@@ -8,7 +8,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
   test("We can obtain a simple new graph") {
     val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
-    val instance = metaManager.apply(CreateExampleGraphOperation(), MetaDataSet())
+    val instance = metaManager.apply(ExampleGraph(), MetaDataSet())
 
     assert(TestUtils.RDDToSortedString(
       dataManager.get(instance.outputs.vertexSets('vertices)).rdd) ==
@@ -45,7 +45,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val metaManager = cleanMetaManager
     val dataManager1 = cleanDataManager
     val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
-    val operation = CreateExampleGraphOperation()
+    val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
     val names = instance.outputs.vertexAttributes('name).runtimeSafeCast[String]
     val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
