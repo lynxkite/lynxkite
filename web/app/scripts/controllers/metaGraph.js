@@ -199,8 +199,8 @@ angular.module('biggraph')
       }
     };
 
-    $scope.left.opposite = 'right';
-    $scope.right.opposite = 'left';
+    $scope.left.oppositeName = 'right';
+    $scope.right.oppositeName = 'left';
 
     $scope.left.setVS = function(id) {
       $scope.state.leftVS = { id: id };
