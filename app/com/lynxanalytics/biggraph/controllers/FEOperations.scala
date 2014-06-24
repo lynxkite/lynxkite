@@ -13,7 +13,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
   registerOperation(CreateVertexSet)
   object CreateVertexSet extends FEOperation {
-    val title = "Create a new vertex set"
+    val title = "New vertex set"
     val parameters = Seq(
       Param("size", "Vertex set size"))
     def apply(params: Map[String, String]) = {
@@ -24,7 +24,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
   registerOperation(RandomEdgeBundle)
   object RandomEdgeBundle extends FEOperation {
-    val title = "Create a random edge bundle"
+    val title = "Create random edge bundle"
     val parameters = Seq(
       Param("vsSrc", "Source vertex set", kind = "vertex-set"),
       Param("vsDst", "Destination vertex set", kind = "vertex-set"),
@@ -39,9 +39,61 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
+  registerOperation(ImportEdgeListWithNumericIDs)
+  object ImportEdgeListWithNumericIDs extends FEOperation {
+    val title = "Import edge list with numeric IDs "
+    val parameters = Seq(
+      Param("data", "Input data path (use * for wildcard)"),
+      Param("header", """Header string (ie. "src","dst","age","gender")"""),
+      Param("delimiter", "Delimiter to use for parsing", defaultValue = ","),
+      Param("src", "Source ID field name (without quotation marks)"),
+      Param("dst", "Destination ID field name (without quotation marks)"),
+      Param("filter", "(optional) Filtering expression (use JavaScript syntax, equation must evaluate to true/false)"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(
+        graph_operations.ImportEdgeListWithNumericIDs(
+          graph_operations.CSV(
+            Filename.fromString(params("data")),
+            params("delimiter"),
+            params("header"),
+            graph_operations.Javascript(params("filter"))),
+          params("src"),
+          params("dst")))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(ImportEdgeListWithStringIDs)
+  object ImportEdgeListWithStringIDs extends FEOperation {
+    val title = "Import edge list with string IDs "
+    val parameters = Seq(
+      Param("data", "Input data path (use * for wildcard)"),
+      Param("awsId", "AWS Access Key ID (optional)"),
+      Param("awsKey", "AWS Secret Access Key (optional)"),
+      Param("header", """Header string (ie. "src","dst","age","gender")"""),
+      Param("delimiter", "Delimiter to use for parsing", defaultValue = ","),
+      Param("src", "Source ID field name (without quotation marks)"),
+      Param("dst", "Destination ID field name (without quotation marks)"),
+      Param("vAttr", "Vertex attribute field name (without quotation marks)"),
+      Param("filter", "(optional) Filtering expression (use JavaScript syntax, equation must evaluate to True/False)"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(
+        graph_operations.ImportEdgeListWithStringIDs(
+          graph_operations.CSV(
+            Filename(params("data"), params("awsId"), params("awsKey")),
+            params("delimiter"),
+            params("header"),
+            graph_operations.Javascript(params("filter"))),
+          params("src"),
+          params("dst"),
+          params("vAttr")))
+      FEStatus.success
+    }
+  }
+
   registerOperation(FindMaxCliques)
   object FindMaxCliques extends FEOperation {
-    val title = "Find maximal cliques"
+    val title = "Maximal cliques"
     val parameters = Seq(
       Param("vs", "Vertex set", kind = "vertex-set"),
       Param("es", "Edge bundle", kind = "edge-bundle"),
@@ -50,6 +102,73 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       manager.apply(graph_operations.FindMaxCliques(params("min").toInt),
         'vsIn -> manager.vertexSet(params("vs").asUUID),
         'esIn -> manager.edgeBundle(params("es").asUUID))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(SetOverlap)
+  object SetOverlap extends FEOperation {
+    val title = "Set overlaps (complete, regular)"
+    val parameters = Seq(
+      Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
+      Param("min", "Minimum overlap size", defaultValue = "3"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(graph_operations.SetOverlap(params("min").toInt),
+        'links -> manager.edgeBundle(params("links").asUUID))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(UniformOverlapForCC)
+  object UniformOverlapForCC extends FEOperation {
+    val title = "Set overlaps (for connected components, regular)"
+    val parameters = Seq(
+      Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
+      Param("min", "Minimum overlap size", defaultValue = "3"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(graph_operations.UniformOverlapForCC(params("min").toInt),
+        'links -> manager.edgeBundle(params("links").asUUID))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(InfocomOverlapForCC)
+  object InfocomOverlapForCC extends FEOperation {
+    val title = "Set overlaps (for connected components, infocom)"
+    val parameters = Seq(
+      Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
+      Param("thr", "Adjacency threshold of infocom overlap function", defaultValue = "0.6"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(graph_operations.InfocomOverlapForCC(params("thr").toDouble),
+        'links -> manager.edgeBundle(params("links").asUUID))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(ConnectedComponents)
+  object ConnectedComponents extends FEOperation {
+    val title = "Connected components"
+    val parameters = Seq(
+      Param("vs", "Vertex set", kind = "vertex-set"),
+      Param("es", "Edge bundle", kind = "edge-bundle"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(graph_operations.ConnectedComponents(),
+        'vs -> manager.vertexSet(params("vs").asUUID),
+        'es -> manager.edgeBundle(params("es").asUUID))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(ConcatenateBundles)
+  object ConcatenateBundles extends FEOperation {
+    val title = "Concatenate edge bundles, weighted"
+    val parameters = Seq(
+      Param("wAB", "Edge weight A->B", kind = "multi-edge-attribute"),
+      Param("wBC", "Edge weight B->C", kind = "multi-edge-attribute"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(graph_operations.ConcatenateBundles(),
+        'weightsAB -> manager.edgeAttribute(params("wAB").asUUID),
+        'weightsBC -> manager.edgeAttribute(params("wBC").asUUID))
       FEStatus.success
     }
   }
@@ -71,7 +190,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
   registerOperation(ExportCSVVertices)
   object ExportCSVVertices extends FEOperation {
-    val title = "Export vertices to CSV"
+    val title = "Export vertex attributes to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
       Param("labels", "Labels (comma-separated)"),
@@ -99,7 +218,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
   registerOperation(ExportCSVEdges)
   object ExportCSVEdges extends FEOperation {
-    val title = "Export edges to CSV"
+    val title = "Export edge attributes to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
       Param("labels", "Labels (comma-separated)"),
