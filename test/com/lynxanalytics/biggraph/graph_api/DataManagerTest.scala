@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_api
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
+import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
   test("We can obtain a simple new graph") {
