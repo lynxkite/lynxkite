@@ -19,7 +19,7 @@ class SetOverlapForCCTest extends FunSuite with TestGraphOperation {
 
   test("Check for a few random sets") {
     val rnd = new Random(0)
-    val trials = 20
+    val trials = 2 // Increase when you need a more thorough test.
     for (i <- (0 until trials)) {
       val eSize = rnd.nextInt(100)
       val vSize = rnd.nextInt(30) + 1
