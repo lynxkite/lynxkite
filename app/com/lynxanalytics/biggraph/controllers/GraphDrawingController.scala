@@ -74,6 +74,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   val metaManager = env.metaGraphManager
   val dataManager = env.dataManager
 
+  def sampleAttribute(sampled: VertexSet,
+                      attribute: VertexAttribute[Double]): VertexAttribute[Double] =
+    metaManager.apply(
+      graph_operations.SampledDoubleVertexAttribute(),
+      'attribute -> attribute,
+      'sampled -> sampled).outputs.vertexAttributes('sampled_attribute).runtimeSafeCast[Double]
+
   def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     if (request.mode != "bucketed") return ???
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
@@ -94,7 +101,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
       xMin = min
       xMax = max
-      inputs ++= MetaDataSet(Map('xAttribute -> attribute))
+      inputs ++= MetaDataSet(Map('xAttribute -> sampleAttribute(sampled, attribute)))
     }
     if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute =
@@ -102,7 +109,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
       yMin = min
       yMax = max
-      inputs ++= MetaDataSet(Map('yAttribute -> attribute))
+      inputs ++= MetaDataSet(Map('yAttribute -> sampleAttribute(sampled, attribute)))
     }
     val op = graph_operations.VertexBucketGrid(
       request.xNumBuckets, request.yNumBuckets, xMin, xMax, yMin, yMax)

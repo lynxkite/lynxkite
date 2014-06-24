@@ -4,14 +4,21 @@ angular.module('biggraph')
   .controller('MetaGraphViewCtrl', function ($scope, $resource, $modal, $location) {
     $scope.alerts = [];
     $scope.closeAlert = function(index) { $scope.alerts.splice(index, 1); };
+    $scope.deepWatch = function(expression, fn) { $scope.$watch(expression, fn, true); };
 
     var defaultState = {
-      leftVS: undefined,
-      leftEB: undefined,
-      rightVSId: undefined,
-      rightEBId: undefined,
-      leftToRightPath: undefined
+      leftToRightPath: undefined,
+      showGraph: false,
+      left: {
+        vs: undefined,
+        filters: {}
+      },
+      right: {
+        vs: undefined,
+        filters: {}
+      },
     };
+    $scope.state = defaultState;
 
     $scope.left = {};
     $scope.right = {};
@@ -19,7 +26,7 @@ angular.module('biggraph')
     $scope.left.other = $scope.right;
     $scope.right.other = $scope.left;
 
-    $scope.$watch(
+    $scope.deepWatch(
       function() { return $location.search(); },
       function() {
         if (!$location.search().q) {
@@ -27,10 +34,9 @@ angular.module('biggraph')
         } else {
           $scope.state = JSON.parse($location.search().q);
         }
-      },
-      true /* compare by equality rather than identity */);
+      });
     
-    $scope.$watch(
+    $scope.deepWatch(
       'state',
       function() {
         // Update URL.
@@ -38,9 +44,8 @@ angular.module('biggraph')
         s.q = JSON.stringify($scope.state);
         $location.search(s);
         // Update graph view.
-        if ($scope.showGraph) { loadGraphView(); }
-      },
-      true /* compare by equality rather than identity */);
+        loadGraphView();
+      });
 
     var VertexSet = $resource('/ajax/vertexSet');
     function loadVertexSet(id) {
@@ -48,9 +53,10 @@ angular.module('biggraph')
     }
 
     $scope.$watch(
-      'state.leftVS',
+      'state.left.vs',
       function() {
-        var leftVS = $scope.state.leftVS;
+        var leftVS = $scope.state.left.vs;
+        $scope.left.vertexSet = leftVS;
         if (leftVS !== undefined) {
           $scope.left.data = loadVertexSet(leftVS.id);
         } else {
@@ -58,9 +64,10 @@ angular.module('biggraph')
         }
       });
     $scope.$watch(
-      'state.rightVS',
+      'state.right.vs',
       function() {
-        var rightVS = $scope.state.rightVS;
+        var rightVS = $scope.state.right.vs;
+        $scope.right.vertexSet = rightVS;
         if (rightVS !== undefined) {
           $scope.right.data = loadVertexSet(rightVS.id);
         } else {
@@ -68,11 +75,46 @@ angular.module('biggraph')
         }
       });
 
-    $scope.$watch('showGraph', function() {
-      if ($scope.showGraph) { loadGraphView(); }
-    });
+    $scope.deepWatch('state', loadGraphView);
     function loadGraphView() {
-      $scope.graphView = $resource('/ajax/bucketed').get(); // TODO: parameters.
+      if (!$scope.state.showGraph) { return; }
+      var sides = [];
+      if ($scope.state.left.vs !== undefined) { sides.push($scope.state.left); }
+      if ($scope.state.right.vs !== undefined) { sides.push($scope.state.right); }
+      if (sides.length === 0) { return; }
+      var q = { vertexSets: [], edgeBundles: [] };
+      for (var i = 0; i < sides.length; ++i) {
+        var side = sides[i];
+        if (side.edgeBundle !== undefined) {
+          q.edgeBundles.push({
+            srcDiagramId: 'idx[' + i + ']',
+            dstDiagramId: 'idx[' + i + ']',
+            bundleIdSequence: [side.edgeBundle]
+          });
+        }
+        var filters = [];
+        for (var attr in side.filters) {
+          if (side.filters[attr] !== '') {
+            filters.push({ attributeId: attr, valueSpec: side.filters[attr] });
+          }
+        }
+        q.vertexSets.push({
+          vertexSetId: side.vs.id,
+          filters: filters,
+          mode: 'bucketed',
+          xBucketingAttributeId: side.xAttribute,
+          yBucketingAttributeId: side.yAttribute,
+        });
+      }
+      if ($scope.leftToRightPath !== undefined) {
+        var ids = $scope.leftToRightPath.map(function(step) { return step.eb.id; });
+        q.edgeBundles.push({
+          srcDiagramId: 'idx[0]',
+          dstDiagramId: 'idx[1]',
+          bundleIdSequence: ids
+        });
+      }
+      $scope.graphView = $resource('/ajax/bucketed').get({ q: q });
     }
 
     var StartingVertexSets = $resource('/ajax/startingVs');
@@ -151,11 +193,26 @@ angular.module('biggraph')
       $scope.state.leftToRightPath = undefined;
     };
 
+    $scope.left.state = $scope.state.left;
+    $scope.right.state = $scope.state.right;
+    $scope.setState = function(side, setting, value) {
+      if (side.state[setting] === value) {
+        // Clicking the same setting again turns it off.
+        delete side.state[setting];
+      } else {
+        $scope.state.showGraph = true;
+        side.state[setting] = value;
+      }
+    };
+
+    $scope.left.oppositeName = 'right';
+    $scope.right.oppositeName = 'left';
+
     $scope.left.setVS = function(id) {
-      $scope.state.leftVS = { id: id };
+      $scope.state.left.vs = { id: id };
     };
     $scope.right.setVS = function(id) {
-      $scope.state.rightVS = { id: id };
+      $scope.state.right.vs = { id: id };
     };
 
     function setNewVS(side) {
