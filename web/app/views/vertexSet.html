@@ -8,7 +8,8 @@
           ng-click="setState(side, 'xAttribute', attr.id)">Graph on X</button>
       <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().yAttribute === attr.id }"
           ng-click="setState(side, 'yAttribute', attr.id)">Graph on Y</button>
-      <input class="form-control filter" placeholder="filter" ng-model="side.state().filters[attr.id]">
+      <input class="form-control filter" placeholder="filter" ng-model="side.state().filters[attr.id]"
+          ng-model-options="{ updateOn: 'blur' }">
     </div>
     <h6 ng-show="side.data.localEdges">Local Edge Bundles</h6>
     <ul class="bundles">
@@ -27,7 +28,7 @@
     <h6 ng-show="side.data.inEdges">Incoming Edge Bundles</h6>
     <ul class="bundles">
       <li class="bundle token" ng-repeat="bundle in side.data.inEdges">
-        {{bundle.title}} &lt;== {{bundle.source.title}}
+        {{bundle.title}} &#x2b05; {{bundle.source.title}}
         <button class="btn btn-default" ng-click="side.followEB(bundle, false)">Follow</button>
         <button class="btn btn-default" ng-click="side.showEB(bundle, true)">Show source on {{side.oppositeName}}</button>
       </li>
@@ -35,7 +36,7 @@
     <h6 ng-show="side.data.outEdges">Outgoing Edge Bundles</h6>
     <ul class="bundles">
       <li class="bundle token" ng-repeat="bundle in side.data.outEdges">
-        {{bundle.title}} ==&gt; {{bundle.destination.title}}
+        {{bundle.title}} &#x27a1; {{bundle.destination.title}}
         <button class="btn btn-default" ng-click="side.followEB(bundle, true)">Follow</button>
         <button class="btn btn-default" ng-click="side.showEB(bundle, false)">Show destination on {{side.oppositeName}}</button>
       </li>
