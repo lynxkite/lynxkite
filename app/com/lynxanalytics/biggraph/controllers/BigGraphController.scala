@@ -160,23 +160,21 @@ class BigGraphController(env: BigGraphEnvironment) {
     val local = in & out
 
     // TODO: save RDDs in DataManager execute instead
-    if (scala.util.Properties.envOrElse("SAVE_RDDS", "false") == "true") {
-      val dataManager = env.dataManager
-      dataManager.saveToDisk(vs)
-      in.filter(manager.isVisible(_)).foreach { e =>
-        dataManager.saveToDisk(e)
-        dataManager.saveToDisk(e.srcVertexSet)
-        manager.attributes(e).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
-        manager.attributes(e.srcVertexSet).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
-      }
-      out.filter(manager.isVisible(_)).foreach { e =>
-        dataManager.saveToDisk(e)
-        dataManager.saveToDisk(e.dstVertexSet)
-        manager.attributes(e).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
-        manager.attributes(e.dstVertexSet).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
-      }
-      manager.attributes(vs).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
+    val dataManager = env.dataManager
+    dataManager.saveToDisk(vs)
+    in.filter(manager.isVisible(_)).foreach { e =>
+      dataManager.saveToDisk(e)
+      dataManager.saveToDisk(e.srcVertexSet)
+      manager.attributes(e).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
+      manager.attributes(e.srcVertexSet).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
     }
+    out.filter(manager.isVisible(_)).foreach { e =>
+      dataManager.saveToDisk(e)
+      dataManager.saveToDisk(e.dstVertexSet)
+      manager.attributes(e).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
+      manager.attributes(e.dstVertexSet).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
+    }
+    manager.attributes(vs).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
 
     FEVertexSet(
       id = vs.gUID.toString,
