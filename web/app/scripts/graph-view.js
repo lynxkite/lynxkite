@@ -43,7 +43,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
-      this.addEdges(e.edges, vertices[e.srcs], vertices[e.dsts]);
+      this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
     }
   };
 

@@ -4,10 +4,11 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 
 class EdgeBundleSampleTest extends FunSuite with TestGraphOperation {
   test("No sampling test") {
-    val graph = helper.apply(CreateExampleGraphOperation())
+    val graph = helper.apply(ExampleGraph())
     val bs = new EdgeBundleSample(
       graph.edgeBundles('edges),
       10000,
