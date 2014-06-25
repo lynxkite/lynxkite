@@ -31,12 +31,13 @@
   <ul>
     <li class="bundle token" ng-repeat="step in state.leftToRightPath">
       <button ng-if="!$first" class="btn btn-default" ng-click="cutPathLeft($index)">
-        --&gt;|
+        &#x232b;
       </button>
-      {{step.eb.title}} [{{step.eb.source.title}} =&gt; {{step.eb.destination.title}}]
-      <br>Points: <span ng-if="step.pointsLeft">LEFT</span><span ng-if="!step.pointsLeft">RIGHT</span>
+      {{step.bundle.title}} [{{step.bundle.source.title}}
+      <span ng-if="step.pointsLeft">&#x2b05;</span><span ng-if="!step.pointsLeft">&#x27a1;</span>
+      {{step.bundle.destination.title}}]
       <button ng-if="!$last" class="btn btn-default" ng-click="cutPathRight($index)">
-        |&lt;--
+        &#x2326;
       </button>
     </li>
   </ul>
