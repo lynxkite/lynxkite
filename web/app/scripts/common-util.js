@@ -16,7 +16,7 @@ var COMMON_UTIL = {
     if (minmax.span > 0) {
       return (x - minmax.min) / minmax.span - 0.5;
     } else {
-      return 0.0
+      return 0.0;
     }
   },
 };

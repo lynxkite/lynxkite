@@ -9,31 +9,17 @@ import com.lynxanalytics.biggraph.graph_api
 import graph_api._
 import graph_api.attributes._
 
-case class UpperBoundFilter(attributeName: String, bound: Double) extends GraphOperation {
-  def isSourceListValid(sources: Seq[BigGraph]) =
-    (sources.size == 1) && sources.head.vertexAttributes.canRead[Double](attributeName)
+case class UpperBoundFilter(bound: Double) extends MetaGraphOperation {
+  def signature = newSignature
+    .inputVertexAttribute[Double]('attr, 'vs, create = true)
+    .outputVertexSet('fvs)
+    .outputEdgeBundle('projection, 'vs -> 'fvs)
 
-  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
-    val sourceGraph = target.sources.head
-    val sourceData = manager.obtainData(sourceGraph)
-    val idx = sourceGraph.vertexAttributes.readIndex[Double](attributeName)
-    val vertices = sourceData.vertices.filter { case (id, attr) => attr(idx) <= bound }
-    val vertexPartitioner =
-      vertices.partitioner.getOrElse(manager.runtimeContext.defaultPartitioner)
-    val vertexIds = vertices.mapValues { _ => () }.partitionBy(vertexPartitioner)
-    val edges = sourceData.edges
-      .map(e => (e.srcId, e)).partitionBy(vertexPartitioner)
-      .join(vertexIds)
-      .map { case (_, (e, _)) => (e.dstId, e) }.partitionBy(vertexPartitioner)
-      .join(vertexIds)
-      .map { case (_, (e, _)) => e }
-    return new SimpleGraphData(target, vertices, edges)
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val attr = inputs.vertexAttributes('attr).runtimeSafeCast[Double].rdd
+    val fattr = attr.filter { case (id, v) => v <= bound }
+    outputs.putVertexSet('fvs, fattr.mapValues(_ => ()))
+    val projection = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
+    outputs.putEdgeBundle('projection, projection)
   }
-
-  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
-
-  def edgeAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
-
-  override def targetProperties(sources: Seq[BigGraph]): BigGraphProperties =
-    sources.head.properties
 }
