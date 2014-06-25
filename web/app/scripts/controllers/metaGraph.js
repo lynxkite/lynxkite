@@ -92,8 +92,8 @@ angular.module('biggraph')
           q.edgeBundles.push({
             srcDiagramId: 'idx[' + i + ']',
             dstDiagramId: 'idx[' + i + ']',
-	    srcIdx: i,
-	    dstIdx: i,
+            srcIdx: i,
+            dstIdx: i,
             bundleIdSequence: [side.edgeBundle.id]
           });
         }
@@ -112,18 +112,20 @@ angular.module('biggraph')
           xNumBuckets: side.xAttribute === undefined ? 1 : 5,
           yNumBuckets: side.yAttribute === undefined ? 1 : 5,
           // Sampled view parameters.
-          radius: 0, centralVertexId: '', sampleSmearEdgeBundleId: '',
+          radius: 0,
+          centralVertexId: '',
+          sampleSmearEdgeBundleId: '',
         });
       }
       if ($scope.state.leftToRightPath !== undefined) {
-	// TODO: we will need to communicate bundle directions here and flip them
-	// back in the backend if necessary.
+        // TODO: we will need to communicate bundle directions here and flip them
+        // back in the backend if necessary.
         var ids = $scope.state.leftToRightPath.map(function(step) { return step.eb.id; });
         q.edgeBundles.push({
           srcDiagramId: 'idx[0]',
           dstDiagramId: 'idx[1]',
-	  srcIdx: 0,
-	  dstIdx: 1,
+          srcIdx: 0,
+          dstIdx: 1,
           bundleIdSequence: ids
         });
       }
