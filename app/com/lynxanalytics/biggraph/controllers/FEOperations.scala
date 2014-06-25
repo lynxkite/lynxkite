@@ -17,7 +17,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val parameters = Seq(
       Param("size", "Vertex set size"))
     def apply(params: Map[String, String]) = {
-      manager.apply(graph_operations.CreateVertexSet(params("size").toInt))
+      manager.show(graph_operations.CreateVertexSet(params("size").toInt))
       FEStatus.success
     }
   }
@@ -31,7 +31,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("density", "density", defaultValue = "0.5"),
       Param("seed", "Seed", defaultValue = "0"))
     def apply(params: Map[String, String]) = {
-      manager.apply(
+      manager.show(
         graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat),
         'vsSrc -> manager.vertexSet(params("vsSrc").asUUID),
         'vsDst -> manager.vertexSet(params("vsDst").asUUID))
@@ -50,7 +50,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("dst", "Destination ID field name (without quotation marks)"),
       Param("filter", "(optional) Filtering expression (use JavaScript syntax, equation must evaluate to true/false)"))
     def apply(params: Map[String, String]) = {
-      manager.apply(
+      manager.show(
         graph_operations.ImportEdgeListWithNumericIDs(
           graph_operations.CSV(
             Filename.fromString(params("data")),
@@ -75,7 +75,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("vAttr", "Vertex attribute field name (without quotation marks)"),
       Param("filter", "(optional) Filtering expression (use JavaScript syntax, equation must evaluate to True/False)"))
     def apply(params: Map[String, String]) = {
-      manager.apply(
+      manager.show(
         graph_operations.ImportEdgeListWithStringIDs(
           graph_operations.CSV(
             Filename.fromString(params("data")),
@@ -96,7 +96,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("es", "Edge bundle", kind = "edge-bundle"),
       Param("min", "Minimum clique size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
-      manager.apply(graph_operations.FindMaxCliques(params("min").toInt),
+      manager.show(graph_operations.FindMaxCliques(params("min").toInt),
         'esIn -> manager.edgeBundle(params("es").asUUID))
       FEStatus.success
     }
@@ -109,7 +109,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
       Param("min", "Minimum overlap size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
-      manager.apply(graph_operations.SetOverlap(params("min").toInt),
+      manager.show(graph_operations.SetOverlap(params("min").toInt),
         'links -> manager.edgeBundle(params("links").asUUID))
       FEStatus.success
     }
@@ -122,7 +122,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
       Param("min", "Minimum overlap size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
-      manager.apply(graph_operations.UniformOverlapForCC(params("min").toInt),
+      manager.show(graph_operations.UniformOverlapForCC(params("min").toInt),
         'links -> manager.edgeBundle(params("links").asUUID))
       FEStatus.success
     }
@@ -135,7 +135,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
       Param("thr", "Adjacency threshold of infocom overlap function", defaultValue = "0.6"))
     def apply(params: Map[String, String]) = {
-      manager.apply(graph_operations.InfocomOverlapForCC(params("thr").toDouble),
+      manager.show(graph_operations.InfocomOverlapForCC(params("thr").toDouble),
         'links -> manager.edgeBundle(params("links").asUUID))
       FEStatus.success
     }
@@ -147,7 +147,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val parameters = Seq(
       Param("es", "Edge bundle", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
-      manager.apply(graph_operations.ConnectedComponents(),
+      manager.show(graph_operations.ConnectedComponents(),
         'es -> manager.edgeBundle(params("es").asUUID))
       FEStatus.success
     }
@@ -160,7 +160,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("wAB", "Edge weight A->B", kind = "multi-edge-attribute"),
       Param("wBC", "Edge weight B->C", kind = "multi-edge-attribute"))
     def apply(params: Map[String, String]) = {
-      manager.apply(graph_operations.ConcatenateBundles(),
+      manager.show(graph_operations.ConcatenateBundles(),
         'weightsAB -> manager.edgeAttribute(params("wAB").asUUID),
         'weightsBC -> manager.edgeAttribute(params("wBC").asUUID))
       FEStatus.success
@@ -175,9 +175,22 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("v", "Value", defaultValue = "1"))
     def apply(params: Map[String, String]) = {
       val edges = manager.edgeBundle(params("eb").asUUID)
-      manager.apply(
+      manager.show(
         graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
         'edges -> edges, 'ignoredSrc -> edges.srcVertexSet, 'ignoredDst -> edges.dstVertexSet)
+      FEStatus.success
+    }
+  }
+
+  registerOperation(ReverseEdges)
+  object ReverseEdges extends FEOperation {
+    val title = "Reverse edge direction"
+    val parameters = Seq(
+      Param("eb", "Edge bundle", kind = "edge-bundle"))
+    def apply(params: Map[String, String]) = {
+      manager.show(
+        graph_operations.ReverseEdges(),
+        'esAB -> manager.edgeBundle(params("eb").asUUID))
       FEStatus.success
     }
   }
@@ -188,7 +201,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val parameters = Seq(
       Param("w", "Weighted edges", kind = "edge-attribute"))
     def apply(params: Map[String, String]) = {
-      manager.apply(
+      manager.show(
         graph_operations.WeightedOutDegree(),
         'weights -> manager.edgeAttribute(params("w").asUUID))
       FEStatus.success
@@ -260,15 +273,16 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
     def apply(params: Map[String, String]) = {
       val attr = manager.vertexAttribute(params("attr").asUUID).runtimeSafeCast[Double]
-      val filter = manager.apply(
+      val filter = manager.show(
         graph_operations.UpperBoundFilter(params("max").toDouble),
         'attr -> attr)
       val orig = attr.vertexSet
       val filtered = filter.outputs.vertexSets('fvs)
-      // Filter all the edge bundles too.
-      for (eb <- manager.incomingBundles(orig) ++ manager.outgoingBundles(orig)) {
+      val edgeBundles = (manager.incomingBundles(orig) ++ manager.outgoingBundles(orig))
+      // Filter all the visible edge bundles too.
+      for (eb <- edgeBundles.filter(manager.isVisible(_))) {
         def f(vs: VertexSet) = if (vs == orig) filtered else vs
-        manager.apply(
+        manager.show(
           graph_operations.InducedEdgeBundle(),
           'input -> eb, 'srcSubset -> f(eb.srcVertexSet), 'dstSubset -> f(eb.dstVertexSet))
       }
@@ -281,7 +295,38 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val title = "Example Graph"
     val parameters = Seq()
     def apply(params: Map[String, String]) = {
-      manager.apply(graph_operations.ExampleGraph())
+      manager.show(graph_operations.ExampleGraph())
+      FEStatus.success
+    }
+  }
+
+  registerOperation(AttributeConversion)
+  object AttributeConversion extends FEOperation {
+    val title = "Convert attributes"
+    val parameters = Seq(
+      Param("vattrs", "Vertex attributes", kind = "multi-vertex-attribute"),
+      Param("eattrs", "Edge attributes", kind = "multi-edge-attribute"),
+      Param("type", "Convert into", options = Seq(UIValue("string", "string"), UIValue("double", "double"))))
+
+    def apply(params: Map[String, String]): FEStatus = {
+      val vattrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")
+      val eattrs: Seq[String] = if (params("eattrs").isEmpty) Nil else params("eattrs").split(",")
+      val vas = vattrs.map(s => manager.vertexAttribute(s.asUUID))
+      val eas = eattrs.map(s => manager.edgeAttribute(s.asUUID))
+      val typ = params("type")
+      if (typ == "string") {
+        val okVAs = vas.filter(!_.is[String])
+        val okEAs = eas.filter(!_.is[String])
+        if (okVAs.isEmpty && okEAs.isEmpty) return FEStatus.failure("Nothing to convert.")
+        for (va <- okVAs) manager.show(graph_operations.VertexAttributeToString(), 'attr -> va)
+        for (ea <- okEAs) manager.show(graph_operations.EdgeAttributeToString(), 'attr -> ea)
+      } else if (typ == "double") {
+        val okVAs = vas.filter(_.is[String])
+        val okEAs = eas.filter(_.is[String])
+        if (okVAs.isEmpty && okEAs.isEmpty) return FEStatus.failure("Nothing to convert.")
+        for (va <- okVAs) manager.show(graph_operations.VertexAttributeToDouble(), 'attr -> va)
+        for (ea <- okEAs) manager.show(graph_operations.EdgeAttributeToDouble(), 'attr -> ea)
+      } else assert(false, s"Unexpected type: $typ")
       FEStatus.success
     }
   }
