@@ -7,20 +7,27 @@ import com.lynxanalytics.biggraph.graph_api._
 
 case class VertexSetIntersection(numVertexSets: Int) extends MetaGraphOperation {
   assert(numVertexSets >= 1)
+  import VertexSetIntersection.vsName
 
   def signature = {
     var sig = newSignature
-    (0 until numVertexSets).foreach(i => sig = sig.inputVertexSet(
-      VertexSetIntersection.vsName(i)))
+    for (i <- (0 until numVertexSets)) {
+      sig = sig.inputVertexSet(vsName(i))
+    }
     sig.outputVertexSet('intersection)
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    var res = inputs.vertexSets('vs0).rdd
-    (1 until numVertexSets).foreach { i =>
-      res = res.join(inputs.vertexSets(VertexSetIntersection.vsName(i)).rdd).mapValues(_ => ())
-    }
-    outputs.putVertexSet('intersection, res)
+    //var res = inputs.vertexSets('vs0).rdd
+    //for (i <- (1 until numVertexSets)) {
+    //  res = res.join(inputs.vertexSets(vsName(i)).rdd).mapValues(_ => ())
+    //}
+    //outputs.putVertexSet('intersection, res)
+    outputs.putVertexSet(
+      'intersection,
+      (0 until numVertexSets)
+        .map(i => inputs.vertexSets(vsName(i)).rdd)
+        .reduce((rdd1, rdd2) => rdd1.join(rdd2).mapValues(_ => ())))
   }
 }
 object VertexSetIntersection {
