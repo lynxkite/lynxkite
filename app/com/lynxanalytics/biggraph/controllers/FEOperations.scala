@@ -182,6 +182,19 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
+  registerOperation(ReverseEdges)
+  object ReverseEdges extends FEOperation {
+    val title = "Reverse edge direction"
+    val parameters = Seq(
+      Param("eb", "Edge bundle", kind = "edge-bundle"))
+    def apply(params: Map[String, String]) = {
+      manager.apply(
+        graph_operations.ReverseEdges(),
+        'esAB -> manager.edgeBundle(params("eb").asUUID))
+      FEStatus.success
+    }
+  }
+
   registerOperation(WeightedOutDegree)
   object WeightedOutDegree extends FEOperation {
     val title = "Weighted out degree"
