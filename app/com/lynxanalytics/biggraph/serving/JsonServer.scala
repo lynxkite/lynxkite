@@ -4,6 +4,7 @@ import play.api.mvc
 import play.api.libs.json
 import play.api.libs.json._
 import com.lynxanalytics.biggraph._
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.functional.syntax.toContraFunctorOps
@@ -15,7 +16,10 @@ class JsonServer extends mvc.Controller {
     mvc.Action(parse.json) {
       request =>
         request.body.validate[I].fold(
-          errors => JsonBadRequest("Error", "Bad JSON", errors),
+          errors => {
+            log.error(errors.toString)
+            JsonBadRequest("Error", "Bad JSON", errors)
+          },
           result => Ok(json.Json.toJson(action(result))))
     }
   }
@@ -26,7 +30,10 @@ class JsonServer extends mvc.Controller {
         .format(action.getClass.toString(), key))
       request.getQueryString(key) match {
         case Some(s) => Json.parse(s).validate[I].fold(
-          errors => JsonBadRequest("Error", "Bad JSON", errors),
+          errors => {
+            log.error(errors.toString)
+            JsonBadRequest("Error", "Bad JSON", errors)
+          },
           result => Ok(json.Json.toJson(action(result))))
         case None => BadRequest(json.Json.obj(
           "status" -> "Error",
@@ -84,6 +91,18 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rSaveGraphRequest = json.Json.reads[SaveGraphRequest]
 
+  implicit val rVertexAttributeFilter = json.Json.reads[VertexAttributeFilter]
+  implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
+  implicit val wFEVertex = json.Json.writes[FEVertex]
+  implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]
+
+  implicit val rEdgeDiagramSpec = json.Json.reads[EdgeDiagramSpec]
+  implicit val wFEEdge = json.Json.writes[FEEdge]
+  implicit val wEdgeDiagramResponse = json.Json.writes[EdgeDiagramResponse]
+
+  implicit val rFEGraphRequest = json.Json.reads[FEGraphRequest]
+  implicit val wFEGraphRespone = json.Json.writes[FEGraphRespone]
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
@@ -106,4 +125,9 @@ object ProductionJsonServer extends JsonServer {
 
   val persistenceController = new PersistenceController(BigGraphProductionEnvironment)
   def saveGraph = jsonGet(persistenceController.saveGraph)
+
+  val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
+  def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
+  def edgeDiagram = jsonGet(drawingController.getEdgeDiagram)
+  def complexView = jsonGet(drawingController.getComplexView)
 }

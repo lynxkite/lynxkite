@@ -4,10 +4,11 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 
 class CSVExportTest extends FunSuite with TestGraphOperation {
   test("We can export attributes") {
-    val sampleOut = helper.apply(CreateExampleGraphOperation())
+    val sampleOut = helper.apply(ExampleGraph())
     assert(CSVExport.exportVertexAttributes(
       Seq(sampleOut.vertexAttributes('name), sampleOut.vertexAttributes('age)),
       Seq("name", "age"),
@@ -30,7 +31,7 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
   }
 
   test("We can save a CSV to a dir") {
-    val sampleOut = helper.apply(CreateExampleGraphOperation())
+    val sampleOut = helper.apply(ExampleGraph())
     val cSVData = CSVExport.exportVertexAttributes(
       Seq(sampleOut.vertexAttributes('name), sampleOut.vertexAttributes('age)),
       Seq("name", "age"),
