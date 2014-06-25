@@ -94,7 +94,7 @@ angular.module('biggraph')
             dstDiagramId: 'idx[' + i + ']',
             srcIdx: i,
             dstIdx: i,
-            bundleIdSequence: [side.edgeBundle.id]
+            bundleSequence: [{ bundle: side.edgeBundle.id, reversed: false }]
           });
         }
         var filters = [];
@@ -118,15 +118,12 @@ angular.module('biggraph')
         });
       }
       if ($scope.state.leftToRightPath !== undefined) {
-        // TODO: we will need to communicate bundle directions here and flip them
-        // back in the backend if necessary.
-        var ids = $scope.state.leftToRightPath.map(function(step) { return step.eb.id; });
         q.edgeBundles.push({
           srcDiagramId: 'idx[0]',
           dstDiagramId: 'idx[1]',
           srcIdx: 0,
           dstIdx: 1,
-          bundleIdSequence: ids
+          bundleSequence: $scope.state.leftToRightPath,
         });
       }
       $scope.graphView = $resource('/ajax/complexView').get({ q: q });
@@ -244,10 +241,10 @@ angular.module('biggraph')
     $scope.right.setNewVS = setNewVS($scope.right);
 
     $scope.left.addEBToPath = function(eb, pointsTowardsMySide) {
-      $scope.state.leftToRightPath.unshift({eb: eb, pointsLeft: pointsTowardsMySide});
+      $scope.state.leftToRightPath.unshift({bundle: eb.id, reversed: pointsTowardsMySide});
     };
     $scope.right.addEBToPath = function(eb, pointsTowardsMySide) {
-      $scope.state.leftToRightPath.push({eb: eb, pointsLeft: !pointsTowardsMySide});
+      $scope.state.leftToRightPath.push({bundle: eb.id, reversed: !pointsTowardsMySide});
     };
 
     function followEB(side) {
