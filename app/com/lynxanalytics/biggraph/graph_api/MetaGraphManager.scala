@@ -26,6 +26,20 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(gUID)
   }
 
+  // Marks a set of entities for frontend visibility.
+  def show(operation: MetaGraphOperation,
+           inputs: (Symbol, MetaGraphEntity)*): MetaGraphOperationInstance = {
+    val inst = apply(operation, inputs: _*)
+    show(inst.outputs)
+    return inst
+  }
+  def show(mds: MetaDataSet): Unit = show(mds.all.values.toSeq)
+  def show(entities: Seq[MetaGraphEntity]): Unit = {
+    visibles ++= entities.map(_.gUID)
+    saveVisibles()
+  }
+  def isVisible(entity: MetaGraphEntity): Boolean = visibles.contains(entity.gUID)
+
   def allVertexSets: Set[VertexSet] = entities.values.collect { case e: VertexSet => e }.toSet
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
   def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
@@ -52,6 +66,7 @@ class MetaGraphManager(val repositoryPath: String) {
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
+  private val visibles = mutable.Set[UUID]()
 
   private val outgoingBundlesMap =
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
@@ -103,6 +118,14 @@ class MetaGraphManager(val repositoryPath: String) {
     dumpFile.renameTo(finalFile)
   }
 
+  private def saveVisibles(): Unit = {
+    val dumpFile = new File(s"$repositoryPath/dump-visibles")
+    val stream = new ObjectOutputStream(new FileOutputStream(dumpFile))
+    stream.writeObject(visibles)
+    stream.close()
+    dumpFile.renameTo(new File(s"$repositoryPath/visibles"))
+  }
+
   private def initializeFromDisk(): Unit = {
     val repo = new File(repositoryPath)
     if (!repo.exists) repo.mkdirs
@@ -118,6 +141,17 @@ class MetaGraphManager(val repositoryPath: String) {
         // TODO(xandrew): Be more selective here...
         case e: Exception =>
           log.error(s"Error loading operation from file: $fileName", e)
+      }
+    }
+    visibles.clear
+    val visiblesFile = new File(repo, "visibles")
+    if (visiblesFile.exists) {
+      log.info(s"Loading visible set.")
+      try {
+        val stream = new ObjectInputStream(new FileInputStream(s"$repositoryPath/visibles"))
+        visibles ++= stream.readObject().asInstanceOf[mutable.Set[UUID]]
+      } catch {
+        case e: Exception => log.error(s"Error loading visible set:", e)
       }
     }
   }
