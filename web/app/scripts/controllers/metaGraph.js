@@ -279,7 +279,7 @@ angular.module('biggraph')
     $scope.cutPathLeft = function(idx) {
       $scope.state.leftToRightPath.splice(0, idx);
       var firstStep = $scope.state.leftToRightPath[0];
-      if (firstStep.pointsLeft) {
+      if (firstStep.reversed) {
         $scope.left.setVS(firstStep.eb.destination.id);
       } else {
         $scope.left.setVS(firstStep.eb.source.id);
@@ -288,7 +288,7 @@ angular.module('biggraph')
     $scope.cutPathRight = function(idx) {
       $scope.state.leftToRightPath.splice(idx + 1);
       var lastStep = $scope.state.leftToRightPath[$scope.state.leftToRightPath.length - 1];
-      if (lastStep.pointsLeft) {
+      if (lastStep.reversed) {
         $scope.right.setVS(lastStep.eb.source.id);
       } else {
         $scope.right.setVS(lastStep.eb.destination.id);
