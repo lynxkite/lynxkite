@@ -118,12 +118,15 @@ angular.module('biggraph')
         });
       }
       if ($scope.state.leftToRightPath !== undefined) {
+        var bundles = $scope.state.leftToRightPath.map(function(step) {
+          return { bundle: step.bundle.id, reversed: step.pointsLeft };
+        });
         q.edgeBundles.push({
           srcDiagramId: 'idx[0]',
           dstDiagramId: 'idx[1]',
           srcIdx: 0,
           dstIdx: 1,
-          bundleSequence: $scope.state.leftToRightPath,
+          bundleSequence: bundles,
         });
       }
       $scope.graphView = $resource('/ajax/complexView').get({ q: q });
@@ -241,10 +244,10 @@ angular.module('biggraph')
     $scope.right.setNewVS = setNewVS($scope.right);
 
     $scope.left.addEBToPath = function(bundle, pointsTowardsMySide) {
-      $scope.state.leftToRightPath.unshift({bundle: bundle.id, reversed: pointsTowardsMySide});
+      $scope.state.leftToRightPath.unshift({bundle: bundle, pointsLeft: pointsTowardsMySide});
     };
     $scope.right.addEBToPath = function(bundle, pointsTowardsMySide) {
-      $scope.state.leftToRightPath.push({bundle: bundle.id, reversed: !pointsTowardsMySide});
+      $scope.state.leftToRightPath.push({bundle: bundle, pointsLeft: !pointsTowardsMySide});
     };
 
     function followEB(side) {
@@ -279,7 +282,7 @@ angular.module('biggraph')
     $scope.cutPathLeft = function(idx) {
       $scope.state.leftToRightPath.splice(0, idx);
       var firstStep = $scope.state.leftToRightPath[0];
-      if (firstStep.reversed) {
+      if (firstStep.pointsLeft) {
         $scope.left.setVS(firstStep.bundle.destination.id);
       } else {
         $scope.left.setVS(firstStep.bundle.source.id);
@@ -288,7 +291,7 @@ angular.module('biggraph')
     $scope.cutPathRight = function(idx) {
       $scope.state.leftToRightPath.splice(idx + 1);
       var lastStep = $scope.state.leftToRightPath[$scope.state.leftToRightPath.length - 1];
-      if (lastStep.reversed) {
+      if (lastStep.pointsLeft) {
         $scope.right.setVS(lastStep.bundle.source.id);
       } else {
         $scope.right.setVS(lastStep.bundle.destination.id);
