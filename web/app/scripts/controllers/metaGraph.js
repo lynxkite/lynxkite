@@ -94,7 +94,7 @@ angular.module('biggraph')
             dstDiagramId: 'idx[' + i + ']',
             srcIdx: i,
             dstIdx: i,
-            bundleIdSequence: [side.edgeBundle.id]
+            bundleSequence: [{ bundle: side.edgeBundle.id, reversed: false }]
           });
         }
         var filters = [];
@@ -118,15 +118,15 @@ angular.module('biggraph')
         });
       }
       if ($scope.state.leftToRightPath !== undefined) {
-        // TODO: we will need to communicate bundle directions here and flip them
-        // back in the backend if necessary.
-        var ids = $scope.state.leftToRightPath.map(function(step) { return step.eb.id; });
+        var bundles = $scope.state.leftToRightPath.map(function(step) {
+          return { bundle: step.bundle.id, reversed: step.pointsLeft };
+        });
         q.edgeBundles.push({
           srcDiagramId: 'idx[0]',
           dstDiagramId: 'idx[1]',
           srcIdx: 0,
           dstIdx: 1,
-          bundleIdSequence: ids
+          bundleSequence: bundles,
         });
       }
       $scope.graphView = $resource('/ajax/complexView').get({ q: q });
@@ -243,22 +243,22 @@ angular.module('biggraph')
     $scope.left.setNewVS = setNewVS($scope.left);
     $scope.right.setNewVS = setNewVS($scope.right);
 
-    $scope.left.addEBToPath = function(eb, pointsTowardsMySide) {
-      $scope.state.leftToRightPath.unshift({eb: eb, pointsLeft: pointsTowardsMySide});
+    $scope.left.addEBToPath = function(bundle, pointsTowardsMySide) {
+      $scope.state.leftToRightPath.unshift({bundle: bundle, pointsLeft: pointsTowardsMySide});
     };
-    $scope.right.addEBToPath = function(eb, pointsTowardsMySide) {
-      $scope.state.leftToRightPath.push({eb: eb, pointsLeft: !pointsTowardsMySide});
+    $scope.right.addEBToPath = function(bundle, pointsTowardsMySide) {
+      $scope.state.leftToRightPath.push({bundle: bundle, pointsLeft: !pointsTowardsMySide});
     };
 
     function followEB(side) {
-      return function(eb, pointsTowardsMySide) {
+      return function(bundle, pointsTowardsMySide) {
         if ($scope.state.leftToRightPath !== undefined) {
-          side.addEBToPath(eb, pointsTowardsMySide);
+          side.addEBToPath(bundle, pointsTowardsMySide);
         }
         if (pointsTowardsMySide) {
-          side.setVS(eb.destination.id);
+          side.setVS(bundle.destination.id);
         } else {
-          side.setVS(eb.source.id);
+          side.setVS(bundle.source.id);
         }
       };
     }
@@ -266,13 +266,13 @@ angular.module('biggraph')
     $scope.right.followEB = followEB($scope.right);
 
     function showEB(side) {
-      return function(eb, pointsTowardsMySide) {
+      return function(bundle, pointsTowardsMySide) {
         $scope.state.leftToRightPath = [];
-        side.addEBToPath(eb, pointsTowardsMySide);
+        side.addEBToPath(bundle, pointsTowardsMySide);
         if (pointsTowardsMySide) {
-          side.other.setVS(eb.source.id);
+          side.other.setVS(bundle.source.id);
         } else {
-          side.other.setVS(eb.destination.id);
+          side.other.setVS(bundle.destination.id);
         }
       };
     }
@@ -283,18 +283,18 @@ angular.module('biggraph')
       $scope.state.leftToRightPath.splice(0, idx);
       var firstStep = $scope.state.leftToRightPath[0];
       if (firstStep.pointsLeft) {
-        $scope.left.setVS(firstStep.eb.destination.id);
+        $scope.left.setVS(firstStep.bundle.destination.id);
       } else {
-        $scope.left.setVS(firstStep.eb.source.id);
+        $scope.left.setVS(firstStep.bundle.source.id);
       }
     };
     $scope.cutPathRight = function(idx) {
       $scope.state.leftToRightPath.splice(idx + 1);
       var lastStep = $scope.state.leftToRightPath[$scope.state.leftToRightPath.length - 1];
       if (lastStep.pointsLeft) {
-        $scope.right.setVS(lastStep.eb.source.id);
+        $scope.right.setVS(lastStep.bundle.source.id);
       } else {
-        $scope.right.setVS(lastStep.eb.destination.id);
+        $scope.right.setVS(lastStep.bundle.destination.id);
       }
     };
   });
