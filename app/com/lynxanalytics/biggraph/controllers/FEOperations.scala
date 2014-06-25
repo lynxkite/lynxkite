@@ -188,7 +188,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val parameters = Seq(
       Param("eb", "Edge bundle", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
-      manager.apply(
+      manager.show(
         graph_operations.ReverseEdges(),
         'esAB -> manager.edgeBundle(params("eb").asUUID))
       FEStatus.success
