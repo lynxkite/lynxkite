@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx
 
 import com.lynxanalytics.biggraph.graph_api
 
