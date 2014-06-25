@@ -228,10 +228,10 @@ angular.module('biggraph')
     $scope.right.oppositeName = 'left';
 
     $scope.left.setVS = function(id) {
-      $scope.state.left.vs = { id: id };
+      $scope.state.left = { vs: { id: id }, filters: {} };
     };
     $scope.right.setVS = function(id) {
-      $scope.state.right.vs = { id: id };
+      $scope.state.right = { vs: { id: id }, filters: {} };
     };
 
     function setNewVS(side) {
