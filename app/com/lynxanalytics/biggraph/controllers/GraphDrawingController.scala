@@ -82,12 +82,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   val metaManager = env.metaGraphManager
   val dataManager = env.dataManager
 
-  def sampleAttribute(sampled: VertexSet,
-                      attribute: VertexAttribute[Double]): VertexAttribute[Double] =
-    metaManager.apply(
-      graph_operations.SampledDoubleVertexAttribute(),
-      'attribute -> attribute,
-      'sampled -> sampled).outputs.vertexAttributes('sampled_attribute).runtimeSafeCast[Double]
+  import graph_operations.SampledVertexAttribute.sampleAttribute
 
   def filter(sampled: VertexSet, filters: Seq[FEVertexAttributeFilter]): VertexSet = {
     if (filters.isEmpty) return sampled
@@ -124,7 +119,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       xMin = min
       xMax = max
       inputs ++= MetaDataSet(
-        Map('xAttribute -> sampleAttribute(filtered, sampleAttribute(sampled, attribute))))
+        Map('xAttribute -> sampleAttribute(
+          metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))))
     }
     if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute =
@@ -133,7 +129,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       yMin = min
       yMax = max
       inputs ++= MetaDataSet(
-        Map('yAttribute -> sampleAttribute(filtered, sampleAttribute(sampled, attribute))))
+        Map('yAttribute -> sampleAttribute(
+          metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))))
     }
     val op = graph_operations.VertexBucketGrid(
       request.xNumBuckets, request.yNumBuckets, xMin, xMax, yMin, yMax)
@@ -219,11 +216,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
     val (srcMapping, dstMapping) = tripletMapping(induced)
     val srcIdxs = mappedAttribute(
-      sampleAttribute(directVsFromOp(srcOp), srcMapping),
+      sampleAttribute(metaManager, directVsFromOp(srcOp), srcMapping),
       idxsFromInst(srcOp),
       induced)
     val dstIdxs = mappedAttribute(
-      sampleAttribute(directVsFromOp(dstOp), dstMapping),
+      sampleAttribute(metaManager, directVsFromOp(dstOp), dstMapping),
       idxsFromInst(dstOp),
       induced)
     val srcIdxsRDD = dataManager.get(srcIdxs).rdd
