@@ -251,6 +251,31 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
+  registerOperation(UpperBoundFilter)
+  object UpperBoundFilter extends FEOperation {
+    val title = "Filter by Vertex Attribute"
+    val parameters = Seq(
+      Param("attr", "Vertex Attribute", kind = "vertex-attribute"),
+      Param("max", "Upper bound"))
+
+    def apply(params: Map[String, String]) = {
+      val attr = manager.vertexAttribute(params("attr").asUUID).runtimeSafeCast[Double]
+      val filter = manager.apply(
+        graph_operations.UpperBoundFilter(params("max").toDouble),
+        'attr -> attr)
+      val orig = attr.vertexSet
+      val filtered = filter.outputs.vertexSets('fvs)
+      // Filter all the edge bundles too.
+      for (eb <- manager.incomingBundles(orig) ++ manager.outgoingBundles(orig)) {
+        def f(vs: VertexSet) = if (vs == orig) filtered else vs
+        manager.apply(
+          graph_operations.InducedEdgeBundle(),
+          'input -> eb, 'srcSubset -> f(eb.srcVertexSet), 'dstSubset -> f(eb.dstVertexSet))
+      }
+      FEStatus.success
+    }
+  }
+
   registerOperation(ExampleGraph)
   object ExampleGraph extends FEOperation {
     val title = "Example Graph"
