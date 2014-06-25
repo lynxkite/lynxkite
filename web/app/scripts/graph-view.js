@@ -102,7 +102,6 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   function Label(x, y, text) {
-    console.log(text);
     this.dom = svg.create('text', {'class': 'bucket', x: x, y: y}).text(text);
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
