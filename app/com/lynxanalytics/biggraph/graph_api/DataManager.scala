@@ -6,8 +6,6 @@ import org.apache.spark
 import org.apache.spark.rdd
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.collection.mutable
-import scala.reflect.runtime.universe._
-import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.graph_util.Filename
