@@ -32,19 +32,22 @@ angular.module('biggraph')
         if (!$location.search().q) {
           $scope.state = defaultState;
         } else {
-          $scope.state = JSON.parse($location.search().q);
+          var state = JSON.parse($location.search().q);
+          if (!angular.equals(state, $scope.state)) {
+            // The parts of the template that depend on 'state' get re-rendered
+            // when we replace it. So we only do this if there is an actual
+            // difference.
+            $scope.state = state;
+          }
         }
       });
     
     $scope.deepWatch(
       'state',
       function() {
-        // Update URL.
         var s = $location.search();
         s.q = JSON.stringify($scope.state);
         $location.search(s);
-        // Update graph view.
-        loadGraphView();
       });
 
     var VertexSet = $resource('/ajax/vertexSet');
@@ -104,8 +107,8 @@ angular.module('biggraph')
           vertexSetId: side.vs.id,
           filters: filters,
           mode: 'bucketed',
-          xBucketingAttributeId: (side.xAttribute || { id: '' }).id,
-          yBucketingAttributeId: (side.yAttribute || { id: '' }).id,
+          xBucketingAttributeId: side.xAttribute || '',
+          yBucketingAttributeId: side.yAttribute || '',
           xNumBuckets: side.xAttribute === undefined ? 1 : 5,
           yNumBuckets: side.yAttribute === undefined ? 1 : 5,
           // Sampled view parameters.
