@@ -10,13 +10,14 @@ angular
     $routeProvider
       .when('/metaGraph', {
         templateUrl: 'views/metaGraph.html',
-        controller: 'MetaGraphViewCtrl'
+        controller: 'MetaGraphViewCtrl',
+        reloadOnSearch: false,
       })
       .when('/cluster/:password', {
         templateUrl: 'views/clusterManager.html',
-        controller: 'ClusterManagerCtrl'
+        controller: 'ClusterManagerCtrl',
       })
       .otherwise({
-        redirectTo: '/metaGraph'
+        redirectTo: '/metaGraph',
       });
   });
