@@ -8,7 +8,8 @@
           ng-click="setState(side, 'xAttribute', attr.id)">Graph on X</button>
       <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().yAttribute === attr.id }"
           ng-click="setState(side, 'yAttribute', attr.id)">Graph on Y</button>
-      <input class="form-control filter" placeholder="filter" ng-model="side.state().filters[attr.id]">
+      <input class="form-control filter" placeholder="filter" ng-model="side.state().filters[attr.id]"
+          ng-model-options="{ updateOn: 'blur' }">
     </div>
     <h6 ng-show="side.data.localEdges">Local Edge Bundles</h6>
     <ul class="bundles">
