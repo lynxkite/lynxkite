@@ -181,13 +181,13 @@ angular.module('biggraph')
         });
       function update() {
         // Force reloads of graphs by creating new objects.
-        var oldLeftVS = $scope.state.leftVS;
+        var oldLeftVS = $scope.state.left.vs;
         if (oldLeftVS !== undefined) {
-          $scope.state.leftVS = { id: oldLeftVS.id };
+          $scope.state.left.vs = { id: oldLeftVS.id };
         }
-        var oldRightVS = $scope.state.rightVS;
+        var oldRightVS = $scope.state.right.vs;
         if (oldRightVS !== undefined) {
-          $scope.state.rightVS = { id: oldRightVS.id };
+          $scope.state.right.vs = { id: oldRightVS.id };
         }
         loadStartingVertexSets();
       }
