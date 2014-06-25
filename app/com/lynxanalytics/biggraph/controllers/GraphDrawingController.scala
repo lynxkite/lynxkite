@@ -51,7 +51,9 @@ case class EdgeDiagramSpec(
   // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
   val srcIdx: Int,
   val dstIdx: Int,
-  val bundleIdSequence: Seq[String])
+  val bundleSequence: Seq[BundleSequenceStep])
+
+case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
 case class FEEdge(
   // idx of source vertex in the vertices Seq in the corresponding VertexDiagramResponse.
@@ -136,15 +138,20 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       yBuckets = op.yBucketLabels)
   }
 
-  private def getCompositeBundle(bundleIds: Seq[String]): EdgeAttribute[Double] = {
-    val bundles = bundleIds.map(id => metaManager.edgeBundle(id.asUUID))
-    val weights = bundles.map(bundle =>
+  private def getCompositeBundle(steps: Seq[BundleSequenceStep]): EdgeAttribute[Double] = {
+    val chain = steps.map { step =>
+      val bundle = metaManager.edgeBundle(step.bundle.asUUID)
+      val directed = if (step.reversed) {
+        metaManager.apply(graph_operations.ReverseEdges(), 'esAB -> bundle)
+          .outputs.edgeBundles('esBA)
+      } else bundle
       metaManager
         .apply(graph_operations.AddConstantDoubleEdgeAttribute(1),
-          'edges -> bundle)
+          'edges -> directed)
         .outputs
-        .edgeAttributes('attr).runtimeSafeCast[Double])
-    return new graph_util.BundleChain(weights).getCompositeEdgeBundle(metaManager)
+        .edgeAttributes('attr).runtimeSafeCast[Double]
+    }
+    return new graph_util.BundleChain(chain).getCompositeEdgeBundle(metaManager)
   }
 
   private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet =
@@ -187,7 +194,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
     val dstOp = metaManager.scalar(request.dstDiagramId.asUUID).source
-    val bundleWeights = getCompositeBundle(request.bundleIdSequence)
+    val bundleWeights = getCompositeBundle(request.bundleSequence)
     val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
     val (srcMapping, dstMapping) = tripletMapping(induced)
     val srcIdxs = mappedAttribute(srcMapping, idxsFromInst(srcOp), induced)
