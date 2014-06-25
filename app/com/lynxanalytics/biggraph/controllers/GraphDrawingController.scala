@@ -90,6 +90,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       'sampled -> sampled).outputs.vertexAttributes('sampled_attribute).runtimeSafeCast[Double]
 
   def filter(sampled: VertexSet, filters: Seq[FEVertexAttributeFilter]): VertexSet = {
+    if (filters.isEmpty) return sampled
     val filteredVss = filters.map { filterSpec =>
       FEFilters.filteredBaseSet(
         metaManager,
@@ -112,9 +113,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         'vertices -> vertexSet).outputs.vertexSets('sampled)
 
     val filtered = filter(sampled, request.filters)
+    println("Filtered count: ", dataManager.get(filtered).rdd.count)
 
     var (xMin, xMax, yMin, yMax) = (-1.0, -1.0, -1.0, -1.0)
-    var inputs = MetaDataSet(Map('vertices -> sampled))
+    var inputs = MetaDataSet(Map('vertices -> filtered))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute =
         metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID).runtimeSafeCast[Double]
@@ -161,8 +163,20 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return new graph_util.BundleChain(weights).getCompositeEdgeBundle(metaManager)
   }
 
-  private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet =
+  private def directVsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
     inst.inputs.vertexSets('vertices)
+  }
+  private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
+    val gridInputVertices = directVsFromOp(inst)
+    if (gridInputVertices.source.operation.isInstanceOf[graph_operations.VertexSetIntersection]) {
+      val firstIntersected = gridInputVertices.source.inputs.vertexSets('vs0)
+      assert(firstIntersected.source.operation
+        .isInstanceOf[graph_operations.VertexAttributeFilter[_]])
+      firstIntersected.source.inputs.vertexSets('vs)
+    } else {
+      gridInputVertices
+    }
+  }
 
   private def inducedBundle(eb: EdgeBundle,
                             src: VertexSet,
@@ -204,8 +218,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val bundleWeights = getCompositeBundle(request.bundleIdSequence)
     val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
     val (srcMapping, dstMapping) = tripletMapping(induced)
-    val srcIdxs = mappedAttribute(srcMapping, idxsFromInst(srcOp), induced)
-    val dstIdxs = mappedAttribute(dstMapping, idxsFromInst(dstOp), induced)
+    val srcIdxs = mappedAttribute(
+      sampleAttribute(directVsFromOp(srcOp), srcMapping),
+      idxsFromInst(srcOp),
+      induced)
+    val dstIdxs = mappedAttribute(
+      sampleAttribute(directVsFromOp(dstOp), dstMapping),
+      idxsFromInst(dstOp),
+      induced)
     val srcIdxsRDD = dataManager.get(srcIdxs).rdd
     val dstIdxsRDD = dataManager.get(dstIdxs).rdd
     val idxPairBuckets = srcIdxsRDD.join(dstIdxsRDD)
