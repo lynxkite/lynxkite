@@ -13,6 +13,10 @@ var COMMON_UTIL = {
   },
 
   normalize: function(x, minmax) {
-    return (x - minmax.min) / minmax.span - 0.5;
+    if (minmax.span > 0) {
+      return (x - minmax.min) / minmax.span - 0.5;
+    } else {
+      return 0.0
+    }
   },
 };

@@ -125,7 +125,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       .outputs.scalars('bucketSizes).runtimeSafeCast[Map[(Int, Int), Int]]
     val diagram = dataManager.get(diagramMeta).value
 
-    val vertices = for (x <- (0 to request.xNumBuckets); y <- (0 to request.yNumBuckets))
+    val vertices = for (x <- (0 until request.xNumBuckets); y <- (0 until request.yNumBuckets))
       yield FEVertex(x, y, diagram.getOrElse((x, y), 0))
 
     VertexDiagramResponse(
