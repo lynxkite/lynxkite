@@ -186,11 +186,11 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object WeightedOutDegree extends FEOperation {
     val title = "Weighted out degree"
     val parameters = Seq(
-      Param("w", "Weighted edges", kind = "multi-edge-attribute"))
+      Param("w", "Weighted edges", kind = "edge-attribute"))
     def apply(params: Map[String, String]) = {
       manager.apply(
         graph_operations.WeightedOutDegree(),
-        'weights -> manager.edgeBundle(params("w").asUUID))
+        'weights -> manager.edgeAttribute(params("w").asUUID))
       FEStatus.success
     }
   }
