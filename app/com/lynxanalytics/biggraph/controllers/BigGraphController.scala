@@ -157,21 +157,23 @@ class BigGraphController(env: BigGraphEnvironment) {
     val local = in & out
 
     // TODO: save RDDs in DataManager execute instead
-    val dataManager = env.dataManager
-    dataManager.saveToDisk(vs)
-    in.foreach { e =>
-      dataManager.saveToDisk(e)
-      dataManager.saveToDisk(e.srcVertexSet)
-      manager.attributes(e).foreach(dataManager.saveToDisk(_))
-      manager.attributes(e.srcVertexSet).foreach(dataManager.saveToDisk(_))
+    if (scala.util.Properties.envOrElse("SAVE_RDDS", "false") == "true") {
+      val dataManager = env.dataManager
+      dataManager.saveToDisk(vs)
+      in.foreach { e =>
+        dataManager.saveToDisk(e)
+        dataManager.saveToDisk(e.srcVertexSet)
+        manager.attributes(e).foreach(dataManager.saveToDisk(_))
+        manager.attributes(e.srcVertexSet).foreach(dataManager.saveToDisk(_))
+      }
+      out.foreach { e =>
+        dataManager.saveToDisk(e)
+        dataManager.saveToDisk(e.dstVertexSet)
+        manager.attributes(e).foreach(dataManager.saveToDisk(_))
+        manager.attributes(e.dstVertexSet).foreach(dataManager.saveToDisk(_))
+      }
+      manager.attributes(vs).foreach(dataManager.saveToDisk(_))
     }
-    out.foreach { e =>
-      dataManager.saveToDisk(e)
-      dataManager.saveToDisk(e.dstVertexSet)
-      manager.attributes(e).foreach(dataManager.saveToDisk(_))
-      manager.attributes(e.dstVertexSet).foreach(dataManager.saveToDisk(_))
-    }
-    manager.attributes(vs).foreach(dataManager.saveToDisk(_))
 
     FEVertexSet(
       id = vs.gUID.toString,
