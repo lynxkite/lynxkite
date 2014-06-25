@@ -33,9 +33,9 @@
       <button ng-if="!$first" class="btn btn-default" ng-click="cutPathLeft($index)">
         &#x232b;
       </button>
-      {{step.eb.title}} [{{step.eb.source.title}}
+      {{step.bundle.title}} [{{step.bundle.source.title}}
       <span ng-if="step.reversed">&#x2b05;</span><span ng-if="!step.reversed">&#x27a1;</span>
-      {{step.eb.destination.title}}]
+      {{step.bundle.destination.title}}]
       <button ng-if="!$last" class="btn btn-default" ng-click="cutPathRight($index)">
         &#x2326;
       </button>
