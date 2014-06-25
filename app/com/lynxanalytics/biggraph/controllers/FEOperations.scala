@@ -286,4 +286,35 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       FEStatus.success
     }
   }
+
+  registerOperation(AttributeConversion)
+  object AttributeConversion extends FEOperation {
+    val title = "Convert attributes"
+    val parameters = Seq(
+      Param("vattrs", "Vertex attributes", kind = "multi-vertex-attribute"),
+      Param("eattrs", "Edge attributes", kind = "multi-edge-attribute"),
+      Param("type", "Convert into", options = Seq(UIValue("string", "string"), UIValue("double", "double"))))
+
+    def apply(params: Map[String, String]): FEStatus = {
+      val vattrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")
+      val eattrs: Seq[String] = if (params("eattrs").isEmpty) Nil else params("eattrs").split(",")
+      val vas = vattrs.map(s => manager.vertexAttribute(s.asUUID))
+      val eas = eattrs.map(s => manager.edgeAttribute(s.asUUID))
+      val typ = params("type")
+      if (typ == "string") {
+        val okVAs = vas.filter(!_.is[String])
+        val okEAs = eas.filter(!_.is[String])
+        if (okVAs.isEmpty && okEAs.isEmpty) return FEStatus.failure("Nothing to convert.")
+        for (va <- okVAs) manager.show(graph_operations.VertexAttributeToString(), 'attr -> va)
+        for (ea <- okEAs) manager.show(graph_operations.EdgeAttributeToString(), 'attr -> ea)
+      } else if (typ == "double") {
+        val okVAs = vas.filter(_.is[String])
+        val okEAs = eas.filter(_.is[String])
+        if (okVAs.isEmpty && okEAs.isEmpty) return FEStatus.failure("Nothing to convert.")
+        for (va <- okVAs) manager.show(graph_operations.VertexAttributeToDouble(), 'attr -> va)
+        for (ea <- okEAs) manager.show(graph_operations.EdgeAttributeToDouble(), 'attr -> ea)
+      } else assert(false, s"Unexpected type: $typ")
+      FEStatus.success
+    }
+  }
 }
