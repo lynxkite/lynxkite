@@ -4,7 +4,10 @@ import java.util.UUID
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.rdd
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.collection.mutable
+import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.graph_util.Filename
@@ -41,25 +44,30 @@ class DataManager(sc: spark.SparkContext,
   private def load(vertexSet: VertexSet): Unit = {
     vertexSetCache(vertexSet.gUID) = new VertexSetData(
       vertexSet,
-      entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc))
+      entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)
+        .partitionBy(runtimeContext.defaultPartitioner))
   }
 
   private def load(edgeBundle: EdgeBundle): Unit = {
     edgeBundleCache(edgeBundle.gUID) = new EdgeBundleData(
       edgeBundle,
-      entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc))
+      entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)
+        .partitionBy(runtimeContext.defaultPartitioner))
   }
 
   private def load[T](vertexAttribute: VertexAttribute[T]): Unit = {
+    implicit val ct = vertexAttribute.classTag
     vertexAttributeCache(vertexAttribute.gUID) = new VertexAttributeData[T](
       vertexAttribute,
-      entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc))
+      entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
+        .partitionBy(runtimeContext.defaultPartitioner))
   }
 
   private def load[T](edgeAttribute: EdgeAttribute[T]): Unit = {
+    implicit val ct = edgeAttribute.classTag
     edgeAttributeCache(edgeAttribute.gUID) = new EdgeAttributeData[T](
-      edgeAttribute,
-      entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc))
+      edgeAttribute, entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)
+        .partitionBy(runtimeContext.defaultPartitioner))
   }
 
   private def load[T](scalar: Scalar[T]): Unit = {

@@ -7,6 +7,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.IOException
 
+import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class Filename(
@@ -80,6 +81,7 @@ case class Filename(
     val hadoopData = data.map(x =>
       (hadoop.io.NullWritable.get(), new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(x))))
     if (fs.exists(path)) fs.delete(path, true)
+    bigGraphLogger.info(s"saving ${data.name} as object file")
     hadoopData.saveAsNewAPIHadoopFile(
       filename,
       keyClass = classOf[hadoop.io.NullWritable],
