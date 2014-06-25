@@ -106,7 +106,10 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     val vertexAttributes = vertexSets.flatMap(manager.attributes(_))
     val edgeAttributes = edgeBundles.flatMap(manager.attributes(_))
     return MetaDataSeq(
-      vertexSets, edgeBundles, vertexAttributes, edgeAttributes)
+      vertexSets.filter(manager.isVisible(_)),
+      edgeBundles.filter(manager.isVisible(_)),
+      vertexAttributes.filter(manager.isVisible(_)),
+      edgeAttributes.filter(manager.isVisible(_)))
   }
 
   def getApplicableOperationMetas(options: MetaDataSeq): Seq[FEOperationMeta] = {
@@ -152,28 +155,26 @@ class BigGraphController(env: BigGraphEnvironment) {
   val operations = new FEOperations(env)
 
   private def toFE(vs: VertexSet): FEVertexSet = {
-    val in = manager.incomingBundles(vs).toSet
-    val out = manager.outgoingBundles(vs).toSet
+    val in = manager.incomingBundles(vs).toSet.filter(manager.isVisible(_))
+    val out = manager.outgoingBundles(vs).toSet.filter(manager.isVisible(_))
     val local = in & out
 
     // TODO: save RDDs in DataManager execute instead
-    if (scala.util.Properties.envOrElse("SAVE_RDDS", "false") == "true") {
-      val dataManager = env.dataManager
-      dataManager.saveToDisk(vs)
-      in.foreach { e =>
-        dataManager.saveToDisk(e)
-        dataManager.saveToDisk(e.srcVertexSet)
-        manager.attributes(e).foreach(dataManager.saveToDisk(_))
-        manager.attributes(e.srcVertexSet).foreach(dataManager.saveToDisk(_))
-      }
-      out.foreach { e =>
-        dataManager.saveToDisk(e)
-        dataManager.saveToDisk(e.dstVertexSet)
-        manager.attributes(e).foreach(dataManager.saveToDisk(_))
-        manager.attributes(e.dstVertexSet).foreach(dataManager.saveToDisk(_))
-      }
-      manager.attributes(vs).foreach(dataManager.saveToDisk(_))
+    val dataManager = env.dataManager
+    dataManager.saveToDisk(vs)
+    in.filter(manager.isVisible(_)).foreach { e =>
+      dataManager.saveToDisk(e)
+      dataManager.saveToDisk(e.srcVertexSet)
+      manager.attributes(e).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
+      manager.attributes(e.srcVertexSet).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
     }
+    out.filter(manager.isVisible(_)).foreach { e =>
+      dataManager.saveToDisk(e)
+      dataManager.saveToDisk(e.dstVertexSet)
+      manager.attributes(e).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
+      manager.attributes(e.dstVertexSet).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
+    }
+    manager.attributes(vs).filter(manager.isVisible(_)).foreach(dataManager.saveToDisk(_))
 
     FEVertexSet(
       id = vs.gUID.toString,
@@ -181,7 +182,7 @@ class BigGraphController(env: BigGraphEnvironment) {
       inEdges = (in -- local).toSeq.map(toFE(_)),
       outEdges = (out -- local).toSeq.map(toFE(_)),
       localEdges = local.toSeq.map(toFE(_)),
-      attributes = manager.attributes(vs).map(UIValue.fromEntity(_)),
+      attributes = manager.attributes(vs).filter(manager.isVisible(_)).map(UIValue.fromEntity(_)),
       ops = operations.getApplicableOperationMetas(vs))
   }
 
@@ -191,7 +192,7 @@ class BigGraphController(env: BigGraphEnvironment) {
       title = eb.toString,
       source = UIValue.fromEntity(eb.srcVertexSet),
       destination = UIValue.fromEntity(eb.dstVertexSet),
-      attributes = manager.attributes(eb).map(UIValue.fromEntity(_)))
+      attributes = manager.attributes(eb).filter(manager.isVisible(_)).map(UIValue.fromEntity(_)))
   }
 
   def vertexSet(request: VertexSetRequest): FEVertexSet = {
@@ -205,5 +206,8 @@ class BigGraphController(env: BigGraphEnvironment) {
     operations.getStartingOperationMetas
 
   def startingVertexSets(request: serving.Empty): Seq[UIValue] =
-    manager.allVertexSets.filter(_.source.inputs.all.isEmpty).map(UIValue.fromEntity(_)).toSeq
+    manager.allVertexSets
+      .filter(_.source.inputs.all.isEmpty)
+      .filter(manager.isVisible(_))
+      .map(UIValue.fromEntity(_)).toSeq
 }
