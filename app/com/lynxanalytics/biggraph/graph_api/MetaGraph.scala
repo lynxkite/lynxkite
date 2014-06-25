@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
 import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
+import scala.collection.immutable.SortedMap
 
 sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
@@ -21,7 +22,24 @@ sealed trait MetaGraphEntity extends Serializable {
     objectStream.close()
     UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
-  override def toString = s"$source/${name.name}"
+  override def toString = toStringStruct.toString
+  def toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
+}
+case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
+  override def toString = {
+    val stuff = contents.map {
+      case (k, v) =>
+        val s = v.toString
+        val guarded = if (s.contains(" ")) s"($s)" else s
+        if (k.isEmpty) guarded else s"$k=$guarded"
+    }.mkString(" ")
+    if (stuff.isEmpty) name
+    else s"$name of $stuff"
+  }
+}
+object StringStruct {
+  def apply(name: String, contents: Map[String, StringStruct]) =
+    new StringStruct(name, SortedMap[String, StringStruct]() ++ contents)
 }
 
 case class VertexSet(source: MetaGraphOperationInstance,
@@ -96,6 +114,15 @@ trait MetaGraphOperation extends Serializable {
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
+
+  override def toString = toStringStruct.toString
+  def toStringStruct = {
+    val mirror = reflect.runtime.currentMirror.reflect(this)
+    val className = mirror.symbol.name.toString
+    val params = mirror.symbol.toType.members.collect { case m: MethodSymbol if m.isCaseAccessor => m }
+    def get(param: MethodSymbol) = mirror.reflectField(param).get
+    StringStruct(className, params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
+  }
 }
 
 class MetaGraphOperationSignature private[graph_api] {
@@ -225,7 +252,41 @@ case class MetaGraphOperationInstance(
 
   val entities = inputs ++ outputs
 
-  override def toString = s"[$operation]($inputs)"
+  override def toString = toStringStruct.toString
+  def toStringStruct: StringStruct = {
+    val op = operation.toStringStruct
+    val fixed = mutable.Set[Symbol]()
+    val mentioned = mutable.Map[MetaGraphEntity, Symbol]()
+    val span = mutable.Map[String, StringStruct]()
+    def put(k: Symbol, v: MetaGraphEntity): Unit = {
+      if (!fixed.contains(k)) {
+        mentioned.get(v) match {
+          case Some(k0) =>
+            span(k.name) = StringStruct(k0.name)
+          case None =>
+            span(k.name) = v.toStringStruct
+            mentioned(v) = k
+        }
+      }
+    }
+    for ((k, v) <- inputs.edgeAttributes) {
+      put(k, v)
+      fixed += operation.signature.inputEdgeAttributes(k)._1
+    }
+    for ((k, v) <- inputs.edgeBundles) {
+      put(k, v)
+      fixed += operation.signature.inputEdgeBundles(k)._1
+      fixed += operation.signature.inputEdgeBundles(k)._2
+    }
+    for ((k, v) <- inputs.vertexAttributes) {
+      put(k, v)
+      fixed += operation.signature.inputVertexAttributes(k)._1
+    }
+    for ((k, v) <- inputs.vertexSets) {
+      put(k, v)
+    }
+    StringStruct(op.name, op.contents ++ span)
+  }
 }
 
 sealed trait EntityData {
