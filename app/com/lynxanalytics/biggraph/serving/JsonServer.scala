@@ -91,7 +91,7 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rSaveGraphRequest = json.Json.reads[SaveGraphRequest]
 
-  implicit val rVertexAttributeFilter = json.Json.reads[VertexAttributeFilter]
+  implicit val rFEVertexAttributeFilter = json.Json.reads[FEVertexAttributeFilter]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
   implicit val wFEVertex = json.Json.writes[FEVertex]
   implicit val wVertexDiagramResponse = json.Json.writes[VertexDiagramResponse]

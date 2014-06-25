@@ -8,12 +8,12 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 
-case class VertexAttributeFilter(
+case class FEVertexAttributeFilter(
   val attributeId: String,
   val valueSpec: String)
 case class VertexDiagramSpec(
   val vertexSetId: String,
-  val filters: Seq[VertexAttributeFilter],
+  val filters: Seq[FEVertexAttributeFilter],
   val mode: String, // For now, one of "bucketed", "sampled".
 
   // ** Parameters for bucketed view **
@@ -89,6 +89,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       'attribute -> attribute,
       'sampled -> sampled).outputs.vertexAttributes('sampled_attribute).runtimeSafeCast[Double]
 
+  def filter(sampled: VertexSet, filters: Seq[FEVertexAttributeFilter]): VertexSet = {
+    val filteredVss = filters.map { filterSpec =>
+      FEFilters.filteredBaseSet(
+        metaManager,
+        metaManager.vertexAttribute(filterSpec.attributeId.asUUID),
+        filterSpec.valueSpec)
+    }
+    return graph_operations.VertexSetIntersection.intersect(metaManager, filteredVss: _*)
+  }
+
   def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     if (request.mode != "bucketed") return ???
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
@@ -101,6 +111,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         graph_operations.VertexSample(targetSample * 1.0 / count),
         'vertices -> vertexSet).outputs.vertexSets('sampled)
 
+    val filtered = filter(sampled, request.filters)
+
     var (xMin, xMax, yMin, yMax) = (-1.0, -1.0, -1.0, -1.0)
     var inputs = MetaDataSet(Map('vertices -> sampled))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
@@ -109,7 +121,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
       xMin = min
       xMax = max
-      inputs ++= MetaDataSet(Map('xAttribute -> sampleAttribute(sampled, attribute)))
+      inputs ++= MetaDataSet(
+        Map('xAttribute -> sampleAttribute(filtered, sampleAttribute(sampled, attribute))))
     }
     if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute =
@@ -117,7 +130,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
       yMin = min
       yMax = max
-      inputs ++= MetaDataSet(Map('yAttribute -> sampleAttribute(sampled, attribute)))
+      inputs ++= MetaDataSet(
+        Map('yAttribute -> sampleAttribute(filtered, sampleAttribute(sampled, attribute))))
     }
     val op = graph_operations.VertexBucketGrid(
       request.xNumBuckets, request.yNumBuckets, xMin, xMax, yMin, yMax)
