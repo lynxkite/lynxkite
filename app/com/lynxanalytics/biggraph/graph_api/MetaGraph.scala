@@ -279,6 +279,9 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
     vertexSets.size + edgeBundles.size + vertexAttributes.size + edgeAttributes.size + scalars.size,
     "Cross type collision %s %s %s %s".format(
       vertexSets, edgeBundles, vertexAttributes, edgeAttributes))
+
+  def apply(name: Symbol) = all(name)
+
   def ++(mds: MetaDataSet): MetaDataSet = {
     assert(
       (all.keySet & mds.all.keySet).forall(key => all(key).gUID == mds.all(key).gUID),
