@@ -1,35 +1,25 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import scala.reflect.runtime.universe._
-
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx.Edge
-import org.apache.spark.graphx.VertexId
-import org.apache.spark.rdd.RDD
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
-import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
-import com.lynxanalytics.biggraph.graph_api.attributes.SignatureExtension
 
-case class WeightedOutDegree(weightAttribute: String, outputAttribute: String)
-    extends NewVertexAttributeOperation[Double] {
-  @transient lazy val tt = typeTag[Double]
+case class WeightedOutDegree() extends MetaGraphOperation {
+  def signature = newSignature
+    .inputEdgeBundle('edges, 'vsA -> 'vsB, create = true)
+    .inputEdgeAttribute[Double]('weights, 'edges)
+    .outputVertexAttribute[Double]('outdegrees, 'vsA)
 
-  override def isSourceListValid(sources: Seq[BigGraph]): Boolean =
-    super.isSourceListValid(sources) && sources.head.edgeAttributes.canRead[Double](weightAttribute)
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val edges = inputs.edgeBundles('edges).rdd
+    val weights = inputs.edgeAttributes('weights).runtimeSafeCast[Double].rdd
 
-  override def computeHolistically(inputData: GraphData,
-                                   runtimeContext: RuntimeContext,
-                                   vertexPartitioner: spark.Partitioner): RDD[(VertexId, Double)] = {
-    val readIdx = inputData.bigGraph.edgeAttributes.readIndex[Double](weightAttribute)
-    inputData.edges
-      .map(e => (e.srcId, e.attr(readIdx)))
+    val outdegrees = edges.join(weights)
+      .map { case (_, (edge, weight)) => edge.src -> weight }
       .reduceByKey(
-        vertexPartitioner,
+        inputs.vertexSets('vsA).rdd.partitioner.get,
         _ + _)
+    outputs.putVertexAttribute('outdegrees, outdegrees)
   }
-
-  override def computeLocally(vid: VertexId, da: DenseAttributes): Double = 0.0
 }

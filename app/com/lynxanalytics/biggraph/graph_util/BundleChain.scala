@@ -1,11 +1,6 @@
-package com.lynxanalytics.biggraph.controllers
+package com.lynxanalytics.biggraph.graph_util
 
-import java.util.UUID
-import scala.collection.mutable
-
-import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations.ConcatenateBundles
 
 class BundleChain(weights: Seq[EdgeAttribute[Double]]) {
@@ -14,8 +9,6 @@ class BundleChain(weights: Seq[EdgeAttribute[Double]]) {
   assert((0 until (bundles.size - 1))
     .forall(i => bundles(i).dstVertexSet == bundles(i + 1).srcVertexSet))
   val vertexSets = bundles.head.srcVertexSet +: bundles.map(_.dstVertexSet)
-
-  val gUID = UUID.nameUUIDFromBytes(bundles.map(_.gUID.toString).mkString.getBytes("ascii"))
 
   def getCompositeEdgeBundle(metaManager: MetaGraphManager): EdgeAttribute[Double] = {
     if (weights.size == 1) {

@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class TripletMapping() extends MetaGraphOperation {
-  val signature = newSignature
+  def signature = newSignature
     .inputEdgeBundle('input, 'src -> 'dst, create = true)
     .outputVertexAttribute[Array[ID]]('srcEdges, 'src)
     .outputVertexAttribute[Array[ID]]('dstEdges, 'dst)
@@ -22,13 +22,13 @@ case class TripletMapping() extends MetaGraphOperation {
       input
         .map { case (id, edge) => (edge.src, id) }
         .groupByKey(src.partitioner.get)
-        .mapValues(Array(_)))
+        .mapValues(_.toArray))
     outputs.putVertexAttribute(
       'dstEdges,
       input
         .map { case (id, edge) => (edge.dst, id) }
         .groupByKey(dst.partitioner.get)
-        .mapValues(Array(_)))
+        .mapValues(_.toArray))
   }
 }
 
@@ -36,7 +36,7 @@ abstract class VertexToEdgeAttribute[T] extends MetaGraphOperation {
   implicit def tt: TypeTag[T]
   implicit def ct: ClassTag[T]
 
-  val signature = newSignature
+  def signature = newSignature
     .inputVertexAttribute[Array[ID]]('mapping, 'vertices, create = true)
     .inputVertexAttribute[T]('original, 'vertices)
     .inputEdgeBundle('target, 'unused_src -> 'unused_dst, create = true)
@@ -47,10 +47,12 @@ abstract class VertexToEdgeAttribute[T] extends MetaGraphOperation {
     val original = inputs.vertexAttributes('original).runtimeSafeCast[T].rdd
     val target = inputs.edgeBundles('target).rdd
 
-    mapping.join(original)
-      .flatMap { case (vid, (edges, value)) => edges.map((_, value)) }
-      .groupByKey(target.partitioner.get)
-      .mapValues(values => values.head)
+    outputs.putEdgeAttribute(
+      'mapped_attribute,
+      mapping.join(original)
+        .flatMap { case (vid, (edges, value)) => edges.map((_, value)) }
+        .groupByKey(target.partitioner.get)
+        .mapValues(values => values.head))
   }
 }
 
