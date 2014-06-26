@@ -55,6 +55,9 @@ case class SampledDoubleVertexAttribute() extends SampledVertexAttribute[Double]
 case class SampledIDArrayVertexAttribute() extends SampledVertexAttribute[Array[ID]] {
   @transient lazy val tt = typeTag[Array[ID]]
 }
+case class SampledStringVertexAttribute() extends SampledVertexAttribute[String] {
+  @transient lazy val tt = typeTag[String]
+}
 
 object SampledVertexAttribute {
   def sampleAttribute[T](metaManager: MetaGraphManager,
@@ -66,6 +69,8 @@ object SampledVertexAttribute {
         SampledDoubleVertexAttribute()
       } else if (typeOf[T] =:= typeOf[Array[ID]]) {
         SampledIDArrayVertexAttribute()
+      } else if (typeOf[T] =:= typeOf[String]) {
+        SampledStringVertexAttribute()
       } else ???
 
     metaManager.apply(

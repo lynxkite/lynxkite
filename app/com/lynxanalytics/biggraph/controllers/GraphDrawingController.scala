@@ -112,43 +112,37 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val filtered = filter(sampled, request.filters)
     println("Filtered count: ", dataManager.get(filtered).rdd.count)
 
-    var (xMin, xMax, yMin, yMax) = (-1.0, -1.0, -1.0, -1.0)
+    var xBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
+    var yBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
     var inputs = MetaDataSet(Map('vertices -> filtered))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
-      val attribute =
-        metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID).runtimeSafeCast[Double]
-      val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
-      xMin = min
-      xMax = max
+      val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
+      xBucketer = FEBucketers.bucketer(metaManager, dataManager, attribute, request.xNumBuckets)
       inputs ++= MetaDataSet(
         Map('xAttribute -> sampleAttribute(
           metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))))
     }
     if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
-      val attribute =
-        metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID).runtimeSafeCast[Double]
-      val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
-      yMin = min
-      yMax = max
+      val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
+      yBucketer = FEBucketers.bucketer(metaManager, dataManager, attribute, request.yNumBuckets)
       inputs ++= MetaDataSet(
         Map('yAttribute -> sampleAttribute(
           metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))))
     }
-    val op = graph_operations.VertexBucketGrid(
-      request.xNumBuckets, request.yNumBuckets, xMin, xMax, yMin, yMax)
+    val op = graph_operations.VertexBucketGrid(xBucketer, yBucketer)
     val diagramMeta = metaManager.apply(op, inputs)
       .outputs.scalars('bucketSizes).runtimeSafeCast[Map[(Int, Int), Int]]
     val diagram = dataManager.get(diagramMeta).value
 
-    val vertices = for (x <- (0 until request.xNumBuckets); y <- (0 until request.yNumBuckets))
+    val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
       yield FEVertex(x, y, diagram.getOrElse((x, y), 0))
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices,
       mode = "bucketed",
-      xBuckets = op.xBucketLabels,
-      yBuckets = op.yBucketLabels)
+      xBuckets = xBucketer.bucketLabels,
+      yBuckets = yBucketer.bucketLabels)
   }
 
   private def getCompositeBundle(steps: Seq[BundleSequenceStep]): EdgeAttribute[Double] = {
@@ -204,7 +198,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     inst.outputs.vertexAttributes('gridIdxs).runtimeSafeCast[Int]
 
   private def numYBuckets(inst: MetaGraphOperationInstance): Int = {
-    inst.operation.asInstanceOf[graph_operations.VertexBucketGrid].ySize
+    inst.operation.asInstanceOf[graph_operations.VertexBucketGrid[_, _]].yBucketer.numBuckets
   }
 
   private def mappedAttribute(mapping: VertexAttribute[Array[ID]],
