@@ -2,6 +2,14 @@ html {
   overflow-y: scroll;
 }
 
+.spinning {
+  transition: transform 0.5s ease;
+}
+
+.spin180 {
+  transform: rotate(180deg);
+}
+
 h6 {
   font-weight: bold;
 }
