@@ -8,12 +8,12 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 
-case class VertexAttributeFilter(
+case class FEVertexAttributeFilter(
   val attributeId: String,
   val valueSpec: String)
 case class VertexDiagramSpec(
   val vertexSetId: String,
-  val filters: Seq[VertexAttributeFilter],
+  val filters: Seq[FEVertexAttributeFilter],
   val mode: String, // For now, one of "bucketed", "sampled".
 
   // ** Parameters for bucketed view **
@@ -84,12 +84,18 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   val metaManager = env.metaGraphManager
   val dataManager = env.dataManager
 
-  def sampleAttribute(sampled: VertexSet,
-                      attribute: VertexAttribute[Double]): VertexAttribute[Double] =
-    metaManager.apply(
-      graph_operations.SampledDoubleVertexAttribute(),
-      'attribute -> attribute,
-      'sampled -> sampled).outputs.vertexAttributes('sampled_attribute).runtimeSafeCast[Double]
+  import graph_operations.SampledVertexAttribute.sampleAttribute
+
+  def filter(sampled: VertexSet, filters: Seq[FEVertexAttributeFilter]): VertexSet = {
+    if (filters.isEmpty) return sampled
+    val filteredVss = filters.map { filterSpec =>
+      FEFilters.filteredBaseSet(
+        metaManager,
+        metaManager.vertexAttribute(filterSpec.attributeId.asUUID),
+        filterSpec.valueSpec)
+    }
+    return graph_operations.VertexSetIntersection.intersect(metaManager, filteredVss: _*)
+  }
 
   def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     if (request.mode != "bucketed") return ???
@@ -103,15 +109,20 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         graph_operations.VertexSample(targetSample * 1.0 / count),
         'vertices -> vertexSet).outputs.vertexSets('sampled)
 
+    val filtered = filter(sampled, request.filters)
+    println("Filtered count: ", dataManager.get(filtered).rdd.count)
+
     var (xMin, xMax, yMin, yMax) = (-1.0, -1.0, -1.0, -1.0)
-    var inputs = MetaDataSet(Map('vertices -> sampled))
+    var inputs = MetaDataSet(Map('vertices -> filtered))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute =
         metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID).runtimeSafeCast[Double]
       val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
       xMin = min
       xMax = max
-      inputs ++= MetaDataSet(Map('xAttribute -> sampleAttribute(sampled, attribute)))
+      inputs ++= MetaDataSet(
+        Map('xAttribute -> sampleAttribute(
+          metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))))
     }
     if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute =
@@ -119,7 +130,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
       yMin = min
       yMax = max
-      inputs ++= MetaDataSet(Map('yAttribute -> sampleAttribute(sampled, attribute)))
+      inputs ++= MetaDataSet(
+        Map('yAttribute -> sampleAttribute(
+          metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))))
     }
     val op = graph_operations.VertexBucketGrid(
       request.xNumBuckets, request.yNumBuckets, xMin, xMax, yMin, yMax)
@@ -154,8 +167,20 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return new graph_util.BundleChain(chain).getCompositeEdgeBundle(metaManager)
   }
 
-  private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet =
+  private def directVsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
     inst.inputs.vertexSets('vertices)
+  }
+  private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
+    val gridInputVertices = directVsFromOp(inst)
+    if (gridInputVertices.source.operation.isInstanceOf[graph_operations.VertexSetIntersection]) {
+      val firstIntersected = gridInputVertices.source.inputs.vertexSets('vs0)
+      assert(firstIntersected.source.operation
+        .isInstanceOf[graph_operations.VertexAttributeFilter[_]])
+      firstIntersected.source.inputs.vertexSets('vs)
+    } else {
+      gridInputVertices
+    }
+  }
 
   private def inducedBundle(eb: EdgeBundle,
                             src: VertexSet,
@@ -197,8 +222,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val bundleWeights = getCompositeBundle(request.bundleSequence)
     val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
     val (srcMapping, dstMapping) = tripletMapping(induced)
-    val srcIdxs = mappedAttribute(srcMapping, idxsFromInst(srcOp), induced)
-    val dstIdxs = mappedAttribute(dstMapping, idxsFromInst(dstOp), induced)
+    val srcIdxs = mappedAttribute(
+      sampleAttribute(metaManager, directVsFromOp(srcOp), srcMapping),
+      idxsFromInst(srcOp),
+      induced)
+    val dstIdxs = mappedAttribute(
+      sampleAttribute(metaManager, directVsFromOp(dstOp), dstMapping),
+      idxsFromInst(dstOp),
+      induced)
     val srcIdxsRDD = dataManager.get(srcIdxs).rdd
     val dstIdxsRDD = dataManager.get(dstIdxs).rdd
     val idxPairBuckets = srcIdxsRDD.join(dstIdxsRDD)
