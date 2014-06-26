@@ -137,17 +137,6 @@ angular.module('biggraph')
       $scope.startingVertexSets = StartingVertexSets.query({q: {fake: 0}});
     }
 
-    $scope.applicableOperations = function() {
-      var res = [];
-      if ($scope.startingOps) {
-        res = res.concat($scope.startingOps);
-      }
-      if ($scope.left.data) {
-        res = res.concat($scope.left.data.ops);
-      }
-      return res;
-    };
-
     function openOperationModal(operation) {
       var modalInstance = $modal.open({
         templateUrl: 'views/operationParameters.html',

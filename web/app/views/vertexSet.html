@@ -2,7 +2,7 @@
   <div class="panel panel-default" ng-if="!side.data">
     <div class="list-group">
       <sublist heading="Create">
-        <a class="list-group-item" ng-repeat="op in applicableOperations()"
+        <a class="list-group-item" ng-repeat="op in startingOps"
           ng-click="apply(op)">{{op.title}}</a>
       </sublist>
       <sublist heading="Load">
@@ -62,6 +62,10 @@
           <button class="btn btn-default" ng-click="side.followEB(bundle, true)">Follow</button>
           <button class="btn btn-default" ng-click="side.showEB(bundle, false)">Show destination on {{side.oppositeName}}</button>
         </li>
+      </sublist>
+      <sublist ng-show="side.data.ops" heading="Operations">
+        <a class="list-group-item" ng-repeat="op in side.data.ops"
+          ng-click="apply(op)">{{op.title}}</a>
       </sublist>
     </div>
   </div>
