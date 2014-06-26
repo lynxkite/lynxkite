@@ -35,14 +35,42 @@ abstract class SampledVertexAttribute[T]() extends MetaGraphOperation {
     .outputVertexAttribute[T]('sampled_attribute, 'sampled)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val sampled = inputs.vertexSets('sampled).rdd
-    val attribute = inputs.vertexAttributes('attribute).runtimeSafeCast[T].rdd
-    outputs.putVertexAttribute(
-      'sampled_attribute,
-      sampled.join(attribute).mapValues { case (_, value) => value })
+    val sampledData = inputs.vertexSets('sampled)
+    val attributeData = inputs.vertexAttributes('attribute)
+    val sampled = sampledData.rdd
+    val attribute = attributeData.runtimeSafeCast[T].rdd
+    if (sampledData.vertexSet.gUID == attributeData.vertexAttribute.vertexSet.gUID) {
+      outputs.putVertexAttribute('sampled_attribute, attribute)
+    } else {
+      outputs.putVertexAttribute(
+        'sampled_attribute,
+        sampled.join(attribute).mapValues { case (_, value) => value })
+    }
   }
 }
 
 case class SampledDoubleVertexAttribute() extends SampledVertexAttribute[Double] {
   @transient lazy val tt = typeTag[Double]
+}
+case class SampledIDArrayVertexAttribute() extends SampledVertexAttribute[Array[ID]] {
+  @transient lazy val tt = typeTag[Array[ID]]
+}
+
+object SampledVertexAttribute {
+  def sampleAttribute[T](metaManager: MetaGraphManager,
+                         sampled: VertexSet,
+                         attribute: VertexAttribute[T]): VertexAttribute[T] = {
+    implicit val tt = attribute.typeTag
+    val op: SampledVertexAttribute[_] =
+      if (typeOf[T] =:= typeOf[Double]) {
+        SampledDoubleVertexAttribute()
+      } else if (typeOf[T] =:= typeOf[Array[ID]]) {
+        SampledIDArrayVertexAttribute()
+      } else ???
+
+    metaManager.apply(
+      op,
+      'attribute -> attribute,
+      'sampled -> sampled).outputs.vertexAttributes('sampled_attribute).runtimeSafeCast[T]
+  }
 }

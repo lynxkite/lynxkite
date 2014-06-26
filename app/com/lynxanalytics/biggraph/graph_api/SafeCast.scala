@@ -5,7 +5,7 @@ import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteKind]] {
-  implicit val typeTag: TypeTag[T]
+  implicit def typeTag: TypeTag[T]
 
   def runtimeSafeCast[S: TypeTag]: ConcreteKind[S] = {
     if (typeOf[S] =:= typeOf[T]) {
