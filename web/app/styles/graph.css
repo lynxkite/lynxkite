@@ -29,6 +29,9 @@ html {
 .panel-heading + .list-group sublist:first-child .list-group-item:first-child {
   border-top-width: 0;
 }
+.list-group:first-child sublist:first-child .list-group-item:first-child {
+  border-top-width: 0;
+}
 
 h6 {
   font-weight: bold;

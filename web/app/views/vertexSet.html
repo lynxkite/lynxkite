@@ -1,6 +1,17 @@
 <div class="col-sm-6">
   <div class="panel panel-default" ng-if="!side.data">
+    <div class="list-group">
+      <sublist heading="Create">
+        <a class="list-group-item" ng-repeat="op in applicableOperations()"
+          ng-click="apply(op)">{{op.title}}</a>
+      </sublist>
+      <sublist heading="Load">
+        <a class="list-group-item" ng-repeat="vs in startingVertexSets"
+          ng-click="side.setNewVS(vs.id)">{{vs.title}}</a>
+      </sublist>
+    </div>
   </div>
+
   <div class="panel panel-default" ng-if="side.data">
     <div class="panel-heading">
       {{side.data.title}}
