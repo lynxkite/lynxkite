@@ -10,6 +10,13 @@ html {
   transform: rotate(180deg);
 }
 
+.panel-heading + .list-group sublist .list-group-item:first-child {
+  border-top-width: 1px;
+}
+.panel-heading + .list-group sublist:first-child .list-group-item:first-child {
+  border-top-width: 0;
+}
+
 h6 {
   font-weight: bold;
 }
