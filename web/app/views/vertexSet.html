@@ -2,7 +2,17 @@
   <div class="panel panel-default" ng-if="!side.data">
   </div>
   <div class="panel panel-default" ng-if="side.data">
-    <div class="panel-heading">{{side.data.title}}</div>
+    <div class="panel-heading">
+      {{side.data.title}}
+      <span style="float: right">
+        <span class="glyphicon clicky" ng-class="'glyphicon-arrow-' + side.oppositeName"
+          title="Show on the {{side.oppositeName}}"
+          ng-click="side.other.setVS(side.data.id)"></span>
+        <span class="glyphicon glyphicon-remove clicky"
+          title="Close"
+          ng-click="side.state().vs = undefined"></span>
+      </span>
+    </div>
     <div class="list-group">
       <sublist ng-show="side.data.attributes" heading="Vertex Attributes">
         <li class="list-group-item" ng-repeat="attr in side.data.attributes">
