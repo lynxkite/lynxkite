@@ -381,7 +381,7 @@ object MetaDataSet {
                          all: (Symbol, MetaGraphEntity)*): MetaDataSet = {
     var res = MetaDataSet()
     def addVS(name: Symbol, vs: VertexSet) {
-      assert(signature.inputVertexSets.contains(name))
+      assert(signature.inputVertexSets.contains(name), s"No such input vertex set: $name")
       res ++= MetaDataSet(vertexSets = Map(name -> vs))
     }
     def addEB(name: Symbol, eb: EdgeBundle) {
@@ -401,7 +401,7 @@ object MetaDataSet {
       addEB(ebName, ea.edgeBundle)
     }
     def addSC(name: Symbol, sc: Scalar[_]) {
-      assert(signature.inputScalars.contains(name))
+      assert(signature.inputScalars.contains(name), s"No such input scalar: $name")
       res ++= MetaDataSet(scalars = Map(name -> sc))
     }
 
