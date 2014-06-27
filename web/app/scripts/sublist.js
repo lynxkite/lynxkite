@@ -11,4 +11,4 @@ angular.module('biggraph').directive('sublist', function () {
       element.find('#contents').replaceWith(transclude());
     },
   };
-})
+});
