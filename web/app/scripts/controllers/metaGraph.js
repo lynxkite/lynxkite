@@ -137,17 +137,6 @@ angular.module('biggraph')
       $scope.startingVertexSets = StartingVertexSets.query({q: {fake: 0}});
     }
 
-    $scope.applicableOperations = function() {
-      var res = [];
-      if ($scope.startingOps) {
-        res = res.concat($scope.startingOps);
-      }
-      if ($scope.left.data) {
-        res = res.concat($scope.left.data.ops);
-      }
-      return res;
-    };
-
     function openOperationModal(operation) {
       var modalInstance = $modal.open({
         templateUrl: 'views/operationParameters.html',
@@ -234,6 +223,16 @@ angular.module('biggraph')
       $scope.state.right = { vs: { id: id }, filters: {} };
     };
 
+    $scope.mirror = function(side) {
+      $scope.state.leftToRightPath = [];
+      side.other.setVS(side.data.id);
+    };
+
+    $scope.close = function(side) {
+      $scope.removePath();
+      side.state().vs = undefined;
+    };
+
     function setNewVS(side) {
       return function(id) {
         $scope.removePath();
@@ -264,20 +263,6 @@ angular.module('biggraph')
     }
     $scope.left.followEB = followEB($scope.left);
     $scope.right.followEB = followEB($scope.right);
-
-    function showEB(side) {
-      return function(bundle, pointsTowardsMySide) {
-        $scope.state.leftToRightPath = [];
-        side.addEBToPath(bundle, pointsTowardsMySide);
-        if (pointsTowardsMySide) {
-          side.other.setVS(bundle.source.id);
-        } else {
-          side.other.setVS(bundle.destination.id);
-        }
-      };
-    }
-    $scope.left.showEB = showEB($scope.left);
-    $scope.right.showEB = showEB($scope.right);
 
     $scope.cutPathLeft = function(idx) {
       $scope.state.leftToRightPath.splice(0, idx);

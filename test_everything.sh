@@ -12,4 +12,5 @@ cd web
 bower install --silent --offline --config.interactive=false
 npm install --offline
 grunt jshint
-grunt test
+# TODO: Re-enable tests. (issue #188)
+# grunt test
