@@ -88,12 +88,18 @@ abstract class ComputeTopValues[T: ClassTag](numTopValues: Int) extends MetaGrap
     .outputScalar[Seq[(T, Int)]]('top_values)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val all = inputs.vertexAttributes('attribute).runtimeSafeCast[T].rdd
-      .map { case (id, value) => (value, 1) }
-      .reduceByKey(_ + _)
-      .collect
-    // TODO do all this remotely once I have a spark API doc.
-    outputs.putScalar[Seq[(T, Int)]]('top_values, all.sortBy(_._2).takeRight(numTopValues))
+    val iiOrdering = implicitly[Ordering[(Int, Int)]]
+    object PairOrdering extends Ordering[(T, Int)] {
+      def compare(a: (T, Int), b: (T, Int)) =
+        iiOrdering.compare((a._2, a._1.hashCode), (b._2, b._1.hashCode))
+    }
+    outputs.putScalar[Seq[(T, Int)]](
+      'top_values,
+      inputs.vertexAttributes('attribute).runtimeSafeCast[T].rdd
+        .map { case (id, value) => (value, 1) }
+        .reduceByKey(_ + _)
+        .top(numTopValues)(PairOrdering)
+        .toSeq)
   }
 }
 
