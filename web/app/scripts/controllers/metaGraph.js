@@ -254,20 +254,6 @@ angular.module('biggraph')
     $scope.left.followEB = followEB($scope.left);
     $scope.right.followEB = followEB($scope.right);
 
-    function showEB(side) {
-      return function(bundle, pointsTowardsMySide) {
-        $scope.state.leftToRightPath = [];
-        side.addEBToPath(bundle, pointsTowardsMySide);
-        if (pointsTowardsMySide) {
-          side.other.setVS(bundle.source.id);
-        } else {
-          side.other.setVS(bundle.destination.id);
-        }
-      };
-    }
-    $scope.left.showEB = showEB($scope.left);
-    $scope.right.showEB = showEB($scope.right);
-
     $scope.cutPathLeft = function(idx) {
       $scope.state.leftToRightPath.splice(0, idx);
       var firstStep = $scope.state.leftToRightPath[0];
