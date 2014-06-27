@@ -12,7 +12,7 @@
 <div class="row-fluid">
   <div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>
 </div>
-<div class="path row-fluid text-center" ng-if="state.leftToRightPath">
+<div class="path row-fluid text-center" ng-if="state.leftToRightPath !== undefined">
   <h6>Connecting path</h6>
   <ul>
     <li class="bundle token" ng-repeat="step in state.leftToRightPath">

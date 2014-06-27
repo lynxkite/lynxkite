@@ -223,6 +223,16 @@ angular.module('biggraph')
       $scope.state.right = { vs: { id: id }, filters: {} };
     };
 
+    $scope.mirror = function(side) {
+      $scope.state.leftToRightPath = [];
+      side.other.setVS(side.data.id);
+    };
+
+    $scope.close = function(side) {
+      $scope.removePath();
+      side.state().vs = undefined;
+    };
+
     function setNewVS(side) {
       return function(id) {
         $scope.removePath();
