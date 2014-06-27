@@ -39,52 +39,29 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
-  registerOperation(ImportEdgeListWithNumericIDs)
-  object ImportEdgeListWithNumericIDs extends FEOperation {
-    val title = "Import edge list with numeric IDs "
+  registerOperation(ImportEdges)
+  object ImportEdges extends FEOperation {
+    val title = "Import edges"
     val parameters = Seq(
-      Param("data", "Input data path (use * for wildcard)"),
-      Param("header", """Header string (ie. "src","dst","age","gender")"""),
-      Param("delimiter", "Delimiter to use for parsing", defaultValue = ","),
-      Param("src", "Source ID field name (without quotation marks)"),
-      Param("dst", "Destination ID field name (without quotation marks)"),
-      Param("filter", "(optional) Filtering expression (use JavaScript syntax, equation must evaluate to true/false)"))
+      Param("files", "Files"),
+      Param("header", "Header"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("src", "Source ID field"),
+      Param("dst", "Destination ID field"),
+      Param("id-type", "ID type", options = UIValue.seq("number", "string"), defaultValue = "number"),
+      Param("filter", "(optional) Filtering expression"))
     def apply(params: Map[String, String]) = {
-      manager.show(
-        graph_operations.ImportEdgeListWithNumericIDs(
-          graph_operations.CSV(
-            Filename.fromString(params("data")),
-            params("delimiter"),
-            params("header"),
-            graph_operations.Javascript(params("filter"))),
-          params("src"),
-          params("dst")))
-      FEStatus.success
-    }
-  }
-
-  registerOperation(ImportEdgeListWithStringIDs)
-  object ImportEdgeListWithStringIDs extends FEOperation {
-    val title = "Import edge list with string IDs "
-    val parameters = Seq(
-      Param("data", "Input data path (use * for wildcard)"),
-      Param("header", """Header string (ie. "src","dst","age","gender")"""),
-      Param("delimiter", "Delimiter to use for parsing", defaultValue = ","),
-      Param("src", "Source ID field name (without quotation marks)"),
-      Param("dst", "Destination ID field name (without quotation marks)"),
-      Param("vAttr", "Vertex attribute field name (without quotation marks)"),
-      Param("filter", "(optional) Filtering expression (use JavaScript syntax, equation must evaluate to True/False)"))
-    def apply(params: Map[String, String]) = {
-      manager.show(
-        graph_operations.ImportEdgeListWithStringIDs(
-          graph_operations.CSV(
-            Filename.fromString(params("data")),
-            params("delimiter"),
-            params("header"),
-            graph_operations.Javascript(params("filter"))),
-          params("src"),
-          params("dst"),
-          params("vAttr")))
+      val csv = graph_operations.CSV(
+        Filename.fromString(params("files")),
+        params("delimiter"),
+        params("header"),
+        graph_operations.Javascript(params("filter")))
+      val src = params("src")
+      val dst = params("dst")
+      manager.show(params("id-type") match {
+        case "number" => graph_operations.ImportEdgeListWithNumericIDs(csv, src, dst)
+        case "string" => graph_operations.ImportEdgeListWithStringIDs(csv, src, dst)
+      })
       FEStatus.success
     }
   }
@@ -306,7 +283,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val parameters = Seq(
       Param("vattrs", "Vertex attributes", kind = "multi-vertex-attribute"),
       Param("eattrs", "Edge attributes", kind = "multi-edge-attribute"),
-      Param("type", "Convert into", options = Seq(UIValue("string", "string"), UIValue("double", "double"))))
+      Param("type", "Convert into", options = UIValue.seq("string", "double")))
 
     def apply(params: Map[String, String]): FEStatus = {
       val vattrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")

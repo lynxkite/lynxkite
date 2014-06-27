@@ -22,6 +22,7 @@ case class UIValue(
   title: String)
 object UIValue {
   def fromEntity(e: MetaGraphEntity): UIValue = UIValue(e.gUID.toString, e.toString)
+  def seq(list: String*) = list.map(id => UIValue(id, id))
 }
 
 case class FEOperationMeta(
