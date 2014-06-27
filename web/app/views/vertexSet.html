@@ -50,18 +50,16 @@
         </li>
       </sublist>
       <sublist ng-show="side.data.inEdges" heading="Incoming Edge Bundles">
-        <li class="list-group-item" ng-repeat="bundle in side.data.inEdges">
+        <a class="list-group-item" ng-repeat="bundle in side.data.inEdges"
+          ng-click="side.followEB(bundle, false)">
           {{bundle.title}} &#x2b05; {{bundle.source.title}}
-          <button class="btn btn-default" ng-click="side.followEB(bundle, false)">Follow</button>
-          <button class="btn btn-default" ng-click="side.showEB(bundle, true)">Show source on {{side.oppositeName}}</button>
-        </li>
+        </a>
       </sublist>
       <sublist ng-show="side.data.outEdges" heading="Outgoing Edge Bundles">
-        <li class="list-group-item" ng-repeat="bundle in side.data.outEdges">
+        <a class="list-group-item" ng-repeat="bundle in side.data.outEdges"
+          ng-click="side.followEB(bundle, true)">
           {{bundle.title}} &#x27a1; {{bundle.destination.title}}
-          <button class="btn btn-default" ng-click="side.followEB(bundle, true)">Follow</button>
-          <button class="btn btn-default" ng-click="side.showEB(bundle, false)">Show destination on {{side.oppositeName}}</button>
-        </li>
+        </a>
       </sublist>
       <sublist ng-show="side.data.ops" heading="Operations">
         <a class="list-group-item" ng-repeat="op in side.data.ops"
