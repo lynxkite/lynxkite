@@ -54,7 +54,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_api.Edge])
     kryo.register(classOf[Array[Seq[_]]])
     kryo.register(classOf[Array[graph_api.Edge]])
-    kryo.register((0l, 0.0).getClass);
+    kryo.register((0L, 0.0).getClass);
   }
 }
 

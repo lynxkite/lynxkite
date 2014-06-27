@@ -75,3 +75,7 @@ case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
     extends FractionalBucketer[Double](min, max, numBuckets) {
   @transient lazy val tt = typeTag[Double]
 }
+case class LongBucketer(min: Long, max: Long, numBuckets: Int)
+    extends NumericBucketer[Long](min, max, numBuckets) {
+  @transient lazy val tt = typeTag[Long]
+}
