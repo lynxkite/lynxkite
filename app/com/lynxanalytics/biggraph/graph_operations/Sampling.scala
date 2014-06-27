@@ -17,7 +17,7 @@ case class VertexSample(fraction: Double) extends MetaGraphOperation {
     val sampled = vertices.sample(withReplacement = false,
       fraction = fraction,
       seed = 0)
-    outputs.putVertexSet('sampled, sampled)
+    outputs.putVertexSet('sampled, sampled.partitionBy(rc.defaultPartitioner))
     outputs.putEdgeBundle(
       'projection,
       RDDUtils.fastNumbered(sampled.map { case (id, _) => Edge(id, id) })
