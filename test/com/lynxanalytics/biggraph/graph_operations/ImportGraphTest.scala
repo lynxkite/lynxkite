@@ -71,17 +71,16 @@ class ImportGraphTest extends FunSuite with TestGraphOperation {
   test("import graph from csv with non-numerical IDs") {
     val dir = "/graph_operations/ImportGraphTest/non-num-ids/"
     val csv = Filename(getClass.getResource(dir + "edges.csv").getFile)
-    val vertexIdAttrName = "name"
     val edgeSourceFieldName = "srcVertexId"
     val edgeDestFieldName = "dstVertexId"
     val delimiter = "|"
     val skipFirstRow = true
     val data = helper.apply(ImportEdgeListWithStringIDs(
       CSV(csv, delimiter, ImportUtil.header(csv)),
-      edgeSourceFieldName, edgeDestFieldName, vertexIdAttrName))
+      edgeSourceFieldName, edgeDestFieldName))
     val vs = helper.rdd(data.vertexSets('vertices))
     val es = helper.rdd(data.edgeBundles('edges))
-    val names = helper.rdd(data.vertexAttributes('csv_name)).asInstanceOf[AttributeRDD[String]]
+    val names = helper.rdd(data.vertexAttributes('stringID)).asInstanceOf[AttributeRDD[String]]
     val comments: AttributeRDD[_] = helper.rdd(data.edgeAttributes('csv_comment))
     val bySrc = es.map { case (e, Edge(s, d)) => s -> (e, d) }
     val byDst = bySrc.join(names).map { case (s, ((e, d), ns)) => d -> (e, ns) }
