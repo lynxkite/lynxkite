@@ -39,6 +39,29 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
+  registerOperation(ImportVertices)
+  object ImportVertices extends FEOperation {
+    val title = "Import vertices"
+    val parameters = Seq(
+      Param("files", "Files"),
+      Param("header", "Header"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("id", "(optional) Numeric field to use as ID"),
+      Param("filter", "(optional) Filtering expression"))
+    def apply(params: Map[String, String]) = {
+      val csv = graph_operations.CSV(
+        Filename.fromString(params("files")),
+        params("delimiter"),
+        params("header"),
+        graph_operations.Javascript(params("filter")))
+      manager.show(params("id") match {
+        case "" => graph_operations.ImportVertexListWithStringIDs(csv)
+        case id => graph_operations.ImportVertexListWithNumericIDs(csv, id)
+      })
+      FEStatus.success
+    }
+  }
+
   registerOperation(ImportEdges)
   object ImportEdges extends FEOperation {
     val title = "Import edges"
