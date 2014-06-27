@@ -1,67 +1,57 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import scala.reflect.runtime.universe._
-
-import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx.Edge
-import org.apache.spark.graphx.VertexId
-import org.apache.spark.rdd.RDD
 import scala.collection.SortedSet
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.attributes.AttributeSignature
-import com.lynxanalytics.biggraph.graph_api.attributes.DenseAttributes
-import com.lynxanalytics.biggraph.graph_api.attributes.SignatureExtension
 
-@SerialVersionUID(4148735639783910942l) case class ClusteringCoefficient(outputAttribute: String)
-    extends NewVertexAttributeOperation[Double] {
-  @transient lazy val tt = typeTag[Double]
+case class ClusteringCoefficient(outputAttribute: String) extends MetaGraphOperation {
+  def signature = newSignature
+    .inputEdgeBundle('es, 'vs -> 'vs, create = true)
+    .outputVertexAttribute[Double]('clustering, 'vs)
 
-  override def computeHolistically(inputData: GraphData,
-                                   runtimeContext: RuntimeContext,
-                                   vertexPartitioner: spark.Partitioner): RDD[(VertexId, Double)] = {
-    val nonLoopEdges = inputData.edges.filter(e => e.srcId != e.dstId)
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val nonLoopEdges = inputs.edgeBundles('es).rdd.filter { case (_, e) => e.src != e.dst }
+    val vertices = inputs.vertexSets('vs).rdd
+    val vertexPartitioner = vertices.partitioner.get
 
     val inNeighbors = nonLoopEdges
-      .map(e => (e.dstId, e.srcId))
+      .map { case (_, e) => e.dst -> e.src }
       .groupByKey(vertexPartitioner)
       .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
     val outNeighbors = nonLoopEdges
-      .map(e => (e.srcId, e.dstId))
+      .map { case (_, e) => e.src -> e.dst }
       .groupByKey(vertexPartitioner)
       .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
-    val neighbors = inputData.vertices.leftOuterJoin(outNeighbors).leftOuterJoin(inNeighbors)
+    val neighbors = vertices.leftOuterJoin(outNeighbors).leftOuterJoin(inNeighbors)
       .mapValues {
-        case ((id, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
+        case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
       }
 
     val outNeighborsOfNeighbors = neighbors.join(outNeighbors).flatMap {
       case (vid, (all, outs)) => all.map((_, outs))
     }.groupByKey(vertexPartitioner)
 
-    neighbors.join(outNeighborsOfNeighbors).mapValues {
+    val clusteringCoeff = neighbors.join(outNeighborsOfNeighbors).mapValues {
       case (mine, theirs) =>
         val numNeighbors = mine.size
         if (numNeighbors > 1) {
           val edgesInNeighborhood = theirs
             .map(his => sortedIntersectionSize(his, mine))
             .sum
-
           edgesInNeighborhood * 1.0 / numNeighbors / (numNeighbors - 1)
         } else {
           1.0
         }
     }
 
+    outputs.putVertexAttribute('clustering, clusteringCoeff)
   }
 
-  override def computeLocally(vid: VertexId, da: DenseAttributes): Double = 1.0
-
-  private def sortedUnion(a: Array[VertexId], b: Array[VertexId]): Array[VertexId] = {
+  private def sortedUnion(a: Array[ID], b: Array[ID]): Array[ID] = {
     val builder = new mutable.ArrayBuilder.ofLong
     var ai = 0
     var bi = 0
@@ -82,7 +72,8 @@ import com.lynxanalytics.biggraph.graph_api.attributes.SignatureExtension
     for (i <- bi until b.size) builder += b(i)
     builder.result()
   }
-  private def sortedIntersectionSize(a: Array[VertexId], b: Array[VertexId]): Int = {
+
+  private def sortedIntersectionSize(a: Array[ID], b: Array[ID]): Int = {
     var ai = 0
     var bi = 0
     var result = 0
