@@ -54,7 +54,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_api.Edge])
     kryo.register(classOf[Array[Seq[_]]])
     kryo.register(classOf[Array[graph_api.Edge]])
-    kryo.register(classOf[(Long, Double)])
+    kryo.register((0L, 0.0).getClass)
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
