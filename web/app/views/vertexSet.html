@@ -18,10 +18,10 @@
       <span style="float: right">
         <span class="glyphicon clicky" ng-class="'glyphicon-arrow-' + side.oppositeName"
           title="Show on the {{side.oppositeName}}"
-          ng-click="side.other.setVS(side.data.id)"></span>
+          ng-click="mirror(side)"></span>
         <span class="glyphicon glyphicon-remove clicky"
           title="Close"
-          ng-click="side.state().vs = undefined"></span>
+          ng-click="close(side)"></span>
       </span>
     </div>
     <div class="list-group">
