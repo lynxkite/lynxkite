@@ -25,7 +25,8 @@ case class EdgeAttributeToDouble() extends MetaGraphOperation {
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val attr = inputs.edgeAttributes('attr).runtimeSafeCast[String].rdd
-    val double = attr.mapValues(_.toDouble)
+    val double = attr.flatMapValues(stringValue =>
+      if (stringValue != "") Some(stringValue.toDouble) else None)
     outputs.putEdgeAttribute[Double]('double, double)
   }
 }
@@ -49,7 +50,8 @@ case class VertexAttributeToDouble() extends MetaGraphOperation {
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val attr = inputs.vertexAttributes('attr).runtimeSafeCast[String].rdd
-    val double = attr.mapValues(_.toDouble)
+    val double = attr.flatMapValues(stringValue =>
+      if (stringValue != "") Some(stringValue.toDouble) else None)
     outputs.putVertexAttribute[Double]('double, double)
   }
 }
