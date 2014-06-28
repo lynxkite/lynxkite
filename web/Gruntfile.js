@@ -391,6 +391,13 @@ module.exports = function (grunt) {
     'htmlmin'
   ]);
 
+  grunt.registerTask('quick', [
+    'clean:server',
+    'bowerInstall',
+    'copy:styles',
+    'autoprefixer'
+  ]);
+
   grunt.registerTask('default', [
     'newer:jshint',
     'test',
