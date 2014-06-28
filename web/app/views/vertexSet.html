@@ -56,20 +56,36 @@
         </li>
       </sublist>
       <sublist ng-show="side.data.inEdges" heading="Incoming Edge Bundles">
-        <a href class="list-group-item" ng-repeat="bundle in side.data.inEdges"
-          ng-click="side.followEB(bundle, false)">
+        <li class="list-group-item" ng-repeat="bundle in side.data.inEdges">
           <shortn text="{{bundle.title}}"></shortn>
           &#x2b05;
           <shortn text="{{bundle.source.title}}"></shortn>
-        </a>
+          <span
+              class="clicky glyphicon glyphicon-random"
+              title="Follow reversed edge bundle"
+              ng-click="side.followEB(bundle, false)"></span>
+          <span
+              class="clicky glyphicon"
+              ng-class="'glyphicon-arrow-' + side.oppositeName"
+              title="Show edge bundle"
+              ng-click="side.showEB(bundle, true)"></span>
+        </li>
       </sublist>
       <sublist ng-show="side.data.outEdges" heading="Outgoing Edge Bundles">
-        <a href class="list-group-item" ng-repeat="bundle in side.data.outEdges"
-          ng-click="side.followEB(bundle, true)">
+        <li class="list-group-item" ng-repeat="bundle in side.data.outEdges">
           <shortn text="{{bundle.title}}"></shortn>
           &#x27a1;
-          <shortn text="{{bundle.destination.title}}"></shortn>
-        </a>
+          <shortn text="{{bundle.source.title}}"></shortn>
+          <span
+              class="clicky glyphicon glyphicon-random"
+              title="Follow edge bundle"
+              ng-click="side.followEB(bundle, true)"></span>
+          <span
+              class="clicky glyphicon"
+              ng-class="'glyphicon-arrow-' + side.oppositeName"
+              title="Show edge bundle"
+              ng-click="side.showEB(bundle, false)"></span>
+        </li>
       </sublist>
       <sublist ng-show="side.data.ops" heading="Operations">
         <a href class="list-group-item" ng-repeat="op in side.data.ops"
