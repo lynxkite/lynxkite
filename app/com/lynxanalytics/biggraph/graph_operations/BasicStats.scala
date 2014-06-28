@@ -42,8 +42,6 @@ abstract class ComputeMinMax[T: Numeric: ClassTag] extends MetaGraphOperation {
     val res = inputs.vertexAttributes('attribute).runtimeSafeCast[T].rdd.values
       .aggregate(Array(MaxValue, MinValue))(
         (minmax, next) => {
-          println(minmax.toSeq)
-          println(next)
           minmax(0) = num.min(minmax(0), next)
           minmax(1) = num.max(minmax(1), next)
           minmax
@@ -73,7 +71,6 @@ object ComputeMinMax {
   def apply(metaManager: MetaGraphManager,
             dataManager: DataManager,
             attr: VertexAttribute[Double]): (Double, Double) = {
-    println("Computing minmax on: ", attr)
     val metaOuts = metaManager.apply(ComputeMinMaxDouble(), 'attribute -> attr).outputs
     (dataManager.get(metaOuts.scalars('min).runtimeSafeCast[Double]).value,
       dataManager.get(metaOuts.scalars('max).runtimeSafeCast[Double]).value)

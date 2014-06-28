@@ -103,14 +103,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val count = graph_operations.CountVertices(metaManager, dataManager, vertexSet)
     // TODO get from request or something.
     val targetSample = 10000
+    val fraction = (targetSample * 1.0 / count) min 1.0
     val sampled =
-      if (count <= targetSample) vertexSet
-      else metaManager.apply(
-        graph_operations.VertexSample(targetSample * 1.0 / count),
+      if (fraction < 1.0) metaManager.apply(
+        graph_operations.VertexSample(fraction),
         'vertices -> vertexSet).outputs.vertexSets('sampled)
+      else vertexSet
 
     val filtered = filter(sampled, request.filters)
-    println("Filtered count: ", dataManager.get(filtered).rdd.count)
 
     var xBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
     var yBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
@@ -143,7 +143,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val diagram = dataManager.get(diagramMeta).value
 
     val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
-      yield FEVertex(x, y, diagram.getOrElse((x, y), 0))
+      yield FEVertex(x, y, (diagram.getOrElse((x, y), 0) * 1.0 / fraction).toInt)
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
