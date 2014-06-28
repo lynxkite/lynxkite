@@ -185,8 +185,8 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ConcatenateBundles extends FEOperation {
     val title = "Concatenate edge bundles, weighted"
     val parameters = Seq(
-      Param("wAB", "Edge weight A->B", kind = "multi-edge-attribute"),
-      Param("wBC", "Edge weight B->C", kind = "multi-edge-attribute"))
+      Param("wAB", "Edge weight A->B", kind = "edge-attribute"),
+      Param("wBC", "Edge weight B->C", kind = "edge-attribute"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.ConcatenateBundles(),
         'weightsAB -> manager.edgeAttribute(params("wAB").asUUID),
