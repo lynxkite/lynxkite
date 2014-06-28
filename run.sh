@@ -4,7 +4,11 @@ set -x
 set -e
 
 rm public || true
-ln -s web/app public
+cd web
+grunt quick
+cp -Rn app/* .tmp/ || true
+cd ..
+ln -s web/.tmp public
 
 sbt stage
 stage/bin/biggraph
