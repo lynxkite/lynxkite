@@ -49,6 +49,25 @@ html {
   color: rgba(0, 0, 0, 0.5);
 }
 
+table.histogram {
+  table-layout: fixed;
+  height: 40px;
+  width: 100%;
+  margin-bottom: -10px;
+  margin-top: 5px;
+}
+
+table.histogram td {
+  width: 5%;
+  vertical-align: bottom;
+  padding: 0;
+  padding-left: 3px;
+}
+
+table.histogram .bar {
+  background: rgba(0, 0, 0, 0.2);
+}
+
 h6 {
   font-weight: bold;
 }
