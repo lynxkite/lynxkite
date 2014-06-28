@@ -34,6 +34,7 @@
               ng-click="setState(side, 'yAttribute', attr.id)">Graph on Y</button>
           <input class="form-control filter" placeholder="filter" ng-model="side.state().filters[attr.id]"
               ng-model-options="{ updateOn: 'blur' }">
+          <histogram model="attr.histogram"></histogram>
         </li>
       </sublist>
       <sublist ng-show="side.data.localEdges" heading="Local Edge Bundles">

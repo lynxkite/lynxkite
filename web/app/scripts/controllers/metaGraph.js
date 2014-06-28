@@ -132,6 +132,44 @@ angular.module('biggraph')
       $scope.graphView = $resource('/ajax/complexView').get({ q: q });
     }
 
+    $scope.deepWatch(
+      'state', // TODO: Finer grained triggering.
+      function() {
+        if ($scope.left.data !== undefined) {
+          $scope.left.data.$promise.then(function() { loadHistograms($scope.left); });
+        }
+        if ($scope.right.data !== undefined) {
+          $scope.right.data.$promise.then(function() { loadHistograms($scope.right); });
+        }
+      });
+    function loadHistograms(side) {
+      var state = side.state();
+      var data = side.data;
+      for (var i = 0; i < data.attributes.length; ++i) {
+        var a = data.attributes[i];
+        var filters = [];
+        for (var attr in state.filters) {
+          if (state.filters[attr] !== '') {
+            filters.push({ attributeId: attr, valueSpec: state.filters[attr] });
+          }
+        }
+        var q = {
+          vertexSetId: data.id,
+          filters: filters,
+          mode: 'bucketed',
+          xBucketingAttributeId: a.id,
+          xNumBuckets: 20,
+          yBucketingAttributeId: '',
+          yNumBuckets: 1,
+          // Unused.
+          centralVertexId: '',
+          sampleSmearEdgeBundleId: '',
+          radius: 0,
+        };
+        a.histogram = $resource('/ajax/vertexDiag').get({q: q});
+      }
+    }
+
     var StartingVertexSets = $resource('/ajax/startingVs');
     function loadStartingVertexSets() {
       $scope.startingVertexSets = StartingVertexSets.query({q: {fake: 0}});
