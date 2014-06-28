@@ -54,7 +54,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
     var xBuckets = [], yBuckets = [];
     var i, x, y, l;
-    y = yOff + this.zoom * util.normalize(yb.max + 1, yb);
+    y = yOff + this.zoom * util.normalize(yb.max, yb) + 35;
     for (i = 0; i < data.xBuckets.length; ++i) {
       x = xOff + this.zoom * util.normalize(i, xb);
       l = new Label(x, y, data.xBuckets[i]);
@@ -62,8 +62,11 @@ angular.module('biggraph').directive('graphView', function($window) {
       this.vertices.append(l.dom);
     }
     // Labels on the left on the left and on the right on the right.
-    var pos = xOff < this.svg.width() / 2 ? xb.min - 1 : xb.max + 1;
-    x = xOff + this.zoom * util.normalize(pos, xb);
+    if (xOff < this.svg.width() / 2) {
+      x = xOff + this.zoom * util.normalize(xb.min, xb) - 60;
+    } else {
+      x = xOff + this.zoom * util.normalize(xb.max, xb) + 60;
+    }
     for (i = 0; i < data.yBuckets.length; ++i) {
       y = yOff + this.zoom * util.normalize(i, yb);
       l = new Label(x, y, data.yBuckets[i]);
