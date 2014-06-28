@@ -18,9 +18,9 @@
       <button ng-if="!$first" class="btn btn-default" ng-click="cutPathLeft($index)">
         &#x232b;
       </button>
-      {{step.bundle.title}} [{{step.bundle.source.title}}
+      <shortn text="{{step.bundle.title}}"></shortn> [<shortn text="{{step.bundle.source.title}}"></shortn>
       <span ng-if="step.pointsLeft">&#x2b05;</span><span ng-if="!step.pointsLeft">&#x27a1;</span>
-      {{step.bundle.destination.title}}]
+      <shortn text="{{step.bundle.destination.title}}"></shortn>]
       <button ng-if="!$last" class="btn btn-default" ng-click="cutPathRight($index)">
         &#x2326;
       </button>
