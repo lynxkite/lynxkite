@@ -26,11 +26,7 @@ angular.module('biggraph').directive('shortn', ['$compile', function($compile) {
   // A color hash.
   function color(text) {
     var code = hashCode(text);
-    var h = '#';
-    h += (10 + 4 * (code % 2)).toString(16); code = Math.floor(code / 2);
-    h += (10 + 4 * (code % 2)).toString(16); code = Math.floor(code / 2);
-    h += (10 + 4 * (code % 2)).toString(16); code = Math.floor(code / 2);
-    return h;
+    return 30 * (code % 12);
   }
 
   return {
@@ -39,32 +35,32 @@ angular.module('biggraph').directive('shortn', ['$compile', function($compile) {
     replace: false,
     link: function(scope, element) {
       scope.$watch('text', function(text) {
-        function getFrom(i) {
-          var result = '';
-          for (; i < text.length; ++i) {
+        function getFrom(start) {
+          var markup = '';
+          for (var i = start; i < text.length; ++i) {
             if (text[i] === '(') {
               var r = getFrom(i + 1);
               if (r.text.length > 10) {
                 var t = r.text;
                 var h = hash(t);
                 var c = color(t);
-                result += '<shortned hash="' + h + '" color="' + c + '">' + t + '</shortned>';
+                markup += '<shortned hash="' + h + '" color="' + c + '">' + r.markup + '</shortned>';
               } else {
                 // Do not collapse short strings.
-                result += '(' + r.text + ')';
+                markup += '(' + r.text + ')';
               }
               i = r.end;
             } else if (text[i] === ')') {
-              return {end: i, text: result};
+              return {end: i, markup: markup, text: text.substring(start, i)};
             } else {
-              result += text[i];
+              markup += text[i];
             }
           }
-          return {end: i - 1, text: result};
+          return {end: i - 1, markup: markup, text: text.substring(start, i - 1)};
         }
         var r = getFrom(0);
         element.empty();
-        var el = angular.element('<span>' + r.text + '</span>');
+        var el = angular.element('<span>' + r.markup + '</span>');
         var comp = $compile(el);
         element.append(comp(scope));
       });
@@ -82,7 +78,7 @@ angular.module('biggraph').directive('shortned', function() {
     templateUrl: 'shortned.html',
     link: function(scope) {
       scope.clicked = function(event) {
-        scope.expanded = true;
+        scope.expanded = !scope.expanded;
         event.preventDefault();
         event.stopPropagation();
       };
