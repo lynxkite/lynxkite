@@ -26,11 +26,7 @@ angular.module('biggraph').directive('shortn', ['$compile', function($compile) {
   // A color hash.
   function color(text) {
     var code = hashCode(text);
-    var h = '#';
-    h += (10 + 4 * (code % 2)).toString(16); code = Math.floor(code / 2);
-    h += (10 + 4 * (code % 2)).toString(16); code = Math.floor(code / 2);
-    h += (10 + 4 * (code % 2)).toString(16); code = Math.floor(code / 2);
-    return h;
+    return 30 * (code % 12);
   }
 
   return {
@@ -82,7 +78,7 @@ angular.module('biggraph').directive('shortned', function() {
     templateUrl: 'shortned.html',
     link: function(scope) {
       scope.clicked = function(event) {
-        scope.expanded = true;
+        scope.expanded = !scope.expanded;
         event.preventDefault();
         event.stopPropagation();
       };
