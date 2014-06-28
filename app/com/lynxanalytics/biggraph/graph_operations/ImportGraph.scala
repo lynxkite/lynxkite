@@ -100,7 +100,7 @@ case class CSV(file: Filename,
     return lines
       .filter(_ != header)
       .map(ImportUtil.split(_, delimiter))
-      .filter(jsFilter(_))
+      .filter(jsFilter(_)).cache
   }
 
   def jsFilter(line: Seq[String]): Boolean = {
