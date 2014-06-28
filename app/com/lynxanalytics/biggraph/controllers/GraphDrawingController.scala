@@ -117,17 +117,25 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     var inputs = MetaDataSet(Map('vertices -> filtered))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
-      xBucketer = FEBucketers.bucketer(metaManager, dataManager, attribute, request.xNumBuckets)
-      inputs ++= MetaDataSet(
-        Map('xAttribute -> sampleAttribute(
-          metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))))
+      val sampledAttribute = sampleAttribute(
+        metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))
+      xBucketer = FEBucketers.bucketer(
+        metaManager, dataManager, sampledAttribute, request.xNumBuckets)
+      if (xBucketer.numBuckets > 1) {
+        inputs ++= MetaDataSet(
+          Map('xAttribute -> sampledAttribute))
+      }
     }
     if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
-      yBucketer = FEBucketers.bucketer(metaManager, dataManager, attribute, request.yNumBuckets)
-      inputs ++= MetaDataSet(
-        Map('yAttribute -> sampleAttribute(
-          metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))))
+      val sampledAttribute = sampleAttribute(
+        metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))
+      yBucketer = FEBucketers.bucketer(
+        metaManager, dataManager, sampledAttribute, request.yNumBuckets)
+      if (yBucketer.numBuckets > 1) {
+        inputs ++= MetaDataSet(
+          Map('yAttribute -> sampledAttribute))
+      }
     }
     val op = graph_operations.VertexBucketGrid(xBucketer, yBucketer)
     val diagramMeta = metaManager.apply(op, inputs)
