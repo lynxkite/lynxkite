@@ -301,12 +301,12 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
     def apply(params: Map[String, String]) = {
       val attr = manager.vertexAttribute(params("attr").asUUID).runtimeSafeCast[Double]
+      val orig = attr.vertexSet
+      val edgeBundles = (manager.incomingBundles(orig) ++ manager.outgoingBundles(orig))
       val filter = manager.show(
         graph_operations.UpperBoundFilter(params("max").toDouble),
         'attr -> attr)
-      val orig = attr.vertexSet
       val filtered = filter.outputs.vertexSets('fvs)
-      val edgeBundles = (manager.incomingBundles(orig) ++ manager.outgoingBundles(orig))
       // Filter all the visible edge bundles too.
       for (eb <- edgeBundles.filter(manager.isVisible(_))) {
         def f(vs: VertexSet) = if (vs == orig) filtered else vs
