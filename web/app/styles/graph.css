@@ -33,6 +33,22 @@ html {
   border-top-width: 0;
 }
 
+.shortned {
+  display: inline-block;
+  padding: 5px;
+  margin: 2px;
+  border-radius: 5px;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  font-size: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.unshortned {
+  color: rgba(0, 0, 0, 0.5);
+}
+
 h6 {
   font-weight: bold;
 }
