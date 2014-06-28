@@ -94,7 +94,7 @@ angular.module('biggraph')
             dstDiagramId: 'idx[' + i + ']',
             srcIdx: i,
             dstIdx: i,
-            bundleIdSequence: [side.edgeBundle.id]
+            bundleSequence: [{ bundle: side.edgeBundle.id, reversed: false }]
           });
         }
         var filters = [];
@@ -118,35 +118,62 @@ angular.module('biggraph')
         });
       }
       if ($scope.state.leftToRightPath !== undefined) {
-        // TODO: we will need to communicate bundle directions here and flip them
-        // back in the backend if necessary.
-        var ids = $scope.state.leftToRightPath.map(function(step) { return step.eb.id; });
+        var bundles = $scope.state.leftToRightPath.map(function(step) {
+          return { bundle: step.bundle.id, reversed: step.pointsLeft };
+        });
         q.edgeBundles.push({
           srcDiagramId: 'idx[0]',
           dstDiagramId: 'idx[1]',
           srcIdx: 0,
           dstIdx: 1,
-          bundleIdSequence: ids
+          bundleSequence: bundles,
         });
       }
       $scope.graphView = $resource('/ajax/complexView').get({ q: q });
+    }
+
+    $scope.deepWatch(
+      'state', // TODO: Finer grained triggering.
+      function() {
+        if ($scope.left.data !== undefined) {
+          $scope.left.data.$promise.then(function() { loadHistograms($scope.left); });
+        }
+        if ($scope.right.data !== undefined) {
+          $scope.right.data.$promise.then(function() { loadHistograms($scope.right); });
+        }
+      });
+    function loadHistograms(side) {
+      var state = side.state();
+      var data = side.data;
+      for (var i = 0; i < data.attributes.length; ++i) {
+        var a = data.attributes[i];
+        var filters = [];
+        for (var attr in state.filters) {
+          if (state.filters[attr] !== '') {
+            filters.push({ attributeId: attr, valueSpec: state.filters[attr] });
+          }
+        }
+        var q = {
+          vertexSetId: data.id,
+          filters: filters,
+          mode: 'bucketed',
+          xBucketingAttributeId: a.id,
+          xNumBuckets: 20,
+          yBucketingAttributeId: '',
+          yNumBuckets: 1,
+          // Unused.
+          centralVertexId: '',
+          sampleSmearEdgeBundleId: '',
+          radius: 0,
+        };
+        a.histogram = $resource('/ajax/vertexDiag').get({q: q});
+      }
     }
 
     var StartingVertexSets = $resource('/ajax/startingVs');
     function loadStartingVertexSets() {
       $scope.startingVertexSets = StartingVertexSets.query({q: {fake: 0}});
     }
-
-    $scope.applicableOperations = function() {
-      var res = [];
-      if ($scope.startingOps) {
-        res = res.concat($scope.startingOps);
-      }
-      if ($scope.left.data) {
-        res = res.concat($scope.left.data.ops);
-      }
-      return res;
-    };
 
     function openOperationModal(operation) {
       var modalInstance = $modal.open({
@@ -228,10 +255,20 @@ angular.module('biggraph')
     $scope.right.oppositeName = 'left';
 
     $scope.left.setVS = function(id) {
-      $scope.state.left.vs = { id: id };
+      $scope.state.left = { vs: { id: id }, filters: {} };
     };
     $scope.right.setVS = function(id) {
-      $scope.state.right.vs = { id: id };
+      $scope.state.right = { vs: { id: id }, filters: {} };
+    };
+
+    $scope.mirror = function(side) {
+      $scope.state.leftToRightPath = [];
+      side.other.setVS(side.data.id);
+    };
+
+    $scope.close = function(side) {
+      $scope.removePath();
+      side.state().vs = undefined;
     };
 
     function setNewVS(side) {
@@ -243,58 +280,44 @@ angular.module('biggraph')
     $scope.left.setNewVS = setNewVS($scope.left);
     $scope.right.setNewVS = setNewVS($scope.right);
 
-    $scope.left.addEBToPath = function(eb, pointsTowardsMySide) {
-      $scope.state.leftToRightPath.unshift({eb: eb, pointsLeft: pointsTowardsMySide});
+    $scope.left.addEBToPath = function(bundle, pointsTowardsMySide) {
+      $scope.state.leftToRightPath.unshift({bundle: bundle, pointsLeft: pointsTowardsMySide});
     };
-    $scope.right.addEBToPath = function(eb, pointsTowardsMySide) {
-      $scope.state.leftToRightPath.push({eb: eb, pointsLeft: !pointsTowardsMySide});
+    $scope.right.addEBToPath = function(bundle, pointsTowardsMySide) {
+      $scope.state.leftToRightPath.push({bundle: bundle, pointsLeft: !pointsTowardsMySide});
     };
 
     function followEB(side) {
-      return function(eb, pointsTowardsMySide) {
+      return function(bundle, pointsTowardsMySide) {
         if ($scope.state.leftToRightPath !== undefined) {
-          side.addEBToPath(eb, pointsTowardsMySide);
+          side.addEBToPath(bundle, pointsTowardsMySide);
         }
         if (pointsTowardsMySide) {
-          side.setVS(eb.destination.id);
+          side.setVS(bundle.destination.id);
         } else {
-          side.setVS(eb.source.id);
+          side.setVS(bundle.source.id);
         }
       };
     }
     $scope.left.followEB = followEB($scope.left);
     $scope.right.followEB = followEB($scope.right);
 
-    function showEB(side) {
-      return function(eb, pointsTowardsMySide) {
-        $scope.state.leftToRightPath = [];
-        side.addEBToPath(eb, pointsTowardsMySide);
-        if (pointsTowardsMySide) {
-          side.other.setVS(eb.source.id);
-        } else {
-          side.other.setVS(eb.destination.id);
-        }
-      };
-    }
-    $scope.left.showEB = showEB($scope.left);
-    $scope.right.showEB = showEB($scope.right);
-
     $scope.cutPathLeft = function(idx) {
       $scope.state.leftToRightPath.splice(0, idx);
       var firstStep = $scope.state.leftToRightPath[0];
       if (firstStep.pointsLeft) {
-        $scope.left.setVS(firstStep.eb.destination.id);
+        $scope.left.setVS(firstStep.bundle.destination.id);
       } else {
-        $scope.left.setVS(firstStep.eb.source.id);
+        $scope.left.setVS(firstStep.bundle.source.id);
       }
     };
     $scope.cutPathRight = function(idx) {
       $scope.state.leftToRightPath.splice(idx + 1);
       var lastStep = $scope.state.leftToRightPath[$scope.state.leftToRightPath.length - 1];
       if (lastStep.pointsLeft) {
-        $scope.right.setVS(lastStep.eb.source.id);
+        $scope.right.setVS(lastStep.bundle.source.id);
       } else {
-        $scope.right.setVS(lastStep.eb.destination.id);
+        $scope.right.setVS(lastStep.bundle.destination.id);
       }
     };
   });

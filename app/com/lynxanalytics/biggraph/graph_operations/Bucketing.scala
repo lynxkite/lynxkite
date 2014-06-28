@@ -6,22 +6,18 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-case class VertexBucketGrid(xSize: Int,
-                            ySize: Int,
-                            xMin: Double,
-                            xMax: Double,
-                            yMin: Double,
-                            yMax: Double) extends MetaGraphOperation {
-  assert(xSize >= 1)
-  assert(ySize >= 1)
+case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
+                                  yBucketer: Bucketer[T]) extends MetaGraphOperation {
   def signature = {
     var sig = newSignature
       .inputVertexSet('vertices)
-    if (xSize > 1) {
-      sig = sig.inputVertexAttribute[Double]('xAttribute, 'vertices)
+    if (xBucketer.numBuckets > 1) {
+      implicit val tt = xBucketer.tt
+      sig = sig.inputVertexAttribute[S]('xAttribute, 'vertices)
     }
-    if (ySize > 1) {
-      sig = sig.inputVertexAttribute[Double]('yAttribute, 'vertices)
+    if (yBucketer.numBuckets > 1) {
+      implicit val tt = yBucketer.tt
+      sig = sig.inputVertexAttribute[T]('yAttribute, 'vertices)
     }
     sig
       .outputScalar[Map[(Int, Int), Int]]('bucketSizes)
@@ -30,39 +26,27 @@ case class VertexBucketGrid(xSize: Int,
       .outputVertexAttribute[Int]('gridIdxs, 'vertices)
   }
 
-  val xBucketLabels = if (xSize == 1) {
-    Seq("")
-  } else {
-    NumericBucketer.bucketLabels(new FractionalBucketer[Double](xMin, xMax, xSize))
-  }
-
-  val yBucketLabels = if (ySize == 1) {
-    Seq("")
-  } else {
-    NumericBucketer.bucketLabels(new FractionalBucketer[Double](yMin, yMax, ySize))
-  }
-
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val vertices = inputs.vertexSets('vertices).rdd
-    val xBuckets = if (xSize == 1) {
+    val xBuckets = if (xBucketer.numBuckets == 1) {
       vertices.mapValues(_ => 0)
     } else {
-      val bucketer = new FractionalBucketer[Double](xMin, xMax, xSize)
-      val xAttr = inputs.vertexAttributes('xAttribute).runtimeSafeCast[Double].rdd
-      vertices.join(xAttr).mapValues { case (_, value) => bucketer.whichBucket(value) }
+      implicit val tt = xBucketer.tt
+      val xAttr = inputs.vertexAttributes('xAttribute).runtimeSafeCast[S].rdd
+      vertices.join(xAttr).mapValues { case (_, value) => xBucketer.whichBucket(value) }
     }
-    val yBuckets = if (ySize == 1) {
+    val yBuckets = if (yBucketer.numBuckets == 1) {
       vertices.mapValues(_ => 0)
     } else {
-      val bucketer = new FractionalBucketer[Double](yMin, yMax, ySize)
-      val yAttr = inputs.vertexAttributes('yAttribute).runtimeSafeCast[Double].rdd
-      vertices.join(yAttr).mapValues { case (_, value) => bucketer.whichBucket(value) }
+      implicit val tt = yBucketer.tt
+      val yAttr = inputs.vertexAttributes('yAttribute).runtimeSafeCast[T].rdd
+      vertices.join(yAttr).mapValues { case (_, value) => yBucketer.whichBucket(value) }
     }
     outputs.putVertexAttribute('xBuckets, xBuckets)
     outputs.putVertexAttribute('yBuckets, yBuckets)
     outputs.putVertexAttribute(
       'gridIdxs,
-      xBuckets.join(yBuckets).mapValues { case (x, y) => x * ySize + y })
+      xBuckets.join(yBuckets).mapValues { case (x, y) => x * yBucketer.numBuckets + y })
     outputs.putScalar('bucketSizes,
       xBuckets.join(yBuckets)
         .map { case (vid, (xB, yB)) => ((xB, yB), 1) }

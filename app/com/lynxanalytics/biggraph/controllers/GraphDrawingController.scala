@@ -8,12 +8,12 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 
-case class VertexAttributeFilter(
+case class FEVertexAttributeFilter(
   val attributeId: String,
   val valueSpec: String)
 case class VertexDiagramSpec(
   val vertexSetId: String,
-  val filters: Seq[VertexAttributeFilter],
+  val filters: Seq[FEVertexAttributeFilter],
   val mode: String, // For now, one of "bucketed", "sampled".
 
   // ** Parameters for bucketed view **
@@ -51,7 +51,9 @@ case class EdgeDiagramSpec(
   // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
   val srcIdx: Int,
   val dstIdx: Int,
-  val bundleIdSequence: Seq[String])
+  val bundleSequence: Seq[BundleSequenceStep])
+
+case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
 case class FEEdge(
   // idx of source vertex in the vertices Seq in the corresponding VertexDiagramResponse.
@@ -82,12 +84,18 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   val metaManager = env.metaGraphManager
   val dataManager = env.dataManager
 
-  def sampleAttribute(sampled: VertexSet,
-                      attribute: VertexAttribute[Double]): VertexAttribute[Double] =
-    metaManager.apply(
-      graph_operations.SampledDoubleVertexAttribute(),
-      'attribute -> attribute,
-      'sampled -> sampled).outputs.vertexAttributes('sampled_attribute).runtimeSafeCast[Double]
+  import graph_operations.SampledVertexAttribute.sampleAttribute
+
+  def filter(sampled: VertexSet, filters: Seq[FEVertexAttributeFilter]): VertexSet = {
+    if (filters.isEmpty) return sampled
+    val filteredVss = filters.map { filterSpec =>
+      FEFilters.filteredBaseSet(
+        metaManager,
+        metaManager.vertexAttribute(filterSpec.attributeId.asUUID),
+        filterSpec.valueSpec)
+    }
+    return graph_operations.VertexSetIntersection.intersect(metaManager, filteredVss: _*)
+  }
 
   def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     if (request.mode != "bucketed") return ???
@@ -95,60 +103,86 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val count = graph_operations.CountVertices(metaManager, dataManager, vertexSet)
     // TODO get from request or something.
     val targetSample = 10000
+    val fraction = (targetSample * 1.0 / count) min 1.0
     val sampled =
-      if (count <= targetSample) vertexSet
-      else metaManager.apply(
-        graph_operations.VertexSample(targetSample * 1.0 / count),
+      if (fraction < 1.0) metaManager.apply(
+        graph_operations.VertexSample(fraction),
         'vertices -> vertexSet).outputs.vertexSets('sampled)
+      else vertexSet
 
-    var (xMin, xMax, yMin, yMax) = (-1.0, -1.0, -1.0, -1.0)
-    var inputs = MetaDataSet(Map('vertices -> sampled))
+    val filtered = filter(sampled, request.filters)
+
+    var xBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
+    var yBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
+    var inputs = MetaDataSet(Map('vertices -> filtered))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
-      val attribute =
-        metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID).runtimeSafeCast[Double]
-      val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
-      xMin = min
-      xMax = max
-      inputs ++= MetaDataSet(Map('xAttribute -> sampleAttribute(sampled, attribute)))
+      val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
+      val sampledAttribute = sampleAttribute(
+        metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))
+      xBucketer = FEBucketers.bucketer(
+        metaManager, dataManager, sampledAttribute, request.xNumBuckets)
+      if (xBucketer.numBuckets > 1) {
+        inputs ++= MetaDataSet(
+          Map('xAttribute -> sampledAttribute))
+      }
     }
     if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
-      val attribute =
-        metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID).runtimeSafeCast[Double]
-      val (min, max) = graph_operations.ComputeMinMax(metaManager, dataManager, attribute)
-      yMin = min
-      yMax = max
-      inputs ++= MetaDataSet(Map('yAttribute -> sampleAttribute(sampled, attribute)))
+      val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
+      val sampledAttribute = sampleAttribute(
+        metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))
+      yBucketer = FEBucketers.bucketer(
+        metaManager, dataManager, sampledAttribute, request.yNumBuckets)
+      if (yBucketer.numBuckets > 1) {
+        inputs ++= MetaDataSet(
+          Map('yAttribute -> sampledAttribute))
+      }
     }
-    val op = graph_operations.VertexBucketGrid(
-      request.xNumBuckets, request.yNumBuckets, xMin, xMax, yMin, yMax)
+    val op = graph_operations.VertexBucketGrid(xBucketer, yBucketer)
     val diagramMeta = metaManager.apply(op, inputs)
       .outputs.scalars('bucketSizes).runtimeSafeCast[Map[(Int, Int), Int]]
     val diagram = dataManager.get(diagramMeta).value
 
-    val vertices = for (x <- (0 until request.xNumBuckets); y <- (0 until request.yNumBuckets))
-      yield FEVertex(x, y, diagram.getOrElse((x, y), 0))
+    val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
+      yield FEVertex(x, y, (diagram.getOrElse((x, y), 0) * 1.0 / fraction).toInt)
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices,
       mode = "bucketed",
-      xBuckets = op.xBucketLabels,
-      yBuckets = op.yBucketLabels)
+      xBuckets = xBucketer.bucketLabels,
+      yBuckets = yBucketer.bucketLabels)
   }
 
-  private def getCompositeBundle(bundleIds: Seq[String]): EdgeAttribute[Double] = {
-    val bundles = bundleIds.map(id => metaManager.edgeBundle(id.asUUID))
-    val weights = bundles.map(bundle =>
+  private def getCompositeBundle(steps: Seq[BundleSequenceStep]): EdgeAttribute[Double] = {
+    val chain = steps.map { step =>
+      val bundle = metaManager.edgeBundle(step.bundle.asUUID)
+      val directed = if (step.reversed) {
+        metaManager.apply(graph_operations.ReverseEdges(), 'esAB -> bundle)
+          .outputs.edgeBundles('esBA)
+      } else bundle
       metaManager
         .apply(graph_operations.AddConstantDoubleEdgeAttribute(1),
-          'edges -> bundle)
+          'edges -> directed)
         .outputs
-        .edgeAttributes('attr).runtimeSafeCast[Double])
-    return new graph_util.BundleChain(weights).getCompositeEdgeBundle(metaManager)
+        .edgeAttributes('attr).runtimeSafeCast[Double]
+    }
+    return new graph_util.BundleChain(chain).getCompositeEdgeBundle(metaManager)
   }
 
-  private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet =
+  private def directVsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
     inst.inputs.vertexSets('vertices)
+  }
+  private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
+    val gridInputVertices = directVsFromOp(inst)
+    if (gridInputVertices.source.operation.isInstanceOf[graph_operations.VertexSetIntersection]) {
+      val firstIntersected = gridInputVertices.source.inputs.vertexSets('vs0)
+      assert(firstIntersected.source.operation
+        .isInstanceOf[graph_operations.VertexAttributeFilter[_]])
+      firstIntersected.source.inputs.vertexSets('vs)
+    } else {
+      gridInputVertices
+    }
+  }
 
   private def inducedBundle(eb: EdgeBundle,
                             src: VertexSet,
@@ -172,7 +206,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     inst.outputs.vertexAttributes('gridIdxs).runtimeSafeCast[Int]
 
   private def numYBuckets(inst: MetaGraphOperationInstance): Int = {
-    inst.operation.asInstanceOf[graph_operations.VertexBucketGrid].ySize
+    inst.operation.asInstanceOf[graph_operations.VertexBucketGrid[_, _]].yBucketer.numBuckets
   }
 
   private def mappedAttribute(mapping: VertexAttribute[Array[ID]],
@@ -187,11 +221,17 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
     val dstOp = metaManager.scalar(request.dstDiagramId.asUUID).source
-    val bundleWeights = getCompositeBundle(request.bundleIdSequence)
+    val bundleWeights = getCompositeBundle(request.bundleSequence)
     val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
     val (srcMapping, dstMapping) = tripletMapping(induced)
-    val srcIdxs = mappedAttribute(srcMapping, idxsFromInst(srcOp), induced)
-    val dstIdxs = mappedAttribute(dstMapping, idxsFromInst(dstOp), induced)
+    val srcIdxs = mappedAttribute(
+      sampleAttribute(metaManager, directVsFromOp(srcOp), srcMapping),
+      idxsFromInst(srcOp),
+      induced)
+    val dstIdxs = mappedAttribute(
+      sampleAttribute(metaManager, directVsFromOp(dstOp), dstMapping),
+      idxsFromInst(dstOp),
+      induced)
     val srcIdxsRDD = dataManager.get(srcIdxs).rdd
     val dstIdxsRDD = dataManager.get(dstIdxs).rdd
     val idxPairBuckets = srcIdxsRDD.join(dstIdxsRDD)

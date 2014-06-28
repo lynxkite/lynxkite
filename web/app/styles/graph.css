@@ -2,6 +2,92 @@ html {
   overflow-y: scroll;
 }
 
+.spinning {
+  transition: transform 0.5s ease;
+}
+
+.spin180 {
+  transform: rotate(180deg);
+}
+
+.glyphicon.clicky {
+  padding: 8px;
+  margin: -8px -8px -8px 0;
+  width: 30px;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.glyphicon.clicky:hover {
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.panel-heading + .list-group sublist .list-group-item:first-child {
+  border-top-width: 1px;
+}
+.panel-heading + .list-group sublist:first-child .list-group-item:first-child {
+  border-top-width: 0;
+}
+.list-group:first-child sublist:first-child .list-group-item:first-child {
+  border-top-width: 0;
+}
+
+.shortned {
+  display: inline-block;
+  position: relative;
+  padding: 5px;
+  margin: 2px;
+  border-radius: 5px;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  font-size: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  top: 0;
+  transition: top 0.2s ease, font-size 0.2s ease, padding 0.2s ease;
+}
+
+.shortned.mini {
+  top: -15px;
+  font-size: 10px;
+  padding: 2px;
+  margin-right: -20px;
+}
+
+.unshortned {
+  color: rgba(0, 0, 0, 0.7);
+  margin: 2px;
+  border-radius: 5px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  word-wrap: break-word;
+}
+
+.unshortned b {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+table.histogram {
+  table-layout: fixed;
+  height: 40px;
+  width: 100%;
+  margin-bottom: -10px;
+  margin-top: 5px;
+}
+
+table.histogram td {
+  width: 5%;
+  vertical-align: bottom;
+  padding: 0;
+  padding-left: 3px;
+}
+
+table.histogram .bar {
+  background: rgba(0, 0, 0, 0.2);
+}
+
 h6 {
   font-weight: bold;
 }

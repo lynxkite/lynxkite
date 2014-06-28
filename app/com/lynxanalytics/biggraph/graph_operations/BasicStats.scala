@@ -76,3 +76,42 @@ object ComputeMinMax {
       dataManager.get(metaOuts.scalars('max).runtimeSafeCast[Double]).value)
   }
 }
+
+abstract class ComputeTopValues[T: ClassTag](numTopValues: Int) extends MetaGraphOperation {
+  implicit def tt: TypeTag[T]
+
+  def signature = newSignature
+    .inputVertexAttribute[T]('attribute, 'vertices, create = true)
+    .outputScalar[Seq[(T, Int)]]('top_values)
+
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val iiOrdering = implicitly[Ordering[(Int, Int)]]
+    object PairOrdering extends Ordering[(T, Int)] {
+      def compare(a: (T, Int), b: (T, Int)) =
+        iiOrdering.compare((a._2, a._1.hashCode), (b._2, b._1.hashCode))
+    }
+    outputs.putScalar[Seq[(T, Int)]](
+      'top_values,
+      inputs.vertexAttributes('attribute).runtimeSafeCast[T].rdd
+        .map { case (id, value) => (value, 1) }
+        .reduceByKey(_ + _)
+        .top(numTopValues)(PairOrdering)
+        .toSeq)
+  }
+}
+
+case class ComputeTopValuesString(numTopValues: Int)
+    extends ComputeTopValues[String](numTopValues) {
+  @transient lazy val tt = typeTag[String]
+}
+
+object ComputeTopValues {
+  def apply(metaManager: MetaGraphManager,
+            dataManager: DataManager,
+            attr: VertexAttribute[String],
+            numTopValues: Int): Seq[(String, Int)] = {
+    val metaOuts = metaManager.apply(
+      ComputeTopValuesString(numTopValues), 'attribute -> attr).outputs
+    dataManager.get(metaOuts.scalars('top_values).runtimeSafeCast[Seq[(String, Int)]]).value
+  }
+}

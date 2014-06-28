@@ -46,15 +46,15 @@ object RDDUtils {
     bos.toByteArray
   }
 
-  def kryoDeserialize[T: ClassTag](bytes: Array[Byte]): T = {
+  def kryoDeserialize[T](bytes: Array[Byte]): T = {
     val ois = new kryo.io.Input(bytes)
-    threadLocalKryo.get.readObject(ois, classTag[T].runtimeClass).asInstanceOf[T]
+    threadLocalKryo.get.readClassAndObject(ois).asInstanceOf[T]
   }
 
   def kryoSerialize[T](obj: Any): Array[Byte] = {
     val bos = new java.io.ByteArrayOutputStream
     val oos = new kryo.io.Output(bos)
-    threadLocalKryo.get.writeObject(oos, obj)
+    threadLocalKryo.get.writeClassAndObject(oos, obj)
     oos.close
     bos.toByteArray
   }
