@@ -160,24 +160,26 @@ class DataManager(sc: spark.SparkContext,
   }
 
   def saveToDisk(entity: MetaGraphEntity): Unit = {
-    if (!hasEntityOnDisk(entity)) {
-      bigGraphLogger.info(s"Saving entity $entity ...")
-      val data = get(entity)
-      data match {
-        case rddData: EntityRDDData =>
-          entityPath(entity).saveAsObjectFile(rddData.rdd)
-        case scalarData: ScalarData[_] => {
-          val targetDir = entityPath(entity)
-          targetDir.mkdirs
-          val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
-          oos.writeObject(scalarData.value)
-          oos.close()
-          successPath(targetDir).createFromStrings("")
+    this.synchronized {
+      if (!hasEntityOnDisk(entity)) {
+        bigGraphLogger.info(s"Saving entity $entity ...")
+        val data = get(entity)
+        data match {
+          case rddData: EntityRDDData =>
+            entityPath(entity).saveAsObjectFile(rddData.rdd)
+          case scalarData: ScalarData[_] => {
+            val targetDir = entityPath(entity)
+            targetDir.mkdirs
+            val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
+            oos.writeObject(scalarData.value)
+            oos.close()
+            successPath(targetDir).createFromStrings("")
+          }
         }
+        bigGraphLogger.info(s"Entity $entity saved.")
+      } else {
+        bigGraphLogger.info(s"Skip saving entity $entity as it's already saved.")
       }
-      bigGraphLogger.info(s"Entity $entity saved.")
-    } else {
-      bigGraphLogger.info(s"Skip saving entity $entity as it's already saved.")
     }
   }
 
