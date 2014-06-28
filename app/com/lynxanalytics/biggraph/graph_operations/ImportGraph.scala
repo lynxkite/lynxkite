@@ -100,7 +100,7 @@ case class CSV(file: Filename,
     return lines
       .filter(_ != header)
       .map(ImportUtil.split(_, delimiter))
-      .filter(jsFilter(_))
+      .filter(jsFilter(_)).cache
   }
 
   def jsFilter(line: Seq[String]): Boolean = {
@@ -210,14 +210,13 @@ case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String) exte
   }
 }
 
-case class ImportEdgeListWithStringIDs(
-    csv: CSV, src: String, dst: String, vertexAttr: String) extends ImportEdgeList(csv) {
+case class ImportEdgeListWithStringIDs(csv: CSV, src: String, dst: String) extends ImportEdgeList(csv) {
   mustHaveField(src)
   mustHaveField(dst)
 
   def signature = addEdgeAttributes(newSignature)
     .outputGraph('vertices, 'edges)
-    .outputVertexAttribute[String](toSymbol(vertexAttr), 'vertices)
+    .outputVertexAttribute[String]('stringID, 'vertices)
 
   override def putOutputs(columns: Columns, outputs: DataSetBuilder, rc: RuntimeContext) = {
     putEdgeAttributes(columns, outputs)
@@ -236,7 +235,7 @@ case class ImportEdgeListWithStringIDs(
     }
     outputs.putEdgeBundle('edges, edges.partitionBy(rc.defaultPartitioner))
     outputs.putVertexSet('vertices, idToName.mapValues(_ => ()))
-    outputs.putVertexAttribute(toSymbol(vertexAttr), idToName)
+    outputs.putVertexAttribute('stringID, idToName)
   }
 }
 

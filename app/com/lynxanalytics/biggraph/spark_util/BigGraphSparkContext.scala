@@ -54,7 +54,11 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_api.Edge])
     kryo.register(classOf[Array[Seq[_]]])
     kryo.register(classOf[Array[graph_api.Edge]])
-    kryo.register(classOf[scala.Tuple2$mcJD$sp]);
+    kryo.register((0L, 0.0).getClass)
+    //kryo.register(classOf[org.apache.spark.util.BoundedPriorityQueue])
+    // Add new stuff just above this line! Thanks.
+    // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
+    // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
   }
 }
 
@@ -72,7 +76,7 @@ object BigGraphSparkContext {
   def apply(
     appName: String,
     masterURL: String,
-    useKryo: Boolean = true,
+    useKryo: Boolean = false,
     debugKryo: Boolean = false,
     useJars: Boolean = true): SparkContext = {
     var sparkConf = new SparkConf()
