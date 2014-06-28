@@ -79,7 +79,13 @@ angular.module('biggraph').directive('shortned', function() {
     replace: false,
     transclude: true,
     scope: { hash: '@', color: '@' },
-    template: '<span class="shortned" style="background-color: {{color}};" ng-hide="expanded" ng-click="expanded = true; $event.stopPropagation()">{{hash}}</span><span class="unshortned" ng-show="expanded"><b>(</b><span ng-transclude></span><b>)</b></span>',
-    link: function() {},
+    templateUrl: 'shortned.html',
+    link: function(scope) {
+      scope.clicked = function(event) {
+        scope.expanded = true;
+        event.preventDefault();
+        event.stopPropagation();
+      };
+    },
   };
 });
