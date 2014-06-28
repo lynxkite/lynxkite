@@ -34,12 +34,11 @@
               ng-click="setState(side, 'yAttribute', attr.id)">Graph on Y</button>
           <input class="form-control filter" placeholder="filter" ng-model="side.state().filters[attr.id]"
               ng-model-options="{ updateOn: 'blur' }">
-          <button
-              ng-hide="attr.showHistogram" 
-              class="btn btn-default"
-              ng-click="startToShowHistogram(side, attr)">
-            Histogram
-          </button>
+          <span
+            ng-hide="attr.showHistogram"
+            class="clicky glyphicon glyphicon-stats"
+            title="Show histogram"
+            ng-click="startToShowHistogram(side, attr)"></span>
           <histogram ng-show="attr.showHistogram" model="attr.histogram"></histogram>
         </li>
       </sublist>
