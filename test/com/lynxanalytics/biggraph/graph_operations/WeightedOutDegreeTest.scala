@@ -9,6 +9,6 @@ class WeightedOutDegreeTest extends FunSuite with TestGraphOperation {
     val g = helper.apply(ExampleGraph())
     val out = helper.apply(WeightedOutDegree(), 'weights -> g.edgeAttributes('weight))
     assert(helper.localData(out.vertexAttributes('outdegrees)) ===
-      Map(0 -> 1.0, 1 -> 2.0, 2 -> 7.0))
+      Map(0 -> 1.0, 1 -> 2.0, 2 -> 7.0, 3 -> 0.0))
   }
 }

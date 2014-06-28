@@ -7,7 +7,7 @@ class UpperBoundFilterTest extends FunSuite with TestGraphOperation {
   test("vertex filtering works") {
     val graph = helper.apply(ExampleGraph())
     val filtered = helper.apply(UpperBoundFilter(21), graph.mapNames('age -> 'attr, 'vertices -> 'vs))
-    assert(helper.localData(filtered.vertexSets('fvs)) == Set(0L, 1L))
+    assert(helper.localData(filtered.vertexSets('fvs)) == Set(0L, 1L, 3L))
   }
   test("edge filtering works") {
     val graph = helper.apply(ExampleGraph())
