@@ -16,6 +16,7 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
       """|"vertexId","name","age"
          |0,"Adam",20.3
          |1,"Eve",18.2
+         |3,"Isolated Joe",2.0
          |2,"Bob",50.3
          |""".stripMargin)
     assert(CSVExport.exportEdgeAttributes(
@@ -55,6 +56,7 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
          |========
          |0,"Adam",20.3
          |1,"Eve",18.2
+         |3,"Isolated Joe",2.0
          |2,"Bob",50.3
          |********
          |./header

@@ -21,7 +21,7 @@ case class ExampleGraph() extends MetaGraphOperation {
     val sc = rc.sparkContext
     outputs.putVertexSet(
       'vertices,
-      sc.parallelize(Seq(0l, 1l, 2l).map((_, ())))
+      sc.parallelize(Seq(0l, 1l, 2l, 3l).map((_, ())))
         .partitionBy(rc.onePartitionPartitioner))
     outputs.putEdgeBundle(
       'edges,
@@ -34,11 +34,13 @@ case class ExampleGraph() extends MetaGraphOperation {
     outputs.putVertexAttribute[String]('name, sc.parallelize(Seq(
       (0l, "Adam"),
       (1l, "Eve"),
-      (2l, "Bob"))).partitionBy(rc.onePartitionPartitioner))
+      (2l, "Bob"),
+      (3l, "Isolated Joe"))).partitionBy(rc.onePartitionPartitioner))
     outputs.putVertexAttribute[Double]('age, sc.parallelize(Seq(
       (0l, 20.3),
       (1l, 18.2),
-      (2l, 50.3))).partitionBy(rc.onePartitionPartitioner))
+      (2l, 50.3),
+      (3l, 2.0))).partitionBy(rc.onePartitionPartitioner))
     outputs.putEdgeAttribute[String]('comment, sc.parallelize(Seq(
       (0l, "Adam loves Eve"),
       (1l, "Eve loves Adam"),

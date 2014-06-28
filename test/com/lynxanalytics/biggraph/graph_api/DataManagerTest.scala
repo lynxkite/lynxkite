@@ -15,17 +15,20 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       dataManager.get(instance.outputs.vertexSets('vertices)).rdd) ==
       "(0,())\n" +
       "(1,())\n" +
-      "(2,())")
+      "(2,())\n" +
+      "(3,())")
     assert(TestUtils.RDDToSortedString(
       dataManager.get(instance.outputs.vertexAttributes('name)).rdd) ==
       "(0,Adam)\n" +
       "(1,Eve)\n" +
-      "(2,Bob)")
+      "(2,Bob)\n" +
+      "(3,Isolated Joe)")
     assert(TestUtils.RDDToSortedString(
       dataManager.get(instance.outputs.vertexAttributes('age)).rdd) ==
       "(0,20.3)\n" +
       "(1,18.2)\n" +
-      "(2,50.3)")
+      "(2,50.3)\n" +
+      "(3,2.0)")
 
     assert(TestUtils.RDDToSortedString(
       dataManager.get(instance.outputs.edgeBundles('edges)).rdd) ==

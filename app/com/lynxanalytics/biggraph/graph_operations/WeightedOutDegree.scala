@@ -12,6 +12,7 @@ case class WeightedOutDegree() extends MetaGraphOperation {
     .outputVertexAttribute[Double]('outdegrees, 'vsA)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val vsA = inputs.vertexSets('vsA).rdd
     val edges = inputs.edgeBundles('edges).rdd
     val weights = inputs.edgeAttributes('weights).runtimeSafeCast[Double].rdd
 
@@ -20,6 +21,7 @@ case class WeightedOutDegree() extends MetaGraphOperation {
       .reduceByKey(
         inputs.vertexSets('vsA).rdd.partitioner.get,
         _ + _)
-    outputs.putVertexAttribute('outdegrees, outdegrees)
+    val result = vsA.leftOuterJoin(outdegrees).mapValues(_._2.getOrElse(0.0))
+    outputs.putVertexAttribute('outdegrees, result)
   }
 }

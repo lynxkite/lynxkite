@@ -24,7 +24,7 @@ class ConversionsTest extends FunSuite with TestGraphOperation {
     val graph = helper.apply(ExampleGraph())
     val string = helper.apply(VertexAttributeToString(), 'attr -> graph('age))
     assert(helper.localData(string.vertexAttributes('string))
-      == Map(0 -> "20.3", 1 -> "18.2", 2 -> "50.3"))
+      == Map(0 -> "20.3", 1 -> "18.2", 2 -> "50.3", 3 -> "2.0"))
   }
 
   test("vertex attribute to double") {
@@ -32,6 +32,6 @@ class ConversionsTest extends FunSuite with TestGraphOperation {
     val string = helper.apply(VertexAttributeToString(), 'attr -> graph('age))
     val double = helper.apply(VertexAttributeToDouble(), 'attr -> string('string))
     assert(helper.localData(double.vertexAttributes('double))
-      == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3))
+      == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
   }
 }
