@@ -225,7 +225,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
   registerOperation(ClusteringCoefficient)
   object ClusteringCoefficient extends FEOperation {
-    val title = "Calculate clustering coefficient"
+    val title = "Clustering coefficient"
     val parameters = Seq(
       Param("eb", "Edge bundle", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {

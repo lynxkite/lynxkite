@@ -35,14 +35,16 @@ case class ClusteringCoefficient() extends MetaGraphOperation {
       case (vid, (all, outs)) => all.map((_, outs))
     }.groupByKey(vertexPartitioner)
 
-    val clusteringCoeff = neighbors.join(outNeighborsOfNeighbors).mapValues {
+    val clusteringCoeff = neighbors.leftOuterJoin(outNeighborsOfNeighbors).mapValues {
       case (mine, theirs) =>
         val numNeighbors = mine.size
         if (numNeighbors > 1) {
-          val edgesInNeighborhood = theirs
-            .map(his => sortedIntersectionSize(his, mine))
-            .sum
-          edgesInNeighborhood * 1.0 / numNeighbors / (numNeighbors - 1)
+          theirs match {
+            case Some(ns) =>
+              val edgesInNeighborhood = ns.map(his => sortedIntersectionSize(his, mine)).sum
+              edgesInNeighborhood * 1.0 / numNeighbors / (numNeighbors - 1)
+            case None => 0.0
+          }
         } else {
           1.0
         }
