@@ -2,19 +2,19 @@
   <div class="panel panel-default" ng-if="!side.data">
     <div class="list-group">
       <sublist heading="New">
-        <a class="list-group-item" ng-repeat="op in startingOps"
+        <a href class="list-group-item" ng-repeat="op in startingOps"
           ng-click="apply(op)">{{op.title}}</a>
       </sublist>
       <sublist heading="Existing">
-        <a class="list-group-item" ng-repeat="vs in startingVertexSets"
-          ng-click="side.setNewVS(vs.id)">{{vs.title}}</a>
+        <a href class="list-group-item" ng-repeat="vs in startingVertexSets"
+          ng-click="side.setNewVS(vs.id)"><shortn text="{{vs.title}}"></shortn></a>
       </sublist>
     </div>
   </div>
 
   <div class="panel panel-default" ng-if="side.data">
     <div class="panel-heading">
-      {{side.data.title}}
+      <shortn text="{{side.data.title}}"></shortn>
       <span style="float: right">
         <span class="glyphicon clicky" ng-class="'glyphicon-arrow-' + side.oppositeName"
           title="Show on the {{side.oppositeName}}"
@@ -27,7 +27,7 @@
     <div class="list-group">
       <sublist ng-show="side.data.attributes" heading="Vertex Attributes">
         <li class="list-group-item" ng-repeat="attr in side.data.attributes">
-          {{attr.title}}
+          <shortn text="{{attr.title}}"></shortn>
           <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().xAttribute === attr.id }"
               ng-click="setState(side, 'xAttribute', attr.id)">Graph on X</button>
           <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().yAttribute === attr.id }"
@@ -38,7 +38,7 @@
       </sublist>
       <sublist ng-show="side.data.localEdges" heading="Local Edge Bundles">
         <li class="list-group-item" ng-repeat="bundle in side.data.localEdges">
-          {{bundle.title}}
+          <shortn text="{{bundle.title}}"></shortn>
           <button class="btn btn-default" ng-click="side.followEB(bundle, true)">
             Follow
           </button>
@@ -50,19 +50,23 @@
         </li>
       </sublist>
       <sublist ng-show="side.data.inEdges" heading="Incoming Edge Bundles">
-        <a class="list-group-item" ng-repeat="bundle in side.data.inEdges"
+        <a href class="list-group-item" ng-repeat="bundle in side.data.inEdges"
           ng-click="side.followEB(bundle, false)">
-          {{bundle.title}} &#x2b05; {{bundle.source.title}}
+          <shortn text="{{bundle.title}}"></shortn>
+          &#x2b05;
+          <shortn text="{{bundle.source.title}}"></shortn>
         </a>
       </sublist>
       <sublist ng-show="side.data.outEdges" heading="Outgoing Edge Bundles">
-        <a class="list-group-item" ng-repeat="bundle in side.data.outEdges"
+        <a href class="list-group-item" ng-repeat="bundle in side.data.outEdges"
           ng-click="side.followEB(bundle, true)">
-          {{bundle.title}} &#x27a1; {{bundle.destination.title}}
+          <shortn text="{{bundle.title}}"></shortn>
+          &#x27a1;
+          <shortn text="{{bundle.destination.title}}"></shortn>
         </a>
       </sublist>
       <sublist ng-show="side.data.ops" heading="Operations">
-        <a class="list-group-item" ng-repeat="op in side.data.ops"
+        <a href class="list-group-item" ng-repeat="op in side.data.ops"
           ng-click="apply(op)">{{op.title}}</a>
       </sublist>
     </div>
