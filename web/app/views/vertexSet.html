@@ -2,11 +2,11 @@
   <div class="panel panel-default" ng-if="!side.data">
     <div class="list-group">
       <sublist heading="New">
-        <a class="list-group-item" ng-repeat="op in startingOps"
+        <a href class="list-group-item" ng-repeat="op in startingOps"
           ng-click="apply(op)">{{op.title}}</a>
       </sublist>
       <sublist heading="Existing">
-        <a class="list-group-item" ng-repeat="vs in startingVertexSets"
+        <a href class="list-group-item" ng-repeat="vs in startingVertexSets"
           ng-click="side.setNewVS(vs.id)"><shortn text="{{vs.title}}"></shortn></a>
       </sublist>
     </div>
@@ -50,7 +50,7 @@
         </li>
       </sublist>
       <sublist ng-show="side.data.inEdges" heading="Incoming Edge Bundles">
-        <a class="list-group-item" ng-repeat="bundle in side.data.inEdges"
+        <a href class="list-group-item" ng-repeat="bundle in side.data.inEdges"
           ng-click="side.followEB(bundle, false)">
           <shortn text="{{bundle.title}}"></shortn>
           &#x2b05;
@@ -58,7 +58,7 @@
         </a>
       </sublist>
       <sublist ng-show="side.data.outEdges" heading="Outgoing Edge Bundles">
-        <a class="list-group-item" ng-repeat="bundle in side.data.outEdges"
+        <a href class="list-group-item" ng-repeat="bundle in side.data.outEdges"
           ng-click="side.followEB(bundle, true)">
           <shortn text="{{bundle.title}}"></shortn>
           &#x27a1;
@@ -66,7 +66,7 @@
         </a>
       </sublist>
       <sublist ng-show="side.data.ops" heading="Operations">
-        <a class="list-group-item" ng-repeat="op in side.data.ops"
+        <a href class="list-group-item" ng-repeat="op in side.data.ops"
           ng-click="apply(op)">{{op.title}}</a>
       </sublist>
     </div>
