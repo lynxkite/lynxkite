@@ -6,9 +6,9 @@ import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class ClusteringCoefficient(outputAttribute: String) extends MetaGraphOperation {
+case class ClusteringCoefficient() extends MetaGraphOperation {
   def signature = newSignature
-    .inputEdgeBundle('es, 'vs -> 'vs, create = true)
+    .inputGraph('vs, 'es)
     .outputVertexAttribute[Double]('clustering, 'vs)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
