@@ -35,32 +35,38 @@ angular.module('biggraph').directive('shortn', ['$compile', function($compile) {
     replace: false,
     link: function(scope, element) {
       scope.$watch('text', function(text) {
+        function shortn(text, markup) {
+          var h = hash(text);
+          var c = color(text);
+          return '<shortned hash="' + h + '" color="' + c + '">' + markup + '</shortned>';
+        }
         function getFrom(start) {
           var markup = '';
+          var t;
           for (var i = start; i < text.length; ++i) {
             if (text[i] === '(') {
               var r = getFrom(i + 1);
-              if (r.text.length > 10) {
-                var t = r.text;
-                var h = hash(t);
-                var c = color(t);
-                markup += '<shortned hash="' + h + '" color="' + c + '">' + r.markup + '</shortned>';
+              if (r.text.length > 5) {
+                markup += r.markup;
               } else {
                 // Do not collapse short strings.
                 markup += '(' + r.text + ')';
               }
               i = r.end;
             } else if (text[i] === ')') {
-              return {end: i, markup: markup, text: text.substring(start, i)};
+              t = text.substring(start, i);
+              return {end: i, markup: shortn(t, markup), text: t};
             } else {
               markup += text[i];
             }
           }
-          return {end: i - 1, markup: markup, text: text.substring(start, i - 1)};
+          t = text.substring(start, i);
+          return {end: i, markup: shortn(t, markup), text: t};
         }
         var r = getFrom(0);
         element.empty();
-        var el = angular.element('<span>' + r.markup + '</span>');
+        var el = angular.element(r.markup);
+        el.attr('expanded', 'true');
         var comp = $compile(el);
         element.append(comp(scope));
       });
@@ -74,7 +80,7 @@ angular.module('biggraph').directive('shortned', function() {
     restrict: 'E',
     replace: false,
     transclude: true,
-    scope: { hash: '@', color: '@' },
+    scope: { hash: '@', color: '@', expanded: '@' },
     templateUrl: 'shortned.html',
     link: function(scope) {
       scope.clicked = function(event) {
