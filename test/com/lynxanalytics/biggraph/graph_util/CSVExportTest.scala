@@ -12,22 +12,22 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
     assert(CSVExport.exportVertexAttributes(
       Seq(sampleOut.vertexAttributes('name), sampleOut.vertexAttributes('age)),
       Seq("name", "age"),
-      helper.dataManager).toString ==
+      helper.dataManager).toSortedString ==
       """|"vertexId","name","age"
          |0,"Adam",20.3
          |1,"Eve",18.2
-         |3,"Isolated Joe",2.0
          |2,"Bob",50.3
+         |3,"Isolated Joe",2.0
          |""".stripMargin)
     assert(CSVExport.exportEdgeAttributes(
       Seq(sampleOut.edgeAttributes('comment)),
       Seq("comment"),
-      helper.dataManager).toString ==
+      helper.dataManager).toSortedString ==
       """|"edgeId","srcVertexId","dstVertexId","comment"
          |0,0,1,"Adam loves Eve"
          |1,1,0,"Eve loves Adam"
-         |3,2,1,"Bob loves Eve"
          |2,2,0,"Bob envies Adam"
+         |3,2,1,"Bob loves Eve"
          |""".stripMargin)
   }
 
@@ -45,7 +45,7 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
          |for file in `find . -type f | LC_COLLATE=C sort | grep -v crc`; do
          |  echo $file
          |  echo '========'
-         |  cat $file
+         |  cat $file | sort
          |  echo '********'
          |done""".stripMargin.format(targetDir.toString))
     assert(dirSnapshot ==
@@ -56,8 +56,8 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
          |========
          |0,"Adam",20.3
          |1,"Eve",18.2
-         |3,"Isolated Joe",2.0
          |2,"Bob",50.3
+         |3,"Isolated Joe",2.0
          |********
          |./header
          |========
