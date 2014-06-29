@@ -15,6 +15,9 @@ case class CSVData(val header: Seq[String],
   override def toString: String =
     CSVData.lineToString(header) + data.map(CSVData.lineToString(_)).collect.mkString
 
+  def toSortedString: String =
+    CSVData.lineToString(header) + data.map(CSVData.lineToString(_)).collect.sorted.mkString
+
   def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
 
   def saveDataToDir(path: Filename) = path.saveAsTextFile(toStringRDD)
