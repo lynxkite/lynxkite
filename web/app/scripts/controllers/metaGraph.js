@@ -142,33 +142,43 @@ angular.module('biggraph')
           $scope.right.data.$promise.then(function() { loadHistograms($scope.right); });
         }
       });
-    function loadHistograms(side) {
+    function loadHistogram(side, attr) {
+      var filters = [];
       var state = side.state();
+      var data = side.data;
+      for (var filteredAttr in state.filters) {
+        if (state.filters[filteredAttr] !== '') {
+          filters.push({ attributeId: filteredAttr, valueSpec: state.filters[filteredAttr] });
+        }
+      }
+      var q = {
+        vertexSetId: data.id,
+        filters: filters,
+        mode: 'bucketed',
+        xBucketingAttributeId: attr.id,
+        xNumBuckets: 20,
+        yBucketingAttributeId: '',
+        yNumBuckets: 1,
+        // Unused.
+        centralVertexId: '',
+        sampleSmearEdgeBundleId: '',
+        radius: 0,
+      };
+      attr.histogram = $resource('/ajax/vertexDiag').get({q: q});
+    }
+    function loadHistograms(side) {
       var data = side.data;
       for (var i = 0; i < data.attributes.length; ++i) {
         var a = data.attributes[i];
-        var filters = [];
-        for (var attr in state.filters) {
-          if (state.filters[attr] !== '') {
-            filters.push({ attributeId: attr, valueSpec: state.filters[attr] });
-          }
-        }
-        var q = {
-          vertexSetId: data.id,
-          filters: filters,
-          mode: 'bucketed',
-          xBucketingAttributeId: a.id,
-          xNumBuckets: 20,
-          yBucketingAttributeId: '',
-          yNumBuckets: 1,
-          // Unused.
-          centralVertexId: '',
-          sampleSmearEdgeBundleId: '',
-          radius: 0,
-        };
-        a.histogram = $resource('/ajax/vertexDiag').get({q: q});
+	if (a.showHistogram) {
+	  loadHistogram(side, a);
+	}
       }
     }
+    $scope.startToShowHistogram = function(side, attr) {
+      attr.showHistogram = true;
+      loadHistogram(side, attr);
+    };
 
     var StartingVertexSets = $resource('/ajax/startingVs');
     function loadStartingVertexSets() {
@@ -301,6 +311,20 @@ angular.module('biggraph')
     }
     $scope.left.followEB = followEB($scope.left);
     $scope.right.followEB = followEB($scope.right);
+
+    function showEB(side) {
+      return function(bundle, pointsTowardsMySide) {
+        $scope.state.leftToRightPath = [];
+        side.addEBToPath(bundle, pointsTowardsMySide);
+        if (pointsTowardsMySide) {
+          side.other.setVS(bundle.source.id);
+        } else {
+          side.other.setVS(bundle.destination.id);
+        }
+      };
+    }
+    $scope.left.showEB = showEB($scope.left);
+    $scope.right.showEB = showEB($scope.right);
 
     $scope.cutPathLeft = function(idx) {
       $scope.state.leftToRightPath.splice(0, idx);
