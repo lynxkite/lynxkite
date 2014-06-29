@@ -16,8 +16,8 @@
     <div class="panel-heading">
       <shortn text="{{side.data.title}}"></shortn>
       <span style="float: right">
-        <span class="glyphicon clicky" ng-class="'glyphicon-arrow-' + side.oppositeName"
-          title="Show on the {{side.oppositeName}}"
+        <span class="glyphicon clicky glyphicon-arrow-{{side.other.name}}"
+          title="Show on the {{side.other.name}}"
           ng-click="mirror(side)"></span>
         <span class="glyphicon glyphicon-remove clicky"
           title="Close"
@@ -58,33 +58,43 @@
       <sublist ng-show="side.data.inEdges" heading="Incoming Edge Bundles">
         <li class="list-group-item" ng-repeat="bundle in side.data.inEdges">
           <shortn text="{{bundle.title}}"></shortn>
-          &#x2b05;
+          from
           <shortn text="{{bundle.source.title}}"></shortn>
           <span
-              class="clicky glyphicon glyphicon-random"
-              title="Follow reversed edge bundle"
+              ng-if="side.name === 'left'"
+              class="clicky glyphicon glyphicon-arrow-{{side.name}}"
+              title="Open source on the {{side.name}}"
               ng-click="side.followEB(bundle, false)"></span>
           <span
-              class="clicky glyphicon"
-              ng-class="'glyphicon-arrow-' + side.oppositeName"
-              title="Show edge bundle"
+              class="clicky glyphicon glyphicon-arrow-{{side.other.name}}"
+              title="Open source on the {{side.other.name}}"
               ng-click="side.showEB(bundle, true)"></span>
+          <span
+              ng-if="side.name === 'right'"
+              class="clicky glyphicon glyphicon-arrow-{{side.name}}"
+              title="Open source on the {{side.name}}"
+              ng-click="side.followEB(bundle, false)"></span>
         </li>
       </sublist>
       <sublist ng-show="side.data.outEdges" heading="Outgoing Edge Bundles">
         <li class="list-group-item" ng-repeat="bundle in side.data.outEdges">
           <shortn text="{{bundle.title}}"></shortn>
-          &#x27a1;
+          to
           <shortn text="{{bundle.destination.title}}"></shortn>
           <span
-              class="clicky glyphicon glyphicon-random"
-              title="Follow edge bundle"
+              ng-if="side.name === 'left'"
+              class="clicky glyphicon glyphicon-arrow-{{side.name}}"
+              title="Open destination on the {{side.name}}"
               ng-click="side.followEB(bundle, true)"></span>
           <span
-              class="clicky glyphicon"
-              ng-class="'glyphicon-arrow-' + side.oppositeName"
-              title="Show edge bundle"
+              class="clicky glyphicon glyphicon-arrow-{{side.other.name}}"
+              title="Open destination on the {{side.other.name}}"
               ng-click="side.showEB(bundle, false)"></span>
+          <span
+              ng-if="side.name === 'right'"
+              class="clicky glyphicon glyphicon-arrow-{{side.name}}"
+              title="Open destination on the {{side.name}}"
+              ng-click="side.followEB(bundle, true)"></span>
         </li>
       </sublist>
       <sublist ng-show="side.data.ops" heading="Operations">
