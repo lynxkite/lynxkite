@@ -223,6 +223,19 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
+  registerOperation(ClusteringCoefficient)
+  object ClusteringCoefficient extends FEOperation {
+    val title = "Clustering coefficient"
+    val parameters = Seq(
+      Param("eb", "Edge bundle", kind = "edge-bundle"))
+    def apply(params: Map[String, String]) = {
+      manager.show(
+        graph_operations.ClusteringCoefficient(),
+        'es -> manager.edgeBundle(params("eb").asUUID))
+      FEStatus.success
+    }
+  }
+
   registerOperation(WeightedOutDegree)
   object WeightedOutDegree extends FEOperation {
     val title = "Weighted out degree"
