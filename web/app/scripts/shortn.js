@@ -35,14 +35,8 @@ angular.module('biggraph').directive('shortn', ['$compile', function($compile) {
     replace: false,
     link: function(scope, element) {
       scope.$watch('text', function(text) {
-        function shortn(text, markup) {
-          var h = hash(text);
-          var c = color(text);
-          return '<shortned hash="' + h + '" color="' + c + '">' + markup + '</shortned>';
-        }
         function getFrom(start) {
           var markup = '';
-          var t;
           for (var i = start; i < text.length; ++i) {
             if (text[i] === '(') {
               var r = getFrom(i + 1);
@@ -54,14 +48,16 @@ angular.module('biggraph').directive('shortn', ['$compile', function($compile) {
               }
               i = r.end;
             } else if (text[i] === ')') {
-              t = text.substring(start, i);
-              return {end: i, markup: shortn(t, markup), text: t};
+              break;
             } else {
               markup += text[i];
             }
           }
-          t = text.substring(start, i);
-          return {end: i, markup: shortn(t, markup), text: t};
+          var t = text.substring(start, i);
+          var h = hash(t);
+          var c = color(t);
+          markup = '<shortned hash="' + h + '" color="' + c + '">' + markup + '</shortned>';
+          return {end: i, markup: markup, text: t};
         }
         var r = getFrom(0);
         element.empty();
