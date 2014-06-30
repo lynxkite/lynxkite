@@ -261,8 +261,8 @@ angular.module('biggraph')
       }
     };
 
-    $scope.left.oppositeName = 'right';
-    $scope.right.oppositeName = 'left';
+    $scope.left.name = 'left';
+    $scope.right.name = 'right';
 
     $scope.left.setVS = function(id) {
       $scope.state.left = { vs: { id: id }, filters: {} };
