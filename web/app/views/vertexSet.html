@@ -61,19 +61,13 @@
           from
           <shortn text="{{bundle.source.title}}"></shortn>
           <span
-              ng-if="side.name === 'left'"
-              class="clicky glyphicon glyphicon-arrow-{{side.name}}"
-              title="Open source on the {{side.name}}"
+              class="clicky glyphicon glyphicon-random"
+              title="Follow reversed edge bundle"
               ng-click="side.followEB(bundle, false)"></span>
           <span
               class="clicky glyphicon glyphicon-arrow-{{side.other.name}}"
-              title="Open source on the {{side.other.name}}"
+              title="Show source on the {{side.other.name}}"
               ng-click="side.showEB(bundle, true)"></span>
-          <span
-              ng-if="side.name === 'right'"
-              class="clicky glyphicon glyphicon-arrow-{{side.name}}"
-              title="Open source on the {{side.name}}"
-              ng-click="side.followEB(bundle, false)"></span>
         </li>
       </sublist>
       <sublist ng-show="side.data.outEdges" heading="Outgoing Edge Bundles">
@@ -82,19 +76,13 @@
           to
           <shortn text="{{bundle.destination.title}}"></shortn>
           <span
-              ng-if="side.name === 'left'"
-              class="clicky glyphicon glyphicon-arrow-{{side.name}}"
-              title="Open destination on the {{side.name}}"
+              class="clicky glyphicon glyphicon-random"
+              title="Follow edge bundle"
               ng-click="side.followEB(bundle, true)"></span>
           <span
               class="clicky glyphicon glyphicon-arrow-{{side.other.name}}"
-              title="Open destination on the {{side.other.name}}"
+              title="Show destination on the {{side.other.name}}"
               ng-click="side.showEB(bundle, false)"></span>
-          <span
-              ng-if="side.name === 'right'"
-              class="clicky glyphicon glyphicon-arrow-{{side.name}}"
-              title="Open destination on the {{side.name}}"
-              ng-click="side.followEB(bundle, true)"></span>
         </li>
       </sublist>
       <sublist ng-show="side.data.ops" heading="Operations">
