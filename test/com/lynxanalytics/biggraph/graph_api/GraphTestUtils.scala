@@ -94,11 +94,15 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
 
   def rdd[T](vertexAttribute: VertexAttribute[T]): AttributeRDD[T] =
     dataManager.get(vertexAttribute).rdd
+  def localData[T: reflect.runtime.universe.TypeTag](vertexAttribute: VertexAttribute[_]): Map[Long, T] =
+    localData(vertexAttribute.runtimeSafeCast[T])
   def localData[T](vertexAttribute: VertexAttribute[T]): Map[Long, T] =
     rdd(vertexAttribute).collect.toMap
 
   def rdd[T](edgeAttribute: EdgeAttribute[T]): AttributeRDD[T] =
     dataManager.get(edgeAttribute).rdd
+  def localData[T: reflect.runtime.universe.TypeTag](edgeAttribute: EdgeAttribute[_]): Map[Long, T] =
+    localData(edgeAttribute.runtimeSafeCast[T])
   def localData[T](edgeAttribute: EdgeAttribute[T]): Map[(Long, Long), T] = {
     val edgesRDD = rdd(edgeAttribute.edgeBundle)
     val attrRDD = rdd(edgeAttribute)
