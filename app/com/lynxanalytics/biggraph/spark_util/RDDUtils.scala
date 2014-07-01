@@ -4,7 +4,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
-import org.apache.spark.graphx
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect._
 
@@ -16,26 +15,6 @@ object RDDUtils {
       new BigGraphKryoRegistrator().registerClasses(myKryo)
       myKryo
     }
-  }
-
-  // TODO(darabos): Remove this once https://github.com/apache/spark/pull/181 is in place.
-  def objectFile[T: scala.reflect.ClassTag](
-    sc: spark.SparkContext,
-    path: String,
-    minSplits: Int = -1): spark.rdd.RDD[T] = {
-    val sf = sc.sequenceFile(
-      path,
-      classOf[hadoop.io.NullWritable],
-      classOf[hadoop.io.BytesWritable],
-      if (minSplits != -1) minSplits else sc.defaultMinPartitions)
-    sf.flatMap(x => deserialize[Array[T]](x._2.getBytes))
-  }
-
-  // TODO(darabos): Remove this once https://github.com/apache/spark/pull/181 is in place.
-  def deserialize[T](bytes: Array[Byte]): T = {
-    val bis = new java.io.ByteArrayInputStream(bytes)
-    val ois = new java.io.ObjectInputStream(bis)
-    ois.readObject.asInstanceOf[T]
   }
 
   def serialize[T](obj: Any): Array[Byte] = {
