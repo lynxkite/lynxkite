@@ -371,4 +371,54 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       FEStatus.success
     }
   }
+
+  registerOperation(AddReversedEdges)
+  object AddReversedEdges extends FEOperation {
+    val title = "Add reversed edges"
+    val parameters = Seq(
+      Param("es", "Edges", kind = "edge-bundle"))
+    def apply(params: Map[String, String]): FEStatus = {
+      manager.show(graph_operations.AddReversedEdges(),
+        'es -> manager.edgeBundle(params("es").asUUID))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(EdgeGraph)
+  object EdgeGraph extends FEOperation {
+    val title = "Dual graph"
+    val parameters = Seq(
+      Param("es", "Edges", kind = "edge-bundle"))
+    def apply(params: Map[String, String]): FEStatus = {
+      manager.show(graph_operations.EdgeGraph(),
+        'es -> manager.edgeBundle(params("es").asUUID))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(PageRank)
+  object PageRank extends FEOperation {
+    val title = "PageRank"
+    val parameters = Seq(
+      Param("ws", "Weights", kind = "edge-attribute"),
+      Param("df", "Damping factor"),
+      Param("iter", "Iterations"))
+    def apply(params: Map[String, String]): FEStatus = {
+      manager.show(graph_operations.PageRank(params("df").toDouble, params("iter").toInt),
+        'weights -> manager.edgeAttribute(params("ws").asUUID))
+      FEStatus.success
+    }
+  }
+
+  registerOperation(RemoveNonSymmetricEdges)
+  object RemoveNonSymmetricEdges extends FEOperation {
+    val title = "Remove non-symmetric edges"
+    val parameters = Seq(
+      Param("es", "Edges", kind = "edge-bundle"))
+    def apply(params: Map[String, String]): FEStatus = {
+      manager.show(graph_operations.RemoveNonSymmetricEdges(),
+        'es -> manager.edgeBundle(params("es").asUUID))
+      FEStatus.success
+    }
+  }
 }
