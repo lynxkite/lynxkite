@@ -1,0 +1,37 @@
+#!/bin/sh
+
+CLASSES=$(dirname $0)/classes
+OPS=$(ls app/com/lynxanalytics/biggraph/graph_operations | sed s/.scala$//)
+(
+  echo Operation Tested Frontend
+  echo --------- ------ --------
+  for OP in $OPS; do
+    HAS_TEST=no
+    if [ -f test/com/lynxanalytics/biggraph/graph_operations/${OP}Test.scala ]; then
+      HAS_TEST=yes
+    fi
+
+    FE=false
+    NONFE=false
+    for CLASS in $($CLASSES app/com/lynxanalytics/biggraph/graph_operations/${OP}.scala MetaGraphOperation); do
+      if grep --quiet $CLASS app/com/lynxanalytics/biggraph/controllers/FEOperations.scala; then
+        FE=true
+      else
+        NONFE=true
+      fi
+    done
+    if [ $FE = true ] && [ $NONFE = false ]; then
+      HAS_FE=yes
+    elif [ $FE = true ] && [ $NONFE = true ]; then
+      HAS_FE=partial
+    elif [ $FE = false ] && [ $NONFE = true ]; then
+      HAS_FE=no
+    else
+      HAS_FE=!noclass!
+    fi
+
+    echo $OP $HAS_TEST $HAS_FE
+  done | sort -sk 2 | sort -sk 3
+) | column -t
+
+
