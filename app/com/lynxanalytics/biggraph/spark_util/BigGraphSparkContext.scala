@@ -10,7 +10,6 @@ import scala.collection.immutable
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api
-import com.lynxanalytics.biggraph.graph_api.attributes
 
 private object SparkStageJars {
   val classesToBundle: Seq[Class[_]] = Seq(
@@ -25,6 +24,7 @@ private object SparkStageJars {
 class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
     // Adding one more line? Do it at the bottom!
+    // Deleting a line? Do not.
     // Types will change IDs otherwise.
     kryo.setRegistrationRequired(true)
     kryo.register(classOf[graphx.Edge[_]])
@@ -32,7 +32,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graphx.EdgeTriplet[_, _]])
     kryo.register(classOf[Array[graphx.Edge[_]]])
     kryo.register(classOf[Array[graphx.EdgeTriplet[_, _]]])
-    kryo.register(classOf[attributes.DenseAttributes])
     kryo.register(classOf[Array[Any]])
     kryo.register(classOf[mutable.WrappedArray$ofRef])
     kryo.register(classOf[mutable.ArrayBuffer[_]])
@@ -48,7 +47,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[::[_]])
     kryo.register(Nil.getClass)
     kryo.register(None.getClass)
-    // Set.EmptySet[_] is private.
     kryo.register(Set.empty[Int].getClass)
     kryo.register(classOf[mutable.ArrayBuffer[Any]])
     kryo.register(classOf[graph_api.Edge])

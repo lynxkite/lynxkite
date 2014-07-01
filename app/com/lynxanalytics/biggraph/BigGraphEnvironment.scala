@@ -18,21 +18,12 @@ class StaticSparkContextProvider(master: String) extends SparkContextProvider {
 }
 
 trait BigGraphEnvironment extends SparkContextProvider {
-  // Old stuff.
-  val bigGraphManager: graph_api.BigGraphManager
-  val graphDataManager: graph_api.GraphDataManager
-  // New stuff.
   val metaGraphManager: graph_api.MetaGraphManager
   val dataManager: graph_api.DataManager
 }
 
 trait StaticDirEnvironment extends BigGraphEnvironment {
   val repositoryDirs: RepositoryDirs
-
-  // For now metadata can only be saved locally.
-  override lazy val bigGraphManager = graph_api.BigGraphManager(repositoryDirs.graphDir)
-  override lazy val graphDataManager = graph_api.GraphDataManager(
-    sparkContext, repositoryDirs.dataDir)
 
   override lazy val metaGraphManager = new graph_api.MetaGraphManager(repositoryDirs.graphDir)
   override lazy val dataManager = new graph_api.DataManager(
