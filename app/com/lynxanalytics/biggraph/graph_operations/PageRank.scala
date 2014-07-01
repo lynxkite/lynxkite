@@ -4,14 +4,11 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class PageRank(weightAttribute: String,
-                    outputAttribute: String,
-                    dampingFactor: Double,
+case class PageRank(dampingFactor: Double,
                     iterations: Int)
     extends MetaGraphOperation {
   def signature = newSignature
-    .inputVertexSet('vs)
-    .inputEdgeBundle('es, 'vs -> 'vs)
+    .inputGraph('vs, 'es)
     .inputEdgeAttribute[Double]('weights, 'es)
     .outputVertexAttribute[Double]('pagerank, 'vs)
 
@@ -52,6 +49,6 @@ case class PageRank(weightAttribute: String,
           case (oldRank, incoming) => distributedExtraWeight + incoming.getOrElse(0.0)
         }
     }
-    outputs.putVertexAttribute('pageranks, pageRank)
+    outputs.putVertexAttribute('pagerank, pageRank)
   }
 }
