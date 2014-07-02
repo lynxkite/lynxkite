@@ -52,9 +52,10 @@ abstract class NumericBucketer[T: Numeric](
     (1 until nb).map(idx => min + num.fromInt(idx) * bucketSize)
 
   def bucketLabels: Seq[String] = {
-    val normalLabels = (Seq(min) ++ bounds.dropRight(1)).zip(bounds)
-      .map { case (lowerBound, upperBound) => s"[$lowerBound, $upperBound)" }
-    val lastLabel = "[%s, %s]".format(bounds.last, max)
+    val normalLabels = (Seq(min) ++ bounds.dropRight(1)).zip(bounds).map {
+      case (lowerBound, upperBound) => f"[${lowerBound.toDouble}%.2f, ${upperBound.toDouble}%.2f)"
+    }
+    val lastLabel = f"[${bounds.last.toDouble}%.2f, ${max.toDouble}%.2f]"
     normalLabels :+ lastLabel
   }
 }
