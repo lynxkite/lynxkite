@@ -2,45 +2,39 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx
 
-import com.lynxanalytics.biggraph.graph_api
-import com.lynxanalytics.biggraph.spark_util
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-import graph_api._
-import graph_api.attributes._
-import spark_util.RDDUtils
+case class EdgeGraph() extends MetaGraphOperation {
+  def signature = newSignature
+    .inputGraph('vs, 'es)
+    .outputGraph('newVS, 'newES)
+    .outputEdgeBundle('link, 'vs -> 'newVS)
 
-case class EdgeGraph() extends GraphOperation {
-  def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 1)
-
-  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
-    val rc = manager.runtimeContext
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val sc = rc.sparkContext
     val edgePartitioner = rc.defaultPartitioner
-    val sourceData = manager.obtainData(target.sources.head)
-    val edgesWithIds = RDDUtils.fastNumbered(sourceData.edges)
-    val newVertices = edgesWithIds.map { case (id, edge) => (id, edge.attr) }
+    val edges = inputs.edgeBundles('es).rdd
+    val newVS = edges.mapValues(_ => ())
 
-    val edgesBySource = edgesWithIds.map {
-      case (id, edge) => (edge.srcId, id)
+    val edgesBySource = edges.map {
+      case (id, edge) => (edge.src, id)
     }.groupByKey(edgePartitioner)
-    val edgesByDest = edgesWithIds.map {
-      case (id, edge) => (edge.dstId, id)
+    val edgesByDest = edges.map {
+      case (id, edge) => (edge.dst, id)
     }.groupByKey(edgePartitioner)
 
-    val newEdges = edgesBySource.join(edgesByDest).join(sourceData.vertices).flatMap {
-      case (vid, ((outgoings, incommings), vattr)) =>
-        for (
-          outgoing <- outgoings;
-          incomming <- incommings
-        ) yield new graphx.Edge(incomming, outgoing, vattr)
+    val newES = edgesBySource.join(edgesByDest).flatMap {
+      case (vid, (outgoings, incomings)) =>
+        for {
+          outgoing <- outgoings
+          incoming <- incomings
+        } yield Edge(incoming, outgoing)
     }
-
-    return new SimpleGraphData(target, newVertices, newEdges)
+    outputs.putVertexSet('newVS, newVS)
+    outputs.putEdgeBundle('newES, RDDUtils.fastNumbered(newES).partitionBy(edgePartitioner))
+    // Just to connect to the results.
+    outputs.putEdgeBundle('link, sc.emptyRDD[(ID, Edge)].partitionBy(edgePartitioner))
   }
-
-  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
-
-  def edgeAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
 }

@@ -26,10 +26,6 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
     }).partitionBy(rc.defaultPartitioner))
   }
 
-  // TODO: Put this into the EdgeBundle?
-  def targetProperties(inputGraphSpecs: Seq[BigGraph]) =
-    new BigGraphProperties(symmetricEdges = true)
-
   // Implementation of the actual algorithm.
 
   /*

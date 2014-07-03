@@ -1,34 +1,29 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.graphx
 
-import com.lynxanalytics.biggraph.graph_api
+import com.lynxanalytics.biggraph.graph_api._
 
-import graph_api._
-import graph_api.attributes._
+case class RemoveNonSymmetricEdges() extends MetaGraphOperation {
+  def signature = newSignature
+    .inputGraph('vs, 'es)
+    .outputEdgeBundle('symmetric, 'vs -> 'vs)
 
-case class RemoveNonSymmetricEdges() extends GraphOperation {
-  def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 1)
-
-  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
-    val sc = manager.runtimeContext.sparkContext
-    val source = target.sources.head
-    val sourceData = manager.obtainData(source)
-    val bySource = sourceData.edges.map(e => (e.srcId, e)).groupByKey()
-    val byDest = sourceData.edges.map(e => (e.dstId, e.srcId)).groupByKey().mapValues(_.toSet)
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val vsPart = inputs.vertexSets('vs).rdd.partitioner.get
+    val es = inputs.edgeBundles('es).rdd
+    val bySource = es.map {
+      case (id, e) => e.src -> (id, e)
+    }.groupByKey(vsPart)
+    val byDest = es.map {
+      case (id, e) => e.dst -> e.src
+    }.groupByKey(vsPart).mapValues(_.toSet)
     val edges = bySource.join(byDest).flatMap {
       case (vertexId, (outEdges, inEdgeSources)) =>
-        outEdges.filter(outEdge => inEdgeSources.contains(outEdge.dstId))
+        outEdges.collect {
+          case (id, outEdge) if inEdgeSources.contains(outEdge.dst) => id -> outEdge
+        }
     }
-    return new SimpleGraphData(target, sc.union(sourceData.vertices), edges)
+    outputs.putEdgeBundle('symmetric, edges.partitionBy(es.partitioner.get))
   }
-
-  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
-
-  def edgeAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
-
-  override def targetProperties(sources: Seq[BigGraph]) =
-    new BigGraphProperties(symmetricEdges = true)
 }
