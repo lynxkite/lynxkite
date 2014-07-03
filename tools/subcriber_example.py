@@ -1,3 +1,7 @@
+"""Test data generator for a cell phone subscriber database.
+
+Run without arguments to generate two CSV files. Run with --help for more options.
+"""
 import argparse
 import collections
 import math
@@ -12,6 +16,7 @@ parser.add_argument('--tree', help='Generate a tree instead of a random graph.',
 Person = collections.namedtuple('Person', 'id, age, income, subscription, gender')
 
 def rnd():
+  """A normal-ish distribution between 0.0 and 1.0."""
   return (random.random() + random.random() + random.random() + random.random() + random.random()) / 5
 
 def vertices(n):

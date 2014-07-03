@@ -1,3 +1,9 @@
+"""Test data generator for an "Internet Of Things" scenario.
+
+Usage:
+  python iot_example.py vs > iot-example-vertices.csv
+  python iot_example.py es > iot-example-edges.csv
+"""
 import collections
 import math
 import random
@@ -7,12 +13,20 @@ random.seed(0)
 
 class Histogram(object):
   def __init__(self, x_min, x_max, *lines):
+    """Generates random integers according to a distribution.
+
+    Args:
+      x_min: Lower bound. (Inclusive.)
+      x_max: Upper bound. (Exclusive.)
+      lines: A graphical representation of the probability distribution.
+    """
     self.lines = lines
     self.line_length = max(len(l) for l in lines)
     self.x_max = float(x_max)
     self.x_min = float(x_min)
 
   def get(self):
+    """Returns one random integer according to the configured distribution."""
     while True:
       x = random.uniform(self.x_min, self.x_max)
       i = int((x - self.x_min) * self.line_length / (self.x_max - self.x_min))
