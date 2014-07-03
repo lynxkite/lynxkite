@@ -51,11 +51,28 @@ abstract class NumericBucketer[T: Numeric](
   @transient lazy val bounds: Seq[T] =
     (1 until nb).map(idx => min + num.fromInt(idx) * bucketSize)
 
+  implicit class Formatter(val sc: StringContext) {
+    def fmt(args: Any*) = {
+      val formatted = args.map(a => format(a.asInstanceOf[T]))
+      sc.s(formatted: _*)
+    }
+
+    private def format(n: T) = {
+      if (num.equiv(n, num.zero)) {
+        "0"
+      } else if (num.lt(n, num.one)) {
+        f"${n.toDouble}%.2f"
+      } else {
+        n.toLong.toString
+      }
+    }
+  }
+
   def bucketLabels: Seq[String] = {
     val normalLabels = (Seq(min) ++ bounds.dropRight(1)).zip(bounds).map {
-      case (lowerBound, upperBound) => f"[${lowerBound.toDouble}%.2f, ${upperBound.toDouble}%.2f)"
+      case (lowerBound, upperBound) => fmt"[$lowerBound, $upperBound)"
     }
-    val lastLabel = f"[${bounds.last.toDouble}%.2f, ${max.toDouble}%.2f]"
+    val lastLabel = fmt"[${bounds.last}, $max]"
     normalLabels :+ lastLabel
   }
 }
