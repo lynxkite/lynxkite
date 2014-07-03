@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""Lists non-abstract subclasses of a class in a file after a superficial parsing.
+
+Usage:
+  python classes.py SomethingSomething.scala MetaGraphOperation
+"""
 import sys
 
 fn = sys.argv[1]
@@ -6,8 +11,8 @@ wantedclass = sys.argv[2]
 with file(fn) as f:
   words = f.read().split()
 
-def token(garbage):
- return garbage.split('(')[0].split('[')[0]
+def token(word):
+ return word.split('(')[0].split('[')[0]
 
 superclass = {}
 curclass = None
