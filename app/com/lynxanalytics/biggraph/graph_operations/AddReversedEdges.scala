@@ -1,29 +1,17 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.graphx
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.graph_api._
 
-import com.lynxanalytics.biggraph.graph_api
+case class AddReversedEdges() extends MetaGraphOperation {
+  def signature = newSignature
+    .inputGraph('vs, 'es)
+    .outputEdgeBundle('esPlus, 'vs -> 'vs)
 
-import graph_api._
-import graph_api.attributes._
-
-case class AddReversedEdges() extends GraphOperation {
-  def isSourceListValid(sources: Seq[BigGraph]) = (sources.size == 1)
-
-  def execute(target: BigGraph, manager: GraphDataManager): GraphData = {
-    val sc = manager.runtimeContext.sparkContext
-    val source = target.sources.head
-    val sourceData = manager.obtainData(source)
-    val edges = sourceData.edges
-      .flatMap(e => Iterator(e, new graphx.Edge(e.dstId, e.srcId, e.attr)))
-    return new SimpleGraphData(target, sc.union(sourceData.vertices), edges)
+  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+    val es = inputs.edgeBundles('es).rdd
+    val esPlus = es.values.flatMap(e => Iterator(e, Edge(e.dst, e.src)))
+    outputs.putEdgeBundle('esPlus, RDDUtils.fastNumbered(esPlus).partitionBy(es.partitioner.get))
   }
-
-  def edgeAttributes(sources: Seq[BigGraph]) = sources.head.edgeAttributes
-
-  def vertexAttributes(sources: Seq[BigGraph]) = sources.head.vertexAttributes
-
-  override def targetProperties(sources: Seq[BigGraph]) =
-    sources.head.properties.copy(symmetricEdges = true)
 }

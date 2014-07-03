@@ -1,8 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark.SparkContext._
-import org.apache.spark.graphx
-import org.apache.spark.graphx.VertexId
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.util.Sorting
@@ -23,9 +21,9 @@ object CompactUndirectedGraph {
     val compact = adjList.mapPartitions({
       it: Iterator[(ID, Array[ID])] =>
         {
-          val neighbors = mutable.ArrayBuffer[VertexId]()
+          val neighbors = mutable.ArrayBuffer[ID]()
           val indices = mutable.ArrayBuffer[Int]()
-          val ids = mutable.ArrayBuffer[VertexId]()
+          val ids = mutable.ArrayBuffer[ID]()
           var index = 0
           it.foreach {
             case (v, ns) => {
@@ -47,8 +45,8 @@ object CompactUndirectedGraph {
       .map { case ((ids, indices), neighbors) => neighbors.size }
       .sum
 
-    val fullNeighbors = Array.ofDim[VertexId](numEdges)
-    val vertexIndices = Array.ofDim[(VertexId, Int)](numVertices)
+    val fullNeighbors = Array.ofDim[ID](numEdges)
+    val vertexIndices = Array.ofDim[(ID, Int)](numVertices)
     val starts = Array.ofDim[Int](numVertices + 1)
 
     var offset = 0
@@ -96,7 +94,7 @@ class CompactUndirectedGraph(
     return -1
   }
 
-  def getNeighbors(vid: ID): Seq[VertexId] = {
+  def getNeighbors(vid: ID): Seq[ID] = {
     val idx = findId(vid)
     if (idx == -1) {
       Seq()

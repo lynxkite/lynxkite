@@ -2,9 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
-import com.lynxanalytics.biggraph.graph_api
-import graph_api._
-import graph_api.attributes._
+import com.lynxanalytics.biggraph.graph_api._
 
 case class ReverseEdges() extends MetaGraphOperation {
   def signature = newSignature
