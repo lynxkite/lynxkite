@@ -1,4 +1,5 @@
 #!/bin/sh
+# Checks whether each file in .../graph_operations has tests and is hooked up to the frontend.
 
 CLASSES=$(dirname $0)/classes
 OPS=$(ls app/com/lynxanalytics/biggraph/graph_operations | sed s/.scala$//)
@@ -33,5 +34,3 @@ OPS=$(ls app/com/lynxanalytics/biggraph/graph_operations | sed s/.scala$//)
     echo $OP $HAS_TEST $HAS_FE
   done | sort -sk 2 | sort -sk 3
 ) | column -t
-
-
