@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
-import org.apache.spark.graphx
 import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.immutable
 import scala.collection.mutable
@@ -27,11 +26,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // Deleting a line? Do not.
     // Types will change IDs otherwise.
     kryo.setRegistrationRequired(true)
-    kryo.register(classOf[graphx.Edge[_]])
     kryo.register(classOf[scala.Tuple2[_, _]])
-    kryo.register(classOf[graphx.EdgeTriplet[_, _]])
-    kryo.register(classOf[Array[graphx.Edge[_]]])
-    kryo.register(classOf[Array[graphx.EdgeTriplet[_, _]]])
     kryo.register(classOf[Array[Any]])
     kryo.register(classOf[mutable.WrappedArray$ofRef])
     kryo.register(classOf[mutable.ArrayBuffer[_]])
