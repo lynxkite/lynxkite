@@ -33,7 +33,7 @@ case class VertexDiagramSpec(
 case class FEVertex(
   x: Int,
   y: Int,
-  count: Int)
+  size: Int)
 case class VertexDiagramResponse(
   val diagramId: String,
   val vertices: Seq[FEVertex],
@@ -60,7 +60,7 @@ case class FEEdge(
   a: Int,
   // idx of destination vertex in the vertices Seq in the corresponding VertexDiagramResponse.
   b: Int,
-  count: Int)
+  size: Int)
 
 case class EdgeDiagramResponse(
   val srcDiagramId: String,
