@@ -39,7 +39,12 @@ angular.module('biggraph').directive('graphView', function($window) {
     for (var i = 0; i < n; ++i) {
       var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
       var yOff = 250;
-      vertices.push(this.addVertices(data.vertexSets[i], xOff, yOff));
+      var vs = data.vertexSets[i];
+      if (vs.mode === 'sampled') {
+        vertices.push(this.addSampledVertices(vs, xOff, yOff));
+      } else {
+        vertices.push(this.addBucketedVertices(vs, xOff, yOff));
+      }
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
@@ -47,7 +52,25 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
   };
 
-  GraphView.prototype.addVertices = function(data, xOff, yOff) {
+  GraphView.prototype.addSampledVertices = function(data, xOff, yOff) {
+    var vertices = {};
+    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
+    for (var i = 0; i < data.vertices.length; ++i) {
+      var vertex = data.vertices[i];
+      var v = new Vertex(xOff + Math.random() * 400 - 200,
+                         yOff + Math.random() * 400 - 200,
+                         Math.sqrt(vertexScale * vertex.size),
+                         vertex.size);
+      vertices[vertex.id] = v;
+      if (vertex.size === 0) {
+        continue;
+      }
+      this.vertices.append(v.dom);
+    }
+    return vertices;
+  };
+
+  GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
     var vertices = [];
     var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
