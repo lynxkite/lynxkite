@@ -71,8 +71,8 @@ module.exports = function (grunt) {
         middleware: function(connect, options, mws) {
           // Switch between two test files for /ajax/complexView.
           mws.unshift(function(req, res, next) {
-            if (req.url.indexOf('/ajax/complexView') == 0) {
-              if (req.url.indexOf('sampled') != -1) {
+            if (req.url.indexOf('/ajax/complexView') === 0) {
+              if (req.url.indexOf('sampled') !== -1) {
                 req.url = req.url.replace('complexView', 'complexView-sampled');
               } else {
                 req.url = req.url.replace('complexView', 'complexView-bucketed');
