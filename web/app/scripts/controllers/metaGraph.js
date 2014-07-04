@@ -106,7 +106,7 @@ angular.module('biggraph')
         q.vertexSets.push({
           vertexSetId: side.vs.id,
           filters: filters,
-          mode: 'bucketed',
+          mode: 'sampled',
           xBucketingAttributeId: side.xAttribute || '',
           yBucketingAttributeId: side.yAttribute || '',
           xNumBuckets: side.xAttribute === undefined ? 1 : 5,
