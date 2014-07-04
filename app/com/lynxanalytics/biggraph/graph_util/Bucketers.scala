@@ -51,10 +51,10 @@ abstract class NumericBucketer[T: Numeric](
   @transient lazy val bounds: Seq[T] =
     (1 until nb).map(idx => min + num.fromInt(idx) * bucketSize)
 
-  implicit class Formatter(val sc: StringContext) {
+  implicit class Formatter(val stringContext: StringContext) {
     def fmt(args: Any*) = {
       val formatted = args.map(a => format(a.asInstanceOf[T]))
-      sc.s(formatted: _*)
+      stringContext.s(formatted: _*)
     }
 
     private def format(n: T) = {
