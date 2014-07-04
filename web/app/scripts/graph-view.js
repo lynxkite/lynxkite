@@ -49,7 +49,7 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.addVertices = function(data, xOff, yOff) {
     var vertices = [];
-    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.count; })).max;
+    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
     var xBuckets = [], yBuckets = [];
@@ -77,10 +77,10 @@ angular.module('biggraph').directive('graphView', function($window) {
       var vertex = data.vertices[i];
       var v = new Vertex(xOff + this.zoom * util.normalize(vertex.x, xb),
                          yOff + this.zoom * util.normalize(vertex.y, yb),
-                         Math.sqrt(vertexScale * vertex.count),
-                         vertex.count);
+                         Math.sqrt(vertexScale * vertex.size),
+                         vertex.size);
       vertices.push(v);
-      if (vertex.count === 0) {
+      if (vertex.size === 0) {
         continue;
       }
       this.vertices.append(v.dom);
@@ -91,15 +91,15 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   GraphView.prototype.addEdges = function(edges, srcs, dsts) {
-    var edgeScale = this.zoom * 0.05 / util.minmax(edges.map(function(n) { return n.count; })).max;
+    var edgeScale = this.zoom * 0.05 / util.minmax(edges.map(function(n) { return n.size; })).max;
     for (var i = 0; i < edges.length; ++i) {
       var edge = edges[i];
-      if (edgeScale * edge.count < 0.1) {
+      if (edgeScale * edge.size < 0.1) {
         continue;
       }
       var a = srcs[edge.a];
       var b = dsts[edge.b];
-      var e = new Edge(a, b, edgeScale * edge.count, this.zoom);
+      var e = new Edge(a, b, edgeScale * edge.size, this.zoom);
       this.edges.append(e.dom);
     }
   };
