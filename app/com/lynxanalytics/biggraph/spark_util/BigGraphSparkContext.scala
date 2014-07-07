@@ -71,7 +71,7 @@ object BigGraphSparkContext {
   def apply(
     appName: String,
     masterURL: String,
-    useKryo: Boolean = false,
+    useKryo: Boolean = true,
     debugKryo: Boolean = false,
     useJars: Boolean = true): SparkContext = {
     var sparkConf = new SparkConf()
