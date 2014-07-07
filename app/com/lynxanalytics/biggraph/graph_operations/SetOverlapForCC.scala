@@ -4,6 +4,7 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd
 import scala.collection.mutable
+import scala.math
 
 import com.lynxanalytics.biggraph.graph_api._
 
