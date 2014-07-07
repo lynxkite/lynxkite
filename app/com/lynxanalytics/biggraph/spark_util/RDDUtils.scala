@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 import com.lynxanalytics.biggraph.graph_api._
 import com.esotericsoftware.kryo
 import org.apache.hadoop
-import org.apache.spark
+import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect._
@@ -39,7 +39,17 @@ object RDDUtils {
     bos.toByteArray
   }
 
-  implicit class Implicit[T](self: RDD[T]) {
+  private[spark_util] def genID(parts: Int, part: Int, row: Int): Long = {
+    val longID = parts.toLong * row.toLong + part.toLong
+    val low = Int.MaxValue % parts
+    val high = Int.MinValue % parts
+    // low + 1 ≡ high + jump  (mod parts)
+    val jump = (low + 1 - high + parts * 2) % parts
+    val jumps = (0L max (longID - jump)) / (Int.MaxValue - jump)
+    longID + jump * jumps
+  }
+
+  implicit class Implicit[T: ClassTag](self: RDD[T]) {
     def numbered: RDD[(Long, T)] = {
       val localCounts = self.glom().map(_.size).collect().scan(0)(_ + _)
       val counts = self.sparkContext.broadcast(localCounts)
@@ -49,11 +59,15 @@ object RDDUtils {
     }
 
     def fastNumbered: RDD[(Long, T)] = {
+      val numPartitions = self.partitions.size
+      val partitioner = self.partitioner.collect {
+        case p: HashPartitioner => p
+      }.getOrElse(new HashPartitioner(numPartitions))
       self.mapPartitionsWithIndex {
         case (pid, it) => it.zipWithIndex.map {
-          case (el, fID) => ((pid.toLong << 32) + fID, el)
+          case (el, fID) => genID(numPartitions, pid, fID) -> el
         }
-      }
+      }.partitionBy(partitioner)
     }
   }
 }
