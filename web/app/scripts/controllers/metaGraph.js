@@ -8,14 +8,15 @@ angular.module('biggraph')
 
     var defaultState = {
       leftToRightPath: undefined,
-      showGraph: false,
       left: {
         vs: undefined,
-        filters: {}
+        filters: {},
+        graphMode: undefined,
       },
       right: {
         vs: undefined,
-        filters: {}
+        filters: {},
+        graphMode: undefined,
       },
     };
     $scope.state = defaultState;
@@ -80,7 +81,7 @@ angular.module('biggraph')
 
     $scope.deepWatch('state', loadGraphView);
     function loadGraphView() {
-      if (!$scope.state.showGraph) { return; }
+      if (!$scope.showGraph()) { return; }
       var sides = [];
       if ($scope.state.left.vs !== undefined) { sides.push($scope.state.left); }
       if ($scope.state.right.vs !== undefined) { sides.push($scope.state.right); }
@@ -106,7 +107,7 @@ angular.module('biggraph')
         q.vertexSets.push({
           vertexSetId: side.vs.id,
           filters: filters,
-          mode: 'sampled',
+          mode: side.graphMode,
           xBucketingAttributeId: side.xAttribute || '',
           yBucketingAttributeId: side.yAttribute || '',
           xNumBuckets: side.xAttribute === undefined ? 1 : 5,
@@ -131,6 +132,9 @@ angular.module('biggraph')
       }
       $scope.graphView = $resource('/ajax/complexView').get({ q: q });
     }
+    $scope.showGraph = function() {
+      return $scope.state.left.graphMode || $scope.state.right.graphMode;
+    };
 
     $scope.deepWatch(
       'state', // TODO: Finer grained triggering.
@@ -256,7 +260,6 @@ angular.module('biggraph')
         // Clicking the same setting again turns it off.
         delete side.state()[setting];
       } else {
-        $scope.state.showGraph = true;
         side.state()[setting] = value;
       }
     };
