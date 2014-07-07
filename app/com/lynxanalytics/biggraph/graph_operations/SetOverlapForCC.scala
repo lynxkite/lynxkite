@@ -9,7 +9,7 @@ import scala.math
 import com.lynxanalytics.biggraph.graph_api._
 
 import org.apache.spark.rdd._
-import com.lynxanalytics.biggraph.spark_util._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 abstract class SetOverlapForCC extends MetaGraphOperation {
   def signature = newSignature
@@ -31,7 +31,7 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
     outputs.putEdgeBundle(
-      'overlaps, RDDUtils.fastNumbered(edges).partitionBy(rc.defaultPartitioner))
+      'overlaps, edges.fastNumbered.partitionBy(rc.defaultPartitioner))
   }
 
   // Override this with the actual overlap function implementations

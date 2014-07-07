@@ -5,7 +5,7 @@ import scala.util.Random
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends MetaGraphOperation {
   def signature = newSignature
@@ -23,6 +23,6 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends MetaGraphOp
           .map { case ((srcId, _), (dstId, _)) => Edge(srcId, dstId) }
     }
 
-    outputs.putEdgeBundle('es, RDDUtils.fastNumbered(randomEdges).partitionBy(rc.defaultPartitioner))
+    outputs.putEdgeBundle('es, randomEdges.fastNumbered.partitionBy(rc.defaultPartitioner))
   }
 }

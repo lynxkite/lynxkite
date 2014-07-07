@@ -10,7 +10,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends MetaGraphOperation {
   def signature = newSignature
@@ -32,7 +32,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends
         case (vId, (_, None)) => Edge(vId, vId)
       }
     val ccVertices = ccEdges.map(_.dst -> ()).distinct
-    outputs.putEdgeBundle('links, RDDUtils.fastNumbered(ccEdges).partitionBy(rc.defaultPartitioner))
+    outputs.putEdgeBundle('links, ccEdges.fastNumbered.partitionBy(rc.defaultPartitioner))
     outputs.putVertexSet('cc, ccVertices.partitionBy(rc.defaultPartitioner))
   }
 

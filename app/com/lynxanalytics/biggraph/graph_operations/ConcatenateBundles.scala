@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 case class ConcatenateBundles() extends MetaGraphOperation {
   def signature = newSignature
@@ -32,7 +32,7 @@ case class ConcatenateBundles() extends MetaGraphOperation {
       case (_, ((vertexA, weightAB), (vertexC, weightBC))) => (Edge(vertexA, vertexC), weightAB * weightBC)
     }.reduceByKey(_ + _) // TODO: possibility to define arbitrary concat functions as JS
 
-    val numberedAC = RDDUtils.fastNumbered(AC).partitionBy(rc.defaultPartitioner)
+    val numberedAC = AC.fastNumbered.partitionBy(rc.defaultPartitioner)
 
     outputs.putEdgeBundle(
       'edgesAC, numberedAC.mapValues { case (edge, weight) => edge })

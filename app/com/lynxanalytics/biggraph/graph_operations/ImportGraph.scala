@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.util.{ Failure, Success, Try }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Filename
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -122,7 +122,7 @@ abstract class ImportCommon(csv: CSV) extends MetaGraphOperation {
   protected def toSymbol(field: String) = Symbol("csv_" + field)
 
   protected def splitGenerateIDs(lines: RDD[Seq[String]]): Columns = {
-    val numbered = RDDUtils.fastNumbered(lines)
+    val numbered = lines.fastNumbered
     return csv.fields.zipWithIndex.map {
       case (field, idx) => field -> numbered.map { case (id, line) => id -> line(idx) }
     }.toMap
@@ -221,7 +221,7 @@ case class ImportEdgeListWithStringIDs(csv: CSV, src: String, dst: String) exten
   override def putOutputs(columns: Columns, outputs: DataSetBuilder, rc: RuntimeContext) = {
     putEdgeAttributes(columns, outputs)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = RDDUtils.fastNumbered(names).partitionBy(rc.defaultPartitioner)
+    val idToName = names.fastNumbered.partitionBy(rc.defaultPartitioner)
     val nameToId = idToName.map { case (id, name) => (name, id) }
     val edgeSrcDst = columns(src).join(columns(dst))
     val bySrc = edgeSrcDst.map {

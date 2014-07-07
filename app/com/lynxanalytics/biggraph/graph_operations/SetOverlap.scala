@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd._
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 // Generates edges between vertices by the amount of overlap in an attribute.
 object SetOverlap {
@@ -63,7 +63,7 @@ case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
       case (prefix, sets) => edgesFor(prefix, sets)
     }
 
-    val numberedEdgesWithOverlaps = RDDUtils.fastNumbered(edgesWithOverlaps).partitionBy(rc.defaultPartitioner)
+    val numberedEdgesWithOverlaps = edgesWithOverlaps.fastNumbered.partitionBy(rc.defaultPartitioner)
 
     outputs.putEdgeBundle(
       'overlaps, numberedEdgesWithOverlaps.mapValues(_._1))

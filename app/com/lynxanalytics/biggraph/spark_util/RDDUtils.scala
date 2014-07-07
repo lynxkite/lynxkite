@@ -4,6 +4,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
+import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect._
 
@@ -38,18 +39,20 @@ object RDDUtils {
     bos.toByteArray
   }
 
-  def numbered[T](rdd: spark.rdd.RDD[T]): spark.rdd.RDD[(Long, T)] = {
-    val localCounts = rdd.glom().map(_.size).collect().scan(0)(_ + _)
-    val counts = rdd.sparkContext.broadcast(localCounts)
-    rdd.mapPartitionsWithIndex((i, p) => {
-      (counts.value(i) until counts.value(i + 1)).map(_.toLong).toIterator zip p
-    })
-  }
+  implicit class Implicit[T](self: RDD[T]) {
+    def numbered: RDD[(Long, T)] = {
+      val localCounts = self.glom().map(_.size).collect().scan(0)(_ + _)
+      val counts = self.sparkContext.broadcast(localCounts)
+      self.mapPartitionsWithIndex((i, p) => {
+        (counts.value(i) until counts.value(i + 1)).map(_.toLong).toIterator zip p
+      })
+    }
 
-  def fastNumbered[T](rdd: spark.rdd.RDD[T]): spark.rdd.RDD[(Long, T)] = {
-    rdd.mapPartitionsWithIndex {
-      case (pid, it) => it.zipWithIndex.map {
-        case (el, fID) => ((pid.toLong << 32) + fID, el)
+    def fastNumbered: RDD[(Long, T)] = {
+      self.mapPartitionsWithIndex {
+        case (pid, it) => it.zipWithIndex.map {
+          case (el, fID) => ((pid.toLong << 32) + fID, el)
+        }
       }
     }
   }
