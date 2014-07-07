@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 
 import com.lynxanalytics.biggraph.graph_util.Filename
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 trait TestMetaGraphManager extends TestTempDir {
   def cleanMetaManager: MetaGraphManager = {
@@ -134,9 +134,9 @@ case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double) extends MetaGr
     .outputEdgeAttribute[Double]('weight, 'es)
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
-    val es = RDDUtils.fastNumbered(rc.sparkContext.parallelize(edges.map {
+    val es = rc.sparkContext.parallelize(edges.map {
       case (a, b) => Edge(a, b)
-    })).partitionBy(rc.onePartitionPartitioner)
+    }).fastNumbered.partitionBy(rc.onePartitionPartitioner)
     outputs.putEdgeBundle('es, es)
     outputs.putEdgeAttribute('weight, es.mapValues(_ => weight))
   }
