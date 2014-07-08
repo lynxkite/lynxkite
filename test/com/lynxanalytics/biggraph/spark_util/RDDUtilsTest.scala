@@ -33,4 +33,16 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
       }
     }
   }
+
+  test("genID works for random numbers") {
+    val rnd = new util.Random(0)
+    for (i <- 0 to 1000) {
+      val parts = rnd.nextInt(1000) max 1
+      val part = rnd.nextInt(parts)
+      val row = rnd.nextInt(1000000)
+      val id = RDDUtils.genID(parts, part, row)
+      val partitioner = new HashPartitioner(parts)
+      assert(partitioner.getPartition(id) == part, s"genID($parts, $part, $row)")
+    }
+  }
 }
