@@ -39,7 +39,14 @@ object RDDUtils {
     bos.toByteArray
   }
 
+  // Used by Implicit.fastNumbered to generate IDs.
+  // Args:
+  //   parts: The number of partitions.
+  //   part: Current partition index.
+  //   row: Current row index.
   private[spark_util] def genID(parts: Int, part: Int, row: Int): Long = {
+    // HashPartitioner will use nonNegativeMod(id.hashCode, parts) to pick the partition.
+    // We generate the ID such that nonNegativeMod(id.hashCode, parts) == part.
     val longID = parts.toLong * row.toLong + part.toLong
     val low = Int.MaxValue % parts
     val high = Int.MinValue % parts
@@ -50,7 +57,7 @@ object RDDUtils {
     val offset = Int.MaxValue.toLong - jump // Zero is at this point in the period.
     val jumps = (longID + offset) / period
     val jumped = longID + jump * jumps
-    jumped ^ (jumped >>> 32) // Counter bit flips in Long.hashCode.
+    jumped ^ (jumped >>> 32) // Cancel out the bit flips in Long.hashCode.
   }
 
   implicit class Implicit[T: ClassTag](self: RDD[T]) {
@@ -62,6 +69,9 @@ object RDDUtils {
       })
     }
 
+    // Adds unique ID numbers to rows of an RDD as a transformation.
+    // The returned RDD will be partitioned by the partitioner of the input (if it is
+    // a HashPartitioner) or by a new HashPartitioner.
     def fastNumbered: RDD[(Long, T)] = {
       val numPartitions = self.partitions.size
       val partitioner = self.partitioner.collect {
@@ -70,18 +80,22 @@ object RDDUtils {
       fastNumbered(partitioner)
     }
 
+    // Adds unique ID numbers to rows of an RDD as a transformation.
+    // The returned RDD will be partitioned by the given partitioner.
     def fastNumbered(partitioner: spark.Partitioner): RDD[(Long, T)] = {
       require(partitioner.isInstanceOf[spark.HashPartitioner], s"Need HashPartitioner, got: $partitioner")
       val numPartitions = partitioner.numPartitions
       // Need to repartition before adding the IDs if we are going to change the partition count.
       val rightPartitions = if (numPartitions == self.partitions.size) self else self.repartition(numPartitions)
       // Add IDs.
-      val withIDs = rightPartitions.mapPartitionsWithIndex {
+      val withIDs = rightPartitions.mapPartitionsWithIndex({
         case (pid, it) => it.zipWithIndex.map {
           case (el, fID) => genID(numPartitions, pid, fID) -> el
         }
-      }
-      withIDs.partitionBy(partitioner)
+      }, preservesPartitioning = true)
+      // If the RDD was already partitioned correctly, we can skip the (pointless) shuffle.
+      if (withIDs.partitioner == Some(partitioner)) withIDs
+      else withIDs.partitionBy(partitioner)
     }
   }
 }
