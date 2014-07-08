@@ -53,18 +53,9 @@ abstract class NumericBucketer[T: Numeric](
 
   implicit class Formatter(val stringContext: StringContext) {
     def fmt(args: Any*) = {
-      val formatted = args.map(a => format(a.asInstanceOf[T]))
+      val df = new java.text.DecimalFormat("#.##")
+      val formatted = args.map(a => df.format(a.asInstanceOf[T]))
       stringContext.s(formatted: _*)
-    }
-
-    private def format(n: T) = {
-      if (num.equiv(n, num.zero)) {
-        "0"
-      } else if (num.lt(n, num.one)) {
-        f"${n.toDouble}%.2f"
-      } else {
-        n.toLong.toString
-      }
     }
   }
 
