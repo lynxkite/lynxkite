@@ -23,6 +23,6 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends MetaGraphOp
           .map { case ((srcId, _), (dstId, _)) => Edge(srcId, dstId) }
     }
 
-    outputs.putEdgeBundle('es, randomEdges.fastNumbered.partitionBy(rc.defaultPartitioner))
+    outputs.putEdgeBundle('es, randomEdges.fastNumbered(rc.defaultPartitioner))
   }
 }

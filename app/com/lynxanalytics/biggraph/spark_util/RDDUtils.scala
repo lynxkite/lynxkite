@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 import com.lynxanalytics.biggraph.graph_api._
 import com.esotericsoftware.kryo
 import org.apache.hadoop
-import org.apache.spark.HashPartitioner
+import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect._
@@ -65,13 +65,23 @@ object RDDUtils {
     def fastNumbered: RDD[(Long, T)] = {
       val numPartitions = self.partitions.size
       val partitioner = self.partitioner.collect {
-        case p: HashPartitioner => p
-      }.getOrElse(new HashPartitioner(numPartitions))
-      self.mapPartitionsWithIndex {
+        case p: spark.HashPartitioner => p
+      }.getOrElse(new spark.HashPartitioner(numPartitions))
+      fastNumbered(partitioner)
+    }
+
+    def fastNumbered(partitioner: spark.Partitioner): RDD[(Long, T)] = {
+      require(partitioner.isInstanceOf[spark.HashPartitioner], s"Need HashPartitioner, got: $partitioner")
+      val numPartitions = partitioner.numPartitions
+      // Need to repartition before adding the IDs if we are going to change the partition count.
+      val rightPartitions = if (numPartitions == self.partitions.size) self else self.repartition(numPartitions)
+      // Add IDs.
+      val withIDs = rightPartitions.mapPartitionsWithIndex {
         case (pid, it) => it.zipWithIndex.map {
           case (el, fID) => genID(numPartitions, pid, fID) -> el
         }
-      }.partitionBy(partitioner)
+      }
+      withIDs.partitionBy(partitioner)
     }
   }
 }

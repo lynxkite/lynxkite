@@ -221,7 +221,7 @@ case class ImportEdgeListWithStringIDs(csv: CSV, src: String, dst: String) exten
   override def putOutputs(columns: Columns, outputs: DataSetBuilder, rc: RuntimeContext) = {
     putEdgeAttributes(columns, outputs)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.fastNumbered.partitionBy(rc.defaultPartitioner)
+    val idToName = names.fastNumbered(rc.defaultPartitioner)
     val nameToId = idToName.map { case (id, name) => (name, id) }
     val edgeSrcDst = columns(src).join(columns(dst))
     val bySrc = edgeSrcDst.map {

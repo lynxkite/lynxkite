@@ -33,7 +33,7 @@ case class EdgeGraph() extends MetaGraphOperation {
         } yield Edge(incoming, outgoing)
     }
     outputs.putVertexSet('newVS, newVS)
-    outputs.putEdgeBundle('newES, newES.fastNumbered.partitionBy(edgePartitioner))
+    outputs.putEdgeBundle('newES, newES.fastNumbered(edgePartitioner))
     // Just to connect to the results.
     outputs.putEdgeBundle('link, sc.emptyRDD[(ID, Edge)].partitionBy(edgePartitioner))
   }
