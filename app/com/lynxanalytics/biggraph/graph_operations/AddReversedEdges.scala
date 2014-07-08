@@ -12,6 +12,6 @@ case class AddReversedEdges() extends MetaGraphOperation {
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
     val es = inputs.edgeBundles('es).rdd
     val esPlus = es.values.flatMap(e => Iterator(e, Edge(e.dst, e.src)))
-    outputs.putEdgeBundle('esPlus, esPlus.fastNumbered.partitionBy(es.partitioner.get))
+    outputs.putEdgeBundle('esPlus, esPlus.fastNumbered(es.partitioner.get))
   }
 }

@@ -136,7 +136,7 @@ case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double) extends MetaGr
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
     val es = rc.sparkContext.parallelize(edges.map {
       case (a, b) => Edge(a, b)
-    }).fastNumbered.partitionBy(rc.onePartitionPartitioner)
+    }).fastNumbered(rc.onePartitionPartitioner)
     outputs.putEdgeBundle('es, es)
     outputs.putEdgeAttribute('weight, es.mapValues(_ => weight))
   }

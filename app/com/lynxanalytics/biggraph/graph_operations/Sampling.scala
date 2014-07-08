@@ -20,8 +20,7 @@ case class VertexSample(fraction: Double) extends MetaGraphOperation {
     outputs.putVertexSet('sampled, sampled.partitionBy(rc.defaultPartitioner))
     outputs.putEdgeBundle(
       'projection,
-      sampled.map { case (id, _) => Edge(id, id) }.fastNumbered
-        .partitionBy(rc.defaultPartitioner))
+      sampled.map { case (id, _) => Edge(id, id) }.fastNumbered(rc.defaultPartitioner))
   }
 }
 

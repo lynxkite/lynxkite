@@ -63,7 +63,7 @@ case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
       case (prefix, sets) => edgesFor(prefix, sets)
     }
 
-    val numberedEdgesWithOverlaps = edgesWithOverlaps.fastNumbered.partitionBy(rc.defaultPartitioner)
+    val numberedEdgesWithOverlaps = edgesWithOverlaps.fastNumbered(rc.defaultPartitioner)
 
     outputs.putEdgeBundle(
       'overlaps, numberedEdgesWithOverlaps.mapValues(_._1))

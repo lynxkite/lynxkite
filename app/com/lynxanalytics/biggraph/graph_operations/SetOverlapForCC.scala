@@ -31,7 +31,7 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
     outputs.putEdgeBundle(
-      'overlaps, edges.fastNumbered.partitionBy(rc.defaultPartitioner))
+      'overlaps, edges.fastNumbered(rc.defaultPartitioner))
   }
 
   // Override this with the actual overlap function implementations
