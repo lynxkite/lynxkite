@@ -51,10 +51,19 @@ abstract class NumericBucketer[T: Numeric](
   @transient lazy val bounds: Seq[T] =
     (1 until nb).map(idx => min + num.fromInt(idx) * bucketSize)
 
+  implicit class Formatter(val stringContext: StringContext) {
+    def fmt(args: Any*) = {
+      val df = new java.text.DecimalFormat("#.##")
+      val formatted = args.map(a => df.format(a.asInstanceOf[T]))
+      stringContext.s(formatted: _*)
+    }
+  }
+
   def bucketLabels: Seq[String] = {
-    val normalLabels = (Seq(min) ++ bounds.dropRight(1)).zip(bounds)
-      .map { case (lowerBound, upperBound) => s"[$lowerBound, $upperBound)" }
-    val lastLabel = "[%s, %s]".format(bounds.last, max)
+    val normalLabels = (Seq(min) ++ bounds.dropRight(1)).zip(bounds).map {
+      case (lowerBound, upperBound) => fmt"[$lowerBound, $upperBound)"
+    }
+    val lastLabel = fmt"[${bounds.last}, $max]"
     normalLabels :+ lastLabel
   }
 }
