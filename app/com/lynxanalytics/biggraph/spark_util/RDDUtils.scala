@@ -43,10 +43,14 @@ object RDDUtils {
     val longID = parts.toLong * row.toLong + part.toLong
     val low = Int.MaxValue % parts
     val high = Int.MinValue % parts
+    // Correction for overflows. No correction needed for underflows.
     // low + 1 ≡ high + jump  (mod parts)
     val jump = (low + 1 - high + parts * 2) % parts
-    val jumps = (0L max (longID - jump)) / (Int.MaxValue - jump)
-    longID + jump * jumps
+    val period = Int.MaxValue.toLong * 2L - jump // Distance between overflows.
+    val offset = Int.MaxValue.toLong - jump // Zero is at this point in the period.
+    val jumps = (longID + offset) / period
+    val jumped = longID + jump * jumps
+    jumped ^ (jumped >>> 32) // Counter bit flips in Long.hashCode.
   }
 
   implicit class Implicit[T: ClassTag](self: RDD[T]) {
