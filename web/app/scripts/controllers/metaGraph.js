@@ -119,9 +119,9 @@ angular.module('biggraph')
           // Sampled view parameters.
           radius: parseInt(side.sampleRadius),  // angular.js/pull/7370
           centralVertexId: '',
-          sampleSmearEdgeBundleId: '',
-          labelAttributeId: '',
-          sizeAttributeId: '',
+          sampleSmearEdgeBundleId: (side.edgeBundle || { id: '' }).id,
+          labelAttributeId: side.labelAttribute || '',
+          sizeAttributeId: side.sizeAttribute || '',
         });
       }
       if ($scope.state.leftToRightPath !== undefined) {
