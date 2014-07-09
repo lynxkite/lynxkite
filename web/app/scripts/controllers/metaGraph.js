@@ -87,8 +87,8 @@ angular.module('biggraph')
     function loadGraphView() {
       if (!$scope.showGraph()) { return; }
       var sides = [];
-      if ($scope.state.left.vs !== undefined) { sides.push($scope.state.left); }
-      if ($scope.state.right.vs !== undefined) { sides.push($scope.state.right); }
+      if ($scope.state.left.graphMode !== undefined) { sides.push($scope.state.left); }
+      if ($scope.state.right.graphMode !== undefined) { sides.push($scope.state.right); }
       if (sides.length === 0) { return; }
       var q = { vertexSets: [], edgeBundles: [] };
       for (var i = 0; i < sides.length; ++i) {
@@ -125,7 +125,7 @@ angular.module('biggraph')
           sizeAttributeId: side.sizeAttribute || '',
         });
       }
-      if ($scope.state.leftToRightPath !== undefined) {
+      if (sides.length == 2 && $scope.state.leftToRightPath !== undefined) {
         var bundles = $scope.state.leftToRightPath.map(function(step) {
           return { bundle: step.bundle.id, reversed: step.pointsLeft };
         });
