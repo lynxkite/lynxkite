@@ -54,13 +54,18 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.addSampledVertices = function(data, xOff, yOff) {
     var vertices = {};
-    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
+    var vertexBounds = util.minmax(data.vertices.map(function(n) { return n.size; }));
+    var vertexScale = this.zoom * 2 / vertexBounds.max;
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
+      // Use vertex.label if set. Use vertex.size if it's not all 1s. Use vertex.id otherwise.
+      var label = vertex.id;
+      if (vertexBounds.min != 1 || vertexBounds.max != 1) { label = vertex.size; }
+      label = vertex.label || label;
       var v = new Vertex(xOff + Math.random() * 400 - 200,
                          yOff + Math.random() * 400 - 200,
                          Math.sqrt(vertexScale * vertex.size),
-                         vertex.size);
+                         label);
       vertices[vertex.id] = v;
       if (vertex.size === 0) {
         continue;
