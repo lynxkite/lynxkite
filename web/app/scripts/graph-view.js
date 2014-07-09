@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('biggraph').directive('graphView', function($window) {
-  /* global SVG_UTIL, COMMON_UTIL */
+  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
   var svg = SVG_UTIL;
   var util = COMMON_UTIL;
   var directive = {
@@ -56,6 +56,14 @@ angular.module('biggraph').directive('graphView', function($window) {
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
       this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
+      if (e.srcIdx === e.dstIdx) {
+        vertices[e.srcIdx].edges = e;
+      }
+    }
+    for (i = 0; i < vertices.length; ++i) {
+      if (vertices[i].mode === 'sampled') {
+        this.layout(vertices[i]);
+      }
     }
   };
 
@@ -80,6 +88,9 @@ angular.module('biggraph').directive('graphView', function($window) {
       this.bindSampleClick(v, vertex, side);
       this.vertices.append(v.dom);
     }
+    vertices.mode = 'sampled';
+    vertices.xOff = xOff;
+    vertices.yOff = yOff;
     return vertices;
   };
 
@@ -90,6 +101,29 @@ angular.module('biggraph').directive('graphView', function($window) {
         side.center = vertex.id;
       });
     });
+  };
+
+  GraphView.prototype.layout = function(vertices) {
+    for (var i = 0; i < vertices.length; ++i) {
+      var v = vertices[i];
+      v.force_mass = 1;
+      v.force_ox = v.x;
+      v.force_oy = v.y;
+    }
+    for (var i = 0; i < vertices.edges.length; ++i) {
+      var e = vertices.edges[i];
+      vertices[e.a].force_mass += 1;
+      vertices[e.b].force_mass += 1;
+    }
+    var engine = new FORCE_LAYOUT.Engine({ attraction: 500, repulsion: 100, gravity: 0.05, drag: 0.1 });
+//    while (engine.step(vertices));
+    function step() {
+      console.log('step');
+      if (engine.step(vertices)) {
+        window.requestAnimationFrame(step);
+      }
+    }
+    window.requestAnimationFrame(step);
   };
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
