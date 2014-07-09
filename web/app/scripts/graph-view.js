@@ -119,7 +119,9 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   GraphView.prototype.addEdges = function(edges, srcs, dsts) {
-    var edgeScale = this.zoom * 0.05 / util.minmax(edges.map(function(n) { return n.size; })).max;
+    var edgeBounds = util.minmax(edges.map(function(n) { return n.size; }));
+    var edgeScale = this.zoom * 0.05 / edgeBounds.max;
+    if (edgeBounds.min == edgeBounds.max) { edgeScale /= 3; }
     for (var i = 0; i < edges.length; ++i) {
       var edge = edges[i];
       if (edgeScale * edge.size < 0.1) {
