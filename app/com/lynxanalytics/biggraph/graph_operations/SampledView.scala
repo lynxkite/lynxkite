@@ -5,13 +5,13 @@ import com.lynxanalytics.biggraph.controllers.FEVertex
 import com.lynxanalytics.biggraph.graph_api._
 
 case class SampledView(
-    centralVertexId: String,
+    center: String,
     radius: Int,
     hasEdges: Boolean,
     hasSizes: Boolean,
     hasLabels: Boolean) extends MetaGraphOperation {
 
-  val hasCenter = centralVertexId.nonEmpty
+  val hasCenter = center.nonEmpty
 
   def signature = {
     var s = newSignature.inputVertexSet('vertices)
@@ -19,6 +19,7 @@ case class SampledView(
     if (hasSizes) s = s.inputVertexAttribute[Double]('sizeAttr, 'vertices)
     if (hasLabels) s = s.inputVertexAttribute[Any]('labelAttr, 'vertices)
     s = s.outputVertexSet('sample)
+    s = s.outputVertexAttribute[Int]('feIdxs, 'sample)
     s = s.outputScalar[Seq[FEVertex]]('feVertices)
     s
   }
@@ -27,27 +28,23 @@ case class SampledView(
     val vs = inputs.vertexSets('vertices).rdd
     val vsPart = vs.partitioner.get
     val c = if (hasCenter) {
-      centralVertexId.toLong
+      center.toLong
     } else {
       vs.keys.first
     }
     val itself = rc.sparkContext.parallelize(Seq(c -> ())).partitionBy(vsPart)
     val neighborhood = if (hasEdges) {
       val edges = inputs.edgeBundles('edges).rdd
-      val outgoing = edges.values.map(e => e.src -> e.dst).partitionBy(vsPart)
-      val incoming = edges.values.map(e => e.dst -> e.src).partitionBy(vsPart)
+      val neighbors = edges.values.flatMap {
+        e => Iterator(e.src -> e.dst, e.dst -> e.src)
+      }.partitionBy(vsPart)
       var collection = itself
       for (i <- 0 until radius) {
-        val inNeighbors = collection.join(incoming).map {
-          case (v, ((), src)) => src -> ()
-        }
-        val outNeighbors = collection.join(outgoing).map {
-          case (v, ((), dst)) => dst -> ()
-        }
-        collection ++= inNeighbors
-        collection ++= outNeighbors
+        collection = collection.join(neighbors).flatMap {
+          case (v, ((), neighbor)) => Iterator(v -> (), neighbor -> ())
+        }.distinct.partitionBy(vsPart)
       }
-      collection.distinct
+      collection
     } else {
       itself
     }
