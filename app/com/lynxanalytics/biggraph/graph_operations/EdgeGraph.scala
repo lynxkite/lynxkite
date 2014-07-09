@@ -4,7 +4,7 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 case class EdgeGraph() extends MetaGraphOperation {
   def signature = newSignature
@@ -33,7 +33,7 @@ case class EdgeGraph() extends MetaGraphOperation {
         } yield Edge(incoming, outgoing)
     }
     outputs.putVertexSet('newVS, newVS)
-    outputs.putEdgeBundle('newES, RDDUtils.fastNumbered(newES).partitionBy(edgePartitioner))
+    outputs.putEdgeBundle('newES, newES.fastNumbered(edgePartitioner))
     // Just to connect to the results.
     outputs.putEdgeBundle('link, sc.emptyRDD[(ID, Edge)].partitionBy(edgePartitioner))
   }

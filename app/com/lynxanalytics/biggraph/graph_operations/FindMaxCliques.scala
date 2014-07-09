@@ -7,7 +7,7 @@ import scala.collection.immutable
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
   def signature = newSignature
@@ -19,11 +19,11 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
     val cug = CompactUndirectedGraph(inputs.edgeBundles('esIn))
     val cliqueLists = computeCliques(
       inputs.vertexSets('vsIn), cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
-    val indexedCliqueLists = RDDUtils.fastNumbered(cliqueLists).partitionBy(rc.defaultPartitioner)
+    val indexedCliqueLists = cliqueLists.fastNumbered(rc.defaultPartitioner)
     outputs.putVertexSet('cliques, indexedCliqueLists.mapValues(_ => Unit))
-    outputs.putEdgeBundle('links, RDDUtils.fastNumbered(indexedCliqueLists.flatMap {
+    outputs.putEdgeBundle('links, indexedCliqueLists.flatMap {
       case (cid, vids) => vids.map(vid => Edge(vid, cid))
-    }).partitionBy(rc.defaultPartitioner))
+    }.fastNumbered(rc.defaultPartitioner))
   }
 
   // Implementation of the actual algorithm.
