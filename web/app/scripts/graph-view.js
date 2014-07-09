@@ -34,8 +34,8 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.update = function(data) {
     var sides = [];
-    if (this.scope.state.left.vs !== undefined) { sides.push(this.scope.state.left); }
-    if (this.scope.state.right.vs !== undefined) { sides.push(this.scope.state.right); }
+    if (this.scope.state.left.graphMode !== undefined) { sides.push(this.scope.state.left); }
+    if (this.scope.state.right.graphMode !== undefined) { sides.push(this.scope.state.right); }
     this.vertices.empty();
     this.edges.empty();
     var vertices = [];
