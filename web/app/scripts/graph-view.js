@@ -60,7 +60,7 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   GraphView.prototype.addSampledVertices = function(data, xOff, yOff, side) {
-    var vertices = {};
+    var vertices = [];
     var vertexBounds = util.minmax(data.vertices.map(function(n) { return n.size; }));
     var vertexScale = this.zoom * 2 / vertexBounds.max;
     for (var i = 0; i < data.vertices.length; ++i) {
@@ -73,7 +73,7 @@ angular.module('biggraph').directive('graphView', function($window) {
                          yOff + Math.random() * 400 - 200,
                          Math.sqrt(vertexScale * vertex.size),
                          label);
-      vertices[vertex.id] = v;
+      vertices.push(v);
       if (vertex.size === 0) {
         continue;
       }
