@@ -13,6 +13,7 @@ angular.module('biggraph')
         graphMode: undefined,
         bucketCount: 4,
         sampleRadius: 1,
+        center: undefined,
       };
     }
     function defaultState() {
@@ -118,7 +119,7 @@ angular.module('biggraph')
           yNumBuckets: parseInt(side.bucketCount),  // angular.js/pull/7370
           // Sampled view parameters.
           radius: parseInt(side.sampleRadius),  // angular.js/pull/7370
-          centralVertexId: '',
+          centralVertexId: (side.center || '').toString(),
           sampleSmearEdgeBundleId: (side.edgeBundle || { id: '' }).id,
           labelAttributeId: side.labelAttribute || '',
           sizeAttributeId: side.sizeAttribute || '',
