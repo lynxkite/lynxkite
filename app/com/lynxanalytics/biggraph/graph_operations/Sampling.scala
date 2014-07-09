@@ -4,7 +4,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
 case class VertexSample(fraction: Double) extends MetaGraphOperation {
   def signature = newSignature
@@ -20,8 +20,7 @@ case class VertexSample(fraction: Double) extends MetaGraphOperation {
     outputs.putVertexSet('sampled, sampled.partitionBy(rc.defaultPartitioner))
     outputs.putEdgeBundle(
       'projection,
-      RDDUtils.fastNumbered(sampled.map { case (id, _) => Edge(id, id) })
-        .partitionBy(rc.defaultPartitioner))
+      sampled.map { case (id, _) => Edge(id, id) }.fastNumbered(rc.defaultPartitioner))
   }
 }
 
