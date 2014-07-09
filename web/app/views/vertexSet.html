@@ -16,9 +16,17 @@
     <div class="panel-heading">
       <shortn text="{{side.data.title}}"></shortn>
       <div class="btn-group">
-        <label class="btn btn-default" ng-model="side.state().graphMode" btn-radio="'bucketed'" uncheckable><i tooltip="Bucketed&nbsp;Graph" class="glyphicon glyphicon-th"></i></label>
-        <label class="btn btn-default" ng-model="side.state().graphMode" btn-radio="'sampled'" uncheckable><i tooltip="Sampled&nbsp;Graph" class="glyphicon glyphicon-eye-open"></i></label>
+        <label class="btn btn-default" ng-model="side.state().graphMode" btn-radio="'bucketed'" uncheckable>
+          <i tooltip="Bucketed&nbsp;Graph" class="glyphicon glyphicon-th"></i>
+        </label>
+        <label class="btn btn-default" ng-model="side.state().graphMode" btn-radio="'sampled'" uncheckable>
+          <i tooltip="Sampled&nbsp;Graph" class="glyphicon glyphicon-eye-open"></i>
+        </label>
       </div>
+      <input style="vertical-align: middle;" ng-show="side.state().graphMode == 'bucketed'"
+      tooltip="{{side.state().bucketCount}}&times;{{side.state().bucketCount}} buckets" type="range" min="1" max="10" step="1" ng-model="side.state().bucketCount">
+      <input style="vertical-align: middle;" ng-show="side.state().graphMode == 'sampled'"
+        tooltip="radius {{side.state().sampleRadius}}" type="range" max="10" step="1" ng-model="side.state().sampleRadius">
       <span style="float: right">
         <span class="glyphicon clicky glyphicon-arrow-{{side.other.name}}"
           title="Show on the {{side.other.name}}"

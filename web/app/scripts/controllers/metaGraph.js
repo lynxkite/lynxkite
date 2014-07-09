@@ -6,20 +6,23 @@ angular.module('biggraph')
     $scope.closeAlert = function(index) { $scope.alerts.splice(index, 1); };
     $scope.deepWatch = function(expression, fn) { $scope.$watch(expression, fn, true); };
 
-    var defaultState = {
-      leftToRightPath: undefined,
-      left: {
+    function defaultSideState() {
+      return {
         vs: undefined,
         filters: {},
         graphMode: undefined,
-      },
-      right: {
-        vs: undefined,
-        filters: {},
-        graphMode: undefined,
-      },
-    };
-    $scope.state = defaultState;
+        bucketCount: 4,
+        sampleRadius: 1,
+      };
+    }
+    function defaultState() {
+      return {
+        leftToRightPath: undefined,
+        left: defaultSideState(),
+        right: defaultSideState(),
+      };
+    }
+    $scope.state = defaultState();
 
     $scope.left = {};
     $scope.right = {};
@@ -31,7 +34,7 @@ angular.module('biggraph')
       function() { return $location.search(); },
       function() {
         if (!$location.search().q) {
-          $scope.state = defaultState;
+          $scope.state = defaultState();
         } else {
           var state = JSON.parse($location.search().q);
           if (!angular.equals(state, $scope.state)) {
@@ -108,14 +111,17 @@ angular.module('biggraph')
           vertexSetId: side.vs.id,
           filters: filters,
           mode: side.graphMode,
+          // Bucketed view parameters.
           xBucketingAttributeId: side.xAttribute || '',
           yBucketingAttributeId: side.yAttribute || '',
-          xNumBuckets: side.xAttribute === undefined ? 1 : 5,
-          yNumBuckets: side.yAttribute === undefined ? 1 : 5,
+          xNumBuckets: parseInt(side.bucketCount),  // angular.js/pull/7370
+          yNumBuckets: parseInt(side.bucketCount),  // angular.js/pull/7370
           // Sampled view parameters.
-          radius: 0,
+          radius: parseInt(side.sampleRadius),  // angular.js/pull/7370
           centralVertexId: '',
           sampleSmearEdgeBundleId: '',
+          labelAttributeId: '',
+          sizeAttributeId: '',
         });
       }
       if ($scope.state.leftToRightPath !== undefined) {
@@ -268,10 +274,12 @@ angular.module('biggraph')
     $scope.right.name = 'right';
 
     $scope.left.setVS = function(id) {
-      $scope.state.left = { vs: { id: id }, filters: {} };
+      $scope.state.left = defaultSideState();
+      $scope.state.left.vs = { id: id };
     };
     $scope.right.setVS = function(id) {
-      $scope.state.right = { vs: { id: id }, filters: {} };
+      $scope.state.right = defaultSideState();
+      $scope.state.right.vs = { id: id };
     };
 
     $scope.mirror = function(side) {
