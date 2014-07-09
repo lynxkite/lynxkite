@@ -2,12 +2,12 @@
   "vertexSets": [{
     "mode": "sampled",
     "vertices": [
-      { "id": 1, "size": 10 },
-      { "id": 2, "size": 20 },
-      { "id": 3, "size": 10 },
-      { "id": 4, "size": 20 },
-      { "id": 5, "size": 15 },
-      { "id": 6, "size": 5 }
+      { "id": 1, "size": 10, "label": "one" },
+      { "id": 2, "size": 20, "label": "two" },
+      { "id": 3, "size": 10, "label": "three" },
+      { "id": 4, "size": 20, "label": "four" },
+      { "id": 5, "size": 15, "label": "five" },
+      { "id": 6, "size": 5, "label": "six" }
     ]
   }],
   "edgeBundles": [{
