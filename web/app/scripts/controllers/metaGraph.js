@@ -125,7 +125,7 @@ angular.module('biggraph')
           sizeAttributeId: side.sizeAttribute || '',
         });
       }
-      if (sides.length == 2 && $scope.state.leftToRightPath !== undefined) {
+      if (sides.length === 2 && $scope.state.leftToRightPath !== undefined) {
         var bundles = $scope.state.leftToRightPath.map(function(step) {
           return { bundle: step.bundle.id, reversed: step.pointsLeft };
         });
