@@ -93,14 +93,18 @@ class DataManager(sc: spark.SparkContext,
       inputs.vertexAttributes.mapValues(get(_)),
       inputs.edgeAttributes.mapValues(get(_)),
       inputs.scalars.mapValues(get(_)))
-    val outputBuilder = new DataSetBuilder(instance)
-    instance.operation.execute(inputDatas, outputBuilder, runtimeContext)
-    val output = outputBuilder.toDataSet
-    output.vertexSets.values.foreach(vs => vertexSetCache(vs.gUID) = vs)
-    output.edgeBundles.values.foreach(eb => edgeBundleCache(eb.gUID) = eb)
-    output.vertexAttributes.values.foreach(va => vertexAttributeCache(va.gUID) = va)
-    output.edgeAttributes.values.foreach(ea => edgeAttributeCache(ea.gUID) = ea)
-    output.scalars.values.foreach(sc => scalarCache(sc.gUID) = sc)
+    val outputBuilder = new OutputBuilder(instance)
+    instance.operation.execute(inputDatas, instance.outputs, outputBuilder, runtimeContext)
+    outputBuilder.datas.foreach {
+      case (uuid, data) =>
+        data match {
+          case vs: VertexSetData => vertexSetCache(vs.gUID) = vs
+          case eb: EdgeBundleData => edgeBundleCache(eb.gUID) = eb
+          case va: VertexAttributeData[_] => vertexAttributeCache(va.gUID) = va
+          case ea: EdgeAttributeData[_] => edgeAttributeCache(ea.gUID) = ea
+          case sc: ScalarData[_] => scalarCache(sc.gUID) = sc
+        }
+    }
   }
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = {
