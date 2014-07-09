@@ -60,7 +60,7 @@ angular.module('biggraph').directive('graphView', function($window) {
       var vertex = data.vertices[i];
       // Use vertex.label if set. Use vertex.size if it's not all 1s. Use vertex.id otherwise.
       var label = vertex.id;
-      if (vertexBounds.min != 1 || vertexBounds.max != 1) { label = vertex.size; }
+      if (vertexBounds.min !== 1 || vertexBounds.max !== 1) { label = vertex.size; }
       label = vertex.label || label;
       var v = new Vertex(xOff + Math.random() * 400 - 200,
                          yOff + Math.random() * 400 - 200,
@@ -121,7 +121,7 @@ angular.module('biggraph').directive('graphView', function($window) {
   GraphView.prototype.addEdges = function(edges, srcs, dsts) {
     var edgeBounds = util.minmax(edges.map(function(n) { return n.size; }));
     var edgeScale = this.zoom * 0.05 / edgeBounds.max;
-    if (edgeBounds.min == edgeBounds.max) { edgeScale /= 3; }
+    if (edgeBounds.min === edgeBounds.max) { edgeScale /= 3; }
     for (var i = 0; i < edges.length; ++i) {
       var edge = edges[i];
       if (edgeScale * edge.size < 0.1) {
