@@ -3,7 +3,8 @@
 </alert>
 <div class="row-fluid text-center">
   <svg class="graph-view" ng-class="{ 'collapsed': !showGraph() }"
-    graph-view ng-model="graphView" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
+    graph-view ng-model="graphView" state="state"
+    version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
 </div>
 <div class="row-fluid">
   <div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>
