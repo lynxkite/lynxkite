@@ -107,11 +107,6 @@ case class SimpleInputSignature(
 trait MetaGraphOp extends Serializable {
   def inputSig: InputSignature
   def outputs(instance: MetaGraphOperationInstance): MetaDataSet
-  def execute(
-    inputDatas: DataSet,
-    outputMeta: MetaDataSet,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit
 
   val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
@@ -134,6 +129,12 @@ trait MetaGraphOp extends Serializable {
 trait TypedMetaGraphOp[IS <: InputSignature, OMDS <: MetaDataSet] extends MetaGraphOp {
   def inputSig: IS
   def outputs(instance: MetaGraphOperationInstance): OMDS
+
+  def execute(
+    inputDatas: DataSet,
+    outputMeta: OMDS,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit
 }
 
 trait MetaGraphOperation extends TypedMetaGraphOp[InputSignature, MetaDataSet] {
@@ -307,6 +308,8 @@ trait MetaGraphOperationInstance {
 
   def entities: MetaDataSet = inputs ++ outputs
 
+  def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData]
+
   override def toString = toStringStruct.toString
   def toStringStruct: StringStruct = {
     val op = operation.toStringStruct
@@ -349,11 +352,11 @@ case class TypedOperationInstance[IS <: InputSignature, OMDS <: MetaDataSet](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet) extends MetaGraphOperationInstance {
   val outputs: OMDS = operation.outputs(this)
-}
-case class NonTypedOperationInstance(
-    operation: MetaGraphOp,
-    inputs: MetaDataSet) extends MetaGraphOperationInstance {
-  val outputs: MetaDataSet = operation.outputs(this)
+  def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData] = {
+    val outputBuilder = new OutputBuilder(this)
+    operation.execute(inputDatas, outputs, outputBuilder, runtimeContext)
+    outputBuilder.datas.toMap
+  }
 }
 
 sealed trait EntityData {

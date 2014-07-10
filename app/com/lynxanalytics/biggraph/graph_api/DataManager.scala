@@ -93,9 +93,7 @@ class DataManager(sc: spark.SparkContext,
       inputs.vertexAttributes.mapValues(get(_)),
       inputs.edgeAttributes.mapValues(get(_)),
       inputs.scalars.mapValues(get(_)))
-    val outputBuilder = new OutputBuilder(instance)
-    instance.operation.execute(inputDatas, instance.outputs, outputBuilder, runtimeContext)
-    outputBuilder.datas.foreach {
+    instance.run(inputDatas, runtimeContext).foreach {
       case (uuid, data) =>
         data match {
           case vs: VertexSetData => vertexSetCache(vs.gUID) = vs
