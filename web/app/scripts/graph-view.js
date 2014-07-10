@@ -81,25 +81,30 @@ angular.module('biggraph').directive('graphView', function($window) {
                          yOff + Math.random() * 400 - 200,
                          Math.sqrt(vertexScale * vertex.size),
                          label);
+      v.id = vertex.id;
       vertices.push(v);
       if (vertex.size === 0) {
         continue;
       }
-      this.bindSampleClick(v, vertex, side);
+      this.sampledVertexMouseBindings(vertices, v);
       this.vertices.append(v.dom);
     }
+    vertices.side = side;
     vertices.mode = 'sampled';
     vertices.xOff = xOff;
     vertices.yOff = yOff;
     return vertices;
   };
 
-  GraphView.prototype.bindSampleClick = function(v, vertex, side) {
+  GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex) {
     var scope = this.scope;
-    v.dom.click(function() {
+    function setCenter() {
       scope.$apply(function() {
-        side.center = vertex.id;
+        vertices.side.center = vertex.id;
       });
+    }
+    vertex.dom.on('mousedown touchstart', function() {
+      setCenter();
     });
   };
 
