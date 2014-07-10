@@ -200,6 +200,7 @@ angular.module('biggraph')
       var modalInstance = $modal.open({
         templateUrl: 'views/operationParameters.html',
         controller: 'OperationParametersCtrl',
+        backdrop: 'static',  // Do not close on backdrop click.
         resolve: {
           operation: function() {
             return operation;
