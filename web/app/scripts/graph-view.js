@@ -55,9 +55,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
-      this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
+      var edges = this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
       if (e.srcIdx === e.dstIdx) {
-        vertices[e.srcIdx].edges = e;
+        vertices[e.srcIdx].edges = edges;
       }
     }
     for (i = 0; i < vertices.length; ++i) {
@@ -112,18 +112,18 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (var i = 0; i < vertices.edges.length; ++i) {
       var e = vertices.edges[i];
-      vertices[e.a].force_mass += 1;
-      vertices[e.b].force_mass += 1;
+      e.src.force_mass += 1;
+      e.dst.force_mass += 1;
     }
-    var engine = new FORCE_LAYOUT.Engine({ attraction: 500, repulsion: 100, gravity: 0.05, drag: 0.1 });
-//    while (engine.step(vertices));
-    function step() {
-      console.log('step');
+    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: 500, gravity: 0.05, drag: 0.1 });
+    // Initial layout.
+    while (engine.step(vertices));
+    // Call vertices.animate() later to trigger interactive layout.
+    vertices.animate = function() {
       if (engine.step(vertices)) {
-        window.requestAnimationFrame(step);
+        window.requestAnimationFrame(vertices.animate);
       }
     }
-    window.requestAnimationFrame(step);
   };
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
@@ -172,6 +172,7 @@ angular.module('biggraph').directive('graphView', function($window) {
   GraphView.prototype.addEdges = function(edges, srcs, dsts) {
     var edgeBounds = util.minmax(edges.map(function(n) { return n.size; }));
     var edgeScale = this.zoom * 0.05 / edgeBounds.max;
+    var edgeObjects = [];
     if (edgeBounds.min === edgeBounds.max) { edgeScale /= 3; }
     for (var i = 0; i < edges.length; ++i) {
       var edge = edges[i];
@@ -181,8 +182,10 @@ angular.module('biggraph').directive('graphView', function($window) {
       var a = srcs[edge.a];
       var b = dsts[edge.b];
       var e = new Edge(a, b, edgeScale * edge.size, this.zoom);
+      edgeObjects.push(e);
       this.edges.append(e.dom);
     }
+    return edgeObjects;
   };
 
   function Label(x, y, text) {

@@ -9,9 +9,9 @@ var FORCE_LAYOUT = (function() {
   lib.Engine.prototype.step = function(vertices) {
     var max_dist = 0;
     for (var i = 0; i < vertices.edges.length; ++i) {
-      var e = edges[i];
-      if (e.count === 0) { continue; }
-      var a = vertices[e.a], b = vertices[e.b];
+      var e = vertices.edges[i];
+      if (e.size === 0) { continue; }
+      var a = e.src, b = e.dst;
       a.x += this.opts.attraction * (b.force_ox - a.force_ox) / a.force_mass;
       a.y += this.opts.attraction * (b.force_oy - a.force_oy) / a.force_mass;
       b.x += this.opts.attraction * (a.force_ox - b.force_ox) / b.force_mass;
