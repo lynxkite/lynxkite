@@ -28,7 +28,7 @@ class MetaGraphManager(val repositoryPath: String) {
       internalApply(operationInstance)
       saveInstanceToDisk(operationInstance)
     }
-    operationInstance
+    operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
   }
 
   // Marks a set of entities for frontend visibility.
@@ -184,8 +184,8 @@ object Timestamp {
 private case class SerializedOperation(operation: MetaGraphOp,
                                        inputs: Map[Symbol, UUID]) extends Serializable {
   def toInstance(manager: MetaGraphManager): MetaGraphOperationInstance = {
-    NonTypedOperationInstance(
-      operation,
+    TypedOperationInstance(
+      operation.asInstanceOf[TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSet]],
       MetaDataSet(
         operation.inputSig.vertexSets
           .map(n => n -> manager.vertexSet(inputs(n))).toMap,

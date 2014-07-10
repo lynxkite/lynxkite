@@ -66,4 +66,19 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(scalarData1.value == scalarData2.value)
     assert(operation.executionCounter == 1)
   }
+
+  test("We can compute a graph whose meta was loaded from disk") {
+    val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+    val operation = ExampleGraph()
+    val instance = metaManager.apply(operation)
+    val age = instance.outputs.vertexAttributes('age).runtimeSafeCast[Double]
+    val reloadedMetaManager = new MetaGraphManager(metaManager.repositoryPath)
+    val reloadedAge = reloadedMetaManager.vertexAttribute(age.gUID).runtimeSafeCast[Double]
+    assert(TestUtils.RDDToSortedString(dataManager.get(reloadedAge).rdd) ==
+      "(0,20.3)\n" +
+      "(1,18.2)\n" +
+      "(2,50.3)\n" +
+      "(3,2.0)")
+  }
 }
