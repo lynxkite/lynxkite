@@ -134,12 +134,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       inputs ++= MetaDataSet(Map('labelAttr -> metaManager.vertexAttribute(request.labelAttributeId.asUUID)))
     }
     val diagramMeta = metaManager.apply(op, inputs)
-      .outputs.scalars('feVertices).runtimeSafeCast[Seq[FEVertex]]
+      .outputs.scalars('svVertices).runtimeSafeCast[Seq[graph_operations.SampledViewVertex]]
     val vertices = dataManager.get(diagramMeta).value
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
-      vertices = vertices,
+      vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label)),
       mode = "sampled")
   }
 

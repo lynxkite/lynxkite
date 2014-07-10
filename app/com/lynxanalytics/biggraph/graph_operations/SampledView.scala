@@ -1,8 +1,9 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import com.lynxanalytics.biggraph.controllers.FEVertex
 import com.lynxanalytics.biggraph.graph_api._
+
+case class SampledViewVertex(id: Long, size: Double, label: String)
 
 case class SampledView(
     center: String,
@@ -20,7 +21,7 @@ case class SampledView(
     if (hasLabels) s = s.inputVertexAttribute[Any]('labelAttr, 'vertices)
     s = s.outputVertexSet('sample)
     s = s.outputVertexAttribute[Int]('feIdxs, 'sample)
-    s = s.outputScalar[Seq[FEVertex]]('feVertices)
+    s = s.outputScalar[Seq[SampledViewVertex]]('svVertices)
     s
   }
 
@@ -59,16 +60,16 @@ case class SampledView(
     } else {
       neighborhood.mapValues(_ => "")
     }
-    val feVertices = neighborhood.join(sizes).join(labels).map {
-      case (id, (((), size), label)) => FEVertex(id = id, size = size, label = label)
+    val svVertices = neighborhood.join(sizes).join(labels).map {
+      case (id, (((), size), label)) => SampledViewVertex(id, size, label)
     }.collect.toSeq
-    val idxs = feVertices.zipWithIndex.map {
+    val idxs = svVertices.zipWithIndex.map {
       case (v, idx) => v.id -> idx
     }
     val idxRDD = rc.sparkContext.parallelize(idxs).partitionBy(vsPart)
 
     outputs.putVertexSet('sample, neighborhood)
     outputs.putVertexAttribute('feIdxs, idxRDD)
-    outputs.putScalar('feVertices, feVertices)
+    outputs.putScalar('svVertices, svVertices)
   }
 }

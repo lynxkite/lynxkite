@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.controllers.FEVertex
 
 class SampledViewTest extends FunSuite with TestGraphOperation {
   test("example graph, center set, no edges, no size, no label") {
@@ -11,7 +10,7 @@ class SampledViewTest extends FunSuite with TestGraphOperation {
     val view = helper.apply(
       SampledView(center = "1", radius = 0, hasEdges = false, hasSizes = false, hasLabels = false),
       graph.mapNames('vertices -> 'vertices))
-    assert(helper.localData(view.scalars('feVertices)) == Seq(FEVertex(1.0, 0, 0, 1, "")))
+    assert(helper.localData(view.scalars('svVertices)) == Seq(SampledViewVertex(1, 1.0, "")))
     assert(helper.localData(view.vertexSets('sample)) == Set(1))
     assert(helper.localData[Int](view.vertexAttributes('feIdxs)) == Map(1 -> 0))
   }
@@ -21,10 +20,10 @@ class SampledViewTest extends FunSuite with TestGraphOperation {
     val view = helper.apply(
       SampledView(center = "1", radius = 1, hasEdges = true, hasSizes = true, hasLabels = true),
       graph.mapNames('vertices -> 'vertices, 'edges -> 'edges, 'age -> 'sizeAttr, 'name -> 'labelAttr))
-    assert(helper.localData(view.scalars('feVertices)) == Seq(
-      FEVertex(20.3, 0, 0, 0, "Adam"),
-      FEVertex(18.2, 0, 0, 1, "Eve"),
-      FEVertex(50.3, 0, 0, 2, "Bob")))
+    assert(helper.localData(view.scalars('svVertices)) == Seq(
+      SampledViewVertex(0, 20.3, "Adam"),
+      SampledViewVertex(1, 18.2, "Eve"),
+      SampledViewVertex(2, 50.3, "Bob")))
     assert(helper.localData(view.vertexSets('sample)) == Set(0, 1, 2))
     assert(helper.localData[Int](view.vertexAttributes('feIdxs)) == Map(0 -> 0, 1 -> 1, 2 -> 2))
   }
