@@ -32,17 +32,17 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
 
 class GraphOperationTestHelper(val metaManager: MetaGraphManager,
                                val dataManager: DataManager) {
-  def apply(operation: MetaGraphOperation,
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSetProvider],
             inputs: MetaDataSet = MetaDataSet()): MetaDataSet = {
     metaManager.apply(operation, inputs).outputs
   }
 
-  def apply(operation: MetaGraphOperation,
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSetProvider],
             all: Map[Symbol, MetaGraphEntity]): MetaDataSet = {
     apply(operation, MetaDataSet(all))
   }
 
-  def apply(operation: MetaGraphOperation,
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSetProvider],
             all: (Symbol, MetaGraphEntity)*): MetaDataSet = {
     metaManager.apply(operation, all: _*).outputs
   }
