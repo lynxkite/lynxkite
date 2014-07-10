@@ -106,24 +106,24 @@ angular.module('biggraph').directive('graphView', function($window) {
   GraphView.prototype.layout = function(vertices) {
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
-      v.force_mass = 1;
-      v.force_ox = v.x;
-      v.force_oy = v.y;
+      v.forceMass = 1;
+      v.forceOX = v.x;
+      v.forceOY = v.y;
     }
-    for (var i = 0; i < vertices.edges.length; ++i) {
+    for (i = 0; i < vertices.edges.length; ++i) {
       var e = vertices.edges[i];
-      e.src.force_mass += 1;
-      e.dst.force_mass += 1;
+      e.src.forceMass += 1;
+      e.dst.forceMass += 1;
     }
     var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: 500, gravity: 0.05, drag: 0.1 });
     // Initial layout.
-    while (engine.step(vertices));
+    while (engine.step(vertices)) {}
     // Call vertices.animate() later to trigger interactive layout.
     vertices.animate = function() {
       if (engine.step(vertices)) {
         window.requestAnimationFrame(vertices.animate);
       }
-    }
+    };
   };
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
