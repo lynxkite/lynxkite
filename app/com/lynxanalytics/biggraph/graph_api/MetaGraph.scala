@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
+import java.util.IdentityHashMap
 import java.util.UUID
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
@@ -13,7 +14,7 @@ sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
   val name: Symbol
   // Implement from source operation's GUID, name and the actual class of this component.
-  val gUID: UUID = {
+  lazy val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
     val objectStream = new ObjectOutputStream(buffer)
     objectStream.writeObject(name)
@@ -22,7 +23,7 @@ sealed trait MetaGraphEntity extends Serializable {
     objectStream.close()
     UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
-  override def toString = toStringStruct.toString
+  //override def toString = toStringStruct.toString
   def toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
 }
 case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
@@ -97,9 +98,55 @@ trait InputSignature {
   val scalars: Set[Symbol]
 }
 
+trait MetaDataSetProvider {
+  def metaDataSet: MetaDataSet
+}
+
+abstract class MagicOutput(instance: MetaGraphOperationInstance) extends MetaDataSetProvider {
+  class P[T <: MetaGraphEntity](entityConstructor: Symbol => T) {
+    lazy val name: Symbol = naming.get(this)
+    lazy val e = entityConstructor(name)
+    placeholders += this
+  }
+  def vertexSet = new P(VertexSet(instance, _))
+  def edgeBundle(src: P[VertexSet], dst: P[VertexSet]) =
+    new P(EdgeBundle(instance, _, src.e, dst.e))
+  def graph = {
+    val v = vertexSet
+    (vertexSet, edgeBundle(v, v))
+  }
+  def vertexAttribute[T: TypeTag](vs: P[VertexSet]) = new P(VertexAttribute[T](instance, _, vs.e))
+  def edgeAttribute[T: TypeTag](eb: P[EdgeBundle]) = new P(EdgeAttribute[T](instance, _, eb.e))
+  def scalar[T: TypeTag] = new P(Scalar[T](instance, _))
+
+  private lazy val naming: IdentityHashMap[Any, Symbol] = {
+    val res = new IdentityHashMap[Any, Symbol]()
+    val mirror = reflect.runtime.currentMirror.reflect(this)
+
+    mirror.symbol.toType.members
+      .collect {
+        case m: MethodSymbol if (m.isGetter && m.isPublic) => m
+      }
+      .foreach { m =>
+        res.put(mirror.reflectField(m).get, Symbol(m.name.toString))
+      }
+    res
+  }
+
+  private val placeholders = mutable.Buffer[P[_ <: MetaGraphEntity]]()
+
+  lazy val metaDataSet = MetaDataSet(placeholders.map(_.e).map(e => (e.name, e)).toMap)
+}
+
+class AlmaOut(instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+  val vertices1 = vertexSet
+  val vertices2 = vertexSet
+  val edges = edgeBundle(vertices1, vertices2)
+}
+
 trait MetaGraphOp extends Serializable {
   def inputSig: InputSignature
-  def outputs(instance: MetaGraphOperationInstance): MetaDataSet
+  def result(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
   val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
@@ -119,9 +166,9 @@ trait MetaGraphOp extends Serializable {
   }
 }
 
-trait TypedMetaGraphOp[IS <: InputSignature, OMDS <: MetaDataSet] extends MetaGraphOp {
+trait TypedMetaGraphOp[IS <: InputSignature, OMDS <: MetaDataSetProvider] extends MetaGraphOp {
   def inputSig: IS
-  def outputs(instance: MetaGraphOperationInstance): OMDS
+  def result(instance: MetaGraphOperationInstance): OMDS
 
   def execute(
     inputDatas: DataSet,
@@ -195,13 +242,14 @@ trait MetaGraphOperationInstance {
   }
 }
 
-case class TypedOperationInstance[IS <: InputSignature, OMDS <: MetaDataSet](
+case class TypedOperationInstance[IS <: InputSignature, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet) extends MetaGraphOperationInstance {
-  val outputs: OMDS = operation.outputs(this)
+  val result: OMDS = operation.result(this)
+  val outputs: MetaDataSet = result.metaDataSet
   def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData] = {
     val outputBuilder = new OutputBuilder(this)
-    operation.execute(inputDatas, outputs, outputBuilder, runtimeContext)
+    operation.execute(inputDatas, result, outputBuilder, runtimeContext)
     outputBuilder.datas.toMap
   }
 }
@@ -361,7 +409,7 @@ case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
 }
 
 class OutputBuilder(instance: MetaGraphOperationInstance) {
-  val outputMeta: MetaDataSet = instance.operation.outputs(instance)
+  val outputMeta: MetaDataSet = instance.outputs
   val datas = mutable.Map[UUID, EntityData]()
 
   def addData(data: EntityData): Unit = {
@@ -403,13 +451,15 @@ class OutputBuilder(instance: MetaGraphOperationInstance) {
 /* ============================================================================================ */
 
 case class SimpleInputSignature(
-  vertexSets: Set[Symbol],
-  edgeBundles: Map[Symbol, (Symbol, Symbol)],
-  vertexAttributes: Map[Symbol, Symbol],
-  edgeAttributes: Map[Symbol, Symbol],
-  scalars: Set[Symbol]) extends InputSignature
+  vertexSets: Set[Symbol] = Set(),
+  edgeBundles: Map[Symbol, (Symbol, Symbol)] = Map(),
+  vertexAttributes: Map[Symbol, Symbol] = Map(),
+  edgeAttributes: Map[Symbol, Symbol] = Map(),
+  scalars: Set[Symbol] = Set()) extends InputSignature
 
-trait MetaGraphOperation extends TypedMetaGraphOp[InputSignature, MetaDataSet] {
+case class SimpleMetaDataSetProvider(metaDataSet: MetaDataSet) extends MetaDataSetProvider
+
+trait MetaGraphOperation extends TypedMetaGraphOp[InputSignature, SimpleMetaDataSetProvider] {
   // Override "signature" to easily describe the inputs and outputs of your operation. E.g.:
   //     class MyOperation extends MetaGraphOperation {
   //       def signature = newSignature
@@ -426,7 +476,7 @@ trait MetaGraphOperation extends TypedMetaGraphOp[InputSignature, MetaDataSet] {
     signature.inputEdgeAttributes.mapValues { case (eb, tt) => eb }.toMap,
     signature.inputScalars.keySet.toSet)
 
-  def outputs(instance: MetaGraphOperationInstance): MetaDataSet = {
+  def result(instance: MetaGraphOperationInstance): SimpleMetaDataSetProvider = {
     val outputVertexSets = signature.outputVertexSets.map(n => n -> VertexSet(instance, n)).toMap
     val allVertexSets = outputVertexSets ++ instance.inputs.vertexSets
     val outputEdgeBundles = signature.outputEdgeBundles.map {
@@ -443,21 +493,21 @@ trait MetaGraphOperation extends TypedMetaGraphOp[InputSignature, MetaDataSet] {
     val scalars = signature.outputScalars.map {
       case (n, tt) => n -> Scalar(instance, n)(tt)
     }
-    MetaDataSet(
+    SimpleMetaDataSetProvider(MetaDataSet(
       outputVertexSets,
       outputEdgeBundles,
       vertexAttributes.toMap,
       edgeAttributes.toMap,
-      scalars.toMap)
+      scalars.toMap))
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit
 
   def execute(inputDatas: DataSet,
-              outputMeta: MetaDataSet,
+              outputMeta: SimpleMetaDataSetProvider,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val builder = new DataSetBuilder(outputMeta)
+    val builder = new DataSetBuilder(outputMeta.metaDataSet)
     execute(inputDatas, builder, rc)
     builder.toDataSet.all.foreach { case (name, data) => output.addData(data) }
   }
