@@ -59,13 +59,7 @@ abstract class NumericBucketer[T: Numeric](
     }
   }
 
-  def bucketLabels: Seq[String] = {
-    val normalLabels = (Seq(min) ++ bounds.dropRight(1)).zip(bounds).map {
-      case (lowerBound, upperBound) => fmt"[$lowerBound, $upperBound)"
-    }
-    val lastLabel = fmt"[${bounds.last}, $max]"
-    normalLabels :+ lastLabel
-  }
+  def bucketLabels: Seq[String] = fmt"$min" +: bounds.map(x => fmt"$x") :+ fmt"$max"
 }
 
 abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
