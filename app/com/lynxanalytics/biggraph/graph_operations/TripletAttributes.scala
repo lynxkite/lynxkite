@@ -33,6 +33,14 @@ case class TripletMapping() extends MetaGraphOperation {
 }
 
 object VertexToEdgeAttribute {
+  class Input[T] extends MagicInputSignature {
+    val vertices = vertexSet
+    val ignoredSrc = vertexSet
+    val ignoredDst = vertexSet
+    val mapping = vertexAttribute[Array[ID]](vertices)
+    val original = vertexAttribute[T](vertices)
+    val target = edgeBundle(ignoredSrc, ignoredDst)
+  }
   class Output[T: TypeTag](
       instance: MetaGraphOperationInstance,
       target: EdgeBundle) extends MagicOutput(instance) {
@@ -40,31 +48,27 @@ object VertexToEdgeAttribute {
   }
 }
 case class VertexToEdgeAttribute[T]()
-    extends TypedMetaGraphOp[SimpleInputSignature, VertexToEdgeAttribute.Output[T]] {
-  def inputSig = SimpleInputSignature(
-    vertexSets = Set('vertices, 'ignoredSrc, 'ignoredDst),
-    vertexAttributes = Map('mapping -> 'vertices, 'original -> 'vertices),
-    edgeBundles = Map('target -> ('ignoredSrc, 'ignoredDst)))
+    extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
+  override val inputs = new VertexToEdgeAttribute.Input[T]()
 
   def result(instance: MetaGraphOperationInstance) = {
-    implicit val tt =
-      instance.inputs.vertexAttributes('original).asInstanceOf[VertexAttribute[T]].typeTag
+    implicit val i = instance
     new VertexToEdgeAttribute.Output(
       instance,
-      instance.inputs.edgeBundles('target))
+      inputs.target.entity)(inputs.original.entity.typeTag)
   }
 
   def execute(inputDatas: DataSet,
               o: VertexToEdgeAttribute.Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val mapping = inputDatas.vertexAttributes('mapping).runtimeSafeCast[Array[ID]].rdd
-    val originalData = inputDatas.vertexAttributes('original).asInstanceOf[VertexAttributeData[T]]
-    val originalMeta = originalData.vertexAttribute
-    val original = originalData.rdd
-    val target = inputDatas.edgeBundles('target).rdd
+    implicit val id = inputDatas
+    val mapping = inputs.mapping.rdd
+    val original = inputs.original.rdd
+    val target = inputs.target.rdd
 
-    implicit val ct = originalMeta.classTag
+    implicit val ct = inputs.original.meta.classTag
+
     output(
       o.mappedAttribute,
       mapping.join(original)

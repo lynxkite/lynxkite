@@ -11,14 +11,14 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 class MetaGraphManager(val repositoryPath: String) {
-  def apply[IS <: InputSignature, OMDS <: MetaDataSetProvider](
+  def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
 
     apply(operation, MetaDataSet.applyWithSignature(operation.inputSig, inputs: _*))
   }
 
-  def apply[IS <: InputSignature, OMDS <: MetaDataSetProvider](
+  def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet = MetaDataSet()): TypedOperationInstance[IS, OMDS] = {
 
@@ -32,7 +32,7 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   // Marks a set of entities for frontend visibility.
-  def show[IS <: InputSignature, OMDS <: MetaDataSetProvider](
+  def show[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
 
@@ -185,7 +185,7 @@ private case class SerializedOperation(operation: MetaGraphOp,
                                        inputs: Map[Symbol, UUID]) extends Serializable {
   def toInstance(manager: MetaGraphManager): MetaGraphOperationInstance = {
     TypedOperationInstance(
-      operation.asInstanceOf[TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSetProvider]],
+      operation.asInstanceOf[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]],
       MetaDataSet(
         operation.inputSig.vertexSets
           .map(n => n -> manager.vertexSet(inputs(n))).toMap,
