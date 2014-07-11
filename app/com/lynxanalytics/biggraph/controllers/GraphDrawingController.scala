@@ -213,10 +213,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
                               attr: VertexAttribute[Int],
                               target: EdgeBundle): EdgeAttribute[Int] =
     metaManager.apply(
-      new graph_operations.VertexToEdgeIntAttribute(),
+      new graph_operations.VertexToEdgeAttribute[Int](),
       'mapping -> mapping,
       'original -> attr,
-      'target -> target).outputs.edgeAttributes('mapped_attribute).runtimeSafeCast[Int]
+      'target -> target).outputs.edgeAttributes('mappedAttribute).runtimeSafeCast[Int]
 
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
