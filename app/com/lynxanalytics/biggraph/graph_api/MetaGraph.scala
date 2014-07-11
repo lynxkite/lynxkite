@@ -23,7 +23,7 @@ sealed trait MetaGraphEntity extends Serializable {
     objectStream.close()
     UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
-  //override def toString = toStringStruct.toString
+  override def toString = toStringStruct.toString
   def toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
 }
 case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
