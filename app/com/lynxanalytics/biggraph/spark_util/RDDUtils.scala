@@ -130,5 +130,7 @@ object Implicits {
       assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
       self.zipPartitions(other, true) { (it1, it2) => merge(it1.buffered, it2.buffered).iterator }
     }
+
+    def sortPartitions = self.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true)
   }
 }
