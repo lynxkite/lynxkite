@@ -104,6 +104,11 @@ trait TestGraphOperation extends TestMetaGraphManager with TestDataManager {
   def cleanHelper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
 }
 
+trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
+  implicit val metaManager = cleanMetaManager
+  implicit val dataManager = cleanDataManager
+}
+
 case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
   def signature = newSignature.outputGraph('vs, 'es)
 
