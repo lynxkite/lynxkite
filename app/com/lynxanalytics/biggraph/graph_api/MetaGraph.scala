@@ -118,7 +118,7 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance) extends MetaDat
     new P(EdgeBundle(instance, _, src, dst))
   def graph = {
     val v = vertexSet
-    (vertexSet, edgeBundle(v, v))
+    (v, edgeBundle(v, v))
   }
   def vertexAttribute[T: TypeTag](vs: EntityContainer[VertexSet]) =
     new P(VertexAttribute[T](instance, _, vs))

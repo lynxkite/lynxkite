@@ -5,14 +5,15 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-class AddConstantEdgeAttributeOutput[T: TypeTag](
-    instance: MetaGraphOperationInstance,
-    edgeBundle: EdgeBundle) extends MagicOutput(instance) {
-
-  val attr = edgeAttribute[T](edgeBundle)
+object AddConstantEdgeAttribute {
+  class Output[T: TypeTag](
+      instance: MetaGraphOperationInstance,
+      edgeBundle: EdgeBundle) extends MagicOutput(instance) {
+    val attr = edgeAttribute[T](edgeBundle)
+  }
 }
 abstract class AddConstantEdgeAttribute[T]
-    extends TypedMetaGraphOp[SimpleInputSignature, AddConstantEdgeAttributeOutput[T]] {
+    extends TypedMetaGraphOp[SimpleInputSignature, AddConstantEdgeAttribute.Output[T]] {
 
   implicit def tt: TypeTag[T]
   val value: T
@@ -22,12 +23,12 @@ abstract class AddConstantEdgeAttribute[T]
     edgeBundles = Map('edges -> ('ignoredSrc, 'ignoredDst)))
 
   def result(instance: MetaGraphOperationInstance) =
-    new AddConstantEdgeAttributeOutput(
+    new AddConstantEdgeAttribute.Output(
       instance,
       instance.inputs.edgeBundles('edges))
 
   def execute(inputDatas: DataSet,
-              o: AddConstantEdgeAttributeOutput[T],
+              o: AddConstantEdgeAttribute.Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val edges = inputDatas.edgeBundles('edges).rdd
