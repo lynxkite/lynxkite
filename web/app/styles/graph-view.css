@@ -1,10 +1,9 @@
 svg.graph-view {
-  display: inline-block;
-  vertical-align: top;
+  margin-bottom: 10px;
   width: 100%;
   height: 500px;
   transition: height 0.5s;
-  background: #222;
+  background: linear-gradient(#222 90%, #181818 97%, #000);
 }
 svg.graph-view.collapsed {
   height: 0px;
