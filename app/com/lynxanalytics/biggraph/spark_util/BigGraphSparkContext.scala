@@ -52,6 +52,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.util.BoundedPriorityQueue")) // SPARK-2306
     kryo.register(classOf[graph_operations.ComputeTopValues.PairOrdering[_]])
     kryo.register(classOf[collection.immutable.Range])
+    kryo.register(classOf[graph_operations.SampledViewVertex])
+    kryo.register(classOf[Array[graph_operations.SampledViewVertex]])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

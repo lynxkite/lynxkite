@@ -2,11 +2,9 @@
   {{alert.msg}}
 </alert>
 <div class="row-fluid text-center">
-  <button class="btn btn-default" ng-click="state.showGraph = !state.showGraph">
-    Graph <span class="glyphicon glyphicon-chevron-down spinning" ng-class="{ spin180: state.showGraph }"></span>
-  </button>
-  <svg class="graph-view" ng-class="{ 'collapsed': !state.showGraph }"
-    graph-view ng-model="graphView" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
+  <svg class="graph-view" ng-class="{ 'collapsed': !showGraph() }"
+    graph-view ng-model="graphView" state="state"
+    version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
 </div>
 <div class="row-fluid">
   <div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>

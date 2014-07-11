@@ -72,9 +72,9 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager = cleanDataManager
     val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
-    val age = instance.outputs.vertexAttributes('age).runtimeSafeCast[Double]
+    val ageGUID = instance.outputs.vertexAttributes('age).gUID
     val reloadedMetaManager = new MetaGraphManager(metaManager.repositoryPath)
-    val reloadedAge = reloadedMetaManager.vertexAttribute(age.gUID).runtimeSafeCast[Double]
+    val reloadedAge = reloadedMetaManager.vertexAttribute(ageGUID).runtimeSafeCast[Double]
     assert(TestUtils.RDDToSortedString(dataManager.get(reloadedAge).rdd) ==
       "(0,20.3)\n" +
       "(1,18.2)\n" +
