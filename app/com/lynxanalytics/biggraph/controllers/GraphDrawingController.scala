@@ -28,12 +28,21 @@ case class VertexDiagramSpec(
   val centralVertexId: String = "",
   // Edge bundle used to find neighborhood of the central vertex.
   val sampleSmearEdgeBundleId: String = "",
+  val sizeAttributeId: String = "",
+  val labelAttributeId: String = "",
   val radius: Int = 1)
 
 case class FEVertex(
-  x: Int,
-  y: Int,
-  count: Int)
+  size: Double,
+
+  // For bucketed view:
+  x: Int = 0,
+  y: Int = 0,
+
+  // For sampled view:
+  id: Long = 0,
+  label: String = "")
+
 case class VertexDiagramResponse(
   val diagramId: String,
   val vertices: Seq[FEVertex],
@@ -60,7 +69,7 @@ case class FEEdge(
   a: Int,
   // idx of destination vertex in the vertices Seq in the corresponding VertexDiagramResponse.
   b: Int,
-  count: Int)
+  size: Int)
 
 case class EdgeDiagramResponse(
   val srcDiagramId: String,
@@ -98,7 +107,43 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
-    if (request.mode != "bucketed") return ???
+    request.mode match {
+      case "bucketed" => getBucketedVertexDiagram(request)
+      case "sampled" => getSampledVertexDiagram(request)
+    }
+  }
+
+  def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
+    val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
+    val count = graph_operations.CountVertices(metaManager, dataManager, vertexSet)
+    val filtered = filter(vertexSet, request.filters)
+    val op = graph_operations.SampledView(
+      request.centralVertexId,
+      request.radius,
+      request.sampleSmearEdgeBundleId.nonEmpty,
+      request.sizeAttributeId.nonEmpty,
+      request.labelAttributeId.nonEmpty)
+    var inputs = MetaDataSet(Map('vertices -> filtered))
+    if (request.sampleSmearEdgeBundleId.nonEmpty) {
+      inputs ++= MetaDataSet(Map('edges -> metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)))
+    }
+    if (request.sizeAttributeId.nonEmpty) {
+      inputs ++= MetaDataSet(Map('sizeAttr -> metaManager.vertexAttribute(request.sizeAttributeId.asUUID)))
+    }
+    if (request.labelAttributeId.nonEmpty) {
+      inputs ++= MetaDataSet(Map('labelAttr -> metaManager.vertexAttribute(request.labelAttributeId.asUUID)))
+    }
+    val diagramMeta = metaManager.apply(op, inputs)
+      .outputs.scalars('svVertices).runtimeSafeCast[Seq[graph_operations.SampledViewVertex]]
+    val vertices = dataManager.get(diagramMeta).value
+
+    VertexDiagramResponse(
+      diagramId = diagramMeta.gUID.toString,
+      vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label)),
+      mode = "sampled")
+  }
+
+  def getBucketedVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val count = graph_operations.CountVertices(metaManager, dataManager, vertexSet)
     // TODO get from request or something.
@@ -143,7 +188,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val diagram = dataManager.get(diagramMeta).value
 
     val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
-      yield FEVertex(x, y, (diagram.getOrElse((x, y), 0) * 1.0 / fraction).toInt)
+      yield FEVertex(x = x, y = y, size = (diagram.getOrElse((x, y), 0) * 1.0 / fraction).toInt)
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
@@ -170,8 +215,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def directVsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
-    inst.inputs.vertexSets('vertices)
+    if (inst.operation.isInstanceOf[graph_operations.SampledView]) {
+      inst.outputs.vertexSets('sample)
+    } else {
+      inst.inputs.vertexSets('vertices)
+    }
   }
+
   private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
     val gridInputVertices = directVsFromOp(inst)
     if (gridInputVertices.source.operation.isInstanceOf[graph_operations.VertexSetIntersection]) {
@@ -203,7 +253,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def idxsFromInst(inst: MetaGraphOperationInstance): VertexAttribute[Int] =
-    inst.outputs.vertexAttributes('gridIdxs).runtimeSafeCast[Int]
+    inst.outputs.vertexAttributes('feIdxs).runtimeSafeCast[Int]
 
   private def numYBuckets(inst: MetaGraphOperationInstance): Int = {
     inst.operation.asInstanceOf[graph_operations.VertexBucketGrid[_, _]].yBucketer.numBuckets

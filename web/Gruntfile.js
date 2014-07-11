@@ -67,7 +67,21 @@ module.exports = function (grunt) {
         port: 9000,
         // Change this to '0.0.0.0' to access the server from outside.
         hostname: 'localhost',
-        livereload: 35729
+        livereload: 35729,
+        middleware: function(connect, options, mws) {
+          // Switch between two test files for /ajax/complexView.
+          mws.unshift(function(req, res, next) {
+            if (req.url.indexOf('/ajax/complexView') === 0) {
+              if (req.url.indexOf('sampled') !== -1) {
+                req.url = req.url.replace('complexView', 'complexView-sampled');
+              } else {
+                req.url = req.url.replace('complexView', 'complexView-bucketed');
+              }
+            }
+            next();
+          });
+          return mws;
+        }
       },
       livereload: {
         options: {
@@ -401,7 +415,8 @@ module.exports = function (grunt) {
 
   grunt.registerTask('default', [
     'newer:jshint',
-    'test',
+// Tests disabled. (#188)
+//  'test',
     'build'
   ]);
 };

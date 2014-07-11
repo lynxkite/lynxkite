@@ -87,6 +87,9 @@ table.histogram td {
 table.histogram .bar {
   background: rgba(0, 0, 0, 0.2);
 }
+table.histogram .bar-container {
+  height: 100%;
+}
 
 h6 {
   font-weight: bold;
