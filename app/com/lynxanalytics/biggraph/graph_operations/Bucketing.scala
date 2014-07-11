@@ -22,7 +22,7 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
       .outputScalar[Map[(Int, Int), Int]]('bucketSizes)
       .outputVertexAttribute[Int]('xBuckets, 'vertices)
       .outputVertexAttribute[Int]('yBuckets, 'vertices)
-      .outputVertexAttribute[Int]('gridIdxs, 'vertices)
+      .outputVertexAttribute[Int]('feIdxs, 'vertices)
   }
 
   def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
@@ -44,7 +44,7 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     outputs.putVertexAttribute('xBuckets, xBuckets)
     outputs.putVertexAttribute('yBuckets, yBuckets)
     outputs.putVertexAttribute(
-      'gridIdxs,
+      'feIdxs,
       xBuckets.join(yBuckets).mapValues { case (x, y) => x * yBucketer.numBuckets + y })
     outputs.putScalar('bucketSizes,
       xBuckets.join(yBuckets)

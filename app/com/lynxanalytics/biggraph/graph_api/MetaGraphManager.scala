@@ -11,24 +11,31 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 class MetaGraphManager(val repositoryPath: String) {
-  def apply(operation: MetaGraphOperation,
-            inputs: (Symbol, MetaGraphEntity)*): MetaGraphOperationInstance =
-    apply(operation, MetaDataSet.applyWithSignature(operation.signature, inputs: _*))
+  def apply[IS <: InputSignature, OMDS <: MetaDataSetProvider](
+    operation: TypedMetaGraphOp[IS, OMDS],
+    inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
 
-  def apply(operation: MetaGraphOperation,
-            inputs: MetaDataSet = MetaDataSet()): MetaGraphOperationInstance = {
-    val operationInstance = MetaGraphOperationInstance(operation, inputs)
+    apply(operation, MetaDataSet.applyWithSignature(operation.inputSig, inputs: _*))
+  }
+
+  def apply[IS <: InputSignature, OMDS <: MetaDataSetProvider](
+    operation: TypedMetaGraphOp[IS, OMDS],
+    inputs: MetaDataSet = MetaDataSet()): TypedOperationInstance[IS, OMDS] = {
+
+    val operationInstance = TypedOperationInstance(operation, inputs)
     val gUID = operationInstance.gUID
     if (!operationInstances.contains(gUID)) {
       internalApply(operationInstance)
       saveInstanceToDisk(operationInstance)
     }
-    operationInstances(gUID)
+    operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
   }
 
   // Marks a set of entities for frontend visibility.
-  def show(operation: MetaGraphOperation,
-           inputs: (Symbol, MetaGraphEntity)*): MetaGraphOperationInstance = {
+  def show[IS <: InputSignature, OMDS <: MetaDataSetProvider](
+    operation: TypedMetaGraphOp[IS, OMDS],
+    inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
+
     val inst = apply(operation, inputs: _*)
     show(inst.outputs)
     return inst
@@ -174,21 +181,21 @@ object Timestamp {
   }
 }
 
-private case class SerializedOperation(operation: MetaGraphOperation,
+private case class SerializedOperation(operation: MetaGraphOp,
                                        inputs: Map[Symbol, UUID]) extends Serializable {
   def toInstance(manager: MetaGraphManager): MetaGraphOperationInstance = {
-    MetaGraphOperationInstance(
-      operation,
+    TypedOperationInstance(
+      operation.asInstanceOf[TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSetProvider]],
       MetaDataSet(
-        operation.signature.inputVertexSets
+        operation.inputSig.vertexSets
           .map(n => n -> manager.vertexSet(inputs(n))).toMap,
-        operation.signature.inputEdgeBundles.keys
+        operation.inputSig.edgeBundles.keys
           .map(n => n -> manager.edgeBundle(inputs(n))).toMap,
-        operation.signature.inputVertexAttributes.keys
+        operation.inputSig.vertexAttributes.keys
           .map(n => n -> manager.vertexAttribute(inputs(n))).toMap,
-        operation.signature.inputEdgeAttributes.keys
+        operation.inputSig.edgeAttributes.keys
           .map(n => n -> manager.edgeAttribute(inputs(n))).toMap,
-        operation.signature.inputScalars.keys
+        operation.inputSig.scalars
           .map(n => n -> manager.scalar(inputs(n))).toMap))
   }
 }

@@ -1,0 +1,26 @@
+{
+  "vertexSets": [{
+    "mode": "sampled",
+    "vertices": [
+      { "id": 1, "size": 10, "label": "one" },
+      { "id": 2, "size": 20, "label": "two" },
+      { "id": 3, "size": 10, "label": "three" },
+      { "id": 4, "size": 20, "label": "four" },
+      { "id": 5, "size": 15, "label": "five" },
+      { "id": 6, "size": 5, "label": "six" }
+    ]
+  }],
+  "edgeBundles": [{
+    "srcIdx": 0, "dstIdx": 0,
+    "edges": [
+      { "a": 1, "b": 2, "size": 230 },
+      { "a": 2, "b": 3, "size": 255 },
+      { "a": 3, "b": 4, "size": 2 },
+      { "a": 4, "b": 5, "size": 217 },
+      { "a": 4, "b": 0, "size": 664 },
+      { "a": 0, "b": 4, "size": 64 },
+      { "a": 1, "b": 3, "size": 168 },
+      { "a": 3, "b": 1, "size": 168 }
+    ]
+  }]
+}

@@ -32,31 +32,44 @@ case class TripletMapping() extends MetaGraphOperation {
   }
 }
 
-abstract class VertexToEdgeAttribute[T] extends MetaGraphOperation {
-  implicit def tt: TypeTag[T]
-  implicit def ct: ClassTag[T]
+object VertexToEdgeAttribute {
+  class Output[T: TypeTag](
+      instance: MetaGraphOperationInstance,
+      target: EdgeBundle) extends MagicOutput(instance) {
+    val mappedAttribute = edgeAttribute[T](target)
+  }
+}
+case class VertexToEdgeAttribute[T]()
+    extends TypedMetaGraphOp[SimpleInputSignature, VertexToEdgeAttribute.Output[T]] {
+  def inputSig = SimpleInputSignature(
+    vertexSets = Set('vertices, 'ignoredSrc, 'ignoredDst),
+    vertexAttributes = Map('mapping -> 'vertices, 'original -> 'vertices),
+    edgeBundles = Map('target -> ('ignoredSrc, 'ignoredDst)))
 
-  def signature = newSignature
-    .inputVertexAttribute[Array[ID]]('mapping, 'vertices, create = true)
-    .inputVertexAttribute[T]('original, 'vertices)
-    .inputEdgeBundle('target, 'unused_src -> 'unused_dst, create = true)
-    .outputEdgeAttribute[T]('mapped_attribute, 'target)
+  def result(instance: MetaGraphOperationInstance) = {
+    implicit val tt =
+      instance.inputs.vertexAttributes('original).asInstanceOf[VertexAttribute[T]].typeTag
+    new VertexToEdgeAttribute.Output(
+      instance,
+      instance.inputs.edgeBundles('target))
+  }
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val mapping = inputs.vertexAttributes('mapping).runtimeSafeCast[Array[ID]].rdd
-    val original = inputs.vertexAttributes('original).runtimeSafeCast[T].rdd
-    val target = inputs.edgeBundles('target).rdd
+  def execute(inputDatas: DataSet,
+              o: VertexToEdgeAttribute.Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    val mapping = inputDatas.vertexAttributes('mapping).runtimeSafeCast[Array[ID]].rdd
+    val originalData = inputDatas.vertexAttributes('original).asInstanceOf[VertexAttributeData[T]]
+    val originalMeta = originalData.vertexAttribute
+    val original = originalData.rdd
+    val target = inputDatas.edgeBundles('target).rdd
 
-    outputs.putEdgeAttribute(
-      'mapped_attribute,
+    implicit val ct = originalMeta.classTag
+    output(
+      o.mappedAttribute,
       mapping.join(original)
         .flatMap { case (vid, (edges, value)) => edges.map((_, value)) }
         .groupByKey(target.partitioner.get)
         .mapValues(values => values.head))
   }
-}
-
-case class VertexToEdgeIntAttribute() extends VertexToEdgeAttribute[Int] {
-  @transient lazy val tt = typeTag[Int]
-  @transient lazy val ct = classTag[Int]
 }
