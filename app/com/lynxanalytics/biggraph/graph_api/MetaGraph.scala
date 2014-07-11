@@ -202,7 +202,7 @@ case class TypedOperationInstance[IS <: InputSignature, OMDS <: MetaDataSet](
   def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData] = {
     val outputBuilder = new OutputBuilder(this)
     operation.execute(inputDatas, outputs, outputBuilder, runtimeContext)
-    outputBuilder.datas.toMap
+    outputBuilder.dataMap.toMap
   }
 }
 
@@ -362,14 +362,14 @@ case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
 
 class OutputBuilder(instance: MetaGraphOperationInstance) {
   val outputMeta: MetaDataSet = instance.operation.outputs(instance)
-  val datas = mutable.Map[UUID, EntityData]()
+  val dataMap = mutable.Map[UUID, EntityData]()
 
   def addData(data: EntityData): Unit = {
     val gUID = data.gUID
     val entity = data.entity
     // Check that it's indeed a known output.
     assert(outputMeta.all(entity.name).gUID == entity.gUID)
-    datas(gUID) = data
+    dataMap(gUID) = data
   }
 
   def addRDDData(data: EntityRDDData): Unit = {
