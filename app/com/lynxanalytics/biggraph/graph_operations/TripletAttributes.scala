@@ -32,28 +32,30 @@ case class TripletMapping() extends MetaGraphOperation {
   }
 }
 
-class VertexToEdgeAttributeOutput[T: TypeTag](
-    instance: MetaGraphOperationInstance,
-    target: EdgeBundle) extends MagicOutput(instance) {
-  val mappedAttribute = edgeAttribute[T](target)
+object VertexToEdgeAttribute {
+  class Output[T: TypeTag](
+      instance: MetaGraphOperationInstance,
+      target: EdgeBundle) extends MagicOutput(instance) {
+    val mappedAttribute = edgeAttribute[T](target)
+  }
 }
 case class VertexToEdgeAttribute[T]()
-    extends TypedMetaGraphOp[SimpleInputSignature, VertexToEdgeAttributeOutput[T]] {
+    extends TypedMetaGraphOp[SimpleInputSignature, VertexToEdgeAttribute.Output[T]] {
   def inputSig = SimpleInputSignature(
-    vertexSets = Set('vertices, 'unused_src, 'unused_dst),
+    vertexSets = Set('vertices, 'ignoredSrc, 'ignoredDst),
     vertexAttributes = Map('mapping -> 'vertices, 'original -> 'vertices),
     edgeBundles = Map('target -> ('ignoredSrc, 'ignoredDst)))
 
   def result(instance: MetaGraphOperationInstance) = {
     implicit val tt =
       instance.inputs.vertexAttributes('original).asInstanceOf[VertexAttribute[T]].typeTag
-    new VertexToEdgeAttributeOutput(
+    new VertexToEdgeAttribute.Output(
       instance,
       instance.inputs.edgeBundles('target))
   }
 
   def execute(inputDatas: DataSet,
-              o: VertexToEdgeAttributeOutput[T],
+              o: VertexToEdgeAttribute.Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val mapping = inputDatas.vertexAttributes('mapping).runtimeSafeCast[Array[ID]].rdd

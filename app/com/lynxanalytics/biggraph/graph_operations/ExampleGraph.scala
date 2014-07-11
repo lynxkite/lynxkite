@@ -4,24 +4,25 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 
 // A small graph with all sorts of attributes. Used for testing.
-class ExampleGraphOutput(instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-  val vertices = vertexSet
-  val edges = edgeBundle(vertices, vertices)
-  val name = vertexAttribute[String](vertices)
-  val age = vertexAttribute[Double](vertices)
-  val comment = edgeAttribute[String](edges)
-  val weight = edgeAttribute[Double](edges)
-  val greeting = scalar[String]
+object ExampleGraph {
+  class Output(instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val (vertices, edges) = graph
+    val name = vertexAttribute[String](vertices)
+    val age = vertexAttribute[Double](vertices)
+    val comment = edgeAttribute[String](edges)
+    val weight = edgeAttribute[Double](edges)
+    val greeting = scalar[String]
+  }
 }
-case class ExampleGraph() extends TypedMetaGraphOp[SimpleInputSignature, ExampleGraphOutput] {
+case class ExampleGraph() extends TypedMetaGraphOp[SimpleInputSignature, ExampleGraph.Output] {
   @transient var executionCounter = 0
 
   def inputSig = SimpleInputSignature()
 
-  def result(instance: MetaGraphOperationInstance) = new ExampleGraphOutput(instance)
+  def result(instance: MetaGraphOperationInstance) = new ExampleGraph.Output(instance)
 
   def execute(inputDatas: DataSet,
-              o: ExampleGraphOutput,
+              o: ExampleGraph.Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     executionCounter += 1
