@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 
 import com.lynxanalytics.biggraph.graph_util.Filename
-import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 trait TestMetaGraphManager extends TestTempDir {
   def cleanMetaManager: MetaGraphManager = {

@@ -38,8 +38,10 @@ object RDDUtils {
     oos.close
     bos.toByteArray
   }
+}
 
-  // Used by Implicit.fastNumbered to generate IDs.
+object Implicits {
+  // Used by RDDUtils.fastNumbered to generate IDs.
   // Args:
   //   parts: The number of partitions.
   //   part: Current partition index.
@@ -60,7 +62,29 @@ object RDDUtils {
     jumped ^ (jumped >>> 32) // Cancel out the bit flips in Long.hashCode.
   }
 
-  implicit class Implicit[T: ClassTag](self: RDD[T]) {
+  // Used by PairRDDUtils.zipJoin. Joins two sorted iterators.
+  private def merge[K, V](
+    bi1: collection.BufferedIterator[(K, V)],
+    bi2: collection.BufferedIterator[(K, V)])(implicit ord: Ordering[K]): Stream[(K, (V, V))] = {
+    if (bi1.hasNext && bi2.hasNext) {
+      val (k1, v1) = bi1.head
+      val (k2, v2) = bi2.head
+      if (ord.equiv(k1, k2)) {
+        bi1.next; bi2.next
+        (k1, (v1, v2)) #:: merge(bi1, bi2)
+      } else if (ord.lt(k1, k2)) {
+        bi1.next
+        merge(bi1, bi2)
+      } else {
+        bi2.next
+        merge(bi1, bi2)
+      }
+    } else {
+      Stream()
+    }
+  }
+
+  implicit class RDDUtils[T: ClassTag](self: RDD[T]) {
     def numbered: RDD[(Long, T)] = {
       val localCounts = self.glom().map(_.size).collect().scan(0)(_ + _)
       val counts = self.sparkContext.broadcast(localCounts)
@@ -96,6 +120,15 @@ object RDDUtils {
       // If the RDD was already partitioned correctly, we can skip the (pointless) shuffle.
       if (withIDs.partitioner == Some(partitioner)) withIDs
       else withIDs.partitionBy(partitioner)
+    }
+  }
+
+  implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
+    // Same as regular join(), but faster. Both RDDs must be sorted by key.
+    def zipJoin(other: RDD[(K, V)]): RDD[(K, (V, V))] = {
+      assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
+      assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
+      self.zipPartitions(other, true) { (it1, it2) => merge(it1.buffered, it2.buffered).iterator }
     }
   }
 }
