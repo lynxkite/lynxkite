@@ -102,21 +102,28 @@ trait MetaDataSetProvider {
   def metaDataSet: MetaDataSet
 }
 
+trait EntityContainer[T <: MetaGraphEntity] {
+  def entity: T
+}
+
 abstract class MagicOutput(instance: MetaGraphOperationInstance) extends MetaDataSetProvider {
-  class P[T <: MetaGraphEntity](entityConstructor: Symbol => T) {
+  class P[T <: MetaGraphEntity](entityConstructor: Symbol => T) extends EntityContainer[T] {
     lazy val name: Symbol = naming.get(this)
-    lazy val e = entityConstructor(name)
+    lazy val entity = entityConstructor(name)
     placeholders += this
   }
+  implicit class TrivialContainer[T <: MetaGraphEntity](val entity: T) extends EntityContainer[T]
   def vertexSet = new P(VertexSet(instance, _))
-  def edgeBundle(src: P[VertexSet], dst: P[VertexSet]) =
-    new P(EdgeBundle(instance, _, src.e, dst.e))
+  def edgeBundle(src: EntityContainer[VertexSet], dst: EntityContainer[VertexSet]) =
+    new P(EdgeBundle(instance, _, src, dst))
   def graph = {
     val v = vertexSet
     (vertexSet, edgeBundle(v, v))
   }
-  def vertexAttribute[T: TypeTag](vs: P[VertexSet]) = new P(VertexAttribute[T](instance, _, vs.e))
-  def edgeAttribute[T: TypeTag](eb: P[EdgeBundle]) = new P(EdgeAttribute[T](instance, _, eb.e))
+  def vertexAttribute[T: TypeTag](vs: EntityContainer[VertexSet]) =
+    new P(VertexAttribute[T](instance, _, vs))
+  def edgeAttribute[T: TypeTag](eb: EntityContainer[EdgeBundle]) =
+    new P(EdgeAttribute[T](instance, _, eb))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _))
 
   private lazy val naming: IdentityHashMap[Any, Symbol] = {
@@ -135,13 +142,7 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance) extends MetaDat
 
   private val placeholders = mutable.Buffer[P[_ <: MetaGraphEntity]]()
 
-  lazy val metaDataSet = MetaDataSet(placeholders.map(_.e).map(e => (e.name, e)).toMap)
-}
-
-class AlmaOut(instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-  val vertices1 = vertexSet
-  val vertices2 = vertexSet
-  val edges = edgeBundle(vertices1, vertices2)
+  lazy val metaDataSet = MetaDataSet(placeholders.map(_.entity).map(e => (e.name, e)).toMap)
 }
 
 trait MetaGraphOp extends Serializable {

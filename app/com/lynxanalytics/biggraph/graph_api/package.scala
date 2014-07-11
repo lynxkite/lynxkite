@@ -11,4 +11,8 @@ package object graph_api {
 
   case class Edge(val src: ID, val dst: ID)
   type EdgeBundleRDD = rdd.RDD[(ID, Edge)]
+
+  import scala.language.implicitConversions
+  implicit def unpackContainer[T <: MetaGraphEntity](container: EntityContainer[T]): T =
+    container.entity
 }

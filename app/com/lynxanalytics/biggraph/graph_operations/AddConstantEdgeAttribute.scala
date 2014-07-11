@@ -5,17 +5,33 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-abstract class AddConstantEdgeAttribute[T] extends MetaGraphOperation {
-  def signature = newSignature
-    .inputEdgeBundle('edges, 'ignoredSrc -> 'ignoredDst, create = true)
-    .outputEdgeAttribute[T]('attr, 'edges)
-  implicit def tt: TypeTag[T]
+class AddConstantEdgeAttributeOutput[T: TypeTag](
+    instance: MetaGraphOperationInstance,
+    edgeBundle: EdgeBundle) extends MagicOutput(instance) {
 
+  val attr = edgeAttribute[T](edgeBundle)
+}
+abstract class AddConstantEdgeAttribute[T]
+    extends TypedMetaGraphOp[SimpleInputSignature, AddConstantEdgeAttributeOutput[T]] {
+
+  implicit def tt: TypeTag[T]
   val value: T
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val edges = inputs.edgeBundles('edges).rdd
-    outputs.putEdgeAttribute('attr, edges.mapValues(_ => value))
+  def inputSig = SimpleInputSignature(
+    vertexSets = Set('ignoredSrc, 'ignoredDst),
+    edgeBundles = Map('edges -> ('ignoredSrc, 'ignoredDst)))
+
+  def result(instance: MetaGraphOperationInstance) =
+    new AddConstantEdgeAttributeOutput(
+      instance,
+      instance.inputs.edgeBundles('edges))
+
+  def execute(inputDatas: DataSet,
+              o: AddConstantEdgeAttributeOutput[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    val edges = inputDatas.edgeBundles('edges).rdd
+    output(o.attr, edges.mapValues(_ => value))
   }
 }
 
