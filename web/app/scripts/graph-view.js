@@ -53,22 +53,24 @@ angular.module('biggraph').directive('graphView', function($window) {
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
     var xBuckets = [], yBuckets = [];
-    var i, x, y, l;
-    y = yOff + this.zoom * util.normalize(yb.max, yb) + 35;
+    var i, x, y, l, xbOff, ybOff;
+    y = yOff + this.zoom * util.normalize(yb.max, yb) + 60;
+    var xbOff = (xb.max + 1 == data.xBuckets.length) ? xOff : xOff - 35;
+    var ybOff = (yb.max + 1 == data.yBuckets.length) ? yOff : yOff - 35;
     for (i = 0; i < data.xBuckets.length; ++i) {
-      x = xOff + this.zoom * util.normalize(i, xb);
+      x = xbOff + this.zoom * util.normalize(i, xb);
       l = new Label(x, y, data.xBuckets[i]);
       xBuckets.push(l);
       this.vertices.append(l.dom);
     }
     // Labels on the left on the left and on the right on the right.
     if (xOff < this.svg.width() / 2) {
-      x = xOff + this.zoom * util.normalize(xb.min, xb) - 60;
+      x = xbOff + this.zoom * util.normalize(xb.min, xb) - 60;
     } else {
-      x = xOff + this.zoom * util.normalize(xb.max, xb) + 60;
+      x = xbOff + this.zoom * util.normalize(xb.max, xb) + 60;
     }
     for (i = 0; i < data.yBuckets.length; ++i) {
-      y = yOff + this.zoom * util.normalize(i, yb);
+      y = ybOff + this.zoom * util.normalize(i, yb);
       l = new Label(x, y, data.yBuckets[i]);
       yBuckets.push(l);
       this.vertices.append(l.dom);
