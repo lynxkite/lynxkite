@@ -121,6 +121,13 @@ object Implicits {
       if (withIDs.partitioner == Some(partitioner)) withIDs
       else withIDs.partitionBy(partitioner)
     }
+
+    // Computes and caches the RDD.
+    def cacheNow = {
+      self.cache
+      self.foreach(_ => ())
+      self
+    }
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
@@ -131,6 +138,7 @@ object Implicits {
       self.zipPartitions(other, true) { (it1, it2) => merge(it1.buffered, it2.buffered).iterator }
     }
 
+    // Sorts each partition of the RDD in isolation.
     def sortPartitions = self.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true)
   }
 }
