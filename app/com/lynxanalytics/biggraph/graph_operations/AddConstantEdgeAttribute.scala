@@ -13,12 +13,12 @@ object AddConstantEdgeAttribute {
   }
 }
 abstract class AddConstantEdgeAttribute[T]
-    extends TypedMetaGraphOp[SimpleInputSignature, AddConstantEdgeAttribute.Output[T]] {
+    extends TypedMetaGraphOp[NoInputProvider, AddConstantEdgeAttribute.Output[T]] {
 
   implicit def tt: TypeTag[T]
   val value: T
 
-  def inputSig = SimpleInputSignature(
+  override def inputSig = SimpleInputSignature(
     vertexSets = Set('ignoredSrc, 'ignoredDst),
     edgeBundles = Map('edges -> ('ignoredSrc, 'ignoredDst)))
 

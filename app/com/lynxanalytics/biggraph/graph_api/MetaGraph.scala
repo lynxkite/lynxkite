@@ -97,7 +97,112 @@ trait InputSignature {
   val edgeAttributes: Map[Symbol, Symbol]
   val scalars: Set[Symbol]
 }
+trait InputSignatureProvider {
+  def inputSignature: InputSignature
+}
+trait FieldNaming {
+  protected lazy val naming: IdentityHashMap[Any, Symbol] = {
+    val res = new IdentityHashMap[Any, Symbol]()
+    val mirror = reflect.runtime.currentMirror.reflect(this)
 
+    mirror.symbol.toType.members
+      .collect {
+        case m: MethodSymbol if (m.isGetter && m.isPublic) => m
+      }
+      .foreach { m =>
+        res.put(mirror.reflectField(m).get, Symbol(m.name.toString))
+      }
+    res
+  }
+
+}
+
+abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
+  abstract class EntityTemplate[T <: MetaGraphEntity] {
+    lazy val name: Symbol = naming.get(this)
+    def set(target: MetaDataSet, entity: T): MetaDataSet =
+      MetaDataSet(Map(name -> entity)) ++ target
+    def get(set: MetaDataSet): T = set.all(name).asInstanceOf[T]
+    def entity(implicit instance: MetaGraphOperationInstance) =
+      instance.inputs.all(name).asInstanceOf[T]
+    def meta(implicit dataSet: DataSet) = dataSet.all(name).entity.asInstanceOf[T]
+    templates += this
+  }
+
+  class VertexSetTemplate extends EntityTemplate[VertexSet] {
+    def rdd(implicit dataSet: DataSet) = dataSet.vertexSets(name).rdd
+  }
+
+  class EdgeBundleTemplate(srcF: => Symbol, dstF: => Symbol)
+      extends EntityTemplate[EdgeBundle] {
+    lazy val src = srcF
+    lazy val dst = dstF
+    override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
+      val withSrc =
+        templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
+      val withSrcDst =
+        templatesByName(dst).asInstanceOf[VertexSetTemplate].set(withSrc, eb.dstVertexSet)
+      super.set(withSrcDst, eb)
+    }
+    def rdd(implicit dataSet: DataSet) = dataSet.edgeBundles(name).rdd
+  }
+
+  class VertexAttributeTemplate[T](vsF: => Symbol) extends EntityTemplate[VertexAttribute[T]] {
+    lazy val vs = vsF
+    override def set(target: MetaDataSet, va: VertexAttribute[T]): MetaDataSet = {
+      val withVs =
+        templatesByName(vs).asInstanceOf[VertexSetTemplate].set(target, va.vertexSet)
+      super.set(withVs, va)
+    }
+    def rdd(implicit dataSet: DataSet) =
+      dataSet.vertexAttributes(name).asInstanceOf[VertexAttributeData[T]].rdd
+  }
+
+  class EdgeAttributeTemplate[T](ebF: => Symbol) extends EntityTemplate[EdgeAttribute[T]] {
+    lazy val eb = ebF
+    override def set(target: MetaDataSet, ea: EdgeAttribute[T]): MetaDataSet = {
+      val withEb =
+        templatesByName(eb).asInstanceOf[EdgeBundleTemplate].set(target, ea.edgeBundle)
+      super.set(withEb, ea)
+    }
+    def rdd(implicit dataSet: DataSet) =
+      dataSet.edgeAttributes(name).asInstanceOf[EdgeAttributeData[T]].rdd
+  }
+
+  class ScalarTemplate[T] extends EntityTemplate[Scalar[T]] {
+    def value(implicit dataSet: DataSet) =
+      dataSet.edgeAttributes(name).asInstanceOf[ScalarData[T]].value
+  }
+
+  def vertexSet = new VertexSetTemplate
+  def edgeBundle(src: VertexSetTemplate, dst: VertexSetTemplate) =
+    new EdgeBundleTemplate(src.name, dst.name)
+  def vertexAttribute[T](vs: VertexSetTemplate) = new VertexAttributeTemplate[T](vs.name)
+  def edgeAttribute[T](eb: EdgeBundleTemplate) = new EdgeAttributeTemplate[T](eb.name)
+  def scalar[T] = new ScalarTemplate[T]
+
+  lazy val inputSignature: InputSignature =
+    SimpleInputSignature(
+      vertexSets = templates.collect { case vs: VertexSetTemplate => vs.name }.toSet,
+      edgeBundles = templates.collect {
+        case eb: EdgeBundleTemplate =>
+          eb.name -> (eb.src, eb.dst)
+      }.toMap,
+      vertexAttributes = templates.collect {
+        case va: VertexAttributeTemplate[_] => va.name -> va.vs
+      }.toMap,
+      edgeAttributes = templates.collect {
+        case ea: EdgeAttributeTemplate[_] => ea.name -> ea.eb
+      }.toMap,
+      scalars = templates.collect { case sc: ScalarTemplate[_] => sc.name }.toSet)
+
+  private val templates = mutable.Buffer[EntityTemplate[_ <: MetaGraphEntity]]()
+  private lazy val templatesByName = {
+    val pairs: Iterable[(Symbol, EntityTemplate[_ <: MetaGraphEntity])] =
+      templates.map(t => (t.name, t))
+    pairs.toMap
+  }
+}
 trait MetaDataSetProvider {
   def metaDataSet: MetaDataSet
 }
@@ -106,7 +211,8 @@ trait EntityContainer[T <: MetaGraphEntity] {
   def entity: T
 }
 
-abstract class MagicOutput(instance: MetaGraphOperationInstance) extends MetaDataSetProvider {
+abstract class MagicOutput(instance: MetaGraphOperationInstance)
+    extends MetaDataSetProvider with FieldNaming {
   class P[T <: MetaGraphEntity](entityConstructor: Symbol => T) extends EntityContainer[T] {
     lazy val name: Symbol = naming.get(this)
     lazy val entity = entityConstructor(name)
@@ -125,20 +231,6 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance) extends MetaDat
   def edgeAttribute[T: TypeTag](eb: EntityContainer[EdgeBundle]) =
     new P(EdgeAttribute[T](instance, _, eb))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _))
-
-  private lazy val naming: IdentityHashMap[Any, Symbol] = {
-    val res = new IdentityHashMap[Any, Symbol]()
-    val mirror = reflect.runtime.currentMirror.reflect(this)
-
-    mirror.symbol.toType.members
-      .collect {
-        case m: MethodSymbol if (m.isGetter && m.isPublic) => m
-      }
-      .foreach { m =>
-        res.put(mirror.reflectField(m).get, Symbol(m.name.toString))
-      }
-    res
-  }
 
   private val placeholders = mutable.Buffer[P[_ <: MetaGraphEntity]]()
 
@@ -167,8 +259,10 @@ trait MetaGraphOp extends Serializable {
   }
 }
 
-trait TypedMetaGraphOp[IS <: InputSignature, OMDS <: MetaDataSetProvider] extends MetaGraphOp {
-  def inputSig: IS
+trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
+    extends MetaGraphOp {
+  def inputs: IS = ???
+  def inputSig: InputSignature = inputs.inputSignature
   def result(instance: MetaGraphOperationInstance): OMDS
 
   def execute(
@@ -243,7 +337,7 @@ trait MetaGraphOperationInstance {
   }
 }
 
-case class TypedOperationInstance[IS <: InputSignature, OMDS <: MetaDataSetProvider](
+case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet) extends MetaGraphOperationInstance {
   val result: OMDS = operation.result(this)
@@ -460,7 +554,11 @@ case class SimpleInputSignature(
 
 case class SimpleMetaDataSetProvider(metaDataSet: MetaDataSet) extends MetaDataSetProvider
 
-trait MetaGraphOperation extends TypedMetaGraphOp[InputSignature, SimpleMetaDataSetProvider] {
+class NoInputProvider extends InputSignatureProvider {
+  def inputSignature = ???
+}
+
+trait MetaGraphOperation extends TypedMetaGraphOp[NoInputProvider, SimpleMetaDataSetProvider] {
   // Override "signature" to easily describe the inputs and outputs of your operation. E.g.:
   //     class MyOperation extends MetaGraphOperation {
   //       def signature = newSignature
@@ -470,7 +568,7 @@ trait MetaGraphOperation extends TypedMetaGraphOp[InputSignature, SimpleMetaData
   protected def signature: MetaGraphOperationSignature
   protected def newSignature = new MetaGraphOperationSignature
 
-  @transient lazy val inputSig = SimpleInputSignature(
+  @transient override lazy val inputSig = SimpleInputSignature(
     signature.inputVertexSets.toSet,
     signature.inputEdgeBundles.toMap,
     signature.inputVertexAttributes.mapValues { case (vs, tt) => vs }.toMap,

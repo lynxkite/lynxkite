@@ -14,10 +14,10 @@ object ExampleGraph {
     val greeting = scalar[String]
   }
 }
-case class ExampleGraph() extends TypedMetaGraphOp[SimpleInputSignature, ExampleGraph.Output] {
+case class ExampleGraph() extends TypedMetaGraphOp[NoInputProvider, ExampleGraph.Output] {
   @transient var executionCounter = 0
 
-  def inputSig = SimpleInputSignature()
+  override def inputSig = SimpleInputSignature()
 
   def result(instance: MetaGraphOperationInstance) = new ExampleGraph.Output(instance)
 
