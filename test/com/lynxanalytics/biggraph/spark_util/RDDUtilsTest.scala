@@ -60,8 +60,8 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
   test("benchmark zipJoin", com.lynxanalytics.biggraph.Benchmark) {
     import Implicits._
     class Demo(parts: Int, rows: Int) {
-      val data = gen(parts, rows, 1)
-      val other = gen(parts, rows, 2).sample(false, 0.5, 0).partitionBy(data.partitioner.get)
+      val data = gen(parts, rows, 1).sortPartitions
+      val other = gen(parts, rows, 2).sample(false, 0.5, 0).partitionBy(data.partitioner.get).sortPartitions
       def zippedSum = getSum(data.zipJoin(other))
       def joinedSum = getSum(data.join(other))
       def gen(parts: Int, rows: Int, seed: Int) = {
@@ -69,7 +69,7 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
           (i, it) => new util.Random(i + seed).alphanumeric.take(rows).iterator
         }
         val partitioner = new org.apache.spark.HashPartitioner(raw.partitions.size)
-        val data = raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner).mapPartitions(p => p.toSeq.sorted.iterator, true)
+        val data = raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
         data.cache()
         data.foreach(_ => ()) // Trigger computation and caching.
         data
