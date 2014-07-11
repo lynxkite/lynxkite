@@ -117,24 +117,29 @@ trait FieldNaming {
 
 }
 
+trait EntityTemplate[T <: MetaGraphEntity] {
+  def set(target: MetaDataSet, entity: T): MetaDataSet
+  def entity(implicit instance: MetaGraphOperationInstance): T
+}
+
 abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
-  abstract class EntityTemplate[T <: MetaGraphEntity] {
+  abstract class ET[T <: MetaGraphEntity] extends EntityTemplate[T] {
     lazy val name: Symbol = naming.get(this)
     def set(target: MetaDataSet, entity: T): MetaDataSet =
       MetaDataSet(Map(name -> entity)) ++ target
     def get(set: MetaDataSet): T = set.all(name).asInstanceOf[T]
-    def entity(implicit instance: MetaGraphOperationInstance) =
+    def entity(implicit instance: MetaGraphOperationInstance): T =
       instance.inputs.all(name).asInstanceOf[T]
     def meta(implicit dataSet: DataSet) = dataSet.all(name).entity.asInstanceOf[T]
     templates += this
   }
 
-  class VertexSetTemplate extends EntityTemplate[VertexSet] {
+  class VertexSetTemplate extends ET[VertexSet] {
     def rdd(implicit dataSet: DataSet) = dataSet.vertexSets(name).rdd
   }
 
   class EdgeBundleTemplate(srcF: => Symbol, dstF: => Symbol)
-      extends EntityTemplate[EdgeBundle] {
+      extends ET[EdgeBundle] {
     lazy val src = srcF
     lazy val dst = dstF
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
@@ -147,7 +152,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = dataSet.edgeBundles(name).rdd
   }
 
-  class VertexAttributeTemplate[T](vsF: => Symbol) extends EntityTemplate[VertexAttribute[T]] {
+  class VertexAttributeTemplate[T](vsF: => Symbol) extends ET[VertexAttribute[T]] {
     lazy val vs = vsF
     override def set(target: MetaDataSet, va: VertexAttribute[T]): MetaDataSet = {
       val withVs =
@@ -158,7 +163,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       dataSet.vertexAttributes(name).asInstanceOf[VertexAttributeData[T]].rdd
   }
 
-  class EdgeAttributeTemplate[T](ebF: => Symbol) extends EntityTemplate[EdgeAttribute[T]] {
+  class EdgeAttributeTemplate[T](ebF: => Symbol) extends ET[EdgeAttribute[T]] {
     lazy val eb = ebF
     override def set(target: MetaDataSet, ea: EdgeAttribute[T]): MetaDataSet = {
       val withEb =
@@ -169,7 +174,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       dataSet.edgeAttributes(name).asInstanceOf[EdgeAttributeData[T]].rdd
   }
 
-  class ScalarTemplate[T] extends EntityTemplate[Scalar[T]] {
+  class ScalarTemplate[T] extends ET[Scalar[T]] {
     def value(implicit dataSet: DataSet) =
       dataSet.edgeAttributes(name).asInstanceOf[ScalarData[T]].value
   }
@@ -180,6 +185,10 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   def vertexAttribute[T](vs: VertexSetTemplate) = new VertexAttributeTemplate[T](vs.name)
   def edgeAttribute[T](eb: EdgeBundleTemplate) = new EdgeAttributeTemplate[T](eb.name)
   def scalar[T] = new ScalarTemplate[T]
+  def graph = {
+    val vs = vertexSet
+    (vs, edgeBundle(vs, vs))
+  }
 
   lazy val inputSignature: InputSignature =
     SimpleInputSignature(
@@ -196,9 +205,9 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       }.toMap,
       scalars = templates.collect { case sc: ScalarTemplate[_] => sc.name }.toSet)
 
-  private val templates = mutable.Buffer[EntityTemplate[_ <: MetaGraphEntity]]()
+  private val templates = mutable.Buffer[ET[_ <: MetaGraphEntity]]()
   private lazy val templatesByName = {
-    val pairs: Iterable[(Symbol, EntityTemplate[_ <: MetaGraphEntity])] =
+    val pairs: Iterable[(Symbol, ET[_ <: MetaGraphEntity])] =
       templates.map(t => (t.name, t))
     pairs.toMap
   }
@@ -270,6 +279,8 @@ trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider
     outputMeta: OMDS,
     output: OutputBuilder,
     rc: RuntimeContext): Unit
+
+  def builder = new InstanceBuilder(this)
 }
 
 /*

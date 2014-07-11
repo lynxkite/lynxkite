@@ -49,7 +49,7 @@ object VertexToEdgeAttribute {
 }
 case class VertexToEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
-  override val inputs = new VertexToEdgeAttribute.Input[T]()
+  @transient override lazy val inputs = new VertexToEdgeAttribute.Input[T]()
 
   def result(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
