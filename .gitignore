@@ -28,3 +28,6 @@ public
 .project
 .classpath
 .settings/*
+
+# KDE specific
+*.directory
