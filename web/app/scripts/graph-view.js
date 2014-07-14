@@ -73,6 +73,7 @@ angular.module('biggraph').directive('graphView', function($window) {
                          yOff + Math.random() * 400 - 200,
                          Math.sqrt(vertexScale * vertex.size),
                          label);
+      svg.addClass(v.dom, 'sampled');
       vertices.push(v);
       if (vertex.size === 0) {
         continue;
