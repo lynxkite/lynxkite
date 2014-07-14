@@ -330,7 +330,7 @@ angular.module('biggraph')
           side.setVS(bundle.source.id);
         }
         // Keep filters when following local edges.
-        if (bundle.destination.id == bundle.source.id) {
+        if (bundle.destination.id === bundle.source.id) {
           side.state().filters = oldFilters;
         }
       };
