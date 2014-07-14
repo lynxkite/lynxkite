@@ -29,10 +29,10 @@
         tooltip="radius {{side.state().sampleRadius}}" type="range" max="10" step="1" ng-model="side.state().sampleRadius">
       <span style="float: right">
         <span class="glyphicon clicky glyphicon-arrow-{{side.other.name}}"
-          title="Show on the {{side.other.name}}"
+          tooltip="Show on the {{side.other.name}}"
           ng-click="mirror(side)"></span>
         <span class="glyphicon glyphicon-remove clicky"
-          title="Close"
+          tooltip="Close"
           ng-click="close(side)"></span>
       </span>
     </div>
@@ -57,7 +57,7 @@
           <span
             ng-hide="attr.showHistogram"
             class="clicky glyphicon glyphicon-stats"
-            title="Show histogram"
+            tooltip="Show histogram"
             ng-click="startToShowHistogram(side, attr)"></span>
           <histogram ng-show="attr.showHistogram" model="attr.histogram"></histogram>
         </li>
@@ -82,11 +82,11 @@
           <shortn text="{{bundle.source.title}}"></shortn>
           <span
               class="clicky glyphicon glyphicon-random"
-              title="Follow reversed edge bundle"
+              tooltip="Follow reversed edge bundle"
               ng-click="side.followEB(bundle, false)"></span>
           <span
               class="clicky glyphicon glyphicon-arrow-{{side.other.name}}"
-              title="Show source on the {{side.other.name}}"
+              tooltip="Show source on the {{side.other.name}}"
               ng-click="side.showEB(bundle, true)"></span>
         </li>
       </sublist>
@@ -97,11 +97,11 @@
           <shortn text="{{bundle.destination.title}}"></shortn>
           <span
               class="clicky glyphicon glyphicon-random"
-              title="Follow edge bundle"
+              tooltip="Follow edge bundle"
               ng-click="side.followEB(bundle, true)"></span>
           <span
               class="clicky glyphicon glyphicon-arrow-{{side.other.name}}"
-              title="Show destination on the {{side.other.name}}"
+              tooltip="Show destination on the {{side.other.name}}"
               ng-click="side.showEB(bundle, false)"></span>
         </li>
       </sublist>
