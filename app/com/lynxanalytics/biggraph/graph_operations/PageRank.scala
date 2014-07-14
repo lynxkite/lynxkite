@@ -20,7 +20,7 @@ case class PageRank(dampingFactor: Double,
     extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
 
-  def result(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
               o: Output,
