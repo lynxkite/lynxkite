@@ -323,10 +323,15 @@ angular.module('biggraph')
         if ($scope.state.leftToRightPath !== undefined) {
           side.addEBToPath(bundle, pointsTowardsMySide);
         }
+        var oldFilters = side.state().filters;
         if (pointsTowardsMySide) {
           side.setVS(bundle.destination.id);
         } else {
           side.setVS(bundle.source.id);
+        }
+        // Keep filters when following local edges.
+        if (bundle.destination.id == bundle.source.id) {
+          side.state().filters = oldFilters;
         }
       };
     }
