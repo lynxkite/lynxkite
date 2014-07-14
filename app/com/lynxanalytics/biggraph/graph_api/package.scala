@@ -23,11 +23,16 @@ package object graph_api {
   implicit class InstanceBuilder[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
       op: TypedMetaGraphOp[IS, OMDS]) {
     private var currentInput = MetaDataSet()
-    def set[T <: MetaGraphEntity](adder: EntityTemplate[T], container: EntityContainer[T]): InstanceBuilder[IS, OMDS] = set(adder, container.entity)
-    def set[T <: MetaGraphEntity](adder: EntityTemplate[T], entity: T): InstanceBuilder[IS, OMDS] = {
+    def apply[T <: MetaGraphEntity](
+      adder: EntityTemplate[T],
+      container: EntityContainer[T]): InstanceBuilder[IS, OMDS] = apply(adder, container.entity)
+    def apply[T <: MetaGraphEntity](
+      adder: EntityTemplate[T],
+      entity: T): InstanceBuilder[IS, OMDS] = {
       currentInput = adder.set(currentInput, entity)
       this
     }
+    def apply() = this
 
     def toInstance(manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] = {
       manager.apply(op, currentInput)
@@ -35,7 +40,9 @@ package object graph_api {
   }
 
   implicit def buildInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    builder: InstanceBuilder[IS, OMDS])(implicit manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] = builder.toInstance(manager)
+    builder: InstanceBuilder[IS, OMDS])(
+      implicit manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
+    builder.toInstance(manager)
 
   implicit def getData(entity: EntityContainer[VertexSet])(
     implicit dataManager: DataManager): VertexSetData =

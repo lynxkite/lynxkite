@@ -41,25 +41,22 @@ object VertexToEdgeAttribute {
     val original = vertexAttribute[T](vertices)
     val target = edgeBundle(ignoredSrc, ignoredDst)
   }
-  class Output[T: TypeTag](
-      instance: MetaGraphOperationInstance,
-      target: EdgeBundle) extends MagicOutput(instance) {
-    val mappedAttribute = edgeAttribute[T](target)
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+                  inputs: Input[T]) extends MagicOutput(instance) {
+    val mappedAttribute = edgeAttribute[T](inputs.target.entity)(inputs.original.typeTag)
   }
 }
+import VertexToEdgeAttribute._
 case class VertexToEdgeAttribute[T]()
-    extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
+    extends TypedMetaGraphOp[Input[T], Output[T]] {
   @transient override lazy val inputs = new VertexToEdgeAttribute.Input[T]()
 
-  def result(instance: MetaGraphOperationInstance) = {
-    implicit val i = instance
-    new VertexToEdgeAttribute.Output(
-      instance,
-      inputs.target.entity)(inputs.original.entity.typeTag)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    new Output()(instance, inputs)
   }
 
   def execute(inputDatas: DataSet,
-              o: VertexToEdgeAttribute.Output[T],
+              o: Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas

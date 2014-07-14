@@ -129,7 +129,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       MetaDataSet(Map(name -> entity)) ++ target
     def get(set: MetaDataSet): T = set.all(name).asInstanceOf[T]
     def entity(implicit instance: MetaGraphOperationInstance): T =
-      instance.inputs.all(name).asInstanceOf[T]
+      get(instance.inputs)
     def meta(implicit dataSet: DataSet) = dataSet.all(name).entity.asInstanceOf[T]
     templates += this
   }
@@ -248,7 +248,7 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
 
 trait MetaGraphOp extends Serializable {
   def inputSig: InputSignature
-  def result(instance: MetaGraphOperationInstance): MetaDataSetProvider
+  def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
   val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
@@ -272,7 +272,7 @@ trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider
     extends MetaGraphOp {
   def inputs: IS = ???
   def inputSig: InputSignature = inputs.inputSignature
-  def result(instance: MetaGraphOperationInstance): OMDS
+  def outputMeta(instance: MetaGraphOperationInstance): OMDS
 
   def execute(
     inputDatas: DataSet,
@@ -351,7 +351,7 @@ trait MetaGraphOperationInstance {
 case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet) extends MetaGraphOperationInstance {
-  val result: OMDS = operation.result(this)
+  val result: OMDS = operation.outputMeta(this)
   val outputs: MetaDataSet = result.metaDataSet
   def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData] = {
     val outputBuilder = new OutputBuilder(this)
@@ -586,7 +586,7 @@ trait MetaGraphOperation extends TypedMetaGraphOp[NoInputProvider, SimpleMetaDat
     signature.inputEdgeAttributes.mapValues { case (eb, tt) => eb }.toMap,
     signature.inputScalars.keySet.toSet)
 
-  def result(instance: MetaGraphOperationInstance): SimpleMetaDataSetProvider = {
+  def outputMeta(instance: MetaGraphOperationInstance): SimpleMetaDataSetProvider = {
     val outputVertexSets = signature.outputVertexSets.map(n => n -> VertexSet(instance, n)).toMap
     val allVertexSets = outputVertexSets ++ instance.inputs.vertexSets
     val outputEdgeBundles = signature.outputEdgeBundles.map {

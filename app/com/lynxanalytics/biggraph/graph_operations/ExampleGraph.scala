@@ -5,7 +5,10 @@ import com.lynxanalytics.biggraph.graph_api._
 
 // A small graph with all sorts of attributes. Used for testing.
 object ExampleGraph {
-  class Output(instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+  class Input extends MagicInputSignature {
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
     val (vertices, edges) = graph
     val name = vertexAttribute[String](vertices)
     val age = vertexAttribute[Double](vertices)
@@ -14,12 +17,14 @@ object ExampleGraph {
     val greeting = scalar[String]
   }
 }
-case class ExampleGraph() extends TypedMetaGraphOp[NoInputProvider, ExampleGraph.Output] {
+import ExampleGraph._
+case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
   @transient var executionCounter = 0
 
-  override def inputSig = SimpleInputSignature()
+  @transient override lazy val inputs = new Input()
 
-  def result(instance: MetaGraphOperationInstance) = new ExampleGraph.Output(instance)
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
               o: ExampleGraph.Output,
