@@ -275,12 +275,20 @@ angular.module('biggraph')
     $scope.left.name = 'left';
     $scope.right.name = 'right';
 
+    // Creates a new side state, while retaining the settings where this makes sense.
+    function freshSideState(old) {
+      var fresh = defaultSideState();
+      fresh.graphMode = old.graphMode;
+      fresh.sampleRadius = old.sampleRadius;
+      fresh.bucketCount = old.bucketCount;
+      return fresh;
+    }
     $scope.left.setVS = function(id) {
-      $scope.state.left = defaultSideState();
+      $scope.state.left = freshSideState($scope.state.left);
       $scope.state.left.vs = { id: id };
     };
     $scope.right.setVS = function(id) {
-      $scope.state.right = defaultSideState();
+      $scope.state.right = freshSideState($scope.state.right);
       $scope.state.right.vs = { id: id };
     };
 
