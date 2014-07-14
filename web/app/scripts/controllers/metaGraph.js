@@ -174,6 +174,8 @@ angular.module('biggraph')
         centralVertexId: '',
         sampleSmearEdgeBundleId: '',
         radius: 0,
+        labelAttributeId: '',
+        sizeAttributeId: '',
       };
       attr.histogram = $resource('/ajax/vertexDiag').get({q: q});
     }
