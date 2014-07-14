@@ -12,7 +12,11 @@
     </div>
   </div>
 
-  <div class="panel panel-default" ng-if="side.data">
+  <progressbar ng-if="side.data && !side.data.$resolved" value="100" class="progress-striped active">
+    Loading...
+  </progressbar>
+
+  <div class="panel panel-default" ng-if="side.data.$resolved">
     <div class="panel-heading">
       <shortn text="{{side.data.title}}"></shortn>
       <div class="btn-group">
