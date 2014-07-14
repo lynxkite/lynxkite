@@ -27,7 +27,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
     this.root = svg.create('g', {'class': 'root'});
-    this.zoom = 250;
+    this.zoom = 200;
     this.root.append([this.edges, this.vertices]);
     this.svg.append(this.root);
   }
@@ -99,9 +99,13 @@ angular.module('biggraph').directive('graphView', function($window) {
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
     var xBuckets = [], yBuckets = [];
     var i, x, y, l, xbOff, ybOff;
-    y = yOff + this.zoom * util.normalize(yb.max, yb) + 60;
-    var xbOff = (xb.max + 1 == data.xBuckets.length) ? xOff : xOff - 35;
-    var ybOff = (yb.max + 1 == data.yBuckets.length) ? yOff : yOff - 35;
+    var xStep = this.zoom / xb.span;
+    var yStep = this.zoom / yb.span;
+    var labelSpace = 20;
+    y = yOff + this.zoom * util.normalize(yb.max, yb) + Math.max(60, yStep / 2 + labelSpace);
+    // offset numeric bucket labels by half step to show them at the bucket borders
+    var xbOff = (xb.span + 1 == data.xBuckets.length) ? xOff : xOff - xStep / 2;
+    var ybOff = (yb.span + 1 == data.yBuckets.length) ? yOff : yOff - yStep / 2;
     for (i = 0; i < data.xBuckets.length; ++i) {
       x = xbOff + this.zoom * util.normalize(i, xb);
       l = new Label(x, y, data.xBuckets[i]);
@@ -110,9 +114,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     // Labels on the left on the left and on the right on the right.
     if (xOff < this.svg.width() / 2) {
-      x = xbOff + this.zoom * util.normalize(xb.min, xb) - 60;
+      x = xOff + this.zoom * util.normalize(xb.min, xb) - Math.max(60, xStep / 2 + labelSpace);
     } else {
-      x = xbOff + this.zoom * util.normalize(xb.max, xb) + 60;
+      x = xOff + this.zoom * util.normalize(xb.max, xb) + Math.max(60, xStep / 2 + labelSpace);
     }
     for (i = 0; i < data.yBuckets.length; ++i) {
       y = ybOff + this.zoom * util.normalize(i, yb);
