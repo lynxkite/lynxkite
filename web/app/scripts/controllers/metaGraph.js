@@ -57,7 +57,10 @@ angular.module('biggraph')
 
     var VertexSet = $resource('/ajax/vertexSet');
     function loadVertexSet(id) {
-      return VertexSet.get({q: {id: id}});
+      var req = VertexSet.get({q: {id: id}}, function(success) {}, function(failure) {
+        req.error = 'Request failed: ' + failure.data;
+      });
+      return req;
     }
 
     $scope.$watch(
