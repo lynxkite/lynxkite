@@ -99,8 +99,8 @@ angular.module('biggraph').directive('graphView', function($window) {
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
     var xBuckets = [], yBuckets = [];
     var i, x, y, l, xbOff, ybOff;
-    var xStep = this.zoom / xb.span;
-    var yStep = this.zoom / yb.span;
+    var xStep = this.zoom / Math.max(xb.span, 1);
+    var yStep = this.zoom / Math.max(yb.span, 1);
     var labelSpace = 20;
     y = yOff + this.zoom * util.normalize(yb.max, yb) + Math.max(60, yStep / 2 + labelSpace);
     // offset numeric bucket labels by half step to show them at the bucket borders
