@@ -181,9 +181,9 @@ angular.module('biggraph')
       var data = side.data;
       for (var i = 0; i < data.attributes.length; ++i) {
         var a = data.attributes[i];
-	if (a.showHistogram) {
-	  loadHistogram(side, a);
-	}
+        if (a.showHistogram) {
+          loadHistogram(side, a);
+        }
       }
     }
     $scope.startToShowHistogram = function(side, attr) {
