@@ -184,7 +184,7 @@ class BigGraphController(env: BigGraphEnvironment) {
       outEdges = (out -- local).toSeq.map(toFE(_)),
       localEdges = local.toSeq.map(toFE(_)),
       attributes = manager.attributes(vs).filter(manager.isVisible(_)).map(UIValue.fromEntity(_)),
-      ops = operations.getApplicableOperationMetas(vs))
+      ops = operations.getApplicableOperationMetas(vs).sortBy(_.title))
   }
 
   private def toFE(eb: EdgeBundle): FEEdgeBundle = {
@@ -204,7 +204,7 @@ class BigGraphController(env: BigGraphEnvironment) {
     operations.applyOp(request)
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
-    operations.getStartingOperationMetas
+    operations.getStartingOperationMetas.sortBy(_.title)
 
   def startingVertexSets(request: serving.Empty): Seq[UIValue] =
     manager.allVertexSets
