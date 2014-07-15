@@ -12,14 +12,14 @@ angular.module('biggraph').directive('histogram', function() {
         var max = 1;
         for (var i = 0; i < model.vertices.length; ++i) {
           var v = model.vertices[i];
-          if (v.count > max) {
-            max = v.count;
+          if (v.size > max) {
+            max = v.size;
           }
         }
         scope.max = max;
       }, true); // Watch contents of model.
       scope.height = function(v) {
-        return Math.floor(100 * v.count / scope.max) + '%';
+        return Math.floor(100 * v.size / scope.max) + '%';
       };
     },
   };
