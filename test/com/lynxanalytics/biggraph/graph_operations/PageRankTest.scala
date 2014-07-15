@@ -4,11 +4,12 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 
-class PageRankTest extends FunSuite with TestGraphOperation {
+class PageRankTest extends FunSuite with TestGraphOp {
   test("example graph") {
-    val g = helper.apply(ExampleGraph())
-    val out = helper.apply(PageRank(0.5, 3), 'weights -> g('weight))
-    val ranks = helper.localData[Double](out.vertexAttributes('pagerank))
+    val eg = ExampleGraph()().result
+    val op = PageRank(0.5, 3)
+    val res = op(op.weights, eg.weight).result
+    val ranks = res.pagerank.rdd.collect.toMap
     assert(1.0 < ranks(0) && ranks(0) < 2.0, s"Bad rank: ${ranks(0)}")
     assert(1.0 < ranks(1) && ranks(1) < 2.0, s"Bad rank: ${ranks(1)}")
     assert(0.0 < ranks(2) && ranks(2) < 1.0, s"Bad rank: ${ranks(2)}")

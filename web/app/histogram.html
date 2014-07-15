@@ -1,7 +1,7 @@
 <table class="histogram">
   <tr>
     <td ng-repeat="v in model.vertices" class="bar-container">
-      <div class="bar" tooltip="{{model.xBuckets[$index]}}: {{v.count}}" style="height: {{height(v)}};"></div>
+      <div class="bar" tooltip="{{model.xBuckets[$index]}}: {{v.size}}" style="height: {{height(v)}};"></div>
     </td>
   </tr>
 </div>

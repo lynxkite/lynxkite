@@ -57,7 +57,10 @@ angular.module('biggraph')
 
     var VertexSet = $resource('/ajax/vertexSet');
     function loadVertexSet(id) {
-      return VertexSet.get({q: {id: id}});
+      var req = VertexSet.get({q: {id: id}}, function() {}, function(failure) {
+        req.error = 'Request failed: ' + failure.data;
+      });
+      return req;
     }
 
     $scope.$watch(
@@ -174,6 +177,8 @@ angular.module('biggraph')
         centralVertexId: '',
         sampleSmearEdgeBundleId: '',
         radius: 0,
+        labelAttributeId: '',
+        sizeAttributeId: '',
       };
       attr.histogram = $resource('/ajax/vertexDiag').get({q: q});
     }
@@ -181,9 +186,9 @@ angular.module('biggraph')
       var data = side.data;
       for (var i = 0; i < data.attributes.length; ++i) {
         var a = data.attributes[i];
-	if (a.showHistogram) {
-	  loadHistogram(side, a);
-	}
+        if (a.showHistogram) {
+          loadHistogram(side, a);
+        }
       }
     }
     $scope.startToShowHistogram = function(side, attr) {
@@ -275,12 +280,20 @@ angular.module('biggraph')
     $scope.left.name = 'left';
     $scope.right.name = 'right';
 
+    // Creates a new side state, while retaining the settings where this makes sense.
+    function freshSideState(old) {
+      var fresh = defaultSideState();
+      fresh.graphMode = old.graphMode;
+      fresh.sampleRadius = old.sampleRadius;
+      fresh.bucketCount = old.bucketCount;
+      return fresh;
+    }
     $scope.left.setVS = function(id) {
-      $scope.state.left = defaultSideState();
+      $scope.state.left = freshSideState($scope.state.left);
       $scope.state.left.vs = { id: id };
     };
     $scope.right.setVS = function(id) {
-      $scope.state.right = defaultSideState();
+      $scope.state.right = freshSideState($scope.state.right);
       $scope.state.right.vs = { id: id };
     };
 
@@ -315,10 +328,15 @@ angular.module('biggraph')
         if ($scope.state.leftToRightPath !== undefined) {
           side.addEBToPath(bundle, pointsTowardsMySide);
         }
+        var oldFilters = side.state().filters;
         if (pointsTowardsMySide) {
           side.setVS(bundle.destination.id);
         } else {
           side.setVS(bundle.source.id);
+        }
+        // Keep filters when following local edges.
+        if (bundle.destination.id === bundle.source.id) {
+          side.state().filters = oldFilters;
         }
       };
     }

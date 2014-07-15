@@ -32,17 +32,17 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
 
 class GraphOperationTestHelper(val metaManager: MetaGraphManager,
                                val dataManager: DataManager) {
-  def apply(operation: TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSetProvider],
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider],
             inputs: MetaDataSet = MetaDataSet()): MetaDataSet = {
     metaManager.apply(operation, inputs).outputs
   }
 
-  def apply(operation: TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSetProvider],
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider],
             all: Map[Symbol, MetaGraphEntity]): MetaDataSet = {
     apply(operation, MetaDataSet(all))
   }
 
-  def apply(operation: TypedMetaGraphOp[_ <: InputSignature, _ <: MetaDataSetProvider],
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider],
             all: (Symbol, MetaGraphEntity)*): MetaDataSet = {
     metaManager.apply(operation, all: _*).outputs
   }
@@ -102,6 +102,11 @@ object HelperSingletonProvider extends TestMetaGraphManager with TestDataManager
 trait TestGraphOperation extends TestMetaGraphManager with TestDataManager {
   val helper = HelperSingletonProvider.helper
   def cleanHelper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
+}
+
+trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
+  implicit val metaManager = cleanMetaManager
+  implicit val dataManager = cleanDataManager
 }
 
 case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
