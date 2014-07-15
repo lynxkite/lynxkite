@@ -27,7 +27,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
     this.root = svg.create('g', {'class': 'root'});
-    this.zoom = 200;
+    this.zoom = this.svg.height() * 0.8 / 2; // to avoid putting labels in 2 bucket mode too close to the bottom or top
     this.root.append([this.edges, this.vertices]);
     this.svg.append(this.root);
   }
@@ -45,7 +45,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (var i = 0; i < n; ++i) {
       var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
-      var yOff = 250;
+      var yOff = this.svg.height() / 2;
       var vs = data.vertexSets[i];
       if (vs.mode === 'sampled') {
         vertices.push(this.addSampledVertices(vs, xOff, yOff, sides[i]));
@@ -97,15 +97,22 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
+    var numXBuckets = Math.max(xb.span, 1);
+    var numYBuckets = Math.max(yb.span, 1);
+    // distance between neighboring vertices (grid size)
+    var xStep = this.zoom / numXBuckets;
+    var yStep = this.zoom / numYBuckets;    
+    // numeric buckets have +1 bucket label compared to the number of buckets
+    var isXNumeric = numXBuckets + 2 === data.xBuckets.length;
+    var isYNumeric = numYBuckets + 2 === data.yBuckets.length;
     var xBuckets = [], yBuckets = [];
-    var i, x, y, l, xbOff, ybOff;
-    var xStep = this.zoom / Math.max(xb.span, 1);
-    var yStep = this.zoom / Math.max(yb.span, 1);
+    var i, x, y, l, side;
     var labelSpace = 20;
-    y = yOff + this.zoom * util.normalize(yb.max, yb) + Math.max(60, yStep / 2 + labelSpace);
+    y = yOff + this.zoom * 0.5 + Math.max(60, yStep / 2 + labelSpace);
+    var xLabelSpace = Math.max(60, xStep / 2 + labelSpace);
     // offset numeric bucket labels by half step to show them at the bucket borders
-    var xbOff = (xb.span + 1 == data.xBuckets.length) ? xOff : xOff - xStep / 2;
-    var ybOff = (yb.span + 1 == data.yBuckets.length) ? yOff : yOff - yStep / 2;
+    var xbOff = (isXNumeric) ? xOff - xStep / 2 : xOff;
+    var ybOff = (isYNumeric) ? yOff - yStep / 2 : yOff;
     for (i = 0; i < data.xBuckets.length; ++i) {
       x = xbOff + this.zoom * util.normalize(i, xb);
       l = new Label(x, y, data.xBuckets[i]);
@@ -114,13 +121,15 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     // Labels on the left on the left and on the right on the right.
     if (xOff < this.svg.width() / 2) {
-      x = xOff + this.zoom * util.normalize(xb.min, xb) - Math.max(60, xStep / 2 + labelSpace);
+      x = xOff + this.zoom * -0.5 - xLabelSpace;
+      side = 'left';
     } else {
-      x = xOff + this.zoom * util.normalize(xb.max, xb) + Math.max(60, xStep / 2 + labelSpace);
+      x = xOff + this.zoom * 0.5 + xLabelSpace;
+      side = 'right';
     }
     for (i = 0; i < data.yBuckets.length; ++i) {
       y = ybOff + this.zoom * util.normalize(i, yb);
-      l = new Label(x, y, data.yBuckets[i]);
+      l = new Label(x, y, data.yBuckets[i], side);
       yBuckets.push(l);
       this.vertices.append(l.dom);
     }
@@ -135,8 +144,14 @@ angular.module('biggraph').directive('graphView', function($window) {
         continue;
       }
       this.vertices.append(v.dom);
-      if (xBuckets.length !== 0) { v.addHoverListener(xBuckets[vertex.x]); }
-      if (yBuckets.length !== 0) { v.addHoverListener(yBuckets[vertex.y]); }
+      if (xBuckets.length !== 0) {
+        v.addHoverListener(xBuckets[vertex.x]);
+        if (isXNumeric) { v.addHoverListener(xBuckets[vertex.x + 1]); }
+      }
+      if (yBuckets.length !== 0) {
+        v.addHoverListener(yBuckets[vertex.y]);
+        if (isYNumeric) { v.addHoverListener(yBuckets[vertex.y + 1]); }
+      }
     }
     return vertices;
   };
@@ -159,8 +174,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
   };
 
-  function Label(x, y, text) {
-    this.dom = svg.create('text', {'class': 'bucket', x: x, y: y}).text(text);
+  function Label(x, y, text, side) {
+    var labelClass = (typeof side !== 'undefined') ? 'bucket ' + side : 'bucket';
+    this.dom = svg.create('text', {'class': labelClass, x: x, y: y}).text(text);
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
   Label.prototype.off = function() { svg.removeClass(this.dom, 'highlight'); };

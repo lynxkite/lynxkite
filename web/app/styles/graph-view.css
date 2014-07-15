@@ -66,3 +66,9 @@ svg .bucket {
 svg .bucket.highlight {
   fill: white;
 }
+svg .bucket.left {
+  text-anchor: end;
+}
+svg .bucket.right {
+  text-anchor: start;
+}
