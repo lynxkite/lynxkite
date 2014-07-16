@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class PageRankTest extends FunSuite with TestGraphOp {
   test("example graph") {
