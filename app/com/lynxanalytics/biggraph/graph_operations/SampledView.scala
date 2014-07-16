@@ -48,8 +48,9 @@ case class SampledView(
       }.partitionBy(vsPart)
       var collection = itself
       for (i <- 0 until radius) {
-        collection = collection.join(neighbors).flatMap {
-          case (v, ((), neighbor)) => Iterator(v -> (), neighbor -> ())
+        collection = collection.leftOuterJoin(neighbors).flatMap {
+          case (v, ((), None)) => Iterator(v -> ())
+          case (v, ((), Some(neighbor))) => Iterator(v -> (), neighbor -> ())
         }.distinct.partitionBy(vsPart)
       }
       collection
