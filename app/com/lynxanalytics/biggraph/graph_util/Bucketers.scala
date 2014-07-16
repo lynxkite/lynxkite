@@ -85,5 +85,11 @@ case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
 case class LongBucketer(min: Long, max: Long, numBuckets: Int)
     extends NumericBucketer[Long](min, max, numBuckets) {
   @transient lazy val tt = typeTag[Long]
-  val labelType = "between"
+  val labelType = if ((max - min) / numBuckets == 0) "bucket" else "between"
+  override def bucketLabels: Seq[String] = {
+    if ((max - min) / numBuckets == 0)
+      fmt"$min" +: bounds.map(x => fmt"$x")
+    else
+      fmt"$min" +: bounds.map(x => fmt"$x") :+ fmt"$max"
+  }
 }
