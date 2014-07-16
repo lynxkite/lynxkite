@@ -45,8 +45,7 @@ case class SampledView(
           case (v, ((), neighbor)) => Iterator(v -> (), neighbor -> ())
         }.distinct.partitionBy(vsPart)
       }
-      collection.cache
-      if (collection.count > 0) collection else itself
+      collection
     } else {
       itself
     }
