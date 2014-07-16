@@ -27,7 +27,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
     this.root = svg.create('g', {'class': 'root'});
-    this.zoom = 500 / 2; // todo: replace 500 with the actual svg height
+    this.zoom = 500 * 0.67; // todo: replace 500 with the actual svg height
     this.root.append([this.edges, this.vertices]);
     this.svg.append(this.root);
   }
@@ -95,31 +95,12 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
     var vertices = [];
-    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
-    var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
-    var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
-    // distance between neighboring vertices
-    var xStep = this.zoom / Math.max(xb.span, 1);
-    var yStep = this.zoom / Math.max(yb.span, 1);
     var xLabels = [], yLabels = [];
     var i, x, y, l, side;
     var labelSpace = 50;
     y = yOff + this.zoom * 0.5 + labelSpace;
-    // offset numeric bucket labels by half step to show them at the bucket borders
     for (i = 0; i < data.xLabels.length; ++i) {
-      // put 'between' labels between the middle point of buckets, except for the first and last
-      if (data.xLabelType === 'between') {
-        if (i === 0) {
-          x = xOff - this.zoom * 0.5 - labelSpace / 2;
-        } else if (i === data.xLabels.length - 1) {
-          x = xOff + this.zoom * 0.5 + labelSpace / 2;
-        } else {
-          x = xOff + this.zoom * util.normalize(i, xb) - xStep / 2;
-        }
-      } else {
-        x = xOff + this.zoom * util.normalize(i, xb);
-      }
-                  
+      x = xOff + this.zoom * util.normalize(i, data.xLabels.length - 1);
       l = new Label(x, y, data.xLabels[i]);
       xLabels.push(l);
       this.vertices.append(l.dom);
@@ -133,27 +114,21 @@ angular.module('biggraph').directive('graphView', function($window) {
       side = 'right';
     }
     for (i = 0; i < data.yLabels.length; ++i) {
-      // put 'between' labels between the middle point of buckets, except for the first and last
-      if (data.yLabelType === 'between') {
-        if (i === 0) {
-          y = yOff - this.zoom * 0.5 - labelSpace / 2;
-        } else if (i === data.yLabels.length - 1) {
-          y = yOff + this.zoom * 0.5 + labelSpace / 2;
-        } else {
-          y = yOff + this.zoom * util.normalize(i, yb) - yStep / 2;
-        }
-      } else {
-        y = yOff + this.zoom * util.normalize(i, yb);
-      }
-      
+      y = yOff + this.zoom * util.normalize(i, data.yLabels.length - 1);
       l = new Label(x, y, data.yLabels[i], side);
       yLabels.push(l);
       this.vertices.append(l.dom);
     }
+    // offset vertices by a half label step if label type is 'between'
+    var xBetween =
+      (data.xLabelType === 'between' && data.xLabels.length > 2) ? (this.zoom / (data.xLabels.length - 1)) / 2 : 0;
+    var yBetween =
+      (data.yLabelType === 'between' && data.yLabels.length > 2) ? (this.zoom / (data.yLabels.length - 1)) / 2 : 0;
+    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
     for (i = 0; i < data.vertices.length; ++i) {
-      var vertex = data.vertices[i];
-      var v = new Vertex(xOff + this.zoom * util.normalize(vertex.x, xb),
-                         yOff + this.zoom * util.normalize(vertex.y, yb),
+      var vertex = data.vertices[i];      
+      var v = new Vertex(xOff + xBetween + this.zoom * (vertex.x / (data.xLabels.length - 1) - 0.5),
+                         yOff + yBetween + this.zoom * (vertex.y / (data.yLabels.length - 1) - 0.5),
                          Math.sqrt(vertexScale * vertex.size),
                          vertex.size);
       vertices.push(v);
