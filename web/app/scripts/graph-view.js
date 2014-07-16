@@ -27,7 +27,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
     this.root = svg.create('g', {'class': 'root'});
-    this.zoom = this.svg.height() * 0.8 / 2; // to avoid putting labels in 2 bucket mode too close to the bottom or top
+    this.zoom = 500 / 2; // todo: replace 500 with the actual svg height
     this.root.append([this.edges, this.vertices]);
     this.svg.append(this.root);
   }
@@ -45,7 +45,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (var i = 0; i < n; ++i) {
       var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
-      var yOff = this.svg.height() / 2;
+      var yOff = 500 / 2; // todo: replace 500 with the actual svg height
       var vs = data.vertexSets[i];
       if (vs.mode === 'sampled') {
         vertices.push(this.addSampledVertices(vs, xOff, yOff, sides[i]));
@@ -98,38 +98,54 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
-    var numXBuckets = Math.max(xb.span, 1);
-    var numYBuckets = Math.max(yb.span, 1);
-    // distance between neighboring vertices (grid size)
-    var xStep = this.zoom / numXBuckets;
-    var yStep = this.zoom / numYBuckets;
-    // the only non-numeric label type is the string label
-    var isXNumeric = data.xLabelType !== 'string';
-    var isYNumeric = data.yLabelType !== 'string';    
+    // distance between neighboring vertices
+    var xStep = this.zoom / Math.max(xb.span, 1);
+    var yStep = this.zoom / Math.max(yb.span, 1);
     var xLabels = [], yLabels = [];
     var i, x, y, l, side;
-    var labelSpace = 20;
-    y = yOff + this.zoom * 0.5 + Math.max(60, yStep / 2 + labelSpace);
-    var xLabelSpace = Math.max(60, xStep / 2 + labelSpace);
+    var labelSpace = 50;
+    y = yOff + this.zoom * 0.5 + labelSpace;
     // offset numeric bucket labels by half step to show them at the bucket borders
-    var xbOff = (isXNumeric) ? xOff - xStep / 2 : xOff;
-    var ybOff = (isYNumeric) ? yOff - yStep / 2 : yOff;
     for (i = 0; i < data.xLabels.length; ++i) {
-      x = xbOff + this.zoom * util.normalize(i, xb);
+      // put 'between' labels between the middle point of buckets, except for the first and last
+      if (data.xLabelType === 'between') {
+        if (i === 0) {
+          x = xOff - this.zoom * 0.5 - labelSpace / 2;
+        } else if (i === data.xLabels.length - 1) {
+          x = xOff + this.zoom * 0.5 + labelSpace / 2;
+        } else {
+          x = xOff + this.zoom * util.normalize(i, xb) - xStep / 2;
+        }
+      } else {
+        x = xOff + this.zoom * util.normalize(i, xb);
+      }
+                  
       l = new Label(x, y, data.xLabels[i]);
       xLabels.push(l);
       this.vertices.append(l.dom);
     }
     // Labels on the left on the left and on the right on the right.
     if (xOff < this.svg.width() / 2) {
-      x = xOff + this.zoom * -0.5 - xLabelSpace;
+      x = xOff - this.zoom * 0.5 - labelSpace;
       side = 'left';
     } else {
-      x = xOff + this.zoom * 0.5 + xLabelSpace;
+      x = xOff + this.zoom * 0.5 + labelSpace;
       side = 'right';
     }
     for (i = 0; i < data.yLabels.length; ++i) {
-      y = ybOff + this.zoom * util.normalize(i, yb);
+      // put 'between' labels between the middle point of buckets, except for the first and last
+      if (data.yLabelType === 'between') {
+        if (i === 0) {
+          y = yOff - this.zoom * 0.5 - labelSpace / 2;
+        } else if (i === data.yLabels.length - 1) {
+          y = yOff + this.zoom * 0.5 + labelSpace / 2;
+        } else {
+          y = yOff + this.zoom * util.normalize(i, yb) - yStep / 2;
+        }
+      } else {
+        y = yOff + this.zoom * util.normalize(i, yb);
+      }
+      
       l = new Label(x, y, data.yLabels[i], side);
       yLabels.push(l);
       this.vertices.append(l.dom);
@@ -147,11 +163,11 @@ angular.module('biggraph').directive('graphView', function($window) {
       this.vertices.append(v.dom);
       if (xLabels.length !== 0) {
         v.addHoverListener(xLabels[vertex.x]);
-        if (isXNumeric) { v.addHoverListener(xLabels[vertex.x + 1]); }
+        if (data.xLabelType === 'between') { v.addHoverListener(xLabels[vertex.x + 1]); }
       }
       if (yLabels.length !== 0) {
         v.addHoverListener(yLabels[vertex.y]);
-        if (isYNumeric) { v.addHoverListener(yLabels[vertex.y + 1]); }
+        if (data.yLabelType === 'between') { v.addHoverListener(yLabels[vertex.y + 1]); }
       }
     }
     return vertices;
@@ -176,7 +192,7 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   function Label(x, y, text, side) {
-    var labelClass = (typeof side !== 'undefined') ? 'bucket ' + side : 'bucket';
+    var labelClass = 'bucket ' + (side || '');
     this.dom = svg.create('text', {'class': labelClass, x: x, y: y}).text(text);
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
