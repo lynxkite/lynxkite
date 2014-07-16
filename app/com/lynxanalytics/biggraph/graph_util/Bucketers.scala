@@ -11,6 +11,7 @@ trait Bucketer[T] extends Serializable {
   val numBuckets: Int
   def whichBucket(value: T): Int
   def bucketLabels: Seq[String]
+  def labelType: String
 }
 
 case class EmptyBucketer() extends Bucketer[Nothing] {
@@ -18,6 +19,7 @@ case class EmptyBucketer() extends Bucketer[Nothing] {
   val numBuckets = 1
   def whichBucket(value: Nothing) = ???
   def bucketLabels: Seq[String] = Seq("")
+  def labelType = ""
 }
 
 abstract class EnumBucketer[T](options: Seq[T], hasOther: Boolean) extends Bucketer[T] {
@@ -73,12 +75,15 @@ abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
     extends EnumBucketer[String](options, hasOther) {
   @transient lazy val tt = typeTag[String]
+  val labelType = "string"
 }
 case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
     extends FractionalBucketer[Double](min, max, numBuckets) {
   @transient lazy val tt = typeTag[Double]
+  val labelType = "double"
 }
 case class LongBucketer(min: Long, max: Long, numBuckets: Int)
     extends NumericBucketer[Long](min, max, numBuckets) {
   @transient lazy val tt = typeTag[Long]
+  val labelType = "long"
 }
