@@ -26,8 +26,11 @@ class VertexBucketerTest extends FunSuite {
     fb = DoubleBucketer(0.2, 0.9, 7)
     assert(fb.bounds == Seq(0.3, 0.4, 0.5, 0.6, 0.7, 0.8))
   }
-  test("Bucketing numberic labels are wonderful") {
+  test("Bucketing numeric labels are wonderful") {
     assert(LongBucketer(1, 8, 3).bucketLabels == Seq("1", "4", "7", "8"))
+  }
+  test("Bucketing long labels by integer division") {
+    assert(LongBucketer(0, 4, 5).bucketLabels == Seq("0", "1", "2", "3", "4"))
   }
   test("Bucketing string labels are wonderful too") {
     assert(StringBucketer(Seq("adam", "eve", "george"), hasOther = true).bucketLabels
