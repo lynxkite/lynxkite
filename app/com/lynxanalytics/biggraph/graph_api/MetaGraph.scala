@@ -121,6 +121,12 @@ trait EntityTemplate[T <: MetaGraphEntity] {
   def set(target: MetaDataSet, entity: T): MetaDataSet
   def entity(implicit instance: MetaGraphOperationInstance): T
 }
+object EntityTemplate {
+  import scala.language.implicitConversions
+  implicit def unpackTemplate[T <: MetaGraphEntity](
+    template: EntityTemplate[T])(
+      implicit instance: MetaGraphOperationInstance): T = template.entity
+}
 
 abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
   abstract class ET[T <: MetaGraphEntity] extends EntityTemplate[T] {
@@ -219,6 +225,12 @@ trait MetaDataSetProvider {
 trait EntityContainer[T <: MetaGraphEntity] {
   def entity: T
 }
+object EntityContainer {
+  implicit class TrivialContainer[T <: MetaGraphEntity](val entity: T) extends EntityContainer[T]
+  import scala.language.implicitConversions
+  implicit def unpackContainer[T <: MetaGraphEntity](container: EntityContainer[T]): T =
+    container.entity
+}
 
 abstract class MagicOutput(instance: MetaGraphOperationInstance)
     extends MetaDataSetProvider with FieldNaming {
@@ -227,7 +239,6 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
     lazy val entity = entityConstructor(name)
     placeholders += this
   }
-  implicit class TrivialContainer[T <: MetaGraphEntity](val entity: T) extends EntityContainer[T]
   def vertexSet = new P(VertexSet(instance, _))
   def edgeBundle(src: EntityContainer[VertexSet], dst: EntityContainer[VertexSet]) =
     new P(EdgeBundle(instance, _, src, dst))
@@ -279,8 +290,6 @@ trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider
     outputMeta: OMDS,
     output: OutputBuilder,
     rc: RuntimeContext): Unit
-
-  def builder = new InstanceBuilder(this)
 }
 
 /*
