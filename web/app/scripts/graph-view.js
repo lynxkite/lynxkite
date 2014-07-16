@@ -102,11 +102,11 @@ angular.module('biggraph').directive('graphView', function($window) {
     var numYBuckets = Math.max(yb.span, 1);
     // distance between neighboring vertices (grid size)
     var xStep = this.zoom / numXBuckets;
-    var yStep = this.zoom / numYBuckets;    
-    // numeric buckets have +1 bucket label compared to the number of buckets
-    var isXNumeric = numXBuckets + 2 === data.xBuckets.length;
-    var isYNumeric = numYBuckets + 2 === data.yBuckets.length;
-    var xBuckets = [], yBuckets = [];
+    var yStep = this.zoom / numYBuckets;
+    // the only non-numeric label type is the string label
+    var isXNumeric = data.xLabelType !== 'string';
+    var isYNumeric = data.yLabelType !== 'string';    
+    var xLabels = [], yLabels = [];
     var i, x, y, l, side;
     var labelSpace = 20;
     y = yOff + this.zoom * 0.5 + Math.max(60, yStep / 2 + labelSpace);
@@ -114,10 +114,10 @@ angular.module('biggraph').directive('graphView', function($window) {
     // offset numeric bucket labels by half step to show them at the bucket borders
     var xbOff = (isXNumeric) ? xOff - xStep / 2 : xOff;
     var ybOff = (isYNumeric) ? yOff - yStep / 2 : yOff;
-    for (i = 0; i < data.xBuckets.length; ++i) {
+    for (i = 0; i < data.xLabels.length; ++i) {
       x = xbOff + this.zoom * util.normalize(i, xb);
-      l = new Label(x, y, data.xBuckets[i]);
-      xBuckets.push(l);
+      l = new Label(x, y, data.xLabels[i]);
+      xLabels.push(l);
       this.vertices.append(l.dom);
     }
     // Labels on the left on the left and on the right on the right.
@@ -128,10 +128,10 @@ angular.module('biggraph').directive('graphView', function($window) {
       x = xOff + this.zoom * 0.5 + xLabelSpace;
       side = 'right';
     }
-    for (i = 0; i < data.yBuckets.length; ++i) {
+    for (i = 0; i < data.yLabels.length; ++i) {
       y = ybOff + this.zoom * util.normalize(i, yb);
-      l = new Label(x, y, data.yBuckets[i], side);
-      yBuckets.push(l);
+      l = new Label(x, y, data.yLabels[i], side);
+      yLabels.push(l);
       this.vertices.append(l.dom);
     }
     for (i = 0; i < data.vertices.length; ++i) {
@@ -145,13 +145,13 @@ angular.module('biggraph').directive('graphView', function($window) {
         continue;
       }
       this.vertices.append(v.dom);
-      if (xBuckets.length !== 0) {
-        v.addHoverListener(xBuckets[vertex.x]);
-        if (isXNumeric) { v.addHoverListener(xBuckets[vertex.x + 1]); }
+      if (xLabels.length !== 0) {
+        v.addHoverListener(xLabels[vertex.x]);
+        if (isXNumeric) { v.addHoverListener(xLabels[vertex.x + 1]); }
       }
-      if (yBuckets.length !== 0) {
-        v.addHoverListener(yBuckets[vertex.y]);
-        if (isYNumeric) { v.addHoverListener(yBuckets[vertex.y + 1]); }
+      if (yLabels.length !== 0) {
+        v.addHoverListener(yLabels[vertex.y]);
+        if (isYNumeric) { v.addHoverListener(yLabels[vertex.y + 1]); }
       }
     }
     return vertices;
