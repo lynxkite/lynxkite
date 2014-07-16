@@ -49,8 +49,10 @@ case class VertexDiagramResponse(
   val mode: String, // as specified in the request
 
   // ** Only set for bucketed view **
-  val xBuckets: Seq[String] = Seq(),
-  val yBuckets: Seq[String] = Seq())
+  val xLabelType: String = "",
+  val yLabelType: String = "",
+  val xLabels: Seq[String] = Seq(),
+  val yLabels: Seq[String] = Seq())
 
 case class EdgeDiagramSpec(
   // In the context of an FEGraphRequest "idx[4]" means the diagram requested by vertexSets(4).
@@ -194,8 +196,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices,
       mode = "bucketed",
-      xBuckets = xBucketer.bucketLabels,
-      yBuckets = yBucketer.bucketLabels)
+      xLabelType = xBucketer.labelType,
+      yLabelType = yBucketer.labelType,
+      xLabels = xBucketer.bucketLabels,
+      yLabels = yBucketer.bucketLabels)
   }
 
   private def getCompositeBundle(steps: Seq[BundleSequenceStep]): EdgeAttribute[Double] = {

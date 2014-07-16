@@ -12,11 +12,22 @@ var COMMON_UTIL = {
     return {min: min, max: max, span: max - min};
   },
 
+  // normalization between [-0.5,0.5]
   normalize: function(x, minmax) {
-    if (minmax.span > 0) {
-      return (x - minmax.min) / minmax.span - 0.5;
+    if (minmax.span) {
+      // normalize minmax object
+      if (minmax.span > 0) {
+        return (x - minmax.min) / minmax.span - 0.5;
+      } else {
+        return 0.0;
+      }
     } else {
-      return 0.0;
+      // normalize single number
+      if (minmax > 0) {
+        return x / minmax - 0.5;
+      } else {
+        return 0.0; 
+      }
     }
   },
 };
