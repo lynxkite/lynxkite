@@ -15,8 +15,7 @@ angular.module('biggraph').directive('histogram', function() {
           if (v.size > max) { max = v.size; }
         }
         scope.max = max;
-        // the only non-numeric label type is the string label
-        if (model.xLabelType !== 'string') {
+        if (model.xLabelType === 'between') {
           var histoLabels = [];
           for (var j = 1; j < model.xLabels.length; ++j) {
             histoLabels[j-1] = model.xLabels[j-1] + '-' + model.xLabels[j];

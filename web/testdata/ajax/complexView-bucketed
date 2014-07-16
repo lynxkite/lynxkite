@@ -1,14 +1,14 @@
 {
   "vertexSets": [{
     "vertices": [{"x":0,"y":0,"size":110},{"x":0,"y":1,"size":157},{"x":0,"y":2,"size":2},{"x":0,"y":3,"size":0},{"x":1,"y":0,"size":67},{"x":1,"y":1,"size":299},{"x":1,"y":2,"size":137},{"x":1,"y":3,"size":21},{"x":2,"y":0,"size":27},{"x":2,"y":1,"size":119},{"x":2,"y":2,"size":43},{"x":2,"y":3,"size":4},{"x":3,"y":0,"size":11},{"x":3,"y":1,"size":3},{"x":3,"y":2,"size":0},{"x":3,"y":3,"size":0}],
-    "xLabelType": "long",
-    "yLabelType": "string",
+    "xLabelType": "between",
+    "yLabelType": "bucket",
     "xLabels": ["6", "24", "42", "60", "78"],
     "yLabels": ["blue", "red", "pink", "red"]
   }, {
     "vertices": [{"x":0,"y":0,"size":110},{"x":0,"y":1,"size":157},{"x":0,"y":2,"size":2},{"x":0,"y":3,"size":0},{"x":1,"y":0,"size":67},{"x":1,"y":1,"size":299},{"x":1,"y":2,"size":137},{"x":1,"y":3,"size":21},{"x":2,"y":0,"size":27},{"x":2,"y":1,"size":119},{"x":2,"y":2,"size":43},{"x":2,"y":3,"size":4},{"x":3,"y":0,"size":11},{"x":3,"y":1,"size":3},{"x":3,"y":2,"size":0},{"x":3,"y":3,"size":0}],
-    "xLabelType": "string",
-    "yLabelType": "long",
+    "xLabelType": "bucket",
+    "yLabelType": "between",
     "xLabels": ["blue", "red", "pink", "red"],
     "yLabels": ["1000", "10000", "50000", "75000", "100000"]
   }],

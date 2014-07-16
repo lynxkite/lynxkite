@@ -75,15 +75,15 @@ abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
     extends EnumBucketer[String](options, hasOther) {
   @transient lazy val tt = typeTag[String]
-  val labelType = "string"
+  val labelType = "bucket"
 }
 case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
     extends FractionalBucketer[Double](min, max, numBuckets) {
   @transient lazy val tt = typeTag[Double]
-  val labelType = "double"
+  val labelType = "between"
 }
 case class LongBucketer(min: Long, max: Long, numBuckets: Int)
     extends NumericBucketer[Long](min, max, numBuckets) {
   @transient lazy val tt = typeTag[Long]
-  val labelType = "long"
+  val labelType = if ((max - min) / numBuckets == 0) "bucket" else "between"
 }
