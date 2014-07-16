@@ -301,11 +301,17 @@ angular.module('biggraph')
       $scope.state.leftToRightPath = [];
       side.other.setVS(side.data.id);
     };
+    
+    $scope.left.setState = function(state) {
+      $scope.state.left = state($scope.state.left);
+    };
+    $scope.right.setState = function(state) {
+      $scope.state.right = state($scope.state.right);
+    };
 
     $scope.close = function(side) {
-      $scope.removePath();
-      side.state().graphMode = undefined;
-      side.state().vs = undefined;
+      $scope.removePath();      
+      side.setState(defaultSideState);
     };
 
     function setNewVS(side) {
