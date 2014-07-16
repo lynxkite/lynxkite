@@ -69,3 +69,10 @@ svg .bucket {
 svg .bucket.highlight {
   fill: white;
 }
+
+svg .loading {
+  fill: #444;
+}
+svg .error {
+  font-size: 20px;
+}

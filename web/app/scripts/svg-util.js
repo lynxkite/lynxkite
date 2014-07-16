@@ -84,7 +84,9 @@ var SVG_UTIL = {
   create: function(tag, attrs) {
     var e = angular.element(document.createElementNS('http://www.w3.org/2000/svg', tag));
     if (attrs !== undefined) {
-      e.attr(attrs);
+      for (var k in attrs) {
+        e[0].setAttributeNS(null, k, attrs[k]);
+      }
     }
     return e;
   },
