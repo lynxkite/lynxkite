@@ -140,7 +140,10 @@ angular.module('biggraph')
           bundleSequence: bundles,
         });
       }
-      $scope.graphView = $resource('/ajax/complexView').get({ q: q });
+      var req = $resource('/ajax/complexView').get({ q: q }, function() {}, function(failure) {
+        req.error = 'Request failed: ' + failure.data;
+      });
+      $scope.graphView = req;
     }
     $scope.showGraph = function() {
       return $scope.state.left.graphMode || $scope.state.right.graphMode;

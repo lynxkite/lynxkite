@@ -11,7 +11,11 @@ angular.module('biggraph').directive('graphView', function($window) {
       link: function(scope, element) {
         var gv = new GraphView(scope, element);
         function updateGraph() {
-          if (scope.ngModel !== undefined && scope.ngModel.$resolved) {
+          if (scope.ngModel === undefined || !scope.ngModel.$resolved) {
+            gv.loading();
+          } else if (scope.ngModel.error) {
+            gv.error(scope.ngModel.error);
+          } else {
             gv.update(scope.ngModel);
           }
         }
@@ -24,20 +28,48 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.scope = scope;
     this.svg = angular.element(element);
     this.svg.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
-    this.edges = svg.create('g', {'class': 'edges'});
-    this.vertices = svg.create('g', {'class': 'nodes'});
     this.root = svg.create('g', {'class': 'root'});
     this.zoom = 250;
-    this.root.append([this.edges, this.vertices]);
     this.svg.append(this.root);
   }
+
+  GraphView.prototype.loading = function() {
+    this.root.empty();
+    var x = this.svg.width() / 2, y = 250;
+    var w = 5000, h = 500;
+    var loading = svg.create('rect', {'class': 'loading', width: w, height: h, x: x - w/2, y: y - h/2});
+    var anchor = ' ' + x + ' ' + y;
+    var rotate = svg.create('animateTransform', {
+      attributeName: 'transform',
+      type: 'rotate',
+      from: '0' + anchor,
+      to: '360' + anchor,
+      dur: '3s',
+      repeatCount: 'indefinite',
+    });
+    loading.append(rotate);
+    this.root.append(loading);
+  };
+
+  GraphView.prototype.error = function(msg) {
+    this.root.empty();
+    var x = this.svg.width() / 2, y = 250;
+    var text = svg.create('text', {'class': 'error', x: x, y: y, 'text-anchor': 'middle'});
+    var maxLength = 100;  // The error message can be very long and SVG does not wrap text.
+    for (var i = 0; i < msg.length; i += maxLength) {
+      text.append(svg.create('tspan', {x: x, dy: 30}).text(msg.substring(i, i + maxLength)));
+    }
+    this.root.append(text);
+  };
 
   GraphView.prototype.update = function(data) {
     var sides = [];
     if (this.scope.state.left.graphMode !== undefined) { sides.push(this.scope.state.left); }
     if (this.scope.state.right.graphMode !== undefined) { sides.push(this.scope.state.right); }
-    this.vertices.empty();
-    this.edges.empty();
+    this.root.empty();
+    this.edges = svg.create('g', {'class': 'edges'});
+    this.vertices = svg.create('g', {'class': 'nodes'});
+    this.root.append([this.edges, this.vertices]);
     var vertices = [];
     var n = data.vertexSets.length;
     if (n !== sides.length) {
