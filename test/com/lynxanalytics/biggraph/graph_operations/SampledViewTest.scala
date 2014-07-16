@@ -27,4 +27,13 @@ class SampledViewTest extends FunSuite with TestGraphOp {
     assert(view.sample.rdd.keys.collect.toSet == Set(0, 1, 2))
     assert(view.feIdxs.rdd.collect.toMap == Map(0 -> 0, 1 -> 1, 2 -> 2))
   }
+
+  test("sample center has no edges") {
+    val eg = ExampleGraph()().result
+    val op = SampledView(center = "3", radius = 1, hasEdges = true, hasSizes = false, hasLabels = true)
+    val view = op(op.vertices, eg.vertices)(op.edges, eg.edges)(op.labelAttr, eg.name).result
+    assert(view.svVertices.value == Seq(SampledViewVertex(3, 1.0, "Isolated Joe")))
+    assert(view.sample.rdd.keys.collect.toSet == Set(3))
+    assert(view.feIdxs.rdd.collect.toMap == Map(3 -> 0))
+  }
 }
