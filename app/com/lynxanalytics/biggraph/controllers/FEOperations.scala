@@ -81,10 +81,10 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
         graph_operations.Javascript(params("filter")))
       val src = params("src")
       val dst = params("dst")
-      manager.show(params("id-type") match {
-        case "number" => graph_operations.ImportEdgeListWithNumericIDs(csv, src, dst)
-        case "string" => graph_operations.ImportEdgeListWithStringIDs(csv, src, dst)
-      })
+      params("id-type") match {
+        case "number" => manager.show(graph_operations.ImportEdgeListWithNumericIDs(csv, src, dst))
+        case "string" => manager.show(graph_operations.ImportEdgeListWithStringIDs(csv, src, dst))
+      }
       FEStatus.success
     }
   }
