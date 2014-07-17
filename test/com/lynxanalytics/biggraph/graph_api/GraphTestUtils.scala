@@ -109,21 +109,31 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
   implicit val dataManager = cleanDataManager
 }
 
-case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
-  def signature = newSignature.outputGraph('vs, 'es)
+object SmallTestGraph {
+  class Input extends MagicInputSignature {
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val (vs, es) = graph
+  }
+}
+case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
+    extends TypedMetaGraphOp[SmallTestGraph.Input, SmallTestGraph.Output] {
+  import SmallTestGraph._
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    outputs.putVertexSet(
-      'vs,
+    output(
+      o.vs,
       sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
         .partitionBy(rc.onePartitionPartitioner))
 
     val nodePairs = edgeLists.toSeq.flatMap {
       case (i, es) => es.map(e => i -> e)
     }
-    outputs.putEdgeBundle(
-      'es,
+    output(
+      o.es,
       sc.parallelize(nodePairs.zipWithIndex.map {
         case ((a, b), i) => i.toLong -> Edge(a, b)
       })
