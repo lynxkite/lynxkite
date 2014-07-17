@@ -92,7 +92,7 @@ case class FEGraphRespone(
   edgeBundles: Seq[EdgeDiagramResponse])
 
 class GraphDrawingController(env: BigGraphEnvironment) {
-  val metaManager = env.metaGraphManager
+  implicit val metaManager = env.metaGraphManager
   val dataManager = env.dataManager
 
   import graph_operations.SampledVertexAttribute.sampleAttribute
@@ -263,14 +263,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     inst.operation.asInstanceOf[graph_operations.VertexBucketGrid[_, _]].yBucketer.numBuckets
   }
 
-  private def mappedAttribute(mapping: VertexAttribute[Array[ID]],
-                              attr: VertexAttribute[Int],
-                              target: EdgeBundle): EdgeAttribute[Int] =
-    metaManager.apply(
-      new graph_operations.VertexToEdgeAttribute[Int](),
-      'mapping -> mapping,
-      'original -> attr,
-      'target -> target).outputs.edgeAttributes('mappedAttribute).runtimeSafeCast[Int]
+  private def mappedAttribute[T](mapping: VertexAttribute[Array[ID]],
+                                 attr: VertexAttribute[T],
+                                 target: EdgeBundle): EdgeAttribute[T] = {
+    import com.lynxanalytics.biggraph.graph_api.Scripting._
+    val op = new graph_operations.VertexToEdgeAttribute[T]()
+    op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
+  }
 
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
