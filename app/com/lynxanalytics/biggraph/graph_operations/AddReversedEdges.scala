@@ -4,14 +4,28 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 import com.lynxanalytics.biggraph.graph_api._
 
-case class AddReversedEdges() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputGraph('vs, 'es)
-    .outputEdgeBundle('esPlus, 'vs -> 'vs)
+object AddReversedEdges {
+  class Input extends MagicInputSignature {
+    val (vs, es) = graph
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    val esPlus = edgeBundle(inputs.vs.entity, inputs.vs.entity)
+  }
+}
+import AddReversedEdges._
+case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {
+  @transient override lazy val inputs = new Input()
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val es = inputs.edgeBundles('es).rdd
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val es = inputs.es.rdd
     val esPlus = es.values.flatMap(e => Iterator(e, Edge(e.dst, e.src)))
-    outputs.putEdgeBundle('esPlus, esPlus.fastNumbered(es.partitioner.get))
+    output(o.esPlus, esPlus.fastNumbered(es.partitioner.get))
   }
 }
