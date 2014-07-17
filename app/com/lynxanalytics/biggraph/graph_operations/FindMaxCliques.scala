@@ -69,6 +69,8 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
     return target
   }
 
+  override val isHeavy = true
+
   /*
    * BK implementation, see:
    * http://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm P and X are

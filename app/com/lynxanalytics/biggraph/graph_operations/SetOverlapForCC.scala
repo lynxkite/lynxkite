@@ -112,6 +112,8 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
     }
     res
   }
+
+  override val isHeavy = true
 }
 
 case class UniformOverlapForCC(overlapSize: Int) extends SetOverlapForCC {

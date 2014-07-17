@@ -37,4 +37,6 @@ case class EdgeGraph() extends MetaGraphOperation {
     // Just to connect to the results.
     outputs.putEdgeBundle('link, sc.emptyRDD[(ID, Edge)].partitionBy(edgePartitioner))
   }
+
+  override val isHeavy = true
 }

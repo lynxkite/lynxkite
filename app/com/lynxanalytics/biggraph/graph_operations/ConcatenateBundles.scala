@@ -52,4 +52,6 @@ case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {
     output(o.edgesAC, numberedAC.mapValues { case (edge, weight) => edge })
     output(o.weightsAC, numberedAC.mapValues { case (edge, weight) => weight })
   }
+
+  override val isHeavy = true
 }

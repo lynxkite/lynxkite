@@ -277,6 +277,8 @@ trait MetaGraphOp extends Serializable {
     def get(param: MethodSymbol) = mirror.reflectField(param).get
     StringStruct(className, params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
   }
+
+  val isHeavy: Boolean = false
 }
 
 trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]

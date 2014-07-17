@@ -65,4 +65,6 @@ case class PageRank(dampingFactor: Double,
     }
     output(o.pagerank, pageRank)
   }
+
+  override val isHeavy = true
 }

@@ -148,4 +148,6 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends
 
     graphRDD.sparkContext.parallelize(components.toSeq).partitionBy(graphRDD.partitioner.get)
   }
+
+  override val isHeavy = true
 }
