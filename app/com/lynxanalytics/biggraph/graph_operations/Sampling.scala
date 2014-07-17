@@ -4,7 +4,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class VertexSample(fraction: Double) extends MetaGraphOperation {
   def signature = newSignature

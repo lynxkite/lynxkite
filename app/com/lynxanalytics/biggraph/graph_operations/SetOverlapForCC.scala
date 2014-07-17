@@ -9,7 +9,7 @@ import scala.math
 import com.lynxanalytics.biggraph.graph_api._
 
 import org.apache.spark.rdd._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 abstract class SetOverlapForCC extends MetaGraphOperation {
   def signature = newSignature
