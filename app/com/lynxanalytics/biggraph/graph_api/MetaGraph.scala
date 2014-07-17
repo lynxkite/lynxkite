@@ -234,23 +234,25 @@ object EntityContainer {
 
 abstract class MagicOutput(instance: MetaGraphOperationInstance)
     extends MetaDataSetProvider with FieldNaming {
-  class P[T <: MetaGraphEntity](entityConstructor: Symbol => T) extends EntityContainer[T] {
-    lazy val name: Symbol = naming.get(this)
+  class P[T <: MetaGraphEntity](entityConstructor: Symbol => T, nameOpt: Option[Symbol]) extends EntityContainer[T] {
+    lazy val name: Symbol = nameOpt.getOrElse(naming.get(this))
     lazy val entity = entityConstructor(name)
     placeholders += this
   }
-  def vertexSet = new P(VertexSet(instance, _))
-  def edgeBundle(src: EntityContainer[VertexSet], dst: EntityContainer[VertexSet]) =
-    new P(EdgeBundle(instance, _, src, dst))
+  def vertexSet = new P(VertexSet(instance, _), None)
+  def vertexSet(name: Symbol) = new P(VertexSet(instance, _), Some(name))
+  def edgeBundle(src: EntityContainer[VertexSet], dst: EntityContainer[VertexSet], name: Symbol = null) =
+    new P(EdgeBundle(instance, _, src, dst), Option(name))
   def graph = {
     val v = vertexSet
     (v, edgeBundle(v, v))
   }
-  def vertexAttribute[T: TypeTag](vs: EntityContainer[VertexSet]) =
-    new P(VertexAttribute[T](instance, _, vs))
-  def edgeAttribute[T: TypeTag](eb: EntityContainer[EdgeBundle]) =
-    new P(EdgeAttribute[T](instance, _, eb))
-  def scalar[T: TypeTag] = new P(Scalar[T](instance, _))
+  def vertexAttribute[T: TypeTag](vs: EntityContainer[VertexSet], name: Symbol = null) =
+    new P(VertexAttribute[T](instance, _, vs), Option(name))
+  def edgeAttribute[T: TypeTag](eb: EntityContainer[EdgeBundle], name: Symbol = null) =
+    new P(EdgeAttribute[T](instance, _, eb), Option(name))
+  def scalar[T: TypeTag] = new P(Scalar[T](instance, _), None)
+  def scalar[T: TypeTag](name: Symbol) = new P(Scalar[T](instance, _), Some(name))
 
   private val placeholders = mutable.Buffer[P[_ <: MetaGraphEntity]]()
 
