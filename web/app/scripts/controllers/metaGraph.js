@@ -89,9 +89,9 @@ angular.module('biggraph')
     $scope.deepWatch('state', loadGraphView);
     function loadGraphView() {
       if (!$scope.showGraph()) { return; }
-      var sides = [];
-      if ($scope.state.left.graphMode !== undefined) { sides.push($scope.state.left); }
-      if ($scope.state.right.graphMode !== undefined) { sides.push($scope.state.right); }
+      var sides = [];      
+      if ($scope.state.left.graphMode) { sides.push($scope.state.left); }
+      if ($scope.state.right.graphMode) { sides.push($scope.state.right); }
       if (sides.length === 0) { return; }
       var q = { vertexSets: [], edgeBundles: [] };
       for (var i = 0; i < sides.length; ++i) {
@@ -273,7 +273,7 @@ angular.module('biggraph')
     };
     $scope.setState = function(side, setting, value) {
       if (side.state()[setting] === value) {
-        // Clicking the same setting again turns it off.
+        // Clicking the same attribute setting again turns it off.
         delete side.state()[setting];
       } else {
         side.state()[setting] = value;
@@ -304,10 +304,17 @@ angular.module('biggraph')
       $scope.state.leftToRightPath = [];
       side.other.setVS(side.data.id);
     };
+    
+    $scope.left.setState = function(state) {
+      $scope.state.left = state($scope.state.left);
+    };
+    $scope.right.setState = function(state) {
+      $scope.state.right = state($scope.state.right);
+    };
 
     $scope.close = function(side) {
-      $scope.removePath();
-      side.state().vs = undefined;
+      $scope.removePath();      
+      side.setState(defaultSideState);
     };
 
     function setNewVS(side) {
