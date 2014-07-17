@@ -4,8 +4,14 @@ import org.apache.spark.{ Partition, TaskContext }
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
-// Each partition in "self" must be sorted by key.
-class SortedRDD[K: Ordering, V] private[spark_util] (val self: RDD[(K, V)]) extends RDD[(K, V)](self) {
+object SortedRDD {
+  // Creates a SortedRDD from an unsorted RDD.
+  def apply[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
+    new SortedRDD(rdd.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true))
+}
+
+// An RDD with each partition sorted by the key. "self" must already be sorted.
+class SortedRDD[K: Ordering, V] (self: RDD[(K, V)]) extends RDD[(K, V)](self) {
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
@@ -52,10 +58,4 @@ class SortedRDD[K: Ordering, V] private[spark_util] (val self: RDD[(K, V)]) exte
     }, preservesPartitioning = true)
     return new SortedRDD(distinct)
   }
-}
-
-object SortedRDD {
-  // Use this to create a SortedRDD from an unsorted RDD.
-  def apply[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
-    new SortedRDD(rdd.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true))
 }
