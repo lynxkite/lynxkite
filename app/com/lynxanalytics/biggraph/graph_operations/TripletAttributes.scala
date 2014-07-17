@@ -30,6 +30,8 @@ case class TripletMapping() extends MetaGraphOperation {
         .groupByKey(dst.partitioner.get)
         .mapValues(_.toArray))
   }
+
+  override val isHeavy = true
 }
 
 object VertexToEdgeAttribute {
@@ -73,4 +75,6 @@ case class VertexToEdgeAttribute[T]()
         .groupByKey(target.partitioner.get)
         .mapValues(values => values.head))
   }
+
+  override val isHeavy = true
 }

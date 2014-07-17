@@ -71,6 +71,8 @@ case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
       'overlap_size, numberedEdgesWithOverlaps.mapValues(_._2))
   }
 
+  override val isHeavy = true
+
   // Generates the edges for a set of sets. This is O(n^2), but the set should
   // be small.
   protected def edgesFor(prefix: Seq[ID], sets: Sets): Seq[(Edge, Int)] = {

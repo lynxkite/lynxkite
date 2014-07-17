@@ -134,6 +134,8 @@ abstract class ImportCommon(csv: CSV) extends MetaGraphOperation {
       case (field, idx) => field -> lines.map { line => line(idIdx).toLong -> line(idx) }
     }.toMap
   }
+
+  override val isHeavy = true
 }
 
 abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv) {
