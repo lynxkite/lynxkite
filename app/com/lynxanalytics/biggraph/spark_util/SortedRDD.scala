@@ -6,12 +6,16 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 object SortedRDD {
   // Creates a SortedRDD from an unsorted RDD.
-  def apply[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
+  def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
     new SortedRDD(rdd.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true))
+
+  // Wraps an already sorted RDD.
+  def fromSorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
+    new SortedRDD(rdd)
 }
 
 // An RDD with each partition sorted by the key. "self" must already be sorted.
-class SortedRDD[K: Ordering, V] (self: RDD[(K, V)]) extends RDD[(K, V)](self) {
+class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends RDD[(K, V)](self) {
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
