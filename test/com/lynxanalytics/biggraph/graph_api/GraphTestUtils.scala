@@ -12,6 +12,17 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
 
+object GraphTestUtils {
+  implicit class EdgeBundleOps[T <% EdgeBundleData](eb: T) {
+    def toSet(): Set[(Long, Long)] = {
+      eb.rdd
+        .collect
+        .map { case (id, edge) => (edge.src, edge.dst) }
+        .toSet
+    }
+  }
+}
+
 trait TestMetaGraphManager extends TestTempDir {
   def cleanMetaManager: MetaGraphManager = {
     val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
