@@ -47,8 +47,8 @@ final case class Tag(name: Symbol, parent: TagDir, gUID: UUID) extends TagPath {
   def clone(newParent: TagDir, newName: Symbol): Tag = newParent.addTag(newName, gUID)
   def followPath(names: Seq[Symbol]): Option[TagPath] =
     if (names.nonEmpty) None else Some(this)
-  def lsRec: String = fullName + " => " + gUID + "\n"
   def allTags = Seq(this)
+  def lsRec: String = fullName + " => " + gUID + "\n"
 }
 
 trait TagDir extends TagPath {
@@ -127,7 +127,7 @@ object TagRoot {
   private val tagRE = "(.*):([^:]*)".r
 }
 final case class TagRoot() extends TagDir {
-  val name = Symbol("")
+  val name = null
   val parent = null
   override val fullName: SymbolPath = new SymbolPath(Seq())
   override def isOffspringOf(other: TagPath): Boolean = (other == this)
