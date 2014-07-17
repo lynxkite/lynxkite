@@ -62,28 +62,6 @@ object Implicits {
     jumped ^ (jumped >>> 32) // Cancel out the bit flips in Long.hashCode.
   }
 
-  // Used by PairRDDUtils.zipJoin. Joins two sorted iterators.
-  private def merge[K, V](
-    bi1: collection.BufferedIterator[(K, V)],
-    bi2: collection.BufferedIterator[(K, V)])(implicit ord: Ordering[K]): Stream[(K, (V, V))] = {
-    if (bi1.hasNext && bi2.hasNext) {
-      val (k1, v1) = bi1.head
-      val (k2, v2) = bi2.head
-      if (ord.equiv(k1, k2)) {
-        bi1.next; bi2.next
-        (k1, (v1, v2)) #:: merge(bi1, bi2)
-      } else if (ord.lt(k1, k2)) {
-        bi1.next
-        merge(bi1, bi2)
-      } else {
-        bi2.next
-        merge(bi1, bi2)
-      }
-    } else {
-      Stream()
-    }
-  }
-
   implicit class RDDUtils[T: ClassTag](self: RDD[T]) {
     def numbered: RDD[(Long, T)] = {
       val localCounts = self.glom().map(_.size).collect().scan(0)(_ + _)
@@ -122,23 +100,11 @@ object Implicits {
       else withIDs.partitionBy(partitioner)
     }
 
-    // Computes and caches the RDD.
-    def cacheNow = {
-      self.cache
-      self.foreach(_ => ())
-      self
-    }
+    def calculate() = self.foreach(_ => ())
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
-    // Same as regular join(), but faster. Both RDDs must be sorted by key.
-    def zipJoin(other: RDD[(K, V)]): RDD[(K, (V, V))] = {
-      assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
-      assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
-      self.zipPartitions(other, true) { (it1, it2) => merge(it1.buffered, it2.buffered).iterator }
-    }
-
     // Sorts each partition of the RDD in isolation.
-    def sortPartitions = self.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true)
+    def sortPartitions = SortedRDD(self)
   }
 }
