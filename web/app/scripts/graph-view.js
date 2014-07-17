@@ -29,7 +29,8 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.svg = angular.element(element);
     this.svg.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
     this.root = svg.create('g', {'class': 'root'});
-    this.zoom = 250;
+    var graphToSVGRatio = 0.67;
+    this.zoom = 500 * graphToSVGRatio; // todo: replace 500 with the actual svg height
     this.svg.append(this.root);
   }
 
@@ -64,8 +65,8 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.update = function(data) {
     var sides = [];
-    if (this.scope.state.left.graphMode !== undefined) { sides.push(this.scope.state.left); }
-    if (this.scope.state.right.graphMode !== undefined) { sides.push(this.scope.state.right); }
+    if (this.scope.state.left.graphMode) { sides.push(this.scope.state.left); }
+    if (this.scope.state.right.graphMode) { sides.push(this.scope.state.right); }
     this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
@@ -77,7 +78,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (var i = 0; i < n; ++i) {
       var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
-      var yOff = 250;
+      var yOff = 500 / 2; // todo: replace 500 with the actual svg height
       var vs = data.vertexSets[i];
       if (vs.mode === 'sampled') {
         vertices.push(this.addSampledVertices(vs, xOff, yOff, sides[i]));
@@ -127,34 +128,51 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
     var vertices = [];
-    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
+    var xLabels = [], yLabels = [];
+    var i, x, y, l, side;
+    var labelSpace = 50;
+    y = yOff + this.zoom * 0.5 + labelSpace;
+    
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
-    var xBuckets = [], yBuckets = [];
-    var i, x, y, l;
-    y = yOff + this.zoom * util.normalize(yb.max, yb) + 35;
-    for (i = 0; i < data.xBuckets.length; ++i) {
-      x = xOff + this.zoom * util.normalize(i, xb);
-      l = new Label(x, y, data.xBuckets[i]);
-      xBuckets.push(l);
+    
+    var xNumBuckets = xb.span + 1;
+    var yNumBuckets = yb.span + 1;
+    
+    for (i = 0; i < data.xLabels.length; ++i) {
+      if (data.xLabelType === 'between') {
+        x = xOff + this.zoom * util.normalize(i, xNumBuckets);
+      } else {
+        x = xOff + this.zoom * util.normalize(i + 0.5, xNumBuckets);
+      }
+      l = new Label(x, y, data.xLabels[i]);
+      xLabels.push(l);
       this.vertices.append(l.dom);
     }
     // Labels on the left on the left and on the right on the right.
     if (xOff < this.svg.width() / 2) {
-      x = xOff + this.zoom * util.normalize(xb.min, xb) - 60;
+      x = xOff - this.zoom * 0.5 - labelSpace;
+      side = 'left';
     } else {
-      x = xOff + this.zoom * util.normalize(xb.max, xb) + 60;
+      x = xOff + this.zoom * 0.5 + labelSpace;
+      side = 'right';
     }
-    for (i = 0; i < data.yBuckets.length; ++i) {
-      y = yOff + this.zoom * util.normalize(i, yb);
-      l = new Label(x, y, data.yBuckets[i]);
-      yBuckets.push(l);
+    for (i = 0; i < data.yLabels.length; ++i) {
+      if (data.yLabelType === 'between') {
+        y = yOff + this.zoom * util.normalize(i, yNumBuckets);
+      } else {
+        y = yOff + this.zoom * util.normalize(i + 0.5, yNumBuckets);
+      }
+      l = new Label(x, y, data.yLabels[i], side);
+      yLabels.push(l);
       this.vertices.append(l.dom);
     }
+     
+    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
     for (i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      var v = new Vertex(xOff + this.zoom * util.normalize(vertex.x, xb),
-                         yOff + this.zoom * util.normalize(vertex.y, yb),
+      var v = new Vertex(xOff + this.zoom * util.normalize(vertex.x + 0.5, xNumBuckets),
+                         yOff + this.zoom * util.normalize(vertex.y + 0.5, yNumBuckets),
                          Math.sqrt(vertexScale * vertex.size),
                          vertex.size);
       vertices.push(v);
@@ -162,8 +180,14 @@ angular.module('biggraph').directive('graphView', function($window) {
         continue;
       }
       this.vertices.append(v.dom);
-      if (xBuckets.length !== 0) { v.addHoverListener(xBuckets[vertex.x]); }
-      if (yBuckets.length !== 0) { v.addHoverListener(yBuckets[vertex.y]); }
+      if (xLabels.length !== 0) {
+        v.addHoverListener(xLabels[vertex.x]);
+        if (data.xLabelType === 'between') { v.addHoverListener(xLabels[vertex.x + 1]); }
+      }
+      if (yLabels.length !== 0) {
+        v.addHoverListener(yLabels[vertex.y]);
+        if (data.yLabelType === 'between') { v.addHoverListener(yLabels[vertex.y + 1]); }
+      }
     }
     return vertices;
   };
@@ -186,8 +210,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
   };
 
-  function Label(x, y, text) {
-    this.dom = svg.create('text', {'class': 'bucket', x: x, y: y}).text(text);
+  function Label(x, y, text, side) {
+    var labelClass = 'bucket ' + (side || '');
+    this.dom = svg.create('text', {'class': labelClass, x: x, y: y}).text(text);
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
   Label.prototype.off = function() { svg.removeClass(this.dom, 'highlight'); };

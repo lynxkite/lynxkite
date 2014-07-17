@@ -11,6 +11,7 @@ trait Bucketer[T] extends Serializable {
   val numBuckets: Int
   def whichBucket(value: T): Int
   def bucketLabels: Seq[String]
+  def labelType: String
 }
 
 case class EmptyBucketer() extends Bucketer[Nothing] {
@@ -18,6 +19,7 @@ case class EmptyBucketer() extends Bucketer[Nothing] {
   val numBuckets = 1
   def whichBucket(value: Nothing) = ???
   def bucketLabels: Seq[String] = Seq("")
+  def labelType = ""
 }
 
 abstract class EnumBucketer[T](options: Seq[T], hasOther: Boolean) extends Bucketer[T] {
@@ -59,13 +61,7 @@ abstract class NumericBucketer[T: Numeric](
     }
   }
 
-  def bucketLabels: Seq[String] = {
-    val normalLabels = (Seq(min) ++ bounds.dropRight(1)).zip(bounds).map {
-      case (lowerBound, upperBound) => fmt"[$lowerBound, $upperBound)"
-    }
-    val lastLabel = fmt"[${bounds.last}, $max]"
-    normalLabels :+ lastLabel
-  }
+  def bucketLabels: Seq[String] = fmt"$min" +: bounds.map(x => fmt"$x") :+ fmt"$max"
 }
 
 abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
@@ -79,12 +75,21 @@ abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
     extends EnumBucketer[String](options, hasOther) {
   @transient lazy val tt = typeTag[String]
+  val labelType = "bucket"
 }
 case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
     extends FractionalBucketer[Double](min, max, numBuckets) {
   @transient lazy val tt = typeTag[Double]
+  val labelType = "between"
 }
 case class LongBucketer(min: Long, max: Long, numBuckets: Int)
     extends NumericBucketer[Long](min, max, numBuckets) {
   @transient lazy val tt = typeTag[Long]
+  val labelType = if ((max - min) / numBuckets == 0) "bucket" else "between"
+  override def bucketLabels: Seq[String] = {
+    if ((max - min) / numBuckets == 0)
+      fmt"$min" +: bounds.map(x => fmt"$x")
+    else
+      fmt"$min" +: bounds.map(x => fmt"$x") :+ fmt"$max"
+  }
 }
