@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.spark_util
 
 import org.scalatest.FunSuite
 import org.apache.spark.HashPartitioner
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.TestSparkContext
 
 class RDDUtilsTest extends FunSuite with TestSparkContext {
@@ -44,46 +43,6 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
       val id = Implicits.genID(parts, part, row)
       val partitioner = new HashPartitioner(parts)
       assert(partitioner.getPartition(id) == part, s"genID($parts, $part, $row)")
-    }
-  }
-
-  case class Timed[X](nanos: Long, value: X)
-  object Timed {
-    def apply[X](f: => X): Timed[X] = {
-      val t0 = System.nanoTime
-      val value = f
-      val duration = System.nanoTime - t0
-      Timed(duration, value)
-    }
-  }
-
-  test("benchmark zipJoin", com.lynxanalytics.biggraph.Benchmark) {
-    import Implicits._
-    class Demo(parts: Int, rows: Int) {
-      val data = gen(parts, rows, 1).sortPartitions.cacheNow
-      val other = gen(parts, rows, 2).sample(false, 0.5, 0).partitionBy(data.partitioner.get).sortPartitions.cacheNow
-      def zippedSum = getSum(data.zipJoin(other))
-      def joinedSum = getSum(data.join(other))
-      def gen(parts: Int, rows: Int, seed: Int) = {
-        val raw = sparkContext.parallelize(1 to parts, parts).mapPartitionsWithIndex {
-          (i, it) => new util.Random(i + seed).alphanumeric.take(rows).iterator
-        }
-        val partitioner = new org.apache.spark.HashPartitioner(raw.partitions.size)
-        raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
-      }
-      def getSum(rdd: org.apache.spark.rdd.RDD[(Long, (Char, Char))]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
-    }
-
-    val parts = 4
-    val table = "%10s | %10s | %10s"
-    println(table.format("rows", "join (ms)", "zipJoin (ms)"))
-    for (round <- 10 to 20) {
-      val rows = 100000 * round
-      val demo = new Demo(parts, rows)
-      val zipped = Timed(demo.zippedSum)
-      val joined = Timed(demo.joinedSum)
-      assert(joined.value == zipped.value)
-      println(table.format(parts * rows, joined.nanos / 1000000, zipped.nanos / 1000000))
     }
   }
 }
