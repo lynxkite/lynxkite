@@ -1,5 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
+import com.lynxanalytics.biggraph.graph_util
+
 object Scripting {
   import scala.language.implicitConversions
 
@@ -50,4 +52,7 @@ object Scripting {
     op: TypedMetaGraphOp[IS, OMDS])(
       implicit manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     manager.apply(op, MetaDataSet())
+
+  implicit def filename(fn: String): graph_util.Filename =
+    graph_util.Filename.fromString(fn)
 }
