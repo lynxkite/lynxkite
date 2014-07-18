@@ -2,8 +2,11 @@ package com.lynxanalytics.biggraph
 
 import java.io.File
 import org.apache.spark
+import org.scalatest.Tag
 
 import spark_util.BigGraphSparkContext
+
+object Benchmark extends Tag("Benchmark")
 
 object TestUtils {
   def RDDToSortedString(rdd: spark.rdd.RDD[_]): String = {

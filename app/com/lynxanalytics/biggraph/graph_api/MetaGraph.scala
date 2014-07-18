@@ -278,6 +278,8 @@ trait MetaGraphOp extends Serializable {
     def get(param: MethodSymbol) = mirror.reflectField(param).get
     StringStruct(className, params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
   }
+
+  val isHeavy: Boolean = false
 }
 
 trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
@@ -526,14 +528,13 @@ case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
 
 class OutputBuilder(instance: MetaGraphOperationInstance) {
   val outputMeta: MetaDataSet = instance.outputs
-  val dataMap = mutable.Map[UUID, EntityData]()
 
   def addData(data: EntityData): Unit = {
     val gUID = data.gUID
     val entity = data.entity
     // Check that it's indeed a known output.
     assert(outputMeta.all(entity.name).gUID == entity.gUID)
-    dataMap(gUID) = data
+    internalDataMap(gUID) = data
   }
 
   def addRDDData(data: EntityRDDData): Unit = {
@@ -560,6 +561,14 @@ class OutputBuilder(instance: MetaGraphOperationInstance) {
   def apply[T](scalar: Scalar[T], value: T): Unit = {
     addData(new ScalarData(scalar, value))
   }
+
+  def dataMap() = {
+    assert(outputMeta.all.values.forall(x => internalDataMap.contains(x.gUID)),
+      s"Output data missing for: ${outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))}")
+    internalDataMap
+  }
+
+  private val internalDataMap = mutable.Map[UUID, EntityData]()
 }
 
 /* ============================================================================================ */

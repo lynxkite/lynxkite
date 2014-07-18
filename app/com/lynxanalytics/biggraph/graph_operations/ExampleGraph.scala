@@ -67,4 +67,6 @@ case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (3l, 4.0))).partitionBy(rc.onePartitionPartitioner))
     output(o.greeting, "Hello world!")
   }
+
+  override val isHeavy = true
 }

@@ -4,7 +4,7 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class EdgeGraph() extends MetaGraphOperation {
   def signature = newSignature
@@ -37,4 +37,6 @@ case class EdgeGraph() extends MetaGraphOperation {
     // Just to connect to the results.
     outputs.putEdgeBundle('link, sc.emptyRDD[(ID, Edge)].partitionBy(edgePartitioner))
   }
+
+  override val isHeavy = true
 }

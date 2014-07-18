@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.util.{ Failure, Success, Try }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Filename
-import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -134,6 +134,8 @@ abstract class ImportCommon(csv: CSV) extends MetaGraphOperation {
       case (field, idx) => field -> lines.map { line => line(idIdx).toLong -> line(idx) }
     }.toMap
   }
+
+  override val isHeavy = true
 }
 
 abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv) {

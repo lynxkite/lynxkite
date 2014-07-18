@@ -26,4 +26,6 @@ case class RemoveNonSymmetricEdges() extends MetaGraphOperation {
     }
     outputs.putEdgeBundle('symmetric, edges.partitionBy(es.partitioner.get))
   }
+
+  override val isHeavy = true
 }
