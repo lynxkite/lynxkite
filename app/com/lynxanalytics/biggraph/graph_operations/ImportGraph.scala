@@ -132,8 +132,6 @@ abstract class ImportCommon(csv: CSV) {
       case (field, idx) => field -> lines.map { line => line(idIdx).toLong -> line(idx) }
     }.toMap
   }
-
-  override val isHeavy = true
 }
 
 object ImportCommon {
@@ -157,6 +155,7 @@ abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv)
   import ImportVertexList._
   @transient override lazy val inputs = new ImportCommon.NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
+  override val isHeavy = true
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -228,6 +227,7 @@ case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String)
   mustHaveField(dst)
   @transient override lazy val inputs = new ImportCommon.NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
+  override val isHeavy = true
 
   override def putOutputs(columns: Columns, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     super.putOutputs(columns, o, output, rc)
@@ -256,6 +256,7 @@ case class ImportEdgeListWithStringIDs(csv: CSV, src: String, dst: String)
   mustHaveField(dst)
   @transient override lazy val inputs = new ImportCommon.NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
+  override val isHeavy = true
 
   override def putOutputs(columns: Columns, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     putEdgeAttributes(columns, o, output)
