@@ -112,8 +112,9 @@ case class CSV(file: Filename,
   }
 }
 
-abstract class ImportCommon(csv: CSV) {
+abstract class ImportCommon {
   type Columns = Map[String, RDD[(Long, String)]]
+  val csv: CSV
 
   protected def mustHaveField(field: String) = {
     assert(csv.fields.contains(field), s"No such field: $field in ${csv.fields}")
@@ -150,7 +151,7 @@ object ImportVertexList {
   }
 }
 
-abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv)
+abstract class ImportVertexList extends ImportCommon
     with TypedMetaGraphOp[ImportCommon.NoInput, ImportVertexList.Output] {
   import ImportVertexList._
   @transient override lazy val inputs = new ImportCommon.NoInput()
@@ -172,11 +173,11 @@ abstract class ImportVertexList(csv: CSV) extends ImportCommon(csv)
   def readColumns(sc: SparkContext): Columns
 }
 
-case class ImportVertexListWithStringIDs(csv: CSV) extends ImportVertexList(csv) {
+case class ImportVertexListWithStringIDs(csv: CSV) extends ImportVertexList {
   def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
 }
 
-case class ImportVertexListWithNumericIDs(csv: CSV, id: String) extends ImportVertexList(csv) {
+case class ImportVertexListWithNumericIDs(csv: CSV, id: String) extends ImportVertexList {
   mustHaveField(id)
   def readColumns(sc: SparkContext): Columns = splitWithIDField(csv.lines(sc), id)
 }
@@ -187,7 +188,7 @@ object ImportEdgeList {
   }
 }
 
-abstract class ImportEdgeList[Output <: ImportEdgeList.Output](csv: CSV) extends ImportCommon(csv) {
+abstract class ImportEdgeList[Output <: ImportEdgeList.Output] extends ImportCommon {
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -220,7 +221,7 @@ object ImportEdgeListWithNumericIDs {
 }
 
 case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String)
-    extends ImportEdgeList[ImportEdgeListWithNumericIDs.Output](csv)
+    extends ImportEdgeList[ImportEdgeListWithNumericIDs.Output]
     with TypedMetaGraphOp[ImportCommon.NoInput, ImportEdgeListWithNumericIDs.Output] {
   import ImportEdgeListWithNumericIDs._
   mustHaveField(src)
@@ -249,7 +250,7 @@ object ImportEdgeListWithStringIDs {
 }
 
 case class ImportEdgeListWithStringIDs(csv: CSV, src: String, dst: String)
-    extends ImportEdgeList[ImportEdgeListWithStringIDs.Output](csv)
+    extends ImportEdgeList[ImportEdgeListWithStringIDs.Output]
     with TypedMetaGraphOp[ImportCommon.NoInput, ImportEdgeListWithStringIDs.Output] {
   import ImportEdgeListWithStringIDs._
   mustHaveField(src)
@@ -297,7 +298,7 @@ object ImportEdgeListWithNumericIDsForExistingVertexSet {
 
 case class ImportEdgeListWithNumericIDsForExistingVertexSet(
   csv: CSV, src: String, dst: String)
-    extends ImportEdgeList[ImportEdgeListWithNumericIDsForExistingVertexSet.Output](csv)
+    extends ImportEdgeList[ImportEdgeListWithNumericIDsForExistingVertexSet.Output]
     with TypedMetaGraphOp[ImportEdgeListWithNumericIDsForExistingVertexSet.Input, ImportEdgeListWithNumericIDsForExistingVertexSet.Output] {
   import ImportEdgeListWithNumericIDsForExistingVertexSet._
   mustHaveField(src)
