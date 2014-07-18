@@ -191,7 +191,7 @@ class MetaGraphManager(val repositoryPath: String) {
         val stream = new ObjectInputStream(new FileInputStream(s"$repositoryPath/visibles"))
         visibles ++= stream.readObject().asInstanceOf[mutable.Set[UUID]]
       } catch {
-        case e: Exception => log.error(s"Error loading visible set:", e)
+        case e: Exception => log.error("Error loading visible set:", e)
       }
     }
 
@@ -201,7 +201,7 @@ class MetaGraphManager(val repositoryPath: String) {
       try {
         tagRoot.loadFromString(FileUtils.readFileToString(tagsFile, "utf8"))
       } catch {
-        case e: Exception => log.error(s"Error loading visible set:", e)
+        case e: Exception => log.error("Error loading tags set:", e)
       }
     } else {
       tagRoot.clear()

@@ -5,12 +5,11 @@ import scala.collection.mutable
 
 class SymbolPath(val path: Seq[Symbol]) {
   def /(name: Symbol): SymbolPath = path :+ name
-  def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
+  def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath.path
   override def toString = path.map(_.name).mkString("/")
 }
 object SymbolPath {
   import scala.language.implicitConversions
-  implicit def asSeq(sp: SymbolPath): Seq[Symbol] = sp.path
   implicit def fromSeq(sp: Seq[Symbol]): SymbolPath = new SymbolPath(sp)
   implicit def fromString(str: String): SymbolPath =
     str.split("/").toSeq.map(Symbol(_))
@@ -73,10 +72,11 @@ trait TagDir extends TagPath {
   }
   def setTag(path: SymbolPath, value: UUID): Tag = synchronized {
     assert(!existsDir(path))
-    assert(path.nonEmpty)
+    val seq = path.path
+    assert(seq.nonEmpty)
     if (existsTag(path)) rm(path)
-    val dir = mkDirs(new SymbolPath(path.dropRight(1)))
-    dir.addTag(path.last, value)
+    val dir = mkDirs(new SymbolPath(seq.dropRight(1)))
+    dir.addTag(seq.last, value)
   }
 
   def mkDir(name: Symbol): TagSubDir = synchronized {
@@ -87,18 +87,21 @@ trait TagDir extends TagPath {
     result
   }
   def mkDirs(path: SymbolPath): TagDir = synchronized {
-    if (path.isEmpty) this
-    else mkDir(path.head).mkDirs(new SymbolPath(path.tail))
+    val seq = path.path
+    if (seq.isEmpty) this
+    else mkDir(seq.head).mkDirs(new SymbolPath(seq.tail))
   }
 
   def cp(from: SymbolPath, to: SymbolPath): TagPath = synchronized {
-    assert(to.nonEmpty)
+    val toSeq = to.path
+    assert(toSeq.nonEmpty)
     assert(!exists(to))
     assert(exists(from))
-    val toDir = mkDirs(to.dropRight(1))
-    (this / from).clone(toDir, to.last)
+    val toDir = mkDirs(toSeq.dropRight(1))
+    (this / from).clone(toDir, toSeq.last)
   }
 
+  def followPath(path: SymbolPath): Option[TagPath] = followPath(path.path)
   def followPath(names: Seq[Symbol]): Option[TagPath] = {
     if (names.isEmpty) Some(this)
     else children.get(names.head).flatMap(_.followPath(names.tail))
