@@ -54,9 +54,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val names = instance.outputs.vertexAttributes('name).runtimeSafeCast[String]
     val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
     val data1: VertexAttributeData[String] = dataManager1.get(names)
-    dataManager1.saveToDisk(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
-    dataManager1.saveToDisk(greeting)
     val data2 = dataManager2.get(names)
     val scalarData2 = dataManager2.get(greeting)
     assert(data1 ne data2)
