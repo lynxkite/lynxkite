@@ -10,7 +10,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends MetaGraphOperation {
   def signature = newSignature
@@ -148,4 +148,6 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends
 
     graphRDD.sparkContext.parallelize(components.toSeq).partitionBy(graphRDD.partitioner.get)
   }
+
+  override val isHeavy = true
 }

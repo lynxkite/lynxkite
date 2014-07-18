@@ -38,8 +38,10 @@ object RDDUtils {
     oos.close
     bos.toByteArray
   }
+}
 
-  // Used by Implicit.fastNumbered to generate IDs.
+object Implicits {
+  // Used by RDDUtils.fastNumbered to generate IDs.
   // Args:
   //   parts: The number of partitions.
   //   part: Current partition index.
@@ -60,7 +62,7 @@ object RDDUtils {
     jumped ^ (jumped >>> 32) // Cancel out the bit flips in Long.hashCode.
   }
 
-  implicit class Implicit[T: ClassTag](self: RDD[T]) {
+  implicit class RDDUtils[T: ClassTag](self: RDD[T]) {
     def numbered: RDD[(Long, T)] = {
       val localCounts = self.glom().map(_.size).collect().scan(0)(_ + _)
       val counts = self.sparkContext.broadcast(localCounts)
@@ -97,5 +99,12 @@ object RDDUtils {
       if (withIDs.partitioner == Some(partitioner)) withIDs
       else withIDs.partitionBy(partitioner)
     }
+
+    def calculate() = self.foreach(_ => ())
+  }
+
+  implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
+    // Sorts each partition of the RDD in isolation.
+    def toSortedRDD = SortedRDD.fromUnsorted(self)
   }
 }
