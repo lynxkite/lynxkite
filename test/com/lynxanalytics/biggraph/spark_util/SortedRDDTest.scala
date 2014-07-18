@@ -5,6 +5,7 @@ import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.TestSparkContext
+import com.lynxanalytics.biggraph.Timed
 
 class SortedRDDTest extends FunSuite with TestSparkContext {
   import Implicits._
@@ -76,15 +77,5 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
       assert(mew.value == old.value)
     }
-  }
-}
-
-case class Timed[X](nanos: Long, value: X)
-object Timed {
-  def apply[X](f: => X): Timed[X] = {
-    val t0 = System.nanoTime
-    val value = f
-    val duration = System.nanoTime - t0
-    Timed(duration, value)
   }
 }

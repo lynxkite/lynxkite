@@ -106,5 +106,6 @@ object Implicits {
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
     // Sorts each partition of the RDD in isolation.
     def toSortedRDD = SortedRDD.fromUnsorted(self)
+    def asSortedRDD = SortedRDD.fromSorted(self)
   }
 }
