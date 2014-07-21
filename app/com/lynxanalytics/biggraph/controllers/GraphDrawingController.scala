@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 case class FEVertexAttributeFilter(
   val attributeId: String,
@@ -49,8 +50,10 @@ case class VertexDiagramResponse(
   val mode: String, // as specified in the request
 
   // ** Only set for bucketed view **
-  val xBuckets: Seq[String] = Seq(),
-  val yBuckets: Seq[String] = Seq())
+  val xLabelType: String = "",
+  val yLabelType: String = "",
+  val xLabels: Seq[String] = Seq(),
+  val yLabels: Seq[String] = Seq())
 
 case class EdgeDiagramSpec(
   // In the context of an FEGraphRequest "idx[4]" means the diagram requested by vertexSets(4).
@@ -90,8 +93,8 @@ case class FEGraphRespone(
   edgeBundles: Seq[EdgeDiagramResponse])
 
 class GraphDrawingController(env: BigGraphEnvironment) {
-  val metaManager = env.metaGraphManager
-  val dataManager = env.dataManager
+  implicit val metaManager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
 
   import graph_operations.SampledVertexAttribute.sampleAttribute
 
@@ -115,7 +118,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val count = graph_operations.CountVertices(metaManager, dataManager, vertexSet)
+    val countOp = graph_operations.CountVertices()
+    val count = countOp(countOp.vertices, vertexSet).result.count.value
     val filtered = filter(vertexSet, request.filters)
     val op = graph_operations.SampledView(
       request.centralVertexId,
@@ -134,18 +138,19 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       inputs ++= MetaDataSet(Map('labelAttr -> metaManager.vertexAttribute(request.labelAttributeId.asUUID)))
     }
     val diagramMeta = metaManager.apply(op, inputs)
-      .outputs.scalars('feVertices).runtimeSafeCast[Seq[FEVertex]]
+      .outputs.scalars('svVertices).runtimeSafeCast[Seq[graph_operations.SampledViewVertex]]
     val vertices = dataManager.get(diagramMeta).value
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
-      vertices = vertices,
+      vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label)),
       mode = "sampled")
   }
 
   def getBucketedVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val count = graph_operations.CountVertices(metaManager, dataManager, vertexSet)
+    val countOp = graph_operations.CountVertices()
+    val count = countOp(countOp.vertices, vertexSet).result.count.value
     // TODO get from request or something.
     val targetSample = 10000
     val fraction = (targetSample * 1.0 / count) min 1.0
@@ -194,8 +199,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices,
       mode = "bucketed",
-      xBuckets = xBucketer.bucketLabels,
-      yBuckets = yBucketer.bucketLabels)
+      xLabelType = xBucketer.labelType,
+      yLabelType = yBucketer.labelType,
+      xLabels = xBucketer.bucketLabels,
+      yLabels = yBucketer.bucketLabels)
   }
 
   private def getCompositeBundle(steps: Seq[BundleSequenceStep]): EdgeAttribute[Double] = {
@@ -259,14 +266,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     inst.operation.asInstanceOf[graph_operations.VertexBucketGrid[_, _]].yBucketer.numBuckets
   }
 
-  private def mappedAttribute(mapping: VertexAttribute[Array[ID]],
-                              attr: VertexAttribute[Int],
-                              target: EdgeBundle): EdgeAttribute[Int] =
-    metaManager.apply(
-      new graph_operations.VertexToEdgeIntAttribute(),
-      'mapping -> mapping,
-      'original -> attr,
-      'target -> target).outputs.edgeAttributes('mapped_attribute).runtimeSafeCast[Int]
+  private def mappedAttribute[T](mapping: VertexAttribute[Array[ID]],
+                                 attr: VertexAttribute[T],
+                                 target: EdgeBundle): EdgeAttribute[T] = {
+    val op = new graph_operations.VertexToEdgeAttribute[T]()
+    op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
+  }
 
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source

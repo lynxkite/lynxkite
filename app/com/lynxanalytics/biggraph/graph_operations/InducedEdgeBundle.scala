@@ -30,4 +30,6 @@ case class InducedEdgeBundle() extends MetaGraphOperation {
       'induced,
       byDst.values.partitionBy(input.partitioner.get))
   }
+
+  override val isHeavy = true
 }

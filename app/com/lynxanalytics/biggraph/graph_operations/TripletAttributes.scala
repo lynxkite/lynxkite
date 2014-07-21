@@ -30,33 +30,51 @@ case class TripletMapping() extends MetaGraphOperation {
         .groupByKey(dst.partitioner.get)
         .mapValues(_.toArray))
   }
+
+  override val isHeavy = true
 }
 
-abstract class VertexToEdgeAttribute[T] extends MetaGraphOperation {
-  implicit def tt: TypeTag[T]
-  implicit def ct: ClassTag[T]
+object VertexToEdgeAttribute {
+  class Input[T] extends MagicInputSignature {
+    val vertices = vertexSet
+    val ignoredSrc = vertexSet
+    val ignoredDst = vertexSet
+    val mapping = vertexAttribute[Array[ID]](vertices)
+    val original = vertexAttribute[T](vertices)
+    val target = edgeBundle(ignoredSrc, ignoredDst)
+  }
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+                  inputs: Input[T]) extends MagicOutput(instance) {
+    val mappedAttribute = edgeAttribute[T](inputs.target.entity)(inputs.original.typeTag)
+  }
+}
+import VertexToEdgeAttribute._
+case class VertexToEdgeAttribute[T]()
+    extends TypedMetaGraphOp[Input[T], Output[T]] {
+  @transient override lazy val inputs = new VertexToEdgeAttribute.Input[T]()
 
-  def signature = newSignature
-    .inputVertexAttribute[Array[ID]]('mapping, 'vertices, create = true)
-    .inputVertexAttribute[T]('original, 'vertices)
-    .inputEdgeBundle('target, 'unused_src -> 'unused_dst, create = true)
-    .outputEdgeAttribute[T]('mapped_attribute, 'target)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    new Output()(instance, inputs)
+  }
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val mapping = inputs.vertexAttributes('mapping).runtimeSafeCast[Array[ID]].rdd
-    val original = inputs.vertexAttributes('original).runtimeSafeCast[T].rdd
-    val target = inputs.edgeBundles('target).rdd
+  def execute(inputDatas: DataSet,
+              o: Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val mapping = inputs.mapping.rdd
+    val original = inputs.original.rdd
+    val target = inputs.target.rdd
 
-    outputs.putEdgeAttribute(
-      'mapped_attribute,
+    implicit val ct = inputs.original.meta.classTag
+
+    output(
+      o.mappedAttribute,
       mapping.join(original)
         .flatMap { case (vid, (edges, value)) => edges.map((_, value)) }
         .groupByKey(target.partitioner.get)
         .mapValues(values => values.head))
   }
-}
 
-case class VertexToEdgeIntAttribute() extends VertexToEdgeAttribute[Int] {
-  @transient lazy val tt = typeTag[Int]
-  @transient lazy val ct = classTag[Int]
+  override val isHeavy = true
 }

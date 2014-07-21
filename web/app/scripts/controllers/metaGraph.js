@@ -57,7 +57,10 @@ angular.module('biggraph')
 
     var VertexSet = $resource('/ajax/vertexSet');
     function loadVertexSet(id) {
-      return VertexSet.get({q: {id: id}});
+      var req = VertexSet.get({q: {id: id}}, function() {}, function(failure) {
+        req.error = 'Request failed: ' + failure.data;
+      });
+      return req;
     }
 
     $scope.$watch(
@@ -86,9 +89,9 @@ angular.module('biggraph')
     $scope.deepWatch('state', loadGraphView);
     function loadGraphView() {
       if (!$scope.showGraph()) { return; }
-      var sides = [];
-      if ($scope.state.left.graphMode !== undefined) { sides.push($scope.state.left); }
-      if ($scope.state.right.graphMode !== undefined) { sides.push($scope.state.right); }
+      var sides = [];      
+      if ($scope.state.left.graphMode) { sides.push($scope.state.left); }
+      if ($scope.state.right.graphMode) { sides.push($scope.state.right); }
       if (sides.length === 0) { return; }
       var q = { vertexSets: [], edgeBundles: [] };
       for (var i = 0; i < sides.length; ++i) {
@@ -137,7 +140,10 @@ angular.module('biggraph')
           bundleSequence: bundles,
         });
       }
-      $scope.graphView = $resource('/ajax/complexView').get({ q: q });
+      var req = $resource('/ajax/complexView').get({ q: q }, function() {}, function(failure) {
+        req.error = 'Request failed: ' + failure.data;
+      });
+      $scope.graphView = req;
     }
     $scope.showGraph = function() {
       return $scope.state.left.graphMode || $scope.state.right.graphMode;
@@ -174,6 +180,8 @@ angular.module('biggraph')
         centralVertexId: '',
         sampleSmearEdgeBundleId: '',
         radius: 0,
+        labelAttributeId: '',
+        sizeAttributeId: '',
       };
       attr.histogram = $resource('/ajax/vertexDiag').get({q: q});
     }
@@ -181,9 +189,9 @@ angular.module('biggraph')
       var data = side.data;
       for (var i = 0; i < data.attributes.length; ++i) {
         var a = data.attributes[i];
-	if (a.showHistogram) {
-	  loadHistogram(side, a);
-	}
+        if (a.showHistogram) {
+          loadHistogram(side, a);
+        }
       }
     }
     $scope.startToShowHistogram = function(side, attr) {
@@ -200,6 +208,7 @@ angular.module('biggraph')
       var modalInstance = $modal.open({
         templateUrl: 'views/operationParameters.html',
         controller: 'OperationParametersCtrl',
+        backdrop: 'static',  // Do not close on backdrop click.
         resolve: {
           operation: function() {
             return operation;
@@ -264,7 +273,7 @@ angular.module('biggraph')
     };
     $scope.setState = function(side, setting, value) {
       if (side.state()[setting] === value) {
-        // Clicking the same setting again turns it off.
+        // Clicking the same attribute setting again turns it off.
         delete side.state()[setting];
       } else {
         side.state()[setting] = value;
@@ -274,12 +283,20 @@ angular.module('biggraph')
     $scope.left.name = 'left';
     $scope.right.name = 'right';
 
+    // Creates a new side state, while retaining the settings where this makes sense.
+    function freshSideState(old) {
+      var fresh = defaultSideState();
+      fresh.graphMode = old.graphMode;
+      fresh.sampleRadius = old.sampleRadius;
+      fresh.bucketCount = old.bucketCount;
+      return fresh;
+    }
     $scope.left.setVS = function(id) {
-      $scope.state.left = defaultSideState();
+      $scope.state.left = freshSideState($scope.state.left);
       $scope.state.left.vs = { id: id };
     };
     $scope.right.setVS = function(id) {
-      $scope.state.right = defaultSideState();
+      $scope.state.right = freshSideState($scope.state.right);
       $scope.state.right.vs = { id: id };
     };
 
@@ -287,10 +304,17 @@ angular.module('biggraph')
       $scope.state.leftToRightPath = [];
       side.other.setVS(side.data.id);
     };
+    
+    $scope.left.setState = function(state) {
+      $scope.state.left = state($scope.state.left);
+    };
+    $scope.right.setState = function(state) {
+      $scope.state.right = state($scope.state.right);
+    };
 
     $scope.close = function(side) {
-      $scope.removePath();
-      side.state().vs = undefined;
+      $scope.removePath();      
+      side.setState(defaultSideState);
     };
 
     function setNewVS(side) {
@@ -314,10 +338,15 @@ angular.module('biggraph')
         if ($scope.state.leftToRightPath !== undefined) {
           side.addEBToPath(bundle, pointsTowardsMySide);
         }
+        var oldFilters = side.state().filters;
         if (pointsTowardsMySide) {
           side.setVS(bundle.destination.id);
         } else {
           side.setVS(bundle.source.id);
+        }
+        // Keep filters when following local edges.
+        if (bundle.destination.id === bundle.source.id) {
+          side.state().filters = oldFilters;
         }
       };
     }

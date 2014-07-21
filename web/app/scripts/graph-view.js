@@ -11,7 +11,11 @@ angular.module('biggraph').directive('graphView', function($window) {
       link: function(scope, element) {
         var gv = new GraphView(scope, element);
         function updateGraph() {
-          if (scope.ngModel !== undefined && scope.ngModel.$resolved) {
+          if (scope.ngModel === undefined || !scope.ngModel.$resolved) {
+            gv.loading();
+          } else if (scope.ngModel.error) {
+            gv.error(scope.ngModel.error);
+          } else {
             gv.update(scope.ngModel);
           }
         }
@@ -24,20 +28,49 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.scope = scope;
     this.svg = angular.element(element);
     this.svg.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
-    this.edges = svg.create('g', {'class': 'edges'});
-    this.vertices = svg.create('g', {'class': 'nodes'});
     this.root = svg.create('g', {'class': 'root'});
-    this.zoom = 250;
-    this.root.append([this.edges, this.vertices]);
+    var graphToSVGRatio = 0.67;
+    this.zoom = 500 * graphToSVGRatio; // todo: replace 500 with the actual svg height
     this.svg.append(this.root);
   }
 
+  GraphView.prototype.loading = function() {
+    this.root.empty();
+    var x = this.svg.width() / 2, y = 250;
+    var w = 5000, h = 500;
+    var loading = svg.create('rect', {'class': 'loading', width: w, height: h, x: x - w/2, y: y - h/2});
+    var anchor = ' ' + x + ' ' + y;
+    var rotate = svg.create('animateTransform', {
+      attributeName: 'transform',
+      type: 'rotate',
+      from: '0' + anchor,
+      to: '360' + anchor,
+      dur: '3s',
+      repeatCount: 'indefinite',
+    });
+    loading.append(rotate);
+    this.root.append(loading);
+  };
+
+  GraphView.prototype.error = function(msg) {
+    this.root.empty();
+    var x = this.svg.width() / 2, y = 250;
+    var text = svg.create('text', {'class': 'error', x: x, y: y, 'text-anchor': 'middle'});
+    var maxLength = 100;  // The error message can be very long and SVG does not wrap text.
+    for (var i = 0; i < msg.length; i += maxLength) {
+      text.append(svg.create('tspan', {x: x, dy: 30}).text(msg.substring(i, i + maxLength)));
+    }
+    this.root.append(text);
+  };
+
   GraphView.prototype.update = function(data) {
     var sides = [];
-    if (this.scope.state.left.graphMode !== undefined) { sides.push(this.scope.state.left); }
-    if (this.scope.state.right.graphMode !== undefined) { sides.push(this.scope.state.right); }
-    this.vertices.empty();
-    this.edges.empty();
+    if (this.scope.state.left.graphMode) { sides.push(this.scope.state.left); }
+    if (this.scope.state.right.graphMode) { sides.push(this.scope.state.right); }
+    this.root.empty();
+    this.edges = svg.create('g', {'class': 'edges'});
+    this.vertices = svg.create('g', {'class': 'nodes'});
+    this.root.append([this.edges, this.vertices]);
     var vertices = [];
     var n = data.vertexSets.length;
     if (n !== sides.length) {
@@ -45,7 +78,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (var i = 0; i < n; ++i) {
       var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
-      var yOff = 250;
+      var yOff = 500 / 2; // todo: replace 500 with the actual svg height
       var vs = data.vertexSets[i];
       if (vs.mode === 'sampled') {
         vertices.push(this.addSampledVertices(vs, xOff, yOff, sides[i]));
@@ -82,6 +115,7 @@ angular.module('biggraph').directive('graphView', function($window) {
                          Math.sqrt(vertexScale * vertex.size),
                          label);
       v.id = vertex.id;
+      svg.addClass(v.dom, 'sampled');
       vertices.push(v);
       if (vertex.size === 0) {
         continue;
@@ -133,34 +167,51 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
     var vertices = [];
-    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
+    var xLabels = [], yLabels = [];
+    var i, x, y, l, side;
+    var labelSpace = 50;
+    y = yOff + this.zoom * 0.5 + labelSpace;
+    
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
-    var xBuckets = [], yBuckets = [];
-    var i, x, y, l;
-    y = yOff + this.zoom * util.normalize(yb.max, yb) + 35;
-    for (i = 0; i < data.xBuckets.length; ++i) {
-      x = xOff + this.zoom * util.normalize(i, xb);
-      l = new Label(x, y, data.xBuckets[i]);
-      xBuckets.push(l);
+    
+    var xNumBuckets = xb.span + 1;
+    var yNumBuckets = yb.span + 1;
+    
+    for (i = 0; i < data.xLabels.length; ++i) {
+      if (data.xLabelType === 'between') {
+        x = xOff + this.zoom * util.normalize(i, xNumBuckets);
+      } else {
+        x = xOff + this.zoom * util.normalize(i + 0.5, xNumBuckets);
+      }
+      l = new Label(x, y, data.xLabels[i]);
+      xLabels.push(l);
       this.vertices.append(l.dom);
     }
     // Labels on the left on the left and on the right on the right.
     if (xOff < this.svg.width() / 2) {
-      x = xOff + this.zoom * util.normalize(xb.min, xb) - 60;
+      x = xOff - this.zoom * 0.5 - labelSpace;
+      side = 'left';
     } else {
-      x = xOff + this.zoom * util.normalize(xb.max, xb) + 60;
+      x = xOff + this.zoom * 0.5 + labelSpace;
+      side = 'right';
     }
-    for (i = 0; i < data.yBuckets.length; ++i) {
-      y = yOff + this.zoom * util.normalize(i, yb);
-      l = new Label(x, y, data.yBuckets[i]);
-      yBuckets.push(l);
+    for (i = 0; i < data.yLabels.length; ++i) {
+      if (data.yLabelType === 'between') {
+        y = yOff + this.zoom * util.normalize(i, yNumBuckets);
+      } else {
+        y = yOff + this.zoom * util.normalize(i + 0.5, yNumBuckets);
+      }
+      l = new Label(x, y, data.yLabels[i], side);
+      yLabels.push(l);
       this.vertices.append(l.dom);
     }
+     
+    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
     for (i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      var v = new Vertex(xOff + this.zoom * util.normalize(vertex.x, xb),
-                         yOff + this.zoom * util.normalize(vertex.y, yb),
+      var v = new Vertex(xOff + this.zoom * util.normalize(vertex.x + 0.5, xNumBuckets),
+                         yOff + this.zoom * util.normalize(vertex.y + 0.5, yNumBuckets),
                          Math.sqrt(vertexScale * vertex.size),
                          vertex.size);
       vertices.push(v);
@@ -168,17 +219,25 @@ angular.module('biggraph').directive('graphView', function($window) {
         continue;
       }
       this.vertices.append(v.dom);
-      if (xBuckets.length !== 0) { v.addHoverListener(xBuckets[vertex.x]); }
-      if (yBuckets.length !== 0) { v.addHoverListener(yBuckets[vertex.y]); }
+      if (xLabels.length !== 0) {
+        v.addHoverListener(xLabels[vertex.x]);
+        if (data.xLabelType === 'between') { v.addHoverListener(xLabels[vertex.x + 1]); }
+      }
+      if (yLabels.length !== 0) {
+        v.addHoverListener(yLabels[vertex.y]);
+        if (data.yLabelType === 'between') { v.addHoverListener(yLabels[vertex.y + 1]); }
+      }
     }
     return vertices;
   };
 
   GraphView.prototype.addEdges = function(edges, srcs, dsts) {
-    var edgeBounds = util.minmax(edges.map(function(n) { return n.size; }));
-    var edgeScale = this.zoom * 0.05 / edgeBounds.max;
     var edgeObjects = [];
-    if (edgeBounds.min === edgeBounds.max) { edgeScale /= 3; }
+    var bounds = util.minmax(edges.map(function(n) { return n.size; }));
+    var normalWidth = this.zoom * 0.02;
+    var info = bounds.span / bounds.max;  // Information content of edge widths. (0 to 1)
+    // Go up to 3x thicker lines if they are meaningful.
+    var edgeScale = normalWidth * (1 + info * 2) / bounds.max;
     for (var i = 0; i < edges.length; ++i) {
       var edge = edges[i];
       if (edgeScale * edge.size < 0.1) {
@@ -193,8 +252,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     return edgeObjects;
   };
 
-  function Label(x, y, text) {
-    this.dom = svg.create('text', {'class': 'bucket', x: x, y: y}).text(text);
+  function Label(x, y, text, side) {
+    var labelClass = 'bucket ' + (side || '');
+    this.dom = svg.create('text', {'class': labelClass, x: x, y: y}).text(text);
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
   Label.prototype.off = function() { svg.removeClass(this.dom, 'highlight'); };

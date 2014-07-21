@@ -5,71 +5,68 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 
-abstract class Filter[T] extends Serializable with RuntimeSafeCastable[T, Filter] {
-  def typeTag: TypeTag[T]
+abstract class Filter[T] extends Serializable {
   def matches(value: T): Boolean
 }
 
-case class VertexAttributeFilter[T](filter: Filter[T]) extends MetaGraphOperation {
-  def signature = {
-    implicit val tt = filter.typeTag
-    newSignature
-      .inputVertexAttribute[T]('attr, 'vs, create = true)
-      .outputVertexSet('fvs)
-      .outputEdgeBundle('projection, 'vs -> 'fvs)
+object VertexAttributeFilter {
+  class Input[T] extends MagicInputSignature {
+    val vs = vertexSet
+    val attr = vertexAttribute[T](vs)
   }
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+                  inputs: Input[T]) extends MagicOutput(instance) {
+    val fvs = vertexSet
+    val identity = edgeBundle(inputs.vs.entity, fvs)
+  }
+}
+import VertexAttributeFilter._
+case class VertexAttributeFilter[T](filter: Filter[T]) extends TypedMetaGraphOp[Input[T], Output[T]] {
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    implicit val tt = filter.typeTag
-    implicit val ct = filter.classTag
-    val attr = inputs.vertexAttributes('attr).runtimeSafeCast[T].rdd
+  @transient override lazy val inputs = new Input[T]
+
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val tt = inputs.attr.data.typeTag
+    implicit val ct = inputs.attr.data.classTag
+    val attr = inputs.attr.rdd
     val fattr = attr.filter { case (id, v) => filter.matches(v) }
-    outputs.putVertexSet('fvs, fattr.mapValues(_ => ()))
-    val projection = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
-    outputs.putEdgeBundle('projection, projection)
+    output(o.fvs, fattr.mapValues(_ => ()))
+    val identity = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
+    output(o.identity, identity)
   }
 }
 
 case class NotFilter[T](filter: Filter[T]) extends Filter[T] {
-  def typeTag = filter.typeTag
   def matches(value: T) = !filter.matches(value)
 }
 case class AndFilter[T](filters: Filter[T]*) extends Filter[T] {
   assert(filters.size > 0)
-  def typeTag = filters.head.typeTag
   def matches(value: T) = filters.forall(_.matches(value))
 }
 
-abstract class DoubleFilter extends Filter[Double] {
-  @transient lazy val typeTag = DoubleFilter.tt
-}
-object DoubleFilter {
-  val tt = typeTag[Double]
-}
-
-case class DoubleEQ(exact: Double) extends DoubleFilter {
+case class DoubleEQ(exact: Double) extends Filter[Double] {
   def matches(value: Double) = value == exact
 }
-case class DoubleLT(bound: Double) extends DoubleFilter {
+case class DoubleLT(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value < bound
 }
-case class DoubleLE(bound: Double) extends DoubleFilter {
+case class DoubleLE(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value <= bound
 }
-case class DoubleGT(bound: Double) extends DoubleFilter {
+case class DoubleGT(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value > bound
 }
-case class DoubleGE(bound: Double) extends DoubleFilter {
+case class DoubleGE(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value >= bound
 }
 
-abstract class StringFilter extends Filter[String] {
-  @transient lazy val typeTag = StringFilter.tt
-}
-object StringFilter {
-  val tt = typeTag[String]
-}
-
-case class StringOneOf(options: Set[String]) extends StringFilter {
+case class StringOneOf(options: Set[String]) extends Filter[String] {
   def matches(value: String) = options.contains(value)
 }

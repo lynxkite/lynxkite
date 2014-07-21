@@ -10,7 +10,18 @@ import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 
 import com.lynxanalytics.biggraph.graph_util.Filename
-import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
+import com.lynxanalytics.biggraph.spark_util.Implicits._
+
+object GraphTestUtils {
+  implicit class EdgeBundleOps[T <% EdgeBundleData](eb: T) {
+    def toSet(): Set[(Long, Long)] = {
+      eb.rdd
+        .collect
+        .map { case (id, edge) => (edge.src, edge.dst) }
+        .toSet
+    }
+  }
+}
 
 trait TestMetaGraphManager extends TestTempDir {
   def cleanMetaManager: MetaGraphManager = {
@@ -32,17 +43,17 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
 
 class GraphOperationTestHelper(val metaManager: MetaGraphManager,
                                val dataManager: DataManager) {
-  def apply(operation: MetaGraphOperation,
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider],
             inputs: MetaDataSet = MetaDataSet()): MetaDataSet = {
     metaManager.apply(operation, inputs).outputs
   }
 
-  def apply(operation: MetaGraphOperation,
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider],
             all: Map[Symbol, MetaGraphEntity]): MetaDataSet = {
     apply(operation, MetaDataSet(all))
   }
 
-  def apply(operation: MetaGraphOperation,
+  def apply(operation: TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider],
             all: (Symbol, MetaGraphEntity)*): MetaDataSet = {
     metaManager.apply(operation, all: _*).outputs
   }
@@ -104,21 +115,36 @@ trait TestGraphOperation extends TestMetaGraphManager with TestDataManager {
   def cleanHelper = new GraphOperationTestHelper(cleanMetaManager, cleanDataManager)
 }
 
-case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]]) extends MetaGraphOperation {
-  def signature = newSignature.outputGraph('vs, 'es)
+trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
+  implicit val metaManager = cleanMetaManager
+  implicit val dataManager = cleanDataManager
+}
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
+object SmallTestGraph {
+  class Input extends MagicInputSignature {
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val (vs, es) = graph
+  }
+}
+case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
+    extends TypedMetaGraphOp[SmallTestGraph.Input, SmallTestGraph.Output] {
+  import SmallTestGraph._
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    outputs.putVertexSet(
-      'vs,
+    output(
+      o.vs,
       sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
         .partitionBy(rc.onePartitionPartitioner))
 
     val nodePairs = edgeLists.toSeq.flatMap {
       case (i, es) => es.map(e => i -> e)
     }
-    outputs.putEdgeBundle(
-      'es,
+    output(
+      o.es,
       sc.parallelize(nodePairs.zipWithIndex.map {
         case ((a, b), i) => i.toLong -> Edge(a, b)
       })
