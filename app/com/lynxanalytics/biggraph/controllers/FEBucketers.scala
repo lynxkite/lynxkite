@@ -5,6 +5,7 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 object FEBucketers {
   def bucketer[T](
@@ -14,14 +15,18 @@ object FEBucketers {
     numBuckets: Int): Bucketer[T] = {
 
     implicit val tt = attr.typeTag
+    implicit val mm = metaManager
+    implicit val dm = dataManager
     if (typeOf[T] =:= typeOf[String]) {
-      val attribute = attr.runtimeSafeCast[String]
-      val topVals = ComputeTopValues(metaManager, dataManager, attribute, numBuckets + 1)
+      val op = ComputeTopValues[String](numBuckets + 1)
+      val topVals = op(op.attribute, attr.runtimeSafeCast[String]).result.topValues.value
       StringBucketer(topVals.map(_._1).takeRight(numBuckets), topVals.size == numBuckets + 1)
         .asInstanceOf[Bucketer[T]]
     } else if (typeOf[T] =:= typeOf[Double]) {
-      val attribute = attr.runtimeSafeCast[Double]
-      val (min, max) = ComputeMinMax(metaManager, dataManager, attribute)
+      val op = ComputeMinMax[Double]
+      val res = op(op.attribute, attr.runtimeSafeCast[Double]).result
+      val min = res.min.value
+      val max = res.max.value
       DoubleBucketer(min, max, numBuckets).asInstanceOf[Bucketer[T]]
     } else ???
   }
