@@ -6,113 +6,115 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class CountVertices() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputVertexSet('vertices)
-    .outputScalar[Long]('count)
-
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    outputs.putScalar[Long]('count, inputs.vertexSets('vertices).rdd.count)
-  }
-}
 object CountVertices {
-  def apply(metaManager: MetaGraphManager,
-            dataManager: DataManager,
-            vertexSet: VertexSet): Long = {
-    val countMeta = metaManager
-      .apply(CountVertices(), 'vertices -> vertexSet)
-      .outputs
-      .scalars('count).runtimeSafeCast[Long]
-    dataManager.get(countMeta).value
+  class Input extends MagicInputSignature {
+    val vertices = vertexSet
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val count = scalar[Long]
   }
 }
+case class CountVertices()
+    extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
+  @transient override lazy val inputs = new CountVertices.Input()
 
-abstract class ComputeMinMax[T: Numeric: ClassTag] extends MetaGraphOperation {
-  val MinValue: T
-  val MaxValue: T
-  implicit def tt: TypeTag[T]
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new CountVertices.Output()(instance)
 
-  def signature = newSignature
-    .inputVertexAttribute[T]('attribute, 'vertices, create = true)
-    .outputScalar[T]('min)
-    .outputScalar[T]('max)
-
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val num = implicitly[Numeric[T]]
-    val res = inputs.vertexAttributes('attribute).runtimeSafeCast[T].rdd.values
-      .aggregate(Array(MaxValue, MinValue))(
-        (minmax, next) => {
-          minmax(0) = num.min(minmax(0), next)
-          minmax(1) = num.max(minmax(1), next)
-          minmax
-        },
-        (minmax1, minmax2) => {
-          minmax1(0) = num.min(minmax1(0), minmax2(0))
-          minmax1(1) = num.max(minmax1(1), minmax2(1))
-          minmax1
-        })
-    outputs.putScalar[T]('min, res(0))
-    outputs.putScalar[T]('max, res(1))
+  def execute(inputDatas: DataSet,
+              o: CountVertices.Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    output(o.count, inputs.vertices.rdd.count)
   }
-}
-
-case class ComputeMinMaxDouble() extends ComputeMinMax[Double] {
-  val MinValue = Double.MinValue
-  val MaxValue = Double.MaxValue
-  @transient lazy val tt = typeTag[Double]
-}
-case class ComputeMinMaxLong() extends ComputeMinMax[Long] {
-  val MinValue = Long.MinValue
-  val MaxValue = Long.MaxValue
-  @transient lazy val tt = typeTag[Long]
 }
 
 object ComputeMinMax {
-  def apply(metaManager: MetaGraphManager,
-            dataManager: DataManager,
-            attr: VertexAttribute[Double]): (Double, Double) = {
-    val metaOuts = metaManager.apply(ComputeMinMaxDouble(), 'attribute -> attr).outputs
-    (dataManager.get(metaOuts.scalars('min).runtimeSafeCast[Double]).value,
-      dataManager.get(metaOuts.scalars('max).runtimeSafeCast[Double]).value)
+  class Input[T] extends MagicInputSignature {
+    val vertices = vertexSet
+    val attribute = vertexAttribute[T](vertices)
+  }
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+                  inputs: Input[T]) extends MagicOutput(instance) {
+    implicit val tt = inputs.attribute.typeTag
+    val min = scalar[T]
+    val max = scalar[T]
   }
 }
+case class ComputeMinMax[T: Numeric]()
+    extends TypedMetaGraphOp[ComputeMinMax.Input[T], ComputeMinMax.Output[T]] {
+  @transient override lazy val inputs = new ComputeMinMax.Input[T]
 
-abstract class ComputeTopValues[T: ClassTag](numTopValues: Int) extends MetaGraphOperation {
-  implicit def tt: TypeTag[T]
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new ComputeMinMax.Output()(instance, inputs)
 
-  def signature = newSignature
-    .inputVertexAttribute[T]('attribute, 'vertices, create = true)
-    .outputScalar[Seq[(T, Int)]]('top_values)
-
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    outputs.putScalar[Seq[(T, Int)]](
-      'top_values,
-      inputs.vertexAttributes('attribute).runtimeSafeCast[T].rdd
-        .map { case (id, value) => (value, 1) }
-        .reduceByKey(_ + _)
-        .top(numTopValues)(new ComputeTopValues.PairOrdering[T])
-        .toSeq)
+  def execute(inputDatas: DataSet,
+              o: ComputeMinMax.Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val tt = inputs.attribute.data.typeTag
+    implicit val ct = inputs.attribute.data.classTag
+    val num = implicitly[Numeric[T]]
+    val resOpt = inputs.attribute.rdd.values
+      .aggregate(None: Option[(T, T)])(
+        (minmax, next) => {
+          val min = minmax.fold(next)(a => num.min(a._1, next))
+          val max = minmax.fold(next)(a => num.max(a._2, next))
+          Some(min, max)
+        },
+        (minmax1, minmax2) => {
+          if (minmax1.isEmpty) minmax2
+          else if (minmax2.isEmpty) minmax1
+          else {
+            val min = num.min(minmax1.get._1, minmax2.get._1)
+            val max = num.max(minmax1.get._2, minmax2.get._2)
+            Some(min, max)
+          }
+        })
+    val res = resOpt.getOrElse(num.zero, num.zero)
+    output(o.min, res._1)
+    output(o.max, res._2)
   }
-}
-
-case class ComputeTopValuesString(numTopValues: Int)
-    extends ComputeTopValues[String](numTopValues) {
-  @transient lazy val tt = typeTag[String]
 }
 
 object ComputeTopValues {
+  class Input[T] extends MagicInputSignature {
+    val vertices = vertexSet
+    val attribute = vertexAttribute[T](vertices)
+  }
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+                  inputs: Input[T]) extends MagicOutput(instance) {
+    implicit val tt = inputs.attribute.typeTag
+    val topValues = scalar[Seq[(T, Int)]]
+  }
   class PairOrdering[T] extends Ordering[(T, Int)] {
     def compare(a: (T, Int), b: (T, Int)) = {
       if (a._2 == b._2) a._1.hashCode compare b._1.hashCode
       else a._2 compare b._2
     }
   }
-  def apply(metaManager: MetaGraphManager,
-            dataManager: DataManager,
-            attr: VertexAttribute[String],
-            numTopValues: Int): Seq[(String, Int)] = {
-    val metaOuts = metaManager.apply(
-      ComputeTopValuesString(numTopValues), 'attribute -> attr).outputs
-    dataManager.get(metaOuts.scalars('top_values).runtimeSafeCast[Seq[(String, Int)]]).value
+}
+case class ComputeTopValues[T](numTopValues: Int)
+    extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
+  @transient override lazy val inputs = new ComputeTopValues.Input[T]
+
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new ComputeTopValues.Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: ComputeTopValues.Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val tt = inputs.attribute.data.typeTag
+    implicit val ct = inputs.attribute.data.classTag
+    output(o.topValues,
+      inputs.attribute.rdd
+        .map { case (id, value) => (value, 1) }
+        .reduceByKey(_ + _)
+        .top(numTopValues)(new ComputeTopValues.PairOrdering[T])
+        .toSeq)
   }
 }
