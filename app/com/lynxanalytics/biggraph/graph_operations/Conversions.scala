@@ -4,13 +4,6 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-class EdgeAttributeInput[T] extends MagicInputSignature {
-  val src = vertexSet
-  val dst = vertexSet
-  val es = edgeBundle(src, dst)
-  val attr = edgeAttribute[T](es)
-}
-
 object EdgeAttributeToString {
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: EdgeAttributeInput[T])
@@ -55,11 +48,6 @@ case class EdgeAttributeToDouble()
     output(o.attr, inputs.attr.rdd.flatMapValues(str =>
       if (str.nonEmpty) Some(str.toDouble) else None))
   }
-}
-
-class VertexAttributeInput[T] extends MagicInputSignature {
-  val vs = vertexSet
-  val attr = vertexAttribute[T](vs)
 }
 
 object VertexAttributeToString {
