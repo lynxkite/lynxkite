@@ -10,8 +10,7 @@ object CountVertices {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
   }
 }
@@ -20,7 +19,7 @@ case class CountVertices()
   @transient override lazy val inputs = new CountVertices.Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) =
-    new CountVertices.Output()(instance, inputs)
+    new CountVertices.Output()(instance)
 
   def execute(inputDatas: DataSet,
               o: CountVertices.Output,
