@@ -27,7 +27,7 @@ class PartialRunTest extends FunSuite with TestSparkContext {
   test("benchmark partial map", com.lynxanalytics.biggraph.Benchmark) {
     val table = "%10s | %10s | %10s | %10s | %10s"
     println(table.format("rows", "rows processed", "as", "time (ms)", "nanos / row processed"))
-    for (round <- 10 to 14) {
+    for (round <- 10 to 10) {
       val parts = 4
       val rows = 10 * round
       val d = genData(parts, rows, 0).toSortedRDD.cache
