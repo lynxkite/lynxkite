@@ -58,7 +58,7 @@ case class ComputeMinMax[T: Numeric]()
     implicit val tt = inputs.attribute.data.typeTag
     implicit val ct = inputs.attribute.data.classTag
     val num = implicitly[Numeric[T]]
-    val res = inputs.attribute.rdd.values
+    val resOpt = inputs.attribute.rdd.values
       .aggregate(None: Option[(T, T)])(
         (minmax, next) => {
           val min = minmax.fold(next)(a => num.min(a._1, next))
@@ -74,8 +74,9 @@ case class ComputeMinMax[T: Numeric]()
             Some(min, max)
           }
         })
-    output(o.min, res.get._1)
-    output(o.max, res.get._2)
+    val res = resOpt.getOrElse(num.zero, num.zero)
+    output(o.min, res._1)
+    output(o.max, res._2)
   }
 }
 
