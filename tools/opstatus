@@ -14,7 +14,8 @@ OPS=$(ls app/com/lynxanalytics/biggraph/graph_operations | sed s/.scala$//)
 
     FE=false
     NONFE=false
-    for CLASS in $($CLASSES app/com/lynxanalytics/biggraph/graph_operations/${OP}.scala MetaGraphOperation); do
+    SOURCE=app/com/lynxanalytics/biggraph/graph_operations/${OP}.scala
+    for CLASS in $($CLASSES $SOURCE MetaGraphOperation; $CLASSES $SOURCE TypedMetaGraphOp); do
       if grep --quiet $CLASS app/com/lynxanalytics/biggraph/controllers/FEOperations.scala; then
         FE=true
       else

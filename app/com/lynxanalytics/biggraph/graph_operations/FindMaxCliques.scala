@@ -7,7 +7,7 @@ import scala.collection.immutable
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils.Implicit
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
   def signature = newSignature
@@ -68,6 +68,8 @@ case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
     }
     return target
   }
+
+  override val isHeavy = true
 
   /*
    * BK implementation, see:

@@ -53,6 +53,8 @@ case class ClusteringCoefficient() extends MetaGraphOperation {
     outputs.putVertexAttribute('clustering, clusteringCoeff)
   }
 
+  override val isHeavy = true
+
   private def sortedUnion(a: Array[ID], b: Array[ID]): Array[ID] = {
     val builder = new mutable.ArrayBuilder.ofLong
     var ai = 0

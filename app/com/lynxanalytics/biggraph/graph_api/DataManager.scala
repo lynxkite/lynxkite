@@ -93,14 +93,26 @@ class DataManager(sc: spark.SparkContext,
       inputs.vertexAttributes.mapValues(get(_)),
       inputs.edgeAttributes.mapValues(get(_)),
       inputs.scalars.mapValues(get(_)))
-    val outputBuilder = new DataSetBuilder(instance)
-    instance.operation.execute(inputDatas, outputBuilder, runtimeContext)
-    val output = outputBuilder.toDataSet
-    output.vertexSets.values.foreach(vs => vertexSetCache(vs.gUID) = vs)
-    output.edgeBundles.values.foreach(eb => edgeBundleCache(eb.gUID) = eb)
-    output.vertexAttributes.values.foreach(va => vertexAttributeCache(va.gUID) = va)
-    output.edgeAttributes.values.foreach(ea => edgeAttributeCache(ea.gUID) = ea)
-    output.scalars.values.foreach(sc => scalarCache(sc.gUID) = sc)
+    if (instance.operation.isHeavy) {
+      instance.run(inputDatas, runtimeContext).values.foreach {
+        data =>
+          {
+            saveToDisk(data)
+            load(data.entity)
+          }
+      }
+    } else {
+      instance.run(inputDatas, runtimeContext).foreach {
+        case (uuid, data) =>
+          data match {
+            case vs: VertexSetData => vertexSetCache(vs.gUID) = vs
+            case eb: EdgeBundleData => edgeBundleCache(eb.gUID) = eb
+            case va: VertexAttributeData[_] => vertexAttributeCache(va.gUID) = va
+            case ea: EdgeAttributeData[_] => edgeAttributeCache(ea.gUID) = ea
+            case sc: ScalarData[_] => scalarCache(sc.gUID) = sc
+          }
+      }
+    }
   }
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = {
@@ -159,11 +171,11 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  def saveToDisk(entity: MetaGraphEntity): Unit = {
+  private def saveToDisk(data: EntityData): Unit = {
     this.synchronized {
-      if (!hasEntityOnDisk(entity)) {
+      val entity = data.entity
+      if (!hasEntityOnDisk(data.entity)) {
         bigGraphLogger.info(s"Saving entity $entity ...")
-        val data = get(entity)
         data match {
           case rddData: EntityRDDData =>
             entityPath(entity).saveAsObjectFile(rddData.rdd)

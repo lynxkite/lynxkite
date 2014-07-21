@@ -2,8 +2,11 @@ package com.lynxanalytics.biggraph
 
 import java.io.File
 import org.apache.spark
+import org.scalatest.Tag
 
 import spark_util.BigGraphSparkContext
+
+object Benchmark extends Tag("Benchmark")
 
 object TestUtils {
   def RDDToSortedString(rdd: spark.rdd.RDD[_]): String = {
@@ -38,4 +41,14 @@ private object SparkContextContainer {
 
 trait TestSparkContext {
   val sparkContext = SparkContextContainer.sparkContext
+}
+
+case class Timed[X](nanos: Long, value: X)
+object Timed {
+  def apply[X](f: => X): Timed[X] = {
+    val t0 = System.nanoTime
+    val value = f
+    val duration = System.nanoTime - t0
+    Timed(duration, value)
+  }
 }

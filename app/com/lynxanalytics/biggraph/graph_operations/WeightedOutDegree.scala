@@ -5,23 +5,30 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class WeightedOutDegree() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputEdgeBundle('edges, 'vsA -> 'vsB, create = true)
-    .inputEdgeAttribute[Double]('weights, 'edges)
-    .outputVertexAttribute[Double]('outdegrees, 'vsA)
+object WeightedOutDegree {
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: EdgeAttributeInput[Double])
+      extends MagicOutput(instance) {
+    val outDegree = vertexAttribute[Double](inputs.src.entity)
+  }
+}
+import WeightedOutDegree._
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val vsA = inputs.vertexSets('vsA).rdd
-    val edges = inputs.edgeBundles('edges).rdd
-    val weights = inputs.edgeAttributes('weights).runtimeSafeCast[Double].rdd
+case class WeightedOutDegree() extends TypedMetaGraphOp[EdgeAttributeInput[Double], Output] {
+  @transient override lazy val inputs = new EdgeAttributeInput[Double]
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-    val outdegrees = edges.join(weights)
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val vsA = inputs.src.rdd
+    val weights = inputs.attr.rdd
+    val outdegrees = inputs.es.rdd.join(weights)
       .map { case (_, (edge, weight)) => edge.src -> weight }
-      .reduceByKey(
-        inputs.vertexSets('vsA).rdd.partitioner.get,
-        _ + _)
+      .reduceByKey(vsA.partitioner.get, _ + _)
     val result = vsA.leftOuterJoin(outdegrees).mapValues(_._2.getOrElse(0.0))
-    outputs.putVertexAttribute('outdegrees, result)
+    output(o.outDegree, result)
   }
 }

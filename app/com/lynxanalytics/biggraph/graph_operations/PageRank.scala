@@ -4,18 +4,32 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
+object PageRank {
+  class Input extends MagicInputSignature {
+    val (vs, es) = graph
+    val weights = edgeAttribute[Double](es)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    val pagerank = vertexAttribute[Double](inputs.vs.entity)
+  }
+}
+import PageRank._
 case class PageRank(dampingFactor: Double,
                     iterations: Int)
-    extends MetaGraphOperation {
-  def signature = newSignature
-    .inputGraph('vs, 'es)
-    .inputEdgeAttribute[Double]('weights, 'es)
-    .outputVertexAttribute[Double]('pagerank, 'vs)
+    extends TypedMetaGraphOp[Input, Output] {
+  @transient override lazy val inputs = new Input()
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val edges = inputs.edgeBundles('es).rdd
-    val weights = inputs.edgeAttributes('weights).runtimeSafeCast[Double].rdd
-    val vertices = inputs.vertexSets('vs).rdd
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val edges = inputs.es.rdd
+    val weights = inputs.weights.rdd
+    val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
     val targetsWithWeights = edges.join(weights)
       .map { case (_, (edge, weight)) => edge.src -> (edge.dst, weight) }
@@ -49,6 +63,8 @@ case class PageRank(dampingFactor: Double,
           case (oldRank, incoming) => distributedExtraWeight + incoming.getOrElse(0.0)
         }
     }
-    outputs.putVertexAttribute('pagerank, pageRank)
+    output(o.pagerank, pageRank)
   }
+
+  override val isHeavy = true
 }

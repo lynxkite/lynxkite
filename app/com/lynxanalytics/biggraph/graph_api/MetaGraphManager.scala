@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
+import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -7,28 +8,36 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.util.UUID
 import scala.collection.mutable
+import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 class MetaGraphManager(val repositoryPath: String) {
-  def apply(operation: MetaGraphOperation,
-            inputs: (Symbol, MetaGraphEntity)*): MetaGraphOperationInstance =
-    apply(operation, MetaDataSet.applyWithSignature(operation.signature, inputs: _*))
+  def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
+    operation: TypedMetaGraphOp[IS, OMDS],
+    inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
 
-  def apply(operation: MetaGraphOperation,
-            inputs: MetaDataSet = MetaDataSet()): MetaGraphOperationInstance = {
-    val operationInstance = MetaGraphOperationInstance(operation, inputs)
+    apply(operation, MetaDataSet.applyWithSignature(operation.inputSig, inputs: _*))
+  }
+
+  def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
+    operation: TypedMetaGraphOp[IS, OMDS],
+    inputs: MetaDataSet = MetaDataSet()): TypedOperationInstance[IS, OMDS] = {
+
+    val operationInstance = TypedOperationInstance(operation, inputs)
     val gUID = operationInstance.gUID
     if (!operationInstances.contains(gUID)) {
       internalApply(operationInstance)
       saveInstanceToDisk(operationInstance)
     }
-    operationInstances(gUID)
+    operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
   }
 
   // Marks a set of entities for frontend visibility.
-  def show(operation: MetaGraphOperation,
-           inputs: (Symbol, MetaGraphEntity)*): MetaGraphOperationInstance = {
+  def show[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
+    operation: TypedMetaGraphOp[IS, OMDS],
+    inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
+
     val inst = apply(operation, inputs: _*)
     show(inst.outputs)
     return inst
@@ -41,14 +50,21 @@ class MetaGraphManager(val repositoryPath: String) {
   def isVisible(entity: MetaGraphEntity): Boolean = visibles.contains(entity.gUID)
 
   def allVertexSets: Set[VertexSet] = entities.values.collect { case e: VertexSet => e }.toSet
+
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
   def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
   def vertexAttribute(gUID: UUID): VertexAttribute[_] =
     entities(gUID).asInstanceOf[VertexAttribute[_]]
+  def vertexAttributeOf[T: TypeTag](gUID: UUID): VertexAttribute[T] =
+    vertexAttribute(gUID).runtimeSafeCast[T]
   def edgeAttribute(gUID: UUID): EdgeAttribute[_] =
     entities(gUID).asInstanceOf[EdgeAttribute[_]]
+  def edgeAttributeOf[T: TypeTag](gUID: UUID): EdgeAttribute[T] =
+    edgeAttribute(gUID).runtimeSafeCast[T]
   def scalar(gUID: UUID): Scalar[_] =
     entities(gUID).asInstanceOf[Scalar[_]]
+  def scalarOf[T: TypeTag](gUID: UUID): Scalar[T] =
+    scalar(gUID).runtimeSafeCast[T]
   def entity(gUID: UUID): MetaGraphEntity = entities(gUID)
 
   def incomingBundles(vertexSet: VertexSet): Seq[EdgeBundle] =
@@ -63,10 +79,28 @@ class MetaGraphManager(val repositoryPath: String) {
   def dependentOperations(entity: MetaGraphEntity): Seq[MetaGraphOperationInstance] =
     dependentOperationsMap.getOrElse(entity.gUID, Seq())
 
+  def setTag(tag: SymbolPath, entity: MetaGraphEntity): Unit = {
+    tagRoot.setTag(tag, entity.gUID)
+    saveTags()
+  }
+
+  def vertexSet(tag: SymbolPath): VertexSet = vertexSet((tagRoot / tag).gUID)
+  def edgeBundle(tag: SymbolPath): EdgeBundle = edgeBundle((tagRoot / tag).gUID)
+  def vertexAttribute(tag: SymbolPath): VertexAttribute[_] = vertexAttribute((tagRoot / tag).gUID)
+  def edgeAttribute(tag: SymbolPath): EdgeAttribute[_] = edgeAttribute((tagRoot / tag).gUID)
+  def scalar(tag: SymbolPath): Scalar[_] = scalar((tagRoot / tag).gUID)
+  def vertexAttributeOf[T: TypeTag](tag: SymbolPath): VertexAttribute[_] =
+    vertexAttributeOf[T]((tagRoot / tag).gUID)
+  def edgeAttributeOf[T: TypeTag](tag: SymbolPath): EdgeAttribute[_] =
+    edgeAttributeOf[T]((tagRoot / tag).gUID)
+  def scalarOf[T: TypeTag](tag: SymbolPath): Scalar[_] =
+    scalarOf[T]((tagRoot / tag).gUID)
+
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
   private val visibles = mutable.Set[UUID]()
+  private val tagRoot = TagRoot()
 
   private val outgoingBundlesMap =
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
@@ -126,6 +160,12 @@ class MetaGraphManager(val repositoryPath: String) {
     dumpFile.renameTo(new File(s"$repositoryPath/visibles"))
   }
 
+  private def saveTags(): Unit = {
+    val dumpFile = new File(s"$repositoryPath/dump-tags")
+    FileUtils.writeStringToFile(dumpFile, tagRoot.saveToString, "utf8")
+    dumpFile.renameTo(new File(s"$repositoryPath/tags"))
+  }
+
   private def initializeFromDisk(): Unit = {
     val repo = new File(repositoryPath)
     if (!repo.exists) repo.mkdirs
@@ -151,8 +191,20 @@ class MetaGraphManager(val repositoryPath: String) {
         val stream = new ObjectInputStream(new FileInputStream(s"$repositoryPath/visibles"))
         visibles ++= stream.readObject().asInstanceOf[mutable.Set[UUID]]
       } catch {
-        case e: Exception => log.error(s"Error loading visible set:", e)
+        case e: Exception => log.error("Error loading visible set:", e)
       }
+    }
+
+    val tagsFile = new File(repo, "tags")
+    if (tagsFile.exists) {
+      log.info(s"Loading tags.")
+      try {
+        tagRoot.loadFromString(FileUtils.readFileToString(tagsFile, "utf8"))
+      } catch {
+        case e: Exception => log.error("Error loading tags set:", e)
+      }
+    } else {
+      tagRoot.clear()
     }
   }
 }
@@ -174,21 +226,21 @@ object Timestamp {
   }
 }
 
-private case class SerializedOperation(operation: MetaGraphOperation,
+private case class SerializedOperation(operation: MetaGraphOp,
                                        inputs: Map[Symbol, UUID]) extends Serializable {
   def toInstance(manager: MetaGraphManager): MetaGraphOperationInstance = {
-    MetaGraphOperationInstance(
-      operation,
+    TypedOperationInstance(
+      operation.asInstanceOf[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]],
       MetaDataSet(
-        operation.signature.inputVertexSets
+        operation.inputSig.vertexSets
           .map(n => n -> manager.vertexSet(inputs(n))).toMap,
-        operation.signature.inputEdgeBundles.keys
+        operation.inputSig.edgeBundles.keys
           .map(n => n -> manager.edgeBundle(inputs(n))).toMap,
-        operation.signature.inputVertexAttributes.keys
+        operation.inputSig.vertexAttributes.keys
           .map(n => n -> manager.vertexAttribute(inputs(n))).toMap,
-        operation.signature.inputEdgeAttributes.keys
+        operation.inputSig.edgeAttributes.keys
           .map(n => n -> manager.edgeAttribute(inputs(n))).toMap,
-        operation.signature.inputScalars.keys
+        operation.inputSig.scalars
           .map(n => n -> manager.scalar(inputs(n))).toMap))
   }
 }
