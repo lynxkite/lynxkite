@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 case class FEVertexAttributeFilter(
   val attributeId: String,
@@ -93,7 +94,7 @@ case class FEGraphRespone(
 
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
-  val dataManager = env.dataManager
+  implicit val dataManager = env.dataManager
 
   import graph_operations.SampledVertexAttribute.sampleAttribute
 
@@ -117,7 +118,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val count = graph_operations.CountVertices(metaManager, dataManager, vertexSet)
+    val countOp = graph_operations.CountVertices()
+    val count = countOp(countOp.vertices, vertexSet).result.count.value
     val filtered = filter(vertexSet, request.filters)
     val op = graph_operations.SampledView(
       request.centralVertexId,
@@ -147,7 +149,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getBucketedVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val count = graph_operations.CountVertices(metaManager, dataManager, vertexSet)
+    val countOp = graph_operations.CountVertices()
+    val count = countOp(countOp.vertices, vertexSet).result.count.value
     // TODO get from request or something.
     val targetSample = 10000
     val fraction = (targetSample * 1.0 / count) min 1.0
@@ -266,7 +269,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   private def mappedAttribute[T](mapping: VertexAttribute[Array[ID]],
                                  attr: VertexAttribute[T],
                                  target: EdgeBundle): EdgeAttribute[T] = {
-    import com.lynxanalytics.biggraph.graph_api.Scripting._
     val op = new graph_operations.VertexToEdgeAttribute[T]()
     op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
   }
