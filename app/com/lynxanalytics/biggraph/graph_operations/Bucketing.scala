@@ -6,10 +6,10 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 
 object VertexBucketGrid {
-  class Input[S, T] extends MagicInputSignature {
+  class Input[S, T](xBucketed: Boolean, yBucketed: Boolean) extends MagicInputSignature {
     val vertices = vertexSet
-    val xAttribute = vertexAttribute[S](vertices)
-    val yAttribute = vertexAttribute[T](vertices)
+    val xAttribute = if (xBucketed) vertexAttribute[S](vertices) else null
+    val yAttribute = if (yBucketed) vertexAttribute[T](vertices) else null
   }
   class Output[S, T](implicit instance: MetaGraphOperationInstance,
                      inputs: Input[S, T]) extends MagicOutput(instance) {
@@ -26,7 +26,8 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
                                   yBucketer: Bucketer[T])
     extends TypedMetaGraphOp[Input[S, T], Output[S, T]] {
 
-  @transient override lazy val inputs = new Input[S, T]
+  @transient override lazy val inputs = new Input[S, T](
+    xBucketer.numBuckets > 1, yBucketer.numBuckets > 1)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
@@ -36,10 +37,6 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val xtt = inputs.xAttribute.data.typeTag
-    implicit val xct = inputs.xAttribute.data.classTag
-    implicit val ytt = inputs.yAttribute.data.typeTag
-    implicit val yct = inputs.yAttribute.data.classTag
     val vertices = inputs.vertices.rdd
     val xBuckets = if (xBucketer.numBuckets == 1) {
       vertices.mapValues(_ => 0)
