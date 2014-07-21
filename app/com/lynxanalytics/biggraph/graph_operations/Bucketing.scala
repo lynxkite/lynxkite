@@ -13,8 +13,6 @@ object VertexBucketGrid {
   }
   class Output[S, T](implicit instance: MetaGraphOperationInstance,
                      inputs: Input[S, T]) extends MagicOutput(instance) {
-    implicit val xtt = inputs.xAttribute.typeTag
-    implicit val ytt = inputs.yAttribute.typeTag
     val bucketSizes = scalar[Map[(Int, Int), Int]]
     val xBuckets = vertexAttribute[Int](inputs.vertices.entity)
     val yBuckets = vertexAttribute[Int](inputs.vertices.entity)
@@ -41,14 +39,12 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     val xBuckets = if (xBucketer.numBuckets == 1) {
       vertices.mapValues(_ => 0)
     } else {
-      implicit val tt = xBucketer.tt
       val xAttr = inputs.xAttribute.rdd
       vertices.join(xAttr).mapValues { case (_, value) => xBucketer.whichBucket(value) }
     }
     val yBuckets = if (yBucketer.numBuckets == 1) {
       vertices.mapValues(_ => 0)
     } else {
-      implicit val tt = yBucketer.tt
       val yAttr = inputs.yAttribute.rdd
       vertices.join(yAttr).mapValues { case (_, value) => yBucketer.whichBucket(value) }
     }
