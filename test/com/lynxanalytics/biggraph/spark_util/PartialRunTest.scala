@@ -48,6 +48,5 @@ class PartialRunTest extends FunSuite with TestSparkContext {
           t.nanos / processed))
       }
     }
-    while (true) {}
   }
 }
