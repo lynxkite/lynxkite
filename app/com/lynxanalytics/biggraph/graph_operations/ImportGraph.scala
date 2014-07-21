@@ -303,7 +303,7 @@ case class ImportEdgeListWithNumericIDsForExistingVertexSet(
   import ImportEdgeListWithNumericIDsForExistingVertexSet._
   mustHaveField(src)
   mustHaveField(dst)
-  @transient override lazy val inputs = new ImportEdgeListWithNumericIDsForExistingVertexSet.Input()
+  @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, csv.fields)
 
   override def putOutputs(columns: Columns, o: Output, output: OutputBuilder, rc: RuntimeContext) = {

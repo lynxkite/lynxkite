@@ -177,13 +177,13 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         templatesByName(eb).asInstanceOf[EdgeBundleTemplate].set(target, ea.edgeBundle)
       super.set(withEb, ea)
     }
-    def rdd(implicit dataSet: DataSet) =
-      dataSet.edgeAttributes(name).asInstanceOf[EdgeAttributeData[T]].rdd
+    def data(implicit dataSet: DataSet) = dataSet.edgeAttributes(name).asInstanceOf[EdgeAttributeData[T]]
+    def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
   class ScalarTemplate[T] extends ET[Scalar[T]] {
-    def value(implicit dataSet: DataSet) =
-      dataSet.edgeAttributes(name).asInstanceOf[ScalarData[T]].value
+    def data(implicit dataSet: DataSet) = dataSet.scalars(name).asInstanceOf[ScalarData[T]]
+    def value(implicit dataSet: DataSet) = data.value
   }
 
   def vertexSet = new VertexSetTemplate
