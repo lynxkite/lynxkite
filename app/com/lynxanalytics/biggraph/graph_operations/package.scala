@@ -16,4 +16,9 @@ package object graph_operations {
     val attr = vertexAttribute[T](vs)
   }
 
+  class GraphInput extends MagicInputSignature {
+    val vs = vertexSet
+    val es = edgeBundle(vs, vs)
+  }
+
 }
