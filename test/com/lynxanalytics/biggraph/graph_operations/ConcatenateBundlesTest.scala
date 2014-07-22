@@ -5,8 +5,10 @@ import org.scalatest.FunSuite
 import scala.language.implicitConversions
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class ConcatenateBundlesTest extends FunSuite with TestGraphOperation {
+class ConcatenateBundlesTest extends FunSuite with TestGraphOp {
   def concatEdges(abSeq: Seq[(Seq[Int], Int)], bcSeq: Seq[(Seq[Int], Int)]): Map[(Int, Int), Double] = {
     val abES = abSeq.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
     val bcES = bcSeq.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
@@ -14,19 +16,18 @@ class ConcatenateBundlesTest extends FunSuite with TestGraphOperation {
     val bVS = abES.map(_._2) ++ bcES.map(_._1)
     val cVS = bcES.map(_._2)
     // Create three vertex sets.
-    val a = helper.apply(SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap))
-    val b = helper.apply(SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap))
-    val c = helper.apply(SmallTestGraph(cVS.map(_.toInt -> Seq()).toMap))
+    val a = SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap).result
+    val b = SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap).result
+    val c = SmallTestGraph(cVS.map(_.toInt -> Seq()).toMap).result
     // Add two edge bundles.
-    val ab = helper.apply(AddWeightedEdges(abES, 1.0), 'src -> a.vertexSets('vs), 'dst -> b.vertexSets('vs))
-    val bc = helper.apply(AddWeightedEdges(bcES, 1.0), 'src -> b.vertexSets('vs), 'dst -> c.vertexSets('vs))
+    val abOp = AddWeightedEdges(abES, 1.0)
+    val ab = abOp(abOp.src, a.vs)(abOp.dst, b.vs).result
+    val bcOp = AddWeightedEdges(bcES, 1.0)
+    val bc = bcOp(bcOp.src, b.vs)(bcOp.dst, c.vs).result
     // Concatenate!
-    val cb = helper.apply(
-      ConcatenateBundles(),
-      'weightsAB -> ab.edgeAttributes('weight),
-      'weightsBC -> bc.edgeAttributes('weight))
-    helper.localData(cb.edgeAttributes('weightsAC).runtimeSafeCast[Double])
-      .map { case ((a, b), c) => ((a.toInt, b.toInt), c) }
+    val cbOp = ConcatenateBundles()
+    val cb = cbOp(cbOp.weightsAB, ab.weight)(cbOp.weightsBC, bc.weight).result
+    cb.weightsAC.toEdgeMap.map { case ((a, b), c) => ((a.toInt, b.toInt), c) }
   }
 
   implicit def toSeqMap(x: Seq[(Int, Int)]): Seq[(Seq[Int], Int)] = x.map { case (a, b) => Seq(a) -> b }

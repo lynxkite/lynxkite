@@ -14,11 +14,20 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object GraphTestUtils {
   implicit class EdgeBundleOps[T <% EdgeBundleData](eb: T) {
-    def toSet(): Set[(Long, Long)] = {
+    def toSet(): Set[(ID, ID)] = {
       eb.rdd
         .collect
         .map { case (id, edge) => (edge.src, edge.dst) }
         .toSet
+    }
+  }
+  implicit class EdgeAttributeOps[T <% EdgeAttributeData[T]](attr: T)(implicit dataManager: DataManager) {
+    def toEdgeMap() = {
+      val edgesRDD = dataManager.get(attr.entity.edgeBundle).rdd
+      edgesRDD.join(attr.rdd).map {
+        case (id, (edge, value)) =>
+          (edge.src, edge.dst) -> value
+      }.collect.toMap
     }
   }
 }
@@ -152,18 +161,27 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
   }
 }
 
-case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double) extends MetaGraphOperation {
-  def signature = newSignature
-    .inputVertexSet('src)
-    .inputVertexSet('dst)
-    .outputEdgeBundle('es, 'src -> 'dst)
-    .outputEdgeAttribute[Double]('weight, 'es)
+object AddWeightedEdges {
+  class Input extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    val es = edgeBundle(inputs.src.entity, inputs.dst.entity)
+    val weight = edgeAttribute[Double](es)
+  }
+}
+case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
+    extends TypedMetaGraphOp[AddWeightedEdges.Input, AddWeightedEdges.Output] {
+  import AddWeightedEdges._
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext) = {
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val es = rc.sparkContext.parallelize(edges.map {
       case (a, b) => Edge(a, b)
     }).fastNumbered(rc.onePartitionPartitioner)
-    outputs.putEdgeBundle('es, es)
-    outputs.putEdgeAttribute('weight, es.mapValues(_ => weight))
+    output(o.es, es)
+    output(o.weight, es.mapValues(_ => weight))
   }
 }
