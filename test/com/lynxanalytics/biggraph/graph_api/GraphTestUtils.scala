@@ -21,7 +21,8 @@ object GraphTestUtils {
         .toSet
     }
   }
-  implicit class EdgeAttributeOps[T <% EdgeAttributeData[T]](attr: T)(implicit dataManager: DataManager) {
+  
+  implicit class EdgeAttributeOps[U, T <% EdgeAttributeData[U]](attr: T)(implicit dataManager: DataManager) {    
     def toEdgeMap() = {
       val edgesRDD = dataManager.get(attr.entity.edgeBundle).rdd
       edgesRDD.join(attr.rdd).map {
