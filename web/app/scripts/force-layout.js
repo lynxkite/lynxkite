@@ -51,6 +51,11 @@ var FORCE_LAYOUT = (function() {
     var totalChange = 0;
     for (i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
+      if (v.dragged) {
+        // Cancel movement.
+        v.x = v.forceOX;
+        v.y = v.forceOY;
+      }
       var oox = v.forceOX, ooy = v.forceOY;
       v.forceOX = v.x; v.forceOY = v.y;
       v.x += (1 - this.opts.drag) * (v.forceOX - oox);
@@ -58,7 +63,7 @@ var FORCE_LAYOUT = (function() {
       v.moveTo(v.x, v.y);
       totalChange += Math.abs(v.x - oox) + Math.abs(v.y - ooy);
     }
-    return 0.001 < totalChange / vertices.length / maxDist;
+    return 0.0001 < totalChange / vertices.length / maxDist;
   };
   return lib;
 }());
