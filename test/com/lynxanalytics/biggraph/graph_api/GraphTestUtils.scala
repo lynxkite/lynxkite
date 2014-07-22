@@ -13,6 +13,12 @@ import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object GraphTestUtils {
+  implicit class VertexSetOps[T <% VertexSetData](vs: T) {
+    def toSet(): Set[ID] = {
+      vs.rdd.keys.collect.toSet
+    }
+  }
+
   implicit class EdgeBundleOps[T <% EdgeBundleData](eb: T) {
     def toMap(): Map[ID, ID] = {
       eb.rdd
