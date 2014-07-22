@@ -8,6 +8,15 @@ angular
   ])
   .config(function ($routeProvider) {
     $routeProvider
+      .when('/', {
+        templateUrl: 'views/splash.html',
+        controller: 'SplashCtrl',
+      })
+      .when('/project', {
+        templateUrl: 'views/project.html',
+        controller: 'ProjectViewCtrl',
+        reloadOnSearch: false,
+      })
       .when('/metaGraph', {
         templateUrl: 'views/metaGraph.html',
         controller: 'MetaGraphViewCtrl',
@@ -18,6 +27,6 @@ angular
         controller: 'ClusterManagerCtrl',
       })
       .otherwise({
-        redirectTo: '/metaGraph',
+        redirectTo: '/',
       });
   });
