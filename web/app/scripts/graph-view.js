@@ -161,11 +161,13 @@ angular.module('biggraph').directive('graphView', function($window) {
           ev.pageY = ev.originalEvent.changedTouches[0].pageY;
           ev.preventDefault();
         }
-        vertex.dragged = true;
-        vertices.animate();
         var x = ev.pageX - svgElement.offset().left;
         var y = ev.pageY - svgElement.offset().top;
         vertex.moveTo(x, y);
+        vertex.forceOX = x;
+        vertex.forceOY = y;
+        vertex.dragged = true;
+        vertices.animate();
       });
     });
   };
@@ -182,13 +184,22 @@ angular.module('biggraph').directive('graphView', function($window) {
       e.src.forceMass += 1;
       e.dst.forceMass += 1;
     }
-    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: 500, gravity: 0.05, drag: 0.1 });
+    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: 500, gravity: 0.05, drag: 0.2 });
     // Initial layout.
     while (engine.step(vertices)) {}
     // Call vertices.animate() later to trigger interactive layout.
+    var animating = false;
     vertices.animate = function() {
+      if (!animating) {
+        animating = true;
+        window.requestAnimationFrame(vertices.step);
+      }
+    };
+    vertices.step = function() {
       if (engine.step(vertices)) {
-        window.requestAnimationFrame(vertices.animate);
+        window.requestAnimationFrame(vertices.step);
+      } else {
+        animating = false;
       }
     };
   };
