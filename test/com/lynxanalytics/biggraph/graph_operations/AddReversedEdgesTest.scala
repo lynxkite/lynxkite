@@ -11,6 +11,6 @@ class AddReversedEdgesTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = AddReversedEdges()
     val out = op(op.es, g.edges).result
-    assert(out.esPlus.toSet === Set(0 -> 1, 1 -> 0, 0 -> 2, 2 -> 0, 1 -> 2, 2 -> 1))
+    assert(out.esPlus.toMap == Map(0 -> 1, 1 -> 0, 0 -> 2, 2 -> 0, 1 -> 2, 2 -> 1))
   }
 }
