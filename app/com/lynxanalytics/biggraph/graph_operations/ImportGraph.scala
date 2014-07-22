@@ -137,8 +137,6 @@ abstract class ImportCommon {
 
 object ImportCommon {
   def toSymbol(field: String) = Symbol("csv_" + field)
-  class NoInput extends MagicInputSignature {
-  }
 }
 
 object ImportVertexList {
@@ -152,9 +150,9 @@ object ImportVertexList {
 }
 
 abstract class ImportVertexList extends ImportCommon
-    with TypedMetaGraphOp[ImportCommon.NoInput, ImportVertexList.Output] {
+    with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
   import ImportVertexList._
-  @transient override lazy val inputs = new ImportCommon.NoInput()
+  @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
   override val isHeavy = true
 
@@ -222,11 +220,11 @@ object ImportEdgeListWithNumericIDs {
 
 case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String)
     extends ImportEdgeList[ImportEdgeListWithNumericIDs.Output]
-    with TypedMetaGraphOp[ImportCommon.NoInput, ImportEdgeListWithNumericIDs.Output] {
+    with TypedMetaGraphOp[NoInput, ImportEdgeListWithNumericIDs.Output] {
   import ImportEdgeListWithNumericIDs._
   mustHaveField(src)
   mustHaveField(dst)
-  @transient override lazy val inputs = new ImportCommon.NoInput()
+  @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
   override val isHeavy = true
 
@@ -251,11 +249,11 @@ object ImportEdgeListWithStringIDs {
 
 case class ImportEdgeListWithStringIDs(csv: CSV, src: String, dst: String)
     extends ImportEdgeList[ImportEdgeListWithStringIDs.Output]
-    with TypedMetaGraphOp[ImportCommon.NoInput, ImportEdgeListWithStringIDs.Output] {
+    with TypedMetaGraphOp[NoInput, ImportEdgeListWithStringIDs.Output] {
   import ImportEdgeListWithStringIDs._
   mustHaveField(src)
   mustHaveField(dst)
-  @transient override lazy val inputs = new ImportCommon.NoInput()
+  @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
   override val isHeavy = true
 
