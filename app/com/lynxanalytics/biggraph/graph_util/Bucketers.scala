@@ -7,7 +7,6 @@ import scala.math.Numeric
 import com.lynxanalytics.biggraph.graph_api._
 
 trait Bucketer[T] extends Serializable {
-  def tt: TypeTag[T]
   val numBuckets: Int
   def whichBucket(value: T): Int
   def bucketLabels: Seq[String]
@@ -15,7 +14,6 @@ trait Bucketer[T] extends Serializable {
 }
 
 case class EmptyBucketer() extends Bucketer[Nothing] {
-  def tt: TypeTag[Nothing] = ???
   val numBuckets = 1
   def whichBucket(value: Nothing) = ???
   def bucketLabels: Seq[String] = Seq("")
@@ -74,17 +72,14 @@ abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
 
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
     extends EnumBucketer[String](options, hasOther) {
-  @transient lazy val tt = typeTag[String]
   val labelType = "bucket"
 }
 case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
     extends FractionalBucketer[Double](min, max, numBuckets) {
-  @transient lazy val tt = typeTag[Double]
   val labelType = "between"
 }
 case class LongBucketer(min: Long, max: Long, numBuckets: Int)
     extends NumericBucketer[Long](min, max, numBuckets) {
-  @transient lazy val tt = typeTag[Long]
   val labelType = if ((max - min) / numBuckets == 0) "bucket" else "between"
   override def bucketLabels: Seq[String] = {
     if ((max - min) / numBuckets == 0)
