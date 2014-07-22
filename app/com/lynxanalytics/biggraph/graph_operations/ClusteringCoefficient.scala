@@ -6,14 +6,25 @@ import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class ClusteringCoefficient() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputGraph('vs, 'es)
-    .outputVertexAttribute[Double]('clustering, 'vs)
+object ClusteringCoefficient {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput) extends MagicOutput(instance) {
+    val clustering = vertexAttribute[Double](inputs.vs.entity)
+  }
+}
+import ClusteringCoefficient._
+case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] {
+  @transient override lazy val inputs = new GraphInput
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val nonLoopEdges = inputs.edgeBundles('es).rdd.filter { case (_, e) => e.src != e.dst }
-    val vertices = inputs.vertexSets('vs).rdd
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val nonLoopEdges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
+    val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
 
     val inNeighbors = nonLoopEdges
@@ -50,7 +61,7 @@ case class ClusteringCoefficient() extends MetaGraphOperation {
         }
     }
 
-    outputs.putVertexAttribute('clustering, clusteringCoeff)
+    output(o.clustering, clusteringCoeff)
   }
 
   override val isHeavy = true
