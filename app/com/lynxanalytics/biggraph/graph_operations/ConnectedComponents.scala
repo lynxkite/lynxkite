@@ -12,16 +12,29 @@ import org.apache.spark.storage.StorageLevel
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends MetaGraphOperation {
-  def signature = newSignature
-    .inputGraph('vs, 'es)
-    .outputVertexSet('cc)
-    .outputEdgeBundle('links, 'vs -> 'cc)
+object ConnectedComponents {
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: GraphInput) extends MagicOutput(instance) {
+    val cc = vertexSet
+    val links = edgeBundle(inputs.vs.entity, cc)
+  }
+}
+import ConnectedComponents._
+case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
+    extends TypedMetaGraphOp[GraphInput, Output] {
+  @transient override lazy val inputs = new GraphInput
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val inputEdges = inputs.edgeBundles('es).rdd.values
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val inputEdges = inputs.es.rdd.values
       .map(edge => (edge.src, edge.dst))
-    val inputVertices = inputs.vertexSets('vs).rdd
+    val inputVertices = inputs.vs.rdd
     val graph = inputEdges
       .groupByKey(inputVertices.partitioner.get)
       .mapValues(_.toSet)
@@ -32,8 +45,8 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000) extends
         case (vId, (_, None)) => Edge(vId, vId)
       }
     val ccVertices = ccEdges.map(_.dst -> ()).distinct
-    outputs.putEdgeBundle('links, ccEdges.fastNumbered(rc.defaultPartitioner))
-    outputs.putVertexSet('cc, ccVertices.partitionBy(rc.defaultPartitioner))
+    output(o.links, ccEdges.fastNumbered(rc.defaultPartitioner))
+    output(o.cc, ccVertices.partitionBy(rc.defaultPartitioner))
   }
 
   type ComponentID = ID
