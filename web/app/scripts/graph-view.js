@@ -132,13 +132,41 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex) {
     var scope = this.scope;
+    var svgElement = this.svg;
     function setCenter() {
       scope.$apply(function() {
         vertices.side.center = vertex.id;
       });
     }
     vertex.dom.on('mousedown touchstart', function() {
-      setCenter();
+      vertex.held = true;
+      vertex.dragged = false;
+      angular.element(window).on('mouseup touchend', function() {
+        angular.element(window).off('mousemove mouseup touchmove touchend');
+        if (!vertex.held) {
+          return;  // Duplicate event.
+        }
+        vertex.held = false;
+        if (vertex.dragged) {  // It was a drag.
+          vertex.dragged = false;
+          vertices.animate();
+        } else {  // It was a click.
+          setCenter();
+        }
+      });
+      angular.element(window).on('mousemove touchmove', function(ev) {
+        if (ev.type === 'touchmove') {
+          // Translate into mouse event.
+          ev.pageX = ev.originalEvent.changedTouches[0].pageX;
+          ev.pageY = ev.originalEvent.changedTouches[0].pageY;
+          ev.preventDefault();
+        }
+        vertex.dragged = true;
+        vertices.animate();
+        var x = ev.pageX - svgElement.offset().left;
+        var y = ev.pageY - svgElement.offset().top;
+        vertex.moveTo(x, y);
+      });
     });
   };
 
