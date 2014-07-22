@@ -10,18 +10,17 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
   val g = ExampleGraph()().result
 
   test("Only 1 bucket") {
-    val xBucketer: Bucketer[_] = new EmptyBucketer()
-    val yBucketer: Bucketer[_] = new EmptyBucketer()
-    val op = VertexBucketGrid(xBucketer, yBucketer)
+    val xBucketer = new EmptyBucketer()
+    val yBucketer = new EmptyBucketer()
+    val op = VertexBucketGrid[Nothing, Nothing](xBucketer, yBucketer)
     val out = op(op.vertices, g.vertices).result
     assert(out.bucketSizes.value == Map((0, 0) -> 4))
   }
 
   test("String-Double bucketing") {
     val numBuckets = 2
-    val xBucketer: Bucketer[String] =
-      StringBucketer(Seq("Adam", "Eve"), hasOther = true)
-    val yBucketer: Bucketer[Double] = DoubleBucketer(2.0, 50.3, numBuckets)
+    val xBucketer = StringBucketer(Seq("Adam", "Eve"), hasOther = true)
+    val yBucketer = DoubleBucketer(2.0, 50.3, numBuckets)
 
     val op = VertexBucketGrid(xBucketer, yBucketer)
     val out = op(op.vertices, g.vertices)(op.xAttribute, g.name)(op.yAttribute, g.age).result
