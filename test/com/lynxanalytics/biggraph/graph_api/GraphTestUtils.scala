@@ -14,11 +14,11 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object GraphTestUtils {
   implicit class EdgeBundleOps[T <% EdgeBundleData](eb: T) {
-    def toSet(): Set[(Long, Long)] = {
+    def toMap(): Map[ID, ID] = {
       eb.rdd
         .collect
-        .map { case (id, edge) => (edge.src, edge.dst) }
-        .toSet
+        .map { case (id, edge) => (edge.src -> edge.dst) }
+        .toMap
     }
   }
 }
