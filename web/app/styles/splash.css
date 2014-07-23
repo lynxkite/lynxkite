@@ -1,0 +1,20 @@
+.top-search input {
+  border: 0;
+  outline: none;
+  padding: 10px;
+  width: 100%;
+}
+.project-list {
+  padding: 0;
+}
+.project-list > a {
+  display: block;
+  padding: 20px;
+  border-bottom: 1px solid whitesmoke;
+}
+.project-list > a:hover,
+.project-list > a:focus {
+  text-decoration: none;
+  background: #428BCA;
+  color: white;
+}
