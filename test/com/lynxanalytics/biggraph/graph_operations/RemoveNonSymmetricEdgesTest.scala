@@ -3,11 +3,14 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class RemoveNonSymmetricEdgesTest extends FunSuite with TestGraphOperation {
+class RemoveNonSymmetricEdgesTest extends FunSuite with TestGraphOp {
   test("example graph") {
-    val g = helper.apply(ExampleGraph())
-    val out = helper.apply(RemoveNonSymmetricEdges(), 'es -> g('edges))
-    assert(helper.localData(out.edgeBundles('symmetric)) == Set(0 -> 1, 1 -> 0))
+    val g = ExampleGraph()().result
+    val op = RemoveNonSymmetricEdges()
+    val out = op(op.es, g.edges).result
+    assert(out.symmetric.toMap == Map(0 -> 1, 1 -> 0))
   }
 }
