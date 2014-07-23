@@ -20,5 +20,11 @@ package object graph_operations {
     val es = edgeBundle(vs, vs)
   }
 
+  class Segmentation(implicit instance: MetaGraphOperationInstance,
+                     vs: VertexSet) extends MagicOutput(instance) {
+    val segments = vertexSet
+    val belongsTo = edgeBundle(vs, segments)
+  }
+
   class NoInput extends MagicInputSignature {}
 }
