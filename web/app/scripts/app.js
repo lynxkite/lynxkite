@@ -12,7 +12,7 @@ angular
         templateUrl: 'views/splash.html',
         controller: 'SplashCtrl',
       })
-      .when('/project', {
+      .when('/project/:project', {
         templateUrl: 'views/project.html',
         controller: 'ProjectViewCtrl',
         reloadOnSearch: false,
