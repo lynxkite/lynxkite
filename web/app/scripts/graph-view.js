@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('biggraph').directive('graphView', function($window) {
-  /* global SVG_UTIL, COMMON_UTIL */
+  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
   var svg = SVG_UTIL;
   var util = COMMON_UTIL;
   var directive = {
@@ -88,7 +88,15 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
-      this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
+      var edges = this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
+      if (e.srcIdx === e.dstIdx) {
+        vertices[e.srcIdx].edges = edges;
+      }
+    }
+    for (i = 0; i < vertices.length; ++i) {
+      if (vertices[i].mode === 'sampled') {
+        this.layout(vertices[i]);
+      }
     }
   };
 
@@ -106,24 +114,94 @@ angular.module('biggraph').directive('graphView', function($window) {
                          yOff + Math.random() * 400 - 200,
                          Math.sqrt(vertexScale * vertex.size),
                          label);
+      v.id = vertex.id;
       svg.addClass(v.dom, 'sampled');
       vertices.push(v);
       if (vertex.size === 0) {
         continue;
       }
-      this.bindSampleClick(v, vertex, side);
+      this.sampledVertexMouseBindings(vertices, v);
       this.vertices.append(v.dom);
     }
+    vertices.side = side;
+    vertices.mode = 'sampled';
+    vertices.xOff = xOff;
+    vertices.yOff = yOff;
     return vertices;
   };
 
-  GraphView.prototype.bindSampleClick = function(v, vertex, side) {
+  GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex) {
     var scope = this.scope;
-    v.dom.click(function() {
+    var svgElement = this.svg;
+    function setCenter() {
       scope.$apply(function() {
-        side.center = vertex.id;
+        vertices.side.center = vertex.id;
+      });
+    }
+    vertex.dom.on('mousedown touchstart', function() {
+      vertex.held = true;
+      vertex.dragged = false;
+      angular.element(window).on('mouseup touchend', function() {
+        angular.element(window).off('mousemove mouseup touchmove touchend');
+        if (!vertex.held) {
+          return;  // Duplicate event.
+        }
+        vertex.held = false;
+        if (vertex.dragged) {  // It was a drag.
+          vertex.dragged = false;
+          vertices.animate();
+        } else {  // It was a click.
+          setCenter();
+        }
+      });
+      angular.element(window).on('mousemove touchmove', function(ev) {
+        if (ev.type === 'touchmove') {
+          // Translate into mouse event.
+          ev.pageX = ev.originalEvent.changedTouches[0].pageX;
+          ev.pageY = ev.originalEvent.changedTouches[0].pageY;
+          ev.preventDefault();
+        }
+        var x = ev.pageX - svgElement.offset().left;
+        var y = ev.pageY - svgElement.offset().top;
+        vertex.moveTo(x, y);
+        vertex.forceOX = x;
+        vertex.forceOY = y;
+        vertex.dragged = true;
+        vertices.animate();
       });
     });
+  };
+
+  GraphView.prototype.layout = function(vertices) {
+    for (var i = 0; i < vertices.length; ++i) {
+      var v = vertices[i];
+      v.forceMass = 1;
+      v.forceOX = v.x;
+      v.forceOY = v.y;
+    }
+    for (i = 0; i < vertices.edges.length; ++i) {
+      var e = vertices.edges[i];
+      e.src.forceMass += 1;
+      e.dst.forceMass += 1;
+    }
+    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: 500, gravity: 0.05, drag: 0.2 });
+    // Initial layout.
+    while (engine.step(vertices)) {}
+    // Call vertices.animate() later to trigger interactive layout.
+    var animating = false;
+    vertices.animate = function() {
+      if (!animating) {
+        animating = true;
+        window.requestAnimationFrame(vertices.step);
+      }
+    };
+    vertices.step = function() {
+      if (engine.step(vertices)) {
+        window.requestAnimationFrame(vertices.step);
+      } else {
+        animating = false;
+      }
+    };
   };
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
@@ -193,6 +271,7 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   GraphView.prototype.addEdges = function(edges, srcs, dsts) {
+    var edgeObjects = [];
     var bounds = util.minmax(edges.map(function(n) { return n.size; }));
     var normalWidth = this.zoom * 0.02;
     var info = bounds.span / bounds.max;  // Information content of edge widths. (0 to 1)
@@ -206,8 +285,10 @@ angular.module('biggraph').directive('graphView', function($window) {
       var a = srcs[edge.a];
       var b = dsts[edge.b];
       var e = new Edge(a, b, edgeScale * edge.size, this.zoom);
+      edgeObjects.push(e);
       this.edges.append(e.dom);
     }
+    return edgeObjects;
   };
 
   function Label(x, y, text, side) {
