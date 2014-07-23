@@ -325,7 +325,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
         def f(vs: VertexSet) = if (vs == orig) filtered else vs
         manager.show(
           graph_operations.InducedEdgeBundle(),
-          'input -> eb, 'srcSubset -> f(eb.srcVertexSet), 'dstSubset -> f(eb.dstVertexSet))
+          'srcEdges -> eb, 'srcSubset -> f(eb.srcVertexSet), 'dstSubset -> f(eb.dstVertexSet))
       }
       FEStatus.success
     }
