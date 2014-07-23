@@ -1,0 +1,75 @@
+<div class="col-sm-6">
+  <progressbar ng-if="side.data && !side.data.$resolved" value="100" class="progress-striped active">
+    Loading...
+  </progressbar>
+
+  <div class="panel panel-danger" ng-if="side.data.error">
+    <div class="panel-heading">
+      Error
+    </div>
+    <div class="panel-body">
+      {{side.data.error}}
+    </div>
+  </div>
+
+  <div class="panel panel-default" ng-if="side.data.$resolved && !side.data.error">
+    <div class="panel-heading project-name">
+      {{side.data.name}}
+      <div class="btn-group pull-right">
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable>
+          <i tooltip="Bucketed&nbsp;Graph" class="glyphicon glyphicon-th"></i>
+        </label>
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable>
+          <i tooltip="Sampled&nbsp;Graph" class="glyphicon glyphicon-eye-open"></i>
+        </label>
+      </div>
+      <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
+        tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets"
+        type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
+      <input class="right-range-input" ng-show="side.state.graphMode == 'sampled'"
+        tooltip="radius {{side.state.sampleRadius}}"
+        type="range" max="10" step="1" ng-model="side.state.sampleRadius">
+    </div>
+
+    <div class="list-group">
+      <li class="list-group-item lead">
+        {{human(side.data.vertexCount)}} <span class="de-emph">{{side.data.vertexNames}} with</span>
+        {{human(side.data.edgeCount)}} <span class="de-emph">{{side.data.edgeNames}}</span>
+      </li>
+
+      <li class="list-group-item lead">
+        <span class="de-emph">Attributes of</span> {{side.data.vertexNames}}
+      </li>
+      <li class="list-group-item" ng-repeat="attr in side.data.vertexAttributes">
+        {{attr.title}}
+        <span ng-if="side.state.graphMode == 'bucketed'">
+          <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.xAttribute === attr.id }"
+              ng-click="setState(side, 'xAttribute', attr.id)">Graph on X</button>
+          <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.yAttribute === attr.id }"
+              ng-click="setState(side, 'yAttribute', attr.id)">Graph on Y</button>
+        </span>
+        <span ng-if="side.state.graphMode == 'sampled'">
+          <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.sizeAttribute === attr.id }"
+              ng-click="setState(side, 'sizeAttribute', attr.id)">Graph as size</button>
+          <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.labelAttribute === attr.id }"
+              ng-click="setState(side, 'labelAttribute', attr.id)">Graph as label</button>
+        </span>
+        <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]"
+            ng-model-options="{ updateOn: 'blur' }">
+        <span
+          ng-hide="attr.showHistogram"
+          class="clicky glyphicon glyphicon-stats"
+          tooltip="Show histogram"
+          ng-click="startToShowHistogram(side, attr)"></span>
+        <histogram ng-show="attr.showHistogram" model="attr.histogram"></histogram>
+      </li>
+
+      <li class="list-group-item lead">
+      <span class="de-emph">Attributes of</span> {{side.data.edgeNames}}
+      </li>
+      <li class="list-group-item" ng-repeat="attr in side.data.edgeAttributes">
+        {{attr.title}}
+      </li>
+    </div>
+  </div>
+</div>

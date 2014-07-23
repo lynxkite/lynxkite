@@ -1,0 +1,68 @@
+{
+  "name": "My Project",
+  "vertexCount": 12345678,
+  "vertexNames": "subscribers",
+  "vertexOps": [
+    { "id": "x", "title": "Delete all vertices", "parameters": [] }
+  ],
+  "edgeCount": 234567890,
+  "edgeNames": "calls",
+  "edgeOps": [
+    { "id": "x", "title": "Delete all edges", "parameters": [] },
+    { "id": "x", "title": "Reverse edges", "parameters": [] },
+    { "id": "x", "title": "Add reversed edges", "parameters": [] }
+  ],
+  "vertexAttributes": [
+    { "id": "1234-1234-1234-1234", "title": "age", "ops": [] },
+    { "id": "1234-1234-1234-1234", "title": "income", "ops": [] },
+    { "id": "1234-1234-1234-1234", "title": "gender", "ops": [] },
+    { "id": "1234-1234-1234-1234", "title": "favorite color", "ops": [
+      { "id": "x", "title": "Delete", "parameters": [] },
+      { "id": "x", "title": "Filter vertices", "parameters": [
+        { "id": "x", "title": "Expression", "defaultValue": "favorite_color != 'blue'" }
+      ] },
+      { "id": "x", "title": "Edges from matches", "parameters": [] }
+    ] }
+  ],
+  "vertexAttributeOps": [
+    { "id": "x", "title": "Constant attribute", "parameters": [
+      { "id": "x", "title": "Value", "defaultValue": "1.0" }
+    ] },
+    { "id": "x", "title": "Degree", "parameters": [] },
+    { "id": "x", "title": "Out-degree", "parameters": [] },
+    { "id": "x", "title": "In-degree", "parameters": [] },
+    { "id": "x", "title": "Clustering coefficient", "parameters": [] },
+    { "id": "x", "title": "PageRank", "parameters": [
+      { "id": "x", "title": "Damping factor", "defaultValue": "0.85" },
+      { "id": "x", "title": "Iterations", "defaultValue": "5" }
+    ] }
+  ],
+  "edgeAttributes": [
+    { "id": "1234-1234-1234-1234", "title": "call duration", "ops": [
+      { "id": "x", "title": "Degree", "parameters": [] },
+      { "id": "x", "title": "Out-degree", "parameters": [] },
+      { "id": "x", "title": "In-degree", "parameters": [] },
+      { "id": "x", "title": "PageRank", "parameters": [
+        { "id": "x", "title": "Damping factor", "defaultValue": "0.85" },
+        { "id": "x", "title": "Iterations", "defaultValue": "5" }
+      ] }
+    ] },
+    { "id": "1234-1234-1234-1234", "title": "hour of day", "ops": [] }
+  ],
+  "edgeAttributeOps": [
+    { "id": "x", "title": "Constant attribute", "parameters": [
+      { "id": "x", "title": "Value", "defaultValue": "1.0" }
+    ] }
+  ],
+  "segmentations": [
+    { "id": "1234-1234-1234-1234", "title": "cliques" },
+    { "id": "1234-1234-1234-1234", "title": "communities" }
+  ],
+  "segmentationOps": [
+    { "id": "x", "title": "Maximal cliques", "parameters": [
+      { "id": "x", "title": "Minimal clique size", "defaultValue": "3" }
+    ] },
+    { "id": "x", "title": "Connected components", "parameters": [] },
+    { "id": "x", "title": "Communities", "parameters": [] }
+  ]
+}
