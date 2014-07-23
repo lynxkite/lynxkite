@@ -125,7 +125,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("min", "Minimum clique size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.FindMaxCliques(params("min").toInt),
-        'esIn -> manager.edgeBundle(params("es").asUUID))
+        'es -> manager.edgeBundle(params("es").asUUID))
       FEStatus.success
     }
   }

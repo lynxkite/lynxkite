@@ -36,8 +36,8 @@ class SetOverlapForCCTest extends FunSuite with TestGraphOperation {
       val CCforCC = helper.apply(ConnectedComponents(), 'vs -> sets, 'es -> SOforCC.edgeBundles('overlaps))
 
       ConnectedComponentsTest.assertSameComponents(
-        helper.localData(CCnormal.edgeBundles('links)).toMap,
-        helper.localData(CCnormal.edgeBundles('links)).toMap)
+        helper.localData(CCnormal.edgeBundles('belongsTo)).toMap,
+        helper.localData(CCnormal.edgeBundles('belongsTo)).toMap)
     }
   }
 }

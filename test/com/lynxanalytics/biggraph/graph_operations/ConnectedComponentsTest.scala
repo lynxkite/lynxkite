@@ -40,7 +40,7 @@ class ConnectedComponentsTest extends FunSuite with TestGraphOp {
     val g = SmallTestGraph(nodes).result
     val op = ConnectedComponents(if (local) 100000 else 0)
     val cc = op(op.vs, g.vs)(op.es, g.es).result
-    cc.links.toMap
+    cc.belongsTo.toMap
   }
 
   test("three islands") {
