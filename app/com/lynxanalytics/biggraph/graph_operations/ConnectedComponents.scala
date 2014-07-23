@@ -12,23 +12,17 @@ import org.apache.spark.storage.StorageLevel
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object ConnectedComponents {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: GraphInput) extends MagicOutput(instance) {
-    val cc = vertexSet
-    val links = edgeBundle(inputs.vs.entity, cc)
-  }
-}
-import ConnectedComponents._
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
-    extends TypedMetaGraphOp[GraphInput, Output] {
+    extends TypedMetaGraphOp[GraphInput, Segmentation] {
   @transient override lazy val inputs = new GraphInput
 
-  def outputMeta(instance: MetaGraphOperationInstance) =
-    new Output()(instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val inst = instance
+    new Segmentation(inputs.vs.entity)
+  }
 
   def execute(inputDatas: DataSet,
-              o: Output,
+              o: Segmentation,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
@@ -45,8 +39,8 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
         case (vId, (_, None)) => Edge(vId, vId)
       }
     val ccVertices = ccEdges.map(_.dst -> ()).distinct
-    output(o.links, ccEdges.fastNumbered(rc.defaultPartitioner))
-    output(o.cc, ccVertices.partitionBy(rc.defaultPartitioner))
+    output(o.belongsTo, ccEdges.fastNumbered(rc.defaultPartitioner))
+    output(o.segments, ccVertices.partitionBy(rc.defaultPartitioner))
   }
 
   type ComponentID = ID
