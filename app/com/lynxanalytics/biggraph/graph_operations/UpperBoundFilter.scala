@@ -1,21 +1,36 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class UpperBoundFilter(bound: Double) extends MetaGraphOperation {
-  def signature = newSignature
-    .inputVertexAttribute[Double]('attr, 'vs, create = true)
-    .outputVertexSet('fvs)
-    .outputEdgeBundle('projection, 'vs -> 'fvs)
+object UpperBoundFilter {
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+                  inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
+    val fvs = vertexSet
+    val identity = edgeBundle(inputs.vs.entity, fvs)
+  }
+}
+import UpperBoundFilter._
+case class UpperBoundFilter[T: Ordering](bound: T)
+    extends TypedMetaGraphOp[VertexAttributeInput[T], Output[T]] {
+  @transient override lazy val inputs = new VertexAttributeInput[T]
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val attr = inputs.vertexAttributes('attr).runtimeSafeCast[Double].rdd
-    val fattr = attr.filter { case (id, v) => v <= bound }
-    outputs.putVertexSet('fvs, fattr.mapValues(_ => ()))
-    val projection = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
-    outputs.putEdgeBundle('projection, projection)
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val tt = inputs.attr.data.typeTag
+    implicit val ct = inputs.attr.data.classTag
+    val ord = implicitly[Ordering[T]]
+    val attr = inputs.attr.rdd
+    val fattr = attr.filter { case (id, v) => ord.lteq(v, bound) }
+    output(o.fvs, fattr.mapValues(_ => ()))
+    val identity = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
+    output(o.identity, identity)
   }
 }
