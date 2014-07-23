@@ -9,3 +9,6 @@
 .de-emph {
   color: rgba(0, 0, 0, 0.3);
 }
+[vertex-attribute] {
+  border-left-width: 5px !important;
+}
