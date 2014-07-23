@@ -18,7 +18,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val inst = instance
-    new Segmentation()(instance, inputs.vs.entity)
+    new Segmentation(inputs.vs.entity)
   }
 
   def execute(inputDatas: DataSet,

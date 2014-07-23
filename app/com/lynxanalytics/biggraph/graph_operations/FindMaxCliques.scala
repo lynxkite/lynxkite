@@ -14,7 +14,7 @@ case class FindMaxCliques(minCliqueSize: Int) extends TypedMetaGraphOp[GraphInpu
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val inst = instance
-    new Segmentation()(instance, inputs.vs.entity)
+    new Segmentation(inputs.vs.entity)
   }
 
   def execute(inputDatas: DataSet,
