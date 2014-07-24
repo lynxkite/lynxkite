@@ -15,3 +15,5 @@
     ng-model-options="{ updateOn: 'blur' }">
 <histogram-button attr="attr" side="side" model="histogram"></histogram-button>
 <histogram ng-show="histogram" model="histogram"></histogram>
+<expander ng-show="attr.ops" class="pull-right" help="Operations" model="showOps"></expander>
+<operations collapse="!showOps" model="attr.ops"></operations>
