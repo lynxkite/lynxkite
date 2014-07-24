@@ -4,14 +4,26 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class RemoveNonSymmetricEdges() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputGraph('vs, 'es)
-    .outputEdgeBundle('symmetric, 'vs -> 'vs)
+object RemoveNonSymmetricEdges {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
+      extends MagicOutput(instance) {
+    val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
+  }
+}
+import RemoveNonSymmetricEdges._
+case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output] {
+  @transient override lazy val inputs = new GraphInput
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val vsPart = inputs.vertexSets('vs).rdd.partitioner.get
-    val es = inputs.edgeBundles('es).rdd
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val vsPart = inputs.vs.rdd.partitioner.get
+    val es = inputs.es.rdd
     val bySource = es.map {
       case (id, e) => e.src -> (id, e)
     }.groupByKey(vsPart)
@@ -24,7 +36,7 @@ case class RemoveNonSymmetricEdges() extends MetaGraphOperation {
           case (id, outEdge) if inEdgeSources.contains(outEdge.dst) => id -> outEdge
         }
     }
-    outputs.putEdgeBundle('symmetric, edges.partitionBy(es.partitioner.get))
+    output(o.symmetric, edges.partitionBy(es.partitioner.get))
   }
 
   override val isHeavy = true

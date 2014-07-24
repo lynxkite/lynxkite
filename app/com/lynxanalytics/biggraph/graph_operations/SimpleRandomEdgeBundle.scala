@@ -7,14 +7,29 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends MetaGraphOperation {
-  def signature = newSignature
-    .inputVertexSet('vsSrc)
-    .inputVertexSet('vsDst)
-    .outputEdgeBundle('es, 'vsSrc -> 'vsDst)
+object SimpleRandomEdgeBundle {
+  class Input extends MagicInputSignature {
+    val vsSrc = vertexSet
+    val vsDst = vertexSet
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
+    val es = edgeBundle(inputs.vsSrc.entity, inputs.vsDst.entity)
+  }
+}
+import SimpleRandomEdgeBundle._
+case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends TypedMetaGraphOp[Input, Output] {
+  @transient override lazy val inputs = new Input
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val allEdges = inputs.vertexSets('vsSrc).rdd.cartesian(inputs.vertexSets('vsDst).rdd)
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val allEdges = inputs.vsSrc.rdd.cartesian(inputs.vsDst.rdd)
 
     val randomEdges = allEdges.mapPartitionsWithIndex {
       case (pidx, it) =>
@@ -23,6 +38,6 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends MetaGraphOp
           .map { case ((srcId, _), (dstId, _)) => Edge(srcId, dstId) }
     }
 
-    outputs.putEdgeBundle('es, randomEdges.fastNumbered(rc.defaultPartitioner))
+    output(o.es, randomEdges.fastNumbered(rc.defaultPartitioner))
   }
 }

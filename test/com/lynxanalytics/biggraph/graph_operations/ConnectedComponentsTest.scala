@@ -4,8 +4,9 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 import scala.language.implicitConversions
 
@@ -30,16 +31,16 @@ object ConnectedComponentsTest {
     }
   }
 }
-class ConnectedComponentsTest extends FunSuite with TestGraphOperation {
+class ConnectedComponentsTest extends FunSuite with TestGraphOp {
   import ConnectedComponentsTest._
 
   // Creates the graph specified by `nodes` and applies ConnectedComponents to it.
   // Returns the resulting component attributes in an easy-to-use format.
   def getComponents(nodes: Map[Int, Seq[Int]], local: Boolean): Map[ID, ID] = {
-    val (vs, es) = helper.smallGraph(nodes)
-    val cc = helper.apply(ConnectedComponents(if (local) 100000 else 0), 'vs -> vs, 'es -> es)
-
-    helper.localData(cc.edgeBundles('links)).toMap
+    val g = SmallTestGraph(nodes).result
+    val op = ConnectedComponents(if (local) 100000 else 0)
+    val cc = op(op.vs, g.vs)(op.es, g.es).result
+    cc.belongsTo.toMap
   }
 
   test("three islands") {

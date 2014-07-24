@@ -5,18 +5,35 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-case class InducedEdgeBundle() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputEdgeBundle('input, 'src -> 'dst, create = true)
-    .inputVertexSet('srcSubset) // The user needs to make sure it's a subset of 'src
-    .inputVertexSet('dstSubset) // The user needs to make sure it's a subset of 'dst
-    .outputEdgeBundle('induced, 'srcSubset -> 'dstSubset)
+object InducedEdgeBundle {
+  class Input extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val srcSubset = vertexSet
+    val dstSubset = vertexSet
+    val edges = edgeBundle(src, dst)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    val induced = edgeBundle(inputs.srcSubset.entity, inputs.dstSubset.entity)
+  }
+}
+import InducedEdgeBundle._
+case class InducedEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
+  @transient override lazy val inputs = new Input
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val input = inputs.edgeBundles('input).rdd
-    val srcSubset = inputs.vertexSets('srcSubset).rdd
-    val dstSubset = inputs.vertexSets('dstSubset).rdd
-    val bySrc = input
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val edges = inputs.edges.rdd
+    val srcSubset = inputs.srcSubset.rdd
+    val dstSubset = inputs.dstSubset.rdd
+    val bySrc = edges
       .map { case (id, edge) => (edge.src, (id, edge)) }
       .partitionBy(srcSubset.partitioner.get)
       .join(srcSubset)
@@ -26,9 +43,7 @@ case class InducedEdgeBundle() extends MetaGraphOperation {
       .partitionBy(dstSubset.partitioner.get)
       .join(dstSubset)
       .mapValues { case (idEdge, _) => idEdge }
-    outputs.putEdgeBundle(
-      'induced,
-      byDst.values.partitionBy(input.partitioner.get))
+    output(o.induced, byDst.values.partitionBy(edges.partitioner.get))
   }
 
   override val isHeavy = true
