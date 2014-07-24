@@ -15,6 +15,9 @@
 [edge-attribute] {
   border-left-width: 5px !important;
 }
+[segmentation] {
+  border-left-width: 5px !important;
+}
 .operation .title {
   padding-top: 7px;
   display: inline-block;
