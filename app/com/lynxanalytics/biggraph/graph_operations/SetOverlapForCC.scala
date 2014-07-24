@@ -11,17 +11,32 @@ import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.rdd._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-abstract class SetOverlapForCC extends MetaGraphOperation {
-  def signature = newSignature
-    .inputVertexSet('vs)
-    .inputVertexSet('sets)
-    .inputEdgeBundle('links, 'vs -> 'sets)
-    .outputEdgeBundle('overlaps, 'sets -> 'sets)
+object SetOverlapForCC {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val segments = vertexSet
+    val belongsTo = edgeBundle(vs, segments)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
+    val overlaps = edgeBundle(inputs.segments.entity, inputs.segments.entity)
+  }
+}
+import SetOverlapForCC._
+abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
+  @transient override lazy val inputs = new Input
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
     val partitioner = rc.defaultPartitioner
 
-    val bySet = inputs.edgeBundles('links).rdd.values
+    val bySet = inputs.belongsTo.rdd.values
       .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
     val byMember = bySet
@@ -30,8 +45,7 @@ abstract class SetOverlapForCC extends MetaGraphOperation {
     val edges: RDD[Edge] = byMember.flatMap {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
-    outputs.putEdgeBundle(
-      'overlaps, edges.fastNumbered(rc.defaultPartitioner))
+    output(o.overlaps, edges.fastNumbered(rc.defaultPartitioner))
   }
 
   // Override this with the actual overlap function implementations

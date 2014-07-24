@@ -158,6 +158,40 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
   }
 }
 
+object SegmentedTestGraph {
+  class Input extends MagicInputSignature {
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val vs = vertexSet
+    val segments = vertexSet
+    val belongsTo = edgeBundle(vs, segments)
+  }
+}
+case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
+    extends TypedMetaGraphOp[SegmentedTestGraph.Input, SegmentedTestGraph.Output] {
+  import SegmentedTestGraph._
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+    val sc = rc.sparkContext
+    val (srcs, dsts) = edgeLists.unzip
+    val vs: VertexSetRDD = sc.parallelize(
+      srcs.flatten.map(_.toLong -> ()))
+      .partitionBy(rc.onePartitionPartitioner)
+    val segments: VertexSetRDD = sc.parallelize(
+      dsts.map(_.toLong -> ()))
+      .partitionBy(rc.onePartitionPartitioner)
+    val es: EdgeBundleRDD = sc.parallelize(
+      edgeLists.flatMap {
+        case (s, i) => s.map(j => Edge(j.toLong, i.toLong))
+      }).fastNumbered(rc.onePartitionPartitioner)
+    output(o.vs, vs)
+    output(o.segments, segments)
+    output(o.belongsTo, es)
+  }
+}
+
 object AddWeightedEdges {
   class Input extends MagicInputSignature {
     val src = vertexSet

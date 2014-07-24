@@ -11,25 +11,37 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object SetOverlap {
   // Maximum number of sets to be O(n^2) compared.
   val SetListBruteForceLimit = 70
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val segments = vertexSet
+    val belongsTo = edgeBundle(vs, segments)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
+    val overlaps = edgeBundle(inputs.segments.entity, inputs.segments.entity)
+    val overlapSize = edgeAttribute[Int](overlaps)
+  }
 }
-case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
-  def signature = newSignature
-    .inputVertexSet('vs)
-    .inputVertexSet('sets)
-    .inputEdgeBundle('links, 'vs -> 'sets)
-    .outputEdgeBundle('overlaps, 'sets -> 'sets)
-    // The generated edges have a single attribute, the overlap size.
-    .outputEdgeAttribute[Int]('overlap_size, 'overlaps)
-
+import SetOverlap._
+case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
   // Set-valued attributes are represented as sorted Array[ID].
   type Set = Array[ID]
   // When dealing with multiple sets, they are identified by their VertexIds.
   type Sets = Iterable[(ID, Array[ID])]
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+  @transient override lazy val inputs = new Input
+
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
     val partitioner = rc.defaultPartitioner
 
-    val sets = inputs.edgeBundles('links).rdd.values
+    val sets = inputs.belongsTo.rdd.values
       .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
 
@@ -65,10 +77,8 @@ case class SetOverlap(minOverlap: Int) extends MetaGraphOperation {
 
     val numberedEdgesWithOverlaps = edgesWithOverlaps.fastNumbered(rc.defaultPartitioner)
 
-    outputs.putEdgeBundle(
-      'overlaps, numberedEdgesWithOverlaps.mapValues(_._1))
-    outputs.putEdgeAttribute(
-      'overlap_size, numberedEdgesWithOverlaps.mapValues(_._2))
+    output(o.overlaps, numberedEdgesWithOverlaps.mapValues(_._1))
+    output(o.overlapSize, numberedEdgesWithOverlaps.mapValues(_._2))
   }
 
   override val isHeavy = true
