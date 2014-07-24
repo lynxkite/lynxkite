@@ -246,14 +246,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
                             dst: VertexSet): EdgeBundle =
     metaManager.apply(
       new graph_operations.InducedEdgeBundle(),
-      'input -> eb,
+      'edges -> eb,
       'srcSubset -> src,
       'dstSubset -> dst).outputs.edgeBundles('induced)
 
   private def tripletMapping(eb: EdgeBundle): (VertexAttribute[Array[ID]], VertexAttribute[Array[ID]]) = {
     val metaOut = metaManager.apply(
       graph_operations.TripletMapping(),
-      'input -> eb).outputs
+      'edges -> eb).outputs
     return (
       metaOut.vertexAttributes('srcEdges).runtimeSafeCast[Array[ID]],
       metaOut.vertexAttributes('dstEdges).runtimeSafeCast[Array[ID]])
