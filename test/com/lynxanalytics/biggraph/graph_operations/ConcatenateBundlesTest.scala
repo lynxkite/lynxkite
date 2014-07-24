@@ -8,6 +8,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
+
 class ConcatenateBundlesTest extends FunSuite with TestGraphOp {
   def concatEdges(abSeq: Seq[(Seq[Int], Int)], bcSeq: Seq[(Seq[Int], Int)]): Map[(Int, Int), Double] = {
     val abES = abSeq.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
@@ -27,7 +29,12 @@ class ConcatenateBundlesTest extends FunSuite with TestGraphOp {
     // Concatenate!
     val cbOp = ConcatenateBundles()
     val cb = cbOp(cbOp.weightsAB, ab.weight)(cbOp.weightsBC, bc.weight).result
-    cb.weightsAC.toEdgeMap.map { case ((a, b), c) => ((a.toInt, b.toInt), c) }
+
+    // join edge bundle and weight data to make an output that is easy to read
+    cb.edgesAC.rdd.join(cb.weightsAC.rdd).map {
+      case (id, (edge, value)) =>
+        (edge.src.toInt, edge.dst.toInt) -> value
+    }.collect.toMap
   }
 
   implicit def toSeqMap(x: Seq[(Int, Int)]): Seq[(Seq[Int], Int)] = x.map { case (a, b) => Seq(a) -> b }
