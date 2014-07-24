@@ -3,15 +3,22 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class SetOverlapTest extends FunSuite with TestGraphOperation {
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
+
+class SetOverlapTest extends FunSuite with TestGraphOp {
   // Creates the graph specified by `nodes` and applies SetOverlap to it.
   // Returns the resulting edges in an easy-to-use format.
   def getOverlaps(nodes: Seq[(Seq[Int], Int)], minOverlap: Int): Map[(Int, Int), Int] = {
-    val (vs, sets, links, _) = helper.groupedGraph(nodes)
-    val so = helper.apply(SetOverlap(minOverlap), 'vs -> vs, 'sets -> sets, 'links -> links)
-    helper.localData(so.edgeAttributes('overlap_size).runtimeSafeCast[Int])
-      .map { case ((a, b), c) => ((a.toInt, b.toInt), c) }
+    val g = SegmentedTestGraph(nodes).result
+    val op = SetOverlap(minOverlap)
+    val so = op(op.vs, g.vs)(op.segments, g.segments)(op.belongsTo, g.belongsTo).result
+
+    so.overlaps.rdd.join(so.overlapSize.rdd).map {
+      case (id, (edge, value)) =>
+        (edge.src.toInt, edge.dst.toInt) -> value
+    }.collect.toMap
   }
 
   test("triangle") {

@@ -134,11 +134,11 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object SetOverlap extends FEOperation {
     val title = "Set overlaps (complete, regular)"
     val parameters = Seq(
-      Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
+      Param("belongsTo", "Edge bundle linking the input and its segments", kind = "edge-bundle"),
       Param("min", "Minimum overlap size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.SetOverlap(params("min").toInt),
-        'links -> manager.edgeBundle(params("links").asUUID))
+        'belongsTo -> manager.edgeBundle(params("belongsTo").asUUID))
       FEStatus.success
     }
   }
@@ -147,11 +147,11 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object UniformOverlapForCC extends FEOperation {
     val title = "Set overlaps (for connected components, regular)"
     val parameters = Seq(
-      Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
+      Param("belongsTo", "Edge bundle linking the input and its segments", kind = "edge-bundle"),
       Param("min", "Minimum overlap size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.UniformOverlapForCC(params("min").toInt),
-        'links -> manager.edgeBundle(params("links").asUUID))
+        'belongsTo -> manager.edgeBundle(params("belongsTo").asUUID))
       FEStatus.success
     }
   }
@@ -160,11 +160,11 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object InfocomOverlapForCC extends FEOperation {
     val title = "Set overlaps (for connected components, infocom)"
     val parameters = Seq(
-      Param("links", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
+      Param("belongsTo", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
       Param("thr", "Adjacency threshold of infocom overlap function", defaultValue = "0.6"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.InfocomOverlapForCC(params("thr").toDouble),
-        'links -> manager.edgeBundle(params("links").asUUID))
+        'belongsTo -> manager.edgeBundle(params("belongsTo").asUUID))
       FEStatus.success
     }
   }

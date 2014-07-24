@@ -4,10 +4,11 @@ import org.apache.spark.rdd
 import org.scalatest.FunSuite
 import scala.util.Random
 
-import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class SetOverlapForCCTest extends FunSuite with TestGraphOperation {
+class SetOverlapForCCTest extends FunSuite with TestGraphOp {
   def RandomSets(esize: Int, vsize: Int, seed: Int): Seq[(Seq[Int], Int)] = {
     val rand = new Random(seed)
     val elementIds = Seq.range[Int](0, vsize)
@@ -25,19 +26,22 @@ class SetOverlapForCCTest extends FunSuite with TestGraphOperation {
       val vSize = rnd.nextInt(30) + 1
       val seed = rnd.nextInt()
       val minOverlap = rnd.nextInt(6) + 1
-      val (vs, sets, links, _) = helper.groupedGraph(RandomSets(eSize, vSize, seed))
+      val g = SegmentedTestGraph(RandomSets(eSize, vSize, seed)).result
 
       // this is a slow test so lets inform the tester about what is going on
       println(s"Checking graph ${i + 1}/$trials, parameters: $eSize, $vSize, $seed, overlap: $minOverlap")
 
-      val SOnormal = helper.apply(SetOverlap(minOverlap), 'vs -> vs, 'sets -> sets, 'links -> links)
-      val SOforCC = helper.apply(UniformOverlapForCC(minOverlap), 'vs -> vs, 'sets -> sets, 'links -> links)
-      val CCnormal = helper.apply(ConnectedComponents(), 'vs -> sets, 'es -> SOnormal.edgeBundles('overlaps))
-      val CCforCC = helper.apply(ConnectedComponents(), 'vs -> sets, 'es -> SOforCC.edgeBundles('overlaps))
+      val opSO = SetOverlap(minOverlap)
+      val SO = opSO(opSO.belongsTo, g.belongsTo).result
+      val opSOforCC = UniformOverlapForCC(minOverlap)
+      val SOforCC = opSOforCC(opSOforCC.belongsTo, g.belongsTo).result
+      val opCC = ConnectedComponents()
+      val CC = opCC(opCC.es, SO.overlaps).result
+      val CCforCC = opCC(opCC.es, SOforCC.overlaps).result
 
       ConnectedComponentsTest.assertSameComponents(
-        helper.localData(CCnormal.edgeBundles('belongsTo)).toMap,
-        helper.localData(CCnormal.edgeBundles('belongsTo)).toMap)
+        CC.belongsTo.toMap,
+        CCforCC.belongsTo.toMap)
     }
   }
 }
