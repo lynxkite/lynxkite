@@ -5,12 +5,22 @@ import com.lynxanalytics.biggraph.spark_util._
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
-case class CreateVertexSet(size: Long) extends MetaGraphOperation {
-  def signature = newSignature
-    .outputVertexSet('vs)
+object CreateVertexSet {
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val vs = vertexSet
+  }
+}
+import CreateVertexSet._
+case class CreateVertexSet(size: Long) extends TypedMetaGraphOp[NoInput, Output] {
+  @transient override lazy val inputs = new NoInput
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
     val vertices: Seq[(ID, Unit)] = Seq.range[ID](0, size).map(x => (x, ()))
-    outputs.putVertexSet('vs, rc.sparkContext.parallelize(vertices).partitionBy(rc.defaultPartitioner))
+    output(o.vs, rc.sparkContext.parallelize(vertices).partitionBy(rc.defaultPartitioner))
   }
 }

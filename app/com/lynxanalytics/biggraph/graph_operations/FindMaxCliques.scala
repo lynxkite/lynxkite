@@ -9,19 +9,25 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class FindMaxCliques(minCliqueSize: Int) extends MetaGraphOperation {
-  def signature = newSignature
-    .inputGraph('vsIn, 'esIn)
-    .outputVertexSet('cliques)
-    .outputEdgeBundle('links, 'vsIn -> 'cliques)
+case class FindMaxCliques(minCliqueSize: Int) extends TypedMetaGraphOp[GraphInput, Segmentation] {
+  @transient override lazy val inputs = new GraphInput
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val cug = CompactUndirectedGraph(inputs.edgeBundles('esIn))
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val inst = instance
+    new Segmentation(inputs.vs.entity)
+  }
+
+  def execute(inputDatas: DataSet,
+              o: Segmentation,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val cug = CompactUndirectedGraph(inputs.es.data)
     val cliqueLists = computeCliques(
-      inputs.vertexSets('vsIn), cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
+      inputs.vs.data, cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
     val indexedCliqueLists = cliqueLists.fastNumbered(rc.defaultPartitioner)
-    outputs.putVertexSet('cliques, indexedCliqueLists.mapValues(_ => Unit))
-    outputs.putEdgeBundle('links, indexedCliqueLists.flatMap {
+    output(o.segments, indexedCliqueLists.mapValues(_ => ()))
+    output(o.belongsTo, indexedCliqueLists.flatMap {
       case (cid, vids) => vids.map(vid => Edge(vid, cid))
     }.fastNumbered(rc.defaultPartitioner))
   }

@@ -6,16 +6,28 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class EdgeGraph() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputGraph('vs, 'es)
-    .outputGraph('newVS, 'newES)
-    .outputEdgeBundle('link, 'vs -> 'newVS)
+object EdgeGraph {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput) extends MagicOutput(instance) {
+    val newVS = vertexSet
+    val newES = edgeBundle(newVS, newVS)
+    val link = edgeBundle(inputs.vs.entity, newVS)
+  }
+}
+import EdgeGraph._
+case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
+  @transient override lazy val inputs = new GraphInput
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
     val sc = rc.sparkContext
     val edgePartitioner = rc.defaultPartitioner
-    val edges = inputs.edgeBundles('es).rdd
+    val edges = inputs.es.rdd
     val newVS = edges.mapValues(_ => ())
 
     val edgesBySource = edges.map {
@@ -32,10 +44,10 @@ case class EdgeGraph() extends MetaGraphOperation {
           incoming <- incomings
         } yield Edge(incoming, outgoing)
     }
-    outputs.putVertexSet('newVS, newVS)
-    outputs.putEdgeBundle('newES, newES.fastNumbered(edgePartitioner))
+    output(o.newVS, newVS)
+    output(o.newES, newES.fastNumbered(edgePartitioner))
     // Just to connect to the results.
-    outputs.putEdgeBundle('link, sc.emptyRDD[(ID, Edge)].partitionBy(edgePartitioner))
+    output(o.link, sc.emptyRDD[(ID, Edge)].partitionBy(edgePartitioner))
   }
 
   override val isHeavy = true

@@ -156,7 +156,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         templatesByName(dst).asInstanceOf[VertexSetTemplate].set(withSrc, eb.dstVertexSet)
       super.set(withSrcDst, eb)
     }
-    def rdd(implicit dataSet: DataSet) = dataSet.edgeBundles(name).rdd
+    def data(implicit dataSet: DataSet) = dataSet.edgeBundles(name)
+    def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
   class VertexAttributeTemplate[T](vsF: => Symbol) extends ET[VertexAttribute[T]] {
