@@ -15,3 +15,14 @@
 [edge-attribute] {
   border-left-width: 5px !important;
 }
+.operation .title {
+  padding-top: 7px;
+  display: inline-block;
+}
+.operation label {
+  font-weight: normal;
+  color: rgba(0, 0, 0, 0.3);
+}
+.operation .form-group:last-child {
+  margin-bottom: 0;
+}

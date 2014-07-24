@@ -2,12 +2,10 @@
   "name": "My Little Project",
   "vertexCount": 12345678,
   "vertexNames": "subscribers",
-  "vertexOps": [
-    { "id": "1", "title": "Delete all vertices", "parameters": [] }
-  ],
   "edgeCount": 234567890,
   "edgeNames": "calls",
-  "edgeOps": [
+  "projectOps": [
+    { "id": "1", "title": "Delete all vertices", "parameters": [] },
     { "id": "2", "title": "Delete all edges", "parameters": [] },
     { "id": "3", "title": "Reverse edges", "parameters": [] },
     { "id": "4", "title": "Add reversed edges", "parameters": [] }
@@ -18,39 +16,42 @@
     { "id": "7", "title": "gender", "ops": [] },
     { "id": "8", "title": "favorite color", "ops": [
       { "id": "9", "title": "Delete", "parameters": [] },
-      { "id": "10", "title": "Filter vertices", "parameters": [
+      { "id": "10", "title": "Filter subscribers", "parameters": [
         { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'" }
       ] },
-      { "id": "12", "title": "Edges from matches", "parameters": [] }
+      { "id": "12", "title": "Build edges from matches", "parameters": [] }
     ] }
   ],
   "vertexAttributeOps": [
-    { "id": "13", "title": "Constant attribute", "parameters": [
-      { "id": "14", "title": "Value", "defaultValue": "1.0" }
+    { "id": "13", "title": "Add constant attribute", "parameters": [
+      { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant" },
+      { "id": "14", "title": "Value", "defaultValue": "1.0"}
     ] },
-    { "id": "15", "title": "Degree", "parameters": [] },
-    { "id": "16", "title": "Out-degree", "parameters": [] },
-    { "id": "17", "title": "In-degree", "parameters": [] },
-    { "id": "18", "title": "Clustering coefficient", "parameters": [] },
-    { "id": "19", "title": "PageRank", "parameters": [
+    { "id": "15", "title": "Add degree", "parameters": [
+      { "id": "15a", "title": "Name of new attribute", "defaultValue": "degree" }
+    ] },
+    { "id": "16", "title": "Add out-degree", "parameters": [
+      { "id": "16a", "title": "Name of new attribute", "defaultValue": "out_degree" }
+    ] },
+    { "id": "17", "title": "Add in-degree", "parameters": [
+      { "id": "17a", "title": "Name of new attribute", "defaultValue": "in_degree" }
+    ] },
+    { "id": "18", "title": "Add clustering coefficient", "parameters": [
+      { "id": "18a", "title": "Name of new attribute", "defaultValue": "clustering_coefficient" }
+    ] },
+    { "id": "19", "title": "Add PageRank", "parameters": [
+      { "id": "19a", "title": "Name of new attribute", "defaultValue": "pagerank" },
       { "id": "20", "title": "Damping factor", "defaultValue": "0.85" },
       { "id": "21", "title": "Iterations", "defaultValue": "5" }
     ] }
   ],
   "edgeAttributes": [
-    { "id": "22", "title": "call duration", "ops": [
-      { "id": "23", "title": "Degree", "parameters": [] },
-      { "id": "24", "title": "Out-degree", "parameters": [] },
-      { "id": "25", "title": "In-degree", "parameters": [] },
-      { "id": "26", "title": "PageRank", "parameters": [
-        { "id": "27", "title": "Damping factor", "defaultValue": "0.85" },
-        { "id": "28", "title": "Iterations", "defaultValue": "5" }
-      ] }
-    ] },
+    { "id": "22", "title": "call duration", "ops": [] },
     { "id": "29", "title": "hour of day", "ops": [] }
   ],
   "edgeAttributeOps": [
-    { "id": "30", "title": "Constant attribute", "parameters": [
+    { "id": "30", "title": "Add constant attribute", "parameters": [
+      { "id": "30a", "title": "Name of new attribute", "defaultValue": "constant" },
       { "id": "31", "title": "Value", "defaultValue": "1.0" }
     ] }
   ],
@@ -59,10 +60,15 @@
     { "id": "33", "title": "communities" }
   ],
   "segmentationOps": [
-    { "id": "34", "title": "Maximal cliques", "parameters": [
+    { "id": "34", "title": "Find maximal cliques", "parameters": [
+      { "id": "34a", "title": "Name of new segmentation", "defaultValue": "cliques" },
       { "id": "35", "title": "Minimal clique size", "defaultValue": "3" }
     ] },
-    { "id": "36", "title": "Connected components", "parameters": [] },
-    { "id": "37", "title": "Communities", "parameters": [] }
+    { "id": "36", "title": "Find connected components", "parameters": [
+      { "id": "36a", "title": "Name of new segmentation", "defaultValue": "connected_components" }
+    ] },
+    { "id": "37", "title": "Find communities", "parameters": [
+      { "id": "37a", "title": "Name of new segmentation", "defaultValue": "communities" }
+    ] }
   ]
 }
