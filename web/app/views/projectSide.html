@@ -45,9 +45,7 @@
       <li class="list-group-item lead">
       <span class="de-emph">Attributes of</span> {{side.data.edgeNames}}
       </li>
-      <li class="list-group-item" ng-repeat="attr in side.data.edgeAttributes">
-        {{attr.title}}
-      </li>
+      <li class="list-group-item" ng-repeat="attr in side.data.edgeAttributes" edge-attribute="attr" side="side"></li>
     </div>
   </div>
 </div>

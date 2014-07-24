@@ -12,3 +12,6 @@
 [vertex-attribute] {
   border-left-width: 5px !important;
 }
+[edge-attribute] {
+  border-left-width: 5px !important;
+}
