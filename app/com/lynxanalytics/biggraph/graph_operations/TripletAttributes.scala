@@ -7,25 +7,40 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-case class TripletMapping() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputEdgeBundle('input, 'src -> 'dst, create = true)
-    .outputVertexAttribute[Array[ID]]('srcEdges, 'src)
-    .outputVertexAttribute[Array[ID]]('dstEdges, 'dst)
+object TripletMapping {
+  class Input extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val edges = edgeBundle(src, dst) // DO NOT SUBMIT before adding to FEOperations as well
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
+    val srcEdges = vertexAttribute[Array[ID]](inputs.src.entity)
+    val dstEdges = vertexAttribute[Array[ID]](inputs.dst.entity)
+  }
+}
+case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, TripletMapping.Output] {
+  import TripletMapping._
+  @transient override lazy val inputs = new TripletMapping.Input
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    val input = inputs.edgeBundles('input).rdd
-    val src = inputs.vertexSets('src).rdd
-    val dst = inputs.vertexSets('dst).rdd
-    outputs.putVertexAttribute(
-      'srcEdges,
-      input
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val edges = inputs.edges.rdd
+    val src = inputs.src.rdd
+    val dst = inputs.dst.rdd
+    output(o.srcEdges,
+      edges
         .map { case (id, edge) => (edge.src, id) }
         .groupByKey(src.partitioner.get)
         .mapValues(_.toArray))
-    outputs.putVertexAttribute(
-      'dstEdges,
-      input
+    output(o.dstEdges,
+      edges
         .map { case (id, edge) => (edge.dst, id) }
         .groupByKey(dst.partitioner.get)
         .mapValues(_.toArray))
@@ -48,9 +63,9 @@ object VertexToEdgeAttribute {
     val mappedAttribute = edgeAttribute[T](inputs.target.entity)(inputs.original.typeTag)
   }
 }
-import VertexToEdgeAttribute._
 case class VertexToEdgeAttribute[T]()
-    extends TypedMetaGraphOp[Input[T], Output[T]] {
+    extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
+  import VertexToEdgeAttribute._
   @transient override lazy val inputs = new VertexToEdgeAttribute.Input[T]()
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
