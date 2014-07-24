@@ -27,16 +27,6 @@ object GraphTestUtils {
         .toMap
     }
   }
-  
-  implicit class EdgeAttributeOps[U, T <% EdgeAttributeData[U]](attr: T)(implicit dataManager: DataManager) {    
-    def toEdgeMap() = {
-      val edgesRDD = dataManager.get(attr.entity.edgeBundle).rdd
-      edgesRDD.join(attr.rdd).map {
-        case (id, (edge, value)) =>
-          (edge.src, edge.dst) -> value
-      }.collect.toMap
-    }
-  }
 }
 
 trait TestMetaGraphManager extends TestTempDir {
