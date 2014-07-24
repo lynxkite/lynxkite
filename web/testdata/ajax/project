@@ -5,8 +5,8 @@
   "edgeCount": 234567890,
   "edgeNames": "calls",
   "projectOps": [
-    { "id": "1", "title": "Delete all vertices", "parameters": [] },
-    { "id": "2", "title": "Delete all edges", "parameters": [] },
+    { "id": "1", "title": "Discard all vertices", "parameters": [] },
+    { "id": "2", "title": "Discard all edges", "parameters": [] },
     { "id": "3", "title": "Reverse edges", "parameters": [] },
     { "id": "4", "title": "Add reversed edges", "parameters": [] }
   ],
@@ -15,7 +15,7 @@
     { "id": "6", "title": "income", "ops": [] },
     { "id": "7", "title": "gender", "ops": [] },
     { "id": "8", "title": "favorite color", "ops": [
-      { "id": "9", "title": "Delete", "parameters": [] },
+      { "id": "9", "title": "Discard", "parameters": [] },
       { "id": "10", "title": "Filter subscribers", "parameters": [
         { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'" }
       ] },
@@ -47,7 +47,17 @@
   ],
   "edgeAttributes": [
     { "id": "22", "title": "call duration", "ops": [] },
-    { "id": "29", "title": "hour of day", "ops": [] }
+    { "id": "29", "title": "timestamp", "ops": [
+      { "id": "29a", "title": "Discard date", "parameters": [
+        { "id": "29b", "title": "Name of new attribute", "defaultValue": "time of day" }
+      ] },
+      { "id": "29c", "title": "Granularity: day", "parameters": [
+        { "id": "29d", "title": "Name of new attribute", "defaultValue": "date" }
+      ] },
+      { "id": "29e", "title": "Granularity: hour", "parameters": [
+        { "id": "29f", "title": "Name of new attribute", "defaultValue": "by the hour" }
+      ] }
+    ] }
   ],
   "edgeAttributeOps": [
     { "id": "30", "title": "Add constant attribute", "parameters": [
@@ -56,8 +66,12 @@
     ] }
   ],
   "segmentations": [
-    { "id": "32", "title": "cliques" },
-    { "id": "33", "title": "communities" }
+    { "id": "32", "title": "cliques", "ops": [
+      { "id": "32a", "title": "Discard", "parameters": [] }
+    ] },
+    { "id": "33", "title": "communities", "ops": [
+      { "id": "32a", "title": "Discard", "parameters": [] }
+    ] }
   ],
   "segmentationOps": [
     { "id": "34", "title": "Find maximal cliques", "parameters": [
