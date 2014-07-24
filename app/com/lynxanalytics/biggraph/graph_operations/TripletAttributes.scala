@@ -11,7 +11,7 @@ object TripletMapping {
   class Input extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
-    val edges = edgeBundle(src, dst) // DO NOT SUBMIT before adding to FEOperations as well
+    val edges = edgeBundle(src, dst)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
@@ -21,7 +21,7 @@ object TripletMapping {
 }
 case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, TripletMapping.Output] {
   import TripletMapping._
-  @transient override lazy val inputs = new TripletMapping.Input
+  @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
@@ -66,7 +66,7 @@ object VertexToEdgeAttribute {
 case class VertexToEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
   import VertexToEdgeAttribute._
-  @transient override lazy val inputs = new VertexToEdgeAttribute.Input[T]()
+  @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
     new Output()(instance, inputs)
