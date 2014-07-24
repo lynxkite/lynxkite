@@ -10,15 +10,15 @@ html {
   transform: rotate(180deg);
 }
 
-.glyphicon.clicky {
+.clicky {
+  min-width: 30px;
+  height: 30px;
   padding: 8px;
-  margin: -8px -8px -8px 0;
-  width: 30px;
   border-radius: 30px;
   cursor: pointer;
 }
 
-.glyphicon.clicky:hover {
+.clicky:hover {
   background-color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
