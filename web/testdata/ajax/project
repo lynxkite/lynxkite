@@ -3,66 +3,66 @@
   "vertexCount": 12345678,
   "vertexNames": "subscribers",
   "vertexOps": [
-    { "id": "x", "title": "Delete all vertices", "parameters": [] }
+    { "id": "1", "title": "Delete all vertices", "parameters": [] }
   ],
   "edgeCount": 234567890,
   "edgeNames": "calls",
   "edgeOps": [
-    { "id": "x", "title": "Delete all edges", "parameters": [] },
-    { "id": "x", "title": "Reverse edges", "parameters": [] },
-    { "id": "x", "title": "Add reversed edges", "parameters": [] }
+    { "id": "2", "title": "Delete all edges", "parameters": [] },
+    { "id": "3", "title": "Reverse edges", "parameters": [] },
+    { "id": "4", "title": "Add reversed edges", "parameters": [] }
   ],
   "vertexAttributes": [
-    { "id": "1234-1234-1234-1234", "title": "age", "ops": [] },
-    { "id": "1234-1234-1234-1234", "title": "income", "ops": [] },
-    { "id": "1234-1234-1234-1234", "title": "gender", "ops": [] },
-    { "id": "1234-1234-1234-1234", "title": "favorite color", "ops": [
-      { "id": "x", "title": "Delete", "parameters": [] },
-      { "id": "x", "title": "Filter vertices", "parameters": [
-        { "id": "x", "title": "Expression", "defaultValue": "favorite_color != 'blue'" }
+    { "id": "5", "title": "age", "ops": [] },
+    { "id": "6", "title": "income", "ops": [] },
+    { "id": "7", "title": "gender", "ops": [] },
+    { "id": "8", "title": "favorite color", "ops": [
+      { "id": "9", "title": "Delete", "parameters": [] },
+      { "id": "10", "title": "Filter vertices", "parameters": [
+        { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'" }
       ] },
-      { "id": "x", "title": "Edges from matches", "parameters": [] }
+      { "id": "12", "title": "Edges from matches", "parameters": [] }
     ] }
   ],
   "vertexAttributeOps": [
-    { "id": "x", "title": "Constant attribute", "parameters": [
-      { "id": "x", "title": "Value", "defaultValue": "1.0" }
+    { "id": "13", "title": "Constant attribute", "parameters": [
+      { "id": "14", "title": "Value", "defaultValue": "1.0" }
     ] },
-    { "id": "x", "title": "Degree", "parameters": [] },
-    { "id": "x", "title": "Out-degree", "parameters": [] },
-    { "id": "x", "title": "In-degree", "parameters": [] },
-    { "id": "x", "title": "Clustering coefficient", "parameters": [] },
-    { "id": "x", "title": "PageRank", "parameters": [
-      { "id": "x", "title": "Damping factor", "defaultValue": "0.85" },
-      { "id": "x", "title": "Iterations", "defaultValue": "5" }
+    { "id": "15", "title": "Degree", "parameters": [] },
+    { "id": "16", "title": "Out-degree", "parameters": [] },
+    { "id": "17", "title": "In-degree", "parameters": [] },
+    { "id": "18", "title": "Clustering coefficient", "parameters": [] },
+    { "id": "19", "title": "PageRank", "parameters": [
+      { "id": "20", "title": "Damping factor", "defaultValue": "0.85" },
+      { "id": "21", "title": "Iterations", "defaultValue": "5" }
     ] }
   ],
   "edgeAttributes": [
-    { "id": "1234-1234-1234-1234", "title": "call duration", "ops": [
-      { "id": "x", "title": "Degree", "parameters": [] },
-      { "id": "x", "title": "Out-degree", "parameters": [] },
-      { "id": "x", "title": "In-degree", "parameters": [] },
-      { "id": "x", "title": "PageRank", "parameters": [
-        { "id": "x", "title": "Damping factor", "defaultValue": "0.85" },
-        { "id": "x", "title": "Iterations", "defaultValue": "5" }
+    { "id": "22", "title": "call duration", "ops": [
+      { "id": "23", "title": "Degree", "parameters": [] },
+      { "id": "24", "title": "Out-degree", "parameters": [] },
+      { "id": "25", "title": "In-degree", "parameters": [] },
+      { "id": "26", "title": "PageRank", "parameters": [
+        { "id": "27", "title": "Damping factor", "defaultValue": "0.85" },
+        { "id": "28", "title": "Iterations", "defaultValue": "5" }
       ] }
     ] },
-    { "id": "1234-1234-1234-1234", "title": "hour of day", "ops": [] }
+    { "id": "29", "title": "hour of day", "ops": [] }
   ],
   "edgeAttributeOps": [
-    { "id": "x", "title": "Constant attribute", "parameters": [
-      { "id": "x", "title": "Value", "defaultValue": "1.0" }
+    { "id": "30", "title": "Constant attribute", "parameters": [
+      { "id": "31", "title": "Value", "defaultValue": "1.0" }
     ] }
   ],
   "segmentations": [
-    { "id": "1234-1234-1234-1234", "title": "cliques" },
-    { "id": "1234-1234-1234-1234", "title": "communities" }
+    { "id": "32", "title": "cliques" },
+    { "id": "33", "title": "communities" }
   ],
   "segmentationOps": [
-    { "id": "x", "title": "Maximal cliques", "parameters": [
-      { "id": "x", "title": "Minimal clique size", "defaultValue": "3" }
+    { "id": "34", "title": "Maximal cliques", "parameters": [
+      { "id": "35", "title": "Minimal clique size", "defaultValue": "3" }
     ] },
-    { "id": "x", "title": "Connected components", "parameters": [] },
-    { "id": "x", "title": "Communities", "parameters": [] }
+    { "id": "36", "title": "Connected components", "parameters": [] },
+    { "id": "37", "title": "Communities", "parameters": [] }
   ]
 }
