@@ -1,0 +1,18 @@
+<div class="row operation">
+  <div class="col-sm-4">
+    <span class="title">{{op.title}}</span>
+    <expander ng-show="op.parameters.length > 1" class="pull-right" help="Parameters" model="showParams"></expander>
+  </div>
+
+  <form class="form-horizontal col-sm-7" collapse="!showParams && op.parameters.length > 1">
+    <div class="form-group" ng-repeat="param in op.parameters">
+      <label for="{{param.id}}" class="col-sm-6 control-label">{{param.title}}</label>
+      <div class="col-sm-6"><input id="{{param.id}}" class="form-control" value="{{param.defaultValue}}"></div>
+    </div>
+  </form>
+
+  <span
+    ng-show="showParams || op.parameters.length <= 1"
+    tooltip="Execute"
+    class="col-sm-1 clicky glyphicon glyphicon-play"></span>
+</div>

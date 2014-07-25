@@ -4,7 +4,6 @@ angular.module('biggraph')
   .controller('MetaGraphViewCtrl', function ($scope, $resource, $modal, $location) {
     $scope.alerts = [];
     $scope.closeAlert = function(index) { $scope.alerts.splice(index, 1); };
-    $scope.deepWatch = function(expression, fn) { $scope.$watch(expression, fn, true); };
 
     function defaultSideState() {
       return {
@@ -31,7 +30,8 @@ angular.module('biggraph')
     $scope.left.other = $scope.right;
     $scope.right.other = $scope.left;
 
-    $scope.deepWatch(
+    angular.deepWatch(
+      $scope,
       function() { return $location.search(); },
       function() {
         if (!$location.search().q) {
@@ -47,7 +47,8 @@ angular.module('biggraph')
         }
       });
     
-    $scope.deepWatch(
+    angular.deepWatch(
+      $scope,
       'state',
       function() {
         var s = $location.search();
@@ -86,7 +87,7 @@ angular.module('biggraph')
         }
       });
 
-    $scope.deepWatch('state', loadGraphView);
+    angular.deepWatch($scope, 'state', loadGraphView);
     function loadGraphView() {
       if (!$scope.showGraph()) { return; }
       var sides = [];      
@@ -149,7 +150,8 @@ angular.module('biggraph')
       return $scope.state.left.graphMode || $scope.state.right.graphMode;
     };
 
-    $scope.deepWatch(
+    angular.deepWatch(
+      $scope,
       'state', // TODO: Finer grained triggering.
       function() {
         if ($scope.left.data !== undefined) {
