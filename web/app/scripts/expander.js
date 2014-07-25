@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('expander', function($resource) {
+angular.module('biggraph').directive('expander', function() {
   return {
     restrict: 'E',
     scope: { show: '=model', help: '@' },

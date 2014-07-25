@@ -30,7 +30,7 @@ angular.module('biggraph')
     $scope.left.other = $scope.right;
     $scope.right.other = $scope.left;
 
-    deepWatch(
+    angular.deepWatch(
       $scope,
       function() { return $location.search(); },
       function() {
@@ -47,7 +47,7 @@ angular.module('biggraph')
         }
       });
     
-    deepWatch(
+    angular.deepWatch(
       $scope,
       'state',
       function() {
@@ -87,7 +87,7 @@ angular.module('biggraph')
         }
       });
 
-    deepWatch($scope, 'state', loadGraphView);
+    angular.deepWatch($scope, 'state', loadGraphView);
     function loadGraphView() {
       if (!$scope.showGraph()) { return; }
       var sides = [];      
@@ -150,7 +150,7 @@ angular.module('biggraph')
       return $scope.state.left.graphMode || $scope.state.right.graphMode;
     };
 
-    deepWatch(
+    angular.deepWatch(
       $scope,
       'state', // TODO: Finer grained triggering.
       function() {

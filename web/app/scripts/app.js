@@ -32,6 +32,6 @@ angular
   });
 
 // This function is for code clarity, so we don't have a mysterious "true" argument.
-function deepWatch(scope, expr, fun) {
+angular.deepWatch = function(scope, expr, fun) {
   scope.$watch(expr, fun, true);
-}
+};
