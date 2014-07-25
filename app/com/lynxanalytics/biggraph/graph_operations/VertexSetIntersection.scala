@@ -5,38 +5,37 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class VertexSetIntersection(numVertexSets: Int) extends MetaGraphOperation {
-  assert(numVertexSets >= 1)
-  import VertexSetIntersection.vsName
-
-  def signature = {
-    var sig = newSignature
-    for (i <- (0 until numVertexSets)) {
-      sig = sig.inputVertexSet(vsName(i))
-    }
-    sig.outputVertexSet('intersection)
-  }
-
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = {
-    //var res = inputs.vertexSets('vs0).rdd
-    //for (i <- (1 until numVertexSets)) {
-    //  res = res.join(inputs.vertexSets(vsName(i)).rdd).mapValues(_ => ())
-    //}
-    //outputs.putVertexSet('intersection, res)
-    outputs.putVertexSet(
-      'intersection,
-      (0 until numVertexSets)
-        .map(i => inputs.vertexSets(vsName(i)).rdd)
-        .reduce((rdd1, rdd2) => rdd1.join(rdd2).mapValues(_ => ())))
-  }
-}
 object VertexSetIntersection {
-  private def vsName(i: Int) = Symbol(s"vs$i")
+  class Input(numVertexSets: Int) extends MagicInputSignature {
+	val vss: List[VertexSetTemplate] = List.fill(numVertexSets)(vertexSet)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val intersection = vertexSet
+  }
+  
+  def intersect(manager: MetaGraphManager, vss: VertexSet*): VertexSet = ???
+    
+//  def intersect(manager: MetaGraphManager, vss: VertexSet*): VertexSet = {
+//    val inst = manager.apply(
+//      VertexSetIntersection(vss.size),
+//      vss.zipWithIndex.map { case (vs, idx) => (idx, vs) }: _*)
+//    return inst.outputs.vertexSets('intersection)
+//  }
+}
+import VertexSetIntersection._
+case class VertexSetIntersection(numVertexSets: Int) extends TypedMetaGraphOp[Input, Output] {
+  assert(numVertexSets >= 1)
+  @transient override lazy val inputs = new Input(numVertexSets)
 
-  def intersect(manager: MetaGraphManager, vss: VertexSet*): VertexSet = {
-    val inst = manager.apply(
-      VertexSetIntersection(vss.size),
-      vss.zipWithIndex.map { case (vs, idx) => (vsName(idx), vs) }: _*)
-    return inst.outputs.vertexSets('intersection)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)  
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val intersection = inputs.vss.map(_.rdd)
+      .reduce((rdd1, rdd2) => rdd1.join(rdd2).mapValues(_ => ()))
+    output(o.intersection, intersection)
   }
 }
