@@ -271,7 +271,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       if (path.isEmpty)
         return FEStatus.failure("No export path specified.")
       graph_util.CSVExport
-        .exportVertexAttributes(attrs, labels, dataManager)
+        .exportVertexAttributes(attrs, labels)
         .saveToDir(path)
       return FEStatus.success
     }
@@ -298,8 +298,9 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       val path = Filename.fromString(params("path"))
       if (path.isEmpty)
         return FEStatus.failure("No export path specified.")
+
       graph_util.CSVExport
-        .exportEdgeAttributes(attrs, labels, dataManager)
+        .exportEdgeAttributes(attrs, labels)
         .saveToDir(path)
       return FEStatus.success
     }
