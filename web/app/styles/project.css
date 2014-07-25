@@ -9,14 +9,8 @@
 .de-emph {
   color: rgba(0, 0, 0, 0.3);
 }
-[vertex-attribute] {
-  border-left-width: 5px !important;
-}
-[edge-attribute] {
-  border-left-width: 5px !important;
-}
-[segmentation] {
-  border-left-width: 5px !important;
+.sublist.list-group-item {
+  background: #f5f5f5;
 }
 .operation .title {
   padding-top: 7px;
