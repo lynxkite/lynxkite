@@ -33,6 +33,11 @@ angular.module('biggraph').directive('operationToolbox', function($resource) {
           open(cat);
         }
       };
+      scope.execute = function(op) {
+        // Placeholder.
+        // TODO: Actually execute the operation.
+        ApplyOp.post(op);
+      };
     },
   };
 });
