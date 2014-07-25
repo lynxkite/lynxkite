@@ -35,5 +35,10 @@ if bad_lines:
   for l in bad_lines:
     warn('  ' + l)
 
+files = subprocess.check_output('git diff --name-only --staged'.split()).split('\n')
+if any(fn.endswith('.js') for fn in files):
+  if subprocess.call('cd web; grunt jshint', shell=True):
+    warn('JSHint fails.')
+
 if warned:
   sys.exit(1)
