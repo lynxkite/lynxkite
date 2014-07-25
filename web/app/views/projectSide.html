@@ -46,21 +46,21 @@
         <expander class="pull-right" help="Operations" model="showVertexAttributeOps"></expander>
         <operations collapse="!showVertexAttributeOps" model="side.data.vertexAttributeOps"></operations>
       </li>
-      <li class="list-group-item" ng-repeat="attr in side.data.vertexAttributes" vertex-attribute="attr" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="attr in side.data.vertexAttributes" vertex-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> {{side.data.edgeNames}}</span>
         <expander class="pull-right" help="Operations" model="showEdgeAttributeOps"></expander>
         <operations collapse="!showEdgeAttributeOps" model="side.data.edgeAttributeOps"></operations>
       </li>
-      <li class="list-group-item" ng-repeat="attr in side.data.edgeAttributes" edge-attribute="attr" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="attr in side.data.edgeAttributes" edge-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead de-emph">Segmentations</span>
         <expander class="pull-right" help="Operations" model="showSegmentationOps"></expander>
         <operations collapse="!showSegmentationOps" model="side.data.segmentationOps"></operations>
       </li>
-      <li class="list-group-item" ng-repeat="segmentation in side.data.segmentations" segmentation="segmentation" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="segmentation in side.data.segmentations" segmentation="segmentation" side="side"></li>
 
     </div>
   </div>
