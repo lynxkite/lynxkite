@@ -129,8 +129,8 @@ object EntityTemplate {
 }
 
 abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
-  abstract class ET[T <: MetaGraphEntity] extends EntityTemplate[T] {
-    lazy val name: Symbol = naming.get(this)
+  abstract class ET[T <: MetaGraphEntity](nameOpt: Option[Symbol] = None) extends EntityTemplate[T] {
+    lazy val name: Symbol = nameOpt.getOrElse(naming.get(this))
     def set(target: MetaDataSet, entity: T): MetaDataSet =
       MetaDataSet(Map(name -> entity)) ++ target
     def get(set: MetaDataSet): T = set.all(name).asInstanceOf[T]
@@ -140,7 +140,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     templates += this
   }
 
-  class VertexSetTemplate extends ET[VertexSet] {
+  class VertexSetTemplate(nameOpt: Option[Symbol]) extends ET[VertexSet](nameOpt) {
     def data(implicit dataSet: DataSet) = dataSet.vertexSets(name)
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
@@ -187,7 +187,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def value(implicit dataSet: DataSet) = data.value
   }
 
-  def vertexSet = new VertexSetTemplate
+  def vertexSet = new VertexSetTemplate(None)
+  def vertexSet(name: Symbol) = new VertexSetTemplate(Some(name))
   def edgeBundle(src: VertexSetTemplate, dst: VertexSetTemplate) =
     new EdgeBundleTemplate(src.name, dst.name)
   def vertexAttribute[T](vs: VertexSetTemplate) = new VertexAttributeTemplate[T](vs.name)
