@@ -4,20 +4,18 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 
-class EdgeBundleSampleTest extends FunSuite with TestGraphOperation {
+class EdgeBundleSampleTest extends FunSuite with TestGraphOp {
   test("No sampling test") {
-    val graph = helper.apply(ExampleGraph())
-    val bs = new EdgeBundleSample(
-      graph.edgeBundles('edges),
-      10000,
-      helper.dataManager)
+    val graph = ExampleGraph()().result
+    val bs = new EdgeBundleSample(graph.edges, 10000)
     val resultRDD = bs.applyOp(
-      graph.edgeAttributes('comment).runtimeSafeCast[String],
-      SrcAttr(graph.vertexAttributes('name).runtimeSafeCast[String]),
-      SrcAttr(graph.vertexAttributes('age).runtimeSafeCast[Double]),
-      DstAttr(graph.vertexAttributes('name).runtimeSafeCast[String])) {
+      graph.comment,
+      SrcAttr(graph.name),
+      SrcAttr(graph.age),
+      DstAttr(graph.name)) {
         (comment, sname, sage, dname) => s"C: $comment sN: $sname sA: $sage dN: $dname"
       }
     assert(TestUtils.RDDToSortedString(resultRDD) ==
