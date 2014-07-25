@@ -110,7 +110,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
     val comments = csv.lines(sparkContext).map(_(2))
     assert(TestUtils.RDDToSortedString(comments) ==
       """|Bob loves Darth Vader
-           |Harry loves Voldemort
-           |Voldemort loves Harry""".stripMargin)
+         |Harry loves Voldemort
+         |Voldemort loves Harry""".stripMargin)
   }
 }
