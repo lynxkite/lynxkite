@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.TestTempDir
 import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 
+import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -69,15 +70,6 @@ class GraphOperationTestHelper(val metaManager: MetaGraphManager,
     (outs.vertexSets('vs), outs.edgeBundles('es))
   }
 
-  def groupedGraph(edgeLists: Seq[(Seq[Int], Int)]): (VertexSet, VertexSet, EdgeBundle, EdgeAttribute[Double]) = {
-    val (srcs, dsts) = edgeLists.unzip
-    val (vs, _) = smallGraph(srcs.flatten.map(_ -> Seq()).toMap)
-    val (sets, _) = smallGraph(dsts.map(_ -> Seq()).toMap)
-    val es = edgeLists.flatMap { case (s, i) => s.map(_.toLong -> i.toLong) }
-    val edges = apply(AddWeightedEdges(es, 1.0), 'src -> vs, 'dst -> sets)
-    (vs, sets, edges.edgeBundles('es), edges.edgeAttributes('weight).runtimeSafeCast[Double])
-  }
-
   def rdd(vertexSet: VertexSet): VertexSetRDD = dataManager.get(vertexSet).rdd
   def localData(vertexSet: VertexSet): Set[Long] = rdd(vertexSet).keys.collect.toSet
 
@@ -127,16 +119,14 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
 }
 
 object SmallTestGraph {
-  class Input extends MagicInputSignature {
-  }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val (vs, es) = graph
   }
 }
 case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
-    extends TypedMetaGraphOp[SmallTestGraph.Input, SmallTestGraph.Output] {
+    extends TypedMetaGraphOp[NoInput, SmallTestGraph.Output] {
   import SmallTestGraph._
-  @transient override lazy val inputs = new Input()
+  @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
@@ -159,8 +149,6 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
 }
 
 object SegmentedTestGraph {
-  class Input extends MagicInputSignature {
-  }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val vs = vertexSet
     val segments = vertexSet
@@ -168,9 +156,9 @@ object SegmentedTestGraph {
   }
 }
 case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
-    extends TypedMetaGraphOp[SegmentedTestGraph.Input, SegmentedTestGraph.Output] {
+    extends TypedMetaGraphOp[NoInput, SegmentedTestGraph.Output] {
   import SegmentedTestGraph._
-  @transient override lazy val inputs = new Input()
+  @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {

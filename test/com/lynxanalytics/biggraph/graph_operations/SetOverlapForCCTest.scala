@@ -31,17 +31,21 @@ class SetOverlapForCCTest extends FunSuite with TestGraphOp {
       // this is a slow test so lets inform the tester about what is going on
       println(s"Checking graph ${i + 1}/$trials, parameters: $eSize, $vSize, $seed, overlap: $minOverlap")
 
-      val opSO = SetOverlap(minOverlap)
-      val SO = opSO(opSO.belongsTo, g.belongsTo).result
-      val opSOforCC = UniformOverlapForCC(minOverlap)
-      val SOforCC = opSOforCC(opSOforCC.belongsTo, g.belongsTo).result
-      val opCC = ConnectedComponents()
-      val CC = opCC(opCC.es, SO.overlaps).result
-      val CCforCC = opCC(opCC.es, SOforCC.overlaps).result
+      val so = {
+        val op = SetOverlap(minOverlap)
+        op(op.belongsTo, g.belongsTo).result
+      }
+      val so4cc = {
+        val op = UniformOverlapForCC(minOverlap)
+        op(op.belongsTo, g.belongsTo).result
+      }
+      val op = ConnectedComponents()
+      val cc = op(op.es, so.overlaps).result
+      val cc4cc = op(op.es, so4cc.overlaps).result
 
       ConnectedComponentsTest.assertSameComponents(
-        CC.belongsTo.toMap,
-        CCforCC.belongsTo.toMap)
+        cc.belongsTo.toMap,
+        cc4cc.belongsTo.toMap)
     }
   }
 }
