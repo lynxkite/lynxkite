@@ -4,26 +4,46 @@
   "vertexNames": "subscribers",
   "edgeCount": 234567890,
   "edgeNames": "calls",
-  "projectOps": [
-    { "id": "1", "title": "Discard all vertices", "parameters": [] },
-    { "id": "2", "title": "Discard all edges", "parameters": [] },
-    { "id": "3", "title": "Reverse edges", "parameters": [] },
-    { "id": "4", "title": "Add reversed edges", "parameters": [] }
-  ],
+
   "vertexAttributes": [
-    { "id": "5", "title": "age", "ops": [] },
-    { "id": "6", "title": "income", "ops": [] },
-    { "id": "7", "title": "gender", "ops": [] },
-    { "id": "8", "title": "favorite color", "ops": [
-      { "id": "9", "title": "Discard", "parameters": [] },
-      { "id": "10", "title": "Filter subscribers", "parameters": [
-        { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'" }
-      ] },
-      { "id": "12", "title": "Build edges from matches", "parameters": [] }
+    { "id": "5", "title": "age" },
+    { "id": "6", "title": "income" },
+    { "id": "7", "title": "gender" },
+    { "id": "8", "title": "favorite color" }
+  ],
+
+  "edgeAttributes": [
+    { "id": "22", "title": "call duration" },
+    { "id": "29", "title": "timestamp" }
+  ],
+
+  "segmentations": [
+    { "id": "32", "title": "cliques" },
+    { "id": "33", "title": "communities" }
+  ],
+
+  "vertexOps": [
+    { "id": "1", "title": "Discard all vertices", "parameters": [] },
+    { "id": "10", "title": "Filter subscribers", "parameters": [
+      { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'" }
     ] }
   ],
-  "vertexAttributeOps": [
-    { "id": "13", "title": "Add constant attribute", "parameters": [
+
+  "edgeOps": [
+    { "id": "2", "title": "Discard all edges", "parameters": [] },
+    { "id": "3", "title": "Reverse edges", "parameters": [] },
+    { "id": "4", "title": "Add reversed edges", "parameters": [] },
+    { "id": "12", "title": "Build edges from expression", "parameters": [
+      { "id": "12a", "title": "Expression", "defaultValue": "a.favorite_color == b.favorite_color" }
+    ] }
+  ],
+
+  "attributeOps": [
+    { "id": "13", "title": "Add constant edge attribute", "parameters": [
+      { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant" },
+      { "id": "14", "title": "Value", "defaultValue": "1.0"}
+    ] },
+    { "id": "13", "title": "Add constant vertex attribute", "parameters": [
       { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant" },
       { "id": "14", "title": "Value", "defaultValue": "1.0"}
     ] },
@@ -43,36 +63,22 @@
       { "id": "19a", "title": "Name of new attribute", "defaultValue": "pagerank" },
       { "id": "20", "title": "Damping factor", "defaultValue": "0.85" },
       { "id": "21", "title": "Iterations", "defaultValue": "5" }
-    ] }
-  ],
-  "edgeAttributes": [
-    { "id": "22", "title": "call duration", "ops": [] },
-    { "id": "29", "title": "timestamp", "ops": [
-      { "id": "29a", "title": "Discard date", "parameters": [
-        { "id": "29b", "title": "Name of new attribute", "defaultValue": "time of day" }
-      ] },
-      { "id": "29c", "title": "Granularity: day", "parameters": [
-        { "id": "29d", "title": "Name of new attribute", "defaultValue": "date" }
-      ] },
-      { "id": "29e", "title": "Granularity: hour", "parameters": [
-        { "id": "29f", "title": "Name of new attribute", "defaultValue": "by the hour" }
-      ] }
-    ] }
-  ],
-  "edgeAttributeOps": [
-    { "id": "30", "title": "Add constant attribute", "parameters": [
-      { "id": "30a", "title": "Name of new attribute", "defaultValue": "constant" },
-      { "id": "31", "title": "Value", "defaultValue": "1.0" }
-    ] }
-  ],
-  "segmentations": [
-    { "id": "32", "title": "cliques", "ops": [
-      { "id": "32a", "title": "Discard", "parameters": [] }
     ] },
-    { "id": "33", "title": "communities", "ops": [
-      { "id": "32a", "title": "Discard", "parameters": [] }
+    { "id": "38", "title": "Duplicate attribute", "parameters": [
+      { "id": "39", "title": "Existing attribute" },
+      { "id": "40", "title": "New attribute" }
+    ] },
+    { "id": "29a", "title": "Discard date", "parameters": [
+      { "id": "29b", "title": "Attribute" }
+    ] },
+    { "id": "29c", "title": "Granularity: day", "parameters": [
+      { "id": "29d", "title": "Attribute" }
+    ] },
+    { "id": "29e", "title": "Granularity: hour", "parameters": [
+      { "id": "29f", "title": "Attribute" }
     ] }
   ],
+
   "segmentationOps": [
     { "id": "34", "title": "Find maximal cliques", "parameters": [
       { "id": "34a", "title": "Name of new segmentation", "defaultValue": "cliques" },
