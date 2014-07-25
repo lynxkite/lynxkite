@@ -4,15 +4,15 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 
-class CSVExportTest extends FunSuite with TestGraphOperation {
+class CSVExportTest extends FunSuite with TestGraphOp {
   test("We can export attributes") {
-    val sampleOut = helper.apply(ExampleGraph())
+    val sampleOut = ExampleGraph()().result
     assert(CSVExport.exportVertexAttributes(
-      Seq(sampleOut.vertexAttributes('name), sampleOut.vertexAttributes('age)),
-      Seq("name", "age"),
-      helper.dataManager).toSortedString ==
+      Seq(sampleOut.name, sampleOut.age),
+      Seq("name", "age")).toSortedString ==
       """|"vertexId","name","age"
          |0,"Adam",20.3
          |1,"Eve",18.2
@@ -20,9 +20,8 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
          |3,"Isolated Joe",2.0
          |""".stripMargin)
     assert(CSVExport.exportEdgeAttributes(
-      Seq(sampleOut.edgeAttributes('comment)),
-      Seq("comment"),
-      helper.dataManager).toSortedString ==
+      Seq(sampleOut.comment),
+      Seq("comment")).toSortedString ==
       """|"edgeId","srcVertexId","dstVertexId","comment"
          |0,0,1,"Adam loves Eve"
          |1,1,0,"Eve loves Adam"
@@ -32,11 +31,10 @@ class CSVExportTest extends FunSuite with TestGraphOperation {
   }
 
   test("We can save a CSV to a dir") {
-    val sampleOut = helper.apply(ExampleGraph())
+    val sampleOut = ExampleGraph()().result
     val cSVData = CSVExport.exportVertexAttributes(
-      Seq(sampleOut.vertexAttributes('name), sampleOut.vertexAttributes('age)),
-      Seq("name", "age"),
-      helper.dataManager)
+      Seq(sampleOut.name, sampleOut.age),
+      Seq("name", "age"))
     val targetDir = tempDir("csv_save_target_dir")
     cSVData.saveToDir(Filename(targetDir.toString))
 

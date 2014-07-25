@@ -6,7 +6,6 @@ import scala.language.implicitConversions
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 

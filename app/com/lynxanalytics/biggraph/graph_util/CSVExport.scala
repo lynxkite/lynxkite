@@ -33,8 +33,7 @@ object CSVData {
 
 object CSVExport {
   def exportVertexAttributes(attributes: Seq[VertexAttribute[_]],
-                             attributeLabels: Seq[String],
-                             dataManager: DataManager): CSVData = {
+                             attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
     assert(attributes.size > 0)
     assert(attributes.size == attributeLabels.size)
     val vertexSet = attributes.head.vertexSet
@@ -53,8 +52,7 @@ object CSVExport {
   }
 
   def exportEdgeAttributes(attributes: Seq[EdgeAttribute[_]],
-                           attributeLabels: Seq[String],
-                           dataManager: DataManager): CSVData = {
+                           attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
     assert(attributes.size > 0)
     assert(attributes.size == attributeLabels.size)
     val edgeBundle = attributes.head.edgeBundle
