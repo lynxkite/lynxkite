@@ -34,7 +34,7 @@ angular.module('biggraph')
     $scope.left.state = defaultSideState();
     $scope.right.state = defaultSideState();
 
-    deepWatch(
+    angular.deepWatch(
       $scope,
       function() { return $location.search(); },
       function(search) {
@@ -55,7 +55,7 @@ angular.module('biggraph')
         }
       });
 
-    deepWatch(
+    angular.deepWatch(
       $scope,
       getState,
       function(state) {

@@ -38,7 +38,7 @@ angular.module('biggraph').directive('histogramButton', function($resource) {
         };
         scope.histogram = vertexDiag.get({q: q});
       }
-      deepWatch(scope, 'side', update);
+      angular.deepWatch(scope, 'side', update);
       scope.$watch('show', update);
     },
   };

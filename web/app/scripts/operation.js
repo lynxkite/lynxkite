@@ -6,7 +6,5 @@ angular.module('biggraph').directive('operation', function () {
     scope: { op: '=model' },
     replace: false,
     templateUrl: 'operation.html',
-    link: function(scope) {
-    },
   };
 });
