@@ -1,0 +1,67 @@
+<div class="col-sm-6">
+  <progressbar ng-if="side.data && !side.data.$resolved" value="100" class="progress-striped active">
+    Loading...
+  </progressbar>
+
+  <div class="panel panel-danger" ng-if="side.data.error">
+    <div class="panel-heading">
+      Error
+    </div>
+    <div class="panel-body">
+      {{side.data.error}}
+    </div>
+  </div>
+
+  <div class="panel panel-default" ng-if="side.data.$resolved && !side.data.error">
+    <div class="panel-heading project-name">
+      {{side.data.name}}
+      <div class="btn-group pull-right">
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable>
+          <i tooltip="Bucketed&nbsp;Graph" class="glyphicon glyphicon-th"></i>
+        </label>
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable>
+          <i tooltip="Sampled&nbsp;Graph" class="glyphicon glyphicon-eye-open"></i>
+        </label>
+      </div>
+      <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
+        tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets"
+        type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
+      <input class="right-range-input" ng-show="side.state.graphMode == 'sampled'"
+        tooltip="radius {{side.state.sampleRadius}}"
+        type="range" max="10" step="1" ng-model="side.state.sampleRadius">
+    </div>
+
+    <div class="list-group">
+      <li class="list-group-item">
+        <span class="lead">
+          {{human(side.data.vertexCount)}} <span class="de-emph">{{side.data.vertexNames}} with</span>
+          {{human(side.data.edgeCount)}} <span class="de-emph">{{side.data.edgeNames}}</span>
+        </span>
+        <expander class="pull-right" help="Operations" model="showProjectOps"></expander>
+        <operations collapse="!showProjectOps" model="side.data.projectOps"></operations>
+      </li>
+
+      <li class="list-group-item">
+        <span class="lead"><span class="de-emph">Attributes of</span> {{side.data.vertexNames}}</span>
+        <expander class="pull-right" help="Operations" model="showVertexAttributeOps"></expander>
+        <operations collapse="!showVertexAttributeOps" model="side.data.vertexAttributeOps"></operations>
+      </li>
+      <li class="sublist list-group-item" ng-repeat="attr in side.data.vertexAttributes" vertex-attribute="attr" side="side"></li>
+
+      <li class="list-group-item">
+        <span class="lead"><span class="de-emph">Attributes of</span> {{side.data.edgeNames}}</span>
+        <expander class="pull-right" help="Operations" model="showEdgeAttributeOps"></expander>
+        <operations collapse="!showEdgeAttributeOps" model="side.data.edgeAttributeOps"></operations>
+      </li>
+      <li class="sublist list-group-item" ng-repeat="attr in side.data.edgeAttributes" edge-attribute="attr" side="side"></li>
+
+      <li class="list-group-item">
+        <span class="lead de-emph">Segmentations</span>
+        <expander class="pull-right" help="Operations" model="showSegmentationOps"></expander>
+        <operations collapse="!showSegmentationOps" model="side.data.segmentationOps"></operations>
+      </li>
+      <li class="sublist list-group-item" ng-repeat="segmentation in side.data.segmentations" segmentation="segmentation" side="side"></li>
+
+    </div>
+  </div>
+</div>
