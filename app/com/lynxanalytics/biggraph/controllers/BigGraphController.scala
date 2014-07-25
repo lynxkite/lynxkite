@@ -78,8 +78,8 @@ case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
                        edgeAttributes: Seq[EdgeAttribute[_]] = Seq())
 
 class FEOperationRepository(env: BigGraphEnvironment) {
-  val manager = env.metaGraphManager
-  val dataManager = env.dataManager
+  implicit val manager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
 
   def registerOperation(op: FEOperation): Unit = {
     assert(!operations.contains(op.id), s"Already registered: ${op.id}")

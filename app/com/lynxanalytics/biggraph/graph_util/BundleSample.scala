@@ -10,8 +10,7 @@ import scala.reflect.ClassTag
 import com.lynxanalytics.biggraph.graph_api._
 
 class EdgeBundleSample(edgeBundle: EdgeBundle,
-                       targetSampleSize: Int,
-                       dataManager: DataManager) {
+                       targetSampleSize: Int)(implicit dataManager: DataManager) {
   val edgeBundleData = dataManager.get(edgeBundle)
   val originalRDD = edgeBundleData.rdd
   // TODO(xandrew): once we have cached statistics somehow take this from there.
