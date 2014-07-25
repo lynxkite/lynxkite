@@ -106,7 +106,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         metaManager.vertexAttribute(filterSpec.attributeId.asUUID),
         filterSpec.valueSpec)
     }
-    return graph_operations.VertexSetIntersection.intersect(metaManager, filteredVss: _*)
+    val op = graph_operations.VertexSetIntersection(filteredVss.size)
+    
+    val builder = filteredVss.zipWithIndex.foldLeft(op.builder){
+      case (b, (vs, i)) => b(op.vss(i), vs)  
+    }
+    
+    builder.result.intersection.entity
   }
 
   def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
