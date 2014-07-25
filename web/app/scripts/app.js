@@ -8,6 +8,15 @@ angular
   ])
   .config(function ($routeProvider) {
     $routeProvider
+      .when('/', {
+        templateUrl: 'views/splash.html',
+        controller: 'SplashCtrl',
+      })
+      .when('/project/:project', {
+        templateUrl: 'views/project.html',
+        controller: 'ProjectViewCtrl',
+        reloadOnSearch: false,
+      })
       .when('/metaGraph', {
         templateUrl: 'views/metaGraph.html',
         controller: 'MetaGraphViewCtrl',
@@ -18,6 +27,11 @@ angular
         controller: 'ClusterManagerCtrl',
       })
       .otherwise({
-        redirectTo: '/metaGraph',
+        redirectTo: '/',
       });
   });
+
+// This function is for code clarity, so we don't have a mysterious "true" argument.
+angular.deepWatch = function(scope, expr, fun) {
+  scope.$watch(expr, fun, true);
+};

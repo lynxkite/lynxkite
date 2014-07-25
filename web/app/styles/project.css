@@ -1,0 +1,25 @@
+.project-name {
+  font-size: 2em;
+}
+.right-range-input {
+  vertical-align: middle;
+  float: right;
+  margin: 10px;
+}
+.de-emph {
+  color: rgba(0, 0, 0, 0.3);
+}
+.sublist.list-group-item {
+  background: #f5f5f5;
+}
+.operation .title {
+  padding-top: 7px;
+  display: inline-block;
+}
+.operation label {
+  font-weight: normal;
+  color: rgba(0, 0, 0, 0.3);
+}
+.operation .form-group:last-child {
+  margin-bottom: 0;
+}

@@ -1,0 +1,7 @@
+{
+  "projects": [
+    { "id": "one", "vertexCount": "100M", "edgeCount": "1B", "vertexNames": "subscribers", "edgeNames": "calls" },
+    { "id": "two", "vertexCount": "200M", "edgeCount": "2B", "vertexNames": "phone numbers", "edgeNames": "texts" },
+    { "id": "three", "vertexCount": "300M", "edgeCount": "3B", "vertexNames": "pets and owners", "edgeNames": "ownerships" }
+  ]
+}

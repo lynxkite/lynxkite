@@ -78,6 +78,10 @@ module.exports = function (grunt) {
                 req.url = req.url.replace('complexView', 'complexView-bucketed');
               }
             }
+            if (req.url.indexOf('/ajax/createProject') === 0) {
+              res.end();
+              return;
+            }
             next();
           });
           return mws;
