@@ -81,33 +81,33 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
-  //  registerOperation(ImportEdgesForExistingVertexSet)
-  //  object ImportEdgesForExistingVertexSet extends FEOperation {
-  //    val title = "Import edges"
-  //    val parameters = Seq(
-  //      Param("vsSrc", "Source vertex set", kind = "vertex-set"),
-  //      Param("vsDst", "Destination vertex set", kind = "vertex-set"),
-  //      Param("files", "Files"),
-  //      Param("header", "Header"),
-  //      Param("delimiter", "Delimiter", defaultValue = ","),
-  //      Param("srcField", "Source ID field (numeric)"),
-  //      Param("dstField", "Destination ID field (numeric)"),
-  //      Param("filter", "(optional) Filtering expression"))
-  //    def apply(params: Map[String, String]) = {
-  //      val csv = graph_operations.CSV(
-  //        Filename.fromString(params("files")),
-  //        params("delimiter"),
-  //        params("header"),
-  //        graph_operations.Javascript(params("filter")))
-  //      val srcField = params("srcField")
-  //      val dstField = params("dstField")
-  //      manager.show(
-  //        graph_operations.ImportEdgeListWithNumericIDsForExistingVertexSet(csv, srcField, dstField),
-  //        'sources -> manager.vertexSet(params("vsSrc").asUUID),
-  //        'destinations -> manager.vertexSet(params("vsDst").asUUID))
-  //      FEStatus.success
-  //    }
-  //  }
+  registerOperation(ImportEdgesForExistingVertexSet)
+  object ImportEdgesForExistingVertexSet extends FEOperation {
+    val title = "Import edges"
+    val parameters = Seq(
+      Param("vsSrc", "Source vertex set", kind = "vertex-set"),
+      Param("vsDst", "Destination vertex set", kind = "vertex-set"),
+      Param("files", "Files"),
+      Param("header", "Header"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("srcField", "Source ID field (numeric)"),
+      Param("dstField", "Destination ID field (numeric)"),
+      Param("filter", "(optional) Filtering expression"))
+    def apply(params: Map[String, String]) = {
+      val csv = graph_operations.CSV(
+        Filename.fromString(params("files")),
+        params("delimiter"),
+        params("header"),
+        graph_operations.Javascript(params("filter")))
+      val srcField = params("srcField")
+      val dstField = params("dstField")
+      manager.show(
+        graph_operations.ImportEdgeListForExistingVertexSet(csv, srcField, dstField),
+        'sources -> manager.vertexSet(params("vsSrc").asUUID),
+        'destinations -> manager.vertexSet(params("vsDst").asUUID))
+      FEStatus.success
+    }
+  }
 
   registerOperation(FindMaxCliques)
   object FindMaxCliques extends FEOperation {
