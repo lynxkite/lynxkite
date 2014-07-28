@@ -10,6 +10,8 @@ import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
 import scala.collection.immutable.SortedMap
 
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
+
 sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
   val name: Symbol
@@ -381,7 +383,7 @@ sealed trait EntityData {
   val entity: MetaGraphEntity
 }
 sealed trait EntityRDDData extends EntityData {
-  val rdd: RDD[_]
+  val rdd: SortedRDD[ID, _]
 }
 class VertexSetData(val vertexSet: VertexSet,
                     val rdd: VertexSetRDD) extends EntityRDDData {
@@ -549,17 +551,41 @@ class OutputBuilder(instance: MetaGraphOperationInstance) {
   def apply(vertexSet: VertexSet, rdd: VertexSetRDD): Unit = {
     addRDDData(new VertexSetData(vertexSet, rdd))
   }
+  def apply(vertexSet: VertexSet, rdd: RDD[(ID, Unit)]): Unit = {
+    rdd match {
+      case asSorted: SortedRDD[ID, Unit] => apply(vertexSet, asSorted)
+      case _ => apply(vertexSet, SortedRDD.fromUnsorted(rdd))
+    }
+  }
 
   def apply(edgeBundle: EdgeBundle, rdd: EdgeBundleRDD): Unit = {
     addRDDData(new EdgeBundleData(edgeBundle, rdd))
+  }
+  def apply(edgeBundle: EdgeBundle, rdd: RDD[(ID, Edge)]): Unit = {
+    rdd match {
+      case asSorted: SortedRDD[ID, Edge] => apply(edgeBundle, asSorted)
+      case _ => apply(edgeBundle, SortedRDD.fromUnsorted(rdd))
+    }
   }
 
   def apply[T](vertexAttribute: VertexAttribute[T], rdd: AttributeRDD[T]): Unit = {
     addRDDData(new VertexAttributeData(vertexAttribute, rdd))
   }
+  def apply[T](vertexAttribute: VertexAttribute[T], rdd: RDD[(ID, T)]): Unit = {
+    rdd match {
+      case asSorted: SortedRDD[ID, T] => apply(vertexAttribute, asSorted)
+      case _ => apply(vertexAttribute, SortedRDD.fromUnsorted(rdd))
+    }
+  }
 
   def apply[T](edgeAttribute: EdgeAttribute[T], rdd: AttributeRDD[T]): Unit = {
     addRDDData(new EdgeAttributeData(edgeAttribute, rdd))
+  }
+  def apply[T](edgeAttribute: EdgeAttribute[T], rdd: RDD[(ID, T)]): Unit = {
+    rdd match {
+      case asSorted: SortedRDD[ID, T] => apply(edgeAttribute, asSorted)
+      case _ => apply(edgeAttribute, SortedRDD.fromUnsorted(rdd))
+    }
   }
 
   def apply[T](scalar: Scalar[T], value: T): Unit = {
@@ -747,26 +773,26 @@ class DataSetBuilder(entities: MetaDataSet) {
 
   def toDataSet = DataSet(vertexSets.toMap, edgeBundles.toMap, vertexAttributes.toMap, edgeAttributes.toMap, scalars.toMap)
 
-  def putVertexSet(name: Symbol, rdd: VertexSetRDD): DataSetBuilder = {
+  def putVertexSet(name: Symbol, rdd: RDD[(ID, Unit)]): DataSetBuilder = {
     assert(rdd.partitioner.isDefined, s"Unpartitioned RDD: $rdd")
-    vertexSets(name) = new VertexSetData(entities.vertexSets(name), rdd)
+    vertexSets(name) = new VertexSetData(entities.vertexSets(name), SortedRDD.fromUnsorted(rdd))
     this
   }
-  def putEdgeBundle(name: Symbol, rdd: EdgeBundleRDD): DataSetBuilder = {
+  def putEdgeBundle(name: Symbol, rdd: RDD[(ID, Edge)]): DataSetBuilder = {
     assert(rdd.partitioner.isDefined, s"Unpartitioned RDD: $rdd")
-    edgeBundles(name) = new EdgeBundleData(entities.edgeBundles(name), rdd)
+    edgeBundles(name) = new EdgeBundleData(entities.edgeBundles(name), SortedRDD.fromUnsorted(rdd))
     this
   }
-  def putVertexAttribute[T: TypeTag](name: Symbol, rdd: AttributeRDD[T]): DataSetBuilder = {
+  def putVertexAttribute[T: TypeTag](name: Symbol, rdd: RDD[(ID, T)]): DataSetBuilder = {
     assert(rdd.partitioner.isDefined, s"Unpartitioned RDD: $rdd")
     val vertexAttribute = entities.vertexAttributes(name).runtimeSafeCast[T]
-    vertexAttributes(name) = new VertexAttributeData[T](vertexAttribute, rdd)
+    vertexAttributes(name) = new VertexAttributeData[T](vertexAttribute, SortedRDD.fromUnsorted(rdd))
     this
   }
-  def putEdgeAttribute[T: TypeTag](name: Symbol, rdd: AttributeRDD[T]): DataSetBuilder = {
+  def putEdgeAttribute[T: TypeTag](name: Symbol, rdd: RDD[(ID, T)]): DataSetBuilder = {
     assert(rdd.partitioner.isDefined, s"Unpartitioned RDD: $rdd")
     val edgeAttribute = entities.edgeAttributes(name).runtimeSafeCast[T]
-    edgeAttributes(name) = new EdgeAttributeData[T](edgeAttribute, rdd)
+    edgeAttributes(name) = new EdgeAttributeData[T](edgeAttribute, SortedRDD.fromUnsorted(rdd))
     this
   }
   def putScalar[T: TypeTag](name: Symbol, value: T): DataSetBuilder = {

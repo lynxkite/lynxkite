@@ -49,4 +49,9 @@ class PartialRunTest extends FunSuite with TestSparkContext {
       }
     }
   }
+  test("which join") {
+    val d1: RDD[(Long, Char)] = genData(10, 100, 0).toSortedRDD.cache
+    val d2 /*: RDD[(Long, Char)]*/ = genData(10, 100, 0).toSortedRDD.cache
+    d1.join(d2).calculate
+  }
 }
