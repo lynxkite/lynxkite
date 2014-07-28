@@ -7,6 +7,7 @@ import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect._
+import scala.util.Random
 
 object RDDUtils {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
@@ -98,6 +99,14 @@ object Implicits {
       // If the RDD was already partitioned correctly, we can skip the (pointless) shuffle.
       if (withIDs.partitioner == Some(partitioner)) withIDs
       else withIDs.partitionBy(partitioner)
+    }
+
+    def randomShuffle(): RDD[T] = {
+      val numPartitions = self.partitions.size
+      self.mapPartitions { iter =>
+        val rnd = new scala.util.Random
+        iter.map(rnd.nextLong -> _)
+      }.partitionBy(new spark.HashPartitioner(numPartitions)).values
     }
 
     def calculate() = self.foreach(_ => ())
