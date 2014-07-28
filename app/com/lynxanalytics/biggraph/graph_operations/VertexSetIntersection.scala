@@ -4,6 +4,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object VertexSetIntersection {
   class Input(numVertexSets: Int) extends MagicInputSignature {
@@ -28,7 +29,7 @@ case class VertexSetIntersection(numVertexSets: Int) extends TypedMetaGraphOp[In
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val intersection = inputs.vss.map(_.rdd)
-      .reduce((rdd1, rdd2) => rdd1.join(rdd2).mapValues(_ => ()))
+      .reduce((rdd1, rdd2) => SortedRDD.fromSorted(rdd1.sortedJoin(rdd2).mapValues(_ => ())))
     output(o.intersection, intersection)
   }
 }

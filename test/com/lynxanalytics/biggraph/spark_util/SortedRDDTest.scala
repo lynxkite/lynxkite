@@ -13,7 +13,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val p = new HashPartitioner(4)
     val a = sparkContext.parallelize(10 to 15).map(x => (x, x)).partitionBy(p).toSortedRDD
     val b = sparkContext.parallelize(20 to 25).map(x => (x, x)).partitionBy(p).toSortedRDD
-    val j: SortedRDD[Int, (Int, Int)] = a.join(b)
+    val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
     assert(j.collect.toSeq == Seq())
   }
 
@@ -39,8 +39,8 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       val other = genData(parts, rows, 2).sample(false, 0.5, 0)
         .partitionBy(data.partitioner.get).toSortedRDD.cache
       other.calculate
-      def oldJoin = getSum(data.asInstanceOf[RDD[(Long, Char)]].join(other))
-      def newJoin = getSum(data.join(other))
+      def oldJoin = getSum(data.join(other))
+      def newJoin = getSum(data.sortedJoin(other))
       def getSum(rdd: RDD[(Long, (Char, Char))]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
     }
     val parts = 4
