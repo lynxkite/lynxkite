@@ -75,7 +75,7 @@ object Implicits {
     // Adds unique ID numbers to rows of an RDD as a transformation.
     // The returned RDD will be partitioned by the partitioner of the input (if it is
     // a HashPartitioner) or by a new HashPartitioner.
-    def fastNumbered: RDD[(Long, T)] = {
+    def fastNumbered: RDD[(ID, T)] = {
       val numPartitions = self.partitions.size
       val partitioner = self.partitioner.collect {
         case p: spark.HashPartitioner => p
@@ -85,7 +85,7 @@ object Implicits {
 
     // Adds unique ID numbers to rows of an RDD as a transformation.
     // The returned RDD will be partitioned by the given partitioner.
-    def fastNumbered(partitioner: spark.Partitioner): RDD[(Long, T)] = {
+    def fastNumbered(partitioner: spark.Partitioner): RDD[(ID, T)] = {
       require(partitioner.isInstanceOf[spark.HashPartitioner], s"Need HashPartitioner, got: $partitioner")
       val numPartitions = partitioner.numPartitions
       // Need to repartition before adding the IDs if we are going to change the partition count.
@@ -101,14 +101,26 @@ object Implicits {
       else withIDs.partitionBy(partitioner)
     }
 
-    def randomShuffle(): RDD[T] = {
-      val numPartitions = self.partitions.size
-      self.mapPartitions { iter =>
+    // Adds unique ID numbers to rows of an RDD as a transformation.
+    // A new HashPartitioner will shuffle data randomly among partitions
+    // in order to provide unbiased data for sampling SortedRDDs.
+    def randomNumbered(numPartitions: Int = self.partitions.size): RDD[(ID, T)] = {
+      val partitioner = new spark.HashPartitioner(numPartitions)
+      val shuffled = self.mapPartitions { iter =>
         val rnd = new scala.util.Random
         iter.map(rnd.nextLong -> _)
-      }.partitionBy(new spark.HashPartitioner(numPartitions)).values
+      }.partitionBy(partitioner)
+
+      // Add IDs.
+      val withIDs = shuffled.mapPartitionsWithIndex({
+        case (pid, it) => it.zipWithIndex.map {
+          case ((_, el), fID) => genID(numPartitions, pid, fID) -> el
+        }
+      }, preservesPartitioning = true)
+      withIDs.partitionBy(partitioner)
     }
 
+    // The cheapest method to force an RDD calculation
     def calculate() = self.foreach(_ => ())
   }
 
