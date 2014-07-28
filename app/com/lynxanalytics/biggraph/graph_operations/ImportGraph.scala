@@ -128,14 +128,8 @@ abstract class ImportCommon {
     }.toMap
   }
 
-  protected def splitWithIDField(lines: RDD[Seq[String]], idField: String): Columns = {
-    val idIdx = csv.fields.indexOf(idField)
-    return csv.fields.zipWithIndex.map {
-      case (field, idx) => field -> lines.map { line => line(idIdx).toLong -> line(idx) }
-    }.toMap
-  }
+  protected def readColumns(sc: SparkContext, csv: CSV): Columns = splitGenerateIDs(csv.lines(sc))
 }
-
 object ImportCommon {
   def toSymbol(field: String) = Symbol("csv_" + field)
 }
@@ -149,8 +143,7 @@ object ImportVertexList {
     }.toMap
   }
 }
-
-abstract class ImportVertexList extends ImportCommon
+case class ImportVertexList(csv: CSV) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
   import ImportVertexList._
   @transient override lazy val inputs = new NoInput()
@@ -161,104 +154,41 @@ abstract class ImportVertexList extends ImportCommon
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc.sparkContext).mapValues(_.partitionBy(rc.defaultPartitioner))
+    val columns = readColumns(rc.sparkContext, csv).mapValues(_.partitionBy(rc.defaultPartitioner))
     for ((field, rdd) <- columns) {
       output(o.attrs(field), rdd)
     }
     output(o.vertices, columns.values.head.mapValues(_ => ()))
   }
-
-  // Override this.
-  def readColumns(sc: SparkContext): Columns
-}
-
-case class ImportVertexListWithStringIDs(csv: CSV) extends ImportVertexList {
-  def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
-}
-
-case class ImportVertexListWithNumericIDs(csv: CSV, id: String) extends ImportVertexList {
-  mustHaveField(id)
-  def readColumns(sc: SparkContext): Columns = splitWithIDField(csv.lines(sc), id)
 }
 
 object ImportEdgeList {
-  trait Output {
-    val attrs: Map[String, EntityContainer[EdgeAttribute[String]]]
+  //  trait Output {
+  //    val attrs: Map[String, EntityContainer[EdgeAttribute[String]]]
+  //  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               fields: Seq[String])
+      extends MagicOutput(instance) {
+    val (vertices, edges) = graph
+    val attrs = fields.map {
+      f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
+    }.toMap
+    val stringID = vertexAttribute[String](vertices)
   }
 }
-
-abstract class ImportEdgeList[Output <: ImportEdgeList.Output] extends ImportCommon {
+case class ImportEdgeList(csv: CSV, src: String, dst: String)
+    extends ImportCommon with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
+  import ImportEdgeList._
+  mustHaveField(src)
+  mustHaveField(dst)
+  @transient override lazy val inputs = new NoInput()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
 
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc.sparkContext).mapValues(_.partitionBy(rc.defaultPartitioner))
-    putOutputs(columns, o, output, rc)
-  }
-
-  protected def putEdgeAttributes(columns: Columns, o: Output, output: OutputBuilder): Unit = {
-    for ((field, rdd) <- columns) {
-      output(o.attrs(field), rdd)
-    }
-  }
-
-  // Override these.
-  def readColumns(sc: SparkContext): Columns = splitGenerateIDs(csv.lines(sc))
-  def putOutputs(columns: Columns, o: Output, output: OutputBuilder, rc: RuntimeContext): Unit =
-    putEdgeAttributes(columns, o, output)
-}
-
-object ImportEdgeListWithNumericIDs {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               fields: Seq[String]) extends MagicOutput(instance) with ImportEdgeList.Output {
-    val (vertices, edges) = graph
-    val attrs = fields.map {
-      f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
-    }.toMap
-  }
-}
-
-case class ImportEdgeListWithNumericIDs(csv: CSV, src: String, dst: String)
-    extends ImportEdgeList[ImportEdgeListWithNumericIDs.Output]
-    with TypedMetaGraphOp[NoInput, ImportEdgeListWithNumericIDs.Output] {
-  import ImportEdgeListWithNumericIDs._
-  mustHaveField(src)
-  mustHaveField(dst)
-  @transient override lazy val inputs = new NoInput()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
-  override val isHeavy = true
-
-  override def putOutputs(columns: Columns, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
-    super.putOutputs(columns, o, output, rc)
-    output(o.vertices,
-      (columns(src).values ++ columns(dst).values).distinct.map(_.toLong -> ())
-        .partitionBy(rc.defaultPartitioner))
-    output(o.edges, columns(src).join(columns(dst)).mapValues {
-      case (src, dst) => Edge(src.toLong, dst.toLong)
-    })
-  }
-}
-
-object ImportEdgeListWithStringIDs {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               fields: Seq[String])
-      extends ImportEdgeListWithNumericIDs.Output()(instance, fields) {
-    val stringID = vertexAttribute[String](vertices)
-  }
-}
-
-case class ImportEdgeListWithStringIDs(csv: CSV, src: String, dst: String)
-    extends ImportEdgeList[ImportEdgeListWithStringIDs.Output]
-    with TypedMetaGraphOp[NoInput, ImportEdgeListWithStringIDs.Output] {
-  import ImportEdgeListWithStringIDs._
-  mustHaveField(src)
-  mustHaveField(dst)
-  @transient override lazy val inputs = new NoInput()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
-  override val isHeavy = true
-
-  override def putOutputs(columns: Columns, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+    val columns = readColumns(rc.sparkContext, csv).mapValues(_.partitionBy(rc.defaultPartitioner))
     putEdgeAttributes(columns, o, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
     val idToName = names.fastNumbered(rc.defaultPartitioner)
@@ -277,38 +207,45 @@ case class ImportEdgeListWithStringIDs(csv: CSV, src: String, dst: String)
     output(o.vertices, idToName.mapValues(_ => ()))
     output(o.stringID, idToName)
   }
+
+  protected def putEdgeAttributes(columns: Columns, o: Output, output: OutputBuilder): Unit = {
+    for ((field, rdd) <- columns) {
+      output(o.attrs(field), rdd)
+    }
+  }
+
+  override val isHeavy = true
 }
 
-object ImportEdgeListWithNumericIDsForExistingVertexSet {
-  class Input extends MagicInputSignature {
-    val sources = vertexSet
-    val destinations = vertexSet
-  }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input,
-               fields: Seq[String])
-      extends MagicOutput(instance) with ImportEdgeList.Output {
-    val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
-    val attrs = fields.map {
-      f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
-    }.toMap
-  }
-}
-
-case class ImportEdgeListWithNumericIDsForExistingVertexSet(
-  csv: CSV, src: String, dst: String)
-    extends ImportEdgeList[ImportEdgeListWithNumericIDsForExistingVertexSet.Output]
-    with TypedMetaGraphOp[ImportEdgeListWithNumericIDsForExistingVertexSet.Input, ImportEdgeListWithNumericIDsForExistingVertexSet.Output] {
-  import ImportEdgeListWithNumericIDsForExistingVertexSet._
-  mustHaveField(src)
-  mustHaveField(dst)
-  @transient override lazy val inputs = new Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, csv.fields)
-
-  override def putOutputs(columns: Columns, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
-    putEdgeAttributes(columns, o, output)
-    output(o.edges, columns(src).join(columns(dst)).mapValues {
-      case (src, dst) => Edge(src.toLong, dst.toLong)
-    })
-  }
-}
+//object ImportEdgeListWithNumericIDsForExistingVertexSet {
+//  class Input extends MagicInputSignature {
+//    val sources = vertexSet
+//    val destinations = vertexSet
+//  }
+//  class Output(implicit instance: MetaGraphOperationInstance,
+//               inputs: Input,
+//               fields: Seq[String])
+//      extends MagicOutput(instance) with ImportEdgeList.Output {
+//    val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
+//    val attrs = fields.map {
+//      f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
+//    }.toMap
+//  }
+//}
+//case class ImportEdgeListWithNumericIDsForExistingVertexSet(
+//  csv: CSV, src: String, dst: String)
+//    extends ImportEdgeList[ImportEdgeListWithNumericIDsForExistingVertexSet.Output]
+//    with TypedMetaGraphOp[ImportEdgeListWithNumericIDsForExistingVertexSet.Input, ImportEdgeListWithNumericIDsForExistingVertexSet.Output] {
+//  import ImportEdgeListWithNumericIDsForExistingVertexSet._
+//  mustHaveField(src)
+//  mustHaveField(dst)
+//  @transient override lazy val inputs = new Input()
+//  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, csv.fields)
+//
+//  override def putOutputs(columns: Columns, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+//    putEdgeAttributes(columns, o, output)
+//    output(o.edges, columns(src).join(columns(dst)).mapValues {
+//      case (src, dst) => Edge(src.toLong, dst.toLong)
+//    })
+//  }
+//}
