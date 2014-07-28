@@ -78,7 +78,7 @@
 .operation-toolbox .box.orange h1 { background: orange; }
 .operation-toolbox .box.green h1 { background: yellowgreen; }
 .operation-toolbox .box.blue h1 { background: aquamarine; }
-.operation-toolbox .box .clicky:hover { color: black; }
+.operation-toolbox .box .clicky:hover { color: black !important; }
 .operation-toolbox .box.yellow .clicky:hover { background: gold; }
 .operation-toolbox .box.orange .clicky:hover { background: orange; }
 .operation-toolbox .box.green .clicky:hover { background: yellowgreen; }
@@ -87,6 +87,10 @@
 .operation-toolbox .box.orange operation:hover .title { color: orange; }
 .operation-toolbox .box.green operation:hover .title { color: yellowgreen; }
 .operation-toolbox .box.blue operation:hover .title { color: aquamarine; }
+.operation-toolbox .box.yellow operation:hover .clicky { color: gold; }
+.operation-toolbox .box.orange operation:hover .clicky { color: orange; }
+.operation-toolbox .box.green operation:hover .clicky { color: yellowgreen; }
+.operation-toolbox .box.blue operation:hover .clicky { color: aquamarine; }
 
 .operation-toolbox .panel .list-group-item {
   border: 0;
