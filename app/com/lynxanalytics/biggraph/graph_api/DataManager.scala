@@ -9,6 +9,7 @@ import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: Filename) {
@@ -42,30 +43,31 @@ class DataManager(sc: spark.SparkContext,
   private def load(vertexSet: VertexSet): Unit = {
     vertexSetCache(vertexSet.gUID) = new VertexSetData(
       vertexSet,
-      entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)
-        .partitionBy(runtimeContext.defaultPartitioner))
+      SortedRDD.fromUnsorted(entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)
+        .partitionBy(runtimeContext.defaultPartitioner)))
   }
 
   private def load(edgeBundle: EdgeBundle): Unit = {
     edgeBundleCache(edgeBundle.gUID) = new EdgeBundleData(
       edgeBundle,
-      entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)
-        .partitionBy(runtimeContext.defaultPartitioner))
+      SortedRDD.fromUnsorted(entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)
+        .partitionBy(runtimeContext.defaultPartitioner)))
   }
 
   private def load[T](vertexAttribute: VertexAttribute[T]): Unit = {
     implicit val ct = vertexAttribute.classTag
     vertexAttributeCache(vertexAttribute.gUID) = new VertexAttributeData[T](
       vertexAttribute,
-      entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
-        .partitionBy(runtimeContext.defaultPartitioner))
+      SortedRDD.fromUnsorted(entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
+        .partitionBy(runtimeContext.defaultPartitioner)))
   }
 
   private def load[T](edgeAttribute: EdgeAttribute[T]): Unit = {
     implicit val ct = edgeAttribute.classTag
     edgeAttributeCache(edgeAttribute.gUID) = new EdgeAttributeData[T](
-      edgeAttribute, entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)
-        .partitionBy(runtimeContext.defaultPartitioner))
+      edgeAttribute,
+      SortedRDD.fromUnsorted(entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)
+        .partitionBy(runtimeContext.defaultPartitioner)))
   }
 
   private def load[T](scalar: Scalar[T]): Unit = {
