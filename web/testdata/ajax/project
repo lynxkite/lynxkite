@@ -1,5 +1,5 @@
 {
-  "name": "My Little Project",
+  "id": "My_Little_Project",
   "vertexCount": 12345678,
   "edgeCount": 234567890,
   "notes": "Subscribers and calls.",

@@ -18,7 +18,7 @@
         </form>
       </a>
       <a ng-repeat="project in data.projects | filter:searchString" href="#/project/{{project.id}}">
-        <h1>{{project.id}}</h1>
+        <h1>{{spaced(project.id)}}</h1>
         {{human(project.vertexCount)}} vertices, {{human(project.edgeCount)}} edges. {{project.notes}}
       </a>
   </div>

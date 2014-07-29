@@ -66,10 +66,26 @@ case class FEOperationSpec(
 abstract class FEOperation {
   val id: String = getClass.getName
   val title: String
+  val category: String
   val parameters: Seq[FEOperationParameterMeta]
   lazy val starting = parameters.forall(_.kind == "scalar")
   def apply(params: Map[String, String]): FEStatus
 }
+
+case class Project(
+  id: String,
+  vertexCount: Long,
+  edgeCount: Long,
+  notes: String,
+  vertexAttributes: Seq[UIValue],
+  edgeAttributes: Seq[UIValue],
+  segmentations: Seq[UIValue])
+
+case class ProjectRequest(id: String)
+case class Operations(categories: Seq[OperationCategory])
+case class Splash(projects: Seq[Project])
+case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
+case class CreateProjectRequest(id: String, notes: String)
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
@@ -87,7 +103,11 @@ class FEOperationRepository(env: BigGraphEnvironment) {
   }
 
   def getStartingOperationMetas: Seq[FEOperationMeta] = {
-    operations.values.toSeq.filter(_.starting).map {
+    toSimpleMetas(operations.values.toSeq.filter(_.starting))
+  }
+
+  private def toSimpleMetas(ops: Seq[FEOperation]): Seq[FEOperationMeta] = {
+    ops.map {
       op => FEOperationMeta(op.id, op.title, op.parameters)
     }
   }
@@ -145,6 +165,11 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     operations(spec.id).apply(spec.parameters)
 
   private val operations = mutable.Map[String, FEOperation]()
+  def categories: Seq[OperationCategory] = {
+    return operations.values.groupBy(_.category).toSeq.map {
+      case (cat, ops) => OperationCategory(cat, toSimpleMetas(ops.toSeq))
+    }.sortBy(_.title)
+  }
 }
 
 /**
@@ -194,4 +219,23 @@ class BigGraphController(env: BigGraphEnvironment) {
       .filter(_.source.inputs.all.isEmpty)
       .filter(manager.isVisible(_))
       .map(UIValue.fromEntity(_)).toSeq
+
+  def ops(request: serving.Empty): Operations = {
+    return Operations(categories = operations.categories)
+  }
+
+  def splash(request: serving.Empty): Splash = {
+    return Splash(projects = projects.values.toSeq)
+  }
+
+  def project(request: ProjectRequest): Project = {
+    return projects(request.id)
+  }
+
+  val projects = mutable.Map[String, Project]()
+
+  def createProject(request: CreateProjectRequest): serving.Empty = {
+    projects(request.id) = Project(request.id, 0, 0, request.notes, Seq(), Seq(), Seq())
+    return serving.Empty()
+  }
 }

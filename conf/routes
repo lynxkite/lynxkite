@@ -10,6 +10,11 @@ GET  /ajax/save        com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 #GET  /data/verticesCSV com.lynxanalytics.biggraph.serving.CSVServer.verticesCSVGet
 #GET  /data/edgesCSV    com.lynxanalytics.biggraph.serving.CSVServer.edgesCSVGet
 
+POST /ajax/createProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.createProject
+GET  /ajax/ops           com.lynxanalytics.biggraph.serving.ProductionJsonServer.ops
+GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project
+GET  /ajax/splash        com.lynxanalytics.biggraph.serving.ProductionJsonServer.splash
+
 GET  /ajax/vertexDiag  com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexDiagram
 GET  /ajax/edgeDiag    com.lynxanalytics.biggraph.serving.ProductionJsonServer.edgeDiagram
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView

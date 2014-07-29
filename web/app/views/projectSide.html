@@ -16,7 +16,7 @@
     <operation-toolbox ops="ops" side="side"></operation-toolbox>
 
     <div class="panel-heading project-name">
-      {{side.data.name}}
+      {{spaced(side.data.id)}}
       <div class="btn-group pull-right">
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable>
           <i tooltip="Bucketed&nbsp;Graph" class="glyphicon glyphicon-th"></i>

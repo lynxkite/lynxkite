@@ -8,6 +8,7 @@ angular
   ])
   .run(function($rootScope) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+    // Easier to read numbers. 1234 -> 1k
     $rootScope.human = function(x) {
       for (var i = 0; true; ++i) {
         if (x < 1000 || i === siSymbols.length - 1) {
@@ -15,6 +16,10 @@ angular
         }
         x = Math.round(x / 1000);
       }
+    };
+    // Replaces underscores with spaces.
+    $rootScope.spaced = function(s) {
+      return s.replace(/_/g, ' ');
     };
   })
   .config(function ($routeProvider) {
