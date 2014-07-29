@@ -1,9 +1,8 @@
 {
   "name": "My Little Project",
   "vertexCount": 12345678,
-  "vertexNames": "subscribers",
   "edgeCount": 234567890,
-  "edgeNames": "calls",
+  "notes": "Subscribers and calls.",
 
   "vertexAttributes": [
     { "id": "5", "title": "age" },

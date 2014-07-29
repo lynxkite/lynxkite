@@ -12,6 +12,12 @@
 .sublist.list-group-item {
   background: #f5f5f5;
 }
+.notes {
+  resize: vertical;
+  background: #f5f5f5;
+  border: 0;
+  width: 100%;
+}
 
 .operation-toolbox {
   position: absolute;
