@@ -29,6 +29,7 @@ angular.module('biggraph')
     $scope.right.state = defaultSideState();
 
     deepWatch(
+      $scope,
       function() { return $location.search(); },
       function(search) {
         if (!search.q) {
@@ -49,6 +50,7 @@ angular.module('biggraph')
       });
 
     deepWatch(
+      $scope,
       getState,
       function(state) {
         $location.search({ q: JSON.stringify(state) });
