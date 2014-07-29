@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function($resource) {
+angular.module('biggraph').directive('operationToolbox', function($resource, deepWatch) {
   return {
     restrict: 'E',
     scope: { ops: '=', side: '=' },
@@ -9,7 +9,7 @@ angular.module('biggraph').directive('operationToolbox', function($resource) {
     link: function(scope) {
       var ApplyOp = $resource('/ajax/applyOp');
       var colors = ['yellow', 'orange', 'green', 'blue'];
-      angular.deepWatch(scope, 'ops', function() {
+      deepWatch('ops', function() {
         scope.categories = [];
         for (var i = 0; i < scope.ops.categories.length; ++i) {
           var data = scope.ops.categories[i];
