@@ -121,9 +121,9 @@ abstract class ImportCommon {
   }
 
   protected def splitGenerateIDs(lines: RDD[Seq[String]]): Columns = {
-    val numbered = lines.fastNumbered
+    val shuffled = lines.randomNumbered()
     return csv.fields.zipWithIndex.map {
-      case (field, idx) => field -> numbered.map { case (id, line) => id -> line(idx) }
+      case (field, idx) => field -> shuffled.map { case (id, line) => id -> line(idx) }
     }.toMap
   }
 
