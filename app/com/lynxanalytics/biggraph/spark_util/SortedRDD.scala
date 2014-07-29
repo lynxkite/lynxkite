@@ -42,7 +42,6 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
   }
 
   def sortedJoin(other: SortedRDD[K, V]): SortedRDD[K, (V, V)] = {
-    println("Magic join happening!")
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
     val zipped = this.zipPartitions(other, true) { (it1, it2) => merge(it1.buffered, it2.buffered).iterator }
