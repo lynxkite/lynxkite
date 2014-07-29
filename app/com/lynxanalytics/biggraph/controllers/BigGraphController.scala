@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
@@ -177,7 +179,7 @@ class FEOperationRepository(env: BigGraphEnvironment) {
  */
 
 class BigGraphController(env: BigGraphEnvironment) {
-  val manager = env.metaGraphManager
+  implicit val manager = env.metaGraphManager
   val operations = new FEOperations(env)
 
   private def toFE(vs: VertexSet): FEVertexSet = {
@@ -224,18 +226,25 @@ class BigGraphController(env: BigGraphEnvironment) {
     return Operations(categories = operations.categories)
   }
 
+  private def getProject(id: String): Project = {
+    val p: SymbolPath = s"projects/$id"
+    val notes = env.dataManager.get(manager.scalarOf[String](p / "notes")).value
+    Project(id, 0, 0, notes, Seq(), Seq(), Seq())
+  }
+
   def splash(request: serving.Empty): Splash = {
-    return Splash(projects = projects.values.toSeq)
+    val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
+    val projects = dirs.map(p => getProject(p.path.last.name))
+    return Splash(projects = projects)
   }
 
   def project(request: ProjectRequest): Project = {
-    return projects(request.id)
+    return getProject(request.id)
   }
 
-  val projects = mutable.Map[String, Project]()
-
   def createProject(request: CreateProjectRequest): serving.Empty = {
-    projects(request.id) = Project(request.id, 0, 0, request.notes, Seq(), Seq(), Seq())
+    val notes = graph_operations.CreateStringScalar(request.notes)().result.value
+    manager.setTag(s"projects/${request.id}/notes", notes)
     return serving.Empty()
   }
 }
