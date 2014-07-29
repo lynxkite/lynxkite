@@ -62,4 +62,15 @@ angular
       });
       return req;
     };
+  })
+  // Json GET with parameter wrapping and no caching.
+  .factory('nocache', function getFactor($resource) {
+    return function(url, params) {
+      if (params === undefined) { params = { fake: 1 }; }
+      var res = $resource(url);
+      var req = res.get({ q: params }, function() {}, function(failure) {
+        req.error = 'Request failed: ' + failure.data;
+      });
+      return req;
+    };
   });
