@@ -107,11 +107,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         filterSpec.valueSpec)
     }
     val op = graph_operations.VertexSetIntersection(filteredVss.size)
-    
-    val builder = filteredVss.zipWithIndex.foldLeft(op.builder){
-      case (b, (vs, i)) => b(op.vss(i), vs)  
+
+    val builder = filteredVss.zipWithIndex.foldLeft(op.builder) {
+      case (b, (vs, i)) => b(op.vss(i), vs)
     }
-    
+
     builder.result.intersection.entity
   }
 
