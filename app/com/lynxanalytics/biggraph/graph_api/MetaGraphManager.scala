@@ -84,6 +84,10 @@ class MetaGraphManager(val repositoryPath: String) {
     saveTags()
   }
 
+  def lsTag(tag: SymbolPath): Seq[SymbolPath] = {
+    (tagRoot / tag).ls.map(_.fullName)
+  }
+
   def vertexSet(tag: SymbolPath): VertexSet = vertexSet((tagRoot / tag).gUID)
   def edgeBundle(tag: SymbolPath): EdgeBundle = edgeBundle((tagRoot / tag).gUID)
   def vertexAttribute(tag: SymbolPath): VertexAttribute[_] = vertexAttribute((tagRoot / tag).gUID)
