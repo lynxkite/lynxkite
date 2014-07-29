@@ -89,11 +89,11 @@ class MetaGraphManager(val repositoryPath: String) {
   def vertexAttribute(tag: SymbolPath): VertexAttribute[_] = vertexAttribute((tagRoot / tag).gUID)
   def edgeAttribute(tag: SymbolPath): EdgeAttribute[_] = edgeAttribute((tagRoot / tag).gUID)
   def scalar(tag: SymbolPath): Scalar[_] = scalar((tagRoot / tag).gUID)
-  def vertexAttributeOf[T: TypeTag](tag: SymbolPath): VertexAttribute[_] =
+  def vertexAttributeOf[T: TypeTag](tag: SymbolPath): VertexAttribute[T] =
     vertexAttributeOf[T]((tagRoot / tag).gUID)
-  def edgeAttributeOf[T: TypeTag](tag: SymbolPath): EdgeAttribute[_] =
+  def edgeAttributeOf[T: TypeTag](tag: SymbolPath): EdgeAttribute[T] =
     edgeAttributeOf[T]((tagRoot / tag).gUID)
-  def scalarOf[T: TypeTag](tag: SymbolPath): Scalar[_] =
+  def scalarOf[T: TypeTag](tag: SymbolPath): Scalar[T] =
     scalarOf[T]((tagRoot / tag).gUID)
 
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
