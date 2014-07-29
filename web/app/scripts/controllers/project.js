@@ -24,7 +24,7 @@ angular.module('biggraph')
     $scope.left = {};
     $scope.right = {};
     $scope.ops = get('/ajax/ops');
-    $scope.left.data = get('/ajax/project', { project: $routeParams.project });
+    $scope.left.data = get('/ajax/project', { id: $routeParams.project });
     $scope.left.state = defaultSideState();
     $scope.right.state = defaultSideState();
 

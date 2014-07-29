@@ -15,7 +15,7 @@ angular.module('biggraph').directive('operationToolbox', function($resource, dee
           var data = scope.ops.categories[i];
           var cat = { title: data.title, ops: data.ops };
           cat.icon = cat.title[0];
-          cat.color = colors[i];
+          cat.color = colors[i % colors.length];
           scope.categories.push(cat);
         }
       });
