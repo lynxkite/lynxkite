@@ -108,15 +108,16 @@ object Implicits {
       val partitioner = new spark.HashPartitioner(numPartitions)
 
       // generate a random id for the hash
-      val randomPartitioned = self.mapPartitionsWithIndex {
+      val randomPartitioned = self.mapPartitionsWithIndex({
         case (pid, it) =>
           val rnd = new scala.util.Random(pid)
           it.map(rnd.nextLong -> _)
-      }.partitionBy(partitioner)
+      }, preservesPartitioning = true).partitionBy(partitioner)
 
-      val shuffled = randomPartitioned.mapPartitionsWithIndex({ case (pid, xs) =>
-        val rnd = new scala.util.Random(pid)
-        Random.shuffle(xs)
+      val shuffled = randomPartitioned.mapPartitionsWithIndex({
+        case (pid, xs) =>
+          val rnd = new scala.util.Random(pid)
+          rnd.shuffle(xs)
       }, preservesPartitioning = true)
 
       // generate unique id, throw away previous random id

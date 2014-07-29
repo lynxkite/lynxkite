@@ -113,21 +113,28 @@ case class CSV(file: Filename,
 }
 
 abstract class ImportCommon {
-  type Columns = Map[String, RDD[(Long, String)]]
+  type Columns = Map[String, RDD[(ID, String)]]
   val csv: CSV
 
   protected def mustHaveField(field: String) = {
     assert(csv.fields.contains(field), s"No such field: $field in ${csv.fields}")
   }
 
-  protected def splitGenerateIDs(lines: RDD[Seq[String]]): Columns = {
-    val shuffled = lines.randomNumbered()
+  protected def readColumns(rc: RuntimeContext, csv: CSV): Columns = {
+    val lines = csv.lines(rc.sparkContext)
+    val numbered = lines.randomNumbered(rc.defaultPartitioner.numPartitions).cache
     return csv.fields.zipWithIndex.map {
-      case (field, idx) => field -> shuffled.map { case (id, line) => id -> line(idx) }
+      case (field, idx) => field -> numbered.mapValues(line => line(idx))
     }.toMap
   }
 
-  protected def readColumns(sc: SparkContext, csv: CSV): Columns = splitGenerateIDs(csv.lines(sc))
+  protected def putEdgeAttributes(columns: Columns,
+                                  oattr: Map[String, EdgeAttribute[String]],
+                                  output: OutputBuilder): Unit = {
+    for ((field, rdd) <- columns) {
+      output(oattr(field), rdd)
+    }
+  }
 }
 object ImportCommon {
   def toSymbol(field: String) = Symbol("csv_" + field)
@@ -153,7 +160,7 @@ case class ImportVertexList(csv: CSV) extends ImportCommon
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc.sparkContext, csv).mapValues(_.partitionBy(rc.defaultPartitioner))
+    val columns = readColumns(rc, csv)
     for ((field, rdd) <- columns) {
       output(o.attrs(field), rdd)
     }
@@ -184,10 +191,10 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc.sparkContext, csv).mapValues(_.partitionBy(rc.defaultPartitioner))
-    putEdgeAttributes(columns, o, output)
+    val columns = readColumns(rc, csv)
+    putEdgeAttributes(columns, o.attrs.mapValues(_.entity), output)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.fastNumbered(rc.defaultPartitioner)
+    val idToName = names.randomNumbered(rc.defaultPartitioner.numPartitions)
     val nameToId = idToName.map { case (id, name) => (name, id) }
     val edgeSrcDst = columns(src).join(columns(dst))
     val bySrc = edgeSrcDst.map {
@@ -202,12 +209,6 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
     output(o.edges, edges.partitionBy(rc.defaultPartitioner))
     output(o.vertices, idToName.mapValues(_ => ()))
     output(o.stringID, idToName)
-  }
-
-  protected def putEdgeAttributes(columns: Columns, o: Output, output: OutputBuilder): Unit = {
-    for ((field, rdd) <- columns) {
-      output(o.attrs(field), rdd)
-    }
   }
 
   override val isHeavy = true
@@ -229,7 +230,8 @@ object ImportEdgeListForExistingVertexSet {
   }
 }
 case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String)
-    extends ImportCommon with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
+    extends ImportCommon
+    with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
   import ImportEdgeListForExistingVertexSet._
   mustHaveField(src)
   mustHaveField(dst)
@@ -240,16 +242,12 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc.sparkContext, csv).mapValues(_.partitionBy(rc.defaultPartitioner))
-    putEdgeAttributes(columns, o, output)
+    val columns = readColumns(rc, csv)
+    putEdgeAttributes(columns, o.attrs.mapValues(_.entity), output)
     output(o.edges, columns(src).join(columns(dst)).mapValues {
       case (src, dst) => Edge(src.toLong, dst.toLong)
     })
   }
 
-  protected def putEdgeAttributes(columns: Columns, o: Output, output: OutputBuilder): Unit = {
-    for ((field, rdd) <- columns) {
-      output(o.attrs(field), rdd)
-    }
-  }
+  override val isHeavy = true
 }
