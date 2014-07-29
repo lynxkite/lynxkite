@@ -42,9 +42,9 @@ angular
       });
   })
   // This function is for code clarity, so we don't have a mysterious "true" argument.
-  .factory('deepWatch', function deepWatchFactory($scope) {
-    return function(expr, fun) {
-      $scope.$watch(expr, fun, true);
+  .factory('deepWatch', function deepWatchFactory() {
+    return function(scope, expr, fun) {
+      scope.$watch(expr, fun, true);
     };
   })
   // Json GET with caching and parameter wrapping.
