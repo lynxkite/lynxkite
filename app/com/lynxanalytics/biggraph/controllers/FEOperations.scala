@@ -194,7 +194,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   registerOperation(ConcatenateBundles)
   object ConcatenateBundles extends FEOperation {
     val title = "Concatenate edge bundles, weighted"
-    val category = "Expert"
+    val category = "X - Expert operations"
     val parameters = Seq(
       Param("wAB", "Edge weight A->B", kind = "edge-attribute"),
       Param("wBC", "Edge weight B->C", kind = "edge-attribute"))
