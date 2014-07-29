@@ -106,21 +106,24 @@ object Implicits {
     // in order to provide unbiased data for sampling SortedRDDs.
     def randomNumbered(numPartitions: Int = self.partitions.size): RDD[(ID, T)] = {
       val partitioner = new spark.HashPartitioner(numPartitions)
-      val shuffled = self.mapPartitionsWithIndex {
+
+      // generate a random id for the hash
+      val randomPartitioned = self.mapPartitionsWithIndex {
         case (pid, it) =>
           val rnd = new scala.util.Random(pid)
           it.map(rnd.nextLong -> _)
       }.partitionBy(partitioner)
 
-      // Add IDs.
-      shuffled.mapPartitionsWithIndex({
-        case (pid, it) => it.zipWithIndex.map {
-          case ((_, el), fID) => genID(numPartitions, pid, fID) -> el
-        }
-      }, preservesPartitioning = false)
+      val shuffled = randomPartitioned.mapPartitionsWithIndex({ case (pid, xs) =>
+        val rnd = new scala.util.Random(pid)
+        Random.shuffle(xs)
+      }, preservesPartitioning = true)
+
+      // generate unique id, throw away previous random id
+      shuffled.fastNumbered(partitioner).mapValues(_._2)
     }
 
-    // The cheapest method to force an RDD calculation
+    // Cheap method to force an RDD calculation
     def calculate() = self.foreach(_ => ())
   }
 

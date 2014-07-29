@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ImportGraphTest extends FunSuite with TestGraphOp {
-  test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
+  /*test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
     val dir = "/graph_operations/ImportGraphTest/testgraph/"
     val vertexCSVs = Filename(getClass.getResource(dir + "vertex-data/part-00000").getFile)
     val edgeCSVs = Filename(getClass.getResource(dir + "edge-data/part-00000").getFile)
@@ -94,7 +94,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
          |((Darth Vader,Adam),Darth Vader envies Adam)
          |((Harry,Voldemort),Harry loves Voldemort)
          |((Voldemort,Harry),Voldemort loves Harry)""".stripMargin)
-  }
+  }*/
 
   test("Splitting with quoted delimiters") {
     val input = """ "Hello, ""mr, smith""!", How are you "doing"?, "Okay, thanks." """.trim
