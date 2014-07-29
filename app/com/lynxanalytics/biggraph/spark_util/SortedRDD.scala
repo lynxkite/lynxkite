@@ -3,11 +3,15 @@ package com.lynxanalytics.biggraph.spark_util
 import org.apache.spark.{ Partition, TaskContext }
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import scala.reflect.ClassTag
 
 object SortedRDD {
   // Creates a SortedRDD from an unsorted RDD.
-  def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
-    new SortedRDD(rdd.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true))
+  def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] = {
+    new SortedRDD(rdd.mapPartitionsWithIndex(
+      (idx, it) => it.toIndexedSeq.sortBy(_._1).iterator,
+      preservesPartitioning = true))
+  }
 
   // Wraps an already sorted RDD.
   def fromSorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
@@ -20,9 +24,9 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
 
-  private def merge[K, V](
-    bi1: collection.BufferedIterator[(K, V)],
-    bi2: collection.BufferedIterator[(K, V)])(implicit ord: Ordering[K]): Stream[(K, (V, V))] = {
+  private def merge[K, V1, V2](
+    bi1: collection.BufferedIterator[(K, V1)],
+    bi2: collection.BufferedIterator[(K, V2)])(implicit ord: Ordering[K]): Stream[(K, (V1, V2))] = {
     if (bi1.hasNext && bi2.hasNext) {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
@@ -41,7 +45,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     }
   }
 
-  def sortedJoin(other: SortedRDD[K, V]): SortedRDD[K, (V, V)] = {
+  def sortedJoin[V2](other: SortedRDD[K, V2]): SortedRDD[K, (V, V2)] = {
     println("Magic join happening!")
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
@@ -62,5 +66,18 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
       }
     }, preservesPartitioning = true)
     return new SortedRDD(distinct)
+  }
+
+  def collectFirstNValues(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
+    val numPartitions = partitions.size
+    val div = n / numPartitions
+    val mod = n % numPartitions
+    this
+      .mapPartitionsWithIndex((pid, it) => {
+        val elementsFromThisPartition = if (pid < mod) (div + 1) else div
+        it.take(elementsFromThisPartition)
+      })
+      .map { case (k, v) => v }
+      .collect
   }
 }

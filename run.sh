@@ -11,6 +11,6 @@ cd ..
 ln -s web/.tmp public
 
 sbt stage
-stage/bin/biggraph
+stage/bin/biggraph -mem 3000
 
 rm public
