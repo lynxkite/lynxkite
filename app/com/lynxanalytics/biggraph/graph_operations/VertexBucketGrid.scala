@@ -4,6 +4,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object VertexBucketGrid {
   class Input[S, T](xBucketed: Boolean, yBucketed: Boolean) extends MagicInputSignature {
@@ -36,27 +37,32 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vertices = inputs.vertices.rdd
-    val xBuckets = if (xBucketer.numBuckets == 1) {
+    val xBuckets = (if (xBucketer.numBuckets == 1) {
       vertices.mapValues(_ => 0)
     } else {
       val xAttr = inputs.xAttribute.rdd
-      vertices.join(xAttr).mapValues { case (_, value) => xBucketer.whichBucket(value) }
-    }
-    val yBuckets = if (yBucketer.numBuckets == 1) {
+      vertices.sortedJoin(xAttr).mapValues { case (_, value) => xBucketer.whichBucket(value) }
+    }).asSortedRDD
+    val yBuckets = (if (yBucketer.numBuckets == 1) {
       vertices.mapValues(_ => 0)
     } else {
       val yAttr = inputs.yAttribute.rdd
-      vertices.join(yAttr).mapValues { case (_, value) => yBucketer.whichBucket(value) }
-    }
+      vertices.sortedJoin(yAttr).mapValues { case (_, value) => yBucketer.whichBucket(value) }
+    }).asSortedRDD
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
-    output(o.feIdxs,
-      xBuckets.join(yBuckets).mapValues { case (x, y) => x * yBucketer.numBuckets + y })
-    output(o.bucketSizes,
-      xBuckets.join(yBuckets)
-        .map { case (vid, (xB, yB)) => ((xB, yB), 1) }
-        .reduceByKey(_ + _)
-        .collect
-        .toMap)
+    val xyBuckets = xBuckets.sortedJoin(yBuckets)
+    output(
+      o.feIdxs,
+      xyBuckets.mapValues { case (x, y) => x * yBucketer.numBuckets + y })
+    val sampleSize = xBucketer.numBuckets * yBucketer.numBuckets * 100
+    val sample = xyBuckets.collectFirstNValues(sampleSize)
+    output(
+      o.bucketSizes,
+      sample
+        .map { case (xB, yB) => ((xB, yB), ()) }
+        .groupBy(_._1)
+        .toMap
+        .mapValues(_.size))
   }
 }

@@ -4,6 +4,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 abstract class Filter[T] extends Serializable {
   def matches(value: T): Boolean
@@ -37,8 +38,12 @@ case class VertexAttributeFilter[T](filter: Filter[T]) extends TypedMetaGraphOp[
     implicit val ct = inputs.attr.data.classTag
     val attr = inputs.attr.rdd
     val fattr = attr.filter { case (id, v) => filter.matches(v) }
-    output(o.fvs, fattr.mapValues(_ => ()))
-    val identity = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
+    output(o.fvs, fattr.mapValues(_ => ()).asSortedRDD)
+    val identity = fattr.mapPartitions(
+      {
+        it => it.map { case (id, v) => id -> Edge(id, id) }
+      },
+      preservesPartitioning = true)
     output(o.identity, identity)
   }
 }

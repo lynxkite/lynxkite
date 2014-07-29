@@ -98,12 +98,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   import graph_operations.SampledVertexAttribute.sampleAttribute
 
-  def filter(sampled: VertexSet, filters: Seq[FEVertexAttributeFilter]): VertexSet = {
-    if (filters.isEmpty) return sampled
+  def filter(vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter]): VertexSet = {
+    if (filters.isEmpty) return vertexSet
     val filteredVss = filters.map { filterSpec =>
+      val attr = metaManager.vertexAttribute(filterSpec.attributeId.asUUID)
+      dataManager.get(attr).rdd.cache()
       FEFilters.filteredBaseSet(
         metaManager,
-        metaManager.vertexAttribute(filterSpec.attributeId.asUUID),
+        attr,
         filterSpec.valueSpec)
     }
     val op = graph_operations.VertexSetIntersection(filteredVss.size)
@@ -112,7 +114,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       case (b, (vs, i)) => b(op.vss(i), vs)
     }
 
-    builder.result.intersection.entity
+    builder.result.intersection
   }
 
   def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
@@ -155,51 +157,35 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getBucketedVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val countOp = graph_operations.CountVertices()
-    val count = countOp(countOp.vertices, vertexSet).result.count.value
-    // TODO get from request or something.
-    val targetSample = 10000
-    val fraction = (targetSample * 1.0 / count) min 1.0
-    val sampled =
-      if (fraction < 1.0) metaManager.apply(
-        graph_operations.VertexSample(fraction),
-        'vertices -> vertexSet).outputs.vertexSets('sampled)
-      else vertexSet
-
-    val filtered = filter(sampled, request.filters)
+    val filtered = filter(vertexSet, request.filters)
 
     var xBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
     var yBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
     var inputs = MetaDataSet(Map('vertices -> filtered))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
-      val sampledAttribute = sampleAttribute(
-        metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))
       xBucketer = FEBucketers.bucketer(
-        metaManager, dataManager, sampledAttribute, request.xNumBuckets)
+        metaManager, dataManager, attribute, request.xNumBuckets)
       if (xBucketer.numBuckets > 1) {
         inputs ++= MetaDataSet(
-          Map('xAttribute -> sampledAttribute))
+          Map('xAttribute -> attribute))
       }
     }
     if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
-      val sampledAttribute = sampleAttribute(
-        metaManager, filtered, sampleAttribute(metaManager, sampled, attribute))
       yBucketer = FEBucketers.bucketer(
-        metaManager, dataManager, sampledAttribute, request.yNumBuckets)
+        metaManager, dataManager, attribute, request.yNumBuckets)
       if (yBucketer.numBuckets > 1) {
         inputs ++= MetaDataSet(
-          Map('yAttribute -> sampledAttribute))
+          Map('yAttribute -> attribute))
       }
     }
     val op = graph_operations.VertexBucketGrid(xBucketer, yBucketer)
-    val diagramMeta = metaManager.apply(op, inputs)
-      .outputs.scalars('bucketSizes).runtimeSafeCast[Map[(Int, Int), Int]]
+    val diagramMeta = metaManager.apply(op, inputs).result.bucketSizes
     val diagram = dataManager.get(diagramMeta).value
 
     val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
-      yield FEVertex(x = x, y = y, size = (diagram.getOrElse((x, y), 0) * 1.0 / fraction).toInt)
+      yield FEVertex(x = x, y = y, size = (diagram.getOrElse((x, y), 0) * 1.0).toInt)
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,

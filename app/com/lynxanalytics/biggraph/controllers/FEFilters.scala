@@ -29,8 +29,10 @@ object FEFilters {
         doubleFilter.asInstanceOf[Filter[T]]
       } else ???
     val filter = if (negated) NotFilter(innerFilter) else innerFilter
-    val inst = manager.apply(VertexAttributeFilter(filter), 'attr -> attr)
-    inst.outputs.vertexSets('fvs)
+    import Scripting._
+    implicit val mm = manager
+    val op = VertexAttributeFilter(filter)
+    return op(op.attr, attr).result.fvs
   }
 
   private val numberPattern = "(\\d*(?:\\.\\d*)?)"
