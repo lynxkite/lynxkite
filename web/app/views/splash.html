@@ -19,7 +19,7 @@
       </a>
       <a ng-repeat="project in data.projects | filter:searchString" href="#/project/{{project.id}}">
         <h1>{{project.id}}</h1>
-        {{project.vertexCount}} vertices, {{project.edgeCount}} edges. {{project.notes}}
+        {{human(project.vertexCount)}} vertices, {{human(project.edgeCount)}} edges. {{project.notes}}
       </a>
   </div>
 </div>

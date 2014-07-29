@@ -6,6 +6,17 @@ angular
     'ngRoute',
     'ui.bootstrap'
   ])
+  .run(function($rootScope) {
+    var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+    $rootScope.human = function(x) {
+      for (var i = 0; true; ++i) {
+        if (x < 1000 || i === siSymbols.length - 1) {
+          return x + siSymbols[i];
+        }
+        x = Math.round(x / 1000);
+      }
+    };
+  })
   .config(function ($routeProvider) {
     $routeProvider
       .when('/', {
