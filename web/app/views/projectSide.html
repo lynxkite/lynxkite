@@ -36,18 +36,27 @@
     <div class="list-group">
       <li class="list-group-item">
         <span class="lead">
-          {{human(side.data.vertexCount)}} <span class="de-emph">{{side.data.vertexNames}} with</span>
-          {{human(side.data.edgeCount)}} <span class="de-emph">{{side.data.edgeNames}}</span>
+          {{human(side.data.vertexCount)}} <span class="de-emph">vertices with</span>
+          {{human(side.data.edgeCount)}} <span class="de-emph">edges</span>
         </span>
       </li>
 
+      <li class="list-group-item sublist">
+        <textarea
+          class="notes"
+          placeholder="Enter project notes here"
+          rows="{{side.data.notes.split('\n').length}}"
+          ng-model="side.data.notes"
+          ng-trim="false"></textarea>
+      </li>
+
       <li class="list-group-item">
-        <span class="lead"><span class="de-emph">Attributes of</span> {{side.data.vertexNames}}</span>
+        <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>
       </li>
       <li class="sublist list-group-item" ng-repeat="attr in side.data.vertexAttributes" vertex-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
-        <span class="lead"><span class="de-emph">Attributes of</span> {{side.data.edgeNames}}</span>
+        <span class="lead"><span class="de-emph">Attributes of</span> edges</span>
       </li>
       <li class="sublist list-group-item" ng-repeat="attr in side.data.edgeAttributes" edge-attribute="attr" side="side"></li>
 
