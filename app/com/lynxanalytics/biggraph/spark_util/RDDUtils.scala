@@ -7,6 +7,7 @@ import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect._
+import scala.util.Random
 
 object RDDUtils {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
@@ -74,7 +75,7 @@ object Implicits {
     // Adds unique ID numbers to rows of an RDD as a transformation.
     // The returned RDD will be partitioned by the partitioner of the input (if it is
     // a HashPartitioner) or by a new HashPartitioner.
-    def fastNumbered: RDD[(Long, T)] = {
+    def fastNumbered: RDD[(ID, T)] = {
       val numPartitions = self.partitions.size
       val partitioner = self.partitioner.collect {
         case p: spark.HashPartitioner => p
@@ -84,7 +85,7 @@ object Implicits {
 
     // Adds unique ID numbers to rows of an RDD as a transformation.
     // The returned RDD will be partitioned by the given partitioner.
-    def fastNumbered(partitioner: spark.Partitioner): RDD[(Long, T)] = {
+    def fastNumbered(partitioner: spark.Partitioner): RDD[(ID, T)] = {
       require(partitioner.isInstanceOf[spark.HashPartitioner], s"Need HashPartitioner, got: $partitioner")
       val numPartitions = partitioner.numPartitions
       // Need to repartition before adding the IDs if we are going to change the partition count.
@@ -100,6 +101,30 @@ object Implicits {
       else withIDs.partitionBy(partitioner)
     }
 
+    // Adds unique ID numbers to rows of an RDD as a transformation.
+    // A new HashPartitioner will shuffle data randomly among partitions
+    // in order to provide unbiased data for sampling SortedRDDs.
+    def randomNumbered(numPartitions: Int = self.partitions.size): RDD[(ID, T)] = {
+      val partitioner = new spark.HashPartitioner(numPartitions)
+
+      // generate a random id for the hash
+      val randomPartitioned = self.mapPartitionsWithIndex {
+        case (pid, it) =>
+          val rnd = new scala.util.Random(pid)
+          it.map(rnd.nextLong -> _)
+      }.partitionBy(partitioner)
+
+      val shuffled = randomPartitioned.mapPartitionsWithIndex({
+        case (pid, xs) =>
+          val rnd = new scala.util.Random(pid)
+          Random.shuffle(xs)
+      }, preservesPartitioning = true)
+
+      // generate unique id, throw away previous random id
+      shuffled.fastNumbered(partitioner).mapValues(_._2)
+    }
+
+    // Cheap method to force an RDD calculation
     def calculate() = self.foreach(_ => ())
   }
 

@@ -11,7 +11,7 @@
 #        Blabla
 ### END INIT INFO
 
-su - -c "spark-0.9.1/sbin/start-master.sh" xandrew
+su - -c "spark-1.0.1/sbin/start-master.sh" xandrew
 
 
 # ========================

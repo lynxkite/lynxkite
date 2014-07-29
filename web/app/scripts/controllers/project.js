@@ -30,6 +30,7 @@ angular.module('biggraph')
 
     $scope.left = {};
     $scope.right = {};
+    $scope.ops = get('/ajax/ops');
     $scope.left.data = get('/ajax/project', { project: $routeParams.project });
     $scope.left.state = defaultSideState();
     $scope.right.state = defaultSideState();
@@ -61,14 +62,4 @@ angular.module('biggraph')
       function(state) {
         $location.search({ q: JSON.stringify(state) });
       });
-
-    var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
-    $scope.human = function(x) {
-      for (var i = 0; i < siSymbols.length; ++i) {
-        if (x < 1000 || i === siSymbols.length - 1) {
-          return x + siSymbols[i];
-        }
-        x = Math.round(x / 1000);
-      }
-    };
   });
