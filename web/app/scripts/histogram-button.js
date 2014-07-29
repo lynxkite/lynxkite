@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('histogramButton', function($resource) {
+angular.module('biggraph').directive('histogramButton', function($resource, deepWatch) {
   return {
     restrict: 'E',
     scope: { attr: '=', side: '=', histogram: '=model' },
@@ -38,7 +38,7 @@ angular.module('biggraph').directive('histogramButton', function($resource) {
         };
         scope.histogram = vertexDiag.get({q: q});
       }
-      angular.deepWatch(scope, 'side', update);
+      deepWatch('side', update);
       scope.$watch('show', update);
     },
   };
