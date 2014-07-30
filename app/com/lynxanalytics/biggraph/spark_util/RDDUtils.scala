@@ -112,7 +112,7 @@ object Implicits {
         case (pid, it) =>
           val rnd = new scala.util.Random(pid)
           it.map(rnd.nextLong -> _)
-      }, preservesPartitioning = true).partitionBy(partitioner)
+      }).partitionBy(partitioner)
 
       val shuffled = randomPartitioned.mapPartitionsWithIndex({
         case (pid, xs) =>

@@ -100,7 +100,7 @@ case class CSV(file: Filename,
     return lines
       .filter(_ != header)
       .map(ImportUtil.split(_, delimiter))
-      .filter(jsFilter(_)).cache
+      .filter(jsFilter(_))
   }
 
   def jsFilter(line: Seq[String]): Boolean = {
@@ -114,6 +114,7 @@ case class CSV(file: Filename,
 
 abstract class ImportCommon {
   type Columns = Map[String, RDD[(ID, String)]]
+
   val csv: CSV
 
   protected def mustHaveField(field: String) = {
@@ -126,14 +127,6 @@ abstract class ImportCommon {
     return csv.fields.zipWithIndex.map {
       case (field, idx) => field -> numbered.mapValues(line => line(idx))
     }.toMap
-  }
-
-  protected def putEdgeAttributes(columns: Columns,
-                                  oattr: Map[String, EdgeAttribute[String]],
-                                  output: OutputBuilder): Unit = {
-    for ((field, rdd) <- columns) {
-      output(oattr(field), rdd)
-    }
   }
 }
 object ImportCommon {
@@ -168,6 +161,18 @@ case class ImportVertexList(csv: CSV) extends ImportCommon
   }
 }
 
+abstract class ImportEdges(src: String, dst: String) extends ImportCommon {
+  mustHaveField(src)
+  mustHaveField(dst)
+  def putEdgeAttributes(columns: Columns,
+                        oattr: Map[String, EntityContainer[EdgeAttribute[String]]],
+                        output: OutputBuilder): Unit = {
+    for ((field, rdd) <- columns) {
+      output(oattr(field), rdd)
+    }
+  }
+}
+
 object ImportEdgeList {
   class Output(implicit instance: MetaGraphOperationInstance,
                fields: Seq[String])
@@ -180,10 +185,9 @@ object ImportEdgeList {
   }
 }
 case class ImportEdgeList(csv: CSV, src: String, dst: String)
-    extends ImportCommon with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
+    extends ImportEdges(src, dst)
+    with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
   import ImportEdgeList._
-  mustHaveField(src)
-  mustHaveField(dst)
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
 
@@ -192,7 +196,7 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val columns = readColumns(rc, csv)
-    putEdgeAttributes(columns, o.attrs.mapValues(_.entity), output)
+    putEdgeAttributes(columns, o.attrs, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
     val idToName = names.randomNumbered(rc.defaultPartitioner.numPartitions)
     val nameToId = idToName.map { case (id, name) => (name, id) }
@@ -230,11 +234,9 @@ object ImportEdgeListForExistingVertexSet {
   }
 }
 case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String)
-    extends ImportCommon
+    extends ImportEdges(src, dst)
     with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
   import ImportEdgeListForExistingVertexSet._
-  mustHaveField(src)
-  mustHaveField(dst)
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, csv.fields)
 
@@ -243,7 +245,7 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val columns = readColumns(rc, csv)
-    putEdgeAttributes(columns, o.attrs.mapValues(_.entity), output)
+    putEdgeAttributes(columns, o.attrs, output)
     output(o.edges, columns(src).join(columns(dst)).mapValues {
       case (src, dst) => Edge(src.toLong, dst.toLong)
     })
