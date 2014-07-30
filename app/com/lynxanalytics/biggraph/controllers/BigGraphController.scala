@@ -74,7 +74,7 @@ abstract class FEOperation {
   def apply(params: Map[String, String]): FEStatus
 }
 
-case class Project(
+case class FEProject(
   id: String,
   vertexCount: Long,
   edgeCount: Long,
@@ -84,10 +84,32 @@ case class Project(
   segmentations: Seq[UIValue],
   opCategories: Seq[OperationCategory])
 
+class Project(val id: String)(implicit manager: MetaGraphManager) {
+  val path: SymbolPath = s"projects/$id"
+  def toFE(implicit dm: DataManager): FEProject = {
+    val notes = manager.scalarOf[String](path / "notes").value
+    FEProject(id, 0, 0, notes, Seq(), Seq(), Seq(), Seq())
+  }
+  def vertexSet = ifExists(path / "vertexSet") { manager.vertexSet(_).value }
+  def vertexSet_=(e: VertexSet) = setOrClear(path / "vertexSet", e)
+  def edgeBundle = ifExists(path / "edgeBundle") { manager.edgeBundle(_).value }
+  def edgeBundle_=(e: EdgeBundle) = setOrClear(path / "edgeBundle", e)
+
+  def ifExists[T](tag: SymbolPath)(fn: SymbolPath => T): T =
+    if (manager.tagExists(tag)) { fn(tag) } else { null }
+  def setOrClear(tag: SymbolPath, entity: MetaGraphEntity): Unit =
+    if (entity == null) manager.rmTag(tag) else manager.setTag(tag, entity)
+}
+
+object Project {
+  def apply(id: String)(implicit metaManager: MetaGraphManager): Project = new Project(id)
+}
+
 case class ProjectRequest(id: String)
-case class Splash(projects: Seq[Project])
+case class Splash(projects: Seq[FEProject])
 case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(id: String, notes: String)
+case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
@@ -96,8 +118,8 @@ case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
                        edgeAttributes: Seq[EdgeAttribute[_]] = Seq())
 
 class FEOperationRepository(env: BigGraphEnvironment) {
-  implicit val manager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
+  val manager = env.metaGraphManager
+  val dataManager = env.dataManager
 
   def registerOperation(op: FEOperation): Unit = {
     assert(!operations.contains(op.id), s"Already registered: ${op.id}")
@@ -167,11 +189,6 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     operations(spec.id).apply(spec.parameters)
 
   private val operations = mutable.Map[String, FEOperation]()
-  def categories: Seq[OperationCategory] = {
-    return operations.values.groupBy(_.category).toSeq.map {
-      case (cat, ops) => OperationCategory(cat, toSimpleMetas(ops.toSeq))
-    }.sortBy(_.title)
-  }
 }
 
 /**
@@ -223,25 +240,55 @@ class BigGraphController(env: BigGraphEnvironment) {
       .filter(metaManager.isVisible(_))
       .map(UIValue.fromEntity(_)).toSeq
 
-  private def getProject(id: String): Project = {
-    val p: SymbolPath = s"projects/$id"
-    val notes = metaManager.scalarOf[String](p / "notes").value
-    Project(id, 0, 0, notes, Seq(), Seq(), Seq(), Seq())
-  }
+  // Project view stuff below.
+
+  val operations = new Operations(env)
 
   def splash(request: serving.Empty): Splash = {
     val dirs = if (metaManager.tagExists("projects")) metaManager.lsTag("projects") else Nil
-    val projects = dirs.map(p => getProject(p.path.last.name))
+    val projects = dirs.map(p => Project(p.path.last.name).toFE)
     return Splash(projects = projects)
   }
 
-  def project(request: ProjectRequest): Project = {
-    return getProject(request.id).copy(opCategories = operations.categories)
+  def project(request: ProjectRequest): FEProject = {
+    val p = Project(request.id)
+    return p.toFE.copy(opCategories = operations.categories(p))
   }
 
   def createProject(request: CreateProjectRequest): serving.Empty = {
     val notes = graph_operations.CreateStringScalar(request.notes)().result.created
     metaManager.setTag(s"projects/${request.id}/notes", notes)
     return serving.Empty()
+  }
+}
+
+abstract class Operation(val project: Project) {
+  def id = title.replace(" ", "-")
+  def title: String
+  def parameters: Seq[FEOperationParameterMeta]
+  def enabled: FEStatus
+  def apply(params: Map[String, String]): FEStatus
+  def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled)
+}
+
+abstract class OperationRepository(env: BigGraphEnvironment) {
+  implicit val manager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
+
+  private val operations = mutable.Seq[Project => Operation]()
+  def register(factory: Project => Operation): Unit = operations ++= factory
+  private def forProject(project: Project) = operations.map(_(project))
+
+  def categories(project: Project): Seq[OperationCategory] = {
+    forProject(project).groupBy(_.category).map {
+      case (cat, ops) => OperationCategory(cat, ops.map(_.toFE))
+    }
+  }
+
+  def apply(req: ProjectOperationRequest): FEStatus = {
+    val p = Project(req.project)
+    val ops = forProject(p).filter(_.id == req.op.id)
+    assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
+    ops.head.apply(req.op.parameters)
   }
 }
