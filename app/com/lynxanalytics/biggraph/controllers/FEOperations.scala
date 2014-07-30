@@ -217,6 +217,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   registerOperation(AddGaussianVertexAttribute)
   object AddGaussianVertexAttribute extends FEOperation {
     val title = "Add Gaussian vertex attribute"
+    val category = "Attribute operations"
     val parameters = Seq(
       Param("vs", "Vertex set", kind = "vertex-set"))
     def apply(params: Map[String, String]) = {

@@ -293,32 +293,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       idxPairBuckets.map { case ((s, d), c) => FEEdge(s, d, c) })
   }*/
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
-    val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
-    val dstOp = metaManager.scalar(request.dstDiagramId.asUUID).source
+    val srcView = graph_operations.VertexView.fromDiagram(
+      metaManager.scalar(request.srcDiagramId.asUUID))
+    val dstView = graph_operations.VertexView.fromDiagram(
+      metaManager.scalar(request.dstDiagramId.asUUID))
     val bundleWeights = getCompositeBundle(request.bundleSequence)
-
-    val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
-    val (srcMapping, dstMapping) = tripletMapping(induced)
-    val srcIdxs = mappedAttribute(
-      sampleAttribute(metaManager, directVsFromOp(srcOp), srcMapping),
-      idxsFromInst(srcOp),
-      induced)
-    val dstIdxs = mappedAttribute(
-      sampleAttribute(metaManager, directVsFromOp(dstOp), dstMapping),
-      idxsFromInst(dstOp),
-      induced)
-    val srcIdxsRDD = dataManager.get(srcIdxs).rdd
-    val dstIdxsRDD = dataManager.get(dstIdxs).rdd
-    val idxPairBuckets = srcIdxsRDD.join(dstIdxsRDD)
-      .map { case (eid, (s, d)) => ((s, d), 1) }
-      .reduceByKey(_ + _)
-      .collect
-    EdgeDiagramResponse(
-      request.srcDiagramId,
-      request.dstDiagramId,
-      request.srcIdx,
-      request.dstIdx,
-      idxPairBuckets.map { case ((s, d), c) => FEEdge(s, d, c) })
+    null
   }
 
   def getComplexView(request: FEGraphRequest): FEGraphRespone = {
