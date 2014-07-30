@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api._
 
 object CreateScalar {
   class Output[T](implicit instance: MetaGraphOperationInstance, tt: TypeTag[T]) extends MagicOutput(instance) {
-    val value = scalar[T]
+    val created = scalar[T]
   }
 }
 import CreateScalar._
@@ -18,7 +18,7 @@ abstract class CreateScalar[T] extends TypedMetaGraphOp[NoInput, Output[T]] {
               o: Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    output(o.value, value)
+    output(o.created, value)
   }
 }
 

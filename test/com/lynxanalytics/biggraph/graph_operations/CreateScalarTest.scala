@@ -7,6 +7,6 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class CreateScalarTest extends FunSuite with TestGraphOp {
   test("CreateStringScalar") {
     val op = CreateStringScalar("hello world")
-    assert(op().result.value.value == "hello world")
+    assert(op().result.created.value == "hello world")
   }
 }
