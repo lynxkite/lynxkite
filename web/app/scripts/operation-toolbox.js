@@ -3,17 +3,16 @@
 angular.module('biggraph').directive('operationToolbox', function($resource, deepWatch) {
   return {
     restrict: 'E',
-    scope: { ops: '=', side: '=' },
+    scope: { side: '=' },
     replace: true,
     templateUrl: 'operation-toolbox.html',
     link: function(scope) {
       var ApplyOp = $resource('/ajax/applyOp');
       var colors = ['yellow', 'orange', 'green', 'blue'];
-      deepWatch(scope, 'ops', function() {
-        if (!scope.ops.$resolved) { return; }
+      deepWatch(scope, 'side.data.opCategories', function(categories) {
         scope.categories = [];
-        for (var i = 0; i < scope.ops.categories.length; ++i) {
-          var data = scope.ops.categories[i];
+        for (var i = 0; i < categories.length; ++i) {
+          var data = categories[i];
           var cat = { title: data.title, ops: data.ops };
           cat.icon = cat.title[0];
           cat.color = colors[i % colors.length];
