@@ -180,6 +180,7 @@ class FEOperationRepository(env: BigGraphEnvironment) {
 
 class BigGraphController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
   val operations = new FEOperations(env)
 
   private def toFE(vs: VertexSet): FEVertexSet = {
@@ -228,7 +229,7 @@ class BigGraphController(env: BigGraphEnvironment) {
 
   private def getProject(id: String): Project = {
     val p: SymbolPath = s"projects/$id"
-    val notes = env.dataManager.get(metaManager.scalarOf[String](p / "notes")).value
+    val notes = metaManager.scalarOf[String](p / "notes").value
     Project(id, 0, 0, notes, Seq(), Seq(), Seq())
   }
 
