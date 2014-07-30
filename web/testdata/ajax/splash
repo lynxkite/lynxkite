@@ -1,7 +1,7 @@
 {
   "projects": [
-    { "id": "one", "vertexCount": "100000000", "edgeCount": "1000000000", "notes": "Subscribers and calls." },
-    { "id": "two", "vertexCount": "200000000", "edgeCount": "2000000000", "notes": "Phone numbers and texts." },
-    { "id": "three", "vertexCount": "300000000", "edgeCount": "3000000000", "notes": "Pets and owners.\nBipartite." }
+    { "id": "Project_Strawberry", "vertexCount": "100000000", "edgeCount": "1000000000", "notes": "Subscribers and calls." },
+    { "id": "Project_Melon", "vertexCount": "200000000", "edgeCount": "2000000000", "notes": "Phone numbers and texts." },
+    { "id": "Project_Avocado", "vertexCount": "300000000", "edgeCount": "3000000000", "notes": "Pets and owners.\nBipartite." }
   ]
 }

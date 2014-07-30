@@ -1,14 +1,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('ProjectViewCtrl', function ($scope, $routeParams, $resource, $location) {
-    function get(url, params) {
-      var req = $resource(url).get(params, function() {}, function(failure) {
-        req.error = 'Request failed: ' + failure.data;
-      });
-      return req;
-    }
-
+  .controller('ProjectViewCtrl', function ($scope, $routeParams, $resource, $location, util) {
     function defaultSideState() {
       return {
         vs: undefined,
@@ -30,12 +23,11 @@ angular.module('biggraph')
 
     $scope.left = {};
     $scope.right = {};
-    $scope.ops = get('/ajax/ops');
-    $scope.left.data = get('/ajax/project', { project: $routeParams.project });
+    $scope.left.data = util.get('/ajax/project', { id: $routeParams.project });
     $scope.left.state = defaultSideState();
     $scope.right.state = defaultSideState();
 
-    angular.deepWatch(
+    util.deepWatch(
       $scope,
       function() { return $location.search(); },
       function(search) {
@@ -56,7 +48,7 @@ angular.module('biggraph')
         }
       });
 
-    angular.deepWatch(
+    util.deepWatch(
       $scope,
       getState,
       function(state) {
