@@ -10,20 +10,16 @@ abstract class Filter[T] extends Serializable {
 }
 
 object VertexAttributeFilter {
-  class Input[T] extends MagicInputSignature {
-    val vs = vertexSet
-    val attr = vertexAttribute[T](vs)
-  }
   class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input[T]) extends MagicOutput(instance) {
+                  inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
     val fvs = vertexSet
     val identity = edgeBundle(inputs.vs.entity, fvs)
   }
 }
 import VertexAttributeFilter._
-case class VertexAttributeFilter[T](filter: Filter[T]) extends TypedMetaGraphOp[Input[T], Output[T]] {
-
-  @transient override lazy val inputs = new Input[T]
+case class VertexAttributeFilter[T](filter: Filter[T])
+    extends TypedMetaGraphOp[VertexAttributeInput[T], Output[T]] {
+  @transient override lazy val inputs = new VertexAttributeInput[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
