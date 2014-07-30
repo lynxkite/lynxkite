@@ -106,6 +106,7 @@ class MetaGraphManager(val repositoryPath: String) {
     edgeAttributeOf[T]((tagRoot / tag).gUID)
   def scalarOf[T: TypeTag](tag: SymbolPath): Scalar[T] =
     scalarOf[T]((tagRoot / tag).gUID)
+  def entity(tag: SymbolPath): MetaGraphEntity = entity((tagRoot / tag).gUID)
 
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
