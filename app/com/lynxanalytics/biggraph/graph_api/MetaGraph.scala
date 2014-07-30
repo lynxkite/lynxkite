@@ -532,7 +532,7 @@ case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
     vertexSets ++ edgeBundles ++ vertexAttributes ++ edgeAttributes ++ scalars
 }
 
-class OutputBuilder(instance: MetaGraphOperationInstance) {
+class OutputBuilder(val instance: MetaGraphOperationInstance) {
   val outputMeta: MetaDataSet = instance.outputs
 
   def addData(data: EntityData): Unit = {

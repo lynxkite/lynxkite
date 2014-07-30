@@ -161,7 +161,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     var xBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
     var yBucketer: graph_util.Bucketer[_] = graph_util.EmptyBucketer()
-    var inputs = MetaDataSet(Map('vertices -> filtered))
+    var inputs = MetaDataSet(Map('filtered -> filtered, 'vertices -> vertexSet))
     if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
       xBucketer = FEBucketers.bucketer(
@@ -184,7 +184,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val diagramMeta = metaManager.apply(op, inputs).result.bucketSizes
     val diagram = dataManager.get(diagramMeta).value
 
-    val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
+    val vertices = for (y <- (0 until yBucketer.numBuckets); x <- (0 until xBucketer.numBuckets))
       yield FEVertex(x = x, y = y, size = (diagram.getOrElse((x, y), 0) * 1.0).toInt)
 
     VertexDiagramResponse(
@@ -265,10 +265,38 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
   }
 
+  /*def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
+    val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
+    val dstOp = metaManager.scalar(request.dstDiagramId.asUUID).source
+    val bundleWeights = getCompositeBundle(request.bundleSequence)
+    val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
+    val (srcMapping, dstMapping) = tripletMapping(induced)
+    val srcIdxs = mappedAttribute(
+      sampleAttribute(metaManager, directVsFromOp(srcOp), srcMapping),
+      idxsFromInst(srcOp),
+      induced)
+    val dstIdxs = mappedAttribute(
+      sampleAttribute(metaManager, directVsFromOp(dstOp), dstMapping),
+      idxsFromInst(dstOp),
+      induced)
+    val srcIdxsRDD = dataManager.get(srcIdxs).rdd
+    val dstIdxsRDD = dataManager.get(dstIdxs).rdd
+    val idxPairBuckets = srcIdxsRDD.join(dstIdxsRDD)
+      .map { case (eid, (s, d)) => ((s, d), 1) }
+      .reduceByKey(_ + _)
+      .collect
+    EdgeDiagramResponse(
+      request.srcDiagramId,
+      request.dstDiagramId,
+      request.srcIdx,
+      request.dstIdx,
+      idxPairBuckets.map { case ((s, d), c) => FEEdge(s, d, c) })
+  }*/
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
     val dstOp = metaManager.scalar(request.dstDiagramId.asUUID).source
     val bundleWeights = getCompositeBundle(request.bundleSequence)
+
     val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
     val (srcMapping, dstMapping) = tripletMapping(induced)
     val srcIdxs = mappedAttribute(

@@ -19,6 +19,8 @@ object VertexAttributeFilter {
                   inputs: Input[T]) extends MagicOutput(instance) {
     val fvs = vertexSet
     val identity = edgeBundle(inputs.vs.entity, fvs)
+    implicit val tt = inputs.attr.typeTag
+    val filteredAttribute = scalar[FilteredAttribute[T]]
   }
 }
 import VertexAttributeFilter._
@@ -34,6 +36,7 @@ case class VertexAttributeFilter[T](filter: Filter[T]) extends TypedMetaGraphOp[
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val instance = output.instance
     implicit val tt = inputs.attr.data.typeTag
     implicit val ct = inputs.attr.data.classTag
     val attr = inputs.attr.rdd
@@ -45,6 +48,7 @@ case class VertexAttributeFilter[T](filter: Filter[T]) extends TypedMetaGraphOp[
       },
       preservesPartitioning = true)
     output(o.identity, identity)
+    output(o.filteredAttribute, FilteredAttribute(inputs.attr, filter))
   }
 }
 
