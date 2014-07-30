@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('SplashCtrl', function ($scope, $resource, $location, nocache) {
-    $scope.data = nocache('/ajax/splash');
+  .controller('SplashCtrl', function ($scope, $resource, $location, util) {
+    $scope.data = util.nocache('/ajax/splash');
     $scope.createProject = function() {
       $scope.newProject.sending = true;
       var id = $scope.newProject.name.replace(/ /g, '_');
