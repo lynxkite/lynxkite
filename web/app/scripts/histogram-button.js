@@ -1,13 +1,12 @@
 'use strict';
 
-angular.module('biggraph').directive('histogramButton', function($resource) {
+angular.module('biggraph').directive('histogramButton', function(util) {
   return {
     restrict: 'E',
     scope: { attr: '=', side: '=', histogram: '=model' },
     replace: true,
     templateUrl: 'histogram-button.html',
     link: function(scope) {
-      var vertexDiag = $resource('/ajax/vertexDiag', {}, { get: { method: 'GET', cache: true } });
       function update() {
         if (!scope.show) {
           scope.histogram = undefined;
@@ -36,9 +35,9 @@ angular.module('biggraph').directive('histogramButton', function($resource) {
           labelAttributeId: '',
           sizeAttributeId: '',
         };
-        scope.histogram = vertexDiag.get({q: q});
+        scope.histogram = util.get('/ajax/vertexDiag', q);
       }
-      angular.deepWatch(scope, 'side', update);
+      util.deepWatch(scope, 'side', update);
       scope.$watch('show', update);
     },
   };
