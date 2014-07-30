@@ -104,6 +104,12 @@ object ProductionJsonServer extends JsonServer {
   implicit val rFEGraphRequest = json.Json.reads[FEGraphRequest]
   implicit val wFEGraphRespone = json.Json.writes[FEGraphRespone]
 
+  implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
+  implicit val rProjectRequest = json.Json.reads[ProjectRequest]
+  implicit val wOperationCategory = json.Json.writes[OperationCategory]
+  implicit val wProject = json.Json.writes[Project]
+  implicit val wSplash = json.Json.writes[Splash]
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
@@ -113,6 +119,9 @@ object ProductionJsonServer extends JsonServer {
   def applyOpGet = jsonGet(bigGraphController.applyOp)
   def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
   def startingVertexSetsGet = jsonGet(bigGraphController.startingVertexSets)
+  def createProject = jsonPost(bigGraphController.createProject)
+  def project = jsonGet(bigGraphController.project)
+  def splash = jsonGet(bigGraphController.splash)
 
   val graphStatsController = new GraphStatsController(BigGraphProductionEnvironment)
   def graphStatsGet = jsonGet(graphStatsController.getStats)

@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
@@ -66,10 +68,26 @@ case class FEOperationSpec(
 abstract class FEOperation {
   val id: String = getClass.getName
   val title: String
+  val category: String
   val parameters: Seq[FEOperationParameterMeta]
   lazy val starting = parameters.forall(_.kind == "scalar")
   def apply(params: Map[String, String]): FEStatus
 }
+
+case class Project(
+  id: String,
+  vertexCount: Long,
+  edgeCount: Long,
+  notes: String,
+  vertexAttributes: Seq[UIValue],
+  edgeAttributes: Seq[UIValue],
+  segmentations: Seq[UIValue],
+  opCategories: Seq[OperationCategory])
+
+case class ProjectRequest(id: String)
+case class Splash(projects: Seq[Project])
+case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
+case class CreateProjectRequest(id: String, notes: String)
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
@@ -87,7 +105,11 @@ class FEOperationRepository(env: BigGraphEnvironment) {
   }
 
   def getStartingOperationMetas: Seq[FEOperationMeta] = {
-    operations.values.toSeq.filter(_.starting).map {
+    toSimpleMetas(operations.values.toSeq.filter(_.starting))
+  }
+
+  private def toSimpleMetas(ops: Seq[FEOperation]): Seq[FEOperationMeta] = {
+    ops.map {
       op => FEOperationMeta(op.id, op.title, op.parameters)
     }
   }
@@ -145,6 +167,11 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     operations(spec.id).apply(spec.parameters)
 
   private val operations = mutable.Map[String, FEOperation]()
+  def categories: Seq[OperationCategory] = {
+    return operations.values.groupBy(_.category).toSeq.map {
+      case (cat, ops) => OperationCategory(cat, toSimpleMetas(ops.toSeq))
+    }.sortBy(_.title)
+  }
 }
 
 /**
@@ -152,12 +179,13 @@ class FEOperationRepository(env: BigGraphEnvironment) {
  */
 
 class BigGraphController(env: BigGraphEnvironment) {
-  val manager = env.metaGraphManager
+  implicit val metaManager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
   val operations = new FEOperations(env)
 
   private def toFE(vs: VertexSet): FEVertexSet = {
-    val in = manager.incomingBundles(vs).toSet.filter(manager.isVisible(_))
-    val out = manager.outgoingBundles(vs).toSet.filter(manager.isVisible(_))
+    val in = metaManager.incomingBundles(vs).toSet.filter(metaManager.isVisible(_))
+    val out = metaManager.outgoingBundles(vs).toSet.filter(metaManager.isVisible(_))
     val local = in & out
 
     FEVertexSet(
@@ -166,7 +194,7 @@ class BigGraphController(env: BigGraphEnvironment) {
       inEdges = (in -- local).toSeq.map(toFE(_)),
       outEdges = (out -- local).toSeq.map(toFE(_)),
       localEdges = local.toSeq.map(toFE(_)),
-      attributes = manager.attributes(vs).filter(manager.isVisible(_)).map(UIValue.fromEntity(_)),
+      attributes = metaManager.attributes(vs).filter(metaManager.isVisible(_)).map(UIValue.fromEntity(_)),
       ops = operations.getApplicableOperationMetas(vs).sortBy(_.title))
   }
 
@@ -176,11 +204,11 @@ class BigGraphController(env: BigGraphEnvironment) {
       title = eb.toString,
       source = UIValue.fromEntity(eb.srcVertexSet),
       destination = UIValue.fromEntity(eb.dstVertexSet),
-      attributes = manager.attributes(eb).filter(manager.isVisible(_)).map(UIValue.fromEntity(_)))
+      attributes = metaManager.attributes(eb).filter(metaManager.isVisible(_)).map(UIValue.fromEntity(_)))
   }
 
   def vertexSet(request: VertexSetRequest): FEVertexSet = {
-    toFE(manager.vertexSet(request.id.asUUID))
+    toFE(metaManager.vertexSet(request.id.asUUID))
   }
 
   def applyOp(request: FEOperationSpec): FEStatus =
@@ -190,8 +218,30 @@ class BigGraphController(env: BigGraphEnvironment) {
     operations.getStartingOperationMetas.sortBy(_.title)
 
   def startingVertexSets(request: serving.Empty): Seq[UIValue] =
-    manager.allVertexSets
+    metaManager.allVertexSets
       .filter(_.source.inputs.all.isEmpty)
-      .filter(manager.isVisible(_))
+      .filter(metaManager.isVisible(_))
       .map(UIValue.fromEntity(_)).toSeq
+
+  private def getProject(id: String): Project = {
+    val p: SymbolPath = s"projects/$id"
+    val notes = metaManager.scalarOf[String](p / "notes").value
+    Project(id, 0, 0, notes, Seq(), Seq(), Seq(), Seq())
+  }
+
+  def splash(request: serving.Empty): Splash = {
+    val dirs = if (metaManager.tagExists("projects")) metaManager.lsTag("projects") else Nil
+    val projects = dirs.map(p => getProject(p.path.last.name))
+    return Splash(projects = projects)
+  }
+
+  def project(request: ProjectRequest): Project = {
+    return getProject(request.id).copy(opCategories = operations.categories)
+  }
+
+  def createProject(request: CreateProjectRequest): serving.Empty = {
+    val notes = graph_operations.CreateStringScalar(request.notes)().result.created
+    metaManager.setTag(s"projects/${request.id}/notes", notes)
+    return serving.Empty()
+  }
 }
