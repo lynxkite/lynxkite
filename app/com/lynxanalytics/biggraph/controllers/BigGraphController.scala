@@ -244,7 +244,7 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def createProject(request: CreateProjectRequest): serving.Empty = {
-    val notes = graph_operations.CreateStringScalar(request.notes)().result.value
+    val notes = graph_operations.CreateStringScalar(request.notes)().result.created
     metaManager.setTag(s"projects/${request.id}/notes", notes)
     return serving.Empty()
   }
