@@ -130,13 +130,13 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     if (entity == null) manager.rmTag(tag) else manager.setTag(tag, entity)
   def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
 
-  class Holder[T <: MetaGraphEntity](dir: String, project: Project) extends Traversable[String] {
+  class Holder[T <: MetaGraphEntity](dir: String, project: Project) extends Iterable[String] {
     def update(name: String, entity: T) =
       manager.setTag(project.path / dir / name, entity)
     def apply(name: String) =
       manager.entity(project.path / dir / name).asInstanceOf[T]
-    def foreach[U](f: String => U): Unit =
-      project.ls(dir).map(path => path.last.name).foreach(f)
+    def iterator =
+      project.ls(dir).map(path => path.last.name).iterator
   }
 }
 
