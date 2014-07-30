@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
+import scala.reflect.runtime.universe.TypeTag
 import scala.util.{ Failure, Success, Try }
 
 case class FEStatus(success: Boolean, failureReason: String = "")
@@ -30,7 +31,8 @@ object UIValue {
 case class FEOperationMeta(
   id: String,
   title: String,
-  parameters: Seq[FEOperationParameterMeta])
+  parameters: Seq[FEOperationParameterMeta],
+  enabled: FEStatus = FEStatus.success)
 
 case class FEOperationParameterMeta(
     id: String,
@@ -90,15 +92,52 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     val notes = manager.scalarOf[String](path / "notes").value
     FEProject(id, 0, 0, notes, Seq(), Seq(), Seq(), Seq())
   }
-  def vertexSet = ifExists(path / "vertexSet") { manager.vertexSet(_).value }
+  def vertexSet = ifExists(path / "vertexSet") { manager.vertexSet(_) }
   def vertexSet_=(e: VertexSet) = setOrClear(path / "vertexSet", e)
-  def edgeBundle = ifExists(path / "edgeBundle") { manager.edgeBundle(_).value }
+  def edgeBundle = ifExists(path / "edgeBundle") { manager.edgeBundle(_) }
   def edgeBundle_=(e: EdgeBundle) = setOrClear(path / "edgeBundle", e)
+  def vertexAttributes = new Holder[VertexAttribute[_]]("vertexAttributes", this)
+  def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = {
+    ifExists(path / "vertexAttributes") { manager.rmTag(_) }
+    for ((name, attr) <- attrs) {
+      manager.setTag(path / "vertexAttributes" / name, attr)
+    }
+  }
+  def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
+    case name if vertexAttributes(name).is[T] => name
+  }
+  def edgeAttributes = new Holder[EdgeAttribute[_]]("edgeAttributes", this)
+  def edgeAttributes_=(attrs: Map[String, EdgeAttribute[_]]) = {
+    ifExists(path / "edgeAttributes") { manager.rmTag(_) }
+    for ((name, attr) <- attrs) {
+      manager.setTag(path / "edgeAttributes" / name, attr)
+    }
+  }
+  def edgeAttributeNames[T: TypeTag] = edgeAttributes.collect {
+    case name if edgeAttributes(name).is[T] => name
+  }
+  def segmentations = new Holder[VertexSet]("edgeAttributes", this)
+  def segmentations_=(attrs: Map[String, VertexSet]) = {
+    ifExists(path / "segmentations") { manager.rmTag(_) }
+    for ((name, attr) <- attrs) {
+      manager.setTag(path / "segmentations" / name, attr)
+    }
+  }
 
   def ifExists[T](tag: SymbolPath)(fn: SymbolPath => T): T =
     if (manager.tagExists(tag)) { fn(tag) } else { null }
   def setOrClear(tag: SymbolPath, entity: MetaGraphEntity): Unit =
     if (entity == null) manager.rmTag(tag) else manager.setTag(tag, entity)
+  def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
+
+  class Holder[T <: MetaGraphEntity](dir: String, project: Project) extends Traversable[String] {
+    def update(name: String, entity: T) =
+      manager.setTag(project.path / dir / name, entity)
+    def apply(name: String) =
+      manager.entity(project.path / dir / name).asInstanceOf[T]
+    def foreach[U](f: String => U): Unit =
+      project.ls(dir).map(path => path.last.name).foreach(f)
+  }
 }
 
 object Project {
@@ -118,8 +157,8 @@ case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
                        edgeAttributes: Seq[EdgeAttribute[_]] = Seq())
 
 class FEOperationRepository(env: BigGraphEnvironment) {
-  val manager = env.metaGraphManager
-  val dataManager = env.dataManager
+  implicit val manager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
 
   def registerOperation(op: FEOperation): Unit = {
     assert(!operations.contains(op.id), s"Already registered: ${op.id}")
@@ -242,7 +281,7 @@ class BigGraphController(env: BigGraphEnvironment) {
 
   // Project view stuff below.
 
-  val operations = new Operations(env)
+  val ops = new Operations(env)
 
   def splash(request: serving.Empty): Splash = {
     val dirs = if (metaManager.tagExists("projects")) metaManager.lsTag("projects") else Nil
@@ -252,7 +291,7 @@ class BigGraphController(env: BigGraphEnvironment) {
 
   def project(request: ProjectRequest): FEProject = {
     val p = Project(request.id)
-    return p.toFE.copy(opCategories = operations.categories(p))
+    return p.toFE.copy(opCategories = ops.categories(p))
   }
 
   def createProject(request: CreateProjectRequest): serving.Empty = {
@@ -265,24 +304,31 @@ class BigGraphController(env: BigGraphEnvironment) {
 abstract class Operation(val project: Project) {
   def id = title.replace(" ", "-")
   def title: String
+  def category: String
   def parameters: Seq[FEOperationParameterMeta]
   def enabled: FEStatus
   def apply(params: Map[String, String]): FEStatus
   def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled)
+  protected def vertexAttributes[T: TypeTag] =
+    project.vertexAttributeNames[T].map(name => UIValue(name, name)).toSeq
+  protected def edgeAttributes[T: TypeTag] =
+    project.edgeAttributeNames[T].map(name => UIValue(name, name)).toSeq
+  protected def segmentations =
+    project.segmentations.map(name => UIValue(name, name)).toSeq
 }
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
   implicit val dataManager = env.dataManager
 
-  private val operations = mutable.Seq[Project => Operation]()
-  def register(factory: Project => Operation): Unit = operations ++= factory
+  private val operations = mutable.Buffer[Project => Operation]()
+  def register(factory: Project => Operation): Unit = operations += factory
   private def forProject(project: Project) = operations.map(_(project))
 
   def categories(project: Project): Seq[OperationCategory] = {
     forProject(project).groupBy(_.category).map {
       case (cat, ops) => OperationCategory(cat, ops.map(_.toFE))
-    }
+    }.toSeq
   }
 
   def apply(req: ProjectOperationRequest): FEStatus = {

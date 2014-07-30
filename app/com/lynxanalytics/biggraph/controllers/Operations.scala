@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
@@ -77,7 +78,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         graph_operations.Javascript(params("filter")))
       val imp = graph_operations.ImportVertexList(csv)().result
       project.vertexSet = imp.vertices
-      project.vertexAttributes = imp.attrs
+      project.vertexAttributes = imp.attrs.mapValues(_.entity)
       FEStatus.success
     }
   })
@@ -93,7 +94,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("dst", "Destination ID field"),
       Param("filter", "(optional) Filtering expression"))
     def enabled = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
-    def apply(project: Project, params: Map[String, String]) = {
+    def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
         Filename.fromString(params("files")),
         params("delimiter"),
@@ -105,12 +106,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val imp = graph_operations.ImportEdgeList(csv, src, dst)().result
         project.vertexSet = imp.vertices
         project.edgeBundle = imp.edges
-        project.edgeAttributes = imp.attrs
+        project.edgeAttributes = imp.attrs.mapValues(_.entity)
       } else {
         val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, src, dst)
         val imp = op(op.sources, project.vertexSet)(op.destinations, project.vertexSet).result
         project.edgeBundle = imp.edges
-        project.edgeAttributes = imp.attrs
+        project.edgeAttributes = imp.attrs.mapValues(_.entity)
       }
       FEStatus.success
     }
@@ -122,6 +123,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Param("min", "Minimum clique size", defaultValue = "3"))
+    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
     def apply(params: Map[String, String]) = {
       val op = graph_operations.FindMaxCliques(params("min").toInt)
       project.segmentations(params("name")) = op(op.es, project.edgeBundle).result.segments
@@ -134,6 +136,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val category = "Segmentations"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "connected_components"))
+    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ConnectedComponents()
       project.segmentations(params("name")) = op(op.es, project.edgeBundle).result.segments
@@ -147,6 +150,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"))
+    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
     def apply(params: Map[String, String]) = {
       val op = graph_operations.AddConstantDoubleEdgeAttribute(params("value").toDouble)
       project.edgeAttributes(params("name")) = op(op.edges, project.edgeBundle).result.attr
@@ -158,6 +162,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Reverse edge direction"
     val category = "Edge operations"
     val parameters = Seq()
+    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ReverseEdges()
       project.edgeBundle = op(op.esAB, project.edgeBundle).result.esBA
@@ -170,6 +175,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val category = "Attribute operations"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
+    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ClusteringCoefficient()
       project.vertexAttributes(params("name")) = op(op.es, project.edgeBundle).result.clustering
@@ -182,11 +188,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val category = "Attribute operations"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "out_degree"),
-      Param("w", "Weighted edges", options = project.edgeAttributeNames[Double]))
-    def enabled = if (project.edgeAttributeNames[Double].isEmpty) FEStatus.failure("No numeric attribute.") else FEStatus.success
+      Param("w", "Weighted edges", options = edgeAttributes[Double]))
+    def enabled = if (edgeAttributes[Double].isEmpty) FEStatus.failure("No numeric attributes.") else FEStatus.success
     def apply(params: Map[String, String]) = {
       val op = graph_operations.WeightedOutDegree()
-      val deg = op(op.weights, manager.edgeAttribute(params("w").asUUID)).result.outDegree
+      val attr = project.edgeAttributes(params("w")).runtimeSafeCast[Double]
+      val deg = op(op.attr, attr).result.outDegree
       project.vertexAttributes(params("name")) = deg
       FEStatus.success
     }
@@ -201,8 +208,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val g = graph_operations.ExampleGraph()().result
       project.vertexSet = g.vertices
       project.edgeBundle = g.edges
-      project.vertexAttributes = g.vertexAttributes
-      project.edgeAttributes = g.edgeAttributes
+      project.vertexAttributes = g.vertexAttributes.mapValues(_.entity)
+      project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
       FEStatus.success
     }
   })
@@ -211,10 +218,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Vertex attribute to string"
     val category = "Attribute operations"
     val parameters = Seq(
-      Param("attr", "Vertex attribute", options = project.vertexAttributeNames))
+      Param("attr", "Vertex attribute", options = vertexAttributes))
+    def enabled = if (vertexAttributes.isEmpty) FEStatus.failure("No vertex attributes.") else FEStatus.success
     def apply(params: Map[String, String]): FEStatus = {
-      val attr = manager.vertexAttribute(params("attr").asTag)
-      val op = graph_operations.VertexAttributeToString()
+      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[Any]
+      val op = graph_operations.VertexAttributeToString[Any]()
       project.vertexAttributes(params("attr")) = op(op.attr, attr).result.attr
       FEStatus.success
     }

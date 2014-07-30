@@ -106,8 +106,9 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
+  implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
-  implicit val wProject = json.Json.writes[Project]
+  implicit val wFEProject = json.Json.writes[FEProject]
   implicit val wSplash = json.Json.writes[Splash]
 
   // Methods called by the web framework
