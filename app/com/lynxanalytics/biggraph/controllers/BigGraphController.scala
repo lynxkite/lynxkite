@@ -81,10 +81,10 @@ case class Project(
   notes: String,
   vertexAttributes: Seq[UIValue],
   edgeAttributes: Seq[UIValue],
-  segmentations: Seq[UIValue])
+  segmentations: Seq[UIValue],
+  opCategories: Seq[OperationCategory])
 
 case class ProjectRequest(id: String)
-case class Operations(categories: Seq[OperationCategory])
 case class Splash(projects: Seq[Project])
 case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(id: String, notes: String)
@@ -223,14 +223,10 @@ class BigGraphController(env: BigGraphEnvironment) {
       .filter(metaManager.isVisible(_))
       .map(UIValue.fromEntity(_)).toSeq
 
-  def ops(request: serving.Empty): Operations = {
-    return Operations(categories = operations.categories)
-  }
-
   private def getProject(id: String): Project = {
     val p: SymbolPath = s"projects/$id"
     val notes = metaManager.scalarOf[String](p / "notes").value
-    Project(id, 0, 0, notes, Seq(), Seq(), Seq())
+    Project(id, 0, 0, notes, Seq(), Seq(), Seq(), Seq())
   }
 
   def splash(request: serving.Empty): Splash = {
@@ -240,7 +236,7 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def project(request: ProjectRequest): Project = {
-    return getProject(request.id)
+    return getProject(request.id).copy(opCategories = operations.categories)
   }
 
   def createProject(request: CreateProjectRequest): serving.Empty = {

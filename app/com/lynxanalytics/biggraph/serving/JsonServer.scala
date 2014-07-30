@@ -106,9 +106,8 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
-  implicit val wProject = json.Json.writes[Project]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
-  implicit val wOperations = json.Json.writes[Operations]
+  implicit val wProject = json.Json.writes[Project]
   implicit val wSplash = json.Json.writes[Splash]
 
   // Methods called by the web framework
@@ -121,7 +120,6 @@ object ProductionJsonServer extends JsonServer {
   def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
   def startingVertexSetsGet = jsonGet(bigGraphController.startingVertexSets)
   def createProject = jsonPost(bigGraphController.createProject)
-  def ops = jsonGet(bigGraphController.ops)
   def project = jsonGet(bigGraphController.project)
   def splash = jsonGet(bigGraphController.splash)
 
