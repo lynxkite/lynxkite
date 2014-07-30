@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ImportGraphTest extends FunSuite with TestGraphOp {
-  /*test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
+  test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
     val dir = "/graph_operations/ImportGraphTest/testgraph/"
     val vertexCSVs = Filename(getClass.getResource(dir + "vertex-data/part-00000").getFile)
     val edgeCSVs = Filename(getClass.getResource(dir + "edge-data/part-00000").getFile)
@@ -19,17 +19,18 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
     val sourceEdgeFieldName = "srcVertexId"
     val destEdgeFieldName = "dstVertexId"
     val delimiter = ","
-    val vertexData = ImportVertexListWithNumericIDs(
-      CSV(vertexCSVs, delimiter, ImportUtil.header(vertexHeader)),
-      vertexIdFieldName).result
+    val vertexData = ImportVertexList(
+      CSV(vertexCSVs, delimiter, ImportUtil.header(vertexHeader))).result
     val vs = vertexData.vertices
     val edgeData = {
-      val op = ImportEdgeListWithNumericIDsForExistingVertexSet(
+      val op = ImportEdgeListForExistingVertexSet(
         CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
         sourceEdgeFieldName, destEdgeFieldName)
       op(op.sources, vs)(op.destinations, vs).result
     }
-    assert(TestUtils.RDDToSortedString(vertexData.attrs("name").rdd) ==
+    val vid = vertexData.attrs("vertexId").rdd
+    val names = vertexData.attrs("name").rdd
+    assert(TestUtils.RDDToSortedString(vid.join(names).values) ==
       """|(0,Adam)
          |(1,Eve)
          |(2,Bob)""".stripMargin)
@@ -50,23 +51,27 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
     val edgeSourceFieldName = "srcVertexId"
     val edgeDestFieldName = "dstVertexId"
     val delimiter = "|"
-    val data = ImportEdgeListWithNumericIDs(
+    val data = ImportEdgeList(
       CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
       edgeSourceFieldName, edgeDestFieldName).result
-    val vertices = data.vertices.rdd
-    val edges = data.edges.rdd
-    assert(vertices.count === 6)
-    assert(edges.count === 8)
+    val vs = data.vertices.rdd
+    val es = data.edges.rdd
+    assert(vs.count === 6)
+    assert(es.count === 8)
+    val names = data.stringID.rdd
+    val bySrc = es.map { case (e, Edge(s, d)) => s -> (e, d) }
+    val byDst = bySrc.join(names).map { case (s, ((e, d), ns)) => d -> (e, ns) }
+    val named = byDst.join(names).map { case (d, ((e, ns), nd)) => e -> (ns, nd) }
     val comments = data.attrs("comment").rdd
-    assert(TestUtils.RDDToSortedString(edges.join(comments).values) ==
-      """|(Edge(0,1),Adam loves Eve)
-         |(Edge(1,0),Eve loves Adam)
-         |(Edge(10,11),Voldemort loves Harry)
-         |(Edge(11,10),Harry loves Voldemort)
-         |(Edge(2,0),Bob envies Adam)
-         |(Edge(2,1),Bob loves Eve)
-         |(Edge(2,21),Bob loves Darth Vader)
-         |(Edge(21,0),Darth Vader envies Adam)""".stripMargin)
+    assert(TestUtils.RDDToSortedString(named.join(comments).values) ==
+      """|((0,1),Adam loves Eve)
+         |((1,0),Eve loves Adam)
+         |((10,11),Voldemort loves Harry)
+         |((11,10),Harry loves Voldemort)
+         |((2,0),Bob envies Adam)
+         |((2,1),Bob loves Eve)
+         |((2,21),Bob loves Darth Vader)
+         |((21,0),Darth Vader envies Adam)""".stripMargin)
   }
 
   test("import graph from csv with non-numerical IDs") {
@@ -76,7 +81,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
     val edgeDestFieldName = "dstVertexId"
     val delimiter = "|"
     val skipFirstRow = true
-    val data = ImportEdgeListWithStringIDs(
+    val data = ImportEdgeList(
       CSV(csv, delimiter, ImportUtil.header(csv)),
       edgeSourceFieldName, edgeDestFieldName).result
     val vs = data.vertices.rdd
@@ -91,7 +96,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
          |((Darth Vader,Adam),Darth Vader envies Adam)
          |((Harry,Voldemort),Harry loves Voldemort)
          |((Voldemort,Harry),Voldemort loves Harry)""".stripMargin)
-  }*/
+  }
 
   test("Splitting with quoted delimiters") {
     val input = """ "Hello, ""mr, smith""!", How are you "doing"?, "Okay, thanks." """.trim

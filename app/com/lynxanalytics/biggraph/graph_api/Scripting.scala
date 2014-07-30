@@ -46,6 +46,22 @@ object Scripting {
     implicit dataManager: DataManager): ScalarData[T] =
     dataManager.get(entity.entity)
 
+  implicit def getData(entity: VertexSet)(
+    implicit dataManager: DataManager): VertexSetData =
+    dataManager.get(entity)
+  implicit def getData(entity: EdgeBundle)(
+    implicit dataManager: DataManager): EdgeBundleData =
+    dataManager.get(entity)
+  implicit def getData[T](entity: VertexAttribute[T])(
+    implicit dataManager: DataManager): VertexAttributeData[T] =
+    dataManager.get(entity)
+  implicit def getData[T](entity: EdgeAttribute[T])(
+    implicit dataManager: DataManager): EdgeAttributeData[T] =
+    dataManager.get(entity)
+  implicit def getData[T](entity: Scalar[T])(
+    implicit dataManager: DataManager): ScalarData[T] =
+    dataManager.get(entity)
+
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     op: TypedMetaGraphOp[IS, OMDS]): IS = op.inputs
 

@@ -17,8 +17,15 @@
           </button>
         </form>
       </a>
+
+      <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
+        Loading...
+      </progressbar>
+
+      <p class="alert alert-danger" ng-if="data.error">{{data.error}}</p>
+
       <a ng-repeat="project in data.projects | filter:searchString" href="#/project/{{project.id}}">
-        <h1>{{project.id}}</h1>
+        <h1>{{spaced(project.id)}}</h1>
         {{human(project.vertexCount)}} vertices, {{human(project.edgeCount)}} edges. {{project.notes}}
       </a>
   </div>
