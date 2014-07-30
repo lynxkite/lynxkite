@@ -1,0 +1,14 @@
+<div class="operation-toolbox row" ng-class="{ open: active }">
+  <div class="col-sm-1 categories">
+    <div ng-repeat="cat in categories"
+      class="category {{cat.color}}" ng-class="{ active: active === cat }"
+      tooltip-append-to-body="true" tooltip-placement="left" tooltip="{{cat.title}}"
+      ng-click="clicked(cat)">
+      {{cat.icon}}
+    </div>
+  </div>
+  <div ng-if="active" class="panel box col-sm-11 {{active.color}}">
+    <h1>{{active.title}}</h1>
+    <operations model="active.ops">
+  </div>
+</div>

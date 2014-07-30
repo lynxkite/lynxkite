@@ -99,13 +99,13 @@ case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
     val (srcs, dsts) = edgeLists.unzip
-    val vs: VertexSetRDD = sc.parallelize(
+    val vs = sc.parallelize(
       srcs.flatten.map(_.toLong -> ()))
       .partitionBy(rc.onePartitionPartitioner)
-    val segments: VertexSetRDD = sc.parallelize(
+    val segments = sc.parallelize(
       dsts.map(_.toLong -> ()))
       .partitionBy(rc.onePartitionPartitioner)
-    val es: EdgeBundleRDD = sc.parallelize(
+    val es = sc.parallelize(
       edgeLists.flatMap {
         case (s, i) => s.map(j => Edge(j.toLong, i.toLong))
       }).fastNumbered(rc.onePartitionPartitioner)
