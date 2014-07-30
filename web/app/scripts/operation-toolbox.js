@@ -10,6 +10,7 @@ angular.module('biggraph').directive('operationToolbox', function($resource, dee
       var ApplyOp = $resource('/ajax/applyOp');
       var colors = ['yellow', 'orange', 'green', 'blue'];
       deepWatch(scope, 'ops', function() {
+        if (!scope.ops.$resolved) { return; }
         scope.categories = [];
         for (var i = 0; i < scope.ops.categories.length; ++i) {
           var data = scope.ops.categories[i];
