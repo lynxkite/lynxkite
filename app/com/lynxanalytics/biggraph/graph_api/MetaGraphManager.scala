@@ -84,6 +84,11 @@ class MetaGraphManager(val repositoryPath: String) {
     saveTags()
   }
 
+  def rmTag(tag: SymbolPath): Unit = {
+    (tagRoot / tag).rm
+    saveTags()
+  }
+
   def tagExists(tag: SymbolPath): Boolean = tagRoot.exists(tag)
 
   def lsTag(tag: SymbolPath): Seq[SymbolPath] = {
