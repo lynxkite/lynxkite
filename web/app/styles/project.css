@@ -89,14 +89,14 @@
 .operation-toolbox .box.orange .clicky:hover { background: orange; }
 .operation-toolbox .box.green .clicky:hover { background: yellowgreen; }
 .operation-toolbox .box.blue .clicky:hover { background: aquamarine; }
-.operation-toolbox .box.yellow operation:hover .title { color: gold; }
-.operation-toolbox .box.orange operation:hover .title { color: orange; }
-.operation-toolbox .box.green operation:hover .title { color: yellowgreen; }
-.operation-toolbox .box.blue operation:hover .title { color: aquamarine; }
-.operation-toolbox .box.yellow operation:hover .clicky { color: gold; }
-.operation-toolbox .box.orange operation:hover .clicky { color: orange; }
-.operation-toolbox .box.green operation:hover .clicky { color: yellowgreen; }
-.operation-toolbox .box.blue operation:hover .clicky { color: aquamarine; }
+.operation-toolbox .box.yellow .operation:hover .title { color: gold; }
+.operation-toolbox .box.orange .operation:hover .title { color: orange; }
+.operation-toolbox .box.green .operation:hover .title { color: yellowgreen; }
+.operation-toolbox .box.blue .operation:hover .title { color: aquamarine; }
+.operation-toolbox .box.yellow .operation:hover .clicky { color: gold; }
+.operation-toolbox .box.orange .operation:hover .clicky { color: orange; }
+.operation-toolbox .box.green .operation:hover .clicky { color: yellowgreen; }
+.operation-toolbox .box.blue .operation:hover .clicky { color: aquamarine; }
 
 .operation-toolbox .panel .list-group-item {
   border: 0;
@@ -112,6 +112,15 @@
 .operation .form-group:last-child:first-child {
   margin-bottom: 0;
 }
-operation:hover {
+.operation:hover {
   background: black !important;
+}
+
+.operation.disabled {
+  background: transparent !important;
+}
+.operation.disabled .title,
+.operation.disabled label,
+.operation.disabled .clicky {
+  color: rgba(255, 255, 255, 0.2) !important;
 }
