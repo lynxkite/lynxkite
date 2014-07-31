@@ -121,6 +121,7 @@ object ProductionJsonServer extends JsonServer {
   def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
   def startingVertexSetsGet = jsonGet(bigGraphController.startingVertexSets)
   def createProject = jsonPost(bigGraphController.createProject)
+  def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
   def splash = jsonGet(bigGraphController.splash)
 

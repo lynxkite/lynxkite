@@ -23,7 +23,10 @@ angular.module('biggraph')
 
     $scope.left = {};
     $scope.right = {};
-    $scope.left.data = util.get('/ajax/project', { id: $routeParams.project });
+    $scope.left.reload = function() {
+      $scope.left.data = util.nocache('/ajax/project', { id: $routeParams.project });
+    };
+    $scope.left.reload();
     $scope.left.state = defaultSideState();
     $scope.right.state = defaultSideState();
 

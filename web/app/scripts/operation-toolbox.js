@@ -1,13 +1,12 @@
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function($resource, util) {
+angular.module('biggraph').directive('operationToolbox', function(util) {
   return {
     restrict: 'E',
     scope: { side: '=' },
     replace: true,
     templateUrl: 'operation-toolbox.html',
     link: function(scope) {
-      var ApplyOp = $resource('/ajax/applyOp');
       var colors = ['yellow', 'orange', 'green', 'blue'];
       util.deepWatch(scope, 'side.data.opCategories', function(categories) {
         scope.categories = [];
@@ -31,11 +30,6 @@ angular.module('biggraph').directive('operationToolbox', function($resource, uti
         } else {
           open(cat);
         }
-      };
-      scope.execute = function(op) {
-        // Placeholder.
-        // TODO: Actually execute the operation.
-        ApplyOp.post(op);
       };
     },
   };

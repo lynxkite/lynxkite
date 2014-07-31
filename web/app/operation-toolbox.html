@@ -10,7 +10,7 @@
   <div ng-if="active" class="panel box col-sm-11 {{active.color}}">
     <h1>{{active.title}}</h1>
     <div class="list-group" style="margin-bottom: 0;">
-      <operation ng-repeat="op in active.ops" model="op"></operation>
+      <operation ng-repeat="op in active.ops" op="op" side="side"></operation>
     </div>
   </div>
 </div>

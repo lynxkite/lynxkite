@@ -365,6 +365,8 @@ class BigGraphController(env: BigGraphEnvironment) {
     metaManager.setTag(s"projects/${request.id}/notes", notes)
     return serving.Empty()
   }
+
+  def projectOp(request: ProjectOperationRequest): FEStatus = ops.apply(request)
 }
 
 abstract class Operation(val project: Project, val category: String) {
