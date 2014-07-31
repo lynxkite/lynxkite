@@ -251,7 +251,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     def apply(params: Map[String, String]) = {
       manager.show(
         graph_operations.WeightedOutDegree(),
-        'weights -> manager.edgeAttribute(params("w").asUUID))
+        'attr -> manager.edgeAttribute(params("w").asUUID))
       FEStatus.success
     }
   }
