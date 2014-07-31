@@ -3,14 +3,15 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 import scala.collection.mutable
 
-class SymbolPath(val path: Seq[Symbol]) {
-  def /(name: Symbol): SymbolPath = path :+ name
-  def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath.path
+class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] {
+  def /(name: Symbol): SymbolPath = path.toSeq :+ name
+  def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
   override def toString = path.map(_.name).mkString("/")
+  def iterator = path.iterator
 }
 object SymbolPath {
   import scala.language.implicitConversions
-  implicit def fromSeq(sp: Seq[Symbol]): SymbolPath = new SymbolPath(sp)
+  implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
   implicit def fromString(str: String): SymbolPath =
     str.split("/").toSeq.map(Symbol(_))
   implicit def fromSymbol(sym: Symbol): SymbolPath = fromString(sym.name)
@@ -29,7 +30,7 @@ sealed trait TagPath extends Serializable {
 
   def clone(newParent: TagDir, newName: Symbol): TagPath
 
-  def followPath(names: Seq[Symbol]): Option[TagPath]
+  def followPath(names: Iterable[Symbol]): Option[TagPath]
 
   def allTags: Iterable[Tag]
 
@@ -44,7 +45,7 @@ object TagPath {
 
 final case class Tag(name: Symbol, parent: TagDir, gUID: UUID) extends TagPath {
   def clone(newParent: TagDir, newName: Symbol): Tag = newParent.addTag(newName, gUID)
-  def followPath(names: Seq[Symbol]): Option[TagPath] =
+  def followPath(names: Iterable[Symbol]): Option[TagPath] =
     if (names.nonEmpty) None else Some(this)
   def allTags = Seq(this)
   def lsRec: String = fullName + " => " + gUID + "\n"
@@ -72,11 +73,10 @@ trait TagDir extends TagPath {
   }
   def setTag(path: SymbolPath, value: UUID): Tag = synchronized {
     assert(!existsDir(path))
-    val seq = path.path
-    assert(seq.nonEmpty)
+    assert(path.nonEmpty)
     if (existsTag(path)) rm(path)
-    val dir = mkDirs(new SymbolPath(seq.dropRight(1)))
-    dir.addTag(seq.last, value)
+    val dir = mkDirs(new SymbolPath(path.dropRight(1)))
+    dir.addTag(path.last, value)
   }
 
   def mkDir(name: Symbol): TagSubDir = synchronized {
@@ -87,22 +87,19 @@ trait TagDir extends TagPath {
     result
   }
   def mkDirs(path: SymbolPath): TagDir = synchronized {
-    val seq = path.path
-    if (seq.isEmpty) this
-    else mkDir(seq.head).mkDirs(new SymbolPath(seq.tail))
+    if (path.isEmpty) this
+    else mkDir(path.head).mkDirs(new SymbolPath(path.tail))
   }
 
   def cp(from: SymbolPath, to: SymbolPath): TagPath = synchronized {
-    val toSeq = to.path
-    assert(toSeq.nonEmpty)
+    assert(to.nonEmpty)
     assert(!exists(to))
     assert(exists(from))
-    val toDir = mkDirs(toSeq.dropRight(1))
-    (this / from).clone(toDir, toSeq.last)
+    val toDir = mkDirs(to.dropRight(1))
+    (this / from).clone(toDir, to.last)
   }
 
-  def followPath(path: SymbolPath): Option[TagPath] = followPath(path.path)
-  def followPath(names: Seq[Symbol]): Option[TagPath] = {
+  def followPath(names: Iterable[Symbol]): Option[TagPath] = {
     if (names.isEmpty) Some(this)
     else children.get(names.head).flatMap(_.followPath(names.tail))
   }
