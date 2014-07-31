@@ -265,40 +265,86 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
   }
 
-  /*def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
-    val srcOp = metaManager.scalar(request.srcDiagramId.asUUID).source
-    val dstOp = metaManager.scalar(request.dstDiagramId.asUUID).source
-    val bundleWeights = getCompositeBundle(request.bundleSequence)
-    val induced = inducedBundle(bundleWeights.edgeBundle, vsFromOp(srcOp), vsFromOp(dstOp))
-    val (srcMapping, dstMapping) = tripletMapping(induced)
-    val srcIdxs = mappedAttribute(
-      sampleAttribute(metaManager, directVsFromOp(srcOp), srcMapping),
-      idxsFromInst(srcOp),
-      induced)
-    val dstIdxs = mappedAttribute(
-      sampleAttribute(metaManager, directVsFromOp(dstOp), dstMapping),
-      idxsFromInst(dstOp),
-      induced)
-    val srcIdxsRDD = dataManager.get(srcIdxs).rdd
-    val dstIdxsRDD = dataManager.get(dstIdxs).rdd
-    val idxPairBuckets = srcIdxsRDD.join(dstIdxsRDD)
-      .map { case (eid, (s, d)) => ((s, d), 1) }
-      .reduceByKey(_ + _)
-      .collect
-    EdgeDiagramResponse(
-      request.srcDiagramId,
-      request.dstDiagramId,
-      request.srcIdx,
-      request.dstIdx,
-      idxPairBuckets.map { case ((s, d), c) => FEEdge(s, d, c) })
-  }*/
+  def filteredEdgesByAttribute[T](
+    eb: EdgeBundle,
+    tripletMapping: VertexAttribute[Array[ID]],
+    fa: graph_operations.FilteredAttribute[T]): EdgeBundle = {
+
+    val mop = graph_operations.VertexToEdgeAttribute[T]()
+    val mappedAttribute = mop(
+      mop.mapping, tripletMapping)(
+        mop.original, fa.attribute)(
+          mop.target, eb).result.mappedAttribute
+
+    val fop = graph_operations.EdgeAttributeFilter[T](fa.filter)
+    fop(fop.attr, mappedAttribute).result.feb
+  }
+
+  def indexFromBucketedAttribute[T](
+    base: EdgeAttribute[Int],
+    tripletMapping: VertexAttribute[Array[ID]],
+    ba: graph_operations.BucketedAttribute[T]): EdgeAttribute[Int] = {
+
+    val mop = graph_operations.VertexToEdgeAttribute[T]()
+    val mappedAttribute = mop(
+      mop.mapping, tripletMapping)(
+        mop.original, ba.attribute)(
+          mop.target, base.edgeBundle).result.mappedAttribute
+
+    val iop = graph_operations.EdgeIndexer(ba.bucketer)
+    iop(iop.baseIndices, base)(iop.bucketAttribute, mappedAttribute).result.indices
+  }
+
+  def indexFromIndexingSeq(
+    filtered: EdgeBundle,
+    tripletMapping: VertexAttribute[Array[ID]],
+    seq: Seq[graph_operations.BucketedAttribute[_]]): EdgeAttribute[Int] = {
+
+    val cop = graph_operations.AddConstantIntEdgeAttribute(0)
+    val startingBase: EdgeAttribute[Int] = cop(cop.edges, filtered).result.attr
+    seq.foldLeft(startingBase) {
+      case (b, ba) => indexFromBucketedAttribute(b, tripletMapping, ba)
+    }
+  }
+
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcView = graph_operations.VertexView.fromDiagram(
       metaManager.scalar(request.srcDiagramId.asUUID))
     val dstView = graph_operations.VertexView.fromDiagram(
       metaManager.scalar(request.dstDiagramId.asUUID))
     val bundleWeights = getCompositeBundle(request.bundleSequence)
-    null
+    val edgeBundle = bundleWeights.edgeBundle
+    val (srcTripletMapping, dstTripletMapping) = tripletMapping(edgeBundle)
+
+    val srcFilteredEBs = srcView.filters
+      .map(filteredAttribute =>
+        filteredEdgesByAttribute(edgeBundle, srcTripletMapping, filteredAttribute))
+    val dstFilteredEBs = dstView.filters
+      .map(filteredAttribute =>
+        filteredEdgesByAttribute(edgeBundle, dstTripletMapping, filteredAttribute))
+    val allFilteredEBs = srcFilteredEBs ++ dstFilteredEBs
+    val filteredEB = if (allFilteredEBs.size > 0) {
+      val iop = graph_operations.EdgeBundleIntersection(allFilteredEBs.size)
+      val builder = allFilteredEBs.zipWithIndex.foldLeft(iop.builder) {
+        case (b, (eb, i)) => b(iop.ebs(i), eb)
+      }
+      builder.result.intersection.entity
+    } else {
+      edgeBundle
+    }
+
+    val srcIndices = indexFromIndexingSeq(filteredEB, srcTripletMapping, srcView.indexingSeq)
+    val dstIndices = indexFromIndexingSeq(filteredEB, dstTripletMapping, dstView.indexingSeq)
+
+    val countOp = graph_operations.EdgeIndexPairCounter()
+    val counts =
+      countOp(countOp.xIndices, srcIndices)(countOp.yIndices, dstIndices).result.counts.value
+    EdgeDiagramResponse(
+      request.srcDiagramId,
+      request.dstDiagramId,
+      request.srcIdx,
+      request.dstIdx,
+      counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq)
   }
 
   def getComplexView(request: FEGraphRequest): FEGraphRespone = {
