@@ -96,7 +96,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   def vertexSet_=(e: VertexSet) = set(path / "vertexSet", e)
   def edgeBundle = ifExists(path / "edgeBundle") { manager.edgeBundle(_) }
   def edgeBundle_=(e: EdgeBundle) = set(path / "edgeBundle", e)
-  def vertexAttributes = new Holder[VertexAttribute[_]]("vertexAttributes", this)
+  def vertexAttributes = new Holder[VertexAttribute[_]]("vertexAttributes")
   def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = {
     ifExists(path / "vertexAttributes") { manager.rmTag(_) }
     for ((name, attr) <- attrs) {
@@ -104,9 +104,9 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     }
   }
   def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
-    case name if vertexAttributes(name).is[T] => name
+    case (name, attr) if attr.is[T] => name
   }
-  def edgeAttributes = new Holder[EdgeAttribute[_]]("edgeAttributes", this)
+  def edgeAttributes = new Holder[EdgeAttribute[_]]("edgeAttributes")
   def edgeAttributes_=(attrs: Map[String, EdgeAttribute[_]]) = {
     ifExists(path / "edgeAttributes") { manager.rmTag(_) }
     for ((name, attr) <- attrs) {
@@ -114,15 +114,16 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     }
   }
   def edgeAttributeNames[T: TypeTag] = edgeAttributes.collect {
-    case name if edgeAttributes(name).is[T] => name
+    case (name, attr) if attr.is[T] => name
   }
-  def segmentations = new Holder[VertexSet]("edgeAttributes", this)
+  def segmentations = new Holder[VertexSet]("edgeAttributes")
   def segmentations_=(attrs: Map[String, VertexSet]) = {
     ifExists(path / "segmentations") { manager.rmTag(_) }
     for ((name, attr) <- attrs) {
       manager.setTag(path / "segmentations" / name, attr)
     }
   }
+  def segmentationNames = segmentations.map { case (name, attr) => name }
 
   private def ifExists[T](tag: SymbolPath)(fn: SymbolPath => T): T =
     if (manager.tagExists(tag)) { fn(tag) } else { null }
@@ -130,13 +131,13 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     if (entity == null) manager.rmTag(tag) else manager.setTag(tag, entity)
   private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
 
-  class Holder[T <: MetaGraphEntity](dir: String, project: Project) extends Iterable[String] {
+  class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
     def update(name: String, entity: T) =
-      manager.setTag(project.path / dir / name, entity)
+      manager.setTag(path / dir / name, entity)
     def apply(name: String) =
-      manager.entity(project.path / dir / name).asInstanceOf[T]
+      manager.entity(path / dir / name).asInstanceOf[T]
     def iterator =
-      project.ls(dir).map(path => path.last.name).iterator
+      ls(dir).map(_.last.name).map(p => p -> apply(p)).iterator
   }
 }
 
@@ -313,7 +314,7 @@ abstract class Operation(val project: Project, val category: String) {
   protected def edgeAttributes[T: TypeTag] =
     project.edgeAttributeNames[T].map(name => UIValue(name, name)).toSeq
   protected def segmentations =
-    project.segmentations.map(name => UIValue(name, name)).toSeq
+    project.segmentationNames.map(name => UIValue(name, name)).toSeq
 }
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
