@@ -1,4 +1,5 @@
-<div class="list-group-item operation" ng-class="{ disabled: !op.enabled.success }">
+<div class="list-group-item operation" ng-class="{ disabled: !op.enabled.success }"
+  tooltip="{{op.enabled.failureReason}}" tooltip-append-to-body="true" tooltip-placement="left">
   <div class="row">
     <div class="col-sm-4">
       <span class="title">{{op.title}}</span>
@@ -14,8 +15,6 @@
 
     <span
       ng-show="showParams || op.parameters.length <= 1"
-      class="col-sm-1 clicky glyphicon glyphicon-{{op.enabled.success && 'play' || 'remove'}}"
-      ng-disabled="!op.enabled.success"
-      tooltip-append-to-body="true" tooltip="{{op.enabled.failureReason}}"></span>
+      class="col-sm-1 clicky glyphicon glyphicon-{{op.enabled.success && 'play' || 'remove'}}"></span>
   </div>
 </div>
