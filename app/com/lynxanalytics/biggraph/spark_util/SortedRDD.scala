@@ -7,11 +7,9 @@ import scala.reflect.ClassTag
 
 object SortedRDD {
   // Creates a SortedRDD from an unsorted RDD.
-  def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] = {
-    new SortedRDD(rdd.mapPartitionsWithIndex(
-      (idx, it) => it.toIndexedSeq.sortBy(_._1).iterator,
-      preservesPartitioning = true))
-  }
+  def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
+    new SortedRDD(
+      rdd.mapPartitions(_.toIndexedSeq.sortBy(_._1).iterator, preservesPartitioning = true))
 
   // Wraps an already sorted RDD.
   def fromSorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
