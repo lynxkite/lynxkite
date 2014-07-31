@@ -125,9 +125,9 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   def edgeBundle = existing(path / "edgeBundle").map(manager.edgeBundle(_)).getOrElse(null)
   def edgeBundle_=(e: EdgeBundle) = {
     if (e != edgeBundle) {
-      assert(vertexSet != null, s"No vertex set for project $id")
-      assert(e.srcVertexSet == vertexSet, s"Edge bundle does not match vertex set for project $id")
-      assert(e.dstVertexSet == vertexSet, s"Edge bundle does not match vertex set for project $id")
+      assert(e == null || vertexSet != null, s"No vertex set for project $id")
+      assert(e == null || e.srcVertexSet == vertexSet, s"Edge bundle does not match vertex set for project $id")
+      assert(e == null || e.dstVertexSet == vertexSet, s"Edge bundle does not match vertex set for project $id")
       // TODO: "Induce" the attributes to the new edge bundle.
       edgeAttributes = Map()
     }
@@ -137,7 +137,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   def vertexAttributes = new VertexAttributeHolder
   def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = {
     existing(path / "vertexAttributes").foreach(manager.rmTag(_))
-    assert(vertexSet != null, s"No vertex set for project $id")
+    assert(attrs.isEmpty || vertexSet != null, s"No vertex set for project $id")
     for ((name, attr) <- attrs) {
       assert(attr.vertexSet == vertexSet, s"Vertex attribute $name does not match vertex set for project $id")
       manager.setTag(path / "vertexAttributes" / name, attr)
@@ -150,7 +150,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   def edgeAttributes = new EdgeAttributeHolder
   def edgeAttributes_=(attrs: Map[String, EdgeAttribute[_]]) = {
     existing(path / "edgeAttributes").foreach(manager.rmTag(_))
-    assert(edgeBundle != null, s"No edge bundle for project $id")
+    assert(attrs.isEmpty || edgeBundle != null, s"No edge bundle for project $id")
     for ((name, attr) <- attrs) {
       assert(attr.edgeBundle == edgeBundle, s"Edge attribute $name does not match edge bundle for project $id")
       manager.setTag(path / "edgeAttributes" / name, attr)
@@ -163,7 +163,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   def segmentations = new SegmentationHolder
   def segmentations_=(segs: Map[String, VertexSet]) = {
     existing(path / "segmentations").foreach(manager.rmTag(_))
-    assert(vertexSet != null, s"No vertex set for project $id")
+    assert(segs.isEmpty || vertexSet != null, s"No vertex set for project $id")
     for ((name, seg) <- segs) {
       // TODO: Assert that this is a segmentation for vertexSet.
       manager.setTag(path / "segmentations" / name, seg)
