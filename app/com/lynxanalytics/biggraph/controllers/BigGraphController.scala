@@ -93,9 +93,24 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     FEProject(id, 0, 0, notes, Seq(), Seq(), Seq(), Seq())
   }
   def vertexSet = ifExists(path / "vertexSet") { manager.vertexSet(_) }
-  def vertexSet_=(e: VertexSet) = set(path / "vertexSet", e)
+  def vertexSet_=(e: VertexSet) = {
+    if (e != vertexSet) {
+      // TODO: "Induce" the edges and attributes to the new vertex set.
+      edgeBundle = null
+      vertexAttributes = Map()
+    }
+    set(path / "vertexSet", e)
+  }
+
   def edgeBundle = ifExists(path / "edgeBundle") { manager.edgeBundle(_) }
-  def edgeBundle_=(e: EdgeBundle) = set(path / "edgeBundle", e)
+  def edgeBundle_=(e: EdgeBundle) = {
+    if (e != edgeBundle) {
+      // TODO: "Induce" the attributes to the new edge bundle.
+      edgeAttributes = Map()
+    }
+    set(path / "edgeBundle", e)
+  }
+
   def vertexAttributes = new Holder[VertexAttribute[_]]("vertexAttributes")
   def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = {
     ifExists(path / "vertexAttributes") { manager.rmTag(_) }
