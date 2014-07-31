@@ -34,8 +34,8 @@ angular.module('biggraph')
       // Put vertex set and edge bundle in the state.
       // This is for compatibility with the metaGraph.js-related code in graph-view.js
       // and could be removed later.
-      $scope.left.state.vertexSet = project.vertexSet;
-      $scope.left.state.edgeBundle = project.edgeBundle;
+      $scope.left.state.vertexSet = { id: project.vertexSet };
+      $scope.left.state.edgeBundle = { id: project.edgeBundle };
     });
 
     util.deepWatch(
