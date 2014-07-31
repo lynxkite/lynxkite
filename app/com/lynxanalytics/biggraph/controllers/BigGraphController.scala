@@ -95,8 +95,17 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   val path: SymbolPath = s"projects/$id"
   def toFE(implicit dm: DataManager): FEProject = {
     val notes = manager.scalarOf[String](path / "notes").value
+    // For now, counts are calculated here. TODO: Make them respond to soft filters.
+    val vs = if (vertexSet == null) 0 else {
+      val op = graph_operations.CountVertices()
+      op(op.vertices, vertexSet).result.count.value
+    }
+    val es = if (edgeBundle == null) 0 else {
+      val op = graph_operations.CountEdges()
+      op(op.edges, edgeBundle).result.count.value
+    }
     FEProject(
-      id, 0, 0, notes,
+      id, vs, es, notes,
       UIValue.seq(vertexAttributeNames),
       UIValue.seq(edgeAttributeNames),
       UIValue.seq(segmentationNames),
