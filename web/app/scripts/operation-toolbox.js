@@ -8,7 +8,7 @@ angular.module('biggraph').directive('operationToolbox', function(util) {
     templateUrl: 'operation-toolbox.html',
     link: function(scope) {
       var colors = ['yellow', 'orange', 'green', 'blue'];
-      util.deepWatch(scope, 'side.data.opCategories', function(categories) {
+      util.deepWatch(scope, 'side.project.opCategories', function(categories) {
         scope.categories = [];
         for (var i = 0; i < categories.length; ++i) {
           var data = categories[i];
