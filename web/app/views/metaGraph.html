@@ -1,11 +1,7 @@
 <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">
   {{alert.msg}}
 </alert>
-<div class="row-fluid text-center">
-  <svg class="graph-view" ng-class="{ 'collapsed': !showGraph() }"
-    graph-view graph="graphView" left="state.left" right="state.right"
-    version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
-</div>
+<project-graph left="state.left" right="state.right" left-to-right-path="state.leftToRightPath"></project-graph>
 <div class="row-fluid">
   <div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>
 </div>

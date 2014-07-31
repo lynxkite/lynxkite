@@ -27,7 +27,7 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
               dstDiagramId: 'idx[' + i + ']',
               srcIdx: i,
               dstIdx: i,
-              bundleSequence: [{ bundle: side.edgeBundle, reversed: false }]
+              bundleSequence: [{ bundle: side.edgeBundle.id, reversed: false }]
             });
           }
           var filters = [];
@@ -37,7 +37,7 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
             }
           }
           q.vertexSets.push({
-            vertexSetId: side.vertexSet,
+            vertexSetId: side.vertexSet.id,
             filters: filters,
             mode: side.graphMode,
             // Bucketed view parameters.
@@ -48,7 +48,7 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
             // Sampled view parameters.
             radius: parseInt(side.sampleRadius),  // angular.js/pull/7370
             centralVertexId: (side.center || '').toString(),
-            sampleSmearEdgeBundleId: side.edgeBundle || '',
+            sampleSmearEdgeBundleId: (side.edgeBundle || { id: '' }).id,
             labelAttributeId: side.labelAttribute || '',
             sizeAttributeId: side.sizeAttribute || '',
           });
