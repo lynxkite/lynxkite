@@ -301,10 +301,9 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 }
 
-abstract class Operation(val project: Project) {
+abstract class Operation(val project: Project, val category: String) {
   def id = title.replace(" ", "-")
   def title: String
-  def category: String
   def parameters: Seq[FEOperationParameterMeta]
   def enabled: FEStatus
   def apply(params: Map[String, String]): FEStatus
