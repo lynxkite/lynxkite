@@ -93,9 +93,9 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     FEProject(id, 0, 0, notes, Seq(), Seq(), Seq(), Seq())
   }
   def vertexSet = ifExists(path / "vertexSet") { manager.vertexSet(_) }
-  def vertexSet_=(e: VertexSet) = setOrClear(path / "vertexSet", e)
+  def vertexSet_=(e: VertexSet) = set(path / "vertexSet", e)
   def edgeBundle = ifExists(path / "edgeBundle") { manager.edgeBundle(_) }
-  def edgeBundle_=(e: EdgeBundle) = setOrClear(path / "edgeBundle", e)
+  def edgeBundle_=(e: EdgeBundle) = set(path / "edgeBundle", e)
   def vertexAttributes = new Holder[VertexAttribute[_]]("vertexAttributes", this)
   def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = {
     ifExists(path / "vertexAttributes") { manager.rmTag(_) }
@@ -124,11 +124,11 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     }
   }
 
-  def ifExists[T](tag: SymbolPath)(fn: SymbolPath => T): T =
+  private def ifExists[T](tag: SymbolPath)(fn: SymbolPath => T): T =
     if (manager.tagExists(tag)) { fn(tag) } else { null }
-  def setOrClear(tag: SymbolPath, entity: MetaGraphEntity): Unit =
+  private def set(tag: SymbolPath, entity: MetaGraphEntity): Unit =
     if (entity == null) manager.rmTag(tag) else manager.setTag(tag, entity)
-  def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
+  private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
 
   class Holder[T <: MetaGraphEntity](dir: String, project: Project) extends Iterable[String] {
     def update(name: String, entity: T) =
