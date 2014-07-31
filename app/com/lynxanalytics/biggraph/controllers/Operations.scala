@@ -182,8 +182,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Weighted out degree"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "out_degree"),
-      Param("w", "Weighted edges", options = edgeAttributes[Double]))
-    def enabled = FEStatus.assert(edgeAttributes[Double].isEmpty, "No numeric attributes.")
+      Param("w", "Weights", options = edgeAttributes[Double]))
+    def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
     def apply(params: Map[String, String]) = {
       val op = graph_operations.WeightedOutDegree()
       val attr = project.edgeAttributes(params("w")).runtimeSafeCast[Double]
@@ -211,7 +211,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Vertex attribute to string"
     val parameters = Seq(
       Param("attr", "Vertex attribute", options = vertexAttributes))
-    def enabled = FEStatus.assert(vertexAttributes.isEmpty, "No vertex attributes.")
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
       val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[Any]
       val op = graph_operations.VertexAttributeToString[Any]()
