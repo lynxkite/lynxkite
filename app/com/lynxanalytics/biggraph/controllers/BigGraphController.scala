@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
-import scala.reflect.runtime.universe.TypeTag
+import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
 
 case class FEStatus(success: Boolean, failureReason: String = "")
@@ -119,8 +119,9 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     }
   }
   def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
-    case (name, attr) if attr.is[T] => name
-  }
+    case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
+  }.toSeq
+
   def edgeAttributes = new Holder[EdgeAttribute[_]]("edgeAttributes")
   def edgeAttributes_=(attrs: Map[String, EdgeAttribute[_]]) = {
     ifExists(path / "edgeAttributes") { manager.rmTag(_) }
@@ -129,8 +130,9 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     }
   }
   def edgeAttributeNames[T: TypeTag] = edgeAttributes.collect {
-    case (name, attr) if attr.is[T] => name
-  }
+    case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
+  }.toSeq
+
   def segmentations = new Holder[VertexSet]("edgeAttributes")
   def segmentations_=(attrs: Map[String, VertexSet]) = {
     ifExists(path / "segmentations") { manager.rmTag(_) }
@@ -138,7 +140,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
       manager.setTag(path / "segmentations" / name, attr)
     }
   }
-  def segmentationNames = segmentations.map { case (name, attr) => name }
+  def segmentationNames = segmentations.map { case (name, attr) => name }.toSeq
 
   private def ifExists[T](tag: SymbolPath)(fn: SymbolPath => T): T =
     if (manager.tagExists(tag)) { fn(tag) } else { null }
