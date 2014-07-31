@@ -18,18 +18,20 @@
     <div class="panel-heading project-name">
       {{spaced(side.project.name)}}
       <div class="btn-group pull-right">
-        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable>
-          <i tooltip="Bucketed&nbsp;Graph" class="glyphicon glyphicon-th"></i>
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable
+          tooltip="Bucketed&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-th"></i>
         </label>
-        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable>
-          <i tooltip="Sampled&nbsp;Graph" class="glyphicon glyphicon-eye-open"></i>
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
+          tooltip="Sampled&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-eye-open"></i>
         </label>
       </div>
       <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
-        tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets"
+        tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets" tooltip-placement="bottom"
         type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
       <input class="right-range-input" ng-show="side.state.graphMode == 'sampled'"
-        tooltip="radius {{side.state.sampleRadius}}"
+        tooltip="radius {{side.state.sampleRadius}}" tooltip-placement="bottom"
         type="range" max="10" step="1" ng-model="side.state.sampleRadius">
     </div>
 
