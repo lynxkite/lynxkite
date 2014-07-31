@@ -173,8 +173,13 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
-  private def set(tag: SymbolPath, entity: MetaGraphEntity): Unit =
-    if (entity == null) manager.rmTag(tag) else manager.setTag(tag, entity)
+  private def set(tag: SymbolPath, entity: MetaGraphEntity): Unit = {
+    if (entity == null) {
+      existing(tag).foreach(manager.rmTag(_))
+    } else {
+      manager.setTag(tag, entity)
+    }
+  }
   private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
 
   abstract class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
