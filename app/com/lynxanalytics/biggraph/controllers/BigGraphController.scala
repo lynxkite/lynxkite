@@ -98,7 +98,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
       Seq())
   }
 
-  def vertexSet = ifExists(path / "vertexSet") { manager.vertexSet(_) }
+  def vertexSet = existing(path / "vertexSet").map(manager.vertexSet(_)).getOrElse(null)
   def vertexSet_=(e: VertexSet) = {
     if (e != vertexSet) {
       // TODO: "Induce" the edges and attributes to the new vertex set.
@@ -108,7 +108,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     set(path / "vertexSet", e)
   }
 
-  def edgeBundle = ifExists(path / "edgeBundle") { manager.edgeBundle(_) }
+  def edgeBundle = existing(path / "edgeBundle").map(manager.edgeBundle(_)).getOrElse(null)
   def edgeBundle_=(e: EdgeBundle) = {
     if (e != edgeBundle) {
       assert(vertexSet != null, s"No vertex set for project $id")
@@ -122,7 +122,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
 
   def vertexAttributes = new VertexAttributeHolder
   def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = {
-    ifExists(path / "vertexAttributes") { manager.rmTag(_) }
+    existing(path / "vertexAttributes").foreach(manager.rmTag(_))
     assert(vertexSet != null, s"No vertex set for project $id")
     for ((name, attr) <- attrs) {
       assert(attr.vertexSet == vertexSet, s"Vertex attribute $name does not match vertex set for project $id")
@@ -135,7 +135,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
 
   def edgeAttributes = new EdgeAttributeHolder
   def edgeAttributes_=(attrs: Map[String, EdgeAttribute[_]]) = {
-    ifExists(path / "edgeAttributes") { manager.rmTag(_) }
+    existing(path / "edgeAttributes").foreach(manager.rmTag(_))
     assert(edgeBundle != null, s"No edge bundle for project $id")
     for ((name, attr) <- attrs) {
       assert(attr.edgeBundle == edgeBundle, s"Edge attribute $name does not match edge bundle for project $id")
@@ -148,7 +148,7 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
 
   def segmentations = new SegmentationHolder
   def segmentations_=(segs: Map[String, VertexSet]) = {
-    ifExists(path / "segmentations") { manager.rmTag(_) }
+    existing(path / "segmentations").foreach(manager.rmTag(_))
     assert(vertexSet != null, s"No vertex set for project $id")
     for ((name, seg) <- segs) {
       // TODO: Assert that this is a segmentation for vertexSet.
@@ -157,8 +157,8 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   }
   def segmentationNames = segmentations.map { case (name, attr) => name }.toSeq
 
-  private def ifExists[T](tag: SymbolPath)(fn: SymbolPath => T): T =
-    if (manager.tagExists(tag)) { fn(tag) } else { null }
+  private def existing(tag: SymbolPath): Option[SymbolPath] =
+    if (manager.tagExists(tag)) Some(tag) else None
   private def set(tag: SymbolPath, entity: MetaGraphEntity): Unit =
     if (entity == null) manager.rmTag(tag) else manager.setTag(tag, entity)
   private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
