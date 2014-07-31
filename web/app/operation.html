@@ -9,12 +9,19 @@
     <form class="form-horizontal col-sm-7" collapse="!showParams && op.parameters.length > 1">
       <div class="form-group" ng-repeat="param in op.parameters">
         <label for="{{param.id}}" class="col-sm-6 control-label">{{param.title}}</label>
-        <div class="col-sm-6"><input ng-disabled="!op.enabled.success" id="{{param.id}}" class="form-control" value="{{param.defaultValue}}"></div>
+        <div class="col-sm-6">
+          <input ng-if="param.options.length === 0" ng-disabled="!op.enabled.success"
+            id="{{param.id}}" class="form-control" ng-model="params[param.id]">
+          <select ng-if="param.options.length > 0" ng-disabled="!op.enabled.success"
+            id="{{param.id}}" class="form-control" ng-model="params[param.id]"
+            ng-options="option.id as option.title for option in param.options"></select>
+        </div>
       </div>
     </form>
 
     <span
       ng-show="showParams || op.parameters.length <= 1"
-      class="col-sm-1 clicky glyphicon glyphicon-{{op.enabled.success && 'play' || 'remove'}}"></span>
+      class="col-sm-1 clicky glyphicon glyphicon-{{op.enabled.success && (running && 'stop' || 'play') || 'remove'}}"
+      ng-click="apply()"></span>
   </div>
 </div>
