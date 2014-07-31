@@ -21,7 +21,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new VertexOperation(_) {
     val title = "Discard vertices"
     val parameters = Seq()
-    def enabled = if (project.vertexSet == null) FEStatus.failure("No vertices.") else FEStatus.success
+    def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       project.vertexSet = null
       FEStatus.success
@@ -31,7 +31,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new EdgeOperation(_) {
     val title = "Discard edges"
     val parameters = Seq()
-    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       project.vertexSet = null
       FEStatus.success
@@ -42,7 +42,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "New vertex set"
     val parameters = Seq(
       Param("size", "Vertex set size"))
-    def enabled = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
+    def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val vs = graph_operations.CreateVertexSet(params("size").toInt)().result.vs
       project.vertexSet = vs
@@ -55,7 +55,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(
       Param("density", "density", defaultValue = "0.5"),
       Param("seed", "Seed", defaultValue = "0"))
-    def enabled = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
+    def enabled = hasVertexSet && hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat)
       project.edgeBundle = op(op.vsSrc, project.vertexSet)(op.vsDst, project.vertexSet).result.es
@@ -70,7 +70,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("header", "Header"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("filter", "(optional) Filtering expression"))
-    def enabled = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
+    def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
         Filename.fromString(params("files")),
@@ -93,7 +93,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"),
       Param("filter", "(optional) Filtering expression"))
-    def enabled = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
+    def enabled = hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
         Filename.fromString(params("files")),
@@ -122,7 +122,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Param("min", "Minimum clique size", defaultValue = "3"))
-    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.FindMaxCliques(params("min").toInt)
       project.segmentations(params("name")) = op(op.es, project.edgeBundle).result.segments
@@ -134,7 +134,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Connected components"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "connected_components"))
-    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ConnectedComponents()
       project.segmentations(params("name")) = op(op.es, project.edgeBundle).result.segments
@@ -147,7 +147,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"))
-    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.AddConstantDoubleEdgeAttribute(params("value").toDouble)
       project.edgeAttributes(params("name")) = op(op.edges, project.edgeBundle).result.attr
@@ -158,7 +158,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new EdgeOperation(_) {
     val title = "Reverse edge direction"
     val parameters = Seq()
-    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ReverseEdges()
       project.edgeBundle = op(op.esAB, project.edgeBundle).result.esBA
@@ -170,7 +170,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Clustering coefficient"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
-    def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ClusteringCoefficient()
       project.vertexAttributes(params("name")) = op(op.es, project.edgeBundle).result.clustering
@@ -183,7 +183,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "out_degree"),
       Param("w", "Weighted edges", options = edgeAttributes[Double]))
-    def enabled = if (edgeAttributes[Double].isEmpty) FEStatus.failure("No numeric attributes.") else FEStatus.success
+    def enabled = FEStatus.assert(edgeAttributes[Double].isEmpty, "No numeric attributes.")
     def apply(params: Map[String, String]) = {
       val op = graph_operations.WeightedOutDegree()
       val attr = project.edgeAttributes(params("w")).runtimeSafeCast[Double]
@@ -196,7 +196,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new VertexOperation(_) {
     val title = "Example Graph"
     val parameters = Seq()
-    def enabled = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
+    def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val g = graph_operations.ExampleGraph()().result
       project.vertexSet = g.vertices
@@ -211,7 +211,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Vertex attribute to string"
     val parameters = Seq(
       Param("attr", "Vertex attribute", options = vertexAttributes))
-    def enabled = if (vertexAttributes.isEmpty) FEStatus.failure("No vertex attributes.") else FEStatus.success
+    def enabled = FEStatus.assert(vertexAttributes.isEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
       val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[Any]
       val op = graph_operations.VertexAttributeToString[Any]()

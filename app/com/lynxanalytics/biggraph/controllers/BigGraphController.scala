@@ -11,10 +11,15 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
 
-case class FEStatus(success: Boolean, failureReason: String = "")
+case class FEStatus(success: Boolean, failureReason: String = "") {
+  def ||(other: FEStatus) = if (success) this else other
+  def &&(other: FEStatus) = if (success) other else this
+}
 object FEStatus {
   val success = FEStatus(true)
   def failure(failureReason: String) = FEStatus(false, failureReason)
+  def assert(condition: Boolean, failureReason: String) =
+    if (condition) success else failure(failureReason)
 }
 
 case class VertexSetRequest(id: String)
@@ -361,6 +366,10 @@ abstract class Operation(val project: Project, val category: String) {
     UIValue.seq(project.edgeAttributeNames[T])
   protected def segmentations =
     UIValue.seq(project.segmentationNames)
+  protected def hasVertexSet = if (project.vertexSet == null) FEStatus.failure("No vertices.") else FEStatus.success
+  protected def hasNoVertexSet = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
+  protected def hasEdgeBundle = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
+  protected def hasNoEdgeBundle = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
 }
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
