@@ -25,7 +25,7 @@ case class UIValue(
   title: String)
 object UIValue {
   def fromEntity(e: MetaGraphEntity): UIValue = UIValue(e.gUID.toString, e.toString)
-  def seq(list: String*) = list.map(id => UIValue(id, id))
+  def seq(list: Seq[String]) = list.map(id => UIValue(id, id))
 }
 
 case class FEOperationMeta(
@@ -90,8 +90,14 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   val path: SymbolPath = s"projects/$id"
   def toFE(implicit dm: DataManager): FEProject = {
     val notes = manager.scalarOf[String](path / "notes").value
-    FEProject(id, 0, 0, notes, Seq(), Seq(), Seq(), Seq())
+    FEProject(
+      id, 0, 0, notes,
+      UIValue.seq(vertexAttributeNames),
+      UIValue.seq(edgeAttributeNames),
+      UIValue.seq(segmentationNames),
+      Seq())
   }
+
   def vertexSet = ifExists(path / "vertexSet") { manager.vertexSet(_) }
   def vertexSet_=(e: VertexSet) = {
     if (e != vertexSet) {
@@ -327,11 +333,11 @@ abstract class Operation(val project: Project, val category: String) {
   def apply(params: Map[String, String]): FEStatus
   def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled)
   protected def vertexAttributes[T: TypeTag] =
-    project.vertexAttributeNames[T].map(name => UIValue(name, name)).toSeq
+    UIValue.seq(project.vertexAttributeNames[T])
   protected def edgeAttributes[T: TypeTag] =
-    project.edgeAttributeNames[T].map(name => UIValue(name, name)).toSeq
+    UIValue.seq(project.edgeAttributeNames[T])
   protected def segmentations =
-    project.segmentationNames.map(name => UIValue(name, name)).toSeq
+    UIValue.seq(project.segmentationNames)
 }
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
