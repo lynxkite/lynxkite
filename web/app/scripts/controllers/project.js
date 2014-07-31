@@ -30,6 +30,14 @@ angular.module('biggraph')
     $scope.left.state = defaultSideState();
     $scope.right.state = defaultSideState();
 
+    util.deepWatch($scope, 'left.project', function(project) {
+      // Put vertex set and edge bundle in the state.
+      // This is for compatibility with the metaGraph.js-related code in graph-view.js
+      // and could be removed later.
+      $scope.left.state.vertexSet = project.vertexSet;
+      $scope.left.state.edgeBundle = project.edgeBundle;
+    });
+
     util.deepWatch(
       $scope,
       function() { return $location.search(); },
