@@ -147,8 +147,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class EdgeBundleTemplate(srcF: => Symbol, dstF: => Symbol)
-      extends ET[EdgeBundle] {
+  class EdgeBundleTemplate(srcF: => Symbol, dstF: => Symbol, nameOpt: Option[Symbol])
+      extends ET[EdgeBundle](nameOpt) {
     lazy val src = srcF
     lazy val dst = dstF
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
@@ -192,7 +192,9 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   def vertexSet = new VertexSetTemplate(None)
   def vertexSet(name: Symbol) = new VertexSetTemplate(Some(name))
   def edgeBundle(src: VertexSetTemplate, dst: VertexSetTemplate) =
-    new EdgeBundleTemplate(src.name, dst.name)
+    new EdgeBundleTemplate(src.name, dst.name, None)
+  def edgeBundle(src: VertexSetTemplate, dst: VertexSetTemplate, name: Symbol) =
+    new EdgeBundleTemplate(src.name, dst.name, Some(name))
   def vertexAttribute[T](vs: VertexSetTemplate) = new VertexAttributeTemplate[T](vs.name)
   def edgeAttribute[T](eb: EdgeBundleTemplate) = new EdgeAttributeTemplate[T](eb.name)
   def scalar[T] = new ScalarTemplate[T]

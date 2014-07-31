@@ -33,17 +33,28 @@ case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, Tripl
     implicit val id = inputDatas
     val edges = inputs.edges.rdd
     val src = inputs.src.rdd
+    val bySrc = edges
+      .map { case (id, edge) => (edge.src, id) }
+      .groupByKey(src.partitioner.get)
+    output(
+      o.srcEdges,
+      src.leftOuterJoin(bySrc)
+        .mapValues {
+          case (_, Some(it)) => it.toArray
+          case (_, None) => Array[ID]()
+        })
+
     val dst = inputs.dst.rdd
-    output(o.srcEdges,
-      edges
-        .map { case (id, edge) => (edge.src, id) }
-        .groupByKey(src.partitioner.get)
-        .mapValues(_.toArray))
-    output(o.dstEdges,
-      edges
-        .map { case (id, edge) => (edge.dst, id) }
-        .groupByKey(dst.partitioner.get)
-        .mapValues(_.toArray))
+    val byDst = edges
+      .map { case (id, edge) => (edge.dst, id) }
+      .groupByKey(dst.partitioner.get)
+    output(
+      o.dstEdges,
+      dst.leftOuterJoin(byDst)
+        .mapValues {
+          case (_, Some(it)) => it.toArray
+          case (_, None) => Array[ID]()
+        })
   }
 
   override val isHeavy = true
