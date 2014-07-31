@@ -12,9 +12,14 @@ import scala.reflect.runtime.universe.typeOf
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   val Param = FEOperationParameterMeta // Short alias.
 
-  register(new Operation(_) {
+  // Categories.
+  abstract class VertexOperation(p: Project) extends Operation(p, "Vertex operations")
+  abstract class EdgeOperation(p: Project) extends Operation(p, "Edge operations")
+  abstract class AttributeOperation(p: Project) extends Operation(p, "Attribute operations")
+  abstract class SegmentationOperation(p: Project) extends Operation(p, "Segmentation operations")
+
+  register(new VertexOperation(_) {
     val title = "Discard vertices"
-    val category = "Vertex operations"
     val parameters = Seq()
     def enabled = if (project.vertexSet == null) FEStatus.failure("No vertices.") else FEStatus.success
     def apply(params: Map[String, String]) = {
@@ -23,9 +28,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new EdgeOperation(_) {
     val title = "Discard edges"
-    val category = "Edge operations"
     val parameters = Seq()
     def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
     def apply(params: Map[String, String]) = {
@@ -34,9 +38,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new VertexOperation(_) {
     val title = "New vertex set"
-    val category = "Vertex operations"
     val parameters = Seq(
       Param("size", "Vertex set size"))
     def enabled = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
@@ -47,9 +50,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new EdgeOperation(_) {
     val title = "Create random edge bundle"
-    val category = "Edge operations"
     val parameters = Seq(
       Param("density", "density", defaultValue = "0.5"),
       Param("seed", "Seed", defaultValue = "0"))
@@ -61,9 +63,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new VertexOperation(_) {
     val title = "Import vertices"
-    val category = "Vertex operations"
     val parameters = Seq(
       Param("files", "Files"),
       Param("header", "Header"),
@@ -83,9 +84,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new EdgeOperation(_) {
     val title = "Import edges"
-    val category = "Edge operations"
     val parameters = Seq(
       Param("files", "Files"),
       Param("header", "Header"),
@@ -117,9 +117,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new SegmentationOperation(_) {
     val title = "Maximal cliques"
-    val category = "Segmentations"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Param("min", "Minimum clique size", defaultValue = "3"))
@@ -131,9 +130,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new SegmentationOperation(_) {
     val title = "Connected components"
-    val category = "Segmentations"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "connected_components"))
     def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
@@ -144,9 +142,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new AttributeOperation(_) {
     val title = "Add constant edge attribute"
-    val category = "Attribute operations"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"))
@@ -158,9 +155,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new EdgeOperation(_) {
     val title = "Reverse edge direction"
-    val category = "Edge operations"
     val parameters = Seq()
     def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
     def apply(params: Map[String, String]) = {
@@ -170,9 +166,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new AttributeOperation(_) {
     val title = "Clustering coefficient"
-    val category = "Attribute operations"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
     def enabled = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
@@ -183,9 +178,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new AttributeOperation(_) {
     val title = "Weighted out degree"
-    val category = "Attribute operations"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "out_degree"),
       Param("w", "Weighted edges", options = edgeAttributes[Double]))
@@ -199,9 +193,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new VertexOperation(_) {
     val title = "Example Graph"
-    val category = "Vertex operations"
     val parameters = Seq()
     def enabled = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
     def apply(params: Map[String, String]) = {
@@ -214,9 +207,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new Operation(_) {
+  register(new AttributeOperation(_) {
     val title = "Vertex attribute to string"
-    val category = "Attribute operations"
     val parameters = Seq(
       Param("attr", "Vertex attribute", options = vertexAttributes))
     def enabled = if (vertexAttributes.isEmpty) FEStatus.failure("No vertex attributes.") else FEStatus.success
