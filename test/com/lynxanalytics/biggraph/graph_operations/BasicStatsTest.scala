@@ -8,9 +8,14 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class BasicStatsTest extends FunSuite with TestGraphOp {
   val g = ExampleGraph()().result
 
-  test("compute basic stats - count") {
+  test("compute basic stats - vertex count") {
     val op = CountVertices()
     val out = op(op.vertices, g.vertices).result
+    assert(out.count.value === 4)
+  }
+  test("compute basic stats - edge count") {
+    val op = CountEdges()
+    val out = op(op.edges, g.edges).result
     assert(out.count.value === 4)
   }
   test("compute basic stats - min max values") {

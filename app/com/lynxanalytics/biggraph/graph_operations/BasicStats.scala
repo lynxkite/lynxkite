@@ -30,6 +30,31 @@ case class CountVertices()
   }
 }
 
+object CountEdges {
+  class Input extends MagicInputSignature {
+    val (vs, edges) = graph
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val count = scalar[Long]
+  }
+}
+case class CountEdges()
+    extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] {
+  import CountEdges._
+  @transient override lazy val inputs = new Input()
+
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    output(o.count, inputs.edges.rdd.count)
+  }
+}
+
 object ComputeMinMax {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
