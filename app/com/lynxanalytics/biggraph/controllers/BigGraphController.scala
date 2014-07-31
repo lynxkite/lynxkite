@@ -111,16 +111,21 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
   def edgeBundle = ifExists(path / "edgeBundle") { manager.edgeBundle(_) }
   def edgeBundle_=(e: EdgeBundle) = {
     if (e != edgeBundle) {
+      assert(vertexSet != null, s"No vertex set for project $id")
+      assert(e.srcVertexSet == vertexSet, s"Edge bundle does not match vertex set for project $id")
+      assert(e.dstVertexSet == vertexSet, s"Edge bundle does not match vertex set for project $id")
       // TODO: "Induce" the attributes to the new edge bundle.
       edgeAttributes = Map()
     }
     set(path / "edgeBundle", e)
   }
 
-  def vertexAttributes = new Holder[VertexAttribute[_]]("vertexAttributes")
+  def vertexAttributes = new VertexAttributeHolder
   def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = {
     ifExists(path / "vertexAttributes") { manager.rmTag(_) }
+    assert(vertexSet != null, s"No vertex set for project $id")
     for ((name, attr) <- attrs) {
+      assert(attr.vertexSet == vertexSet, s"Vertex attribute $name does not match vertex set for project $id")
       manager.setTag(path / "vertexAttributes" / name, attr)
     }
   }
@@ -128,10 +133,12 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
   }.toSeq
 
-  def edgeAttributes = new Holder[EdgeAttribute[_]]("edgeAttributes")
+  def edgeAttributes = new EdgeAttributeHolder
   def edgeAttributes_=(attrs: Map[String, EdgeAttribute[_]]) = {
     ifExists(path / "edgeAttributes") { manager.rmTag(_) }
+    assert(edgeBundle != null, s"No edge bundle for project $id")
     for ((name, attr) <- attrs) {
+      assert(attr.edgeBundle == edgeBundle, s"Edge attribute $name does not match edge bundle for project $id")
       manager.setTag(path / "edgeAttributes" / name, attr)
     }
   }
@@ -139,11 +146,13 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
   }.toSeq
 
-  def segmentations = new Holder[VertexSet]("edgeAttributes")
-  def segmentations_=(attrs: Map[String, VertexSet]) = {
+  def segmentations = new SegmentationHolder
+  def segmentations_=(segs: Map[String, VertexSet]) = {
     ifExists(path / "segmentations") { manager.rmTag(_) }
-    for ((name, attr) <- attrs) {
-      manager.setTag(path / "segmentations" / name, attr)
+    assert(vertexSet != null, s"No vertex set for project $id")
+    for ((name, seg) <- segs) {
+      // TODO: Assert that this is a segmentation for vertexSet.
+      manager.setTag(path / "segmentations" / name, seg)
     }
   }
   def segmentationNames = segmentations.map { case (name, attr) => name }.toSeq
@@ -154,13 +163,27 @@ class Project(val id: String)(implicit manager: MetaGraphManager) {
     if (entity == null) manager.rmTag(tag) else manager.setTag(tag, entity)
   private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
 
-  class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
-    def update(name: String, entity: T) =
+  abstract class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
+    def validate(name: String, entity: T): Unit
+    def update(name: String, entity: T) = {
+      validate(name, entity)
       manager.setTag(path / dir / name, entity)
+    }
     def apply(name: String) =
       manager.entity(path / dir / name).asInstanceOf[T]
     def iterator =
       ls(dir).map(_.last.name).map(p => p -> apply(p)).iterator
+  }
+  class VertexAttributeHolder extends Holder[VertexAttribute[_]]("vertexAttributes") {
+    def validate(name: String, attr: VertexAttribute[_]) =
+      assert(attr.vertexSet == vertexSet, s"Vertex attribute $name does not match vertex set for project $id")
+  }
+  class EdgeAttributeHolder extends Holder[EdgeAttribute[_]]("edgeAttributes") {
+    def validate(name: String, attr: EdgeAttribute[_]) =
+      assert(attr.edgeBundle == edgeBundle, s"Edge attribute $name does not match edge bundle for project $id")
+  }
+  class SegmentationHolder extends Holder[VertexSet]("segmentations") {
+    def validate(name: String, seg: VertexSet) = () // TODO: Validate segmentation.
   }
 }
 
