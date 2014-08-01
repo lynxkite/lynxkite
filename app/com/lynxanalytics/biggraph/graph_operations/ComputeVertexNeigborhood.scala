@@ -9,6 +9,7 @@ object ComputeVertexNeighborhood {
     val edges = edgeBundle(vertices, vertices)
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val center = scalar[ID]
     val neighborsIdToIndex = scalar[Map[ID, Int]]
   }
 }
@@ -37,6 +38,7 @@ case class ComputeVertexNeighborhood(
         .collect
         .toSet
     }
+    output(o.center, c)
     output(o.neighborsIdToIndex, neigborhood.zipWithIndex.toMap)
   }
 }

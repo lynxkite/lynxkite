@@ -142,13 +142,15 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       else Some(request.centralVertexId.toLong)
 
     val nop = graph_operations.ComputeVertexNeighborhood(center, request.radius)
-    val idToIdx =
-      nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result.neighborsIdToIndex.value
+    val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
+    val idToIdx = nopres.neighborsIdToIndex.value
 
     val iaaop = graph_operations.IdAsAttribute()
     val idAttr = iaaop(iaaop.vertices, vertexSet).result.vertexIds
+
     val fop = graph_operations.VertexAttributeFilter(graph_operations.OneOf(idToIdx.keySet))
     val sample = fop(fop.attr, idAttr).result.fvs
+
     val filtered = filterMore(sample, request.filters)
 
     val op = graph_operations.SampledView(
@@ -172,7 +174,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label)),
-      mode = "sampled")
+      mode = "sampled",
+      center = nopres.center.value)
   }
 
   def getDiagramFromBucketedAttributes[S, T](
