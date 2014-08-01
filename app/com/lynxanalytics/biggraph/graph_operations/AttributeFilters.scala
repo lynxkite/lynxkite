@@ -11,12 +11,8 @@ abstract class Filter[T] extends Serializable {
 }
 
 object VertexAttributeFilter {
-  class Input[T] extends MagicInputSignature {
-    val vs = vertexSet
-    val attr = vertexAttribute[T](vs)
-  }
   class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input[T]) extends MagicOutput(instance) {
+                  inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
     val fvs = vertexSet
     val identity = edgeBundle(inputs.vs.entity, fvs)
     implicit val tt = inputs.attr.typeTag
@@ -24,10 +20,10 @@ object VertexAttributeFilter {
   }
 }
 case class VertexAttributeFilter[T](filter: Filter[T])
-    extends TypedMetaGraphOp[VertexAttributeFilter.Input[T], VertexAttributeFilter.Output[T]] {
+    extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeFilter.Output[T]] {
   import VertexAttributeFilter._
 
-  @transient override lazy val inputs = new Input[T]
+  @transient override lazy val inputs = new VertexAttributeInput[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
@@ -113,6 +109,6 @@ case class DoubleGE(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value >= bound
 }
 
-case class StringOneOf(options: Set[String]) extends Filter[String] {
-  def matches(value: String) = options.contains(value)
+case class OneOf[T](options: Set[T]) extends Filter[T] {
+  def matches(value: T) = options.contains(value)
 }

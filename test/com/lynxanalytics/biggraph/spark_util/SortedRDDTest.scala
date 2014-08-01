@@ -56,6 +56,31 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     }
   }
 
+  test("benchmark leftOuterJoin if right is not sorted", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int, frac: Double) {
+      val data = genData(parts, rows, 1).toSortedRDD.cache
+      data.calculate
+      val other = genData(parts, rows, 2).sample(false, frac, 0)
+        .partitionBy(data.partitioner.get).cache
+      other.calculate
+      def oldJoin = getSum(data.leftOuterJoin(other).mapValues { case (a, b) => a -> b.getOrElse('0') }.toSortedRDD)
+      def newJoin = getSum(data.sortedLeftOuterJoin(other.toSortedRDD).mapValues { case (a, b) => a -> b.getOrElse('0') }.asSortedRDD)
+      def getSum(rdd: RDD[(Long, (Char, Char))]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
+    }
+    val parts = 4
+    val rows = 100000
+    val table = "%10s | %10s | %10s"
+    println(table.format("frac", "old (ms)", "new (ms)"))
+    for (round <- 1 to 10) {
+      val frac = round * 0.1
+      val demo = new Demo(parts, rows, frac)
+      val mew = Timed(demo.newJoin)
+      val old = Timed(demo.oldJoin)
+      println(table.format(frac, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value == old.value)
+    }
+  }
+
   test("benchmark distinct", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))

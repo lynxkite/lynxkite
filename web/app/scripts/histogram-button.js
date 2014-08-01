@@ -14,14 +14,13 @@ angular.module('biggraph').directive('histogramButton', function(util) {
         }
         var filters = [];
         var state = scope.side.state;
-        var data = scope.side.data;
         for (var filteredAttr in state.filters) {
           if (state.filters[filteredAttr] !== '') {
             filters.push({ attributeId: filteredAttr, valueSpec: state.filters[filteredAttr] });
           }
         }
         var q = {
-          vertexSetId: data.id,
+          vertexSetId: scope.side.project.vertexSet,
           filters: filters,
           mode: 'bucketed',
           xBucketingAttributeId: scope.attr.id,

@@ -1,43 +1,45 @@
 <div class="col-sm-6">
-  <progressbar ng-if="side.data && !side.data.$resolved" value="100" class="progress-striped active">
+  <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
     Loading...
   </progressbar>
 
-  <div class="panel panel-danger" ng-if="side.data.error">
+  <div class="panel panel-danger" ng-if="side.project.error">
     <div class="panel-heading">
       Error
     </div>
     <div class="panel-body">
-      {{side.data.error}}
+      {{side.project.error}}
     </div>
   </div>
 
-  <div class="panel panel-default" ng-if="side.data.$resolved && !side.data.error">
+  <div class="panel panel-default" ng-if="side.project.$resolved && !side.project.error">
     <operation-toolbox side="side"></operation-toolbox>
 
     <div class="panel-heading project-name">
-      {{spaced(side.data.id)}}
+      {{spaced(side.project.name)}}
       <div class="btn-group pull-right">
-        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable>
-          <i tooltip="Bucketed&nbsp;Graph" class="glyphicon glyphicon-th"></i>
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable
+          tooltip="Bucketed&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-th"></i>
         </label>
-        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable>
-          <i tooltip="Sampled&nbsp;Graph" class="glyphicon glyphicon-eye-open"></i>
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
+          tooltip="Sampled&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-eye-open"></i>
         </label>
       </div>
       <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
-        tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets"
+        tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets" tooltip-placement="bottom"
         type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
       <input class="right-range-input" ng-show="side.state.graphMode == 'sampled'"
-        tooltip="radius {{side.state.sampleRadius}}"
+        tooltip="radius {{side.state.sampleRadius}}" tooltip-placement="bottom"
         type="range" max="10" step="1" ng-model="side.state.sampleRadius">
     </div>
 
     <div class="list-group">
       <li class="list-group-item">
         <span class="lead">
-          {{human(side.data.vertexCount)}} <span class="de-emph">vertices with</span>
-          {{human(side.data.edgeCount)}} <span class="de-emph">edges</span>
+          {{human(side.project.vertexCount)}} <span class="de-emph">vertices with</span>
+          {{human(side.project.edgeCount)}} <span class="de-emph">edges</span>
         </span>
       </li>
 
@@ -45,25 +47,25 @@
         <textarea
           class="notes"
           placeholder="Enter project notes here"
-          rows="{{side.data.notes.split('\n').length}}"
-          ng-model="side.data.notes"
+          rows="{{side.project.notes.split('\n').length}}"
+          ng-model="side.project.notes"
           ng-trim="false"></textarea>
       </li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>
       </li>
-      <li class="sublist list-group-item" ng-repeat="attr in side.data.vertexAttributes" vertex-attribute="attr" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="attr in side.project.vertexAttributes" vertex-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> edges</span>
       </li>
-      <li class="sublist list-group-item" ng-repeat="attr in side.data.edgeAttributes" edge-attribute="attr" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="attr in side.project.edgeAttributes" edge-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead de-emph">Segmentations</span>
       </li>
-      <li class="sublist list-group-item" ng-repeat="segmentation in side.data.segmentations" segmentation="segmentation" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
 
     </div>
   </div>
