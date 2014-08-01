@@ -96,7 +96,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     return new SortedRDD(distinct)
   }
 
-  def collectFirstNValues(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
+  def collectFirstNValuesOrSo(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
     val numPartitions = partitions.size
     val div = n / numPartitions
     val mod = n % numPartitions

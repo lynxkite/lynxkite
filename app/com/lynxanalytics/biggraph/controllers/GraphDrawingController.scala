@@ -134,37 +134,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
   }
 
-  /*def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
-    val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val countOp = graph_operations.CountVertices()
-    val count = countOp(countOp.vertices, vertexSet).result.count.value
-    val filtered = filter(vertexSet, request.filters)
-    val op = graph_operations.SampledView(
-      request.centralVertexId,
-      request.radius,
-      request.sampleSmearEdgeBundleId.nonEmpty,
-      request.sizeAttributeId.nonEmpty,
-      request.labelAttributeId.nonEmpty)
-    var inputs = MetaDataSet(Map('vertices -> filtered))
-    if (request.sampleSmearEdgeBundleId.nonEmpty) {
-      inputs ++= MetaDataSet(Map('edges -> metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)))
-    }
-    if (request.sizeAttributeId.nonEmpty) {
-      inputs ++= MetaDataSet(Map('sizeAttr -> metaManager.vertexAttribute(request.sizeAttributeId.asUUID)))
-    }
-    if (request.labelAttributeId.nonEmpty) {
-      inputs ++= MetaDataSet(Map('labelAttr -> metaManager.vertexAttribute(request.labelAttributeId.asUUID)))
-    }
-    val diagramMeta = metaManager.apply(op, inputs)
-      .outputs.scalars('svVertices).runtimeSafeCast[Seq[graph_operations.SampledViewVertex]]
-    val vertices = dataManager.get(diagramMeta).value
-
-    VertexDiagramResponse(
-      diagramId = diagramMeta.gUID.toString,
-      vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label)),
-      mode = "sampled")
-  }*/
-
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
@@ -279,49 +248,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return new graph_util.BundleChain(chain).getCompositeEdgeBundle(metaManager)
   }
 
-  private def directVsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
-    if (inst.operation.isInstanceOf[graph_operations.SampledView]) {
-      inst.outputs.vertexSets('sample)
-    } else {
-      inst.inputs.vertexSets('vertices)
-    }
-  }
-
-  private def vsFromOp(inst: MetaGraphOperationInstance): VertexSet = {
-    val gridInputVertices = directVsFromOp(inst)
-    if (gridInputVertices.source.operation.isInstanceOf[graph_operations.VertexSetIntersection]) {
-      val firstIntersected = gridInputVertices.source.inputs.vertexSets('vs0)
-      assert(firstIntersected.source.operation
-        .isInstanceOf[graph_operations.VertexAttributeFilter[_]])
-      firstIntersected.source.inputs.vertexSets('vs)
-    } else {
-      gridInputVertices
-    }
-  }
-
-  private def inducedBundle(eb: EdgeBundle,
-                            src: VertexSet,
-                            dst: VertexSet): EdgeBundle =
-    metaManager.apply(
-      new graph_operations.InducedEdgeBundle(),
-      'edges -> eb,
-      'srcSubset -> src,
-      'dstSubset -> dst).outputs.edgeBundles('induced)
-
   private def tripletMapping(eb: EdgeBundle): (VertexAttribute[Array[ID]], VertexAttribute[Array[ID]]) = {
-    val metaOut = metaManager.apply(
-      graph_operations.TripletMapping(),
-      'edges -> eb).outputs
-    return (
-      metaOut.vertexAttributes('srcEdges).runtimeSafeCast[Array[ID]],
-      metaOut.vertexAttributes('dstEdges).runtimeSafeCast[Array[ID]])
-  }
-
-  private def idxsFromInst(inst: MetaGraphOperationInstance): VertexAttribute[Int] =
-    inst.outputs.vertexAttributes('feIdxs).runtimeSafeCast[Int]
-
-  private def numYBuckets(inst: MetaGraphOperationInstance): Int = {
-    inst.operation.asInstanceOf[graph_operations.VertexBucketGrid[_, _]].yBucketer.numBuckets
+    val op = graph_operations.TripletMapping()
+    val res = op(op.edges, eb).result
+    val srcMapping = res.srcEdges
+    val dstMapping = res.dstEdges
+    srcMapping.rdd.cache
+    dstMapping.rdd.cache
+    return (srcMapping, dstMapping)
   }
 
   private def mappedAttribute[T](mapping: VertexAttribute[Array[ID]],
