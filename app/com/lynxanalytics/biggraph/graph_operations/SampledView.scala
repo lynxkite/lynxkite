@@ -1,83 +1,64 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.MapBucketer
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class SampledViewVertex(id: Long, size: Double, label: String)
 
 object SampledView {
-  class Input(hasEdges: Boolean, hasSizes: Boolean, hasLabels: Boolean) extends MagicInputSignature {
+  class Input(hasSizes: Boolean, hasLabels: Boolean) extends MagicInputSignature {
     val vertices = vertexSet
-    val edges = if (hasEdges) edgeBundle(vertices, vertices) else null
+    val ids = vertexAttribute[ID](vertices)
+    val filtered = vertexSet
     val sizeAttr = if (hasSizes) vertexAttribute[Double](vertices) else null
     val labelAttr = if (hasLabels) vertexAttribute[String](vertices) else null
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-    val sample = vertexSet
-    val feIdxs = vertexAttribute[Int](sample)
     val svVertices = scalar[Seq[SampledViewVertex]]
+    val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
   }
 }
 import SampledView._
 
 case class SampledView(
-    center: String,
-    radius: Int,
-    hasEdges: Boolean,
+    idToIdx: Map[ID, Int],
     hasSizes: Boolean,
     hasLabels: Boolean) extends TypedMetaGraphOp[Input, Output] {
 
-  val hasCenter = center.nonEmpty
-  @transient override lazy val inputs = new Input(hasEdges, hasSizes, hasLabels)
+  @transient override lazy val inputs = new Input(hasSizes, hasLabels)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
-    val vs = inputs.vertices.rdd
-    val vsPart = vs.partitioner.get
-    val c = if (hasCenter) {
-      center.toLong
-    } else {
-      vs.keys.first
-    }
-    val itself = rc.sparkContext.parallelize(Seq(c -> ())).partitionBy(vsPart)
-    val neighborhood = if (hasEdges) {
-      val neighbors = inputs.edges.rdd.values.flatMap {
-        e => Iterator(e.src -> e.dst, e.dst -> e.src)
-      }.partitionBy(vsPart)
-      var collection = itself
-      for (i <- 0 until radius) {
-        collection = collection.leftOuterJoin(neighbors).flatMap {
-          case (v, ((), None)) => Iterator(v -> ())
-          case (v, ((), Some(neighbor))) => Iterator(v -> (), neighbor -> ())
-        }.distinct.partitionBy(vsPart)
-      }
-      collection
-    } else {
-      itself
-    }
+    implicit val instance = output.instance
+
+    val filtered = inputs.filtered.rdd
 
     val sizes = if (hasSizes) {
       inputs.sizeAttr.rdd
     } else {
-      neighborhood.mapValues(_ => 1.0)
+      filtered.mapValues(_ => 1.0).asSortedRDD
     }
     val labels = if (hasLabels) {
       inputs.labelAttr.rdd
     } else {
-      neighborhood.mapValues(_ => "")
+      filtered.mapValues(_ => "").asSortedRDD
     }
-    val svVertices = neighborhood.join(sizes).join(labels).map {
-      case (id, (((), size), label)) => SampledViewVertex(id, size, label)
-    }.collect.toSeq
-    val idxs = svVertices.zipWithIndex.map {
-      case (v, idx) => v.id -> idx
-    }
-    val idxRDD = rc.sparkContext.parallelize(idxs).partitionBy(vsPart)
+    val svVerticesMap = filtered.sortedJoin(sizes).sortedJoin(labels)
+      .collect
+      .map { case (id, (((), size), label)) => (idToIdx(id), SampledViewVertex(id, size, label)) }
+      .toMap
 
-    output(o.sample, neighborhood)
-    output(o.feIdxs, idxRDD)
+    val maxKey = svVerticesMap.keys.max
+    val svVertices = (0 to maxKey)
+      .map(svVerticesMap.get(_).getOrElse(SampledViewVertex(-1, 0, "")))
+      .toSeq
+
     output(o.svVertices, svVertices)
+    output(o.indexingSeq, Seq(BucketedAttribute(inputs.ids, MapBucketer(idToIdx))))
   }
 }

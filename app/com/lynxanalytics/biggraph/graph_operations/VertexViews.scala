@@ -21,10 +21,10 @@ case class VertexView(
   filtered: VertexSet,
   // The indexing of a vertex view happens as a "product" of per attribute bucketers. This means
   // that the final index of a vertex v is:
-  // indexingSeq(0).whichBucket(v) + indexingSeq(0).numBuckets * (
-  //   indexingSeq(1).whichBucket(v) + indexingSeq(1).numBuckets * (
+  // indexingSeq(n-1).whichBucket(v) + indexingSeq(n-1).numBuckets * (
+  //   indexingSeq(n-2).whichBucket(v) + indexingSeq(n-2).numBuckets * (
   //     ...
-  //               indexingSeq(n-1).whichBucket(v)
+  //               indexingSeq(0).whichBucket(v)
   //     ...
   //   )
   // )
@@ -36,8 +36,8 @@ object VertexView {
     val indexerInstance = diagram.source
     val indexingSeq =
       indexerInstance.outputs.scalars('indexingSeq).runtimeSafeCast[Seq[BucketedAttribute[_]]].value
-    val vertexSet = indexerInstance.outputs.vertexSets('vertexSet)
-    val filtered = indexerInstance.outputs.vertexSets('filtered)
+    val vertexSet = indexerInstance.inputs.vertexSets('vertices)
+    val filtered = indexerInstance.inputs.vertexSets('filtered)
     val filters: Seq[FilteredAttribute[_]] = if (filtered.gUID == vertexSet.gUID) {
       Seq()
     } else {
