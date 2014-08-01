@@ -24,11 +24,19 @@ angular.module('biggraph')
     $scope.left = {};
     $scope.right = {};
     $scope.left.reload = function() {
-      $scope.left.data = util.nocache('/ajax/project', { id: $routeParams.project });
+      $scope.left.project = util.nocache('/ajax/project', { name: $routeParams.project });
     };
     $scope.left.reload();
     $scope.left.state = defaultSideState();
     $scope.right.state = defaultSideState();
+
+    util.deepWatch($scope, 'left.project', function(project) {
+      // Put vertex set and edge bundle in the state.
+      // This is for compatibility with the metaGraph.js-related code in graph-view.js
+      // and could be removed later.
+      $scope.left.state.vertexSet = { id: project.vertexSet };
+      $scope.left.state.edgeBundle = { id: project.edgeBundle };
+    });
 
     util.deepWatch(
       $scope,

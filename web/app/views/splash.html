@@ -24,8 +24,8 @@
 
       <p class="alert alert-danger" ng-if="data.error">{{data.error}}</p>
 
-      <a ng-repeat="project in data.projects | filter:searchString" href="#/project/{{project.id}}">
-        <h1>{{spaced(project.id)}}</h1>
+      <a ng-repeat="project in data.projects | filter:searchString" href="#/project/{{project.name}}">
+        <h1>{{spaced(project.name)}}</h1>
         {{human(project.vertexCount)}} vertices, {{human(project.edgeCount)}} edges. {{project.notes}}
       </a>
   </div>
