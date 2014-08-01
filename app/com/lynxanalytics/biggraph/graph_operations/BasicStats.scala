@@ -32,7 +32,9 @@ case class CountVertices()
 
 object CountEdges {
   class Input extends MagicInputSignature {
-    val (vs, edges) = graph
+    val srcVS = vertexSet
+    val dstVS = vertexSet
+    val edges = edgeBundle(srcVS, dstVS)
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
