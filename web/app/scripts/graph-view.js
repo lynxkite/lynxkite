@@ -6,20 +6,20 @@ angular.module('biggraph').directive('graphView', function($window) {
   var util = COMMON_UTIL;
   var directive = {
       template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
-      scope: { ngModel: '=', state: '=' },
+      scope: { graph: '=', left: '=', right: '=' },
       replace: true,
       link: function(scope, element) {
         var gv = new GraphView(scope, element);
         function updateGraph() {
-          if (scope.ngModel === undefined || !scope.ngModel.$resolved) {
+          if (scope.graph === undefined || !scope.graph.$resolved) {
             gv.loading();
-          } else if (scope.ngModel.error) {
-            gv.error(scope.ngModel.error);
+          } else if (scope.graph.error) {
+            gv.error(scope.graph.error);
           } else {
-            gv.update(scope.ngModel);
+            gv.update(scope.graph);
           }
         }
-        scope.$watch('ngModel', updateGraph, true);
+        scope.$watch('graph', updateGraph, true);
         angular.element($window).bind('resize', updateGraph);
       },
     };
@@ -65,8 +65,8 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.update = function(data) {
     var sides = [];
-    if (this.scope.state.left.graphMode) { sides.push(this.scope.state.left); }
-    if (this.scope.state.right.graphMode) { sides.push(this.scope.state.right); }
+    if (this.scope.left.graphMode) { sides.push(this.scope.left); }
+    if (this.scope.right.graphMode) { sides.push(this.scope.right); }
     this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
