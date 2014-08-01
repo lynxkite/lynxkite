@@ -16,7 +16,7 @@ object FEFilters {
     implicit val tt = attr.typeTag
     val innerFilter: Filter[T] =
       if (typeOf[T] =:= typeOf[String]) {
-        StringOneOf(innerSpec.split(",").toSet)
+        OneOf(innerSpec.split(",").toSet)
           .asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[Double]) {
         val doubleFilter = innerSpec match {
