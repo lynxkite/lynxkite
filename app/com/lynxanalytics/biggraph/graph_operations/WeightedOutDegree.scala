@@ -29,7 +29,7 @@ case class WeightedOutDegree() extends TypedMetaGraphOp[EdgeAttributeInput[Doubl
     val outdegrees = inputs.es.rdd.sortedJoin(weights)
       .map { case (_, (edge, weight)) => edge.src -> weight }
       .reduceByKey(vsA.partitioner.get, _ + _).toSortedRDD
-      // TODO: update after reduceSortedByKey is implemented, https://github.com/biggraph/biggraph/issues/333
+    // TODO: update after reduceSortedByKey is implemented, https://github.com/biggraph/biggraph/issues/333
     val result = vsA.sortedLeftOuterJoin(outdegrees).mapValues(_._2.getOrElse(0.0)).asSortedRDD
     output(o.outDegree, result)
   }
