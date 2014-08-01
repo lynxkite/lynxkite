@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object InducedEdgeBundle {
@@ -35,14 +36,14 @@ case class InducedEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
     val dstSubset = inputs.dstSubset.rdd
     val bySrc = edges
       .map { case (id, edge) => (edge.src, (id, edge)) }
-      .partitionBy(srcSubset.partitioner.get)
-      .join(srcSubset)
-      .mapValues { case (idEdge, _) => idEdge }
+      .partitionBy(srcSubset.partitioner.get).toSortedRDD
+      .sortedJoin(srcSubset)
+      .sortedMapValues { case (idEdge, _) => idEdge }
     val byDst = bySrc
       .map { case (vid, (id, edge)) => (edge.dst, (id, edge)) }
-      .partitionBy(dstSubset.partitioner.get)
-      .join(dstSubset)
-      .mapValues { case (idEdge, _) => idEdge }
+      .partitionBy(dstSubset.partitioner.get).toSortedRDD
+      .sortedJoin(dstSubset)
+      .sortedMapValues { case (idEdge, _) => idEdge }
     output(o.induced, byDst.values.partitionBy(edges.partitioner.get))
   }
 
