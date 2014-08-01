@@ -38,12 +38,12 @@ case class InducedEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
       .map { case (id, edge) => (edge.src, (id, edge)) }
       .partitionBy(srcSubset.partitioner.get).toSortedRDD
       .sortedJoin(srcSubset)
-      .sortedMapValues { case (idEdge, _) => idEdge }
+      .mapValues { case (idEdge, _) => idEdge }
     val byDst = bySrc
       .map { case (vid, (id, edge)) => (edge.dst, (id, edge)) }
       .partitionBy(dstSubset.partitioner.get).toSortedRDD
       .sortedJoin(dstSubset)
-      .sortedMapValues { case (idEdge, _) => idEdge }
+      .mapValues { case (idEdge, _) => idEdge }
     output(o.induced, byDst.values.partitionBy(edges.partitioner.get))
   }
 

@@ -86,7 +86,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
         .partitionBy(new HashPartitioner(parts)).toSortedRDD.cache
       sorted.calculate
-      val vanilla = sorted.filter(_ => true).cache
+      val vanilla = sorted.map(x => x).cache
       vanilla.calculate
       def oldDistinct = vanilla.distinct.collect.toSeq.sorted
       def newDistinct = sorted.distinct.collect.toSeq.sorted
@@ -114,9 +114,9 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
   test("sorted mapValues") {
     val sorted = genData(4, 1000, 1).values.map(x => (x, x))
       .partitionBy(new HashPartitioner(4)).toSortedRDD
-    val mew = sorted.sortedMapValues(x => 'a')
-    val mewKeys = sorted.sortedMapValuesWithKeys(x => 'a')
-    val old = sorted.mapValues(x => 'a')
+    val mew = sorted.mapValues(x => 'a')
+    val mewKeys = sorted.mapValuesWithKeys(x => 'a')
+    val old = sorted.map(x => x).mapValues(x => 'a')
     assert(mew.collect.toMap == old.collect.toMap)
     assert(mew.collect.toMap == mewKeys.collect.toMap)
   }
@@ -127,7 +127,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
         .partitionBy(new HashPartitioner(parts)).toSortedRDD.cache
       sorted.calculate
       def oldMV = sorted.map({ case (id, x) => id -> (id, x) }).partitionBy(sorted.partitioner.get).toSortedRDD.collect.toMap
-      def newMV = sorted.sortedMapValuesWithKeys({ case (id, x) => (id, x) }).collect.toMap
+      def newMV = sorted.mapValuesWithKeys({ case (id, x) => (id, x) }).collect.toMap
     }
     val parts = 4
     val table = "%10s | %10s | %10s"

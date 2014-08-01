@@ -4,6 +4,8 @@ import org.apache.spark.{ Partition, TaskContext }
 import org.apache.spark.rdd._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import scala.reflect.ClassTag
+
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {
@@ -80,15 +82,13 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     return new SortedRDD(zipped)
   }
 
-  def sortedMapValues[U](f: V => U): SortedRDD[K, U] = {
-    val mapped = this.mapPartitions({ it =>
-      it.map { case (k, v) => (k, f(v)) }
-    }, preservesPartitioning = true)
+  def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, U] = {
+    val mapped = self.mapValues(x => f(x))
     return new SortedRDD(mapped)
   }
 
   // This version takes a Key-Value tuple as argument.
-  def sortedMapValuesWithKeys[U](f: ((K, V)) => U): SortedRDD[K, U] = {
+  def mapValuesWithKeys[U](f: ((K, V)) => U): SortedRDD[K, U] = {
     val mapped = this.mapPartitions({ it =>
       it.map { case (k, v) => (k, f(k, v)) }
     }, preservesPartitioning = true)
