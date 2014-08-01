@@ -58,7 +58,7 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     output(o.yBuckets, yBuckets)
     val xyBuckets = xBuckets.sortedJoin(yBuckets)
     val sampleSize = xBucketer.numBuckets * yBucketer.numBuckets * 1000000
-    val sample = xyBuckets.collectFirstNValues(sampleSize)
+    val sample = xyBuckets.collectFirstNValuesOrSo(sampleSize)
     output(
       o.bucketSizes,
       sample
