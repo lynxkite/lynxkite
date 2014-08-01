@@ -80,7 +80,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     return new SortedRDD(zipped)
   }
 
-  def sortedMapValues[U](f: V => U): RDD[(K, U)] = {
+  def sortedMapValues[U](f: V => U): SortedRDD[K, U] = {
     val mapped = this.mapPartitions({ it =>
       it.map { case (k, v) => (k, f(v)) }
     }, preservesPartitioning = true)
@@ -88,7 +88,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
   }
 
   // This version takes a Key-Value tuple as argument.
-  def sortedMapValuesWithKeys[U](f: ((K, V)) => U): RDD[(K, U)] = {
+  def sortedMapValuesWithKeys[U](f: ((K, V)) => U): SortedRDD[K, U] = {
     val mapped = this.mapPartitions({ it =>
       it.map { case (k, v) => (k, f(k, v)) }
     }, preservesPartitioning = true)
