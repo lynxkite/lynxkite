@@ -15,6 +15,9 @@ object ExampleGraph {
     val comment = edgeAttribute[String](edges)
     val weight = edgeAttribute[Double](edges)
     val greeting = scalar[String]
+    // For wholesale attribute access.
+    val edgeAttributes = Map("comment" -> comment, "weight" -> weight)
+    val vertexAttributes = Map("name" -> name, "age" -> age)
   }
 }
 import ExampleGraph._

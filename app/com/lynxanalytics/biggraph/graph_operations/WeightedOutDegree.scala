@@ -4,6 +4,7 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object WeightedOutDegree {
   class Output(implicit instance: MetaGraphOperationInstance,
@@ -25,10 +26,11 @@ case class WeightedOutDegree() extends TypedMetaGraphOp[EdgeAttributeInput[Doubl
     implicit val id = inputDatas
     val vsA = inputs.src.rdd
     val weights = inputs.attr.rdd
-    val outdegrees = inputs.es.rdd.join(weights)
+    val outdegrees = inputs.es.rdd.sortedJoin(weights)
       .map { case (_, (edge, weight)) => edge.src -> weight }
-      .reduceByKey(vsA.partitioner.get, _ + _)
-    val result = vsA.leftOuterJoin(outdegrees).mapValues(_._2.getOrElse(0.0))
+      .reduceByKey(vsA.partitioner.get, _ + _).toSortedRDD
+    // TODO: update after reduceSortedByKey is implemented, https://github.com/biggraph/biggraph/issues/333
+    val result = vsA.sortedLeftOuterJoin(outdegrees).mapValues(_._2.getOrElse(0.0)).asSortedRDD
     output(o.outDegree, result)
   }
 }

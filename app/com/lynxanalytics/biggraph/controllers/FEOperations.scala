@@ -375,7 +375,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val parameters = Seq(
       Param("vattrs", "Vertex attributes", kind = "multi-vertex-attribute"),
       Param("eattrs", "Edge attributes", kind = "multi-edge-attribute"),
-      Param("type", "Convert into", options = UIValue.seq("string", "double")))
+      Param("type", "Convert into", options = UIValue.seq(Seq("string", "double"))))
 
     def apply(params: Map[String, String]): FEStatus = {
       val vattrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")

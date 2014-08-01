@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
+import scala.math.Ordering.Implicits._
 
 object UpperBoundFilter {
   class Output[T](implicit instance: MetaGraphOperationInstance,
@@ -26,9 +27,8 @@ case class UpperBoundFilter[T: Ordering](bound: T)
     implicit val id = inputDatas
     implicit val tt = inputs.attr.data.typeTag
     implicit val ct = inputs.attr.data.classTag
-    val ord = implicitly[Ordering[T]]
     val attr = inputs.attr.rdd
-    val fattr = attr.filter { case (id, v) => ord.lteq(v, bound) }
+    val fattr = attr.filter { case (id, v) => v <= bound }
     output(o.fvs, fattr.mapValues(_ => ()))
     val identity = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
     output(o.identity, identity)

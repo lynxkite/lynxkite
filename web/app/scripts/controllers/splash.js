@@ -5,10 +5,10 @@ angular.module('biggraph')
     $scope.data = util.nocache('/ajax/splash');
     $scope.createProject = function() {
       $scope.newProject.sending = true;
-      var id = $scope.newProject.name.replace(/ /g, '_');
+      var name = $scope.newProject.name.replace(/ /g, '_');
       var notes = $scope.newProject.notes;
-      $resource('/ajax/createProject').save({ id: id, notes: notes }, function() {
-        $location.path('/project/' + id);
+      $resource('/ajax/createProject').save({ name: name, notes: notes }, function() {
+        $location.path('/project/' + name);
       }, function(error) {
         console.log(error);
         $scope.newProject.sending = false;
