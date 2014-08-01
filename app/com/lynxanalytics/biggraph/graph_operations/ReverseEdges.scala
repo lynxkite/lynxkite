@@ -26,7 +26,7 @@ case class ReverseEdges() extends TypedMetaGraphOp[Input, Output] {
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val esBA = inputs.esAB.rdd.mapValues(e => Edge(e.dst, e.src))
+    val esBA = inputs.esAB.rdd.sortedMapValues(e => Edge(e.dst, e.src))
     output(o.esBA, esBA)
   }
 }
