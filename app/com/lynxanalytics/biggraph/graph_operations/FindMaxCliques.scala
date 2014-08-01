@@ -130,7 +130,7 @@ case class FindMaxCliques(minCliqueSize: Int) extends TypedMetaGraphOp[GraphInpu
                              minCliqueSize: Int,
                              numTasks: Int): rdd.RDD[List[ID]] = {
     val broadcastGraph = sc.broadcast(cug)
-    g.rdd.map(_._1).repartition(numTasks).flatMap(
+    g.rdd.keys.repartition(numTasks).flatMap(
       v => {
         val fullGraph = broadcastGraph.value
         val markedCandidates =
