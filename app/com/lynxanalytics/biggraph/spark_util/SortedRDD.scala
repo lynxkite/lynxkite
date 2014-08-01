@@ -16,6 +16,7 @@ object SortedRDD {
 
 // An RDD with each partition sorted by the key. "self" must already be sorted.
 class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends RDD[(K, V)](self) {
+  assert(self.partitioner.isDefined)
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
