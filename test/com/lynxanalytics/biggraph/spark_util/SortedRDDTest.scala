@@ -103,4 +103,11 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       assert(mew.value == old.value)
     }
   }
+
+  test("sorted filter") {
+    val sorted = genData(4, 1000, 1).values.map(x => (x, x))
+      .partitionBy(new HashPartitioner(4)).toSortedRDD
+    val filtered = sorted.filter(_._2 != 'a')
+    assert(sorted.count > filtered.count)
+  }
 }

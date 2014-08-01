@@ -1,8 +1,10 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark.{ Partition, TaskContext }
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {
   // Creates a SortedRDD from an unsorted RDD.
@@ -13,7 +15,6 @@ object SortedRDD {
   def fromSorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
     new SortedRDD(rdd)
 }
-
 // An RDD with each partition sorted by the key. "self" must already be sorted.
 class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends RDD[(K, V)](self) {
   assert(self.partitioner.isDefined)
@@ -77,6 +78,10 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
     val zipped = this.zipPartitions(other, true) { (it1, it2) => leftOuterMerge(it1.buffered, it2.buffered).iterator }
     return new SortedRDD(zipped)
+  }
+
+  override def filter(f: ((K, V)) => Boolean): SortedRDD[K, V] = {
+    super.filter(f).toSortedRDD
   }
 
   override def distinct: SortedRDD[K, V] = {
