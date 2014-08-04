@@ -222,6 +222,8 @@ object ImportEdgeListForExistingVertexSet {
   class Input extends MagicInputSignature {
     val sources = vertexSet
     val destinations = vertexSet
+    val srcIds = vertexAttribute[String](sources)
+    val dstIds = vertexAttribute[String](destinations)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input,
@@ -244,11 +246,22 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
-    output(o.edges, columns(src).join(columns(dst)).mapValues {
-      case (src, dst) => Edge(src.toLong, dst.toLong)
-    })
+    val srcToId = inputs.srcIds.rdd.map { case (k, v) => v -> k }
+    val dstToId = inputs.dstIds.rdd.map { case (k, v) => v -> k }
+    val edgeSrcDst = columns(src).join(columns(dst))
+    val bySrc = edgeSrcDst.map {
+      case (edge, (src, dst)) => src -> (edge, dst)
+    }
+    val byDst = bySrc.join(srcToId).map {
+      case (src, ((edge, dst), sid)) => dst -> (edge, sid)
+    }
+    val edges = byDst.join(dstToId).map {
+      case (dst, ((edge, sid), did)) => edge -> Edge(sid, did)
+    }
+    output(o.edges, edges.partitionBy(rc.defaultPartitioner))
   }
 
   override val isHeavy = true
