@@ -90,13 +90,13 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val title = "Import edges"
     val category = "Edge operations"
     val parameters = Seq(
-      Param("vsSrc", "Source vertex set", kind = "vertex-set"),
-      Param("vsDst", "Destination vertex set", kind = "vertex-set"),
+      Param("vsSrc", "Source vertex id attributes", kind = "vertex-attribute"),
+      Param("vsDst", "Destination vertex id attributes", kind = "vertex-attribute"),
       Param("files", "Files"),
       Param("header", "Header"),
       Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("srcField", "Source ID field (numeric)"),
-      Param("dstField", "Destination ID field (numeric)"),
+      Param("srcField", "Source ID field"),
+      Param("dstField", "Destination ID field "),
       Param("filter", "(optional) Filtering expression"))
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
@@ -108,8 +108,8 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       val dstField = params("dstField")
       manager.show(
         graph_operations.ImportEdgeListForExistingVertexSet(csv, srcField, dstField),
-        'sources -> manager.vertexSet(params("vsSrc").asUUID),
-        'destinations -> manager.vertexSet(params("vsDst").asUUID))
+        'srcIds -> manager.vertexSet(params("vsSrc").asUUID),
+        'dstIds -> manager.vertexSet(params("vsDst").asUUID))
       FEStatus.success
     }
   }
