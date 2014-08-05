@@ -56,6 +56,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[graph_operations.SampledViewVertex]])
     kryo.register(classOf[mutable.WrappedArray$ofInt])
     kryo.register(('x', 'x').getClass)
+    kryo.register(classOf[scala.Tuple2[Double, Double]])
+    kryo.register(classOf[Array[Tuple2[Long, Int]]])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
