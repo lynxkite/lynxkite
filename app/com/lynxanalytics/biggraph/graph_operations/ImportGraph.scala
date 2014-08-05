@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.util.{ Failure, Success, Try }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.spark.rdd.RDD
@@ -113,7 +114,7 @@ case class CSV(file: Filename,
 }
 
 abstract class ImportCommon {
-  type Columns = Map[String, RDD[(ID, String)]]
+  type Columns = Map[String, SortedRDD[ID, String]]
 
   val csv: CSV
 
@@ -123,7 +124,7 @@ abstract class ImportCommon {
 
   protected def readColumns(rc: RuntimeContext, csv: CSV): Columns = {
     val lines = csv.lines(rc.sparkContext)
-    val numbered = lines.randomNumbered(rc.defaultPartitioner.numPartitions).cache
+    val numbered = lines.randomNumbered(rc.defaultPartitioner.numPartitions).toSortedRDD.cache
     return csv.fields.zipWithIndex.map {
       case (field, idx) => field -> numbered.mapValues(line => line(idx))
     }.toMap
@@ -198,19 +199,20 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.randomNumbered(rc.defaultPartitioner.numPartitions)
+    val idToName = names.randomNumbered(rc.defaultPartitioner.numPartitions).toSortedRDD
     val nameToId = idToName.map { case (id, name) => (name, id) }
-    val edgeSrcDst = columns(src).join(columns(dst))
+      .partitionBy(rc.defaultPartitioner).toSortedRDD
+    val edgeSrcDst = columns(src).sortedJoin(columns(dst))
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }
-    val byDst = bySrc.join(nameToId).map {
+    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    val byDst = bySrc.sortedJoin(nameToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }
-    val edges = byDst.join(nameToId).map {
+    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    val edges = byDst.sortedJoin(nameToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
-    }
-    output(o.edges, edges.partitionBy(rc.defaultPartitioner))
+    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    output(o.edges, edges)
     output(o.vertices, idToName.mapValues(_ => ()))
     output(o.stringID, idToName)
   }
@@ -237,7 +239,7 @@ object ImportEdgeListForExistingVertexSet {
 
   def checkIdMapping(rdd: RDD[(String, ID)]): RDD[(String, ID)] = rdd.groupByKey
     .mapValues { id =>
-      assert(id.size == 1)
+      assert(id.size == 1, "VertexId mapping is ambiguous, check supplied VertexAttributes")
       id.head
     }
 }
@@ -256,23 +258,25 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
     val srcToId = checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k })
+      .partitionBy(rc.defaultPartitioner).toSortedRDD
     val dstToId = {
       if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
         srcToId
       else
         checkIdMapping(inputs.dstVidAttr.rdd.map { case (k, v) => v -> k })
+          .partitionBy(rc.defaultPartitioner).toSortedRDD
     }
-    val edgeSrcDst = columns(src).join(columns(dst))
+    val edgeSrcDst = columns(src).sortedJoin(columns(dst))
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }
-    val byDst = bySrc.join(srcToId).map {
+    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    val byDst = bySrc.sortedJoin(srcToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }
-    val edges = byDst.join(dstToId).map {
+    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    val edges = byDst.sortedJoin(dstToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
-    }
-    output(o.edges, edges.partitionBy(rc.defaultPartitioner))
+    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    output(o.edges, edges)
   }
 
   override val isHeavy = true
