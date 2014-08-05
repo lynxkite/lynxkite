@@ -32,7 +32,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
   }
 
-  test("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
+  ignore("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val data = genData(parts, rows, 1).toSortedRDD.cache
       data.calculate
@@ -42,6 +42,30 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       def oldJoin = getSum(data.join(other))
       def newJoin = getSum(data.sortedJoin(other))
       def getSum(rdd: RDD[(Long, (Char, Char))]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    for (round <- 10 to 20) {
+      val rows = 100000 * round
+      val demo = new Demo(parts, rows)
+      val mew = Timed(demo.newJoin)
+      val old = Timed(demo.oldJoin)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value == old.value)
+    }
+  }
+
+  test("benchmark partition+sort+join", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      val data = genData(parts, rows, 1).cache
+      data.calculate
+      val other = genData(parts, rows, 2).sample(false, 0.5, 0).cache
+      other.calculate
+      assert(data.partitioner != other.partitioner)
+      def oldJoin = getSum(data.join(other).toSortedRDD)
+      def newJoin = getSum(data.toSortedRDD.sortedJoin(other.partitionBy(data.partitioner.get).toSortedRDD))
+      def getSum(rdd: SortedRDD[Long, (Char, Char)]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
     }
     val parts = 4
     val table = "%10s | %10s | %10s"
