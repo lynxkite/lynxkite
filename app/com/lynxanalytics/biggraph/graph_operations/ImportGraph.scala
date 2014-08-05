@@ -250,7 +250,12 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
     val srcToId = inputs.srcIds.rdd.map { case (k, v) => v -> k }
-    val dstToId = inputs.dstIds.rdd.map { case (k, v) => v -> k }
+    val dstToId = {
+      if (inputs.srcIds.data.gUID == inputs.dstIds.data.gUID)
+        srcToId
+      else
+        inputs.dstIds.rdd.map { case (k, v) => v -> k }
+    }
     val edgeSrcDst = columns(src).join(columns(dst))
     val bySrc = edgeSrcDst.map {
       case (edge, (src, dst)) => src -> (edge, dst)
