@@ -96,10 +96,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val opt = Param("filter", "(optional) Filtering expression")
 
       if (project.vertexSet == null) p :+ opt
-      else p :+ Param("attr", "Vertex id attribute", options = vertexAttributes) :+ opt
+      else p :+ Param("attr", "Vertex id attribute", options = vertexAttributes[String]) :+ opt
     }
     def enabled = {
-      if (project.vertexSet == null) hasNoEdgeBundle
+      if (project.vertexSet == null) FEStatus.success
       else hasNoEdgeBundle && FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes to use as id.")
     }
     def apply(params: Map[String, String]) = {
@@ -118,7 +118,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       } else {
         val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
         val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, src, dst)
-        val imp = op(op.srcIds, attr)(op.dstIds, attr).result
+        val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
         project.edgeBundle = imp.edges
         project.edgeAttributes = imp.attrs.mapValues(_.entity)
       }

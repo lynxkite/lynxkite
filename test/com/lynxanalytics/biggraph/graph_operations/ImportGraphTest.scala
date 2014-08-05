@@ -26,7 +26,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
       val op = ImportEdgeListForExistingVertexSet(
         CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
         sourceEdgeFieldName, destEdgeFieldName)
-      op(op.srcIds, vid)(op.dstIds, vid).result
+      op(op.srcVidAttr, vid)(op.dstVidAttr, vid).result
     }
     val names = vertexData.attrs("name").rdd
     assert(TestUtils.RDDToSortedString(vid.rdd.join(names).values) ==

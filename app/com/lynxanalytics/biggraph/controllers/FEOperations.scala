@@ -108,8 +108,8 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       val dstField = params("dstField")
       manager.show(
         graph_operations.ImportEdgeListForExistingVertexSet(csv, srcField, dstField),
-        'srcIds -> manager.vertexAttribute(params("vsSrc").asUUID),
-        'dstIds -> manager.vertexAttribute(params("vsDst").asUUID))
+        'srcVidAttr -> manager.vertexAttribute(params("vsSrc").asUUID),
+        'dstVidAttr -> manager.vertexAttribute(params("vsDst").asUUID))
       FEStatus.success
     }
   }

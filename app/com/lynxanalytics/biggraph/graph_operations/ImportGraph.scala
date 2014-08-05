@@ -202,13 +202,13 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
     val nameToId = idToName.map { case (id, name) => (name, id) }
     val edgeSrcDst = columns(src).join(columns(dst))
     val bySrc = edgeSrcDst.map {
-      case (edge, (src, dst)) => src -> (edge, dst)
+      case (edgeId, (src, dst)) => src -> (edgeId, dst)
     }
     val byDst = bySrc.join(nameToId).map {
-      case (src, ((edge, dst), sid)) => dst -> (edge, sid)
+      case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
     }
     val edges = byDst.join(nameToId).map {
-      case (dst, ((edge, sid), did)) => edge -> Edge(sid, did)
+      case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
     }
     output(o.edges, edges.partitionBy(rc.defaultPartitioner))
     output(o.vertices, idToName.mapValues(_ => ()))
@@ -222,8 +222,8 @@ object ImportEdgeListForExistingVertexSet {
   class Input extends MagicInputSignature {
     val sources = vertexSet
     val destinations = vertexSet
-    val srcIds = vertexAttribute[String](sources)
-    val dstIds = vertexAttribute[String](destinations)
+    val srcVidAttr = vertexAttribute[String](sources)
+    val dstVidAttr = vertexAttribute[String](destinations)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input,
@@ -234,6 +234,12 @@ object ImportEdgeListForExistingVertexSet {
       f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
     }.toMap
   }
+
+  def checkIdMapping(rdd: RDD[(String, ID)]): RDD[(String, ID)] = rdd.groupByKey
+    .mapValues { id =>
+      assert(id.size == 1)
+      id.head
+    }
 }
 case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String)
     extends ImportEdges(src, dst)
@@ -249,22 +255,22 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
     implicit val id = inputDatas
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
-    val srcToId = inputs.srcIds.rdd.map { case (k, v) => v -> k }
+    val srcToId = checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k })
     val dstToId = {
-      if (inputs.srcIds.data.gUID == inputs.dstIds.data.gUID)
+      if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
         srcToId
       else
-        inputs.dstIds.rdd.map { case (k, v) => v -> k }
+        checkIdMapping(inputs.dstVidAttr.rdd.map { case (k, v) => v -> k })
     }
     val edgeSrcDst = columns(src).join(columns(dst))
     val bySrc = edgeSrcDst.map {
-      case (edge, (src, dst)) => src -> (edge, dst)
+      case (edgeId, (src, dst)) => src -> (edgeId, dst)
     }
     val byDst = bySrc.join(srcToId).map {
-      case (src, ((edge, dst), sid)) => dst -> (edge, sid)
+      case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
     }
     val edges = byDst.join(dstToId).map {
-      case (dst, ((edge, sid), did)) => edge -> Edge(sid, did)
+      case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
     }
     output(o.edges, edges.partitionBy(rc.defaultPartitioner))
   }
