@@ -47,19 +47,25 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
 
     val partitioner = rc.defaultPartitioner
     val numPartitions = partitioner.numPartitions
-    vs.mapPartitionsWithIndex {
-      case (pidx, it) =>
-        val rand = new Random((pidx << 16) + seed)
-        it.flatMap {
-          case (id, _) =>
-            val copies = math.round(rand.nextFloat() * 2 * averageCopies)
-            Iterator
-              .continually(id)
-              .take(copies)
-              .map(value => rand.nextInt(numPartitions) -> value)
-        }
-    }
+    vs
+      .mapPartitionsWithIndex {
+        case (pidx, it) =>
+          val rand = new Random((pidx << 16) + seed)
+          it.flatMap {
+            case (id, _) =>
+              val copies = math.round(rand.nextFloat() * 2 * averageCopies)
+              Iterator
+                .continually(id)
+                .take(copies)
+                .map(value => rand.nextInt(numPartitions) -> value)
+          }
+      }
       .partitionBy(partitioner)
       .values
+      .mapPartitionsWithIndex {
+        case (pidx, it) =>
+          val rand = new Random((pidx << 16) + seed)
+          rand.shuffle(it)
+      }
   }
 }
