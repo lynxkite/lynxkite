@@ -86,7 +86,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
         .partitionBy(new HashPartitioner(parts)).toSortedRDD.cache
       sorted.calculate
-      val vanilla = sorted.filter(_ => true).cache
+      val vanilla = sorted.map(x => x).cache
       vanilla.calculate
       def oldDistinct = vanilla.distinct.collect.toSeq.sorted
       def newDistinct = sorted.distinct.collect.toSeq.sorted
@@ -99,6 +99,44 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       val demo = new Demo(parts, rows)
       val mew = Timed(demo.newDistinct)
       val old = Timed(demo.oldDistinct)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value == old.value)
+    }
+  }
+
+  test("sorted filter") {
+    val sorted = genData(4, 1000, 1).values.map(x => (x, x))
+      .partitionBy(new HashPartitioner(4)).toSortedRDD
+    val filtered = sorted.filter(_._2 != 'a')
+    assert(sorted.count > filtered.count)
+  }
+
+  test("sorted mapValues") {
+    val sorted = genData(4, 1000, 1).values.map(x => (x, x))
+      .partitionBy(new HashPartitioner(4)).toSortedRDD
+    val mew = sorted.mapValues(x => 'a')
+    val mewKeys = sorted.mapValuesWithKeys(x => 'a')
+    val old = sorted.map(x => x).mapValues(x => 'a')
+    assert(mew.collect.toMap == old.collect.toMap)
+    assert(mew.collect.toMap == mewKeys.collect.toMap)
+  }
+
+  test("benchmark mapValues with keys", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      val sorted = genData(parts, rows, 1).values.map(x => (x, x))
+        .partitionBy(new HashPartitioner(parts)).toSortedRDD.cache
+      sorted.calculate
+      def oldMV = sorted.map({ case (id, x) => id -> (id, x) }).partitionBy(sorted.partitioner.get).toSortedRDD.collect.toMap
+      def newMV = sorted.mapValuesWithKeys({ case (id, x) => (id, x) }).collect.toMap
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    for (round <- 10 to 20) {
+      val rows = 10000 * round
+      val demo = new Demo(parts, rows)
+      val mew = Timed(demo.newMV)
+      val old = Timed(demo.oldMV)
       println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
       assert(mew.value == old.value)
     }
