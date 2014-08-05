@@ -53,12 +53,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new EdgeOperation(_) {
     val title = "Create random edge bundle"
     val parameters = Seq(
-      Param("density", "density", defaultValue = "0.5"),
+      Param("degree", "Average degree", defaultValue = "10"),
       Param("seed", "Seed", defaultValue = "0"))
     def enabled = hasVertexSet && hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat)
-      project.edgeBundle = op(op.vsSrc, project.vertexSet)(op.vsDst, project.vertexSet).result.es
+      val op = graph_operations.FastRandomEdgeBundle(params("seed").toInt, params("degree").toInt)
+      project.edgeBundle = op(op.vs, project.vertexSet).result.es
       FEStatus.success
     }
   })

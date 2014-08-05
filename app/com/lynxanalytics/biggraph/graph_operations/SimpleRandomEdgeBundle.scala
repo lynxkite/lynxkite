@@ -40,4 +40,6 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends TypedMetaGr
 
     output(o.es, randomEdges.fastNumbered(rc.defaultPartitioner))
   }
+
+  override val isHeavy = true
 }
