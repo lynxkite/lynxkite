@@ -8,7 +8,6 @@ import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.immutable
 import scala.collection.mutable
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 
@@ -17,7 +16,6 @@ private object SparkStageJars {
     getClass(),
     classOf[gcs.GoogleHadoopFileSystem])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
-  println("Jars needed: ", jars)
   require(
     jars.forall(_.endsWith(".jar")),
     "You need to run this from a jar. Use 'sbt stage' to get one.")
@@ -104,7 +102,6 @@ object BigGraphSparkContext {
           else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator")
     }
     if (useJars) {
-      println("Setting jars: ", SparkStageJars.jars)
       sparkConf = sparkConf.setJars(SparkStageJars.jars)
     }
     return new SparkContext(sparkConf)
