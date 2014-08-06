@@ -33,6 +33,7 @@ case class EdgeIndexPairCounter() extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
     val xIndices = inputs.xIndices.rdd
     val yIndices = inputs.yIndices.rdd
+    // To limit data checked, do sg like: .mapPartitions(it => it.take(100)) before countValues.
     output(o.counts, xIndices.sortedJoin(yIndices).values.countValues)
   }
 }
