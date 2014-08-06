@@ -36,7 +36,7 @@ case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, Tripl
     val src = inputs.src.rdd
     val bySrc = edges
       .map { case (id, edge) => (edge.src, id) }
-      .groupByKey(src.partitioner.get).asSortedRDD
+      .groupByKey(src.partitioner.get).toSortedRDD
     output(
       o.srcEdges,
       src.sortedLeftOuterJoin(bySrc)
@@ -48,7 +48,7 @@ case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, Tripl
     val dst = inputs.dst.rdd
     val byDst = edges
       .map { case (id, edge) => (edge.dst, id) }
-      .groupByKey(dst.partitioner.get).asSortedRDD
+      .groupByKey(dst.partitioner.get).toSortedRDD
     output(
       o.dstEdges,
       dst.sortedLeftOuterJoin(byDst)
