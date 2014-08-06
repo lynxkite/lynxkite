@@ -5,6 +5,7 @@ import scala.reflect._
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object TripletMapping {
@@ -35,10 +36,10 @@ case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, Tripl
     val src = inputs.src.rdd
     val bySrc = edges
       .map { case (id, edge) => (edge.src, id) }
-      .groupByKey(src.partitioner.get)
+      .groupByKey(src.partitioner.get).asSortedRDD
     output(
       o.srcEdges,
-      src.leftOuterJoin(bySrc)
+      src.sortedLeftOuterJoin(bySrc)
         .mapValues {
           case (_, Some(it)) => it.toArray
           case (_, None) => Array[ID]()
@@ -47,10 +48,10 @@ case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, Tripl
     val dst = inputs.dst.rdd
     val byDst = edges
       .map { case (id, edge) => (edge.dst, id) }
-      .groupByKey(dst.partitioner.get)
+      .groupByKey(dst.partitioner.get).asSortedRDD
     output(
       o.dstEdges,
-      dst.leftOuterJoin(byDst)
+      dst.sortedLeftOuterJoin(byDst)
         .mapValues {
           case (_, Some(it)) => it.toArray
           case (_, None) => Array[ID]()

@@ -22,8 +22,6 @@ case class IdAsAttribute() extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
     output(
       o.vertexIds,
-      inputs.vertices.rdd.mapPartitions(
-        it => it.map { case (k, _) => (k, k) },
-        preservesPartitioning = true))
+      inputs.vertices.rdd.mapValuesWithKeys(_._1))
   }
 }
