@@ -19,9 +19,6 @@ object EdgeIndexPairCounter {
                inputs: Input) extends MagicOutput(instance) {
     val counts = scalar[Map[(Int, Int), Int]]
   }
-  def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
-    map(key) = if (map.contains(key)) (map(key) + increment) else increment
-  }
 }
 import EdgeIndexPairCounter._
 case class EdgeIndexPairCounter() extends TypedMetaGraphOp[Input, Output] {
@@ -36,17 +33,6 @@ case class EdgeIndexPairCounter() extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
     val xIndices = inputs.xIndices.rdd
     val yIndices = inputs.yIndices.rdd
-    output(o.counts, xIndices.sortedJoin(yIndices)
-      .aggregate(mutable.Map[(Int, Int), Int]())(
-        {
-          case (map, (id, pair)) =>
-            incrementMap(map, pair)
-            map
-        },
-        {
-          case (map1, map2) =>
-            map2.foreach { case (k, v) => incrementMap(map1, k, v) }
-            map1
-        }).toMap)
+    output(o.counts, xIndices.sortedJoin(yIndices).values.countValues)
   }
 }

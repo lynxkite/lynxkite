@@ -1,13 +1,15 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import com.lynxanalytics.biggraph.graph_api._
 import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import scala.collection.mutable
 import scala.reflect._
 import scala.util.Random
+
+import com.lynxanalytics.biggraph.graph_api._
 
 object RDDUtils {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
@@ -126,11 +128,28 @@ object Implicits {
 
     // Cheap method to force an RDD calculation
     def calculate() = self.foreach(_ => ())
+
+    def countValues: Map[T, Int] =
+      self.aggregate(mutable.Map[T, Int]())(
+        {
+          case (map, key) =>
+            incrementMap(map, key)
+            map
+        },
+        {
+          case (map1, map2) =>
+            map2.foreach { case (k, v) => incrementMap(map1, k, v) }
+            map1
+        }).toMap
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
     // Sorts each partition of the RDD in isolation.
     def toSortedRDD = SortedRDD.fromUnsorted(self)
     def asSortedRDD = SortedRDD.fromSorted(self)
+  }
+
+  private def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
+    map(key) = if (map.contains(key)) (map(key) + increment) else increment
   }
 }
