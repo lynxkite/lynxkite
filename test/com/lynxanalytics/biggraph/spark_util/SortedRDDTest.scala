@@ -9,12 +9,42 @@ import com.lynxanalytics.biggraph.Timed
 
 class SortedRDDTest extends FunSuite with TestSparkContext {
   import Implicits._
-  test("join") {
+
+  test("join without intersection") {
     val p = new HashPartitioner(4)
     val a = sparkContext.parallelize(10 to 15).map(x => (x, x)).partitionBy(p).toSortedRDD
     val b = sparkContext.parallelize(20 to 25).map(x => (x, x)).partitionBy(p).toSortedRDD
     val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
     assert(j.collect.toSeq == Seq())
+  }
+
+  test("join with intersection") {
+    val p = new HashPartitioner(4)
+    val a = sparkContext.parallelize(10 to 15).map(x => (x, x + 1)).partitionBy(p).toSortedRDD
+    val b = sparkContext.parallelize(15 to 25).map(x => (x, x + 2)).partitionBy(p).toSortedRDD
+    val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
+    assert(j.collect.toSeq == Seq(15 -> (16, 17)))
+  }
+
+  test("join with multiple keys on the left side") {
+    val p = new HashPartitioner(4)
+    val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).toSortedRDD
+    val b = sparkContext.parallelize(5 to 15).map(x => (x, "A")).partitionBy(p).toSortedRDD
+    val sj: SortedRDD[Int, (Int, String)] = a.sortedJoin(b)
+    val j: RDD[(Int, (Int, String))] = a.join(b)
+    assert(sj.count == j.count)
+  }
+
+  // at the moment our sortedJoin does not support this feature
+  ignore("join with multiple keys on both sides") {
+    val p = new HashPartitioner(4)
+    val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).toSortedRDD
+    val b = sparkContext.parallelize(Seq(10 -> "A", 10 -> "B")).partitionBy(p).toSortedRDD
+    val sj: SortedRDD[Int, (Int, String)] = a.sortedJoin(b)
+    val j: RDD[(Int, (Int, String))] = a.join(b)
+    println(sj.collect.toSeq)
+    println(j.collect.toSeq)
+    assert(sj.count == j.count)
   }
 
   test("distinct") {
