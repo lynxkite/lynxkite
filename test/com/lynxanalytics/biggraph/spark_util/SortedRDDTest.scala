@@ -32,6 +32,26 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
   }
 
+  test("benchmark groupByKey", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      val vanilla = genData(parts, rows, 1).values.map(x => (x, x)).cache
+      vanilla.calculate
+      def oldGrouped = vanilla.groupByKey(new HashPartitioner(parts)).toSortedRDD.collect.toSeq.sorted
+      def newGrouped = vanilla.partitionBy(new HashPartitioner(parts)).toSortedRDD.groupByKey().collect.toSeq.sorted
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    for (round <- 10 to 20) {
+      val rows = 100000 * round
+      val demo = new Demo(parts, rows)
+      val mew = Timed(demo.oldGrouped)
+      val old = Timed(demo.newGrouped)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value == old.value)
+    }
+  }
+
   test("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val data = genData(parts, rows, 1).toSortedRDD.cache
