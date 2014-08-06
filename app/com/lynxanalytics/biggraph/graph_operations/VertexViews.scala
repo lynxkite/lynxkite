@@ -16,6 +16,17 @@ case class FilteredAttribute[T](
   attribute: VertexAttribute[T],
   filter: Filter[T])
 
+/*
+ * The VertexView class is used to define how a view of some vertices or vertex sets were created.
+ *
+ * This is useful when we want to connect edges to nodes in this view as then we need to re-perform
+ * the same operations on the end-vertices of the edges that we consider.
+ *
+ * This basically contains three bits of information:
+ *  - the base vertex set used
+ *  - the filters applied to restrict the vertices
+ *  - the process used to assign a bucket index to a vertex
+ */
 case class VertexView(
   vertexSet: VertexSet,
   filtered: VertexSet,

@@ -41,12 +41,12 @@ case class SampledView(
     val sizes = if (hasSizes) {
       inputs.sizeAttr.rdd
     } else {
-      filtered.mapValues(_ => 1.0).asSortedRDD
+      filtered.mapValues(_ => 1.0)
     }
     val labels = if (hasLabels) {
       inputs.labelAttr.rdd
     } else {
-      filtered.mapValues(_ => "").asSortedRDD
+      filtered.mapValues(_ => "")
     }
     val svVerticesMap = filtered.sortedJoin(sizes).sortedJoin(labels)
       .collect
