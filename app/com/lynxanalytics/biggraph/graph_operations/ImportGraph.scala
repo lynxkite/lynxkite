@@ -196,22 +196,23 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
+    val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.randomNumbered(rc.defaultPartitioner.numPartitions).toSortedRDD
+    val idToName = names.randomNumbered(partitioner.numPartitions).toSortedRDD
     val nameToId = idToName.map { case (id, name) => (name, id) }
-      .partitionBy(rc.defaultPartitioner).toSortedRDD
+      .partitionBy(partitioner).toSortedRDD
     val edgeSrcDst = columns(src).sortedJoin(columns(dst))
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    }.partitionBy(partitioner).toSortedRDD
     val byDst = bySrc.sortedJoin(nameToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    }.partitionBy(partitioner).toSortedRDD
     val edges = byDst.sortedJoin(nameToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
-    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    }.partitionBy(partitioner).toSortedRDD
     output(o.edges, edges)
     output(o.vertices, idToName.mapValues(_ => ()))
     output(o.stringID, idToName)
@@ -255,27 +256,28 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
     val srcToId = checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k })
-      .partitionBy(rc.defaultPartitioner).toSortedRDD
+      .partitionBy(partitioner).toSortedRDD
     val dstToId = {
       if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
         srcToId
       else
         checkIdMapping(inputs.dstVidAttr.rdd.map { case (k, v) => v -> k })
-          .partitionBy(rc.defaultPartitioner).toSortedRDD
+          .partitionBy(partitioner).toSortedRDD
     }
     val edgeSrcDst = columns(src).sortedJoin(columns(dst))
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    }.partitionBy(partitioner).toSortedRDD
     val byDst = bySrc.sortedJoin(srcToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    }.partitionBy(partitioner).toSortedRDD
     val edges = byDst.sortedJoin(dstToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
-    }.partitionBy(rc.defaultPartitioner).toSortedRDD
+    }.partitionBy(partitioner).toSortedRDD
     output(o.edges, edges)
   }
 
