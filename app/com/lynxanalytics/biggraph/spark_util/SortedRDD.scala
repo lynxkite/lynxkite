@@ -7,6 +7,7 @@ import scala.reflect.ClassTag
 
 import scala.reflect.ClassTag
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {
@@ -73,7 +74,9 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
   def sortedJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, W)] = {
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
-    val zipped = this.zipPartitions(other, true) { (it1, it2) => merge(it1.buffered, it2.buffered).iterator }
+    val zipped = this.zipPartitions(other, true) {
+      (it1, it2) => merge(it1.buffered, it2.buffered).iterator
+    }
     return new SortedRDD(zipped)
   }
 
