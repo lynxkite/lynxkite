@@ -38,12 +38,8 @@ case class VertexAttributeFilter[T](filter: Filter[T])
     implicit val ct = inputs.attr.data.classTag
     val attr = inputs.attr.rdd
     val fattr = attr.filter { case (id, v) => filter.matches(v) }
-    output(o.fvs, fattr.mapValues(_ => ()).asSortedRDD)
-    val identity = fattr.mapPartitions(
-      {
-        it => it.map { case (id, v) => id -> Edge(id, id) }
-      },
-      preservesPartitioning = true)
+    output(o.fvs, fattr.mapValues(_ => ()))
+    val identity = fattr.mapValuesWithKeys { case (id, _) => Edge(id, id) }
     output(o.identity, identity)
     output(o.filteredAttribute, FilteredAttribute(inputs.attr, filter))
   }
@@ -78,10 +74,10 @@ case class EdgeAttributeFilter[T](filter: Filter[T])
     implicit val tt = inputs.attr.data.typeTag
     implicit val ct = inputs.attr.data.classTag
     val attr = inputs.attr.rdd
-    val fattr = attr.filter { case (id, v) => filter.matches(v) }.asSortedRDD
+    val fattr = attr.filter { case (id, v) => filter.matches(v) }
     output(
       o.feb,
-      inputs.eb.rdd.sortedJoin(fattr).mapValues { case (edge, attr) => edge }.asSortedRDD)
+      inputs.eb.rdd.sortedJoin(fattr).mapValues { case (edge, attr) => edge })
   }
 }
 

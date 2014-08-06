@@ -38,12 +38,11 @@ case class EdgeIndexer[T](bucketer: Bucketer[T])
     val buckets =
       filtered.sortedJoin(bucketAttribute).mapValues {
         case (_, value) => bucketer.whichBucket(value)
-      }.asSortedRDD
+      }
     val baseIndices = inputs.baseIndices.rdd
     output(
       o.indices,
       baseIndices.sortedJoin(buckets)
-        .mapValues { case (baseIndex, bucket) => bucketer.numBuckets * baseIndex + bucket }
-        .asSortedRDD)
+        .mapValues { case (baseIndex, bucket) => bucketer.numBuckets * baseIndex + bucket })
   }
 }

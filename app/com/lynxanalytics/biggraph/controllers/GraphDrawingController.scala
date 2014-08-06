@@ -99,8 +99,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
 
-  import graph_operations.SampledVertexAttribute.sampleAttribute
-
   def applyFEFilter(filterSpec: FEVertexAttributeFilter): VertexSet = {
     val attr = metaManager.vertexAttribute(filterSpec.attributeId.asUUID)
     attr.rdd.cache()

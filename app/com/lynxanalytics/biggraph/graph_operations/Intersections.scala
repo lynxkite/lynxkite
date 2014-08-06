@@ -31,7 +31,7 @@ case class VertexSetIntersection(numVertexSets: Int)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val intersection = inputs.vss.map(_.rdd)
-      .reduce((rdd1, rdd2) => SortedRDD.fromSorted(rdd1.sortedJoin(rdd2).mapValues(_ => ())))
+      .reduce((rdd1, rdd2) => rdd1.sortedJoin(rdd2).mapValues(_ => ()))
     output(o.intersection, intersection)
   }
 }
@@ -63,8 +63,7 @@ case class EdgeBundleIntersection(numEdgeBundles: Int)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val intersection = inputs.ebs.map(_.rdd)
-      .reduce((rdd1, rdd2) => SortedRDD.fromSorted(
-        rdd1.sortedJoin(rdd2).mapValues { case (a, b) => a }))
+      .reduce((rdd1, rdd2) => rdd1.sortedJoin(rdd2).mapValues(_._1))
     output(o.intersection, intersection)
   }
 }
