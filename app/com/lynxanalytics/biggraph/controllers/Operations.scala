@@ -100,7 +100,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def enabled = {
       if (project.vertexSet == null) FEStatus.success
-      else hasNoEdgeBundle && FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes to use as id.")
+      else hasNoEdgeBundle && FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     }
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(

@@ -104,7 +104,7 @@ object Implicits {
     // Adds unique ID numbers to rows of an RDD as a transformation.
     // A new HashPartitioner will shuffle data randomly among partitions
     // in order to provide unbiased data for sampling SortedRDDs.
-    def randomNumbered(numPartitions: Int = self.partitions.size): RDD[(ID, T)] = {
+    def randomNumbered(numPartitions: Int = self.partitions.size): SortedRDD[ID, T] = {
       val partitioner = new spark.HashPartitioner(numPartitions)
 
       // generate a random id for the hash
@@ -121,7 +121,7 @@ object Implicits {
       }, preservesPartitioning = true)
 
       // generate unique id, throw away previous random id
-      shuffled.fastNumbered(partitioner).mapValues(_._2)
+      shuffled.fastNumbered(partitioner).mapValues(_._2).toSortedRDD
     }
 
     // Cheap method to force an RDD calculation

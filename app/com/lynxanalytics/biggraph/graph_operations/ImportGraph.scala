@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.spark.rdd.RDD
+import org.apache.spark.Partitioner
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.SparkContext
 
@@ -124,7 +125,7 @@ abstract class ImportCommon {
 
   protected def readColumns(rc: RuntimeContext, csv: CSV): Columns = {
     val lines = csv.lines(rc.sparkContext)
-    val numbered = lines.randomNumbered(rc.defaultPartitioner.numPartitions).toSortedRDD.cache
+    val numbered = lines.randomNumbered(rc.defaultPartitioner.numPartitions).cache
     return csv.fields.zipWithIndex.map {
       case (field, idx) => field -> numbered.mapValues(line => line(idx))
     }.toMap
@@ -165,12 +166,32 @@ case class ImportVertexList(csv: CSV) extends ImportCommon
 abstract class ImportEdges(src: String, dst: String) extends ImportCommon {
   mustHaveField(src)
   mustHaveField(dst)
+
   def putEdgeAttributes(columns: Columns,
                         oattr: Map[String, EntityContainer[EdgeAttribute[String]]],
                         output: OutputBuilder): Unit = {
     for ((field, rdd) <- columns) {
       output(oattr(field), rdd)
     }
+  }
+
+  def putEdgeBundle(columns: Columns, 
+                    srcToId: SortedRDD[String, ID], 
+                    dstToId: SortedRDD[String, ID], 
+                    oeb: EdgeBundle, 
+                    output: OutputBuilder, 
+                    partitioner: Partitioner): Unit = {
+    val edgeSrcDst = columns(src).sortedJoin(columns(dst))
+    val bySrc = edgeSrcDst.map {
+      case (edgeId, (src, dst)) => src -> (edgeId, dst)
+    }.partitionBy(partitioner).toSortedRDD
+    val byDst = bySrc.sortedJoin(srcToId).map {
+      case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
+    }.partitionBy(partitioner).toSortedRDD
+    val edges = byDst.sortedJoin(dstToId).map {
+      case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
+    }.partitionBy(partitioner).toSortedRDD
+    output(oeb, edges)
   }
 }
 
@@ -200,20 +221,10 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.randomNumbered(partitioner.numPartitions).toSortedRDD
+    val idToName = names.randomNumbered(partitioner.numPartitions)
     val nameToId = idToName.map { case (id, name) => (name, id) }
       .partitionBy(partitioner).toSortedRDD
-    val edgeSrcDst = columns(src).sortedJoin(columns(dst))
-    val bySrc = edgeSrcDst.map {
-      case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.partitionBy(partitioner).toSortedRDD
-    val byDst = bySrc.sortedJoin(nameToId).map {
-      case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.partitionBy(partitioner).toSortedRDD
-    val edges = byDst.sortedJoin(nameToId).map {
-      case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
-    }.partitionBy(partitioner).toSortedRDD
-    output(o.edges, edges)
+    putEdgeBundle(columns, nameToId, nameToId, o.edges, output, partitioner)
     output(o.vertices, idToName.mapValues(_ => ()))
     output(o.stringID, idToName)
   }
@@ -238,11 +249,12 @@ object ImportEdgeListForExistingVertexSet {
     }.toMap
   }
 
-  def checkIdMapping(rdd: RDD[(String, ID)]): RDD[(String, ID)] = rdd.groupByKey
-    .mapValues { id =>
-      assert(id.size == 1, "VertexId mapping is ambiguous, check supplied VertexAttributes")
-      id.head
-    }
+  def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): SortedRDD[String, ID] =
+    rdd.groupByKey(partitioner)
+      .mapValues { id =>
+        assert(id.size == 1, "VertexId mapping is ambiguous, check supplied VertexAttributes")
+        id.head
+      }.toSortedRDD
 }
 case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String)
     extends ImportEdges(src, dst)
@@ -259,26 +271,14 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
     val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
-    val srcToId = checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k })
-      .partitionBy(partitioner).toSortedRDD
+    val srcToId = checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
     val dstToId = {
       if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
         srcToId
       else
-        checkIdMapping(inputs.dstVidAttr.rdd.map { case (k, v) => v -> k })
-          .partitionBy(partitioner).toSortedRDD
+        checkIdMapping(inputs.dstVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
     }
-    val edgeSrcDst = columns(src).sortedJoin(columns(dst))
-    val bySrc = edgeSrcDst.map {
-      case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.partitionBy(partitioner).toSortedRDD
-    val byDst = bySrc.sortedJoin(srcToId).map {
-      case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.partitionBy(partitioner).toSortedRDD
-    val edges = byDst.sortedJoin(dstToId).map {
-      case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
-    }.partitionBy(partitioner).toSortedRDD
-    output(o.edges, edges)
+    putEdgeBundle(columns, srcToId, dstToId, o.edges, output, partitioner)
   }
 
   override val isHeavy = true
