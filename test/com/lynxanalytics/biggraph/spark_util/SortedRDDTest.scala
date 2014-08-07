@@ -53,6 +53,44 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     }
   }
 
+  test("benchmark combineByKey on non-partitioned RDD", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      import scala.collection.mutable.ArrayBuffer
+      val partitioner = new HashPartitioner(parts)
+      val sorted = genData(7, rows, 1).values.map(x => (x, x)).toSortedRDD(partitioner).cache
+      sorted.calculate
+      val createCombiner = (v: Char) => ArrayBuffer(v)
+      val mergeValue = (buf: ArrayBuffer[Char], v: Char) => buf += v
+      val mergeCombiners = (c1: ArrayBuffer[Char], c2: ArrayBuffer[Char]) => c1 ++ c2
+      def oldGrouped = sorted.asInstanceOf[RDD[(Char, Char)]]
+        .combineByKey(
+          createCombiner,
+          mergeValue,
+          mergeCombiners,
+          partitioner,
+          mapSideCombine = true)
+        .toSortedRDD
+        .collect
+      def newGrouped = sorted
+        .combineByKey(
+          createCombiner,
+          mergeValue)
+        .collect
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
+    for (round <- 10 to 20) {
+      val rows = 50000 * round
+      val demo = new Demo(parts, rows)
+      val mew = Timed(demo.newGrouped)
+      val old = Timed(demo.oldGrouped)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value.toSeq == old.value.toSeq)
+    }
+  }
+
   test("benchmark groupByKey on SortedRDD", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
