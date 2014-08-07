@@ -13,7 +13,7 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
     val xBucketer = new EmptyBucketer()
     val yBucketer = new EmptyBucketer()
     val op = VertexBucketGrid[Nothing, Nothing](xBucketer, yBucketer)
-    val out = op(op.vertices, g.vertices).result
+    val out = op(op.vertices, g.vertices)(op.filtered, g.vertices).result
     assert(out.bucketSizes.value == Map((0, 0) -> 4))
   }
 
@@ -23,7 +23,7 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
     val yBucketer = DoubleBucketer(2.0, 50.3, numBuckets)
 
     val op = VertexBucketGrid(xBucketer, yBucketer)
-    val out = op(op.vertices, g.vertices)(op.xAttribute, g.name)(op.yAttribute, g.age).result
+    val out = op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.xAttribute, g.name)(op.yAttribute, g.age).result
 
     assert(out.bucketSizes.value == Map((0, 0) -> 1, (1, 0) -> 1, (2, 0) -> 1, (2, 1) -> 1))
     assert(out.xBuckets.rdd.collect.toMap == Map((0 -> 0), (1 -> 1), (2 -> 2), (3 -> 2)))

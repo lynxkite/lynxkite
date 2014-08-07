@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 import org.apache.spark.{ Partition, TaskContext }
 import org.apache.spark.rdd._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import scala.reflect.ClassTag
 
 import scala.reflect.ClassTag
 
@@ -11,7 +12,8 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object SortedRDD {
   // Creates a SortedRDD from an unsorted RDD.
   def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
-    new SortedRDD(rdd.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true))
+    new SortedRDD(
+      rdd.mapPartitions(_.toIndexedSeq.sortBy(_._1).iterator, preservesPartitioning = true))
 
   // Wraps an already sorted RDD.
   def fromSorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
@@ -120,5 +122,18 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
       }
     }, preservesPartitioning = true)
     return new SortedRDD(distinct)
+  }
+
+  def collectFirstNValuesOrSo(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
+    val numPartitions = partitions.size
+    val div = n / numPartitions
+    val mod = n % numPartitions
+    this
+      .mapPartitionsWithIndex((pid, it) => {
+        val elementsFromThisPartition = if (pid < mod) (div + 1) else div
+        it.take(elementsFromThisPartition)
+      })
+      .map { case (k, v) => v }
+      .collect
   }
 }

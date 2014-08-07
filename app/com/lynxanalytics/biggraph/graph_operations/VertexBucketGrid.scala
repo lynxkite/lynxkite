@@ -4,19 +4,21 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object VertexBucketGrid {
   class Input[S, T](xBucketed: Boolean, yBucketed: Boolean) extends MagicInputSignature {
     val vertices = vertexSet
     val xAttribute = if (xBucketed) vertexAttribute[S](vertices) else null
     val yAttribute = if (yBucketed) vertexAttribute[T](vertices) else null
+    val filtered = vertexSet
   }
   class Output[S, T](implicit instance: MetaGraphOperationInstance,
                      inputs: Input[S, T]) extends MagicOutput(instance) {
     val bucketSizes = scalar[Map[(Int, Int), Int]]
-    val xBuckets = vertexAttribute[Int](inputs.vertices.entity)
-    val yBuckets = vertexAttribute[Int](inputs.vertices.entity)
-    val feIdxs = vertexAttribute[Int](inputs.vertices.entity)
+    val xBuckets = vertexAttribute[Int](inputs.filtered.entity)
+    val yBuckets = vertexAttribute[Int](inputs.filtered.entity)
+    val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
   }
 }
 import VertexBucketGrid._
@@ -35,28 +37,35 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val vertices = inputs.vertices.rdd
-    val xBuckets = if (xBucketer.numBuckets == 1) {
-      vertices.mapValues(_ => 0)
+    implicit val instance = output.instance
+    val filtered = inputs.filtered.rdd
+    var indexingSeq = Seq[BucketedAttribute[_]]()
+    val xBuckets = (if (xBucketer.numBuckets == 1) {
+      filtered.mapValues(_ => 0)
     } else {
       val xAttr = inputs.xAttribute.rdd
-      vertices.join(xAttr).mapValues { case (_, value) => xBucketer.whichBucket(value) }
-    }
-    val yBuckets = if (yBucketer.numBuckets == 1) {
-      vertices.mapValues(_ => 0)
+      indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
+      filtered.sortedJoin(xAttr).mapValues { case (_, value) => xBucketer.whichBucket(value) }
+    })
+    val yBuckets = (if (yBucketer.numBuckets == 1) {
+      filtered.mapValues(_ => 0)
     } else {
       val yAttr = inputs.yAttribute.rdd
-      vertices.join(yAttr).mapValues { case (_, value) => yBucketer.whichBucket(value) }
-    }
+      indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
+      filtered.sortedJoin(yAttr).mapValues { case (_, value) => yBucketer.whichBucket(value) }
+    })
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
-    output(o.feIdxs,
-      xBuckets.join(yBuckets).mapValues { case (x, y) => x * yBucketer.numBuckets + y })
-    output(o.bucketSizes,
-      xBuckets.join(yBuckets)
-        .map { case (vid, (xB, yB)) => ((xB, yB), 1) }
-        .reduceByKey(_ + _)
-        .collect
-        .toMap)
+    val xyBuckets = xBuckets.sortedJoin(yBuckets)
+    val sampleSize = xBucketer.numBuckets * yBucketer.numBuckets * 1000000
+    val sample = xyBuckets.collectFirstNValuesOrSo(sampleSize)
+    output(
+      o.bucketSizes,
+      sample
+        .map { case (xB, yB) => ((xB, yB), ()) }
+        .groupBy(_._1)
+        .toMap
+        .mapValues(_.size))
+    output(o.indexingSeq, indexingSeq)
   }
 }

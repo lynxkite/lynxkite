@@ -56,6 +56,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[graph_operations.SampledViewVertex]])
     kryo.register(classOf[mutable.WrappedArray$ofInt])
     kryo.register(('x', 'x').getClass)
+    kryo.register(classOf[collection.mutable.Map[_, _]])
     kryo.register(classOf[scala.Tuple2[Double, Double]])
     kryo.register(classOf[Array[Tuple2[Long, Int]]])
     // Add new stuff just above this line! Thanks.

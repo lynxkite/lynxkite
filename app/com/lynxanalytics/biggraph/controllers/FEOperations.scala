@@ -214,6 +214,21 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
+  registerOperation(AddGaussianVertexAttribute)
+  object AddGaussianVertexAttribute extends FEOperation {
+    val title = "Add Gaussian vertex attribute"
+    val category = "Attribute operations"
+    val parameters = Seq(
+      Param("vs", "Vertex set", kind = "vertex-set"))
+    def apply(params: Map[String, String]) = {
+      val vertices = manager.vertexSet(params("vs").asUUID)
+      import Scripting._
+      val op = graph_operations.AddGaussianVertexAttribute()
+      manager.show(op(op.vertices, vertices).result.metaDataSet)
+      FEStatus.success
+    }
+  }
+
   registerOperation(ReverseEdges)
   object ReverseEdges extends FEOperation {
     val title = "Reverse edge direction"
