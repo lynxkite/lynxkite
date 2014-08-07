@@ -26,6 +26,6 @@ case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
     val es = inputs.es.rdd
     val esPlus = es.values.flatMap(e => Iterator(e, Edge(e.dst, e.src)))
-    output(o.esPlus, esPlus.fastNumbered(es.partitioner.get))
+    output(o.esPlus, esPlus.fastNumbered(es.partitioner.get).toSortedRDD)
   }
 }

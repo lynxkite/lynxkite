@@ -34,7 +34,7 @@ case class VertexAttributeFilter[T](filter: Filter[T])
     val attr = inputs.attr.rdd
     val fattr = attr.filter { case (id, v) => filter.matches(v) }
     output(o.fvs, fattr.mapValues(_ => ()))
-    val identity = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
+    val identity = fattr.mapValuesWithKeys({ case (id, v) => Edge(id, id) })
     output(o.identity, identity)
   }
 }

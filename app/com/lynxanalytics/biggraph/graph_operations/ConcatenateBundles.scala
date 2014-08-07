@@ -36,18 +36,18 @@ case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {
     val edgesBC = inputs.edgesBC.rdd
     val weightsAB = inputs.weightsAB.rdd
     val weightsBC = inputs.weightsBC.rdd
-    val weightedEdgesAB = edgesAB.join(weightsAB)
-    val weightedEdgesBC = edgesBC.join(weightsBC)
+    val weightedEdgesAB = edgesAB.sortedJoin(weightsAB)
+    val weightedEdgesBC = edgesBC.sortedJoin(weightsBC)
 
-    val partitioner = inputs.vsB.rdd.partitioner.getOrElse(rc.defaultPartitioner)
-    val BA = weightedEdgesAB.map { case (_, (edge, weight)) => edge.dst -> (edge.src, weight) }.partitionBy(partitioner)
-    val BC = weightedEdgesBC.map { case (_, (edge, weight)) => edge.src -> (edge.dst, weight) }.partitionBy(partitioner)
+    val partitioner = inputs.vsB.rdd.partitioner.get
+    val BA = weightedEdgesAB.map { case (_, (edge, weight)) => edge.dst -> (edge.src, weight) }.toSortedRDD(partitioner)
+    val BC = weightedEdgesBC.map { case (_, (edge, weight)) => edge.src -> (edge.dst, weight) }.toSortedRDD(partitioner)
 
-    val AC = BA.join(BC).map {
+    val AC = BA.sortedJoin(BC).map {
       case (_, ((vertexA, weightAB), (vertexC, weightBC))) => (Edge(vertexA, vertexC), weightAB * weightBC)
     }.reduceByKey(_ + _) // TODO: possibility to define arbitrary concat functions as JS
 
-    val numberedAC = AC.fastNumbered(rc.defaultPartitioner)
+    val numberedAC = AC.fastNumbered(rc.defaultPartitioner).toSortedRDD
 
     output(o.edgesAC, numberedAC.mapValues { case (edge, weight) => edge })
     output(o.weightsAC, numberedAC.mapValues { case (edge, weight) => weight })

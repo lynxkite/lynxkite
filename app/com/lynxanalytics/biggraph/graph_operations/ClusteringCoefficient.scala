@@ -5,6 +5,7 @@ import scala.collection.SortedSet
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object ClusteringCoefficient {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput) extends MagicOutput(instance) {
@@ -29,24 +30,24 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
 
     val inNeighbors = nonLoopEdges
       .map { case (_, e) => e.dst -> e.src }
-      .groupByKey(vertexPartitioner)
+      .groupBySortedKey(vertexPartitioner)
       .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
     val outNeighbors = nonLoopEdges
       .map { case (_, e) => e.src -> e.dst }
-      .groupByKey(vertexPartitioner)
+      .groupBySortedKey(vertexPartitioner)
       .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
-    val neighbors = vertices.leftOuterJoin(outNeighbors).leftOuterJoin(inNeighbors)
+    val neighbors = vertices.sortedLeftOuterJoin(outNeighbors).sortedLeftOuterJoin(inNeighbors)
       .mapValues {
         case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
       }
 
-    val outNeighborsOfNeighbors = neighbors.join(outNeighbors).flatMap {
+    val outNeighborsOfNeighbors = neighbors.sortedJoin(outNeighbors).flatMap {
       case (vid, (all, outs)) => all.map((_, outs))
-    }.groupByKey(vertexPartitioner)
+    }.groupBySortedKey(vertexPartitioner)
 
-    val clusteringCoeff = neighbors.leftOuterJoin(outNeighborsOfNeighbors).mapValues {
+    val clusteringCoeff = neighbors.sortedLeftOuterJoin(outNeighborsOfNeighbors).mapValues {
       case (mine, theirs) =>
         val numNeighbors = mine.size
         if (numNeighbors > 1) {
