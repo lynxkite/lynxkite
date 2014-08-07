@@ -16,7 +16,7 @@ object FEFilters {
     implicit val tt = attr.typeTag
     val innerFilter: Filter[T] =
       if (typeOf[T] =:= typeOf[String]) {
-        StringOneOf(innerSpec.split(",").toSet)
+        OneOf(innerSpec.split(",").toSet)
           .asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[Double]) {
         val doubleFilter = innerSpec match {
@@ -29,8 +29,10 @@ object FEFilters {
         doubleFilter.asInstanceOf[Filter[T]]
       } else ???
     val filter = if (negated) NotFilter(innerFilter) else innerFilter
-    val inst = manager.apply(VertexAttributeFilter(filter), 'attr -> attr)
-    inst.outputs.vertexSets('fvs)
+    import Scripting._
+    implicit val mm = manager
+    val op = VertexAttributeFilter(filter)
+    return op(op.attr, attr).result.fvs
   }
 
   private val numberPattern = "(\\d*(?:\\.\\d*)?)"

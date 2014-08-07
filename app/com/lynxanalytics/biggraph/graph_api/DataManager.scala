@@ -204,6 +204,6 @@ class DataManager(sc: spark.SparkContext,
   def runtimeContext =
     RuntimeContext(
       sparkContext = sc,
-      numAvailableCores = sc.getExecutorStorageStatus.size * numCoresPerExecutor,
+      numAvailableCores = ((sc.getExecutorStorageStatus.size - 1) max 1) * numCoresPerExecutor,
       availableCacheMemoryGB = sc.getExecutorMemoryStatus.values.map(_._2).sum.toDouble / bytesInGb)
 }

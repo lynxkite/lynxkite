@@ -43,7 +43,7 @@ abstract class SampledVertexAttribute[T]() extends MetaGraphOperation {
     } else {
       outputs.putVertexAttribute(
         'sampled_attribute,
-        sampled.join(attribute).mapValues { case (_, value) => value })
+        sampled.sortedJoin(attribute).mapValues(_._2))
     }
   }
 }

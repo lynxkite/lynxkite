@@ -21,8 +21,8 @@ import com.lynxanalytics.biggraph.SparkContextProvider
 case class GCEManagedCluster(clusterName: String,
                              applicationName: String,
                              isMasterStarted: Boolean,
-                             masterMachineType: String = "n1-standard-1",
-                             slaveMachineType: String = "n1-standard-1")
+                             masterMachineType: String = "n1-standard-2",
+                             slaveMachineType: String = "n1-highmem-4")
     extends SparkContextProvider {
   val slaveNamePrefix = clusterName + "-"
   val masterName = clusterName + "-master"

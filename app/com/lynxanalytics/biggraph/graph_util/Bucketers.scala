@@ -88,3 +88,10 @@ case class LongBucketer(min: Long, max: Long, numBuckets: Int)
       fmt"$min" +: bounds.map(x => fmt"$x") :+ fmt"$max"
   }
 }
+
+case class MapBucketer[T](toBucket: Map[T, Int]) extends Bucketer[T] {
+  val numBuckets = toBucket.values.max + 1
+  def whichBucket(value: T) = toBucket(value)
+  def bucketLabels = ???
+  def labelType = ???
+}
