@@ -30,12 +30,31 @@ angular.module('biggraph')
     $scope.left.state = defaultSideState();
     $scope.right.state = defaultSideState();
 
+    function setSideSetting(side, setting, value) {
+      if (side.state[setting] === value) {
+        // Clicking the same attribute setting again turns it off.
+        delete side.state[setting];
+      } else {
+        side.state[setting] = value;
+      }
+    }
+    $scope.left.set = function(setting, value) {
+      setSideSetting($scope.left, setting, value);
+    };
+    $scope.right.set = function(setting, value) {
+      setSideSetting($scope.right, setting, value);
+    };
+
     util.deepWatch($scope, 'left.project', function(project) {
       // Put vertex set and edge bundle in the state.
       // This is for compatibility with the metaGraph.js-related code in graph-view.js
       // and could be removed later.
       $scope.left.state.vertexSet = { id: project.vertexSet };
-      $scope.left.state.edgeBundle = { id: project.edgeBundle };
+      if (project.edgeBundle !== '') {
+       $scope.left.state.edgeBundle = { id: project.edgeBundle };
+      } else {
+        $scope.left.state.edgeBundle = undefined;
+      }
     });
 
     util.deepWatch(
