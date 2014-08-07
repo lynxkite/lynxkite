@@ -35,7 +35,11 @@ angular.module('biggraph')
       // This is for compatibility with the metaGraph.js-related code in graph-view.js
       // and could be removed later.
       $scope.left.state.vertexSet = { id: project.vertexSet };
-      $scope.left.state.edgeBundle = { id: project.edgeBundle };
+      if (project.edgeBundle !== '') {
+       $scope.left.state.edgeBundle = { id: project.edgeBundle };
+      } else {
+        $scope.left.state.edgeBundle = undefined;
+      }
     });
 
     util.deepWatch(
