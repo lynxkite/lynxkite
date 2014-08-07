@@ -56,18 +56,26 @@ class DataManager(sc: spark.SparkContext,
 
   private def load[T](vertexAttribute: VertexAttribute[T]): Unit = {
     implicit val ct = vertexAttribute.classTag
+    // We do our best to colocate partitions to corresponding vertex set partitions.
+    val vsRDD = get(vertexAttribute.vertexSet).rdd.cache
+    val rawRDD = SortedRDD.fromUnsorted(entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
+      .partitionBy(vsRDD.partitioner.get))
     vertexAttributeCache(vertexAttribute.gUID) = new VertexAttributeData[T](
       vertexAttribute,
-      SortedRDD.fromUnsorted(entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
-        .partitionBy(runtimeContext.defaultPartitioner)))
+      // This join does nothing except enforcing colocation.
+      vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
   }
 
   private def load[T](edgeAttribute: EdgeAttribute[T]): Unit = {
     implicit val ct = edgeAttribute.classTag
+    // We do our best to colocate partitions to corresponding vertex set partitions.
+    val ebRDD = get(edgeAttribute.edgeBundle).rdd.cache
+    val rawRDD = SortedRDD.fromUnsorted(entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)
+      .partitionBy(ebRDD.partitioner.get))
     edgeAttributeCache(edgeAttribute.gUID) = new EdgeAttributeData[T](
       edgeAttribute,
-      SortedRDD.fromUnsorted(entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)
-        .partitionBy(runtimeContext.defaultPartitioner)))
+      // This join does nothing except enforcing colocation.
+      ebRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
   }
 
   private def load[T](scalar: Scalar[T]): Unit = {
@@ -96,13 +104,9 @@ class DataManager(sc: spark.SparkContext,
       inputs.edgeAttributes.mapValues(get(_)),
       inputs.scalars.mapValues(get(_)))
     if (instance.operation.isHeavy) {
-      instance.run(inputDatas, runtimeContext).values.foreach {
-        data =>
-          {
-            saveToDisk(data)
-            load(data.entity)
-          }
-      }
+      val outputs = instance.run(inputDatas, runtimeContext).values
+      outputs.foreach(data => saveToDisk(data))
+      outputs.foreach(data => load(data.entity))
     } else {
       instance.run(inputDatas, runtimeContext).foreach {
         case (uuid, data) =>

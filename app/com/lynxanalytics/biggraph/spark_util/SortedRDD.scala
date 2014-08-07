@@ -7,6 +7,7 @@ import scala.reflect.ClassTag
 
 import scala.reflect.ClassTag
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {

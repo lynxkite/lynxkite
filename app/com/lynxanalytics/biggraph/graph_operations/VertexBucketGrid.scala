@@ -57,15 +57,11 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
     val xyBuckets = xBuckets.sortedJoin(yBuckets)
-    val sampleSize = xBucketer.numBuckets * yBucketer.numBuckets * 1000000
-    val sample = xyBuckets.collectFirstNValuesOrSo(sampleSize)
     output(
       o.bucketSizes,
-      sample
-        .map { case (xB, yB) => ((xB, yB), ()) }
-        .groupBy(_._1)
-        .toMap
-        .mapValues(_.size))
+      xyBuckets
+        .values
+        .countValues)
     output(o.indexingSeq, indexingSeq)
   }
 }

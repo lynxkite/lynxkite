@@ -381,22 +381,21 @@ case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaData
 }
 
 sealed trait EntityData {
-  val gUID: UUID
   val entity: MetaGraphEntity
+  def gUID = entity.gUID
 }
 sealed trait EntityRDDData extends EntityData {
   val rdd: SortedRDD[ID, _]
+  rdd.name = "RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID)
 }
-class VertexSetData(val vertexSet: VertexSet,
+class VertexSetData(val entity: VertexSet,
                     val rdd: VertexSetRDD) extends EntityRDDData {
-  val gUID = vertexSet.gUID
-  val entity = vertexSet
+  val vertexSet = entity
 }
 
-class EdgeBundleData(val edgeBundle: EdgeBundle,
+class EdgeBundleData(val entity: EdgeBundle,
                      val rdd: EdgeBundleRDD) extends EntityRDDData {
-  val gUID = edgeBundle.gUID
-  val entity = edgeBundle
+  val edgeBundle = entity
 }
 
 sealed trait AttributeData[T] extends EntityRDDData {
@@ -405,28 +404,25 @@ sealed trait AttributeData[T] extends EntityRDDData {
   val rdd: AttributeRDD[T]
 }
 
-class VertexAttributeData[T](val vertexAttribute: VertexAttribute[T],
+class VertexAttributeData[T](val entity: VertexAttribute[T],
                              val rdd: AttributeRDD[T])
     extends AttributeData[T] with RuntimeSafeCastable[T, VertexAttributeData] {
+  val vertexAttribute = entity
   val typeTag = vertexAttribute.typeTag
-  val gUID = vertexAttribute.gUID
-  val entity = vertexAttribute
 }
 
-class EdgeAttributeData[T](val edgeAttribute: EdgeAttribute[T],
+class EdgeAttributeData[T](val entity: EdgeAttribute[T],
                            val rdd: AttributeRDD[T])
     extends AttributeData[T] with RuntimeSafeCastable[T, EdgeAttributeData] {
+  val edgeAttribute = entity
   val typeTag = edgeAttribute.typeTag
-  val gUID = edgeAttribute.gUID
-  val entity = edgeAttribute
 }
 
-class ScalarData[T](val scalar: Scalar[T],
+class ScalarData[T](val entity: Scalar[T],
                     val value: T)
     extends EntityData with RuntimeSafeCastable[T, ScalarData] {
+  val scalar = entity
   val typeTag = scalar.typeTag
-  val gUID = scalar.gUID
-  val entity = scalar
 }
 
 // A bundle of metadata types.

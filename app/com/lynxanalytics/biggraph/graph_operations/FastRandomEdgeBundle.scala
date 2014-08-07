@@ -33,7 +33,7 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
 
     val vs = inputs.vs.rdd
     val inCandidates = randomCopies(vs, averageDegree, seed, rc)
-    val outCandidates = randomCopies(vs, averageDegree, seed * seed, rc)
+    val outCandidates = randomCopies(vs, averageDegree, seed * seed + 42 * seed + 77, rc)
     val randomEdges = inCandidates.zipPartitions(outCandidates, true) { (it1, it2) =>
       it1.zip(it2).map { case (id1, id2) => Edge(id1, id2) }
     }
