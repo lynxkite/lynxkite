@@ -104,8 +104,9 @@ class DataManager(sc: spark.SparkContext,
       inputs.edgeAttributes.mapValues(get(_)),
       inputs.scalars.mapValues(get(_)))
     if (instance.operation.isHeavy) {
-      instance.run(inputDatas, runtimeContext).values.foreach(data => saveToDisk(data))
-      instance.run(inputDatas, runtimeContext).values.foreach(data => load(data.entity))
+      val outputs = instance.run(inputDatas, runtimeContext).values
+      outputs.foreach(data => saveToDisk(data))
+      outputs.foreach(data => load(data.entity))
     } else {
       instance.run(inputDatas, runtimeContext).foreach {
         case (uuid, data) =>
