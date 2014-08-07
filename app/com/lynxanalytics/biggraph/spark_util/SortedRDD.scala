@@ -4,6 +4,7 @@ import org.apache.spark.{ Partition, TaskContext }
 import org.apache.spark.rdd._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -133,12 +134,9 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     new SortedRDD(combined)
   }
 
-  def groupByKey()(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, Iterable[V]] = {
-    import scala.collection.mutable.ArrayBuffer
-    def createCombiner(v: V) = ArrayBuffer(v)
-    def mergeValue(buf: ArrayBuffer[V], v: V) = buf += v
-    val bufs = combineByKey[ArrayBuffer[V]](
-      createCombiner _, mergeValue _)
-    bufs.mapValues(_.toIterable)
+  def groupByKey(): SortedRDD[K, ArrayBuffer[V]] = {
+    val createCombiner = (v: V) => ArrayBuffer(v)
+    val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
+    combineByKey[ArrayBuffer[V]](createCombiner, mergeValue)
   }
 }
