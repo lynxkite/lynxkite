@@ -1,15 +1,15 @@
 {{attr.title}}
 <span ng-if="side.state.graphMode === 'bucketed'">
   <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.xAttribute === attr.id }"
-      ng-click="side.state.xAttribute = attr.id">Graph on X</button>
+      ng-click="side.set('xAttribute', attr.id)">Graph on X</button>
   <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.yAttribute === attr.id }"
-      ng-click="side.state.yAttribute = attr.id">Graph on Y</button>
+      ng-click="side.set('yAttribute', attr.id)">Graph on Y</button>
 </span>
 <span ng-if="side.state.graphMode === 'sampled'">
   <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.sizeAttribute === attr.id }"
-      ng-click="side.state.sizeAttribute = attr.id">Graph as size</button>
+      ng-click="side.set('sizeAttribute', attr.id)">Graph as size</button>
   <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.labelAttribute === attr.id }"
-      ng-click="side.state.labelAttribute = attr.id">Graph as label</button>
+      ng-click="side.set('labelAttribute', attr.id)">Graph as label</button>
 </span>
 <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]"
     ng-model-options="{ updateOn: 'blur' }">
