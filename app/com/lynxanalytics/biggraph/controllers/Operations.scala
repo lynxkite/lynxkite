@@ -33,7 +33,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      project.vertexSet = null
+      project.edgeBundle = null
       FEStatus.success
     }
   })
