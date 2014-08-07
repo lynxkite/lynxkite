@@ -7,6 +7,7 @@ import scala.reflect.ClassTag
 
 import scala.reflect.ClassTag
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {
@@ -33,7 +34,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
       if (ord.equiv(k1, k2)) {
-        bi1.next; bi2.next
+        bi1.next; //bi2.next; // uncomment to disallow multiple keys on the left side
         (k1, (v1, v2)) #:: merge(bi1, bi2)
       } else if (ord.lt(k1, k2)) {
         bi1.next
@@ -54,7 +55,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
       if (ord.equiv(k1, k2)) {
-        bi1.next; bi2.next
+        bi1.next; //bi2.next; // uncomment to disallow multiple keys on the left side
         (k1, (v1, Some(v2))) #:: leftOuterMerge(bi1, bi2)
       } else if (ord.lt(k1, k2)) {
         bi1.next
@@ -70,6 +71,10 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     }
   }
 
+  /* 
+   * Differs from Spark's join implementation as this allows multiple keys only on the left side
+   * the keys of 'other' must be unique!
+   */
   def sortedJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, W)] = {
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
@@ -77,6 +82,10 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     return new SortedRDD(zipped)
   }
 
+  /* 
+   * Differs from Spark's join implementation as this allows multiple keys only on the left side
+   * the keys of 'other' must be unique!
+   */
   def sortedLeftOuterJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, Option[W])] = {
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")

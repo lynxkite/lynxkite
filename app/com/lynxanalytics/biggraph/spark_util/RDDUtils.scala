@@ -1,13 +1,15 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import com.lynxanalytics.biggraph.graph_api._
 import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import scala.collection.mutable
 import scala.reflect._
 import scala.util.Random
+
+import com.lynxanalytics.biggraph.graph_api._
 
 object RDDUtils {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
@@ -104,7 +106,7 @@ object Implicits {
     // Adds unique ID numbers to rows of an RDD as a transformation.
     // A new HashPartitioner will shuffle data randomly among partitions
     // in order to provide unbiased data for sampling SortedRDDs.
-    def randomNumbered(numPartitions: Int = self.partitions.size): RDD[(ID, T)] = {
+    def randomNumbered(numPartitions: Int = self.partitions.size): SortedRDD[ID, T] = {
       val partitioner = new spark.HashPartitioner(numPartitions)
 
       // generate a random id for the hash
@@ -121,16 +123,33 @@ object Implicits {
       }, preservesPartitioning = true)
 
       // generate unique id, throw away previous random id
-      shuffled.fastNumbered(partitioner).mapValues(_._2)
+      shuffled.fastNumbered(partitioner).mapValues(_._2).toSortedRDD
     }
 
     // Cheap method to force an RDD calculation
     def calculate() = self.foreach(_ => ())
+
+    def countValues: Map[T, Int] =
+      self.aggregate(mutable.Map[T, Int]())(
+        {
+          case (map, key) =>
+            incrementMap(map, key)
+            map
+        },
+        {
+          case (map1, map2) =>
+            map2.foreach { case (k, v) => incrementMap(map1, k, v) }
+            map1
+        }).toMap
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
     // Sorts each partition of the RDD in isolation.
     def toSortedRDD = SortedRDD.fromUnsorted(self)
     def asSortedRDD = SortedRDD.fromSorted(self)
+  }
+
+  private def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
+    map(key) = if (map.contains(key)) (map(key) + increment) else increment
   }
 }
