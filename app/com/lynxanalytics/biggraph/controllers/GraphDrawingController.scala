@@ -298,6 +298,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val cop = graph_operations.AddConstantIntEdgeAttribute(0)
     val startingBase: EdgeAttribute[Int] = cop(cop.edges, filtered).result.attr
+    startingBase.rdd.cache
     seq.foldLeft(startingBase) {
       case (b, ba) => indexFromBucketedAttribute(original, b, tripletMapping, ba)
     }

@@ -21,26 +21,28 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
     val delimiter = ","
     val vertexData = ImportVertexList(
       CSV(vertexCSVs, delimiter, ImportUtil.header(vertexHeader))).result
-    val vs = vertexData.vertices
+    val vid = vertexData.attrs("vertexId")
     val edgeData = {
       val op = ImportEdgeListForExistingVertexSet(
         CSV(edgeCSVs, delimiter, ImportUtil.header(edgeHeader)),
         sourceEdgeFieldName, destEdgeFieldName)
-      op(op.sources, vs)(op.destinations, vs).result
+      op(op.srcVidAttr, vid)(op.dstVidAttr, vid).result
     }
-    val vid = vertexData.attrs("vertexId").rdd
     val names = vertexData.attrs("name").rdd
-    assert(TestUtils.RDDToSortedString(vid.join(names).values) ==
+    assert(TestUtils.RDDToSortedString(vid.rdd.join(names).values) ==
       """|(0,Adam)
          |(1,Eve)
          |(2,Bob)""".stripMargin)
     val edges = edgeData.edges.rdd
+    val bySrc = edges.map { case (e, Edge(s, d)) => s -> (e, d) }
+    val byDst = bySrc.join(vid.rdd).map { case (s, ((e, d), ns)) => d -> (e, ns) }
+    val namedEdges = byDst.join(vid.rdd).map { case (d, ((e, ns), nd)) => e -> (ns, nd) }
     val comments = edgeData.attrs("comment").rdd
-    assert(TestUtils.RDDToSortedString(edges.join(comments).values) ==
-      """|(Edge(0,1),Adam loves Eve)
-         |(Edge(1,0),Eve loves Adam)
-         |(Edge(2,0),Bob envies Adam)
-         |(Edge(2,1),Bob loves Eve)""".stripMargin)
+    assert(TestUtils.RDDToSortedString(namedEdges.join(comments).values) ==
+      """|((0,1),Adam loves Eve)
+         |((1,0),Eve loves Adam)
+         |((2,0),Bob envies Adam)
+         |((2,1),Bob loves Eve)""".stripMargin)
   }
 
   test("import graph from csv as two edge files including header") {

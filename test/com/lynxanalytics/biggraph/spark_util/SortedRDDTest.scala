@@ -9,12 +9,42 @@ import com.lynxanalytics.biggraph.Timed
 
 class SortedRDDTest extends FunSuite with TestSparkContext {
   import Implicits._
-  test("join") {
+
+  test("join without intersection") {
     val p = new HashPartitioner(4)
     val a = sparkContext.parallelize(10 to 15).map(x => (x, x)).partitionBy(p).toSortedRDD
     val b = sparkContext.parallelize(20 to 25).map(x => (x, x)).partitionBy(p).toSortedRDD
     val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
     assert(j.collect.toSeq == Seq())
+  }
+
+  test("join with intersection") {
+    val p = new HashPartitioner(4)
+    val a = sparkContext.parallelize(10 to 15).map(x => (x, x + 1)).partitionBy(p).toSortedRDD
+    val b = sparkContext.parallelize(15 to 25).map(x => (x, x + 2)).partitionBy(p).toSortedRDD
+    val j: SortedRDD[Int, (Int, Int)] = a.sortedJoin(b)
+    assert(j.collect.toSeq == Seq(15 -> (16, 17)))
+  }
+
+  test("join with multiple keys on the left side") {
+    val p = new HashPartitioner(4)
+    val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).toSortedRDD
+    val b = sparkContext.parallelize(5 to 15).map(x => (x, "A")).partitionBy(p).toSortedRDD
+    val sj: SortedRDD[Int, (Int, String)] = a.sortedJoin(b)
+    val j: RDD[(Int, (Int, String))] = a.join(b)
+    assert(sj.count == j.count)
+  }
+
+  // at the moment our sortedJoin does not support this feature
+  ignore("join with multiple keys on both sides") {
+    val p = new HashPartitioner(4)
+    val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).toSortedRDD
+    val b = sparkContext.parallelize(Seq(10 -> "A", 10 -> "B")).partitionBy(p).toSortedRDD
+    val sj: SortedRDD[Int, (Int, String)] = a.sortedJoin(b)
+    val j: RDD[(Int, (Int, String))] = a.join(b)
+    println(sj.collect.toSeq)
+    println(j.collect.toSeq)
+    assert(sj.count == j.count)
   }
 
   test("distinct") {
@@ -32,7 +62,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
   }
 
-  test("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
+  ignore("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val data = genData(parts, rows, 1).toSortedRDD.cache
       data.calculate
@@ -42,6 +72,30 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       def oldJoin = getSum(data.join(other))
       def newJoin = getSum(data.sortedJoin(other))
       def getSum(rdd: RDD[(Long, (Char, Char))]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    for (round <- 10 to 20) {
+      val rows = 100000 * round
+      val demo = new Demo(parts, rows)
+      val mew = Timed(demo.newJoin)
+      val old = Timed(demo.oldJoin)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value == old.value)
+    }
+  }
+
+  test("benchmark partition+sort+join", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      val data = genData(parts, rows, 1).cache
+      data.calculate
+      val other = genData(parts, rows, 2).sample(false, 0.5, 0).cache
+      other.calculate
+      assert(data.partitioner != other.partitioner)
+      def oldJoin = getSum(data.join(other).toSortedRDD)
+      def newJoin = getSum(data.toSortedRDD.sortedJoin(other.partitionBy(data.partitioner.get).toSortedRDD))
+      def getSum(rdd: SortedRDD[Long, (Char, Char)]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
     }
     val parts = 4
     val table = "%10s | %10s | %10s"
