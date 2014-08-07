@@ -117,7 +117,7 @@ case class GCEManagedCluster(clusterName: String,
         "--project=big-graph-gc1",
         "adddisk",
         "--zone=europe-west1-b",
-        "--source_snapshot=spark-1-0-1-slave") ++ fullSlaveNames
+        "--source_snapshot=spark-1-0-1-slave-logthreads") ++ fullSlaveNames
     diskCmd.!
     for (slaveName <- fullSlaveNames) {
       val instanceCmd: Seq[String] =
