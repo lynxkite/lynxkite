@@ -4,6 +4,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Counters
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 abstract class Filter[T] extends Serializable {
@@ -36,8 +37,24 @@ case class VertexAttributeFilter[T](filter: Filter[T])
     implicit val instance = output.instance
     implicit val tt = inputs.attr.data.typeTag
     implicit val ct = inputs.attr.data.classTag
+
     val attr = inputs.attr.rdd
-    val fattr = attr.filter { case (id, v) => filter.matches(v) }
+
+    val filteringSessionName = "filtering into: %s [%s]".format(o.fvs.entity, o.fvs.entity.gUID)
+    val tried = Counters.newCounter(
+      "Trials while " + filteringSessionName,
+      rc.sparkContext)
+    val matched = Counters.newCounter(
+      "Matches while " + filteringSessionName,
+      rc.sparkContext)
+
+    val fattr = attr.filter {
+      case (id, v) =>
+        val res = filter.matches(v)
+        tried += 1
+        if (res) matched += 1
+        res
+    }
     output(o.fvs, fattr.mapValues(_ => ()))
     val identity = fattr.mapValuesWithKeys { case (id, _) => Edge(id, id) }
     output(o.identity, identity)
