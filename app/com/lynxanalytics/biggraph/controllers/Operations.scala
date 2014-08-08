@@ -228,4 +228,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       FEStatus.success
     }
   })
+
+  register(new AttributeOperation(_) {
+    val title = "Vertex attribute to double"
+    val parameters = Seq(
+      Param("attr", "Vertex attribute", options = vertexAttributes[String]))
+    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes.")
+    def apply(params: Map[String, String]): FEStatus = {
+      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
+      val op = graph_operations.VertexAttributeToDouble()
+      project.vertexAttributes(params("attr")) = op(op.attr, attr).result.attr
+      FEStatus.success
+    }
+  })
 }
