@@ -137,6 +137,6 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
   def groupByKey(): SortedRDD[K, ArrayBuffer[V]] = {
     val createCombiner = (v: V) => ArrayBuffer(v)
     val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
-    combineByKey[ArrayBuffer[V]](createCombiner, mergeValue)
+    combineByKey(createCombiner, mergeValue)
   }
 }
