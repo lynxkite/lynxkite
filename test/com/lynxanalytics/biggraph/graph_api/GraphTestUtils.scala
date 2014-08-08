@@ -69,7 +69,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
     output(
       o.vs,
       sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
-        .partitionBy(rc.onePartitionPartitioner))
+        .toSortedRDD(rc.onePartitionPartitioner))
 
     val nodePairs = edgeLists.toSeq.flatMap {
       case (i, es) => es.map(e => i -> e)
@@ -79,7 +79,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
       sc.parallelize(nodePairs.zipWithIndex.map {
         case ((a, b), i) => i.toLong -> Edge(a, b)
       })
-        .partitionBy(rc.onePartitionPartitioner))
+        .toSortedRDD(rc.onePartitionPartitioner))
   }
 }
 
