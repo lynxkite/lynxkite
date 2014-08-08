@@ -152,6 +152,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
+    val title = "Add gaussian vertex attribute"
+    val parameters = Seq(
+      Param("name", "Attribute name", defaultValue = "random"))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.AddGaussianVertexAttribute()
+      project.vertexAttributes(params("name")) = op(op.vertices, project.vertexSet).result.attr
+      FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
     val title = "Add constant edge attribute"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "weight"),

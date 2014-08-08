@@ -123,7 +123,7 @@ object ComputeTopValues {
     }
   }
 }
-case class ComputeTopValues[T](numTopValues: Int)
+case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
     extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
   @transient override lazy val inputs = new ComputeTopValues.Input[T]
 
@@ -137,11 +137,17 @@ case class ComputeTopValues[T](numTopValues: Int)
     implicit val id = inputDatas
     implicit val tt = inputs.attribute.data.typeTag
     implicit val ct = inputs.attribute.data.classTag
+    val ordering = new ComputeTopValues.PairOrdering[T]
+    val attribute = inputs.attribute.rdd
+    val sampled =
+      if (sampleSize > 0) attribute.takeFirstNValuesOrSo(sampleSize)
+      else attribute
     output(o.topValues,
-      inputs.attribute.rdd
+      sampled
         .map { case (id, value) => (value, 1) }
         .reduceByKey(_ + _)
-        .top(numTopValues)(new ComputeTopValues.PairOrdering[T])
-        .toSeq)
+        .top(numTopValues)(ordering)
+        .toSeq
+        .sorted(ordering))
   }
 }
