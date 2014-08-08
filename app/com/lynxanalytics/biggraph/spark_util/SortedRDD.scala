@@ -5,6 +5,7 @@ import org.apache.spark.rdd._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.ClassTag
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -79,7 +80,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
     val zipped = this.zipPartitions(other, true) { (it1, it2) => merge(it1.buffered, it2.buffered).iterator }
-    return new SortedRDD(zipped)
+    new SortedRDD(zipped)
   }
 
   /*
@@ -90,12 +91,12 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
     val zipped = this.zipPartitions(other, true) { (it1, it2) => leftOuterMerge(it1.buffered, it2.buffered).iterator }
-    return new SortedRDD(zipped)
+    new SortedRDD(zipped)
   }
 
   def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, U] = {
     val mapped = self.mapValues(x => f(x))
-    return new SortedRDD(mapped)
+    new SortedRDD(mapped)
   }
 
   // This version takes a Key-Value tuple as argument.
@@ -103,11 +104,11 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     val mapped = this.mapPartitions({ it =>
       it.map { case (k, v) => (k, f(k, v)) }
     }, preservesPartitioning = true)
-    return new SortedRDD(mapped)
+    new SortedRDD(mapped)
   }
 
   override def filter(f: ((K, V)) => Boolean): SortedRDD[K, V] = {
-    super.filter(f).asSortedRDD
+    new SortedRDD(super.filter(f))
   }
 
   override def distinct: SortedRDD[K, V] = {
@@ -122,7 +123,32 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
         }
       }
     }, preservesPartitioning = true)
-    return new SortedRDD(distinct)
+    new SortedRDD(distinct)
+  }
+
+  // `createCombiner`, which turns a V into a C (e.g., creates a one-element list)
+  // `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
+  def combineByKey[C](createCombiner: V => C,
+                      mergeValue: (C, V) => C): SortedRDD[K, C] = {
+    val combined = this.mapPartitions({ it =>
+      val bi = it.buffered
+      new Iterator[(K, C)] {
+        def hasNext = bi.hasNext
+        def next() = {
+          val n = bi.next
+          var res = createCombiner(n._2)
+          while (bi.hasNext && bi.head._1 == n._1) res = mergeValue(res, bi.next._2)
+          n._1 -> res
+        }
+      }
+    }, preservesPartitioning = true)
+    new SortedRDD(combined)
+  }
+
+  def groupByKey(): SortedRDD[K, ArrayBuffer[V]] = {
+    val createCombiner = (v: V) => ArrayBuffer(v)
+    val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
+    combineByKey(createCombiner, mergeValue)
   }
 
   def collectFirstNValuesOrSo(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
