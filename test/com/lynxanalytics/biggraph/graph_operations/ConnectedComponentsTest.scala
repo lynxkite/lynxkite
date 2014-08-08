@@ -4,11 +4,14 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.scalatest.FunSuite
 
+import scala.util.Random
+import scala.language.implicitConversions
+
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-
-import scala.language.implicitConversions
+import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.Timed
 
 object ConnectedComponentsTest {
   // we want to compare Map[Int, Int] and Map[ID, ID] values as well
@@ -39,7 +42,7 @@ class ConnectedComponentsTest extends FunSuite with TestGraphOp {
   def getComponents(nodes: Map[Int, Seq[Int]], local: Boolean): Map[ID, ID] = {
     val g = SmallTestGraph(nodes).result
     val op = ConnectedComponents(if (local) 100000 else 0)
-    val cc = op(op.vs, g.vs)(op.es, g.es).result
+    val cc = op(op.es, g.es).result
     cc.belongsTo.toMap
   }
 
@@ -70,5 +73,39 @@ class ConnectedComponentsTest extends FunSuite with TestGraphOp {
     val expectation = Map(0 -> 0, 1 -> 0, 2 -> 0, 3 -> 0)
     assertSameComponents(getComponents(nodes, local = true), expectation)
     assertSameComponents(getComponents(nodes, local = false), expectation)
+  }
+
+  test("benchmark cc", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(outdegree: Int, vSize: Int, seed: Int) {
+      val rand = new Random(seed)
+      val elementIds = Seq.range[Int](0, vSize)
+
+      val edges = elementIds.flatMap { id =>
+        val rnd = rand.shuffle(elementIds).take(rand.nextInt(outdegree))
+        rnd.flatMap(v => Iterator((id, v), (v, id)))
+      }.distinct
+      val inp = edges.groupBy(_._1).mapValues(x => x.map(_._2)).toSeq.toMap
+      val g = SmallTestGraph(inp).result
+      g.vs.rdd.cache.calculate
+      g.es.rdd.cache.calculate
+
+      def bench = {
+        val op = ConnectedComponents(100)
+        val cc = op(op.es, g.es).result
+        cc.segments.rdd.collect
+      }
+    }
+    val table = "%10s | %10s | %10s | %10s"
+    println(table.format("av deg", "vs", "components", "time (ms)"))
+    println(table.format("---:", "---:", "---:", "---:")) // github markdown
+    for (round <- 1 to 10) {
+      val outdegree = round % 4 + 1
+      val vSize = 1000 * round
+      val seed = round
+
+      val demo = new Demo(outdegree, vSize, seed)
+      val timed = Timed(demo.bench)
+      println(table.format(outdegree, vSize, timed.value.length, timed.nanos / 1000000))
+    }
   }
 }
