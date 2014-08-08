@@ -61,6 +61,7 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
       o.bucketSizes,
       xyBuckets
         .values
+        .mapPartitions(it => it.take(100))
         .countValues)
     output(o.indexingSeq, indexingSeq)
   }

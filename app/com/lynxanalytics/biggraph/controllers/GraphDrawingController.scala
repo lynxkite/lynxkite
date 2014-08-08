@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.spark_util
 
 case class FEVertexAttributeFilter(
   val attributeId: String,
@@ -360,6 +361,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         srcDiagramId = resolveDiagramId(eb.srcDiagramId),
         dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
     val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(_))
+    spark_util.Counters.printAll
     return FEGraphRespone(vertexDiagrams, edgeDiagrams)
   }
 }

@@ -175,11 +175,11 @@ abstract class ImportEdges(src: String, dst: String) extends ImportCommon {
     }
   }
 
-  def putEdgeBundle(columns: Columns, 
-                    srcToId: SortedRDD[String, ID], 
-                    dstToId: SortedRDD[String, ID], 
-                    oeb: EdgeBundle, 
-                    output: OutputBuilder, 
+  def putEdgeBundle(columns: Columns,
+                    srcToId: SortedRDD[String, ID],
+                    dstToId: SortedRDD[String, ID],
+                    oeb: EdgeBundle,
+                    output: OutputBuilder,
                     partitioner: Partitioner): Unit = {
     val edgeSrcDst = columns(src).sortedJoin(columns(dst))
     val bySrc = edgeSrcDst.map {

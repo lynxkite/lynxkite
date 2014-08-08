@@ -71,7 +71,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     }
   }
 
-  /* 
+  /*
    * Differs from Spark's join implementation as this allows multiple keys only on the left side
    * the keys of 'other' must be unique!
    */
@@ -82,7 +82,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     return new SortedRDD(zipped)
   }
 
-  /* 
+  /*
    * Differs from Spark's join implementation as this allows multiple keys only on the left side
    * the keys of 'other' must be unique!
    */
@@ -107,7 +107,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
   }
 
   override def filter(f: ((K, V)) => Boolean): SortedRDD[K, V] = {
-    super.filter(f).toSortedRDD
+    super.filter(f).asSortedRDD
   }
 
   override def distinct: SortedRDD[K, V] = {
