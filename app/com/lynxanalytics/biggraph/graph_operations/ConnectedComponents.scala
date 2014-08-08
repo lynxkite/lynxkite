@@ -11,6 +11,7 @@ import org.apache.spark.storage.StorageLevel
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     extends TypedMetaGraphOp[GraphInput, Segmentation] {
@@ -30,17 +31,17 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
       .map(edge => (edge.src, edge.dst))
     val inputVertices = inputs.vs.rdd
     val graph = inputEdges
-      .groupByKey(inputVertices.partitioner.get)
+      .groupBySortedKey(inputVertices.partitioner.get)
       .mapValues(_.toSet)
     // islands are not represented in the edge bundle as they have degree 0
-    val ccEdges = inputVertices.leftOuterJoin(getComponents(graph, 0))
+    val ccEdges = inputVertices.sortedLeftOuterJoin(getComponents(graph, 0))
       .map {
         case (vId, (_, Some(cId))) => Edge(vId, cId)
         case (vId, (_, None)) => Edge(vId, vId)
       }
-    output(o.belongsTo, ccEdges.fastNumbered(rc.defaultPartitioner))
+    output(o.belongsTo, ccEdges.fastNumbered(rc.defaultPartitioner).toSortedRDD)
     val ccVertices = ccEdges.map(_.dst -> ())
-      .partitionBy(rc.defaultPartitioner).toSortedRDD
+      .toSortedRDD(rc.defaultPartitioner)
       .distinct
     output(o.segments, ccVertices)
   }
@@ -48,12 +49,13 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
   type ComponentID = ID
 
   def getComponents(
-    graph: RDD[(ID, Set[ID])], iteration: Int): RDD[(ID, ComponentID)] = {
+    graph: SortedRDD[ID, Set[ID]], iteration: Int): SortedRDD[ID, ComponentID] = {
     // Need to take a count of edges, and then operate on the graph.
     // We best cache it here.
     graph.persist(StorageLevel.MEMORY_AND_DISK)
     if (graph.count == 0) {
-      return graph.sparkContext.emptyRDD[(ID, ComponentID)]
+      // it is empty anyways, so just cast it into the return type
+      return graph.asInstanceOf[SortedRDD[ID, ComponentID]]
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
     if (edgeCount <= maxEdgesProcessedLocally) {
@@ -63,7 +65,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     }
   }
 
-  def getComponentsDist(graph: RDD[(ID, Set[ID])], iteration: Int): RDD[(ID, ComponentID)] = {
+  def getComponentsDist(graph: SortedRDD[ID, Set[ID]], iteration: Int): SortedRDD[ID, ComponentID] = {
     val partitioner = graph.partitioner.get
 
     // Each node decides if it is hosting a party or going out as a guest.
@@ -85,52 +87,48 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     }
 
     // Accept invitations.
-    val moves = invitations.groupByKey(partitioner).mapPartitions(pit =>
-      pit.map {
-        case (n, invIt) =>
-          val invSeq = invIt.toSeq.sorted
-          if (invSeq.size == 1 || invSeq.contains(-1l)) {
-            // Nowhere to go, or we are hosting a party. Stay at home.
-            (n, n)
-          } else {
-            // Free to go. Go somewhere else.
-            (n, invSeq.find(_ != n).get)
-          }
-      },
-      preservesPartitioning = true).persist(StorageLevel.MEMORY_AND_DISK)
+    val moves = invitations.groupBySortedKey(partitioner).mapValuesWithKeys {
+      case (n, invIt) =>
+        val invSeq = invIt.toSeq.sorted
+        if (invSeq.size == 1 || invSeq.contains(-1l)) {
+          // Nowhere to go, or we are hosting a party. Stay at home.
+          n
+        } else {
+          // Free to go. Go somewhere else.
+          invSeq.find(_ != n).get
+        }
+    }.persist(StorageLevel.MEMORY_AND_DISK)
 
     // Update edges. First, update the source (n->c) and flip the direction.
-    val halfDone = graph.join(moves).flatMap({
+    val halfDone = graph.sortedJoin(moves).flatMap({
       case (n, (edges, c)) =>
         edges.map((_, c))
-    }).groupByKey(partitioner).mapValues(_.toSet)
+    }).groupBySortedKey(partitioner).mapValues(_.toSet)
     // Second, update the source, and merge the edge lists.
-    val almostDone = halfDone.join(moves).map({
+    val almostDone = halfDone.sortedJoin(moves).map {
       case (n, (edges, c)) =>
         (c, edges)
-    }).groupByKey(partitioner).mapPartitions(pit =>
-      pit.map {
-        case (c, edgesList) =>
-          (c, edgesList.toSet.flatten - c)
-      },
-      preservesPartitioning = true)
+    }.groupBySortedKey(partitioner).mapValuesWithKeys {
+      case (c, edgesList) =>
+        edgesList.toSet.flatten - c
+    }
 
     // Third, remove finished components.
     val newGraph = almostDone.filter({ case (n, edges) => edges.nonEmpty })
     // Recursion.
-    val newComponents: RDD[(ID, ComponentID)] = getComponents(newGraph, iteration + 1)
+    val newComponents: SortedRDD[ID, ComponentID] = getComponents(newGraph, iteration + 1)
     // We just have to map back the component IDs to the vertices.
     val reverseMoves = moves.map({ case (n, party) => (party, n) })
-    val parties = reverseMoves.groupByKey(partitioner)
-    val components = parties.leftOuterJoin(newComponents).flatMap({
+    val parties = reverseMoves.groupBySortedKey(partitioner)
+    val components = parties.sortedLeftOuterJoin(newComponents).flatMap({
       case (party, (guests, component)) =>
         guests.map((_, component.getOrElse(party)))
-    }).partitionBy(partitioner)
+    }).toSortedRDD(partitioner)
     components
   }
 
   def getComponentsLocal(
-    graphRDD: RDD[(ID, Set[ID])]): RDD[(ID, ComponentID)] = {
+    graphRDD: SortedRDD[ID, Set[ID]]): SortedRDD[ID, ComponentID] = {
     // Moves all the data to the driver and processes it there.
     val p = graphRDD.collect
 
@@ -155,7 +153,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     }
     assert(components.size == graph.size, s"${components.size} != ${graph.size}")
 
-    graphRDD.sparkContext.parallelize(components.toSeq).partitionBy(graphRDD.partitioner.get)
+    graphRDD.sparkContext.parallelize(components.toSeq).toSortedRDD(graphRDD.partitioner.get)
   }
 
   override val isHeavy = true
