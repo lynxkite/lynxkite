@@ -8,16 +8,17 @@ import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 object FEBucketers {
-  def bucketer[T](
+  def bucketedAttribute[T](
     metaManager: MetaGraphManager,
     dataManager: DataManager,
     attr: VertexAttribute[T],
-    numBuckets: Int): Bucketer[T] = {
+    numBuckets: Int): BucketedAttribute[T] = {
 
     implicit val tt = attr.typeTag
     implicit val mm = metaManager
     implicit val dm = dataManager
-    if (typeOf[T] =:= typeOf[String]) {
+
+    val bucketer = if (typeOf[T] =:= typeOf[String]) {
       val op = ComputeTopValues[String](numBuckets + 1)
       val topVals = op(op.attribute, attr.runtimeSafeCast[String]).result.topValues.value
       StringBucketer(topVals.map(_._1).takeRight(numBuckets), topVals.size == numBuckets + 1)
@@ -29,5 +30,7 @@ object FEBucketers {
       val max = res.max.value
       DoubleBucketer(min, max, numBuckets).asInstanceOf[Bucketer[T]]
     } else ???
+
+    BucketedAttribute(attr, bucketer)
   }
 }

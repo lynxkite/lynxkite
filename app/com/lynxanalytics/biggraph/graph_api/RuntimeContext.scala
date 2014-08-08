@@ -9,7 +9,7 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           availableCacheMemoryGB: Double) {
   // This is set to 1 in tests to improve their performance on small data.
   private lazy val defaultPartitionsPerCore =
-    System.getProperty("biggraph.default.partitions.per.core", "3").toInt
+    System.getProperty("biggraph.default.partitions.per.core", "1").toInt
   lazy val defaultPartitioner: spark.Partitioner =
     new spark.HashPartitioner(numAvailableCores * defaultPartitionsPerCore)
   lazy val onePartitionPartitioner: spark.Partitioner =
