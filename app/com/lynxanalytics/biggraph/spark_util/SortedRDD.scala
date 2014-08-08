@@ -3,16 +3,19 @@ package com.lynxanalytics.biggraph.spark_util
 import org.apache.spark.{ Partition, TaskContext }
 import org.apache.spark.rdd._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import scala.reflect.ClassTag
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {
   // Creates a SortedRDD from an unsorted RDD.
   def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
-    new SortedRDD(rdd.mapPartitions(_.toSeq.sortBy(_._1).iterator, preservesPartitioning = true))
+    new SortedRDD(
+      rdd.mapPartitions(_.toIndexedSeq.sortBy(_._1).iterator, preservesPartitioning = true))
 
   // Wraps an already sorted RDD.
   def fromSorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] =
@@ -32,7 +35,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
       if (ord.equiv(k1, k2)) {
-        bi1.next; bi2.next
+        bi1.next; //bi2.next; // uncomment to disallow multiple keys on the left side
         (k1, (v1, v2)) #:: merge(bi1, bi2)
       } else if (ord.lt(k1, k2)) {
         bi1.next
@@ -53,7 +56,7 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
       if (ord.equiv(k1, k2)) {
-        bi1.next; bi2.next
+        bi1.next; //bi2.next; // uncomment to disallow multiple keys on the left side
         (k1, (v1, Some(v2))) #:: leftOuterMerge(bi1, bi2)
       } else if (ord.lt(k1, k2)) {
         bi1.next
@@ -69,6 +72,10 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     }
   }
 
+  /* 
+   * Differs from Spark's join implementation as this allows multiple keys only on the left side
+   * the keys of 'other' must be unique!
+   */
   def sortedJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, W)] = {
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
@@ -76,6 +83,10 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     new SortedRDD(zipped)
   }
 
+  /* 
+   * Differs from Spark's join implementation as this allows multiple keys only on the left side
+   * the keys of 'other' must be unique!
+   */
   def sortedLeftOuterJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, Option[W])] = {
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
@@ -138,5 +149,18 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     val createCombiner = (v: V) => ArrayBuffer(v)
     val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
     combineByKey(createCombiner, mergeValue)
+  }
+
+  def collectFirstNValuesOrSo(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
+    val numPartitions = partitions.size
+    val div = n / numPartitions
+    val mod = n % numPartitions
+    this
+      .mapPartitionsWithIndex((pid, it) => {
+        val elementsFromThisPartition = if (pid < mod) (div + 1) else div
+        it.take(elementsFromThisPartition)
+      })
+      .map { case (k, v) => v }
+      .collect
   }
 }
