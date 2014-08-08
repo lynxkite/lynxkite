@@ -99,6 +99,11 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     new SortedRDD(mapped)
   }
 
+  def flatMapValues[U](f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, U] = {
+    val mapped = self.flatMapValues(x => f(x))
+    new SortedRDD(mapped)
+  }
+
   // This version takes a Key-Value tuple as argument.
   def mapValuesWithKeys[U](f: ((K, V)) => U): SortedRDD[K, U] = {
     val mapped = this.mapPartitions({ it =>
