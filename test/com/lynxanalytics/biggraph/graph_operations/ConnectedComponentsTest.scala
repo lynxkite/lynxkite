@@ -81,7 +81,7 @@ class ConnectedComponentsTest extends FunSuite with TestGraphOp {
       val elementIds = Seq.range[Int](0, vSize)
 
       val edges = elementIds.flatMap { id =>
-        val rnd = rand.shuffle(elementIds.toSeq).take(rand.nextInt(outdegree))
+        val rnd = rand.shuffle(elementIds).take(rand.nextInt(outdegree))
         rnd.flatMap(v => Iterator((id, v), (v, id)))
       }.distinct
       val inp = edges.groupBy(_._1).mapValues(x => x.map(_._2)).toSeq.toMap
