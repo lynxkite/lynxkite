@@ -151,15 +151,21 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     combineByKey(createCombiner, mergeValue)
   }
 
-  def collectFirstNValuesOrSo(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
+  def takeFirstNValuesOrSo(n: Int): SortedRDD[K, V] = {
     val numPartitions = partitions.size
     val div = n / numPartitions
     val mod = n % numPartitions
-    this
-      .mapPartitionsWithIndex((pid, it) => {
+    val res = mapPartitionsWithIndex(
+      { (pid, it) =>
         val elementsFromThisPartition = if (pid < mod) (div + 1) else div
         it.take(elementsFromThisPartition)
-      })
+      },
+      preservesPartitioning = true)
+    new SortedRDD(res)
+  }
+
+  def collectFirstNValuesOrSo(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
+    takeFirstNValuesOrSo(n)
       .map { case (k, v) => v }
       .collect
   }

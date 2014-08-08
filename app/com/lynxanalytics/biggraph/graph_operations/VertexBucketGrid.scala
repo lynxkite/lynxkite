@@ -5,6 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object VertexBucketGrid {
   class Input[S, T](xBucketed: Boolean, yBucketed: Boolean) extends MagicInputSignature {
@@ -12,6 +13,7 @@ object VertexBucketGrid {
     val xAttribute = if (xBucketed) vertexAttribute[S](vertices) else null
     val yAttribute = if (yBucketed) vertexAttribute[T](vertices) else null
     val filtered = vertexSet
+    val originalCount = scalar[Long]
   }
   class Output[S, T](implicit instance: MetaGraphOperationInstance,
                      inputs: Input[S, T]) extends MagicOutput(instance) {
@@ -57,12 +59,11 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
     val xyBuckets = xBuckets.sortedJoin(yBuckets)
+    val vertices = inputs.vertices.rdd
+    val originalCount = inputs.originalCount.value
     output(
       o.bucketSizes,
-      xyBuckets
-        .values
-        .mapPartitions(it => it.take(100))
-        .countValues)
+      RDDUtils.estimateValueCounts(vertices, xyBuckets, originalCount, 50000))
     output(o.indexingSeq, indexingSeq)
   }
 }

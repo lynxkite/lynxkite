@@ -183,8 +183,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     xBucketedAttr: graph_operations.BucketedAttribute[S],
     yBucketedAttr: graph_operations.BucketedAttribute[T]): Scalar[Map[(Int, Int), Int]] = {
 
+    val cop = graph_operations.CountVertices()
+    val originalCount = cop(cop.vertices, original).result.count
     val op = graph_operations.VertexBucketGrid(xBucketedAttr.bucketer, yBucketedAttr.bucketer)
-    var builder = op(op.filtered, filtered)(op.vertices, original)
+    var builder = op(op.filtered, filtered)(op.vertices, original)(op.originalCount, originalCount)
     if (xBucketedAttr.bucketer.numBuckets > 1) {
       builder = builder(op.xAttribute, xBucketedAttr.attribute)
     }
@@ -299,7 +301,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val cop = graph_operations.AddConstantIntEdgeAttribute(0)
     val startingBase: EdgeAttribute[Int] = cop(cop.edges, filtered).result.attr
-    startingBase.rdd.cache
     seq.foldLeft(startingBase) {
       case (b, ba) => indexFromBucketedAttribute(original, b, tripletMapping, ba)
     }
@@ -336,9 +337,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val dstIndices = indexFromIndexingSeq(
       edgeBundle, filteredEB, dstTripletMapping, dstView.indexingSeq)
 
+    val cop = graph_operations.CountEdges()
+    val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
     val countOp = graph_operations.EdgeIndexPairCounter()
     val counts =
-      countOp(countOp.xIndices, srcIndices)(countOp.yIndices, dstIndices).result.counts.value
+      countOp(countOp.xIndices, srcIndices)(
+        countOp.yIndices, dstIndices)(
+          countOp.original, edgeBundle)(
+            countOp.originalCount, originalEdgeCount).result.counts.value
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
