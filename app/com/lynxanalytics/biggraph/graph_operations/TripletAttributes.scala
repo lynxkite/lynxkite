@@ -5,6 +5,7 @@ import scala.reflect._
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object TripletMapping {
@@ -33,17 +34,28 @@ case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, Tripl
     implicit val id = inputDatas
     val edges = inputs.edges.rdd
     val src = inputs.src.rdd
+    val bySrc = edges
+      .map { case (id, edge) => (edge.src, id) }
+      .groupByKey(src.partitioner.get).toSortedRDD
+    output(
+      o.srcEdges,
+      src.sortedLeftOuterJoin(bySrc)
+        .mapValues {
+          case (_, Some(it)) => it.toArray
+          case (_, None) => Array[ID]()
+        })
+
     val dst = inputs.dst.rdd
-    output(o.srcEdges,
-      edges
-        .map { case (id, edge) => (edge.src, id) }
-        .groupByKey(src.partitioner.get)
-        .mapValues(_.toArray))
-    output(o.dstEdges,
-      edges
-        .map { case (id, edge) => (edge.dst, id) }
-        .groupByKey(dst.partitioner.get)
-        .mapValues(_.toArray))
+    val byDst = edges
+      .map { case (id, edge) => (edge.dst, id) }
+      .groupByKey(dst.partitioner.get).toSortedRDD
+    output(
+      o.dstEdges,
+      dst.sortedLeftOuterJoin(byDst)
+        .mapValues {
+          case (_, Some(it)) => it.toArray
+          case (_, None) => Array[ID]()
+        })
   }
 
   override val isHeavy = true

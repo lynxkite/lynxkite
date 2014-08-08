@@ -42,3 +42,8 @@ case class AddConstantDoubleEdgeAttribute(val value: Double)
     extends AddConstantEdgeAttribute[Double] {
   @transient lazy val tt = typeTag[Double]
 }
+
+case class AddConstantIntEdgeAttribute(val value: Int)
+    extends AddConstantEdgeAttribute[Int] {
+  @transient lazy val tt = typeTag[Int]
+}
