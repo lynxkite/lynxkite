@@ -62,7 +62,88 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
   }
 
-  ignore("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
+  ignore("benchmark groupByKey on non-partitioned RDD", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      val vanilla = genData(7, rows, 1).values.map(x => (x, x)).cache
+      vanilla.calculate
+      def oldGrouped = vanilla.groupByKey(new HashPartitioner(parts)).toSortedRDD.collect
+      def newGrouped = vanilla.partitionBy(new HashPartitioner(parts)).toSortedRDD.groupByKey.collect
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
+    for (round <- 10 to 20) {
+      val rows = 100000 * round
+      val demo = new Demo(parts, rows)
+      val old = Timed(demo.oldGrouped)
+      val mew = Timed(demo.newGrouped)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value.toSeq == old.value.toSeq)
+    }
+  }
+
+  test("benchmark combineByKey on non-partitioned RDD", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      import scala.collection.mutable.ArrayBuffer
+      val partitioner = new HashPartitioner(parts)
+      val sorted = genData(7, rows, 1).values.map(x => (x, x)).toSortedRDD(partitioner).cache
+      sorted.calculate
+      val createCombiner = (v: Char) => ArrayBuffer(v)
+      val mergeValue = (buf: ArrayBuffer[Char], v: Char) => buf += v
+      val mergeCombiners = (c1: ArrayBuffer[Char], c2: ArrayBuffer[Char]) => c1 ++ c2
+      def oldGrouped = sorted.asInstanceOf[RDD[(Char, Char)]]
+        .combineByKey(
+          createCombiner,
+          mergeValue,
+          mergeCombiners,
+          partitioner,
+          mapSideCombine = true)
+        .toSortedRDD
+        .collect
+      def newGrouped = sorted
+        .combineByKey(
+          createCombiner,
+          mergeValue)
+        .collect
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
+    for (round <- 10 to 20) {
+      val rows = 100000 * round
+      val demo = new Demo(parts, rows)
+      val mew = Timed(demo.newGrouped)
+      val old = Timed(demo.oldGrouped)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value.toSeq == old.value.toSeq)
+    }
+  }
+
+  test("benchmark groupByKey on SortedRDD", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      val sorted = genData(parts, rows, 1).values.map(x => (x, x))
+        .partitionBy(new HashPartitioner(parts)).toSortedRDD.cache
+      sorted.calculate
+      def oldGrouped = sorted.groupByKey(sorted.partitioner.get).toSortedRDD.collect
+      def newGrouped = sorted.groupByKey.collect
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
+    for (round <- 10 to 20) {
+      val rows = 100000 * round
+      val demo = new Demo(parts, rows)
+      val old = Timed(demo.oldGrouped)
+      val mew = Timed(demo.newGrouped)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value.toSeq == old.value.toSeq)
+    }
+  }
+
+  test("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val data = genData(parts, rows, 1).toSortedRDD.cache
       data.calculate
@@ -76,6 +157,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val parts = 4
     val table = "%10s | %10s | %10s"
     println(table.format("rows", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
     for (round <- 10 to 20) {
       val rows = 100000 * round
       val demo = new Demo(parts, rows)
@@ -125,6 +207,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val rows = 100000
     val table = "%10s | %10s | %10s"
     println(table.format("frac", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
     for (round <- 1 to 10) {
       val frac = round * 0.1
       val demo = new Demo(parts, rows, frac)
@@ -148,6 +231,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val parts = 4
     val table = "%10s | %10s | %10s"
     println(table.format("rows", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
     for (round <- 10 to 20) {
       val rows = 100000 * round
       val demo = new Demo(parts, rows)
@@ -186,6 +270,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val parts = 4
     val table = "%10s | %10s | %10s"
     println(table.format("rows", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
     for (round <- 10 to 20) {
       val rows = 10000 * round
       val demo = new Demo(parts, rows)
