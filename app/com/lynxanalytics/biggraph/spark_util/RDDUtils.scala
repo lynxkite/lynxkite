@@ -87,7 +87,7 @@ object Implicits {
 
     // Adds unique ID numbers to rows of an RDD as a transformation.
     // The returned RDD will be partitioned by the given partitioner.
-    def fastNumbered(partitioner: spark.Partitioner): RDD[(ID, T)] = {
+    def fastNumbered(partitioner: spark.Partitioner): SortedRDD[ID, T] = {
       require(partitioner.isInstanceOf[spark.HashPartitioner], s"Need HashPartitioner, got: $partitioner")
       val numPartitions = partitioner.numPartitions
       // Need to repartition before adding the IDs if we are going to change the partition count.
@@ -99,8 +99,11 @@ object Implicits {
         }
       }, preservesPartitioning = true)
       // If the RDD was already partitioned correctly, we can skip the (pointless) shuffle.
-      if (withIDs.partitioner == Some(partitioner)) withIDs
-      else withIDs.partitionBy(partitioner)
+      val result = {
+        if (withIDs.partitioner == Some(partitioner)) withIDs
+        else withIDs.partitionBy(partitioner)
+      }
+      result.toSortedRDD
     }
 
     // Adds unique ID numbers to rows of an RDD as a transformation.
@@ -123,7 +126,7 @@ object Implicits {
       }, preservesPartitioning = true)
 
       // generate unique id, throw away previous random id
-      shuffled.fastNumbered(partitioner).mapValues(_._2).toSortedRDD
+      shuffled.fastNumbered(partitioner).mapValues(_._2)
     }
 
     // Cheap method to force an RDD calculation
