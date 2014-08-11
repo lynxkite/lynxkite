@@ -19,9 +19,11 @@ object FEBucketers {
     implicit val dm = dataManager
 
     val bucketer = if (typeOf[T] =:= typeOf[String]) {
-      val op = ComputeTopValues[String](numBuckets + 1)
-      val topVals = op(op.attribute, attr.runtimeSafeCast[String]).result.topValues.value
-      StringBucketer(topVals.map(_._1).takeRight(numBuckets), topVals.size == numBuckets + 1)
+      val op = ComputeTopValues[String](numBuckets + 1, 10000)
+      val topVals = op(op.attribute, attr.runtimeSafeCast[String]).result.topValues.value.map(_._1)
+      val hasOther = topVals.size == numBuckets + 1
+      (if (hasOther) StringBucketer(topVals.takeRight(numBuckets - 1), true)
+      else StringBucketer(topVals, false))
         .asInstanceOf[Bucketer[T]]
     } else if (typeOf[T] =:= typeOf[Double]) {
       val op = ComputeMinMax[Double]

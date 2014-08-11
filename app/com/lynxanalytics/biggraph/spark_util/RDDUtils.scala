@@ -41,6 +41,64 @@ object RDDUtils {
     oos.close
     bos.toByteArray
   }
+
+  /*
+   * For a filtered RDD computes how many elements were "skipped" by the filter.
+   *
+   * The input is two sorted RDDs, restricted and full, where the keys in restricted form a subset
+   * of the keys in full. The function will return the data in restricted complemented by an extra
+   * interger for each key. This interger is the number of keys found in fullRDD between
+   * the actual key (inclusive) and the previous key in restricted (exclusive). Summing up that
+   * integer on a per-partition prefix gives an estimate of how much of the original, full RDD
+   * we had to process to get the filtered sample we needed. This is necessary to be able to
+   * estimate totals from the filtered numbers.
+   */
+  private def unfilteredCounts[T](
+    fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]): SortedRDD[ID, (T, Int)] = {
+    val res = fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
+      val bfit = fit.buffered
+      val brit = rit.buffered
+      new Iterator[(ID, (T, Int))] {
+        def hasNext = rit.hasNext
+        def next() = {
+          val nxt = rit.next
+          var c = 1
+          while (fit.next._1 < nxt._1) c += 1
+          (nxt._1, (nxt._2, c))
+        }
+      }
+    }
+    new SortedRDD(res)
+  }
+
+  def estimateValueCounts[T](
+    fullRDD: SortedRDD[ID, _],
+    data: SortedRDD[ID, T],
+    totalVertexCount: Long,
+    requiredPositiveSamples: Int): Map[T, Int] = {
+
+    val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
+    val withCounts = unfilteredCounts(fullRDD, dataUsed)
+    val (valueCounts, unfilteredCount) = withCounts
+      .values
+      .aggregate((mutable.Map[T, Int](), 0))(
+        {
+          case ((map, uct), (key, uc)) =>
+            incrementMap(map, key)
+            (map, uct + uc)
+        },
+        {
+          case ((map1, uct1), (map2, uct2)) =>
+            map2.foreach { case (k, v) => incrementMap(map1, k, v) }
+            (map1, uct1 + uct2)
+        })
+    val multiplier = totalVertexCount * 1.0 / unfilteredCount
+    valueCounts.toMap.mapValues(c => math.round(multiplier * c).toInt)
+  }
+
+  def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
+    map(key) = if (map.contains(key)) (map(key) + increment) else increment
+  }
 }
 
 object Implicits {
@@ -65,7 +123,7 @@ object Implicits {
     jumped ^ (jumped >>> 32) // Cancel out the bit flips in Long.hashCode.
   }
 
-  implicit class RDDUtils[T: ClassTag](self: RDD[T]) {
+  implicit class AnyRDDUtils[T: ClassTag](self: RDD[T]) {
     def numbered: RDD[(Long, T)] = {
       val localCounts = self.glom().map(_.size).collect().scan(0)(_ + _)
       val counts = self.sparkContext.broadcast(localCounts)
@@ -130,19 +188,6 @@ object Implicits {
 
     // Cheap method to force an RDD calculation
     def calculate() = self.foreach(_ => ())
-
-    def countValues: Map[T, Int] =
-      self.aggregate(mutable.Map[T, Int]())(
-        {
-          case (map, key) =>
-            incrementMap(map, key)
-            map
-        },
-        {
-          case (map1, map2) =>
-            map2.foreach { case (k, v) => incrementMap(map1, k, v) }
-            map1
-        }).toMap
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
@@ -153,9 +198,5 @@ object Implicits {
     def groupBySortedKey(partitioner: spark.Partitioner)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
       SortedRDD.fromUnsorted(self.groupByKey(partitioner))
     def asSortedRDD = SortedRDD.fromSorted(self)
-  }
-
-  private def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
-    map(key) = if (map.contains(key)) (map(key) + increment) else increment
   }
 }
