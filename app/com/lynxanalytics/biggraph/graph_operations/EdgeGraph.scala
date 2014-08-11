@@ -32,12 +32,12 @@ case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
 
     val edgesBySource = edges.map {
       case (id, edge) => (edge.src, id)
-    }.groupByKey(edgePartitioner)
+    }.groupBySortedKey(edgePartitioner)
     val edgesByDest = edges.map {
       case (id, edge) => (edge.dst, id)
-    }.groupByKey(edgePartitioner)
+    }.groupBySortedKey(edgePartitioner)
 
-    val newES = edgesBySource.join(edgesByDest).flatMap {
+    val newES = edgesBySource.sortedJoin(edgesByDest).flatMap {
       case (vid, (outgoings, incomings)) =>
         for {
           outgoing <- outgoings
@@ -45,7 +45,7 @@ case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
         } yield Edge(incoming, outgoing)
     }
     output(o.newVS, newVS)
-    output(o.newES, newES.fastNumbered(edgePartitioner))
+    output(o.newES, newES.randomNumbered(edgePartitioner))
     // Just to connect to the results.
     output(o.link, sc.emptyRDD[(ID, Edge)].toSortedRDD(edgePartitioner))
   }

@@ -34,7 +34,7 @@ case class PageRank(dampingFactor: Double,
     val vertexPartitioner = vertices.partitioner.get
     val targetsWithWeights = edges.sortedJoin(weights)
       .map { case (_, (edge, weight)) => edge.src -> (edge.dst, weight) }
-      .groupByKey(vertexPartitioner).toSortedRDD
+      .groupBySortedKey(vertexPartitioner)
       .mapValues { it =>
         val dstW = it.toSeq
         def sumWeights(s: Seq[(ID, Double)]) = s.map({ case (dst, w) => w }).sum
@@ -53,7 +53,7 @@ case class PageRank(dampingFactor: Double,
           case (id, (pr, targets)) =>
             targets.map { case (tid, weight) => (tid, pr * weight * dampingFactor) }
         }
-        .groupByKey(vertexPartitioner).toSortedRDD
+        .groupBySortedKey(vertexPartitioner)
         .mapValues(_.sum)
 
       val totalIncoming = incomingRank.map(_._2).aggregate(0.0)(_ + _, _ + _)

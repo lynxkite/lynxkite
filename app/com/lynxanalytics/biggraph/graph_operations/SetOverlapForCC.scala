@@ -45,7 +45,7 @@ abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
     val edges: RDD[Edge] = byMember.flatMap {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
-    output(o.overlaps, edges.fastNumbered(rc.defaultPartitioner))
+    output(o.overlaps, edges.randomNumbered(rc.defaultPartitioner))
   }
 
   // Override this with the actual overlap function implementations

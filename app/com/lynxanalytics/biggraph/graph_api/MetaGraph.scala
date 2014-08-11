@@ -544,19 +544,19 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
   def apply(vertexSet: VertexSet, rdd: VertexSetRDD): Unit = {
     addData(new VertexSetData(vertexSet, rdd))
   }
-  
+
   def apply(edgeBundle: EdgeBundle, rdd: EdgeBundleRDD): Unit = {
     addData(new EdgeBundleData(edgeBundle, rdd))
   }
-  
+
   def apply[T](vertexAttribute: VertexAttribute[T], rdd: AttributeRDD[T]): Unit = {
     addData(new VertexAttributeData(vertexAttribute, rdd))
   }
-  
+
   def apply[T](edgeAttribute: EdgeAttribute[T], rdd: AttributeRDD[T]): Unit = {
     addData(new EdgeAttributeData(edgeAttribute, rdd))
   }
-  
+
   def apply[T](scalar: Scalar[T], value: T): Unit = {
     addData(new ScalarData(scalar, value))
   }

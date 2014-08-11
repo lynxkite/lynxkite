@@ -200,6 +200,8 @@ object Implicits {
       SortedRDD.fromUnsorted(self.partitionBy(partitioner))
     def groupBySortedKey(partitioner: spark.Partitioner)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
       SortedRDD.fromUnsorted(self.groupByKey(partitioner))
+    def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
+      SortedRDD.fromUnsorted(self.reduceByKey(partitioner, f))
     def asSortedRDD = SortedRDD.fromSorted(self)
   }
 }
