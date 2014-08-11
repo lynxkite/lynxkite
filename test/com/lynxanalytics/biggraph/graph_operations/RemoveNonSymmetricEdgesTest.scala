@@ -11,6 +11,6 @@ class RemoveNonSymmetricEdgesTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = RemoveNonSymmetricEdges()
     val out = op(op.es, g.edges).result
-    assert(out.symmetric.toMap == Map(0 -> 1, 1 -> 0))
+    assert(out.symmetric.toPairSet == Set(0 -> 1, 1 -> 0))
   }
 }

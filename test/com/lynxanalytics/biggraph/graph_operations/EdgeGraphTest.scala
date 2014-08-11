@@ -12,6 +12,6 @@ class EdgeGraphTest extends FunSuite with TestGraphOp {
     val op = EdgeGraph()
     val out = op(op.es, g.edges).result
     assert(out.newVS.toSet == Set(0, 1, 2, 3))
-    assert(out.newES.toMap == Map(1 -> 0, 3 -> 1, 2 -> 0, 0 -> 1))
+    assert(out.newES.toPairSet == Set(1 -> 0, 3 -> 1, 2 -> 0, 0 -> 1))
   }
 }

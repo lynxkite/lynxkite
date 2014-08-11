@@ -110,7 +110,10 @@ object Implicits {
     // in order to provide unbiased data for sampling SortedRDDs.
     def randomNumbered(numPartitions: Int = self.partitions.size): SortedRDD[ID, T] = {
       val partitioner = new spark.HashPartitioner(numPartitions)
+      randomNumbered(partitioner)
+    }
 
+    def randomNumbered(partitioner: spark.Partitioner): SortedRDD[ID, T] = {
       // generate a random id for the hash
       val randomPartitioned = self.mapPartitionsWithIndex({
         case (pid, it) =>
