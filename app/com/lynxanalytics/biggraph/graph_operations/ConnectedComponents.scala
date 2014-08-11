@@ -39,7 +39,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
         case (vId, (_, Some(cId))) => Edge(vId, cId)
         case (vId, (_, None)) => Edge(vId, vId)
       }
-    output(o.belongsTo, ccEdges.fastNumbered(rc.defaultPartitioner).toSortedRDD)
+    output(o.belongsTo, ccEdges.fastNumbered(rc.defaultPartitioner))
     val ccVertices = ccEdges.map(_.dst -> ())
       .toSortedRDD(rc.defaultPartitioner)
       .distinct
@@ -54,8 +54,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     // We best cache it here.
     graph.persist(StorageLevel.MEMORY_AND_DISK)
     if (graph.count == 0) {
-      // it is empty anyways, so just cast it into the return type
-      return graph.asInstanceOf[SortedRDD[ID, ComponentID]]
+      return graph.sparkContext.emptyRDD[(ID, ComponentID)].partitionBy(graph.partitioner.get).asSortedRDD
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
     if (edgeCount <= maxEdgesProcessedLocally) {

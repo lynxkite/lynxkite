@@ -43,7 +43,8 @@ case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {
     val BA = weightedEdgesAB.map { case (_, (edge, weight)) => edge.dst -> (edge.src, weight) }.toSortedRDD(partitioner)
     val BC = weightedEdgesBC.map { case (_, (edge, weight)) => edge.src -> (edge.dst, weight) }.toSortedRDD(partitioner)
 
-    val AC = BA.sortedJoin(BC).map {
+    // can't use sortedJoin as we need provide cartesian product for many to many relations
+    val AC = BA.join(BC).map {
       case (_, ((vertexA, weightAB), (vertexC, weightBC))) => (Edge(vertexA, vertexC), weightAB * weightBC)
     }.reduceByKey(_ + _) // TODO: possibility to define arbitrary concat functions as JS
 
