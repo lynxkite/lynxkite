@@ -44,7 +44,8 @@ case class FEOperationParameterMeta(
     title: String,
     kind: String = "scalar", // vertex-set, edge-bundle, ...
     defaultValue: String = "",
-    options: Seq[UIValue] = Seq()) {
+    options: Seq[UIValue] = Seq(),
+    multipleChoice: Boolean = false) {
 
   val validKinds = Seq(
     "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
