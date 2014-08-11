@@ -39,7 +39,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
         case (vId, (_, Some(cId))) => Edge(vId, cId)
         case (vId, (_, None)) => Edge(vId, vId)
       }
-    output(o.belongsTo, ccEdges.fastNumbered(rc.defaultPartitioner))
+    output(o.belongsTo, ccEdges.randomNumbered(rc.defaultPartitioner))
     val ccVertices = ccEdges.map(_.dst -> ())
       .toSortedRDD(rc.defaultPartitioner)
       .distinct

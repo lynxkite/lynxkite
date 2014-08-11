@@ -30,7 +30,7 @@ case class UpperBoundFilter[T: Ordering](bound: T)
     val attr = inputs.attr.rdd
     val fattr = attr.filter { case (id, v) => v <= bound }
     output(o.fvs, fattr.mapValues(_ => ()))
-    val identity = fattr.map({ case (id, v) => id -> Edge(id, id) }).partitionBy(attr.partitioner.get)
+    val identity = fattr.mapValuesWithKeys { case (id, v) => Edge(id, id) }
     output(o.identity, identity)
   }
 }

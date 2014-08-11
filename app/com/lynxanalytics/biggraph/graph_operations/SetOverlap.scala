@@ -75,7 +75,7 @@ case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
       case (prefix, sets) => edgesFor(prefix, sets)
     }
 
-    val numberedEdgesWithOverlaps = edgesWithOverlaps.fastNumbered(rc.defaultPartitioner)
+    val numberedEdgesWithOverlaps = edgesWithOverlaps.randomNumbered(rc.defaultPartitioner)
 
     output(o.overlaps, numberedEdgesWithOverlaps.mapValues(_._1))
     output(o.overlapSize, numberedEdgesWithOverlaps.mapValues(_._2))

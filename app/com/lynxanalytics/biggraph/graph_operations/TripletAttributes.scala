@@ -97,9 +97,9 @@ case class VertexToEdgeAttribute[T]()
 
     output(
       o.mappedAttribute,
-      mapping.join(original)
+      mapping.sortedJoin(original)
         .flatMap { case (vid, (edges, value)) => edges.map((_, value)) }
-        .groupByKey(target.partitioner.get)
+        .groupBySortedKey(target.partitioner.get)
         .mapValues(values => values.head))
   }
 

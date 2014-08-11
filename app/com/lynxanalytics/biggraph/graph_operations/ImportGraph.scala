@@ -186,13 +186,13 @@ trait ImportEdges extends ImportCommon {
     val edgeSrcDst = columns(src).sortedJoin(columns(dst))
     val bySrc = edgeSrcDst.map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.partitionBy(partitioner).toSortedRDD
+    }.toSortedRDD(partitioner)
     val byDst = bySrc.sortedJoin(srcToId).map {
       case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.partitionBy(partitioner).toSortedRDD
+    }.toSortedRDD(partitioner)
     val edges = byDst.sortedJoin(dstToId).map {
       case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
-    }.partitionBy(partitioner).toSortedRDD
+    }.toSortedRDD(partitioner)
     output(oeb, edges)
   }
 }
@@ -225,7 +225,7 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
     val names = (columns(src).values ++ columns(dst).values).distinct
     val idToName = names.randomNumbered(partitioner.numPartitions)
     val nameToId = idToName.map { case (id, name) => (name, id) }
-      .partitionBy(partitioner).toSortedRDD
+      .toSortedRDD(partitioner)
     putEdgeBundle(columns, nameToId, nameToId, o.edges, output, partitioner)
     output(o.vertices, idToName.mapValues(_ => ()))
     output(o.stringID, idToName)
@@ -252,11 +252,11 @@ object ImportEdgeListForExistingVertexSet {
   }
 
   def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): SortedRDD[String, ID] =
-    rdd.groupByKey(partitioner)
+    rdd.groupBySortedKey(partitioner)
       .mapValues { id =>
         assert(id.size == 1, "VertexId mapping is ambiguous, check supplied VertexAttributes")
         id.head
-      }.toSortedRDD
+      }
 }
 case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String)
     extends ImportEdges
