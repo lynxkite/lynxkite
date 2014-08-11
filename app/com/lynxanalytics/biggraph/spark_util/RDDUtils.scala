@@ -42,6 +42,17 @@ object RDDUtils {
     bos.toByteArray
   }
 
+  /*
+   * For a filtered RDD computes how many elements were "skipped" by the filter.
+   *
+   * The input is two sorted RDDs, restricted and full, where the keys in restricted form a subset
+   * of the keys in full. The function will return the data in restricted complemented by an extra
+   * interger for each key. This interger is the number of keys found in fullRDD between
+   * the actual key (inclusive) and the previous key in restricted (exclusive). Summing up that
+   * integer on a per-partition prefix gives an estimate of how much of the original, full RDD
+   * we had to process to get the filtered sample we needed. This is necessary to be able to
+   * estimate totals from the filtered numbers.
+   */
   private def unfilteredCounts[T](
     fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]): SortedRDD[ID, (T, Int)] = {
     val res = fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
@@ -175,19 +186,6 @@ object Implicits {
 
     // Cheap method to force an RDD calculation
     def calculate() = self.foreach(_ => ())
-
-    def countValues: Map[T, Int] =
-      self.aggregate(mutable.Map[T, Int]())(
-        {
-          case (map, key) =>
-            RDDUtils.incrementMap(map, key)
-            map
-        },
-        {
-          case (map1, map2) =>
-            map2.foreach { case (k, v) => RDDUtils.incrementMap(map1, k, v) }
-            map1
-        }).toMap
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
