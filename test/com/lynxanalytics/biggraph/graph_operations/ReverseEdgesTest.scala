@@ -11,6 +11,6 @@ class ReverseEdgesTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = ReverseEdges()
     val out = op(op.esAB, g.edges).result
-    assert(out.esBA.toMap == Map(0 -> 1, 1 -> 0, 0 -> 2, 1 -> 2))
+    assert(out.esBA.toPairSet == Set(0 -> 1, 1 -> 0, 0 -> 2, 1 -> 2))
   }
 }

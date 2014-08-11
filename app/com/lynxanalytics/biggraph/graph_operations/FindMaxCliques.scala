@@ -25,11 +25,11 @@ case class FindMaxCliques(minCliqueSize: Int) extends TypedMetaGraphOp[GraphInpu
     val cug = CompactUndirectedGraph(inputs.es.data)
     val cliqueLists = computeCliques(
       inputs.vs.data, cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
-    val indexedCliqueLists = cliqueLists.fastNumbered(rc.defaultPartitioner)
+    val indexedCliqueLists = cliqueLists.randomNumbered(rc.defaultPartitioner)
     output(o.segments, indexedCliqueLists.mapValues(_ => ()))
     output(o.belongsTo, indexedCliqueLists.flatMap {
       case (cid, vids) => vids.map(vid => Edge(vid, cid))
-    }.fastNumbered(rc.defaultPartitioner))
+    }.randomNumbered(rc.defaultPartitioner))
   }
 
   // Implementation of the actual algorithm.

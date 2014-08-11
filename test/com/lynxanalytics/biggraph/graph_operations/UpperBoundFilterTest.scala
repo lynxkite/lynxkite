@@ -15,7 +15,7 @@ class UpperBoundFilterTest extends FunSuite with TestGraphOp {
     val ind = InducedEdgeBundle()
     val joined = ind(ind.edges, g.edges)(ind.srcSubset, f.fvs.entity)(ind.dstSubset, f.fvs.entity)
       .result
-    assert(joined.induced.toMap == Map(0L -> 1L, 1L -> 0L))
+    assert(joined.induced.toPairSet == Set(0L -> 1L, 1L -> 0L))
   }
   test("filtering on strings works") {
     val op = UpperBoundFilter("Bz")

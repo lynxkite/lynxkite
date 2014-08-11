@@ -48,7 +48,7 @@ case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {
       case (_, ((vertexA, weightAB), (vertexC, weightBC))) => (Edge(vertexA, vertexC), weightAB * weightBC)
     }.reduceByKey(_ + _) // TODO: possibility to define arbitrary concat functions as JS
 
-    val numberedAC = AC.fastNumbered(rc.defaultPartitioner)
+    val numberedAC = AC.randomNumbered(rc.defaultPartitioner)
 
     output(o.edgesAC, numberedAC.mapValues { case (edge, weight) => edge })
     output(o.weightsAC, numberedAC.mapValues { case (edge, weight) => weight })
