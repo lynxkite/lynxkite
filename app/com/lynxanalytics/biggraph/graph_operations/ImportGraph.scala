@@ -114,7 +114,7 @@ case class CSV(file: Filename,
   }
 }
 
-abstract class ImportCommon {
+trait ImportCommon {
   type Columns = Map[String, SortedRDD[ID, String]]
 
   val csv: CSV
@@ -163,7 +163,9 @@ case class ImportVertexList(csv: CSV) extends ImportCommon
   }
 }
 
-abstract class ImportEdges(src: String, dst: String) extends ImportCommon {
+trait ImportEdges extends ImportCommon {
+  val src: String
+  val dst: String
   mustHaveField(src)
   mustHaveField(dst)
 
@@ -207,7 +209,7 @@ object ImportEdgeList {
   }
 }
 case class ImportEdgeList(csv: CSV, src: String, dst: String)
-    extends ImportEdges(src, dst)
+    extends ImportEdges
     with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
   import ImportEdgeList._
   @transient override lazy val inputs = new NoInput()
@@ -257,7 +259,7 @@ object ImportEdgeListForExistingVertexSet {
       }.toSortedRDD
 }
 case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String)
-    extends ImportEdges(src, dst)
+    extends ImportEdges
     with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
   import ImportEdgeListForExistingVertexSet._
   @transient override lazy val inputs = new Input()

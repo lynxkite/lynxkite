@@ -6,14 +6,17 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object EdgeIndexPairCounter {
   class Input extends MagicInputSignature {
     val srcVS = vertexSet
     val dstVS = vertexSet
-    val eb = edgeBundle(srcVS, dstVS)
-    val xIndices = edgeAttribute[Int](eb)
-    val yIndices = edgeAttribute[Int](eb)
+    val original = edgeBundle(srcVS, dstVS)
+    val filtered = edgeBundle(srcVS, dstVS)
+    val xIndices = edgeAttribute[Int](filtered)
+    val yIndices = edgeAttribute[Int](filtered)
+    val originalCount = scalar[Long]
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
@@ -33,7 +36,13 @@ case class EdgeIndexPairCounter() extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
     val xIndices = inputs.xIndices.rdd
     val yIndices = inputs.yIndices.rdd
-    // To limit data checked, do sg like: .mapPartitions(it => it.take(100)) before countValues.
-    output(o.counts, xIndices.sortedJoin(yIndices).values.countValues)
+
+    output(
+      o.counts,
+      RDDUtils.estimateValueCounts(
+        inputs.original.rdd,
+        xIndices.sortedJoin(yIndices),
+        inputs.originalCount.value,
+        50000))
   }
 }
