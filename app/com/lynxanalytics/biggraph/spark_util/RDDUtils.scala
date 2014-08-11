@@ -99,10 +99,9 @@ object Implicits {
         }
       }, preservesPartitioning = true)
       // If the RDD was already partitioned correctly, we can skip the (pointless) shuffle.
-      val result = {
+      val result =
         if (withIDs.partitioner == Some(partitioner)) withIDs
         else withIDs.partitionBy(partitioner)
-      }
       result.toSortedRDD
     }
 
