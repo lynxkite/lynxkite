@@ -47,7 +47,7 @@ case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
     output(o.newVS, newVS)
     output(o.newES, newES.fastNumbered(edgePartitioner))
     // Just to connect to the results.
-    output(o.link, sc.emptyRDD[(ID, Edge)].partitionBy(edgePartitioner))
+    output(o.link, sc.emptyRDD[(ID, Edge)].toSortedRDD(edgePartitioner))
   }
 
   override val isHeavy = true

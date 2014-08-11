@@ -541,51 +541,22 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
     internalDataMap(gUID) = data
   }
 
-  def addRDDData(data: EntityRDDData): Unit = {
-    assert(data.rdd.partitioner.isDefined, s"Unpartitioned RDD: $data.rdd")
-    addData(data)
-  }
-
   def apply(vertexSet: VertexSet, rdd: VertexSetRDD): Unit = {
-    addRDDData(new VertexSetData(vertexSet, rdd))
+    addData(new VertexSetData(vertexSet, rdd))
   }
-  def apply(vertexSet: VertexSet, rdd: RDD[(ID, Unit)]): Unit = {
-    rdd match {
-      case asSorted: SortedRDD[ID, Unit] => apply(vertexSet, asSorted)
-      case _ => apply(vertexSet, SortedRDD.fromUnsorted(rdd))
-    }
-  }
-
+  
   def apply(edgeBundle: EdgeBundle, rdd: EdgeBundleRDD): Unit = {
-    addRDDData(new EdgeBundleData(edgeBundle, rdd))
+    addData(new EdgeBundleData(edgeBundle, rdd))
   }
-  def apply(edgeBundle: EdgeBundle, rdd: RDD[(ID, Edge)]): Unit = {
-    rdd match {
-      case asSorted: SortedRDD[ID, Edge] => apply(edgeBundle, asSorted)
-      case _ => apply(edgeBundle, SortedRDD.fromUnsorted(rdd))
-    }
-  }
-
+  
   def apply[T](vertexAttribute: VertexAttribute[T], rdd: AttributeRDD[T]): Unit = {
-    addRDDData(new VertexAttributeData(vertexAttribute, rdd))
+    addData(new VertexAttributeData(vertexAttribute, rdd))
   }
-  def apply[T](vertexAttribute: VertexAttribute[T], rdd: RDD[(ID, T)]): Unit = {
-    rdd match {
-      case asSorted: SortedRDD[ID, T] => apply(vertexAttribute, asSorted)
-      case _ => apply(vertexAttribute, SortedRDD.fromUnsorted(rdd))
-    }
-  }
-
+  
   def apply[T](edgeAttribute: EdgeAttribute[T], rdd: AttributeRDD[T]): Unit = {
-    addRDDData(new EdgeAttributeData(edgeAttribute, rdd))
+    addData(new EdgeAttributeData(edgeAttribute, rdd))
   }
-  def apply[T](edgeAttribute: EdgeAttribute[T], rdd: RDD[(ID, T)]): Unit = {
-    rdd match {
-      case asSorted: SortedRDD[ID, T] => apply(edgeAttribute, asSorted)
-      case _ => apply(edgeAttribute, SortedRDD.fromUnsorted(rdd))
-    }
-  }
-
+  
   def apply[T](scalar: Scalar[T], value: T): Unit = {
     addData(new ScalarData(scalar, value))
   }
