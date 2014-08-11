@@ -37,7 +37,7 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
     val randomEdges = inCandidates.zipPartitions(outCandidates, true) { (it1, it2) =>
       it1.zip(it2).map { case (id1, id2) => Edge(id1, id2) }
     }
-    output(o.es, randomEdges.fastNumbered(rc.defaultPartitioner))
+    output(o.es, randomEdges.randomNumbered(rc.defaultPartitioner))
   }
 
   override val isHeavy = true

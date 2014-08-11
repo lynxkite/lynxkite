@@ -38,7 +38,7 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends TypedMetaGr
           .map { case ((srcId, _), (dstId, _)) => Edge(srcId, dstId) }
     }
 
-    output(o.es, randomEdges.fastNumbered(rc.defaultPartitioner))
+    output(o.es, randomEdges.randomNumbered(rc.defaultPartitioner))
   }
 
   override val isHeavy = true

@@ -21,11 +21,11 @@ object GraphTestUtils {
   }
 
   implicit class EdgeBundleOps[T <% EdgeBundleData](eb: T) {
-    def toMap(): Map[ID, ID] = {
+    def toPairSet(): Set[(ID, ID)] = {
       eb.rdd
         .collect
         .map { case (id, edge) => (edge.src -> edge.dst) }
-        .toMap
+        .toSet
     }
   }
 }
@@ -108,7 +108,7 @@ case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
     val es = sc.parallelize(
       edgeLists.flatMap {
         case (s, i) => s.map(j => Edge(j.toLong, i.toLong))
-      }).fastNumbered(rc.onePartitionPartitioner)
+      }).randomNumbered(rc.onePartitionPartitioner)
     output(o.vs, vs)
     output(o.segments, segments)
     output(o.belongsTo, es)
@@ -134,7 +134,7 @@ case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val es = rc.sparkContext.parallelize(edges.map {
       case (a, b) => Edge(a, b)
-    }).fastNumbered(rc.onePartitionPartitioner)
+    }).randomNumbered(rc.onePartitionPartitioner)
     output(o.es, es)
     output(o.weight, es.mapValues(_ => weight))
   }
