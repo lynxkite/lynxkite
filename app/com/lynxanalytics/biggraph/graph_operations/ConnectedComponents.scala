@@ -54,7 +54,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     // We best cache it here.
     graph.persist(StorageLevel.MEMORY_AND_DISK)
     if (graph.count == 0) {
-      return graph.sparkContext.emptyRDD[(ID, ComponentID)].partitionBy(graph.partitioner.get).asSortedRDD
+      return graph.sparkContext.emptyRDD[(ID, ComponentID)].toSortedRDD(graph.partitioner.get)
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
     if (edgeCount <= maxEdgesProcessedLocally) {

@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
@@ -21,6 +22,6 @@ case class CreateVertexSet(size: Long) extends TypedMetaGraphOp[NoInput, Output]
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val vertices: Seq[(ID, Unit)] = Seq.range[ID](0, size).map(x => (x, ()))
-    output(o.vs, rc.sparkContext.parallelize(vertices).partitionBy(rc.defaultPartitioner))
+    output(o.vs, rc.sparkContext.parallelize(vertices).toSortedRDD(rc.defaultPartitioner))
   }
 }
