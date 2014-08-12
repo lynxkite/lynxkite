@@ -2,6 +2,7 @@
 
 angular.module('biggraph')
   .controller('ProjectViewCtrl', function ($scope, $routeParams, $resource, $location, util) {
+    $scope.util = util;
     function defaultSideState() {
       return {
         projectName: undefined,
@@ -28,17 +29,19 @@ angular.module('biggraph')
     Side.prototype.reload = function() {
       if (this.state.projectName) {
         this.project = util.nocache('/ajax/project', { name: this.state.projectName });
-      } else{
+      } else {
         this.project = undefined;
       }
     };
+
+    $scope.left = new Side();
+    $scope.right = new Side();
     function clearState() {
       $scope.leftToRightPath = undefined;
-      $scope.left = new Side();
-      $scope.right = new Side();
+      $scope.left.state = defaultSideState();
+      $scope.right.state = defaultSideState();
       $scope.left.state.projectName = $routeParams.project;
     }
-    clearState();
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
 
@@ -57,22 +60,26 @@ angular.module('biggraph')
       setSideSetting($scope.right, setting, value);
     };
 
-    util.deepWatch($scope, 'left.project', function(project) {
-      if (project === undefined) {
-        $scope.left.state.vertexSet = undefined;
-        $scope.left.state.edgeBundle = undefined;
+    // Side.graphState is for compatibility with the metaGraph.js-related code in graph-view.js
+    // and could be removed later.
+    util.deepWatch($scope, 'left.project', function() { $scope.left.updateGraphState(); });
+    util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
+    util.deepWatch($scope, 'right.project', function() { $scope.right.updateGraphState(); });
+    util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
+    Side.prototype.updateGraphState = function() {
+      this.graphState = angular.copy(this.state, this.graphState);
+      if (this.project === undefined || !this.project.$resolved) {
+        this.graphState.vertexSet = undefined;
+        this.graphState.edgeBundle = undefined;
         return;
       }
-      // Put vertex set and edge bundle in the state.
-      // This is for compatibility with the metaGraph.js-related code in graph-view.js
-      // and could be removed later.
-      $scope.left.state.vertexSet = { id: project.vertexSet };
-      if (project.edgeBundle !== '') {
-        $scope.left.state.edgeBundle = { id: project.edgeBundle };
+      this.graphState.vertexSet = { id: this.project.vertexSet };
+      if (this.project.edgeBundle !== '') {
+        this.graphState.edgeBundle = { id: this.project.edgeBundle };
       } else {
-        $scope.left.state.edgeBundle = undefined;
+        this.graphState.edgeBundle = undefined;
       }
-    });
+    };
 
     util.deepWatch(
       $scope,
@@ -96,7 +103,9 @@ angular.module('biggraph')
     util.deepWatch(
       $scope,
       getState,
-      function(state) {
-        $location.search({ q: JSON.stringify(state) });
+      function(after, before) {
+        if (after !== before) {
+          $location.search({ q: JSON.stringify(after) });
+        }
       });
   });

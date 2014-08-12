@@ -1,4 +1,7 @@
 <div class="col-sm-6">
+
+  <project-selector name="side.state.projectName" ng-if="side.state.projectName === undefined"></project-selector>
+
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
     Loading...
   </progressbar>
@@ -15,7 +18,7 @@
   <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.error">
 
     <div class="panel-heading project-name">
-      {{spaced(side.project.name)}}
+      {{util.spaced(side.project.name)}}
       <div class="btn-group pull-right">
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable
           tooltip="Bucketed&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
@@ -37,8 +40,8 @@
     <div class="list-group">
       <li class="list-group-item">
         <span class="lead">
-          {{human(side.project.vertexCount)}} <span class="de-emph">vertices with</span>
-          {{human(side.project.edgeCount)}} <span class="de-emph">edges</span>
+          {{util.human(side.project.vertexCount)}} <span class="de-emph">vertices with</span>
+          {{util.human(side.project.edgeCount)}} <span class="de-emph">edges</span>
         </span>
       </li>
 
