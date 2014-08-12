@@ -41,7 +41,7 @@ object EdgeBundleIntersection {
     val srcVS = vertexSet
     val dstVS = vertexSet
     val ebs = Range(0, numEdgeBundles).map {
-      i => edgeBundle(srcVS, dstVS, Symbol("eb" + i))
+      i => edgeBundle(srcVS, dstVS, name = Symbol("eb" + i))
     }.toList
   }
   class Output(implicit instance: MetaGraphOperationInstance,
