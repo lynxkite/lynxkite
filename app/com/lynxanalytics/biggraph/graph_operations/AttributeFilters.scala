@@ -15,7 +15,7 @@ object VertexAttributeFilter {
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
     val fvs = vertexSet
-    val identity = edgeBundle(inputs.vs.entity, fvs)
+    val identity = edgeBundle(fvs, inputs.vs.entity, EdgeBundleProperties.embedding)
     implicit val tt = inputs.attr.typeTag
     val filteredAttribute = scalar[FilteredAttribute[T]]
   }
