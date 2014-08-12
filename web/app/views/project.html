@@ -1,6 +1,10 @@
 <project-graph left="left.state" right="right.state" left-to-right-path="leftToRightPath"></project-graph>
 <div class="row-fluid" style="position: relative;">
+
+  <!-- The project panels. -->
   <div ng-repeat="side in [left, right]" ng-include="'views/projectSide.html'"/>
+
+  <!-- Toolboxes are in a separate <div> after the sides, so they appear on top. -->
   <div class="operation-toolboxes">
     <div ng-repeat="side in [left, right]" class="col-sm-6">
       <div ng-class="{ rightmost: $last }" ng-if="side.project.$resolved && !side.project.error">
@@ -8,4 +12,5 @@
       </div>
     </div>
   </div>
+
 </div>
