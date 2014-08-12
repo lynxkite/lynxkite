@@ -18,23 +18,40 @@
   border: 0;
   width: 100%;
 }
+.project {
+  margin-right: 50px;
+}
+
+div.operation-toolboxes {
+  position: absolute;
+  width: 100%;
+}
 
 .operation-toolbox {
   position: absolute;
   left: 100%;
   border-top-right-radius: 4px;
   border-bottom-right-radius: 4px;
-  margin-top: 40px;
-  margin-left: -16px;
-  transition: width 1s ease, height 1s ease;
+  margin-left: -66px;
 }
 .operation-toolbox.open {
   width: 100%;
 }
+.rightmost .operation-toolbox.open {
+  left: 0;
+}
+.rightmost .operation-toolbox.open .box {
+  margin-left: 80px;
+}
+.rightmost .operation-toolbox.open .categories {
+  float: right;
+  margin-right: -35px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
 .operation-toolbox .box {
   background: rgba(0, 0, 0, 0.75);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-  margin-top: -40px;
   padding: 0;
 }
 .operation-toolbox .box h1 {
@@ -55,6 +72,7 @@
   cursor: pointer;
   width: 35px;
   padding: 0;
+  margin-top: 40px;
   border-top-right-radius: 4px;
   border-bottom-right-radius: 4px;
 }
