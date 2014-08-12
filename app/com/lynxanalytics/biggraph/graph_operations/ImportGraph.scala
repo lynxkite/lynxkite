@@ -124,8 +124,10 @@ trait ImportCommon {
   }
 
   protected def readColumns(rc: RuntimeContext, csv: CSV): Columns = {
+    val p = rc.defaultPartitioner.numPartitions
+    log.info(s"Reading input lines into ${p} partitions")
     val lines = csv.lines(rc.sparkContext)
-    val numbered = lines.randomNumbered(rc.defaultPartitioner.numPartitions).cache
+    val numbered = lines.randomNumbered(p).cache
     return csv.fields.zipWithIndex.map {
       case (field, idx) => field -> numbered.mapValues(line => line(idx))
     }.toMap
