@@ -182,6 +182,7 @@ class DataManager(sc: spark.SparkContext,
       val entity = data.entity
       if (!hasEntityOnDisk(data.entity)) {
         bigGraphLogger.info(s"Saving entity $entity ...")
+        bigGraphLogger.debug(s"Parallelism is set to ${runtimeContext.numAvailableCores}")
         data match {
           case rddData: EntityRDDData =>
             entityPath(entity).saveAsObjectFile(rddData.rdd)
