@@ -51,7 +51,7 @@ case class VertexSet(source: MetaGraphOperationInstance,
 /*
  * Represents potential extra properties of edge bundles.
  *
- * This class can used both to represent properties of a bundle or requirements against
+ * This class can be used both to represent properties of a bundle or requirements against
  * a bundle by an operation. In either case, only "true" values matter. E.g. isFunction = false
  * does not mean that the bundle is definitely not a function, it only means that we are not sure
  * about its functionness.
@@ -67,7 +67,7 @@ case class EdgeBundleProperties(
     isReversedFunction: Boolean = false,
     // All source vertices have at least one outgoing edge.
     isEverywhereDefined: Boolean = false,
-    // All destination vertices have at least one incomming edge.
+    // All destination vertices have at least one incoming edge.
     isReverseEverywhereDefined: Boolean = false,
     // The source id and destinate id are the same for all edges in this bundle.
     // In this case edge ids are also chosen to match the source and destination ids and

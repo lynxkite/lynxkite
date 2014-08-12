@@ -9,13 +9,13 @@ object PulledOverAttribute {
   class Input[T] extends MagicInputSignature {
     val originalVS = vertexSet
     val destinationVS = vertexSet
-    val mapping = edgeBundle(destinationVS, originalVS, EdgeBundleProperties.injection)
+    val injection = edgeBundle(destinationVS, originalVS, EdgeBundleProperties.injection)
     val originalAttr = vertexAttribute[T](originalVS)
   }
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: Input[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.originalAttr.typeTag
-    val pulledAttr = vertexAttribute[T](inputs.originalVS.entity)
+    val pulledAttr = vertexAttribute[T](inputs.destinationVS.entity)
   }
 }
 import PulledOverAttribute._
@@ -30,20 +30,20 @@ case class PulledOverAttribute[T]()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val mappingEntity = inputs.mapping.meta
-    val mapping = inputs.mapping.rdd
+    val injectionEntity = inputs.injection.meta
+    val injection = inputs.injection.rdd
     val originalAttr = inputs.originalAttr.rdd
     val pulledAttr =
-      if (mappingEntity.properties.isIdentity) {
-        originalAttr.sortedJoin(mapping).mapValues { case (value, edge) => value }
+      if (injectionEntity.properties.isIdentity) {
+        originalAttr.sortedJoin(injection).mapValues { case (value, edge) => value }
       } else {
         val destinationVS = inputs.destinationVS.rdd
-        val rekeyedMapping = mapping
+        val originalToDestinationID = injection
           .map { case (id, edge) => (edge.dst, edge.src) }
           .toSortedRDD(destinationVS.partitioner.get)
         implicit val ct = inputs.originalAttr.meta.classTag
-        originalAttr.sortedJoin(rekeyedMapping)
-          .map { case (oldID, (value, newID)) => (newID, value) }
+        originalAttr.sortedJoin(originalToDestinationID)
+          .map { case (originalID, (value, destinationID)) => (destinationID, value) }
           .toSortedRDD(destinationVS.partitioner.get)
       }
     output(o.pulledAttr, pulledAttr)
