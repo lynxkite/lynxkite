@@ -31,7 +31,7 @@ case class FakePull() extends TypedMetaGraphOp[FakePull.Input, FakePull.Output] 
     output(
       o.pull,
       rc.sparkContext
-        .parallelize(Seq((0l, Edge(0, 1)), (1l, Edge(1, 2)), (2l, Edge(2, 0)), (3l, Edge(3, 3))))
+        .parallelize(Seq((0L, Edge(0, 1)), (1L, Edge(1, 2)), (2L, Edge(2, 0)), (3L, Edge(3, 3))))
         .toSortedRDD(inputs.vs.rdd.partitioner.get))
   }
 }
@@ -44,7 +44,8 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
     val fopRes = fop(fop.attr, g.age).result
 
     val pop = PulledOverAttribute[String]()
-    val pulledAttr = pop(pop.mapping, fopRes.identity)(pop.originalAttr, g.name).result.pulledAttr
+    val pulledAttr =
+      pop(pop.injection, fopRes.identity)(pop.originalAttr, g.name).result.pulledAttr
 
     assert(pulledAttr.rdd.collect.toMap == Map(0l -> "Adam", 1 -> "Eve", 2 -> "Bob"))
   }
@@ -56,9 +57,17 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
     val fopRes = fop(fop.vs, g.vertices).result
 
     val pop = PulledOverAttribute[String]()
-    val pulledAttr = pop(pop.mapping, fopRes.pull)(pop.originalAttr, g.name).result.pulledAttr
+    val pulledAttr = pop(pop.injection, fopRes.pull)(pop.originalAttr, g.name).result.pulledAttr
 
     assert(pulledAttr.rdd.collect.toMap ==
       Map(0l -> "Eve", 1 -> "Bob", 2 -> "Adam", 3 -> "Isolated Joe"))
+  }
+
+  test("fails if bundle is not an injection") {
+    val g = ExampleGraph()().result
+    val pop = PulledOverAttribute[String]()
+    intercept[AssertionError] {
+      pop(pop.injection, g.edges)
+    }
   }
 }
