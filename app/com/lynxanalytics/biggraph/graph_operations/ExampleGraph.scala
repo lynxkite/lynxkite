@@ -14,12 +14,13 @@ object ExampleGraph {
     val (vertices, edges) = graph
     val name = vertexAttribute[String](vertices)
     val age = vertexAttribute[Double](vertices)
+    val gender = vertexAttribute[String](vertices)
     val comment = edgeAttribute[String](edges)
     val weight = edgeAttribute[Double](edges)
     val greeting = scalar[String]
     // For wholesale attribute access.
     val edgeAttributes = Map("comment" -> comment, "weight" -> weight)
-    val vertexAttributes = Map("name" -> name, "age" -> age)
+    val vertexAttributes = Map("name" -> name, "age" -> age, "gender" -> gender)
   }
 }
 import ExampleGraph._
@@ -61,6 +62,11 @@ case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (1l, 18.2),
       (2l, 50.3),
       (3l, 2.0))).toSortedRDD(partitioner))
+    output(o.gender, sc.parallelize(Seq(
+      (0l, "Male"),
+      (1l, "Female"),
+      (2l, "Male"),
+      (3l, "Male"))).toSortedRDD(partitioner))
     output(o.comment, sc.parallelize(Seq(
       (0l, "Adam loves Eve"),
       (1l, "Eve loves Adam"),
