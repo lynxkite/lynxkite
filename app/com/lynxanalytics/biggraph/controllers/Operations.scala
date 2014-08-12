@@ -70,12 +70,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       (hasVertexSet && hasNoEdgeBundle
         && FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes."))
-    def apply(params: Map[String, String]) = {
-      val op = graph_operations.EdgesFromAttributeMatches[String]()
-      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
+    private def applyOn[T](attr: VertexAttribute[T]) = {
+      val op = graph_operations.EdgesFromAttributeMatches[T]()
       project.edgeBundle = op(op.attr, attr).result.edges
       FEStatus.success
     }
+    def apply(params: Map[String, String]) =
+      applyOn(project.vertexAttributes(params("attr")))
   })
 
   register(new VertexOperation(_) {
@@ -278,10 +279,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(
       Param("attr", "Vertex attribute", options = vertexAttributes))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+    private def applyOn[T](attr: VertexAttribute[T]) = {
+      val op = graph_operations.VertexAttributeToString[T]()
+      op(op.attr, attr).result.attr
+    }
     def apply(params: Map[String, String]): FEStatus = {
-      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[Any]
-      val op = graph_operations.VertexAttributeToString[Any]()
-      project.vertexAttributes(params("attr")) = op(op.attr, attr).result.attr
+      project.vertexAttributes(params("attr")) = applyOn(project.vertexAttributes(params("attr")))
       FEStatus.success
     }
   })

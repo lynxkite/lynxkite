@@ -12,8 +12,7 @@
     </div>
   </div>
 
-  <div class="panel panel-default" ng-if="side.project.$resolved && !side.project.error">
-    <operation-toolbox side="side"></operation-toolbox>
+  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.error">
 
     <div class="panel-heading project-name">
       {{spaced(side.project.name)}}
