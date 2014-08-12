@@ -63,6 +63,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new EdgeOperation(_) {
+    val title = "Connect vertices on attribute"
+    val parameters = Seq(
+      Param("attr", "Attribute", options = vertexAttributes[String]))
+    def enabled =
+      (hasVertexSet && hasNoEdgeBundle
+        && FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes."))
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.EdgesFromAttributeMatches[String]()
+      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
+      project.edgeBundle = op(op.attr, attr).result.edges
+      FEStatus.success
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Import vertices"
     val parameters = Seq(
