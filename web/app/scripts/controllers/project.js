@@ -58,7 +58,11 @@ angular.module('biggraph')
     };
 
     util.deepWatch($scope, 'left.project', function(project) {
-      if (project === undefined) { return; }
+      if (project === undefined) {
+        $scope.left.state.vertexSet = undefined;
+        $scope.left.state.edgeBundle = undefined;
+        return;
+      }
       // Put vertex set and edge bundle in the state.
       // This is for compatibility with the metaGraph.js-related code in graph-view.js
       // and could be removed later.
