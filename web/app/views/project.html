@@ -2,8 +2,8 @@
 <div class="row-fluid" style="position: relative;">
   <div ng-repeat="side in [left, right]" ng-include="'views/projectSide.html'"/>
     <div class="operation-toolboxes">
-    <div ng-repeat="side in [left, right]">
-      <div class="col-sm-6" ng-class="{ rightmost: $last }" ng-if="side.project.$resolved && !side.project.error">
+    <div ng-repeat="side in [left, right]" class="col-sm-6">
+      <div ng-class="{ rightmost: $last }" ng-if="side.project.$resolved && !side.project.error">
         <operation-toolbox side="side"></operation-toolbox>
       </div>
     </div>
