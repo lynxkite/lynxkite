@@ -48,10 +48,52 @@ object StringStruct {
 case class VertexSet(source: MetaGraphOperationInstance,
                      name: Symbol) extends MetaGraphEntity
 
+/*
+ * Represents potential extra properties of edge bundles.
+ *
+ * This class can be used both to represent properties of a bundle or requirements against
+ * a bundle by an operation. In either case, only "true" values matter. E.g. isFunction = false
+ * does not mean that the bundle is definitely not a function, it only means that we are not sure
+ * about its functionness.
+ */
+case class EdgeBundleProperties(
+    // If you add a new property don't forget to update compliesWith as well!
+
+    // The edge bundle defines a (potentially partial) function from its source
+    // to its destination. Equivalently, all source vertices have an outdegree <= 1.
+    isFunction: Boolean = false,
+    // The edge bundle defines a (potentially partial) function from its destination
+    // to its source. Equivalently, all destination vertices have an indegree <= 1.
+    isReversedFunction: Boolean = false,
+    // All source vertices have at least one outgoing edge.
+    isEverywhereDefined: Boolean = false,
+    // All destination vertices have at least one incoming edge.
+    isReverseEverywhereDefined: Boolean = false,
+    // The source id and destinate id are the same for all edges in this bundle.
+    // In this case edge ids are also chosen to match the source and destination ids and
+    // the bundle is partitioned the same way as its source vertex set.
+    isIdentity: Boolean = false) {
+
+  def compliesWith(requirements: EdgeBundleProperties): Boolean =
+    (isFunction || !requirements.isFunction) &&
+      (isReversedFunction || !requirements.isReversedFunction) &&
+      (isEverywhereDefined || !requirements.isEverywhereDefined) &&
+      (isReverseEverywhereDefined || !requirements.isReverseEverywhereDefined) &&
+      (isIdentity || !requirements.isIdentity)
+}
+object EdgeBundleProperties {
+  val default = EdgeBundleProperties()
+  val injection = EdgeBundleProperties(
+    isFunction = true, isReversedFunction = true, isEverywhereDefined = true)
+  val embedding = injection.copy(isIdentity = true)
+}
+
 case class EdgeBundle(source: MetaGraphOperationInstance,
                       name: Symbol,
                       srcVertexSet: VertexSet,
-                      dstVertexSet: VertexSet) extends MetaGraphEntity {
+                      dstVertexSet: VertexSet,
+                      properties: EdgeBundleProperties = EdgeBundleProperties.default)
+    extends MetaGraphEntity {
   val isLocal = srcVertexSet == dstVertexSet
 }
 
@@ -147,11 +189,16 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class EdgeBundleTemplate(srcF: => Symbol, dstF: => Symbol, nameOpt: Option[Symbol])
+  class EdgeBundleTemplate(
+    srcF: => Symbol,
+    dstF: => Symbol,
+    requiredProperties: EdgeBundleProperties,
+    nameOpt: Option[Symbol])
       extends ET[EdgeBundle](nameOpt) {
     lazy val src = srcF
     lazy val dst = dstF
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
+      assert(eb.properties.compliesWith(requiredProperties))
       val withSrc =
         templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
       val withSrcDst =
@@ -191,10 +238,12 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
 
   def vertexSet = new VertexSetTemplate(None)
   def vertexSet(name: Symbol) = new VertexSetTemplate(Some(name))
-  def edgeBundle(src: VertexSetTemplate, dst: VertexSetTemplate) =
-    new EdgeBundleTemplate(src.name, dst.name, None)
-  def edgeBundle(src: VertexSetTemplate, dst: VertexSetTemplate, name: Symbol) =
-    new EdgeBundleTemplate(src.name, dst.name, Some(name))
+  def edgeBundle(
+    src: VertexSetTemplate,
+    dst: VertexSetTemplate,
+    requiredProperties: EdgeBundleProperties = EdgeBundleProperties.default,
+    name: Symbol = null) =
+    new EdgeBundleTemplate(src.name, dst.name, requiredProperties, Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate) = new VertexAttributeTemplate[T](vs.name)
   def edgeAttribute[T](eb: EdgeBundleTemplate) = new EdgeAttributeTemplate[T](eb.name)
   def scalar[T] = new ScalarTemplate[T]
@@ -248,8 +297,11 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   }
   def vertexSet = new P(VertexSet(instance, _), None)
   def vertexSet(name: Symbol) = new P(VertexSet(instance, _), Some(name))
-  def edgeBundle(src: EntityContainer[VertexSet], dst: EntityContainer[VertexSet], name: Symbol = null) =
-    new P(EdgeBundle(instance, _, src, dst), Option(name))
+  def edgeBundle(
+    src: EntityContainer[VertexSet],
+    dst: EntityContainer[VertexSet],
+    properties: EdgeBundleProperties = EdgeBundleProperties.default,
+    name: Symbol = null) = new P(EdgeBundle(instance, _, src, dst, properties), Option(name))
   def graph = {
     val v = vertexSet
     (v, edgeBundle(v, v))
