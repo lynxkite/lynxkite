@@ -85,23 +85,45 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new EdgeOperation(_) {
-    val title = "Import edges"
-    val parameters = {
-      val p = Seq(
-        Param("files", "Files"),
-        Param("header", "Header"),
-        Param("delimiter", "Delimiter", defaultValue = ","),
-        Param("src", "Source ID field"),
-        Param("dst", "Destination ID field"))
-      val opt = Param("filter", "(optional) Filtering expression")
+    val title = "Import edges for existing vertices"
+    val parameters = Seq(
+      Param("files", "Files"),
+      Param("header", "Header"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
+      Param("src", "Source ID field"),
+      Param("dst", "Destination ID field"),
+      Param("filter", "(optional) Filtering expression"))
+    def enabled =
+      hasNoEdgeBundle &&
+        hasVertexSet &&
+        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
+    def apply(params: Map[String, String]) = {
+      val csv = graph_operations.CSV(
+        Filename.fromString(params("files")),
+        params("delimiter"),
+        params("header"))
+      val src = params("src")
+      val dst = params("dst")
+      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
+      val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, src, dst)
+      val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
+      project.edgeBundle = imp.edges
+      project.edgeAttributes = imp.attrs.mapValues(_.entity)
+      FEStatus.success
+    }
+  })
 
-      if (project.vertexSet == null) p :+ opt
-      else p :+ Param("attr", "Vertex id attribute", options = vertexAttributes[String]) :+ opt
-    }
-    def enabled = {
-      if (project.vertexSet == null) FEStatus.success
-      else hasNoEdgeBundle && FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
-    }
+  register(new EdgeOperation(_) {
+    val title = "Import vertices and edges from single CSV fileset"
+    val parameters = Seq(
+      Param("files", "Files"),
+      Param("header", "Header"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("src", "Source ID field"),
+      Param("dst", "Destination ID field"),
+      Param("filter", "(optional) Filtering expression"))
+    def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
         Filename.fromString(params("files")),
@@ -110,18 +132,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         graph_operations.Javascript(params("filter")))
       val src = params("src")
       val dst = params("dst")
-      if (project.vertexSet == null) {
-        val imp = graph_operations.ImportEdgeList(csv, src, dst)().result
-        project.vertexSet = imp.vertices
-        project.edgeBundle = imp.edges
-        project.edgeAttributes = imp.attrs.mapValues(_.entity)
-      } else {
-        val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
-        val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, src, dst)
-        val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
-        project.edgeBundle = imp.edges
-        project.edgeAttributes = imp.attrs.mapValues(_.entity)
-      }
+      val imp = graph_operations.ImportEdgeList(csv, src, dst)().result
+      project.vertexSet = imp.vertices
+      project.edgeBundle = imp.edges
+      project.edgeAttributes = imp.attrs.mapValues(_.entity)
       FEStatus.success
     }
   })
@@ -214,6 +228,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "PageRank"
+    val parameters = Seq(
+      Param("name", "Attribute name", defaultValue = "page_rank"),
+      Param("weights", "Weight attribute", options = edgeAttributes[Double]),
+      Param("iterations", "Number of iterations", defaultValue = "5"),
+      Param("damping", "Damping factor", defaultValue = "0.85"))
+    def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
+      val weights = project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
+      project.vertexAttributes(params("name")) = op(op.weights, weights).result.pagerank
+      FEStatus.success
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Example Graph"
     val parameters = Seq()
@@ -251,6 +281,61 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.VertexAttributeToDouble()
       project.vertexAttributes(params("attr")) = op(op.attr, attr).result.attr
       FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Export vertex attributes to CSV"
+    val parameters = Seq(
+      Param("path", "Destination path"),
+      Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+    def apply(params: Map[String, String]): FEStatus = {
+      if (params("attrs").isEmpty)
+        return FEStatus.failure("Nothing selected for export.")
+      val labels = params("attrs").split(",")
+      val attrs = labels.map(label => project.vertexAttributes(label))
+      val path = Filename.fromString(params("path"))
+      if (path.isEmpty)
+        return FEStatus.failure("No export path specified.")
+      graph_util.CSVExport
+        .exportVertexAttributes(attrs, labels)
+        .saveToDir(path)
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Export edge attributes to CSV"
+    val parameters = Seq(
+      Param("path", "Destination path"),
+      Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+    def apply(params: Map[String, String]): FEStatus = {
+      if (params("attrs").isEmpty)
+        return FEStatus.failure("Nothing selected for export.")
+      val labels = params("attrs").split(",")
+      val attrs = labels.map(label => project.edgeAttributes(label))
+      val path = Filename.fromString(params("path"))
+      if (path.isEmpty)
+        return FEStatus.failure("No export path specified.")
+      graph_util.CSVExport
+        .exportEdgeAttributes(attrs, labels)
+        .saveToDir(path)
+      return FEStatus.success
+    }
+  })
+
+  register(new VertexOperation(_) {
+    val title = "Edge Graph"
+    val parameters = Seq()
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]): FEStatus = {
+      val op = graph_operations.EdgeGraph()
+      val g = op(op.es, project.edgeBundle).result
+      project.vertexSet = g.newVS
+      project.edgeBundle = g.newES
+      return FEStatus.success
     }
   })
 }
