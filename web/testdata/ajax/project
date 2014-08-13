@@ -5,6 +5,7 @@
   "vertexCount": 12345678,
   "edgeCount": 234567890,
   "notes": "Subscribers and calls.",
+  "belongsTo": { "id": "only-for-segmentations", "title": "belongs to" },
 
   "vertexAttributes": [
     { "id": "5", "title": "age" },
