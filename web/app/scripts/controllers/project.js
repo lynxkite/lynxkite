@@ -117,7 +117,6 @@ angular.module('biggraph')
       } else {
         this.graphState.edgeBundle = undefined;
       }
-      console.error(this.graphState);
     };
 
     // This watcher copies the state from the URL into $scope.
