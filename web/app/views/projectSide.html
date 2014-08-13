@@ -20,6 +20,14 @@
     <div class="panel-heading project-name">
       {{util.spaced(side.project.name)}}
       <div class="btn-group pull-right">
+        <label class="btn btn-default"
+               ng-if="side.hasFilters()"
+               ng-click="side.applyFilters()"
+               tooltip="Apply&nbsp;Current&nbsp;Filters"
+               tooltip-append-to-body="true"
+               tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-filter"></i>
+        </label>
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable
           tooltip="Bucketed&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
@@ -40,8 +48,12 @@
     <div class="list-group">
       <li class="list-group-item">
         <span class="lead">
-          {{util.human(side.project.vertexCount)}} <span class="de-emph">vertices with</span>
-          {{util.human(side.project.edgeCount)}} <span class="de-emph">edges</span>
+          <span ng-if="side.project.vertexSet !== ''">{{util.human(side.project.vertexCount)}}</span>
+          <span ng-if="side.project.vertexSet === ''">no</span>
+          <span class="de-emph">vertices with</span>
+          <span ng-if="side.project.edgeBundle !== ''">{{util.human(side.project.edgeCount)}}</span>
+          <span ng-if="side.project.edgeBundle === ''">no</span>
+          <span class="de-emph">edges</span>
         </span>
       </li>
 

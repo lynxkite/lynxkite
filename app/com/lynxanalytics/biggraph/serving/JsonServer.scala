@@ -107,6 +107,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
+  implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
   implicit val wFEProject = json.Json.writes[FEProject]
   implicit val wSplash = json.Json.writes[Splash]
@@ -124,6 +125,7 @@ object ProductionJsonServer extends JsonServer {
   def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
   def splash = jsonGet(bigGraphController.splash)
+  def filterProject = jsonPost(bigGraphController.filterProject)
 
   val graphStatsController = new GraphStatsController(BigGraphProductionEnvironment)
   def graphStatsGet = jsonGet(graphStatsController.getStats)
