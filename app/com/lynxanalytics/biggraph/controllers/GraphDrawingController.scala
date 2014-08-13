@@ -10,9 +10,6 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util
 
-case class FEVertexAttributeFilter(
-  val attributeId: String,
-  val valueSpec: String)
 case class VertexDiagramSpec(
   val vertexSetId: String,
   val filters: Seq[FEVertexAttributeFilter],
@@ -100,32 +97,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
 
-  def applyFEFilter(filterSpec: FEVertexAttributeFilter): VertexSet = {
-    val attr = metaManager.vertexAttribute(filterSpec.attributeId.asUUID)
-    attr.rdd.cache()
-    FEFilters.filteredBaseSet(
-      metaManager,
-      attr,
-      filterSpec.valueSpec)
-  }
-
-  def intersect(filteredVss: Seq[VertexSet]): VertexSet = {
-    val op = graph_operations.VertexSetIntersection(filteredVss.size)
-    val builder = filteredVss.zipWithIndex.foldLeft(op.builder) {
-      case (b, (vs, i)) => b(op.vss(i), vs)
-    }
-    builder.result.intersection
-  }
-
-  def filter(vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter]): VertexSet = {
-    if (filters.isEmpty) return vertexSet
-    intersect(filters.map(applyFEFilter))
-  }
-
-  def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter]): VertexSet = {
-    intersect(filtered +: moreFilters.map(applyFEFilter))
-  }
-
   def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {
       case "bucketed" => getBucketedVertexDiagram(request)
@@ -150,7 +121,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val fop = graph_operations.VertexAttributeFilter(graph_operations.OneOf(idToIdx.keySet))
     val sample = fop(fop.attr, idAttr).result.fvs
 
-    val filtered = filterMore(sample, request.filters)
+    val filtered = FEFilters.filterMore(sample, request.filters)
 
     val op = graph_operations.SampledView(
       idToIdx,
@@ -198,7 +169,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getBucketedVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val filtered = filter(vertexSet, request.filters)
+    val filtered = FEFilters.filter(vertexSet, request.filters)
 
     val xBucketedAttr = if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)

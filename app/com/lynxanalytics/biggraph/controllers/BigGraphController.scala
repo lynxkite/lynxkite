@@ -127,6 +127,21 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
     set(path / "vertexSet", e)
   }
+  def pullBackWithInjection(injection: EdgeBundle): Unit = {
+    assert(injection.properties.compliesWith(EdgeBundleProperties.injection))
+    assert(injection.dstVertexSet.gUID == vertexSet.gUID)
+    val origVS = vertexSet
+    val origVAttrs = vertexAttributes.toIndexedSeq
+    val origEB = edgeBundle
+    val origEAttrs = edgeAttributes.toIndexedSeq
+    vertexSet = injection.srcVertexSet
+    origVAttrs.foreach {
+      case (name, attr) =>
+        vertexAttributes(name) =
+          graph_operations.PulledOverAttribute.pullAttributeVia(attr, injection)
+    }
+    // TODO(xandrew): induce new edge bundle and edge attributes.
+  }
 
   def edgeBundle = existing(path / "edgeBundle").map(manager.edgeBundle(_)).getOrElse(null)
   def edgeBundle_=(e: EdgeBundle) = {
@@ -221,6 +236,7 @@ case class Splash(projects: Seq[FEProject])
 case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(name: String, notes: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
+case class ProjectFilterRequest(project: String, filters: Seq[FEVertexAttributeFilter])
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
@@ -373,6 +389,16 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def projectOp(request: ProjectOperationRequest): FEStatus = ops.apply(request)
+
+  def filterProject(request: ProjectFilterRequest): FEStatus = {
+    val project = Project(request.project)
+    val vertexSet = project.vertexSet
+    assert(vertexSet != null)
+    assert(request.filters.nonEmpty)
+    val embedding = FEFilters.embedFilteredVertices(vertexSet, request.filters)
+    project.pullBackWithInjection(embedding)
+    FEStatus.success
+  }
 }
 
 abstract class Operation(val project: Project, val category: String) {

@@ -5,7 +5,6 @@ angular.module('biggraph')
     function defaultSideState() {
       return {
         projectName: undefined,
-        vs: undefined,
         filters: {},
         graphMode: undefined,
         bucketCount: 4,
@@ -32,6 +31,46 @@ angular.module('biggraph')
         this.project = undefined;
       }
     };
+    Side.prototype.set = function(setting, value) {
+      if (this.state[setting] === value) {
+        // Clicking the same attribute setting again turns it off.
+        delete this.state[setting];
+      } else {
+        this.state[setting] = value;
+      }
+    };
+    Side.prototype.nonEmptyFilters = function() {
+      var res = [];
+      for (var attr in this.state.filters) {
+        if (this.state.filters[attr] !== '') {
+          res.push({ attributeId: attr, valueSpec: this.state.filters[attr] });
+        }
+      }
+      return res;
+    };
+    Side.prototype.hasFilters = function() {
+      return this.nonEmptyFilters().length !== 0;
+    };
+    Side.prototype.applyFilters = function() {
+      var that = this;
+      $resource('/ajax/filterProject').save(
+        {
+          project: this.state.projectName,
+          filters: this.nonEmptyFilters()
+        },
+        function(result) {
+          if (result.success) {
+            that.state.filters = {};
+            that.reload();
+          } else {
+            console.error(result.failureReason);
+          }
+        },
+        function(response) {
+          console.error(response);
+        });
+    };
+
     function clearState() {
       $scope.leftToRightPath = undefined;
       $scope.left = new Side();
@@ -41,21 +80,6 @@ angular.module('biggraph')
     clearState();
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
-
-    function setSideSetting(side, setting, value) {
-      if (side.state[setting] === value) {
-        // Clicking the same attribute setting again turns it off.
-        delete side.state[setting];
-      } else {
-        side.state[setting] = value;
-      }
-    }
-    $scope.left.set = function(setting, value) {
-      setSideSetting($scope.left, setting, value);
-    };
-    $scope.right.set = function(setting, value) {
-      setSideSetting($scope.right, setting, value);
-    };
 
     util.deepWatch($scope, 'left.project', function(project) {
       if (project === undefined) {

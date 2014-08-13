@@ -18,6 +18,17 @@ object Scripting {
       currentInput = adder.set(currentInput, entity)
       this
     }
+    def apply[T <: MetaGraphEntity](
+      adders: Seq[EntityTemplate[T]],
+      entities: Seq[T]): InstanceBuilder[IS, OMDS] = {
+      assert(adders.size == entities.size)
+      adders.zip(entities).foreach {
+        case (adder, entity) =>
+          currentInput = adder.set(currentInput, entity)
+      }
+      this
+    }
+
     def apply() = this
 
     def toInstance(manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] = {

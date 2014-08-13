@@ -3,10 +3,54 @@ package com.lynxanalytics.biggraph.controllers
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations._
 
+case class FEVertexAttributeFilter(
+  val attributeId: String,
+  val valueSpec: String)
+
 object FEFilters {
-  def filteredBaseSet[T](
+  def filter(
+    vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
+      implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+    if (filters.isEmpty) return vertexSet
+    intersectionEmbedding(filters.map(applyFEFilter)).srcVertexSet
+  }
+
+  def embedFilteredVertices(
+    base: VertexSet, filters: Seq[FEVertexAttributeFilter])(
+      implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
+    intersectionEmbedding(base +: filters.map(applyFEFilter))
+  }
+
+  def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
+    implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+    embedFilteredVertices(filtered, moreFilters).srcVertexSet
+  }
+
+  private def applyFEFilter(
+    filterSpec: FEVertexAttributeFilter)(
+      implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+
+    val attr = metaManager.vertexAttribute(filterSpec.attributeId.asUUID)
+    attr.rdd.cache()
+    FEFilters.filteredBaseSet(
+      metaManager,
+      attr,
+      filterSpec.valueSpec)
+  }
+
+  private def intersectionEmbedding(
+    filteredVss: Seq[VertexSet])(
+      implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
+
+    val op = VertexSetIntersection(filteredVss.size)
+    op(op.vss, filteredVss).result.firstEmbedding
+  }
+
+  private def filteredBaseSet[T](
     manager: MetaGraphManager,
     attr: VertexAttribute[T],
     spec: String): VertexSet = {
