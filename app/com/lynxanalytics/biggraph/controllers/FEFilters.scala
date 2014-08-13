@@ -47,10 +47,7 @@ object FEFilters {
       implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
 
     val op = VertexSetIntersection(filteredVss.size)
-    val builder = filteredVss.zipWithIndex.foldLeft(op.builder) {
-      case (b, (vs, i)) => b(op.vss(i), vs)
-    }
-    builder.result.firstEmbedding
+    op(op.vss, filteredVss).result.firstEmbedding
   }
 
   private def filteredBaseSet[T](

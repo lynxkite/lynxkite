@@ -17,13 +17,12 @@
     <div class="panel-heading project-name">
       {{spaced(side.project.name)}}
       <div class="btn-group pull-right">
-        <label
-           class="btn btn-default"
-           ng-if="side.hasFilters()"
-           ng-click="side.applyFilters()"
-           tooltip="Apply&nbsp;Current&nbsp;Filters"
-           tooltip-append-to-body="true"
-           tooltip-placement="bottom">
+        <label class="btn btn-default"
+               ng-if="side.hasFilters()"
+               ng-click="side.applyFilters()"
+               tooltip="Apply&nbsp;Current&nbsp;Filters"
+               tooltip-append-to-body="true"
+               tooltip-placement="bottom">
           <i class="glyphicon glyphicon-filter"></i>
         </label>
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable
