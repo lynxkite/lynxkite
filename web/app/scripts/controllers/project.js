@@ -27,6 +27,9 @@ angular.module('biggraph')
       this.state = defaultSideState();
       // The /ajax/project Ajax response.
       this.project = undefined;
+      // Side.graphState is for compatibility with the metaGraph.js-related code in graph-view.js
+      // and could be removed later.
+      this.graphState = undefined;
     }
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the project name changes, or when the project
@@ -78,7 +81,7 @@ angular.module('biggraph')
         });
     };
     Side.prototype.resolveVertexAttribute = function(title) {
-      for (var attrIdx in this.project.vertexAttributes) {
+      for (var attrIdx = 0; attrIdx < this.project.vertexAttributes.length; attrIdx++) {
         var attr = this.project.vertexAttributes[attrIdx];
         if (attr.title === title) {
           return attr.id;
@@ -93,8 +96,6 @@ angular.module('biggraph')
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
 
-    // Side.graphState is for compatibility with the metaGraph.js-related code in graph-view.js
-    // and could be removed later.
     util.deepWatch($scope, 'left.project', function() { $scope.left.updateGraphState(); });
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
     util.deepWatch($scope, 'right.project', function() { $scope.right.updateGraphState(); });
