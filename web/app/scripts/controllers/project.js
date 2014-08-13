@@ -38,6 +38,13 @@ angular.module('biggraph')
     Side.prototype.reload = function() {
       if (this.state.projectName) {
         this.project = util.nocache('/ajax/project', { name: this.state.projectName });
+        var that = this;
+        this.project.$promise.then(function() {
+          // When loading a segmentation, use "belongsTo" as the connecting path.
+          if (that === $scope.right && that.project.belongsTo) {
+            $scope.leftToRightPath = [{ bundle: that.project.belongsTo, pointsLeft: true }];
+          }
+        });
       } else {
         this.project = undefined;
       }
@@ -99,6 +106,12 @@ angular.module('biggraph')
         }
       }
       return undefined;
+    };
+
+    Side.prototype.openSegmentation = function(seg) {
+      // For now segmentations always open on the right.
+      var side = $scope.right;
+      side.state.projectName = seg;
     };
 
 

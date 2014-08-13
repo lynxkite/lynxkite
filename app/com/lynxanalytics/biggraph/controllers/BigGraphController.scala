@@ -114,7 +114,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       vsCount, esCount, notes,
       vertexAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
       edgeAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
-      UIValue.seq(segmentationNames),
+      segmentationNames.map(seg => UIValue(s"$projectName/segmentations/$seg", seg)),
       Option(belongsTo).map(UIValue.fromEntity(_)),
       opCategories = Seq())
   }
