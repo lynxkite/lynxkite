@@ -138,9 +138,18 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     origVAttrs.foreach {
       case (name, attr) =>
         vertexAttributes(name) =
-          graph_operations.PulledOverAttribute.pullAttributeVia(attr, injection)
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
     }
-    // TODO(xandrew): induce new edge bundle and edge attributes.
+
+    val iop = graph_operations.InducedEdgeBundle()
+    edgeBundle = iop(iop.srcInjection, injection)(iop.dstInjection, injection)(iop.edges, origEB)
+      .result.induced
+
+    origEAttrs.foreach {
+      case (name, attr) =>
+        edgeAttributes(name) =
+          graph_operations.PulledOverEdgeAttribute.pullAttributeTo(attr, edgeBundle)
+    }
   }
 
   def edgeBundle = existing(path / "edgeBundle").map(manager.edgeBundle(_)).getOrElse(null)

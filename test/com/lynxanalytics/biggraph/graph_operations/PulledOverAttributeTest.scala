@@ -43,7 +43,7 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
     val fop = VertexAttributeFilter(DoubleGT(10))
     val fopRes = fop(fop.attr, g.age).result
 
-    val pop = PulledOverAttribute[String]()
+    val pop = PulledVertexOverAttribute[String]()
     val pulledAttr =
       pop(pop.injection, fopRes.identity)(pop.originalAttr, g.name).result.pulledAttr
 
@@ -56,7 +56,7 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
     val fop = FakePull()
     val fopRes = fop(fop.vs, g.vertices).result
 
-    val pop = PulledOverAttribute[String]()
+    val pop = PulledVertexOverAttribute[String]()
     val pulledAttr = pop(pop.injection, fopRes.pull)(pop.originalAttr, g.name).result.pulledAttr
 
     assert(pulledAttr.rdd.collect.toMap ==
@@ -65,7 +65,7 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
 
   test("fails if bundle is not an injection") {
     val g = ExampleGraph()().result
-    val pop = PulledOverAttribute[String]()
+    val pop = PulledVertexOverAttribute[String]()
     intercept[AssertionError] {
       pop(pop.injection, g.edges)
     }
