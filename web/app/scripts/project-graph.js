@@ -15,8 +15,12 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
       function update() {
         if (!scope.showGraph()) { return; }
         var sides = [];
-        if (scope.left.graphMode) { sides.push(scope.left); }
-        if (scope.right.graphMode) { sides.push(scope.right); }
+        if (scope.left.graphMode && (scope.left.vertexSet !== undefined)) {
+          sides.push(scope.left);
+        }
+        if (scope.right.graphMode && (scope.right.vertexSet !== undefined)) {
+          sides.push(scope.right);
+        }
         if (sides.length === 0) { return; }
         var q = { vertexSets: [], edgeBundles: [] };
         for (var i = 0; i < sides.length; ++i) {
