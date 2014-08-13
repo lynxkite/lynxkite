@@ -11,16 +11,16 @@
     { "id": "5", "title": "age" },
     { "id": "6", "title": "income" },
     { "id": "7", "title": "gender" },
-    { "id": "8", "title": "favorite color" }
+    { "id": "8", "title": "favorite_color" }
   ],
 
   "edgeAttributes": [
-    { "id": "22", "title": "call duration" },
+    { "id": "22", "title": "call_duration" },
     { "id": "29", "title": "timestamp" }
   ],
 
   "segmentations": [
-    { "id": "32", "title": "cliques" },
+    { "id": "32", "title": "maximal_cliques" },
     { "id": "33", "title": "communities" }
   ],
 
