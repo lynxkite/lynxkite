@@ -118,7 +118,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val csv = graph_operations.CSV(
         Filename.fromString(params("files")),
         params("delimiter"),
-        params("header"))
+        params("header"),
+        graph_operations.Javascript(params("filter")))
       val src = params("src")
       val dst = params("dst")
       val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]

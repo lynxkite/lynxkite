@@ -17,6 +17,13 @@ object PulledOverAttribute {
     implicit val tt = inputs.originalAttr.typeTag
     val pulledAttr = vertexAttribute[T](inputs.destinationVS.entity)
   }
+  def pullAttributeVia[T](
+    originalAttr: VertexAttribute[T], injection: EdgeBundle)(
+      implicit metaManager: MetaGraphManager): VertexAttribute[T] = {
+    import com.lynxanalytics.biggraph.graph_api.Scripting._
+    val pop = PulledOverAttribute[T]()
+    pop(pop.originalAttr, originalAttr)(pop.injection, injection).result.pulledAttr
+  }
 }
 import PulledOverAttribute._
 case class PulledOverAttribute[T]()
