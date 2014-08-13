@@ -19,8 +19,8 @@
       <div class="btn-group pull-right">
         <label
            class="btn btn-default"
-           ng-if="side.hasFilters"
-           ng-click="side.applyCurrentFilters"
+           ng-if="side.hasFilters()"
+           ng-click="side.applyFilters()"
            tooltip="Apply&nbsp;Current&nbsp;Filters"
            tooltip-append-to-body="true"
            tooltip-placement="bottom">
@@ -46,8 +46,12 @@
     <div class="list-group">
       <li class="list-group-item">
         <span class="lead">
-          {{human(side.project.vertexCount)}} <span class="de-emph">vertices with</span>
-          {{human(side.project.edgeCount)}} <span class="de-emph">edges</span>
+          <span ng-if="side.project.vertexSet !== ''">{{human(side.project.vertexCount)}}</span>
+          <span ng-if="side.project.vertexSet === ''">no</span>
+          <span class="de-emph">vertices with</span>
+          <span ng-if="side.project.edgeBundle !== ''">{{human(side.project.edgeCount)}}</span>
+          <span ng-if="side.project.edgeBundle === ''">no</span>
+          <span class="de-emph">edges</span>
         </span>
       </li>
 

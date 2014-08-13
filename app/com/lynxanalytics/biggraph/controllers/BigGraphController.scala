@@ -131,9 +131,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     assert(injection.properties.compliesWith(EdgeBundleProperties.injection))
     assert(injection.dstVertexSet.gUID == vertexSet.gUID)
     val origVS = vertexSet
-    val origVAttrs = vertexAttributes.toSeq
+    val origVAttrs = vertexAttributes.toIndexedSeq
     val origEB = edgeBundle
-    val origEAttrs = edgeAttributes.toSeq
+    val origEAttrs = edgeAttributes.toIndexedSeq
     vertexSet = injection.srcVertexSet
     origVAttrs.foreach {
       case (name, attr) =>
