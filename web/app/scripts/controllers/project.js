@@ -52,7 +52,6 @@ angular.module('biggraph')
       return this.nonEmptyFilters().length !== 0;
     };
     Side.prototype.applyFilters = function() {
-      $scope.running = true;
       var that = this;
       $resource('/ajax/filterProject').save(
         {
@@ -60,7 +59,6 @@ angular.module('biggraph')
           filters: this.nonEmptyFilters()
         },
         function(result) {
-          $scope.running = false;
           if (result.success) {
             that.state.filters = {};
             that.reload();
@@ -69,7 +67,6 @@ angular.module('biggraph')
           }
         },
         function(response) {
-          $scope.running = false;
           console.error(response);
         });
     };
