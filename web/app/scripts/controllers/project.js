@@ -53,7 +53,6 @@ angular.module('biggraph')
     Side.prototype.close = function() {
       this.state.projectName = undefined;
       for (var i = 0; i < $scope.sides.length; ++i) {
-        console.log($scope.sides[i].state.projectName);
         if ($scope.sides[i].state.projectName !== undefined) {
           return;
         }
