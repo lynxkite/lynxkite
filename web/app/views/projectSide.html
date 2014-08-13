@@ -1,6 +1,13 @@
 <div class="col-sm-6">
 
-  <project-selector name="side.state.projectName" ng-if="side.state.projectName === undefined"></project-selector>
+  <div ng-if="side.state.projectName === undefined">
+    <button ng-hide="showProjectSelector" style="width: 100%;"
+      ng-click="showProjectSelector = true" class="btn btn-link btn-lg">
+      <i class="glyphicon glyphicon-plus"
+        tooltip="Open&nbsp;project" tooltip-placement="bottom"></i>
+    </button>
+    <project-selector name="side.state.projectName" ng-show="showProjectSelector"></project-selector>
+  </div>
 
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
     Loading...
