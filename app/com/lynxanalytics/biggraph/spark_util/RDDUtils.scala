@@ -81,7 +81,8 @@ object RDDUtils {
     val withCounts = unfilteredCounts(fullRDD, dataUsed)
     val (valueCounts, unfilteredCount, filteredCount) = withCounts
       .values
-      .aggregate((mutable.Map[T, Int]() /* observed value counts */ ,
+      .aggregate((
+        mutable.Map[T, Int]() /* observed value counts */ ,
         0 /* estimated total count corresponding to the observed filtered sample */ ,
         0 /* observed filtered sample size */ ))(
         {
