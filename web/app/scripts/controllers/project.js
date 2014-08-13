@@ -31,6 +31,7 @@ angular.module('biggraph')
       // and could be removed later.
       this.graphState = {};
     }
+
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the project name changes, or when the project
     // itself is expected to change. (Such as after an operation.)
@@ -49,6 +50,17 @@ angular.module('biggraph')
         this.state[setting] = value;
       }
     };
+    Side.prototype.close = function() {
+      this.state.projectName = undefined;
+      for (var i = 0; i < $scope.sides.length; ++i) {
+        console.log($scope.sides[i].state.projectName);
+        if ($scope.sides[i].state.projectName !== undefined) {
+          return;
+        }
+      }
+      $location.url('/');
+    };
+
     Side.prototype.nonEmptyFilters = function() {
       var res = [];
       for (var attr in this.state.filters) {
@@ -83,6 +95,7 @@ angular.module('biggraph')
 
     $scope.left = new Side();
     $scope.right = new Side();
+    $scope.sides = [$scope.left, $scope.right];
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
 
@@ -139,8 +152,12 @@ angular.module('biggraph')
       $scope,
       getState,
       function(after, before) {
-        if (after !== before) {  // Do not modify URL on initialization.
-          $location.search({ q: JSON.stringify(after) });
+        if (after === before) {
+          return;  // Do not modify URL on initialization.
         }
+        if ($location.path().indexOf('/project/') === -1) {
+          return;  // Navigating away. Leave the URL alone.
+        }
+        $location.search({ q: JSON.stringify(after) });
       });
   });
