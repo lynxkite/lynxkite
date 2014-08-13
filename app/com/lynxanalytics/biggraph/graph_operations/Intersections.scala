@@ -12,8 +12,14 @@ object VertexSetIntersection {
       i => vertexSet(Symbol("vs" + i))
     }.toList
   }
-  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+  class Output(
+      implicit instance: MetaGraphOperationInstance,
+      input: Input) extends MagicOutput(instance) {
+
     val intersection = vertexSet
+    // An embedding of the intersection into the first vertex set.
+    val firstEmbedding = edgeBundle(
+      intersection, input.vss(0).entity, EdgeBundleProperties.embedding)
   }
 }
 case class VertexSetIntersection(numVertexSets: Int)
@@ -23,7 +29,7 @@ case class VertexSetIntersection(numVertexSets: Int)
   assert(numVertexSets >= 1)
   @transient override lazy val inputs = new Input(numVertexSets)
 
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -33,6 +39,7 @@ case class VertexSetIntersection(numVertexSets: Int)
     val intersection = inputs.vss.map(_.rdd)
       .reduce((rdd1, rdd2) => rdd1.sortedJoin(rdd2).mapValues(_ => ()))
     output(o.intersection, intersection)
+    output(o.firstEmbedding, intersection.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
 }
 
