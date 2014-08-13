@@ -12,6 +12,10 @@ object InducedEdgeBundle {
     val dst = vertexSet
     val srcSubset = vertexSet
     val dstSubset = vertexSet
+    // There is no fundamental reason this couldn't work with injections. We can implement that
+    // if/when we need it.
+    val srcInjection = edgeBundle(srcSubset, src, EdgeBundleProperties.embedding)
+    val dstInjection = edgeBundle(dstSubset, dst, EdgeBundleProperties.embedding)
     val edges = edgeBundle(src, dst)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
