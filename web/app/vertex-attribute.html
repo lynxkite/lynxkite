@@ -1,15 +1,27 @@
 {{attr.title}}
 <span ng-if="side.state.graphMode === 'bucketed'">
-  <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.xAttribute === attr.id }"
-      ng-click="side.set('xAttribute', attr.id)">Graph on X</button>
-  <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.yAttribute === attr.id }"
-      ng-click="side.set('yAttribute', attr.id)">Graph on Y</button>
+  <button class="btn btn-default"
+          ng-class="{ 'btn-primary': side.state.xAttributeTitle === attr.title }"
+      ng-click="side.set('xAttributeTitle', attr.title)">
+    Graph on X
+  </button>
+  <button class="btn btn-default"
+          ng-class="{ 'btn-primary': side.state.yAttributeTitle === attr.title }"
+          ng-click="side.set('yAttributeTitle', attr.title)">
+    Graph on Y
+  </button>
 </span>
 <span ng-if="side.state.graphMode === 'sampled'">
-  <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.sizeAttribute === attr.id }"
-      ng-click="side.set('sizeAttribute', attr.id)">Graph as size</button>
-  <button class="btn btn-default" ng-class="{ 'btn-primary': side.state.labelAttribute === attr.id }"
-      ng-click="side.set('labelAttribute', attr.id)">Graph as label</button>
+  <button class="btn btn-default"
+          ng-class="{ 'btn-primary': side.state.sizeAttributeTitle === attr.title }"
+          ng-click="side.set('sizeAttributeTitle', attr.title)">
+    Graph as size
+  </button>
+  <button class="btn btn-default"
+          ng-class="{ 'btn-primary': side.state.labelAttributeTitle === attr.title }"
+          ng-click="side.set('labelAttributeTitle', attr.title)">
+    Graph as label
+  </button>
 </span>
 <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]"
     ng-model-options="{ updateOn: 'blur' }">

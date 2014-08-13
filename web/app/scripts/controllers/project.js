@@ -27,9 +27,6 @@ angular.module('biggraph')
       this.state = defaultSideState();
       // The /ajax/project Ajax response.
       this.project = undefined;
-      // graphState is for compatibility with the metaGraph.js-related code in graph-view.js
-      // and could be removed later.
-      this.graphState = {};
     }
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the project name changes, or when the project
@@ -80,6 +77,16 @@ angular.module('biggraph')
           console.error(response);
         });
     };
+    Side.prototype.resolveVertexAttribute = function(title) {
+      for (var attrIdx in this.project.vertexAttributes) {
+        var attr = this.project.vertexAttributes[attrIdx];
+        if (attr.title === title) {
+          return attr.id;
+        }
+      }
+      return undefined;
+    };
+
 
     $scope.left = new Side();
     $scope.right = new Side();
@@ -93,18 +100,24 @@ angular.module('biggraph')
     util.deepWatch($scope, 'right.project', function() { $scope.right.updateGraphState(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
     Side.prototype.updateGraphState = function() {
-      angular.copy(this.state, this.graphState);
+      this.graphState = angular.copy(this.state);
       if (this.project === undefined || !this.project.$resolved) {
-        this.graphState.vertexSet = undefined;
-        this.graphState.edgeBundle = undefined;
         return;
       }
+
       this.graphState.vertexSet = { id: this.project.vertexSet };
+
+      this.graphState.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
+      this.graphState.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
+      this.graphState.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
+      this.graphState.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+
       if (this.project.edgeBundle !== '') {
         this.graphState.edgeBundle = { id: this.project.edgeBundle };
       } else {
         this.graphState.edgeBundle = undefined;
       }
+      console.error(this.graphState);
     };
 
     // This watcher copies the state from the URL into $scope.
