@@ -1,6 +1,13 @@
 <div class="col-sm-6">
 
-  <project-selector name="side.state.projectName" ng-if="side.state.projectName === undefined"></project-selector>
+  <div ng-if="side.state.projectName === undefined">
+    <button ng-hide="showProjectSelector" style="width: 100%;"
+      ng-click="showProjectSelector = true" class="btn btn-link btn-lg">
+      <i class="glyphicon glyphicon-plus"
+        tooltip="Open&nbsp;project" tooltip-placement="bottom"></i>
+    </button>
+    <project-selector name="side.state.projectName" ng-show="showProjectSelector"></project-selector>
+  </div>
 
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
     Loading...
@@ -23,26 +30,35 @@
         <label class="btn btn-default"
                ng-if="side.hasFilters()"
                ng-click="side.applyFilters()"
-               tooltip="Apply&nbsp;Current&nbsp;Filters"
+               tooltip="Apply&nbsp;current&nbsp;filters"
                tooltip-append-to-body="true"
                tooltip-placement="bottom">
           <i class="glyphicon glyphicon-filter"></i>
         </label>
+        <label class="btn btn-default" ng-click="side.close()"
+          tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-remove"></i>
+        </label>
+      </div>
+
+      <div class="btn-group pull-right">
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable
-          tooltip="Bucketed&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
         </label>
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
-          tooltip="Sampled&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          tooltip="Sampled&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
         </label>
       </div>
+
       <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
         tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets" tooltip-placement="bottom"
         type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
       <input class="right-range-input" ng-show="side.state.graphMode == 'sampled'"
         tooltip="radius {{side.state.sampleRadius}}" tooltip-placement="bottom"
         type="range" max="10" step="1" ng-model="side.state.sampleRadius">
+      <div class="clearfix"></div>
     </div>
 
     <div class="list-group">
