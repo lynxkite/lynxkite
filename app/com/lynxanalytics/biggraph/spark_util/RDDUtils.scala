@@ -47,7 +47,7 @@ object RDDUtils {
    *
    * The input is two sorted RDDs, restricted and full, where the keys in restricted form a subset
    * of the keys in full. The function will return the data in restricted complemented by an extra
-   * interger for each key. This interger is the number of keys found in fullRDD between
+   * integer for each key. This integer is the number of keys found in fullRDD between
    * the actual key (inclusive) and the previous key in restricted (exclusive). Summing up that
    * integer on a per-partition prefix gives an estimate of how much of the original, full RDD
    * we had to process to get the filtered sample we needed. This is necessary to be able to
