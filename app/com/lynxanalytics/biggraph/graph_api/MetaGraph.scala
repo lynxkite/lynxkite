@@ -69,7 +69,7 @@ case class EdgeBundleProperties(
     isEverywhereDefined: Boolean = false,
     // All destination vertices have at least one incoming edge.
     isReverseEverywhereDefined: Boolean = false,
-    // The source id and destinate id are the same for all edges in this bundle.
+    // The source id and destination id are the same for all edges in this bundle.
     // In this case edge ids are also chosen to match the source and destination ids and
     // the bundle is partitioned the same way as its source vertex set.
     isIdentity: Boolean = false) {
