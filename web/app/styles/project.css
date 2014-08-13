@@ -22,6 +22,10 @@
   margin-right: 50px;
 }
 
+.project-name .pull-right {
+  margin-left: 30px;
+}
+
 div.operation-toolboxes {
   position: absolute;
   width: 100%;

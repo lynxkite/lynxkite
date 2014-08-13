@@ -30,20 +30,28 @@
         <label class="btn btn-default"
                ng-if="side.hasFilters()"
                ng-click="side.applyFilters()"
-               tooltip="Apply&nbsp;Current&nbsp;Filters"
+               tooltip="Apply&nbsp;current&nbsp;filters"
                tooltip-append-to-body="true"
                tooltip-placement="bottom">
           <i class="glyphicon glyphicon-filter"></i>
         </label>
+        <label class="btn btn-default" ng-click="side.close()"
+          tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-remove"></i>
+        </label>
+      </div>
+
+      <div class="btn-group pull-right">
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable
-          tooltip="Bucketed&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
         </label>
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
-          tooltip="Sampled&nbsp;Graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          tooltip="Sampled&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
         </label>
       </div>
+
       <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
         tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets" tooltip-placement="bottom"
         type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
