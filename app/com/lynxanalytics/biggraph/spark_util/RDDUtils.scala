@@ -79,20 +79,28 @@ object RDDUtils {
 
     val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
     val withCounts = unfilteredCounts(fullRDD, dataUsed)
-    val (valueCounts, unfilteredCount) = withCounts
+    val (valueCounts, unfilteredCount, filteredCount) = withCounts
       .values
-      .aggregate((mutable.Map[T, Int](), 0))(
+      .aggregate((
+        mutable.Map[T, Int]() /* observed value counts */ ,
+        0 /* estimated total count corresponding to the observed filtered sample */ ,
+        0 /* observed filtered sample size */ ))(
         {
-          case ((map, uct), (key, uc)) =>
+          case ((map, uct, fct), (key, uc)) =>
             incrementMap(map, key)
-            (map, uct + uc)
+            (map, uct + uc, fct + 1)
         },
         {
-          case ((map1, uct1), (map2, uct2)) =>
+          case ((map1, uct1, fct1), (map2, uct2, fct2)) =>
             map2.foreach { case (k, v) => incrementMap(map1, k, v) }
-            (map1, uct1 + uct2)
+            (map1, uct1 + uct2, fct1 + fct2)
         })
-    val multiplier = totalVertexCount * 1.0 / unfilteredCount
+    val multiplier = if (filteredCount < requiredPositiveSamples / 2) {
+      // No sampling must have happened.
+      1.0
+    } else {
+      totalVertexCount * 1.0 / unfilteredCount
+    }
     valueCounts.toMap.mapValues(c => math.round(multiplier * c).toInt)
   }
 
