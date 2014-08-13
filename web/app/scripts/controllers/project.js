@@ -2,6 +2,7 @@
 
 angular.module('biggraph')
   .controller('ProjectViewCtrl', function ($scope, $routeParams, $resource, $location, util) {
+    $scope.util = util;
     function defaultSideState() {
       return {
         projectName: undefined,
@@ -22,12 +23,21 @@ angular.module('biggraph')
     }
 
     function Side() {
+      // The state of controls. E.g. bucket count.
       this.state = defaultSideState();
+      // The /ajax/project Ajax response.
+      this.project = undefined;
+      // graphState is for compatibility with the metaGraph.js-related code in graph-view.js
+      // and could be removed later.
+      this.graphState = {};
     }
+    // Side.reload makes an unconditional, uncached Ajax request.
+    // This is called when the project name changes, or when the project
+    // itself is expected to change. (Such as after an operation.)
     Side.prototype.reload = function() {
       if (this.state.projectName) {
         this.project = util.nocache('/ajax/project', { name: this.state.projectName });
-      } else{
+      } else {
         this.project = undefined;
       }
     };
@@ -71,39 +81,47 @@ angular.module('biggraph')
         });
     };
 
-    function clearState() {
-      $scope.leftToRightPath = undefined;
-      $scope.left = new Side();
-      $scope.right = new Side();
-      $scope.left.state.projectName = $routeParams.project;
-    }
-    clearState();
+    $scope.left = new Side();
+    $scope.right = new Side();
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
 
-    util.deepWatch($scope, 'left.project', function(project) {
-      if (project === undefined) {
-        $scope.left.state.vertexSet = undefined;
-        $scope.left.state.edgeBundle = undefined;
+    // Side.graphState is for compatibility with the metaGraph.js-related code in graph-view.js
+    // and could be removed later.
+    util.deepWatch($scope, 'left.project', function() { $scope.left.updateGraphState(); });
+    util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
+    util.deepWatch($scope, 'right.project', function() { $scope.right.updateGraphState(); });
+    util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
+    Side.prototype.updateGraphState = function() {
+      angular.copy(this.state, this.graphState);
+      if (this.project === undefined || !this.project.$resolved) {
+        this.graphState.vertexSet = undefined;
+        this.graphState.edgeBundle = undefined;
         return;
       }
-      // Put vertex set and edge bundle in the state.
-      // This is for compatibility with the metaGraph.js-related code in graph-view.js
-      // and could be removed later.
-      $scope.left.state.vertexSet = { id: project.vertexSet };
-      if (project.edgeBundle !== '') {
-        $scope.left.state.edgeBundle = { id: project.edgeBundle };
+      this.graphState.vertexSet = { id: this.project.vertexSet };
+      if (this.project.edgeBundle !== '') {
+        this.graphState.edgeBundle = { id: this.project.edgeBundle };
       } else {
-        $scope.left.state.edgeBundle = undefined;
+        this.graphState.edgeBundle = undefined;
       }
-    });
+    };
 
+    // This watcher copies the state from the URL into $scope.
+    // It is an important part of initialization. Less importantly it makes
+    // it possible to edit the state manually in the URL, or use the "back"
+    // button to undo state changes.
     util.deepWatch(
       $scope,
       function() { return $location.search(); },
       function(search) {
         if (!search.q) {
-          clearState();
+          $scope.leftToRightPath = undefined;
+          $scope.left.state = defaultSideState();
+          $scope.right.state = defaultSideState();
+          // In the absence of query parameters, take the left-side project
+          // name from the URL. This makes for friendlier project links.
+          $scope.left.state.projectName = $routeParams.project;
         } else {
           var state = JSON.parse(search.q);
           // The parts of the template that depend on 'state' get re-rendered
@@ -120,7 +138,9 @@ angular.module('biggraph')
     util.deepWatch(
       $scope,
       getState,
-      function(state) {
-        $location.search({ q: JSON.stringify(state) });
+      function(after, before) {
+        if (after !== before) {  // Do not modify URL on initialization.
+          $location.search({ q: JSON.stringify(after) });
+        }
       });
   });
