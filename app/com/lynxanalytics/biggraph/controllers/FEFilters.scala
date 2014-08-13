@@ -16,13 +16,13 @@ object FEFilters {
     vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
       implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
     if (filters.isEmpty) return vertexSet
-    intersect(filters.map(applyFEFilter)).srcVertexSet
+    intersectionEmbedding(filters.map(applyFEFilter)).srcVertexSet
   }
 
   def embedFilteredVertices(
     base: VertexSet, filters: Seq[FEVertexAttributeFilter])(
       implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
-    intersect(base +: filters.map(applyFEFilter))
+    intersectionEmbedding(base +: filters.map(applyFEFilter))
   }
 
   def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
@@ -42,7 +42,7 @@ object FEFilters {
       filterSpec.valueSpec)
   }
 
-  private def intersect(
+  private def intersectionEmbedding(
     filteredVss: Seq[VertexSet])(
       implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
 

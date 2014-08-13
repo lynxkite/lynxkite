@@ -140,6 +140,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
         vertexAttributes(name) =
           graph_operations.PulledOverAttribute.pullAttributeVia(attr, injection)
     }
+    // TODO(xandrew): induce new edge bundle and edge attributes.
   }
 
   def edgeBundle = existing(path / "edgeBundle").map(manager.edgeBundle(_)).getOrElse(null)
@@ -393,6 +394,7 @@ class BigGraphController(env: BigGraphEnvironment) {
     val project = Project(request.project)
     val vertexSet = project.vertexSet
     assert(vertexSet != null)
+    assert(request.filters.nonEmpty)
     val embedding = FEFilters.embedFilteredVertices(vertexSet, request.filters)
     project.pullBackWithInjection(embedding)
     FEStatus.success
