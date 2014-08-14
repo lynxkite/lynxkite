@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
-import java.util.IdentityHashMap
 import java.util.UUID
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
@@ -10,6 +9,7 @@ import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
 import scala.collection.immutable.SortedMap
 
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 sealed trait MetaGraphEntity extends Serializable {
@@ -46,7 +46,9 @@ object StringStruct {
 }
 
 case class VertexSet(source: MetaGraphOperationInstance,
-                     name: Symbol) extends MetaGraphEntity
+                     name: Symbol) extends MetaGraphEntity {
+  assert(name != null)
+}
 
 /*
  * Represents potential extra properties of edge bundles.
@@ -94,7 +96,14 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
                       dstVertexSet: VertexSet,
                       properties: EdgeBundleProperties = EdgeBundleProperties.default)
     extends MetaGraphEntity {
+  assert(name != null)
   val isLocal = srcVertexSet == dstVertexSet
+  lazy val asVertexSet: VertexSet = {
+    import Scripting._
+    implicit val manager = source.manager
+    val avsop = graph_operations.EdgeBundleAsVertexSet()
+    avsop(avsop.edges, this).result.equivalentVS
+  }
 }
 
 sealed trait Attribute[T] extends MetaGraphEntity {
@@ -115,6 +124,7 @@ case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                        name: Symbol,
                                        vertexSet: VertexSet)
     extends Attribute[T] with RuntimeSafeCastable[T, VertexAttribute] {
+  assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
 }
 
@@ -125,12 +135,20 @@ case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                      name: Symbol,
                                      edgeBundle: EdgeBundle)
     extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] with TripletAttribute[T] {
+  assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
+  lazy val asVertexAttribute: VertexAttribute[T] = {
+    import Scripting._
+    implicit val manager = source.manager
+    val avaop = graph_operations.EdgeAttributeAsVertexAttribute[T]()
+    avaop(avaop.edgeAttr, this).result.vertexAttr
+  }
 }
 
 case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
                               name: Symbol)
     extends MetaGraphEntity with RuntimeSafeCastable[T, Scalar] {
+  assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
 }
 
@@ -145,20 +163,28 @@ trait InputSignatureProvider {
   def inputSignature: InputSignature
 }
 trait FieldNaming {
-  protected lazy val naming: IdentityHashMap[Any, Symbol] = {
-    val res = new IdentityHashMap[Any, Symbol]()
+  protected def nameOf(obj: AnyRef): Symbol = {
     val mirror = reflect.runtime.currentMirror.reflect(this)
 
-    mirror.symbol.toType.members
+    val naming = mirror.symbol.toType.members
       .collect {
         case m: MethodSymbol if (m.isGetter && m.isPublic) => m
       }
-      .foreach { m =>
-        res.put(mirror.reflectField(m).get, Symbol(m.name.toString))
+      .map { m =>
+        Symbol(m.name.toString) -> mirror.reflectField(m).get
       }
-    res
+      .collect {
+        case (name, value: AnyRef) => name -> value
+      }
+    naming.find { case (name, value) => value eq obj } match {
+      case Some((name, value)) =>
+        name
+      case None =>
+        val names = naming.map(_._1)
+        assert(false, s"Name for $obj not found in $names")
+        ???
+    }
   }
-
 }
 
 trait EntityTemplate[T <: MetaGraphEntity] {
@@ -174,7 +200,7 @@ object EntityTemplate {
 
 abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
   abstract class ET[T <: MetaGraphEntity](nameOpt: Option[Symbol] = None) extends EntityTemplate[T] {
-    lazy val name: Symbol = nameOpt.getOrElse(naming.get(this))
+    lazy val name: Symbol = nameOpt.getOrElse(nameOf(this))
     def set(target: MetaDataSet, entity: T): MetaDataSet =
       MetaDataSet(Map(name -> entity)) ++ target
     def get(set: MetaDataSet): T = set.all(name).asInstanceOf[T]
@@ -291,7 +317,7 @@ object EntityContainer {
 abstract class MagicOutput(instance: MetaGraphOperationInstance)
     extends MetaDataSetProvider with FieldNaming {
   class P[T <: MetaGraphEntity](entityConstructor: Symbol => T, nameOpt: Option[Symbol]) extends EntityContainer[T] {
-    lazy val name: Symbol = nameOpt.getOrElse(naming.get(this))
+    lazy val name: Symbol = nameOpt.getOrElse(nameOf(this))
     lazy val entity = entityConstructor(name)
     placeholders += this
   }
@@ -360,6 +386,8 @@ trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider
  * the operation together with concrete input vertex sets and edge bundles.
  */
 trait MetaGraphOperationInstance {
+  val manager: MetaGraphManager
+
   val operation: MetaGraphOp
 
   val inputs: MetaDataSet
@@ -421,6 +449,7 @@ trait MetaGraphOperationInstance {
 }
 
 case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
+    manager: MetaGraphManager,
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet) extends MetaGraphOperationInstance {
   val result: OMDS = operation.outputMeta(this)
