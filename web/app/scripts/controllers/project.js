@@ -38,13 +38,6 @@ angular.module('biggraph')
     Side.prototype.reload = function() {
       if (this.state.projectName) {
         this.project = util.nocache('/ajax/project', { name: this.state.projectName });
-        var that = this;
-        this.project.$promise.then(function() {
-          // When loading a segmentation, use "belongsTo" as the connecting path.
-          if (that === $scope.right && that.project.belongsTo) {
-            $scope.leftToRightPath = [{ bundle: that.project.belongsTo, pointsLeft: false }];
-          }
-        });
       } else {
         this.project = undefined;
       }
@@ -110,10 +103,25 @@ angular.module('biggraph')
 
     Side.prototype.openSegmentation = function(seg) {
       // For now segmentations always open on the right.
-      var side = $scope.right;
-      side.state.projectName = seg;
+      $scope.right.state.projectName = seg;
     };
-
+    function getLeftToRightPath() {
+      var left = $scope.left.project;
+      var right = $scope.right.project;
+      if (!left || !left.$resolved) { return undefined; }
+      if (!right || !right.$resolved) { return undefined; }
+      // If it is a segmentation, use "belongsTo" as the connecting path.
+      if (right.name.indexOf(left.name + '/segmentations/') === 0) {
+        return [{ bundle: right.belongsTo, pointsLeft: false }];
+      }
+      // If it is the same project on both sides, use its internal edges.
+      if (left.name === right.name) {
+        return [{ bundle: { id: left.edgeBundle }, pointsLeft: false }];
+      }
+      return undefined;
+    }
+    util.deepWatch($scope, 'left.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    util.deepWatch($scope, 'right.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
 
     $scope.left = new Side();
     $scope.right = new Side();
