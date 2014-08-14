@@ -42,7 +42,7 @@ angular.module('biggraph')
         this.project.$promise.then(function() {
           // When loading a segmentation, use "belongsTo" as the connecting path.
           if (that === $scope.right && that.project.belongsTo) {
-            $scope.leftToRightPath = [{ bundle: that.project.belongsTo, pointsLeft: true }];
+            $scope.leftToRightPath = [{ bundle: that.project.belongsTo, pointsLeft: false }];
           }
         });
       } else {
