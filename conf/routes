@@ -19,6 +19,7 @@ POST /ajax/filterProject com.lynxanalytics.biggraph.serving.ProductionJsonServer
 GET  /ajax/vertexDiag  com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexDiagram
 GET  /ajax/edgeDiag    com.lynxanalytics.biggraph.serving.ProductionJsonServer.edgeDiagram
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
+GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            controllers.Assets.at(path="/public", file)
