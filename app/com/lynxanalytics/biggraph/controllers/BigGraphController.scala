@@ -91,13 +91,17 @@ case class FEProject(
   notes: String,
   vertexAttributes: Seq[UIValue],
   edgeAttributes: Seq[UIValue],
-  segmentations: Seq[UIValue],
+  segmentations: Seq[FESegmentation],
   opCategories: Seq[OperationCategory])
+
+case class FESegmentation(
+  name: String,
+  fullName: String,
+  belongsTo: UIValue) // The connecting edge bundle.
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   val path: SymbolPath = s"projects/$projectName"
   def toFE(implicit dm: DataManager): FEProject = {
-    val notes = manager.scalarOf[String](path / "notes").value
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     // For now, counts are calculated here. TODO: Make them respond to soft filters.
@@ -114,8 +118,13 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       vsCount, esCount, notes,
       vertexAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
       edgeAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
-      segmentations.map { case (name, seg) => UIValue(seg.gUID.toString, name) }.toSeq,
+      segmentations.map(_.toFE),
       opCategories = Seq())
+  }
+
+  def notes(implicit dm: DataManager) = manager.scalarOf[String](path / "notes").value
+  def notes_=(n: String) = {
+    set("notes", graph_operations.CreateStringScalar(n)().result.created)
   }
 
   def vertexSet = existing(path / "vertexSet").map(manager.vertexSet(_)).getOrElse(null)
@@ -125,7 +134,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       edgeBundle = null
       vertexAttributes = Map()
     }
-    set(path / "vertexSet", e)
+    set("vertexSet", e)
   }
   def pullBackWithInjection(injection: EdgeBundle): Unit = {
     assert(injection.properties.compliesWith(EdgeBundleProperties.injection))
@@ -161,7 +170,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       // TODO: "Induce" the attributes to the new edge bundle.
       edgeAttributes = Map()
     }
-    set(path / "edgeBundle", e)
+    set("edgeBundle", e)
   }
 
   def vertexAttributes = new VertexAttributeHolder
@@ -190,26 +199,20 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
   }.toSeq
 
-  def segmentations = new SegmentationHolder
-  def segmentations_=(segs: Map[String, VertexSet]) = {
-    existing(path / "segmentations").foreach(manager.rmTag(_))
-    assert(segs.isEmpty || vertexSet != null, s"No vertex set for project $projectName")
-    for ((name, seg) <- segs) {
-      // TODO: Assert that this is a segmentation for vertexSet.
-      manager.setTag(path / "segmentations" / name, seg)
-    }
-  }
-  def segmentationNames = segmentations.map { case (name, attr) => name }.toSeq
+  def segmentations = segmentationNames.map(segmentation(_))
+  def segmentation(name: String) = Segmentation(projectName, name)
+  def segmentationNames = ls("segmentations").map(_.last.name)
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
-  private def set(tag: SymbolPath, entity: MetaGraphEntity): Unit = {
+  private def set(tag: String, entity: MetaGraphEntity): Unit = {
     if (entity == null) {
-      existing(tag).foreach(manager.rmTag(_))
+      existing(path / tag).foreach(manager.rmTag(_))
     } else {
-      manager.setTag(tag, entity)
+      manager.setTag(path / tag, entity)
     }
   }
+  private def get(tag: String): MetaGraphEntity = existing(path / tag).map(manager.entity(_)).getOrElse(null)
   private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
 
   abstract class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
@@ -231,13 +234,22 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     def validate(name: String, attr: EdgeAttribute[_]) =
       assert(attr.edgeBundle == edgeBundle, s"Edge attribute $name does not match edge bundle for project $projectName")
   }
-  class SegmentationHolder extends Holder[VertexSet]("segmentations") {
-    def validate(name: String, seg: VertexSet) = () // TODO: Validate segmentation.
-  }
 }
 
 object Project {
   def apply(projectName: String)(implicit metaManager: MetaGraphManager): Project = new Project(projectName)
+}
+
+case class Segmentation(parent: String, name: String)(implicit manager: MetaGraphManager) {
+  val path: SymbolPath = s"projects/$parent/segmentations/$name"
+  def toFE(implicit dm: DataManager) =
+    FESegmentation(name, project.projectName, UIValue.fromEntity(belongsTo))
+  def belongsTo = manager.entity(path / "belongsTo")
+  def belongsTo_=(eb: EdgeBundle) = {
+    assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
+    manager.setTag(path / "belongsTo", eb)
+  }
+  def project = Project(s"$parent/segmentations/$name/project")
 }
 
 case class ProjectRequest(name: String)
@@ -392,8 +404,7 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def createProject(request: CreateProjectRequest): serving.Empty = {
-    val notes = graph_operations.CreateStringScalar(request.notes)().result.created
-    metaManager.setTag(s"projects/${request.name}/notes", notes)
+    Project(request.name).notes = request.notes
     return serving.Empty()
   }
 
