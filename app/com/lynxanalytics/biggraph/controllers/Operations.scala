@@ -167,9 +167,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.FindMaxCliques(params("min").toInt)
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
-      segmentation.vertexSet = result.segments
+      segmentation.project.vertexSet = result.segments
+      segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.notes = title
       FEStatus.success
     }
   })
@@ -183,9 +183,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
-      segmentation.vertexSet = result.segments
+      segmentation.project.vertexSet = result.segments
+      segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.notes = title
       FEStatus.success
     }
   })

@@ -91,9 +91,13 @@ case class FEProject(
   notes: String,
   vertexAttributes: Seq[UIValue],
   edgeAttributes: Seq[UIValue],
-  segmentations: Seq[UIValue],
-  belongsTo: Option[UIValue],
+  segmentations: Seq[FESegmentation],
   opCategories: Seq[OperationCategory])
+
+case class FESegmentation(
+  name: String,
+  fullName: String,
+  belongsTo: UIValue) // The connecting edge bundle.
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   val path: SymbolPath = s"projects/$projectName"
@@ -114,8 +118,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       vsCount, esCount, notes,
       vertexAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
       edgeAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
-      segmentationNames.map(seg => UIValue(s"$projectName/segmentations/$seg", seg)),
-      Option(belongsTo).map(UIValue.fromEntity(_)),
+      segmentations.map(_.toFE),
       opCategories = Seq())
   }
 
@@ -196,14 +199,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
   }.toSeq
 
-  def segmentation(name: String) = Project(s"$projectName/segmentations/$name")
+  def segmentations = segmentationNames.map(segmentation(_))
+  def segmentation(name: String) = Segmentation(projectName, name)
   def segmentationNames = ls("segmentations").map(_.last.name)
-
-  def belongsTo = get("belongsTo")
-  def belongsTo_=(eb: EdgeBundle) = {
-    assert(eb.dstVertexSet == vertexSet, s"Incorrect 'belongsTo' relationship for $projectName")
-    set("belongsTo", eb)
-  }
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
@@ -240,6 +238,18 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
 object Project {
   def apply(projectName: String)(implicit metaManager: MetaGraphManager): Project = new Project(projectName)
+}
+
+case class Segmentation(parent: String, name: String)(implicit manager: MetaGraphManager) {
+  val path: SymbolPath = s"projects/$parent/segmentations/$name"
+  def toFE(implicit dm: DataManager) =
+    FESegmentation(name, project.projectName, UIValue.fromEntity(belongsTo))
+  def belongsTo = manager.entity(path / "belongsTo")
+  def belongsTo_=(eb: EdgeBundle) = {
+    assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
+    manager.setTag(path / "belongsTo", eb)
+  }
+  def project = Project(s"$parent/segmentations/$name/project")
 }
 
 case class ProjectRequest(name: String)
