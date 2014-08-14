@@ -244,7 +244,7 @@ object Timestamp {
 private case class SerializedOperation(operation: MetaGraphOp,
                                        inputs: Map[Symbol, UUID]) extends Serializable {
   def toInstance(manager: MetaGraphManager): MetaGraphOperationInstance = {
-    val op = TypedOperationInstance(
+    TypedOperationInstance(
       operation.asInstanceOf[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]],
       MetaDataSet(
         operation.inputSig.vertexSets
@@ -257,8 +257,6 @@ private case class SerializedOperation(operation: MetaGraphOp,
           .map(n => n -> manager.edgeAttribute(inputs(n))).toMap,
         operation.inputSig.scalars
           .map(n => n -> manager.scalar(inputs(n))).toMap))
-    println("instance: " + op)
-    op
   }
 }
 private object SerializedOperation {
