@@ -5,12 +5,23 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class BucketedAttribute[T](
-  attribute: VertexAttribute[T],
-  bucketer: Bucketer[T])
+    attribute: VertexAttribute[T],
+    bucketer: Bucketer[T]) {
+
+  def toHistogram(
+    filtered: VertexSet)(
+      implicit manager: MetaGraphManager): graph_operations.AttributeHistogram.Output = {
+    val cop = graph_operations.CountVertices()
+    val originalCount = cop(cop.vertices, attribute.vertexSet).result.count
+    val op = graph_operations.AttributeHistogram[T](bucketer)
+    op(op.attr, attribute)(op.filtered, filtered)(op.originalCount, originalCount).result
+  }
+}
 
 case class FilteredAttribute[T](
   attribute: VertexAttribute[T],

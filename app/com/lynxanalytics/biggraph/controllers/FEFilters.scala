@@ -8,8 +8,20 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations._
 
 case class FEVertexAttributeFilter(
-  val attributeId: String,
-  val valueSpec: String)
+    val attributeId: String,
+    val valueSpec: String) {
+
+  def toFilteredAttribute(
+    implicit manager: MetaGraphManager): FilteredAttribute[_] = {
+    toFilteredAttributeFromAttribute(manager.vertexAttribute(attributeId.asUUID))
+  }
+
+  private def toFilteredAttributeFromAttribute[T](
+    attr: VertexAttribute[T]): FilteredAttribute[T] = {
+    implicit val tt = attr.typeTag
+    return FilteredAttribute(attr, FEFilters.filterFromSpec(valueSpec))
+  }
+}
 
 object FEFilters {
   def filter(
@@ -50,14 +62,9 @@ object FEFilters {
     op(op.vss, filteredVss).result.firstEmbedding
   }
 
-  private def filteredBaseSet[T](
-    manager: MetaGraphManager,
-    attr: VertexAttribute[T],
-    spec: String): VertexSet = {
-
+  def filterFromSpec[T: TypeTag](spec: String): Filter[T] = {
     val negated = spec.startsWith("!")
     val innerSpec = if (negated) spec.drop(1) else spec
-    implicit val tt = attr.typeTag
     val innerFilter: Filter[T] =
       if (typeOf[T] =:= typeOf[String]) {
         OneOf(innerSpec.split(",").toSet)
@@ -72,7 +79,16 @@ object FEFilters {
         }
         doubleFilter.asInstanceOf[Filter[T]]
       } else ???
-    val filter = if (negated) NotFilter(innerFilter) else innerFilter
+    if (negated) NotFilter(innerFilter) else innerFilter
+  }
+
+  private def filteredBaseSet[T](
+    manager: MetaGraphManager,
+    attr: VertexAttribute[T],
+    spec: String): VertexSet = {
+
+    implicit val tt = attr.typeTag
+    val filter = filterFromSpec[T](spec)
     import Scripting._
     implicit val mm = manager
     val op = VertexAttributeFilter(filter)
