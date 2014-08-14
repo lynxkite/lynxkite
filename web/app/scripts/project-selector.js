@@ -12,7 +12,7 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         scope.newProject.sending = true;
         var name = scope.newProject.name.replace(/ /g, '_');
         var notes = scope.newProject.notes;
-        $resource('/ajax/createProject').save({ name: name, notes: notes }, function() {
+        $resource('/ajax/createProject').save({ name: name, notes: notes || '' }, function() {
           scope.name = name;
         }, function(error) {
           console.error(error);
