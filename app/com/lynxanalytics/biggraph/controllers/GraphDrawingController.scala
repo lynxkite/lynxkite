@@ -284,6 +284,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       metaManager.scalar(request.dstDiagramId.asUUID))
     val bundleWeights = getCompositeBundle(request.bundleSequence)
     val edgeBundle = bundleWeights.edgeBundle
+    assert(srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
+      "Source vertex set does not match edge bundle source." +
+        s"\nSource: ${srcView.vertexSet}\nEdge bundle source: ${edgeBundle.srcVertexSet}")
+    assert(dstView.vertexSet.gUID == edgeBundle.dstVertexSet.gUID,
+      "Destination vertex set does not match edge bundle destination." +
+        s"\nSource: ${dstView.vertexSet}\nEdge bundle destination: ${edgeBundle.dstVertexSet}")
     val (srcTripletMapping, dstTripletMapping) = tripletMapping(edgeBundle)
 
     val srcFilteredEBs = srcView.filters
@@ -312,10 +318,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
     val countOp = graph_operations.EdgeIndexPairCounter()
     val counts =
-      countOp(countOp.xIndices, srcIndices)(
-        countOp.yIndices, dstIndices)(
-          countOp.original, edgeBundle)(
-            countOp.originalCount, originalEdgeCount).result.counts.value
+      countOp(
+        countOp.xIndices, srcIndices)(
+          countOp.yIndices, dstIndices)(
+            countOp.original, edgeBundle)(
+              countOp.originalCount, originalEdgeCount).result.counts.value
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,

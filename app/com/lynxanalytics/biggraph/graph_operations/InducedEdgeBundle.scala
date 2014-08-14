@@ -24,6 +24,7 @@ object InducedEdgeBundle {
       val dst = if (induceDst) inputs.dstSubset else inputs.dst
       edgeBundle(src.entity, dst.entity)
     }
+    val embedding = edgeBundle(induced.asVertexSet, inputs.edges.asVertexSet)
   }
 }
 import InducedEdgeBundle._
@@ -58,7 +59,9 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
         .mapValues { case (idEdge, _) => idEdge }
       byDst.values
     }
-    output(o.induced, dstInduced.toSortedRDD(edges.partitioner.get))
+    val induced = dstInduced.toSortedRDD(edges.partitioner.get)
+    output(o.induced, induced)
+    output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
 
   override val isHeavy = true
