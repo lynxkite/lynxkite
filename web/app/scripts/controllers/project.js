@@ -103,7 +103,7 @@ angular.module('biggraph')
 
     Side.prototype.openSegmentation = function(seg) {
       // For now segmentations always open on the right.
-      $scope.right.state.projectName = seg;
+      $scope.right.state.projectName = seg.fullName;
     };
     function getLeftToRightPath() {
       var left = $scope.left.project;
@@ -111,8 +111,11 @@ angular.module('biggraph')
       if (!left || !left.$resolved) { return undefined; }
       if (!right || !right.$resolved) { return undefined; }
       // If it is a segmentation, use "belongsTo" as the connecting path.
-      if (right.name.indexOf(left.name + '/segmentations/') === 0) {
-        return [{ bundle: right.belongsTo, pointsLeft: false }];
+      for (var i = 0; i < left.segmentations.length; ++i) {
+        var seg = left.segmentations[i];
+        if (right.name === seg.fullName) {
+          return [{ bundle: seg.belongsTo, pointsLeft: false }];
+        }
       }
       // If it is the same project on both sides, use its internal edges.
       if (left.name === right.name) {
