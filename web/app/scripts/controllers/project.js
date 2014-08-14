@@ -38,6 +38,12 @@ angular.module('biggraph')
     Side.prototype.reload = function() {
       if (this.state.projectName) {
         this.project = util.nocache('/ajax/project', { name: this.state.projectName });
+        // If this project is open on the other side, update that instance too.
+        for (var i = 0; i < $scope.sides.length; ++i) {
+          if ($scope.sides[i].state.projectName === this.state.projectName) {
+            $scope.sides[i].project = this.project;
+          }
+        }
       } else {
         this.project = undefined;
       }
