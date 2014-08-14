@@ -24,7 +24,7 @@ class MetaGraphManager(val repositoryPath: String) {
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet = MetaDataSet()): TypedOperationInstance[IS, OMDS] = synchronized {
 
-    val operationInstance = TypedOperationInstance(operation, inputs)
+    val operationInstance = TypedOperationInstance(this, operation, inputs)
     val gUID = operationInstance.gUID
     if (!operationInstances.contains(gUID)) {
       internalApply(operationInstance)
@@ -245,6 +245,7 @@ private case class SerializedOperation(operation: MetaGraphOp,
                                        inputs: Map[Symbol, UUID]) extends Serializable {
   def toInstance(manager: MetaGraphManager): MetaGraphOperationInstance = {
     TypedOperationInstance(
+      manager,
       operation.asInstanceOf[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]],
       MetaDataSet(
         operation.inputSig.vertexSets

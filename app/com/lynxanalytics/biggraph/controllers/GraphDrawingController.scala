@@ -318,10 +318,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
     val countOp = graph_operations.EdgeIndexPairCounter()
     val counts =
-      countOp(countOp.xIndices, srcIndices)(
-        countOp.yIndices, dstIndices)(
-          countOp.original, edgeBundle)(
-            countOp.originalCount, originalEdgeCount).result.counts.value
+      countOp(
+        countOp.xIndices, srcIndices)(
+          countOp.yIndices, dstIndices)(
+            countOp.original, edgeBundle)(
+              countOp.originalCount, originalEdgeCount).result.counts.value
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
