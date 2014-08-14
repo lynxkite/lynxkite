@@ -10,6 +10,7 @@ import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
 import scala.collection.immutable.SortedMap
 
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 sealed trait MetaGraphEntity extends Serializable {
@@ -95,6 +96,12 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
                       properties: EdgeBundleProperties = EdgeBundleProperties.default)
     extends MetaGraphEntity {
   val isLocal = srcVertexSet == dstVertexSet
+  lazy val asVertexSet: VertexSet = {
+    import Scripting._
+    implicit val manager = source.manager
+    val avsop = graph_operations.EdgeBundleAsVertexSet()
+    avsop(avsop.edges, this).result.equivalentVS
+  }
 }
 
 sealed trait Attribute[T] extends MetaGraphEntity {
@@ -126,6 +133,12 @@ case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                      edgeBundle: EdgeBundle)
     extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] with TripletAttribute[T] {
   val typeTag = implicitly[TypeTag[T]]
+  lazy val asVertexAttribute: VertexAttribute[T] = {
+    import Scripting._
+    implicit val manager = source.manager
+    val avaop = graph_operations.EdgeAttributeAsVertexAttribute[T]()
+    avaop(avaop.edgeAttr, this).result.vertexAttr
+  }
 }
 
 case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
@@ -360,6 +373,8 @@ trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider
  * the operation together with concrete input vertex sets and edge bundles.
  */
 trait MetaGraphOperationInstance {
+  val manager: MetaGraphManager
+
   val operation: MetaGraphOp
 
   val inputs: MetaDataSet
@@ -421,6 +436,7 @@ trait MetaGraphOperationInstance {
 }
 
 case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
+    manager: MetaGraphManager,
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet) extends MetaGraphOperationInstance {
   val result: OMDS = operation.outputMeta(this)
