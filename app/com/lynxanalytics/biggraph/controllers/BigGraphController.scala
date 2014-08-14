@@ -136,6 +136,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
     set("vertexSet", e)
   }
+
   def pullBackWithInjection(injection: EdgeBundle): Unit = {
     assert(injection.properties.compliesWith(EdgeBundleProperties.injection))
     assert(injection.dstVertexSet.gUID == vertexSet.gUID)
@@ -158,6 +159,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       case (name, attr) =>
         edgeAttributes(name) =
           graph_operations.PulledOverEdgeAttribute.pullAttributeTo(attr, edgeBundle)
+    }
+
+    segmentations.foreach { seg =>
+      val op = graph_operations.InducedEdgeBundle(induceDst = false)
+      seg.belongsTo = op(op.srcInjection, injection)(op.edges, seg.belongsTo).result.induced
     }
   }
 
@@ -244,7 +250,7 @@ case class Segmentation(parent: String, name: String)(implicit manager: MetaGrap
   val path: SymbolPath = s"projects/$parent/segmentations/$name"
   def toFE(implicit dm: DataManager) =
     FESegmentation(name, project.projectName, UIValue.fromEntity(belongsTo))
-  def belongsTo = manager.entity(path / "belongsTo")
+  def belongsTo = manager.edgeBundle(path / "belongsTo")
   def belongsTo_=(eb: EdgeBundle) = {
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
