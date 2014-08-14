@@ -122,6 +122,16 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       opCategories = Seq())
   }
 
+  def isSegmentation = path.parent.parent.name == "segmentations"
+  def asSegmentation = {
+    assert(isSegmentation, s"$projectName is not a segmentation")
+    // If our parent is a top-level project, path is like:
+    //   project/parentName/segmentations/segmentationName/project
+    val parentPath = path.drop(3)
+    val segmentationName = path.init.last.name
+    Segmentation(parentPath.toString, segmentationName)
+  }
+
   def notes(implicit dm: DataManager) = manager.scalarOf[String](path / "notes").value
   def notes_=(n: String) = {
     set("notes", graph_operations.CreateStringScalar(n)().result.created)
@@ -164,6 +174,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     segmentations.foreach { seg =>
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(op.srcInjection, injection)(op.edges, seg.belongsTo).result.induced
+    }
+
+    if (isSegmentation) {
+      val seg = asSegmentation
+      val op = graph_operations.InducedEdgeBundle(induceSrc = false)
+      seg.belongsTo = op(op.dstInjection, injection)(op.edges, seg.belongsTo).result.induced
     }
   }
 
