@@ -25,7 +25,11 @@
   <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.error">
 
     <div class="panel-heading project-name">
-      {{util.spaced(side.project.name)}}
+      <span class="de-emph" ng-repeat="parent in side.parentProjects()">
+        {{parent}} &raquo;
+      </span>
+      {{side.shortName()}}
+
       <div class="btn-group pull-right">
         <label class="btn btn-default"
                ng-if="side.hasFilters()"

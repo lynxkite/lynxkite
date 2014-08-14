@@ -32,6 +32,33 @@ angular.module('biggraph')
       this.graphState = undefined;
     }
 
+    Side.prototype.shortName = function() {
+      var name = this.state.projectName;
+      if (!name) { return undefined; }
+      var parts = name.split('/');
+      if (parts[parts.length - 1] === 'project') {
+        parts.pop();
+      }
+      return util.spaced(parts[parts.length - 1]);
+    };
+    Side.prototype.parentProjects = function() {
+      var name = this.state.projectName;
+      if (!name) { return []; }
+      var parts = name.split('/');
+      var parents = [];
+      while (parts.length > 0) {
+        if (parts[0] === 'segmentations') {
+          parts.shift();  // "segmentations"
+          parents.push(util.spaced(parts.shift()));  // segmentation name
+          parts.shift();  // "project"
+        } else {
+          parents.push(util.spaced(parts.shift()));
+        }
+      }
+      parents.pop();  // The last one is the project name.
+      return parents;
+    };
+
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the project name changes, or when the project
     // itself is expected to change. (Such as after an operation.)
@@ -107,6 +134,30 @@ angular.module('biggraph')
       return undefined;
     };
 
+    Side.prototype.openSegmentation = function(seg) {
+      // For now segmentations always open on the right.
+      $scope.right.state.projectName = seg.fullName;
+    };
+    function getLeftToRightPath() {
+      var left = $scope.left.project;
+      var right = $scope.right.project;
+      if (!left || !left.$resolved) { return undefined; }
+      if (!right || !right.$resolved) { return undefined; }
+      // If it is a segmentation, use "belongsTo" as the connecting path.
+      for (var i = 0; i < left.segmentations.length; ++i) {
+        var seg = left.segmentations[i];
+        if (right.name === seg.fullName) {
+          return [{ bundle: seg.belongsTo, pointsLeft: false }];
+        }
+      }
+      // If it is the same project on both sides, use its internal edges.
+      if (left.name === right.name) {
+        return [{ bundle: { id: left.edgeBundle }, pointsLeft: false }];
+      }
+      return undefined;
+    }
+    util.deepWatch($scope, 'left.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    util.deepWatch($scope, 'right.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
 
     $scope.left = new Side();
     $scope.right = new Side();
