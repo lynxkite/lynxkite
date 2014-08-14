@@ -8,6 +8,8 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] {
   def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
   override def toString = path.map(_.name).mkString("/")
   def iterator = path.iterator
+  def parent: SymbolPath = path.init
+  def name = path.last
 }
 object SymbolPath {
   import scala.language.implicitConversions
