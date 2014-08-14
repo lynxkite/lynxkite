@@ -21,6 +21,7 @@ object InducedEdgeBundle {
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
     val induced = edgeBundle(inputs.srcSubset.entity, inputs.dstSubset.entity)
+    val embedding = edgeBundle(induced.asVertexSet, inputs.edges.asVertexSet)
   }
 }
 import InducedEdgeBundle._
@@ -48,7 +49,9 @@ case class InducedEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
       .toSortedRDD(dstSubset.partitioner.get)
       .sortedJoin(dstSubset)
       .mapValues { case (idEdge, _) => idEdge }
-    output(o.induced, byDst.values.toSortedRDD(edges.partitioner.get))
+    val induced = byDst.values.toSortedRDD(edges.partitioner.get)
+    output(o.induced, induced)
+    output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
 
   override val isHeavy = true
