@@ -32,6 +32,33 @@ angular.module('biggraph')
       this.graphState = undefined;
     }
 
+    Side.prototype.shortName = function() {
+      var name = this.state.projectName;
+      if (!name) { return undefined; }
+      var parts = name.split('/');
+      if (parts[parts.length - 1] === 'project') {
+        parts.pop();
+      }
+      return util.spaced(parts[parts.length - 1]);
+    };
+    Side.prototype.parentProjects = function() {
+      var name = this.state.projectName;
+      if (!name) { return []; }
+      var parts = name.split('/');
+      var parents = [];
+      while (parts.length > 0) {
+        if (parts[0] === 'segmentations') {
+          parts.shift();  // "segmentations"
+          parents.push(util.spaced(parts.shift()));  // segmentation name
+          parts.shift();  // "project"
+        } else {
+          parents.push(util.spaced(parts.shift()));
+        }
+      }
+      parents.pop();  // The last one is the project name.
+      return parents;
+    };
+
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the project name changes, or when the project
     // itself is expected to change. (Such as after an operation.)
