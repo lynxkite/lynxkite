@@ -360,6 +360,8 @@ trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider
  * the operation together with concrete input vertex sets and edge bundles.
  */
 trait MetaGraphOperationInstance {
+  val manager: MetaGraphManager
+
   val operation: MetaGraphOp
 
   val inputs: MetaDataSet
@@ -421,6 +423,7 @@ trait MetaGraphOperationInstance {
 }
 
 case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
+    manager: MetaGraphManager,
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: MetaDataSet) extends MetaGraphOperationInstance {
   val result: OMDS = operation.outputMeta(this)
