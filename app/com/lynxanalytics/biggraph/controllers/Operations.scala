@@ -427,14 +427,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       op(op.esAB, segmentation.belongsTo).result.esBA
     }
 
-    val weigthed = {
+    val weighted = {
       val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
       op(op.edges, reversed).result.attr
     }
 
     segmentation.project.vertexAttributes(attributeName) = {
       val op = graph_operations.WeightedOutDegree()
-      op(op.attr, weigthed).result.outDegree
+      op(op.attr, weighted).result.outDegree
     }
   }
 }
