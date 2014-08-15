@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.scalatest.FunSuite
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_api._
@@ -106,14 +107,14 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
       Seq("Hello, \"mr, smith\"!", "How are you \"doing\"?", "Okay, thanks."))
   }
 
-  test("Javascript filtering") {
+  test("JavaScript filtering") {
     val dir = "/graph_operations/ImportGraphTest/non-num-ids/"
     val path = Filename(getClass.getResource(dir + "edges.csv").getFile)
     val csv = CSV(
       path,
       "|",
       ImportUtil.header(path),
-      Javascript("comment.indexOf('loves') != -1"))
+      JavaScript("comment.indexOf('loves') != -1"))
     val comments = csv.lines(sparkContext).map(_(2))
     assert(TestUtils.RDDToSortedString(comments) ==
       """|Bob loves Darth Vader

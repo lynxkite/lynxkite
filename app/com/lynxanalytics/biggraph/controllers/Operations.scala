@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -92,7 +93,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Filename.fromString(params("files")),
         params("delimiter"),
         params("header"),
-        graph_operations.Javascript(params("filter")))
+        JavaScript(params("filter")))
       val imp = graph_operations.ImportVertexList(csv)().result
       project.vertexSet = imp.vertices
       project.vertexAttributes = imp.attrs.mapValues(_.entity)
@@ -119,7 +120,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Filename.fromString(params("files")),
         params("delimiter"),
         params("header"),
-        graph_operations.Javascript(params("filter")))
+        JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
       val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
@@ -146,7 +147,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Filename.fromString(params("files")),
         params("delimiter"),
         params("header"),
-        graph_operations.Javascript(params("filter")))
+        JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
       val imp = graph_operations.ImportEdgeList(csv, src, dst)().result

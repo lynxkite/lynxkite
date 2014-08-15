@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
@@ -55,7 +56,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
         Filename.fromString(params("files")),
         params("delimiter"),
         params("header"),
-        graph_operations.Javascript(params("filter")))
+        JavaScript(params("filter")))
       manager.show(graph_operations.ImportVertexList(csv))
       FEStatus.success
     }
@@ -77,7 +78,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
         Filename.fromString(params("files")),
         params("delimiter"),
         params("header"),
-        graph_operations.Javascript(params("filter")))
+        JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
       manager.show(graph_operations.ImportEdgeList(csv, src, dst))
@@ -103,7 +104,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
         Filename.fromString(params("files")),
         params("delimiter"),
         params("header"),
-        graph_operations.Javascript(params("filter")))
+        JavaScript(params("filter")))
       val srcField = params("srcField")
       val dstField = params("dstField")
       manager.show(

@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import scala.util.{ Failure, Success, Try }
+import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -63,38 +63,10 @@ object ImportUtil {
   }
 }
 
-case class Javascript(expression: String) {
-  def isEmpty = expression.isEmpty
-  def nonEmpty = expression.nonEmpty
-
-  def isTrue(mapping: (String, String)*): Boolean = isTrue(mapping.toMap)
-  def isTrue(mapping: Map[String, String]): Boolean = {
-    if (isEmpty) {
-      return true
-    }
-    val bindings = Javascript.engine.createBindings
-    for ((key, value) <- mapping) {
-      bindings.put(key, value)
-    }
-    return Try(Javascript.engine.eval(expression, bindings)) match {
-      case Success(result: java.lang.Boolean) =>
-        result
-      case Success(result) =>
-        throw Javascript.Error(s"JS expression ($expression) returned $result instead of a Boolean")
-      case Failure(e) =>
-        throw Javascript.Error(s"Could not evaluate JS: $expression", e)
-    }
-  }
-}
-object Javascript {
-  val engine = new javax.script.ScriptEngineManager().getEngineByName("JavaScript")
-  case class Error(msg: String, cause: Throwable = null) extends Exception(msg, cause)
-}
-
 case class CSV(file: Filename,
                delimiter: String,
                header: String,
-               filter: Javascript = Javascript("")) {
+               filter: JavaScript = JavaScript("")) {
   val fields = ImportUtil.split(header, delimiter)
 
   def lines(sc: SparkContext): RDD[Seq[String]] = {
