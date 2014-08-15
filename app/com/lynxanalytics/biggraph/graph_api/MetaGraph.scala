@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
+import java.util.IdentityHashMap
 import java.util.UUID
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
@@ -162,28 +163,25 @@ trait InputSignature {
 trait InputSignatureProvider {
   def inputSignature: InputSignature
 }
+
 trait FieldNaming {
-  protected def nameOf(obj: AnyRef): Symbol = {
+  private lazy val naming: IdentityHashMap[Any, Symbol] = {
+    val res = new IdentityHashMap[Any, Symbol]()
     val mirror = reflect.runtime.currentMirror.reflect(this)
 
-    val naming = mirror.symbol.toType.members
+    mirror.symbol.toType.members
       .collect {
         case m: MethodSymbol if (m.isGetter && m.isPublic) => m
       }
-      .map { m =>
-        Symbol(m.name.toString) -> mirror.reflectField(m).get
+      .foreach { m =>
+        res.put(mirror.reflectField(m).get, Symbol(m.name.toString))
       }
-      .collect {
-        case (name, value: AnyRef) => name -> value
-      }
-    naming.find { case (name, value) => value eq obj } match {
-      case Some((name, value)) =>
-        name
-      case None =>
-        val names = naming.map(_._1)
-        assert(false, s"Name for $obj not found in $names")
-        ???
-    }
+    res
+  }
+  def nameOf(obj: Any): Symbol = {
+    val name = naming.get(obj)
+    assert(name != null)
+    name
   }
 }
 
@@ -324,17 +322,17 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   def vertexSet = new P(VertexSet(instance, _), None)
   def vertexSet(name: Symbol) = new P(VertexSet(instance, _), Some(name))
   def edgeBundle(
-    src: EntityContainer[VertexSet],
-    dst: EntityContainer[VertexSet],
+    src: => EntityContainer[VertexSet],
+    dst: => EntityContainer[VertexSet],
     properties: EdgeBundleProperties = EdgeBundleProperties.default,
     name: Symbol = null) = new P(EdgeBundle(instance, _, src, dst, properties), Option(name))
   def graph = {
     val v = vertexSet
     (v, edgeBundle(v, v))
   }
-  def vertexAttribute[T: TypeTag](vs: EntityContainer[VertexSet], name: Symbol = null) =
+  def vertexAttribute[T: TypeTag](vs: => EntityContainer[VertexSet], name: Symbol = null) =
     new P(VertexAttribute[T](instance, _, vs), Option(name))
-  def edgeAttribute[T: TypeTag](eb: EntityContainer[EdgeBundle], name: Symbol = null) =
+  def edgeAttribute[T: TypeTag](eb: => EntityContainer[EdgeBundle], name: Symbol = null) =
     new P(EdgeAttribute[T](instance, _, eb), Option(name))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _), None)
   def scalar[T: TypeTag](name: Symbol) = new P(Scalar[T](instance, _), Some(name))
