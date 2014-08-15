@@ -201,7 +201,7 @@ object EntityTemplate {
 }
 
 abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
-  abstract class ET[T <: MetaGraphEntity](nameOpt: Option[Symbol] = None) extends EntityTemplate[T] {
+  abstract class ET[T <: MetaGraphEntity](nameOpt: Option[Symbol]) extends EntityTemplate[T] {
     lazy val name: Symbol = nameOpt.getOrElse(nameOf(this))
     def set(target: MetaDataSet, entity: T): MetaDataSet =
       MetaDataSet(Map(name -> entity)) ++ target
@@ -237,7 +237,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class VertexAttributeTemplate[T](vsF: => Symbol) extends ET[VertexAttribute[T]] {
+  class VertexAttributeTemplate[T](vsF: => Symbol, nameOpt: Option[Symbol])
+      extends ET[VertexAttribute[T]](nameOpt) {
     lazy val vs = vsF
     override def set(target: MetaDataSet, va: VertexAttribute[T]): MetaDataSet = {
       val withVs =
@@ -248,7 +249,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class EdgeAttributeTemplate[T](ebF: => Symbol) extends ET[EdgeAttribute[T]] {
+  class EdgeAttributeTemplate[T](ebF: => Symbol, nameOpt: Option[Symbol])
+      extends ET[EdgeAttribute[T]](nameOpt) {
     lazy val eb = ebF
     override def set(target: MetaDataSet, ea: EdgeAttribute[T]): MetaDataSet = {
       val withEb =
@@ -259,7 +261,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class ScalarTemplate[T] extends ET[Scalar[T]] {
+  class ScalarTemplate[T](nameOpt: Option[Symbol]) extends ET[Scalar[T]](nameOpt) {
     def data(implicit dataSet: DataSet) = dataSet.scalars(name).asInstanceOf[ScalarData[T]]
     def value(implicit dataSet: DataSet) = data.value
   }
@@ -272,9 +274,12 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     requiredProperties: EdgeBundleProperties = EdgeBundleProperties.default,
     name: Symbol = null) =
     new EdgeBundleTemplate(src.name, dst.name, requiredProperties, Option(name))
-  def vertexAttribute[T](vs: VertexSetTemplate) = new VertexAttributeTemplate[T](vs.name)
-  def edgeAttribute[T](eb: EdgeBundleTemplate) = new EdgeAttributeTemplate[T](eb.name)
-  def scalar[T] = new ScalarTemplate[T]
+  def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
+    new VertexAttributeTemplate[T](vs.name, Option(name))
+  def edgeAttribute[T](eb: EdgeBundleTemplate, name: Symbol = null) =
+    new EdgeAttributeTemplate[T](eb.name, Option(name))
+  def scalar[T] = new ScalarTemplate[T](None)
+  def scalar[T](name: Symbol) = new ScalarTemplate[T](Some(name))
   def graph = {
     val vs = vertexSet
     (vs, edgeBundle(vs, vs))
