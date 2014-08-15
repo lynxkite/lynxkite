@@ -20,21 +20,11 @@ angular.module('biggraph').directive('histogramButton', function(util) {
           }
         }
         var q = {
-          vertexSetId: scope.side.project.vertexSet,
-          filters: filters,
-          mode: 'bucketed',
-          xBucketingAttributeId: scope.attr.id,
-          xNumBuckets: 20,
-          yBucketingAttributeId: '',
-          yNumBuckets: 1,
-          // Unused.
-          centralVertexId: '',
-          sampleSmearEdgeBundleId: '',
-          radius: 0,
-          labelAttributeId: '',
-          sizeAttributeId: '',
+          attributeId: scope.attr.id,
+          vertexFilters: filters,
+          numBuckets: 20,
         };
-        scope.histogram = util.get('/ajax/vertexDiag', q);
+        scope.histogram = util.get('/ajax/histo', q);
       }
       util.deepWatch(scope, 'side', update);
       scope.$watch('show', update);
