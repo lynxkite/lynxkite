@@ -61,6 +61,8 @@ class MetaGraphManager(val repositoryPath: String) {
     entities(gUID).asInstanceOf[EdgeAttribute[_]]
   def edgeAttributeOf[T: TypeTag](gUID: UUID): EdgeAttribute[T] =
     edgeAttribute(gUID).runtimeSafeCast[T]
+  def attribute(gUID: UUID): Attribute[_] =
+    entities(gUID).asInstanceOf[Attribute[_]]
   def scalar(gUID: UUID): Scalar[_] =
     entities(gUID).asInstanceOf[Scalar[_]]
   def scalarOf[T: TypeTag](gUID: UUID): Scalar[T] =

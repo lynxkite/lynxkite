@@ -93,6 +93,16 @@ case class FEGraphRespone(
   vertexSets: Seq[VertexDiagramResponse],
   edgeBundles: Seq[EdgeDiagramResponse])
 
+case class HistogramSpec(
+  val attributeId: String,
+  val vertexFilters: Seq[FEVertexAttributeFilter],
+  val numBuckets: Int)
+
+case class HistogramResponse(
+  val labelType: String,
+  val labels: Seq[String],
+  val sizes: Seq[Int])
+
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
@@ -347,5 +357,49 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(_))
     spark_util.Counters.printAll
     return FEGraphRespone(vertexDiagrams, edgeDiagrams)
+  }
+
+  private def getFilteredVS(
+    attribute: Attribute[_], vertexFilters: Seq[FEVertexAttributeFilter]): VertexSet = {
+
+    attribute match {
+      case vertexAttribute: VertexAttribute[_] =>
+        FEFilters.filter(vertexAttribute.vertexSet, vertexFilters)
+      case edgeAttribute: EdgeAttribute[_] => {
+        val edgeBundle = edgeAttribute.edgeBundle
+        val (srcTripletMapping, dstTripletMapping) = tripletMapping(edgeBundle)
+        val filteredEBs = vertexFilters
+          .map(_.toFilteredAttribute)
+          .flatMap(filteredAttribute =>
+            Iterator(
+              filteredEdgesByAttribute(edgeBundle, srcTripletMapping, filteredAttribute),
+              filteredEdgesByAttribute(edgeBundle, dstTripletMapping, filteredAttribute)))
+
+        val filteredEB = if (filteredEBs.size > 0) {
+          val iop = graph_operations.EdgeBundleIntersection(filteredEBs.size)
+          iop(iop.ebs, filteredEBs).result.intersection.entity
+        } else {
+          edgeBundle
+        }
+        filteredEB.asVertexSet
+      }
+    }
+  }
+
+  def getHistogram(request: HistogramSpec): HistogramResponse = {
+    val attribute = metaManager.attribute(request.attributeId.asUUID)
+    val vertexAttribute = attribute match {
+      case va: VertexAttribute[_] => va
+      case ea: EdgeAttribute[_] => ea.asVertexAttribute
+    }
+    val bucketedAttr = FEBucketers.bucketedAttribute(
+      metaManager, dataManager, vertexAttribute, request.numBuckets)
+    val filteredVS = getFilteredVS(attribute, request.vertexFilters)
+    val histogram = bucketedAttr.toHistogram(filteredVS)
+    val counts = histogram.counts.value
+    HistogramResponse(
+      bucketedAttr.bucketer.labelType,
+      bucketedAttr.bucketer.bucketLabels,
+      (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0)))
   }
 }
