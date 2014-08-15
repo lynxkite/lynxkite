@@ -183,8 +183,8 @@ trait FieldNaming {
     assert(
       name != null,
       "This is typically caused by a name being used before the initialization of " +
-        "the FieldNaming sublcass. We were looking for the name of: %s. Available names: %s".format(
-          name, naming))
+        "the FieldNaming subclass. We were looking for the name of: %s. Available names: %s".format(
+          obj, naming))
     name
   }
 }
