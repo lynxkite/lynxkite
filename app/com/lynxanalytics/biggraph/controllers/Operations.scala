@@ -190,6 +190,61 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new SegmentationOperation(_) {
+    val title = "Find infocom communities"
+    val parameters = Seq(
+      Param(
+        "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
+      Param(
+        "communities_name", "Name for communities segmentation", defaultValue = "communities"),
+      Param("min_cliques", "Minimum clique size", defaultValue = "3"),
+      Param("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val cliquesResult = {
+        val op = graph_operations.FindMaxCliques(params("min_cliques").toInt)
+        op(op.es, project.edgeBundle).result
+      }
+
+      val cliquesSegmentation = project.segmentation(params("cliques_name"))
+      cliquesSegmentation.project.vertexSet = cliquesResult.segments
+      cliquesSegmentation.project.notes = "Maximal cliques of %s".format(project.projectName)
+      cliquesSegmentation.belongsTo = cliquesResult.belongsTo
+      computeSegmentSizes(cliquesSegmentation)
+
+      val cedges = {
+        val op = graph_operations.InfocomOverlapForCC(params("adjacency_threshold").toDouble)
+        op(op.belongsTo, cliquesResult.belongsTo).result.overlaps
+      }
+
+      val ccResult = {
+        val op = graph_operations.ConnectedComponents()
+        op(op.es, cedges).result
+      }
+
+      val (weightedVertexToClique, weightedCliqueToCommunity) = {
+        val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
+        (op(op.edges, cliquesResult.belongsTo).result.attr,
+          op(op.edges, ccResult.belongsTo).result.attr)
+      }
+
+      val weightedVertexToCommunity = {
+        val op = graph_operations.ConcatenateBundles()
+        op(op.weightsAB, weightedVertexToClique)(op.weightsBC, weightedCliqueToCommunity)
+          .result.weightsAC
+      }
+
+      val communitiesSegmentation = project.segmentation(params("communities_name"))
+      communitiesSegmentation.project.vertexSet = ccResult.segments
+      communitiesSegmentation.project.notes =
+        "Infocom Communities of %s".format(project.projectName)
+      communitiesSegmentation.belongsTo = weightedVertexToCommunity.edgeBundle
+      computeSegmentSizes(communitiesSegmentation)
+
+      FEStatus.success
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Add gaussian vertex attribute"
     val parameters = Seq(
@@ -365,4 +420,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       return FEStatus.success
     }
   })
+
+  def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
+    val reversed = {
+      val op = graph_operations.ReverseEdges()
+      op(op.esAB, segmentation.belongsTo).result.esBA
+    }
+
+    val weigthed = {
+      val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
+      op(op.edges, reversed).result.attr
+    }
+
+    segmentation.project.vertexAttributes(attributeName) = {
+      val op = graph_operations.WeightedOutDegree()
+      op(op.attr, weigthed).result.outDegree
+    }
+  }
 }
