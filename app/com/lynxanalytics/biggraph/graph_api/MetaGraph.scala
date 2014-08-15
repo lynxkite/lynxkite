@@ -180,7 +180,11 @@ trait FieldNaming {
   }
   def nameOf(obj: Any): Symbol = {
     val name = naming.get(obj)
-    assert(name != null)
+    assert(
+      name != null,
+      "This is typically caused by a name being used before the initialization of " +
+        "the FieldNaming sublcass. We were looking for the name of: %s. Available names: %s".format(
+          name, naming))
     name
   }
 }
