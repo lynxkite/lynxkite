@@ -201,8 +201,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val cop = graph_operations.FindMaxCliques(params("min_cliques").toInt)
-      val cliquesResult = cop(cop.es, project.edgeBundle).result
+      val cliquesResult = {
+        val op = graph_operations.FindMaxCliques(params("min_cliques").toInt)
+        op(op.es, project.edgeBundle).result
+      }
 
       val cliquesSegmentation = project.segmentation(params("cliques_name"))
       cliquesSegmentation.project.vertexSet = cliquesResult.segments
@@ -210,20 +212,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
       computeSegmentSizes(cliquesSegmentation)
 
-      val ioop = graph_operations.InfocomOverlapForCC(params("adjacency_threshold").toDouble)
-      val cedges = ioop(ioop.belongsTo, cliquesResult.belongsTo).result.overlaps
+      val cedges = {
+        val op = graph_operations.InfocomOverlapForCC(params("adjacency_threshold").toDouble)
+        op(op.belongsTo, cliquesResult.belongsTo).result.overlaps
+      }
 
-      val ccop = graph_operations.ConnectedComponents()
-      val ccResult = ccop(ccop.es, cedges).result
+      val ccResult = {
+        val op = graph_operations.ConnectedComponents()
+        op(op.es, cedges).result
+      }
 
-      val wop = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-      val weightedVertexToClique = wop(wop.edges, cliquesResult.belongsTo).result.attr
-      val weightedCliqueToCommunity = wop(wop.edges, ccResult.belongsTo).result.attr
+      val (weightedVertexToClique, weightedCliqueToCommunity) = {
+        val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
+        (op(op.edges, cliquesResult.belongsTo).result.attr,
+          op(op.edges, ccResult.belongsTo).result.attr)
+      }
 
-      val cnop = graph_operations.ConcatenateBundles()
-      val weightedVertexToCommunity = cnop(
-        cnop.weightsAB, weightedVertexToClique)(
-          cnop.weightsBC, weightedCliqueToCommunity).result.weightsAC
+      val weightedVertexToCommunity = {
+        val op = graph_operations.ConcatenateBundles()
+        op(op.weightsAB, weightedVertexToClique)(op.weightsBC, weightedCliqueToCommunity)
+          .result.weightsAC
+      }
 
       val communitiesSegmentation = project.segmentation(params("communities_name"))
       communitiesSegmentation.project.vertexSet = ccResult.segments
@@ -413,13 +422,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
-    val rop = graph_operations.ReverseEdges()
-    val reversed = rop(rop.esAB, segmentation.belongsTo).result.esBA
+    val reversed = {
+      val op = graph_operations.ReverseEdges()
+      op(op.esAB, segmentation.belongsTo).result.esBA
+    }
 
-    val wop = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-    val weigthed = wop(wop.edges, reversed).result.attr
+    val weigthed = {
+      val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
+      op(op.edges, reversed).result.attr
+    }
 
-    val wod = graph_operations.WeightedOutDegree()
-    segmentation.project.vertexAttributes(attributeName) = wod(wod.attr, weigthed).result.outDegree
+    segmentation.project.vertexAttributes(attributeName) = {
+      val op = graph_operations.WeightedOutDegree()
+      op(op.attr, weigthed).result.outDegree
+    }
   }
 }
