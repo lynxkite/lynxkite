@@ -49,7 +49,7 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
 }
 
 trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
-  implicit val metaManager = cleanMetaManager
+  implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
 }
 
