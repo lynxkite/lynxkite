@@ -361,8 +361,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
       val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
-      val op = graph_operations.VertexAttributeToDouble()
-      project.vertexAttributes(params("attr")) = op(op.attr, attr).result.attr
+      project.vertexAttributes(params("attr")) = toDouble(attr)
       FEStatus.success
     }
   })
@@ -422,6 +421,41 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "New vertex attribute"
+    val parameters = Seq(
+      Param("output", "Save as"),
+      Param("type", "Type", options = UIValue.seq(Seq("String", "Number"))),
+      Param("expr", "Value", defaultValue = "1"))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]): FEStatus = {
+      val expr = params("expr")
+      var numAttrNames = List[String]()
+      var numAttrs = List[VertexAttribute[Double]]()
+      var strAttrNames = List[String]()
+      var strAttrs = List[VertexAttribute[String]]()
+      project.vertexAttributes.foreach {
+        case (name, attr) if expr.contains(name) && attr.is[Double] =>
+          numAttrNames +:= name
+          numAttrs +:= attr.asInstanceOf[VertexAttribute[Double]]
+        case (name, attr) if expr.contains(name) && attr.is[String] =>
+          strAttrNames +:= name
+          strAttrs +:= attr.asInstanceOf[VertexAttribute[String]]
+        case (name, attr) if expr.contains(name) =>
+          return FEStatus.failure(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
+        case _ => ()
+      }
+      val op = graph_operations.DeriveJS(JavaScript(expr), numAttrNames, strAttrNames)
+      val result = op(
+        op.vs, project.vertexSet)(
+          op.numAttrs, numAttrs)(
+            op.strAttrs, strAttrs).result
+      project.vertexAttributes(params("output")) =
+        if (params("type") == "Number") toDouble(result.attr) else result.attr
+      return FEStatus.success
+    }
+  })
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()
@@ -437,5 +471,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.WeightedOutDegree()
       op(op.attr, weighted).result.outDegree
     }
+  }
+
+  def toDouble(attr: VertexAttribute[String]): VertexAttribute[Double] = {
+    val op = graph_operations.VertexAttributeToDouble()
+    op(op.attr, attr).result.attr
   }
 }
