@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-object Aggregate {
+object AggregateByEdgeBundle {
   class Input[From] extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -19,14 +19,16 @@ object Aggregate {
     val attr = vertexAttribute[To](inputs.dst.entity)
   }
 }
-import Aggregate._
-abstract class Aggregate[From, To] extends TypedMetaGraphOp[Input[From], Output[From, To]] {
+import AggregateByEdgeBundle._
+case class AggregateByEdgeBundle[From, To](aggregator: Aggregator[From, To])
+    extends TypedMetaGraphOp[Input[From], Output[From, To]] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input[From]
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output[From, To]()(tt, instance, inputs)
-
-  def tt: TypeTag[To]
-  def aggregate(values: Iterable[From]): To
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val i = instance
+    val tt = aggregator.outputTypeTag(inputs.attr.typeTag)
+    new Output[From, To]()(tt, instance, inputs)
+  }
 
   def execute(inputDatas: DataSet,
               o: Output[From, To],
@@ -43,22 +45,34 @@ abstract class Aggregate[From, To] extends TypedMetaGraphOp[Input[From], Output[
       case (src, (dst, attr)) => dst -> attr
     }
     val grouped = byDst.groupByKey(inputs.dst.rdd.partitioner.get)
-    val aggregated = grouped.mapValues(aggregate _)
+    val aggregated = grouped.mapValues(aggregator.aggregate(_))
     output(o.attr, aggregated.toSortedRDD)
   }
 }
 
-case class AggregateByCount[T]() extends Aggregate[T, Double] {
-  def tt = typeTag[Double]
-  override def aggregate(values: Iterable[T]): Double = values.size
+trait Aggregator[From, To] {
+  def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
+  // aggregate() can assume that values is non-empty.
+  def aggregate(values: Iterable[From]): To
 }
+object Aggregator {
+  case class Count[T]() extends Aggregator[T, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
+    def aggregate(values: Iterable[T]): Double = values.size
+  }
 
-case class AggregateBySum() extends Aggregate[Double, Double] {
-  def tt = typeTag[Double]
-  override def aggregate(values: Iterable[Double]): Double = values.sum
-}
+  case class Sum() extends Aggregator[Double, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
+    override def aggregate(values: Iterable[Double]): Double = values.sum
+  }
 
-case class AggregateByAverage() extends Aggregate[Double, Double] {
-  def tt = typeTag[Double]
-  override def aggregate(values: Iterable[Double]): Double = values.sum / values.size
+  case class Average() extends Aggregator[Double, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
+    override def aggregate(values: Iterable[Double]): Double = values.sum / values.size
+  }
+
+  case class First[T]() extends Aggregator[T, T] {
+    def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
+    override def aggregate(values: Iterable[T]): T = values.head
+  }
 }
