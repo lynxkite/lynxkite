@@ -122,7 +122,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       opCategories = Seq())
   }
 
-  def isSegmentation = path.parent.parent.name == "segmentations"
+  def isSegmentation = {
+    val grandFather = path.parent.parent
+    grandFather.nonEmpty && (grandFather.name == "segmentations")
+  }
   def asSegmentation = {
     assert(isSegmentation, s"$projectName is not a segmentation")
     // If our parent is a top-level project, path is like:
