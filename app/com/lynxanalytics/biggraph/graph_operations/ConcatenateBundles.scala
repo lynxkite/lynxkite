@@ -23,6 +23,7 @@ object ConcatenateBundles {
 }
 import ConcatenateBundles._
 case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -53,6 +54,4 @@ case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {
     output(o.edgesAC, numberedAC.mapValues { case (edge, weight) => edge })
     output(o.weightsAC, numberedAC.mapValues { case (edge, weight) => weight })
   }
-
-  override val isHeavy = true
 }

@@ -22,6 +22,7 @@ object TripletMapping {
 }
 case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, TripletMapping.Output] {
   import TripletMapping._
+  override val isHeavy = true
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -57,8 +58,6 @@ case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, Tripl
           case (_, None) => Array[ID]()
         })
   }
-
-  override val isHeavy = true
 }
 
 object VertexToEdgeAttribute {
@@ -78,6 +77,7 @@ object VertexToEdgeAttribute {
 case class VertexToEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
   import VertexToEdgeAttribute._
+  override val isHeavy = true
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
@@ -102,6 +102,4 @@ case class VertexToEdgeAttribute[T]()
         .groupBySortedKey(target.partitioner.get)
         .mapValues(values => values.head))
   }
-
-  override val isHeavy = true
 }

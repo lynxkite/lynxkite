@@ -121,9 +121,9 @@ object ImportVertexList {
 case class ImportVertexList(csv: CSV) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
   import ImportVertexList._
+  override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
-  override val isHeavy = true
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -186,6 +186,7 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
   import ImportEdgeList._
+  override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
 
@@ -204,8 +205,6 @@ case class ImportEdgeList(csv: CSV, src: String, dst: String)
     output(o.vertices, idToName.mapValues(_ => ()))
     output(o.stringID, idToName)
   }
-
-  override val isHeavy = true
 }
 
 object ImportEdgeListForExistingVertexSet {
@@ -236,6 +235,7 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
     extends ImportEdges
     with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
   import ImportEdgeListForExistingVertexSet._
+  override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, csv.fields)
 
@@ -256,6 +256,4 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
     }
     putEdgeBundle(columns, srcToId, dstToId, o.edges, output, partitioner)
   }
-
-  override val isHeavy = true
 }

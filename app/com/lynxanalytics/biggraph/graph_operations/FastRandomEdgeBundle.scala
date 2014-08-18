@@ -20,6 +20,7 @@ object FastRandomEdgeBundle {
 import FastRandomEdgeBundle._
 case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
     extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -39,8 +40,6 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
     }
     output(o.es, randomEdges.randomNumbered(rc.defaultPartitioner))
   }
-
-  override val isHeavy = true
 
   private def randomCopies(
     vs: VertexSetRDD, averageCopies: Int, seed: Int, rc: RuntimeContext): rdd.RDD[ID] = {

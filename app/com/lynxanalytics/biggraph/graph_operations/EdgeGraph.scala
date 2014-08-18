@@ -15,6 +15,7 @@ object EdgeGraph {
 }
 import EdgeGraph._
 case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -49,6 +50,4 @@ case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
     // Just to connect to the results.
     output(o.link, sc.emptyRDD[(ID, Edge)].toSortedRDD(edgePartitioner))
   }
-
-  override val isHeavy = true
 }

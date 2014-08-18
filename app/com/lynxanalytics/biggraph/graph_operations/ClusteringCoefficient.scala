@@ -14,6 +14,7 @@ object ClusteringCoefficient {
 }
 import ClusteringCoefficient._
 case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -64,8 +65,6 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
 
     output(o.clustering, clusteringCoeff)
   }
-
-  override val isHeavy = true
 
   private def sortedUnion(a: Array[ID], b: Array[ID]): Array[ID] = {
     val builder = new mutable.ArrayBuilder.ofLong

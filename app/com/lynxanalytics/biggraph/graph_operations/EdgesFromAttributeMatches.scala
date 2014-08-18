@@ -16,9 +16,9 @@ object EdgesFromAttributeMatches {
 }
 import EdgesFromAttributeMatches._
 case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], Output[T]] {
+  override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override val isHeavy = true
 
   def execute(inputDatas: DataSet,
               o: Output[T],

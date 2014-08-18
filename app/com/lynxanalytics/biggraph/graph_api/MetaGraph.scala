@@ -352,6 +352,7 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
 }
 
 trait MetaGraphOp extends Serializable {
+  val isHeavy: Boolean = false
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
@@ -371,8 +372,6 @@ trait MetaGraphOp extends Serializable {
     def get(param: MethodSymbol) = mirror.reflectField(param).get
     StringStruct(className, params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
   }
-
-  val isHeavy: Boolean = false
 }
 
 trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]

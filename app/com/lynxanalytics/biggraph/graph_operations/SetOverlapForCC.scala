@@ -24,6 +24,7 @@ object SetOverlapForCC {
 }
 import SetOverlapForCC._
 abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -126,8 +127,6 @@ abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
     }
     res
   }
-
-  override val isHeavy = true
 }
 
 case class UniformOverlapForCC(overlapSize: Int) extends SetOverlapForCC {
