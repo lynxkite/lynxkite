@@ -470,6 +470,44 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new SegmentationOperation(_) {
+    val title = "Aggregate to segmentation"
+    val parameters = Seq(
+      Param("segmentation", "Destination segmentation", options = segmentations),
+      Param("aggregate", "Aggregate", kind = "aggregate", options = vertexAttributes))
+    def enabled =
+      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
+        FEStatus.assert(segmentations.size > 0, "No segmentations")
+    def parseAggregate(choices: String): Seq[(String, String)] = {
+      choices.split(",").map { entry =>
+        val keyValue = entry.split(":")
+        keyValue(0) -> keyValue(1)
+      }
+    }
+    def apply(params: Map[String, String]): FEStatus = {
+      val seg = project.segmentation(params("segmentation"))
+      for ((attr, choice) <- parseAggregate(params("aggregate"))) {
+        val result = aggregate(seg.belongsTo, project.vertexAttributes(attr), choice)
+        seg.project.vertexAttributes(attr) = result
+      }
+      return FEStatus.success
+    }
+    def aggregate[T](connection: EdgeBundle, attr: VertexAttribute[T], choice: String): VertexAttribute[_] = {
+      choice match {
+        case "first" => aggregate(connection, attr, graph_operations.Aggregator.First[T]())
+        case "sum" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
+        case "count" => aggregate(connection, attr, graph_operations.Aggregator.Count[T]())
+        case "average" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
+      }
+    }
+    def aggregate[From, To](connection: EdgeBundle,
+                            attr: VertexAttribute[From],
+                            aggregator: graph_operations.Aggregator[From, To]): VertexAttribute[To] = {
+      val op = graph_operations.AggregateByEdgeBundle(aggregator)
+      op(op.connection, connection)(op.attr, attr).result.attr
+    }
+  })
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()
