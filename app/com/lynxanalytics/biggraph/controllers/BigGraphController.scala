@@ -124,7 +124,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def isSegmentation = {
     val grandFather = path.parent.parent
-    grandFather.nonEmpty && (grandFather.name.name == "segmentations")
+    grandFather.nonEmpty && (grandFather.name == 'segmentations)
   }
   def asSegmentation = {
     assert(isSegmentation, s"$projectName is not a segmentation")
