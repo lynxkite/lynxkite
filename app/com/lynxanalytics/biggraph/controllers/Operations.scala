@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.Filename
@@ -442,7 +443,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           strAttrNames +:= name
           strAttrs +:= attr.asInstanceOf[VertexAttribute[String]]
         case (name, attr) if expr.contains(name) =>
-          return FEStatus.failure(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
+          log.warn(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
         case _ => ()
       }
       val op = graph_operations.DeriveJS(JavaScript(expr), numAttrNames, strAttrNames)
