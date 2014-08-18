@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.runtime.universe._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.JavaScript
@@ -13,20 +14,21 @@ object DeriveJS {
     val numAttrs = (0 until numAttrCount).map(i => vertexAttribute[Double](vs, Symbol("numAttr-" + i)))
     val strAttrs = (0 until strAttrCount).map(i => vertexAttribute[String](vs, Symbol("strAttr-" + i)))
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
-    val attr = vertexAttribute[String](inputs.vs.entity)
+  class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance,
+                           inputs: Input) extends MagicOutput(instance) {
+    val attr = vertexAttribute[T](inputs.vs.entity)
   }
 }
 import DeriveJS._
-case class DeriveJS(expr: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String])
-    extends TypedMetaGraphOp[Input, Output] {
+abstract class DeriveJS[T](expr: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String])
+    extends TypedMetaGraphOp[Input, Output[T]] {
+  implicit def tt: TypeTag[T]
   override val isHeavy = true
   @transient override lazy val inputs = new Input(numAttrNames.size, strAttrNames.size)
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(tt, instance, inputs)
 
   def execute(inputDatas: DataSet,
-              o: Output,
+              o: Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
@@ -50,8 +52,18 @@ case class DeriveJS(expr: JavaScript, numAttrNames: Seq[String], strAttrNames: S
       case (nums, strs) =>
         val numValues = numAttrNames.zip(nums).toMap
         val strValues = strAttrNames.zip(strs).toMap
-        expr.evaluate(numValues ++ strValues).toString
+        expr.evaluate(numValues ++ strValues).asInstanceOf[T]
     }
     output(o.attr, derived)
   }
+}
+
+case class DeriveJSString(expr: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String])
+    extends DeriveJS[String](expr, numAttrNames, strAttrNames) {
+  @transient lazy val tt = typeTag[String]
+}
+
+case class DeriveJSDouble(expr: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String])
+    extends DeriveJS[Double](expr, numAttrNames, strAttrNames) {
+  @transient lazy val tt = typeTag[Double]
 }

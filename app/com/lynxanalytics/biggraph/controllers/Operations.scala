@@ -426,7 +426,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Derived vertex attribute"
     val parameters = Seq(
       Param("output", "Save as"),
-      Param("type", "Type", options = UIValue.seq(Seq("String", "Number"))),
       Param("expr", "Value", defaultValue = "1"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]): FEStatus = {
@@ -446,14 +445,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           log.warn(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
         case _ => ()
       }
-      val op = graph_operations.DeriveJS(JavaScript(expr), numAttrNames, strAttrNames)
+      val js = JavaScript(expr)
+      // Figure out the return type.
+      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames) match {
+        case _: String =>
+          graph_operations.DeriveJSString(js, numAttrNames, strAttrNames)
+        case _: Double =>
+          graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames)
+        case result =>
+          return FEStatus.failure(s"Test evaluation of '$js' returned '$result'.")
+      }
       val result = op(
         op.vs, project.vertexSet)(
           op.numAttrs, numAttrs)(
             op.strAttrs, strAttrs).result
-      project.vertexAttributes(params("output")) =
-        if (params("type") == "Number") toDouble(result.attr) else result.attr
+      project.vertexAttributes(params("output")) = result.attr
       return FEStatus.success
+    }
+
+    // Evaluates the expression with 0/'' parameters.
+    def testEvaluation(js: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String]): Any = {
+      val mapping = numAttrNames.map(_ -> 0.0).toMap ++ strAttrNames.map(_ -> "").toMap
+      return js.evaluate(mapping)
     }
   })
 
