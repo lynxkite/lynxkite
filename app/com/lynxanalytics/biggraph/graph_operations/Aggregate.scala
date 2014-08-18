@@ -39,14 +39,14 @@ case class AggregateByEdgeBundle[From, To](aggregator: Aggregator[From, To])
 
     val bySrc = inputs.connection.rdd.map {
       case (id, edge) => edge.src -> edge.dst
-    }.partitionBy(inputs.src.rdd.partitioner.get)
-    val withAttr = bySrc.join(inputs.attr.rdd)
+    }.toSortedRDD(inputs.src.rdd.partitioner.get)
+    val withAttr = bySrc.sortedJoin(inputs.attr.rdd)
     val byDst = withAttr.map {
       case (src, (dst, attr)) => dst -> attr
     }
-    val grouped = byDst.groupByKey(inputs.dst.rdd.partitioner.get)
+    val grouped = byDst.groupBySortedKey(inputs.dst.rdd.partitioner.get)
     val aggregated = grouped.mapValues(aggregator.aggregate(_))
-    output(o.attr, aggregated.toSortedRDD)
+    output(o.attr, aggregated)
   }
 }
 
