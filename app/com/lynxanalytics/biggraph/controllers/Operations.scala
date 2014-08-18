@@ -535,9 +535,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     attrs.toSeq.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
-          UIValue.seq(Seq("ignore", "sum", "average", "count"))
+          UIValue.seq(Seq("ignore", "sum", "average", "first", "count"))
         } else {
-          UIValue.seq(Seq("ignore", "count"))
+          UIValue.seq(Seq("ignore", "first", "count"))
         }
         Param(s"aggregate-$name", name, options = options)
     }
