@@ -473,7 +473,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Aggregate to segmentation"
     val parameters = Seq(
       Param("segmentation", "Destination segmentation", options = segmentations)) ++
-      aggregateParams(vertexAttributes)
+      aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
         FEStatus.assert(segmentations.size > 0, "No segmentations")
@@ -489,7 +489,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register(new SegmentationOperation(_) {
     val title = "Aggregate from segmentation"
-    val parameters = aggregateParams(vertexAttributes)
+    val parameters = aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(project.isSegmentation, "Operates on a segmentation") &&
         FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
@@ -531,10 +531,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (aggregate(attr), choice) if choice != "ignore" => attr -> choice
     }
   }
-  def aggregateParams(attrs: Seq[UIValue]) = {
-    attrs.map { attr =>
-      val id = attr.id
-      Param(s"aggregate-$id", id, options = UIValue.seq(Seq("ignore", "sum", "average", "count")))
+  def aggregateParams(attrs: Iterable[(String, VertexAttribute[_])]): Seq[FEOperationParameterMeta] = {
+    attrs.toSeq.map {
+      case (name, attr) =>
+        val options = if (attr.is[Double]) {
+          UIValue.seq(Seq("ignore", "sum", "average", "count"))
+        } else {
+          UIValue.seq(Seq("ignore", "count"))
+        }
+        Param(s"aggregate-$name", name, options = options)
     }
   }
   // Converts the string identifiers used by aggregateParams to Aggregator objects.
