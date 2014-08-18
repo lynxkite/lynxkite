@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class FindMaxCliques(minCliqueSize: Int) extends TypedMetaGraphOp[GraphInput, Segmentation] {
+  override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
@@ -74,8 +75,6 @@ case class FindMaxCliques(minCliqueSize: Int) extends TypedMetaGraphOp[GraphInpu
     }
     return target
   }
-
-  override val isHeavy = true
 
   /*
    * BK implementation, see:

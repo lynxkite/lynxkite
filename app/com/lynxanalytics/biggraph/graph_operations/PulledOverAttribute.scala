@@ -28,6 +28,7 @@ object PulledOverVertexAttribute {
 case class PulledOverVertexAttribute[T]()
     extends TypedMetaGraphOp[PulledOverVertexAttribute.Input[T], PulledOverVertexAttribute.Output[T]] {
   import PulledOverVertexAttribute._
+  override val isHeavy = true
   @transient override lazy val inputs = new Input[T]()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -55,8 +56,6 @@ case class PulledOverVertexAttribute[T]()
       }
     output(o.pulledAttr, pulledAttr)
   }
-
-  override val isHeavy = true
 }
 
 object PulledOverEdgeAttribute {
@@ -89,6 +88,7 @@ object PulledOverEdgeAttribute {
 case class PulledOverEdgeAttribute[T]()
     extends TypedMetaGraphOp[PulledOverEdgeAttribute.Input[T], PulledOverEdgeAttribute.Output[T]] {
   import PulledOverEdgeAttribute._
+  override val isHeavy = true
   @transient override lazy val inputs = new Input[T]()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -104,6 +104,4 @@ case class PulledOverEdgeAttribute[T]()
       .mapValues { case (value, edge) => value }
     output(o.pulledAttr, pulledAttr)
   }
-
-  override val isHeavy = true
 }

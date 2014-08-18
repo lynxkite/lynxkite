@@ -27,6 +27,7 @@ import ExampleGraph._
 case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
   @transient var executionCounter = 0
 
+  override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -79,6 +80,4 @@ case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (3l, 4.0))).toSortedRDD(partitioner))
     output(o.greeting, "Hello world!")
   }
-
-  override val isHeavy = true
 }

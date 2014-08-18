@@ -13,6 +13,7 @@ object RemoveNonSymmetricEdges {
 }
 import RemoveNonSymmetricEdges._
 case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -39,6 +40,4 @@ case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output
     }
     output(o.symmetric, edges.toSortedRDD(es.partitioner.get))
   }
-
-  override val isHeavy = true
 }

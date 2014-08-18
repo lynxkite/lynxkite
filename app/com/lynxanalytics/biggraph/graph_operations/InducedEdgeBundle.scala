@@ -30,6 +30,7 @@ object InducedEdgeBundle {
 import InducedEdgeBundle._
 case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = true)
     extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new Input(induceSrc, induceDst)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -63,6 +64,4 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     output(o.induced, induced)
     output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
-
-  override val isHeavy = true
 }

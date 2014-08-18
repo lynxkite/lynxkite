@@ -29,6 +29,7 @@ case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
   // When dealing with multiple sets, they are identified by their VertexIds.
   type Sets = Iterable[(ID, Array[ID])]
 
+  override val isHeavy = true
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -80,8 +81,6 @@ case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
     output(o.overlaps, numberedEdgesWithOverlaps.mapValues(_._1))
     output(o.overlapSize, numberedEdgesWithOverlaps.mapValues(_._2))
   }
-
-  override val isHeavy = true
 
   // Generates the edges for a set of sets. This is O(n^2), but the set should
   // be small.

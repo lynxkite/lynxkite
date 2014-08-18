@@ -19,6 +19,7 @@ object SimpleRandomEdgeBundle {
 }
 import SimpleRandomEdgeBundle._
 case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -40,6 +41,4 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends TypedMetaGr
 
     output(o.es, randomEdges.randomNumbered(rc.defaultPartitioner))
   }
-
-  override val isHeavy = true
 }

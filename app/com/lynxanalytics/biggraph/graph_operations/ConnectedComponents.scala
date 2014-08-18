@@ -15,6 +15,7 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     extends TypedMetaGraphOp[GraphInput, Segmentation] {
+  override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
@@ -154,6 +155,4 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
 
     graphRDD.sparkContext.parallelize(components.toSeq).toSortedRDD(graphRDD.partitioner.get)
   }
-
-  override val isHeavy = true
 }
