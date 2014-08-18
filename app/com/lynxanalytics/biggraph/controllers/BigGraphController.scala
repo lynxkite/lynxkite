@@ -130,9 +130,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     assert(isSegmentation, s"$projectName is not a segmentation")
     // If our parent is a top-level project, path is like:
     //   project/parentName/segmentations/segmentationName/project
-    val parentPath = new SymbolPath(path.drop(1).dropRight(3))
+    val parentName = new SymbolPath(path.drop(1).dropRight(3))
     val segmentationName = path.dropRight(1).last.name
-    Segmentation(parentPath.toString, segmentationName)
+    Segmentation(parentName.toString, segmentationName)
   }
 
   def notes(implicit dm: DataManager) = manager.scalarOf[String](path / "notes").value
