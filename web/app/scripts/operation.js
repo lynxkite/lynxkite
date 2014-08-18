@@ -9,15 +9,9 @@ angular.module('biggraph').directive('operation', function ($resource, util) {
     link: function(scope) {
       scope.params = {};
       scope.multiParams = {};
-      scope.aggregateMethods = ['ignore', 'sum', 'count', 'first', 'average'];
       util.deepWatch(scope, 'op', function() {
         scope.op.parameters.forEach(function(p) {
-          if (p.kind === 'aggregate') {
-            scope.params[p.id] = {};
-            for (var i = 0; i < p.options.length; ++i) {
-              scope.params[p.id][p.options[i].id] = 'ignore';
-            }
-          } else if (p.options.length === 0) {
+          if (p.options.length === 0) {
             scope.params[p.id] = p.defaultValue;
           } else {
             if (!p.multipleChoice) {
@@ -33,15 +27,6 @@ angular.module('biggraph').directive('operation', function ($resource, util) {
         scope.op.parameters.forEach(function(p) {
           if (p.multipleChoice) {
             reqParams[p.id] = scope.multiParams[p.id].join(',');
-          } else if (p.kind === 'aggregate') {
-            var choices = [];
-            for (var key in scope.params[p.id]) {
-              var value = scope.params[p.id][key];
-              if (value !== 'ignore') {
-                choices.push(key + ':' + value);
-              }
-            }
-            reqParams[p.id] = choices.join(',');
           } else {
             reqParams[p.id] = scope.params[p.id];
           }
