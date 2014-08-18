@@ -164,9 +164,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
     }
 
-    val iop = graph_operations.InducedEdgeBundle()
-    edgeBundle = iop(iop.srcInjection, injection)(iop.dstInjection, injection)(iop.edges, origEB)
-      .result.induced
+    if (origEB != null) {
+      val iop = graph_operations.InducedEdgeBundle()
+      edgeBundle = iop(iop.srcInjection, injection)(iop.dstInjection, injection)(iop.edges, origEB)
+        .result.induced
+    }
 
     origEAttrs.foreach {
       case (name, attr) =>
