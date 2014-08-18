@@ -95,16 +95,17 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
                       name: Symbol,
                       srcVertexSet: VertexSet,
                       dstVertexSet: VertexSet,
-                      properties: EdgeBundleProperties = EdgeBundleProperties.default)
+                      properties: EdgeBundleProperties = EdgeBundleProperties.default,
+                      idSet: Option[VertexSet] = None)
     extends MetaGraphEntity {
   assert(name != null)
   val isLocal = srcVertexSet == dstVertexSet
-  lazy val asVertexSet: VertexSet = {
+  lazy val asVertexSet: VertexSet = idSet.getOrElse({
     import Scripting._
     implicit val manager = source.manager
     val avsop = graph_operations.EdgeBundleAsVertexSet()
     avsop(avsop.edges, this).result.equivalentVS
-  }
+  })
 }
 
 sealed trait Attribute[T] extends MetaGraphEntity {
@@ -220,18 +221,25 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   class EdgeBundleTemplate(
     srcF: => Symbol,
     dstF: => Symbol,
+    idSetF: => Option[Symbol],
     requiredProperties: EdgeBundleProperties,
     nameOpt: Option[Symbol])
       extends ET[EdgeBundle](nameOpt) {
     lazy val src = srcF
     lazy val dst = dstF
+    lazy val idSet = idSetF
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
       assert(eb.properties.compliesWith(requiredProperties))
       val withSrc =
         templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
       val withSrcDst =
         templatesByName(dst).asInstanceOf[VertexSetTemplate].set(withSrc, eb.dstVertexSet)
-      super.set(withSrcDst, eb)
+      val withSrcDstIdSet = idSet match {
+        case Some(vsName) => templatesByName(vsName).asInstanceOf[VertexSetTemplate]
+          .set(withSrcDst, eb.asVertexSet)
+        case None => withSrcDst
+      }
+      super.set(withSrcDstIdSet, eb)
     }
     def data(implicit dataSet: DataSet) = dataSet.edgeBundles(name)
     def rdd(implicit dataSet: DataSet) = data.rdd
@@ -272,8 +280,10 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     src: VertexSetTemplate,
     dst: VertexSetTemplate,
     requiredProperties: EdgeBundleProperties = EdgeBundleProperties.default,
+    idSet: VertexSetTemplate = null,
     name: Symbol = null) =
-    new EdgeBundleTemplate(src.name, dst.name, requiredProperties, Option(name))
+    new EdgeBundleTemplate(
+      src.name, dst.name, Option(idSet).map(_.name), requiredProperties, Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
     new VertexAttributeTemplate[T](vs.name, Option(name))
   def edgeAttribute[T](eb: EdgeBundleTemplate, name: Symbol = null) =
@@ -334,7 +344,11 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
     src: => EntityContainer[VertexSet],
     dst: => EntityContainer[VertexSet],
     properties: EdgeBundleProperties = EdgeBundleProperties.default,
-    name: Symbol = null) = new P(EdgeBundle(instance, _, src, dst, properties), Option(name))
+    idSet: VertexSet = null,
+    name: Symbol = null) = {
+
+    new P(EdgeBundle(instance, _, src, dst, properties, Option(idSet)), Option(name))
+  }
   def graph = {
     val v = vertexSet
     (v, edgeBundle(v, v))
