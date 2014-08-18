@@ -19,7 +19,7 @@ object VertexSetUnion {
       input: Input) extends MagicOutput(instance) {
 
     val union = vertexSet
-    // An embedding of the intersection into the first vertex set.
+    // Injections of the original vertex sets into the union.
     val injections = Range(0, numVertexSets)
       .map(i => edgeBundle(
         input.vss(i).entity, union, EdgeBundleProperties.injection, Symbol("injection" + i)))
@@ -39,12 +39,11 @@ case class VertexSetUnion(numVertexSets: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val unionWithOldIds = inputs.vss
-      .map(_.rdd)
-      .zipWithIndex
-      .map { case (rdd, idx) => rdd.mapValues(_ => idx) }
-      .reduce[RDD[(ID, Int)]]((rdd1, rdd2) => rdd1 ++ rdd2)
-      .randomNumbered(rc.defaultPartitioner)
+    val unionWithOldIds = rc.sparkContext.union(
+      inputs.vss
+        .map(_.rdd)
+        .zipWithIndex
+        .map { case (rdd, idx) => rdd.mapValues(_ => idx) }).randomNumbered(rc.defaultPartitioner)
     output(o.union, unionWithOldIds.mapValues(_ => ()))
     for (idx <- 0 until numVertexSets) {
       output(
