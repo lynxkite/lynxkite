@@ -16,6 +16,7 @@ object CountVertices {
 }
 case class CountVertices()
     extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new CountVertices.Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -43,6 +44,7 @@ object CountEdges {
 case class CountEdges()
     extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] {
   import CountEdges._
+  override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -71,6 +73,7 @@ object ComputeMinMax {
 }
 case class ComputeMinMax[T: Numeric]()
     extends TypedMetaGraphOp[ComputeMinMax.Input[T], ComputeMinMax.Output[T]] {
+  override val isHeavy = true
   @transient override lazy val inputs = new ComputeMinMax.Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -125,6 +128,7 @@ object ComputeTopValues {
 }
 case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
     extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
+  override val isHeavy = true
   @transient override lazy val inputs = new ComputeTopValues.Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
