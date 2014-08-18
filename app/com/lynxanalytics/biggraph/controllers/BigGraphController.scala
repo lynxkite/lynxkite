@@ -124,14 +124,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def isSegmentation = {
     val grandFather = path.parent.parent
-    grandFather.nonEmpty && (grandFather.name == "segmentations")
+    grandFather.nonEmpty && (grandFather.name.name == "segmentations")
   }
   def asSegmentation = {
     assert(isSegmentation, s"$projectName is not a segmentation")
     // If our parent is a top-level project, path is like:
     //   project/parentName/segmentations/segmentationName/project
-    val parentPath = path.drop(3)
-    val segmentationName = path.init.last.name
+    val parentPath = new SymbolPath(path.drop(1).dropRight(3))
+    val segmentationName = path.dropRight(1).last.name
     Segmentation(parentPath.toString, segmentationName)
   }
 
@@ -265,8 +265,9 @@ object Project {
   def apply(projectName: String)(implicit metaManager: MetaGraphManager): Project = new Project(projectName)
 }
 
-case class Segmentation(parent: String, name: String)(implicit manager: MetaGraphManager) {
-  val path: SymbolPath = s"projects/$parent/segmentations/$name"
+case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
+  def parent = Project(parentName)
+  val path: SymbolPath = s"projects/$parentName/segmentations/$name"
   def toFE(implicit dm: DataManager) =
     FESegmentation(name, project.projectName, UIValue.fromEntity(belongsTo))
   def belongsTo = manager.edgeBundle(path / "belongsTo")
@@ -274,7 +275,7 @@ case class Segmentation(parent: String, name: String)(implicit manager: MetaGrap
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
   }
-  def project = Project(s"$parent/segmentations/$name/project")
+  def project = Project(s"$parentName/segmentations/$name/project")
 }
 
 case class ProjectRequest(name: String)
