@@ -481,7 +481,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val seg = project.segmentation(params("segmentation"))
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(seg.belongsTo, project.vertexAttributes(attr), choice)
-        seg.project.vertexAttributes(attr) = result
+        seg.project.vertexAttributes(s"${attr}_${choice}") = result
       }
       return FEStatus.success
     }
@@ -489,15 +489,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register(new SegmentationOperation(_) {
     val title = "Aggregate from segmentation"
-    val parameters = aggregateParams(project.vertexAttributes)
+    val parameters = Seq(
+      Param("prefix", "Generated name prefix",
+        defaultValue = if (project.isSegmentation) project.asSegmentation.name else "")) ++
+      aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(project.isSegmentation, "Operates on a segmentation") &&
         FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.asSegmentation
+      val prefix = params("prefix")
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(reverse(seg.belongsTo), project.vertexAttributes(attr), choice)
-        seg.parent.vertexAttributes(attr) = result
+        seg.parent.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
       }
       return FEStatus.success
     }
