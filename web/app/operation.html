@@ -13,20 +13,20 @@
           <input ng-if="param.options.length === 0" ng-disabled="!op.enabled.success"
             id="{{param.id}}" class="form-control" ng-model="params[param.id]">
           <select
-             ng-if="param.options.length > 0 && !param.multipleChoice"
-             ng-disabled="!op.enabled.success"
-             id="{{param.id}}"
-             class="form-control"
-             ng-model="params[param.id]"
-             ng-options="option.id as option.title for option in param.options"></select>
+            ng-if="param.options.length > 0 && !param.multipleChoice"
+            ng-disabled="!op.enabled.success"
+            id="{{param.id}}"
+            class="form-control"
+            ng-model="params[param.id]"
+            ng-options="option.id as option.title for option in param.options"></select>
           <select
-             ng-if="param.options.length > 0 && param.multipleChoice"
-             multiple
-             ng-disabled="!op.enabled.success"
-             id="{{param.id}}"
-             class="form-control"
-             ng-model="multiParams[param.id]"
-             ng-options="option.id as option.title for option in param.options"></select>
+            ng-if="param.options.length > 0 && param.multipleChoice"
+            multiple
+            ng-disabled="!op.enabled.success"
+            id="{{param.id}}"
+            class="form-control"
+            ng-model="multiParams[param.id]"
+            ng-options="option.id as option.title for option in param.options"></select>
         </div>
       </div>
     </form>
