@@ -277,8 +277,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.ReverseEdges()
-      project.edgeBundle = op(op.esAB, project.edgeBundle).result.esBA
+      project.edgeBundle = reverse(project.edgeBundle)
       FEStatus.success
     }
   })
@@ -478,12 +477,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
         FEStatus.assert(segmentations.size > 0, "No segmentations")
-    def parseAggregate(choices: String): Seq[(String, String)] = {
-      choices.split(",").map { entry =>
-        val keyValue = entry.split(":")
-        keyValue(0) -> keyValue(1)
-      }
-    }
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.segmentation(params("segmentation"))
       for ((attr, choice) <- parseAggregate(params("aggregate"))) {
@@ -492,19 +485,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       return FEStatus.success
     }
-    def aggregate[T](connection: EdgeBundle, attr: VertexAttribute[T], choice: String): VertexAttribute[_] = {
-      choice match {
-        case "first" => aggregate(connection, attr, graph_operations.Aggregator.First[T]())
-        case "sum" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
-        case "count" => aggregate(connection, attr, graph_operations.Aggregator.Count[T]())
-        case "average" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Aggregate from segmentation"
+    val parameters = Seq(
+      Param("aggregate", "Aggregate", kind = "aggregate", options = vertexAttributes))
+    def enabled =
+      FEStatus.assert(project.isSegmentation, "Operates on a segmentation") &&
+        FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      val seg = project.asSegmentation
+      for ((attr, choice) <- parseAggregate(params("aggregate"))) {
+        val result = aggregate(reverse(seg.belongsTo), project.vertexAttributes(attr), choice)
+        seg.parent.vertexAttributes(attr) = result
       }
-    }
-    def aggregate[From, To](connection: EdgeBundle,
-                            attr: VertexAttribute[From],
-                            aggregator: graph_operations.Aggregator[From, To]): VertexAttribute[To] = {
-      val op = graph_operations.AggregateByEdgeBundle(aggregator)
-      op(op.connection, connection)(op.attr, attr).result.attr
+      return FEStatus.success
     }
   })
 
@@ -528,5 +524,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   def toDouble(attr: VertexAttribute[String]): VertexAttribute[Double] = {
     val op = graph_operations.VertexAttributeToDouble()
     op(op.attr, attr).result.attr
+  }
+
+  // An identifier-identifier map encoded in a string. Used by kind=aggregate.
+  def parseAggregate(choices: String): Seq[(String, String)] = {
+    choices.split(",").map { entry =>
+      val keyValue = entry.split(":")
+      keyValue(0) -> keyValue(1)
+    }
+  }
+  // Maps the string identifiers used by kind=aggregate to Aggregator objects.
+  def aggregate[T](connection: EdgeBundle, attr: VertexAttribute[T], choice: String): VertexAttribute[_] = {
+    choice match {
+      case "first" => aggregate(connection, attr, graph_operations.Aggregator.First[T]())
+      case "sum" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
+      case "count" => aggregate(connection, attr, graph_operations.Aggregator.Count[T]())
+      case "average" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
+    }
+  }
+  // Performs AggregateByEdgeBundle.
+  def aggregate[From, To](connection: EdgeBundle,
+                          attr: VertexAttribute[From],
+                          aggregator: graph_operations.Aggregator[From, To]): VertexAttribute[To] = {
+    val op = graph_operations.AggregateByEdgeBundle(aggregator)
+    op(op.connection, connection)(op.attr, attr).result.attr
+  }
+
+  def reverse(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.ReverseEdges()
+    op(op.esAB, eb).result.esBA
   }
 }
