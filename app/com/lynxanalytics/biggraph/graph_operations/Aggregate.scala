@@ -63,16 +63,16 @@ object Aggregator {
 
   case class Sum() extends Aggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
-    override def aggregate(values: Iterable[Double]): Double = values.sum
+    def aggregate(values: Iterable[Double]): Double = values.sum
   }
 
   case class Average() extends Aggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
-    override def aggregate(values: Iterable[Double]): Double = values.sum / values.size
+    def aggregate(values: Iterable[Double]): Double = values.sum / values.size
   }
 
   case class First[T]() extends Aggregator[T, T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
-    override def aggregate(values: Iterable[T]): T = values.head
+    def aggregate(values: Iterable[T]): T = values.head
   }
 }
