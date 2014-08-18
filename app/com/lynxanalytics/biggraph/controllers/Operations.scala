@@ -423,7 +423,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
-    val title = "New vertex attribute"
+    val title = "Derived vertex attribute"
     val parameters = Seq(
       Param("output", "Save as"),
       Param("type", "Type", options = UIValue.seq(Seq("String", "Number"))),
