@@ -111,10 +111,6 @@
         { "id": "37", "title": "Find communities", "parameters": [
           { "id": "37a", "title": "Name of new segmentation", "defaultValue": "communities", "options": [] },
           { "id": "37b", "title": "Algorithm", "defaultValue": "two", "options": [{ "id": "one", "title": "One" }, { "id": "two", "title": "Two" }] }
-        ], "enabled": { "success": true, "failureReason": "" } },
-        { "id": "aggregate-to-segmentation", "title": "Aggregate to segmentation", "parameters": [
-          { "id": "seg", "title": "Segmentation", "options": [{ "title": "cliques", "id": "cliques" }] },
-          { "id": "agg", "title": "Aggregate", "kind": "aggregate", "options": [{ "title": "age", "id": "age" }, { "title": "name", "id": "name" }] }
         ], "enabled": { "success": true, "failureReason": "" } }
       ]
     }

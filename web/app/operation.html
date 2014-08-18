@@ -7,41 +7,26 @@
     </div>
 
     <form class="form-horizontal col-sm-7" collapse="!showParams && op.parameters.length > 1">
-      <div ng-repeat="param in op.parameters">
-        <div class="form-group" ng-if="param.kind !== 'aggregate'">
-          <label for="{{param.id}}" class="col-sm-6 control-label">{{param.title}}</label>
-          <div class="col-sm-6">
-            <input ng-if="param.options.length === 0" ng-disabled="!op.enabled.success"
-              id="{{param.id}}" class="form-control" ng-model="params[param.id]">
-            <select
-              ng-if="param.options.length > 0 && !param.multipleChoice"
-              ng-disabled="!op.enabled.success"
-              id="{{param.id}}"
-              class="form-control"
-              ng-model="params[param.id]"
-              ng-options="option.id as option.title for option in param.options"></select>
-            <select
-              ng-if="param.options.length > 0 && param.multipleChoice"
-              multiple
-              ng-disabled="!op.enabled.success"
-              id="{{param.id}}"
-              class="form-control"
-              ng-model="multiParams[param.id]"
-              ng-options="option.id as option.title for option in param.options"></select>
-          </div>
-        </div>
-        <div ng-if="param.kind === 'aggregate'">
-          <div class="form-group"><label class="col-sm-6 control-label">{{param.title}}</label><div class="col-sm-6"></div></div>
-          <div class="form-group" ng-repeat="attr in param.options">
-            <label for="{{param.id}}-{{attr.id}}" class="col-sm-6 control-label">{{attr.title}}</label>
-            <div class="col-sm-6">
-              <select
-                id="{{param.id}}-{{attr.id}}"
-                class="form-control"
-                ng-model="params[param.id][attr.id]"
-                ng-options="opt as opt for opt in aggregateMethods"></select>
-            </div>
-          </div>
+      <div class="form-group" ng-repeat="param in op.parameters">
+        <label for="{{param.id}}" class="col-sm-6 control-label">{{param.title}}</label>
+        <div class="col-sm-6">
+          <input ng-if="param.options.length === 0" ng-disabled="!op.enabled.success"
+            id="{{param.id}}" class="form-control" ng-model="params[param.id]">
+          <select
+            ng-if="param.options.length > 0 && !param.multipleChoice"
+            ng-disabled="!op.enabled.success"
+            id="{{param.id}}"
+            class="form-control"
+            ng-model="params[param.id]"
+            ng-options="option.id as option.title for option in param.options"></select>
+          <select
+            ng-if="param.options.length > 0 && param.multipleChoice"
+            multiple
+            ng-disabled="!op.enabled.success"
+            id="{{param.id}}"
+            class="form-control"
+            ng-model="multiParams[param.id]"
+            ng-options="option.id as option.title for option in param.options"></select>
         </div>
       </div>
     </form>

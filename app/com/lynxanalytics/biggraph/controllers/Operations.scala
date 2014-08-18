@@ -472,14 +472,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new SegmentationOperation(_) {
     val title = "Aggregate to segmentation"
     val parameters = Seq(
-      Param("segmentation", "Destination segmentation", options = segmentations),
-      Param("aggregate", "Aggregate", kind = "aggregate", options = vertexAttributes))
+      Param("segmentation", "Destination segmentation", options = segmentations)) ++
+      aggregateParams(vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
         FEStatus.assert(segmentations.size > 0, "No segmentations")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.segmentation(params("segmentation"))
-      for ((attr, choice) <- parseAggregate(params("aggregate"))) {
+      for ((attr, choice) <- aggregateParams(params)) {
         val result = aggregate(seg.belongsTo, project.vertexAttributes(attr), choice)
         seg.project.vertexAttributes(attr) = result
       }
@@ -489,14 +489,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register(new SegmentationOperation(_) {
     val title = "Aggregate from segmentation"
-    val parameters = Seq(
-      Param("aggregate", "Aggregate", kind = "aggregate", options = vertexAttributes))
+    val parameters = aggregateParams(vertexAttributes)
     def enabled =
       FEStatus.assert(project.isSegmentation, "Operates on a segmentation") &&
         FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.asSegmentation
-      for ((attr, choice) <- parseAggregate(params("aggregate"))) {
+      for ((attr, choice) <- aggregateParams(params)) {
         val result = aggregate(reverse(seg.belongsTo), project.vertexAttributes(attr), choice)
         seg.parent.vertexAttributes(attr) = result
       }
@@ -526,14 +525,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.attr, attr).result.attr
   }
 
-  // An identifier-identifier map encoded in a string. Used by kind=aggregate.
-  def parseAggregate(choices: String): Seq[(String, String)] = {
-    choices.split(",").map { entry =>
-      val keyValue = entry.split(":")
-      keyValue(0) -> keyValue(1)
+  def aggregateParams(params: Map[String, String]) = {
+    val aggregate = "aggregate-(.*)".r
+    params.collect {
+      case (aggregate(attr), choice) if choice != "ignore" => attr -> choice
     }
   }
-  // Maps the string identifiers used by kind=aggregate to Aggregator objects.
+  def aggregateParams(attrs: Seq[UIValue]) = {
+    attrs.map { attr =>
+      val id = attr.id
+      Param(s"aggregate-$id", id, options = UIValue.seq(Seq("ignore", "sum", "average", "count")))
+    }
+  }
+  // Converts the string identifiers used by aggregateParams to Aggregator objects.
   def aggregate[T](connection: EdgeBundle, attr: VertexAttribute[T], choice: String): VertexAttribute[_] = {
     choice match {
       case "first" => aggregate(connection, attr, graph_operations.Aggregator.First[T]())
