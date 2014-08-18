@@ -479,7 +479,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         FEStatus.assert(segmentations.size > 0, "No segmentations")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.segmentation(params("segmentation"))
-      for ((attr, choice) <- aggregateParams(params)) {
+      for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(seg.belongsTo, project.vertexAttributes(attr), choice)
         seg.project.vertexAttributes(attr) = result
       }
@@ -495,7 +495,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.asSegmentation
-      for ((attr, choice) <- aggregateParams(params)) {
+      for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(reverse(seg.belongsTo), project.vertexAttributes(attr), choice)
         seg.parent.vertexAttributes(attr) = result
       }
@@ -525,7 +525,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.attr, attr).result.attr
   }
 
-  def aggregateParams(params: Map[String, String]) = {
+  def parseAggregateParams(params: Map[String, String]) = {
     val aggregate = "aggregate-(.*)".r
     params.collect {
       case (aggregate(attr), choice) if choice != "ignore" => attr -> choice
