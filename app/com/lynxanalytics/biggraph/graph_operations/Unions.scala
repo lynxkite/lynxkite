@@ -22,7 +22,7 @@ object VertexSetUnion {
     // Injections of the original vertex sets into the union.
     val injections = Range(0, numVertexSets)
       .map(i => edgeBundle(
-        input.vss(i).entity, union, EdgeBundleProperties.injection, Symbol("injection" + i)))
+        input.vss(i).entity, union, EdgeBundleProperties.injection, name = Symbol("injection" + i)))
   }
 }
 case class VertexSetUnion(numVertexSets: Int)
