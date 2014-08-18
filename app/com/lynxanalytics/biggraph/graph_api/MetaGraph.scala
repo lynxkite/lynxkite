@@ -326,6 +326,12 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   class P[T <: MetaGraphEntity](entityConstructor: Symbol => T, nameOpt: Option[Symbol]) extends EntityContainer[T] {
     lazy val name: Symbol = nameOpt.getOrElse(nameOf(this))
     lazy val entity = entityConstructor(name)
+
+    override def toString: String = {
+      val fakeEntity = entityConstructor(nameOpt.getOrElse('fakeName))
+      "P wrapper of type %s for %s".format(fakeEntity.getClass.getName, fakeEntity.toString)
+    }
+
     placeholders += this
   }
   def vertexSet = new P(VertexSet(instance, _), None)
