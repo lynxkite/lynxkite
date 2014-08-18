@@ -18,7 +18,7 @@ case class FEStatus(success: Boolean, failureReason: String = "") {
 object FEStatus {
   val success = FEStatus(true)
   def failure(failureReason: String) = FEStatus(false, failureReason)
-  def assert(condition: Boolean, failureReason: String) =
+  def assert(condition: Boolean, failureReason: => String) =
     if (condition) success else failure(failureReason)
 }
 
@@ -49,7 +49,7 @@ case class FEOperationParameterMeta(
 
   val validKinds = Seq(
     "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
-    "multi-vertex-attribute", "multi-edge-attribute")
+    "multi-vertex-attribute", "multi-edge-attribute", "aggregate")
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
 }
 
