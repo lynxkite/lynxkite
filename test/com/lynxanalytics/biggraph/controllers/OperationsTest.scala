@@ -34,9 +34,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Aggregate to segmentation",
       Map("segmentation" -> "cc", "aggregate-age" -> "average", "aggregate-name" -> "count"))
     val seg = project.segmentation("cc").project
-    val age = seg.vertexAttributes("age").runtimeSafeCast[Double]
+    val age = seg.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))
-    val count = seg.vertexAttributes("name").runtimeSafeCast[Double]
+    val count = seg.vertexAttributes("name_count").runtimeSafeCast[Double]
     assert(count.rdd.collect.toMap.values.toSet == Set(2.0, 1.0, 1.0))
   }
 }
