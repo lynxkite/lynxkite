@@ -37,4 +37,12 @@ class AggregateTest extends FunSuite with TestGraphOp {
     assert(firsts.size == 3)
     assert(firsts.contains(3L -> "Isolated Joe"))
   }
+  test("example graph attribute aggregates") {
+    val example = ExampleGraph()().result
+    val sumAge = {
+      val op = AggregateAttributeToScalar(Aggregator.Sum())
+      op(op.attr, example.age).result.aggregated.value
+    }
+    assert(sumAge == 90.8)
+  }
 }
