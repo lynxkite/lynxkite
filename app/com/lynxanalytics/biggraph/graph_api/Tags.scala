@@ -54,8 +54,11 @@ final case class Tag(name: Symbol, parent: TagDir, gUID: UUID) extends TagPath {
 }
 
 trait TagDir extends TagPath {
-  def /(subPath: SymbolPath): TagPath =
-    followPath(subPath).get
+  def /(subPath: SymbolPath): TagPath = {
+    val p = followPath(subPath)
+    assert(p.nonEmpty, s"$subPath not found in $this")
+    p.get
+  }
 
   def exists(subPath: SymbolPath) = followPath(subPath).nonEmpty
   def existsDir(subPath: SymbolPath) = followPath(subPath).exists(_.isInstanceOf[TagDir])

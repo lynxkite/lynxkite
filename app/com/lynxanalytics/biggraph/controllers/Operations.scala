@@ -155,6 +155,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexSet = imp.vertices
       project.edgeBundle = imp.edges
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
+      project.vertexAttributes("stringID") = imp.stringID
       FEStatus.success
     }
   })
@@ -250,10 +251,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Add gaussian vertex attribute"
     val parameters = Seq(
-      Param("name", "Attribute name", defaultValue = "random"))
+      Param("name", "Attribute name", defaultValue = "random"),
+      Param("seed", "Seed", defaultValue = "0"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.AddGaussianVertexAttribute()
+      val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
       project.vertexAttributes(params("name")) = op(op.vertices, project.vertexSet).result.attr
       FEStatus.success
     }
@@ -530,6 +532,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new VertexOperation(_) {
+    val title = "Join vertices on attribute"
+    val parameters = Seq(
+      Param("attr", "Attribute", options = vertexAttributes)) ++
+      aggregateParams(project.vertexAttributes)
+    def enabled =
+      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+    def merge[T](attr: VertexAttribute[T]): graph_operations.Segmentation = {
+      val op = graph_operations.MergeVertices[T]()
+      op(op.attr, attr).result
+    }
+    def apply(params: Map[String, String]): FEStatus = {
+      val m = merge(project.vertexAttributes(params("attr")))
+      val oldAttrs = project.vertexAttributes.toMap
+      project.vertexSet = m.segments
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregate(m.belongsTo, oldAttrs(attr), choice)
+        project.vertexAttributes(attr) = result
+      }
+      return FEStatus.success
+    }
+  })
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()
@@ -581,7 +606,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   // Performs AggregateByEdgeBundle.
   def aggregate[From, To](connection: EdgeBundle,
                           attr: VertexAttribute[From],
-                          aggregator: graph_operations.Aggregator[From, To]): VertexAttribute[To] = {
+                          aggregator: graph_operations.LocalAggregator[From, To]): VertexAttribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(aggregator)
     op(op.connection, connection)(op.attr, attr).result.attr
   }
