@@ -155,6 +155,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexSet = imp.vertices
       project.edgeBundle = imp.edges
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
+      project.vertexAttributes("stringID") = imp.stringID
       FEStatus.success
     }
   })
