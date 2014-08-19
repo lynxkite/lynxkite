@@ -49,4 +49,10 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val count = project.vertexAttributes("name").runtimeSafeCast[Double]
     assert(count.rdd.collect.toMap.values.toSet == Set(3.0, 1.0))
   }
+
+  test("Aggregate edge attribute") {
+    run("Example Graph")
+    run("Aggregate edge attribute", Map("prefix" -> "", "aggregate-weight" -> "sum"))
+    assert(project.scalars("weight_sum").value == 10.0)
+  }
 }
