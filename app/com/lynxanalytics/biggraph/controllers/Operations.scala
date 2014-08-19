@@ -564,11 +564,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     attrs.toSeq.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
-          UIValue.seq(Seq("ignore", "sum", "average", "mode", "count"))
+          UIValue.seq(Seq("ignore", "sum", "average", "most-common", "count"))
         } else if (attr.is[String]) {
-          UIValue.seq(Seq("ignore", "mode", "majority-50", "majority-100", "count"))
+          UIValue.seq(Seq("ignore", "most-common", "majority-50", "majority-100", "count"))
         } else {
-          UIValue.seq(Seq("ignore", "mode", "count"))
+          UIValue.seq(Seq("ignore", "most-common", "count"))
         }
         Param(s"aggregate-$name", name, options = options)
     }
@@ -579,7 +579,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "sum" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => aggregate(connection, attr, graph_operations.Aggregator.Count[T]())
       case "average" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
-      case "mode" => aggregate(connection, attr, graph_operations.Aggregator.Mode[T]())
+      case "most-common" => aggregate(connection, attr, graph_operations.Aggregator.MostCommon[T]())
       case "majority-50" => aggregate(connection, attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
       case "majority-100" => aggregate(connection, attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
     }
