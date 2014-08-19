@@ -52,10 +52,10 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
 
 trait LocalAggregator[From, To] {
   def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
+  // aggregate() can assume that values is non-empty.
   def aggregate(values: Iterable[From]): To
 }
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
-  def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
   def zero: Intermediate
   def merge(a: Intermediate, b: From): Intermediate
   def combine(a: Intermediate, b: Intermediate): Intermediate
