@@ -250,10 +250,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Add gaussian vertex attribute"
     val parameters = Seq(
-      Param("name", "Attribute name", defaultValue = "random"))
+      Param("name", "Attribute name", defaultValue = "random"),
+      Param("seed", "Seed", defaultValue = "0"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.AddGaussianVertexAttribute()
+      val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
       project.vertexAttributes(params("name")) = op(op.vertices, project.vertexSet).result.attr
       FEStatus.success
     }

@@ -15,7 +15,7 @@ object AddGaussianVertexAttribute {
   }
 }
 import AddGaussianVertexAttribute._
-case class AddGaussianVertexAttribute() extends TypedMetaGraphOp[Input, Output] {
+case class AddGaussianVertexAttribute(seed: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -29,7 +29,7 @@ case class AddGaussianVertexAttribute() extends TypedMetaGraphOp[Input, Output] 
     output(o.attr, vertices.mapPartitionsWithIndex(
       {
         case (pid, it) =>
-          val rnd = new Random(pid)
+          val rnd = new Random((pid << 16) + seed)
           it.map { case (vid, _) => vid -> rnd.nextGaussian() }
       },
       preservesPartitioning = true).asSortedRDD)
