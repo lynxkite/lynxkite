@@ -26,6 +26,11 @@
   margin-left: 30px;
 }
 
+input.save-as {
+  display: inline-block;
+  width: 200px;
+}
+
 div.operation-toolboxes {
   position: absolute;
   width: 100%;

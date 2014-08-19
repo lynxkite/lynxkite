@@ -92,6 +92,18 @@ angular.module('biggraph')
       }
       $location.url('/');
     };
+    Side.prototype.saveAs = function(newName) {
+      console.log('fork', newName);
+      var that = this;
+      $resource('/ajax/forkProject').save(
+        {
+          from: this.state.projectName,
+          to: newName,
+        },
+        function() {
+          that.state.projectName = newName;
+        });
+    };
 
     Side.prototype.nonEmptyFilters = function() {
       var res = [];
