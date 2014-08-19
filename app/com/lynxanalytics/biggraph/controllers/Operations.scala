@@ -583,7 +583,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   // Performs AggregateByEdgeBundle.
   def aggregate[From, To](connection: EdgeBundle,
                           attr: VertexAttribute[From],
-                          aggregator: graph_operations.Aggregator[From, To]): VertexAttribute[To] = {
+                          aggregator: graph_operations.LocalAggregator[From, To]): VertexAttribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(aggregator)
     op(op.connection, connection)(op.attr, attr).result.attr
   }
