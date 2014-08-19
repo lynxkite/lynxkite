@@ -16,5 +16,8 @@ trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteK
   def classTag: ClassTag[T] = {
     ClassTag[T](typeTag.mirror.runtimeClass(typeTag.tpe))
   }
+  def is[S: TypeTag]: Boolean = {
+    typeOf[S] =:= typeOf[T]
+  }
 }
 

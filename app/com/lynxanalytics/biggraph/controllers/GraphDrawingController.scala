@@ -103,6 +103,12 @@ case class HistogramResponse(
   val labels: Seq[String],
   val sizes: Seq[Int])
 
+case class ScalarValueRequest(
+  val scalarId: String)
+
+case class ScalarValueResponse(
+  val value: String)
+
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
@@ -401,5 +407,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       bucketedAttr.bucketer.labelType,
       bucketedAttr.bucketer.bucketLabels,
       (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0)))
+  }
+  def getScalarValue(request: ScalarValueRequest): ScalarValueResponse = {
+    val scalar = metaManager.scalar(request.scalarId.asUUID)
+    ScalarValueResponse(scalar.value.toString)
   }
 }
