@@ -8,9 +8,9 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
-  val project = Project("project")
+  val project = Project("Test_Project")
   def run(op: String, params: Map[String, String] = Map()) =
-    ops.apply(ProjectOperationRequest("project", FEOperationSpec(op.replace(" ", "-"), params)))
+    ops.apply(ProjectOperationRequest("Test_Project", FEOperationSpec(op.replace(" ", "-"), params)))
 
   test("Derived vertex attribute (Double)") {
     run("Example Graph")
@@ -38,5 +38,15 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))
     val count = seg.vertexAttributes("name_count").runtimeSafeCast[Double]
     assert(count.rdd.collect.toMap.values.toSet == Set(2.0, 1.0, 1.0))
+  }
+
+  test("Join vertices on attribute") {
+    run("Example Graph")
+    run("Join vertices on attribute",
+      Map("attr" -> "gender", "aggregate-age" -> "average", "aggregate-name" -> "count"))
+    val age = project.vertexAttributes("age").runtimeSafeCast[Double]
+    assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
+    val count = project.vertexAttributes("name").runtimeSafeCast[Double]
+    assert(count.rdd.collect.toMap.values.toSet == Set(3.0, 1.0))
   }
 }

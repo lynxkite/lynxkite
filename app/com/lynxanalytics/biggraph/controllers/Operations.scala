@@ -507,6 +507,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new VertexOperation(_) {
+    val title = "Join vertices on attribute"
+    val parameters = Seq(
+      Param("attr", "Attribute", options = vertexAttributes)) ++
+      aggregateParams(project.vertexAttributes)
+    def enabled =
+      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+    def merge[T](attr: VertexAttribute[T]): graph_operations.Segmentation = {
+      val op = graph_operations.MergeVertices[T]()
+      op(op.attr, attr).result
+    }
+    def apply(params: Map[String, String]): FEStatus = {
+      val m = merge(project.vertexAttributes(params("attr")))
+      val oldAttrs = project.vertexAttributes.toMap
+      project.vertexSet = m.segments
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregate(m.belongsTo, oldAttrs(attr), choice)
+        project.vertexAttributes(attr) = result
+      }
+      return FEStatus.success
+    }
+  })
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()
