@@ -11,6 +11,6 @@ cd ..
 ln -s web/.tmp public
 
 sbt stage
-stage/bin/biggraph
+stage/bin/biggraph "$@"
 
 rm public
