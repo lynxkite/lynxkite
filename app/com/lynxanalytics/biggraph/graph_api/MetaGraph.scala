@@ -111,10 +111,7 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
 sealed trait Attribute[T] extends MetaGraphEntity {
   val typeTag: TypeTag[T]
   def runtimeSafeCast[S: TypeTag]: Attribute[S]
-  def is[S: TypeTag] = {
-    implicit val tt = typeTag
-    typeOf[S] =:= typeOf[T]
-  }
+  def is[S: TypeTag]: Boolean
 }
 
 // Marker trait for possible attributes of a triplet. It's either a vertex attribute
