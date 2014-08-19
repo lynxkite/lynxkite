@@ -20,7 +20,7 @@ object AggregateByEdgeBundle {
   }
 }
 import AggregateByEdgeBundle._
-case class AggregateByEdgeBundle[From, To](aggregator: Aggregator[From, To])
+case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To])
     extends TypedMetaGraphOp[Input[From], Output[From, To]] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input[From]
@@ -50,29 +50,65 @@ case class AggregateByEdgeBundle[From, To](aggregator: Aggregator[From, To])
   }
 }
 
-trait Aggregator[From, To] {
+trait LocalAggregator[From, To] {
   def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
-  // aggregate() can assume that values is non-empty.
   def aggregate(values: Iterable[From]): To
 }
+trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
+  def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
+  def zero: Intermediate
+  def merge(a: Intermediate, b: From): Intermediate
+  def combine(a: Intermediate, b: Intermediate): Intermediate
+  def finalize(i: Intermediate): To
+  def aggregate(values: Iterable[From]): To =
+    finalize(values.foldLeft(zero)(merge _))
+}
+trait SimpleAggregator[From, To] extends Aggregator[From, To, To] {
+  def finalize(i: To): To = i
+}
+// This is a trait instead of an abstract class because otherwise the case
+// class will not be serializable ("no valid constructor").
+trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
+    extends Aggregator[From, (Intermediate1, Intermediate2), To] {
+  val agg1: Aggregator[From, Intermediate1, To1]
+  val agg2: Aggregator[From, Intermediate2, To2]
+  def zero = (agg1.zero, agg2.zero)
+  def merge(a: (Intermediate1, Intermediate2), b: From) =
+    (agg1.merge(a._1, b), agg2.merge(a._2, b))
+  def combine(a: (Intermediate1, Intermediate2), b: (Intermediate1, Intermediate2)) =
+    (agg1.combine(a._1, b._1), agg2.combine(a._2, b._2))
+  def finalize(i: (Intermediate1, Intermediate2)): To =
+    compound(agg1.finalize(i._1), agg2.finalize(i._2))
+  def compound(res1: To1, res2: To2): To
+}
+
 object Aggregator {
-  case class Count[T]() extends Aggregator[T, Double] {
+  case class Count[T]() extends SimpleAggregator[T, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
-    def aggregate(values: Iterable[T]): Double = values.size
+    def zero = 0
+    def merge(a: Double, b: T) = a + 1
+    def combine(a: Double, b: Double) = a + b
   }
 
-  case class Sum() extends Aggregator[Double, Double] {
+  case class Sum() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
-    def aggregate(values: Iterable[Double]): Double = values.sum
+    def zero = 0
+    def merge(a: Double, b: Double) = a + b
+    def combine(a: Double, b: Double) = a + b
   }
 
-  case class Average() extends Aggregator[Double, Double] {
+  case class Average() extends CompoundAggregator[Double, Double, Double, Double, Double, Double] {
+    val agg1 = Count[Double]()
+    val agg2 = Sum()
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
-    def aggregate(values: Iterable[Double]): Double = values.sum / values.size
+    def compound(count: Double, sum: Double) = sum / count
   }
 
-  case class First[T]() extends Aggregator[T, T] {
+  case class First[T]() extends Aggregator[T, Option[T], T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
-    def aggregate(values: Iterable[T]): T = values.head
+    def zero = None
+    def merge(a: Option[T], b: T) = a.orElse(Some(b))
+    def combine(a: Option[T], b: Option[T]) = a.orElse(b)
+    def finalize(opt: Option[T]) = opt.get
   }
 }
