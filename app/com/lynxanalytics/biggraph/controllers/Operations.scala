@@ -630,7 +630,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
 
-  // Performs AggregateByEdgeBundle.
+  // Performs AggregateAttributeToScalar.
   private def aggregate[From, Intermediate, To](
     attributeWithAggregator: AttributeWithAggregator[From, Intermediate, To]): Scalar[To] = {
     val op = graph_operations.AggregateAttributeToScalar(attributeWithAggregator.aggregator)

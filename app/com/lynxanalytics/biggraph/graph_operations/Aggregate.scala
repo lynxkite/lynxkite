@@ -51,10 +51,6 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
 }
 
 object AggregateAttributeToScalar {
-  class Input[From] extends MagicInputSignature {
-    val vs = vertexSet
-    val attr = vertexAttribute[From](vs)
-  }
   class Output[To: TypeTag](
       implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
 
@@ -64,10 +60,10 @@ object AggregateAttributeToScalar {
 
 case class AggregateAttributeToScalar[From, Intermediate, To](
   aggregator: Aggregator[From, Intermediate, To])
-    extends TypedMetaGraphOp[AggregateAttributeToScalar.Input[From], AggregateAttributeToScalar.Output[To]] {
+    extends TypedMetaGraphOp[VertexAttributeInput[From], AggregateAttributeToScalar.Output[To]] {
   import AggregateAttributeToScalar._
   override val isHeavy = true
-  @transient override lazy val inputs = new Input[From]
+  @transient override lazy val inputs = new VertexAttributeInput[From]
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
     val tt = aggregator.outputTypeTag(inputs.attr.typeTag)
