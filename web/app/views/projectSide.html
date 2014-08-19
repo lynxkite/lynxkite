@@ -39,6 +39,15 @@
                tooltip-placement="bottom">
           <i class="glyphicon glyphicon-filter"></i>
         </label>
+        <label class="btn btn-default" ng-click="saveAs = true"
+          tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
+          <form ng-submit="side.saveAs(saveAsName)" style="display: inline;" ng-show="saveAs">
+            <!-- The input box closes if it loses focus while empty. -->
+            <input class="form-control save-as" ng-model="saveAsName" ng-blur="saveAs = saveAsName">
+          </form>
+          <!-- The floppy sends the request if something has been entered. -->
+          <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? side.saveAs(saveAsName) : 0"></i>
+        </label>
         <label class="btn btn-default" ng-click="side.close()"
           tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-remove"></i>
