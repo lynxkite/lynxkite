@@ -19,9 +19,9 @@ object AggregateByEdgeBundle {
     val attr = vertexAttribute[To](inputs.dst.entity)
   }
 }
-import AggregateByEdgeBundle._
 case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To])
-    extends TypedMetaGraphOp[Input[From], Output[From, To]] {
+    extends TypedMetaGraphOp[AggregateByEdgeBundle.Input[From], AggregateByEdgeBundle.Output[From, To]] {
+  import AggregateByEdgeBundle._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[From]
   def outputMeta(instance: MetaGraphOperationInstance) = {
@@ -50,21 +50,69 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
   }
 }
 
+object AggregateAttributeToScalar {
+  class Input[From] extends MagicInputSignature {
+    val vs = vertexSet
+    val attr = vertexAttribute[From](vs)
+  }
+  class Output[To: TypeTag](
+      implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+
+    val aggregated = scalar[To]
+  }
+}
+
+case class AggregateAttributeToScalar[From, Intermediate, To](
+  aggregator: Aggregator[From, Intermediate, To])
+    extends TypedMetaGraphOp[AggregateAttributeToScalar.Input[From], AggregateAttributeToScalar.Output[To]] {
+  import AggregateAttributeToScalar._
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input[From]
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val i = instance
+    val tt = aggregator.outputTypeTag(inputs.attr.typeTag)
+    new Output[To]()(tt, instance)
+  }
+
+  def execute(inputDatas: DataSet,
+              o: Output[To],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val attr = inputs.attr.rdd
+    implicit val ftt = inputs.attr.data.typeTag
+    implicit val fct = inputs.attr.data.classTag
+    implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(aggregator.intermediateTypeTag(ftt))
+    output(
+      o.aggregated,
+      aggregator.finalize(
+        attr
+          .values
+          .mapPartitions(it => Iterator(aggregator.aggregatePartition(it)))
+          .collect
+          .foldLeft(aggregator.zero)(aggregator.combine _)))
+  }
+}
+
 trait LocalAggregator[From, To] {
   def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
   // aggregate() can assume that values is non-empty.
   def aggregate(values: Iterable[From]): To
 }
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
+  def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[Intermediate]
   def zero: Intermediate
   def merge(a: Intermediate, b: From): Intermediate
   def combine(a: Intermediate, b: Intermediate): Intermediate
   def finalize(i: Intermediate): To
+  def aggregatePartition(values: Iterator[From]): Intermediate =
+    values.foldLeft(zero)(merge _)
   def aggregate(values: Iterable[From]): To =
-    finalize(values.foldLeft(zero)(merge _))
+    finalize(aggregatePartition(values.iterator))
 }
 trait SimpleAggregator[From, To] extends Aggregator[From, To, To] {
   def finalize(i: To): To = i
+  def intermediateTypeTag(inputTypeTag: TypeTag[From]) = outputTypeTag(inputTypeTag)
 }
 // This is a trait instead of an abstract class because otherwise the case
 // class will not be serializable ("no valid constructor").
@@ -80,6 +128,11 @@ trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
   def finalize(i: (Intermediate1, Intermediate2)): To =
     compound(agg1.finalize(i._1), agg2.finalize(i._2))
   def compound(res1: To1, res2: To2): To
+  def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[(Intermediate1, Intermediate2)] = {
+    implicit val tt1 = agg1.intermediateTypeTag(inputTypeTag)
+    implicit val tt2 = agg2.intermediateTypeTag(inputTypeTag)
+    typeTag[(Intermediate1, Intermediate2)]
+  }
 }
 
 object Aggregator {
@@ -106,6 +159,10 @@ object Aggregator {
 
   case class First[T]() extends Aggregator[T, Option[T], T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
+    def intermediateTypeTag(inputTypeTag: TypeTag[T]): TypeTag[Option[T]] = {
+      implicit val tt = inputTypeTag
+      typeTag[Option[T]]
+    }
     def zero = None
     def merge(a: Option[T], b: T) = a.orElse(Some(b))
     def combine(a: Option[T], b: Option[T]) = a.orElse(b)
