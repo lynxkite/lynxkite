@@ -153,6 +153,22 @@ object Aggregator {
     def compound(count: Double, sum: Double) = sum / count
   }
 
+  case class MostCommon[T]() extends LocalAggregator[T, T] {
+    def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
+    def aggregate(values: Iterable[T]) = {
+      values.groupBy(identity).maxBy(_._2.size)._1
+    }
+  }
+
+  // Majority is like MostCommon, but returns "" if the mode is < fraction of the values.
+  case class Majority(fraction: Double) extends LocalAggregator[String, String] {
+    def outputTypeTag(inputTypeTag: TypeTag[String]) = typeTag[String]
+    def aggregate(values: Iterable[String]) = {
+      val (mode, count) = values.groupBy(identity).mapValues(_.size).maxBy(_._2)
+      if (count >= fraction * values.size) mode else ""
+    }
+  }
+
   case class First[T]() extends Aggregator[T, Option[T], T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[T]): TypeTag[Option[T]] = {
