@@ -529,7 +529,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         case "outgoing edges" => reverse(project.edgeBundle)
       }
       for ((attr, choice) <- parseAggregateParams(params)) {
-        val result = aggregate(edges, project.vertexAttributes(attr), choice)
+        val result = aggregateViaConnection(
+          edges,
+          attributeWithAggregator(project.vertexAttributes(attr), choice))
         project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
       }
       return FEStatus.success
