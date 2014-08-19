@@ -220,11 +220,12 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val title = "Add Gaussian vertex attribute"
     val category = "Attribute operations"
     val parameters = Seq(
-      Param("vs", "Vertex set", kind = "vertex-set"))
+      Param("vs", "Vertex set", kind = "vertex-set"),
+      Param("seed", "Seed", defaultValue = "0"))
     def apply(params: Map[String, String]) = {
       val vertices = manager.vertexSet(params("vs").asUUID)
       import Scripting._
-      val op = graph_operations.AddGaussianVertexAttribute()
+      val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
       manager.show(op(op.vertices, vertices).result.metaDataSet)
       FEStatus.success
     }
