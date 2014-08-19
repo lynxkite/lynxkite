@@ -62,6 +62,31 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     raw.zipWithUniqueId.map { case (v, id) => id -> v }.partitionBy(partitioner)
   }
 
+  test("benchmark sorting", com.lynxanalytics.biggraph.Benchmark) {
+    class Demo(parts: Int, rows: Int) {
+      val data = genData(parts, rows, 1).cache
+      data.calculate
+      def oldSort = data.mapPartitions(_.toIndexedSeq.sortBy(_._1).iterator, preservesPartitioning = true).collect
+      def newSort = data.mapPartitions(x => {
+        val a = x.toArray
+        scala.util.Sorting.quickSort(a)
+        a.iterator
+      }, preservesPartitioning = true).collect
+    }
+    val parts = 4
+    val table = "%10s | %10s | %10s"
+    println(table.format("rows", "old (ms)", "new (ms)"))
+    println(table.format("---:", "-------:", "-------:")) // github markdown
+    for (round <- 10 to 20) {
+      val rows = 100000 * round
+      val demo = new Demo(parts, rows)
+      val mew = Timed(demo.newSort)
+      val old = Timed(demo.oldSort)
+      println(table.format(parts * rows, old.nanos / 1000000, mew.nanos / 1000000))
+      assert(mew.value.toSeq == old.value.toSeq)
+    }
+  }
+
   ignore("benchmark groupByKey on non-partitioned RDD", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val vanilla = genData(7, rows, 1).values.map(x => (x, x)).cache
