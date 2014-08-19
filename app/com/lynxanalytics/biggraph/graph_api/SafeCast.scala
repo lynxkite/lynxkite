@@ -4,6 +4,10 @@ import scala.language.higherKinds
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
+object RuntimeSafeCastable {
+  def classTagFromTypeTag[T](tt: TypeTag[T]): ClassTag[T] =
+    ClassTag[T](typeTag.mirror.runtimeClass(tt.tpe))
+}
 trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteKind]] {
   implicit def typeTag: TypeTag[T]
 
@@ -14,10 +18,9 @@ trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteK
   }
 
   def classTag: ClassTag[T] = {
-    ClassTag[T](typeTag.mirror.runtimeClass(typeTag.tpe))
+    RuntimeSafeCastable.classTagFromTypeTag(typeTag)
   }
   def is[S: TypeTag]: Boolean = {
     typeOf[S] =:= typeOf[T]
   }
 }
-
