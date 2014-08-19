@@ -587,9 +587,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     attrs.toSeq.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
-          UIValue.seq(Seq("ignore", "sum", "average", "first", "count"))
+          UIValue.seq(Seq("ignore", "sum", "average", "most-common", "count"))
+        } else if (attr.is[String]) {
+          UIValue.seq(Seq("ignore", "most-common", "majority-50", "majority-100", "count"))
         } else {
-          UIValue.seq(Seq("ignore", "first", "count"))
+          UIValue.seq(Seq("ignore", "most-common", "count"))
         }
         Param(s"aggregate-$name", name, options = options)
     }
@@ -597,10 +599,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   // Converts the string identifiers used by aggregateParams to Aggregator objects.
   def aggregate[T](connection: EdgeBundle, attr: VertexAttribute[T], choice: String): VertexAttribute[_] = {
     choice match {
-      case "first" => aggregate(connection, attr, graph_operations.Aggregator.First[T]())
       case "sum" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => aggregate(connection, attr, graph_operations.Aggregator.Count[T]())
       case "average" => aggregate(connection, attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
+      case "most-common" => aggregate(connection, attr, graph_operations.Aggregator.MostCommon[T]())
+      case "majority-50" => aggregate(connection, attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
+      case "majority-100" => aggregate(connection, attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
     }
   }
   // Performs AggregateByEdgeBundle.
