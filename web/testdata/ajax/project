@@ -6,6 +6,10 @@
   "edgeCount": 234567890,
   "notes": "Subscribers and calls.",
 
+  "scalars": [
+    { "id": "42", "title": "vertex count" }
+  ],
+
   "vertexAttributes": [
     { "id": "5", "title": "age" },
     { "id": "6", "title": "income" },

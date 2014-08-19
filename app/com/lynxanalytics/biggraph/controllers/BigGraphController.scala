@@ -89,6 +89,7 @@ case class FEProject(
   vertexCount: Long,
   edgeCount: Long,
   notes: String,
+  scalars: Seq[UIValue],
   vertexAttributes: Seq[UIValue],
   edgeAttributes: Seq[UIValue],
   segmentations: Seq[FESegmentation],
@@ -116,6 +117,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     FEProject(
       projectName, vs, eb,
       vsCount, esCount, notes,
+      scalars.map { case (name, scalar) => UIValue(scalar.gUID.toString, name) }.toSeq,
       vertexAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
       edgeAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
       segmentations.map(_.toFE),
@@ -148,6 +150,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       vertexAttributes = Map()
     }
     set("vertexSet", e)
+    if (e != null) {
+      val op = graph_operations.CountVertices()
+      scalars("vertex count") = op(op.vertices, vertexSet).result.count
+    }
   }
 
   def pullBackWithInjection(injection: EdgeBundle): Unit = {
@@ -199,6 +205,17 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
     set("edgeBundle", e)
   }
+
+  def scalars = new ScalarHolder
+  def scalars_=(scalars: Map[String, Scalar[_]]) = {
+    existing(path / "scalars").foreach(manager.rmTag(_))
+    for ((name, scalar) <- scalars) {
+      manager.setTag(path / "scalars" / name, scalar)
+    }
+  }
+  def scalarNames[T: TypeTag] = scalars.collect {
+    case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
+  }.toSeq
 
   def vertexAttributes = new VertexAttributeHolder
   def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = {
@@ -252,6 +269,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       manager.entity(path / dir / name).asInstanceOf[T]
     def iterator =
       ls(dir).map(_.last.name).map(p => p -> apply(p)).iterator
+  }
+  class ScalarHolder extends Holder[Scalar[_]]("scalars") {
+    def validate(name: String, scalar: Scalar[_]) = {}
   }
   class VertexAttributeHolder extends Holder[VertexAttribute[_]]("vertexAttributes") {
     def validate(name: String, attr: VertexAttribute[_]) =
@@ -456,6 +476,8 @@ abstract class Operation(val project: Project, val category: String) {
   def enabled: FEStatus
   def apply(params: Map[String, String]): FEStatus
   def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled)
+  protected def scalars[T: TypeTag] =
+    UIValue.seq(project.scalarNames[T])
   protected def vertexAttributes[T: TypeTag] =
     UIValue.seq(project.vertexAttributeNames[T])
   protected def edgeAttributes[T: TypeTag] =

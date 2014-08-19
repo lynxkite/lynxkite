@@ -20,6 +20,7 @@ GET  /ajax/vertexDiag  com.lynxanalytics.biggraph.serving.ProductionJsonServer.v
 GET  /ajax/edgeDiag    com.lynxanalytics.biggraph.serving.ProductionJsonServer.edgeDiagram
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
+GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.scalarValue
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            controllers.Assets.at(path="/public", file)

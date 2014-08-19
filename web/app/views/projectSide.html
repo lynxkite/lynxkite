@@ -87,6 +87,11 @@
       </li>
 
       <li class="list-group-item">
+        <span class="lead"><span class="de-emph">Attributes of</span> the graph</span>
+      </li>
+      <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars" scalar="scalar" side="side"></li>
+
+      <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>
       </li>
       <li class="sublist list-group-item" ng-repeat="attr in side.project.vertexAttributes" vertex-attribute="attr" side="side"></li>
