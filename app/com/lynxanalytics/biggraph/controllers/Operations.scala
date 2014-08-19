@@ -539,15 +539,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
-    val title = "Aggregate attribute"
+    val title = "Aggregate vertex attribute"
     val parameters = Seq(Param("prefix", "Generated name prefix", defaultValue = "")) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") && hasEdgeBundle
+      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val prefix = params("prefix")
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(attributeWithAggregator(project.vertexAttributes(attr), choice))
+        val name = if (prefix.isEmpty) s"${attr}_${choice}" else s"${prefix}_${attr}_${choice}"
+        project.scalars(name) = result
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Aggregate edge attribute"
+    val parameters = Seq(Param("prefix", "Generated name prefix", defaultValue = "")) ++
+      aggregateParams(
+        project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) })
+    def enabled =
+      FEStatus.assert(edgeAttributes.size > 0, "No edge attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = params("prefix")
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregate(
+          attributeWithAggregator(project.edgeAttributes(attr).asVertexAttribute, choice))
         val name = if (prefix.isEmpty) s"${attr}_${choice}" else s"${prefix}_${attr}_${choice}"
         project.scalars(name) = result
       }
