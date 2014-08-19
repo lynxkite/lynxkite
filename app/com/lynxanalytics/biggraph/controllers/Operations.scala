@@ -507,6 +507,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Aggregate on neighbors"
+    val parameters = Seq(
+      Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
+      Param("direction", "Aggregate on",
+        options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
+      aggregateParams(project.vertexAttributes)
+    def enabled =
+      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") && hasEdgeBundle
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = params("prefix")
+      val edges = params("direction") match {
+        case "incoming edges" => project.edgeBundle
+        case "outgoing edges" => reverse(project.edgeBundle)
+      }
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregate(edges, project.vertexAttributes(attr), choice)
+        project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
+      }
+      return FEStatus.success
+    }
+  })
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()
