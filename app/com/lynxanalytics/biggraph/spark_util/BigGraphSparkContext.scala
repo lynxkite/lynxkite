@@ -93,10 +93,11 @@ object BigGraphSparkContext {
       .set("spark.akka.threads",
         scala.util.Properties.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
       .set("spark.local.dir", scala.util.Properties.envOrElse("SPARK_DIR", "/tmp"))
-      .set("spark.speculation", "true")
-      .set("spark.speculation.interval", "1000")
-      .set("spark.speculation.quantile", "0.90")
-      .set("spark.speculation.multiplier", "2")
+      // Speculative execution will start extra copies of tasks to eliminate long tail latency.
+      .set("spark.speculation", "true") // Enable speculative execution.
+      .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
+      .set("spark.speculation.quantile", "0.90") // (Fraction.) This much of the stage has to complete first.
+      .set("spark.speculation.multiplier", "2") // (Ratio.) Task has to be this much slower than the median.
     if (useKryo) {
       sparkConf = sparkConf
         .set("spark.serializer",

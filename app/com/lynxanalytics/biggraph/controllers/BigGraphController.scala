@@ -247,6 +247,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def segmentation(name: String) = Segmentation(projectName, name)
   def segmentationNames = ls("segmentations").map(_.last.name)
 
+  def copy(to: Project) = {
+    existing(to.path).foreach(manager.rmTag(_))
+    manager.cpTag(path, to.path)
+  }
+
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
   private def set(tag: String, entity: MetaGraphEntity): Unit = {
@@ -306,6 +311,7 @@ case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(name: String, notes: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 case class ProjectFilterRequest(project: String, filters: Seq[FEVertexAttributeFilter])
+case class ForkProjectRequest(from: String, to: String)
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
@@ -465,6 +471,11 @@ class BigGraphController(env: BigGraphEnvironment) {
     assert(request.filters.nonEmpty)
     val embedding = FEFilters.embedFilteredVertices(vertexSet, request.filters)
     project.pullBackWithInjection(embedding)
+    FEStatus.success
+  }
+
+  def forkProject(request: ForkProjectRequest): FEStatus = {
+    Project(request.from).copy(Project(request.to))
     FEStatus.success
   }
 }
