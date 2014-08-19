@@ -32,12 +32,14 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Example Graph")
     run("Connected components", Map("name" -> "cc"))
     run("Aggregate to segmentation",
-      Map("segmentation" -> "cc", "aggregate-age" -> "average", "aggregate-name" -> "count"))
+      Map("segmentation" -> "cc", "aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority-100"))
     val seg = project.segmentation("cc").project
     val age = seg.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))
     val count = seg.vertexAttributes("name_count").runtimeSafeCast[Double]
     assert(count.rdd.collect.toMap.values.toSet == Set(2.0, 1.0, 1.0))
+    val gender = seg.vertexAttributes("gender_majority-100").runtimeSafeCast[String]
+    assert(gender.rdd.collect.toMap.values.toSeq.sorted == Seq("", "Male", "Male"))
   }
 
   test("Join vertices on attribute") {

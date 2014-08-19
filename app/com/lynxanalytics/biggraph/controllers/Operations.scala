@@ -484,7 +484,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           seg.belongsTo,
-          attributeWithAggregator(project.vertexAttributes(attr), choice))
+          attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
         seg.project.vertexAttributes(s"${attr}_${choice}") = result
       }
       return FEStatus.success
@@ -506,7 +506,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           reverse(seg.belongsTo),
-          attributeWithAggregator(project.vertexAttributes(attr), choice))
+          attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
         seg.parent.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
       }
       return FEStatus.success
@@ -531,7 +531,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           edges,
-          attributeWithAggregator(project.vertexAttributes(attr), choice))
+          attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
         project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
       }
       return FEStatus.success
@@ -556,7 +556,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           m.belongsTo,
-          attributeWithAggregator(oldAttrs(attr), choice))
+          attributeWithLocalAggregator(oldAttrs(attr), choice))
         project.vertexAttributes(attr) = result
       }
       return FEStatus.success
@@ -627,31 +627,72 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (aggregate(attr), choice) if choice != "ignore" => attr -> choice
     }
   }
-  def aggregateParams(attrs: Iterable[(String, VertexAttribute[_])]): Seq[FEOperationParameterMeta] = {
+  def aggregateParams(
+    attrs: Iterable[(String, VertexAttribute[_])],
+    needsGlobal: Boolean = false): Seq[FEOperationParameterMeta] = {
     attrs.toSeq.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
-          UIValue.seq(Seq("ignore", "sum", "average", "first", "count"))
+          if (needsGlobal) {
+            UIValue.seq(Seq("ignore", "sum", "average", "count"))
+          } else {
+            UIValue.seq(Seq("ignore", "sum", "average", "most-common", "count"))
+          }
+        } else if (attr.is[String]) {
+          if (needsGlobal) {
+            UIValue.seq(Seq("ignore", "count"))
+          } else {
+            UIValue.seq(Seq("ignore", "most-common", "majority-50", "majority-100", "count"))
+          }
         } else {
-          UIValue.seq(Seq("ignore", "first", "count"))
+          if (needsGlobal) {
+            UIValue.seq(Seq("ignore", "count"))
+          } else {
+            UIValue.seq(Seq("ignore", "most-common", "count"))
+          }
         }
         Param(s"aggregate-$name", name, options = options)
     }
   }
 
-  private case class AttributeWithAggregator[From, Intermediate, To](
-    attr: VertexAttribute[From],
-    aggregator: graph_operations.Aggregator[From, Intermediate, To])
+  trait AttributeWithLocalAggregator[From, To] {
+    val attr: VertexAttribute[From]
+    val aggregator: graph_operations.LocalAggregator[From, To]
+  }
+  object AttributeWithLocalAggregator {
+    def apply[From, To](
+      attrInp: VertexAttribute[From],
+      aggregatorInp: graph_operations.LocalAggregator[From, To]): AttributeWithLocalAggregator[From, To] = {
+      new AttributeWithLocalAggregator[From, To] {
+        val attr = attrInp
+        val aggregator = aggregatorInp
+      }
+    }
+  }
+
+  case class AttributeWithAggregator[From, Intermediate, To](
+    val attr: VertexAttribute[From],
+    val aggregator: graph_operations.Aggregator[From, Intermediate, To])
+      extends AttributeWithLocalAggregator[From, To]
 
   private def attributeWithAggregator[T](
     attr: VertexAttribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
 
     choice match {
-      case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
       case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
+    }
+  }
+
+  private def attributeWithLocalAggregator[T](
+    attr: VertexAttribute[T], choice: String): AttributeWithLocalAggregator[_, _] = {
+    choice match {
+      case "most-common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
+      case "majority-50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
+      case "majority-100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+      case _ => attributeWithAggregator(attr, choice)
     }
   }
 
@@ -663,9 +704,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   // Performs AggregateByEdgeBundle.
-  def aggregateViaConnection[From, Intermediate, To](
+  def aggregateViaConnection[From, To](
     connection: EdgeBundle,
-    attributeWithAggregator: AttributeWithAggregator[From, Intermediate, To]): VertexAttribute[To] = {
+    attributeWithAggregator: AttributeWithLocalAggregator[From, To]): VertexAttribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
     op(op.connection, connection)(op.attr, attributeWithAggregator.attr).result.attr
   }
