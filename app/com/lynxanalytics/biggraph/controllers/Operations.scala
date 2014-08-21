@@ -525,7 +525,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
       Param("direction", "Aggregate on",
         options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
-     aggregateParams(project.vertexAttributes)
+      aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]): FEStatus = {
@@ -533,7 +533,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val edges = params("direction") match {
         case "incoming edges" => project.edgeBundle
         case "outgoing edges" => reverse(project.edgeBundle)
-     }
+      }
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           edges,
@@ -541,7 +541,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
       }
       return FEStatus.success
-   }
+    }
   })
 
   register(new VertexOperation(_) {
