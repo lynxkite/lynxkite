@@ -50,6 +50,54 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
   }
 }
 
+object AggregateFromEdges {
+  class Input[From] extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val ids = vertexSet
+    val edges = edgeBundle(src, dst, idSet = ids)
+    val eattr = vertexAttribute[From](ids)
+  }
+  class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
+                                  inputs: Input[From]) extends MagicOutput(instance) {
+    val srcAttr = vertexAttribute[To](inputs.src.entity)
+    val dstAttr = vertexAttribute[To](inputs.dst.entity)
+  }
+}
+case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
+    extends TypedMetaGraphOp[AggregateFromEdges.Input[From], AggregateFromEdges.Output[From, To]] {
+  import AggregateFromEdges._
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input[From]
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val i = instance
+    val tt = aggregator.outputTypeTag(inputs.eattr.typeTag)
+    new Output[From, To]()(tt, instance, inputs)
+  }
+
+  def execute(inputDatas: DataSet,
+              o: Output[From, To],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val ct = inputs.eattr.data.classTag
+
+    val src = inputs.src.rdd
+    val dst = inputs.dst.rdd
+    val edges = inputs.edges.rdd
+    val eattr = inputs.eattr.rdd
+    val edgesWAttr = edges.sortedJoin(eattr)
+    val bySrc = edgesWAttr.map {
+      case (eid, (edge, value)) => edge.src -> value
+    }.groupBySortedKey(src.partitioner.get)
+    val byDst = edgesWAttr.map {
+      case (eid, (edge, value)) => edge.dst -> value
+    }.groupBySortedKey(dst.partitioner.get)
+    output(o.srcAttr, bySrc.mapValues(aggregator.aggregate(_)))
+    output(o.dstAttr, byDst.mapValues(aggregator.aggregate(_)))
+  }
+}
+
 object AggregateAttributeToScalar {
   class Output[To: TypeTag](
       implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
