@@ -63,6 +63,10 @@
           tooltip="Sampled&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
         </label>
+        <label ng-if="side.state.graphMode === 'sampled'" class="btn btn-default" ng-click="side.state.animate = !side.state.animate"
+          tooltip="Animate&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
+        </label>
       </div>
 
       <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
