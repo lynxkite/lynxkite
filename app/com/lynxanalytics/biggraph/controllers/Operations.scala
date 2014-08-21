@@ -85,15 +85,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Import vertices"
     val parameters = Seq(
       Param("files", "Files"),
-      Param("header", "Header"),
+      Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("filter", "(optional) Filtering expression"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
+      val files = Filename.fromString(params("files"))
+      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        files,
         params("delimiter"),
-        params("header"),
+        header,
         JavaScript(params("filter")))
       val imp = graph_operations.ImportVertexList(csv)().result
       project.vertexSet = imp.vertices
@@ -106,7 +108,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Import edges for existing vertices"
     val parameters = Seq(
       Param("files", "Files"),
-      Param("header", "Header"),
+      Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("src", "Source ID field"),
@@ -117,10 +119,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
+      val files = Filename.fromString(params("files"))
+      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        files,
         params("delimiter"),
-        params("header"),
+        header,
         JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
@@ -137,17 +141,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Import vertices and edges from single CSV fileset"
     val parameters = Seq(
       Param("files", "Files"),
-      Param("header", "Header"),
+      Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"),
       Param("filter", "(optional) Filtering expression"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
+      val files = Filename.fromString(params("files"))
+      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        files,
         params("delimiter"),
-        params("header"),
+        header,
         JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
