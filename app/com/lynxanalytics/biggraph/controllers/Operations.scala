@@ -566,7 +566,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Aggregate vertex attribute"
     val parameters = Seq(Param("prefix", "Generated name prefix", defaultValue = "")) ++
-      aggregateParams(project.vertexAttributes)
+      aggregateParams(project.vertexAttributes, needsGlobal = true)
     def enabled =
       FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
@@ -584,7 +584,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Aggregate edge attribute"
     val parameters = Seq(Param("prefix", "Generated name prefix", defaultValue = "")) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) })
+        project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) },
+        needsGlobal = true)
     def enabled =
       FEStatus.assert(edgeAttributes.size > 0, "No edge attributes")
     def apply(params: Map[String, String]): FEStatus = {
@@ -634,19 +635,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (needsGlobal) {
-            UIValue.seq(Seq("ignore", "sum", "average", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "sum", "average", "most-common", "count"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
-            UIValue.seq(Seq("ignore", "count"))
+            UIValue.seq(Seq("ignore", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "most-common", "majority-50", "majority-100", "count"))
           }
         } else {
           if (needsGlobal) {
-            UIValue.seq(Seq("ignore", "count"))
+            UIValue.seq(Seq("ignore", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "most-common", "count"))
           }
@@ -683,6 +684,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
+      case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
     }
   }
 
