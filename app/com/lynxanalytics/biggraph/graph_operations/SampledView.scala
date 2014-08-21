@@ -48,9 +48,12 @@ case class SampledView(
     } else {
       filtered.mapValues(_ => "")
     }
-    val svVerticesMap = filtered.sortedJoin(sizes).sortedJoin(labels)
+    val svVerticesMap = filtered.sortedLeftOuterJoin(sizes).sortedLeftOuterJoin(labels)
       .collect
-      .map { case (id, (((), size), label)) => (idToIdx(id), SampledViewVertex(id, size, label)) }
+      .map {
+        case (id, (((), size), label)) =>
+          (idToIdx(id), SampledViewVertex(id, size.getOrElse(0.0), label.getOrElse("")))
+      }
       .toMap
 
     val maxKey = svVerticesMap.keys.max
