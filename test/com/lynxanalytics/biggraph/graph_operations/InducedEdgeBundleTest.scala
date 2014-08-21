@@ -19,8 +19,9 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
     val op = InducedEdgeBundle()
     val induced = op(
       op.edges, example.edges)(
-        op.srcInjection, adamless.identity)(
-          op.dstInjection, adamless.identity).result.induced.toPairSet
+        op.srcMapping, ReverseEdges.run(adamless.identity))(
+          op.dstMapping, ReverseEdges.run(adamless.identity))
+      .result.induced.toPairSet
     assert(induced == Set(2 -> 1))
   }
 
@@ -28,7 +29,7 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
     val op = InducedEdgeBundle(induceDst = false)
     val induced = op(
       op.edges, example.edges)(
-        op.srcInjection, adamless.identity).result.induced.toPairSet
+        op.srcMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSet
     assert(induced == Set(2 -> 1, 1 -> 0, 2 -> 0))
   }
 
@@ -36,7 +37,7 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
     val op = InducedEdgeBundle(induceSrc = false)
     val induced = op(
       op.edges, example.edges)(
-        op.dstInjection, adamless.identity).result.induced.toPairSet
+        op.dstMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSet
     assert(induced == Set(2 -> 1, 0 -> 1))
   }
 }
