@@ -30,7 +30,7 @@ case class ComputeVertexNeighborhood(
     val c = center.getOrElse(vs.keys.first)
     var neigborhood = Set(c)
     for (i <- 0 until radius) {
-      neigborhood = es
+      neigborhood ++= es
         .values
         .filter(e => (neigborhood.contains(e.src) != neigborhood.contains(e.dst)))
         .flatMap(e => Iterator(e.src, e.dst))
