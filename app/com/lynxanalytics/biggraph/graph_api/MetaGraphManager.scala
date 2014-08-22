@@ -82,7 +82,7 @@ class MetaGraphManager(val repositoryPath: String) {
     dependentOperationsMap.getOrElse(entity.gUID, Seq())
 
   def setTag(tag: SymbolPath, entity: MetaGraphEntity): Unit = {
-    tagRoot.setTag(tag, entity.gUID)
+    tagRoot.setTag(tag, entity.gUID.toString)
     show(Seq(entity))
     saveTags()
   }

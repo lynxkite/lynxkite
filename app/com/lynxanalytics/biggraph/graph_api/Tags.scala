@@ -45,12 +45,13 @@ object TagPath {
   implicit def asTag(path: TagPath) = path.asInstanceOf[Tag]
 }
 
-final case class Tag(name: Symbol, parent: TagDir, gUID: UUID) extends TagPath {
-  def clone(newParent: TagDir, newName: Symbol): Tag = newParent.addTag(newName, gUID)
+final case class Tag(name: Symbol, parent: TagDir, content: String) extends TagPath {
+  def clone(newParent: TagDir, newName: Symbol): Tag = newParent.addTag(newName, content)
   def followPath(names: Iterable[Symbol]): Option[TagPath] =
     if (names.nonEmpty) None else Some(this)
   def allTags = Seq(this)
-  def lsRec: String = fullName + " => " + gUID + "\n"
+  def lsRec: String = fullName + " => " + content + "\n"
+  def gUID: UUID = UUID.fromString(content)
 }
 
 trait TagDir extends TagPath {
@@ -70,18 +71,18 @@ trait TagDir extends TagPath {
   def rm(offspring: SymbolPath): Unit = synchronized {
     followPath(offspring).map(_.rm())
   }
-  def addTag(name: Symbol, value: UUID): Tag = synchronized {
+  def addTag(name: Symbol, content: String): Tag = synchronized {
     assert(!children.contains(name))
-    val result = Tag(name, this, value)
+    val result = Tag(name, this, content)
     children(name) = result
     result
   }
-  def setTag(path: SymbolPath, value: UUID): Tag = synchronized {
+  def setTag(path: SymbolPath, content: String): Tag = synchronized {
     assert(!existsDir(path))
     assert(path.nonEmpty)
     if (existsTag(path)) rm(path)
     val dir = mkDirs(new SymbolPath(path.dropRight(1)))
-    dir.addTag(path.last, value)
+    dir.addTag(path.last, content)
   }
 
   def mkDir(name: Symbol): TagSubDir = synchronized {
@@ -139,12 +140,12 @@ final case class TagRoot() extends TagDir {
   override val fullName: SymbolPath = new SymbolPath(Seq())
   override def isOffspringOf(other: TagPath): Boolean = (other == this)
   def saveToString: String =
-    allTags.map(tag => "%s:%s".format(tag.fullName, tag.gUID)).mkString("\n")
+    allTags.map(tag => "%s:%s".format(tag.fullName, tag.content)).mkString("\n")
   def loadFromString(data: String) = {
     clear()
     data.split("\n").foreach {
       _ match {
-        case TagRoot.tagRE(name, value) => setTag(name, UUID.fromString(value))
+        case TagRoot.tagRE(name, value) => setTag(name, value)
       }
     }
   }
