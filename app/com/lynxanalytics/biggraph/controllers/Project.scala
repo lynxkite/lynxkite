@@ -19,14 +19,53 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val op = graph_operations.CountEdges()
       op(op.edges, edgeBundle).result.count.value
     }
+    val undo = if (checkpointCount > 0) (checkpointCount - 1).toString else ""
+    val redo = if (undoCount > 0) (checkpointCount + 1).toString else ""
     FEProject(
-      projectName, vs, eb,
+      projectName, undo, redo, vs, eb,
       vsCount, esCount, notes,
       scalars.map { case (name, scalar) => UIValue(scalar.gUID.toString, name) }.toSeq,
       vertexAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
       edgeAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
       segmentations.map(_.toFE),
       opCategories = Seq())
+  }
+
+  def checkpointCount = get("checkpointCount") match {
+    case "" => 0
+    case x => x.toInt
+  }
+  def checkpointCount_=(x: Int): Unit = set("checkpointCount", x.toString)
+  def undoCount = get("undoCount") match {
+    case "" => 0
+    case x => x.toInt
+  }
+  def undoCount_=(x: Int): Unit = set("undoCount", x.toString)
+
+  def checkpoint(): Unit = {
+    cp(path, s"checkpoints/$path/$checkpointCount")
+    undoCount = 0
+    checkpointCount += 1
+  }
+  def undo(checkpointIndex: Int): Unit = {
+    val u = undoCount
+    val c = checkpointCount
+    if (u == 0) {
+      checkpoint() // Save state on first undo.
+    }
+    assert(checkpointIndex == c - 1, "$checkpointIndex != $c - 1")
+    cp(s"checkpoints/$path/$checkpointIndex", path)
+    undoCount = u + 1
+    checkpointCount = c - 1
+  }
+  def redo(checkpointIndex: Int): Unit = {
+    val u = undoCount
+    val c = checkpointCount
+    assert(u > 0, s"undoCount is $undoCount")
+    assert(checkpointIndex == c + 1, "$checkpointIndex != $c + 1")
+    cp(s"checkpoints/$path/$checkpointIndex", path)
+    undoCount = u - 1
+    checkpointCount = c + 1
   }
 
   def isSegmentation = {
@@ -152,9 +191,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def segmentation(name: String) = Segmentation(projectName, name)
   def segmentationNames = ls("segmentations").map(_.last.name)
 
-  def copy(to: Project) = {
-    existing(to.path).foreach(manager.rmTag(_))
-    manager.cpTag(path, to.path)
+  def copy(to: Project): Unit = cp(path, to.path)
+
+  private def cp(from: SymbolPath, to: SymbolPath) = {
+    existing(to).foreach(manager.rmTag(_))
+    manager.cpTag(from, to)
   }
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
@@ -166,7 +207,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       manager.setTag(path / tag, entity)
     }
   }
-  private def get(tag: String): MetaGraphEntity = existing(path / tag).map(manager.entity(_)).getOrElse(null)
+  private def set(tag: String, content: String): Unit = manager.setTag(path / tag, content)
+  private def get(tag: String): String = existing(path / tag).map(manager.getTag(_)).getOrElse("")
   private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
 
   abstract class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
