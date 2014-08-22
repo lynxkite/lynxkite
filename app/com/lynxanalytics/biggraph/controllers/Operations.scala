@@ -170,10 +170,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Maximal cliques"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
+      Param("bothdir", "Edges required in both directions", defaultValue = "true"),
       Param("min", "Minimum clique size", defaultValue = "3"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.FindMaxCliques(params("min").toInt)
+      val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
       segmentation.project.vertexSet = result.segments
@@ -206,12 +207,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
       Param(
         "communities_name", "Name for communities segmentation", defaultValue = "communities"),
+      Param("bothdir", "Edges required in cliques in both directions", defaultValue = "true"),
       Param("min_cliques", "Minimum clique size", defaultValue = "3"),
       Param("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val cliquesResult = {
-        val op = graph_operations.FindMaxCliques(params("min_cliques").toInt)
+        val op = graph_operations.FindMaxCliques(
+          params("min_cliques").toInt, params("bothdir").toBoolean)
         op(op.es, project.edgeBundle).result
       }
 
