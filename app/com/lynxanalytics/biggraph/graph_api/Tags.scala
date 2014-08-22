@@ -72,21 +72,21 @@ trait TagDir extends TagPath {
     followPath(offspring).map(_.rm())
   }
   def addTag(name: Symbol, content: String): Tag = synchronized {
-    assert(!children.contains(name))
+    assert(!children.contains(name), s"'$this' already contains '$name'.")
     val result = Tag(name, this, content)
     children(name) = result
     result
   }
   def setTag(path: SymbolPath, content: String): Tag = synchronized {
-    assert(!existsDir(path))
-    assert(path.nonEmpty)
+    assert(!existsDir(path), s"'$path' is a directory.")
+    assert(path.nonEmpty, s"Cannot create path named '$path'.")
     if (existsTag(path)) rm(path)
     val dir = mkDirs(new SymbolPath(path.dropRight(1)))
     dir.addTag(path.last, content)
   }
 
   def mkDir(name: Symbol): TagSubDir = synchronized {
-    assert(!existsTag(name))
+    assert(!existsTag(name), s"'$name' already exists.")
     if (existsDir(name)) return (this / name).asInstanceOf[TagSubDir]
     val result = TagSubDir(name, this)
     children(name) = result
@@ -98,9 +98,9 @@ trait TagDir extends TagPath {
   }
 
   def cp(from: SymbolPath, to: SymbolPath): TagPath = synchronized {
-    assert(to.nonEmpty)
-    assert(!exists(to))
-    assert(exists(from))
+    assert(to.nonEmpty, s"Cannot copy from '$from' to '$to'.")
+    assert(!exists(to), s"'$to' already exists.")
+    assert(exists(from), s"'$from' does not exist.")
     val toDir = mkDirs(to.dropRight(1))
     (this / from).clone(toDir, to.last)
   }
@@ -111,7 +111,7 @@ trait TagDir extends TagPath {
   }
 
   def clone(newParent: TagDir, newName: Symbol): TagSubDir = {
-    assert(!newParent.isOffspringOf(this))
+    assert(!newParent.isOffspringOf(this), s"'$newParent' contains '$this'.")
     val cloned = newParent.mkDir(newName)
     children.foreach { case (name, child) => child.clone(cloned, name) }
     cloned
