@@ -80,6 +80,8 @@ abstract class FEOperation {
 
 case class FEProject(
   name: String,
+  undoTo: String,
+  redoTo: String,
   vertexSet: String,
   edgeBundle: String,
   vertexCount: Long,
@@ -103,6 +105,8 @@ case class CreateProjectRequest(name: String, notes: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 case class ProjectFilterRequest(project: String, filters: Seq[FEVertexAttributeFilter])
 case class ForkProjectRequest(from: String, to: String)
+case class UndoProjectRequest(project: String, checkpoint: String)
+case class RedoProjectRequest(project: String, checkpoint: String)
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
@@ -269,6 +273,16 @@ class BigGraphController(env: BigGraphEnvironment) {
     Project(request.from).copy(Project(request.to))
     FEStatus.success
   }
+
+  def undoProject(request: UndoProjectRequest): FEStatus = {
+    Project(request.project).undo(request.checkpoint.toInt)
+    FEStatus.success
+  }
+
+  def redoProject(request: RedoProjectRequest): FEStatus = {
+    Project(request.project).redo(request.checkpoint.toInt)
+    FEStatus.success
+  }
 }
 
 abstract class Operation(val project: Project, val category: String) {
@@ -310,6 +324,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
+    p.checkpoint()
     ops.head.apply(req.op.parameters)
   }
 }
