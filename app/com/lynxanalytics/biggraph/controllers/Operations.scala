@@ -429,8 +429,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       if (params("seg").isEmpty)
         return FEStatus.failure("Nothing selected for export.")
       val path = Filename.fromString(params("path"))
-      if (path.isEmpty)
-        return FEStatus.failure("No export path specified.")
       val seg = project.segmentation(params("seg"))
       graph_util.CSVExport
         .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
