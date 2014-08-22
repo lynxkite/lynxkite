@@ -419,6 +419,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new SegmentationOperation(_) {
+    val title = "Export segmentation to CSV"
+    val parameters = Seq(
+      Param("path", "Destination path"),
+      Param("seg", "Segmentation", options = segmentations))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations.")
+    def apply(params: Map[String, String]): FEStatus = {
+      if (params("seg").isEmpty)
+        return FEStatus.failure("Nothing selected for export.")
+      val path = Filename.fromString(params("path"))
+      val seg = project.segmentation(params("seg"))
+      graph_util.CSVExport
+        .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
+        .saveToDir(path)
+      return FEStatus.success
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Edge Graph"
     val parameters = Seq()
