@@ -168,8 +168,8 @@ angular.module('biggraph')
       }
       return undefined;
     }
-    util.deepWatch($scope, 'left.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
-    util.deepWatch($scope, 'right.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('left.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
 
     $scope.left = new Side();
     $scope.right = new Side();
@@ -177,9 +177,9 @@ angular.module('biggraph')
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
 
-    util.deepWatch($scope, 'left.project', function() { $scope.left.updateGraphState(); });
+    $scope.$watch('left.project.$resolved', function() { $scope.left.updateGraphState(); });
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
-    util.deepWatch($scope, 'right.project', function() { $scope.right.updateGraphState(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.right.updateGraphState(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
     Side.prototype.updateGraphState = function() {
       this.graphState = angular.copy(this.state);
