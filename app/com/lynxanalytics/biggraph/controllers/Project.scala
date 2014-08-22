@@ -31,16 +31,16 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       opCategories = Seq())
   }
 
-  def checkpointCount = get("checkpointCount") match {
+  private def checkpointCount = get("checkpointCount") match {
     case "" => 0
     case x => x.toInt
   }
-  def checkpointCount_=(x: Int): Unit = set("checkpointCount", x.toString)
-  def undoCount = get("undoCount") match {
+  private def checkpointCount_=(x: Int): Unit = set("checkpointCount", x.toString)
+  private def undoCount = get("undoCount") match {
     case "" => 0
     case x => x.toInt
   }
-  def undoCount_=(x: Int): Unit = set("undoCount", x.toString)
+  private def undoCount_=(x: Int): Unit = set("undoCount", x.toString)
 
   def checkpoint(): Unit = {
     cp(path, s"checkpoints/$path/$checkpointCount")
