@@ -150,9 +150,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       builder = builder(op.sizeAttr, attr)
     }
     if (request.labelAttributeId.nonEmpty) {
-      val attr = metaManager.vertexAttributeOf[String](request.labelAttributeId.asUUID)
+      val attr = metaManager.vertexAttribute(request.labelAttributeId.asUUID)
       attr.rdd.cache
-      builder = builder(op.labelAttr, attr)
+      val sattr: VertexAttribute[String] =
+        if (attr.is[String]) attr.runtimeSafeCast[String]
+        else graph_operations.VertexAttributeToString.run(attr)
+
+      builder = builder(op.labelAttr, sattr)
     }
     val diagramMeta = builder.result.svVertices
     val vertices = diagramMeta.value
