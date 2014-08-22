@@ -186,11 +186,12 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: 500, gravity: 0.05, drag: 0.2 });
     // Initial layout.
-    while (engine.step(vertices)) {}
-    // Call vertices.animate() later to trigger interactive layout.
+    var t1 = Date.now();
+    while (engine.step(vertices) && Date.now() - t1 <= 2000) {}
     var animating = false;
+    // Call vertices.animate() later to trigger interactive layout.
     vertices.animate = function() {
-      if (!animating) {
+      if (!animating && vertices.side.animate) {
         animating = true;
         window.requestAnimationFrame(vertices.step);
       }
@@ -202,6 +203,7 @@ angular.module('biggraph').directive('graphView', function($window) {
         animating = false;
       }
     };
+    vertices.animate();
   };
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
