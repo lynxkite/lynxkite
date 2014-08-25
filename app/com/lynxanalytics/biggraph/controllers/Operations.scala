@@ -170,7 +170,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Maximal cliques"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
-      Param("bothdir", "Edges required in both directions", defaultValue = "true"),
+      Param("bothdir", "Edges required in both directions", options = UIValue.seq(Seq("true", "false"))),
       Param("min", "Minimum clique size", defaultValue = "3"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
