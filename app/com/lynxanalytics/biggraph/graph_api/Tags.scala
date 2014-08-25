@@ -20,11 +20,13 @@ object SymbolPath {
   implicit def fromSymbol(sym: Symbol): SymbolPath = fromString(sym.name)
 }
 
-sealed trait TagPath extends Serializable {
+sealed trait TagPath extends Serializable with Ordered[TagPath] {
   val name: Symbol
   val parent: TagDir
 
   def fullName: SymbolPath = parent.fullName / name
+
+  def compare(other: TagPath) = fullName compare other.fullName
 
   def rm() = parent.rmChild(name)
 
