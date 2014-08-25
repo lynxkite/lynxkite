@@ -194,6 +194,20 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
+  case class Max() extends SimpleAggregator[Double, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
+    def zero = Double.NegativeInfinity
+    def merge(a: Double, b: Double) = math.max(a, b)
+    def combine(a: Double, b: Double) = math.max(a, b)
+  }
+
+  case class Min() extends SimpleAggregator[Double, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
+    def zero = Double.PositiveInfinity
+    def merge(a: Double, b: Double) = math.min(a, b)
+    def combine(a: Double, b: Double) = math.min(a, b)
+  }
+
   case class Average() extends CompoundAggregator[Double, Double, Double, Double, Double, Double] {
     val agg1 = Count[Double]()
     val agg2 = Sum()

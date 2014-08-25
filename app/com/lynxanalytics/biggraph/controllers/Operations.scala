@@ -687,21 +687,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (needsGlobal) {
-            UIValue.seq(Seq("ignore", "sum", "average", "count", "first"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "sum", "average", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most-common", "majority-50", "majority-100", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count"))
           }
         } else {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "count"))
           }
         }
         Param(s"aggregate-$name", name, options = options)
@@ -734,6 +734,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     choice match {
       case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
+      case "min" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Min())
+      case "max" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Max())
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
@@ -743,9 +745,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   private def attributeWithLocalAggregator[T](
     attr: VertexAttribute[T], choice: String): AttributeWithLocalAggregator[_, _] = {
     choice match {
-      case "most-common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
-      case "majority-50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
-      case "majority-100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+      case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
+      case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
+      case "majority_100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
       case _ => attributeWithAggregator(attr, choice)
     }
   }
