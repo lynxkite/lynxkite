@@ -19,8 +19,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val op = graph_operations.CountEdges()
       op(op.edges, edgeBundle).result.count.value
     }
-    val undo = if (checkpointCount > 0) (checkpointCount - 1).toString else ""
-    val redo = if (undoCount > 0) (checkpointCount + 1).toString else ""
+    val undo = if (checkpointIndex > 0) "operation" else ""
+    val redo = if (checkpointIndex < checkpointCount) "operation" else ""
     FEProject(
       projectName, undo, redo, vs, eb,
       vsCount, esCount, notes,
@@ -36,36 +36,32 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     case x => x.toInt
   }
   private def checkpointCount_=(x: Int): Unit = set("checkpointCount", x.toString)
-  private def undoCount = get("undoCount") match {
+  private def checkpointIndex = get("checkpointIndex") match {
     case "" => 0
     case x => x.toInt
   }
-  private def undoCount_=(x: Int): Unit = set("undoCount", x.toString)
+  private def checkpointIndex_=(x: Int): Unit = set("checkpointIndex", x.toString)
 
   def checkpoint(): Unit = {
     cp(path, s"checkpoints/$path/$checkpointCount")
-    undoCount = 0
-    checkpointCount += 1
+    checkpointIndex += 1
+    checkpointCount = checkpointIndex
   }
-  def undo(checkpointIndex: Int): Unit = {
-    val u = undoCount
+  def undo(): Unit = {
     val c = checkpointCount
-    if (u == 0) {
-      checkpoint() // Save state on first undo.
-    }
-    assert(checkpointIndex == c - 1, "$checkpointIndex != $c - 1")
+    val i = checkpointIndex
+    assert(checkpointIndex > 0, s"Already at checkpoint $checkpointIndex.")
     cp(s"checkpoints/$path/$checkpointIndex", path)
-    undoCount = u + 1
-    checkpointCount = c - 1
+    checkpointIndex = i - 1
+    checkpointCount = c
   }
-  def redo(checkpointIndex: Int): Unit = {
-    val u = undoCount
+  def redo(): Unit = {
     val c = checkpointCount
-    assert(u > 0, s"undoCount is $undoCount")
-    assert(checkpointIndex == c + 1, "$checkpointIndex != $c + 1")
+    val i = checkpointIndex
+    assert(checkpointIndex < checkpointCount - 1, s"Already at checkpoint $checkpointIndex of $checkpointCount.")
     cp(s"checkpoints/$path/$checkpointIndex", path)
-    undoCount = u - 1
-    checkpointCount = c + 1
+    checkpointIndex = i + 1
+    checkpointCount = c
   }
 
   def isSegmentation = {
