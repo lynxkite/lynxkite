@@ -80,8 +80,8 @@ abstract class FEOperation {
 
 case class FEProject(
   name: String,
-  undoTo: String,
-  redoTo: String,
+  undoOp: String, // Name of last operation. Empty if there is nothing to undo.
+  redoOp: String, // Name of next operation. Empty if there is nothing to redo.
   vertexSet: String,
   edgeBundle: String,
   vertexCount: Long,
@@ -105,8 +105,8 @@ case class CreateProjectRequest(name: String, notes: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 case class ProjectFilterRequest(project: String, filters: Seq[FEVertexAttributeFilter])
 case class ForkProjectRequest(from: String, to: String)
-case class UndoProjectRequest(project: String, checkpoint: String)
-case class RedoProjectRequest(project: String, checkpoint: String)
+case class UndoProjectRequest(project: String)
+case class RedoProjectRequest(project: String)
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
@@ -275,12 +275,12 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def undoProject(request: UndoProjectRequest): FEStatus = {
-    Project(request.project).undo(request.checkpoint.toInt)
+    Project(request.project).undo
     FEStatus.success
   }
 
   def redoProject(request: RedoProjectRequest): FEStatus = {
-    Project(request.project).redo(request.checkpoint.toInt)
+    Project(request.project).redo
     FEStatus.success
   }
 }

@@ -111,7 +111,6 @@ angular.module('biggraph')
       $resource('/ajax/undoProject').save(
         {
           project: this.state.projectName,
-          checkpoint: this.project.undoTo,
         },
         function() {
           that.reload();
@@ -122,7 +121,6 @@ angular.module('biggraph')
       $resource('/ajax/redoProject').save(
         {
           project: this.state.projectName,
-          checkpoint: this.project.redoTo,
         },
         function() {
           that.reload();
