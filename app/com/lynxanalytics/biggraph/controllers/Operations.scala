@@ -689,19 +689,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most-common", "majority-50", "majority-100", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count"))
           }
         } else {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "count"))
           }
         }
         Param(s"aggregate-$name", name, options = options)
@@ -745,9 +745,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   private def attributeWithLocalAggregator[T](
     attr: VertexAttribute[T], choice: String): AttributeWithLocalAggregator[_, _] = {
     choice match {
-      case "most-common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
-      case "majority-50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
-      case "majority-100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+      case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
+      case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
+      case "majority_100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
       case _ => attributeWithAggregator(attr, choice)
     }
   }
