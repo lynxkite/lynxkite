@@ -27,7 +27,7 @@ case class ComputeVertexNeighborhood(
     val vs = inputs.vertices.rdd
     val es = inputs.edges.rdd
     val vsPart = vs.partitioner.get
-    val c = center.getOrElse(vs.keys.first)
+    val c = center.fold(vs.keys.first)(c => if (vs.lookup(c).size > 0) c else vs.keys.first)
     var neigborhood = Set(c)
     for (i <- 0 until radius) {
       neigborhood ++= es
