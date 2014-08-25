@@ -262,7 +262,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
   }
   private def get(tag: String): MetaGraphEntity = existing(path / tag).map(manager.entity(_)).getOrElse(null)
-  private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir).sorted else Nil
+  private def ls(dir: String) = if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
 
   abstract class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit

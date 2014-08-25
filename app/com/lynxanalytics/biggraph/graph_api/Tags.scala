@@ -123,7 +123,7 @@ trait TagDir extends TagPath {
 
   def clear(): Unit = children.clear()
 
-  def ls: Seq[TagPath] = children.values.toSeq
+  def ls: Seq[TagPath] = children.values.toSeq.sorted
 
   private val children = mutable.Map[Symbol, TagPath]()
 }
