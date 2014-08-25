@@ -6,8 +6,11 @@ import com.lynxanalytics.biggraph.graph_operations
 import scala.reflect.runtime.universe._
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
+  val separator = "|"
+  assert(!projectName.contains(separator), s"Invalid project name: $projectName")
   val path: SymbolPath = s"projects/$projectName"
   def toFE(implicit dm: DataManager): FEProject = {
+    assert(manager.tagExists(path / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     // For now, counts are calculated here. TODO: Make them respond to soft filters.
@@ -19,10 +22,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val op = graph_operations.CountEdges()
       op(op.edges, edgeBundle).result.count.value
     }
-    val undo = if (checkpointIndex > 0) "operation" else ""
-    val redo = if (checkpointIndex < checkpointCount) "operation" else ""
     FEProject(
-      projectName, undo, redo, vs, eb,
+      projectName, lastOperation, nextOperation, vs, eb,
       vsCount, esCount, notes,
       scalars.map { case (name, scalar) => UIValue(scalar.gUID.toString, name) }.toSeq,
       vertexAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
@@ -31,37 +32,48 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       opCategories = Seq())
   }
 
-  private def checkpointCount = get("checkpointCount") match {
-    case "" => 0
-    case x => x.toInt
+  private def checkpoints: Seq[String] = get("checkpoints") match {
+    case "" => Seq()
+    case x => x.split(java.util.regex.Pattern.quote(separator), -1)
   }
-  private def checkpointCount_=(x: Int): Unit = set("checkpointCount", x.toString)
+  private def checkpoints_=(cs: Seq[String]): Unit = set("checkpoints", cs.mkString(separator))
   private def checkpointIndex = get("checkpointIndex") match {
     case "" => 0
     case x => x.toInt
   }
   private def checkpointIndex_=(x: Int): Unit = set("checkpointIndex", x.toString)
 
-  def checkpoint(): Unit = {
-    cp(path, s"checkpoints/$path/$checkpointCount")
-    checkpointIndex += 1
-    checkpointCount = checkpointIndex
+  private def lastOperation = get("lastOperation")
+  private def lastOperation_=(x: String): Unit = set("lastOperation", x)
+  private def nextOperation = {
+    val i = checkpointIndex + 1
+    if (checkpoints.size <= i) ""
+    else manager.getTag(s"${checkpoints(i)}/lastOperation")
+  }
+
+  def checkpointAfter(op: String): Unit = {
+    lastOperation = op
+    val nextIndex = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
+    val checkpoint = s"checkpoints/$path/$nextIndex"
+    checkpoints = checkpoints.take(nextIndex) :+ checkpoint
+    checkpointIndex = nextIndex
+    cp(path, checkpoint)
   }
   def undo(): Unit = {
-    val c = checkpointCount
+    val c = checkpoints
     val i = checkpointIndex
-    assert(checkpointIndex > 0, s"Already at checkpoint $checkpointIndex.")
-    cp(s"checkpoints/$path/$checkpointIndex", path)
+    assert(i > 0, s"Already at checkpoint $i.")
+    cp(c(i - 1), path)
     checkpointIndex = i - 1
-    checkpointCount = c
+    checkpoints = c
   }
   def redo(): Unit = {
-    val c = checkpointCount
+    val c = checkpoints
     val i = checkpointIndex
-    assert(checkpointIndex < checkpointCount - 1, s"Already at checkpoint $checkpointIndex of $checkpointCount.")
-    cp(s"checkpoints/$path/$checkpointIndex", path)
+    assert(i < c.size - 1, s"Already at checkpoint $i of ${c.size}.")
+    cp(c(i + 1), path)
     checkpointIndex = i + 1
-    checkpointCount = c
+    checkpoints = c
   }
 
   def isSegmentation = {
