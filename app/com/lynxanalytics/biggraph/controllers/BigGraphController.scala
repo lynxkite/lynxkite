@@ -253,7 +253,9 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def createProject(request: CreateProjectRequest): serving.Empty = {
-    Project(request.name).notes = request.notes
+    val p = Project(request.name)
+    p.notes = request.notes
+    p.checkpointAfter("") // Initial checkpoint.
     return serving.Empty()
   }
 
@@ -324,7 +326,10 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
-    p.checkpoint()
-    ops.head.apply(req.op.parameters)
+    try {
+      ops.head.apply(req.op.parameters)
+    } finally {
+      p.checkpointAfter(ops.head.title)
+    }
   }
 }
