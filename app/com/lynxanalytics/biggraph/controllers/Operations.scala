@@ -687,9 +687,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (needsGlobal) {
-            UIValue.seq(Seq("ignore", "sum", "average", "count", "first"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "sum", "average", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most-common", "count"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
@@ -734,6 +734,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     choice match {
       case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
+      case "min" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Min())
+      case "max" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Max())
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
