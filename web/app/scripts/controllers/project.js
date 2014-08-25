@@ -11,6 +11,7 @@ angular.module('biggraph')
         bucketCount: 4,
         sampleRadius: 1,
         center: undefined,
+        animate: false,
       };
     }
 
@@ -31,6 +32,25 @@ angular.module('biggraph')
       // and could be removed later.
       this.graphState = undefined;
     }
+
+    Side.prototype.getViewData = function() {
+      var viewData = angular.copy(this.state);
+      if (this.project === undefined || !this.project.$resolved) {
+        return;
+      }
+      viewData.vertexSet = { id: this.project.vertexSet };
+      viewData.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
+      viewData.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
+      viewData.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
+      viewData.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+      
+      if (this.project.edgeBundle !== '') {
+        viewData.edgeBundle = { id: this.project.edgeBundle };
+      } else {
+        viewData.edgeBundle = undefined;
+      }
+      return viewData;
+    };
 
     Side.prototype.shortName = function() {
       var name = this.state.projectName;
@@ -177,11 +197,11 @@ angular.module('biggraph')
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
 
-    util.deepWatch($scope, 'left.project', function() { $scope.left.updateGraphState(); });
-    util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
-    util.deepWatch($scope, 'right.project', function() { $scope.right.updateGraphState(); });
-    util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
-    Side.prototype.updateGraphState = function() {
+    //util.deepWatch($scope, 'left.project', function() { $scope.left.updateGraphState(); });
+    //util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
+    //util.deepWatch($scope, 'right.project', function() { $scope.right.updateGraphState(); });
+    //util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
+    /*Side.prototype.updateGraphState = function() {
       this.graphState = angular.copy(this.state);
       if (this.project === undefined || !this.project.$resolved) {
         return;
@@ -199,7 +219,7 @@ angular.module('biggraph')
       } else {
         this.graphState.edgeBundle = undefined;
       }
-    };
+    };*/
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes

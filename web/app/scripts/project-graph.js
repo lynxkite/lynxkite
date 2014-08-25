@@ -6,55 +6,60 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
     scope: { left: '=', right: '=', leftToRightPath: '=' },
     replace: false,
     templateUrl: 'project-graph.html',
-    link: function(scope) {
-      scope.showGraph = function() { return scope.left.graphMode || scope.right.graphMode; };
+    link: function(scope) {      
+      scope.showGraph = function() {
+        var leftViewData = scope.left.getViewData();
+        var rightViewData = scope.right.getViewData();
+        return (leftViewData && leftViewData.graphMode) || (rightViewData && rightViewData.graphMode);
+      };
 
-      util.deepWatch(scope, 'left', update);
-      util.deepWatch(scope, 'right', update);
+      util.deepWatch(scope, 'left.state', update);
+      util.deepWatch(scope, 'right.state', update);
 
       function update() {
-        if (!scope.showGraph()) { return; }
+        var leftViewData = scope.left.getViewData();
+        var rightViewData = scope.right.getViewData();        
         var sides = [];
-        if (scope.left.graphMode && (scope.left.vertexSet !== undefined)) {
-          sides.push(scope.left);
+        if (leftViewData && leftViewData.graphMode && (leftViewData.vertexSet !== undefined)) {
+          sides.push(leftViewData);
         }
-        if (scope.right.graphMode && (scope.right.vertexSet !== undefined)) {
-          sides.push(scope.right);
+        if (rightViewData && rightViewData.graphMode && (rightViewData.vertexSet !== undefined)) {
+          sides.push(rightViewData);
         }
         if (sides.length === 0) { return; }
         var q = { vertexSets: [], edgeBundles: [] };
         for (var i = 0; i < sides.length; ++i) {
-          var side = sides[i];
-          if (side.edgeBundle !== undefined) {
+          var viewData = sides[i];
+          if (viewData.edgeBundle !== undefined) {
             q.edgeBundles.push({
               srcDiagramId: 'idx[' + i + ']',
               dstDiagramId: 'idx[' + i + ']',
               srcIdx: i,
               dstIdx: i,
-              bundleSequence: [{ bundle: side.edgeBundle.id, reversed: false }]
+              bundleSequence: [{ bundle: viewData.edgeBundle.id, reversed: false }]
             });
           }
           var filters = [];
-          for (var attr in side.filters) {
-            if (side.filters[attr] !== '') {
-              filters.push({ attributeId: attr, valueSpec: side.filters[attr] });
+          for (var attr in viewData.filters) {
+            if (viewData.filters[attr] !== '') {
+              filters.push({ attributeId: attr, valueSpec: viewData.filters[attr] });
             }
           }
           q.vertexSets.push({
-            vertexSetId: side.vertexSet.id,
+            vertexSetId: viewData.vertexSet.id,
             filters: filters,
-            mode: side.graphMode,
+            mode: viewData.graphMode,
             // Bucketed view parameters.
-            xBucketingAttributeId: side.xAttribute || '',
-            yBucketingAttributeId: side.yAttribute || '',
-            xNumBuckets: parseInt(side.bucketCount),  // angular.js/pull/7370
-            yNumBuckets: parseInt(side.bucketCount),  // angular.js/pull/7370
+            xBucketingAttributeId: viewData.xAttribute || '',
+            yBucketingAttributeId: viewData.yAttribute || '',
+            xNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
+            yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             // Sampled view parameters.
-            radius: parseInt(side.sampleRadius),  // angular.js/pull/7370
-            centralVertexId: (side.center || '').toString(),
-            sampleSmearEdgeBundleId: (side.edgeBundle || { id: '' }).id,
-            labelAttributeId: side.labelAttribute || '',
-            sizeAttributeId: side.sizeAttribute || '',
+            radius: parseInt(viewData.sampleRadius),  // angular.js/pull/7370
+            centralVertexId: (viewData.center || '').toString(),
+            sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
+            labelAttributeId: viewData.labelAttribute || '',
+            sizeAttributeId: viewData.sizeAttribute || '',
           });
         }
         if (sides.length === 2 && scope.leftToRightPath !== undefined) {
