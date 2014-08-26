@@ -381,6 +381,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Export vertex attributes to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("true", "false"))),
       Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
@@ -391,9 +392,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val path = Filename.fromString(params("path"))
       if (path.isEmpty)
         return FEStatus.failure("No export path specified.")
-      graph_util.CSVExport
-        .exportVertexAttributes(attrs, labels)
-        .saveToDir(path)
+      val csv =
+        graph_util.CSVExport
+          .exportVertexAttributes(attrs, labels)
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
       return FEStatus.success
     }
   })
@@ -402,6 +408,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Export edge attributes to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("true", "false"))),
       Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
     def apply(params: Map[String, String]): FEStatus = {
@@ -412,9 +419,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val path = Filename.fromString(params("path"))
       if (path.isEmpty)
         return FEStatus.failure("No export path specified.")
-      graph_util.CSVExport
+      val csv = graph_util.CSVExport
         .exportEdgeAttributes(attrs, labels)
-        .saveToDir(path)
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
       return FEStatus.success
     }
   })
@@ -423,6 +434,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Export segmentation to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("true", "false"))),
       Param("seg", "Segmentation", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations.")
     def apply(params: Map[String, String]): FEStatus = {
@@ -430,9 +442,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         return FEStatus.failure("Nothing selected for export.")
       val path = Filename.fromString(params("path"))
       val seg = project.segmentation(params("seg"))
-      graph_util.CSVExport
+      val csv = graph_util.CSVExport
         .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
-        .saveToDir(path)
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
       return FEStatus.success
     }
   })
