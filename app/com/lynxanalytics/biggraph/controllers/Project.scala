@@ -231,8 +231,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   abstract class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit
     def update(name: String, entity: T) = {
-      validate(name, entity)
-      manager.setTag(path / dir / name, entity)
+      if (entity == null) {
+        existing(path / dir / name).foreach(manager.rmTag(_))
+      } else {
+        validate(name, entity)
+        manager.setTag(path / dir / name, entity)
+      }
     }
     def apply(name: String) =
       manager.entity(path / dir / name).asInstanceOf[T]
