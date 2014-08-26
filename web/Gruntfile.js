@@ -218,7 +218,6 @@ module.exports = function (grunt) {
     // The following *-min tasks produce minified files in the dist folder
     cssmin: {
       options: {
-        noRebase: true,
         root: '<%= yeoman.app %>'
       }
     },
