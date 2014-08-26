@@ -54,7 +54,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def checkpointAfter(op: String): Unit = {
     lastOperation = op
     val nextIndex = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
-    val checkpoint = s"checkpoints/$path/$nextIndex"
+    val timestamp = Timestamp.toString
+    val checkpoint = s"checkpoints/$path/$timestamp"
     checkpoints = checkpoints.take(nextIndex) :+ checkpoint
     checkpointIndex = nextIndex
     cp(path, checkpoint)
