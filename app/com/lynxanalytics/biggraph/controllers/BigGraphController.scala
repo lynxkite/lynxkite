@@ -334,11 +334,11 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
         s
       case Success(s) =>
         // Discard potentially corrupt changes.
-        p.reloadCheckpoint()
+        p.reloadCurrentCheckpoint()
         throw new Exception(s.failureReason)
       case Failure(e) =>
         // Discard potentially corrupt changes.
-        p.reloadCheckpoint()
+        p.reloadCurrentCheckpoint()
         throw e;
     }
   }
