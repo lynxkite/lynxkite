@@ -23,6 +23,15 @@ html {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
+.clicky.clicky-text {
+  width: 30px;
+  line-height: 30px;
+  padding: 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
 .panel-heading + .list-group sublist .list-group-item:first-child {
   border-top-width: 1px;
 }
