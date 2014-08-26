@@ -25,6 +25,12 @@ case class CSVData(val header: Seq[String],
     (path / "header").createFromStrings(CSVData.lineToString(header))
     saveDataToDir(path / "data")
   }
+
+  def saveToSingleFile(path: Filename) = {
+    val stringRDD = toStringRDD.repartition(1)
+    val full = stringRDD.mapPartitions(it => Iterator(CSVData.lineToStringNoNewLine(header)) ++ it)
+    path.saveAsTextFile(full)
+  }
 }
 object CSVData {
   def lineToStringNoNewLine(line: Seq[String]): String = line.mkString(",")
@@ -54,8 +60,15 @@ object CSVExport {
   def exportEdgeAttributes(attributes: Seq[EdgeAttribute[_]],
                            attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
     assert(attributes.size > 0)
-    assert(attributes.size == attributeLabels.size)
     val edgeBundle = attributes.head.edgeBundle
+    exportEdgeAttributes(edgeBundle, attributes, attributeLabels)
+  }
+  def exportEdgeAttributes(
+    edgeBundle: EdgeBundle,
+    attributes: Seq[EdgeAttribute[_]],
+    attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
+
+    assert(attributes.size == attributeLabels.size)
     assert(attributes.forall(_.edgeBundle == edgeBundle))
     val indexedEdges: rdd.RDD[(ID, Seq[String])] =
       dataManager.get(edgeBundle).rdd.mapPartitions(it =>

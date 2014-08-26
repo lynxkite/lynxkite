@@ -31,14 +31,15 @@ case class Filename(
   def reader() = new BufferedReader(new InputStreamReader(open))
 
   def loadTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
-    // SparkContext.textfile does not accept hadoop configuration as a parameter (we need to pass AWS credentials)
-    // textfile calls hadoopfile that uses MRv1 while the newAPIHadoopFile uses the MRv2 API (and accepts conf)
+    val conf = hadoopConfiguration
+    // Make sure we get many small splits.
+    conf.setLong("mapred.max.split.size", 50000000)
     sc.newAPIHadoopFile(
       filename,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.Text],
       fClass = classOf[hadoop.mapreduce.lib.input.TextInputFormat],
-      conf = hadoopConfiguration)
+      conf = conf)
       .map(pair => pair._2.toString)
   }
 

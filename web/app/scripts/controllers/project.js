@@ -127,6 +127,20 @@ angular.module('biggraph')
         });
     };
 
+    Side.prototype.rename = function(kind, oldName, newName) {
+      if (oldName === newName) { return; }
+      var that = this;
+      var params = { from: oldName, to: newName };
+      $resource('/ajax/projectOp').save(
+        {
+          project: this.state.projectName,
+          op: { id: 'Rename-' + kind, parameters: params },
+        },
+        function() {
+          that.reload();
+        });
+    };
+
     Side.prototype.nonEmptyFilters = function() {
       var res = [];
       for (var attr in this.state.filters) {
