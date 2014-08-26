@@ -6,25 +6,21 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
     scope: { left: '=', right: '=', leftToRightPath: '=' },
     replace: false,
     templateUrl: 'project-graph.html',
-    link: function(scope) {      
+    link: function(scope) {
       scope.showGraph = function() {
-        var leftViewData = scope.left.getViewData();
-        var rightViewData = scope.right.getViewData();
-        return (leftViewData && leftViewData.graphMode) || (rightViewData && rightViewData.graphMode);
+        return (scope.left && scope.left.graphMode) || (scope.right && scope.right.graphMode);
       };
 
-      util.deepWatch(scope, 'left.state', update);
-      util.deepWatch(scope, 'right.state', update);
+      util.deepWatch(scope, 'left', update);
+      util.deepWatch(scope, 'right', update);
 
       function update() {
-        var leftViewData = scope.left.getViewData();
-        var rightViewData = scope.right.getViewData();        
         var sides = [];
-        if (leftViewData && leftViewData.graphMode && (leftViewData.vertexSet !== undefined)) {
-          sides.push(leftViewData);
+        if (scope.left && scope.left.graphMode && (scope.left.vertexSet !== undefined)) {
+          sides.push(scope.left);
         }
-        if (rightViewData && rightViewData.graphMode && (rightViewData.vertexSet !== undefined)) {
-          sides.push(rightViewData);
+        if (scope.right && scope.right.graphMode && (scope.right.vertexSet !== undefined)) {
+          sides.push(scope.right);
         }
         if (sides.length === 0) { return; }
         var q = { vertexSets: [], edgeBundles: [] };
