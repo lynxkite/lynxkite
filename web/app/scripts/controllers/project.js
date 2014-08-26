@@ -201,6 +201,10 @@ angular.module('biggraph')
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
 
+    // This watcher copies the state from the URL into $scope.
+    // It is an important part of initialization. Less importantly it makes
+    // it possible to edit the state manually in the URL, or use the "back"
+    // button to undo state changes.
     util.deepWatch(
       $scope,
       function() { return $location.search(); },
