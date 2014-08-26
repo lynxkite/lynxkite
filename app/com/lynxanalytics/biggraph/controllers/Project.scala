@@ -61,6 +61,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     cp(path, checkpoint)
   }
   def undo(): Unit = {
+    // checkpoints and checkpointIndex are not restored, but copied over from the current state.
     val c = checkpoints
     val i = checkpointIndex
     assert(i > 0, s"Already at checkpoint $i.")
@@ -69,6 +70,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     checkpoints = c
   }
   def redo(): Unit = {
+    // checkpoints and checkpointIndex are not restored, but copied over from the current state.
     val c = checkpoints
     val i = checkpointIndex
     assert(i < c.size - 1, s"Already at checkpoint $i of ${c.size}.")
