@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
+import scala.util.{ Failure, Success, Try }
 
 case class FEStatus(success: Boolean, failureReason: String = "") {
   def ||(other: FEStatus) = if (success) this else other
@@ -326,7 +327,19 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
-    ops.head.apply(req.op.parameters)
-    p.checkpointAfter(ops.head.title)
+    Try(ops.head.apply(req.op.parameters)) match {
+      case Success(s) if s.success =>
+        // Save changes.
+        p.checkpointAfter(ops.head.title)
+        s
+      case Success(s) =>
+        // Discard potentially corrupt changes.
+        p.reloadCheckpoint()
+        throw new Exception(s.failureReason)
+      case Failure(e) =>
+        // Discard potentially corrupt changes.
+        p.reloadCheckpoint()
+        throw e;
+    }
   }
 }

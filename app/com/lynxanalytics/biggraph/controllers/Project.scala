@@ -76,6 +76,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     checkpointIndex = i + 1
     checkpoints = c
   }
+  def reloadCheckpoint(): Unit = {
+    val c = checkpoints
+    val i = checkpointIndex
+    assert(c.nonEmpty, "No checkpoints.")
+    cp(c(i), path)
+    checkpointIndex = i
+    checkpoints = c
+  }
 
   def isSegmentation = {
     val grandFather = path.parent.parent

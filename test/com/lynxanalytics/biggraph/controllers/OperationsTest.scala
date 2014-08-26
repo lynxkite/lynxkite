@@ -59,4 +59,25 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Aggregate edge attribute", Map("prefix" -> "", "aggregate-weight" -> "sum"))
     assert(project.scalars("weight_sum").value == 10.0)
   }
+
+  test("Restore checkpoint after failing operation") {
+    class Bug extends Exception("simulated bug")
+    ops.register(new Operation(_, "Test operations") {
+      val title = "Buggy op"
+      def enabled = ???
+      def parameters = ???
+      def apply(params: Map[String, String]) = {
+        project.vertexSet = null
+        throw new Bug
+      }
+    })
+    run("Example Graph")
+    assert(project.vertexSet != null)
+    try {
+      run("Buggy op")
+    } catch {
+      case _: Bug =>
+    }
+    assert(project.vertexSet != null)
+  }
 }
