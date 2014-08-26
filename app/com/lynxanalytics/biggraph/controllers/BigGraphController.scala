@@ -277,12 +277,12 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def undoProject(request: UndoProjectRequest): FEStatus = {
-    Project(request.project).undo
+    Project(request.project).undo()
     FEStatus.success
   }
 
   def redoProject(request: RedoProjectRequest): FEStatus = {
-    Project(request.project).redo
+    Project(request.project).redo()
     FEStatus.success
   }
 }
