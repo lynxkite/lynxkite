@@ -78,7 +78,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     checkpointIndex = i + 1
     checkpoints = c
   }
-  def reloadCheckpoint(): Unit = {
+  def reloadCurrentCheckpoint(): Unit = {
+    // checkpoints and checkpointIndex are not restored, but copied over from the current state.
     val c = checkpoints
     val i = checkpointIndex
     assert(c.nonEmpty, "No checkpoints.")
