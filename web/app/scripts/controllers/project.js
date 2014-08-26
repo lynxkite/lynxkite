@@ -93,7 +93,6 @@ angular.module('biggraph')
       $location.url('/');
     };
     Side.prototype.saveAs = function(newName) {
-      console.log('fork', newName);
       var that = this;
       $resource('/ajax/forkProject').save(
         {
@@ -102,6 +101,20 @@ angular.module('biggraph')
         },
         function() {
           that.state.projectName = newName;
+        });
+    };
+
+    Side.prototype.rename = function(kind, oldName, newName) {
+      if (oldName === newName) { return; }
+      var that = this;
+      var params = { from: oldName, to: newName };
+      $resource('/ajax/projectOp').save(
+        {
+          project: this.state.projectName,
+          op: { id: 'Rename-' + kind, parameters: params },
+        },
+        function() {
+          that.reload();
         });
     };
 
