@@ -65,8 +65,12 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.update = function(data) {
     var sides = [];
-    if (this.scope.left.state.graphMode) { sides.push(this.scope.left.state); }
-    if (this.scope.right.state.graphMode) { sides.push(this.scope.right.state); }
+    if (this.scope.left && this.scope.left.graphMode) {
+      sides.push(this.scope.left);
+    }
+    if (this.scope.right && this.scope.right.graphMode) {
+      sides.push(this.scope.right);
+    }
     this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
@@ -81,9 +85,7 @@ angular.module('biggraph').directive('graphView', function($window) {
       var yOff = 500 / 2; // todo: replace 500 with the actual svg height
       var vs = data.vertexSets[i];
       if (vs.mode === 'sampled') {
-        // set selected center to be the one the backend provided
-        sides[i].center = data.vertexSets[i].center;
-        vertices.push(this.addSampledVertices(vs, xOff, yOff, sides[i]));        
+        vertices.push(this.addSampledVertices(vs, xOff, yOff, sides[i]));
       } else {
         vertices.push(this.addBucketedVertices(vs, xOff, yOff));
       }
@@ -103,6 +105,8 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   GraphView.prototype.addSampledVertices = function(data, xOff, yOff, side) {
+    // set vertex center to the one provided by backend
+    side.setCenter(data.center);
     var vertices = [];
     var vertexBounds = util.minmax(data.vertices.map(function(n) { return n.size; }));
     var vertexScale = this.zoom * 2 / vertexBounds.max;
@@ -117,10 +121,9 @@ angular.module('biggraph').directive('graphView', function($window) {
                          Math.sqrt(vertexScale * vertex.size),
                          label);
       v.id = vertex.id;
-      if (v.id === side.center) {
+      svg.addClass(v.dom, 'sampled');
+      if (v.id === data.center) {
         svg.addClass(v.dom, 'center');
-      } else {
-        svg.addClass(v.dom, 'sampled');
       }
       vertices.push(v);
       if (vertex.size === 0) {
@@ -141,7 +144,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     var svgElement = this.svg;
     function setCenter() {
       scope.$apply(function() {
-        vertices.side.center = vertex.id;
+        vertices.side.setCenter(vertex.id);
       });
     }
     vertex.dom.on('mousedown touchstart', function() {
