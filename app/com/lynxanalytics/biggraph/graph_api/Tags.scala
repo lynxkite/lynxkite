@@ -3,13 +3,14 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 import scala.collection.mutable
 
-class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] {
+class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
   def /(name: Symbol): SymbolPath = path.toSeq :+ name
   def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
   override def toString = path.map(_.name).mkString("/")
   def iterator = path.iterator
   def parent: SymbolPath = path.init
   def name = path.last
+  def compare(other: SymbolPath) = toString compare other.toString
 }
 object SymbolPath {
   import scala.language.implicitConversions
@@ -19,11 +20,13 @@ object SymbolPath {
   implicit def fromSymbol(sym: Symbol): SymbolPath = fromString(sym.name)
 }
 
-sealed trait TagPath extends Serializable {
+sealed trait TagPath extends Serializable with Ordered[TagPath] {
   val name: Symbol
   val parent: TagDir
 
   def fullName: SymbolPath = parent.fullName / name
+
+  def compare(other: TagPath) = fullName compare other.fullName
 
   def rm() = parent.rmChild(name)
 
@@ -122,7 +125,7 @@ trait TagDir extends TagPath {
 
   def clear(): Unit = children.clear()
 
-  def ls: Seq[TagPath] = children.values.toSeq
+  def ls: Seq[TagPath] = children.values.toSeq.sorted
 
   private val children = mutable.Map[Symbol, TagPath]()
 }

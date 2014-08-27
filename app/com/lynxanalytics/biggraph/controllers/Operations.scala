@@ -170,10 +170,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Maximal cliques"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
+      Param("bothdir", "Edges required in both directions", options = UIValue.seq(Seq("true", "false"))),
       Param("min", "Minimum clique size", defaultValue = "3"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.FindMaxCliques(params("min").toInt)
+      val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
       segmentation.project.vertexSet = result.segments
@@ -206,12 +207,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
       Param(
         "communities_name", "Name for communities segmentation", defaultValue = "communities"),
+      Param("bothdir", "Edges required in cliques in both directions", defaultValue = "true"),
       Param("min_cliques", "Minimum clique size", defaultValue = "3"),
       Param("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val cliquesResult = {
-        val op = graph_operations.FindMaxCliques(params("min_cliques").toInt)
+        val op = graph_operations.FindMaxCliques(
+          params("min_cliques").toInt, params("bothdir").toBoolean)
         op(op.es, project.edgeBundle).result
       }
 
@@ -378,6 +381,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Export vertex attributes to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
       Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
@@ -388,9 +392,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val path = Filename.fromString(params("path"))
       if (path.isEmpty)
         return FEStatus.failure("No export path specified.")
-      graph_util.CSVExport
-        .exportVertexAttributes(attrs, labels)
-        .saveToDir(path)
+      val csv =
+        graph_util.CSVExport
+          .exportVertexAttributes(attrs, labels)
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
       return FEStatus.success
     }
   })
@@ -399,6 +408,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Export edge attributes to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
       Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
     def apply(params: Map[String, String]): FEStatus = {
@@ -409,9 +419,36 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val path = Filename.fromString(params("path"))
       if (path.isEmpty)
         return FEStatus.failure("No export path specified.")
-      graph_util.CSVExport
+      val csv = graph_util.CSVExport
         .exportEdgeAttributes(attrs, labels)
-        .saveToDir(path)
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Export segmentation to CSV"
+    val parameters = Seq(
+      Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
+      Param("seg", "Segmentation", options = segmentations))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations.")
+    def apply(params: Map[String, String]): FEStatus = {
+      if (params("seg").isEmpty)
+        return FEStatus.failure("Nothing selected for export.")
+      val path = Filename.fromString(params("path"))
+      val seg = project.segmentation(params("seg"))
+      val csv = graph_util.CSVExport
+        .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
       return FEStatus.success
     }
   })
@@ -666,21 +703,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (needsGlobal) {
-            UIValue.seq(Seq("ignore", "sum", "average", "count", "first"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "sum", "average", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most-common", "majority-50", "majority-100", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count"))
           }
         } else {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "count"))
           }
         }
         Param(s"aggregate-$name", name, options = options)
@@ -713,6 +750,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     choice match {
       case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
+      case "min" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Min())
+      case "max" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Max())
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
@@ -722,9 +761,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   private def attributeWithLocalAggregator[T](
     attr: VertexAttribute[T], choice: String): AttributeWithLocalAggregator[_, _] = {
     choice match {
-      case "most-common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
-      case "majority-50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
-      case "majority-100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+      case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
+      case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
+      case "majority_100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
       case _ => attributeWithAggregator(attr, choice)
     }
   }

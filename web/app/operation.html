@@ -33,7 +33,7 @@
 
     <span
       ng-show="showParams || op.parameters.length <= 1"
-      class="col-sm-1 clicky glyphicon glyphicon-{{op.enabled.success && (running && 'stop' || 'play') || 'remove'}}"
-      ng-click="apply()"></span>
+      class="col-sm-1 clicky clicky-text"
+      ng-click="apply()">{{op.enabled.success ? (running ? '...' : 'OK') : 'X'}}</span>
   </div>
 </div>
