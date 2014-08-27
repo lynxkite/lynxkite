@@ -24,7 +24,7 @@ angular.module('biggraph')
     function Side() {
       // The state of controls. E.g. bucket count.
       this.state = defaultSideState();
-      // Everything needed for a view (state included), use this instead of state.
+      // Everything needed for a view (state included), use this for rendeing graph view instead of using state directly.
       this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
@@ -34,26 +34,30 @@ angular.module('biggraph')
     }
 
     Side.prototype.updateViewData = function() {
+      this.viewData = {};
+      
+      var vd = this.viewData;
       if (this.project === undefined || !this.project.$resolved) {
         return;
       }
 
-      this.viewData.vertexSet = { id: this.project.vertexSet };
-      this.viewData.edgeBundle = { id: this.project.edgeBundle };
+      vd.vertexSet = { id: this.project.vertexSet };
+      vd.edgeBundle = { id: this.project.edgeBundle };
 
-      this.viewData.filters = this.state.filters;
-      this.viewData.graphMode = this.state.graphMode;
-      this.viewData.bucketCount = this.state.bucketCount;
-      this.viewData.sampleRadius = this.state.sampleRadius;
-      this.viewData.animate = this.state.animate;
+      vd.filters = this.state.filters;
+      vd.graphMode = this.state.graphMode;
+      vd.bucketCount = this.state.bucketCount;
+      vd.sampleRadius = this.state.sampleRadius;
+      vd.animate = this.state.animate;
 
+      vd.center = this.state.center;
       var that = this;
-      this.viewData.setCenter = function(id) { that.viewData.center = id; };
+      vd.setCenter = function(id) { that.state.center = id; };
 
-      this.viewData.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
-      this.viewData.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
-      this.viewData.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
-      this.viewData.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+      vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
+      vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
+      vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
+      vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
     };
 
     Side.prototype.shortName = function() {
@@ -192,15 +196,17 @@ angular.module('biggraph')
       }
       return undefined;
     }
-    util.deepWatch($scope, 'left.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
-    util.deepWatch($scope, 'right.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('left.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
 
     $scope.left = new Side();
     $scope.right = new Side();
     $scope.sides = [$scope.left, $scope.right];
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
-
+    $scope.$watch('left.project.$resolved', function() { $scope.left.updateViewData(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
+    
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes
     // it possible to edit the state manually in the URL, or use the "back"

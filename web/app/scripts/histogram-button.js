@@ -26,7 +26,7 @@ angular.module('biggraph').directive('histogramButton', function(util) {
         };
         scope.histogram = util.get('/ajax/histo', q);
       }
-      util.deepWatch(scope, 'side', update);
+      util.deepWatch(scope, 'side.state', update);
       scope.$watch('show', update);
     },
   };
