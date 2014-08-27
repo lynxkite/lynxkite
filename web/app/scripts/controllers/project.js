@@ -28,9 +28,6 @@ angular.module('biggraph')
       this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
-      // Side.graphState is for compatibility with the metaGraph.js-related code in graph-view.js
-      // and could be removed later.
-      this.graphState = undefined;
     }
 
     Side.prototype.updateViewData = function() {
