@@ -141,6 +141,21 @@ angular.module('biggraph')
         });
     };
 
+    Side.prototype.saveNotes = function() {
+      var that = this;
+      var params = { notes: this.project.notes };
+      this.savingNotes = true;
+      $resource('/ajax/projectOp').save(
+        {
+          project: this.state.projectName,
+          op: { id: 'Change-project-notes', parameters: params },
+        },
+        function() {
+          that.unsavedNotes = false;
+          that.savingNotes = false;
+        });
+    };
+
     Side.prototype.nonEmptyFilters = function() {
       var res = [];
       for (var attr in this.state.filters) {
