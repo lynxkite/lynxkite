@@ -682,6 +682,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new HiddenOperation(_) {
+    val title = "Change project notes"
+    val parameters = Seq(
+      Param("notes", "New contents"))
+    def enabled = FEStatus.success
+    def apply(params: Map[String, String]): FEStatus = {
+      project.notes = params("notes")
+      return FEStatus.success
+    }
+  })
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()
