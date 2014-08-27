@@ -668,6 +668,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Rename edge attribute"
+    val parameters = Seq(
+      Param("from", "Old name", options = edgeAttributes),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(edgeAttributes.size > 0, "No edge attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
+      project.edgeAttributes(params("from")) = null
+      return FEStatus.success
+    }
+  })
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()

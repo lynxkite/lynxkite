@@ -1,3 +1,14 @@
-{{attr.title}}
+<span ng-if="!renaming">
+  {{attr.title}}
+</span>
+<label>
+  <form ng-submit="renaming = side.rename('edge-attribute', attr.title, newName)" style="display: inline;" ng-show="renaming">
+    <input class="form-control rename-attribute" ng-model="newName" ng-blur="renaming = newName !== attr.title">
+  </form>
+  <span ng-click="newName = renaming ? newName : attr.title; renaming = !renaming || side.rename('edge-attribute', attr.title, newName);"></i>
+    <i class="clicky glyphicon glyphicon-pencil" tooltip="Rename" tooltip-append-to-body="true"></i>
+  </span>
+</label>
+
 <histogram-button attr="attr" side="side" model="histogram"></histogram-button>
 <histogram ng-show="histogram" model="histogram"></histogram>
