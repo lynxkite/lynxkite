@@ -19,6 +19,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class EdgeOperation(p: Project) extends Operation(p, "Edge operations")
   abstract class AttributeOperation(p: Project) extends Operation(p, "Attribute operations")
   abstract class SegmentationOperation(p: Project) extends Operation(p, "Segmentation operations")
+  abstract class HiddenOperation(p: Project) extends Operation(p, "<hidden>")
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
