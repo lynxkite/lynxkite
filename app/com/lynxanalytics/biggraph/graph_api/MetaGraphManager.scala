@@ -27,8 +27,8 @@ class MetaGraphManager(val repositoryPath: String) {
     val operationInstance = TypedOperationInstance(this, operation, inputs)
     val gUID = operationInstance.gUID
     if (!operationInstances.contains(gUID)) {
-      internalApply(operationInstance)
       saveInstanceToDisk(operationInstance)
+      internalApply(operationInstance)
     }
     operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
   }
