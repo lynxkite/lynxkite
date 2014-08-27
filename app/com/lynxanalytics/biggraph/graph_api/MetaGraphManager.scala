@@ -224,8 +224,6 @@ class MetaGraphManager(val repositoryPath: String) {
       log.info(s"Loading tags.")
       try {
         tagRoot.loadFromString(FileUtils.readFileToString(tagsFile, "utf8"))
-        // This should be redundant normally. It's used to make old repos' entities visible, too.
-        show(tagRoot.allTags.map(tag => entity(tag.gUID)).toSeq)
       } catch {
         case e: Exception => log.error("Error loading tags set:", e)
       }
