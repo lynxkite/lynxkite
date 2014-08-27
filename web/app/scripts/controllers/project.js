@@ -24,7 +24,7 @@ angular.module('biggraph')
     function Side() {
       // The state of controls. E.g. bucket count.
       this.state = defaultSideState();
-      // Everything needed for a view (state included), use this for rendeing graph view instead of using state directly.
+      // Everything needed for a view (state included), use this for rendering graph view instead of using state directly.
       this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
