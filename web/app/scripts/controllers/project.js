@@ -111,6 +111,7 @@ angular.module('biggraph')
         this.state[setting] = value;
       }
     };
+
     Side.prototype.close = function() {
       this.state.projectName = undefined;
       for (var i = 0; i < $scope.sides.length; ++i) {
@@ -120,8 +121,8 @@ angular.module('biggraph')
       }
       $location.url('/');
     };
+
     Side.prototype.saveAs = function(newName) {
-      console.log('fork', newName);
       var that = this;
       $resource('/ajax/forkProject').save(
         {
@@ -130,6 +131,41 @@ angular.module('biggraph')
         },
         function() {
           that.state.projectName = newName;
+        });
+    };
+
+    Side.prototype.undo = function() {
+      var that = this;
+      $resource('/ajax/undoProject').save(
+        {
+          project: this.state.projectName,
+        },
+        function() {
+          that.reload();
+        });
+    };
+    Side.prototype.redo = function() {
+      var that = this;
+      $resource('/ajax/redoProject').save(
+        {
+          project: this.state.projectName,
+        },
+        function() {
+          that.reload();
+        });
+    };
+
+    Side.prototype.rename = function(kind, oldName, newName) {
+      if (oldName === newName) { return; }
+      var that = this;
+      var params = { from: oldName, to: newName };
+      $resource('/ajax/projectOp').save(
+        {
+          project: this.state.projectName,
+          op: { id: 'Rename-' + kind, parameters: params },
+        },
+        function() {
+          that.reload();
         });
     };
 
