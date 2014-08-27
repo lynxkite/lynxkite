@@ -36,22 +36,22 @@ angular.module('biggraph')
     util.deepWatch(
       $scope,
       'state.left',
-      function() { updateViewData($scope.state.left) }
+      function() { updateViewData($scope.state.left); }
     );
     util.deepWatch(
       $scope,
       'state.right',
-      function() { updateViewData($scope.state.right) }
+      function() { updateViewData($scope.state.right); }
     );
-    
+
     function updateViewData(side) {
       if (side.state === undefined) {
         return;
       }
       side.viewData = angular.copy(side.state);
       console.log(side);
-      side.viewData.setCenter = function(id) { side.state.center = id; };      
-    };
+      side.viewData.setCenter = function(id) { side.state.center = id; };
+    }
 
     util.deepWatch(
       $scope,
