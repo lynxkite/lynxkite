@@ -39,6 +39,14 @@
                tooltip-placement="bottom">
           <i class="glyphicon glyphicon-filter"></i>
         </label>
+        <label class="btn btn-default" ng-if="side.project.undoOp" ng-click="side.undo()"
+          tooltip="Undo {{side.project.undoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-backward"></i>
+        </label>
+        <label class="btn btn-default" ng-if="side.project.redoOp" ng-click="side.redo()"
+          tooltip="Redo {{side.project.redoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-forward"></i>
+        </label>
         <label class="btn btn-default" ng-click="saveAs = true"
           tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
           <form ng-submit="side.saveAs(saveAsName)" style="display: inline;" ng-show="saveAs">
@@ -62,6 +70,10 @@
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
           tooltip="Sampled&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
+        </label>
+        <label ng-if="side.state.graphMode === 'sampled'" class="btn btn-default" ng-click="side.state.animate = !side.state.animate"
+          tooltip="Animate&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
         </label>
       </div>
 

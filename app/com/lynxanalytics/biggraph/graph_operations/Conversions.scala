@@ -56,6 +56,13 @@ object VertexAttributeToString {
       extends MagicOutput(instance) {
     val attr = vertexAttribute[String](inputs.vs.entity)
   }
+  def run[T](attr: VertexAttribute[T])(
+    implicit manager: MetaGraphManager): VertexAttribute[String] = {
+
+    import Scripting._
+    val op = VertexAttributeToString[T]()
+    op(op.attr, attr).result.attr
+  }
 }
 case class VertexAttributeToString[T]()
     extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToString.Output[T]] {

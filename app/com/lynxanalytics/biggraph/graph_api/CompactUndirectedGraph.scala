@@ -6,7 +6,7 @@ import scala.collection.mutable
 import scala.util.Sorting
 
 object CompactUndirectedGraph {
-  def apply(edges: EdgeBundleData): CompactUndirectedGraph = {
+  def apply(edges: EdgeBundleData, needsBothDirections: Boolean = true): CompactUndirectedGraph = {
     assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
     val outEdges = edges.rdd.map {
       case (id, edge) => (edge.src, edge.dst)
@@ -15,9 +15,14 @@ object CompactUndirectedGraph {
       case (id, edge) => (edge.dst, edge.src)
     }.groupByKey()
     val adjList = outEdges.join(inEdges)
-      .map({
-        case (v, (outs, ins)) => (v, (outs.toSet & ins.toSet - v).toArray.sorted)
-      })
+      .map {
+        case (v, (outs, ins)) => {
+          val outSet = outs.toSet
+          val inSet = ins.toSet
+          val combined = if (needsBothDirections) (outSet & inSet) else (outSet | inSet)
+          (v, (combined - v).toArray.sorted)
+        }
+      }
     val compact = adjList.mapPartitions({
       it: Iterator[(ID, Array[ID])] =>
         {

@@ -85,15 +85,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Import vertices"
     val parameters = Seq(
       Param("files", "Files"),
-      Param("header", "Header"),
+      Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("filter", "(optional) Filtering expression"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
+      val files = Filename.fromString(params("files"))
+      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        files,
         params("delimiter"),
-        params("header"),
+        header,
         JavaScript(params("filter")))
       val imp = graph_operations.ImportVertexList(csv)().result
       project.vertexSet = imp.vertices
@@ -106,7 +108,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Import edges for existing vertices"
     val parameters = Seq(
       Param("files", "Files"),
-      Param("header", "Header"),
+      Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("src", "Source ID field"),
@@ -117,10 +119,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
+      val files = Filename.fromString(params("files"))
+      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        files,
         params("delimiter"),
-        params("header"),
+        header,
         JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
@@ -137,17 +141,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Import vertices and edges from single CSV fileset"
     val parameters = Seq(
       Param("files", "Files"),
-      Param("header", "Header"),
+      Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"),
       Param("filter", "(optional) Filtering expression"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
+      val files = Filename.fromString(params("files"))
+      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        files,
         params("delimiter"),
-        params("header"),
+        header,
         JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
@@ -164,10 +170,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Maximal cliques"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
+      Param("bothdir", "Edges required in both directions", options = UIValue.seq(Seq("true", "false"))),
       Param("min", "Minimum clique size", defaultValue = "3"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.FindMaxCliques(params("min").toInt)
+      val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
       segmentation.project.vertexSet = result.segments
@@ -200,12 +207,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
       Param(
         "communities_name", "Name for communities segmentation", defaultValue = "communities"),
+      Param("bothdir", "Edges required in cliques in both directions", defaultValue = "true"),
       Param("min_cliques", "Minimum clique size", defaultValue = "3"),
       Param("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val cliquesResult = {
-        val op = graph_operations.FindMaxCliques(params("min_cliques").toInt)
+        val op = graph_operations.FindMaxCliques(
+          params("min_cliques").toInt, params("bothdir").toBoolean)
         op(op.es, project.edgeBundle).result
       }
 
@@ -372,6 +381,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Export vertex attributes to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
       Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
@@ -382,9 +392,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val path = Filename.fromString(params("path"))
       if (path.isEmpty)
         return FEStatus.failure("No export path specified.")
-      graph_util.CSVExport
-        .exportVertexAttributes(attrs, labels)
-        .saveToDir(path)
+      val csv =
+        graph_util.CSVExport
+          .exportVertexAttributes(attrs, labels)
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
       return FEStatus.success
     }
   })
@@ -393,6 +408,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Export edge attributes to CSV"
     val parameters = Seq(
       Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
       Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
     def apply(params: Map[String, String]): FEStatus = {
@@ -403,9 +419,36 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val path = Filename.fromString(params("path"))
       if (path.isEmpty)
         return FEStatus.failure("No export path specified.")
-      graph_util.CSVExport
+      val csv = graph_util.CSVExport
         .exportEdgeAttributes(attrs, labels)
-        .saveToDir(path)
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Export segmentation to CSV"
+    val parameters = Seq(
+      Param("path", "Destination path"),
+      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
+      Param("seg", "Segmentation", options = segmentations))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations.")
+    def apply(params: Map[String, String]): FEStatus = {
+      if (params("seg").isEmpty)
+        return FEStatus.failure("Nothing selected for export.")
+      val path = Filename.fromString(params("path"))
+      val seg = project.segmentation(params("seg"))
+      val csv = graph_util.CSVExport
+        .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
+      if (params("single") == "true") {
+        csv.saveToSingleFile(path)
+      } else {
+        csv.saveToDir(path)
+      }
       return FEStatus.success
     }
   })
@@ -477,8 +520,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("segmentation", "Destination segmentation", options = segmentations)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
-        FEStatus.assert(segmentations.size > 0, "No segmentations")
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") &&
+        FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.segmentation(params("segmentation"))
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -499,7 +542,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(project.isSegmentation, "Operates on a segmentation") &&
-        FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+        FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.asSegmentation
       val prefix = params("prefix")
@@ -521,7 +564,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") && hasEdgeBundle
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]): FEStatus = {
       val prefix = params("prefix")
       val edges = params("direction") match {
@@ -544,7 +587,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("attr", "Attribute", options = vertexAttributes)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def merge[T](attr: VertexAttribute[T]): graph_operations.Segmentation = {
       val op = graph_operations.MergeVertices[T]()
       op(op.attr, attr).result
@@ -568,7 +611,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(Param("prefix", "Generated name prefix", defaultValue = "")) ++
       aggregateParams(project.vertexAttributes, needsGlobal = true)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val prefix = params("prefix")
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -587,7 +630,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) },
         needsGlobal = true)
     def enabled =
-      FEStatus.assert(edgeAttributes.size > 0, "No edge attributes")
+      FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val prefix = params("prefix")
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -596,6 +639,69 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val name = if (prefix.isEmpty) s"${attr}_${choice}" else s"${prefix}_${attr}_${choice}"
         project.scalars(name) = result
       }
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Aggregate edge attribute to vertices"
+    val parameters = Seq(
+      Param("prefix", "Generated name prefix", defaultValue = "edge"),
+      Param("direction", "Aggregate on",
+        options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
+      aggregateParams(
+        project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) })
+    def enabled =
+      FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = params("prefix")
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregateFromEdges(
+          project.edgeBundle,
+          params("direction") == "outgoing edges",
+          attributeWithLocalAggregator(
+            project.edgeAttributes(attr).asVertexAttribute,
+            choice))
+        project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Rename edge attribute"
+    val parameters = Seq(
+      Param("from", "Old name", options = edgeAttributes),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
+      project.edgeAttributes(params("from")) = null
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Rename vertex attribute"
+    val parameters = Seq(
+      Param("from", "Old name", options = vertexAttributes),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
+      project.vertexAttributes(params("from")) = null
+      return FEStatus.success
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Rename segmentation"
+    val parameters = Seq(
+      Param("from", "Old name", options = segmentations),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+    def apply(params: Map[String, String]): FEStatus = {
+      project.segmentation(params("from")).rename(params("to"))
       return FEStatus.success
     }
   })
@@ -635,21 +741,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (needsGlobal) {
-            UIValue.seq(Seq("ignore", "sum", "average", "count", "first"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "sum", "average", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most-common", "majority-50", "majority-100", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count"))
           }
         } else {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most-common", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "count"))
           }
         }
         Param(s"aggregate-$name", name, options = options)
@@ -682,6 +788,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     choice match {
       case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
+      case "min" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Min())
+      case "max" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Max())
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
@@ -691,9 +799,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   private def attributeWithLocalAggregator[T](
     attr: VertexAttribute[T], choice: String): AttributeWithLocalAggregator[_, _] = {
     choice match {
-      case "most-common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
-      case "majority-50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
-      case "majority-100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+      case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
+      case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
+      case "majority_100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
       case _ => attributeWithAggregator(attr, choice)
     }
   }
@@ -711,6 +819,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): VertexAttribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
     op(op.connection, connection)(op.attr, attributeWithAggregator.attr).result.attr
+  }
+
+  // Performs AggregateFromEdges.
+  def aggregateFromEdges[From, To](
+    edges: EdgeBundle,
+    onSrc: Boolean,
+    attributeWithAggregator: AttributeWithLocalAggregator[From, To]): VertexAttribute[To] = {
+    val op = graph_operations.AggregateFromEdges(attributeWithAggregator.aggregator)
+    val res = op(op.edges, edges)(op.eattr, attributeWithAggregator.attr).result
+    if (onSrc) res.srcAttr else res.dstAttr
   }
 
   def reverse(eb: EdgeBundle): EdgeBundle = {

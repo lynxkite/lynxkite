@@ -9,7 +9,7 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class FindMaxCliques(minCliqueSize: Int) extends TypedMetaGraphOp[GraphInput, Segmentation] {
+case class FindMaxCliques(minCliqueSize: Int, needsBothDirections: Boolean = false) extends TypedMetaGraphOp[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
@@ -23,7 +23,7 @@ case class FindMaxCliques(minCliqueSize: Int) extends TypedMetaGraphOp[GraphInpu
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val cug = CompactUndirectedGraph(inputs.es.data)
+    val cug = CompactUndirectedGraph(inputs.es.data, needsBothDirections)
     val cliqueLists = computeCliques(
       inputs.vs.data, cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
     val indexedCliqueLists = cliqueLists.randomNumbered(rc.defaultPartitioner)
