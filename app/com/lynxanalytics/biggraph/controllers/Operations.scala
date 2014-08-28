@@ -521,8 +521,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("segmentation", "Destination segmentation", options = segmentations)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
-        FEStatus.assert(segmentations.size > 0, "No segmentations")
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") &&
+        FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.segmentation(params("segmentation"))
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -543,7 +543,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(project.isSegmentation, "Operates on a segmentation") &&
-        FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+        FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.asSegmentation
       val prefix = params("prefix")
@@ -565,7 +565,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") && hasEdgeBundle
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]): FEStatus = {
       val prefix = params("prefix")
       val edges = params("direction") match {
@@ -588,7 +588,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("attr", "Attribute", options = vertexAttributes)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def merge[T](attr: VertexAttribute[T]): graph_operations.Segmentation = {
       val op = graph_operations.MergeVertices[T]()
       op(op.attr, attr).result
@@ -612,7 +612,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(Param("prefix", "Generated name prefix", defaultValue = "")) ++
       aggregateParams(project.vertexAttributes, needsGlobal = true)
     def enabled =
-      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes")
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val prefix = params("prefix")
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -631,7 +631,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) },
         needsGlobal = true)
     def enabled =
-      FEStatus.assert(edgeAttributes.size > 0, "No edge attributes")
+      FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val prefix = params("prefix")
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -653,7 +653,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       aggregateParams(
         project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) })
     def enabled =
-      FEStatus.assert(edgeAttributes.size > 0, "No edge attributes")
+      FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val prefix = params("prefix")
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -674,7 +674,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = Seq(
       Param("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
-    def enabled = FEStatus.assert(edgeAttributes.size > 0, "No edge attributes")
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]): FEStatus = {
       project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
       project.edgeAttributes(params("from")) = null
@@ -689,6 +689,31 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.success
     def apply(params: Map[String, String]): FEStatus = {
       project.notes = params("notes")
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Rename vertex attribute"
+    val parameters = Seq(
+      Param("from", "Old name", options = vertexAttributes),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
+      project.vertexAttributes(params("from")) = null
+      return FEStatus.success
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Rename segmentation"
+    val parameters = Seq(
+      Param("from", "Old name", options = segmentations),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+    def apply(params: Map[String, String]): FEStatus = {
+      project.segmentation(params("from")).rename(params("to"))
       return FEStatus.success
     }
   })
