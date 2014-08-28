@@ -27,8 +27,6 @@ angular.module('biggraph')
 
     $scope.left = {};
     $scope.right = {};
-    $scope.left.viewData = {};
-    $scope.right.viewData = {};
 
     $scope.left.other = $scope.right;
     $scope.right.other = $scope.left;
@@ -36,21 +34,25 @@ angular.module('biggraph')
     util.deepWatch(
       $scope,
       'state.left',
-      function() { updateViewData($scope.state.left); }
+      function() { updateLeftViewData(); }
     );
     util.deepWatch(
       $scope,
       'state.right',
-      function() { updateViewData($scope.state.right); }
+      function() { updateRightViewData(); }
     );
 
-    function updateViewData(side) {
-      if (side.state === undefined) {
+    function updateLeftViewData() {
+      if ($scope.state.left === undefined) {
         return;
       }
-      side.viewData = angular.copy(side.state);
-      console.log(side);
-      side.viewData.setCenter = function(id) { side.state.center = id; };
+      $scope.state.left.setCenter = function(id) { $scope.state.left.center = id; };
+    }
+    function updateRightViewData() {
+      if ($scope.state.right === undefined) {
+        return;
+      }
+      $scope.state.right.setCenter = function(id) { $scope.state.right.center = id; };
     }
 
     util.deepWatch(

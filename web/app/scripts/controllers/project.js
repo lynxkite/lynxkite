@@ -39,7 +39,7 @@ angular.module('biggraph')
       }
 
       vd.vertexSet = { id: this.project.vertexSet };
-      vd.edgeBundle = { id: this.project.edgeBundle };
+      if (this.project.edgeBundle !== '') { vd.edgeBundle = { id: this.project.edgeBundle }; }
 
       vd.filters = this.state.filters;
       vd.graphMode = this.state.graphMode;
