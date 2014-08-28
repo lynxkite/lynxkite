@@ -21,7 +21,17 @@ CORES=4
 RAM_MB=28000
 
 # Stop the server in case it's already running.
-killall java
+killall java || true
+for i in $(seq 10); do
+  if [ ! -e biggraphstage/RUNNING_PID ]; then
+    break
+  fi
+  sleep 1
+done
+if [ -e biggraphstage/RUNNING_PID ]; then
+  killall -9 java
+  rm -f biggraphstage/RUNNING_PID
+fi
 
 # Start the server.
 sh -c "( ( \
