@@ -40,4 +40,20 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
         op.dstMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSet
     assert(induced == Set(2 -> 1, 0 -> 1))
   }
+
+  test("example graph induce on merged") {
+    val merge = {
+      val op = MergeVertices[String]()
+      op(op.attr, example.gender).result
+    }
+    val induced = {
+      val op = InducedEdgeBundle()
+      op(
+        op.edges, example.edges)(
+          op.srcMapping, merge.belongsTo)(
+            op.dstMapping, merge.belongsTo)
+        .result.induced
+    }
+    assert(induced.toPairCounts == Map((1, 0) -> 1, (0, 1) -> 2, (0, 0) -> 1))
+  }
 }
