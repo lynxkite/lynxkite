@@ -83,6 +83,7 @@ angular.module('biggraph')
         this.state[setting] = value;
       }
     };
+
     Side.prototype.close = function() {
       this.state.projectName = undefined;
       for (var i = 0; i < $scope.sides.length; ++i) {
@@ -92,8 +93,8 @@ angular.module('biggraph')
       }
       $location.url('/');
     };
+
     Side.prototype.saveAs = function(newName) {
-      console.log('fork', newName);
       var that = this;
       $resource('/ajax/forkProject').save(
         {
@@ -103,6 +104,53 @@ angular.module('biggraph')
         function() {
           that.state.projectName = newName;
         });
+    };
+
+    Side.prototype.undo = function() {
+      var that = this;
+      $resource('/ajax/undoProject').save(
+        {
+          project: this.state.projectName,
+        },
+        function() {
+          that.reload();
+        });
+    };
+    Side.prototype.redo = function() {
+      var that = this;
+      $resource('/ajax/redoProject').save(
+        {
+          project: this.state.projectName,
+        },
+        function() {
+          that.reload();
+        });
+    };
+
+    Side.prototype.applyOp = function(op, params, callback) {
+      var that = this;
+      // TODO: Report errors on the UI.
+      $resource('/ajax/projectOp').save(
+        {
+          project: this.state.projectName,
+          op: { id: op, parameters: params },
+        },
+        function(result) {
+          if (callback) { callback(); }
+          if (result.success) {
+            that.reload();
+          } else {
+            console.error(result.failureReason);
+          }
+        }, function(response) {
+          if (callback) { callback(); }
+          console.error(response);
+        });
+    };
+
+    Side.prototype.rename = function(kind, oldName, newName) {
+      if (oldName === newName) { return; }
+      this.applyOp('Rename-' + kind, { from: oldName, to: newName });
     };
 
     Side.prototype.nonEmptyFilters = function() {
@@ -168,8 +216,8 @@ angular.module('biggraph')
       }
       return undefined;
     }
-    util.deepWatch($scope, 'left.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
-    util.deepWatch($scope, 'right.project', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('left.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
 
     $scope.left = new Side();
     $scope.right = new Side();
@@ -177,9 +225,9 @@ angular.module('biggraph')
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
 
-    util.deepWatch($scope, 'left.project', function() { $scope.left.updateGraphState(); });
+    $scope.$watch('left.project.$resolved', function() { $scope.left.updateGraphState(); });
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
-    util.deepWatch($scope, 'right.project', function() { $scope.right.updateGraphState(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.right.updateGraphState(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
     Side.prototype.updateGraphState = function() {
       this.graphState = angular.copy(this.state);

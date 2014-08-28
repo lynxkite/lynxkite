@@ -9,6 +9,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
   val project = Project("Test_Project")
+  project.notes = "test project" // Make sure project directory exists.
+
   def run(op: String, params: Map[String, String] = Map()) =
     ops.apply(ProjectOperationRequest("Test_Project", FEOperationSpec(op.replace(" ", "-"), params)))
 
@@ -32,13 +34,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Example Graph")
     run("Connected components", Map("name" -> "cc"))
     run("Aggregate to segmentation",
-      Map("segmentation" -> "cc", "aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority-100"))
+      Map("segmentation" -> "cc", "aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100"))
     val seg = project.segmentation("cc").project
     val age = seg.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))
     val count = seg.vertexAttributes("name_count").runtimeSafeCast[Double]
     assert(count.rdd.collect.toMap.values.toSet == Set(2.0, 1.0, 1.0))
-    val gender = seg.vertexAttributes("gender_majority-100").runtimeSafeCast[String]
+    val gender = seg.vertexAttributes("gender_majority_100").runtimeSafeCast[String]
     assert(gender.rdd.collect.toMap.values.toSeq.sorted == Seq("", "Male", "Male"))
   }
 
@@ -56,5 +58,26 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Example Graph")
     run("Aggregate edge attribute", Map("prefix" -> "", "aggregate-weight" -> "sum"))
     assert(project.scalars("weight_sum").value == 10.0)
+  }
+
+  test("Restore checkpoint after failing operation") {
+    class Bug extends Exception("simulated bug")
+    ops.register(new Operation(_, "Test operations") {
+      val title = "Buggy op"
+      def enabled = ???
+      def parameters = ???
+      def apply(params: Map[String, String]) = {
+        project.vertexSet = null
+        throw new Bug
+      }
+    })
+    run("Example Graph")
+    assert(project.vertexSet != null)
+    try {
+      run("Buggy op")
+    } catch {
+      case _: Bug =>
+    }
+    assert(project.vertexSet != null)
   }
 }

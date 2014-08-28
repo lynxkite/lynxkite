@@ -8,7 +8,7 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
   test("fastNumbered works for a few items") {
     import Implicits._
     val rdd = sparkContext.parallelize(1 to 10, 3)
-    val numbered = rdd.fastNumbered.collect.toSeq
+    val numbered = rdd.fastNumberedBROKEN.collect.toSeq
     assert(numbered == Seq(0 -> 1, 3 -> 2, 6 -> 3, 1 -> 4, 4 -> 5, 7 -> 6, 2 -> 7, 5 -> 8, 8 -> 9, 11 -> 10))
   }
 

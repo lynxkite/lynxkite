@@ -27,8 +27,8 @@ class MetaGraphManager(val repositoryPath: String) {
     val operationInstance = TypedOperationInstance(this, operation, inputs)
     val gUID = operationInstance.gUID
     if (!operationInstances.contains(gUID)) {
-      internalApply(operationInstance)
       saveInstanceToDisk(operationInstance)
+      internalApply(operationInstance)
     }
     operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
   }
@@ -82,10 +82,14 @@ class MetaGraphManager(val repositoryPath: String) {
     dependentOperationsMap.getOrElse(entity.gUID, Seq())
 
   def setTag(tag: SymbolPath, entity: MetaGraphEntity): Unit = {
-    tagRoot.setTag(tag, entity.gUID)
+    setTag(tag, entity.gUID.toString)
     show(Seq(entity))
+  }
+  def setTag(tag: SymbolPath, content: String): Unit = {
+    tagRoot.setTag(tag, content)
     saveTags()
   }
+  def getTag(tag: SymbolPath): String = (tagRoot / tag).content
 
   def rmTag(tag: SymbolPath): Unit = {
     (tagRoot / tag).rm
@@ -220,8 +224,6 @@ class MetaGraphManager(val repositoryPath: String) {
       log.info(s"Loading tags.")
       try {
         tagRoot.loadFromString(FileUtils.readFileToString(tagsFile, "utf8"))
-        // This should be redundant normally. It's used to make old repos' entities visible, too.
-        show(tagRoot.allTags.map(tag => entity(tag.gUID)).toSeq)
       } catch {
         case e: Exception => log.error("Error loading tags set:", e)
       }
