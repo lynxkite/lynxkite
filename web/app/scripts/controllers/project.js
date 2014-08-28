@@ -150,17 +150,11 @@ angular.module('biggraph')
 
     Side.prototype.saveNotes = function() {
       var that = this;
-      var params = { notes: this.project.notes };
       this.savingNotes = true;
-      $resource('/ajax/projectOp').save(
-        {
-          project: this.state.projectName,
-          op: { id: 'Change-project-notes', parameters: params },
-        },
-        function() {
-          that.unsavedNotes = false;
-          that.savingNotes = false;
-        });
+      this.applyOp('Change-project-notes', { notes: this.project.notes }, function() {
+        that.unsavedNotes = false;
+        that.savingNotes = false;
+      });
     };
 
     Side.prototype.rename = function(kind, oldName, newName) {
