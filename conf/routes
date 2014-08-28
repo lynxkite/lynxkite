@@ -25,5 +25,12 @@ GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.c
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
 GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.scalarValue
 
+# SecureSocial
+GET  /login                  securesocial.controllers.LoginPage.login
+GET  /logout                 securesocial.controllers.LoginPage.logout
+GET  /authenticate/:provider securesocial.controllers.ProviderController.authenticate(provider)
+POST /authenticate/:provider securesocial.controllers.ProviderController.authenticateByPost(provider)
+GET  /not-authorized         securesocial.controllers.ProviderController.notAuthorized
+
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            controllers.Assets.at(path="/public", file)
