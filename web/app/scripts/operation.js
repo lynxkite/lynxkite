@@ -31,20 +31,8 @@ angular.module('biggraph').directive('operation', function ($resource, util) {
             reqParams[p.id] = scope.params[p.id];
           }
         });
-        var req = { project: scope.side.project.name, op: { id: scope.op.id, parameters: reqParams } };
         scope.running = true;
-        // TODO: Report errors on the UI.
-        $resource('/ajax/projectOp').save(req, function(result) {
-          scope.running = false;
-          if (result.success) {
-            scope.side.reload();
-          } else {
-            console.error(result.failureReason);
-          }
-        }, function(response) {
-          scope.running = false;
-          console.error(response);
-        });
+        scope.side.applyOp(scope.op.id, reqParams, function() { scope.running = false; });
       };
     }
   };

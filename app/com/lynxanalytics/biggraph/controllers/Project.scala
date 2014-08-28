@@ -272,4 +272,10 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     manager.setTag(path / "belongsTo", eb)
   }
   def project = Project(s"$parentName/segmentations/$name/project")
+
+  def rename(newName: String) = {
+    val to = new SymbolPath(path.init) / newName
+    manager.cpTag(path, to)
+    manager.rmTag(path)
+  }
 }
