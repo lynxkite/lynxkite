@@ -106,10 +106,9 @@
           ng-model="side.project.notes"
           ng-change="side.unsavedNotes = true"
           ng-trim="false"></textarea>
-        <p class="pull-right" ng-if="side.unsavedNotes">
+        <p class="text-right" ng-if="side.unsavedNotes">
           <button ng-click="side.saveNotes()" ng-disabled="side.savingNotes" class="btn btn-default">{{side.savingNotes ? '...' : 'Save'}}</button>
         </p>
-        <div class="clearfix"></div>
       </li>
 
       <li class="list-group-item">
