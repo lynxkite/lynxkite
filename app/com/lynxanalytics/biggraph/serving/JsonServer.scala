@@ -3,37 +3,34 @@ package com.lynxanalytics.biggraph.serving
 import play.api.mvc
 import play.api.libs.json
 import play.api.libs.json._
-import com.lynxanalytics.biggraph._
+import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
-class JsonServer extends mvc.Controller {
+object LynxUser extends securesocial.core.Authorization {
+  def isAuthorized(user: securesocial.core.Identity) = user.email.get.endsWith("@lynxanalytics.com")
+}
+
+class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
   def jsonPost[I: json.Reads, O: json.Writes](action: I => O) = {
-    bigGraphLogger.info("JSON POST event received, function: " + action.getClass.toString())
-    mvc.Action(parse.json) {
-      request =>
-        request.body.validate[I].fold(
-          errors => {
-            log.error(errors.toString)
-            JsonBadRequest("Error", "Bad JSON", errors)
-          },
-          result => Ok(json.Json.toJson(action(result))))
+    log.info("JSON POST event received, function: " + action.getClass.toString())
+    SecuredAction(authorize = LynxUser, ajaxCall = true)(parse.json) { request =>
+      request.body.validate[I].fold(
+        errors => jsonBadRequest(errors),
+        result => Ok(json.Json.toJson(action(result))))
     }
   }
 
   def jsonGet[I: json.Reads, O: json.Writes](action: I => O, key: String = "q") = {
-    mvc.Action { request =>
-      bigGraphLogger.info("JSON GET event received, function: %s, query key: %s"
+    SecuredAction(authorize = LynxUser, ajaxCall = true) { request =>
+      log.error("JSON GET event received, function: %s, query key: %s"
         .format(action.getClass.toString(), key))
       request.getQueryString(key) match {
         case Some(s) => Json.parse(s).validate[I].fold(
-          errors => {
-            log.error(errors.toString)
-            JsonBadRequest("Error", "Bad JSON", errors)
-          },
+          errors => jsonBadRequest(errors),
           result => Ok(json.Json.toJson(action(result))))
         case None => BadRequest(json.Json.obj(
           "status" -> "Error",
@@ -43,14 +40,12 @@ class JsonServer extends mvc.Controller {
     }
   }
 
-  def JsonBadRequest(
-    status: String,
-    message: String,
+  def jsonBadRequest(
     details: Seq[(play.api.libs.json.JsPath, Seq[play.api.data.validation.ValidationError])]) = {
-    bigGraphLogger.error("Bad request: " + message)
+    log.error(s"Bad JSON: $details")
     BadRequest(json.Json.obj(
-      "status" -> status,
-      "message" -> message,
+      "status" -> "Error",
+      "message" -> "Bad JSON",
       "details" -> json.JsError.toFlatJson(details)))
   }
 }
