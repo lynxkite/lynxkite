@@ -15,9 +15,11 @@ object LynxUser extends securesocial.core.Authorization {
 }
 
 class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
+  def testMode = play.api.Play.maybeApplication == None
+  def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
   def action[A](parser: mvc.BodyParser[A])(block: mvc.Request[A] => mvc.Result): mvc.Action[A] = {
     // Turn off authentication in development mode.
-    if (play.api.Play.current.configuration.getString("application.secret").nonEmpty) {
+    if (productionMode) {
       SecuredAction(authorize = LynxUser, ajaxCall = true)(parser)(block(_))
     } else {
       mvc.Action(parser)(block(_))
