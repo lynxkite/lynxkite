@@ -7,12 +7,14 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
-  val ops = new Operations(this)
+  val controller = new BigGraphController(this)
+  val ops = new Operations(controller)
   val project = Project("Test_Project")
   project.notes = "test project" // Make sure project directory exists.
 
-  def run(op: String, params: Map[String, String] = Map()) =
-    ops.apply(ProjectOperationRequest("Test_Project", FEOperationSpec(op.replace(" ", "-"), params)))
+  def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
+    ops.apply(
+      ProjectOperationRequest(on.projectName, FEOperationSpec(op.replace(" ", "-"), params)))
 
   test("Derived vertex attribute (Double)") {
     run("Example Graph")
@@ -79,5 +81,14 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       case _: Bug =>
     }
     assert(project.vertexSet != null)
+  }
+
+  test("Project union") {
+    run("Example Graph")
+    val other = Project("ExampleGraph2")
+    project.copy(other)
+    run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = other)
+    run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = other)
+    run("Union with another project", Map("other" -> "ExampleGraph2"))
   }
 }

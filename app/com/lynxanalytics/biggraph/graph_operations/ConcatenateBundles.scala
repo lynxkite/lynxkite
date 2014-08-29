@@ -17,7 +17,17 @@ object ConcatenateBundles {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val edgesAC = edgeBundle(inputs.vsA.entity, inputs.vsC.entity)
+    println("Doing concatenation of " + inputs.edgesAB.entity + " and " + inputs.edgesBC.entity)
+    println("PAB", inputs.edgesAB.entity.properties)
+    println("PBC", inputs.edgesBC.entity.properties)
+    val isFunction =
+      inputs.edgesAB.properties.isFunction && inputs.edgesBC.properties.isFunction
+    val isReversedFunction =
+      inputs.edgesAB.properties.isReversedFunction && inputs.edgesBC.properties.isReversedFunction
+    val edgesAC = edgeBundle(
+      inputs.vsA.entity,
+      inputs.vsC.entity,
+      EdgeBundleProperties(isFunction = isFunction, isReversedFunction = isReversedFunction))
     val weightsAC = edgeAttribute[Double](edgesAC)
   }
 }
