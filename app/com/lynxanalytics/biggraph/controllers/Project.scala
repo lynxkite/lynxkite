@@ -136,8 +136,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
     if (origEB != null) {
       val iop = graph_operations.InducedEdgeBundle()
-      edgeBundle = iop(iop.srcInjection, injection)(iop.dstInjection, injection)(iop.edges, origEB)
-        .result.induced
+      edgeBundle = iop(
+        iop.srcMapping, graph_operations.ReverseEdges.run(injection))(
+          iop.dstMapping, graph_operations.ReverseEdges.run(injection))(
+            iop.edges, origEB).result.induced
     }
 
     origEAttrs.foreach {
@@ -148,13 +150,17 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
     segmentations.foreach { seg =>
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
-      seg.belongsTo = op(op.srcInjection, injection)(op.edges, seg.belongsTo).result.induced
+      seg.belongsTo = op(
+        op.srcMapping, graph_operations.ReverseEdges.run(injection))(
+          op.edges, seg.belongsTo).result.induced
     }
 
     if (isSegmentation) {
       val seg = asSegmentation
       val op = graph_operations.InducedEdgeBundle(induceSrc = false)
-      seg.belongsTo = op(op.dstInjection, injection)(op.edges, seg.belongsTo).result.induced
+      seg.belongsTo = op(
+        op.dstMapping, graph_operations.ReverseEdges.run(injection))(
+          op.edges, seg.belongsTo).result.induced
     }
   }
 
@@ -274,4 +280,10 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     manager.setTag(path / "belongsTo", eb)
   }
   def project = Project(s"$parentName/segmentations/$name/project")
+
+  def rename(newName: String) = {
+    val to = new SymbolPath(path.init) / newName
+    manager.cpTag(path, to)
+    manager.rmTag(path)
+  }
 }
