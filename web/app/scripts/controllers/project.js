@@ -153,18 +153,30 @@ angular.module('biggraph')
         });
     };
 
-    Side.prototype.rename = function(kind, oldName, newName) {
-      if (oldName === newName) { return; }
+    Side.prototype.applyOp = function(op, params, callback) {
       var that = this;
-      var params = { from: oldName, to: newName };
+      // TODO: Report errors on the UI.
       $resource('/ajax/projectOp').save(
         {
           project: this.state.projectName,
-          op: { id: 'Rename-' + kind, parameters: params },
+          op: { id: op, parameters: params },
         },
-        function() {
-          that.reload();
+        function(result) {
+          if (callback) { callback(); }
+          if (result.success) {
+            that.reload();
+          } else {
+            console.error(result.failureReason);
+          }
+        }, function(response) {
+          if (callback) { callback(); }
+          console.error(response);
         });
+    };
+
+    Side.prototype.rename = function(kind, oldName, newName) {
+      if (oldName === newName) { return; }
+      this.applyOp('Rename-' + kind, { from: oldName, to: newName });
     };
 
     Side.prototype.nonEmptyFilters = function() {

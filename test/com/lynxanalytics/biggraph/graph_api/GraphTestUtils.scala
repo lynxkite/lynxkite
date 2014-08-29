@@ -27,6 +27,14 @@ object GraphTestUtils {
         .map { case (id, edge) => (edge.src -> edge.dst) }
         .toSet
     }
+    def toPairCounts(): Map[(ID, ID), Int] = {
+      eb.rdd
+        .collect
+        .map { case (id, edge) => (edge.src -> edge.dst) }
+        .groupBy(identity)
+        .toMap
+        .mapValues(_.size)
+    }
   }
 }
 

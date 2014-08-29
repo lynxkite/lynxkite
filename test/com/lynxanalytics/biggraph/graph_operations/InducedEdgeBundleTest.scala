@@ -19,8 +19,9 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
     val op = InducedEdgeBundle()
     val induced = op(
       op.edges, example.edges)(
-        op.srcInjection, adamless.identity)(
-          op.dstInjection, adamless.identity).result.induced.toPairSet
+        op.srcMapping, ReverseEdges.run(adamless.identity))(
+          op.dstMapping, ReverseEdges.run(adamless.identity))
+      .result.induced.toPairSet
     assert(induced == Set(2 -> 1))
   }
 
@@ -28,7 +29,7 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
     val op = InducedEdgeBundle(induceDst = false)
     val induced = op(
       op.edges, example.edges)(
-        op.srcInjection, adamless.identity).result.induced.toPairSet
+        op.srcMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSet
     assert(induced == Set(2 -> 1, 1 -> 0, 2 -> 0))
   }
 
@@ -36,7 +37,23 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
     val op = InducedEdgeBundle(induceSrc = false)
     val induced = op(
       op.edges, example.edges)(
-        op.dstInjection, adamless.identity).result.induced.toPairSet
+        op.dstMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSet
     assert(induced == Set(2 -> 1, 0 -> 1))
+  }
+
+  test("example graph induce on merged") {
+    val merge = {
+      val op = MergeVertices[String]()
+      op(op.attr, example.gender).result
+    }
+    val induced = {
+      val op = InducedEdgeBundle()
+      op(
+        op.edges, example.edges)(
+          op.srcMapping, merge.belongsTo)(
+            op.dstMapping, merge.belongsTo)
+        .result.induced
+    }
+    assert(induced.toPairCounts == Map((1, 0) -> 1, (0, 1) -> 2, (0, 0) -> 1))
   }
 }

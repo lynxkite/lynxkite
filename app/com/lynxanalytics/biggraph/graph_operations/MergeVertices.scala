@@ -13,7 +13,7 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
-    new Segmentation(inputs.vs.entity)
+    new Segmentation(inputs.vs.entity, EdgeBundleProperties.partialFunction)
   }
 
   def execute(inputDatas: DataSet,

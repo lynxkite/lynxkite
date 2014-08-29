@@ -60,7 +60,7 @@ case class VertexSet(source: MetaGraphOperationInstance,
  * about its functionness.
  */
 case class EdgeBundleProperties(
-    // If you add a new property don't forget to update compliesWith as well!
+    // If you add a new property don't forget to update methods below as well!
 
     // The edge bundle defines a (potentially partial) function from its source
     // to its destination. Equivalently, all source vertices have an outdegree <= 1.
@@ -83,9 +83,14 @@ case class EdgeBundleProperties(
       (isEverywhereDefined || !requirements.isEverywhereDefined) &&
       (isReverseEverywhereDefined || !requirements.isReverseEverywhereDefined) &&
       (isIdentity || !requirements.isIdentity)
+
+  lazy val reversed: EdgeBundleProperties =
+    EdgeBundleProperties(
+      isReversedFunction, isFunction, isReverseEverywhereDefined, isEverywhereDefined, isIdentity)
 }
 object EdgeBundleProperties {
   val default = EdgeBundleProperties()
+  val partialFunction = EdgeBundleProperties(isFunction = true)
   val injection = EdgeBundleProperties(
     isFunction = true, isReversedFunction = true, isEverywhereDefined = true)
   val embedding = injection.copy(isIdentity = true)
@@ -226,7 +231,9 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     lazy val dst = dstF
     lazy val idSet = idSetF
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
-      assert(eb.properties.compliesWith(requiredProperties))
+      assert(
+        eb.properties.compliesWith(requiredProperties),
+        "Edge bundle %s does not comply with requirements %s".format(eb, requiredProperties))
       val withSrc =
         templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
       val withSrcDst =
