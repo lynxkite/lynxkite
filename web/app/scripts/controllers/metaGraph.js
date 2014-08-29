@@ -23,15 +23,15 @@ angular.module('biggraph')
         right: defaultSideState(),
       };
     }
-    
+
     function setState(state) {
       $scope.state = state;
       $scope.state.left.setCenter = function(id) { $scope.state.left.center = id; };
       $scope.state.right.setCenter = function(id) { $scope.state.right.center = id; };
     }
-    
+
     setState(defaultState());
-    
+
     $scope.left = {};
     $scope.right = {};
 
