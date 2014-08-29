@@ -65,8 +65,12 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.update = function(data) {
     var sides = [];
-    if (this.scope.left.graphMode) { sides.push(this.scope.left); }
-    if (this.scope.right.graphMode) { sides.push(this.scope.right); }
+    if (this.scope.left && this.scope.left.graphMode) {
+      sides.push(this.scope.left);
+    }
+    if (this.scope.right && this.scope.right.graphMode) {
+      sides.push(this.scope.right);
+    }
     this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
@@ -116,6 +120,9 @@ angular.module('biggraph').directive('graphView', function($window) {
                          label);
       v.id = vertex.id;
       svg.addClass(v.dom, 'sampled');
+      if (v.id === data.center) {
+        svg.addClass(v.dom, 'center');
+      }
       vertices.push(v);
       if (vertex.size === 0) {
         continue;
@@ -135,7 +142,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     var svgElement = this.svg;
     function setCenter() {
       scope.$apply(function() {
-        vertices.side.center = vertex.id;
+        vertices.side.setCenter(vertex.id);
       });
     }
     vertex.dom.on('mousedown touchstart', function() {
