@@ -105,7 +105,11 @@
           placeholder="Enter project notes here"
           rows="{{side.project.notes.split('\n').length}}"
           ng-model="side.project.notes"
+          ng-change="side.unsavedNotes = true"
           ng-trim="false"></textarea>
+        <p class="text-right" ng-if="side.unsavedNotes">
+          <button ng-click="side.saveNotes()" ng-disabled="side.savingNotes" class="btn btn-default">{{side.savingNotes ? '...' : 'Save'}}</button>
+        </p>
       </li>
 
       <li class="list-group-item">

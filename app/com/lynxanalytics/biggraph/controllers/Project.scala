@@ -101,10 +101,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     Segmentation(parentName.toString, segmentationName)
   }
 
-  def notes(implicit dm: DataManager) = manager.scalarOf[String](path / "notes").value
-  def notes_=(n: String) = {
-    set("notes", graph_operations.CreateStringScalar(n)().result.created)
-  }
+  def notes(implicit dm: DataManager) = get("notes")
+  def notes_=(n: String) = set("notes", n)
 
   def vertexSet = existing(path / "vertexSet").map(manager.vertexSet(_)).getOrElse(null)
   def vertexSet_=(e: VertexSet) = {

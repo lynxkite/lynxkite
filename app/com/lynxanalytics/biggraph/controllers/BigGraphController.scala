@@ -320,7 +320,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def categories(project: Project): Seq[OperationCategory] = {
     forProject(project).groupBy(_.category).map {
       case (cat, ops) => OperationCategory(cat, ops.map(_.toFE))
-    }.toSeq.sortBy(_.title)
+    }.toSeq.filter(_.title != "<hidden>").sortBy(_.title)
   }
 
   def apply(req: ProjectOperationRequest): FEStatus = {

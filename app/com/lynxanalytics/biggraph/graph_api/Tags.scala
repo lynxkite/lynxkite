@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+import play.api.libs.json
 import scala.collection.mutable
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
@@ -131,26 +132,22 @@ trait TagDir extends TagPath {
   private val children = mutable.Map[Symbol, TagPath]()
 }
 
-final case class TagSubDir(name: Symbol, parent: TagDir) extends TagDir {
-}
+final case class TagSubDir(name: Symbol, parent: TagDir) extends TagDir
 
-object TagRoot {
-  private val tagRE = "(.*):([^:]*)".r
-}
 final case class TagRoot() extends TagDir {
   val name = null
   val parent = null
   override val fullName: SymbolPath = new SymbolPath(Seq())
   override def isOffspringOf(other: TagPath): Boolean = (other == this)
-  def saveToString: String =
-    allTags.map(tag => "%s:%s".format(tag.fullName, tag.content)).mkString("\n")
+  def saveToString: String = {
+    json.Json.prettyPrint(json.JsObject(
+      allTags.map(tag => tag.fullName.toString -> json.JsString(tag.content)).toSeq
+    ))
+  }
   def loadFromString(data: String) = {
     clear()
-    data.split("\n").foreach {
-      _ match {
-        case TagRoot.tagRE(name, value) => setTag(name, value)
-      }
+    json.Json.parse(data).as[json.JsObject].fields.foreach {
+      case (name, value) => setTag(name, value.as[String])
     }
   }
 }
-
