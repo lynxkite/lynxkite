@@ -1,11 +1,11 @@
 <configuration>
-    
+
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
-  
+
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
      <file>${application.home}/logs/application.log</file>
      <encoder>
-       <pattern>%date - [%level] - from %logger in %thread %n%message%n%xException%n</pattern>
+       <pattern>%.-1level%date %file:%line %message%n%xException</pattern>
      </encoder>
    </appender>
 
@@ -28,5 +28,5 @@
     <appender-ref ref="FILE" />
     <appender-ref ref="STDERR" />
   </root>
-  
+
 </configuration>
