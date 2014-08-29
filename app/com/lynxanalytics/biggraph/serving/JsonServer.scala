@@ -15,23 +15,32 @@ object LynxUser extends securesocial.core.Authorization {
 }
 
 class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
-  def jsonPost[I: json.Reads, O: json.Writes](action: I => O) = {
-    log.info("JSON POST event received, function: " + action.getClass.toString())
-    SecuredAction(authorize = LynxUser, ajaxCall = true)(parse.json) { request =>
-      request.body.validate[I].fold(
-        errors => jsonBadRequest(errors),
-        result => Ok(json.Json.toJson(action(result))))
+  def action[A](parser: mvc.BodyParser[A])(block: mvc.Request[A] => mvc.Result): mvc.Action[A] = {
+    // Turn off authentication in development mode.
+    if (play.api.Play.current.configuration.getString("application.secret").nonEmpty) {
+      SecuredAction(authorize = LynxUser, ajaxCall = true)(parser)(block(_))
+    } else {
+      mvc.Action(parser)(block(_))
     }
   }
 
-  def jsonGet[I: json.Reads, O: json.Writes](action: I => O, key: String = "q") = {
-    SecuredAction(authorize = LynxUser, ajaxCall = true) { request =>
-      log.error("JSON GET event received, function: %s, query key: %s"
-        .format(action.getClass.toString(), key))
+  def jsonPost[I: json.Reads, O: json.Writes](handler: I => O) = {
+    log.info("JSON POST event received, function: " + handler.getClass.toString())
+    action(parse.json) { request =>
+      request.body.validate[I].fold(
+        errors => jsonBadRequest(errors),
+        result => Ok(json.Json.toJson(handler(result))))
+    }
+  }
+
+  def jsonGet[I: json.Reads, O: json.Writes](handler: I => O, key: String = "q") = {
+    action(parse.anyContent) { request =>
+      log.info("JSON GET event received, function: %s, query key: %s"
+        .format(handler.getClass.toString(), key))
       request.getQueryString(key) match {
         case Some(s) => Json.parse(s).validate[I].fold(
           errors => jsonBadRequest(errors),
-          result => Ok(json.Json.toJson(action(result))))
+          result => Ok(json.Json.toJson(handler(result))))
         case None => BadRequest(json.Json.obj(
           "status" -> "Error",
           "message" -> "Bad query string",
