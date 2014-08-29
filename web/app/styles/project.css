@@ -21,6 +21,11 @@
 .project {
   margin-right: 50px;
 }
+.version {
+  color: rgba(0, 0, 0, 0.3);
+  text-align: right;
+  padding: 20px;
+}
 
 .project-name .pull-right {
   margin-left: 30px;

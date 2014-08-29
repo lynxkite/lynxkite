@@ -1,4 +1,5 @@
 {
+  "version": "Static Ajax Test",
   "projects": [
     { "name": "Project_Strawberry", "vertexCount": "100000000", "edgeCount": "1000000000", "notes": "Subscribers and calls." },
     { "name": "Project_Melon", "vertexCount": "200000000", "edgeCount": "2000000000", "notes": "Phone numbers and texts." },
