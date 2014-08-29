@@ -39,7 +39,7 @@ angular.module('biggraph')
       }
 
       vd.vertexSet = { id: this.project.vertexSet };
-      if (this.project.edgeBundle !== '') { vd.edgeBundle = { id: this.project.edgeBundle }; }
+      if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
 
       vd.filters = this.state.filters;
       vd.graphMode = this.state.graphMode;
@@ -51,6 +51,7 @@ angular.module('biggraph')
       var that = this;
       vd.setCenter = function(id) { that.state.center = id; };
 
+      // we don't just copy state to viewData as we need to transform some state variables
       vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
       vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
       vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
@@ -239,7 +240,9 @@ angular.module('biggraph')
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
     $scope.$watch('left.project.$resolved', function() { $scope.left.updateViewData(); });
     $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
-    
+    util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
+    util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
+
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes
     // it possible to edit the state manually in the URL, or use the "back"
@@ -266,8 +269,6 @@ angular.module('biggraph')
             $scope.right.state = state.right;
           }
         }
-        $scope.left.updateViewData();
-        $scope.right.updateViewData();
       });
 
     util.deepWatch(
