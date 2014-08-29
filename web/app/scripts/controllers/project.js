@@ -148,6 +148,15 @@ angular.module('biggraph')
         });
     };
 
+    Side.prototype.saveNotes = function() {
+      var that = this;
+      this.savingNotes = true;
+      this.applyOp('Change-project-notes', { notes: this.project.notes }, function() {
+        that.unsavedNotes = false;
+        that.savingNotes = false;
+      });
+    };
+
     Side.prototype.rename = function(kind, oldName, newName) {
       if (oldName === newName) { return; }
       this.applyOp('Rename-' + kind, { from: oldName, to: newName });

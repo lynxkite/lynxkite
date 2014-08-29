@@ -19,6 +19,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class EdgeOperation(p: Project) extends Operation(p, "Edge operations")
   abstract class AttributeOperation(p: Project) extends Operation(p, "Attribute operations")
   abstract class SegmentationOperation(p: Project) extends Operation(p, "Segmentation operations")
+  abstract class HiddenOperation(p: Project) extends Operation(p, "<hidden>")
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
@@ -668,7 +669,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new AttributeOperation(_) {
+  register(new HiddenOperation(_) {
     val title = "Rename edge attribute"
     val parameters = Seq(
       Param("from", "Old name", options = edgeAttributes),
@@ -681,7 +682,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new AttributeOperation(_) {
+  register(new HiddenOperation(_) {
     val title = "Rename vertex attribute"
     val parameters = Seq(
       Param("from", "Old name", options = vertexAttributes),
@@ -694,7 +695,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new HiddenOperation(_) {
     val title = "Rename segmentation"
     val parameters = Seq(
       Param("from", "Old name", options = segmentations),
@@ -702,6 +703,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     def apply(params: Map[String, String]): FEStatus = {
       project.segmentation(params("from")).rename(params("to"))
+      return FEStatus.success
+    }
+  })
+
+  register(new HiddenOperation(_) {
+    val title = "Change project notes"
+    val parameters = Seq(
+      Param("notes", "New contents"))
+    def enabled = FEStatus.success
+    def apply(params: Map[String, String]): FEStatus = {
+      project.notes = params("notes")
       return FEStatus.success
     }
   })
