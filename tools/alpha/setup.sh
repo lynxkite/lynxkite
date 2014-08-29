@@ -17,11 +17,22 @@ fi
 sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 9000
 
 CREDENTIALS=$1
+GOOGLE_CLIENT_SECRET=$2
 CORES=4
 RAM_MB=28000
 
 # Stop the server in case it's already running.
-killall java
+killall java || true
+for i in $(seq 10); do
+  if [ ! -e biggraphstage/RUNNING_PID ]; then
+    break
+  fi
+  sleep 1
+done
+if [ -e biggraphstage/RUNNING_PID ]; then
+  killall -9 java
+  rm -f biggraphstage/RUNNING_PID
+fi
 
 # Start the server.
 sh -c "( ( \
@@ -33,6 +44,8 @@ sh -c "( ( \
   EXECUTOR_MEMORY=${RAM_MB}m \
   nohup biggraphstage/bin/biggraph \
     -mem $RAM_MB \
+    -Dapplication.secret=$CREDENTIALS \
+    -Dsecuresocial.google.clientSecret=$GOOGLE_CLIENT_SECRET \
   &> setup.sh.out \
 ) & ls > /dev/null )"
 # I have no idea why, but if I remove "ls", nohup does not work.
