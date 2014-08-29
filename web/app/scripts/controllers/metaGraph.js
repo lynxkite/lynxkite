@@ -14,7 +14,6 @@ angular.module('biggraph')
         bucketCount: 4,
         sampleRadius: 1,
         center: undefined,
-        setCenter: function(id) { $scope.state.left.center = id; },
       };
     }
     function defaultState() {
@@ -24,8 +23,15 @@ angular.module('biggraph')
         right: defaultSideState(),
       };
     }
-    $scope.state = defaultState();
-
+    
+    function setState(state) {
+      $scope.state = state;
+      $scope.state.left.setCenter = function(id) { $scope.state.left.center = id; };
+      $scope.state.right.setCenter = function(id) { $scope.state.right.center = id; };
+    }
+    
+    setState(defaultState());
+    
     $scope.left = {};
     $scope.right = {};
 
@@ -37,14 +43,14 @@ angular.module('biggraph')
       function() { return $location.search(); },
       function() {
         if (!$location.search().q) {
-          $scope.state = defaultState();
+          setState(defaultState());
         } else {
           var state = JSON.parse($location.search().q);
           if (!angular.equals(state, $scope.state)) {
             // The parts of the template that depend on 'state' get re-rendered
             // when we replace it. So we only do this if there is an actual
             // difference.
-            $scope.state = state;
+            setState(state);
           }
         }
       });
