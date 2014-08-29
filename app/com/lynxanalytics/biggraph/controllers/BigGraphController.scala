@@ -193,7 +193,7 @@ class FEOperationRepository(env: BigGraphEnvironment) {
  * Logic for processing requests
  */
 
-class BigGraphController(env: BigGraphEnvironment) {
+class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   val operations = new FEOperations(env)
@@ -240,12 +240,15 @@ class BigGraphController(env: BigGraphEnvironment) {
 
   // Project view stuff below.
 
-  val ops = new Operations(env)
+  val ops = new Operations(this)
+
+  def projects: Seq[Project] = {
+    val dirs = if (metaManager.tagExists("projects")) metaManager.lsTag("projects") else Nil
+    dirs.map(p => Project(p.path.last.name))
+  }
 
   def splash(request: serving.Empty): Splash = {
-    val dirs = if (metaManager.tagExists("projects")) metaManager.lsTag("projects") else Nil
-    val projects = dirs.map(p => Project(p.path.last.name).toFE)
-    return Splash(projects = projects)
+    return Splash(projects = projects.map(_.toFE))
   }
 
   def project(request: ProjectRequest): FEProject = {
@@ -309,9 +312,9 @@ abstract class Operation(val project: Project, val category: String) {
   protected def hasNoEdgeBundle = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
 }
 
-abstract class OperationRepository(env: BigGraphEnvironment) {
-  implicit val manager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
+abstract class OperationRepository(controller: BigGraphController) {
+  implicit val manager = controller.env.metaGraphManager
+  implicit val dataManager = controller.env.dataManager
 
   private val operations = mutable.Buffer[Project => Operation]()
   def register(factory: Project => Operation): Unit = operations += factory
@@ -322,6 +325,8 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
       case (cat, ops) => OperationCategory(cat, ops.map(_.toFE))
     }.toSeq.sortBy(_.title)
   }
+
+  def projects: Seq[UIValue] = UIValue.seq(controller.projects.map(_.projectName))
 
   def apply(req: ProjectOperationRequest): FEStatus = {
     val p = Project(req.project)

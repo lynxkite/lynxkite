@@ -55,3 +55,58 @@ case class VertexSetUnion(numVertexSets: Int)
     }
   }
 }
+
+object EdgeBundleUnion {
+  class Input(numEdgeBundles: Int) extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val idSets = Range(0, numEdgeBundles).map {
+      i => vertexSet(Symbol("id_set" + i))
+    }.toList
+    val idSetUnion = vertexSet
+    val injections = Range(0, numEdgeBundles).map {
+      i =>
+        edgeBundle(
+          idSets(i),
+          idSetUnion,
+          requiredProperties = EdgeBundleProperties.injection,
+          name = Symbol("injection" + i))
+    }.toList
+    val ebs = Range(0, numEdgeBundles).map {
+      i => edgeBundle(src, dst, idSet = idSets(i), name = Symbol("eb" + i))
+    }.toList
+  }
+  class Output(numEdgeBundles: Int)(
+      implicit instance: MetaGraphOperationInstance,
+      input: Input) extends MagicOutput(instance) {
+    val union = edgeBundle(input.src.entity, input.dst.entity, idSet = input.idSetUnion.entity)
+  }
+}
+case class EdgeBundleUnion(numEdgeBundles: Int)
+    extends TypedMetaGraphOp[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
+
+  import EdgeBundleUnion._
+  assert(numEdgeBundles >= 1)
+  @transient override lazy val inputs = new Input(numEdgeBundles)
+
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output(numEdgeBundles)(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val idSetUnion = inputs.idSetUnion.rdd
+    val reIDedEbs = Range(0, numEdgeBundles).map { i =>
+      val eb = inputs.ebs(i).rdd
+      // Here typically none of the injections are identity, so we don't special case for that.
+      val injection =
+        inputs.injections(i).rdd
+          .map { case (_, e) => e.src -> e.dst }
+          .toSortedRDD(eb.partitioner.get)
+      eb.sortedJoin(injection).map { case (oldId, (edge, newId)) => (newId, edge) }
+    }
+    output(o.union, rc.sparkContext.union(reIDedEbs).toSortedRDD(idSetUnion.partitioner.get))
+  }
+}

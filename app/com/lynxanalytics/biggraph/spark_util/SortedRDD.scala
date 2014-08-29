@@ -72,6 +72,32 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     }
   }
 
+  private def fullOuterMerge[K, V, W](
+    bi1: collection.BufferedIterator[(K, V)],
+    bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (Option[V], Option[W]))] = {
+    if (bi1.hasNext && bi2.hasNext) {
+      val (k1, v1) = bi1.head
+      val (k2, v2) = bi2.head
+      if (ord.equiv(k1, k2)) {
+        bi1.next;
+        bi2.next;
+        (k1, (Some(v1), Some(v2))) #:: fullOuterMerge(bi1, bi2)
+      } else if (ord.lt(k1, k2)) {
+        bi1.next
+        (k1, (Some(v1), None)) #:: fullOuterMerge(bi1, bi2)
+      } else {
+        bi2.next
+        (k2, (None, Some(v2))) #:: fullOuterMerge(bi1, bi2)
+      }
+    } else if (bi1.hasNext) {
+      bi1.toStream.map { case (k, v) => (k, (Some(v), None)) }
+    } else if (bi2.hasNext) {
+      bi2.toStream.map { case (k, v) => (k, (None, Some(v))) }
+    } else {
+      Stream()
+    }
+  }
+
   /*
    * Differs from Spark's join implementation as this allows multiple keys only on the left side
    * the keys of 'other' must be unique!
@@ -91,6 +117,16 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
     assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
     assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
     val zipped = this.zipPartitions(other, true) { (it1, it2) => leftOuterMerge(it1.buffered, it2.buffered).iterator }
+    new SortedRDD(zipped)
+  }
+
+  /*
+   * Both RDDs must have unique keys. Otherwise the world might end.
+   */
+  def fullOuterJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (Option[V], Option[W])] = {
+    assert(self.partitions.size == other.partitions.size, s"Size mismatch between $self and $other")
+    assert(self.partitioner == other.partitioner, s"Partitioner mismatch between $self and $other")
+    val zipped = this.zipPartitions(other, true) { (it1, it2) => fullOuterMerge(it1.buffered, it2.buffered).iterator }
     new SortedRDD(zipped)
   }
 

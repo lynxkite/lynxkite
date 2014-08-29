@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import scala.reflect.runtime.universe.typeOf
 
-class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
+class Operations(controller: BigGraphController) extends OperationRepository(controller) {
   val Param = FEOperationParameterMeta // Short alias.
 
   // Categories.
@@ -706,6 +706,101 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new VertexOperation(_) {
+    val title = "Union with another project"
+    val parameters = Seq(
+      Param("other", "Other projects name", options = projects))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]): FEStatus = {
+      val other = Project(params("other"))
+      if (other.vertexSet == null) {
+        // Nothing to do
+        return FEStatus.success
+      }
+      val vsUnion = {
+        val op = graph_operations.VertexSetUnion(2)
+        op(op.vss, Seq(project.vertexSet, other.vertexSet)).result
+      }
+      val newVertexAttributes = unifyAttributes(
+        project.vertexAttributes
+          .map {
+            case (name, attr) =>
+              name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+                attr,
+                reverse(vsUnion.injections(0)))
+          },
+        other.vertexAttributes
+          .map {
+            case (name, attr) =>
+              name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+                attr,
+                reverse(vsUnion.injections(1)))
+          })
+      val ebInduced = Option(project.edgeBundle).map { eb =>
+        val op = graph_operations.InducedEdgeBundle()
+        val mapping = vsUnion.injections(0)
+        op(op.srcMapping, mapping)(op.dstMapping, mapping)(op.edges, project.edgeBundle).result
+      }
+      val otherEbInduced = Option(other.edgeBundle).map { eb =>
+        val op = graph_operations.InducedEdgeBundle()
+        val mapping = vsUnion.injections(1)
+        op(op.srcMapping, mapping)(op.dstMapping, mapping)(op.edges, other.edgeBundle).result
+      }
+
+      val (newEdgeBundle, myEbInjection, otherEbInjection): (EdgeBundle, EdgeBundle, EdgeBundle) =
+        if (ebInduced.isDefined && !otherEbInduced.isDefined) {
+          (ebInduced.get.induced.entity, ebInduced.get.embedding, null)
+        } else if (!ebInduced.isDefined && otherEbInduced.isDefined) {
+          (otherEbInduced.get.induced.entity, null, otherEbInduced.get.embedding)
+        } else {
+          assert(ebInduced.isDefined && otherEbInduced.isDefined)
+          val idUnion = {
+            val op = graph_operations.VertexSetUnion(2)
+            op(
+              op.vss,
+              Seq(ebInduced.get.induced.asVertexSet, otherEbInduced.get.induced.asVertexSet))
+              .result
+          }
+          val ebUnion = {
+            val op = graph_operations.EdgeBundleUnion(2)
+            op(
+              op.ebs, Seq(ebInduced.get.induced.entity, otherEbInduced.get.induced.entity))(
+                op.injections, idUnion.injections.map(_.entity)).result.union
+          }
+          (ebUnion,
+            concat(reverse(idUnion.injections(0).entity), ebInduced.get.embedding),
+            concat(reverse(idUnion.injections(1).entity), otherEbInduced.get.embedding))
+        }
+      val newEdgeAttributes = unifyAttributes(
+        project.edgeAttributes
+          .map {
+            case (name, attr) => {
+              println("AVS" + attr.asVertexAttribute.vertexSet)
+              println("src" + myEbInjection.srcVertexSet)
+              println("dst" + myEbInjection.dstVertexSet)
+              name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+                attr.asVertexAttribute,
+                myEbInjection)
+            }
+          },
+        other.edgeAttributes
+          .map {
+            case (name, attr) =>
+              name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+                attr.asVertexAttribute,
+                otherEbInjection)
+          })
+        .mapValues(va => graph_operations.VertexAttributeAsEdgeAttribute.run(va, newEdgeBundle))
+
+      project.vertexSet = vsUnion.union
+      project.vertexAttributes = newVertexAttributes
+      project.edgeBundle = newEdgeBundle
+      project.edgeAttributes = newEdgeAttributes
+
+      return FEStatus.success
+    }
+  })
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()
@@ -834,5 +929,35 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   def reverse(eb: EdgeBundle): EdgeBundle = {
     val op = graph_operations.ReverseEdges()
     op(op.esAB, eb).result.esBA
+  }
+
+  def unifyAttributeT[T](a1: VertexAttribute[T], a2: VertexAttribute[_]): VertexAttribute[T] = {
+    implicit val tt = a1.typeTag
+    val op = graph_operations.AttributeDefault[T]()
+    op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast[T]).result.defaultedAttr
+  }
+  def unifyAttribute(a1: VertexAttribute[_], a2: VertexAttribute[_]): VertexAttribute[_] = {
+    unifyAttributeT(a1, a2)
+  }
+
+  def unifyAttributes(
+    as1: Iterable[(String, VertexAttribute[_])],
+    as2: Iterable[(String, VertexAttribute[_])]): Map[String, VertexAttribute[_]] = {
+
+    val m1 = as1.toMap
+    val m2 = as2.toMap
+    m1.keySet.union(m2.keySet)
+      .map(k => k -> (m1.get(k) ++ m2.get(k)).reduce(unifyAttribute _))
+      .toMap
+  }
+
+  def concat(eb1: EdgeBundle, eb2: EdgeBundle): EdgeBundle = {
+    val (weighted1, weighted2) = {
+      val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
+      (op(op.edges, eb1).result.attr, op(op.edges, eb2).result.attr)
+    }
+
+    val op = graph_operations.ConcatenateBundles()
+    op(op.weightsAB, weighted1)(op.weightsBC, weighted2).result.weightsAC.edgeBundle
   }
 }
