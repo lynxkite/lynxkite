@@ -10,7 +10,6 @@ angular.module('biggraph')
         graphMode: undefined,
         bucketCount: 4,
         sampleRadius: 1,
-        center: undefined,
       };
     }
 
@@ -25,12 +24,39 @@ angular.module('biggraph')
     function Side() {
       // The state of controls. E.g. bucket count.
       this.state = defaultSideState();
+      // Everything needed for a view (state included), use this for rendering graph view instead of using state directly.
+      this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
-      // Side.graphState is for compatibility with the metaGraph.js-related code in graph-view.js
-      // and could be removed later.
-      this.graphState = undefined;
     }
+
+    Side.prototype.updateViewData = function() {
+      this.viewData = {};
+      
+      var vd = this.viewData;
+      if (this.project === undefined || !this.project.$resolved) {
+        return;
+      }
+
+      vd.vertexSet = { id: this.project.vertexSet };
+      if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
+
+      vd.filters = this.state.filters;
+      vd.graphMode = this.state.graphMode;
+      vd.bucketCount = this.state.bucketCount;
+      vd.sampleRadius = this.state.sampleRadius;
+      vd.animate = this.state.animate;
+
+      vd.center = this.state.center;
+      var that = this;
+      vd.setCenter = function(id) { that.state.center = id; };
+
+      // we don't just copy state to viewData as we need to transform some state variables
+      vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
+      vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
+      vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
+      vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+    };
 
     Side.prototype.shortName = function() {
       var name = this.state.projectName;
@@ -233,30 +259,10 @@ angular.module('biggraph')
     $scope.sides = [$scope.left, $scope.right];
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
-
-    $scope.$watch('left.project.$resolved', function() { $scope.left.updateGraphState(); });
-    util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
-    $scope.$watch('right.project.$resolved', function() { $scope.right.updateGraphState(); });
-    util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
-    Side.prototype.updateGraphState = function() {
-      this.graphState = angular.copy(this.state);
-      if (this.project === undefined || !this.project.$resolved) {
-        return;
-      }
-
-      this.graphState.vertexSet = { id: this.project.vertexSet };
-
-      this.graphState.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
-      this.graphState.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
-      this.graphState.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
-      this.graphState.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
-
-      if (this.project.edgeBundle !== '') {
-        this.graphState.edgeBundle = { id: this.project.edgeBundle };
-      } else {
-        this.graphState.edgeBundle = undefined;
-      }
-    };
+    $scope.$watch('left.project.$resolved', function() { $scope.left.updateViewData(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
+    util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
+    util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes

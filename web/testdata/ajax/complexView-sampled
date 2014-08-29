@@ -8,7 +8,8 @@
       { "id": 4, "size": 20, "label": "four" },
       { "id": 5, "size": 15, "label": "five" },
       { "id": 6, "size": 5, "label": "six" }
-    ]
+    ],
+    "center": 1
   }],
   "edgeBundles": [{
     "srcIdx": 0, "dstIdx": 0,
