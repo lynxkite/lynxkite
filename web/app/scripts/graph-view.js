@@ -105,8 +105,6 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   GraphView.prototype.addSampledVertices = function(data, xOff, yOff, side) {
-    // set vertex center to the one provided by backend
-    side.setCenter(data.center);
     var vertices = [];
     var vertexBounds = util.minmax(data.vertices.map(function(n) { return n.size; }));
     var vertexScale = this.zoom * 2 / vertexBounds.max;

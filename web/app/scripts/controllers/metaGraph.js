@@ -14,6 +14,7 @@ angular.module('biggraph')
         bucketCount: 4,
         sampleRadius: 1,
         center: undefined,
+        setCenter: function(id) { $scope.state.left.center = id; },
       };
     }
     function defaultState() {
@@ -30,30 +31,6 @@ angular.module('biggraph')
 
     $scope.left.other = $scope.right;
     $scope.right.other = $scope.left;
-    
-    util.deepWatch(
-      $scope,
-      'state.left',
-      function() { updateLeftViewData(); }
-    );
-    util.deepWatch(
-      $scope,
-      'state.right',
-      function() { updateRightViewData(); }
-    );
-
-    function updateLeftViewData() {
-      if ($scope.state.left === undefined) {
-        return;
-      }
-      $scope.state.left.setCenter = function(id) { $scope.state.left.center = id; };
-    }
-    function updateRightViewData() {
-      if ($scope.state.right === undefined) {
-        return;
-      }
-      $scope.state.right.setCenter = function(id) { $scope.state.right.center = id; };
-    }
 
     util.deepWatch(
       $scope,
