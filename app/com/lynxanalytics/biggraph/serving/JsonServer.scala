@@ -27,8 +27,8 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
   }
 
   def jsonPost[I: json.Reads, O: json.Writes](handler: I => O) = {
-    log.info("JSON POST event received, function: " + handler.getClass.toString())
     action(parse.json) { request =>
+      log.info(s"POST ${request.path} ${request.body}")
       request.body.validate[I].fold(
         errors => jsonBadRequest(errors),
         result => Ok(json.Json.toJson(handler(result))))
@@ -37,12 +37,12 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
 
   def jsonGet[I: json.Reads, O: json.Writes](handler: I => O, key: String = "q") = {
     action(parse.anyContent) { request =>
-      log.info("JSON GET event received, function: %s, query key: %s"
-        .format(handler.getClass.toString(), key))
       request.getQueryString(key) match {
-        case Some(s) => Json.parse(s).validate[I].fold(
-          errors => jsonBadRequest(errors),
-          result => Ok(json.Json.toJson(handler(result))))
+        case Some(s) =>
+          log.info(s"GET ${request.path} $s")
+          Json.parse(s).validate[I].fold(
+            errors => jsonBadRequest(errors),
+            result => Ok(json.Json.toJson(handler(result))))
         case None => BadRequest(json.Json.obj(
           "status" -> "Error",
           "message" -> "Bad query string",
