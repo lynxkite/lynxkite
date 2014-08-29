@@ -100,7 +100,7 @@ case class FESegmentation(
   belongsTo: UIValue) // The connecting edge bundle.
 
 case class ProjectRequest(name: String)
-case class Splash(projects: Seq[FEProject])
+case class Splash(version: String, projects: Seq[FEProject])
 case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(name: String, notes: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
@@ -240,12 +240,18 @@ class BigGraphController(env: BigGraphEnvironment) {
 
   // Project view stuff below.
 
+  lazy val version = try {
+    scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString
+  } catch {
+    case e: java.io.IOException => ""
+  }
+
   val ops = new Operations(env)
 
   def splash(request: serving.Empty): Splash = {
     val dirs = if (metaManager.tagExists("projects")) metaManager.lsTag("projects") else Nil
     val projects = dirs.map(p => Project(p.path.last.name).toFE)
-    return Splash(projects = projects)
+    return Splash(version, projects)
   }
 
   def project(request: ProjectRequest): FEProject = {

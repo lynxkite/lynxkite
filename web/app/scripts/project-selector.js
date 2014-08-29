@@ -3,11 +3,12 @@
 angular.module('biggraph').directive('projectSelector', function($resource, util) {
   return {
     restrict: 'E',
-    scope: { name: '=' },
+    scope: { name: '=', version: '=' },
     templateUrl: 'project-selector.html',
     link: function(scope) {
       scope.util = util;
       scope.data = util.nocache('/ajax/splash');
+      scope.$watch('data.version', function(v) { scope.version = v; });
       scope.createProject = function() {
         scope.newProject.sending = true;
         var name = scope.newProject.name.replace(/ /g, '_');

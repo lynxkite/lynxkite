@@ -34,6 +34,20 @@ libraryDependencies ++= Seq(
 
 play.Project.playScalaSettings
 
+// Runs "stage", then creates the "stage/version" file.
+def myStage = Command.command("stage") { state =>
+  import sys.process._
+  val res = Project.extract(state).runTask(com.typesafe.sbt.packager.Keys.stage, state)._1
+  val date = java.util.Calendar.getInstance.getTime
+  val user = util.Properties.userName
+  val branch = "git rev-parse --abbrev-ref HEAD".!!
+  val modified = if ("git status --porcelain".!!.nonEmpty) "modified" else "mint"
+  IO.write(new java.io.File("stage/version"), s"Staged at $date by $user from $modified $branch\n")
+  res
+}
+
+commands += myStage
+
 // Save logs to a file. Do not run benchmarks by default. (Use "sbt bench:test" to run them.)
 testOptions in Test := Seq(Tests.Argument("-fWDF", "logs/sbttest.out", "-l", "Benchmark"))
 
