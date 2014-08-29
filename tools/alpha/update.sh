@@ -8,6 +8,7 @@ if [ "${CREDENTIALS:-}" = "" ]; then
 fi
 if [ "${GOOGLE_CLIENT_SECRET:-}" = "" ]; then
   echo "GOOGLE_CLIENT_SECRET has to be set"
+  echo "You can find it at https://console.developers.google.com/project/apps~big-graph-gc1/apiui/credential"
   exit 1
 fi
 
