@@ -586,9 +586,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new VertexOperation(_) {
-    val title = "Join vertices on attribute"
+    val title = "Merge vertices by attribute"
     val parameters = Seq(
-      Param("attr", "Attribute", options = vertexAttributes)) ++
+      Param("key", "Match by", options = vertexAttributes)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
@@ -597,14 +597,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       op(op.attr, attr).result
     }
     def apply(params: Map[String, String]): FEStatus = {
-      val m = merge(project.vertexAttributes(params("attr")))
+      val m = merge(project.vertexAttributes(params("key")))
       val oldAttrs = project.vertexAttributes.toMap
+      val oldEdges = project.edgeBundle
       project.vertexSet = m.segments
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      // Always use most_common for the key attribute.
+      val hack = "aggregate-" + params("key") -> "most_common"
+      for ((attr, choice) <- parseAggregateParams(params + hack)) {
         val result = aggregateViaConnection(
           m.belongsTo,
           attributeWithLocalAggregator(oldAttrs(attr), choice))
         project.vertexAttributes(attr) = result
+      }
+      project.edgeBundle = {
+        val op = graph_operations.InducedEdgeBundle()
+        op(op.srcMapping, m.belongsTo)(op.dstMapping, m.belongsTo)(op.edges, oldEdges).result.induced
       }
       return FEStatus.success
     }
