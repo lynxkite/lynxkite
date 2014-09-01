@@ -596,6 +596,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]): FEStatus = {
       val m = merge(project.vertexAttributes(params("key")))
       val oldAttrs = project.vertexAttributes.toMap
+      val oldEdges = project.edgeBundle
       project.vertexSet = m.segments
       // Always use most_common for the key attribute.
       val hack = "aggregate-" + params("key") -> "most_common"
@@ -604,6 +605,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           m.belongsTo,
           attributeWithLocalAggregator(oldAttrs(attr), choice))
         project.vertexAttributes(attr) = result
+      }
+      project.edgeBundle = {
+        val op = graph_operations.InducedEdgeBundle()
+        op(op.srcMapping, m.belongsTo)(op.dstMapping, m.belongsTo)(op.edges, oldEdges).result.induced
       }
       return FEStatus.success
     }

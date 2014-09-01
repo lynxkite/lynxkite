@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -54,6 +55,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(count.rdd.collect.toMap.values.toSet == Set(3.0, 1.0))
     val gender = project.vertexAttributes("gender").runtimeSafeCast[String]
     assert(gender.rdd.collect.toMap.values.toSet == Set("Male", "Female"))
+    val edges = project.edgeBundle
+    assert(edges.rdd.values.collect.toSeq.sorted ==
+      Seq(Edge(0, 0), Edge(0, 1), Edge(0, 1), Edge(1, 0)))
   }
 
   test("Aggregate edge attribute") {
