@@ -61,6 +61,12 @@ svg .vertex.highlight text {
 svg .vertex.sampled circle {
   cursor: pointer;
 }
+svg .vertex.center circle {
+  fill: #744;
+}
+svg .vertex.center.highlight circle {
+  fill: #FAA;
+}
 
 svg .bucket {
   font-size: 12px;

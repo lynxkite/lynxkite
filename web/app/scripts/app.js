@@ -32,29 +32,28 @@ angular
   })
   .factory('util', function utilFactory($resource) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+    function ajax(url, params, cache) {
+      if (params === undefined) { params = { fake: 1 }; }
+      var res = $resource(url, {}, { get: { method: 'GET', cache: cache } });
+      var req = res.get({ q: params }, function() {}, function(failure) {
+        if (failure.status === 401) {  // Unauthorized.
+          req.error = 'Redirecting to login page.';
+          window.location.href = '/authenticate/google';
+        } else {
+          req.error = 'Request failed: ' + (failure.data.error || failure.data);
+        }
+      });
+      return req;
+    }
     return {
       // This function is for code clarity, so we don't have a mysterious "true" argument.
       deepWatch: function(scope, expr, fun) {
         scope.$watch(expr, fun, true);
       },
       // Json GET with caching and parameter wrapping.
-      get: function(url, params) {
-        if (params === undefined) { params = { fake: 1 }; }
-        var res = $resource(url, {}, { get: { method: 'GET', cache: true } });
-        var req = res.get({ q: params }, function() {}, function(failure) {
-          req.error = 'Request failed: ' + failure.data;
-        });
-        return req;
-      },
+      get: function(url, params) { return ajax(url, params, true); },
       // Json GET with parameter wrapping and no caching.
-      nocache: function(url, params) {
-        if (params === undefined) { params = { fake: 1 }; }
-        var res = $resource(url);
-        var req = res.get({ q: params }, function() {}, function(failure) {
-          req.error = 'Request failed: ' + failure.data;
-        });
-        return req;
-      },
+      nocache: function(url, params) { return ajax(url, params, false); },
       // Easier to read numbers. 1234 -> 1k
       human: function(x) {
         for (var i = 0; true; ++i) {

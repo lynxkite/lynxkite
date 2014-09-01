@@ -67,12 +67,13 @@
           tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
         </label>
-        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
+        <label ng-show="side.project.edgeBundle !== ''" class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
           tooltip="Sampled&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
         </label>
-        <label ng-if="side.state.graphMode === 'sampled'" class="btn btn-default" ng-click="side.state.animate = !side.state.animate"
-          tooltip="Animate&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <label ng-show="(side.project.edgeBundle !== '' && side.state.graphMode === 'sampled')" class="btn btn-default"
+          ng-click="side.state.animate = !side.state.animate" tooltip="Animate&nbsp;graph" tooltip-append-to-body="true"
+          tooltip-placement="bottom">
           <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
         </label>
       </div>
@@ -104,7 +105,11 @@
           placeholder="Enter project notes here"
           rows="{{side.project.notes.split('\n').length}}"
           ng-model="side.project.notes"
+          ng-change="side.unsavedNotes = true"
           ng-trim="false"></textarea>
+        <p class="text-right" ng-if="side.unsavedNotes">
+          <button ng-click="side.saveNotes()" ng-disabled="side.savingNotes" class="btn btn-default">{{side.savingNotes ? '...' : 'Save'}}</button>
+        </p>
       </li>
 
       <li class="list-group-item">
