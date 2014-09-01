@@ -92,7 +92,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
-      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
+      val header = if (params("header") == "<read first line>")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
@@ -121,7 +122,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
-      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
+      val header = if (params("header") == "<read first line>")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
@@ -150,7 +152,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
-      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
+      val header = if (params("header") == "<read first line>")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
