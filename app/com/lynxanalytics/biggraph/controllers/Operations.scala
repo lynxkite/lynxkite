@@ -93,7 +93,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
       val header = if (params("header") == "<read first line>")
-        files.files.head.reader.readLine else params("header")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
@@ -123,7 +123,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
       val header = if (params("header") == "<read first line>")
-        files.files.head.reader.readLine else params("header")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
@@ -153,7 +153,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
       val header = if (params("header") == "<read first line>")
-        files.files.head.reader.readLine else params("header")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
