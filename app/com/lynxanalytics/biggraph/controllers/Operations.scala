@@ -310,12 +310,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Degree"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "degree"),
-      Param("inout", "Type", options = UIValue.seq(Seq("in", "out", "all", "symmetric"))))      
+      Param("inout", "Type", options = UIValue.seq(Seq("in", "out", "all", "symmetric"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val esAB = project.edgeBundle
       val re = graph_operations.ReverseEdges()
-      val esBA = re(re.esAB, esAB).result.esBA      
+      val esBA = re(re.esAB, esAB).result.esBA
       val esSym = {
         val op = graph_operations.RemoveNonSymmetricEdges()
         op(op.es, esAB).result.symmetric
@@ -324,17 +324,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         case "in" => applyOn(esBA)
         case "out" => applyOn(esAB)
         case "symmetric" => applyOn(esSym)
-        /*case "all" => {
-          val op = graph_operations.DeriveJS
-        }*/
+        case "all" => graph_operations.DeriveJS.add(applyOn(esBA), applyOn(esAB))
       }
       project.vertexAttributes(params("name")) = deg
       FEStatus.success
     }
-      
+
     private def applyOn(es: EdgeBundle): VertexAttribute[Double] = {
       val op = graph_operations.OutDegree()
-      op(op.es, es).result.outDegree      
+      op(op.es, es).result.outDegree
     }
   })
 
@@ -741,14 +739,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       op(op.esAB, segmentation.belongsTo).result.esBA
     }
 
-    val weighted = {
-      val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-      op(op.edges, reversed).result.attr
-    }
-
     segmentation.project.vertexAttributes(attributeName) = {
-      val op = graph_operations.WeightedOutDegree()
-      op(op.attr, weighted).result.outDegree
+      val op = graph_operations.OutDegree()
+      op(op.es, reversed).result.outDegree
     }
   }
 
