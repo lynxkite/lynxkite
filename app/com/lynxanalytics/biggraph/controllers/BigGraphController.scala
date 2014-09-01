@@ -85,8 +85,6 @@ case class FEProject(
   redoOp: String, // Name of next operation. Empty if there is nothing to redo.
   vertexSet: String,
   edgeBundle: String,
-  vertexCount: Long,
-  edgeCount: Long,
   notes: String,
   scalars: Seq[UIValue],
   vertexAttributes: Seq[UIValue],
