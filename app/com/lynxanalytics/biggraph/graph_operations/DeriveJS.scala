@@ -18,6 +18,12 @@ object DeriveJS {
                            inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
+  def add(a: VertexAttribute[Double],
+          b: VertexAttribute[Double])(implicit manager: MetaGraphManager): VertexAttribute[Double] = {
+    import Scripting._
+    val op = DeriveJSDouble(JavaScript("a + b"), Seq("a", "b"), Seq())
+    op(op.numAttrs, Seq(a, b)).result.attr
+  }
 }
 import DeriveJS._
 abstract class DeriveJS[T](expr: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String])
