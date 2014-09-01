@@ -9,22 +9,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   val separator = "|"
   assert(!projectName.contains(separator), s"Invalid project name: $projectName")
   val path: SymbolPath = s"projects/$projectName"
-  def toFE(implicit dm: DataManager): FEProject = {
+  def toFE: FEProject = {
     assert(manager.tagExists(path / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    // For now, counts are calculated here. TODO: Make them respond to soft filters.
-    val vsCount = if (vertexSet == null) 0 else {
-      val op = graph_operations.CountVertices()
-      op(op.vertices, vertexSet).result.count.value
-    }
-    val esCount = if (edgeBundle == null) 0 else {
-      val op = graph_operations.CountEdges()
-      op(op.edges, edgeBundle).result.count.value
-    }
     FEProject(
-      projectName, lastOperation, nextOperation, vs, eb,
-      vsCount, esCount, notes,
+      projectName, lastOperation, nextOperation, vs, eb, notes,
       scalars.map { case (name, scalar) => UIValue(scalar.gUID.toString, name) }.toSeq,
       vertexAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
       edgeAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
@@ -101,7 +91,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     Segmentation(parentName.toString, segmentationName)
   }
 
-  def notes(implicit dm: DataManager) = get("notes")
+  def notes = get("notes")
   def notes_=(n: String) = set("notes", n)
 
   def vertexSet = existing(path / "vertexSet").map(manager.vertexSet(_)).getOrElse(null)
@@ -114,7 +104,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     set("vertexSet", e)
     if (e != null) {
       val op = graph_operations.CountVertices()
-      scalars("vertex count") = op(op.vertices, vertexSet).result.count
+      scalars("vertex_count") = op(op.vertices, e).result.count
     }
   }
 
@@ -172,6 +162,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       edgeAttributes = Map()
     }
     set("edgeBundle", e)
+    if (e != null) {
+      val op = graph_operations.CountEdges()
+      scalars("edge_count") = op(op.edges, e).result.count
+    }
   }
 
   def scalars = new ScalarHolder
@@ -270,7 +264,7 @@ object Project {
 case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
   def parent = Project(parentName)
   val path: SymbolPath = s"projects/$parentName/segmentations/$name"
-  def toFE(implicit dm: DataManager) =
+  def toFE =
     FESegmentation(name, project.projectName, UIValue.fromEntity(belongsTo))
   def belongsTo = manager.edgeBundle(path / "belongsTo")
   def belongsTo_=(eb: EdgeBundle) = {
