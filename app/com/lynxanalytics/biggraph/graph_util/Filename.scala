@@ -29,6 +29,7 @@ case class Filename(
   def create() = fs.create(path)
   def exists() = fs.exists(path)
   def reader() = new BufferedReader(new InputStreamReader(open))
+  def files = fs.globStatus(path).map(st => this.copy(filename = st.getPath.toString))
 
   def loadTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
     val conf = hadoopConfiguration
