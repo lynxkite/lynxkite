@@ -6,16 +6,21 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object WeightedOutDegree {
+object OutDegree {
+  class Input() extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val es = edgeBundle(src, dst)
+  }
   class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: EdgeAttributeInput[Double])
+               inputs: Input)
       extends MagicOutput(instance) {
     val outDegree = vertexAttribute[Double](inputs.src.entity)
   }
 }
-import WeightedOutDegree._
-case class WeightedOutDegree() extends TypedMetaGraphOp[EdgeAttributeInput[Double], Output] {
-  @transient override lazy val inputs = new EdgeAttributeInput[Double]
+import OutDegree._
+case class OutDegree() extends TypedMetaGraphOp[Input, Output] {
+  @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
@@ -24,11 +29,9 @@ case class WeightedOutDegree() extends TypedMetaGraphOp[EdgeAttributeInput[Doubl
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vsA = inputs.src.rdd
-    val weights = inputs.attr.rdd
-    val outdegrees = inputs.es.rdd.sortedJoin(weights)
-      .map { case (_, (edge, weight)) => edge.src -> weight }
+    val outdegrees = inputs.es.rdd
+      .map { case (_, edge) => edge.src -> 1.0 }
       .reduceBySortedKey(vsA.partitioner.get, _ + _)
-    // TODO: update after reduceBySortedKey is implemented, https://github.com/biggraph/biggraph/issues/333
     val result = vsA.sortedLeftOuterJoin(outdegrees).mapValues(_._2.getOrElse(0.0))
     output(o.outDegree, result)
   }

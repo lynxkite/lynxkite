@@ -306,17 +306,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
-    val title = "Weighted out degree"
+    val title = "Degree"
     val parameters = Seq(
-      Param("name", "Attribute name", defaultValue = "out_degree"),
-      Param("w", "Weights", options = edgeAttributes[Double]))
-    def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
+      Param("name", "Attribute name", defaultValue = "degree"),
+      Param("inout", "Type", options = UIValue.seq(Seq("in", "out", "all", "symmetric"))))      
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.WeightedOutDegree()
-      val attr = project.edgeAttributes(params("w")).runtimeSafeCast[Double]
-      val deg = op(op.attr, attr).result.outDegree
+      val esAB = project.edgeBundle
+      val re = graph_operations.ReverseEdges()
+      val esBA = re(re.esAB, esAB).result.esBA      
+      val esSym = {
+        val op = graph_operations.RemoveNonSymmetricEdges()
+        op(op.es, esAB).result.symmetric
+      }
+      val deg = params("inout") match {
+        case "in" => applyOn(esBA)
+        case "out" => applyOn(esAB)
+        case "symmetric" => applyOn(esSym)
+        /*case "all" => {
+          val op = graph_operations.DeriveJS
+        }*/
+      }
       project.vertexAttributes(params("name")) = deg
       FEStatus.success
+    }
+      
+    private def applyOn(es: EdgeBundle): VertexAttribute[Double] = {
+      val op = graph_operations.OutDegree()
+      op(op.es, es).result.outDegree      
     }
   })
 
