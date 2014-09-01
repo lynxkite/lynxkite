@@ -329,7 +329,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     }.toSeq.filter(_.title != "<hidden>").sortBy(_.title)
   }
 
-  def apply(req: ProjectOperationRequest): FEStatus = {
+  def apply(req: ProjectOperationRequest): FEStatus = manager.synchronized {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
