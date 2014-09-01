@@ -77,6 +77,15 @@ case class EdgeBundleProperties(
     // the bundle is partitioned the same way as its source vertex set.
     isIdentity: Boolean = false) {
 
+  override def toString: String = {
+    ((if (isFunction) Some("function") else None) ::
+      (if (isReversedFunction) Some("reversed-function") else None) ::
+      (if (isEverywhereDefined) Some("everywhere-defined") else None) ::
+      (if (isReverseEverywhereDefined) Some("reverse-everywhere-defined") else None) ::
+      (if (isIdentity) Some("identity") else None) ::
+      Nil).flatten.mkString(" ")
+  }
+
   def compliesWith(requirements: EdgeBundleProperties): Boolean =
     (isFunction || !requirements.isFunction) &&
       (isReversedFunction || !requirements.isReversedFunction) &&
@@ -233,7 +242,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
       assert(
         eb.properties.compliesWith(requiredProperties),
-        "Edge bundle %s does not comply with requirements %s".format(eb, requiredProperties))
+        s"Edge bundle $eb (${eb.properties}) does not comply with: $requiredProperties")
       val withSrc =
         templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
       val withSrcDst =
