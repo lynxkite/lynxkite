@@ -5,10 +5,13 @@
   <form ng-submit="renaming = side.rename('edge-attribute', attr.title, newName)" style="display: inline;" ng-show="renaming">
     <input class="form-control" ng-model="newName" ng-blur="renaming = newName !== attr.title">
   </form>
-  <span ng-click="newName = renaming ? newName : attr.title; renaming = !renaming || side.rename('edge-attribute', attr.title, newName);"></i>
+  <span ng-click="newName = renaming ? newName : attr.title; renaming = !renaming || side.rename('edge-attribute', attr.title, newName);">
     <i class="clicky glyphicon glyphicon-pencil" tooltip="Rename" tooltip-append-to-body="true"></i>
   </span>
 </label>
 
 <histogram-button attr="attr" side="side" model="histogram"></histogram-button>
 <histogram ng-show="histogram" model="histogram"></histogram>
+<span class="pull-right" ng-click="side.discard('edge-attribute', attr.title);">
+  <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
+</span>

@@ -1,2 +1,15 @@
-{{scalar.title}}
+<span ng-if="!renaming">
+  {{scalar.title}}
+</span>
+<label>
+  <form ng-submit="renaming = side.rename('scalar', scalar.title, newName)" style="display: inline;" ng-show="renaming">
+    <input class="form-control" ng-model="newName" ng-blur="renaming = newName !== scalar.title">
+  </form>
+  <span ng-click="newName = renaming ? newName : scalar.title; renaming = !renaming || side.rename('scalar', scalar.title, newName);">
+    <i class="clicky glyphicon glyphicon-pencil" tooltip="Rename" tooltip-append-to-body="true"></i>
+  </span>
+</label>
 <span class="scalar-value">{{value}}</span>
+<span class="pull-right" ng-click="side.discard('scalar', scalar.title);">
+  <i class="clicky glyphicon glyphicon-remove" tooltip="Discard scalar" tooltip-append-to-body="true"></i>
+</span>
