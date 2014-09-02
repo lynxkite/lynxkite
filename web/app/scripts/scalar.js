@@ -2,7 +2,7 @@
 
 angular.module('biggraph').directive('scalar', function() {
   return {
-    scope: { scalar: '=', value: '=' },
+    scope: { scalar: '=', value: '@' },
     templateUrl: 'scalar.html',
   };
 });
