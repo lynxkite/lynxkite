@@ -1,8 +1,8 @@
 {
   "version": "Static Ajax Test",
   "projects": [
-    { "name": "Project_Strawberry", "vertexCount": "100000000", "edgeCount": "1000000000", "notes": "Subscribers and calls." },
-    { "name": "Project_Melon", "vertexCount": "200000000", "edgeCount": "2000000000", "notes": "Phone numbers and texts." },
-    { "name": "Project_Avocado", "vertexCount": "300000000", "edgeCount": "3000000000", "notes": "Pets and owners.\nBipartite." }
+    { "name": "Project_Strawberry", "notes": "Subscribers and calls.", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] },
+    { "name": "Project_Melon", "notes": "Phone numbers and texts.", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] },
+    { "name": "Project_Avocado", "notes": "Pets and owners.\nBipartite.", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] }
   ]
 }
