@@ -15,6 +15,9 @@ case class Filename(
     val awsAccessKeyId: String = "",
     val awsSecretAccessKey: String = "") {
   override def toString() = filename
+  def fullString = if (awsAccessKeyId.isEmpty) filename else {
+    filename.replace("s3n://", s"s3n://$awsAccessKeyId:$awsSecretAccessKey@")
+  }
   def isEmpty = filename.isEmpty
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = new hadoop.conf.Configuration()
@@ -97,7 +100,7 @@ case class Filename(
   }
 
   def +(suffix: String): Filename = {
-    Filename(filename + suffix, awsAccessKeyId, awsSecretAccessKey)
+    this.copy(filename = filename + suffix)
   }
 
   def /(path_element: String): Filename = {

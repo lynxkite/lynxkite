@@ -1,0 +1,9 @@
+<input ng-disabled="!enabled" ng-hide="uploading" class="form-control" ng-model="filename">
+
+<progressbar ng-show="uploading" value="progress" class="progress-striped">
+  {{progress}}%
+</progressbar>
+
+<span class="clicky glyphicon glyphicon-cloud-upload" tooltip="Upload" ng-click="dialog()"></span>
+
+<input type="file" style="display: none;" ng-model="files" ng-change="upload(this.files)">

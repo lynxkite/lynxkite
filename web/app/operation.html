@@ -10,12 +10,14 @@
       <div class="form-group" ng-repeat="param in op.parameters">
         <label for="{{param.id}}" class="col-sm-6 control-label">{{param.title}}</label>
         <div class="col-sm-6">
-          <input ng-if="param.options.length === 0" ng-disabled="!op.enabled.success"
-            id="{{param.id}}" class="form-control" ng-model="params[param.id]">
+          <input ng-if="param.options.length === 0 && param.kind !== 'file'"
+            ng-disabled="!op.enabled.success" class="form-control" ng-model="params[param.id]">
+          <file-parameter ng-if="param.kind === 'file'"
+            param="param" model="params[param.id]" file-uploads="op.fileUploads" enabled="op.enabled.success">
+          </file-parameter>
           <select
             ng-if="param.options.length > 0 && !param.multipleChoice"
             ng-disabled="!op.enabled.success"
-            id="{{param.id}}"
             class="form-control"
             ng-model="params[param.id]"
             ng-options="option.id as option.title for option in param.options"></select>
@@ -23,7 +25,6 @@
             ng-if="param.options.length > 0 && param.multipleChoice"
             multiple
             ng-disabled="!op.enabled.success"
-            id="{{param.id}}"
             class="form-control"
             ng-model="multiParams[param.id]"
             ng-options="option.id as option.title for option in param.options"></select>
@@ -34,6 +35,6 @@
     <span
       ng-show="showParams || op.parameters.length <= 1"
       class="col-sm-1 clicky clicky-text"
-      ng-click="apply()">{{op.enabled.success ? (running ? '...' : 'OK') : 'X'}}</span>
+      ng-click="apply()">{{op.enabled.success ? (running || op.fileUploads ? '...' : 'OK') : 'X'}}</span>
   </div>
 </div>
