@@ -310,17 +310,30 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
-    val title = "Weighted out degree"
+    val title = "Degree"
     val parameters = Seq(
-      Param("name", "Attribute name", defaultValue = "out_degree"),
-      Param("w", "Weights", options = edgeAttributes[Double]))
-    def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
+      Param("name", "Attribute name", defaultValue = "degree"),
+      Param("inout", "Type", options = UIValue.seq(Seq("in", "out", "all", "symmetric"))))
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.WeightedOutDegree()
-      val attr = project.edgeAttributes(params("w")).runtimeSafeCast[Double]
-      val deg = op(op.attr, attr).result.outDegree
+      val es = project.edgeBundle
+      val esSym = {
+        val op = graph_operations.RemoveNonSymmetricEdges()
+        op(op.es, es).result.symmetric
+      }
+      val deg = params("inout") match {
+        case "in" => applyOn(reverse(es))
+        case "out" => applyOn(es)
+        case "symmetric" => applyOn(esSym)
+        case "all" => graph_operations.DeriveJS.add(applyOn(reverse(es)), applyOn(es))
+      }
       project.vertexAttributes(params("name")) = deg
       FEStatus.success
+    }
+
+    private def applyOn(es: EdgeBundle): VertexAttribute[Double] = {
+      val op = graph_operations.OutDegree()
+      op(op.es, es).result.outDegree
     }
   })
 
@@ -734,14 +747,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       op(op.esAB, segmentation.belongsTo).result.esBA
     }
 
-    val weighted = {
-      val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-      op(op.edges, reversed).result.attr
-    }
-
     segmentation.project.vertexAttributes(attributeName) = {
-      val op = graph_operations.WeightedOutDegree()
-      op(op.attr, weighted).result.outDegree
+      val op = graph_operations.OutDegree()
+      op(op.es, reversed).result.outDegree
     }
   }
 
