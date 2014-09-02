@@ -188,6 +188,10 @@ angular.module('biggraph')
       this.applyOp('Rename-' + kind, { from: oldName, to: newName });
     };
 
+    Side.prototype.discard = function(kind, name) {
+      this.applyOp('Discard-' + kind, { name: name });
+    };
+
     Side.prototype.nonEmptyFilters = function() {
       var res = [];
       for (var attr in this.state.filters) {
