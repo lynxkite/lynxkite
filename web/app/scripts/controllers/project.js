@@ -233,6 +233,22 @@ angular.module('biggraph')
       // For now segmentations always open on the right.
       $scope.right.state.projectName = seg.fullName;
     };
+
+    Side.prototype.loadScalars = function() {
+      if (!this.project || !this.project.$resolved) { return; }
+      var scalars = this.project.scalars;
+      this.scalars = {};
+      for (var i = 0; i < scalars.length; ++i) {
+        var s = scalars[i];
+        this.scalars[s.title] = util.get('/ajax/scalarValue', { scalarId: s.id });
+      }
+    };
+
+    // "vertex_count" and "edge_count" are displayed separately at the top.
+    $scope.commonScalar = function(s) {
+      return s.title !== 'vertex_count' && s.title !== 'edge_count';
+    };
+
     function getLeftToRightPath() {
       var left = $scope.left.project;
       var right = $scope.right.project;
@@ -253,6 +269,8 @@ angular.module('biggraph')
     }
     $scope.$watch('left.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
     $scope.$watch('right.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('left.project.$resolved', function() { $scope.left.loadScalars(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.right.loadScalars(); });
 
     $scope.left = new Side();
     $scope.right = new Side();

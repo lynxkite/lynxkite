@@ -24,9 +24,9 @@
 
       <p class="alert alert-danger" ng-if="data.error">{{data.error}}</p>
 
-      <a ng-repeat="project in data.projects | filter:searchString" href ng-click="setProject(project.name)">
+      <a ng-repeat="project in data.projects | filter: searchString" href ng-click="setProject(project.name)">
         <h1>{{util.spaced(project.name)}}</h1>
-        {{util.human(project.vertexCount)}} vertices, {{util.human(project.edgeCount)}} edges. {{project.notes}}
+        {{util.human(vertexCounts[project.name].value)}} vertices, {{util.human(edgeCounts[project.name].value)}} edges. {{project.notes}}
       </a>
   </div>
 </div>

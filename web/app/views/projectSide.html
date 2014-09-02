@@ -90,10 +90,10 @@
     <div class="list-group">
       <li class="list-group-item">
         <span class="lead">
-          <span ng-if="side.project.vertexSet !== ''">{{util.human(side.project.vertexCount)}}</span>
+          <span ng-if="side.project.vertexSet !== ''">{{util.human(side.scalars['vertex_count'].value)}}</span>
           <span ng-if="side.project.vertexSet === ''">no</span>
           <span class="de-emph">vertices with</span>
-          <span ng-if="side.project.edgeBundle !== ''">{{util.human(side.project.edgeCount)}}</span>
+          <span ng-if="side.project.edgeBundle !== ''">{{util.human(side.scalars['edge_count'].value)}}</span>
           <span ng-if="side.project.edgeBundle === ''">no</span>
           <span class="de-emph">edges</span>
         </span>
@@ -113,9 +113,9 @@
       </li>
 
       <li class="list-group-item">
-        <span class="lead"><span class="de-emph">Attributes of</span> the graph</span>
+        <span class="lead"><span class="de-emph">Attributes of the</span> graph</span>
       </li>
-      <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars" scalar="scalar" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars | filter: commonScalar" scalar="scalar" value="side.scalars[scalar]"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>

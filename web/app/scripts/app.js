@@ -56,6 +56,7 @@ angular
       nocache: function(url, params) { return ajax(url, params, false); },
       // Easier to read numbers. 1234 -> 1k
       human: function(x) {
+        if (x === undefined) { return '?'; }
         for (var i = 0; true; ++i) {
           if (x < 1000 || i === siSymbols.length - 1) {
             return x + siSymbols[i];
