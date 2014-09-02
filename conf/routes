@@ -25,6 +25,8 @@ GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.c
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
 GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.scalarValue
 
+POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
+
 # SecureSocial
 GET  /login                  securesocial.controllers.LoginPage.login
 GET  /logout                 securesocial.controllers.LoginPage.logout

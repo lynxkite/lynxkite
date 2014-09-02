@@ -40,6 +40,10 @@
     {
       "title": "Vertex operations",
       "ops": [
+        { "id": "import", "title": "Import vertices", "parameters": [
+          { "id": "files", "title": "Files", "defaultValue": "", "options": [], "kind": "file" },
+          { "id": "header", "title": "Header", "defaultValue": "<read from file>", "options": [], "kind": "" }
+        ], "enabled": { "success": true, "failureReason": "" } },
         { "id": "1", "title": "Discard all vertices", "parameters": [], "enabled": { "success": true, "failureReason": "" } },
         { "id": "10", "title": "Filter subscribers", "parameters": [
           { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'", "options": [] }

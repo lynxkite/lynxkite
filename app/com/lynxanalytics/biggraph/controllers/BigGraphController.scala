@@ -46,7 +46,7 @@ case class FEOperationParameterMeta(
 
   val validKinds = Seq(
     "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
-    "multi-vertex-attribute", "multi-edge-attribute")
+    "multi-vertex-attribute", "multi-edge-attribute", "file")
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
 }
 
