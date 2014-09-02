@@ -2,12 +2,11 @@
   "name": "My_Little_Project",
   "vertexSet": "1234-1234-1234-1234",
   "edgeBundle": "4321-4321-4321-4321",
-  "vertexCount": 12345678,
-  "edgeCount": 234567890,
   "notes": "Subscribers and calls.",
 
   "scalars": [
-    { "id": "42", "title": "vertex count" }
+    { "id": "1234-vertex-count", "title": "vertex_count" },
+    { "id": "1234-edge-count", "title": "edge_count" }
   ],
 
   "vertexAttributes": [

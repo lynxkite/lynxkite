@@ -9,6 +9,24 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
       scope.util = util;
       scope.data = util.nocache('/ajax/splash');
       scope.$watch('data.version', function(v) { scope.version = v; });
+      function scalar(p, name) {
+        for (var i = 0; i < p.scalars.length; ++i) {
+          if (p.scalars[i].title === name) {
+            return p.scalars[i].id;
+          }
+        }
+        return undefined;
+      }
+      scope.$watch('data.$resolved', function(resolved) {
+        if (!resolved) { return; }
+        scope.vertexCounts = {};
+        scope.edgeCounts = {};
+        for (var i = 0; i < scope.data.projects.length; ++i) {
+          var p = scope.data.projects[i];
+          scope.vertexCounts[p.name] = util.get('/ajax/scalarValue', { scalarId: scalar(p, 'vertex_count') });
+          scope.edgeCounts[p.name] = util.get('/ajax/scalarValue', { scalarId: scalar(p, 'edge_count') });
+        }
+      });
       scope.createProject = function() {
         scope.newProject.sending = true;
         var name = scope.newProject.name.replace(/ /g, '_');
