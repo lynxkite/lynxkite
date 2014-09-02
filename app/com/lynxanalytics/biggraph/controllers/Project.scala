@@ -13,11 +13,13 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     assert(manager.tagExists(path / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
+    def feAttr[T](e: TypedEntity[T], name: String) =
+      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString)
     FEProject(
       projectName, lastOperation, nextOperation, vs, eb, notes,
-      scalars.map { case (name, scalar) => UIValue(scalar.gUID.toString, name) }.toSeq,
-      vertexAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
-      edgeAttributes.map { case (name, attr) => UIValue(attr.gUID.toString, name) }.toSeq,
+      scalars.map { case (name, scalar) => feAttr(scalar, name) }.toSeq,
+      vertexAttributes.map { case (name, attr) => feAttr(attr, name) }.toSeq,
+      edgeAttributes.map { case (name, attr) => feAttr(attr, name) }.toSeq,
       segmentations.map(_.toFE),
       opCategories = Seq())
   }
