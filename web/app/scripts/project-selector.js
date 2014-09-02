@@ -42,11 +42,13 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         scope.name = p;
       };
       scope.discardProject = function(p) {
-        $resource('/ajax/discardProject').save({ name: p }, function() {
-          scope.data = util.nocache('/ajax/splash');
-        }, function(error) {
-          console.error(error);
-        });
+        if (window.confirm('This operation cannot be undone! Are you sure you want to discard project ' + util.spaced(p) + '?')) {
+          $resource('/ajax/discardProject').save({ name: p }, function() {
+            scope.data = util.nocache('/ajax/splash');
+          }, function(error) {
+            console.error(error);
+          });
+        }
       };
     },
   };
