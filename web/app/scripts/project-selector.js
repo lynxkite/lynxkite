@@ -41,6 +41,13 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
       scope.setProject = function(p) {
         scope.name = p;
       };
+      scope.discardProject = function(p) {
+        $resource('/ajax/discardProject').save({ name: p }, function() {
+          scope.data = util.nocache('/ajax/splash');
+        }, function(error) {
+          console.error(error);
+        });
+      };
     },
   };
 });

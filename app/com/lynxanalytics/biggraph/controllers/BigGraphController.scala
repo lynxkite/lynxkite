@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
@@ -101,6 +102,7 @@ case class ProjectRequest(name: String)
 case class Splash(version: String, projects: Seq[FEProject])
 case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(name: String, notes: String)
+case class DiscardProjectRequest(name: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 case class ProjectFilterRequest(project: String, filters: Seq[FEVertexAttributeFilter])
 case class ForkProjectRequest(from: String, to: String)
@@ -261,6 +263,13 @@ class BigGraphController(env: BigGraphEnvironment) {
     val p = Project(request.name)
     p.notes = request.notes
     p.checkpointAfter("") // Initial checkpoint.
+    return serving.Empty()
+  }
+
+  def discardProject(request: DiscardProjectRequest): serving.Empty = {
+    val path: SymbolPath = s"projects/${request.name}"
+    if (metaManager.tagExists(path)) metaManager.rmTag(path)
+    bigGraphLogger.info(s"A project has been discarded: $path")
     return serving.Empty()
   }
 
