@@ -287,4 +287,7 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     manager.cpTag(path, to)
     manager.rmTag(path)
   }
+  def remove = manager.synchronized {
+    manager.rmTag(path)
+  }
 }
