@@ -3,7 +3,7 @@
 angular.module('biggraph').directive('projectSelector', function($resource, util) {
   return {
     restrict: 'E',
-    scope: { name: '=', version: '=' },
+    scope: { name: '=', version: '=?' },
     templateUrl: 'project-selector.html',
     link: function(scope) {
       scope.util = util;
