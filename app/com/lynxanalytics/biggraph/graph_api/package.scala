@@ -11,6 +11,10 @@ package object graph_api {
 
   type AttributeRDD[T] = SortedRDD[ID, T]
 
-  case class Edge(val src: ID, val dst: ID)
+  case class Edge(val src: ID, val dst: ID) extends Ordered[Edge] {
+    def compare(other: Edge) =
+      if (src != other.src) src.compare(other.src) else dst.compare(other.dst)
+  }
+
   type EdgeBundleRDD = SortedRDD[ID, Edge]
 }
