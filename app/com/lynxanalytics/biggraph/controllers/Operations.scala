@@ -316,18 +316,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("inout", "Type", options = UIValue.seq(Seq("in", "out", "all", "symmetric"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val esAB = project.edgeBundle
-      val re = graph_operations.ReverseEdges()
-      val esBA = re(re.esAB, esAB).result.esBA
+      val es = project.edgeBundle
       val esSym = {
         val op = graph_operations.RemoveNonSymmetricEdges()
-        op(op.es, esAB).result.symmetric
+        op(op.es, es).result.symmetric
       }
       val deg = params("inout") match {
-        case "in" => applyOn(esBA)
-        case "out" => applyOn(esAB)
+        case "in" => applyOn(reverse(es))
+        case "out" => applyOn(es)
         case "symmetric" => applyOn(esSym)
-        case "all" => graph_operations.DeriveJS.add(applyOn(esBA), applyOn(esAB))
+        case "all" => graph_operations.DeriveJS.add(applyOn(reverse(es)), applyOn(es))
       }
       project.vertexAttributes(params("name")) = deg
       FEStatus.success
