@@ -3,13 +3,22 @@
 angular.module('biggraph').directive('fileParameter', function() {
   return {
     restrict: 'E',
-    scope: { param: '=', model: '=', fileUploads: '=', enabled: '=' },
+    scope: {
+      // The filename is exported through "model".
+      model: '=',
+      // The number of ongoing uploads. It is incremented by 1 while an upload is in progress.
+      fileUploads: '=',
+      // Whether the operation is enabled.
+      enabled: '=',
+    },
     templateUrl: 'file-parameter.html',
     link: function(scope, element) {
       var input = angular.element(element).find('input[type="file"]');
       scope.dialog = function() {
         input.click();
       };
+      // Copy the internal "filename" to the external "model".
+      // (Using "model" internally should probably work too, but it did not.)
       scope.$watch('filename', function(fn) {
         scope.model = fn;
       });
@@ -18,6 +27,7 @@ angular.module('biggraph').directive('fileParameter', function() {
       input.bind('change', function() {
         scope.$apply(function() {
           var file = input[0].files[0];
+          input.val(null);  // Unset the selection, so the same file can be picked again.
           scope.fileUploads = scope.fileUploads || 0;
           scope.fileUploads += 1;
           scope.uploading = true;
@@ -25,9 +35,9 @@ angular.module('biggraph').directive('fileParameter', function() {
           var xhr = new XMLHttpRequest();
           xhr.open('POST', '/ajax/upload');
           xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
+            if (xhr.readyState === 4) {  // DONE
               scope.$apply(function() {
-                if (xhr.status === 200) {
+                if (xhr.status === 200) {  // SUCCESS
                   scope.filename = xhr.responseText;
                 } else {
                   console.error('Upload failed.');
