@@ -134,13 +134,11 @@ object ProductionJsonServer extends JsonServer {
     action(parse.multipartFormData) { request =>
       val upload = request.body.file("file").get
       log.info(s"upload: ${upload.filename}")
-      val file = upload.ref.file
       val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
       val output = dataRepo / "uploads" / upload.filename.replace(" ", "_")
-      val contents = java.nio.file.Files.readAllBytes(file.toPath)
-      val handle = output.create()
-      try handle.write(contents)
-      finally handle.close()
+      val stream = output.create()
+      try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
+      finally stream.close()
       Ok(output.fullString)
     }
   }
