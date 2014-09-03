@@ -101,7 +101,15 @@ object RDDUtils {
     } else {
       totalVertexCount * 1.0 / unfilteredCount
     }
-    valueCounts.toMap.mapValues(c => math.round(multiplier * c).toInt)
+    val rounder = if (multiplier <= 1.0) 1.0 else math.pow(10, digits(multiplier.toInt))
+    valueCounts.toMap.mapValues(c => math.round(multiplier * c / rounder).toInt * rounder.toInt)
+  }
+
+  def digits(num: Int) = {
+    @scala.annotation.tailrec
+    def run(num: Int, digits: Int): Int =
+      if (num > 0) run(num / 10, digits + 1) else digits
+    run(num, 0)
   }
 
   def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
