@@ -90,7 +90,7 @@ angular.module('biggraph')
     // itself is expected to change. (Such as after an operation.)
     Side.prototype.reload = function() {
       if (this.state.projectName) {
-        var newProject = this.load();
+        var newProject = this.load();  // The old project is used to look for segmentations.
         for (var i = 0; i < $scope.sides.length; ++i) {
           var side = $scope.sides[i];
           if (side === this) { continue; }
