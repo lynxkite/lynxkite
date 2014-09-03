@@ -495,6 +495,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       var numAttrs = List[VertexAttribute[Double]]()
       var strAttrNames = List[String]()
       var strAttrs = List[VertexAttribute[String]]()
+      var vecAttrNames = List[String]()
+      var vecAttrs = List[VertexAttribute[Vector[_]]]()
       project.vertexAttributes.foreach {
         case (name, attr) if expr.contains(name) && attr.is[Double] =>
           numAttrNames +:= name
@@ -502,31 +504,44 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         case (name, attr) if expr.contains(name) && attr.is[String] =>
           strAttrNames +:= name
           strAttrs +:= attr.asInstanceOf[VertexAttribute[String]]
+        case (name, attr) if expr.contains(name) && attr.is[Vector[_]] =>
+          vecAttrNames +:= name
+          vecAttrs +:= attr.asInstanceOf[VertexAttribute[Vector[_]]]
         case (name, attr) if expr.contains(name) =>
           log.warn(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
         case _ => ()
       }
       val js = JavaScript(expr)
       // Figure out the return type.
-      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames) match {
+      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames, vecAttrNames) match {
         case _: String =>
-          graph_operations.DeriveJSString(js, numAttrNames, strAttrNames)
+          graph_operations.DeriveJSString(js, numAttrNames, strAttrNames, vecAttrNames)
         case _: Double =>
-          graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames)
+          graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames, vecAttrNames)
         case result =>
           return FEStatus.failure(s"Test evaluation of '$js' returned '$result'.")
       }
       val result = op(
         op.vs, project.vertexSet)(
           op.numAttrs, numAttrs)(
-            op.strAttrs, strAttrs).result
+            op.strAttrs, strAttrs)(
+              op.vecAttrs, vecAttrs).result
       project.vertexAttributes(params("output")) = result.attr
       return FEStatus.success
     }
 
     // Evaluates the expression with 0/'' parameters.
-    def testEvaluation(js: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String]): Any = {
-      val mapping = numAttrNames.map(_ -> 0.0).toMap ++ strAttrNames.map(_ -> "").toMap
+    def testEvaluation(
+      js: JavaScript,
+      numAttrNames: Seq[String],
+      strAttrNames: Seq[String],
+      vecAttrNames: Seq[String]): Any = {
+      val mapping = (
+        numAttrNames.map(_ -> 0.0).toMap ++
+        strAttrNames.map(_ -> "").toMap ++
+        // Because the array will be empty for the test, the expression has to be ready
+        // to handle this.
+        vecAttrNames.map(_ -> Array[Any]()))
       return js.evaluate(mapping)
     }
   })
