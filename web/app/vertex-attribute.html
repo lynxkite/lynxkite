@@ -10,33 +10,36 @@
   </span>
 </label>
 
-<span ng-if="side.state.graphMode === 'bucketed'">
-  <button class="btn"
-          ng-class="{ 'btn-primary': side.state.xAttributeTitle === attr.title,
-                      'btn-default': side.state.xAttributeTitle !== attr.title }"
-      ng-click="side.set('xAttributeTitle', attr.title)">
-    Graph on X
-  </button>
-  <button class="btn"
-          ng-class="{ 'btn-primary': side.state.yAttributeTitle === attr.title,
-                      'btn-default': side.state.yAttributeTitle !== attr.title }"
-          ng-click="side.set('yAttributeTitle', attr.title)">
-    Graph on Y
-  </button>
+<span ng-if="side.state.graphMode === 'bucketed'" class="de-emph">
+  Graph on
+  <div class="btn-group">
+    <button class="btn btn-default"
+        ng-class="{ active: side.state.xAttributeTitle === attr.title }"
+        ng-click="side.set('xAttributeTitle', attr.title)">
+      X
+    </button>
+    <button class="btn btn-default"
+        ng-class="{ active: side.state.yAttributeTitle === attr.title }"
+        ng-click="side.set('yAttributeTitle', attr.title)">
+      Y
+    </button>
+  </div>
 </span>
-<span ng-if="side.state.graphMode === 'sampled'">
-  <button class="btn"
-          ng-class="{ 'btn-primary': side.state.sizeAttributeTitle === attr.title,
-                      'btn-default': side.state.sizeAttributeTitle !== attr.title }"
-          ng-click="side.set('sizeAttributeTitle', attr.title)">
-    Graph as size
-  </button>
-  <button class="btn"
-          ng-class="{ 'btn-primary': side.state.labelAttributeTitle === attr.title,
-                      'btn-default': side.state.labelAttributeTitle !== attr.title }"
-          ng-click="side.set('labelAttributeTitle', attr.title)">
-    Graph as label
-  </button>
+<span ng-if="side.state.graphMode === 'sampled'" class="de-emph">
+  Graph as
+  <div class="btn-group">
+    <button class="btn btn-default"
+            ng-if="attr.typeName === 'Double'"
+            ng-class="{ active: side.state.sizeAttributeTitle === attr.title }"
+            ng-click="side.set('sizeAttributeTitle', attr.title)">
+      Size
+    </button>
+    <button class="btn btn-default"
+            ng-class="{ active: side.state.labelAttributeTitle === attr.title }"
+            ng-click="side.set('labelAttributeTitle', attr.title)">
+      Label
+    </button>
+  </div>
 </span>
 <form style="display: inline;">
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]"
