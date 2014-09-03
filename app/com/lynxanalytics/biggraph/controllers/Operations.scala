@@ -695,7 +695,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new HiddenOperation(_) {
     val title = "Discard edge attribute"
     val parameters = Seq(
-      Param("name", "", options = edgeAttributes))
+      Param("name", "Name", options = edgeAttributes))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]): FEStatus = {
       project.edgeAttributes(params("name")) = null
@@ -706,7 +706,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new HiddenOperation(_) {
     val title = "Discard vertex attribute"
     val parameters = Seq(
-      Param("name", "", options = vertexAttributes))
+      Param("name", "Name", options = vertexAttributes))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       project.vertexAttributes(params("name")) = null
@@ -717,10 +717,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new HiddenOperation(_) {
     val title = "Discard segmentation"
     val parameters = Seq(
-      Param("name", "", options = segmentations))
+      Param("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     def apply(params: Map[String, String]): FEStatus = {
-      project.segmentation(params("name")).remove
+      project.segmentation(params("name")).project.rm
       return FEStatus.success
     }
   })
@@ -728,7 +728,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new HiddenOperation(_) {
     val title = "Discard scalar"
     val parameters = Seq(
-      Param("name", "", options = scalars))
+      Param("name", "Name", options = scalars))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
     def apply(params: Map[String, String]): FEStatus = {
       project.scalars(params("name")) = null

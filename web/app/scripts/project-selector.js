@@ -41,9 +41,13 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
       scope.setProject = function(p) {
         scope.name = p;
       };
-      scope.discardProject = function(p) {
-        if (window.confirm('This operation cannot be undone! Are you sure you want to discard project ' + util.spaced(p) + '?')) {
+      scope.discardProject = function(p, $event) {
+        // avoid opening project or refreshing splash automatically
+        $event.preventDefault();
+        $event.stopPropagation();
+        if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
           $resource('/ajax/discardProject').save({ name: p }, function() {
+            // refresh splash manually
             scope.data = util.nocache('/ajax/splash');
           }, function(error) {
             console.error(error);

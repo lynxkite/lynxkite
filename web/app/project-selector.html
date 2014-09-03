@@ -25,8 +25,8 @@
       <p class="alert alert-danger" ng-if="data.error">{{data.error}}</p>
 
       <a ng-repeat="project in data.projects | filter: searchString" href ng-click="setProject(project.name)">
-        <span class="pull-right" ng-click="discardProject(project.name);$event.stopPropagation();$event.preventDefault()">
-          <i class="clicky glyphicon glyphicon-remove" tooltip="Discard project (WARNING: no undo!)" tooltip-append-to-body="true"></i>
+        <span class="pull-right" ng-click="discardProject(project.name, $event)">
+          <i class="clicky glyphicon glyphicon-remove" tooltip="Discard project" tooltip-append-to-body="true"></i>
         </span>
         <h1>{{util.spaced(project.name)}}</h1>
         {{util.human(vertexCounts[project.name].value)}} vertices, {{util.human(edgeCounts[project.name].value)}} edges. {{project.notes}}
