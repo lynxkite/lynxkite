@@ -129,6 +129,20 @@ object ProductionJsonServer extends JsonServer {
   implicit val wFEProject = json.Json.writes[FEProject]
   implicit val wSplash = json.Json.writes[Splash]
 
+  // File upload.
+  def upload = {
+    action(parse.multipartFormData) { request =>
+      val upload = request.body.file("file").get
+      log.info(s"upload: ${upload.filename}")
+      val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
+      val output = dataRepo / "uploads" / upload.filename.replace(" ", "_")
+      val stream = output.create()
+      try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
+      finally stream.close()
+      Ok(output.fullString)
+    }
+  }
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
