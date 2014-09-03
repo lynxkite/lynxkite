@@ -217,11 +217,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def segmentationNames = ls("segmentations").map(_.last.name)
 
   def copy(to: Project): Unit = cp(path, to.path)
-  def rm(): Unit = manager.synchronized {
-    if (manager.tagExists(path)) {
-      manager.rmTag(path)
-      log.info(s"A project has been discarded: $path")
-    }
+  def remove(): Unit = manager.synchronized {
+    manager.rmTag(path)
+    log.info(s"A project has been discarded: $path")
   }
 
   private def cp(from: SymbolPath, to: SymbolPath) = manager.synchronized {
@@ -294,6 +292,9 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   def rename(newName: String) = manager.synchronized {
     val to = new SymbolPath(path.init) / newName
     manager.cpTag(path, to)
+    manager.rmTag(path)
+  }
+  def remove(): Unit = manager.synchronized {
     manager.rmTag(path)
   }
 }
