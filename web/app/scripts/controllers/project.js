@@ -201,6 +201,16 @@ angular.module('biggraph')
     };
 
     Side.prototype.discard = function(kind, name) {
+      // if the other side is the segmentation to be discarded, close it
+      if (kind === 'segmentation') {
+        for (var i = 0; i < $scope.sides.length; ++i) {
+          var side = $scope.sides[i];
+          if (side === this) { continue; }
+          if (side.isSegmentationOf(this) && side.shortName() === util.spaced(name)) {
+            side.close();
+          }
+        }
+      }
       this.applyOp('Discard-' + kind, { name: name });
     };
 
