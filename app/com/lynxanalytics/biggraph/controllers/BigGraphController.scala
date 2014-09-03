@@ -46,7 +46,7 @@ case class FEOperationParameterMeta(
 
   val validKinds = Seq(
     "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
-    "multi-vertex-attribute", "multi-edge-attribute")
+    "multi-vertex-attribute", "multi-edge-attribute", "file")
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
 }
 
@@ -79,6 +79,8 @@ abstract class FEOperation {
   def apply(params: Map[String, String]): FEStatus
 }
 
+case class FEAttribute(id: String, title: String, typeName: String)
+
 case class FEProject(
   name: String,
   undoOp: String, // Name of last operation. Empty if there is nothing to undo.
@@ -86,9 +88,9 @@ case class FEProject(
   vertexSet: String,
   edgeBundle: String,
   notes: String,
-  scalars: Seq[UIValue],
-  vertexAttributes: Seq[UIValue],
-  edgeAttributes: Seq[UIValue],
+  scalars: Seq[FEAttribute],
+  vertexAttributes: Seq[FEAttribute],
+  edgeAttributes: Seq[FEAttribute],
   segmentations: Seq[FESegmentation],
   opCategories: Seq[OperationCategory])
 
