@@ -76,6 +76,17 @@ object FEFilters {
           case intervalOpenCloseRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLE(b.toDouble))
           case intervalCloseOpenRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLT(b.toDouble))
           case intervalCloseCloseRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLE(b.toDouble))
+          case boundRE(comparator, valueString) => {
+            val value = valueString.toDouble
+            comparator match {
+              case "=" => DoubleEQ(value)
+              case "==" => DoubleEQ(value)
+              case "<" => DoubleLT(value)
+              case ">" => DoubleGT(value)
+              case "<=" => DoubleLE(value)
+              case ">=" => DoubleGE(value)
+            }
+          }
         }
         doubleFilter.asInstanceOf[Filter[T]]
       } else ???
@@ -101,4 +112,6 @@ object FEFilters {
   private val intervalOpenCloseRE = s"\\s*\\($numberPattern,$numberPattern\\]\\s*".r
   private val intervalCloseOpenRE = s"\\s*\\[$numberPattern,$numberPattern\\)\\s*".r
   private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
+  private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
+  private val boundRE = s"$comparatorPattern$numberPattern".r
 }
