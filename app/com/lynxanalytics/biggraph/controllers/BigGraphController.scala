@@ -268,7 +268,7 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def discardProject(request: DiscardProjectRequest): serving.Empty = {
-    Project(request.name).rm()
+    Project(request.name).remove()
     return serving.Empty()
   }
 

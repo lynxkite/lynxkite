@@ -41,10 +41,10 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
       scope.setProject = function(p) {
         scope.name = p;
       };
-      scope.discardProject = function(p, $event) {
+      scope.discardProject = function(p, event) {
         // avoid opening project or refreshing splash automatically
-        $event.preventDefault();
-        $event.stopPropagation();
+        event.preventDefault();
+        event.stopPropagation();
         if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
           $resource('/ajax/discardProject').save({ name: p }, function() {
             // refresh splash manually

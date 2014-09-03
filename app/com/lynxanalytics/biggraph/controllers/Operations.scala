@@ -720,7 +720,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     def apply(params: Map[String, String]): FEStatus = {
-      project.segmentation(params("name")).project.rm
+      project.segmentation(params("name")).remove
       return FEStatus.success
     }
   })
