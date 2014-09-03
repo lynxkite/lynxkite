@@ -921,19 +921,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count", "vector"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count", "vector"))
           }
         } else {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most_common", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "count", "vector"))
           }
         }
         Param(s"aggregate-$name", name, options = options)
@@ -980,6 +980,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
       case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
       case "majority_100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+      case "vector" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.AsVector[T]())
       case _ => attributeWithAggregator(attr, choice)
     }
   }
