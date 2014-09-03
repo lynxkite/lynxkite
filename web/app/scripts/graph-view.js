@@ -216,6 +216,8 @@ angular.module('biggraph').directive('graphView', function($window) {
       }
     };
     vertices.animate();
+    // Kick off animation when the user manually turns it on.
+    // (This watcher is unregistered when a new graph is loaded.)
     this.unwatch.push(this.scope.$watch(
         function() { return vertices.side.animate; },
         function() { vertices.animate(); }));
