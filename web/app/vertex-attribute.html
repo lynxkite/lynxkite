@@ -26,6 +26,7 @@
 </span>
 <span ng-if="side.state.graphMode === 'sampled'">
   <button class="btn"
+          ng-if="attr.typeName === 'Double'"
           ng-class="{ 'btn-primary': side.state.sizeAttributeTitle === attr.title,
                       'btn-default': side.state.sizeAttributeTitle !== attr.title }"
           ng-click="side.set('sizeAttributeTitle', attr.title)">
