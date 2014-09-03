@@ -95,10 +95,10 @@ object FEFilters {
     return op(op.attr, attr).result.fvs
   }
 
-  private val numberPattern = "(\\d*(?:\\.\\d*)?)"
+  private val numberPattern = "\\s*(\\d*(?:\\.\\d*)?)\\s*"
   private val numberRE = numberPattern.r
-  private val intervalOpenOpenRE = s"\\($numberPattern,$numberPattern\\)".r
-  private val intervalOpenCloseRE = s"\\($numberPattern,$numberPattern\\]".r
-  private val intervalCloseOpenRE = s"\\[$numberPattern,$numberPattern\\)".r
-  private val intervalCloseCloseRE = s"\\[$numberPattern,$numberPattern\\]".r
+  private val intervalOpenOpenRE = s"\\s*\\($numberPattern,$numberPattern\\)\\s*".r
+  private val intervalOpenCloseRE = s"\\s*\\($numberPattern,$numberPattern\\]\\s*".r
+  private val intervalCloseOpenRE = s"\\s*\\[$numberPattern,$numberPattern\\)\\s*".r
+  private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
 }
