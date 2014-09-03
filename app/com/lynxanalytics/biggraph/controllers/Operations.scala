@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import scala.reflect.runtime.universe.typeOf
 
-class Operations(controller: BigGraphController) extends OperationRepository(controller) {
+class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   val Param = FEOperationParameterMeta // Short alias.
 
   // Categories.
@@ -733,7 +733,7 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
   register(new VertexOperation(_) {
     val title = "Union with another project"
     val parameters = Seq(
-      Param("other", "Other projects name", options = projects))
+      Param("other", "Other projects name", options = uIProjects))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]): FEStatus = {
       val other = Project(params("other"))

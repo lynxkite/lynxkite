@@ -246,15 +246,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
     case e: java.io.IOException => ""
   }
 
-  val ops = new Operations(this)
-
-  def projects: Seq[Project] = {
-    val dirs = if (metaManager.tagExists("projects")) metaManager.lsTag("projects") else Nil
-    dirs.map(p => Project(p.path.last.name))
-  }
+  val ops = new Operations(env)
 
   def splash(request: serving.Empty): Splash = {
-    return Splash(version, projects.map(_.toFE))
+    return Splash(version, ops.projects.map(_.toFE))
   }
 
   def project(request: ProjectRequest): FEProject = {
@@ -318,9 +313,14 @@ abstract class Operation(val project: Project, val category: String) {
   protected def hasNoEdgeBundle = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
 }
 
-abstract class OperationRepository(controller: BigGraphController) {
-  implicit val manager = controller.env.metaGraphManager
-  implicit val dataManager = controller.env.dataManager
+abstract class OperationRepository(env: BigGraphEnvironment) {
+  implicit val manager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
+
+  def projects: Seq[Project] = {
+    val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
+    dirs.map(p => Project(p.path.last.name))
+  }
 
   private val operations = mutable.Buffer[Project => Operation]()
   def register(factory: Project => Operation): Unit = operations += factory
@@ -332,7 +332,7 @@ abstract class OperationRepository(controller: BigGraphController) {
     }.toSeq.filter(_.title != "<hidden>").sortBy(_.title)
   }
 
-  def projects: Seq[UIValue] = UIValue.seq(controller.projects.map(_.projectName))
+  def uIProjects: Seq[UIValue] = UIValue.seq(projects.map(_.projectName))
 
   def apply(req: ProjectOperationRequest): FEStatus = manager.synchronized {
     val p = Project(req.project)

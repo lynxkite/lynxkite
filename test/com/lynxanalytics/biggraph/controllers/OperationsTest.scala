@@ -8,8 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
-  val controller = new BigGraphController(this)
-  val ops = new Operations(controller)
+  val ops = new Operations(this)
   val project = Project("Test_Project")
   project.notes = "test project" // Make sure project directory exists.
 
