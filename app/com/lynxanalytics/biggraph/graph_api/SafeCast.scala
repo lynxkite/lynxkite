@@ -21,6 +21,6 @@ trait RuntimeSafeCastable[T, ConcreteKind[T] <: RuntimeSafeCastable[T, ConcreteK
     RuntimeSafeCastable.classTagFromTypeTag(typeTag)
   }
   def is[S: TypeTag]: Boolean = {
-    typeOf[S] =:= typeOf[T]
+    typeOf[T] <:< typeOf[S]
   }
 }
