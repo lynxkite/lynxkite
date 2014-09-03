@@ -85,7 +85,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new VertexOperation(_) {
     val title = "Import vertices"
     val parameters = Seq(
-      Param("files", "Files"),
+      Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("filter", "(optional) Filtering expression"))
@@ -109,7 +109,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new EdgeOperation(_) {
     val title = "Import edges for existing vertices"
     val parameters = Seq(
-      Param("files", "Files"),
+      Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
@@ -143,7 +143,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new EdgeOperation(_) {
     val title = "Import vertices and edges from single CSV fileset"
     val parameters = Seq(
-      Param("files", "Files"),
+      Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("src", "Source ID field"),
