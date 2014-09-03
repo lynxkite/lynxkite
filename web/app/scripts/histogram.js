@@ -17,6 +17,7 @@ angular.module('biggraph').directive('histogram', function() {
       }
       scope.$watch('model', function(model) {
         if (model === undefined || !model.$resolved) { return; }
+        scope.highlighted = undefined;  // Index of highlighted bar.
         scope.max = maxSize();
         if (model.labelType === 'between') {
           var histoLabels = [];
@@ -34,13 +35,15 @@ angular.module('biggraph').directive('histogram', function() {
       scope.clipped = function(s) {
         return scope.max < s;
       };
-      scope.zoom = function(s) {
-        if (scope.max === s * 2) {
+      scope.zoom = function(index) {
+        if (scope.highlighted === index) {
           // Unzoom.
+          scope.highlighted = undefined;
           scope.max = maxSize();
         } else {
           // Zoom.
-          scope.max = s * 2;
+          scope.highlighted = index;
+          scope.max = scope.model.sizes[index] * 2;
         }
       };
     },

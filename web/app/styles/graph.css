@@ -93,7 +93,10 @@ table.histogram td {
 }
 table.histogram .bar {
   background: rgba(0, 0, 0, 0.2);
-  transition: height 0.1s ease;
+  transition: height 0.1s ease, background 0.1s ease;
+}
+table.histogram .bar.highlighted {
+  background: rgba(128, 96, 0, 0.5);
 }
 table.histogram .bar.clipped {
   border-top: 1px dashed #f5f5f5;
