@@ -26,7 +26,8 @@ object InducedEdgeBundle {
       val dst = if (induceDst) inputs.dstImage else inputs.dst
       edgeBundle(src.entity, dst.entity)
     }
-    val embedding = edgeBundle(induced.asVertexSet, inputs.edges.asVertexSet)
+    val embedding = edgeBundle(
+      induced.asVertexSet, inputs.edges.asVertexSet, EdgeBundleProperties.embedding)
   }
 }
 import InducedEdgeBundle._

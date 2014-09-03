@@ -12,8 +12,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   val project = Project("Test_Project")
   project.notes = "test project" // Make sure project directory exists.
 
-  def run(op: String, params: Map[String, String] = Map()) =
-    ops.apply(ProjectOperationRequest("Test_Project", FEOperationSpec(op.replace(" ", "-"), params)))
+  def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
+    ops.apply(
+      ProjectOperationRequest(on.projectName, FEOperationSpec(op.replace(" ", "-"), params)))
 
   test("Derived vertex attribute (Double)") {
     run("Example Graph")
@@ -85,5 +86,36 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       case _: Bug =>
     }
     assert(project.vertexSet != null)
+  }
+
+  test("Project union") {
+    run("Example Graph")
+    val other = Project("ExampleGraph2")
+    project.copy(other)
+    run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = other)
+    run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = other)
+    run("Union with another project", Map("other" -> "ExampleGraph2"))
+
+    assert(project.vertexSet.rdd.count == 8)
+    assert(project.edgeBundle.rdd.count == 8)
+
+    val vAttrs = project.vertexAttributes.toMap
+    // 3 original +1 renamed
+    assert(vAttrs.size == 4)
+    val eAttrs = project.edgeAttributes.toMap
+    // 2 original +1 renamed
+    assert(eAttrs.size == 3)
+
+    // Not renamed vertex attr is defined on all.
+    assert(vAttrs("name").rdd.count == 8)
+    // Renamed vertex attr is defined on half.
+    assert(vAttrs("age").rdd.count == 4)
+    assert(vAttrs("newage").rdd.count == 4)
+
+    // Not renamed edge attr is defined on all.
+    assert(eAttrs("weight").rdd.count == 8)
+    // Renamed edge attr is defined on half.
+    assert(eAttrs("comment").rdd.count == 4)
+    assert(eAttrs("newcomment").rdd.count == 4)
   }
 }

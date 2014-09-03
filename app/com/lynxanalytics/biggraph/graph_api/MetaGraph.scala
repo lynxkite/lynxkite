@@ -100,8 +100,8 @@ case class EdgeBundleProperties(
 object EdgeBundleProperties {
   val default = EdgeBundleProperties()
   val partialFunction = EdgeBundleProperties(isFunction = true)
-  val injection = EdgeBundleProperties(
-    isFunction = true, isReversedFunction = true, isEverywhereDefined = true)
+  val matching = EdgeBundleProperties(isFunction = true, isReversedFunction = true)
+  val injection = matching.copy(isEverywhereDefined = true)
   val embedding = injection.copy(isIdentity = true)
 }
 
