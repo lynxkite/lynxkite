@@ -26,6 +26,7 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   function GraphView(scope, element) {
     this.scope = scope;
+    this.unwatch = [];  // Watchers to be removed when drawing new graph.
     this.svg = angular.element(element);
     this.svg.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
     this.root = svg.create('g', {'class': 'root'});
@@ -64,6 +65,10 @@ angular.module('biggraph').directive('graphView', function($window) {
   };
 
   GraphView.prototype.update = function(data) {
+    // Remove old watchers.
+    for (var i = 0; i < this.unwatch.length; ++i) {
+      this.unwatch[i]();
+    }
     var sides = [];
     if (this.scope.left && this.scope.left.graphMode) {
       sides.push(this.scope.left);
@@ -78,9 +83,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertices = [];
     var n = data.vertexSets.length;
     if (n !== sides.length) {
-      console.log('ERROR: ' + n + ' vertex sets for ' + sides.length + ' sides.');
+      console.error(n + ' vertex sets for ' + sides.length + ' sides.');
     }
-    for (var i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
       var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
       var yOff = 500 / 2; // todo: replace 500 with the actual svg height
       var vs = data.vertexSets[i];
@@ -198,19 +203,22 @@ angular.module('biggraph').directive('graphView', function($window) {
     var animating = false;
     // Call vertices.animate() later to trigger interactive layout.
     vertices.animate = function() {
-      if (!animating && vertices.side.animate) {
+      if (!animating) {
         animating = true;
         window.requestAnimationFrame(vertices.step);
       }
     };
     vertices.step = function() {
-      if (engine.step(vertices)) {
+      if (vertices.side.animate && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {
         animating = false;
       }
     };
     vertices.animate();
+    this.unwatch.push(this.scope.$watch(
+        function() { return vertices.side.animate; },
+        function() { vertices.animate(); }));
   };
 
   GraphView.prototype.addBucketedVertices = function(data, xOff, yOff) {
