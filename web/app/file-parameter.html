@@ -4,6 +4,8 @@
   {{progress}}%
 </progressbar>
 
-<span class="clicky glyphicon glyphicon-cloud-upload" tooltip="Upload" ng-click="dialog()"></span>
+<p class="text-right">
+  <span class="clicky glyphicon glyphicon-cloud-upload" tooltip="Upload" ng-click="dialog()"></span>
+</p>
 
 <input type="file" style="display: none;" ng-model="files" ng-change="upload(this.files)">
