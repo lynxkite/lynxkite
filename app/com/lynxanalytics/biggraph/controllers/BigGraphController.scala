@@ -1,6 +1,5 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
@@ -267,9 +266,7 @@ class BigGraphController(env: BigGraphEnvironment) {
   }
 
   def discardProject(request: DiscardProjectRequest): serving.Empty = {
-    val path: SymbolPath = s"projects/${request.name}"
-    if (metaManager.tagExists(path)) metaManager.rmTag(path)
-    bigGraphLogger.info(s"A project has been discarded: $path")
+    Project(request.name).rm()
     return serving.Empty()
   }
 

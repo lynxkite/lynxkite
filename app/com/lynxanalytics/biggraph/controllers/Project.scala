@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -214,6 +215,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def segmentationNames = ls("segmentations").map(_.last.name)
 
   def copy(to: Project): Unit = cp(path, to.path)
+  def rm(): Unit = manager.synchronized {
+    if (manager.tagExists(path)) {
+      manager.rmTag(path)
+      log.info(s"A project has been discarded: $path")
+    }
+  }
 
   private def cp(from: SymbolPath, to: SymbolPath) = manager.synchronized {
     existing(to).foreach(manager.rmTag(_))
@@ -285,9 +292,6 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   def rename(newName: String) = manager.synchronized {
     val to = new SymbolPath(path.init) / newName
     manager.cpTag(path, to)
-    manager.rmTag(path)
-  }
-  def remove = manager.synchronized {
     manager.rmTag(path)
   }
 }
