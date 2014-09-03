@@ -99,9 +99,9 @@ case class HistogramSpec(
   numBuckets: Int)
 
 case class HistogramResponse(
-  labelType: String,
-  labels: Seq[String],
-  sizes: Seq[Int]) {
+    labelType: String,
+    labels: Seq[String],
+    sizes: Seq[Int]) {
   val validLabelTypes = Seq("between", "bucket")
   assert(validLabelTypes.contains(labelType),
     s"$labelType is not a valid label type. They are: $validLabelTypes")
