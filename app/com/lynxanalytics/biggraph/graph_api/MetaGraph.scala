@@ -77,6 +77,15 @@ case class EdgeBundleProperties(
     // the bundle is partitioned the same way as its source vertex set.
     isIdentity: Boolean = false) {
 
+  override def toString: String = {
+    ((if (isFunction) Some("function") else None) ::
+      (if (isReversedFunction) Some("reversed-function") else None) ::
+      (if (isEverywhereDefined) Some("everywhere-defined") else None) ::
+      (if (isReverseEverywhereDefined) Some("reverse-everywhere-defined") else None) ::
+      (if (isIdentity) Some("identity") else None) ::
+      Nil).flatten.mkString(" ")
+  }
+
   def compliesWith(requirements: EdgeBundleProperties): Boolean =
     (isFunction || !requirements.isFunction) &&
       (isReversedFunction || !requirements.isReversedFunction) &&
@@ -113,10 +122,14 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
   })
 }
 
-sealed trait Attribute[T] extends MetaGraphEntity {
+sealed trait TypedEntity[T] extends MetaGraphEntity {
   val typeTag: TypeTag[T]
-  def runtimeSafeCast[S: TypeTag]: Attribute[S]
+  def runtimeSafeCast[S: TypeTag]: TypedEntity[S]
   def is[S: TypeTag]: Boolean
+}
+
+sealed trait Attribute[T] extends TypedEntity[T] {
+  def runtimeSafeCast[S: TypeTag]: Attribute[S]
 }
 
 // Marker trait for possible attributes of a triplet. It's either a vertex attribute
@@ -151,7 +164,7 @@ case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
 
 case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
                               name: Symbol)
-    extends MetaGraphEntity with RuntimeSafeCastable[T, Scalar] {
+    extends TypedEntity[T] with RuntimeSafeCastable[T, Scalar] {
   assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
 }
@@ -233,7 +246,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
       assert(
         eb.properties.compliesWith(requiredProperties),
-        "Edge bundle %s does not comply with requirements %s".format(eb, requiredProperties))
+        s"Edge bundle $eb (${eb.properties}) does not comply with: $requiredProperties")
       val withSrc =
         templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
       val withSrcDst =

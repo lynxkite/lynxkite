@@ -10,7 +10,6 @@ angular.module('biggraph')
         graphMode: undefined,
         bucketCount: 4,
         sampleRadius: 1,
-        center: undefined,
       };
     }
 
@@ -25,12 +24,39 @@ angular.module('biggraph')
     function Side() {
       // The state of controls. E.g. bucket count.
       this.state = defaultSideState();
+      // Everything needed for a view (state included), use this for rendering graph view instead of using state directly.
+      this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
-      // Side.graphState is for compatibility with the metaGraph.js-related code in graph-view.js
-      // and could be removed later.
-      this.graphState = undefined;
     }
+
+    Side.prototype.updateViewData = function() {
+      this.viewData = {};
+      
+      var vd = this.viewData;
+      if (this.project === undefined || !this.project.$resolved) {
+        return;
+      }
+
+      vd.vertexSet = { id: this.project.vertexSet };
+      if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
+
+      vd.filters = this.state.filters;
+      vd.graphMode = this.state.graphMode;
+      vd.bucketCount = this.state.bucketCount;
+      vd.sampleRadius = this.state.sampleRadius;
+      vd.animate = this.state.animate;
+
+      vd.center = this.state.center;
+      var that = this;
+      vd.setCenter = function(id) { that.state.center = id; };
+
+      // we don't just copy state to viewData as we need to transform some state variables
+      vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
+      vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
+      vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
+      vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+    };
 
     Side.prototype.shortName = function() {
       var name = this.state.projectName;
@@ -64,17 +90,29 @@ angular.module('biggraph')
     // itself is expected to change. (Such as after an operation.)
     Side.prototype.reload = function() {
       if (this.state.projectName) {
-        this.project = util.nocache('/ajax/project', { name: this.state.projectName });
-        // If this project is open on the other side, update that instance too.
+        var newProject = this.load();  // The old project is used to look for segmentations.
         for (var i = 0; i < $scope.sides.length; ++i) {
-          if ($scope.sides[i].state.projectName === this.state.projectName) {
-            $scope.sides[i].project = this.project;
+          var side = $scope.sides[i];
+          if (side === this) { continue; }
+          // If this project is open on the other side, update that instance too.
+          if (side.state.projectName === this.state.projectName) {
+            side.project = newProject;
+          }
+          // If a segmentation or parent is open, reload it as well.
+          if (side.isSegmentationOf(this) || this.isSegmentationOf(side)) {
+            side.project = side.load();
           }
         }
+        this.project = newProject;
       } else {
         this.project = undefined;
       }
     };
+
+    Side.prototype.load = function() {
+      return util.nocache('/ajax/project', { name: this.state.projectName });
+    };
+
     Side.prototype.set = function(setting, value) {
       if (this.state[setting] === value) {
         // Clicking the same attribute setting again turns it off.
@@ -148,6 +186,15 @@ angular.module('biggraph')
         });
     };
 
+    Side.prototype.saveNotes = function() {
+      var that = this;
+      this.savingNotes = true;
+      this.applyOp('Change-project-notes', { notes: this.project.notes }, function() {
+        that.unsavedNotes = false;
+        that.savingNotes = false;
+      });
+    };
+
     Side.prototype.rename = function(kind, oldName, newName) {
       if (oldName === newName) { return; }
       this.applyOp('Rename-' + kind, { from: oldName, to: newName });
@@ -198,56 +245,66 @@ angular.module('biggraph')
       // For now segmentations always open on the right.
       $scope.right.state.projectName = seg.fullName;
     };
-    function getLeftToRightPath() {
-      var left = $scope.left.project;
-      var right = $scope.right.project;
-      if (!left || !left.$resolved) { return undefined; }
-      if (!right || !right.$resolved) { return undefined; }
-      // If it is a segmentation, use "belongsTo" as the connecting path.
-      for (var i = 0; i < left.segmentations.length; ++i) {
-        var seg = left.segmentations[i];
-        if (right.name === seg.fullName) {
-          return [{ bundle: seg.belongsTo, pointsLeft: false }];
+
+    Side.prototype.loadScalars = function() {
+      if (!this.project || !this.project.$resolved) { return; }
+      var scalars = this.project.scalars;
+      this.scalars = {};
+      for (var i = 0; i < scalars.length; ++i) {
+        var s = scalars[i];
+        this.scalars[s.title] = util.get('/ajax/scalarValue', { scalarId: s.id });
+      }
+    };
+
+    Side.prototype.isSegmentationOf = function(parent) {
+      return parent.getBelongsTo(this) !== undefined;
+    };
+    Side.prototype.getBelongsTo = function(segmentation) {
+      if (!this.project || !this.project.$resolved) { return undefined; }
+      if (!segmentation.project || !segmentation.project.$resolved) { return undefined; }
+      for (var i = 0; i < this.project.segmentations.length; ++i) {
+        var seg = this.project.segmentations[i];
+        if (segmentation.project.name === seg.fullName) {
+          return seg.belongsTo;
         }
       }
+      return undefined;
+    };
+
+    // "vertex_count" and "edge_count" are displayed separately at the top.
+    $scope.commonScalar = function(s) {
+      return s.title !== 'vertex_count' && s.title !== 'edge_count';
+    };
+
+    function getLeftToRightPath() {
+      var left = $scope.left;
+      var right = $scope.right;
+      if (!left.project || !left.project.$resolved) { return undefined; }
+      if (!right.project || !right.project.$resolved) { return undefined; }
+      // If it is a segmentation, use "belongsTo" as the connecting path.
+      if (right.isSegmentationOf(left)) {
+        return [{ bundle: left.getBelongsTo(right), pointsLeft: false }];
+      }
       // If it is the same project on both sides, use its internal edges.
-      if (left.name === right.name) {
-        return [{ bundle: { id: left.edgeBundle }, pointsLeft: false }];
+      if (left.project.name === right.project.name) {
+        return [{ bundle: { id: left.project.edgeBundle }, pointsLeft: false }];
       }
       return undefined;
     }
     $scope.$watch('left.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
     $scope.$watch('right.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('left.project.$resolved', function() { $scope.left.loadScalars(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.right.loadScalars(); });
 
     $scope.left = new Side();
     $scope.right = new Side();
     $scope.sides = [$scope.left, $scope.right];
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
-
-    $scope.$watch('left.project.$resolved', function() { $scope.left.updateGraphState(); });
-    util.deepWatch($scope, 'left.state', function() { $scope.left.updateGraphState(); });
-    $scope.$watch('right.project.$resolved', function() { $scope.right.updateGraphState(); });
-    util.deepWatch($scope, 'right.state', function() { $scope.right.updateGraphState(); });
-    Side.prototype.updateGraphState = function() {
-      this.graphState = angular.copy(this.state);
-      if (this.project === undefined || !this.project.$resolved) {
-        return;
-      }
-
-      this.graphState.vertexSet = { id: this.project.vertexSet };
-
-      this.graphState.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
-      this.graphState.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
-      this.graphState.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
-      this.graphState.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
-
-      if (this.project.edgeBundle !== '') {
-        this.graphState.edgeBundle = { id: this.project.edgeBundle };
-      } else {
-        this.graphState.edgeBundle = undefined;
-      }
-    };
+    $scope.$watch('left.project.$resolved', function() { $scope.left.updateViewData(); });
+    $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
+    util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
+    util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes

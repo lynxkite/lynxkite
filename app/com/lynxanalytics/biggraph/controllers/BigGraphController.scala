@@ -46,7 +46,7 @@ case class FEOperationParameterMeta(
 
   val validKinds = Seq(
     "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
-    "multi-vertex-attribute", "multi-edge-attribute")
+    "multi-vertex-attribute", "multi-edge-attribute", "file")
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
 }
 
@@ -79,18 +79,18 @@ abstract class FEOperation {
   def apply(params: Map[String, String]): FEStatus
 }
 
+case class FEAttribute(id: String, title: String, typeName: String)
+
 case class FEProject(
   name: String,
   undoOp: String, // Name of last operation. Empty if there is nothing to undo.
   redoOp: String, // Name of next operation. Empty if there is nothing to redo.
   vertexSet: String,
   edgeBundle: String,
-  vertexCount: Long,
-  edgeCount: Long,
   notes: String,
-  scalars: Seq[UIValue],
-  vertexAttributes: Seq[UIValue],
-  edgeAttributes: Seq[UIValue],
+  scalars: Seq[FEAttribute],
+  vertexAttributes: Seq[FEAttribute],
+  edgeAttributes: Seq[FEAttribute],
   segmentations: Seq[FESegmentation],
   opCategories: Seq[OperationCategory])
 
@@ -100,7 +100,7 @@ case class FESegmentation(
   belongsTo: UIValue) // The connecting edge bundle.
 
 case class ProjectRequest(name: String)
-case class Splash(projects: Seq[FEProject])
+case class Splash(version: String, projects: Seq[FEProject])
 case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(name: String, notes: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
@@ -240,6 +240,12 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   // Project view stuff below.
 
+  lazy val version = try {
+    scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString
+  } catch {
+    case e: java.io.IOException => ""
+  }
+
   val ops = new Operations(this)
 
   def projects: Seq[Project] = {
@@ -248,7 +254,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def splash(request: serving.Empty): Splash = {
-    return Splash(projects = projects.map(_.toFE))
+    return Splash(version, projects.map(_.toFE))
   }
 
   def project(request: ProjectRequest): FEProject = {
@@ -323,12 +329,12 @@ abstract class OperationRepository(controller: BigGraphController) {
   def categories(project: Project): Seq[OperationCategory] = {
     forProject(project).groupBy(_.category).map {
       case (cat, ops) => OperationCategory(cat, ops.map(_.toFE))
-    }.toSeq.sortBy(_.title)
+    }.toSeq.filter(_.title != "<hidden>").sortBy(_.title)
   }
 
   def projects: Seq[UIValue] = UIValue.seq(controller.projects.map(_.projectName))
 
-  def apply(req: ProjectOperationRequest): FEStatus = {
+  def apply(req: ProjectOperationRequest): FEStatus = manager.synchronized {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")

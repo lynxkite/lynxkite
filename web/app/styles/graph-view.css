@@ -48,6 +48,9 @@ svg .edge.highlight-in .first {
 svg .vertex circle {
   fill: #444;
 }
+svg .vertex .touch {
+  fill: transparent;
+}
 svg .vertex text {
   font-family: 'Arial Black', sans-serif;
   font-size: 15px;
@@ -60,6 +63,12 @@ svg .vertex.highlight text {
 }
 svg .vertex.sampled circle {
   cursor: pointer;
+}
+svg .vertex.center circle {
+  fill: #744;
+}
+svg .vertex.center.highlight circle {
+  fill: #FAA;
 }
 
 svg .bucket {

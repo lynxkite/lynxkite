@@ -19,6 +19,7 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
   abstract class EdgeOperation(p: Project) extends Operation(p, "Edge operations")
   abstract class AttributeOperation(p: Project) extends Operation(p, "Attribute operations")
   abstract class SegmentationOperation(p: Project) extends Operation(p, "Segmentation operations")
+  abstract class HiddenOperation(p: Project) extends Operation(p, "<hidden>")
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
@@ -84,14 +85,15 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
   register(new VertexOperation(_) {
     val title = "Import vertices"
     val parameters = Seq(
-      Param("files", "Files"),
+      Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("filter", "(optional) Filtering expression"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
-      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
+      val header = if (params("header") == "<read first line>")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
@@ -107,7 +109,7 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
   register(new EdgeOperation(_) {
     val title = "Import edges for existing vertices"
     val parameters = Seq(
-      Param("files", "Files"),
+      Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
@@ -120,7 +122,8 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
-      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
+      val header = if (params("header") == "<read first line>")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
@@ -140,7 +143,7 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
   register(new EdgeOperation(_) {
     val title = "Import vertices and edges from single CSV fileset"
     val parameters = Seq(
-      Param("files", "Files"),
+      Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("src", "Source ID field"),
@@ -149,7 +152,8 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val files = Filename.fromString(params("files"))
-      val header = if (params("header") == "<read first line>") files.reader.readLine else params("header")
+      val header = if (params("header") == "<read first line>")
+        graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
         files,
         params("delimiter"),
@@ -306,17 +310,30 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
   })
 
   register(new AttributeOperation(_) {
-    val title = "Weighted out degree"
+    val title = "Degree"
     val parameters = Seq(
-      Param("name", "Attribute name", defaultValue = "out_degree"),
-      Param("w", "Weights", options = edgeAttributes[Double]))
-    def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
+      Param("name", "Attribute name", defaultValue = "degree"),
+      Param("inout", "Type", options = UIValue.seq(Seq("in", "out", "all", "symmetric"))))
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.WeightedOutDegree()
-      val attr = project.edgeAttributes(params("w")).runtimeSafeCast[Double]
-      val deg = op(op.attr, attr).result.outDegree
+      val es = project.edgeBundle
+      val esSym = {
+        val op = graph_operations.RemoveNonSymmetricEdges()
+        op(op.es, es).result.symmetric
+      }
+      val deg = params("inout") match {
+        case "in" => applyOn(reverse(es))
+        case "out" => applyOn(es)
+        case "symmetric" => applyOn(esSym)
+        case "all" => graph_operations.DeriveJS.add(applyOn(reverse(es)), applyOn(es))
+      }
       project.vertexAttributes(params("name")) = deg
       FEStatus.success
+    }
+
+    private def applyOn(es: EdgeBundle): VertexAttribute[Double] = {
+      val op = graph_operations.OutDegree()
+      op(op.es, es).result.outDegree
     }
   })
 
@@ -582,9 +599,9 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
   })
 
   register(new VertexOperation(_) {
-    val title = "Join vertices on attribute"
+    val title = "Merge vertices by attribute"
     val parameters = Seq(
-      Param("attr", "Attribute", options = vertexAttributes)) ++
+      Param("key", "Match by", options = vertexAttributes)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
@@ -593,14 +610,21 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
       op(op.attr, attr).result
     }
     def apply(params: Map[String, String]): FEStatus = {
-      val m = merge(project.vertexAttributes(params("attr")))
+      val m = merge(project.vertexAttributes(params("key")))
       val oldAttrs = project.vertexAttributes.toMap
+      val oldEdges = project.edgeBundle
       project.vertexSet = m.segments
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      // Always use most_common for the key attribute.
+      val hack = "aggregate-" + params("key") -> "most_common"
+      for ((attr, choice) <- parseAggregateParams(params + hack)) {
         val result = aggregateViaConnection(
           m.belongsTo,
           attributeWithLocalAggregator(oldAttrs(attr), choice))
         project.vertexAttributes(attr) = result
+      }
+      project.edgeBundle = {
+        val op = graph_operations.InducedEdgeBundle()
+        op(op.srcMapping, m.belongsTo)(op.dstMapping, m.belongsTo)(op.edges, oldEdges).result.induced
       }
       return FEStatus.success
     }
@@ -668,7 +692,7 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
     }
   })
 
-  register(new AttributeOperation(_) {
+  register(new HiddenOperation(_) {
     val title = "Rename edge attribute"
     val parameters = Seq(
       Param("from", "Old name", options = edgeAttributes),
@@ -681,7 +705,7 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
     }
   })
 
-  register(new AttributeOperation(_) {
+  register(new HiddenOperation(_) {
     val title = "Rename vertex attribute"
     val parameters = Seq(
       Param("from", "Old name", options = vertexAttributes),
@@ -694,7 +718,7 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new HiddenOperation(_) {
     val title = "Rename segmentation"
     val parameters = Seq(
       Param("from", "Old name", options = segmentations),
@@ -796,7 +820,17 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
       project.vertexAttributes = newVertexAttributes
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
+      return FEStatus.success
+    }
+  })
 
+  register(new HiddenOperation(_) {
+    val title = "Change project notes"
+    val parameters = Seq(
+      Param("notes", "New contents"))
+    def enabled = FEStatus.success
+    def apply(params: Map[String, String]): FEStatus = {
+      project.notes = params("notes")
       return FEStatus.success
     }
   })
@@ -807,14 +841,9 @@ class Operations(controller: BigGraphController) extends OperationRepository(con
       op(op.esAB, segmentation.belongsTo).result.esBA
     }
 
-    val weighted = {
-      val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-      op(op.edges, reversed).result.attr
-    }
-
     segmentation.project.vertexAttributes(attributeName) = {
-      val op = graph_operations.WeightedOutDegree()
-      op(op.attr, weighted).result.outDegree
+      val op = graph_operations.OutDegree()
+      op(op.es, reversed).result.outDegree
     }
   }
 
