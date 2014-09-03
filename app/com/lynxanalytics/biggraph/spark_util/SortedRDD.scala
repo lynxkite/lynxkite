@@ -121,6 +121,9 @@ class SortedRDD[K: Ordering, V] private[spark_util] (self: RDD[(K, V)]) extends 
   }
 
   /*
+   * Returns an RDD with the union of the keyset of this and other. For each key it returns two
+   * Options with the value for the key in this and in the other RDD.
+   *
    * Both RDDs must have unique keys. Otherwise the world might end.
    */
   def fullOuterJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (Option[V], Option[W])] = {
