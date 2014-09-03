@@ -799,9 +799,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.edgeAttributes
           .map {
             case (name, attr) => {
-              println("AVS" + attr.asVertexAttribute.vertexSet)
-              println("src" + myEbInjection.srcVertexSet)
-              println("dst" + myEbInjection.dstVertexSet)
               name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
                 attr.asVertexAttribute,
                 myEbInjection)
