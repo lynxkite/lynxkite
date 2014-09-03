@@ -95,5 +95,27 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = other)
     run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = other)
     run("Union with another project", Map("other" -> "ExampleGraph2"))
+
+    assert(project.vertexSet.rdd.count == 8)
+    assert(project.edgeBundle.rdd.count == 8)
+
+    val vAttrs = project.vertexAttributes.toMap
+    // 3 original +1 renamed
+    assert(vAttrs.size == 4)
+    val eAttrs = project.edgeAttributes.toMap
+    // 2 original +1 renamed
+    assert(eAttrs.size == 3)
+
+    // Not renamed vertex attr is defined on all.
+    assert(vAttrs("name").rdd.count == 8)
+    // Renamed vertex attr is defined on half.
+    assert(vAttrs("age").rdd.count == 4)
+    assert(vAttrs("newage").rdd.count == 4)
+
+    // Not renamed edge attr is defined on all.
+    assert(eAttrs("weight").rdd.count == 8)
+    // Renamed edge attr is defined on half.
+    assert(eAttrs("comment").rdd.count == 4)
+    assert(eAttrs("newcomment").rdd.count == 4)
   }
 }
