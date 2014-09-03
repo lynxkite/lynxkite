@@ -10,7 +10,7 @@
   </span>
 </label>
 
-<histogram-button attr="attr" side="side" model="histogram"></histogram-button>
+<histogram-button ng-if="canBucket" attr="attr" side="side" model="histogram"></histogram-button>
 <histogram ng-show="histogram" model="histogram"></histogram>
 <span class="pull-right" ng-click="side.discard('edge-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>

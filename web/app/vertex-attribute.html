@@ -10,7 +10,7 @@
   </span>
 </label>
 
-<span ng-if="side.state.graphMode === 'bucketed'" class="de-emph">
+<span ng-if="side.state.graphMode === 'bucketed' && canBucket" class="de-emph">
   Graph on
   <div class="btn-group">
     <button class="btn btn-default"
@@ -41,11 +41,11 @@
     </button>
   </div>
 </span>
-<form style="display: inline;">
+<form ng-if="canFilter" style="display: inline;">
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]"
     ng-model-options="{ updateOn: 'blur' }">
 </form>
-<histogram-button attr="attr" side="side" model="histogram"></histogram-button>
+<histogram-button ng-if="canBucket" attr="attr" side="side" model="histogram"></histogram-button>
 <histogram ng-show="histogram" model="histogram"></histogram>
 <span class="pull-right" ng-click="side.discard('vertex-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
