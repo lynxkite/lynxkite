@@ -85,19 +85,34 @@ table.histogram {
   margin-bottom: -10px;
   margin-top: 5px;
 }
-
 table.histogram td {
   width: 5%;
   vertical-align: bottom;
   padding: 0;
   padding-left: 3px;
 }
-
 table.histogram .bar {
   background: rgba(0, 0, 0, 0.2);
+  transition: height 0.1s ease;
+}
+table.histogram .bar.clipped {
+  border-top: 1px dashed #f5f5f5;
 }
 table.histogram .bar-container {
+  position: relative;
   height: 100%;
+}
+table.histogram .bar-container .histogram-eye {
+  display: none;
+}
+table.histogram .bar-container:hover .histogram-eye {
+  display: block;
+  position: absolute;
+  top: 10px;
+  color: rgba(0, 0, 0, 0.5);
+  margin: auto;
+  left: 0;
+  right: 0;
 }
 
 h6 {
