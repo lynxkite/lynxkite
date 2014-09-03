@@ -60,3 +60,43 @@ case class EdgeAttributeAsVertexAttribute[T]()
     output(o.vertexAttr, inputs.edgeAttr.rdd)
   }
 }
+
+// This will hopefully go away when edge attributes die die die.
+object VertexAttributeAsEdgeAttribute {
+  class Input[T] extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val idSet = vertexSet
+    val edges = edgeBundle(src, dst, idSet = idSet)
+    val vertexAttr = vertexAttribute[T](idSet)
+  }
+  class Output[T](
+      implicit instance: MetaGraphOperationInstance,
+      inputs: Input[T]) extends MagicOutput(instance) {
+    implicit val tt = inputs.vertexAttr.typeTag
+    val edgeAttr = edgeAttribute[T](inputs.edges.entity)
+  }
+  def run[T](
+    vertexAttribute: VertexAttribute[T], edgeBundle: EdgeBundle)(
+      implicit manager: MetaGraphManager): EdgeAttribute[T] = {
+    import Scripting._
+    val op = VertexAttributeAsEdgeAttribute[T]()
+    op(op.edges, edgeBundle)(op.vertexAttr, vertexAttribute).result.edgeAttr
+  }
+}
+case class VertexAttributeAsEdgeAttribute[T]()
+    extends TypedMetaGraphOp[VertexAttributeAsEdgeAttribute.Input[T], VertexAttributeAsEdgeAttribute.Output[T]] {
+  import VertexAttributeAsEdgeAttribute._
+
+  @transient override lazy val inputs = new Input[T]()
+
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val ds = inputDatas
+    output(o.edgeAttr, inputs.vertexAttr.rdd)
+  }
+}

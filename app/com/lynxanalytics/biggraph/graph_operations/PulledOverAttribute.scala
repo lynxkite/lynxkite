@@ -9,7 +9,7 @@ object PulledOverVertexAttribute {
   class Input[T] extends MagicInputSignature {
     val originalVS = vertexSet
     val destinationVS = vertexSet
-    val injection = edgeBundle(destinationVS, originalVS, EdgeBundleProperties.injection)
+    val injection = edgeBundle(destinationVS, originalVS, EdgeBundleProperties.matching)
     val originalAttr = vertexAttribute[T](originalVS)
   }
   class Output[T](implicit instance: MetaGraphOperationInstance,
