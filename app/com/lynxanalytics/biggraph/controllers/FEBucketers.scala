@@ -30,7 +30,8 @@ object FEBucketers {
       val res = op(op.attribute, attr.runtimeSafeCast[Double]).result
       val min = res.min.value
       val max = res.max.value
-      DoubleBucketer(min, max, numBuckets).asInstanceOf[Bucketer[T]]
+      val actualNumBuckets = if (min == max) 1 else numBuckets
+      DoubleBucketer(min, max, actualNumBuckets).asInstanceOf[Bucketer[T]]
     } else ???
 
     BucketedAttribute(attr, bucketer)
