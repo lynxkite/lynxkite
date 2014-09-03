@@ -2,10 +2,11 @@
   <tr>
     <td ng-repeat="s in model.sizes track by $index" class="bar-container"
       tooltip="{{histoLabels[$index]}}: {{s}}"
-      ng-click="zoom(s)">
+      ng-click="zoom($index)">
       <i class="glyphicon glyphicon-eye-open histogram-eye"
         tooltip="Zoom" tooltip-placement="left" tooltip-popup-delay="500"></i>
-      <div class="bar" ng-class="{ clipped: clipped(s) }" style="height: {{height(s)}};"></div>
+      <div class="bar" ng-class="{ clipped: clipped(s), highlighted: highlighted === $index }"
+        style="height: {{height(s)}};"></div>
     </td>
   </tr>
 </div>
