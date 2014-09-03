@@ -81,49 +81,72 @@ class MetaGraphManager(val repositoryPath: String) {
   def dependentOperations(entity: MetaGraphEntity): Seq[MetaGraphOperationInstance] =
     dependentOperationsMap.getOrElse(entity.gUID, Seq())
 
-  def setTag(tag: SymbolPath, entity: MetaGraphEntity): Unit = {
+  def setTag(tag: SymbolPath, entity: MetaGraphEntity): Unit = synchronized {
     setTag(tag, entity.gUID.toString)
     show(Seq(entity))
   }
-  def setTag(tag: SymbolPath, content: String): Unit = {
+  def setTag(tag: SymbolPath, content: String): Unit = synchronized {
     tagRoot.setTag(tag, content)
     saveTags()
   }
-  def getTag(tag: SymbolPath): String = (tagRoot / tag).content
+  def getTag(tag: SymbolPath): String = synchronized {
+    (tagRoot / tag).content
+  }
 
-  def rmTag(tag: SymbolPath): Unit = {
+  def rmTag(tag: SymbolPath): Unit = synchronized {
     (tagRoot / tag).rm
     saveTags()
   }
 
-  def cpTag(from: SymbolPath, to: SymbolPath): Unit = {
+  def cpTag(from: SymbolPath, to: SymbolPath): Unit = synchronized {
     tagRoot.cp(from, to)
     saveTags()
   }
 
-  def tagExists(tag: SymbolPath): Boolean = tagRoot.exists(tag)
+  def tagExists(tag: SymbolPath): Boolean = synchronized {
+    tagRoot.exists(tag)
+  }
 
-  def lsTag(tag: SymbolPath): Seq[SymbolPath] = {
+  def lsTag(tag: SymbolPath): Seq[SymbolPath] = synchronized {
     (tagRoot / tag).ls.map(_.fullName)
   }
 
-  def vertexSet(tag: SymbolPath): VertexSet = vertexSet((tagRoot / tag).gUID)
-  def edgeBundle(tag: SymbolPath): EdgeBundle = edgeBundle((tagRoot / tag).gUID)
-  def vertexAttribute(tag: SymbolPath): VertexAttribute[_] = vertexAttribute((tagRoot / tag).gUID)
-  def edgeAttribute(tag: SymbolPath): EdgeAttribute[_] = edgeAttribute((tagRoot / tag).gUID)
-  def scalar(tag: SymbolPath): Scalar[_] = scalar((tagRoot / tag).gUID)
-  def vertexAttributeOf[T: TypeTag](tag: SymbolPath): VertexAttribute[T] =
+  def vertexSet(tag: SymbolPath): VertexSet = synchronized {
+    vertexSet((tagRoot / tag).gUID)
+  }
+  def edgeBundle(tag: SymbolPath): EdgeBundle = synchronized {
+    edgeBundle((tagRoot / tag).gUID)
+  }
+  def vertexAttribute(tag: SymbolPath): VertexAttribute[_] = synchronized {
+    vertexAttribute((tagRoot / tag).gUID)
+  }
+  def edgeAttribute(tag: SymbolPath): EdgeAttribute[_] = synchronized {
+    edgeAttribute((tagRoot / tag).gUID)
+  }
+  def scalar(tag: SymbolPath): Scalar[_] = synchronized {
+    scalar((tagRoot / tag).gUID)
+  }
+  def vertexAttributeOf[T: TypeTag](tag: SymbolPath): VertexAttribute[T] = synchronized {
     vertexAttributeOf[T]((tagRoot / tag).gUID)
-  def edgeAttributeOf[T: TypeTag](tag: SymbolPath): EdgeAttribute[T] =
+  }
+  def edgeAttributeOf[T: TypeTag](tag: SymbolPath): EdgeAttribute[T] = synchronized {
     edgeAttributeOf[T]((tagRoot / tag).gUID)
-  def scalarOf[T: TypeTag](tag: SymbolPath): Scalar[T] =
+  }
+  def scalarOf[T: TypeTag](tag: SymbolPath): Scalar[T] = synchronized {
     scalarOf[T]((tagRoot / tag).gUID)
-  def entity(tag: SymbolPath): MetaGraphEntity = entity((tagRoot / tag).gUID)
+  }
+  def entity(tag: SymbolPath): MetaGraphEntity = synchronized {
+    entity((tagRoot / tag).gUID)
+  }
 
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
   private val visibles = mutable.Set[UUID]()
+
+  // All tagRoot access must be synchronized on this MetaGraphManager object.
+  // This allows users of MetaGraphManager to safely conduct transactions over
+  // multiple tags.
   private val tagRoot = TagRoot()
 
   private val outgoingBundlesMap =
@@ -184,7 +207,7 @@ class MetaGraphManager(val repositoryPath: String) {
     dumpFile.renameTo(new File(s"$repositoryPath/visibles"))
   }
 
-  private def saveTags(): Unit = {
+  private def saveTags(): Unit = synchronized {
     val dumpFile = new File(s"$repositoryPath/dump-tags")
     FileUtils.writeStringToFile(dumpFile, tagRoot.saveToString, "utf8")
     dumpFile.renameTo(new File(s"$repositoryPath/tags"))
@@ -223,12 +246,16 @@ class MetaGraphManager(val repositoryPath: String) {
     if (tagsFile.exists) {
       log.info(s"Loading tags.")
       try {
-        tagRoot.loadFromString(FileUtils.readFileToString(tagsFile, "utf8"))
+        synchronized {
+          tagRoot.loadFromString(FileUtils.readFileToString(tagsFile, "utf8"))
+        }
       } catch {
         case e: Exception => log.error("Error loading tags set:", e)
       }
     } else {
-      tagRoot.clear()
+      synchronized {
+        tagRoot.clear()
+      }
     }
   }
 }

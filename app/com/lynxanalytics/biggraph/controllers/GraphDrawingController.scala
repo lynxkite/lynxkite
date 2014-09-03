@@ -94,14 +94,18 @@ case class FEGraphRespone(
   edgeBundles: Seq[EdgeDiagramResponse])
 
 case class HistogramSpec(
-  val attributeId: String,
-  val vertexFilters: Seq[FEVertexAttributeFilter],
-  val numBuckets: Int)
+  attributeId: String,
+  vertexFilters: Seq[FEVertexAttributeFilter],
+  numBuckets: Int)
 
 case class HistogramResponse(
-  val labelType: String,
-  val labels: Seq[String],
-  val sizes: Seq[Int])
+    labelType: String,
+    labels: Seq[String],
+    sizes: Seq[Int]) {
+  val validLabelTypes = Seq("between", "bucket")
+  assert(validLabelTypes.contains(labelType),
+    s"$labelType is not a valid label type. They are: $validLabelTypes")
+}
 
 case class ScalarValueRequest(
   val scalarId: String)

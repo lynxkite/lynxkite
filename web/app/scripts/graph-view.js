@@ -65,8 +65,12 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.update = function(data) {
     var sides = [];
-    if (this.scope.left.graphMode) { sides.push(this.scope.left); }
-    if (this.scope.right.graphMode) { sides.push(this.scope.right); }
+    if (this.scope.left && this.scope.left.graphMode) {
+      sides.push(this.scope.left);
+    }
+    if (this.scope.right && this.scope.right.graphMode) {
+      sides.push(this.scope.right);
+    }
     this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
@@ -116,6 +120,9 @@ angular.module('biggraph').directive('graphView', function($window) {
                          label);
       v.id = vertex.id;
       svg.addClass(v.dom, 'sampled');
+      if (v.id === data.center) {
+        svg.addClass(v.dom, 'center');
+      }
       vertices.push(v);
       if (vertex.size === 0) {
         continue;
@@ -135,7 +142,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     var svgElement = this.svg;
     function setCenter() {
       scope.$apply(function() {
-        vertices.side.center = vertex.id;
+        vertices.side.setCenter(vertex.id);
       });
     }
     vertex.dom.on('mousedown touchstart', function() {
@@ -305,19 +312,25 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.y = y;
     this.r = r;
     this.circle = svg.create('circle', {r: r});
+    var minTouchRadius = 10;
+    if (r < minTouchRadius) {
+      this.touch = svg.create('circle', {r: minTouchRadius, 'class': 'touch'});
+    } else {
+      this.touch = this.circle;
+    }
     this.label = svg.create('text').text(text);
-    this.dom = svg.group([this.circle, this.label], {'class': 'vertex' });
+    this.dom = svg.group([this.circle, this.touch, this.label], {'class': 'vertex' });
     this.moveListeners = [];
     this.moveTo(x, y);
     this.hoverListeners = [];
     var that = this;
-    this.circle.mouseenter(function() {
+    this.touch.mouseenter(function() {
       svg.addClass(that.dom, 'highlight');
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
     });
-    this.circle.mouseleave(function() {
+    this.touch.mouseleave(function() {
       svg.removeClass(that.dom, 'highlight');
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].off(that);
@@ -335,6 +348,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.x = x;
     this.y = y;
     this.circle.attr({cx: x, cy: y});
+    this.touch.attr({cx: x, cy: y});
     this.label.attr({x: x, y: y});
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);

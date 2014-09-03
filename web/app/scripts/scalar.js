@@ -1,13 +1,8 @@
 'use strict';
 
-angular.module('biggraph').directive('scalar', function(util) {
+angular.module('biggraph').directive('scalar', function() {
   return {
-    scope: { scalar: '=', side: '=' },
+    scope: { scalar: '=', value: '@' },
     templateUrl: 'scalar.html',
-    link: function(scope) {
-      util.deepWatch(scope, 'scalar', function() {
-        scope.value = util.get('/ajax/scalarValue', { scalarId: scope.scalar.id });
-      });
-    }
   };
 });

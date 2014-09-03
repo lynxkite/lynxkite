@@ -2,24 +2,25 @@
   "name": "My_Little_Project",
   "vertexSet": "1234-1234-1234-1234",
   "edgeBundle": "4321-4321-4321-4321",
-  "vertexCount": 12345678,
-  "edgeCount": 234567890,
   "notes": "Subscribers and calls.",
 
   "scalars": [
-    { "id": "42", "title": "vertex count" }
+    { "id": "1234-vertex-count", "title": "vertex_count", "typeName": "Int" },
+    { "id": "1234-edge-count", "title": "edge_count", "typeName": "Int" },
+    { "id": "1234-age-sum", "title": "age_sum", "typeName": "Double" },
+    { "id": "1234-call-duration-sum", "title": "call_duration_sum", "typeName": "Double" }
   ],
 
   "vertexAttributes": [
-    { "id": "5", "title": "age" },
-    { "id": "6", "title": "income" },
-    { "id": "7", "title": "gender" },
-    { "id": "8", "title": "favorite_color" }
+    { "id": "5", "title": "age", "typeName": "Double" },
+    { "id": "6", "title": "income", "typeName": "Double" },
+    { "id": "7", "title": "gender", "typeName": "String" },
+    { "id": "8", "title": "favorite_color", "typeName": "String" }
   ],
 
   "edgeAttributes": [
-    { "id": "22", "title": "call_duration" },
-    { "id": "29", "title": "timestamp" }
+    { "id": "22", "title": "call_duration", "typeName": "Double" },
+    { "id": "29", "title": "timestamp", "typeName": "Date" }
   ],
 
   "segmentations": [
@@ -39,6 +40,10 @@
     {
       "title": "Vertex operations",
       "ops": [
+        { "id": "import", "title": "Import vertices", "parameters": [
+          { "id": "files", "title": "Files", "defaultValue": "", "options": [], "kind": "file" },
+          { "id": "header", "title": "Header", "defaultValue": "<read from file>", "options": [], "kind": "" }
+        ], "enabled": { "success": true, "failureReason": "" } },
         { "id": "1", "title": "Discard all vertices", "parameters": [], "enabled": { "success": true, "failureReason": "" } },
         { "id": "10", "title": "Filter subscribers", "parameters": [
           { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'", "options": [] }

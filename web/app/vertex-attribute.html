@@ -38,7 +38,11 @@
     Graph as label
   </button>
 </span>
-<input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]"
+<form style="display: inline;">
+  <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]"
     ng-model-options="{ updateOn: 'blur' }">
+</form>
 <histogram-button attr="attr" side="side" model="histogram"></histogram-button>
 <histogram ng-show="histogram" model="histogram"></histogram>
+
+<span class="type-name">{{attr.typeName}}</span>
