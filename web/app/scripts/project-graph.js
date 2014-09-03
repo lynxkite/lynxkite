@@ -14,7 +14,15 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
       util.deepWatch(scope, 'left', update);
       util.deepWatch(scope, 'right', update);
 
-      function update() {
+      function update(after, before) {
+        if (after && before && before !== after) {
+          before.animate = after.animate;
+          if (angular.equals(before, after)) {
+            // The only difference is in the "animate" setting. Do not reload.
+            return;
+          }
+        }
+
         var sides = [];
         if (scope.left && scope.left.graphMode && (scope.left.vertexSet !== undefined)) {
           sides.push(scope.left);

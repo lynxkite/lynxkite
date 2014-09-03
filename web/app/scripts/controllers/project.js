@@ -31,10 +31,9 @@ angular.module('biggraph')
     }
 
     Side.prototype.updateViewData = function() {
-      this.viewData = {};
-      
-      var vd = this.viewData;
+      var vd = this.viewData || {};
       if (this.project === undefined || !this.project.$resolved) {
+        this.viewData = {};
         return;
       }
 
@@ -56,6 +55,7 @@ angular.module('biggraph')
       vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
       vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
       vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+      this.viewData = vd;
     };
 
     Side.prototype.shortName = function() {
