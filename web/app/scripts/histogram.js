@@ -26,7 +26,13 @@ angular.module('biggraph').directive('histogram', function() {
         }
       }, true); // Watch contents of model.
       scope.height = function(s) {
-        return Math.floor(100 * s / scope.max) + '%';
+        return Math.min(100, Math.floor(100 * s / scope.max)) + '%';
+      };
+      scope.clipped = function(s) {
+        return scope.max < s;
+      };
+      scope.zoom = function(s) {
+        scope.max = s;
       };
     },
   };
