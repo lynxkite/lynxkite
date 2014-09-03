@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 /*
  * This operation fills the missing values of an attribute from another attribute
  */
-object AttributeDefault {
+object AttributeFallback {
   class Input[T] extends MagicInputSignature {
     val vs = vertexSet
     val originalAttr = vertexAttribute[T](vs)
@@ -21,8 +21,8 @@ object AttributeDefault {
     val defaultedAttr = vertexAttribute[T](inputs.vs.entity)
   }
 }
-import AttributeDefault._
-case class AttributeDefault[T]() extends TypedMetaGraphOp[Input[T], Output[T]] {
+import AttributeFallback._
+case class AttributeFallback[T]() extends TypedMetaGraphOp[Input[T], Output[T]] {
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)

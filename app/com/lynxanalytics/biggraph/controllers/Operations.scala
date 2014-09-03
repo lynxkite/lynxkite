@@ -958,7 +958,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def unifyAttributeT[T](a1: VertexAttribute[T], a2: VertexAttribute[_]): VertexAttribute[T] = {
-    val op = graph_operations.AttributeDefault[T]()
+    val op = graph_operations.AttributeFallback[T]()
     op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast(a1.typeTag)).result.defaultedAttr
   }
   def unifyAttribute(a1: VertexAttribute[_], a2: VertexAttribute[_]): VertexAttribute[_] = {
