@@ -733,7 +733,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new VertexOperation(_) {
     val title = "Union with another project"
     val parameters = Seq(
-      Param("other", "Other projects name", options = uIProjects))
+      Param("other", "Other project's name", options = uIProjects))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]): FEStatus = {
       val other = Project(params("other"))
