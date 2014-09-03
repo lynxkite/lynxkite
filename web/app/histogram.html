@@ -1,7 +1,13 @@
 <table class="histogram">
   <tr>
-    <td ng-repeat="s in model.sizes track by $index" class="bar-container">
-      <div class="bar" tooltip="{{histoLabels[$index]}}: {{s}}" style="height: {{height(s)}};"></div>
+    <td ng-repeat="s in model.sizes track by $index" class="bar-container"
+      tooltip="{{histoLabels[$index]}}: {{s}}" tooltip-append-to-body="true"
+      ng-click="zoom($index)">
+      <i ng-if="zoomable(s)" class="glyphicon glyphicon-eye-open histogram-eye"
+        tooltip="Zoom" tooltip-placement="left" tooltip-popup-delay="500"
+        tooltip-append-to-body="true"></i>
+      <div class="bar" ng-class="{ clipped: clipped(s), highlighted: highlighted === $index }"
+        style="height: {{height(s)}};"></div>
     </td>
   </tr>
 </div>
