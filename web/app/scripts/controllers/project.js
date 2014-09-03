@@ -90,17 +90,29 @@ angular.module('biggraph')
     // itself is expected to change. (Such as after an operation.)
     Side.prototype.reload = function() {
       if (this.state.projectName) {
-        this.project = util.nocache('/ajax/project', { name: this.state.projectName });
-        // If this project is open on the other side, update that instance too.
+        var newProject = this.load();  // The old project is used to look for segmentations.
         for (var i = 0; i < $scope.sides.length; ++i) {
-          if ($scope.sides[i].state.projectName === this.state.projectName) {
-            $scope.sides[i].project = this.project;
+          var side = $scope.sides[i];
+          if (side === this) { continue; }
+          // If this project is open on the other side, update that instance too.
+          if (side.state.projectName === this.state.projectName) {
+            side.project = newProject;
+          }
+          // If a segmentation or parent is open, reload it as well.
+          if (side.isSegmentationOf(this) || this.isSegmentationOf(side)) {
+            side.project = side.load();
           }
         }
+        this.project = newProject;
       } else {
         this.project = undefined;
       }
     };
+
+    Side.prototype.load = function() {
+      return util.nocache('/ajax/project', { name: this.state.projectName });
+    };
+
     Side.prototype.set = function(setting, value) {
       if (this.state[setting] === value) {
         // Clicking the same attribute setting again turns it off.
@@ -244,26 +256,38 @@ angular.module('biggraph')
       }
     };
 
+    Side.prototype.isSegmentationOf = function(parent) {
+      return parent.getBelongsTo(this) !== undefined;
+    };
+    Side.prototype.getBelongsTo = function(segmentation) {
+      if (!this.project || !this.project.$resolved) { return undefined; }
+      if (!segmentation.project || !segmentation.project.$resolved) { return undefined; }
+      for (var i = 0; i < this.project.segmentations.length; ++i) {
+        var seg = this.project.segmentations[i];
+        if (segmentation.project.name === seg.fullName) {
+          return seg.belongsTo;
+        }
+      }
+      return undefined;
+    };
+
     // "vertex_count" and "edge_count" are displayed separately at the top.
     $scope.commonScalar = function(s) {
       return s.title !== 'vertex_count' && s.title !== 'edge_count';
     };
 
     function getLeftToRightPath() {
-      var left = $scope.left.project;
-      var right = $scope.right.project;
-      if (!left || !left.$resolved) { return undefined; }
-      if (!right || !right.$resolved) { return undefined; }
+      var left = $scope.left;
+      var right = $scope.right;
+      if (!left.project || !left.project.$resolved) { return undefined; }
+      if (!right.project || !right.project.$resolved) { return undefined; }
       // If it is a segmentation, use "belongsTo" as the connecting path.
-      for (var i = 0; i < left.segmentations.length; ++i) {
-        var seg = left.segmentations[i];
-        if (right.name === seg.fullName) {
-          return [{ bundle: seg.belongsTo, pointsLeft: false }];
-        }
+      if (right.isSegmentationOf(left)) {
+        return [{ bundle: left.getBelongsTo(right), pointsLeft: false }];
       }
       // If it is the same project on both sides, use its internal edges.
-      if (left.name === right.name) {
-        return [{ bundle: { id: left.edgeBundle }, pointsLeft: false }];
+      if (left.project.name === right.project.name) {
+        return [{ bundle: { id: left.project.edgeBundle }, pointsLeft: false }];
       }
       return undefined;
     }
