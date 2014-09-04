@@ -273,65 +273,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     }
   }
 
-  registerOperation(ExportCSVVertices)
-  object ExportCSVVertices extends FEOperation {
-    val title = "Export vertex attributes to CSV"
-    val category = "Attribute operations"
-    val parameters = Seq(
-      Param("path", "Destination path"),
-      Param("labels", "Labels (comma-separated)"),
-      Param("attrs", "Attributes", kind = "multi-vertex-attribute"))
-
-    def apply(params: Map[String, String]): FEStatus = {
-      if (params("attrs").isEmpty || params("labels").isEmpty)
-        return FEStatus.failure("Nothing selected for export.")
-      val attrs = params("attrs").split(",").map(id => manager.vertexAttribute(id.asUUID))
-      val labels = params("labels").split(",")
-      if (labels.size != attrs.size)
-        return FEStatus.failure("Wrong number of labels.")
-      val vertexSets = attrs.map(_.vertexSet).toSet
-      if (vertexSets.size != 1)
-        return FEStatus.failure("All attributes must belong to the same vertex set.")
-      val path = Filename.fromString(params("path"))
-      if (path.isEmpty)
-        return FEStatus.failure("No export path specified.")
-      graph_util.CSVExport
-        .exportVertexAttributes(attrs, labels)
-        .saveToDir(path)
-      return FEStatus.success
-    }
-  }
-
-  registerOperation(ExportCSVEdges)
-  object ExportCSVEdges extends FEOperation {
-    val title = "Export edge attributes to CSV"
-    val category = "Attribute operations"
-    val parameters = Seq(
-      Param("path", "Destination path"),
-      Param("labels", "Labels (comma-separated)"),
-      Param("attrs", "Attributes", kind = "multi-edge-attribute"))
-
-    def apply(params: Map[String, String]): FEStatus = {
-      if (params("attrs").isEmpty || params("labels").isEmpty)
-        return FEStatus.failure("Nothing selected for export.")
-      val attrs = params("attrs").split(",").map(id => manager.edgeAttribute(id.asUUID))
-      val labels = params("labels").split(",")
-      if (labels.size != attrs.size)
-        return FEStatus.failure("Wrong number of labels.")
-      val edgeBundles = attrs.map(_.edgeBundle).toSet
-      if (edgeBundles.size != 1)
-        return FEStatus.failure("All attributes must belong to the same edge bundle.")
-      val path = Filename.fromString(params("path"))
-      if (path.isEmpty)
-        return FEStatus.failure("No export path specified.")
-
-      graph_util.CSVExport
-        .exportEdgeAttributes(attrs, labels)
-        .saveToDir(path)
-      return FEStatus.success
-    }
-  }
-
   registerOperation(ExampleGraph)
   object ExampleGraph extends FEOperation {
     val title = "Example Graph"

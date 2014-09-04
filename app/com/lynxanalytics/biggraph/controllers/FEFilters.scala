@@ -26,28 +26,27 @@ case class FEVertexAttributeFilter(
 object FEFilters {
   def filter(
     vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+      implicit metaManager: MetaGraphManager): VertexSet = {
     if (filters.isEmpty) return vertexSet
     intersectionEmbedding(filters.map(applyFEFilter)).srcVertexSet
   }
 
   def embedFilteredVertices(
     base: VertexSet, filters: Seq[FEVertexAttributeFilter])(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
     intersectionEmbedding(base +: filters.map(applyFEFilter))
   }
 
   def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
-    implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+    implicit metaManager: MetaGraphManager): VertexSet = {
     embedFilteredVertices(filtered, moreFilters).srcVertexSet
   }
 
   private def applyFEFilter(
     filterSpec: FEVertexAttributeFilter)(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+      implicit metaManager: MetaGraphManager): VertexSet = {
 
     val attr = metaManager.vertexAttribute(filterSpec.attributeId.asUUID)
-    attr.rdd.cache()
     FEFilters.filteredBaseSet(
       metaManager,
       attr,
@@ -56,7 +55,7 @@ object FEFilters {
 
   private def intersectionEmbedding(
     filteredVss: Seq[VertexSet])(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
 
     val op = VertexSetIntersection(filteredVss.size)
     op(op.vss, filteredVss).result.firstEmbedding

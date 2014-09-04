@@ -394,82 +394,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new AttributeOperation(_) {
-    val title = "Export vertex attributes to CSV"
-    val parameters = Seq(
-      Param("path", "Destination path"),
-      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
-      Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
-    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
-    def apply(params: Map[String, String]): FEStatus = {
-      if (params("attrs").isEmpty)
-        return FEStatus.failure("Nothing selected for export.")
-      val labels = params("attrs").split(",")
-      val attrs = labels.map(label => project.vertexAttributes(label))
-      val path = Filename.fromString(params("path"))
-      if (path.isEmpty)
-        return FEStatus.failure("No export path specified.")
-      val csv =
-        graph_util.CSVExport
-          .exportVertexAttributes(attrs, labels)
-      if (params("single") == "true") {
-        csv.saveToSingleFile(path)
-      } else {
-        csv.saveToDir(path)
-      }
-      return FEStatus.success
-    }
-  })
-
-  register(new AttributeOperation(_) {
-    val title = "Export edge attributes to CSV"
-    val parameters = Seq(
-      Param("path", "Destination path"),
-      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
-      Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
-    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
-    def apply(params: Map[String, String]): FEStatus = {
-      if (params("attrs").isEmpty)
-        return FEStatus.failure("Nothing selected for export.")
-      val labels = params("attrs").split(",")
-      val attrs = labels.map(label => project.edgeAttributes(label))
-      val path = Filename.fromString(params("path"))
-      if (path.isEmpty)
-        return FEStatus.failure("No export path specified.")
-      val csv = graph_util.CSVExport
-        .exportEdgeAttributes(attrs, labels)
-      if (params("single") == "true") {
-        csv.saveToSingleFile(path)
-      } else {
-        csv.saveToDir(path)
-      }
-      return FEStatus.success
-    }
-  })
-
-  register(new SegmentationOperation(_) {
-    val title = "Export segmentation to CSV"
-    val parameters = Seq(
-      Param("path", "Destination path"),
-      Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
-      Param("seg", "Segmentation", options = segmentations))
-    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations.")
-    def apply(params: Map[String, String]): FEStatus = {
-      if (params("seg").isEmpty)
-        return FEStatus.failure("Nothing selected for export.")
-      val path = Filename.fromString(params("path"))
-      val seg = project.segmentation(params("seg"))
-      val csv = graph_util.CSVExport
-        .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
-      if (params("single") == "true") {
-        csv.saveToSingleFile(path)
-      } else {
-        csv.saveToDir(path)
-      }
-      return FEStatus.success
-    }
-  })
-
   register(new VertexOperation(_) {
     val title = "Edge Graph"
     val parameters = Seq()
@@ -888,6 +812,87 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       return FEStatus.success
     }
   })
+
+  { // "Dirty operations", that is operations that use a data manager. Think twice if you really
+    // need this before putting an operation here.
+    implicit val dataManager = env.dataManager
+
+    register(new AttributeOperation(_) {
+      val title = "Export vertex attributes to CSV"
+      val parameters = Seq(
+        Param("path", "Destination path"),
+        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
+        Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
+      def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+      def apply(params: Map[String, String]): FEStatus = {
+        if (params("attrs").isEmpty)
+          return FEStatus.failure("Nothing selected for export.")
+        val labels = params("attrs").split(",")
+        val attrs = labels.map(label => project.vertexAttributes(label))
+        val path = Filename.fromString(params("path"))
+        if (path.isEmpty)
+          return FEStatus.failure("No export path specified.")
+        val csv =
+          graph_util.CSVExport
+            .exportVertexAttributes(attrs, labels)
+        if (params("single") == "true") {
+          csv.saveToSingleFile(path)
+        } else {
+          csv.saveToDir(path)
+        }
+        return FEStatus.success
+      }
+    })
+
+    register(new AttributeOperation(_) {
+      val title = "Export edge attributes to CSV"
+      val parameters = Seq(
+        Param("path", "Destination path"),
+        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
+        Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
+      def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+      def apply(params: Map[String, String]): FEStatus = {
+        if (params("attrs").isEmpty)
+          return FEStatus.failure("Nothing selected for export.")
+        val labels = params("attrs").split(",")
+        val attrs = labels.map(label => project.edgeAttributes(label))
+        val path = Filename.fromString(params("path"))
+        if (path.isEmpty)
+          return FEStatus.failure("No export path specified.")
+        val csv = graph_util.CSVExport
+          .exportEdgeAttributes(attrs, labels)
+        if (params("single") == "true") {
+          csv.saveToSingleFile(path)
+        } else {
+          csv.saveToDir(path)
+        }
+        return FEStatus.success
+      }
+    })
+
+    register(new SegmentationOperation(_) {
+      val title = "Export segmentation to CSV"
+      val parameters = Seq(
+        Param("path", "Destination path"),
+        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
+        Param("seg", "Segmentation", options = segmentations))
+      def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations.")
+      def apply(params: Map[String, String]): FEStatus = {
+        if (params("seg").isEmpty)
+          return FEStatus.failure("Nothing selected for export.")
+        val path = Filename.fromString(params("path"))
+        val seg = project.segmentation(params("seg"))
+        val csv = graph_util.CSVExport
+          .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
+        if (params("single") == "true") {
+          csv.saveToSingleFile(path)
+        } else {
+          csv.saveToDir(path)
+        }
+        return FEStatus.success
+      }
+    })
+  }
 
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
