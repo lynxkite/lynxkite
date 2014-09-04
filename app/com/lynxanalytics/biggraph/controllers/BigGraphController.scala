@@ -296,7 +296,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 }
 
-abstract class Operation(val project: Project, val category: Operations.Category) {
+abstract class Operation(val project: Project, val category: Operation.Category) {
   def id = title.replace(" ", "-")
   def title: String
   def parameters: Seq[FEOperationParameterMeta]
@@ -315,6 +315,11 @@ abstract class Operation(val project: Project, val category: Operations.Category
   protected def hasNoVertexSet = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
   protected def hasEdgeBundle = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
   protected def hasNoEdgeBundle = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
+}
+object Operation {
+  case class Category(title: String, color: String, visible: Boolean = true) {
+    val icon = title.take(1) // The "icon" in the operation toolbox.
+  }
 }
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
