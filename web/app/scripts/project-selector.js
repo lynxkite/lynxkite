@@ -17,14 +17,17 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         }
         return undefined;
       }
+      function get(p, name) {
+        return util.get('/ajax/scalarValue', { scalarId: scalar(p, name) });
+      }
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved) { return; }
         scope.vertexCounts = {};
         scope.edgeCounts = {};
         for (var i = 0; i < scope.data.projects.length; ++i) {
           var p = scope.data.projects[i];
-          scope.vertexCounts[p.name] = util.get('/ajax/scalarValue', { scalarId: scalar(p, 'vertex_count') });
-          scope.edgeCounts[p.name] = util.get('/ajax/scalarValue', { scalarId: scalar(p, 'edge_count') });
+          scope.vertexCounts[p.name] = p.vertexSet ? get(p, 'vertex_count') : { value: 'no' };
+          scope.edgeCounts[p.name] = p.edgeBundle ? get(p, 'edge_count') : { value: 'no' };
         }
       });
       scope.createProject = function() {
