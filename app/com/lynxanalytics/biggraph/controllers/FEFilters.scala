@@ -26,28 +26,27 @@ case class FEVertexAttributeFilter(
 object FEFilters {
   def filter(
     vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+      implicit metaManager: MetaGraphManager): VertexSet = {
     if (filters.isEmpty) return vertexSet
     intersectionEmbedding(filters.map(applyFEFilter)).srcVertexSet
   }
 
   def embedFilteredVertices(
     base: VertexSet, filters: Seq[FEVertexAttributeFilter])(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
     intersectionEmbedding(base +: filters.map(applyFEFilter))
   }
 
   def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
-    implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+    implicit metaManager: MetaGraphManager): VertexSet = {
     embedFilteredVertices(filtered, moreFilters).srcVertexSet
   }
 
   private def applyFEFilter(
     filterSpec: FEVertexAttributeFilter)(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexSet = {
+      implicit metaManager: MetaGraphManager): VertexSet = {
 
     val attr = metaManager.vertexAttribute(filterSpec.attributeId.asUUID)
-    attr.rdd.cache()
     FEFilters.filteredBaseSet(
       metaManager,
       attr,
@@ -56,7 +55,7 @@ object FEFilters {
 
   private def intersectionEmbedding(
     filteredVss: Seq[VertexSet])(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): EdgeBundle = {
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
 
     val op = VertexSetIntersection(filteredVss.size)
     op(op.vss, filteredVss).result.firstEmbedding
@@ -76,6 +75,17 @@ object FEFilters {
           case intervalOpenCloseRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLE(b.toDouble))
           case intervalCloseOpenRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLT(b.toDouble))
           case intervalCloseCloseRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLE(b.toDouble))
+          case boundRE(comparator, valueString) => {
+            val value = valueString.toDouble
+            comparator match {
+              case "=" => DoubleEQ(value)
+              case "==" => DoubleEQ(value)
+              case "<" => DoubleLT(value)
+              case ">" => DoubleGT(value)
+              case "<=" => DoubleLE(value)
+              case ">=" => DoubleGE(value)
+            }
+          }
         }
         doubleFilter.asInstanceOf[Filter[T]]
       } else ???
@@ -95,10 +105,12 @@ object FEFilters {
     return op(op.attr, attr).result.fvs
   }
 
-  private val numberPattern = "(\\d*(?:\\.\\d*)?)"
+  private val numberPattern = "\\s*(-?\\d*(?:\\.\\d*)?)\\s*"
   private val numberRE = numberPattern.r
-  private val intervalOpenOpenRE = s"\\($numberPattern,$numberPattern\\)".r
-  private val intervalOpenCloseRE = s"\\($numberPattern,$numberPattern\\]".r
-  private val intervalCloseOpenRE = s"\\[$numberPattern,$numberPattern\\)".r
-  private val intervalCloseCloseRE = s"\\[$numberPattern,$numberPattern\\]".r
+  private val intervalOpenOpenRE = s"\\s*\\($numberPattern,$numberPattern\\)\\s*".r
+  private val intervalOpenCloseRE = s"\\s*\\($numberPattern,$numberPattern\\]\\s*".r
+  private val intervalCloseOpenRE = s"\\s*\\[$numberPattern,$numberPattern\\)\\s*".r
+  private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
+  private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
+  private val boundRE = s"$comparatorPattern$numberPattern".r
 }

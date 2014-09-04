@@ -141,6 +141,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val fop = graph_operations.VertexAttributeFilter(graph_operations.OneOf(idToIdx.keySet))
     val sample = fop(fop.attr, idAttr).result.fvs
 
+    cacheVertexAttributes(request.filters.map(_.attributeId))
     val filtered = FEFilters.filterMore(sample, request.filters)
 
     val op = graph_operations.SampledView(
@@ -193,6 +194,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getBucketedVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
+    cacheVertexAttributes(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
 
     val xBucketedAttr = if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
@@ -229,6 +231,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       yLabelType = yBucketer.labelType,
       xLabels = xBucketer.bucketLabels,
       yLabels = yBucketer.bucketLabels)
+  }
+
+  private def cacheVertexAttributes(attributeGUIDs: Seq[String]): Unit = {
+    attributeGUIDs.foreach(id => metaManager.vertexAttribute(id.asUUID).rdd.cache)
   }
 
   private def getCompositeBundle(steps: Seq[BundleSequenceStep]): EdgeAttribute[Double] = {
@@ -378,6 +384,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     attribute match {
       case vertexAttribute: VertexAttribute[_] =>
+        cacheVertexAttributes(vertexFilters.map(_.attributeId))
         FEFilters.filter(vertexAttribute.vertexSet, vertexFilters)
       case edgeAttribute: EdgeAttribute[_] => {
         val edgeBundle = edgeAttribute.edgeBundle

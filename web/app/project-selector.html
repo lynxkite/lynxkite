@@ -29,7 +29,9 @@
           <i class="clicky glyphicon glyphicon-remove" tooltip="Discard project" tooltip-append-to-body="true"></i>
         </span>
         <h1>{{util.spaced(project.name)}}</h1>
-        {{util.human(vertexCounts[project.name].value)}} vertices, {{util.human(edgeCounts[project.name].value)}} edges. {{project.notes}}
+        {{util.human(vertexCounts[project.name].value)}} vertices,
+        {{util.human(edgeCounts[project.name].value)}} edges.
+        {{project.notes}}
       </a>
   </div>
 </div>
