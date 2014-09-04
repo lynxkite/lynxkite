@@ -1,10 +1,10 @@
 'use strict';
 
-angular.module('biggraph').directive('histogram', function() {
+angular.module('biggraph').directive('histogram', function($timeout) {
   return {
     restrict: 'E',
     scope: { model: '=' },
-    replace: true,
+    replace: false,
     templateUrl: 'histogram.html',
     link: function(scope) {
       function maxSize() {
@@ -15,8 +15,23 @@ angular.module('biggraph').directive('histogram', function() {
         }
         return max;
       }
-      scope.$watch('model', function(model) {
-        if (model === undefined || !model.$resolved) { return; }
+      function loading() {
+        if (!scope.model || scope.model.$resolved) { return; }
+        scope.model.sizes = [];
+        for (var i = 0; i < 20; ++i) {
+          scope.model.sizes.push(Math.random());
+        }
+        scope.max = 1;
+        scope.origMax = 1;
+        $timeout(loading, 200);
+      }
+      scope.$watch('model.$resolved', function() {
+        var model = scope.model;
+        if (!model) { return; }
+        if (!model.$resolved) {
+          loading();
+          return;
+        }
         scope.highlighted = undefined;  // Index of highlighted bar.
         scope.max = maxSize();
         scope.origMax = scope.max;
@@ -29,7 +44,7 @@ angular.module('biggraph').directive('histogram', function() {
         } else {
           scope.histoLabels = model.labels;
         }
-      }, true); // Watch contents of model.
+      });
       scope.height = function(s) {
         return Math.max(0, Math.min(100, Math.floor(100 * s / scope.max))) + '%';
       };
