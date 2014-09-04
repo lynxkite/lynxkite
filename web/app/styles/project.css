@@ -36,6 +36,13 @@ input.save-as {
   width: 200px;
 }
 
+.project .sublist .clicky {
+  color: rgba(0, 0, 0, 0.3);
+}
+.project .sublist .clicky:hover {
+  color: black;
+}
+
 .type-name {
   position: absolute;
   bottom: 0;
