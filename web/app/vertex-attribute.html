@@ -45,7 +45,7 @@
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.id]"
     ng-model-options="{ updateOn: 'blur' }">
 </form>
-<histogram-button ng-if="canBucket" attr="attr" side="side" model="histogram"></histogram-button>
+<histogram-button ng-show="canBucket" attr="attr" side="side" model="histogram"></histogram-button>
 <histogram ng-show="histogram" model="histogram"></histogram>
 <span class="pull-right" ng-click="side.discard('vertex-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>

@@ -428,7 +428,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         case (name, attr) if expr.contains(name) && attr.is[String] =>
           strAttrNames +:= name
           strAttrs +:= attr.runtimeSafeCast[String]
-        case (name, attr) if expr.contains(name) && attr.is[Vector[_]] =>
+        case (name, attr) if expr.contains(name) && isVector(attr) =>
           implicit var tt = attr.typeTag
           vecAttrNames +:= name
           vecAttrs +:= vectorToAny(attr.asInstanceOf[VectorAttr[_]])
@@ -455,6 +455,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       return FEStatus.success
     }
 
+    def isVector[T](attr: VertexAttribute[T]): Boolean = {
+      import scala.reflect.runtime.universe._
+      return attr.typeTag.tpe <:< typeOf[Vector[Any]]
+    }
     type VectorAttr[T] = VertexAttribute[Vector[T]]
     def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
       val op = graph_operations.VertexAttributeVectorToAny[T]()

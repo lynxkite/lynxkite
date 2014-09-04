@@ -116,7 +116,7 @@ abstract class VertexAttributeCast[From, To]()
   import VertexAttributeCast._
   @transient override lazy val inputs = new VertexAttributeInput[From]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[From, To]()(tt, instance, inputs)
-  implicit def tt: TypeTag[To]
+  def tt: TypeTag[To]
 
   def execute(inputDatas: DataSet,
               o: Output[From, To],
@@ -129,5 +129,5 @@ abstract class VertexAttributeCast[From, To]()
 }
 
 case class VertexAttributeVectorToAny[From]() extends VertexAttributeCast[Vector[From], Vector[Any]] {
-  implicit val tt = typeTag[Vector[Any]]
+  @transient lazy val tt = typeTag[Vector[Any]]
 }
