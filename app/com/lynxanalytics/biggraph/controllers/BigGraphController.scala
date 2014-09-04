@@ -277,6 +277,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assert(request.filters.nonEmpty)
     val embedding = FEFilters.embedFilteredVertices(vertexSet, request.filters)
     project.pullBackWithInjection(embedding)
+    project.checkpointAfter("Filter")
     FEStatus.success
   }
 
