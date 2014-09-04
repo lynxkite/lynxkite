@@ -11,16 +11,11 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import scala.reflect.runtime.universe.typeOf
 
-object Operations {
-  case class Category(title: String, color: String, visible: Boolean = true) {
-    val icon = title.take(1) // The "icon" in the operation toolbox.
-  }
-}
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   val Param = FEOperationParameterMeta // Short alias.
 
   // Categories.
-  import Operations._
+  import Operation.Category
   abstract class VertexOperation(p: Project)
     extends Operation(p, Category("Vertex operations", "blue"))
   abstract class EdgeOperation(p: Project)
