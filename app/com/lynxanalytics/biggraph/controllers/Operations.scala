@@ -11,16 +11,28 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import scala.reflect.runtime.universe.typeOf
 
+object Operations {
+  case class Category(title: String, color: String, visible: Boolean = true) {
+    val icon = title.take(1) // The "icon" in the operation toolbox.
+  }
+}
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   val Param = FEOperationParameterMeta // Short alias.
 
   // Categories.
-  abstract class VertexOperation(p: Project) extends Operation(p, "Vertex operations")
-  abstract class EdgeOperation(p: Project) extends Operation(p, "Edge operations")
-  abstract class AttributeOperation(p: Project) extends Operation(p, "Attribute operations")
-  abstract class SegmentationOperation(p: Project) extends Operation(p, "Segmentation operations")
-  abstract class BaseSetOperation(p: Project) extends Operation(p, "Base set operations")
-  abstract class HiddenOperation(p: Project) extends Operation(p, "<hidden>")
+  import Operations._
+  abstract class VertexOperation(p: Project)
+    extends Operation(p, Category("Vertex operations", "blue"))
+  abstract class EdgeOperation(p: Project)
+    extends Operation(p, Category("Edge operations", "orange"))
+  abstract class AttributeOperation(p: Project)
+    extends Operation(p, Category("Attribute operations", "yellow"))
+  abstract class SegmentationOperation(p: Project)
+    extends Operation(p, Category("Segmentation operations", "green"))
+  abstract class HiddenOperation(p: Project)
+    extends Operation(p, Category("Hidden", "", visible = false))
+  abstract class BaseSetOperation(p: Project)
+    extends Operation(p, Category("Base set operations", "blue", visible = p.isSegmentation))
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
