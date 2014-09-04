@@ -9,8 +9,8 @@ import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
 
 case class FEStatus(success: Boolean, failureReason: String = "") {
-  def ||(other: FEStatus) = if (success) this else other
-  def &&(other: FEStatus) = if (success) other else this
+  def ||(other: => FEStatus) = if (success) this else other
+  def &&(other: => FEStatus) = if (success) other else this
 }
 object FEStatus {
   val success = FEStatus(true)
@@ -330,9 +330,11 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   private def forProject(project: Project) = operations.map(_(project))
 
   def categories(project: Project): Seq[OperationCategory] = {
-    forProject(project).groupBy(_.category).map {
+    val cats = forProject(project).groupBy(_.category).map {
       case (cat, ops) => OperationCategory(cat, ops.map(_.toFE))
-    }.toSeq.filter(_.title != "<hidden>").sortBy(_.title)
+    }.toSeq.sortBy(_.title)
+    // Hide "hidden" operations and categories with no enabled operations.
+    cats.filter(cat => cat.title != "<hidden>" && cat.ops.exists(_.enabled.success))
   }
 
   def uIProjects: Seq[UIValue] = UIValue.seq(projects.map(_.projectName))

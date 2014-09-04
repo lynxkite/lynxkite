@@ -19,6 +19,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class EdgeOperation(p: Project) extends Operation(p, "Edge operations")
   abstract class AttributeOperation(p: Project) extends Operation(p, "Attribute operations")
   abstract class SegmentationOperation(p: Project) extends Operation(p, "Segmentation operations")
+  abstract class BaseSetOperation(p: Project) extends Operation(p, "Base set operations")
   abstract class HiddenOperation(p: Project) extends Operation(p, "<hidden>")
 
   register(new VertexOperation(_) {
@@ -455,27 +456,30 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new BaseSetOperation(_) {
     val title = "Aggregate to segmentation"
-    val parameters = Seq(
-      Param("segmentation", "Destination segmentation", options = segmentations)) ++
-      aggregateParams(project.vertexAttributes)
+    val parameters = {
+      if (project.isSegmentation) aggregateParams(project.asSegmentation.parent.vertexAttributes)
+      else Nil
+    }
     def enabled =
-      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") &&
-        FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+      FEStatus.assert(project.isSegmentation, "Applies to segmentations") &&
+        FEStatus.assert(project.asSegmentation.parent.vertexAttributes.nonEmpty,
+          "No vertex attributes on parent")
     def apply(params: Map[String, String]): FEStatus = {
-      val seg = project.segmentation(params("segmentation"))
+      val seg = project.asSegmentation
+      val parent = project.asSegmentation.parent
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           seg.belongsTo,
-          attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
-        seg.project.vertexAttributes(s"${attr}_${choice}") = result
+          attributeWithLocalAggregator(parent.vertexAttributes(attr), choice))
+        project.vertexAttributes(s"${attr}_${choice}") = result
       }
       return FEStatus.success
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new BaseSetOperation(_) {
     val title = "Aggregate from segmentation"
     val parameters = Seq(
       Param("prefix", "Generated name prefix",
