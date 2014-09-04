@@ -101,7 +101,7 @@ case class FESegmentation(
 
 case class ProjectRequest(name: String)
 case class Splash(version: String, projects: Seq[FEProject])
-case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
+case class OperationCategory(title: String, icon: String, color: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(name: String, notes: String)
 case class DiscardProjectRequest(name: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
@@ -296,7 +296,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 }
 
-abstract class Operation(val project: Project, val category: String) {
+abstract class Operation(val project: Project, val category: Operations.Category) {
   def id = title.replace(" ", "-")
   def title: String
   def parameters: Seq[FEOperationParameterMeta]
@@ -330,11 +330,10 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   private def forProject(project: Project) = operations.map(_(project))
 
   def categories(project: Project): Seq[OperationCategory] = {
-    val cats = forProject(project).groupBy(_.category).map {
-      case (cat, ops) => OperationCategory(cat, ops.map(_.toFE))
-    }.toSeq.sortBy(_.title)
-    // Hide "hidden" operations and categories with no enabled operations.
-    cats.filter(cat => cat.title != "<hidden>" && cat.ops.exists(_.enabled.success))
+    val cats = forProject(project).groupBy(_.category).toSeq
+    cats.filter(_._1.visible).sortBy(_._1.title).map {
+      case (cat, ops) => OperationCategory(cat.title, cat.icon, cat.color, ops.map(_.toFE))
+    }
   }
 
   def uIProjects: Seq[UIValue] = UIValue.seq(projects.map(_.projectName))
