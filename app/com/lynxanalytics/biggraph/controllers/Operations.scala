@@ -522,6 +522,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Weighted aggregate on neighbors"
+    val parameters = Seq(
+      Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
+      Param("weight", "Weight", options = vertexAttributes[Double]),
+      Param("direction", "Aggregate on",
+        options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
+      weightedAggregateParams(project.vertexAttributes)
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes") && hasEdgeBundle
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = params("prefix")
+      val edges = params("direction") match {
+        case "incoming edges" => project.edgeBundle
+        case "outgoing edges" => reverse(project.edgeBundle)
+      }
+      val weight = project.vertexAttributes(params("weight"))
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val pairs = pairAttr(weight, project.vertexAttributes(attr))
+        val result = aggregateViaConnection(
+          edges,
+          attributeWithAggregator(pairs, choice))
+        project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
+      }
+      return FEStatus.success
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Merge vertices by attribute"
     val parameters = Seq(
@@ -919,7 +947,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
   def aggregateParams(
     attrs: Iterable[(String, VertexAttribute[_])],
-    needsGlobal: Boolean = false): Seq[FEOperationParameterMeta] = {
+    needsGlobal: Boolean = false,
+    weighted: Boolean = false): Seq[FEOperationParameterMeta] = {
     attrs.toSeq.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
