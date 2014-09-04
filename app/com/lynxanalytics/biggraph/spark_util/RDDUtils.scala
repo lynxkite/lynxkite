@@ -101,7 +101,9 @@ object RDDUtils {
     } else {
       totalVertexCount * 1.0 / unfilteredCount
     }
-    valueCounts.toMap.mapValues(c => math.round(multiplier * c).toInt)
+    // round to next power of 10
+    val rounder = if (multiplier == 1.0) 1 else math.pow(10, math.ceil(math.log10(multiplier))).toInt
+    valueCounts.toMap.mapValues(c => math.round(multiplier * c / rounder).toInt * rounder)
   }
 
   def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
