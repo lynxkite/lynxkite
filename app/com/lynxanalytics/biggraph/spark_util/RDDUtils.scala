@@ -102,7 +102,7 @@ object RDDUtils {
       totalVertexCount * 1.0 / unfilteredCount
     }
     // round to next power of 10
-    val rounder = if (multiplier == 1.0) 1 else math.pow(10, math.ceil(math.log10(multiplier))).toInt
+    val rounder = math.pow(10, math.ceil(math.log10(multiplier))).toInt
     valueCounts.toMap.mapValues(c => math.round(multiplier * c / rounder).toInt * rounder)
   }
 
