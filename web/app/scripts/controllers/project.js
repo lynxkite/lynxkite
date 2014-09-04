@@ -206,7 +206,8 @@ angular.module('biggraph')
         for (var i = 0; i < $scope.sides.length; ++i) {
           var side = $scope.sides[i];
           if (side === this) { continue; }
-          if (side.isSegmentationOf(this) && side.shortName() === util.spaced(name)) {
+          var parts = side.project.name.split('/');
+          if (side.isSegmentationOf(this) && parts[parts.length-2] === name) {
             side.close();
           }
         }
