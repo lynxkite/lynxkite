@@ -14,7 +14,7 @@ object DeriveJS {
     val vs = vertexSet
     val numAttrs = (0 until numAttrCount).map(i => vertexAttribute[Double](vs, Symbol("numAttr-" + i)))
     val strAttrs = (0 until strAttrCount).map(i => vertexAttribute[String](vs, Symbol("strAttr-" + i)))
-    val vecAttrs = (0 until vecAttrCount).map(i => vertexAttribute[Vector[_]](vs, Symbol("vecAttr-" + i)))
+    val vecAttrs = (0 until vecAttrCount).map(i => vertexAttribute[Vector[Any]](vs, Symbol("vecAttr-" + i)))
   }
   class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance,
                            inputs: Input) extends MagicOutput(instance) {
@@ -61,23 +61,21 @@ abstract class DeriveJS[T](
       }
     }
     val vecJoined = {
-      val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[Vector[_]]())
+      val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[Vector[Any]]())
       inputs.vecAttrs.foldLeft(noAttrs) { (rdd, attr) =>
         rdd.sortedJoin(attr.rdd).mapValues {
           case (attrs, attr) => attrs :+ attr
         }
       }
     }
-    val vecTypes = inputs.vecAttrs.map(_.data.typeTag.tpe.toString)
     val derived = numJoined.sortedJoin(strJoined).sortedJoin(vecJoined).mapValues {
       case ((nums, strs), vecs) =>
         val numValues = numAttrNames.zip(nums).toMap
         val strValues = strAttrNames.zip(strs).toMap
-        // There is no autounboxing in Javascript. So we unbox primitive types.
-        // (TypeTag is not serializable, so we only have the string type name here.)
-        val arrays = vecs.zip(vecTypes).map {
-          case (v, "Vector[Double]") => v.map(_.asInstanceOf[Double]).toArray[Double]
-          case (v, _) => v.toArray[Any]
+        // There is no autounboxing in Javascript. So we unbox primitive arrays.
+        val arrays = vecs.map { v =>
+          if (v.forall(_.isInstanceOf[Double])) v.asInstanceOf[Vector[Double]].toArray
+          else v.toArray
         }
         val vecValues: Map[String, Array[_]] = vecAttrNames.zip(arrays).toMap
         expr.evaluate(numValues ++ strValues ++ vecValues).asInstanceOf[T]
