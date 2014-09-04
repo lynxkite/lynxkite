@@ -118,7 +118,6 @@ case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
 
 class FEOperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
 
   def registerOperation(op: FEOperation): Unit = {
     assert(!operations.contains(op.id), s"Already registered: ${op.id}")
@@ -196,7 +195,6 @@ class FEOperationRepository(env: BigGraphEnvironment) {
 
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
   val operations = new FEOperations(env)
 
   private def toFE(vs: VertexSet): FEVertexSet = {
@@ -321,7 +319,6 @@ abstract class Operation(val project: Project, val category: String) {
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
 
   def projects: Seq[Project] = {
     val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
