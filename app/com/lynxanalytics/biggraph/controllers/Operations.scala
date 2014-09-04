@@ -408,6 +408,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
+    val title = "Pad with constant default value"
+    val parameters = Seq(
+      Param("attr", "Vertex attribute", options = vertexAttributes),
+      Param("def", "Default value"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+    def apply(params: Map[String, String]): FEStatus = {
+      val attr = project.vertexAttributes(params("attr"))
+      val js = JavaScript(params("def"))
+      val op: graph_operations.DeriveJS[_] = {
+        if (attr.is[Double]) graph_operations.DeriveJSDouble(js, List(), List())
+        else if (attr.is[String]) graph_operations.DeriveJSString(js, List(), List())
+        else return FEStatus.failure(s"Attribute is of an unsupported type: ${attr.typeTag.tpe}")
+      }
+      val default = op(op.vs, project.vertexSet)(
+        op.numAttrs, List())(
+          op.strAttrs, List()).result
+      project.vertexAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+      FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
     val title = "Derived vertex attribute"
     val parameters = Seq(
       Param("output", "Save as"),
