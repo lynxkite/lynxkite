@@ -9,16 +9,13 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
       scope.util = util;
       scope.data = util.nocache('/ajax/splash');
       scope.$watch('data.version', function(v) { scope.version = v; });
-      function scalar(p, name) {
+      function getScalar(p, name) {
         for (var i = 0; i < p.scalars.length; ++i) {
           if (p.scalars[i].title === name) {
-            return p.scalars[i].id;
+            return util.get('/ajax/scalarValue', { scalarId: p.scalars[i].id });
           }
         }
-        return undefined;
-      }
-      function get(p, name) {
-        return util.get('/ajax/scalarValue', { scalarId: scalar(p, name) });
+        return { value: undefined };
       }
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved) { return; }
@@ -26,8 +23,8 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         scope.edgeCounts = {};
         for (var i = 0; i < scope.data.projects.length; ++i) {
           var p = scope.data.projects[i];
-          scope.vertexCounts[p.name] = p.vertexSet ? get(p, 'vertex_count') : { value: 'no' };
-          scope.edgeCounts[p.name] = p.edgeBundle ? get(p, 'edge_count') : { value: 'no' };
+          scope.vertexCounts[p.name] = p.vertexSet ? getScalar(p, 'vertex_count') : { value: 'no' };
+          scope.edgeCounts[p.name] = p.edgeBundle ? getScalar(p, 'edge_count') : { value: 'no' };
         }
       });
       scope.createProject = function() {
