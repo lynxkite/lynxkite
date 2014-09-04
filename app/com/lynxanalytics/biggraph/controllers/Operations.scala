@@ -22,12 +22,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     extends Operation(p, Category("Edge operations", "orange"))
   abstract class AttributeOperation(p: Project)
     extends Operation(p, Category("Attribute operations", "yellow"))
-  abstract class SegmentationOperation(p: Project)
-    extends Operation(p, Category("Segmentation operations", "green"))
+  abstract class CreateSegmentationOperation(p: Project)
+    extends Operation(p, Category("Create segmentation", "green"))
   abstract class HiddenOperation(p: Project)
     extends Operation(p, Category("Hidden", "", visible = false))
-  abstract class BaseSetOperation(p: Project)
-    extends Operation(p, Category("Base set operations", "blue", visible = p.isSegmentation))
+  abstract class SegmentationOperation(p: Project)
+    extends Operation(p, Category("Segmentation operations", "blue", visible = p.isSegmentation))
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
@@ -178,7 +178,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new CreateSegmentationOperation(_) {
     val title = "Maximal cliques"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
@@ -196,7 +196,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new CreateSegmentationOperation(_) {
     val title = "Connected components"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "connected_components"))
@@ -212,7 +212,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new CreateSegmentationOperation(_) {
     val title = "Find infocom communities"
     val parameters = Seq(
       Param(
@@ -463,16 +463,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new BaseSetOperation(_) {
+  register(new SegmentationOperation(_) {
     val title = "Aggregate to segmentation"
-    val parameters = {
-      if (project.isSegmentation) aggregateParams(project.asSegmentation.parent.vertexAttributes)
-      else Nil
-    }
+    def parameters = aggregateParams(project.asSegmentation.parent.vertexAttributes)
     def enabled =
-      FEStatus.assert(project.isSegmentation, "Applies to segmentations") &&
-        FEStatus.assert(project.asSegmentation.parent.vertexAttributes.nonEmpty,
-          "No vertex attributes on parent")
+      FEStatus.assert(project.asSegmentation.parent.vertexAttributes.nonEmpty,
+        "No vertex attributes on parent")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.asSegmentation
       val parent = project.asSegmentation.parent
@@ -486,15 +482,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new BaseSetOperation(_) {
+  register(new SegmentationOperation(_) {
     val title = "Aggregate from segmentation"
-    val parameters = Seq(
+    def parameters = Seq(
       Param("prefix", "Generated name prefix",
-        defaultValue = if (project.isSegmentation) project.asSegmentation.name else "")) ++
+        defaultValue = project.asSegmentation.name)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(project.isSegmentation, "Operates on a segmentation") &&
-        FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.asSegmentation
       val prefix = params("prefix")
@@ -885,14 +880,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val title = "Export segmentation to CSV"
       val parameters = Seq(
         Param("path", "Destination path"),
-        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
-        Param("seg", "Segmentation", options = segmentations))
-      def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations.")
+        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))))
+      def enabled = FEStatus.success
       def apply(params: Map[String, String]): FEStatus = {
-        if (params("seg").isEmpty)
-          return FEStatus.failure("Nothing selected for export.")
         val path = Filename.fromString(params("path"))
-        val seg = project.segmentation(params("seg"))
+        val seg = project.asSegmentation
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
         if (params("single") == "true") {
