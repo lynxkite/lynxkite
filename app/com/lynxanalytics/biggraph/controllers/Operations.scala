@@ -500,13 +500,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexAttributes.foreach {
         case (name, attr) if expr.contains(name) && attr.is[Double] =>
           numAttrNames +:= name
-          numAttrs +:= attr.asInstanceOf[VertexAttribute[Double]]
+          numAttrs +:= attr.runtimeSafeCast[Double]
         case (name, attr) if expr.contains(name) && attr.is[String] =>
           strAttrNames +:= name
-          strAttrs +:= attr.asInstanceOf[VertexAttribute[String]]
+          strAttrs +:= attr.runtimeSafeCast[String]
         case (name, attr) if expr.contains(name) && attr.is[Vector[_]] =>
+          implicit var tt = attr.typeTag
           vecAttrNames +:= name
-          vecAttrs +:= attr.asInstanceOf[VertexAttribute[Vector[_]]]
+          vecAttrs +:= vectorToAny(attr.asInstanceOf[VectorAttr[_]])
         case (name, attr) if expr.contains(name) =>
           log.warn(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
         case _ => ()
@@ -528,6 +529,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               op.vecAttrs, vecAttrs).result
       project.vertexAttributes(params("output")) = result.attr
       return FEStatus.success
+    }
+
+    type VectorAttr[T] = VertexAttribute[Vector[T]]
+    def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
+      val op = graph_operations.VertexAttributeVectorToAny[T]()
+      op(op.attr, attr).result.attr
     }
 
     // Evaluates the expression with 0/'' parameters.

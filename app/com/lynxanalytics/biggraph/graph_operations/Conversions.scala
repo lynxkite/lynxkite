@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.runtime.universe._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -101,4 +102,32 @@ case class VertexAttributeToDouble()
     output(o.attr, inputs.attr.rdd.flatMapValues(str =>
       if (str.nonEmpty) Some(str.toDouble) else None))
   }
+}
+
+object VertexAttributeCast {
+  class Output[From, To: TypeTag](
+    implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[From])
+      extends MagicOutput(instance) {
+    val attr = vertexAttribute[To](inputs.vs.entity)
+  }
+}
+abstract class VertexAttributeCast[From, To]()
+    extends TypedMetaGraphOp[VertexAttributeInput[From], VertexAttributeCast.Output[From, To]] {
+  import VertexAttributeCast._
+  @transient override lazy val inputs = new VertexAttributeInput[From]
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output[From, To]()(tt, instance, inputs)
+  implicit def tt: TypeTag[To]
+
+  def execute(inputDatas: DataSet,
+              o: Output[From, To],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val ct = inputs.attr.data.classTag
+    output(o.attr, inputs.attr.rdd.mapValues(_.asInstanceOf[To]))
+  }
+}
+
+case class VertexAttributeVectorToAny[From]() extends VertexAttributeCast[Vector[From], Vector[Any]] {
+  implicit val tt = typeTag[Vector[Any]]
 }
