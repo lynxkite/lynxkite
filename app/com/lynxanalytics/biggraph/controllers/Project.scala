@@ -110,6 +110,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     if (e != null) {
       val op = graph_operations.CountVertices()
       scalars("vertex_count") = op(op.vertices, e).result.count
+    } else {
+      scalars("vertex_count") = null
     }
   }
 
@@ -172,6 +174,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     if (e != null) {
       val op = graph_operations.CountEdges()
       scalars("edge_count") = op(op.edges, e).result.count
+    } else {
+      scalars("edge_count") = null
     }
   }
 

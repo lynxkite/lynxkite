@@ -57,6 +57,8 @@ angular
       // Easier to read numbers. 1234 -> 1k
       human: function(x) {
         if (x === undefined) { return '?'; }
+        if (typeof x !== 'number') { return x; }
+        if (isNaN(x)) { return x; }
         for (var i = 0; true; ++i) {
           if (x < 1000 || i === siSymbols.length - 1) {
             return x + siSymbols[i];
