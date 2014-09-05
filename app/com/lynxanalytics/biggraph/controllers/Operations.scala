@@ -27,7 +27,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class HiddenOperation(p: Project)
     extends Operation(p, Category("Hidden", "", visible = false))
   abstract class SegmentationOperation(p: Project)
-      extends Operation(p, Category("Segmentation operations", "blue", visible = p.isSegmentation)) {
+      extends Operation(p, Category("Segmentation operations", "yellow", visible = p.isSegmentation)) {
     protected def parent = project.asSegmentation.parent
   }
 
