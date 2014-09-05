@@ -14,8 +14,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     assert(manager.tagExists(path / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    def feAttr[T](e: TypedEntity[T], name: String) =
-      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString)
+    def feAttr[T](e: TypedEntity[T], name: String) = {
+      val canBucket = Seq(typeOf[Double], typeOf[String]).exists(_ =:= e.typeTag.tpe)
+      val canFilter = Seq(typeOf[Double], typeOf[String]).exists(_ =:= e.typeTag.tpe)
+      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter)
+    }
     FEProject(
       projectName, lastOperation, nextOperation, vs, eb, notes,
       scalars.map { case (name, scalar) => feAttr(scalar, name) }.toSeq,
