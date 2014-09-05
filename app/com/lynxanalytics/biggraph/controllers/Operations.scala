@@ -566,7 +566,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("weight", "Weight", options = vertexAttributes[Double]),
       Param("direction", "Aggregate on",
         options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
-      weightedAggregateParams(project.vertexAttributes)
+      aggregateParams(project.vertexAttributes, weighted = true)
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]): FEStatus = {
@@ -575,13 +575,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         case "incoming edges" => project.edgeBundle
         case "outgoing edges" => reverse(project.edgeBundle)
       }
-      val weight = project.vertexAttributes(params("weight"))
-      for ((attr, choice) <- parseAggregateParams(params)) {
-        val pairs = pairAttr(weight, project.vertexAttributes(attr))
+      val weight = project.vertexAttributes(params("weight")).runtimeSafeCast[Double]
+      for ((name, choice) <- parseAggregateParams(params)) {
+        val attr = project.vertexAttributes(name)
         val result = aggregateViaConnection(
           edges,
-          attributeWithAggregator(pairs, choice))
-        project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
+          weightedAttributeWithAggregator(weight, attr, choice))
+        project.vertexAttributes(s"${prefix}_${name}_${choice}") = result
       }
       return FEStatus.success
     }
@@ -956,6 +956,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
   }
 
+  def joinAttr[A, B](a: VertexAttribute[A], b: VertexAttribute[B]): VertexAttribute[(A, B)] = {
+    val op = graph_operations.JoinAttributes[A, B]()
+    op(op.a, a)(op.b, b).result.attr
+  }
+
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
     val reversed = {
       val op = graph_operations.ReverseEdges()
@@ -986,19 +991,25 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     attrs.toSeq.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
-          if (needsGlobal) {
+          if (weighted) { // At the moment all weighted aggregators are global.
+            UIValue.seq(Seq("ignore", "weighted_sum", "weighted_average", "by_max_weight"))
+          } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count", "vector"))
           }
         } else if (attr.is[String]) {
-          if (needsGlobal) {
+          if (weighted) { // At the moment all weighted aggregators are global.
+            UIValue.seq(Seq("ignore", "by_max_weight"))
+          } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count", "vector"))
           }
         } else {
-          if (needsGlobal) {
+          if (weighted) { // At the moment all weighted aggregators are global.
+            UIValue.seq(Seq("ignore", "by_max_weight"))
+          } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "most_common", "count", "vector"))
@@ -1030,7 +1041,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   private def attributeWithAggregator[T](
     attr: VertexAttribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
-
     choice match {
       case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
@@ -1039,6 +1049,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
+    }
+  }
+  private def weightedAttributeWithAggregator[T](
+    weight: VertexAttribute[Double], attr: VertexAttribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
+    choice match {
+      case "by_max_weight" => AttributeWithAggregator(
+        joinAttr(weight, attr), graph_operations.Aggregator.MaxBy[Double, T]())
+      case "weighted_sum" => AttributeWithAggregator(
+        joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedSum())
+      case "weighted_average" => AttributeWithAggregator(
+        joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedAverage())
     }
   }
 

@@ -195,7 +195,7 @@ object Aggregator {
   }
 
   case class WeightedSum() extends SimpleAggregator[(Double, Double), Double] {
-    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
+    def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
     def zero = 0
     def merge(a: Double, b: (Double, Double)) = a + b._1 * b._2
     def combine(a: Double, b: Double) = a + b
@@ -215,13 +215,27 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
-  case class MaxBy[Value, Weight: Ordering]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
+  def typeToTypeTag[T](tpe: Type, mirror: reflect.api.Mirror[reflect.runtime.universe.type]): TypeTag[T] = {
+    TypeTag(mirror, new reflect.api.TypeCreator {
+      def apply[U <: reflect.api.Universe with Singleton](m: reflect.api.Mirror[U]) = {
+        if (m eq mirror) tpe.asInstanceOf[U#Type]
+        else throw new IllegalArgumentException(
+          s"Type tag defined in $mirror cannot be migrated to other mirrors.")
+      }
+    })
+  }
+
+  def typeArgs(tpe: Type): Seq[Type] = tpe.asInstanceOf[TypeRefApi].args
+
+  case class MaxBy[Weight: Ordering, Value]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
+    import Ordering.Implicits._
+    def optionTypeTag[T: TypeTag] = typeTag[Option[T]]
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
-      typeTag[Option[(Weight, Value)]]
+      optionTypeTag[(Weight, Value)]
     }
     def outputTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
-      implicit val tt = inputTypeTag
+      implicit val tt = typeToTypeTag[Value](typeArgs(inputTypeTag.tpe).last, inputTypeTag.mirror)
       typeTag[Value]
     }
     def zero = None
@@ -237,6 +251,7 @@ object Aggregator {
         case _ => aOpt.orElse(bOpt)
       }
     }
+    def finalize(opt: Option[(Weight, Value)]) = opt.get._2
   }
 
   case class Average() extends CompoundAggregator[Double, Double, Double, Double, Double, Double] {
@@ -249,7 +264,7 @@ object Aggregator {
   case class WeightedAverage() extends CompoundAggregator[(Double, Double), Double, Double, Double, Double, Double] {
     val agg1 = Count[(Double, Double)]()
     val agg2 = WeightedSum()
-    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
+    def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
     def compound(count: Double, sum: Double) = sum / count
   }
 
