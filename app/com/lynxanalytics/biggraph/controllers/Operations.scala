@@ -605,7 +605,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
-    def merge[T](attr: VertexAttribute[T]): graph_operations.Segmentation = {
+    def merge[T](attr: VertexAttribute[T]): graph_operations.MergeVertices.Output = {
       val op = graph_operations.MergeVertices[T]()
       op(op.attr, attr).result
     }
