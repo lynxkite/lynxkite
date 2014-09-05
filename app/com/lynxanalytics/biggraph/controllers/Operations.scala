@@ -246,11 +246,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, cedges).result
       }
 
-      val (weightedVertexToClique, weightedCliqueToCommunity) = {
-        val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-        (op(op.edges, cliquesResult.belongsTo).result.attr,
-          op(op.edges, ccResult.belongsTo).result.attr)
-      }
+      val weightedVertexToClique = graph_operations.AddConstantAttribute.edgeDouble(cliquesResult.belongsTo, 1.0)
+      val weightedCliqueToCommunity = graph_operations.AddConstantAttribute.edgeDouble(ccResult.belongsTo, 1.0)
 
       val weightedVertexToCommunity = {
         val op = graph_operations.ConcatenateBundles()
@@ -286,11 +283,53 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Add constant edge attribute"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "weight"),
-      Param("value", "Value", defaultValue = "1"))
+      Param("value", "Value", defaultValue = "1"),
+      Param("type", "Type", options = UIValue.seq(Seq("Double", "String"))))
     def enabled = hasEdgeBundle
-    def apply(params: Map[String, String]) = {
-      val op = graph_operations.AddConstantDoubleEdgeAttribute(params("value").toDouble)
-      project.edgeAttributes(params("name")) = op(op.edges, project.edgeBundle).result.attr
+    def apply(params: Map[String, String]): FEStatus = {
+      val res = {
+        if (params("type") == "Double") {
+          val d = params("value").toDouble
+          graph_operations.AddConstantAttribute.edgeDouble(project.edgeBundle, d)
+        } else {
+          graph_operations.AddConstantAttribute.edgeString(project.edgeBundle, params("value"))
+        }
+      }
+      project.edgeAttributes(params("name")) = res
+      FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Add constant vertex attribute"
+    val parameters = Seq(
+      Param("name", "Attribute name", defaultValue = "weight"),
+      Param("value", "Value", defaultValue = "1"),
+      Param("type", "Type", options = UIValue.seq(Seq("Double", "String"))))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]): FEStatus = {
+      val op: graph_operations.AddConstantAttribute[_] =
+        graph_operations.AddConstantAttribute.doubleOrString(
+          isDouble = (params("type") == "Double"), params("value"))
+      project.vertexAttributes(params("name")) = op(op.vs, project.vertexSet).result.attr
+      FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Pad with constant default value"
+    val parameters = Seq(
+      Param("attr", "Vertex attribute", options = vertexAttributes[String] ++ vertexAttributes[Double]),
+      Param("def", "Default value"))
+    def enabled = FEStatus.assert(
+      (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No vertex attributes.")
+    def apply(params: Map[String, String]): FEStatus = {
+      val attr = project.vertexAttributes(params("attr"))
+      val op: graph_operations.AddConstantAttribute[_] =
+        graph_operations.AddConstantAttribute.doubleOrString(
+          isDouble = attr.is[Double], params("def"))
+      val default = op(op.vs, project.vertexSet).result
+      project.vertexAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
       FEStatus.success
     }
   })
@@ -431,38 +470,65 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       var numAttrs = List[VertexAttribute[Double]]()
       var strAttrNames = List[String]()
       var strAttrs = List[VertexAttribute[String]]()
+      var vecAttrNames = List[String]()
+      var vecAttrs = List[VertexAttribute[Vector[_]]]()
       project.vertexAttributes.foreach {
         case (name, attr) if expr.contains(name) && attr.is[Double] =>
           numAttrNames +:= name
-          numAttrs +:= attr.asInstanceOf[VertexAttribute[Double]]
+          numAttrs +:= attr.runtimeSafeCast[Double]
         case (name, attr) if expr.contains(name) && attr.is[String] =>
           strAttrNames +:= name
-          strAttrs +:= attr.asInstanceOf[VertexAttribute[String]]
+          strAttrs +:= attr.runtimeSafeCast[String]
+        case (name, attr) if expr.contains(name) && isVector(attr) =>
+          implicit var tt = attr.typeTag
+          vecAttrNames +:= name
+          vecAttrs +:= vectorToAny(attr.asInstanceOf[VectorAttr[_]])
         case (name, attr) if expr.contains(name) =>
           log.warn(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
         case _ => ()
       }
       val js = JavaScript(expr)
       // Figure out the return type.
-      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames) match {
+      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames, vecAttrNames) match {
         case _: String =>
-          graph_operations.DeriveJSString(js, numAttrNames, strAttrNames)
+          graph_operations.DeriveJSString(js, numAttrNames, strAttrNames, vecAttrNames)
         case _: Double =>
-          graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames)
+          graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames, vecAttrNames)
         case result =>
           return FEStatus.failure(s"Test evaluation of '$js' returned '$result'.")
       }
       val result = op(
         op.vs, project.vertexSet)(
           op.numAttrs, numAttrs)(
-            op.strAttrs, strAttrs).result
+            op.strAttrs, strAttrs)(
+              op.vecAttrs, vecAttrs).result
       project.vertexAttributes(params("output")) = result.attr
       return FEStatus.success
     }
 
+    def isVector[T](attr: VertexAttribute[T]): Boolean = {
+      import scala.reflect.runtime.universe._
+      // Vector is covariant, so Vector[X] <:< Vector[Any].
+      return attr.typeTag.tpe <:< typeOf[Vector[Any]]
+    }
+    type VectorAttr[T] = VertexAttribute[Vector[T]]
+    def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
+      val op = graph_operations.AttributeVectorToAny[T]()
+      op(op.attr, attr).result.attr
+    }
+
     // Evaluates the expression with 0/'' parameters.
-    def testEvaluation(js: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String]): Any = {
-      val mapping = numAttrNames.map(_ -> 0.0).toMap ++ strAttrNames.map(_ -> "").toMap
+    def testEvaluation(
+      js: JavaScript,
+      numAttrNames: Seq[String],
+      strAttrNames: Seq[String],
+      vecAttrNames: Seq[String]): Any = {
+      val mapping = (
+        numAttrNames.map(_ -> 0.0).toMap ++
+        strAttrNames.map(_ -> "").toMap ++
+        // Because the array will be empty for the test, the expression has to be ready
+        // to handle this.
+        vecAttrNames.map(_ -> Array[Any]()))
       return js.evaluate(mapping)
     }
   })
@@ -983,19 +1049,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count", "vector"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count", "vector"))
           }
         } else {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most_common", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "count", "vector"))
           }
         }
         Param(s"aggregate-$name", name, options = options)
@@ -1042,6 +1108,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
       case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
       case "majority_100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+      case "vector" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.AsVector[T]())
       case _ => attributeWithAggregator(attr, choice)
     }
   }
@@ -1096,10 +1163,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def concat(eb1: EdgeBundle, eb2: EdgeBundle): EdgeBundle = {
-    val (weighted1, weighted2) = {
-      val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-      (op(op.edges, eb1).result.attr, op(op.edges, eb2).result.attr)
-    }
+    val weighted1 = graph_operations.AddConstantAttribute.edgeDouble(eb1, 1.0)
+    val weighted2 = graph_operations.AddConstantAttribute.edgeDouble(eb2, 1.0)
 
     val op = graph_operations.ConcatenateBundles()
     op(op.weightsAB, weighted1)(op.weightsBC, weighted2).result.weightsAC.edgeBundle

@@ -43,7 +43,7 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
           val rnd = new Random(pid)
           it.map {
             case (attr, vertices) =>
-              (vertices.iterator.drop(rnd.nextInt(vertices.size)).next, vertices)
+              (vertices.drop(rnd.nextInt(vertices.size)).head, vertices)
           }
       }
       .toSortedRDD(partitioner)
