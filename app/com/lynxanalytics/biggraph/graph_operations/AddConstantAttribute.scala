@@ -14,6 +14,30 @@ object AddConstantAttribute {
                   typeTag: TypeTag[T]) extends MagicOutput(instance) {
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
+
+  def doubleOrString(isDouble: Boolean, param: String) = {
+    if (isDouble) {
+      val d = param.toDouble
+      AddConstantDoubleAttribute(d)
+    } else {
+      AddConstantStringAttribute(param)
+    }
+  }
+
+  // TODO: remove these convenience methods when EdgeAttribute gets deleted  
+  import com.lynxanalytics.biggraph.graph_api.Scripting._
+  def edgeInt(eb: EdgeBundle, n: Int)(implicit mm: MetaGraphManager) = {
+    val cop = AddConstantIntAttribute(n)
+    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
+  }
+  def edgeDouble(eb: EdgeBundle, n: Double)(implicit mm: MetaGraphManager) = {
+    val cop = AddConstantDoubleAttribute(n)
+    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
+  }
+  def edgeString(eb: EdgeBundle, s: String)(implicit mm: MetaGraphManager) = {
+    val cop = AddConstantStringAttribute(s)
+    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
+  }
 }
 import AddConstantAttribute._
 abstract class AddConstantAttribute[T]
@@ -49,29 +73,4 @@ case class AddConstantIntAttribute(val value: Int)
 case class AddConstantStringAttribute(val value: String)
     extends AddConstantAttribute[String] {
   @transient lazy val tt = typeTag[String]
-}
-
-// TODO: remove these convenience objects when EdgeAttribute gets deleted
-object AddConstantIntEdgeAttribute {
-  import com.lynxanalytics.biggraph.graph_api.Scripting._
-  def apply(eb: EdgeBundle, n: Int)(implicit mm: MetaGraphManager) = {
-    val cop = AddConstantIntAttribute(n)
-    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
-  }
-}
-
-object AddConstantDoubleEdgeAttribute {
-  import com.lynxanalytics.biggraph.graph_api.Scripting._
-  def apply(eb: EdgeBundle, n: Double)(implicit mm: MetaGraphManager) = {
-    val cop = AddConstantDoubleAttribute(n)
-    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
-  }
-}
-
-object AddConstantStringEdgeAttribute {
-  import com.lynxanalytics.biggraph.graph_api.Scripting._
-  def apply(eb: EdgeBundle, s: String)(implicit mm: MetaGraphManager) = {
-    val cop = AddConstantStringAttribute(s)
-    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
-  }
 }
