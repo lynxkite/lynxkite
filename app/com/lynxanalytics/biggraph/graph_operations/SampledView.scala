@@ -26,7 +26,8 @@ import SampledView._
 case class SampledView(
     idToIdx: Map[ID, Int],
     hasSizes: Boolean,
-    hasLabels: Boolean) extends TypedMetaGraphOp[Input, Output] {
+    hasLabels: Boolean,
+    maxCount: Int = 1000) extends TypedMetaGraphOp[Input, Output] {
 
   @transient override lazy val inputs = new Input(hasSizes, hasLabels)
 
@@ -49,7 +50,7 @@ case class SampledView(
       filtered.mapValues(_ => "")
     }
     val svVerticesMap = filtered.sortedLeftOuterJoin(sizes).sortedLeftOuterJoin(labels)
-      .collect
+      .take(maxCount)
       .map {
         case (id, (((), size), label)) =>
           (idToIdx(id), SampledViewVertex(id, size.getOrElse(0.0), label.getOrElse("")))

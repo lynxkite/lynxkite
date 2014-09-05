@@ -9,8 +9,8 @@ import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
 
 case class FEStatus(success: Boolean, failureReason: String = "") {
-  def ||(other: FEStatus) = if (success) this else other
-  def &&(other: FEStatus) = if (success) other else this
+  def ||(other: => FEStatus) = if (success) this else other
+  def &&(other: => FEStatus) = if (success) other else this
 }
 object FEStatus {
   val success = FEStatus(true)
@@ -79,7 +79,12 @@ abstract class FEOperation {
   def apply(params: Map[String, String]): FEStatus
 }
 
-case class FEAttribute(id: String, title: String, typeName: String)
+case class FEAttribute(
+  id: String,
+  title: String,
+  typeName: String,
+  canBucket: Boolean,
+  canFilter: Boolean)
 
 case class FEProject(
   name: String,
@@ -101,7 +106,7 @@ case class FESegmentation(
 
 case class ProjectRequest(name: String)
 case class Splash(version: String, projects: Seq[FEProject])
-case class OperationCategory(title: String, ops: Seq[FEOperationMeta])
+case class OperationCategory(title: String, icon: String, color: String, ops: Seq[FEOperationMeta])
 case class CreateProjectRequest(name: String, notes: String)
 case class DiscardProjectRequest(name: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
@@ -277,6 +282,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assert(request.filters.nonEmpty)
     val embedding = FEFilters.embedFilteredVertices(vertexSet, request.filters)
     project.pullBackWithInjection(embedding)
+    project.checkpointAfter("Filter")
     FEStatus.success
   }
 
@@ -296,7 +302,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 }
 
-abstract class Operation(val project: Project, val category: String) {
+abstract class Operation(val project: Project, val category: Operation.Category) {
   def id = title.replace(" ", "-")
   def title: String
   def parameters: Seq[FEOperationParameterMeta]
@@ -316,6 +322,11 @@ abstract class Operation(val project: Project, val category: String) {
   protected def hasEdgeBundle = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
   protected def hasNoEdgeBundle = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
 }
+object Operation {
+  case class Category(title: String, color: String, visible: Boolean = true) {
+    val icon = title.take(1) // The "icon" in the operation toolbox.
+  }
+}
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
@@ -330,9 +341,10 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   private def forProject(project: Project) = operations.map(_(project))
 
   def categories(project: Project): Seq[OperationCategory] = {
-    forProject(project).groupBy(_.category).map {
-      case (cat, ops) => OperationCategory(cat, ops.map(_.toFE))
-    }.toSeq.filter(_.title != "<hidden>").sortBy(_.title)
+    val cats = forProject(project).groupBy(_.category).toSeq
+    cats.filter(_._1.visible).sortBy(_._1.title).map {
+      case (cat, ops) => OperationCategory(cat.title, cat.icon, cat.color, ops.map(_.toFE))
+    }
   }
 
   def uIProjects: Seq[UIValue] = UIValue.seq(projects.map(_.projectName))

@@ -15,11 +15,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   val Param = FEOperationParameterMeta // Short alias.
 
   // Categories.
-  abstract class VertexOperation(p: Project) extends Operation(p, "Vertex operations")
-  abstract class EdgeOperation(p: Project) extends Operation(p, "Edge operations")
-  abstract class AttributeOperation(p: Project) extends Operation(p, "Attribute operations")
-  abstract class SegmentationOperation(p: Project) extends Operation(p, "Segmentation operations")
-  abstract class HiddenOperation(p: Project) extends Operation(p, "<hidden>")
+  import Operation.Category
+  abstract class VertexOperation(p: Project)
+    extends Operation(p, Category("Vertex operations", "blue"))
+  abstract class EdgeOperation(p: Project)
+    extends Operation(p, Category("Edge operations", "orange"))
+  abstract class AttributeOperation(p: Project)
+    extends Operation(p, Category("Attribute operations", "yellow"))
+  abstract class CreateSegmentationOperation(p: Project)
+    extends Operation(p, Category("Create segmentation", "green"))
+  abstract class HiddenOperation(p: Project)
+    extends Operation(p, Category("Hidden", "", visible = false))
+  abstract class SegmentationOperation(p: Project)
+    extends Operation(p, Category("Segmentation operations", "blue", visible = p.isSegmentation))
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
@@ -170,7 +178,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new CreateSegmentationOperation(_) {
     val title = "Maximal cliques"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
@@ -188,7 +196,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new CreateSegmentationOperation(_) {
     val title = "Connected components"
     val parameters = Seq(
       Param("name", "Segmentation name", defaultValue = "connected_components"))
@@ -204,7 +212,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new CreateSegmentationOperation(_) {
     val title = "Find infocom communities"
     val parameters = Seq(
       Param(
@@ -370,14 +378,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Vertex attribute to string"
     val parameters = Seq(
-      Param("attr", "Vertex attribute", options = vertexAttributes))
+      Param("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
     private def applyOn[T](attr: VertexAttribute[T]) = {
       val op = graph_operations.VertexAttributeToString[T]()
       op(op.attr, attr).result.attr
     }
     def apply(params: Map[String, String]): FEStatus = {
-      project.vertexAttributes(params("attr")) = applyOn(project.vertexAttributes(params("attr")))
+      for (attr <- params("attr").split(",")) {
+        project.vertexAttributes(attr) = applyOn(project.vertexAttributes(attr))
+      }
       FEStatus.success
     }
   })
@@ -385,11 +395,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Vertex attribute to double"
     val parameters = Seq(
-      Param("attr", "Vertex attribute", options = vertexAttributes[String]))
+      Param("attr", "Vertex attribute", options = vertexAttributes[String], multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
-      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
-      project.vertexAttributes(params("attr")) = toDouble(attr)
+      for (name <- params("attr").split(",")) {
+        val attr = project.vertexAttributes(name).runtimeSafeCast[String]
+        project.vertexAttributes(name) = toDouble(attr)
+      }
       FEStatus.success
     }
   })
@@ -419,57 +431,83 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       var numAttrs = List[VertexAttribute[Double]]()
       var strAttrNames = List[String]()
       var strAttrs = List[VertexAttribute[String]]()
+      var vecAttrNames = List[String]()
+      var vecAttrs = List[VertexAttribute[Vector[_]]]()
       project.vertexAttributes.foreach {
         case (name, attr) if expr.contains(name) && attr.is[Double] =>
           numAttrNames +:= name
-          numAttrs +:= attr.asInstanceOf[VertexAttribute[Double]]
+          numAttrs +:= attr.runtimeSafeCast[Double]
         case (name, attr) if expr.contains(name) && attr.is[String] =>
           strAttrNames +:= name
-          strAttrs +:= attr.asInstanceOf[VertexAttribute[String]]
+          strAttrs +:= attr.runtimeSafeCast[String]
+        case (name, attr) if expr.contains(name) && isVector(attr) =>
+          implicit var tt = attr.typeTag
+          vecAttrNames +:= name
+          vecAttrs +:= vectorToAny(attr.asInstanceOf[VectorAttr[_]])
         case (name, attr) if expr.contains(name) =>
           log.warn(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
         case _ => ()
       }
       val js = JavaScript(expr)
       // Figure out the return type.
-      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames) match {
+      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames, vecAttrNames) match {
         case _: String =>
-          graph_operations.DeriveJSString(js, numAttrNames, strAttrNames)
+          graph_operations.DeriveJSString(js, numAttrNames, strAttrNames, vecAttrNames)
         case _: Double =>
-          graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames)
+          graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames, vecAttrNames)
         case result =>
           return FEStatus.failure(s"Test evaluation of '$js' returned '$result'.")
       }
       val result = op(
         op.vs, project.vertexSet)(
           op.numAttrs, numAttrs)(
-            op.strAttrs, strAttrs).result
+            op.strAttrs, strAttrs)(
+              op.vecAttrs, vecAttrs).result
       project.vertexAttributes(params("output")) = result.attr
       return FEStatus.success
     }
 
+    def isVector[T](attr: VertexAttribute[T]): Boolean = {
+      import scala.reflect.runtime.universe._
+      // Vector is covariant, so Vector[X] <:< Vector[Any].
+      return attr.typeTag.tpe <:< typeOf[Vector[Any]]
+    }
+    type VectorAttr[T] = VertexAttribute[Vector[T]]
+    def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
+      val op = graph_operations.AttributeVectorToAny[T]()
+      op(op.attr, attr).result.attr
+    }
+
     // Evaluates the expression with 0/'' parameters.
-    def testEvaluation(js: JavaScript, numAttrNames: Seq[String], strAttrNames: Seq[String]): Any = {
-      val mapping = numAttrNames.map(_ -> 0.0).toMap ++ strAttrNames.map(_ -> "").toMap
+    def testEvaluation(
+      js: JavaScript,
+      numAttrNames: Seq[String],
+      strAttrNames: Seq[String],
+      vecAttrNames: Seq[String]): Any = {
+      val mapping = (
+        numAttrNames.map(_ -> 0.0).toMap ++
+        strAttrNames.map(_ -> "").toMap ++
+        // Because the array will be empty for the test, the expression has to be ready
+        // to handle this.
+        vecAttrNames.map(_ -> Array[Any]()))
       return js.evaluate(mapping)
     }
   })
 
   register(new SegmentationOperation(_) {
     val title = "Aggregate to segmentation"
-    val parameters = Seq(
-      Param("segmentation", "Destination segmentation", options = segmentations)) ++
-      aggregateParams(project.vertexAttributes)
+    def parameters = aggregateParams(project.asSegmentation.parent.vertexAttributes)
     def enabled =
-      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") &&
-        FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+      FEStatus.assert(project.asSegmentation.parent.vertexAttributes.nonEmpty,
+        "No vertex attributes on parent")
     def apply(params: Map[String, String]): FEStatus = {
-      val seg = project.segmentation(params("segmentation"))
+      val seg = project.asSegmentation
+      val parent = project.asSegmentation.parent
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           seg.belongsTo,
-          attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
-        seg.project.vertexAttributes(s"${attr}_${choice}") = result
+          attributeWithLocalAggregator(parent.vertexAttributes(attr), choice))
+        project.vertexAttributes(s"${attr}_${choice}") = result
       }
       return FEStatus.success
     }
@@ -477,13 +515,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register(new SegmentationOperation(_) {
     val title = "Aggregate from segmentation"
-    val parameters = Seq(
+    def parameters = Seq(
       Param("prefix", "Generated name prefix",
-        defaultValue = if (project.isSegmentation) project.asSegmentation.name else "")) ++
+        defaultValue = project.asSegmentation.name)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
-      FEStatus.assert(project.isSegmentation, "Operates on a segmentation") &&
-        FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
       val seg = project.asSegmentation
       val prefix = params("prefix")
@@ -902,14 +939,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val title = "Export segmentation to CSV"
       val parameters = Seq(
         Param("path", "Destination path"),
-        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
-        Param("seg", "Segmentation", options = segmentations))
-      def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations.")
+        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))))
+      def enabled = FEStatus.success
       def apply(params: Map[String, String]): FEStatus = {
-        if (params("seg").isEmpty)
-          return FEStatus.failure("Nothing selected for export.")
         val path = Filename.fromString(params("path"))
-        val seg = project.segmentation(params("seg"))
+        val seg = project.asSegmentation
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
         if (params("single") == "true") {
@@ -955,19 +989,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count"))
+            UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count", "vector"))
           }
         } else if (attr.is[String]) {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count", "vector"))
           }
         } else {
           if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
-            UIValue.seq(Seq("ignore", "most_common", "count"))
+            UIValue.seq(Seq("ignore", "most_common", "count", "vector"))
           }
         }
         Param(s"aggregate-$name", name, options = options)
@@ -1014,6 +1048,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
       case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
       case "majority_100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+      case "vector" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.AsVector[T]())
       case _ => attributeWithAggregator(attr, choice)
     }
   }

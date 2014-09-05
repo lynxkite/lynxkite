@@ -1,23 +1,12 @@
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function(util) {
+angular.module('biggraph').directive('operationToolbox', function() {
   return {
     restrict: 'E',
     scope: { side: '=' },
     replace: true,
     templateUrl: 'operation-toolbox.html',
     link: function(scope) {
-      var colors = ['yellow', 'orange', 'green', 'blue'];
-      util.deepWatch(scope, 'side.project.opCategories', function(categories) {
-        scope.categories = [];
-        for (var i = 0; i < categories.length; ++i) {
-          var data = categories[i];
-          var cat = { title: data.title, ops: data.ops };
-          cat.icon = cat.title[0];
-          cat.color = colors[i % colors.length];
-          scope.categories.push(cat);
-        }
-      });
       function close() {
         scope.active = undefined;
       }
