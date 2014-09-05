@@ -238,10 +238,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, cedges).result
       }
 
-      val (weightedVertexToClique, weightedCliqueToCommunity) = {
-        (graph_operations.AddConstantDoubleEdgeAttribute(cliquesResult.belongsTo, 1.0),
-          graph_operations.AddConstantDoubleEdgeAttribute(ccResult.belongsTo, 1.0))
-      }
+      val weightedVertexToClique = graph_operations.AddConstantAttribute.edgeDouble(cliquesResult.belongsTo, 1.0)
+      val weightedCliqueToCommunity = graph_operations.AddConstantAttribute.edgeDouble(ccResult.belongsTo, 1.0)
 
       val weightedVertexToCommunity = {
         val op = graph_operations.ConcatenateBundles()
@@ -283,16 +281,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]): FEStatus = {
       val res = {
         if (params("type") == "Double") {
-          val d =
-            try {
-              params("value").toDouble
-            } catch {
-              case nfe: NumberFormatException =>
-                return FEStatus.failure(s"Value must be Double!")
-            }
-          graph_operations.AddConstantDoubleEdgeAttribute(project.edgeBundle, d)
+          val d = params("value").toDouble
+          graph_operations.AddConstantAttribute.edgeDouble(project.edgeBundle, d)
         } else {
-          graph_operations.AddConstantStringEdgeAttribute(project.edgeBundle, params("value"))
+          graph_operations.AddConstantAttribute.edgeString(project.edgeBundle, params("value"))
         }
       }
       project.edgeAttributes(params("name")) = res
@@ -308,20 +300,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("type", "Type", options = UIValue.seq(Seq("Double", "String"))))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]): FEStatus = {
-      val op: graph_operations.AddConstantAttribute[_] = {
-        if (params("type") == "Double") {
-          val d =
-            try {
-              params("value").toDouble
-            } catch {
-              case nfe: NumberFormatException =>
-                return FEStatus.failure(s"Value must be Double!")
-            }
-          graph_operations.AddConstantDoubleAttribute(d)
-        } else {
-          graph_operations.AddConstantStringAttribute(params("value"))
-        }
-      }
+      val op: graph_operations.AddConstantAttribute[_] =
+        graph_operations.AddConstantAttribute.doubleOrString(
+          isDouble = (params("type") == "Double"), params("value"))
       project.vertexAttributes(params("name")) = op(op.vs, project.vertexSet).result.attr
       FEStatus.success
     }
@@ -336,20 +317,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
       val attr = project.vertexAttributes(params("attr"))
-      val op: graph_operations.AddConstantAttribute[_] = {
-        if (attr.is[Double]) {
-          val d =
-            try {
-              params("def").toDouble
-            } catch {
-              case nfe: NumberFormatException =>
-                return FEStatus.failure(s"Default value must be Double!")
-            }
-          graph_operations.AddConstantDoubleAttribute(d)
-        } else {
-          graph_operations.AddConstantStringAttribute(params("def"))
-        }
-      }
+      val op: graph_operations.AddConstantAttribute[_] =
+        graph_operations.AddConstantAttribute.doubleOrString(
+          isDouble = attr.is[Double], params("def"))
       val default = op(op.vs, project.vertexSet).result
       project.vertexAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
       FEStatus.success
@@ -1108,10 +1078,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def concat(eb1: EdgeBundle, eb2: EdgeBundle): EdgeBundle = {
-    val (weighted1, weighted2) = {
-      (graph_operations.AddConstantDoubleEdgeAttribute(eb1, 1.0),
-        graph_operations.AddConstantDoubleEdgeAttribute(eb2, 1.0))
-    }
+    val weighted1 = graph_operations.AddConstantAttribute.edgeDouble(eb1, 1.0)
+    val weighted2 = graph_operations.AddConstantAttribute.edgeDouble(eb2, 1.0)
 
     val op = graph_operations.ConcatenateBundles()
     op(op.weightsAB, weighted1)(op.weightsBC, weighted2).result.weightsAC.edgeBundle
