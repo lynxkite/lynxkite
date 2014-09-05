@@ -74,7 +74,7 @@ abstract class DeriveJS[T](
         val strValues = strAttrNames.zip(strs).toMap
         // There is no autounboxing in Javascript. So we unbox primitive arrays.
         val arrays = vecs.map { v =>
-          if (v.forall(_.isInstanceOf[Double])) v.asInstanceOf[Vector[Double]].toArray
+          if (v.forall(_.isInstanceOf[Double])) v.map(_.asInstanceOf[Double]).toArray
           else v.toArray
         }
         val vecValues: Map[String, Array[_]] = vecAttrNames.zip(arrays).toMap
