@@ -143,6 +143,12 @@ case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
     extends Attribute[T] with RuntimeSafeCastable[T, VertexAttribute] {
   assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
+  def asEdgeAttribute(eb: EdgeBundle): EdgeAttribute[T] = {
+    import Scripting._
+    implicit val manager = source.manager
+    val aeaop = graph_operations.VertexAttributeAsEdgeAttribute[T]()
+    aeaop(aeaop.vertexAttr, this)(aeaop.edges, eb).result.edgeAttr
+  }
 }
 
 case class SrcAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]

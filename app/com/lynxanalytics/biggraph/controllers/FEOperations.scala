@@ -208,9 +208,10 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("v", "Value", defaultValue = "1"))
     def apply(params: Map[String, String]) = {
       val edges = manager.edgeBundle(params("eb").asUUID)
-      manager.show(
-        graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
-        'edges -> edges, 'ignoredSrc -> edges.srcVertexSet, 'ignoredDst -> edges.dstVertexSet)
+      import Scripting._
+      val op = graph_operations.AddConstantDoubleAttribute(params("v").toDouble)
+      val vertexAttr = op(op.vs, edges.asVertexSet).result.attr
+      manager.show(Seq(vertexAttr.asEdgeAttribute(edges)))
       FEStatus.success
     }
   }
@@ -261,7 +262,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
 
   registerOperation(OutDegree)
   object OutDegree extends FEOperation {
-    val title = "Weighted out degree"
+    val title = "Out degree"
     val category = "Attribute operations"
     val parameters = Seq(
       Param("w", "Edges", kind = "edge-bundle"))
