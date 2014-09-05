@@ -208,9 +208,11 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("v", "Value", defaultValue = "1"))
     def apply(params: Map[String, String]) = {
       val edges = manager.edgeBundle(params("eb").asUUID)
-      manager.show(
-        graph_operations.AddConstantDoubleEdgeAttribute(params("v").toDouble),
-        'edges -> edges, 'ignoredSrc -> edges.srcVertexSet, 'ignoredDst -> edges.dstVertexSet)
+      import Scripting._
+      val op = graph_operations.AddConstantDoubleAttribute(params("v").toDouble)
+      val vertexAttr = op(op.vs, edges.asVertexSet).result.attr
+      val aeaop = graph_operations.VertexAttributeAsEdgeAttribute[Double]()
+      manager.show(aeaop(aeaop.vertexAttr, vertexAttr).result.metaDataSet)
       FEStatus.success
     }
   }

@@ -7,14 +7,23 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
-class AddConstantEdgeAttributeTest extends FunSuite with TestGraphOp {
-  test("triangle") {
+class AddConstantAttributeTest extends FunSuite with TestGraphOp {
+  test("triangle vertex attribute") {
     val g = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(2), 2 -> Seq(0))).result
-    val op = AddConstantDoubleEdgeAttribute(100.0)
-    val out = op(op.edges, g.es).result
+    val op = AddConstantDoubleAttribute(100.0)
+    val out = op(op.vs, g.vs).result
+
+    val res = g.vs.rdd.join(out.attr.rdd).mapValues(_._2).collect.toMap
+
+    assert(res == Map(0l -> 100.0, 1l -> 100.0, 2l -> 100.0))
+  }
+
+  test("triangle edge attribute") {
+    val g = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(2), 2 -> Seq(0))).result
+    val eAttr = AddConstantDoubleEdgeAttribute(g.es, 100.0)
 
     // join edge bundle and weight data to make an output that is easy to read
-    val res = g.es.rdd.join(out.attr.rdd).map {
+    val res = g.es.rdd.join(eAttr.rdd).map {
       case (id, (edge, value)) =>
         (edge.src.toInt, edge.dst.toInt) -> value
     }.collect.toMap
