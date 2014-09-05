@@ -3,35 +3,57 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd.RDD
+import scala.util.Random
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+object MergeVertices {
+  class Output(
+      implicit instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[_]) extends MagicOutput(instance) {
+
+    val segments = vertexSet
+    val belongsTo = edgeBundle(inputs.vs.entity, segments, EdgeBundleProperties.partialFunction)
+    val representative = edgeBundle(segments, inputs.vs.entity, EdgeBundleProperties.embedding)
+  }
+
+}
+import MergeVertices._
 // Merges vertices that match on an attribute.
-case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], Segmentation] {
+case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = {
-    implicit val i = instance
-    new Segmentation(inputs.vs.entity, EdgeBundleProperties.partialFunction)
+    new Output()(instance, inputs)
   }
 
   def execute(inputDatas: DataSet,
-              o: Segmentation,
+              o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     val partitioner = rc.defaultPartitioner
     val byAttr = inputs.attr.rdd.map { case (id, attr) => (attr, id) }
-    val matching = byAttr.groupByKey(partitioner)
-    output(o.segments, matching.map {
-      case (attr, vertices) => vertices.min -> ()
-    }.toSortedRDD(partitioner))
-    output(o.belongsTo, matching.flatMap {
-      case (attr, vertices) =>
-        val newID = vertices.min
-        vertices.map(v => v -> Edge(v, newID))
-    }.toSortedRDD(partitioner))
+    val matching = byAttr
+      .groupByKey(partitioner)
+      .mapPartitionsWithIndex {
+        case (pid, it) =>
+          val rnd = new Random(pid)
+          it.map {
+            case (attr, vertices) =>
+              (vertices.iterator.drop(rnd.nextInt(vertices.size)).next, vertices)
+          }
+      }
+      .toSortedRDD(partitioner)
+    output(o.segments, matching.mapValues(_ => ()))
+    output(o.representative, matching.mapValuesWithKeys { case (key, _) => Edge(key, key) })
+    output(
+      o.belongsTo,
+      matching.flatMap {
+        case (groupId, vertices) =>
+          vertices.map(v => v -> Edge(v, groupId))
+      }.toSortedRDD(partitioner))
   }
 }
