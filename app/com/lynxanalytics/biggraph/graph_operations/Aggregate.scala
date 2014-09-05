@@ -194,6 +194,13 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
+  case class WeightedSum() extends SimpleAggregator[(Double, Double), Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
+    def zero = 0
+    def merge(a: Double, b: (Double, Double)) = a + b._1 * b._2
+    def combine(a: Double, b: Double) = a + b
+  }
+
   case class Max() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def zero = Double.NegativeInfinity
@@ -208,9 +215,40 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
+  case class MaxBy[Value, Weight: Ordering]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
+    def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
+      implicit val tt = inputTypeTag
+      typeTag[Option[(Weight, Value)]]
+    }
+    def outputTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
+      implicit val tt = inputTypeTag
+      typeTag[Value]
+    }
+    def zero = None
+    def merge(aOpt: Option[(Weight, Value)], b: (Weight, Value)) = {
+      aOpt match {
+        case Some(a) => if (a._1 < b._1) Some(b) else Some(a)
+        case None => Some(b)
+      }
+    }
+    def combine(aOpt: Option[(Weight, Value)], bOpt: Option[(Weight, Value)]) = {
+      (aOpt, bOpt) match {
+        case (Some(a), Some(b)) => if (a._1 < b._1) Some(b) else Some(a)
+        case _ => aOpt.orElse(bOpt)
+      }
+    }
+  }
+
   case class Average() extends CompoundAggregator[Double, Double, Double, Double, Double, Double] {
     val agg1 = Count[Double]()
     val agg2 = Sum()
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
+    def compound(count: Double, sum: Double) = sum / count
+  }
+
+  case class WeightedAverage() extends CompoundAggregator[(Double, Double), Double, Double, Double, Double, Double] {
+    val agg1 = Count[(Double, Double)]()
+    val agg2 = WeightedSum()
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def compound(count: Double, sum: Double) = sum / count
   }
