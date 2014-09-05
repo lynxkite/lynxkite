@@ -461,7 +461,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     type VectorAttr[T] = VertexAttribute[Vector[T]]
     def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
-      val op = graph_operations.VertexAttributeVectorToAny[T]()
+      val op = graph_operations.AttributeVectorToAny[T]()
       op(op.attr, attr).result.attr
     }
 

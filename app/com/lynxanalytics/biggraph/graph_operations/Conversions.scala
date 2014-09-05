@@ -104,16 +104,16 @@ case class VertexAttributeToDouble()
   }
 }
 
-object VertexAttributeCast {
+object AttributeCast {
   class Output[From, To: TypeTag](
     implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[From])
       extends MagicOutput(instance) {
     val attr = vertexAttribute[To](inputs.vs.entity)
   }
 }
-abstract class VertexAttributeCast[From, To]()
-    extends TypedMetaGraphOp[VertexAttributeInput[From], VertexAttributeCast.Output[From, To]] {
-  import VertexAttributeCast._
+abstract class AttributeCast[From, To]()
+    extends TypedMetaGraphOp[VertexAttributeInput[From], AttributeCast.Output[From, To]] {
+  import AttributeCast._
   @transient override lazy val inputs = new VertexAttributeInput[From]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[From, To]()(tt, instance, inputs)
   def tt: TypeTag[To]
@@ -128,6 +128,6 @@ abstract class VertexAttributeCast[From, To]()
   }
 }
 
-case class VertexAttributeVectorToAny[From]() extends VertexAttributeCast[Vector[From], Vector[Any]] {
+case class AttributeVectorToAny[From]() extends AttributeCast[Vector[From], Vector[Any]] {
   @transient lazy val tt = typeTag[Vector[Any]]
 }
