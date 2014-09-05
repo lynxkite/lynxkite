@@ -215,29 +215,31 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
-  def typeToTypeTag[T](tpe: Type, mirror: reflect.api.Mirror[reflect.runtime.universe.type]): TypeTag[T] = {
-    TypeTag(mirror, new reflect.api.TypeCreator {
-      def apply[U <: reflect.api.Universe with Singleton](m: reflect.api.Mirror[U]) = {
-        if (m eq mirror) tpe.asInstanceOf[U#Type]
-        else throw new IllegalArgumentException(
-          s"Type tag defined in $mirror cannot be migrated to other mirrors.")
-      }
-    })
+  // Returns TypeTags for the type parameters of T.
+  // For example typeArgs(typeTag[Map[Int, Double]]) returns Seq(typeTag[Int], typeTag[Double]).
+  private def typeArgs[T](tt: TypeTag[T]): Seq[TypeTag[_]] = {
+    val args = tt.tpe.asInstanceOf[TypeRefApi].args
+    val mirror = tt.mirror
+    args.map { arg =>
+      TypeTag(mirror, new reflect.api.TypeCreator {
+        def apply[U <: reflect.api.Universe with Singleton](m: reflect.api.Mirror[U]) = {
+          assert(m eq mirror, s"TypeTag[$arg] defined in $mirror cannot be migrated to mirror $m.")
+          arg.asInstanceOf[U#Type]
+        }
+      })
+    }
   }
 
-  def typeArgs(tpe: Type): Seq[Type] = tpe.asInstanceOf[TypeRefApi].args
+  private def optionTypeTag[T: TypeTag] = typeTag[Option[T]]
 
   case class MaxBy[Weight: Ordering, Value]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
     import Ordering.Implicits._
-    def optionTypeTag[T: TypeTag] = typeTag[Option[T]]
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
       optionTypeTag[(Weight, Value)]
     }
-    def outputTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
-      implicit val tt = typeToTypeTag[Value](typeArgs(inputTypeTag.tpe).last, inputTypeTag.mirror)
-      typeTag[Value]
-    }
+    def outputTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) =
+      typeArgs(inputTypeTag).last.asInstanceOf[TypeTag[Value]]
     def zero = None
     def merge(aOpt: Option[(Weight, Value)], b: (Weight, Value)) = {
       aOpt match {
