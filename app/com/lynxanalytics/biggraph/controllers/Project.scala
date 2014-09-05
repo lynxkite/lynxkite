@@ -14,8 +14,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     assert(manager.tagExists(path / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    def feAttr[T](e: TypedEntity[T], name: String) =
-      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString)
+    def feAttr[T](e: TypedEntity[T], name: String) = {
+      val canBucket = Seq(typeOf[Double], typeOf[String]).exists(_ =:= e.typeTag.tpe)
+      val canFilter = Seq(typeOf[Double], typeOf[String]).exists(_ =:= e.typeTag.tpe)
+      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter)
+    }
     FEProject(
       projectName, lastOperation, nextOperation, vs, eb, notes,
       scalars.map { case (name, scalar) => feAttr(scalar, name) }.toSeq,
@@ -98,7 +101,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def notes_=(n: String) = set("notes", n)
 
   def vertexSet = manager.synchronized {
-    existing(path / "vertexSet").map(manager.vertexSet(_)).getOrElse(null)
+    existing(path / "vertexSet")
+      .flatMap(vsPath => Project.doOrNone(
+        manager.vertexSet(vsPath), s"Couldn't resolve vertex set of project $projectName"))
+      .getOrElse(null)
   }
   def vertexSet_=(e: VertexSet) = manager.synchronized {
     if (e != vertexSet) {
@@ -160,7 +166,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
 
   def edgeBundle = manager.synchronized {
-    existing(path / "edgeBundle").map(manager.edgeBundle(_)).getOrElse(null)
+    existing(path / "edgeBundle")
+      .flatMap(ebPath => Project.doOrNone(
+        manager.edgeBundle(ebPath), s"Couldn't resolve edge bundle of project $projectName"))
+      .getOrElse(null)
   }
   def edgeBundle_=(e: EdgeBundle) = manager.synchronized {
     if (e != edgeBundle) {
@@ -258,10 +267,16 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
         manager.setTag(path / dir / name, entity)
       }
     }
-    def apply(name: String) =
+    def apply(name: String): T =
       manager.entity(path / dir / name).asInstanceOf[T]
+
     def iterator = manager.synchronized {
-      ls(dir).map(_.last.name).map(p => p -> apply(p)).iterator
+      ls(dir)
+        .flatMap { path =>
+          val name = path.last.name
+          Project.doOrNone(apply(name), s"Couldn't resolve $path").map(name -> _)
+        }
+        .iterator
     }
   }
   class ScalarHolder extends Holder[Scalar[_]]("scalars") {
@@ -279,6 +294,16 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
 object Project {
   def apply(projectName: String)(implicit metaManager: MetaGraphManager): Project = new Project(projectName)
+
+  def doOrNone[T](op: => T, onErrorLog: String): Option[T] =
+    try {
+      Some(op)
+    } catch {
+      case e: Exception => {
+        log.error(onErrorLog, e)
+        None
+      }
+    }
 }
 
 case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
