@@ -575,13 +575,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         case "incoming edges" => project.edgeBundle
         case "outgoing edges" => reverse(project.edgeBundle)
       }
-      val weight = project.vertexAttributes(params("weight")).runtimeSafeCast[Double]
+      val weightName = params("weight")
+      val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
       for ((name, choice) <- parseAggregateParams(params)) {
         val attr = project.vertexAttributes(name)
         val result = aggregateViaConnection(
           edges,
           weightedAttributeWithAggregator(weight, attr, choice))
-        project.vertexAttributes(s"${prefix}_${name}_${choice}") = result
+        project.vertexAttributes(s"${prefix}_${name}_${choice}_by_${weightName}") = result
       }
       return FEStatus.success
     }
@@ -992,7 +993,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.seq(Seq("ignore", "weighted_sum", "weighted_average", "by_max_weight"))
+            UIValue.seq(Seq("ignore", "weighted_sum", "weighted_average", "by_max_weight", "by_min_weight"))
           } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
@@ -1000,7 +1001,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.seq(Seq("ignore", "by_max_weight"))
+            UIValue.seq(Seq("ignore", "by_max_weight", "by_min_weight"))
           } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
@@ -1008,7 +1009,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.seq(Seq("ignore", "by_max_weight"))
+            UIValue.seq(Seq("ignore", "by_max_weight", "by_min_weight"))
           } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
@@ -1056,6 +1057,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     choice match {
       case "by_max_weight" => AttributeWithAggregator(
         joinAttr(weight, attr), graph_operations.Aggregator.MaxBy[Double, T]())
+      case "by_min_weight" => AttributeWithAggregator(
+        joinAttr(graph_operations.DeriveJS.negative(weight), attr), graph_operations.Aggregator.MaxBy[Double, T]())
       case "weighted_sum" => AttributeWithAggregator(
         joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedSum())
       case "weighted_average" => AttributeWithAggregator(
