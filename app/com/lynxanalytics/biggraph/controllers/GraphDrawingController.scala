@@ -244,11 +244,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         metaManager.apply(graph_operations.ReverseEdges(), 'esAB -> bundle)
           .outputs.edgeBundles('esBA)
       } else bundle
-      metaManager
-        .apply(graph_operations.AddConstantDoubleEdgeAttribute(1),
-          'edges -> directed)
-        .outputs
-        .edgeAttributes('attr).runtimeSafeCast[Double]
+      graph_operations.AddConstantAttribute.edgeDouble(directed, 1)
     }
     return new graph_util.BundleChain(chain).getCompositeEdgeBundle(metaManager)
   }
@@ -300,8 +296,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     tripletMapping: VertexAttribute[Array[ID]],
     seq: Seq[graph_operations.BucketedAttribute[_]]): EdgeAttribute[Int] = {
 
-    val cop = graph_operations.AddConstantIntEdgeAttribute(0)
-    val startingBase: EdgeAttribute[Int] = cop(cop.edges, filtered).result.attr
+    val startingBase: EdgeAttribute[Int] = graph_operations.AddConstantAttribute.edgeInt(filtered, 0)
     seq.foldLeft(startingBase) {
       case (b, ba) => indexFromBucketedAttribute(original, b, tripletMapping, ba)
     }

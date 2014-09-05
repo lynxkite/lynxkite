@@ -79,7 +79,12 @@ abstract class FEOperation {
   def apply(params: Map[String, String]): FEStatus
 }
 
-case class FEAttribute(id: String, title: String, typeName: String)
+case class FEAttribute(
+  id: String,
+  title: String,
+  typeName: String,
+  canBucket: Boolean,
+  canFilter: Boolean)
 
 case class FEProject(
   name: String,

@@ -242,4 +242,12 @@ object Aggregator {
     def combine(a: Option[T], b: Option[T]) = a.orElse(b)
     def finalize(opt: Option[T]) = opt.get
   }
+
+  case class AsVector[T]() extends LocalAggregator[T, Vector[T]] {
+    def outputTypeTag(inputTypeTag: TypeTag[T]) = {
+      implicit val tt = inputTypeTag
+      typeTag[Vector[T]]
+    }
+    def aggregate(values: Iterable[T]): Vector[T] = values.toVector
+  }
 }
