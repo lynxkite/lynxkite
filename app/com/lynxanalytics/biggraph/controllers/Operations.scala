@@ -457,7 +457,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     def isVector[T](attr: VertexAttribute[T]): Boolean = {
       import scala.reflect.runtime.universe._
-      return attr.typeTag.tpe <:< typeOf[Vector[_]]
+      // Vector is covariant, so Vector[X] <:< Vector[Any].
+      return attr.typeTag.tpe <:< typeOf[Vector[Any]]
     }
     type VectorAttr[T] = VertexAttribute[Vector[T]]
     def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
