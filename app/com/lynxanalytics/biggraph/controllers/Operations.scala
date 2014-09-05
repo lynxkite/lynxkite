@@ -378,14 +378,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Vertex attribute to string"
     val parameters = Seq(
-      Param("attr", "Vertex attribute", options = vertexAttributes))
+      Param("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
     private def applyOn[T](attr: VertexAttribute[T]) = {
       val op = graph_operations.VertexAttributeToString[T]()
       op(op.attr, attr).result.attr
     }
     def apply(params: Map[String, String]): FEStatus = {
-      project.vertexAttributes(params("attr")) = applyOn(project.vertexAttributes(params("attr")))
+      for (attr <- params("attr").split(",")) {
+        project.vertexAttributes(attr) = applyOn(project.vertexAttributes(attr))
+      }
       FEStatus.success
     }
   })
@@ -393,11 +395,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Vertex attribute to double"
     val parameters = Seq(
-      Param("attr", "Vertex attribute", options = vertexAttributes[String]))
+      Param("attr", "Vertex attribute", options = vertexAttributes[String], multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]): FEStatus = {
-      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
-      project.vertexAttributes(params("attr")) = toDouble(attr)
+      for (name <- params("attr").split(",")) {
+        val attr = project.vertexAttributes(name).runtimeSafeCast[String]
+        project.vertexAttributes(name) = toDouble(attr)
+      }
       FEStatus.success
     }
   })
