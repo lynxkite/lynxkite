@@ -545,20 +545,70 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]): FEStatus = {
       val m = merge(project.vertexAttributes(params("key")))
-      val oldAttrs = project.vertexAttributes.toMap
+      val oldVAttrs = project.vertexAttributes.toMap
       val oldEdges = project.edgeBundle
+      val oldEAttrs = project.edgeAttributes.toMap
       project.vertexSet = m.segments
       // Always use most_common for the key attribute.
       val hack = "aggregate-" + params("key") -> "most_common"
       for ((attr, choice) <- parseAggregateParams(params + hack)) {
         val result = aggregateViaConnection(
           m.belongsTo,
-          attributeWithLocalAggregator(oldAttrs(attr), choice))
+          attributeWithLocalAggregator(oldVAttrs(attr), choice))
         project.vertexAttributes(attr) = result
       }
-      project.edgeBundle = {
+      val edgeInduction = {
         val op = graph_operations.InducedEdgeBundle()
-        op(op.srcMapping, m.belongsTo)(op.dstMapping, m.belongsTo)(op.edges, oldEdges).result.induced
+        op(op.srcMapping, m.belongsTo)(op.dstMapping, m.belongsTo)(op.edges, oldEdges).result
+      }
+      project.edgeBundle = edgeInduction.induced
+      for ((name, eAttr) <- oldEAttrs) {
+        val pulled =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            eAttr.asVertexAttribute, edgeInduction.embedding)
+        project.edgeAttributes(name) =
+          graph_operations.VertexAttributeAsEdgeAttribute.run(pulled, edgeInduction.induced)
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new EdgeOperation(_) {
+    val title = "Merge parallel edges"
+
+    val parameters =
+      aggregateParams(
+        project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) })
+
+    def enabled = hasEdgeBundle
+
+    def merge[T](attr: VertexAttribute[T]): graph_operations.MergeVertices.Output = {
+      val op = graph_operations.MergeVertices[T]()
+      op(op.attr, attr).result
+    }
+    def apply(params: Map[String, String]): FEStatus = {
+      val edgesAsAttr = {
+        val op = graph_operations.EdgeBundleAsVertexAttribute()
+        op(op.edges, project.edgeBundle).result.attr
+      }
+      val mergedResult = {
+        val op = graph_operations.MergeVertices[(ID, ID)]()
+        op(op.attr, edgesAsAttr).result
+      }
+      val newEdges = {
+        val op = graph_operations.PulledOverEdges()
+        op(op.originalEB, project.edgeBundle)(op.injection, mergedResult.representative)
+          .result.pulledEB
+      }
+      val oldAttrs = project.edgeAttributes.toMap
+      project.edgeBundle = newEdges
+
+      for ((attrName, choice) <- parseAggregateParams(params)) {
+        val vAttr = aggregateViaConnection(
+          mergedResult.belongsTo,
+          attributeWithLocalAggregator(oldAttrs(attrName).asVertexAttribute, choice))
+        project.edgeAttributes(attrName) =
+          graph_operations.VertexAttributeAsEdgeAttribute.run(vAttr, newEdges)
       }
       return FEStatus.success
     }
