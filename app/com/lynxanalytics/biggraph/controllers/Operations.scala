@@ -239,9 +239,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
 
       val (weightedVertexToClique, weightedCliqueToCommunity) = {
-        val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-        (op(op.edges, cliquesResult.belongsTo).result.attr,
-          op(op.edges, ccResult.belongsTo).result.attr)
+        (graph_operations.AddConstantDoubleEdgeAttribute(cliquesResult.belongsTo, 1.0),
+          graph_operations.AddConstantDoubleEdgeAttribute(ccResult.belongsTo, 1.0))
       }
 
       val weightedVertexToCommunity = {
@@ -278,11 +277,81 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Add constant edge attribute"
     val parameters = Seq(
       Param("name", "Attribute name", defaultValue = "weight"),
-      Param("value", "Value", defaultValue = "1"))
+      Param("value", "Value", defaultValue = "1"),
+      Param("type", "Type", options = UIValue.seq(Seq("Double", "String"))))
     def enabled = hasEdgeBundle
-    def apply(params: Map[String, String]) = {
-      val op = graph_operations.AddConstantDoubleEdgeAttribute(params("value").toDouble)
-      project.edgeAttributes(params("name")) = op(op.edges, project.edgeBundle).result.attr
+    def apply(params: Map[String, String]): FEStatus = {
+      val res = {
+        if (params("type") == "Double") {
+          val d =
+            try {
+              params("value").toDouble
+            } catch {
+              case nfe: NumberFormatException =>
+                return FEStatus.failure(s"Value must be Double!")
+            }
+          graph_operations.AddConstantDoubleEdgeAttribute(project.edgeBundle, d)
+        } else {
+          graph_operations.AddConstantStringEdgeAttribute(project.edgeBundle, params("value"))
+        }
+      }
+      project.edgeAttributes(params("name")) = res
+      FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Add constant vertex attribute"
+    val parameters = Seq(
+      Param("name", "Attribute name", defaultValue = "weight"),
+      Param("value", "Value", defaultValue = "1"),
+      Param("type", "Type", options = UIValue.seq(Seq("Double", "String"))))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]): FEStatus = {
+      val op: graph_operations.AddConstantAttribute[_] = {
+        if (params("type") == "Double") {
+          val d =
+            try {
+              params("value").toDouble
+            } catch {
+              case nfe: NumberFormatException =>
+                return FEStatus.failure(s"Value must be Double!")
+            }
+          graph_operations.AddConstantDoubleAttribute(d)
+        } else {
+          graph_operations.AddConstantStringAttribute(params("value"))
+        }
+      }
+      project.vertexAttributes(params("name")) = op(op.vs, project.vertexSet).result.attr
+      FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Pad with constant default value"
+    val parameters = Seq(
+      Param("attr", "Vertex attribute", options = vertexAttributes[String] ++ vertexAttributes[Double]),
+      Param("def", "Default value"))
+    def enabled = FEStatus.assert(
+      (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No vertex attributes.")
+    def apply(params: Map[String, String]): FEStatus = {
+      val attr = project.vertexAttributes(params("attr"))
+      val op: graph_operations.AddConstantAttribute[_] = {
+        if (attr.is[Double]) {
+          val d =
+            try {
+              params("def").toDouble
+            } catch {
+              case nfe: NumberFormatException =>
+                return FEStatus.failure(s"Default value must be Double!")
+            }
+          graph_operations.AddConstantDoubleAttribute(d)
+        } else {
+          graph_operations.AddConstantStringAttribute(params("def"))
+        }
+      }
+      val default = op(op.vs, project.vertexSet).result
+      project.vertexAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
       FEStatus.success
     }
   })
@@ -404,28 +473,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexSet = g.newVS
       project.edgeBundle = g.newES
       return FEStatus.success
-    }
-  })
-
-  register(new AttributeOperation(_) {
-    val title = "Pad with constant default value"
-    val parameters = Seq(
-      Param("attr", "Vertex attribute", options = vertexAttributes),
-      Param("def", "Default value"))
-    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
-    def apply(params: Map[String, String]): FEStatus = {
-      val attr = project.vertexAttributes(params("attr"))
-      val js = JavaScript(params("def"))
-      val op: graph_operations.DeriveJS[_] = {
-        if (attr.is[Double]) graph_operations.DeriveJSDouble(js, List(), List())
-        else if (attr.is[String]) graph_operations.DeriveJSString(js, List(), List())
-        else return FEStatus.failure(s"Attribute is of an unsupported type: ${attr.typeTag.tpe}")
-      }
-      val default = op(op.vs, project.vertexSet)(
-        op.numAttrs, List())(
-          op.strAttrs, List()).result
-      project.vertexAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
-      FEStatus.success
     }
   })
 
@@ -1062,8 +1109,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def concat(eb1: EdgeBundle, eb2: EdgeBundle): EdgeBundle = {
     val (weighted1, weighted2) = {
-      val op = graph_operations.AddConstantDoubleEdgeAttribute(1.0)
-      (op(op.edges, eb1).result.attr, op(op.edges, eb2).result.attr)
+      (graph_operations.AddConstantDoubleEdgeAttribute(eb1, 1.0),
+        graph_operations.AddConstantDoubleEdgeAttribute(eb2, 1.0))
     }
 
     val op = graph_operations.ConcatenateBundles()
