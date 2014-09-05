@@ -1,6 +1,6 @@
 <div class="operation-toolbox row" ng-class="{ open: active }">
   <div class="col-sm-1 categories">
-    <div ng-repeat="cat in categories"
+    <div ng-repeat="cat in side.project.opCategories"
       class="category {{cat.color}}" ng-class="{ active: active === cat }"
       tooltip-append-to-body="true" tooltip-placement="left" tooltip="{{cat.title}}"
       ng-click="clicked(cat)">

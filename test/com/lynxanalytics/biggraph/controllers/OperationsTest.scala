@@ -35,9 +35,10 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   test("Aggregate to segmentation") {
     run("Example Graph")
     run("Connected components", Map("name" -> "cc"))
-    run("Aggregate to segmentation",
-      Map("segmentation" -> "cc", "aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100"))
     val seg = project.segmentation("cc").project
+    run("Aggregate to segmentation",
+      Map("aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100"),
+      on = seg)
     val age = seg.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))
     val count = seg.vertexAttributes("name_count").runtimeSafeCast[Double]
@@ -69,7 +70,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Restore checkpoint after failing operation") {
     class Bug extends Exception("simulated bug")
-    ops.register(new Operation(_, "Test operations") {
+    ops.register(new Operation(_, Operation.Category("Test", "test")) {
       val title = "Buggy op"
       def enabled = ???
       def parameters = ???
