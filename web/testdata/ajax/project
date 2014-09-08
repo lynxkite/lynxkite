@@ -39,6 +39,7 @@
   "opCategories": [
     {
       "title": "Vertex operations",
+      "color": "blue", "icon": "V",
       "ops": [
         { "id": "import", "title": "Import vertices", "parameters": [
           { "id": "files", "title": "Files", "defaultValue": "", "options": [], "kind": "file" },
@@ -53,6 +54,7 @@
 
     {
       "title": "Edge operations",
+      "color": "orange", "icon": "E",
       "ops": [
         { "id": "2", "title": "Discard all edges", "parameters": [], "enabled": { "success": true, "failureReason": "" } },
         { "id": "3", "title": "Reverse edges", "parameters": [], "enabled": { "success": true, "failureReason": "" } },
@@ -65,6 +67,7 @@
 
     {
       "title": "Attribute operations",
+      "color": "yellow", "icon": "A",
       "ops": [
         { "id": "13", "title": "Add constant edge attribute", "parameters": [
           { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant", "options": [] },
@@ -109,6 +112,7 @@
 
     {
       "title": "Segmentation operations",
+      "color": "green", "icon": "C",
       "ops": [
         { "id": "34", "title": "Find maximal cliques", "parameters": [
           { "id": "34a", "title": "Name of new segmentation", "defaultValue": "cliques", "options": [] },
