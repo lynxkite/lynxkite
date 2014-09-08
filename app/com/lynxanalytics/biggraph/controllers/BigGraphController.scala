@@ -317,10 +317,10 @@ abstract class Operation(val project: Project, val category: Operation.Category)
     UIValue.seq(project.edgeAttributeNames[T])
   protected def segmentations =
     UIValue.seq(project.segmentationNames)
-  protected def hasVertexSet = if (project.vertexSet == null) FEStatus.failure("No vertices.") else FEStatus.success
-  protected def hasNoVertexSet = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
-  protected def hasEdgeBundle = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
-  protected def hasNoEdgeBundle = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
+  protected def hasVertexSet = FEStatus.assert(project.vertexSet != null, "No vertices.")
+  protected def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
+  protected def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
+  protected def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
 }
 object Operation {
   case class Category(title: String, color: String, visible: Boolean = true) {
