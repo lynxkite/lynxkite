@@ -115,9 +115,8 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertexScale = this.zoom * 2 / vertexBounds.max;
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      // Use vertex.label if set. Use vertex.size if it's not all 1s. Use vertex.id otherwise.
+      // Use vertex.label if set. Use vertex.id otherwise.
       var label = vertex.id;
-      if (vertexBounds.min !== 1 || vertexBounds.max !== 1) { label = vertex.size; }
       label = vertex.label || label;
       var v = new Vertex(xOff + Math.random() * 400 - 200,
                          yOff + Math.random() * 400 - 200,
