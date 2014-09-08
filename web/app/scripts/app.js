@@ -40,15 +40,12 @@ angular
           req.error = 'Redirecting to login page.';
           window.location.href = '/authenticate/google';
         } else {
-          req.error = errorMessage(failure);
+          req.error = util.errorMessage(failure);
         }
       });
       return req;
     }
-    function errorMessage(err) {
-      return err.data.error || err.data || (err.config.url + ' ' + (err.statusText || 'failed'));
-    }
-    return {
+    var util = {
       // This function is for code clarity, so we don't have a mysterious "true" argument.
       deepWatch: function(scope, expr, fun) {
         scope.$watch(expr, fun, true);
@@ -74,8 +71,14 @@ angular
         return s.replace(/_/g, ' ');
       },
       ajaxError: function(err) {
-        $rootScope.$broadcast('ajaxError', err);
+        util.error(util.errorMessage(err));
       },
-      errorMessage: errorMessage,
+      error: function(msg) {
+        $rootScope.$broadcast('topAlert', msg);
+      },
+      errorMessage: function(err) {
+        return err.data.error || err.data || (err.config.url + ' ' + (err.statusText || 'failed'));
+      },
     };
+    return util;
   });

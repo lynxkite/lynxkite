@@ -1,19 +1,16 @@
 'use strict';
 
-angular.module('biggraph').directive('topAlerts', function(util) {
+angular.module('biggraph').directive('topAlerts', function() {
   return {
     restrict: 'E',
     templateUrl: 'top-alerts.html',
     link: function(scope) {
       scope.alerts = [];
-      function messageOf(err) {
-        return {
-          message: util.errorMessage(err),
+      scope.$on('topAlert', function(evt, msg) {
+        scope.alerts.push({
+          message: msg,
           time: new Date(),
-        };
-      }
-      scope.$on('ajaxError', function(evt, err) {
-        scope.alerts.push(messageOf(err));
+        });
       });
       scope.close = function(i) {
         scope.alerts.splice(i, 1);

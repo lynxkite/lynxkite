@@ -235,16 +235,12 @@ angular.module('biggraph')
           project: this.state.projectName,
           filters: this.nonEmptyFilters()
         },
-        function(result) {
-          if (result.success) {
-            that.state.filters = {};
-            that.reload();
-          } else {
-            console.error(result.failureReason);
-          }
+        function() {
+          that.state.filters = {};
+          that.reload();
         },
         function(response) {
-          console.error(response);
+          util.ajaxError(response);
         });
     };
     Side.prototype.resolveVertexAttribute = function(title) {
