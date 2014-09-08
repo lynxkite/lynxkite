@@ -76,13 +76,6 @@ object VertexAttributeAsEdgeAttribute {
     implicit val tt = inputs.vertexAttr.typeTag
     val edgeAttr = edgeAttribute[T](inputs.edges.entity)
   }
-  def run[T](
-    vertexAttribute: VertexAttribute[T], edgeBundle: EdgeBundle)(
-      implicit manager: MetaGraphManager): EdgeAttribute[T] = {
-    import Scripting._
-    val op = VertexAttributeAsEdgeAttribute[T]()
-    op(op.edges, edgeBundle)(op.vertexAttr, vertexAttribute).result.edgeAttr
-  }
 }
 case class VertexAttributeAsEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexAttributeAsEdgeAttribute.Input[T], VertexAttributeAsEdgeAttribute.Output[T]] {

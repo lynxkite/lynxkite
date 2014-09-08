@@ -633,7 +633,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
             eAttr.asVertexAttribute, edgeInduction.embedding)
         project.edgeAttributes(name) =
-          graph_operations.VertexAttributeAsEdgeAttribute.run(pulled, edgeInduction.induced)
+          pulled.asEdgeAttribute(edgeInduction.induced)
       }
       return FEStatus.success
     }
@@ -673,8 +673,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val vAttr = aggregateViaConnection(
           mergedResult.belongsTo,
           attributeWithLocalAggregator(oldAttrs(attrName).asVertexAttribute, choice))
-        project.edgeAttributes(attrName) =
-          graph_operations.VertexAttributeAsEdgeAttribute.run(vAttr, newEdges)
+        project.edgeAttributes(attrName) = vAttr.asEdgeAttribute(newEdges)
       }
       return FEStatus.success
     }
@@ -905,7 +904,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 attr.asVertexAttribute,
                 otherEbInjection)
           })
-        .mapValues(va => graph_operations.VertexAttributeAsEdgeAttribute.run(va, newEdgeBundle))
+        .mapValues(va => va.asEdgeAttribute(newEdgeBundle))
 
       project.vertexSet = vsUnion.union
       project.vertexAttributes = newVertexAttributes
