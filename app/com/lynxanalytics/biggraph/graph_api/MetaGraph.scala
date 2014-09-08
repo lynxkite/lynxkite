@@ -114,11 +114,13 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
     extends MetaGraphEntity {
   assert(name != null)
   val isLocal = srcVertexSet == dstVertexSet
-  lazy val asVertexSet: VertexSet = idSet.getOrElse({
+  val asVertexSet: VertexSet = idSet.getOrElse({
     import Scripting._
-    implicit val manager = source.manager
     val avsop = graph_operations.EdgeBundleAsVertexSet()
-    avsop(avsop.edges, this).result.equivalentVS
+    // This operation will always be executed as part of the operation that creates this edge
+    // bundle. So there is no reason to save this operation to disk, in fact, that would cause
+    // trouble.
+    avsop(avsop.edges, this).toInstance(source.manager, true /* transient */ ).result.equivalentVS
   })
 }
 
@@ -160,11 +162,13 @@ case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
     extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] with TripletAttribute[T] {
   assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
-  lazy val asVertexAttribute: VertexAttribute[T] = {
+  val asVertexAttribute: VertexAttribute[T] = {
     import Scripting._
-    implicit val manager = source.manager
     val avaop = graph_operations.EdgeAttributeAsVertexAttribute[T]()
-    avaop(avaop.edgeAttr, this).result.vertexAttr
+    // This operation will always be executed as part of the operation that creates this edge
+    // attribute. So there is no reason to save this operation to disk, in fact, that would cause
+    // trouble.
+    avaop(avaop.edgeAttr, this).toInstance(source.manager, true /* transient */ ).result.vertexAttr
   }
 }
 
