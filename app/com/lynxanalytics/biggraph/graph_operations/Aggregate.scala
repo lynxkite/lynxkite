@@ -138,11 +138,16 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
   }
 }
 
+// A simple interface that does not cover distributed use.
 trait LocalAggregator[From, To] {
   def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
   // aggregate() can assume that values is non-empty.
   def aggregate(values: Iterable[From]): To
 }
+// Aggregates from From to Intermediate and at the end calls finalize() to turn
+// Intermediate into To. So Intermediate can contain extra data over what is
+// required in the result. The merge() and combine() methods make it possible to
+// use Aggregator in a distributed setting.
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[Intermediate]
   def zero: Intermediate
@@ -154,10 +159,13 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def aggregate(values: Iterable[From]): To =
     finalize(aggregatePartition(values.iterator))
 }
+// A distributed aggregator where Intermediate is not different from To.
 trait SimpleAggregator[From, To] extends Aggregator[From, To, To] {
   def finalize(i: To): To = i
   def intermediateTypeTag(inputTypeTag: TypeTag[From]) = outputTypeTag(inputTypeTag)
 }
+// CompoundAggregator combines two aggregators. Only compound() and
+// outputTypeTag() need to be implemented.
 // This is a trait instead of an abstract class because otherwise the case
 // class will not be serializable ("no valid constructor").
 trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
@@ -178,6 +186,11 @@ trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
     typeTag[(Intermediate1, Intermediate2)]
   }
 }
+// A convenient shorthand.
+trait CompoundDoubleAggregator[From]
+    extends CompoundAggregator[From, Double, Double, Double, Double, Double] {
+  def outputTypeTag(inputTypeTag: TypeTag[From]) = typeTag[Double]
+}
 
 object Aggregator {
   case class Count[T]() extends SimpleAggregator[T, Double] {
@@ -191,6 +204,13 @@ object Aggregator {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def zero = 0
     def merge(a: Double, b: Double) = a + b
+    def combine(a: Double, b: Double) = a + b
+  }
+
+  case class WeightedSum() extends SimpleAggregator[(Double, Double), Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
+    def zero = 0
+    def merge(a: Double, b: (Double, Double)) = a + b._1 * b._2
     def combine(a: Double, b: Double) = a + b
   }
 
@@ -208,11 +228,66 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
-  case class Average() extends CompoundAggregator[Double, Double, Double, Double, Double, Double] {
+  // Returns TypeTags for the type parameters of T.
+  // For example typeArgs(typeTag[Map[Int, Double]]) returns Seq(typeTag[Int], typeTag[Double]).
+  private def typeArgs[T](tt: TypeTag[T]): Seq[TypeTag[_]] = {
+    val args = tt.tpe.asInstanceOf[TypeRefApi].args
+    val mirror = tt.mirror
+    args.map { arg =>
+      TypeTag(mirror, new reflect.api.TypeCreator {
+        def apply[U <: reflect.api.Universe with Singleton](m: reflect.api.Mirror[U]) = {
+          assert(m eq mirror, s"TypeTag[$arg] defined in $mirror cannot be migrated to mirror $m.")
+          arg.asInstanceOf[U#Type]
+        }
+      })
+    }
+  }
+
+  private def optionTypeTag[T: TypeTag] = typeTag[Option[T]]
+
+  case class MaxBy[Weight: Ordering, Value]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
+    import Ordering.Implicits._
+    def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
+      implicit val tt = inputTypeTag
+      // The intermediate type is Option[(Weight, Value)], which is None for empty input and
+      // Some(maximal element) otherwise.
+      optionTypeTag[(Weight, Value)]
+    }
+    def outputTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) =
+      typeArgs(inputTypeTag).last.asInstanceOf[TypeTag[Value]]
+    def zero = None
+    def merge(aOpt: Option[(Weight, Value)], b: (Weight, Value)) = {
+      aOpt match {
+        case Some(a) => if (a._1 < b._1) Some(b) else Some(a)
+        case None => Some(b)
+      }
+    }
+    def combine(aOpt: Option[(Weight, Value)], bOpt: Option[(Weight, Value)]) = {
+      (aOpt, bOpt) match {
+        case (Some(a), Some(b)) => if (a._1 < b._1) Some(b) else Some(a)
+        case _ => aOpt.orElse(bOpt)
+      }
+    }
+    def finalize(opt: Option[(Weight, Value)]) = opt.get._2
+  }
+
+  case class Average() extends CompoundDoubleAggregator[Double] {
     val agg1 = Count[Double]()
     val agg2 = Sum()
-    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def compound(count: Double, sum: Double) = sum / count
+  }
+
+  case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[(Double, T)]) = typeTag[Double]
+    def zero = 0
+    def merge(a: Double, b: (Double, T)) = a + b._1
+    def combine(a: Double, b: Double) = a + b
+  }
+
+  case class WeightedAverage() extends CompoundDoubleAggregator[(Double, Double)] {
+    val agg1 = SumOfWeights[Double]()
+    val agg2 = WeightedSum()
+    def compound(weights: Double, weightedSum: Double) = weightedSum / weights
   }
 
   case class MostCommon[T]() extends LocalAggregator[T, T] {

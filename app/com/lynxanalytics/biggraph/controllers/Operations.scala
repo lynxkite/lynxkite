@@ -27,7 +27,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class HiddenOperation(p: Project)
     extends Operation(p, Category("Hidden", "", visible = false))
   abstract class SegmentationOperation(p: Project)
-    extends Operation(p, Category("Segmentation operations", "blue", visible = p.isSegmentation))
+      extends Operation(p, Category("Segmentation operations", "yellow", visible = p.isSegmentation)) {
+    protected def seg = project.asSegmentation
+    protected def parent = seg.parent
+  }
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
@@ -535,18 +538,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register(new SegmentationOperation(_) {
     val title = "Aggregate to segmentation"
-    def parameters = aggregateParams(project.asSegmentation.parent.vertexAttributes)
+    def parameters = aggregateParams(parent.vertexAttributes)
     def enabled =
-      FEStatus.assert(project.asSegmentation.parent.vertexAttributes.nonEmpty,
+      FEStatus.assert(parent.vertexAttributes.nonEmpty,
         "No vertex attributes on parent")
     def apply(params: Map[String, String]): FEStatus = {
-      val seg = project.asSegmentation
-      val parent = project.asSegmentation.parent
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           seg.belongsTo,
           attributeWithLocalAggregator(parent.vertexAttributes(attr), choice))
         project.vertexAttributes(s"${attr}_${choice}") = result
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Weighted aggregate to segmentation"
+    def parameters = Seq(
+      Param("weight", "Weight", options = UIValue.seq(parent.vertexAttributeNames[Double]))) ++
+      aggregateParams(parent.vertexAttributes, weighted = true)
+    def enabled =
+      FEStatus.assert(parent.vertexAttributeNames[Double].nonEmpty,
+        "No numeric vertex attributes on parent")
+    def apply(params: Map[String, String]): FEStatus = {
+      val weightName = params("weight")
+      val weight = parent.vertexAttributes(weightName).runtimeSafeCast[Double]
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregateViaConnection(
+          seg.belongsTo,
+          attributeWithWeightedAggregator(weight, parent.vertexAttributes(attr), choice))
+        project.vertexAttributes(s"${attr}_${choice}_by_${weightName}") = result
       }
       return FEStatus.success
     }
@@ -561,13 +583,35 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
-      val seg = project.asSegmentation
-      val prefix = params("prefix")
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           reverse(seg.belongsTo),
           attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
-        seg.parent.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
+        seg.parent.vertexAttributes(s"${prefix}${attr}_${choice}") = result
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Weighted aggregate from segmentation"
+    def parameters = Seq(
+      Param("prefix", "Generated name prefix",
+        defaultValue = project.asSegmentation.name),
+      Param("weight", "Weight", options = vertexAttributes[Double])) ++
+      aggregateParams(project.vertexAttributes, weighted = true)
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      val weightName = params("weight")
+      val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregateViaConnection(
+          reverse(seg.belongsTo),
+          attributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
+        seg.parent.vertexAttributes(s"${prefix}${attr}_${choice}_by_${weightName}") = result
       }
       return FEStatus.success
     }
@@ -583,7 +627,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]): FEStatus = {
-      val prefix = params("prefix")
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val edges = params("direction") match {
         case "incoming edges" => project.edgeBundle
         case "outgoing edges" => reverse(project.edgeBundle)
@@ -592,7 +636,36 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           edges,
           attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
-        project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
+        project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Weighted aggregate on neighbors"
+    val parameters = Seq(
+      Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
+      Param("weight", "Weight", options = vertexAttributes[Double]),
+      Param("direction", "Aggregate on",
+        options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
+      aggregateParams(project.vertexAttributes, weighted = true)
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes") && hasEdgeBundle
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      val edges = params("direction") match {
+        case "incoming edges" => project.edgeBundle
+        case "outgoing edges" => reverse(project.edgeBundle)
+      }
+      val weightName = params("weight")
+      val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
+      for ((name, choice) <- parseAggregateParams(params)) {
+        val attr = project.vertexAttributes(name)
+        val result = aggregateViaConnection(
+          edges,
+          attributeWithWeightedAggregator(weight, attr, choice))
+        project.vertexAttributes(s"${prefix}${name}_${choice}_by_${weightName}") = result
       }
       return FEStatus.success
     }
@@ -686,10 +759,32 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
-      val prefix = params("prefix")
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(attributeWithAggregator(project.vertexAttributes(attr), choice))
-        val name = if (prefix.isEmpty) s"${attr}_${choice}" else s"${prefix}_${attr}_${choice}"
+        val name = s"${prefix}${attr}_${choice}"
+        project.scalars(name) = result
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Weighted aggregate vertex attribute"
+    val parameters = Seq(
+      Param("prefix", "Generated name prefix", defaultValue = ""),
+      Param("weight", "Weight", options = vertexAttributes[Double])) ++
+      aggregateParams(project.vertexAttributes, needsGlobal = true, weighted = true)
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      val weightName = params("weight")
+      val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregate(
+          attributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
+        val name = s"${prefix}${attr}_${choice}_by_${weightName}"
         project.scalars(name) = result
       }
       return FEStatus.success
@@ -705,11 +800,35 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]): FEStatus = {
-      val prefix = params("prefix")
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(
           attributeWithAggregator(project.edgeAttributes(attr).asVertexAttribute, choice))
-        val name = if (prefix.isEmpty) s"${attr}_${choice}" else s"${prefix}_${attr}_${choice}"
+        val name = s"${prefix}${attr}_${choice}"
+        project.scalars(name) = result
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Weighted aggregate edge attribute"
+    val parameters = Seq(
+      Param("prefix", "Generated name prefix", defaultValue = ""),
+      Param("weight", "Weight", options = edgeAttributes[Double])) ++
+      aggregateParams(
+        project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) },
+        needsGlobal = true, weighted = true)
+    def enabled =
+      FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      val weightName = params("weight")
+      val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double].asVertexAttribute
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregate(
+          attributeWithWeightedAggregator(weight, project.edgeAttributes(attr).asVertexAttribute, choice))
+        val name = s"${prefix}${attr}_${choice}_by_${weightName}"
         project.scalars(name) = result
       }
       return FEStatus.success
@@ -727,7 +846,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]): FEStatus = {
-      val prefix = params("prefix")
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateFromEdges(
           project.edgeBundle,
@@ -735,7 +854,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           attributeWithLocalAggregator(
             project.edgeAttributes(attr).asVertexAttribute,
             choice))
-        project.vertexAttributes(s"${prefix}_${attr}_${choice}") = result
+        project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
+      }
+      return FEStatus.success
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Weighted aggregate edge attribute to vertices"
+    val parameters = Seq(
+      Param("prefix", "Generated name prefix", defaultValue = "edge"),
+      Param("weight", "Weight", options = edgeAttributes[Double]),
+      Param("direction", "Aggregate on",
+        options = UIValue.seq(Seq("incoming edges", "outgoing edges")))) ++
+      aggregateParams(
+        project.edgeAttributes.map { case (name, ea) => (name, ea.asVertexAttribute) },
+        weighted = true)
+    def enabled =
+      FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes")
+    def apply(params: Map[String, String]): FEStatus = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      val weightName = params("weight")
+      val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double].asVertexAttribute
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        val result = aggregateFromEdges(
+          project.edgeBundle,
+          params("direction") == "outgoing edges",
+          attributeWithWeightedAggregator(
+            weight,
+            project.edgeAttributes(attr).asVertexAttribute,
+            choice))
+        project.vertexAttributes(s"${prefix}${attr}_${choice}_by_${weightName}") = result
       }
       return FEStatus.success
     }
@@ -1003,7 +1152,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = FEStatus.success
       def apply(params: Map[String, String]): FEStatus = {
         val path = Filename.fromString(params("path"))
-        val seg = project.asSegmentation
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
         if (params("single") == "true") {
@@ -1014,6 +1162,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         return FEStatus.success
       }
     })
+  }
+
+  def joinAttr[A, B](a: VertexAttribute[A], b: VertexAttribute[B]): VertexAttribute[(A, B)] = {
+    val op = graph_operations.JoinAttributes[A, B]()
+    op(op.a, a)(op.b, b).result.attr
   }
 
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
@@ -1041,23 +1194,30 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
   def aggregateParams(
     attrs: Iterable[(String, VertexAttribute[_])],
-    needsGlobal: Boolean = false): Seq[FEOperationParameterMeta] = {
+    needsGlobal: Boolean = false,
+    weighted: Boolean = false): Seq[FEOperationParameterMeta] = {
     attrs.toSeq.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
-          if (needsGlobal) {
+          if (weighted) { // At the moment all weighted aggregators are global.
+            UIValue.seq(Seq("ignore", "weighted_sum", "weighted_average", "by_max_weight", "by_min_weight"))
+          } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "sum", "average", "min", "max", "most_common", "count", "vector"))
           }
         } else if (attr.is[String]) {
-          if (needsGlobal) {
+          if (weighted) { // At the moment all weighted aggregators are global.
+            UIValue.seq(Seq("ignore", "by_max_weight", "by_min_weight"))
+          } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "most_common", "majority_50", "majority_100", "count", "vector"))
           }
         } else {
-          if (needsGlobal) {
+          if (weighted) { // At the moment all weighted aggregators are global.
+            UIValue.seq(Seq("ignore", "by_max_weight", "by_min_weight"))
+          } else if (needsGlobal) {
             UIValue.seq(Seq("ignore", "count", "first"))
           } else {
             UIValue.seq(Seq("ignore", "most_common", "count", "vector"))
@@ -1089,7 +1249,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   private def attributeWithAggregator[T](
     attr: VertexAttribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
-
     choice match {
       case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
@@ -1098,6 +1257,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
+    }
+  }
+  private def attributeWithWeightedAggregator[T](
+    weight: VertexAttribute[Double], attr: VertexAttribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
+    choice match {
+      case "by_max_weight" => AttributeWithAggregator(
+        joinAttr(weight, attr), graph_operations.Aggregator.MaxBy[Double, T]())
+      case "by_min_weight" => AttributeWithAggregator(
+        joinAttr(graph_operations.DeriveJS.negative(weight), attr), graph_operations.Aggregator.MaxBy[Double, T]())
+      case "weighted_sum" => AttributeWithAggregator(
+        joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedSum())
+      case "weighted_average" => AttributeWithAggregator(
+        joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedAverage())
     }
   }
 
