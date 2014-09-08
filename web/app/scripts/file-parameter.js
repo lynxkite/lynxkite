@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('fileParameter', function() {
+angular.module('biggraph').directive('fileParameter', function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -40,7 +40,7 @@ angular.module('biggraph').directive('fileParameter', function() {
                 if (xhr.status === 200) {  // SUCCESS
                   scope.filename = xhr.responseText;
                 } else {
-                  console.error('Upload failed.');
+                  util.error('File upload failed.');
                 }
                 scope.fileUploads -= 1;
                 scope.uploading = false;
