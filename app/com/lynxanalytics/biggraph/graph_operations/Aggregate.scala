@@ -236,6 +236,8 @@ object Aggregator {
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
+      // The intermediate type is Option[(Weight, Value)], which is None for empty input and
+      // Some(maximal element) otherwise.
       optionTypeTag[(Weight, Value)]
     }
     def outputTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) =
