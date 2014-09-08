@@ -28,7 +28,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     extends Operation(p, Category("Hidden", "", visible = false))
   abstract class SegmentationOperation(p: Project)
       extends Operation(p, Category("Segmentation operations", "yellow", visible = p.isSegmentation)) {
-    protected def parent = project.asSegmentation.parent
+    protected def seg = project.asSegmentation
+    protected def parent = seg.parent
   }
 
   register(new VertexOperation(_) {
@@ -503,7 +504,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       FEStatus.assert(parent.vertexAttributes.nonEmpty,
         "No vertex attributes on parent")
     def apply(params: Map[String, String]): FEStatus = {
-      val seg = project.asSegmentation
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           seg.belongsTo,
@@ -523,7 +523,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       FEStatus.assert(parent.vertexAttributeNames[Double].nonEmpty,
         "No numeric vertex attributes on parent")
     def apply(params: Map[String, String]): FEStatus = {
-      val seg = project.asSegmentation
       val weightName = params("weight")
       val weight = parent.vertexAttributes(weightName).runtimeSafeCast[Double]
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -545,7 +544,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
-      val seg = project.asSegmentation
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
@@ -567,7 +565,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes")
     def apply(params: Map[String, String]): FEStatus = {
-      val seg = project.asSegmentation
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val weightName = params("weight")
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
@@ -1067,7 +1064,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = FEStatus.success
       def apply(params: Map[String, String]): FEStatus = {
         val path = Filename.fromString(params("path"))
-        val seg = project.asSegmentation
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
         if (params("single") == "true") {
