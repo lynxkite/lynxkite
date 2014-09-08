@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('topAlerts', function() {
+angular.module('biggraph').directive('topAlerts', function(util) {
   return {
     restrict: 'E',
     templateUrl: 'top-alerts.html',
@@ -8,7 +8,7 @@ angular.module('biggraph').directive('topAlerts', function() {
       scope.alerts = [];
       function messageOf(err) {
         return {
-          message: err.data.error || err.data || (err.config.url + ' ' + err.statusText),
+          message: util.errorMessage(err),
           time: new Date(),
         };
       }
