@@ -30,7 +30,7 @@ angular
         redirectTo: '/',
       });
   })
-  .factory('util', function utilFactory($resource) {
+  .factory('util', function utilFactory($resource, $rootScope) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     function ajax(url, params, cache) {
       if (params === undefined) { params = { fake: 1 }; }
@@ -40,7 +40,7 @@ angular
           req.error = 'Redirecting to login page.';
           window.location.href = '/authenticate/google';
         } else {
-          req.error = 'Request failed: ' + (failure.data.error || failure.data);
+          req.error = failure.data.error || failure.data || (url + ' ' + failure.statusText);
         }
       });
       return req;
@@ -69,6 +69,9 @@ angular
       // Replaces underscores with spaces.
       spaced: function(s) {
         return s.replace(/_/g, ' ');
+      },
+      ajaxError: function(err) {
+        $rootScope.$broadcast('ajaxError', err);
       },
     };
   });
