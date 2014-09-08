@@ -186,6 +186,11 @@ trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
     typeTag[(Intermediate1, Intermediate2)]
   }
 }
+// A convenient shorthand.
+trait CompoundDoubleAggregator[From]
+    extends CompoundAggregator[From, Double, Double, Double, Double, Double] {
+  def outputTypeTag(inputTypeTag: TypeTag[From]) = typeTag[Double]
+}
 
 object Aggregator {
   case class Count[T]() extends SimpleAggregator[T, Double] {
@@ -266,10 +271,9 @@ object Aggregator {
     def finalize(opt: Option[(Weight, Value)]) = opt.get._2
   }
 
-  case class Average() extends CompoundAggregator[Double, Double, Double, Double, Double, Double] {
+  case class Average() extends CompoundDoubleAggregator[Double] {
     val agg1 = Count[Double]()
     val agg2 = Sum()
-    def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def compound(count: Double, sum: Double) = sum / count
   }
 
@@ -280,10 +284,9 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
-  case class WeightedAverage() extends CompoundAggregator[(Double, Double), Double, Double, Double, Double, Double] {
+  case class WeightedAverage() extends CompoundDoubleAggregator[(Double, Double)] {
     val agg1 = SumOfWeights()
     val agg2 = WeightedSum()
-    def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
     def compound(weights: Double, weightedSum: Double) = weightedSum / weights
   }
 
