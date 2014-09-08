@@ -12,8 +12,8 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class Filename(
     val filename: String,
-    val awsAccessKeyId: String = "",
-    val awsSecretAccessKey: String = "") {
+    val awsAccessKeyId: String,
+    val awsSecretAccessKey: String) {
   override def toString() = filename
   def fullString = if (awsAccessKeyId.isEmpty) filename else {
     filename.replace("s3n://", s"s3n://$awsAccessKeyId:$awsSecretAccessKey@")
@@ -114,7 +114,7 @@ object Filename {
     str match {
       case filenamePattern(protocol, id, key, path) =>
         new Filename(protocol + "://" + path, id, key)
-      case _ => new Filename(str)
+      case _ => new Filename(str, "", "")
     }
   }
 }
