@@ -273,11 +273,18 @@ object Aggregator {
     def compound(count: Double, sum: Double) = sum / count
   }
 
+  case class SumOfWeights() extends SimpleAggregator[(Double, Double), Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
+    def zero = 0
+    def merge(a: Double, b: (Double, Double)) = a + b._1
+    def combine(a: Double, b: Double) = a + b
+  }
+
   case class WeightedAverage() extends CompoundAggregator[(Double, Double), Double, Double, Double, Double, Double] {
-    val agg1 = Count[(Double, Double)]()
+    val agg1 = SumOfWeights()
     val agg2 = WeightedSum()
     def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
-    def compound(count: Double, sum: Double) = sum / count
+    def compound(weights: Double, weightedSum: Double) = weightedSum / weights
   }
 
   case class MostCommon[T]() extends LocalAggregator[T, T] {
