@@ -74,7 +74,6 @@ object ProductionJsonServer extends JsonServer {
 
   // TODO: do this without a fake field, e.g. by not using inception.
   implicit val rEmpty = json.Json.reads[Empty]
-  implicit val wEmpty = json.Json.writes[Empty]
   implicit val wUnit = new json.Writes[Unit] {
     def writes(u: Unit) = Json.obj()
   }

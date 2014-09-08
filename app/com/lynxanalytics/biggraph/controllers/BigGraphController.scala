@@ -261,21 +261,19 @@ class BigGraphController(val env: BigGraphEnvironment) {
     return p.toFE.copy(opCategories = ops.categories(p))
   }
 
-  def createProject(request: CreateProjectRequest): serving.Empty = {
+  def createProject(request: CreateProjectRequest): Unit = {
     val p = Project(request.name)
     p.notes = request.notes
     p.checkpointAfter("") // Initial checkpoint.
-    return serving.Empty()
   }
 
-  def discardProject(request: DiscardProjectRequest): serving.Empty = {
+  def discardProject(request: DiscardProjectRequest): Unit = {
     Project(request.name).remove()
-    return serving.Empty()
   }
 
   def projectOp(request: ProjectOperationRequest): Unit = ops.apply(request)
 
-  def filterProject(request: ProjectFilterRequest): FEStatus = {
+  def filterProject(request: ProjectFilterRequest): Unit = {
     val project = Project(request.project)
     val vertexSet = project.vertexSet
     assert(vertexSet != null)
@@ -283,22 +281,18 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val embedding = FEFilters.embedFilteredVertices(vertexSet, request.filters)
     project.pullBackWithInjection(embedding)
     project.checkpointAfter("Filter")
-    FEStatus.success
   }
 
-  def forkProject(request: ForkProjectRequest): FEStatus = {
+  def forkProject(request: ForkProjectRequest): Unit = {
     Project(request.from).copy(Project(request.to))
-    FEStatus.success
   }
 
-  def undoProject(request: UndoProjectRequest): FEStatus = {
+  def undoProject(request: UndoProjectRequest): Unit = {
     Project(request.project).undo()
-    FEStatus.success
   }
 
-  def redoProject(request: RedoProjectRequest): FEStatus = {
+  def redoProject(request: RedoProjectRequest): Unit = {
     Project(request.project).redo()
-    FEStatus.success
   }
 }
 
