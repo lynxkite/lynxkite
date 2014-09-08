@@ -34,7 +34,7 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         $resource('/ajax/createProject').save({ name: name, notes: notes || '' }, function() {
           scope.name = name;
         }, function(error) {
-          console.error(error);
+          util.ajaxError(error);
           scope.newProject.sending = false;
         });
       };
@@ -50,7 +50,7 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
             // refresh splash manually
             scope.data = util.nocache('/ajax/splash');
           }, function(error) {
-            console.error(error);
+            util.ajaxError(error);
           });
         }
       };
