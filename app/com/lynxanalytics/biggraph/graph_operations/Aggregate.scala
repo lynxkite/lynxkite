@@ -138,11 +138,16 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
   }
 }
 
+// A simple interface that does not cover distributed use.
 trait LocalAggregator[From, To] {
   def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
   // aggregate() can assume that values is non-empty.
   def aggregate(values: Iterable[From]): To
 }
+// Aggregates from From to Intermediate and at the end calls finalize() to turn
+// Intermediate into To. So Intermediate can contain extra data over what is
+// required in the result. The merge() and combine() methods make it possible to
+// use Aggregator in a distributed setting.
 trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def intermediateTypeTag(inputTypeTag: TypeTag[From]): TypeTag[Intermediate]
   def zero: Intermediate
@@ -154,10 +159,13 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def aggregate(values: Iterable[From]): To =
     finalize(aggregatePartition(values.iterator))
 }
+// A distributed aggregator where Intermediate is not different from To.
 trait SimpleAggregator[From, To] extends Aggregator[From, To, To] {
   def finalize(i: To): To = i
   def intermediateTypeTag(inputTypeTag: TypeTag[From]) = outputTypeTag(inputTypeTag)
 }
+// CompoundAggregator combines two aggregators. Only compound() and
+// outputTypeTag() need to be implemented.
 // This is a trait instead of an abstract class because otherwise the case
 // class will not be serializable ("no valid constructor").
 trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
