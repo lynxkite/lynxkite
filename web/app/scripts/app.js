@@ -40,10 +40,13 @@ angular
           req.error = 'Redirecting to login page.';
           window.location.href = '/authenticate/google';
         } else {
-          req.error = failure.data.error || failure.data || (url + ' ' + failure.statusText);
+          req.error = errorMessage(failure);
         }
       });
       return req;
+    }
+    function errorMessage(err) {
+      return err.data.error || err.data || (err.config.url + ' ' + (err.statusText || 'failed'));
     }
     return {
       // This function is for code clarity, so we don't have a mysterious "true" argument.
@@ -73,5 +76,6 @@ angular
       ajaxError: function(err) {
         $rootScope.$broadcast('ajaxError', err);
       },
+      errorMessage: errorMessage,
     };
   });

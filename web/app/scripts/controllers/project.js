@@ -167,22 +167,17 @@ angular.module('biggraph')
 
     Side.prototype.applyOp = function(op, params, callback) {
       var that = this;
-      // TODO: Report errors on the UI.
       $resource('/ajax/projectOp').save(
         {
           project: this.state.projectName,
           op: { id: op, parameters: params },
         },
-        function(result) {
+        function() {
           if (callback) { callback(); }
-          if (result.success) {
-            that.reload();
-          } else {
-            console.error(result.failureReason);
-          }
-        }, function(response) {
+          that.reload();
+        }, function(err) {
           if (callback) { callback(); }
-          console.error(response);
+          util.ajaxError(err);
         });
     };
 
