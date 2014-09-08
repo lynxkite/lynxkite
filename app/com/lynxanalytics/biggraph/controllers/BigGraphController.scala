@@ -273,7 +273,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     return serving.Empty()
   }
 
-  def projectOp(request: ProjectOperationRequest): FEStatus = ops.apply(request)
+  def projectOp(request: ProjectOperationRequest): Unit = ops.apply(request)
 
   def filterProject(request: ProjectFilterRequest): FEStatus = {
     val project = Project(request.project)
@@ -307,7 +307,7 @@ abstract class Operation(val project: Project, val category: Operation.Category)
   def title: String
   def parameters: Seq[FEOperationParameterMeta]
   def enabled: FEStatus
-  def apply(params: Map[String, String]): FEStatus
+  def apply(params: Map[String, String]): Unit
   def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled)
   protected def scalars[T: TypeTag] =
     UIValue.seq(project.scalarNames[T])
@@ -349,19 +349,14 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
 
   def uIProjects: Seq[UIValue] = UIValue.seq(projects.map(_.projectName))
 
-  def apply(req: ProjectOperationRequest): FEStatus = manager.synchronized {
+  def apply(req: ProjectOperationRequest): Unit = manager.synchronized {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
     Try(ops.head.apply(req.op.parameters)) match {
-      case Success(s) if s.success =>
+      case Success(_) =>
         // Save changes.
         p.checkpointAfter(ops.head.title)
-        s
-      case Success(s) =>
-        // Discard potentially corrupt changes.
-        p.reloadCurrentCheckpoint()
-        throw new Exception(s.failureReason)
       case Failure(e) =>
         // Discard potentially corrupt changes.
         p.reloadCurrentCheckpoint()
