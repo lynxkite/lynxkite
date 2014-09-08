@@ -53,7 +53,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("filter", "(optional) Filtering expression"))
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        Filename(params("files")),
         params("delimiter"),
         params("header"),
         JavaScript(params("filter")))
@@ -75,7 +75,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("filter", "(optional) Filtering expression"))
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        Filename(params("files")),
         params("delimiter"),
         params("header"),
         JavaScript(params("filter")))
@@ -101,7 +101,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("filter", "(optional) Filtering expression"))
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        Filename(params("files")),
         params("delimiter"),
         params("header"),
         JavaScript(params("filter")))

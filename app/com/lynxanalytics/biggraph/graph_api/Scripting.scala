@@ -80,7 +80,4 @@ object Scripting {
     op: TypedMetaGraphOp[IS, OMDS])(
       implicit manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     manager.apply(op, MetaDataSet())
-
-  implicit def filename(fn: String): graph_util.Filename =
-    graph_util.Filename.fromString(fn)
 }

@@ -97,7 +97,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("filter", "(optional) Filtering expression"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
-      val files = Filename.fromString(params("files"))
+      val files = Filename(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
@@ -126,7 +126,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
-      val files = Filename.fromString(params("files"))
+      val files = Filename(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
@@ -155,7 +155,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("filter", "(optional) Filtering expression"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
-      val files = Filename.fromString(params("files"))
+      val files = Filename(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
       val csv = graph_operations.CSV(
@@ -1053,11 +1053,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
         val attrs = labels.map(label => project.vertexAttributes(label))
-        val path = Filename.fromString(params("path"))
-        assert(!path.isEmpty, "No export path specified.")
-        val csv =
-          graph_util.CSVExport
-            .exportVertexAttributes(attrs, labels)
+        val path = Filename(params("path"))
+        assert(path.nonEmpty, "No export path specified.")
+        val csv = graph_util.CSVExport.exportVertexAttributes(attrs, labels)
         if (params("single") == "true") {
           csv.saveToSingleFile(path)
         } else {
@@ -1077,8 +1075,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
         val attrs = labels.map(label => project.edgeAttributes(label))
-        val path = Filename.fromString(params("path"))
-        assert(!path.isEmpty, "No export path specified.")
+        val path = Filename(params("path"))
+        assert(path.nonEmpty, "No export path specified.")
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(attrs, labels)
         if (params("single") == "true") {
@@ -1096,7 +1094,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))))
       def enabled = FEStatus.success
       def apply(params: Map[String, String]) = {
-        val path = Filename.fromString(params("path"))
+        val path = Filename(params("path"))
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
         if (params("single") == "true") {
