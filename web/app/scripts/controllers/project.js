@@ -32,7 +32,7 @@ angular.module('biggraph')
 
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
-      if (this.project === undefined || !this.project.$resolved) {
+      if (!this.loaded()) {
         this.viewData = {};
         return;
       }
@@ -111,6 +111,10 @@ angular.module('biggraph')
 
     Side.prototype.load = function() {
       return util.nocache('/ajax/project', { name: this.state.projectName });
+    };
+
+    Side.prototype.loaded = function() {
+      return this.project && this.project.$resolved && !this.project.error;
     };
 
     Side.prototype.set = function(setting, value) {
@@ -259,7 +263,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.loadScalars = function() {
-      if (!this.project || !this.project.$resolved) { return; }
+      if (!this.loaded()) { return; }
       var scalars = this.project.scalars;
       this.scalars = {};
       for (var i = 0; i < scalars.length; ++i) {
@@ -272,7 +276,7 @@ angular.module('biggraph')
       return parent.getBelongsTo(this) !== undefined;
     };
     Side.prototype.getBelongsTo = function(segmentation) {
-      if (!this.project || !this.project.$resolved) { return undefined; }
+      if (!this.loaded()) { return undefined; }
       if (!segmentation.project || !segmentation.project.$resolved) { return undefined; }
       for (var i = 0; i < this.project.segmentations.length; ++i) {
         var seg = this.project.segmentations[i];
@@ -291,8 +295,7 @@ angular.module('biggraph')
     function getLeftToRightPath() {
       var left = $scope.left;
       var right = $scope.right;
-      if (!left.project || !left.project.$resolved) { return undefined; }
-      if (!right.project || !right.project.$resolved) { return undefined; }
+      if (!left.loaded() || !right.loaded()) { return undefined; }
       // If it is a segmentation, use "belongsTo" as the connecting path.
       if (right.isSegmentationOf(left)) {
         return [{ bundle: left.getBelongsTo(right), pointsLeft: false }];
