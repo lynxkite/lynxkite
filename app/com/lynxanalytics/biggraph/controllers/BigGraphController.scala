@@ -76,7 +76,7 @@ abstract class FEOperation {
   val category: String
   val parameters: Seq[FEOperationParameterMeta]
   lazy val starting = parameters.forall(_.kind == "scalar")
-  def apply(params: Map[String, String]): FEStatus
+  def apply(params: Map[String, String]): Unit
 }
 
 case class FEAttribute(
@@ -188,7 +188,7 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  def applyOp(spec: FEOperationSpec): FEStatus =
+  def applyOp(spec: FEOperationSpec): Unit =
     operations(spec.id).apply(spec.parameters)
 
   private val operations = mutable.Map[String, FEOperation]()
@@ -230,7 +230,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     toFE(metaManager.vertexSet(request.id.asUUID))
   }
 
-  def applyOp(request: FEOperationSpec): FEStatus =
+  def applyOp(request: FEOperationSpec): Unit =
     operations.applyOp(request)
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
