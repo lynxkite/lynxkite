@@ -23,7 +23,7 @@ case class VertexDiagramSpec(
   val yNumBuckets: Int = 1,
 
   // ** Parameters for sampled view **
-  val centralVertexId: ID,
+  val centralVertexIds: Seq[ID],
   // Edge bundle used to find neighborhood of the central vertex.
   val sampleSmearEdgeBundleId: String = "",
   val sizeAttributeId: String = "",
@@ -130,9 +130,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
-    val center = request.centralVertexId.toLong
+    val centers = request.centralVertexIds.map(_.toLong)
 
-    val nop = graph_operations.ComputeVertexNeighborhood(center, request.radius)
+    val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
     val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
     val idToIdx = nopres.neighborsIdToIndex.value
 

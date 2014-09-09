@@ -70,8 +70,7 @@ angular.module('biggraph')
           filters: this.nonEmptyFilters() || '',
         }},
         function(result) {
-          console.log(result);
-          that.state.center = result.center[0]; // visualize the first value only for now
+          that.state.center = result.center;
         },
         function(response) {
           console.error(response);
