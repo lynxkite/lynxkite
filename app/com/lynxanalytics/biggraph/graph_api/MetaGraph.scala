@@ -145,12 +145,6 @@ case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
     extends Attribute[T] with RuntimeSafeCastable[T, VertexAttribute] {
   assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
-  def asEdgeAttribute(eb: EdgeBundle): EdgeAttribute[T] = {
-    import Scripting._
-    implicit val manager = source.manager
-    val aeaop = graph_operations.VertexAttributeAsEdgeAttribute[T]()
-    aeaop(aeaop.vertexAttr, this)(aeaop.edges, eb).result.edgeAttr
-  }
 }
 
 case class SrcAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]
@@ -192,7 +186,6 @@ case class SimpleInputSignature(
   vertexSets: Set[Symbol] = Set(),
   edgeBundles: Map[Symbol, (Symbol, Symbol)] = Map(),
   vertexAttributes: Map[Symbol, Symbol] = Map(),
-  edgeAttributes: Map[Symbol, Symbol] = Map(),
   scalars: Set[Symbol] = Set()) extends InputSignature
 
 trait FieldNaming {
@@ -306,8 +299,6 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       src.name, dst.name, Option(idSet).map(_.name), requiredProperties, Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
     new VertexAttributeTemplate[T](vs.name, Option(name))
-  def edgeAttribute[T](eb: EdgeBundleTemplate, name: Symbol = null) =
-    new VertexAttributeTemplate[T](eb.asVertexSet.name, Option(name))
   def scalar[T] = new ScalarTemplate[T](None)
   def scalar[T](name: Symbol) = new ScalarTemplate[T](Some(name))
   def graph = {
