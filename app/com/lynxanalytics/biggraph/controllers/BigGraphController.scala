@@ -8,15 +8,15 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
 
-case class FEStatus(success: Boolean, failureReason: String = "") {
-  def ||(other: => FEStatus) = if (success) this else other
-  def &&(other: => FEStatus) = if (success) other else this
+case class FEStatus(enabled: Boolean, disabledReason: String = "") {
+  def ||(other: => FEStatus) = if (enabled) this else other
+  def &&(other: => FEStatus) = if (enabled) other else this
 }
 object FEStatus {
-  val success = FEStatus(true)
-  def failure(failureReason: String) = FEStatus(false, failureReason)
-  def assert(condition: Boolean, failureReason: => String) =
-    if (condition) success else failure(failureReason)
+  val enabled = FEStatus(true)
+  def disabled(disabledReason: String) = FEStatus(false, disabledReason)
+  def assert(condition: Boolean, disabledReason: => String) =
+    if (condition) enabled else disabled(disabledReason)
 }
 
 case class VertexSetRequest(id: String)
@@ -34,7 +34,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: Seq[FEOperationParameterMeta],
-  enabled: FEStatus = FEStatus.success)
+  enabled: FEStatus = FEStatus.enabled)
 
 case class FEOperationParameterMeta(
     id: String,

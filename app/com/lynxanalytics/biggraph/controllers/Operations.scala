@@ -1032,7 +1032,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Change project notes"
     val parameters = Seq(
       Param("notes", "New contents"))
-    def enabled = FEStatus.success
+    def enabled = FEStatus.enabled
     def apply(params: Map[String, String]) = {
       project.notes = params("notes")
     }
@@ -1092,7 +1092,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val parameters = Seq(
         Param("path", "Destination path"),
         Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))))
-      def enabled = FEStatus.success
+      def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val path = Filename(params("path"))
         val csv = graph_util.CSVExport
