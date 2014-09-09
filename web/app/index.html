@@ -14,11 +14,13 @@
     <link rel="stylesheet" href="styles/graph.css">
     <link rel="stylesheet" href="styles/graph-view.css">
     <link rel="stylesheet" href="styles/project.css">
+    <link rel="stylesheet" href="styles/alert.css">
     <link rel="stylesheet" href="styles/splash.css">
     <!-- endbuild -->
   </head>
   <body ng-app="biggraph">
     <div class="container-fluid" ng-view></div>
+    <top-alerts></top-alerts>
 
     <!-- build:js scripts/vendor.js -->
     <!-- bower:js -->
@@ -55,6 +57,7 @@
     <script src="scripts/operation-toolbox.js"></script>
     <script src="scripts/project-graph.js"></script>
     <script src="scripts/file-parameter.js"></script>
+    <script src="scripts/top-alerts.js"></script>
     <script src="scripts/controllers/splash.js"></script>
     <script src="scripts/controllers/project.js"></script>
     <script src="scripts/controllers/metaGraph.js"></script>

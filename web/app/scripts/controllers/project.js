@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('ProjectViewCtrl', function ($scope, $routeParams, $resource, $location, util) {
+  .controller('ProjectViewCtrl', function ($scope, $routeParams, $location, util) {
     $scope.util = util;
     function defaultSideState() {
       return {
@@ -32,7 +32,7 @@ angular.module('biggraph')
 
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
-      if (this.project === undefined || !this.project.$resolved) {
+      if (!this.loaded()) {
         this.viewData = {};
         return;
       }
@@ -113,6 +113,10 @@ angular.module('biggraph')
       return util.nocache('/ajax/project', { name: this.state.projectName });
     };
 
+    Side.prototype.loaded = function() {
+      return this.project && this.project.$resolved && !this.project.error;
+    };
+
     Side.prototype.set = function(setting, value) {
       if (this.state[setting] === value) {
         // Clicking the same attribute setting again turns it off.
@@ -134,7 +138,7 @@ angular.module('biggraph')
 
     Side.prototype.saveAs = function(newName) {
       var that = this;
-      $resource('/ajax/forkProject').save(
+      util.post('/ajax/forkProject',
         {
           from: this.state.projectName,
           to: newName,
@@ -146,7 +150,7 @@ angular.module('biggraph')
 
     Side.prototype.undo = function() {
       var that = this;
-      $resource('/ajax/undoProject').save(
+      util.post('/ajax/undoProject',
         {
           project: this.state.projectName,
         },
@@ -156,7 +160,7 @@ angular.module('biggraph')
     };
     Side.prototype.redo = function() {
       var that = this;
-      $resource('/ajax/redoProject').save(
+      util.post('/ajax/redoProject',
         {
           project: this.state.projectName,
         },
@@ -165,33 +169,28 @@ angular.module('biggraph')
         });
     };
 
-    Side.prototype.applyOp = function(op, params, callback) {
+    // Returns a promise.
+    Side.prototype.applyOp = function(op, params) {
       var that = this;
-      // TODO: Report errors on the UI.
-      $resource('/ajax/projectOp').save(
+      return util.post('/ajax/projectOp',
         {
           project: this.state.projectName,
           op: { id: op, parameters: params },
         },
-        function(result) {
-          if (callback) { callback(); }
-          if (result.success) {
-            that.reload();
-          } else {
-            console.error(result.failureReason);
-          }
-        }, function(response) {
-          if (callback) { callback(); }
-          console.error(response);
+        function() {
+          that.reload();
         });
     };
 
     Side.prototype.saveNotes = function() {
       var that = this;
       this.savingNotes = true;
-      this.applyOp('Change-project-notes', { notes: this.project.notes }, function() {
-        that.unsavedNotes = false;
-        that.savingNotes = false;
+      this.applyOp('Change-project-notes', { notes: this.project.notes })
+        .then(function(success) {
+        if (success) {
+          that.unsavedNotes = false;
+          that.savingNotes = false;
+        }
       });
     };
 
@@ -231,21 +230,14 @@ angular.module('biggraph')
     };
     Side.prototype.applyFilters = function() {
       var that = this;
-      $resource('/ajax/filterProject').save(
+      util.post('/ajax/filterProject',
         {
           project: this.state.projectName,
           filters: this.nonEmptyFilters()
         },
-        function(result) {
-          if (result.success) {
-            that.state.filters = {};
-            that.reload();
-          } else {
-            console.error(result.failureReason);
-          }
-        },
-        function(response) {
-          console.error(response);
+        function() {
+          that.state.filters = {};
+          that.reload();
         });
     };
     Side.prototype.resolveVertexAttribute = function(title) {
@@ -264,7 +256,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.loadScalars = function() {
-      if (!this.project || !this.project.$resolved) { return; }
+      if (!this.loaded()) { return; }
       var scalars = this.project.scalars;
       this.scalars = {};
       for (var i = 0; i < scalars.length; ++i) {
@@ -277,7 +269,7 @@ angular.module('biggraph')
       return parent.getBelongsTo(this) !== undefined;
     };
     Side.prototype.getBelongsTo = function(segmentation) {
-      if (!this.project || !this.project.$resolved) { return undefined; }
+      if (!this.loaded()) { return undefined; }
       if (!segmentation.project || !segmentation.project.$resolved) { return undefined; }
       for (var i = 0; i < this.project.segmentations.length; ++i) {
         var seg = this.project.segmentations[i];
@@ -296,8 +288,7 @@ angular.module('biggraph')
     function getLeftToRightPath() {
       var left = $scope.left;
       var right = $scope.right;
-      if (!left.project || !left.project.$resolved) { return undefined; }
-      if (!right.project || !right.project.$resolved) { return undefined; }
+      if (!left.loaded() || !right.loaded()) { return undefined; }
       // If it is a segmentation, use "belongsTo" as the connecting path.
       if (right.isSegmentationOf(left)) {
         return [{ bundle: left.getBelongsTo(right), pointsLeft: false }];

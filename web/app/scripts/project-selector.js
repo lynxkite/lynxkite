@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('projectSelector', function($resource, util) {
+angular.module('biggraph').directive('projectSelector', function(util) {
   return {
     restrict: 'E',
     scope: { name: '=', version: '=?' },
@@ -31,12 +31,15 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         scope.newProject.sending = true;
         var name = scope.newProject.name.replace(/ /g, '_');
         var notes = scope.newProject.notes;
-        $resource('/ajax/createProject').save({ name: name, notes: notes || '' }, function() {
-          scope.name = name;
-        }, function(error) {
-          console.error(error);
-          scope.newProject.sending = false;
-        });
+        util.post('/ajax/createProject',
+          {
+            name: name,
+            notes: notes || ''
+          }, function() {
+            scope.name = name;
+          }).then(function() {
+            scope.newProject.sending = false;
+          });
       };
       scope.setProject = function(p) {
         scope.name = p;
@@ -46,11 +49,9 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         event.preventDefault();
         event.stopPropagation();
         if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
-          $resource('/ajax/discardProject').save({ name: p }, function() {
+          util.post('/ajax/discardProject', { name: p }, function() {
             // refresh splash manually
             scope.data = util.nocache('/ajax/splash');
-          }, function(error) {
-            console.error(error);
           });
         }
       };
