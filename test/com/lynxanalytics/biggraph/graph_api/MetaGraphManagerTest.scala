@@ -50,8 +50,8 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(manager.attributes(firstEdges).toSet == Set(firstEattr))
 
     // Dependent operations linked as expected.
-    assert(manager.dependentOperations(firstVertices).toSet == Set(secondInstance))
-    assert(manager.dependentOperations(firstVattr).toSet == Set(secondInstance))
+    assert(manager.dependentOperations(firstVertices).contains(secondInstance))
+    assert(manager.dependentOperations(firstVattr).contains(secondInstance))
   }
 
   test("Sometimes, there is no such component") {
