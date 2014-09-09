@@ -2,7 +2,7 @@
 """Lists non-abstract subclasses of a class in a file after a superficial parsing.
 
 Usage:
-  python classes.py SomethingSomething.scala MetaGraphOperation
+  python classes.py SomethingSomething.scala TypedMetaGraphOp
 """
 import sys
 
