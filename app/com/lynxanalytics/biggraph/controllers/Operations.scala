@@ -1053,8 +1053,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
         val attrs = labels.map(label => project.vertexAttributes(label))
+        assert(params("path").nonEmpty, "No export path specified.")
         val path = Filename(params("path"))
-        assert(path.nonEmpty, "No export path specified.")
         val csv = graph_util.CSVExport.exportVertexAttributes(attrs, labels)
         if (params("single") == "true") {
           csv.saveToSingleFile(path)
@@ -1075,8 +1075,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
         val attrs = labels.map(label => project.edgeAttributes(label))
+        assert(params("path").nonEmpty, "No export path specified.")
         val path = Filename(params("path"))
-        assert(path.nonEmpty, "No export path specified.")
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(attrs, labels)
         if (params("single") == "true") {
