@@ -14,7 +14,7 @@ object ComputeVertexNeighborhood {
 }
 import ComputeVertexNeighborhood._
 case class ComputeVertexNeighborhood(
-    center: ID,
+    centers: Seq[ID],
     radius: Int) extends TypedMetaGraphOp[Input, Output] {
 
   @transient override lazy val inputs = new Input
@@ -26,7 +26,7 @@ case class ComputeVertexNeighborhood(
     val vs = inputs.vertices.rdd
     val es = inputs.edges.rdd
     val vsPart = vs.partitioner.get
-    var neigborhood = Set(center)
+    var neigborhood = centers.toSet
     for (i <- 0 until radius) {
       neigborhood ++= es
         .values

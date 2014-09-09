@@ -124,7 +124,7 @@ angular.module('biggraph').directive('graphView', function($window) {
                          label);
       v.id = vertex.id;
       svg.addClass(v.dom, 'sampled');
-      if (v.id === data.center) {
+      if (side.center.indexOf(v.id) > -1) {
         svg.addClass(v.dom, 'center');
       }
       vertices.push(v);
