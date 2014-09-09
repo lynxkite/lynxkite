@@ -120,7 +120,7 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
     // This operation will always be executed as part of the operation that creates this edge
     // bundle. So there is no reason to save this operation to disk, in fact, that would cause
     // trouble.
-    avsop(avsop.edges, this).toInstance(source.manager, true /* transient */ ).result.equivalentVS
+    avsop(avsop.edges, this).toInstance(source.manager, transient = true).result.equivalentVS
   })
 }
 
@@ -168,7 +168,7 @@ case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
     // This operation will always be executed as part of the operation that creates this edge
     // attribute. So there is no reason to save this operation to disk, in fact, that would cause
     // trouble.
-    avaop(avaop.edgeAttr, this).toInstance(source.manager, true /* transient */ ).result.vertexAttr
+    avaop(avaop.edgeAttr, this).toInstance(source.manager, transient = true).result.vertexAttr
   }
 }
 
