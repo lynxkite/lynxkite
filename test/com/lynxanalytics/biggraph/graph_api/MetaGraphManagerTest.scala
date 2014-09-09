@@ -103,7 +103,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   }
 }
 
-object CreateSomeGraph {
+private object CreateSomeGraph {
   class Input extends MagicInputSignature {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
@@ -128,7 +128,7 @@ private case class CreateSomeGraph()
               rc: RuntimeContext): Unit = ???
 }
 
-object FromVertexAttr {
+private object FromVertexAttr {
   class Input extends MagicInputSignature {
     val inputVertices = vertexSet
     val inputAttr = vertexAttribute[Long](inputVertices)
