@@ -23,8 +23,7 @@ case class VertexDiagramSpec(
   val yNumBuckets: Int = 1,
 
   // ** Parameters for sampled view **
-  // Empty string means auto select randomly.
-  val centralVertexId: String = "",
+  val centralVertexId: ID,
   // Edge bundle used to find neighborhood of the central vertex.
   val sampleSmearEdgeBundleId: String = "",
   val sizeAttributeId: String = "",
@@ -51,10 +50,7 @@ case class VertexDiagramResponse(
   val xLabelType: String = "",
   val yLabelType: String = "",
   val xLabels: Seq[String] = Seq(),
-  val yLabels: Seq[String] = Seq(),
-
-  // ** Only set for sampled view **
-  val center: ID = 0)
+  val yLabels: Seq[String] = Seq())
 
 case class EdgeDiagramSpec(
   // In the context of an FEGraphRequest "idx[4]" means the diagram requested by vertexSets(4).
@@ -89,7 +85,7 @@ case class FEGraphRequest(
   vertexSets: Seq[VertexDiagramSpec],
   edgeBundles: Seq[EdgeDiagramSpec])
 
-case class FEGraphRespone(
+case class FEGraphResponse(
   vertexSets: Seq[VertexDiagramResponse],
   edgeBundles: Seq[EdgeDiagramResponse])
 
@@ -113,6 +109,13 @@ case class ScalarValueRequest(
 case class ScalarValueResponse(
   val value: String)
 
+case class CenterRequest(
+  vertexSetId: String,
+  filters: Seq[FEVertexAttributeFilter])
+
+case class CenterResponse(
+  val center: Seq[ID] = Seq(0))
+
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
@@ -127,9 +130,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
-    val center =
-      if (request.centralVertexId.isEmpty) None
-      else Some(request.centralVertexId.toLong)
+    val center = request.centralVertexId.toLong
 
     val nop = graph_operations.ComputeVertexNeighborhood(center, request.radius)
     val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
@@ -169,8 +170,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label)),
-      mode = "sampled",
-      center = nopres.center.value)
+      mode = "sampled")
   }
 
   def getDiagramFromBucketedAttributes[S, T](
@@ -356,7 +356,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq)
   }
 
-  def getComplexView(request: FEGraphRequest): FEGraphRespone = {
+  def getComplexView(request: FEGraphRequest): FEGraphResponse = {
     val vertexDiagrams = request.vertexSets.map(getVertexDiagram(_))
     val idxPattern = "idx\\[(\\d+)\\]".r
     def resolveDiagramId(reference: String): String = {
@@ -371,7 +371,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
     val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(_))
     spark_util.Counters.printAll
-    return FEGraphRespone(vertexDiagrams, edgeDiagrams)
+    return FEGraphResponse(vertexDiagrams, edgeDiagrams)
   }
 
   private def getFilteredVS(
@@ -402,6 +402,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
   }
 
+  def getCenter(request: CenterRequest): CenterResponse = {
+    CenterResponse(Seq(0, 3)) // temporary constant response
+  }
+
   def getHistogram(request: HistogramSpec): HistogramResponse = {
     val attribute = metaManager.attribute(request.attributeId.asUUID)
     val vertexAttribute = attribute match {
@@ -418,6 +422,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       bucketedAttr.bucketer.bucketLabels,
       (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0)))
   }
+
   def getScalarValue(request: ScalarValueRequest): ScalarValueResponse = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
     ScalarValueResponse(scalar.value.toString)

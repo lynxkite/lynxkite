@@ -24,11 +24,13 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
         }
 
         var sides = [];
-        if (scope.left && scope.left.graphMode && (scope.left.vertexSet !== undefined)) {
-          sides.push(scope.left);
+        if (scope.left && scope.left.graphMode && (scope.left.vertexSet !== undefined) &&
+          (scope.left.graphMode !== 'sampled' || scope.left.center)) {
+            sides.push(scope.left);
         }
-        if (scope.right && scope.right.graphMode && (scope.right.vertexSet !== undefined)) {
-          sides.push(scope.right);
+        if (scope.right && scope.right.graphMode && (scope.right.vertexSet !== undefined) &&
+          (scope.right.graphMode !== 'sampled' || scope.right.center)) {
+            sides.push(scope.right);
         }
         if (sides.length === 0) { return; }
         var q = { vertexSets: [], edgeBundles: [] };
@@ -60,7 +62,7 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
             yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             // Sampled view parameters.
             radius: parseInt(viewData.sampleRadius),  // angular.js/pull/7370
-            centralVertexId: (viewData.center || '').toString(),
+            centralVertexId: parseInt(viewData.center),  // angular.js/pull/7370
             sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
             labelAttributeId: viewData.labelAttribute || '',
             sizeAttributeId: viewData.sizeAttribute || '',

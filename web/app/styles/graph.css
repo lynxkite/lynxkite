@@ -149,3 +149,16 @@ input.form-control.filter {
   width: 120px;
   display: inline-block;
 }
+
+input.form-control.center {
+  color: lightblue;
+  width: 40px;
+  background-color: blue;
+  display: inline-block;
+  font-weight: bold;
+  padding: 0;
+  vertical-align: top;
+  text-align: center;
+  border-radius: 0;
+  margin-left: -1px;
+}
