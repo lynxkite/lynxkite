@@ -54,6 +54,15 @@ angular
       get: function(url, params) { return ajax(url, params, true); },
       // Json GET with parameter wrapping and no caching.
       nocache: function(url, params) { return ajax(url, params, false); },
+      // Json POST with simple error handling.
+      post: function(url, params, onSuccess) {
+        var resource = $resource(url).save(params, onSuccess, function(failure) {
+          util.ajaxError(failure);
+        });
+        // Returns a promise of the success state, for flexibility.
+        return resource.$promise
+          .then(function() { return true; }, function() { return false; });
+      },
       // Easier to read numbers. 1234 -> 1k
       human: function(x) {
         if (x === undefined) { return '?'; }

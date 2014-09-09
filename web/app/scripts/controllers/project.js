@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('ProjectViewCtrl', function ($scope, $routeParams, $resource, $location, util) {
+  .controller('ProjectViewCtrl', function ($scope, $routeParams, $location, util) {
     $scope.util = util;
     function defaultSideState() {
       return {
@@ -138,7 +138,7 @@ angular.module('biggraph')
 
     Side.prototype.saveAs = function(newName) {
       var that = this;
-      $resource('/ajax/forkProject').save(
+      util.post('/ajax/forkProject',
         {
           from: this.state.projectName,
           to: newName,
@@ -150,7 +150,7 @@ angular.module('biggraph')
 
     Side.prototype.undo = function() {
       var that = this;
-      $resource('/ajax/undoProject').save(
+      util.post('/ajax/undoProject',
         {
           project: this.state.projectName,
         },
@@ -160,7 +160,7 @@ angular.module('biggraph')
     };
     Side.prototype.redo = function() {
       var that = this;
-      $resource('/ajax/redoProject').save(
+      util.post('/ajax/redoProject',
         {
           project: this.state.projectName,
         },
@@ -169,28 +169,28 @@ angular.module('biggraph')
         });
     };
 
-    Side.prototype.applyOp = function(op, params, callback) {
+    // Returns a promise.
+    Side.prototype.applyOp = function(op, params) {
       var that = this;
-      $resource('/ajax/projectOp').save(
+      return util.post('/ajax/projectOp',
         {
           project: this.state.projectName,
           op: { id: op, parameters: params },
         },
         function() {
-          if (callback) { callback(); }
           that.reload();
-        }, function(err) {
-          if (callback) { callback(); }
-          util.ajaxError(err);
         });
     };
 
     Side.prototype.saveNotes = function() {
       var that = this;
       this.savingNotes = true;
-      this.applyOp('Change-project-notes', { notes: this.project.notes }, function() {
-        that.unsavedNotes = false;
-        that.savingNotes = false;
+      this.applyOp('Change-project-notes', { notes: this.project.notes })
+        .then(function(success) {
+        if (success) {
+          that.unsavedNotes = false;
+          that.savingNotes = false;
+        }
       });
     };
 
@@ -230,7 +230,7 @@ angular.module('biggraph')
     };
     Side.prototype.applyFilters = function() {
       var that = this;
-      $resource('/ajax/filterProject').save(
+      util.post('/ajax/filterProject',
         {
           project: this.state.projectName,
           filters: this.nonEmptyFilters()
@@ -238,9 +238,6 @@ angular.module('biggraph')
         function() {
           that.state.filters = {};
           that.reload();
-        },
-        function(response) {
-          util.ajaxError(response);
         });
     };
     Side.prototype.resolveVertexAttribute = function(title) {
