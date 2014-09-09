@@ -5,7 +5,6 @@ import play.api.libs.json
 import play.api.libs.json._
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
@@ -86,16 +85,8 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
 
-  implicit val rGraphStatsRequest = json.Json.reads[GraphStatsRequest]
-  implicit val wGraphStatsResponse = json.Json.writes[GraphStatsResponse]
-
-  implicit val rSaveGraphAsCSVRequest = json.Json.reads[SaveGraphAsCSVRequest]
-  implicit val wSaveGraphAsCSVResponse = json.Json.writes[SaveGraphAsCSVResponse]
-
   implicit val rSetClusterNumInstanceRequest = json.Json.reads[SetClusterNumInstanceRequest]
   implicit val wSparkClusterStatusResponse = json.Json.writes[SparkClusterStatusResponse]
-
-  implicit val rSaveGraphRequest = json.Json.reads[SaveGraphRequest]
 
   implicit val rFEVertexAttributeFilter = json.Json.reads[FEVertexAttributeFilter]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
@@ -163,18 +154,9 @@ object ProductionJsonServer extends JsonServer {
   def undoProject = jsonPost(bigGraphController.undoProject)
   def redoProject = jsonPost(bigGraphController.redoProject)
 
-  val graphStatsController = new GraphStatsController(BigGraphProductionEnvironment)
-  def graphStatsGet = jsonGet(graphStatsController.getStats)
-
-  //val graphExportController = new GraphExportController(BigGraphProductionEnvironment)
-  //def saveGraphAsCSV = jsonGet(graphExportController.saveGraphAsCSV)
-
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
   def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
-
-  val persistenceController = new PersistenceController(BigGraphProductionEnvironment)
-  def saveGraph = jsonGet(persistenceController.saveGraph)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
