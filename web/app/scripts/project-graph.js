@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('projectGraph', function ($resource, util) {
+angular.module('biggraph').directive('projectGraph', function (util) {
   return {
     restrict: 'E',
     scope: { left: '=', right: '=', leftToRightPath: '=' },

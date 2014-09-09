@@ -106,11 +106,16 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
         manager.vertexSet(vsPath), s"Couldn't resolve vertex set of project $projectName"))
       .getOrElse(null)
   }
-  def vertexSet_=(e: VertexSet) = manager.synchronized {
+  def vertexSet_=(e: VertexSet): Unit = {
+    updateVertexSet(e, killSegmentations = true)
+  }
+
+  private def updateVertexSet(e: VertexSet, killSegmentations: Boolean) = manager.synchronized {
     if (e != vertexSet) {
       // TODO: "Induce" the edges and attributes to the new vertex set.
       edgeBundle = null
       vertexAttributes = Map()
+      if (killSegmentations) segmentations.foreach(_.remove())
     }
     set("vertexSet", e)
     if (e != null) {
@@ -128,7 +133,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val origVAttrs = vertexAttributes.toIndexedSeq
     val origEB = edgeBundle
     val origEAttrs = edgeAttributes.toIndexedSeq
-    vertexSet = injection.srcVertexSet
+
+    updateVertexSet(injection.srcVertexSet, killSegmentations = false)
     origVAttrs.foreach {
       case (name, attr) =>
         vertexAttributes(name) =
