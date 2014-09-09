@@ -71,10 +71,10 @@ angular
         return s.replace(/_/g, ' ');
       },
       ajaxError: function(resp) {
-        util.error(util.responseToErrorMessage(resp));
+        util.error(util.responseToErrorMessage(resp), { request: resp.config.url, data: resp.config.data });
       },
-      error: function(msg) {
-        $rootScope.$broadcast('topAlert', msg);
+      error: function(message, details) {
+        $rootScope.$broadcast('topAlert', { message: message, details: details });
       },
       responseToErrorMessage: function(resp) {
         return resp.data.error || resp.data || (resp.config.url + ' ' + (resp.statusText || 'failed'));
