@@ -188,6 +188,12 @@ trait InputSignature {
 trait InputSignatureProvider {
   def inputSignature: InputSignature
 }
+case class SimpleInputSignature(
+  vertexSets: Set[Symbol] = Set(),
+  edgeBundles: Map[Symbol, (Symbol, Symbol)] = Map(),
+  vertexAttributes: Map[Symbol, Symbol] = Map(),
+  edgeAttributes: Map[Symbol, Symbol] = Map(),
+  scalars: Set[Symbol] = Set()) extends InputSignature
 
 trait FieldNaming {
   private lazy val naming: IdentityHashMap[Any, Symbol] = {
@@ -665,13 +671,6 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
 /* ============================================================================================ */
 /* ================================= LEGACY STUFF ============================================= */
 /* ============================================================================================ */
-
-case class SimpleInputSignature(
-  vertexSets: Set[Symbol] = Set(),
-  edgeBundles: Map[Symbol, (Symbol, Symbol)] = Map(),
-  vertexAttributes: Map[Symbol, Symbol] = Map(),
-  edgeAttributes: Map[Symbol, Symbol] = Map(),
-  scalars: Set[Symbol] = Set()) extends InputSignature
 
 case class SimpleMetaDataSetProvider(metaDataSet: MetaDataSet) extends MetaDataSetProvider
 
