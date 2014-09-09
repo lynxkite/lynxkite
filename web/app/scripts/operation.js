@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('operation', function ($resource, util) {
+angular.module('biggraph').directive('operation', function (util) {
   return {
     restrict: 'E',
     scope: { op: '=', side: '=' },
@@ -32,7 +32,8 @@ angular.module('biggraph').directive('operation', function ($resource, util) {
           }
         });
         scope.running = true;
-        scope.side.applyOp(scope.op.id, reqParams, function() { scope.running = false; });
+        scope.side.applyOp(scope.op.id, reqParams)
+          .then(function() { scope.running = false; });
       };
     }
   };
