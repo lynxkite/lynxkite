@@ -40,7 +40,7 @@ angular
           req.error = 'Redirecting to login page.';
           window.location.href = '/authenticate/google';
         } else {
-          req.error = util.errorMessage(failure);
+          req.error = util.responseToErrorMessage(failure);
         }
       });
       return req;
@@ -70,14 +70,14 @@ angular
       spaced: function(s) {
         return s.replace(/_/g, ' ');
       },
-      ajaxError: function(err) {
-        util.error(util.errorMessage(err));
+      ajaxError: function(resp) {
+        util.error(util.responseToErrorMessage(resp));
       },
       error: function(msg) {
         $rootScope.$broadcast('topAlert', msg);
       },
-      errorMessage: function(err) {
-        return err.data.error || err.data || (err.config.url + ' ' + (err.statusText || 'failed'));
+      responseToErrorMessage: function(resp) {
+        return resp.data.error || resp.data || (resp.config.url + ' ' + (resp.statusText || 'failed'));
       },
     };
     return util;
