@@ -14,8 +14,16 @@
   </progressbar>
 
   <div class="panel panel-danger" ng-if="side.project.error">
-    <div class="panel-heading">
-      Error
+    <div class="panel-heading project-name">
+      {{side.state.projectName}}
+
+      <div class="btn-group pull-right">
+        <label class="btn btn-default" ng-click="side.close()"
+          tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-remove"></i>
+        </label>
+      </div>
+      <div class="clearfix"></div>
     </div>
     <div class="panel-body">
       {{side.project.error}}

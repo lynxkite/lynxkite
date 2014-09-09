@@ -12,13 +12,14 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 case class Filename(
     val filename: String,
-    val awsAccessKeyId: String = "",
-    val awsSecretAccessKey: String = "") {
+    val awsAccessKeyId: String,
+    val awsSecretAccessKey: String) {
   override def toString() = filename
   def fullString = if (awsAccessKeyId.isEmpty) filename else {
     filename.replace("s3n://", s"s3n://$awsAccessKeyId:$awsSecretAccessKey@")
   }
   def isEmpty = filename.isEmpty
+  def nonEmpty = filename.nonEmpty
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = new hadoop.conf.Configuration()
     conf.set("fs.s3n.awsAccessKeyId", awsAccessKeyId)
@@ -109,11 +110,11 @@ case class Filename(
 }
 object Filename {
   private val filenamePattern = "(s3n?)://(.+):(.+)@(.+)".r
-  def fromString(str: String): Filename = {
+  def apply(str: String): Filename = {
     str match {
       case filenamePattern(protocol, id, key, path) =>
-        Filename(protocol + "://" + path, id, key)
-      case _ => Filename(str)
+        new Filename(protocol + "://" + path, id, key)
+      case _ => new Filename(str, "", "")
     }
   }
 }
