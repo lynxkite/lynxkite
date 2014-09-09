@@ -108,7 +108,10 @@ object ProductionJsonServer extends JsonServer {
   implicit val wEdgeDiagramResponse = json.Json.writes[EdgeDiagramResponse]
 
   implicit val rFEGraphRequest = json.Json.reads[FEGraphRequest]
-  implicit val wFEGraphRespone = json.Json.writes[FEGraphRespone]
+  implicit val wFEGraphResponse = json.Json.writes[FEGraphResponse]
+
+  implicit val rCenterRequest = json.Json.reads[CenterRequest]
+  implicit val wCenterResponse = json.Json.writes[CenterResponse]
 
   implicit val rHistogramSpec = json.Json.reads[HistogramSpec]
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
@@ -180,6 +183,7 @@ object ProductionJsonServer extends JsonServer {
   def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
   def edgeDiagram = jsonGet(drawingController.getEdgeDiagram)
   def complexView = jsonGet(drawingController.getComplexView)
+  def center = jsonGet(drawingController.getCenter)
   def histo = jsonGet(drawingController.getHistogram)
   def scalarValue = jsonGet(drawingController.getScalarValue)
 }

@@ -65,10 +65,10 @@ svg .vertex.sampled circle {
   cursor: pointer;
 }
 svg .vertex.center circle {
-  fill: #744;
+  fill: blue;
 }
 svg .vertex.center.highlight circle {
-  fill: #FAA;
+  fill: lightblue;
 }
 
 svg .bucket {

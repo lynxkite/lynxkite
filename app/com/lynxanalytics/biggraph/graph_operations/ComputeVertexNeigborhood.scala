@@ -9,13 +9,12 @@ object ComputeVertexNeighborhood {
     val edges = edgeBundle(vertices, vertices)
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-    val center = scalar[ID]
     val neighborsIdToIndex = scalar[Map[ID, Int]]
   }
 }
 import ComputeVertexNeighborhood._
 case class ComputeVertexNeighborhood(
-    center: Option[ID],
+    center: ID,
     radius: Int) extends TypedMetaGraphOp[Input, Output] {
 
   @transient override lazy val inputs = new Input
@@ -27,8 +26,7 @@ case class ComputeVertexNeighborhood(
     val vs = inputs.vertices.rdd
     val es = inputs.edges.rdd
     val vsPart = vs.partitioner.get
-    val c = center.getOrElse(vs.keys.first)
-    var neigborhood = Set(c)
+    var neigborhood = Set(center)
     for (i <- 0 until radius) {
       neigborhood ++= es
         .values
@@ -38,7 +36,6 @@ case class ComputeVertexNeighborhood(
         .collect
         .toSet
     }
-    output(o.center, c)
     output(o.neighborsIdToIndex, neigborhood.zipWithIndex.toMap)
   }
 }

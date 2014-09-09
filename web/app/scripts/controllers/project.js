@@ -46,6 +46,10 @@ angular.module('biggraph')
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
 
+      if (vd.graphMode === 'sampled' && !this.state.center) {
+        this.requestNewCenter();
+        return;
+      }
       vd.center = this.state.center;
       var that = this;
       vd.setCenter = function(id) { that.state.center = id; };
@@ -55,7 +59,23 @@ angular.module('biggraph')
       vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
       vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
       vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+
       this.viewData = vd;
+    };
+
+    Side.prototype.requestNewCenter = function() {
+      var that = this;
+      $resource('/ajax/center').get( { q: {
+          vertexSetId: this.project.vertexSet,
+          filters: this.nonEmptyFilters() || '',
+        }},
+        function(result) {
+          console.log(result);
+          that.state.center = result.center[0]; // visualize the first value only for now
+        },
+        function(response) {
+          console.error(response);
+        });
     };
 
     Side.prototype.shortName = function() {
