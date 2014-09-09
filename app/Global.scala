@@ -13,9 +13,10 @@ object Global extends GlobalSettings {
     concurrent.Future.successful(NotFound(request.toString))
   }
   private def rootCause(t: Throwable): Throwable = Option(t.getCause).map(rootCause(_)).getOrElse(t)
-  private val assertionFailed = "assertion failed: (.*)".r
-  private def format(t: Throwable): String = rootCause(t).getMessage match {
-    case assertionFailed(e) => e
-    case e => e
+  private val assertionFailed = "^assertion failed: ".r
+  private def format(t: Throwable): String = rootCause(t) match {
+    // Trim "assertion failed: " from AssertionErrors.
+    case e: AssertionError => assertionFailed.replaceFirstIn(e.getMessage, "")
+    case e => e.getMessage
   }
 }
