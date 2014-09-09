@@ -8,7 +8,8 @@ angular.module('biggraph').directive('topAlerts', function() {
       scope.alerts = [];
       scope.$on('topAlert', function(evt, msg) {
         scope.alerts.push({
-          message: msg,
+          message: msg.message,
+          details: msg.details,
           time: new Date(),
         });
       });
@@ -17,10 +18,14 @@ angular.module('biggraph').directive('topAlerts', function() {
       };
       scope.mailto = function(alert) {
         var support = 'rnd-team@lynxanalytics.com';
+        var body = 'Happened at ' + window.location.href + ' on ' + alert.time + '\n\nPlease advise.';
+        if (alert.details) {
+          body += '\n\nExtra info:\n\n' + JSON.stringify(alert.details, null, '  ');
+        }
         return (
           'mailto:' + support +
           '?subject=' + encodeURIComponent('[Issue] ' + alert.message) +
-          '&body=' + encodeURIComponent('Happened at ' + window.location.href + ' on ' + alert.time + '\n\nPlease advise.')
+          '&body=' + encodeURIComponent(body)
           );
       };
     }

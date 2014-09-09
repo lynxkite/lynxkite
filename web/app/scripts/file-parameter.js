@@ -40,7 +40,7 @@ angular.module('biggraph').directive('fileParameter', function(util) {
                 if (xhr.status === 200) {  // SUCCESS
                   scope.filename = xhr.responseText;
                 } else {
-                  util.error('File upload failed.');
+                  util.error('File upload failed.', { file: file });
                 }
                 scope.fileUploads -= 1;
                 scope.uploading = false;
