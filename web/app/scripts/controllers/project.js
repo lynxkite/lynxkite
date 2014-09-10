@@ -21,7 +21,11 @@ angular.module('biggraph')
       };
     }
 
-    function Side() {
+    function Side(options) {
+      var that = this;
+      angular.forEach(options, function(value, key) {
+        that[key] = value;
+      });
       // The state of controls. E.g. bucket count.
       this.state = defaultSideState();
       // Everything needed for a view (state included), use this for rendering graph view instead of using state directly.
@@ -304,7 +308,7 @@ angular.module('biggraph')
     $scope.$watch('left.project.$resolved', function() { $scope.left.loadScalars(); });
     $scope.$watch('right.project.$resolved', function() { $scope.right.loadScalars(); });
 
-    $scope.left = new Side();
+    $scope.left = new Side({ primary: true });
     $scope.right = new Side();
     $scope.sides = [$scope.left, $scope.right];
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
