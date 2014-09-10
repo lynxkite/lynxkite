@@ -12,16 +12,9 @@ angular.module('biggraph').directive('histogramButton', function(util) {
           scope.histogram = undefined;
           return;
         }
-        var filters = [];
-        var state = scope.side.state;
-        for (var filteredAttr in state.filters) {
-          if (state.filters[filteredAttr] !== '') {
-            filters.push({ attributeId: filteredAttr, valueSpec: state.filters[filteredAttr] });
-          }
-        }
         var q = {
           attributeId: scope.attr.id,
-          vertexFilters: filters,
+          vertexFilters: scope.side.nonEmptyFilters(),
           numBuckets: 20,
         };
         scope.histogram = util.get('/ajax/histo', q);

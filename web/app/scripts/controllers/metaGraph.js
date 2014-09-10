@@ -173,10 +173,7 @@ angular.module('biggraph')
       };
       ApplyOperation.get(
         {q: request},
-        function(result) {
-          if (!result.success) {
-            $scope.alerts.push({type: 'danger', msg: result.failureReason});
-          }
+        function() {
           update();
         },
         function(response) {

@@ -26,6 +26,11 @@ object DeriveJS {
     val op = DeriveJSDouble(JavaScript("a + b"), Seq("a", "b"), Seq(), Seq())
     op(op.numAttrs, Seq(a, b)).result.attr
   }
+  def negative(x: VertexAttribute[Double])(implicit manager: MetaGraphManager): VertexAttribute[Double] = {
+    import Scripting._
+    val op = DeriveJSDouble(JavaScript("-x"), Seq("x"), Seq(), Seq())
+    op(op.numAttrs, Seq(x)).result.attr
+  }
 }
 import DeriveJS._
 abstract class DeriveJS[T](

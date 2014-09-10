@@ -1,11 +1,19 @@
 'use strict';
 
-angular.module('biggraph').directive('projectSelector', function($resource, util) {
+angular.module('biggraph').directive('projectSelector', function(util, hotkeys) {
   return {
     restrict: 'E',
     scope: { name: '=', version: '=?' },
     templateUrl: 'project-selector.html',
-    link: function(scope) {
+    link: function(scope, element) {
+      hotkeys.bindTo(scope)
+        .add({
+          combo: 'c', description: 'Create new project',
+          callback: function(e) { e.preventDefault(); scope.expandNewProject = true; },
+        });
+      scope.$watch('expandNewProject', function(ex) {
+        if (ex) { element.find('#new-project-name')[0].focus(); }
+      });
       scope.util = util;
       scope.data = util.nocache('/ajax/splash');
       scope.$watch('data.version', function(v) { scope.version = v; });
@@ -31,12 +39,15 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         scope.newProject.sending = true;
         var name = scope.newProject.name.replace(/ /g, '_');
         var notes = scope.newProject.notes;
-        $resource('/ajax/createProject').save({ name: name, notes: notes || '' }, function() {
-          scope.name = name;
-        }, function(error) {
-          console.error(error);
-          scope.newProject.sending = false;
-        });
+        util.post('/ajax/createProject',
+          {
+            name: name,
+            notes: notes || ''
+          }, function() {
+            scope.name = name;
+          }).then(function() {
+            scope.newProject.sending = false;
+          });
       };
       scope.setProject = function(p) {
         scope.name = p;
@@ -46,11 +57,9 @@ angular.module('biggraph').directive('projectSelector', function($resource, util
         event.preventDefault();
         event.stopPropagation();
         if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
-          $resource('/ajax/discardProject').save({ name: p }, function() {
+          util.post('/ajax/discardProject', { name: p }, function() {
             // refresh splash manually
             scope.data = util.nocache('/ajax/splash');
-          }, function(error) {
-            console.error(error);
           });
         }
       };

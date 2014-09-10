@@ -50,8 +50,8 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(manager.attributes(firstEdges).toSet == Set(firstEattr))
 
     // Dependent operations linked as expected.
-    assert(manager.dependentOperations(firstVertices).toSet == Set(secondInstance))
-    assert(manager.dependentOperations(firstVattr).toSet == Set(secondInstance))
+    assert(manager.dependentOperations(firstVertices).contains(secondInstance))
+    assert(manager.dependentOperations(firstVattr).contains(secondInstance))
   }
 
   test("Sometimes, there is no such component") {
@@ -103,21 +103,53 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   }
 }
 
-private case class CreateSomeGraph() extends MetaGraphOperation {
-  def signature = newSignature
-    .outputGraph('vertices, 'edges)
-    .outputVertexAttribute[Long]('vattr, 'vertices)
-    .outputEdgeAttribute[String]('eattr, 'edges)
+private object CreateSomeGraph {
+  class Input extends MagicInputSignature {
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    val (vertices, edges) = graph
+    val vattr = vertexAttribute[Long](vertices)
+    val eattr = edgeAttribute[String](edges)
+  }
+}
+private case class CreateSomeGraph()
+    extends TypedMetaGraphOp[CreateSomeGraph.Input, CreateSomeGraph.Output] {
+  import CreateSomeGraph._
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = ???
+  @transient override lazy val inputs = new Input()
+
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = ???
 }
 
-private case class FromVertexAttr() extends MetaGraphOperation {
-  def signature = newSignature
-    .inputVertexSet('inputVertices)
-    .inputVertexAttribute[Long]('inputAttr, 'inputVertices)
-    .outputVertexSet('attrValues)
-    .outputEdgeBundle('links, 'attrValues -> 'inputVertices)
+private object FromVertexAttr {
+  class Input extends MagicInputSignature {
+    val inputVertices = vertexSet
+    val inputAttr = vertexAttribute[Long](inputVertices)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    val attrValues = vertexSet
+    val links = edgeBundle(attrValues, inputs.inputVertices.entity)
+  }
+}
+private case class FromVertexAttr()
+    extends TypedMetaGraphOp[FromVertexAttr.Input, FromVertexAttr.Output] {
+  import FromVertexAttr._
 
-  def execute(inputs: DataSet, outputs: DataSetBuilder, rc: RuntimeContext): Unit = ???
+  @transient override lazy val inputs = new Input()
+
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = ???
 }

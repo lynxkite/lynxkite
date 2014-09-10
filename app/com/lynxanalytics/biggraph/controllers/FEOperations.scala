@@ -20,7 +20,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("size", "Vertex set size"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.CreateVertexSet(params("size").toInt))
-      FEStatus.success
     }
   }
 
@@ -38,7 +37,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
         graph_operations.SimpleRandomEdgeBundle(params("seed").toInt, params("density").toFloat),
         'vsSrc -> manager.vertexSet(params("vsSrc").asUUID),
         'vsDst -> manager.vertexSet(params("vsDst").asUUID))
-      FEStatus.success
     }
   }
 
@@ -53,12 +51,11 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("filter", "(optional) Filtering expression"))
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        Filename(params("files")),
         params("delimiter"),
         params("header"),
         JavaScript(params("filter")))
       manager.show(graph_operations.ImportVertexList(csv))
-      FEStatus.success
     }
   }
 
@@ -75,14 +72,13 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("filter", "(optional) Filtering expression"))
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        Filename(params("files")),
         params("delimiter"),
         params("header"),
         JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
       manager.show(graph_operations.ImportEdgeList(csv, src, dst))
-      FEStatus.success
     }
   }
 
@@ -101,7 +97,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("filter", "(optional) Filtering expression"))
     def apply(params: Map[String, String]) = {
       val csv = graph_operations.CSV(
-        Filename.fromString(params("files")),
+        Filename(params("files")),
         params("delimiter"),
         params("header"),
         JavaScript(params("filter")))
@@ -111,7 +107,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
         graph_operations.ImportEdgeListForExistingVertexSet(csv, srcField, dstField),
         'srcVidAttr -> manager.vertexAttribute(params("vsSrc").asUUID),
         'dstVidAttr -> manager.vertexAttribute(params("vsDst").asUUID))
-      FEStatus.success
     }
   }
 
@@ -125,7 +120,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.FindMaxCliques(params("min").toInt),
         'es -> manager.edgeBundle(params("es").asUUID))
-      FEStatus.success
     }
   }
 
@@ -139,7 +133,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.SetOverlap(params("min").toInt),
         'belongsTo -> manager.edgeBundle(params("belongsTo").asUUID))
-      FEStatus.success
     }
   }
 
@@ -153,7 +146,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.UniformOverlapForCC(params("min").toInt),
         'belongsTo -> manager.edgeBundle(params("belongsTo").asUUID))
-      FEStatus.success
     }
   }
 
@@ -167,7 +159,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.InfocomOverlapForCC(params("thr").toDouble),
         'belongsTo -> manager.edgeBundle(params("belongsTo").asUUID))
-      FEStatus.success
     }
   }
 
@@ -180,7 +171,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.ConnectedComponents(),
         'es -> manager.edgeBundle(params("es").asUUID))
-      FEStatus.success
     }
   }
 
@@ -195,7 +185,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       manager.show(graph_operations.ConcatenateBundles(),
         'weightsAB -> manager.edgeAttribute(params("wAB").asUUID),
         'weightsBC -> manager.edgeAttribute(params("wBC").asUUID))
-      FEStatus.success
     }
   }
 
@@ -212,7 +201,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       val op = graph_operations.AddConstantDoubleAttribute(params("v").toDouble)
       val vertexAttr = op(op.vs, edges.asVertexSet).result.attr
       manager.show(Seq(vertexAttr.asEdgeAttribute(edges)))
-      FEStatus.success
     }
   }
 
@@ -228,7 +216,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       import Scripting._
       val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
       manager.show(op(op.vertices, vertices).result.metaDataSet)
-      FEStatus.success
     }
   }
 
@@ -242,7 +229,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       manager.show(
         graph_operations.ReverseEdges(),
         'esAB -> manager.edgeBundle(params("eb").asUUID))
-      FEStatus.success
     }
   }
 
@@ -256,7 +242,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       manager.show(
         graph_operations.ClusteringCoefficient(),
         'es -> manager.edgeBundle(params("eb").asUUID))
-      FEStatus.success
     }
   }
 
@@ -270,7 +255,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       manager.show(
         graph_operations.OutDegree(),
         'es -> manager.edgeBundle(params("w").asUUID))
-      FEStatus.success
     }
   }
 
@@ -281,7 +265,6 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val parameters = Seq()
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.ExampleGraph())
-      FEStatus.success
     }
   }
 
@@ -294,7 +277,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("eattrs", "Edge attributes", kind = "multi-edge-attribute"),
       Param("type", "Convert into", options = UIValue.seq(Seq("string", "double"))))
 
-    def apply(params: Map[String, String]): FEStatus = {
+    def apply(params: Map[String, String]) = {
       val vattrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")
       val eattrs: Seq[String] = if (params("eattrs").isEmpty) Nil else params("eattrs").split(",")
       val vas = vattrs.map(s => manager.vertexAttribute(s.asUUID))
@@ -303,17 +286,16 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       if (typ == "string") {
         val okVAs = vas.filter(!_.is[String])
         val okEAs = eas.filter(!_.is[String])
-        if (okVAs.isEmpty && okEAs.isEmpty) return FEStatus.failure("Nothing to convert.")
+        assert(okVAs.nonEmpty || okEAs.nonEmpty, "Nothing to convert.")
         for (va <- okVAs) manager.show(graph_operations.VertexAttributeToString(), 'attr -> va)
         for (ea <- okEAs) manager.show(graph_operations.EdgeAttributeToString(), 'attr -> ea)
       } else if (typ == "double") {
         val okVAs = vas.filter(_.is[String])
         val okEAs = eas.filter(_.is[String])
-        if (okVAs.isEmpty && okEAs.isEmpty) return FEStatus.failure("Nothing to convert.")
+        assert(okVAs.nonEmpty || okEAs.nonEmpty, "Nothing to convert.")
         for (va <- okVAs) manager.show(graph_operations.VertexAttributeToDouble(), 'attr -> va)
         for (ea <- okEAs) manager.show(graph_operations.EdgeAttributeToDouble(), 'attr -> ea)
       } else assert(false, s"Unexpected type: $typ")
-      FEStatus.success
     }
   }
 
@@ -323,10 +305,9 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val category = "Edge operations"
     val parameters = Seq(
       Param("es", "Edges", kind = "edge-bundle"))
-    def apply(params: Map[String, String]): FEStatus = {
+    def apply(params: Map[String, String]) = {
       manager.show(graph_operations.AddReversedEdges(),
         'es -> manager.edgeBundle(params("es").asUUID))
-      FEStatus.success
     }
   }
 
@@ -336,10 +317,9 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val category = "Edge operations"
     val parameters = Seq(
       Param("es", "Edges", kind = "edge-bundle"))
-    def apply(params: Map[String, String]): FEStatus = {
+    def apply(params: Map[String, String]) = {
       manager.show(graph_operations.EdgeGraph(),
         'es -> manager.edgeBundle(params("es").asUUID))
-      FEStatus.success
     }
   }
 
@@ -351,10 +331,9 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("ws", "Weights", kind = "edge-attribute"),
       Param("df", "Damping factor"),
       Param("iter", "Iterations"))
-    def apply(params: Map[String, String]): FEStatus = {
+    def apply(params: Map[String, String]) = {
       manager.show(graph_operations.PageRank(params("df").toDouble, params("iter").toInt),
         'weights -> manager.edgeAttribute(params("ws").asUUID))
-      FEStatus.success
     }
   }
 
@@ -364,10 +343,9 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
     val category = "Edge operations"
     val parameters = Seq(
       Param("es", "Edges", kind = "edge-bundle"))
-    def apply(params: Map[String, String]): FEStatus = {
+    def apply(params: Map[String, String]) = {
       manager.show(graph_operations.RemoveNonSymmetricEdges(),
         'es -> manager.edgeBundle(params("es").asUUID))
-      FEStatus.success
     }
   }
 }
