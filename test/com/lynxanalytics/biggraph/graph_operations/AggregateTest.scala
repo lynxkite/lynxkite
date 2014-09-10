@@ -49,7 +49,7 @@ class AggregateTest extends FunSuite with TestGraphOp {
   test("example graph - weighted out degree") {
     val g = ExampleGraph()().result
     val op = AggregateFromEdges[Double, Double](Aggregator.Sum())
-    val res = op(op.edges, g.edges)(op.eattr, g.weight.asVertexAttribute).result.srcAttr
+    val res = op(op.edges, g.edges)(op.eattr, g.weight).result.srcAttr
     assert(res.rdd.collect.toMap == Map(0 -> 1.0, 1 -> 2.0, 2 -> 7.0))
   }
 }

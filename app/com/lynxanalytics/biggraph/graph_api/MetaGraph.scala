@@ -28,6 +28,7 @@ sealed trait MetaGraphEntity extends Serializable {
   }
   override def toString = toStringStruct.toString
   def toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
+  def manager = source.manager
 }
 case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
   override def toString = {

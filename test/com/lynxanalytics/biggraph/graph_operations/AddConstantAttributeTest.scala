@@ -20,7 +20,7 @@ class AddConstantAttributeTest extends FunSuite with TestGraphOp {
 
   test("triangle edge attribute") {
     val g = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(2), 2 -> Seq(0))).result
-    val eAttr = AddConstantAttribute.edgeDouble(g.es, 100.0)
+    val eAttr = AddConstantAttribute(g.es.asVertexSet, 100.0)
 
     // join edge bundle and weight data to make an output that is easy to read
     val res = g.es.rdd.join(eAttr.rdd).map {

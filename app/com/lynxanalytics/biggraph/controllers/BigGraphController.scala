@@ -119,7 +119,7 @@ case class RedoProjectRequest(project: String)
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
                        edgeBundles: Seq[EdgeBundle] = Seq(),
                        vertexAttributes: Seq[VertexAttribute[_]] = Seq(),
-                       edgeAttributes: Seq[EdgeAttribute[_]] = Seq())
+                       edgeAttributes: Seq[VertexAttribute[_]] = Seq())
 
 class FEOperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
