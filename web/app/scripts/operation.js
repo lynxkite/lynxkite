@@ -22,7 +22,7 @@ angular.module('biggraph').directive('operation', function (util) {
       });
 
       scope.apply = function() {
-        if (!scope.op.enabled.success) { return; }
+        if (!scope.op.enabled.enabled) { return; }
         var reqParams = {};
         scope.op.parameters.forEach(function(p) {
           if (p.multipleChoice) {
