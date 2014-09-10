@@ -10,10 +10,12 @@ object ConcatenateBundles {
     val vsA = vertexSet
     val vsB = vertexSet
     val vsC = vertexSet
-    val edgesAB = edgeBundle(vsA, vsB)
-    val edgesBC = edgeBundle(vsB, vsC)
-    val weightsAB = edgeAttribute[Double](edgesAB)
-    val weightsBC = edgeAttribute[Double](edgesBC)
+    val idsAB = vertexSet
+    val idsBC = vertexSet
+    val edgesAB = edgeBundle(vsA, vsB, idSet = idsAB)
+    val edgesBC = edgeBundle(vsB, vsC, idSet = idsBC)
+    val weightsAB = vertexAttribute[Double](idsAB)
+    val weightsBC = vertexAttribute[Double](idsBC)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
@@ -25,7 +27,7 @@ object ConcatenateBundles {
       inputs.vsA.entity,
       inputs.vsC.entity,
       EdgeBundleProperties(isFunction = isFunction, isReversedFunction = isReversedFunction))
-    val weightsAC = edgeAttribute[Double](edgesAC)
+    val weightsAC = vertexAttribute[Double](edgesAC.asVertexSet)
   }
 }
 import ConcatenateBundles._

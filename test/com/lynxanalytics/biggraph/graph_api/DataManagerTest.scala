@@ -37,7 +37,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       "(2,Edge(2,0))\n" +
       "(3,Edge(2,1))")
     assert(TestUtils.RDDToSortedString(
-      dataManager.get(instance.outputs.edgeAttributes('comment)).rdd) ==
+      dataManager.get(instance.outputs.vertexAttributes('comment)).rdd) ==
       "(0,Adam loves Eve)\n" +
       "(1,Eve loves Adam)\n" +
       "(2,Bob envies Adam)\n" +
