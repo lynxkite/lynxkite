@@ -1,11 +1,19 @@
 'use strict';
 
-angular.module('biggraph').directive('projectSelector', function(util) {
+angular.module('biggraph').directive('projectSelector', function(util, hotkeys) {
   return {
     restrict: 'E',
     scope: { name: '=', version: '=?' },
     templateUrl: 'project-selector.html',
-    link: function(scope) {
+    link: function(scope, element) {
+      hotkeys.bindTo(scope)
+        .add({
+          combo: 'c', description: 'Create new project',
+          callback: function(e) { e.preventDefault(); scope.expandNewProject = true; },
+        });
+      scope.$watch('expandNewProject', function(ex) {
+        if (ex) { element.find('#new-project-name')[0].focus(); }
+      });
       scope.util = util;
       scope.data = util.nocache('/ajax/splash');
       scope.$watch('data.version', function(v) { scope.version = v; });
