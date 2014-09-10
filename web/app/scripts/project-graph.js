@@ -24,12 +24,10 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
         }
 
         var sides = [];
-        if (scope.left && scope.left.graphMode && (scope.left.vertexSet !== undefined) &&
-          (scope.left.graphMode !== 'sampled' || scope.left.center)) {
+        if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
             sides.push(scope.left);
         }
-        if (scope.right && scope.right.graphMode && (scope.right.vertexSet !== undefined) &&
-          (scope.right.graphMode !== 'sampled' || scope.right.center)) {
+        if (scope.right && scope.right.graphMode && scope.right.vertexSet !== undefined) {
             sides.push(scope.right);
         }
         if (sides.length === 0) { return; }

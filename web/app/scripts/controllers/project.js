@@ -37,7 +37,8 @@ angular.module('biggraph')
 
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
-      if (this.project === undefined || !this.project.$resolved) {
+      if (this.project === undefined || !this.project.$resolved &&
+        (this.state.graphMode === 'sampled' && !this.state.center)) {
         this.viewData = {};
         return;
       }
@@ -51,35 +52,33 @@ angular.module('biggraph')
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
 
-      if (vd.graphMode === 'sampled' && !this.state.center) {
-        this.requestNewCenter();
-        return;
-      }
       vd.center = this.state.center;
       var that = this;
       vd.setCenter = function(id) { that.state.center = [id]; };
 
-      // we don't just copy state to viewData as we need to transform some state variables
-      vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
-      vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
-      vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
-      vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+      if (this.state.graphMode === 'bucketed') {
+        // we don't just copy state to viewData as we need to transform some state variables
+        vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
+        vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
+        vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
+        vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+      }
 
       this.viewData = vd;
     };
 
-    Side.prototype.requestNewCenter = function() {
-      var that = this;
-      $resource('/ajax/center').get( { q: {
+    Side.prototype.requestNewCenter = function(force) {
+      if (force || !this.state.center) {
+        var params = {
           vertexSetId: this.project.vertexSet,
           filters: this.nonEmptyFilters() || '',
-        }},
-        function(result) {
-          that.state.center = result.center;
-        },
-        function(response) {
-          console.error(response);
-        });
+        };
+        var that = this;
+        util.get('/ajax/center', params).$promise.then(
+          function(result) { that.state.center = result.center; },
+          function(response) { util.ajaxError(response); }
+        );
+      }
     };
 
     Side.prototype.shortName = function() {
