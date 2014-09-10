@@ -13,7 +13,7 @@ angular.module('biggraph')
         graphMode: undefined,
         bucketCount: 4,
         sampleRadius: 1,
-        center: undefined,
+        center: [0],
       };
     }
     function defaultState() {
@@ -124,7 +124,7 @@ angular.module('biggraph')
         yBucketingAttributeId: '',
         yNumBuckets: 1,
         // Unused.
-        centralVertexId: '',
+        centralVertexIds: [],
         sampleSmearEdgeBundleId: '',
         radius: 0,
         labelAttributeId: '',
