@@ -8,7 +8,7 @@
       <a href ng-click="expandNewProject = true">
         <span class="lead" ng-hide="expandNewProject">A new project</span>
         <form ng-show="expandNewProject" class="form-inline" role="form">
-          <div class="form-group"><input placeholder="A new project" ng-model="newProject.name" class="form-control"></div>
+          <div class="form-group"><input id="new-project-name" placeholder="A new project" ng-model="newProject.name" class="form-control"></div>
           <div class="form-group">about</div>
           <div class="form-group"><input placeholder="Things and yokes." ng-model="newProject.notes" class="form-control"></div>
           <button type="submit" class="btn btn-default" ng-click="createProject()"

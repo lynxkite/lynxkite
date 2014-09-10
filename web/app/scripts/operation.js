@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('operation', function ($resource, util) {
+angular.module('biggraph').directive('operation', function (util, hotkeys) {
   return {
     restrict: 'E',
     scope: { op: '=', side: '=' },
@@ -22,7 +22,7 @@ angular.module('biggraph').directive('operation', function ($resource, util) {
       });
 
       scope.apply = function() {
-        if (!scope.op.enabled.success) { return; }
+        if (!scope.op.status.enabled) { return; }
         var reqParams = {};
         scope.op.parameters.forEach(function(p) {
           if (p.multipleChoice) {
@@ -32,8 +32,13 @@ angular.module('biggraph').directive('operation', function ($resource, util) {
           }
         });
         scope.running = true;
-        scope.side.applyOp(scope.op.id, reqParams, function() { scope.running = false; });
+        scope.side.applyOp(scope.op.id, reqParams)
+          .then(function() { scope.running = false; });
       };
+      hotkeys.bindTo(scope).add({
+        combo: 'enter',
+        callback: scope.apply,
+      });
     }
   };
 });

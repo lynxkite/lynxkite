@@ -25,7 +25,7 @@ package object biggraph {
       case staticRepoPattern(bigGraphDir, graphDataDir) =>
         new RepositoryDirs {
           val graphDir = bigGraphDir
-          val dataDir = Filename.fromString(graphDataDir)
+          val dataDir = Filename(graphDataDir)
         }
       case "local_random" => new TemporaryRepositoryDirs
     }

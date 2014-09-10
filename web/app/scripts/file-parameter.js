@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('fileParameter', function() {
+angular.module('biggraph').directive('fileParameter', function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -8,8 +8,6 @@ angular.module('biggraph').directive('fileParameter', function() {
       model: '=',
       // The number of ongoing uploads. It is incremented by 1 while an upload is in progress.
       fileUploads: '=',
-      // Whether the operation is enabled.
-      enabled: '=',
     },
     templateUrl: 'file-parameter.html',
     link: function(scope, element) {
@@ -40,7 +38,7 @@ angular.module('biggraph').directive('fileParameter', function() {
                 if (xhr.status === 200) {  // SUCCESS
                   scope.filename = xhr.responseText;
                 } else {
-                  console.error('Upload failed.');
+                  util.error('File upload failed.', { file: file });
                 }
                 scope.fileUploads -= 1;
                 scope.uploading = false;

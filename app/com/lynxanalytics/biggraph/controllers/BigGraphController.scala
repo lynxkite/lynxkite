@@ -8,15 +8,15 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
 
-case class FEStatus(success: Boolean, failureReason: String = "") {
-  def ||(other: => FEStatus) = if (success) this else other
-  def &&(other: => FEStatus) = if (success) other else this
+case class FEStatus(enabled: Boolean, disabledReason: String = "") {
+  def ||(other: => FEStatus) = if (enabled) this else other
+  def &&(other: => FEStatus) = if (enabled) other else this
 }
 object FEStatus {
-  val success = FEStatus(true)
-  def failure(failureReason: String) = FEStatus(false, failureReason)
-  def assert(condition: Boolean, failureReason: => String) =
-    if (condition) success else failure(failureReason)
+  val enabled = FEStatus(true)
+  def disabled(disabledReason: String) = FEStatus(false, disabledReason)
+  def assert(condition: Boolean, disabledReason: => String) =
+    if (condition) enabled else disabled(disabledReason)
 }
 
 case class VertexSetRequest(id: String)
@@ -34,7 +34,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: Seq[FEOperationParameterMeta],
-  enabled: FEStatus = FEStatus.success)
+  status: FEStatus = FEStatus.enabled)
 
 case class FEOperationParameterMeta(
     id: String,
@@ -76,7 +76,7 @@ abstract class FEOperation {
   val category: String
   val parameters: Seq[FEOperationParameterMeta]
   lazy val starting = parameters.forall(_.kind == "scalar")
-  def apply(params: Map[String, String]): FEStatus
+  def apply(params: Map[String, String]): Unit
 }
 
 case class FEAttribute(
@@ -188,7 +188,7 @@ class FEOperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  def applyOp(spec: FEOperationSpec): FEStatus =
+  def applyOp(spec: FEOperationSpec): Unit =
     operations(spec.id).apply(spec.parameters)
 
   private val operations = mutable.Map[String, FEOperation]()
@@ -230,7 +230,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     toFE(metaManager.vertexSet(request.id.asUUID))
   }
 
-  def applyOp(request: FEOperationSpec): FEStatus =
+  def applyOp(request: FEOperationSpec): Unit =
     operations.applyOp(request)
 
   def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
@@ -261,21 +261,19 @@ class BigGraphController(val env: BigGraphEnvironment) {
     return p.toFE.copy(opCategories = ops.categories(p))
   }
 
-  def createProject(request: CreateProjectRequest): serving.Empty = {
+  def createProject(request: CreateProjectRequest): Unit = {
     val p = Project(request.name)
     p.notes = request.notes
     p.checkpointAfter("") // Initial checkpoint.
-    return serving.Empty()
   }
 
-  def discardProject(request: DiscardProjectRequest): serving.Empty = {
+  def discardProject(request: DiscardProjectRequest): Unit = {
     Project(request.name).remove()
-    return serving.Empty()
   }
 
-  def projectOp(request: ProjectOperationRequest): FEStatus = ops.apply(request)
+  def projectOp(request: ProjectOperationRequest): Unit = ops.apply(request)
 
-  def filterProject(request: ProjectFilterRequest): FEStatus = {
+  def filterProject(request: ProjectFilterRequest): Unit = {
     val project = Project(request.project)
     val vertexSet = project.vertexSet
     assert(vertexSet != null)
@@ -283,22 +281,18 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val embedding = FEFilters.embedFilteredVertices(vertexSet, request.filters)
     project.pullBackWithInjection(embedding)
     project.checkpointAfter("Filter")
-    FEStatus.success
   }
 
-  def forkProject(request: ForkProjectRequest): FEStatus = {
+  def forkProject(request: ForkProjectRequest): Unit = {
     Project(request.from).copy(Project(request.to))
-    FEStatus.success
   }
 
-  def undoProject(request: UndoProjectRequest): FEStatus = {
+  def undoProject(request: UndoProjectRequest): Unit = {
     Project(request.project).undo()
-    FEStatus.success
   }
 
-  def redoProject(request: RedoProjectRequest): FEStatus = {
+  def redoProject(request: RedoProjectRequest): Unit = {
     Project(request.project).redo()
-    FEStatus.success
   }
 }
 
@@ -307,7 +301,7 @@ abstract class Operation(val project: Project, val category: Operation.Category)
   def title: String
   def parameters: Seq[FEOperationParameterMeta]
   def enabled: FEStatus
-  def apply(params: Map[String, String]): FEStatus
+  def apply(params: Map[String, String]): Unit
   def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled)
   protected def scalars[T: TypeTag] =
     UIValue.seq(project.scalarNames[T])
@@ -317,10 +311,10 @@ abstract class Operation(val project: Project, val category: Operation.Category)
     UIValue.seq(project.edgeAttributeNames[T])
   protected def segmentations =
     UIValue.seq(project.segmentationNames)
-  protected def hasVertexSet = if (project.vertexSet == null) FEStatus.failure("No vertices.") else FEStatus.success
-  protected def hasNoVertexSet = if (project.vertexSet != null) FEStatus.failure("Vertices already exist.") else FEStatus.success
-  protected def hasEdgeBundle = if (project.edgeBundle == null) FEStatus.failure("No edges.") else FEStatus.success
-  protected def hasNoEdgeBundle = if (project.edgeBundle != null) FEStatus.failure("Edges already exist.") else FEStatus.success
+  protected def hasVertexSet = FEStatus.assert(project.vertexSet != null, "No vertices.")
+  protected def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
+  protected def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
+  protected def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
 }
 object Operation {
   case class Category(title: String, color: String, visible: Boolean = true) {
@@ -343,25 +337,21 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def categories(project: Project): Seq[OperationCategory] = {
     val cats = forProject(project).groupBy(_.category).toSeq
     cats.filter(_._1.visible).sortBy(_._1.title).map {
-      case (cat, ops) => OperationCategory(cat.title, cat.icon, cat.color, ops.map(_.toFE))
+      case (cat, ops) =>
+        OperationCategory(cat.title, cat.icon, cat.color, ops.map(_.toFE).sortBy(_.title))
     }
   }
 
   def uIProjects: Seq[UIValue] = UIValue.seq(projects.map(_.projectName))
 
-  def apply(req: ProjectOperationRequest): FEStatus = manager.synchronized {
+  def apply(req: ProjectOperationRequest): Unit = manager.synchronized {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
     Try(ops.head.apply(req.op.parameters)) match {
-      case Success(s) if s.success =>
+      case Success(_) =>
         // Save changes.
         p.checkpointAfter(ops.head.title)
-        s
-      case Success(s) =>
-        // Discard potentially corrupt changes.
-        p.reloadCurrentCheckpoint()
-        throw new Exception(s.failureReason)
       case Failure(e) =>
         // Discard potentially corrupt changes.
         p.reloadCurrentCheckpoint()
