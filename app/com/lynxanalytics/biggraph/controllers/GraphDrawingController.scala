@@ -114,7 +114,7 @@ case class CenterRequest(
   filters: Seq[FEVertexAttributeFilter])
 
 case class CenterResponse(
-  val center: Seq[ID] = Seq(0))
+  val center: Seq[ID])
 
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -403,7 +403,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   def getCenter(request: CenterRequest): CenterResponse = {
-    CenterResponse(Seq(0, 3)) // temporary constant response
+    val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
+    cacheVertexAttributes(request.filters.map(_.attributeId))
+    val filtered = FEFilters.filter(vertexSet, request.filters)
+    CenterResponse(Seq(filtered.rdd.keys.first))
   }
 
   def getHistogram(request: HistogramSpec): HistogramResponse = {
