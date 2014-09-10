@@ -34,7 +34,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: Seq[FEOperationParameterMeta],
-  enabled: FEStatus = FEStatus.enabled)
+  status: FEStatus = FEStatus.enabled)
 
 case class FEOperationParameterMeta(
     id: String,
