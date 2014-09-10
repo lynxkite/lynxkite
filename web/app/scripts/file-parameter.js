@@ -8,8 +8,6 @@ angular.module('biggraph').directive('fileParameter', function(util) {
       model: '=',
       // The number of ongoing uploads. It is incremented by 1 while an upload is in progress.
       fileUploads: '=',
-      // Whether the operation is enabled.
-      enabled: '=',
     },
     templateUrl: 'file-parameter.html',
     link: function(scope, element) {

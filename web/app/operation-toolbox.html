@@ -1,16 +1,37 @@
-<div class="operation-toolbox row" ng-class="{ open: active }">
+<div class="operation-toolbox row" ng-class="{ open: active || searching }">
   <div class="col-sm-1 categories">
     <div ng-repeat="cat in side.project.opCategories"
       class="category {{cat.color}}" ng-class="{ active: active === cat }"
       tooltip-append-to-body="true" tooltip-placement="left" tooltip="{{cat.title}}"
-      ng-click="clicked(cat)">
+      ng-click="clickedCat(cat)">
       {{cat.icon}}
     </div>
   </div>
-  <div ng-if="active" class="panel box col-sm-11 {{active.color}}">
+  <div ng-if="active && !op" class="panel box col-sm-11 {{active.color}}">
     <h1>{{active.title}}</h1>
-    <div class="list-group" style="margin-bottom: 0;">
-      <operation ng-repeat="op in active.ops" op="op" side="side"></operation>
+    <div class="list-group">
+      <div ng-repeat="op in active.ops" ng-click="clickedOp(op)"
+          class="list-group-item operation" ng-class="{ disabled: !op.status.enabled }"
+          tooltip="{{op.status.disabledReason}}"
+          tooltip-append-to-body="true" tooltip-placement="left">
+        {{op.title}}
+      </div>
     </div>
+  </div>
+  <div ng-if="searching && !op" class="panel box col-sm-11 yellow">
+    <h1><input id="filter" ng-model="opFilter"></h1>
+    <div class="list-group">
+      <div ng-repeat="op in allOps | filter: opFilter | orderBy: 'title'" ng-click="clickedOp(op)"
+          class="list-group-item operation"
+          ng-class="{ disabled: !op.status.enabled, highlight: $index === searchSelection }"
+          tooltip="{{op.status.disabledReason}}"
+          tooltip-append-to-body="true" tooltip-placement="left">
+        {{op.title}}
+      </div>
+    </div>
+  </div>
+  <div ng-if="op" class="panel box col-sm-11 {{active.color || 'yellow'}}">
+    <h1>{{op.title}}</h1>
+    <operation class="list-group" op="op" side="side"></operation>
   </div>
 </div>

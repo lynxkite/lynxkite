@@ -6,7 +6,7 @@
       <i class="glyphicon glyphicon-plus"
         tooltip="Open&nbsp;project" tooltip-placement="bottom"></i>
     </button>
-    <project-selector name="side.state.projectName" ng-show="showProjectSelector"></project-selector>
+    <project-selector name="side.state.projectName" ng-if="showProjectSelector"></project-selector>
   </div>
 
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">

@@ -4,7 +4,8 @@ angular
   .module('biggraph', [
     'ngResource',
     'ngRoute',
-    'ui.bootstrap'
+    'ui.bootstrap',
+    'cfp.hotkeys',
   ])
   .config(function ($routeProvider) {
     $routeProvider
