@@ -76,8 +76,8 @@
           tooltip-placement="bottom">
           <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
         </label>
-        <form ng-show="side.state.graphMode == 'sampled'" style="display: inline;">
-          <input class="form-control center" placeholder="{{side.state.center}}" ng-model="side.state.center" ng-model-options="{ updateOn: 'blur' }">
+        <form ng-submit="side.state.center = convertToIntList(side.state.center)" ng-show="side.state.graphMode == 'sampled'" style="display: inline;">
+          <input class="form-control center" placeholder="{{side.state.center}}" ng-model="side.state.center" ng-list ng-model-options="{ updateOn: 'blur' }" tooltip="Set sample center(s)" tooltip-append-to-body="true" tooltip-placement="bottom">
         </form>
       </div>
 
