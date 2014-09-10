@@ -161,6 +161,10 @@ div.operation-toolboxes {
 .operation:hover {
   background: black !important;
 }
+.operation.highlight {
+  color: gold !important;
+  background: black !important;
+}
 .operation.disabled {
   color: rgba(255, 255, 255, 0.2) !important;
 }
@@ -178,6 +182,12 @@ div.operation-toolboxes {
 }
 .operation-toolbox .ok-button:hover {
   color: black;
+}
+
+.operation-toolbox #filter {
+  background: transparent;
+  border: 0;
+  outline: 0;
 }
 
 .scalar-value {

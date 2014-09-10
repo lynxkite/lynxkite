@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('operation', function (util) {
+angular.module('biggraph').directive('operation', function (util, hotkeys) {
   return {
     restrict: 'E',
     scope: { op: '=', side: '=' },
@@ -35,6 +35,10 @@ angular.module('biggraph').directive('operation', function (util) {
         scope.side.applyOp(scope.op.id, reqParams)
           .then(function() { scope.running = false; });
       };
+      hotkeys.bindTo(scope).add({
+        combo: 'enter',
+        callback: scope.apply,
+      });
     }
   };
 });
