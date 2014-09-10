@@ -130,7 +130,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
-    val centers = request.centralVertexIds.map(_.toLong)
+    val centers = request.centralVertexIds
 
     val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
     val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result

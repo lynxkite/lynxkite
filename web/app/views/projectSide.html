@@ -70,12 +70,11 @@
         </label>
         <form ng-submit="side.state.center = convertToIntList(side.state.center)"
           style="display: inline;">
-          <input class="form-control center" placeholder="{{side.state.center}}"
-            ng-model="side.state.center" ng-list ng-model-options="{ updateOn: 'blur' }"
-            tooltip="Set&nbsp;sample&nbsp;center(s)" tooltip-append-to-body="true"
-            tooltip-placement="bottom">
+          <input class="form-control center" ng-model="side.state.center" ng-list
+            ng-model-options="{ updateOn: 'blur' }" tooltip="Set&nbsp;sample&nbsp;center(s)"
+            tooltip-append-to-body="true" tooltip-placement="bottom">
         </form>
-        <label class="btn btn-default" ng-click="side.requestNewCenter()"
+        <label class="btn btn-default" ng-click="side.requestNewCenter(true)"
           tooltip="New&nbsp;sample from&nbsp;filtered&nbsp;vertices"
           tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-refresh"></i>
@@ -89,7 +88,7 @@
           <i class="glyphicon glyphicon-th"></i>
         </label>
         <label ng-if="side.project.edgeBundle !== ''" class="btn btn-default"
-          ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
+          ng-model="side.state.graphMode" btn-radio="'sampled'" ng-click="side.requestNewCenter(false)" uncheckable
           tooltip="Sampled&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
         </label>
