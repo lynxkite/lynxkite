@@ -39,22 +39,24 @@ angular.module('biggraph')
 
       vd.vertexSet = { id: this.project.vertexSet };
       if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
-
-      vd.filters = this.state.filters;
       vd.graphMode = this.state.graphMode;
       vd.bucketCount = this.state.bucketCount;
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
-
       vd.center = this.state.center;
       var that = this;
       vd.setCenter = function(id) { that.state.center = id; };
 
-      // we don't just copy state to viewData as we need to transform some state variables
+      // "state" uses attribute names, while "viewData" uses attribute UUIDs.
       vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
       vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
       vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
       vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+      vd.filters = [];
+      for(var name in this.state.filters) {
+        vd.filters[this.resolveVertexAttribute(name)] = this.state.filters[name];
+      }
+
       this.viewData = vd;
     };
 
@@ -216,11 +218,14 @@ angular.module('biggraph')
       this.applyOp('Discard-' + kind, { name: name });
     };
 
+    // Returns resolved filters (i.e. keyed by UUID).
     Side.prototype.nonEmptyFilters = function() {
       var res = [];
       for (var attr in this.state.filters) {
         if (this.state.filters[attr] !== '') {
-          res.push({ attributeId: attr, valueSpec: this.state.filters[attr] });
+          res.push({
+            attributeId: this.resolveVertexAttribute(attr),
+            valueSpec: this.state.filters[attr] });
         }
       }
       return res;
