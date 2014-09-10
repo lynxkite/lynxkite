@@ -1,4 +1,4 @@
-<form class="form-horizontal list-group-item">
+<form class="form-horizontal list-group-item" ng-submit="apply()">
   <div class="form-group" ng-repeat="param in op.parameters">
     <label for="{{param.id}}" class="col-sm-4 control-label">{{param.title}}</label>
     <div class="col-sm-8">

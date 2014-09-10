@@ -1,4 +1,4 @@
-<div class="operation-toolbox row" ng-class="{ open: active }">
+<div class="operation-toolbox row" ng-class="{ open: active || searching }">
   <div class="col-sm-1 categories">
     <div ng-repeat="cat in side.project.opCategories"
       class="category {{cat.color}}" ng-class="{ active: active === cat }"
@@ -16,7 +16,17 @@
       </div>
     </div>
   </div>
-  <div ng-if="active && op" class="panel box col-sm-11 {{active.color}}">
+  <div ng-if="searching && !op" class="panel box col-sm-11 yellow">
+    <h1><input id="filter" ng-model="opFilter"></h1>
+    <div class="list-group">
+      <div class="list-group-item operation" ng-repeat="op in allOps | filter: opFilter | orderBy: 'title'"
+          ng-click="clickedOp(op)" ng-class="{ disabled: !op.status.enabled, highlight: $index === searchSelection }"
+          tooltip="{{op.status.disabledReason}}" tooltip-append-to-body="true" tooltip-placement="left">
+        {{op.title}}
+      </div>
+    </div>
+  </div>
+  <div ng-if="op" class="panel box col-sm-11 {{active.color || 'yellow'}}">
     <h1>{{op.title}}</h1>
     <operation class="list-group" op="op" side="side"></operation>
   </div>
