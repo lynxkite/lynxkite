@@ -89,6 +89,9 @@ angular
       responseToErrorMessage: function(resp) {
         return resp.data.error || resp.data || (resp.config.url + ' ' + (resp.statusText || 'failed'));
       },
+      convertToIntList: function(stringList) {
+        return stringList.map(function(item) { return parseInt(item); } );
+      },
     };
     return util;
   });

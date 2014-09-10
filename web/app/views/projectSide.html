@@ -76,8 +76,7 @@
           tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
         </label>
-        <form ng-submit="side.state.center = convertToIntList(side.state.center)"
-          style="display: inline;">
+        <form style="display: inline;">
           <input class="form-control center" ng-model="side.state.center" ng-list
             ng-model-options="{ updateOn: 'blur' }" tooltip="Set&nbsp;sample&nbsp;center(s)"
             tooltip-append-to-body="true" tooltip-placement="bottom">
