@@ -1,11 +1,14 @@
-<input ng-hide="uploading" class="form-control" ng-model="filename">
-
-<progressbar ng-show="uploading" value="progress" class="progress-striped">
-  {{progress}}%
-</progressbar>
-
-<p class="text-right">
-  <span class="clicky glyphicon glyphicon-cloud-upload" tooltip="Upload" ng-click="dialog()"></span>
-</p>
-
+<table style="width: 100%;">
+  <tr>
+    <td style="width: 100%;">
+      <input ng-hide="uploading" class="form-control" ng-model="filename">
+      <progressbar ng-show="uploading" value="progress">
+        {{progress}}%
+      </progressbar>
+    </td>
+    <td>
+      <span class="clicky glyphicon glyphicon-cloud-upload" tooltip="Upload" ng-click="dialog()"></span>
+    </td>
+  </tr>
+</table>
 <input type="file" style="display: none;" ng-model="files" ng-change="upload(this.files)">

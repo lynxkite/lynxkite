@@ -194,6 +194,14 @@ div.operation-toolboxes {
   outline: 0;
 }
 
+operation file-parameter .progress {
+  height: 34px;
+  margin-bottom: 0;
+}
+operation file-parameter .progress-bar {
+  line-height: 32px;
+}
+
 .scalar-value {
   min-width: 60px;
   display: inline-block;

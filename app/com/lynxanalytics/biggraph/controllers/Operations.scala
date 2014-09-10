@@ -96,7 +96,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   val importHelpText =
     """ Wildcard (foo/*.csv) and glob (foo/{bar,baz}.csv) patterns are accepted. S3 paths must
       include the key name and secret key in the following format:
-        <tt>s3n://key name:secret key@bucket/dir/file</tt>
+        <tt>s3n://key_name:secret_key@bucket/dir/file</tt>
       """
 
   register(new VertexOperation(_) {
