@@ -96,7 +96,10 @@ case class FEGraphRespone(
 case class HistogramSpec(
   attributeId: String,
   vertexFilters: Seq[FEVertexAttributeFilter],
-  numBuckets: Int)
+  numBuckets: Int,
+  // Set only if we ask for an edge attribute histogram and provided vertexFilters should be
+  // applied on the end-vertices of edges.
+  edgeBundleId: String = "")
 
 case class HistogramResponse(
     labelType: String,
@@ -372,51 +375,54 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return FEGraphRespone(vertexDiagrams, edgeDiagrams)
   }
 
-  /*private def getFilteredVS(
-    attribute: VertexAttribute[_], vertexFilters: Seq[FEVertexAttributeFilter]): VertexSet = {
+  private def getFilteredVS(
+    vertexSet: VertexSet,
+    vertexFilters: Seq[FEVertexAttributeFilter]): VertexSet = {
 
-    attribute match {
-      case vertexAttribute: VertexAttribute[_] =>
-        cacheVertexAttributes(vertexFilters.map(_.attributeId))
-        FEFilters.filter(vertexAttribute.vertexSet, vertexFilters)
-      case edgeAttribute: EdgeAttribute[_] => {
-        val edgeBundle = edgeAttribute.edgeBundle
-        val (srcTripletMapping, dstTripletMapping) = tripletMapping(edgeBundle)
-        val filteredEBs = vertexFilters
-          .map(_.toFilteredAttribute)
-          .flatMap(filteredAttribute =>
-            Iterator(
-              filteredEdgesByAttribute(edgeBundle, srcTripletMapping, filteredAttribute),
-              filteredEdgesByAttribute(edgeBundle, dstTripletMapping, filteredAttribute)))
+    cacheVertexAttributes(vertexFilters.map(_.attributeId))
+    FEFilters.filter(vertexSet, vertexFilters)
+  }
 
-        val filteredEB = if (filteredEBs.size > 0) {
-          val iop = graph_operations.EdgeBundleIntersection(filteredEBs.size)
-          iop(iop.ebs, filteredEBs).result.intersection.entity
-        } else {
-          edgeBundle
-        }
-        filteredEB.asVertexSet
-      }
+  private def getFilteredEdgeIds(
+    edgeBundle: EdgeBundle,
+    vertexFilters: Seq[FEVertexAttributeFilter]): VertexSet = {
+
+    val (srcTripletMapping, dstTripletMapping) = tripletMapping(edgeBundle)
+    val filteredIdSets = vertexFilters
+      .map(_.toFilteredAttribute)
+      .flatMap(filteredAttribute =>
+        Iterator(
+          filteredEdgeIdsByAttribute(edgeBundle, srcTripletMapping, filteredAttribute),
+          filteredEdgeIdsByAttribute(edgeBundle, dstTripletMapping, filteredAttribute)))
+
+    println("Filtered id sets size", filteredIdSets.size)
+    filteredIdSets.foreach(st => println(st.rdd.collect.toSeq))
+
+    if (filteredIdSets.size > 0) {
+      val iop = graph_operations.VertexSetIntersection(filteredIdSets.size)
+      iop(iop.vss, filteredIdSets).result.intersection.entity
+    } else {
+      edgeBundle.asVertexSet
     }
-  }*/
+  }
 
-  def getHistogram(request: HistogramSpec): HistogramResponse = ???
-  /*{
-    val attribute = metaManager.attribute(request.attributeId.asUUID)
-    val vertexAttribute = attribute match {
-      case va: VertexAttribute[_] => va
-      case ea: EdgeAttribute[_] => ea.asVertexAttribute
-    }
+  def getHistogram(request: HistogramSpec): HistogramResponse = {
+    val vertexAttribute = metaManager.vertexAttribute(request.attributeId.asUUID)
     val bucketedAttr = FEBucketers.bucketedAttribute(
       metaManager, dataManager, vertexAttribute, request.numBuckets)
-    val filteredVS = getFilteredVS(attribute, request.vertexFilters)
+    val filteredVS = if (request.edgeBundleId.isEmpty) {
+      getFilteredVS(vertexAttribute.vertexSet, request.vertexFilters)
+    } else {
+      getFilteredEdgeIds(
+        metaManager.edgeBundle(request.edgeBundleId.asUUID), request.vertexFilters)
+    }
     val histogram = bucketedAttr.toHistogram(filteredVS)
     val counts = histogram.counts.value
     HistogramResponse(
       bucketedAttr.bucketer.labelType,
       bucketedAttr.bucketer.bucketLabels,
       (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0)))
-  }*/
+  }
   def getScalarValue(request: ScalarValueRequest): ScalarValueResponse = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
     ScalarValueResponse(scalar.value.toString)
