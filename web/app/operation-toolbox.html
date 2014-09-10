@@ -10,8 +10,10 @@
   <div ng-if="active && !op" class="panel box col-sm-11 {{active.color}}">
     <h1>{{active.title}}</h1>
     <div class="list-group">
-      <div class="list-group-item operation" ng-repeat="op in active.ops" ng-click="clickedOp(op)" ng-class="{ disabled: !op.status.enabled }"
-          tooltip="{{op.status.disabledReason}}" tooltip-append-to-body="true" tooltip-placement="left">
+      <div ng-repeat="op in active.ops" ng-click="clickedOp(op)"
+          class="list-group-item operation" ng-class="{ disabled: !op.status.enabled }"
+          tooltip="{{op.status.disabledReason}}"
+          tooltip-append-to-body="true" tooltip-placement="left">
         {{op.title}}
       </div>
     </div>
@@ -19,9 +21,11 @@
   <div ng-if="searching && !op" class="panel box col-sm-11 yellow">
     <h1><input id="filter" ng-model="opFilter"></h1>
     <div class="list-group">
-      <div class="list-group-item operation" ng-repeat="op in allOps | filter: opFilter | orderBy: 'title'"
-          ng-click="clickedOp(op)" ng-class="{ disabled: !op.status.enabled, highlight: $index === searchSelection }"
-          tooltip="{{op.status.disabledReason}}" tooltip-append-to-body="true" tooltip-placement="left">
+      <div ng-repeat="op in allOps | filter: opFilter | orderBy: 'title'" ng-click="clickedOp(op)"
+          class="list-group-item operation"
+          ng-class="{ disabled: !op.status.enabled, highlight: $index === searchSelection }"
+          tooltip="{{op.status.disabledReason}}"
+          tooltip-append-to-body="true" tooltip-placement="left">
         {{op.title}}
       </div>
     </div>
