@@ -62,7 +62,7 @@ angular.module('biggraph').directive('projectGraph', function ($resource, util) 
             yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             // Sampled view parameters.
             radius: parseInt(viewData.sampleRadius),  // angular.js/pull/7370
-            centralVertexIds: viewData.center,  // angular.js/pull/7370
+            centralVertexIds: viewData.center,
             sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
             labelAttributeId: viewData.labelAttribute || '',
             sizeAttributeId: viewData.sizeAttribute || '',

@@ -3,6 +3,11 @@
 angular.module('biggraph')
   .controller('ProjectViewCtrl', function ($scope, $routeParams, $resource, $location, util) {
     $scope.util = util;
+
+    $scope.convertToIntList = function(stringList) {
+      return stringList.map(function(item) { return parseInt(item); } );
+    };
+
     function defaultSideState() {
       return {
         projectName: undefined,
@@ -52,7 +57,7 @@ angular.module('biggraph')
       }
       vd.center = this.state.center;
       var that = this;
-      vd.setCenter = function(id) { that.state.center = id; };
+      vd.setCenter = function(id) { that.state.center = [id]; };
 
       // we don't just copy state to viewData as we need to transform some state variables
       vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
