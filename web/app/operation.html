@@ -1,5 +1,5 @@
-<div class="list-group-item operation" ng-class="{ disabled: !op.enabled.success }"
-  tooltip="{{op.enabled.failureReason}}" tooltip-append-to-body="true" tooltip-placement="left">
+<div class="list-group-item operation" ng-class="{ disabled: !op.enabled.enabled }"
+  tooltip="{{op.enabled.disabledReason}}" tooltip-append-to-body="true" tooltip-placement="left">
   <div class="row">
     <div class="col-sm-4">
       <span class="title">{{op.title}}</span>
@@ -11,20 +11,20 @@
         <label for="{{param.id}}" class="col-sm-6 control-label">{{param.title}}</label>
         <div class="col-sm-6">
           <input ng-if="param.options.length === 0 && param.kind !== 'file'"
-            ng-disabled="!op.enabled.success" class="form-control" ng-model="params[param.id]">
+            ng-disabled="!op.enabled.enabled" class="form-control" ng-model="params[param.id]">
           <file-parameter ng-if="param.kind === 'file'"
-            model="params[param.id]" file-uploads="op.fileUploads" enabled="op.enabled.success">
+            model="params[param.id]" file-uploads="op.fileUploads" enabled="op.enabled.enabled">
           </file-parameter>
           <select
             ng-if="param.options.length > 0 && !param.multipleChoice"
-            ng-disabled="!op.enabled.success"
+            ng-disabled="!op.enabled.enabled"
             class="form-control"
             ng-model="params[param.id]"
             ng-options="option.id as option.title for option in param.options"></select>
           <select
             ng-if="param.options.length > 0 && param.multipleChoice"
             multiple
-            ng-disabled="!op.enabled.success"
+            ng-disabled="!op.enabled.enabled"
             class="form-control"
             ng-model="multiParams[param.id]"
             ng-options="option.id as option.title for option in param.options"></select>
@@ -35,6 +35,6 @@
     <span
       ng-show="showParams || op.parameters.length <= 1"
       class="col-sm-1 clicky clicky-text"
-      ng-click="apply()">{{op.enabled.success ? (running || op.fileUploads ? '...' : 'OK') : 'X'}}</span>
+      ng-click="apply()">{{op.enabled.enabled ? (running || op.fileUploads ? '...' : 'OK') : 'X'}}</span>
   </div>
 </div>
