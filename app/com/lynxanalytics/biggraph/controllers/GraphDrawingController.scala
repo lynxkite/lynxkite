@@ -395,9 +395,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
           filteredEdgeIdsByAttribute(edgeBundle, srcTripletMapping, filteredAttribute),
           filteredEdgeIdsByAttribute(edgeBundle, dstTripletMapping, filteredAttribute)))
 
-    println("Filtered id sets size", filteredIdSets.size)
-    filteredIdSets.foreach(st => println(st.rdd.collect.toSeq))
-
     if (filteredIdSets.size > 0) {
       val iop = graph_operations.VertexSetIntersection(filteredIdSets.size)
       iop(iop.vss, filteredIdSets).result.intersection.entity
