@@ -80,7 +80,9 @@ angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
         scope.op = undefined;
       };
       scope.clickedOp = function(op) {
-        scope.op = op;
+        if (op.status.enabled) {
+          scope.op = op;
+        }
       };
     },
   };
