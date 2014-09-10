@@ -1,7 +1,32 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('ProjectViewCtrl', function ($scope, $routeParams, $location, util) {
+  .controller('ProjectViewCtrl', function ($scope, $routeParams, $location, util, hotkeys) {
+    var hk = hotkeys.bindTo($scope);
+    hk.add({
+      combo: 'ctrl+z', description: 'Undo',
+      callback: function() { $scope.left.undo(); } });
+    hk.add({
+      combo: 'ctrl+y', description: 'Redo',
+      callback: function() { $scope.left.redo(); } });
+    hk.add({
+      combo: 'l b', description: 'Bucketed view (left)',
+      callback: function() { $scope.left.state.graphMode = 'bucketed'; } });
+    hk.add({
+      combo: 'l s', description: 'Sampled view (left)',
+      callback: function() { $scope.left.state.graphMode = 'sampled'; } });
+    hk.add({
+      combo: 'l x', description: 'Close graph (left)',
+      callback: function() { $scope.left.state.graphMode = undefined; } });
+    hk.add({
+      combo: 'r b', description: 'Bucketed view (right)',
+      callback: function() { $scope.right.state.graphMode = 'bucketed'; } });
+    hk.add({
+      combo: 'r s', description: 'Sampled view (right)',
+      callback: function() { $scope.right.state.graphMode = 'sampled'; } });
+    hk.add({
+      combo: 'r x', description: 'Close graph (right)',
+      callback: function() { $scope.right.state.graphMode = undefined; } });
     $scope.util = util;
     function defaultSideState() {
       return {

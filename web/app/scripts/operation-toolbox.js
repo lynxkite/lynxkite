@@ -9,7 +9,7 @@ angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
     link: function(scope, elem) {
       if (scope.side.primary) {  // Set up hotkeys on the primary project only.
         var hk = hotkeys.bindTo(scope);
-        hk.add({ combo: '/', description: 'Filter operations', callback: function(e) {
+        hk.add({ combo: '/', description: 'Find operation', callback: function(e) {
           e.preventDefault();  // Do not type "/".
           scope.op = undefined;
           scope.active = undefined;
