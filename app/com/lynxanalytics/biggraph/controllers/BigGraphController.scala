@@ -34,7 +34,8 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: Seq[FEOperationParameterMeta],
-  status: FEStatus = FEStatus.enabled)
+  status: FEStatus = FEStatus.enabled,
+  description: String = "")
 
 case class FEOperationParameterMeta(
     id: String,
@@ -299,10 +300,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
 abstract class Operation(val project: Project, val category: Operation.Category) {
   def id = title.replace(" ", "-")
   def title: String
+  def description: String = ""
   def parameters: Seq[FEOperationParameterMeta]
   def enabled: FEStatus
   def apply(params: Map[String, String]): Unit
-  def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled)
+  def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled, description)
   protected def scalars[T: TypeTag] =
     UIValue.seq(project.scalarNames[T])
   protected def vertexAttributes[T: TypeTag] =
