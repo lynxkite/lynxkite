@@ -28,12 +28,14 @@ svg #arrow-highlight-out {
 }
 svg .edge.highlight-out {
   stroke: white;
+  opacity: 0.67;
 }
 svg #arrow-highlight-in {
   fill: #888;
 }
 svg .edge.highlight-in {
   stroke: #888;
+  opacity: 0.67;
 }
 svg .edge .first {
   marker-end: url(#arrow);
