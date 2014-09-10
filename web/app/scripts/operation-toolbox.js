@@ -7,18 +7,16 @@ angular.module('biggraph').directive('operationToolbox', function() {
     replace: true,
     templateUrl: 'operation-toolbox.html',
     link: function(scope) {
-      function close() {
-        scope.active = undefined;
-      }
-      function open(cat) {
-        scope.active = cat;
-      }
-      scope.clicked = function(cat) {
-        if (scope.active === cat) {
-          close();
+      scope.clickedCat = function(cat) {
+        if (scope.active === cat && !scope.op) {
+          scope.active = undefined;
         } else {
-          open(cat);
+          scope.active = cat;
         }
+        scope.op = undefined;
+      };
+      scope.clickedOp = function(op) {
+        scope.op = op;
       };
     },
   };
