@@ -135,11 +135,6 @@ sealed trait Attribute[T] extends TypedEntity[T] {
   def runtimeSafeCast[S: TypeTag]: Attribute[S]
 }
 
-// Marker trait for possible attributes of a triplet. It's either a vertex attribute
-// belonging to the source vertex, a vertex attribute belonging to the destination vertex
-// or an edge attribute.
-sealed trait TripletAttribute[T]
-
 case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                        name: Symbol,
                                        vertexSet: VertexSet)
@@ -147,25 +142,6 @@ case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
   assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
 }
-
-case class SrcAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]
-case class DstAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]
-
-/*case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
-                                     name: Symbol,
-                                     edgeBundle: EdgeBundle)
-    extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] with TripletAttribute[T] {
-  assert(name != null)
-  val typeTag = implicitly[TypeTag[T]]
-  val asVertexAttribute: VertexAttribute[T] = {
-    import Scripting._
-    val avaop = graph_operations.EdgeAttributeAsVertexAttribute[T]()
-    // This operation will always be executed as part of the operation that creates this edge
-    // attribute. So there is no reason to save this operation to disk, in fact, that would cause
-    // trouble.
-    avaop(avaop.edgeAttr, this).toInstance(source.manager, transient = true).result.vertexAttr
-  }
-}*/
 
 case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
                               name: Symbol)
