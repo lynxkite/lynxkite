@@ -62,23 +62,37 @@
         </label>
       </div>
 
+      <div class="btn-group pull-right" ng-if="side.state.graphMode == 'sampled'">
+        <label ng-if="side.project.edgeBundle !== ''" class="btn btn-default"
+          ng-click="side.state.animate = !side.state.animate" tooltip="Animate&nbsp;graph"
+          tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
+        </label>
+        <form ng-submit="side.state.center = convertToIntList(side.state.center)"
+          style="display: inline;">
+          <input class="form-control center" placeholder="{{side.state.center}}"
+            ng-model="side.state.center" ng-list ng-model-options="{ updateOn: 'blur' }"
+            tooltip="Set&nbsp;sample&nbsp;center(s)" tooltip-append-to-body="true"
+            tooltip-placement="bottom">
+        </form>
+        <label class="btn btn-default" ng-click="side.requestNewCenter()"
+          tooltip="New&nbsp;sample from&nbsp;filtered&nbsp;vertices"
+          tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-refresh"></i>
+        </label>
+      </div>
+
       <div class="btn-group pull-right">
-        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'" uncheckable
-          tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'"
+          uncheckable tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true"
+          tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
         </label>
-        <label ng-if="side.project.edgeBundle !== ''" class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
+        <label ng-if="side.project.edgeBundle !== ''" class="btn btn-default"
+          ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
           tooltip="Sampled&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
         </label>
-        <label ng-if="(side.project.edgeBundle !== '' && side.state.graphMode === 'sampled')" class="btn btn-default"
-          ng-click="side.state.animate = !side.state.animate" tooltip="Animate&nbsp;graph" tooltip-append-to-body="true"
-          tooltip-placement="bottom">
-          <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
-        </label>
-        <form ng-submit="side.state.center = convertToIntList(side.state.center)" ng-show="side.state.graphMode == 'sampled'" style="display: inline;">
-          <input class="form-control center" placeholder="{{side.state.center}}" ng-model="side.state.center" ng-list ng-model-options="{ updateOn: 'blur' }" tooltip="Set sample center(s)" tooltip-append-to-body="true" tooltip-placement="bottom">
-        </form>
       </div>
 
       <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
