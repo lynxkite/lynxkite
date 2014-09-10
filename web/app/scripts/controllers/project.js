@@ -29,10 +29,6 @@ angular.module('biggraph')
       callback: function() { $scope.right.state.graphMode = undefined; } });
     $scope.util = util;
 
-    $scope.convertToIntList = function(stringList) {
-      return stringList.map(function(item) { return parseInt(item); } );
-    };
-
     function defaultSideState() {
       return {
         projectName: undefined,
@@ -74,24 +70,25 @@ angular.module('biggraph')
       vd.vertexSet = { id: this.project.vertexSet };
       if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
       vd.graphMode = this.state.graphMode;
+
       vd.bucketCount = this.state.bucketCount;
-      vd.sampleRadius = this.state.sampleRadius;
-      vd.animate = this.state.animate;
-      vd.center = this.state.center;
+
+      // "state" uses attribute names, while "viewData" uses attribute UUIDs.
+      vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
+      vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
+      vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
+      vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+
+      vd.filters = [];
+      for(var name in this.state.filters) {
+        vd.filters[this.resolveVertexAttribute(name)] = this.state.filters[name];
+      }
+
+      vd.center = this.state.center ? util.convertToIntList(this.state.center) : [];
       var that = this;
       vd.setCenter = function(id) { that.state.center = [id]; };
-
-      if (this.state.graphMode === 'bucketed') {
-        // "state" uses attribute names, while "viewData" uses attribute UUIDs.
-        vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
-        vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
-        vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
-        vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
-        vd.filters = [];
-        for(var name in this.state.filters) {
-          vd.filters[this.resolveVertexAttribute(name)] = this.state.filters[name];
-        }
-      }
+      vd.sampleRadius = this.state.sampleRadius;
+      vd.animate = this.state.animate;
 
       this.viewData = vd;
     };

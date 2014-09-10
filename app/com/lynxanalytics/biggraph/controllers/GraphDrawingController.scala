@@ -23,7 +23,7 @@ case class VertexDiagramSpec(
   val yNumBuckets: Int = 1,
 
   // ** Parameters for sampled view **
-  val centralVertexIds: Seq[ID],
+  val centralVertexIds: Seq[ID] = Seq(),
   // Edge bundle used to find neighborhood of the central vertex.
   val sampleSmearEdgeBundleId: String = "",
   val sizeAttributeId: String = "",
