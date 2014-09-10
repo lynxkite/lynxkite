@@ -4,6 +4,7 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.SparkContext.IntAccumulatorParam
 import scala.collection.mutable
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object Counters {
   def registerCounter(name: String, counter: spark.Accumulator[Int]): Unit =
@@ -15,8 +16,11 @@ object Counters {
     counter
   }
 
-  def printAll: Unit =
-    counters.foreach { case (name, counter) => println("[%800s]: %10d".format(name, counter.value)) }
+  def printAll: Unit = {
+    for ((name, counter) <- counters) {
+      log.debug(s"$name: ${counter.value}")
+    }
+  }
 
   private val counters = mutable.Buffer[(String, spark.Accumulator[Int])]()
 }
