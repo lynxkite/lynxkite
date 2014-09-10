@@ -139,41 +139,57 @@ div.operation-toolboxes {
 .operation-toolbox .box.orange .clicky:hover { background: orange; }
 .operation-toolbox .box.green .clicky:hover { background: yellowgreen; }
 .operation-toolbox .box.blue .clicky:hover { background: aquamarine; }
-.operation-toolbox .box.yellow .operation:hover .title { color: gold; }
-.operation-toolbox .box.orange .operation:hover .title { color: orange; }
-.operation-toolbox .box.green .operation:hover .title { color: yellowgreen; }
-.operation-toolbox .box.blue .operation:hover .title { color: aquamarine; }
-.operation-toolbox .box.yellow .operation:hover .clicky { color: gold; }
-.operation-toolbox .box.orange .operation:hover .clicky { color: orange; }
-.operation-toolbox .box.green .operation:hover .clicky { color: yellowgreen; }
-.operation-toolbox .box.blue .operation:hover .clicky { color: aquamarine; }
+.operation-toolbox .box.yellow .ok-button:hover { background: gold; }
+.operation-toolbox .box.orange .ok-button:hover { background: orange; }
+.operation-toolbox .box.green .ok-button:hover { background: yellowgreen; }
+.operation-toolbox .box.blue .ok-button:hover { background: aquamarine; }
+.operation-toolbox .box.yellow .operation:hover { color: gold; }
+.operation-toolbox .box.orange .operation:hover { color: orange; }
+.operation-toolbox .box.green .operation:hover { color: yellowgreen; }
+.operation-toolbox .box.blue .operation:hover { color: aquamarine; }
+.operation-toolbox .box.yellow .clicky { color: gold; }
+.operation-toolbox .box.orange .clicky { color: orange; }
+.operation-toolbox .box.green .clicky { color: yellowgreen; }
+.operation-toolbox .box.blue .clicky { color: aquamarine; }
 
 .operation-toolbox .panel .list-group-item {
   border: 0;
 }
-.operation .title {
-  padding-top: 7px;
-  display: inline-block;
-}
-.operation label {
-  font-weight: normal;
-  color: rgba(255, 255, 255, 0.4);
-}
-.operation .form-group:last-child:first-child {
-  margin-bottom: 0;
+.operation {
+  cursor: pointer;
 }
 .operation:hover {
   background: black !important;
 }
-
-.operation.disabled {
-  background: transparent !important;
+.operation.highlight {
+  color: gold !important;
+  background: black !important;
 }
-.operation.disabled .title,
-.operation.disabled label,
-.operation.disabled .clicky {
+.operation.disabled {
   color: rgba(255, 255, 255, 0.2) !important;
 }
+
+.operation-toolbox form {
+  padding: 20px;
+}
+.operation-toolbox label {
+  font-weight: normal;
+  color: rgba(255, 255, 255, 0.8);
+}
+.operation-toolbox .ok-button {
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+.operation-toolbox .ok-button:hover {
+  color: black;
+}
+
+.operation-toolbox #filter {
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
 .scalar-value {
   min-width: 60px;
   display: inline-block;

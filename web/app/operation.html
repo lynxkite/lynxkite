@@ -1,40 +1,26 @@
-<div class="list-group-item operation" ng-class="{ disabled: !op.enabled.enabled }"
-  tooltip="{{op.enabled.disabledReason}}" tooltip-append-to-body="true" tooltip-placement="left">
-  <div class="row">
-    <div class="col-sm-4">
-      <span class="title">{{op.title}}</span>
-      <expander ng-show="op.parameters.length > 1" class="pull-right" help="Parameters" model="showParams"></expander>
+<form class="form-horizontal list-group-item" ng-submit="apply()">
+  <div class="form-group" ng-repeat="param in op.parameters">
+    <label for="{{param.id}}" class="col-sm-4 control-label">{{param.title}}</label>
+    <div class="col-sm-8">
+      <input ng-if="param.options.length === 0 && param.kind !== 'file'"
+        class="form-control" ng-model="params[param.id]">
+      <file-parameter ng-if="param.kind === 'file'"
+        model="params[param.id]" file-uploads="op.fileUploads">
+      </file-parameter>
+      <select
+        ng-if="param.options.length > 0 && !param.multipleChoice"
+        class="form-control"
+        ng-model="params[param.id]"
+        ng-options="option.id as option.title for option in param.options"></select>
+      <select
+        ng-if="param.options.length > 0 && param.multipleChoice"
+        multiple
+        class="form-control"
+        ng-model="multiParams[param.id]"
+        ng-options="option.id as option.title for option in param.options"></select>
     </div>
-
-    <form class="form-horizontal col-sm-7" collapse="!showParams && op.parameters.length > 1">
-      <div class="form-group" ng-repeat="param in op.parameters">
-        <label for="{{param.id}}" class="col-sm-6 control-label">{{param.title}}</label>
-        <div class="col-sm-6">
-          <input ng-if="param.options.length === 0 && param.kind !== 'file'"
-            ng-disabled="!op.enabled.enabled" class="form-control" ng-model="params[param.id]">
-          <file-parameter ng-if="param.kind === 'file'"
-            model="params[param.id]" file-uploads="op.fileUploads" enabled="op.enabled.enabled">
-          </file-parameter>
-          <select
-            ng-if="param.options.length > 0 && !param.multipleChoice"
-            ng-disabled="!op.enabled.enabled"
-            class="form-control"
-            ng-model="params[param.id]"
-            ng-options="option.id as option.title for option in param.options"></select>
-          <select
-            ng-if="param.options.length > 0 && param.multipleChoice"
-            multiple
-            ng-disabled="!op.enabled.enabled"
-            class="form-control"
-            ng-model="multiParams[param.id]"
-            ng-options="option.id as option.title for option in param.options"></select>
-        </div>
-      </div>
-    </form>
-
-    <span
-      ng-show="showParams || op.parameters.length <= 1"
-      class="col-sm-1 clicky clicky-text"
-      ng-click="apply()">{{op.enabled.enabled ? (running || op.fileUploads ? '...' : 'OK') : 'X'}}</span>
   </div>
+</form>
+<div ng-click="apply()" class="list-group-item ok-button text-center">
+  {{running || op.fileUploads ? '...' : 'OK'}}
 </div>

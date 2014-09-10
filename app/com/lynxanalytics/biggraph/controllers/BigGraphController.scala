@@ -34,7 +34,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: Seq[FEOperationParameterMeta],
-  enabled: FEStatus = FEStatus.enabled)
+  status: FEStatus = FEStatus.enabled)
 
 case class FEOperationParameterMeta(
     id: String,
@@ -337,7 +337,8 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def categories(project: Project): Seq[OperationCategory] = {
     val cats = forProject(project).groupBy(_.category).toSeq
     cats.filter(_._1.visible).sortBy(_._1.title).map {
-      case (cat, ops) => OperationCategory(cat.title, cat.icon, cat.color, ops.map(_.toFE))
+      case (cat, ops) =>
+        OperationCategory(cat.title, cat.icon, cat.color, ops.map(_.toFE).sortBy(_.title))
     }
   }
 
