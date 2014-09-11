@@ -16,7 +16,7 @@ angular.module('biggraph').directive('histogramButton', function(util) {
           attributeId: scope.attr.id,
           vertexFilters: scope.side.nonEmptyFilters(),
           numBuckets: 20,
-          edgeBundleId: scope.type === 'edge' ? scope.side.project.edgeBundle : ''
+          edgeBundleId: scope.type === 'edge' ? scope.side.project.edgeBundle : '',
         };
         scope.histogram = util.get('/ajax/histo', q);
       }
