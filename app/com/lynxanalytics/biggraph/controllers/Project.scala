@@ -141,18 +141,20 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
     }
 
+    var edgeInduction: graph_operations.InducedEdgeBundle.Output = null
     if (origEB != null) {
       val iop = graph_operations.InducedEdgeBundle()
-      edgeBundle = iop(
+      edgeInduction = iop(
         iop.srcMapping, graph_operations.ReverseEdges.run(injection))(
           iop.dstMapping, graph_operations.ReverseEdges.run(injection))(
-            iop.edges, origEB).result.induced
+            iop.edges, origEB).result
+      edgeBundle = edgeInduction.induced
     }
 
     origEAttrs.foreach {
       case (name, attr) =>
         edgeAttributes(name) =
-          graph_operations.PulledOverEdgeAttribute.pullAttributeTo(attr, edgeBundle)
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, edgeInduction.embedding)
     }
 
     segmentations.foreach { seg =>
@@ -219,11 +221,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }.toSeq
 
   def edgeAttributes = new EdgeAttributeHolder
-  def edgeAttributes_=(attrs: Map[String, EdgeAttribute[_]]) = manager.synchronized {
+  def edgeAttributes_=(attrs: Map[String, VertexAttribute[_]]) = manager.synchronized {
     existing(path / "edgeAttributes").foreach(manager.rmTag(_))
     assert(attrs.isEmpty || edgeBundle != null, s"No edge bundle for project $projectName")
     for ((name, attr) <- attrs) {
-      assert(attr.edgeBundle == edgeBundle, s"Edge attribute $name does not match edge bundle for project $projectName")
+      assert(attr.vertexSet == edgeBundle.asVertexSet, s"Edge attribute $name does not match edge bundle for project $projectName")
       manager.setTag(path / "edgeAttributes" / name, attr)
     }
   }
@@ -292,9 +294,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     def validate(name: String, attr: VertexAttribute[_]) =
       assert(attr.vertexSet == vertexSet, s"Vertex attribute $name does not match vertex set for project $projectName")
   }
-  class EdgeAttributeHolder extends Holder[EdgeAttribute[_]]("edgeAttributes") {
-    def validate(name: String, attr: EdgeAttribute[_]) =
-      assert(attr.edgeBundle == edgeBundle, s"Edge attribute $name does not match edge bundle for project $projectName")
+  class EdgeAttributeHolder extends Holder[VertexAttribute[_]]("edgeAttributes") {
+    def validate(name: String, attr: VertexAttribute[_]) =
+      assert(attr.vertexSet == edgeBundle.asVertexSet, s"Edge attribute $name does not match edge bundle for project $projectName")
   }
 }
 

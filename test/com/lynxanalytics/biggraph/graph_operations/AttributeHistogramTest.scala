@@ -17,7 +17,7 @@ class AttributeHistogramTest extends FunSuite with TestGraphOp {
     val out = op(
       op.original, g.edges.asVertexSet)(
         op.filtered, g.edges.asVertexSet)(
-          op.attr, g.weight.asVertexAttribute)(
+          op.attr, g.weight)(
             op.originalCount, count).result
     assert(out.counts.value === Map(0 -> 2, 1 -> 2))
   }

@@ -62,42 +62,6 @@ case class VertexAttributeFilter[T](filter: Filter[T])
   }
 }
 
-object EdgeAttributeFilter {
-  class Input[T] extends MagicInputSignature {
-    val srcVS = vertexSet
-    val dstVS = vertexSet
-    val eb = edgeBundle(srcVS, dstVS)
-    val attr = edgeAttribute[T](eb)
-  }
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input[T]) extends MagicOutput(instance) {
-    val feb = edgeBundle(inputs.srcVS.entity, inputs.dstVS.entity)
-  }
-}
-case class EdgeAttributeFilter[T](filter: Filter[T])
-    extends TypedMetaGraphOp[EdgeAttributeFilter.Input[T], EdgeAttributeFilter.Output[T]] {
-  import EdgeAttributeFilter._
-
-  @transient override lazy val inputs = new Input[T]
-
-  def outputMeta(instance: MetaGraphOperationInstance) =
-    new Output()(instance, inputs)
-
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    implicit val id = inputDatas
-    implicit val tt = inputs.attr.data.typeTag
-    implicit val ct = inputs.attr.data.classTag
-    val attr = inputs.attr.rdd
-    val fattr = attr.filter { case (id, v) => filter.matches(v) }
-    output(
-      o.feb,
-      inputs.eb.rdd.sortedJoin(fattr).mapValues { case (edge, attr) => edge })
-  }
-}
-
 case class NotFilter[T](filter: Filter[T]) extends Filter[T] {
   def matches(value: T) = !filter.matches(value)
 }
