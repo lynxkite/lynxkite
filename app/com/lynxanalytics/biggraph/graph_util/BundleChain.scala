@@ -8,7 +8,7 @@ class BundleChain(bundles: Seq[EdgeBundle],
                   weightsParam: Option[Seq[VertexAttribute[Double]]] = None) {
 
   assert(bundles.size > 0)
-  weightsParam.map { weightsSeq =>
+  weightsParam.foreach { weightsSeq =>
     assert(weightsSeq.size == bundles.size)
     bundles.zip(weightsSeq)
       .foreach { case (bundle, weight) => assert(bundle.asVertexSet == weight.vertexSet) }
