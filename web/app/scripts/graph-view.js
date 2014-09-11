@@ -113,10 +113,11 @@ angular.module('biggraph').directive('graphView', function($window) {
       var label = vertex.id;
       if (vertexBounds.min !== 1 || vertexBounds.max !== 1) { label = vertex.size; }
       label = vertex.label || label;
-      var v = new Vertex(xOff + Math.random() * 400 - 200,
-                         yOff + Math.random() * 400 - 200,
+      var v = new Vertex(Math.random() * 400 - 200,
+                         Math.random() * 400 - 200,
                          Math.sqrt(vertexScale * vertex.size),
-                         label);
+                         label,
+                         vertices);
       v.id = vertex.id;
       svg.addClass(v.dom, 'sampled');
       if (v.id === data.center) {
@@ -167,8 +168,8 @@ angular.module('biggraph').directive('graphView', function($window) {
           ev.pageY = ev.originalEvent.changedTouches[0].pageY;
           ev.preventDefault();
         }
-        var x = ev.pageX - svgElement.offset().left;
-        var y = ev.pageY - svgElement.offset().top;
+        var x = ev.pageX - svgElement.offset().left - vertices.xOff;
+        var y = ev.pageY - svgElement.offset().top - vertices.yOff;
         vertex.moveTo(x, y);
         vertex.forceOX = x;
         vertex.forceOY = y;
@@ -311,10 +312,11 @@ angular.module('biggraph').directive('graphView', function($window) {
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
   Label.prototype.off = function() { svg.removeClass(this.dom, 'highlight'); };
 
-  function Vertex(x, y, r, text) {
+  function Vertex(x, y, r, text, vertexGroup) {
     this.x = x;
     this.y = y;
     this.r = r;
+    this.vertexGroup = vertexGroup;
     this.circle = svg.create('circle', {r: r});
     var minTouchRadius = 10;
     if (r < minTouchRadius) {
@@ -351,9 +353,18 @@ angular.module('biggraph').directive('graphView', function($window) {
   Vertex.prototype.moveTo = function(x, y) {
     this.x = x;
     this.y = y;
-    this.circle.attr({cx: x, cy: y});
-    this.touch.attr({cx: x, cy: y});
-    this.label.attr({x: x, y: y});
+    this.reDraw();
+  };
+  Vertex.prototype.screenX = function() {
+    return this.vertexGroup.xOff + this.x;
+  };
+  Vertex.prototype.screenY = function() {
+    return this.vertexGroup.yOff + this.y;
+  };
+  Vertex.prototype.reDraw = function() {
+    this.circle.attr({cx: this.screenX(), cy: this.screenY()});
+    this.touch.attr({cx: this.screenX(), cy: this.screenY()});
+    this.label.attr({x: this.screenX(), y: this.screenY()});
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }
@@ -380,8 +391,14 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.dom.parent().append(this.dom);
   };
   Edge.prototype.reposition = function(zoom) {
-    this.first.attr('d', svg.arrow1(this.src.x, this.src.y, this.dst.x, this.dst.y, zoom));
-    this.second.attr('d', svg.arrow2(this.src.x, this.src.y, this.dst.x, this.dst.y, zoom));
+    this.first.attr(
+      'd',
+      svg.arrow1(
+        this.src.screenX(), this.src.screenY(), this.dst.screenX(), this.dst.screenY(), zoom));
+    this.second.attr(
+      'd',
+      svg.arrow2(
+        this.src.screenX(), this.src.screenY(), this.dst.screenX(), this.dst.screenY(), zoom));
   };
 
   return directive;
