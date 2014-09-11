@@ -3,7 +3,7 @@
 angular.module('biggraph').directive('histogramButton', function(util) {
   return {
     restrict: 'E',
-    scope: { attr: '=', side: '=', histogram: '=model' },
+    scope: { attr: '=', side: '=', histogram: '=model', type: '=' },
     replace: true,
     templateUrl: 'histogram-button.html',
     link: function(scope) {
@@ -16,6 +16,7 @@ angular.module('biggraph').directive('histogramButton', function(util) {
           attributeId: scope.attr.id,
           vertexFilters: scope.side.nonEmptyFilters(),
           numBuckets: 20,
+          edgeBundleId: scope.type === 'edge' ? scope.side.project.edgeBundle : '',
         };
         scope.histogram = util.get('/ajax/histo', q);
       }

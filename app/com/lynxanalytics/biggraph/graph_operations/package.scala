@@ -6,8 +6,9 @@ package object graph_operations {
   class EdgeAttributeInput[T] extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
-    val es = edgeBundle(src, dst)
-    val attr = edgeAttribute[T](es)
+    val edgeIds = vertexSet
+    val es = edgeBundle(src, dst, idSet = edgeIds)
+    val attr = vertexAttribute[T](edgeIds)
   }
 
   class VertexAttributeInput[T] extends MagicInputSignature {

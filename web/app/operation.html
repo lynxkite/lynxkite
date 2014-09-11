@@ -1,4 +1,9 @@
-<form class="form-horizontal list-group-item" ng-submit="apply()">
+<p ng-if="op.description" class="list-group-item description"
+  ng-bind-html="op.description | trustAsHtml"></p>
+<p ng-if="op.parameters.length === 0" class="list-group-item text-center">
+  No parameters
+</p>
+<form ng-if="op.parameters" class="form-horizontal list-group-item" ng-submit="apply()">
   <div class="form-group" ng-repeat="param in op.parameters">
     <label for="{{param.id}}" class="col-sm-4 control-label">{{param.title}}</label>
     <div class="col-sm-8">

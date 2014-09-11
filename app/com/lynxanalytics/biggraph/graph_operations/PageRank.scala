@@ -7,8 +7,10 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object PageRank {
   class Input extends MagicInputSignature {
-    val (vs, es) = graph
-    val weights = edgeAttribute[Double](es)
+    val vs = vertexSet
+    val edgeIds = vertexSet
+    val es = edgeBundle(vs, vs, idSet = edgeIds)
+    val weights = vertexAttribute[Double](edgeIds)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {

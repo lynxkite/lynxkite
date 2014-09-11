@@ -27,7 +27,11 @@ class ConcatenateBundlesTest extends FunSuite with TestGraphOp {
     val bc = bcOp(bcOp.src, b.vs)(bcOp.dst, c.vs).result
     // Concatenate!
     val cbOp = ConcatenateBundles()
-    val cb = cbOp(cbOp.weightsAB, ab.weight)(cbOp.weightsBC, bc.weight).result
+    val cb = cbOp(
+      cbOp.edgesAB, ab.es)(
+        cbOp.weightsAB, ab.weight)(
+          cbOp.edgesBC, bc.es)(
+            cbOp.weightsBC, bc.weight).result
 
     // join edge bundle and weight data to make an output that is easy to read
     cb.edgesAC.rdd.join(cb.weightsAC.rdd).map {
