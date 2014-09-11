@@ -301,7 +301,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     seq: Seq[graph_operations.BucketedAttribute[_]]): VertexAttribute[Int] = {
 
     val startingBase: VertexAttribute[Int] =
-      graph_operations.AddConstantAttribute(filteredIds, 0)
+      graph_operations.AddConstantAttribute.run(filteredIds, 0)
     seq.foldLeft(startingBase) {
       case (b, ba) => indexFromBucketedAttribute(original, b, tripletMapping, ba)
     }
