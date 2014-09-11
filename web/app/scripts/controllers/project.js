@@ -376,6 +376,7 @@ angular.module('biggraph')
             $scope.leftToRightPath = afterState.leftToRightPath;
             $scope.left.state = afterState.left;
             $scope.right.state = afterState.right;
+            console.log('Loaded state from URL:', afterState);
           }
         }
       });
