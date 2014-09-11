@@ -27,8 +27,8 @@ var FORCE_LAYOUT = (function() {
     for (i = 0; i < vertices.length; ++i) {
       a = vertices[i];
       if (a.count === 0) { continue; }
-      dx = a.forceOX - vertices.xOff;
-      dy = a.forceOY - vertices.yOff;
+      dx = a.forceOX;
+      dy = a.forceOY;
       a.x -= this.opts.gravity * dx;
       a.y -= this.opts.gravity * dy;
       if (maxDist < Math.abs(dx)) { maxDist = Math.abs(dx); }
