@@ -51,9 +51,6 @@ object Scripting {
   implicit def getData[T](entity: EntityContainer[VertexAttribute[T]])(
     implicit dataManager: DataManager): VertexAttributeData[T] =
     dataManager.get(entity.entity)
-  implicit def getData[T](entity: EntityContainer[EdgeAttribute[T]])(
-    implicit dataManager: DataManager): EdgeAttributeData[T] =
-    dataManager.get(entity.entity)
   implicit def getData[T](entity: EntityContainer[Scalar[T]])(
     implicit dataManager: DataManager): ScalarData[T] =
     dataManager.get(entity.entity)
@@ -66,9 +63,6 @@ object Scripting {
     dataManager.get(entity)
   implicit def getData[T](entity: VertexAttribute[T])(
     implicit dataManager: DataManager): VertexAttributeData[T] =
-    dataManager.get(entity)
-  implicit def getData[T](entity: EdgeAttribute[T])(
-    implicit dataManager: DataManager): EdgeAttributeData[T] =
     dataManager.get(entity)
   implicit def getData[T](entity: Scalar[T])(
     implicit dataManager: DataManager): ScalarData[T] =

@@ -28,6 +28,7 @@ sealed trait MetaGraphEntity extends Serializable {
   }
   override def toString = toStringStruct.toString
   def toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
+  def manager = source.manager
 }
 case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
   override def toString = {
@@ -134,42 +135,12 @@ sealed trait Attribute[T] extends TypedEntity[T] {
   def runtimeSafeCast[S: TypeTag]: Attribute[S]
 }
 
-// Marker trait for possible attributes of a triplet. It's either a vertex attribute
-// belonging to the source vertex, a vertex attribute belonging to the destination vertex
-// or an edge attribute.
-sealed trait TripletAttribute[T]
-
 case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                        name: Symbol,
                                        vertexSet: VertexSet)
     extends Attribute[T] with RuntimeSafeCastable[T, VertexAttribute] {
   assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
-  def asEdgeAttribute(eb: EdgeBundle): EdgeAttribute[T] = {
-    import Scripting._
-    implicit val manager = source.manager
-    val aeaop = graph_operations.VertexAttributeAsEdgeAttribute[T]()
-    aeaop(aeaop.vertexAttr, this)(aeaop.edges, eb).result.edgeAttr
-  }
-}
-
-case class SrcAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]
-case class DstAttr[T](attr: VertexAttribute[T]) extends TripletAttribute[T]
-
-case class EdgeAttribute[T: TypeTag](source: MetaGraphOperationInstance,
-                                     name: Symbol,
-                                     edgeBundle: EdgeBundle)
-    extends Attribute[T] with RuntimeSafeCastable[T, EdgeAttribute] with TripletAttribute[T] {
-  assert(name != null)
-  val typeTag = implicitly[TypeTag[T]]
-  val asVertexAttribute: VertexAttribute[T] = {
-    import Scripting._
-    val avaop = graph_operations.EdgeAttributeAsVertexAttribute[T]()
-    // This operation will always be executed as part of the operation that creates this edge
-    // attribute. So there is no reason to save this operation to disk, in fact, that would cause
-    // trouble.
-    avaop(avaop.edgeAttr, this).toInstance(source.manager, transient = true).result.vertexAttr
-  }
 }
 
 case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
@@ -183,7 +154,6 @@ trait InputSignature {
   val vertexSets: Set[Symbol]
   val edgeBundles: Map[Symbol, (Symbol, Symbol)]
   val vertexAttributes: Map[Symbol, Symbol]
-  val edgeAttributes: Map[Symbol, Symbol]
   val scalars: Set[Symbol]
 }
 trait InputSignatureProvider {
@@ -193,7 +163,6 @@ case class SimpleInputSignature(
   vertexSets: Set[Symbol] = Set(),
   edgeBundles: Map[Symbol, (Symbol, Symbol)] = Map(),
   vertexAttributes: Map[Symbol, Symbol] = Map(),
-  edgeAttributes: Map[Symbol, Symbol] = Map(),
   scalars: Set[Symbol] = Set()) extends InputSignature
 
 trait FieldNaming {
@@ -290,18 +259,6 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class EdgeAttributeTemplate[T](ebF: => Symbol, nameOpt: Option[Symbol])
-      extends ET[EdgeAttribute[T]](nameOpt) {
-    lazy val eb = ebF
-    override def set(target: MetaDataSet, ea: EdgeAttribute[T]): MetaDataSet = {
-      val withEb =
-        templatesByName(eb).asInstanceOf[EdgeBundleTemplate].set(target, ea.edgeBundle)
-      super.set(withEb, ea)
-    }
-    def data(implicit dataSet: DataSet) = dataSet.edgeAttributes(name).asInstanceOf[EdgeAttributeData[T]]
-    def rdd(implicit dataSet: DataSet) = data.rdd
-  }
-
   class ScalarTemplate[T](nameOpt: Option[Symbol]) extends ET[Scalar[T]](nameOpt) {
     def data(implicit dataSet: DataSet) = dataSet.scalars(name).asInstanceOf[ScalarData[T]]
     def value(implicit dataSet: DataSet) = data.value
@@ -319,8 +276,6 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       src.name, dst.name, Option(idSet).map(_.name), requiredProperties, Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
     new VertexAttributeTemplate[T](vs.name, Option(name))
-  def edgeAttribute[T](eb: EdgeBundleTemplate, name: Symbol = null) =
-    new EdgeAttributeTemplate[T](eb.name, Option(name))
   def scalar[T] = new ScalarTemplate[T](None)
   def scalar[T](name: Symbol) = new ScalarTemplate[T](Some(name))
   def graph = {
@@ -337,9 +292,6 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       }.toMap,
       vertexAttributes = templates.collect {
         case va: VertexAttributeTemplate[_] => va.name -> va.vs
-      }.toMap,
-      edgeAttributes = templates.collect {
-        case ea: EdgeAttributeTemplate[_] => ea.name -> ea.eb
       }.toMap,
       scalars = templates.collect { case sc: ScalarTemplate[_] => sc.name }.toSet)
 
@@ -395,7 +347,7 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   def vertexAttribute[T: TypeTag](vs: => EntityContainer[VertexSet], name: Symbol = null) =
     new P(VertexAttribute[T](instance, _, vs), Option(name))
   def edgeAttribute[T: TypeTag](eb: => EntityContainer[EdgeBundle], name: Symbol = null) =
-    new P(EdgeAttribute[T](instance, _, eb), Option(name))
+    new P(VertexAttribute[T](instance, _, eb.asVertexSet), Option(name))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _), None)
   def scalar[T: TypeTag](name: Symbol) = new P(Scalar[T](instance, _), Some(name))
 
@@ -487,10 +439,6 @@ trait MetaGraphOperationInstance {
       }
     }
     val inputSig: InputSignature = operation.inputSig
-    for ((k, v) <- inputs.edgeAttributes) {
-      put(k, v)
-      fixed += inputSig.edgeAttributes(k)
-    }
     for ((k, v) <- inputs.edgeBundles) {
       put(k, v)
       fixed += inputSig.edgeBundles(k)._1
@@ -551,13 +499,6 @@ class VertexAttributeData[T](val entity: VertexAttribute[T],
   val typeTag = vertexAttribute.typeTag
 }
 
-class EdgeAttributeData[T](val entity: EdgeAttribute[T],
-                           val rdd: AttributeRDD[T])
-    extends AttributeData[T] with RuntimeSafeCastable[T, EdgeAttributeData] {
-  val edgeAttribute = entity
-  val typeTag = edgeAttribute.typeTag
-}
-
 class ScalarData[T](val entity: Scalar[T],
                     val value: T)
     extends EntityData with RuntimeSafeCastable[T, ScalarData] {
@@ -569,14 +510,13 @@ class ScalarData[T](val entity: Scalar[T],
 case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
                        vertexAttributes: Map[Symbol, VertexAttribute[_]] = Map(),
-                       edgeAttributes: Map[Symbol, EdgeAttribute[_]] = Map(),
                        scalars: Map[Symbol, Scalar[_]] = Map()) {
   val all: Map[Symbol, MetaGraphEntity] =
-    vertexSets ++ edgeBundles ++ vertexAttributes ++ edgeAttributes ++ scalars
+    vertexSets ++ edgeBundles ++ vertexAttributes ++ scalars
   assert(all.size ==
-    vertexSets.size + edgeBundles.size + vertexAttributes.size + edgeAttributes.size + scalars.size,
-    "Cross type collision %s %s %s %s".format(
-      vertexSets, edgeBundles, vertexAttributes, edgeAttributes))
+    vertexSets.size + edgeBundles.size + vertexAttributes.size + scalars.size,
+    "Cross type collision %s %s %s".format(
+      vertexSets, edgeBundles, vertexAttributes))
 
   def apply(name: Symbol) = all(name)
 
@@ -589,7 +529,6 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
       vertexSets ++ mds.vertexSets,
       edgeBundles ++ mds.edgeBundles,
       vertexAttributes ++ mds.vertexAttributes,
-      edgeAttributes ++ mds.edgeAttributes,
       scalars ++ mds.scalars)
   }
 
@@ -607,7 +546,6 @@ object MetaDataSet {
       vertexSets = all.collect { case (k, v: VertexSet) => (k, v) },
       edgeBundles = all.collect { case (k, v: EdgeBundle) => (k, v) },
       vertexAttributes = all.collect { case (k, v: VertexAttribute[_]) => (k, v) }.toMap,
-      edgeAttributes = all.collect { case (k, v: EdgeAttribute[_]) => (k, v) }.toMap,
       scalars = all.collect { case (k, v: Scalar[_]) => (k, v) }.toMap)
   }
   def applyWithSignature(signature: InputSignature,
@@ -628,11 +566,6 @@ object MetaDataSet {
       res ++= MetaDataSet(vertexAttributes = Map(name -> va))
       addVS(vsName, va.vertexSet)
     }
-    def addEA(name: Symbol, ea: EdgeAttribute[_]) {
-      val ebName = signature.edgeAttributes(name)
-      res ++= MetaDataSet(edgeAttributes = Map(name -> ea))
-      addEB(ebName, ea.edgeBundle)
-    }
     def addSC(name: Symbol, sc: Scalar[_]) {
       assert(signature.scalars.contains(name), s"No such input scalar: $name")
       res ++= MetaDataSet(scalars = Map(name -> sc))
@@ -644,7 +577,6 @@ object MetaDataSet {
           case vs: VertexSet => addVS(name, vs)
           case eb: EdgeBundle => addEB(name, eb)
           case va: VertexAttribute[_] => addVA(name, va)
-          case ea: EdgeAttribute[_] => addEA(name, ea)
           case sc: Scalar[_] => addSC(name, sc)
         }
     }
@@ -657,17 +589,15 @@ object MetaDataSet {
 case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
                    edgeBundles: Map[Symbol, EdgeBundleData] = Map(),
                    vertexAttributes: Map[Symbol, VertexAttributeData[_]] = Map(),
-                   edgeAttributes: Map[Symbol, EdgeAttributeData[_]] = Map(),
                    scalars: Map[Symbol, ScalarData[_]] = Map()) {
   def metaDataSet = MetaDataSet(
     vertexSets.mapValues(_.vertexSet),
     edgeBundles.mapValues(_.edgeBundle),
     vertexAttributes.mapValues(_.vertexAttribute),
-    edgeAttributes.mapValues(_.edgeAttribute),
     scalars.mapValues(_.scalar))
 
   def all: Map[Symbol, EntityData] =
-    vertexSets ++ edgeBundles ++ vertexAttributes ++ edgeAttributes ++ scalars
+    vertexSets ++ edgeBundles ++ vertexAttributes ++ scalars
 }
 
 class OutputBuilder(val instance: MetaGraphOperationInstance) {
@@ -691,10 +621,6 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
 
   def apply[T](vertexAttribute: VertexAttribute[T], rdd: AttributeRDD[T]): Unit = {
     addData(new VertexAttributeData(vertexAttribute, rdd))
-  }
-
-  def apply[T](edgeAttribute: EdgeAttribute[T], rdd: AttributeRDD[T]): Unit = {
-    addData(new EdgeAttributeData(edgeAttribute, rdd))
   }
 
   def apply[T](scalar: Scalar[T], value: T): Unit = {

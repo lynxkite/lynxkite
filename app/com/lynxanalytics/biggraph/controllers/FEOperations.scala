@@ -183,8 +183,8 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("wBC", "Edge weight B->C", kind = "edge-attribute"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.ConcatenateBundles(),
-        'weightsAB -> manager.edgeAttribute(params("wAB").asUUID),
-        'weightsBC -> manager.edgeAttribute(params("wBC").asUUID))
+        'weightsAB -> manager.vertexAttribute(params("wAB").asUUID),
+        'weightsBC -> manager.vertexAttribute(params("wBC").asUUID))
     }
   }
 
@@ -200,7 +200,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       import Scripting._
       val op = graph_operations.AddConstantDoubleAttribute(params("v").toDouble)
       val vertexAttr = op(op.vs, edges.asVertexSet).result.attr
-      manager.show(Seq(vertexAttr.asEdgeAttribute(edges)))
+      manager.show(Seq(vertexAttr.entity))
     }
   }
 
@@ -278,23 +278,19 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("type", "Convert into", options = UIValue.seq(Seq("string", "double"))))
 
     def apply(params: Map[String, String]) = {
-      val vattrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")
-      val eattrs: Seq[String] = if (params("eattrs").isEmpty) Nil else params("eattrs").split(",")
-      val vas = vattrs.map(s => manager.vertexAttribute(s.asUUID))
-      val eas = eattrs.map(s => manager.edgeAttribute(s.asUUID))
+      val vAttrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")
+      val eAttrs: Seq[String] = if (params("eattrs").isEmpty) Nil else params("eattrs").split(",")
+      val attrs = vAttrs ++ eAttrs
+      val as = attrs.map(s => manager.vertexAttribute(s.asUUID))
       val typ = params("type")
       if (typ == "string") {
-        val okVAs = vas.filter(!_.is[String])
-        val okEAs = eas.filter(!_.is[String])
-        assert(okVAs.nonEmpty || okEAs.nonEmpty, "Nothing to convert.")
-        for (va <- okVAs) manager.show(graph_operations.VertexAttributeToString(), 'attr -> va)
-        for (ea <- okEAs) manager.show(graph_operations.EdgeAttributeToString(), 'attr -> ea)
+        val okAs = as.filter(!_.is[String])
+        assert(okAs.nonEmpty, "Nothing to convert.")
+        for (a <- okAs) manager.show(graph_operations.VertexAttributeToString(), 'attr -> a)
       } else if (typ == "double") {
-        val okVAs = vas.filter(_.is[String])
-        val okEAs = eas.filter(_.is[String])
-        assert(okVAs.nonEmpty || okEAs.nonEmpty, "Nothing to convert.")
-        for (va <- okVAs) manager.show(graph_operations.VertexAttributeToDouble(), 'attr -> va)
-        for (ea <- okEAs) manager.show(graph_operations.EdgeAttributeToDouble(), 'attr -> ea)
+        val okAs = as.filter(_.is[String])
+        assert(okAs.nonEmpty, "Nothing to convert.")
+        for (a <- okAs) manager.show(graph_operations.VertexAttributeToDouble(), 'attr -> a)
       } else assert(false, s"Unexpected type: $typ")
     }
   }
@@ -333,7 +329,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("iter", "Iterations"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.PageRank(params("df").toDouble, params("iter").toInt),
-        'weights -> manager.edgeAttribute(params("ws").asUUID))
+        'weights -> manager.vertexAttribute(params("ws").asUUID))
     }
   }
 

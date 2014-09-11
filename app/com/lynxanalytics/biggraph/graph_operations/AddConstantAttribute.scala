@@ -24,19 +24,21 @@ object AddConstantAttribute {
     }
   }
 
-  // TODO: remove these convenience methods when EdgeAttribute gets deleted  
-  import com.lynxanalytics.biggraph.graph_api.Scripting._
-  def edgeInt(eb: EdgeBundle, n: Int)(implicit mm: MetaGraphManager) = {
-    val cop = AddConstantIntAttribute(n)
-    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
+  import Scripting._
+  def run(vs: VertexSet, value: Double): VertexAttribute[Double] = {
+    implicit val manager = vs.manager
+    val op = AddConstantDoubleAttribute(value)
+    op(op.vs, vs).result.attr
   }
-  def edgeDouble(eb: EdgeBundle, n: Double)(implicit mm: MetaGraphManager) = {
-    val cop = AddConstantDoubleAttribute(n)
-    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
+  def run(vs: VertexSet, value: Int): VertexAttribute[Int] = {
+    implicit val manager = vs.manager
+    val op = AddConstantIntAttribute(value)
+    op(op.vs, vs).result.attr
   }
-  def edgeString(eb: EdgeBundle, s: String)(implicit mm: MetaGraphManager) = {
-    val cop = AddConstantStringAttribute(s)
-    cop(cop.vs, eb.asVertexSet).result.attr.asEdgeAttribute(eb)
+  def run(vs: VertexSet, value: String): VertexAttribute[String] = {
+    implicit val manager = vs.manager
+    val op = AddConstantStringAttribute(value)
+    op(op.vs, vs).result.attr
   }
 }
 import AddConstantAttribute._

@@ -15,7 +15,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val firstVertices = firstInstance.outputs.vertexSets('vertices)
     val firstEdges = firstInstance.outputs.edgeBundles('edges)
     val firstVattr = firstInstance.outputs.vertexAttributes('vattr)
-    val firstEattr = firstInstance.outputs.edgeAttributes('eattr)
+    val firstEattr = firstInstance.outputs.vertexAttributes('eattr)
 
     val secondInstance = manager.apply(
       new FromVertexAttr(),
@@ -45,7 +45,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
     // Properties are linked as expected.
     assert(firstVattr.vertexSet == firstVertices)
-    assert(firstEattr.edgeBundle == firstEdges)
+    assert(firstEattr.vertexSet == firstEdges.asVertexSet)
     assert(manager.attributes(firstVertices).toSet == Set(firstVattr))
     assert(manager.attributes(firstEdges).toSet == Set(firstEattr))
 
