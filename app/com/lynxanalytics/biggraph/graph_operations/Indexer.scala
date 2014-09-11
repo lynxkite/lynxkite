@@ -6,22 +6,28 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object EdgeIndexer {
+/* This operation is used to compute a single index for each vertex based on potentially multiple
+ * bucketings. This is basically done as a "product" of per attribute buckets. For a detailed
+ * specification, see the comment for VertexView's indexingSeq field.
+ *
+ * One application of this operation computes one step in the product, that is given the index
+ * based on the previous bucketed attributes (baseIndices), it comutes the index based on the
+ * previous and the current bucketed attribute.
+ */
+object Indexer {
   class Input[T] extends MagicInputSignature {
-    val srcVS = vertexSet
-    val dstVS = vertexSet
-    val eb = edgeBundle(srcVS, dstVS)
-    val filtered = edgeBundle(srcVS, dstVS)
-    val baseIndices = edgeAttribute[Int](filtered)
-    val bucketAttribute = edgeAttribute[T](eb)
+    val vs = vertexSet
+    val filtered = vertexSet
+    val baseIndices = vertexAttribute[Int](filtered)
+    val bucketAttribute = vertexAttribute[T](vs)
   }
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: Input[T]) extends MagicOutput(instance) {
-    val indices = edgeAttribute[Int](inputs.filtered.entity)
+    val indices = vertexAttribute[Int](inputs.filtered.entity)
   }
 }
-import EdgeIndexer._
-case class EdgeIndexer[T](bucketer: Bucketer[T])
+import Indexer._
+case class Indexer[T](bucketer: Bucketer[T])
     extends TypedMetaGraphOp[Input[T], Output[T]] {
 
   @transient override lazy val inputs = new Input[T]

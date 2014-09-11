@@ -184,10 +184,22 @@ div.operation-toolboxes {
   color: black;
 }
 
+.operation-toolbox .box .description {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 .operation-toolbox #filter {
   background: transparent;
   border: 0;
   outline: 0;
+}
+
+operation file-parameter .progress {
+  height: 34px;
+  margin-bottom: 0;
+}
+operation file-parameter .progress-bar {
+  line-height: 32px;
 }
 
 .scalar-value {

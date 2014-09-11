@@ -57,19 +57,13 @@ object CSVExport {
       attachAttributeData(indexedVertexIds, attributes, dataManager).values)
   }
 
-  def exportEdgeAttributes(attributes: Seq[EdgeAttribute[_]],
-                           attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
-    assert(attributes.size > 0)
-    val edgeBundle = attributes.head.edgeBundle
-    exportEdgeAttributes(edgeBundle, attributes, attributeLabels)
-  }
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
-    attributes: Seq[EdgeAttribute[_]],
+    attributes: Seq[VertexAttribute[_]],
     attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
 
     assert(attributes.size == attributeLabels.size)
-    assert(attributes.forall(_.edgeBundle == edgeBundle))
+    assert(attributes.forall(_.vertexSet == edgeBundle.asVertexSet))
     val indexedEdges: rdd.RDD[(ID, Seq[String])] =
       dataManager.get(edgeBundle).rdd.mapPartitions(it =>
         it.map {

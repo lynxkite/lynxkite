@@ -69,30 +69,24 @@ angular.module('biggraph').directive('graphView', function($window) {
     for (var i = 0; i < this.unwatch.length; ++i) {
       this.unwatch[i]();
     }
-    var sides = [];
-    if (this.scope.left && this.scope.left.graphMode) {
-      sides.push(this.scope.left);
-    }
-    if (this.scope.right && this.scope.right.graphMode) {
-      sides.push(this.scope.right);
-    }
+    var sides = [this.scope.left, this.scope.right];
     this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
     this.root.append([this.edges, this.vertices]);
     var vertices = [];
-    var n = data.vertexSets.length;
-    if (n !== sides.length) {
-      console.error(n + ' vertex sets for ' + sides.length + ' sides.');
-    }
-    for (i = 0; i < n; ++i) {
-      var xOff = (i * 2 + 1) * this.svg.width() / n / 2;
-      var yOff = 500 / 2; // todo: replace 500 with the actual svg height
-      var vs = data.vertexSets[i];
-      if (vs.mode === 'sampled') {
-        vertices.push(this.addSampledVertices(vs, xOff, yOff, sides[i]));
-      } else {
-        vertices.push(this.addBucketedVertices(vs, xOff, yOff));
+    var vsIndex = 0;
+    for (i = 0; i < sides.length; ++i) {
+      if (sides[i] && sides[i].graphMode) {
+        var xOff = (i * 2 + 1) * this.svg.width() / sides.length / 2;
+        var yOff = 500 / 2; // todo: replace 500 with the actual svg height
+        var vs = data.vertexSets[vsIndex];
+        vsIndex += 1;
+        if (vs.mode === 'sampled') {
+          vertices.push(this.addSampledVertices(vs, xOff, yOff, sides[i]));
+        } else {
+          vertices.push(this.addBucketedVertices(vs, xOff, yOff));
+        }
       }
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {

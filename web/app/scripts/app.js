@@ -94,4 +94,7 @@ angular
       },
     };
     return util;
+  })
+  .filter('trustAsHtml', function($sce) {
+    return $sce.trustAsHtml;
   });

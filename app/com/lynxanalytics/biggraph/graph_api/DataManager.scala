@@ -16,7 +16,6 @@ class DataManager(sc: spark.SparkContext,
   private val vertexSetCache = mutable.Map[UUID, VertexSetData]()
   private val edgeBundleCache = mutable.Map[UUID, EdgeBundleData]()
   private val vertexAttributeCache = mutable.Map[UUID, VertexAttributeData[_]]()
-  private val edgeAttributeCache = mutable.Map[UUID, EdgeAttributeData[_]]()
   private val scalarCache = mutable.Map[UUID, ScalarData[_]]()
 
   private def entityPath(entity: MetaGraphEntity) =
@@ -35,7 +34,6 @@ class DataManager(sc: spark.SparkContext,
       case vs: VertexSet => vertexSetCache.contains(gUID)
       case eb: EdgeBundle => edgeBundleCache.contains(gUID)
       case va: VertexAttribute[_] => vertexAttributeCache.contains(gUID)
-      case ea: EdgeAttribute[_] => edgeAttributeCache.contains(gUID)
       case sc: Scalar[_] => scalarCache.contains(gUID)
     }
   }
@@ -66,18 +64,6 @@ class DataManager(sc: spark.SparkContext,
       vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
   }
 
-  private def load[T](edgeAttribute: EdgeAttribute[T]): Unit = {
-    implicit val ct = edgeAttribute.classTag
-    // We do our best to colocate partitions to corresponding vertex set partitions.
-    val ebRDD = get(edgeAttribute.edgeBundle).rdd.cache
-    val rawRDD = SortedRDD.fromUnsorted(entityPath(edgeAttribute).loadObjectFile[(ID, T)](sc)
-      .partitionBy(ebRDD.partitioner.get))
-    edgeAttributeCache(edgeAttribute.gUID) = new EdgeAttributeData[T](
-      edgeAttribute,
-      // This join does nothing except enforcing colocation.
-      ebRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
-  }
-
   private def load[T](scalar: Scalar[T]): Unit = {
     val ois = new java.io.ObjectInputStream(serializedScalarFileName(entityPath(scalar)).open())
     val value = ois.readObject.asInstanceOf[T]
@@ -90,7 +76,6 @@ class DataManager(sc: spark.SparkContext,
       case vs: VertexSet => load(vs)
       case eb: EdgeBundle => load(eb)
       case va: VertexAttribute[_] => load(va)
-      case ea: EdgeAttribute[_] => load(ea)
       case sc: Scalar[_] => load(sc)
     }
   }
@@ -101,7 +86,6 @@ class DataManager(sc: spark.SparkContext,
       inputs.vertexSets.mapValues(get(_)),
       inputs.edgeBundles.mapValues(get(_)),
       inputs.vertexAttributes.mapValues(get(_)),
-      inputs.edgeAttributes.mapValues(get(_)),
       inputs.scalars.mapValues(get(_)))
     if (instance.operation.isHeavy) {
       val outputs = instance.run(inputDatas, runtimeContext).values
@@ -114,7 +98,6 @@ class DataManager(sc: spark.SparkContext,
             case vs: VertexSetData => vertexSetCache(vs.gUID) = vs
             case eb: EdgeBundleData => edgeBundleCache(eb.gUID) = eb
             case va: VertexAttributeData[_] => vertexAttributeCache(va.gUID) = va
-            case ea: EdgeAttributeData[_] => edgeAttributeCache(ea.gUID) = ea
             case sc: ScalarData[_] => scalarCache(sc.gUID) = sc
           }
       }
@@ -149,12 +132,6 @@ class DataManager(sc: spark.SparkContext,
     vertexAttributeCache(vertexAttribute.gUID).runtimeSafeCast[T]
   }
 
-  def get[T](edgeAttribute: EdgeAttribute[T]): EdgeAttributeData[T] = {
-    loadOrExecuteIfNecessary(edgeAttribute)
-    implicit val tagForT = edgeAttribute.typeTag
-    edgeAttributeCache(edgeAttribute.gUID).runtimeSafeCast[T]
-  }
-
   def get[T](scalar: Scalar[T]): ScalarData[T] = {
     loadOrExecuteIfNecessary(scalar)
     implicit val tagForT = scalar.typeTag
@@ -164,7 +141,6 @@ class DataManager(sc: spark.SparkContext,
   def get[T](entity: Attribute[T]): AttributeData[T] = {
     entity match {
       case va: VertexAttribute[_] => get(va)
-      case ea: EdgeAttribute[_] => get(ea)
     }
   }
 

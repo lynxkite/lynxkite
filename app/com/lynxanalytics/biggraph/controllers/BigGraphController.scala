@@ -34,7 +34,8 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: Seq[FEOperationParameterMeta],
-  status: FEStatus = FEStatus.enabled)
+  status: FEStatus = FEStatus.enabled,
+  description: String = "")
 
 case class FEOperationParameterMeta(
     id: String,
@@ -119,7 +120,7 @@ case class RedoProjectRequest(project: String)
 case class MetaDataSeq(vertexSets: Seq[VertexSet] = Seq(),
                        edgeBundles: Seq[EdgeBundle] = Seq(),
                        vertexAttributes: Seq[VertexAttribute[_]] = Seq(),
-                       edgeAttributes: Seq[EdgeAttribute[_]] = Seq())
+                       edgeAttributes: Seq[VertexAttribute[_]] = Seq())
 
 class FEOperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
@@ -299,10 +300,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
 abstract class Operation(val project: Project, val category: Operation.Category) {
   def id = title.replace(" ", "-")
   def title: String
+  def description: String
   def parameters: Seq[FEOperationParameterMeta]
   def enabled: FEStatus
   def apply(params: Map[String, String]): Unit
-  def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled)
+  def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled, description)
   protected def scalars[T: TypeTag] =
     UIValue.seq(project.scalarNames[T])
   protected def vertexAttributes[T: TypeTag] =
@@ -347,6 +349,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def apply(req: ProjectOperationRequest): Unit = manager.synchronized {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
+    assert(ops.nonEmpty, s"Cannot find operation: ${req.op.id}")
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
     Try(ops.head.apply(req.op.parameters)) match {
       case Success(_) =>

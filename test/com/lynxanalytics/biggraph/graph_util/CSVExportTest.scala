@@ -20,6 +20,7 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |3,"Isolated Joe",2.0
          |""".stripMargin)
     assert(CSVExport.exportEdgeAttributes(
+      sampleOut.edges,
       Seq(sampleOut.comment),
       Seq("comment")).toSortedString ==
       """|"edgeId","srcVertexId","dstVertexId","comment"
