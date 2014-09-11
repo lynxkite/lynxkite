@@ -240,9 +240,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
 
       val weightedVertexToClique =
-        graph_operations.AddConstantAttribute(cliquesResult.belongsTo.asVertexSet, 1.0)
+        graph_operations.AddConstantAttribute.run(cliquesResult.belongsTo.asVertexSet, 1.0)
       val weightedCliqueToCommunity =
-        graph_operations.AddConstantAttribute(ccResult.belongsTo.asVertexSet, 1.0)
+        graph_operations.AddConstantAttribute.run(ccResult.belongsTo.asVertexSet, 1.0)
 
       val vertexToCommunity = {
         val op = graph_operations.ConcatenateBundles()
@@ -285,9 +285,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val res = {
         if (params("type") == "Double") {
           val d = params("value").toDouble
-          graph_operations.AddConstantAttribute(project.edgeBundle.asVertexSet, d)
+          graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, d)
         } else {
-          graph_operations.AddConstantAttribute(project.edgeBundle.asVertexSet, params("value"))
+          graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, params("value"))
         }
       }
       project.edgeAttributes(params("name")) = res
