@@ -64,7 +64,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Aggregate edge attribute") {
     run("Example Graph")
-    run("Aggregate edge attribute", Map("prefix" -> "", "aggregate-weight" -> "sum"))
+    run("Aggregate edge attribute globally", Map("prefix" -> "", "aggregate-weight" -> "sum"))
     assert(project.scalars("weight_sum").value == 10.0)
   }
 
@@ -72,6 +72,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     class Bug extends Exception("simulated bug")
     ops.register(new Operation(_, Operation.Category("Test", "test")) {
       val title = "Buggy op"
+      val description = "For testing"
       def enabled = ???
       def parameters = ???
       def apply(params: Map[String, String]) = {

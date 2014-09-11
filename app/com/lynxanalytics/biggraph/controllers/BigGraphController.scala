@@ -349,6 +349,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def apply(req: ProjectOperationRequest): Unit = manager.synchronized {
     val p = Project(req.project)
     val ops = forProject(p).filter(_.id == req.op.id)
+    assert(ops.nonEmpty, s"Cannot find operation: ${req.op.id}")
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
     Try(ops.head.apply(req.op.parameters)) match {
       case Success(_) =>
