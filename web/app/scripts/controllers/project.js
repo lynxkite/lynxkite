@@ -369,8 +369,9 @@ angular.module('biggraph')
           // the current state. Otherwise the change in the state triggered the
           // change in the URL (from the watcher below). In this case we are
           // already at the state reflected in the URL, or even further ahead
-          // of it.
-          if (angular.equals(beforeState, getState())) {
+          // of it. Plus we also load the state if this is the initial loading
+          // of the page.
+          if (before.q === after.q || angular.equals(beforeState, getState())) {
             var afterState = JSON.parse(after.q);
             $scope.leftToRightPath = afterState.leftToRightPath;
             $scope.left.state = afterState.left;
