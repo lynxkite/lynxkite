@@ -25,10 +25,10 @@ angular.module('biggraph').directive('projectGraph', function (util) {
 
         var sides = [];
         if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
-            sides.push(scope.left);
+          sides.push(scope.left);
         }
         if (scope.right && scope.right.graphMode && scope.right.vertexSet !== undefined) {
-            sides.push(scope.right);
+          sides.push(scope.right);
         }
         if (sides.length === 0) { return; }
         var q = { vertexSets: [], edgeBundles: [] };

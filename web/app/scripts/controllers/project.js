@@ -39,14 +39,6 @@ angular.module('biggraph')
       };
     }
 
-    function getState() {
-      return {
-        leftToRightPath: $scope.leftToRightPath,
-        left: $scope.left.state,
-        right: $scope.right.state,
-      };
-    }
-
     function Side(options) {
       var that = this;
       angular.forEach(options, function(value, key) {
@@ -94,7 +86,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.requestNewCenter = function(force) {
-      if (force || !this.state.center) {
+      if (this.state.graphMode === 'sampled' && (force || !this.state.center)) {
         var params = {
           vertexSetId: this.project.vertexSet,
           filters: this.nonEmptyFilters() || '',
@@ -351,6 +343,7 @@ angular.module('biggraph')
       }
       return undefined;
     }
+
     $scope.$watch('left.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
     $scope.$watch('right.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
     $scope.$watch('left.project.$resolved', function() { $scope.left.loadScalars(); });
@@ -359,12 +352,15 @@ angular.module('biggraph')
     $scope.left = new Side({ primary: true });
     $scope.right = new Side();
     $scope.sides = [$scope.left, $scope.right];
+
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
     $scope.$watch('left.project.$resolved', function() { $scope.left.updateViewData(); });
     $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
+    $scope.$watch('left.state.graphMode', function() { $scope.left.requestNewCenter(false); });
+    $scope.$watch('right.state.graphMode', function() { $scope.right.requestNewCenter(false); });
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes
@@ -406,4 +402,12 @@ angular.module('biggraph')
         }
         $location.search({ q: JSON.stringify(after) });
       });
+
+    function getState() {
+      return {
+        leftToRightPath: $scope.leftToRightPath,
+        left: $scope.left.state,
+        right: $scope.right.state,
+      };
+    }
   });
