@@ -30,7 +30,10 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         if (scope.right && scope.right.graphMode && (scope.right.vertexSet !== undefined)) {
           sides.push(scope.right);
         }
-        if (sides.length === 0) { return; }
+        if (sides.length === 0) {  // Nothing to draw.
+          scope.graphView = undefined;
+          return;
+        }
         var q = { vertexSets: [], edgeBundles: [] };
         for (var i = 0; i < sides.length; ++i) {
           var viewData = sides[i];
