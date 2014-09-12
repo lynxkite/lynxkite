@@ -365,7 +365,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     var labelClass = 'bucket ' + (side || '');
     this.x = x;
     this.y = y;
-    this.dom = svg.create('text', {'class': labelClass, x: x, y: y}).text(text);
+    this.dom = svg.create('text', {'class': labelClass}).text(text);
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
   Label.prototype.off = function() { svg.removeClass(this.dom, 'highlight'); };
@@ -387,7 +387,6 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.label = svg.create('text').text(text);
     this.dom = svg.group([this.circle, this.touch, this.label], {'class': 'vertex' });
     this.moveListeners = [];
-    //this.moveTo(x, y);
     this.hoverListeners = [];
     var that = this;
     this.touch.mouseenter(function() {
