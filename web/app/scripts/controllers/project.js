@@ -363,7 +363,8 @@ angular.module('biggraph')
         // already at the state reflected in the URL, or even further ahead
         // of it. Plus we also load the state if this is the initial loading
         // of the page.
-        if (before.q === after.q || angular.equals(beforeState, getState())) {
+        var initialLoad = before.q === after.q;
+        if (initialLoad || angular.equals(beforeState, getState())) {
           var afterState = parseState(after);
           $scope.leftToRightPath = afterState.leftToRightPath;
           $scope.left.state = afterState.left;
