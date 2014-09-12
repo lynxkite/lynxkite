@@ -356,30 +356,36 @@ angular.module('biggraph')
       $scope,
       function() { return $location.search(); },
       function(after, before) {
-        if (!after.q) {
-          $scope.leftToRightPath = undefined;
-          $scope.left.state = defaultSideState();
-          $scope.right.state = defaultSideState();
-          // In the absence of query parameters, take the left-side project
-          // name from the URL. This makes for friendlier project links.
-          $scope.left.state.projectName = $routeParams.project;
-        } else {
-          var beforeState = JSON.parse(before.q);
-          // We are only interested in this change, if the old URL reflected
-          // the current state. Otherwise the change in the state triggered the
-          // change in the URL (from the watcher below). In this case we are
-          // already at the state reflected in the URL, or even further ahead
-          // of it. Plus we also load the state if this is the initial loading
-          // of the page.
-          if (before.q === after.q || angular.equals(beforeState, getState())) {
-            var afterState = JSON.parse(after.q);
-            $scope.leftToRightPath = afterState.leftToRightPath;
-            $scope.left.state = afterState.left;
-            $scope.right.state = afterState.right;
-            console.log('Loaded state from URL:', afterState);
-          }
+        var beforeState = parseState(before);
+        // We are only interested in this change, if the old URL reflected
+        // the current state. Otherwise the change in the state triggered the
+        // change in the URL (from the watcher below). In this case we are
+        // already at the state reflected in the URL, or even further ahead
+        // of it. Plus we also load the state if this is the initial loading
+        // of the page.
+        if (before.q === after.q || angular.equals(beforeState, getState())) {
+          var afterState = parseState(after);
+          $scope.leftToRightPath = afterState.leftToRightPath;
+          $scope.left.state = afterState.left;
+          $scope.right.state = afterState.right;
+          console.log('Loaded state from URL:', afterState);
         }
       });
+
+    function parseState(search) {
+      var state = {};
+      if (search.q === undefined) {
+        state.leftToRightPath = undefined;
+        state.left = defaultSideState();
+        state.right = defaultSideState();
+        // In the absence of query parameters, take the left-side project
+        // name from the URL. This makes for friendlier project links.
+        state.left.projectName = $routeParams.project;
+      } else {
+        state = JSON.parse(search.q);
+      }
+      return state;
+    }
 
     util.deepWatch(
       $scope,
