@@ -9,8 +9,7 @@ angular.module('biggraph').directive('tokenfield', function() {
       element.tokenfield();
       element.on('$destroy', function() { element.tokenfield('destroy'); });
       ctrl.$render = function() {
-        var value = ctrl.$viewValue || [];
-        var tokens = value.map(function(x) { return x.toString(); });
+        var tokens = ctrl.$viewValue || [];
         element.tokenfield('setTokens', tokens);
       };
       ctrl.$parsers.push(function(str) {

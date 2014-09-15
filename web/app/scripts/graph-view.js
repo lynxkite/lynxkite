@@ -150,7 +150,7 @@ angular.module('biggraph').directive('graphView', function($window) {
       offsetter.rule(v);
       v.id = vertex.id;
       svg.addClass(v.dom, 'sampled');
-      if (side.center.indexOf(v.id) > -1) {
+      if (side.centers.indexOf(v.id) > -1) {
         svg.addClass(v.dom, 'center');
       }
       vertices.push(v);
