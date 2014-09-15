@@ -46,10 +46,10 @@ svg .edge.highlight-out .first {
 svg .edge.highlight-in .first {
   marker-end: url(#arrow-highlight-in);
 }
-
+/* commented out until we decide on style or use less?
 svg .vertex circle {
-  fill: #444;
 }
+*/
 svg .vertex .touch {
   fill: transparent;
 }
@@ -57,9 +57,10 @@ svg .vertex text {
   font-family: 'Arial Black', sans-serif;
   font-size: 15px;
 }
+/* commented out until we decide on style or use less?
 svg .vertex.highlight circle {
-  fill: white;
 }
+*/
 svg .vertex.highlight text {
   fill: black;
 }
@@ -67,7 +68,7 @@ svg .vertex.sampled circle {
   cursor: pointer;
 }
 svg .vertex.center circle {
-  stroke: #777;
+  stroke: #ddd;
   stroke-width: 3;
 }
 
