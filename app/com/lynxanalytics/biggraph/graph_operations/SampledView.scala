@@ -6,15 +6,16 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.MapBucketer
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class SampledViewVertex(id: Long, size: Double, label: String)
+case class SampledViewVertex(id: Long, size: Double, label: String, color: String)
 
 object SampledView {
-  class Input(hasSizes: Boolean, hasLabels: Boolean) extends MagicInputSignature {
+  class Input(hasSizes: Boolean, hasLabels: Boolean, hasColors: Boolean) extends MagicInputSignature {
     val vertices = vertexSet
     val ids = vertexAttribute[ID](vertices)
     val filtered = vertexSet
     val sizeAttr = if (hasSizes) vertexAttribute[Double](vertices) else null
     val labelAttr = if (hasLabels) vertexAttribute[String](vertices) else null
+    val colorAttr = if (hasColors) vertexAttribute[String](vertices) else null
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val svVertices = scalar[Seq[SampledViewVertex]]
@@ -27,9 +28,10 @@ case class SampledView(
     idToIdx: Map[ID, Int],
     hasSizes: Boolean,
     hasLabels: Boolean,
+    hasColors: Boolean,
     maxCount: Int = 1000) extends TypedMetaGraphOp[Input, Output] {
 
-  @transient override lazy val inputs = new Input(hasSizes, hasLabels)
+  @transient override lazy val inputs = new Input(hasSizes, hasLabels, hasColors)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
@@ -49,17 +51,25 @@ case class SampledView(
     } else {
       filtered.mapValues(_ => "")
     }
-    val svVerticesMap = filtered.sortedLeftOuterJoin(sizes).sortedLeftOuterJoin(labels)
+    val colors = if (hasColors) {
+      inputs.colorAttr.rdd
+    } else {
+      filtered.mapValues(_ => "")
+    }
+    val svVerticesMap = filtered
+      .sortedLeftOuterJoin(sizes)
+      .sortedLeftOuterJoin(labels)
+      .sortedLeftOuterJoin(colors)
       .take(maxCount)
       .map {
-        case (id, (((), size), label)) =>
-          (idToIdx(id), SampledViewVertex(id, size.getOrElse(0.0), label.getOrElse("")))
+        case (id, ((((), size), label), color)) =>
+          (idToIdx(id), SampledViewVertex(id, size.getOrElse(0.0), label.getOrElse(""), color.getOrElse("")))
       }
       .toMap
 
     val maxKey = svVerticesMap.keys.max
     val svVertices = (0 to maxKey)
-      .map(svVerticesMap.get(_).getOrElse(SampledViewVertex(-1, 0, "")))
+      .map(svVerticesMap.get(_).getOrElse(SampledViewVertex(-1, 0, "", "")))
       .toSeq
 
     output(o.svVertices, svVertices)
