@@ -67,8 +67,8 @@ svg .vertex.sampled circle {
   cursor: pointer;
 }
 svg .vertex.center circle {
-  stroke: #787;
-  stroke-width: 2;
+  stroke: #777;
+  stroke-width: 3;
 }
 
 svg .bucket {

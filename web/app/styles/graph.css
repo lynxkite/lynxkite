@@ -156,10 +156,9 @@ input.form-control.center {
   background-color: #444;
   width: 80px;
   display: inline-block;
-  font-weight: bold;
   padding: 0;
   vertical-align: top;
   text-align: center;
   margin-left: 3px;
-  border: 2px solid #787;
+  border: 3px solid #777;
 }
