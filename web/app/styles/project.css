@@ -213,3 +213,24 @@ operation file-parameter .progress-bar {
   padding: 2px 10px;
   box-shadow: inset 1px 1px 1px #B0B0B0;
 }
+
+copy-box {
+  position: relative;
+}
+.copy-box {
+  position: absolute;
+  z-index: 1;
+  top: 30px !important;
+  max-width: 200px;
+  max-height: 100px;
+  overflow: scroll;
+  top: 0;
+  left: 0;
+  border-radius: 2px;
+}
+.copy-box textarea {
+  border: 0;
+  line-height: 15px;
+  padding: 0;
+  outline: 0;
+}
