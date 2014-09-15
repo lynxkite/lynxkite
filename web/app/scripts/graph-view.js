@@ -136,17 +136,25 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertices = [];
     vertices.side = side;
     vertices.mode = 'sampled';
-    var vertexBounds = util.minmax(data.vertices.map(function(n) { return n.size; }));
-    var vertexScale = this.zoom * 2 / vertexBounds.max;
+    var vertexSizeBounds = util.minmax(data.vertices.map(function(n) { return n.size; }));
+    var vertexSizeScale = this.zoom * 2 / vertexSizeBounds.max;
+    var vertexColorBounds = util.minmax(data.vertices.map(function(n) { return n.color; }));
+    var vertexColorScale =
+      100 / Math.max(vertexColorBounds.max, Math.abs(vertexColorBounds.min));
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
       // Use vertex.label if set. Use vertex.id otherwise.
       var label = vertex.id;
       label = vertex.label || label;
+      var h = (vertex.color >= 0) ? 0 : 240; // negative is blue, positive is red
+      var s = Math.abs(vertexColorScale * vertex.color);
+      var l = (vertexColorScale) ? 50 : 25; // default color is dark grey
+      var hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
       var v = new Vertex(Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
-                         Math.sqrt(vertexScale * vertex.size),
-                         label);
+                         Math.sqrt(vertexSizeScale * vertex.size),
+                         label,
+                         hslColor);
       offsetter.rule(v);
       v.id = vertex.id;
       svg.addClass(v.dom, 'sampled');
@@ -372,11 +380,13 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.dom.attr({x: this.screenX(), y: this.screenY()});
   };
 
-  function Vertex(x, y, r, text) {
+  function Vertex(x, y, r, text, color) {
     this.x = x;
     this.y = y;
     this.r = r;
-    this.circle = svg.create('circle', {r: r});
+    this.color = color || '#444';
+    this.highlight = 'white';
+    this.circle = svg.create('circle', {r: r, style: 'fill: ' + this.color});
     var minTouchRadius = 10;
     if (r < minTouchRadius) {
       this.touch = svg.create('circle', {r: minTouchRadius, 'class': 'touch'});
@@ -390,12 +400,14 @@ angular.module('biggraph').directive('graphView', function($window) {
     var that = this;
     this.touch.mouseenter(function() {
       svg.addClass(that.dom, 'highlight');
+      that.circle.attr({style: 'fill: ' + that.highlight});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
     });
     this.touch.mouseleave(function() {
       svg.removeClass(that.dom, 'highlight');
+      that.circle.attr({style: 'fill: ' + that.color});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].off(that);
       }
