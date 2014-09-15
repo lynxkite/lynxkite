@@ -28,6 +28,7 @@ case class VertexDiagramSpec(
   val sampleSmearEdgeBundleId: String = "",
   val sizeAttributeId: String = "",
   val labelAttributeId: String = "",
+  val colorAttributeId: String = "",
   val radius: Int = 1)
 
 case class FEVertex(
@@ -39,7 +40,8 @@ case class FEVertex(
 
   // For sampled view:
   id: Long = 0,
-  label: String = "")
+  label: String = "",
+  color: String = "")
 
 case class VertexDiagramResponse(
   val diagramId: String,
@@ -151,7 +153,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val op = graph_operations.SampledView(
       idToIdx,
       request.sizeAttributeId.nonEmpty,
-      request.labelAttributeId.nonEmpty)
+      request.labelAttributeId.nonEmpty,
+      request.colorAttributeId.nonEmpty)
     var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
     if (request.sizeAttributeId.nonEmpty) {
       val attr = metaManager.vertexAttributeOf[Double](request.sizeAttributeId.asUUID)
@@ -167,12 +170,21 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
       builder = builder(op.labelAttr, sattr)
     }
+    if (request.colorAttributeId.nonEmpty) {
+      val attr = metaManager.vertexAttribute(request.colorAttributeId.asUUID)
+      attr.rdd.cache
+      val cattr: VertexAttribute[String] =
+        if (attr.is[String]) attr.runtimeSafeCast[String]
+        else graph_operations.VertexAttributeToString.run(attr)
+
+      builder = builder(op.colorAttr, cattr)
+    }
     val diagramMeta = builder.result.svVertices
     val vertices = diagramMeta.value
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
-      vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label)),
+      vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label, color = v.color)),
       mode = "sampled")
   }
 

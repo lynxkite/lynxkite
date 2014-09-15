@@ -67,6 +67,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
             labelAttributeId: viewData.labelAttribute || '',
             sizeAttributeId: viewData.sizeAttribute || '',
+            colorAttributeId: viewData.colorAttribute || '',
           });
         }
         if (sides.length === 2 && scope.leftToRightPath !== undefined) {
