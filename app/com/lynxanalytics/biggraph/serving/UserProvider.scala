@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.serving
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import securesocial.core._
 import securesocial.core.providers.Token
 
@@ -16,6 +17,7 @@ class UserProvider(application: play.api.Application) extends UserServicePlugin(
   }
 
   def save(user: Identity): Identity = {
+    log.info(s"Login from $user")
     users(user.identityId) = user
     user
   }
