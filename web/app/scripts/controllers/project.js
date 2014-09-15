@@ -54,7 +54,7 @@ angular.module('biggraph')
 
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
-      if (!this.loaded() || (this.state.graphMode === 'sampled' && !this.state.center)) {
+      if (!this.loaded() || (this.state.graphMode === 'sampled' && !this.state.centers)) {
         this.viewData = {};
         return;
       }
@@ -76,9 +76,9 @@ angular.module('biggraph')
         vd.filters[this.resolveVertexAttribute(name)] = this.state.filters[name];
       }
 
-      vd.center = this.state.center ? util.convertToIntList(this.state.center) : [];
+      vd.centers = this.state.centers || [];
       var that = this;
-      vd.setCenter = function(id) { that.state.center = [id]; };
+      vd.setCenter = function(id) { that.state.centers = [id]; };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
 
@@ -86,16 +86,16 @@ angular.module('biggraph')
     };
 
     Side.prototype.maybeRequestNewCenter = function() {
-      if (this.state.graphMode === 'sampled' && !this.state.center) {
+      if (this.state.graphMode === 'sampled' && !this.state.centers) {
         this.requestNewCenter(1);
       }
     };
     Side.prototype.requestRandomCenter = function() {
       var that = this;
       this.requestNewCenter(100).then(function() {
-        var centers = that.state.center;
+        var centers = that.state.centers;
         var i = Math.floor(Math.random() * centers.length);
-        that.state.center = [centers[i]];
+        that.state.centers = [centers[i]];
       });
     };
     Side.prototype.requestNewCenter = function(count) {
@@ -106,7 +106,7 @@ angular.module('biggraph')
       };
       var that = this;
       return util.get('/ajax/center', params).$promise.then(
-        function(result) { that.state.center = result.center; },
+        function(result) { that.state.centers = result.centers; },
         function(response) { util.ajaxError(response); }
       );
     };

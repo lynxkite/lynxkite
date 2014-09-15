@@ -23,7 +23,7 @@ case class VertexDiagramSpec(
   val yNumBuckets: Int = 1,
 
   // ** Parameters for sampled view **
-  val centralVertexIds: Seq[ID] = Seq(),
+  val centralVertexIds: Seq[String] = Seq(),
   // Edge bundle used to find neighborhood of the central vertex.
   val sampleSmearEdgeBundleId: String = "",
   val sizeAttributeId: String = "",
@@ -38,7 +38,7 @@ case class FEVertex(
   y: Int = 0,
 
   // For sampled view:
-  id: Long = 0,
+  id: String = "",
   label: String = "")
 
 case class VertexDiagramResponse(
@@ -118,7 +118,7 @@ case class CenterRequest(
   filters: Seq[FEVertexAttributeFilter])
 
 case class CenterResponse(
-  val center: Seq[ID])
+  val centers: Seq[String])
 
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -134,7 +134,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
-    val centers = request.centralVertexIds
+    val centers = request.centralVertexIds.map(_.toLong)
 
     val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
     val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
@@ -173,7 +173,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
-      vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label)),
+      vertices = vertices.map(v => FEVertex(id = v.id.toString, size = v.size, label = v.label)),
       mode = "sampled")
   }
 
@@ -408,7 +408,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     cacheVertexAttributes(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
-    CenterResponse(filtered.rdd.keys.take(request.count))
+    CenterResponse(filtered.rdd.keys.take(request.count).map(_.toString))
   }
 
   def getHistogram(request: HistogramSpec): HistogramResponse = {
