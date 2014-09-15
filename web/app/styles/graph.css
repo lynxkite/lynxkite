@@ -152,13 +152,14 @@ input.form-control.filter {
 }
 
 input.form-control.center {
-  color: lightblue;
+  color: white;
+  background-color: #444;
   width: 80px;
-  background-color: blue;
   display: inline-block;
   font-weight: bold;
   padding: 0;
   vertical-align: top;
   text-align: center;
   margin-left: 3px;
+  border: 2px solid #787;
 }
