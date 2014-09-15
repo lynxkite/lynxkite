@@ -114,6 +114,7 @@ case class ScalarValueResponse(
 
 case class CenterRequest(
   vertexSetId: String,
+  count: Int,
   filters: Seq[FEVertexAttributeFilter])
 
 case class CenterResponse(
@@ -407,7 +408,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     cacheVertexAttributes(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
-    CenterResponse(Seq(filtered.rdd.keys.first))
+    CenterResponse(filtered.rdd.keys.take(request.count))
   }
 
   def getHistogram(request: HistogramSpec): HistogramResponse = {

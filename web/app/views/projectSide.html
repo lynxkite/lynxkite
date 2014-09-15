@@ -89,7 +89,7 @@
     <div class="list-group">
 
       <!-- Extra controls for the sampled view. -->
-      <div class="list-group-item extra-controls for-sampled-view"
+      <div class="list-group-item extra-controls"
         ng-if="side.state.graphMode == 'sampled' && side.project.edgeBundle !== ''">
         <table>
           <tr>
@@ -103,7 +103,7 @@
                 </label>
                 <label class="btn btn-default"
                   ng-model="side.state.animate"
-                  btn-radio="false">
+                  btn-radio="undefined">
                   <i class="glyphicon glyphicon-pause"></i>
                 </label>
               </div>
@@ -112,18 +112,19 @@
           <tr>
             <td>Centers:</td>
             <td>
-              <div class="input-group">
+              <div class="input-group" id="sample-center">
                 <input class="form-control" ng-model="side.state.center" tokenfield>
                 <div class="input-group-btn">
-                  <button class="btn btn-default" ng-click="side.requestNewCenter(true)">
+                  <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
                     Pick
                   </button><button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu">
-                    <li><a href>Pick random center</a></li>
+                    <li><a ng-click="side.requestRandomCenter()" href>Pick random center</a></li>
                     <li class="divider"></li>
-                    <li><a ng-repeat="n in [2, 3, 4, 5]" href>Pick {{n}} centers</a></li>
+                    <li><a ng-repeat="n in [2, 3, 4, 5]"
+                      ng-click="side.requestNewCenter(n)" href>Pick {{n}} centers</a></li>
                   </ul>
                 </div>
               </div>
@@ -141,7 +142,7 @@
       </div>
 
       <!-- Extra controls for the bucketed view. -->
-      <div class="list-group-item extra-controls for-bucketed-view"
+      <div class="list-group-item extra-controls"
         ng-if="side.state.graphMode == 'bucketed'">
         <table>
           <tr>
