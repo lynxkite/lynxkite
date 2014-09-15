@@ -85,18 +85,30 @@ angular.module('biggraph')
       this.viewData = vd;
     };
 
-    Side.prototype.requestNewCenter = function(force) {
-      if (this.state.graphMode === 'sampled' && (force || !this.state.center)) {
-        var params = {
-          vertexSetId: this.project.vertexSet,
-          filters: this.nonEmptyFilters() || '',
-        };
-        var that = this;
-        util.get('/ajax/center', params).$promise.then(
-          function(result) { that.state.center = result.center; },
-          function(response) { util.ajaxError(response); }
-        );
+    Side.prototype.maybeRequestNewCenter = function() {
+      if (this.state.graphMode === 'sampled' && !this.state.center) {
+        this.requestNewCenter(1);
       }
+    };
+    Side.prototype.requestRandomCenter = function() {
+      var that = this;
+      this.requestNewCenter(100).then(function() {
+        var centers = that.state.center;
+        var i = Math.floor(Math.random() * centers.length);
+        that.state.center = [centers[i]];
+      });
+    };
+    Side.prototype.requestNewCenter = function(count) {
+      var params = {
+        vertexSetId: this.project.vertexSet,
+        filters: this.nonEmptyFilters() || '',
+        count: count,
+      };
+      var that = this;
+      return util.get('/ajax/center', params).$promise.then(
+        function(result) { that.state.center = result.center; },
+        function(response) { util.ajaxError(response); }
+      );
     };
 
     Side.prototype.shortName = function() {
@@ -359,8 +371,8 @@ angular.module('biggraph')
     $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
-    $scope.$watch('left.state.graphMode', function() { $scope.left.requestNewCenter(false); });
-    $scope.$watch('right.state.graphMode', function() { $scope.right.requestNewCenter(false); });
+    $scope.$watch('left.state.graphMode', function() { $scope.left.maybeRequestNewCenter(); });
+    $scope.$watch('right.state.graphMode', function() { $scope.right.maybeRequestNewCenter(); });
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes

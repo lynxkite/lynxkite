@@ -222,6 +222,9 @@ operation file-parameter .progress-bar {
   text-align: right;
   width: 40%;
 }
-.extra-controls.for-sampled-view .input-group-btn .btn {
+#sample-center .input-group-btn {
+  vertical-align: top;
+}
+#sample-center .input-group-btn .btn {
   margin-left: -1px;  /* Due to some glitch Bootstrap sets this to -4px. */
 }
