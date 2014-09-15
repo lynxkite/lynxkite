@@ -46,9 +46,10 @@
     ng-model-options="{ updateOn: 'blur' }">
 </form>
 <histogram-button ng-show="attr.canBucket" attr="attr" side="side"
-  model="histogram" type="vertex" tsv="histogramTSV" clipboard-copy="{{histogramTSV}}">
+  model="histogram" type="vertex" tsv="histogramTSV">
 </histogram-button>
-<histogram ng-show="histogram" model="histogram" clipboard-copy="{{histogramTSV}}"></histogram>
+<copy-box ng-show="histogram" description="Histogram as TSV" data="{{histogramTSV}}"></copy-box>
+<histogram ng-show="histogram" model="histogram"></histogram>
 <span class="pull-right" ng-click="side.discard('vertex-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
 </span>
