@@ -67,10 +67,8 @@ svg .vertex.sampled circle {
   cursor: pointer;
 }
 svg .vertex.center circle {
-  fill: blue;
-}
-svg .vertex.center.highlight circle {
-  fill: lightblue;
+  stroke: #777;
+  stroke-width: 3;
 }
 
 svg .bucket {
