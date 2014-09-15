@@ -76,17 +76,17 @@
           tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
         </label>
-        <form style="display: inline;">
-          <input class="form-control center" ng-model="side.state.center" ng-list
-            ng-model-options="{ updateOn: 'blur' }" tooltip="Set&nbsp;sample&nbsp;center(s)"
-            tooltip-append-to-body="true" tooltip-placement="bottom">
-        </form>
         <label class="btn btn-default" ng-click="side.requestNewCenter(true)"
           tooltip="New&nbsp;sample from&nbsp;filtered&nbsp;vertices"
           tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-refresh"></i>
         </label>
       </div>
+      <form ng-if="side.state.graphMode == 'sampled'" style="display: inline;"
+        tooltip="Sample&nbsp;centers"
+        tooltip-append-to-body="true" tooltip-placement="bottom">
+          <input class="form-control center" ng-model="side.state.center" tokenfield>
+      </form>
 
       <div class="btn-group pull-right">
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'"
