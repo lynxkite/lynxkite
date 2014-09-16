@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
   "org.apache.commons" % "commons-lang3" % "3.3",
-  "org.apache.spark" %% "spark-core" % "1.0.1" excludeAll(
+  "org.apache.spark" %% "spark-core" % "1.1.0" excludeAll(
     ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12"),
     ExclusionRule(organization = "log4j", name = "log4j"),
     ExclusionRule(organization = "com.fasterxml.jackson.core", name = "jackson-databind")),
