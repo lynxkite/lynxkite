@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
+angular.module('biggraph').directive('operationToolbox', function($rootScope, hotkeys) {
   return {
     restrict: 'E',
     scope: { side: '=' },
@@ -69,6 +69,19 @@ angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
           }
         });
       }
+
+      scope.$watch('active || searching', function(open) {
+        if (open) {
+          $rootScope.$broadcast('close all operation-toolboxes except', scope);
+        }
+      });
+      scope.$on('close all operation-toolboxes except', function(e, exception) {
+        if (exception !== scope) {
+          scope.op = undefined;
+          scope.active = undefined;
+          scope.searching = undefined;
+        }
+      });
 
       scope.clickedCat = function(cat) {
         if (scope.active === cat && !scope.op) {
