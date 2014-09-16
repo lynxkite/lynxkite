@@ -72,11 +72,11 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ho
 
       scope.$watch('active || searching', function(open) {
         if (open) {
-          $rootScope.$broadcast('close all operation-toolboxes except', scope);
+          $rootScope.$broadcast('close all the other operation-toolboxes', scope);
         }
       });
-      scope.$on('close all operation-toolboxes except', function(e, exception) {
-        if (exception !== scope) {
+      scope.$on('close all the other operation-toolboxes', function(e, source) {
+        if (scope !== source) {
           scope.op = undefined;
           scope.active = undefined;
           scope.searching = undefined;
