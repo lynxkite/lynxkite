@@ -59,6 +59,7 @@ div.operation-toolboxes {
 
 .operation-toolbox {
   position: absolute;
+  z-index: 2;
   left: 100%;
   border-top-right-radius: 4px;
   border-bottom-right-radius: 4px;
@@ -227,4 +228,25 @@ operation file-parameter .progress-bar {
 }
 #sample-center .input-group-btn .btn {
   margin-left: -1px;  /* Due to some glitch Bootstrap sets this to -4px. */
+}
+
+copy-box {
+  position: relative;
+}
+.copy-box {
+  position: absolute;
+  z-index: 1;
+  top: 30px !important;
+  max-width: 200px;
+  max-height: 100px;
+  overflow: scroll;
+  top: 0;
+  left: 0;
+  border-radius: 2px;
+}
+.copy-box textarea {
+  border: 0;
+  line-height: 15px;
+  padding: 0;
+  outline: 0;
 }
