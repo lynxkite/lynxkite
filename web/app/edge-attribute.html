@@ -10,8 +10,10 @@
   </span>
 </label>
 
-<histogram-button ng-show="attr.canBucket" attr="attr" side="side" model="histogram" type="edge">
+<histogram-button ng-show="attr.canBucket" attr="attr" side="side"
+  model="histogram" type="edge" tsv="histogramTSV">
 </histogram-button>
+<copy-box ng-show="histogram" description="Histogram as TSV" data="{{histogramTSV}}"></copy-box>
 <histogram ng-show="histogram" model="histogram"></histogram>
 <span class="pull-right" ng-click="side.discard('edge-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
