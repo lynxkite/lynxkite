@@ -215,6 +215,16 @@ operation file-parameter .progress-bar {
   box-shadow: inset 1px 1px 1px #B0B0B0;
 }
 
+.split-screen > .ui-splitbar {
+  background: black;
+}
+.project-sides {
+  margin-top: 10px;
+}
+.split-screen > .project-sides {
+  padding-top: 10px;  /* Get out from under the split-bar. */
+}
+
 copy-box {
   position: relative;
 }
