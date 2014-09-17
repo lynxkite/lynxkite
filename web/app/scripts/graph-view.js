@@ -120,6 +120,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
+      // Avoid an error with the Grunt test data, which has edges going to the other side
+      // even if we only have one side.
+      if (e.srcIdx >= vsIndex || e.dstIdx >= vsIndex) { continue; }
       var edges = this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
       if (e.srcIdx === e.dstIdx) {
         vertices[e.srcIdx].edges = edges;
