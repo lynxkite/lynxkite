@@ -316,8 +316,7 @@ angular.module('biggraph').directive('graphView', function($window) {
       var v = new Vertex(this.zoom * util.normalize(vertex.x + 0.5, xNumBuckets),
                          this.zoom * util.normalize(vertex.y + 0.5, yNumBuckets),
                          Math.sqrt(vertexScale * vertex.size),
-                         vertex.size,
-                         vertices);
+                         vertex.size);
       offsetter.rule(v);
       vertices.push(v);
       if (vertex.size === 0) {
