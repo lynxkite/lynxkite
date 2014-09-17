@@ -132,27 +132,58 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
   };
 
+  function mapByAttr(vert, attr) {
+    return vert.map(function(n) {
+      return n.attrs[attr];
+    });
+  }
+
   GraphView.prototype.addSampledVertices = function(data, offsetter, side) {
     var vertices = [];
     vertices.side = side;
     vertices.mode = 'sampled';
-    var vertexSizeBounds = util.minmax(data.vertices.map(function(n) { return n.size; }));
+    var size = side.attrs.size.id;
+    var color = side.attrs.color.id;
+    var vertexSizeBounds = util.minmax(mapByAttr(data.vertices, size));
     var vertexSizeScale = this.zoom * 2 / vertexSizeBounds.max;
-    var vertexColorBounds = util.minmax(data.vertices.map(function(n) { return n.color; }));
-    var vertexColorScale =
-      100 / Math.max(vertexColorBounds.max, Math.abs(vertexColorBounds.min));
+
+    var vertexColorBounds, vertexColorScale, colorMap;
+
+    if (side.attrs.color.typeName === 'Double') {
+      vertexColorBounds = util.minmax(mapByAttr(data.vertices, color));
+      vertexColorScale =
+        100 / Math.max(vertexColorBounds.max, Math.abs(vertexColorBounds.min));
+    } else if (side.attrs.color.typeName === 'String') {
+      var enumMap = {};
+      colorMap = {};
+      angular.forEach(data.vertices, function(n) {
+        enumMap[n.attrs[color]] =
+          (enumMap[n.attrs[color]]) ? enumMap[n.attrs[color]] + 1 : 1;
+      });
+      var cdist = Math.floor(360 / Object.keys(enumMap).length);
+      var ci = 0;
+      angular.forEach(enumMap, function(v, k) { colorMap[k] = ci; ci += cdist; });
+      console.log(colorMap);
+    }
+
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      // Use vertex.label if set. Use vertex.id otherwise.
-      var label = vertex.id;
-      label = vertex.label || label;
-      var h = (vertex.color >= 0) ? 0 : 240; // negative is blue, positive is red
-      var s = Math.abs(vertexColorScale * vertex.color);
-      var l = (vertexColorScale) ? 50 : 25; // default color is dark grey
-      var hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
+      var label = vertex.attrs[side.attrs.label.id] || vertex.id;
+      var hslColor, h, s, l;
+      if (side.attrs.color.typeName === 'Double') {
+        // negative is blue, positive is red, zero lighter grey
+        h = (vertex.attrs[color] >= 0) ? 0 : 240;
+        s = Math.abs(vertexColorScale * vertex.attrs[color]);
+        l = (vertexColorScale) ? 50 : 25; // default color is dark grey
+      } else if (side.attrs.color.typeName === 'String') {
+        h = colorMap[vertex.attrs[color]];
+        s = 100;
+        l = 42;
+      }
+      hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
       var v = new Vertex(Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
-                         Math.sqrt(vertexSizeScale * vertex.size),
+                         Math.sqrt(vertexSizeScale * vertex.attrs[size]),
                          label,
                          hslColor);
       offsetter.rule(v);

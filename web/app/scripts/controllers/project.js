@@ -68,9 +68,10 @@ angular.module('biggraph')
       // "state" uses attribute names, while "viewData" uses attribute UUIDs.
       vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
       vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
-      vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
-      vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
-      vd.colorAttribute = this.resolveVertexAttribute(this.state.colorAttributeTitle);
+      vd.attrs = {};
+      vd.attrs.size = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
+      vd.attrs.label = this.resolveVertexAttribute(this.state.labelAttributeTitle);
+      vd.attrs.color = this.resolveVertexAttribute(this.state.colorAttributeTitle);
 
       vd.filters = {};
       for(var name in this.state.filters) {
@@ -289,7 +290,7 @@ angular.module('biggraph')
       for (var attrIdx = 0; attrIdx < this.project.vertexAttributes.length; attrIdx++) {
         var attr = this.project.vertexAttributes[attrIdx];
         if (attr.title === title) {
-          return attr.id;
+          return attr;
         }
       }
       return undefined;
