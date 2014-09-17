@@ -1,7 +1,3 @@
-html {
-  overflow-y: scroll;
-}
-
 .spinning {
   transition: transform 0.5s ease;
 }
