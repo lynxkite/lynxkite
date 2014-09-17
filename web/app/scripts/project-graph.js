@@ -52,6 +52,11 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               filters.push({ attributeId: attr, valueSpec: viewData.filters[attr] });
             }
           }
+          // we sort attributes by UUID to avoid recomputing the same combination
+          var attrs = [];
+          for (var index in viewData.attrs) { attrs.push(viewData.attrs[index].id); }
+          attrs.sort();
+
           q.vertexSets.push({
             vertexSetId: viewData.vertexSet.id,
             filters: filters,
@@ -65,9 +70,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             radius: parseInt(viewData.sampleRadius),  // angular.js/pull/7370
             centralVertexIds: viewData.center,
             sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
-            labelAttributeId: viewData.labelAttribute || '',
-            sizeAttributeId: viewData.sizeAttribute || '',
-            colorAttributeId: viewData.colorAttribute || '',
+            attrs: attrs,
           });
         }
         if (sides.length === 2 && scope.leftToRightPath !== undefined) {
