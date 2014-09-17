@@ -1,10 +1,8 @@
 .project-name {
   font-size: 2em;
 }
-.right-range-input {
+input[type=range] {
   vertical-align: middle;
-  float: right;
-  margin: 10px;
 }
 .de-emph {
   color: rgba(0, 0, 0, 0.3);
@@ -213,6 +211,29 @@ operation file-parameter .progress-bar {
   margin-left: 10px;
   padding: 2px 10px;
   box-shadow: inset 1px 1px 1px #B0B0B0;
+}
+
+.extra-controls > table {
+  width: 100%;
+}
+.extra-controls td {
+  padding: 6px;
+}
+.extra-controls td:first-child {
+  text-align: right;
+  width: 40%;
+}
+#sample-center .input-group-btn {
+  vertical-align: top;
+}
+#sample-center .input-group-btn .btn {
+  margin-left: -1px;  /* Due to some glitch Bootstrap sets this to -4px. */
+}
+#sample-center.loading .tokenfield {
+  background-color: whitesmoke;
+  background-image: linear-gradient(45deg, white 25%, transparent 25%, transparent 50%, white 50%, white 75%, transparent 75%, transparent);
+  background-size: 40px 40px;
+  animation: progress-bar-stripes 2s linear infinite;
 }
 
 .split-screen > .ui-splitbar {
