@@ -96,6 +96,11 @@ svg .bucket.left {
 svg .bucket.right {
   text-anchor: start;
 }
+svg .bucket.axis-label {
+  font-size: 18px;
+  font-weight: bold;
+  fill: #444;
+}
 
 svg .loading {
   fill: #444;
