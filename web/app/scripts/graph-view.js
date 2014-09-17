@@ -285,7 +285,9 @@ angular.module('biggraph').directive('graphView', function() {
     y = this.zoom * 0.5 + labelSpace;
     if (viewData.xAttribute.title) {
       // Label the X axis with the attribute name.
-      l = new Label(0, y - 0.5 * labelSpace, viewData.xAttribute.title);
+      l = new Label(
+          0, y - labelSpace, viewData.xAttribute.title,
+          { classes: 'axis-label' });
       offsetter.rule(l);
       this.vertices.append(l.dom);
     }
@@ -310,8 +312,10 @@ angular.module('biggraph').directive('graphView', function() {
     }
     if (viewData.yAttribute.title) {
       // Label the Y axis with the attribute name.
-      var mul = side === 'left' ? 0.5 : -0.5;
-      l = new Label(x + mul * labelSpace, 0, viewData.yAttribute.title, { vertical: true });
+      var mul = side === 'left' ? 1 : -1;
+      l = new Label(
+          x + mul * labelSpace, 0, viewData.yAttribute.title,
+          { vertical: true, classes: 'axis-label' });
       offsetter.rule(l);
       this.vertices.append(l.dom);
     }
@@ -321,7 +325,7 @@ angular.module('biggraph').directive('graphView', function() {
       } else {
         y = this.zoom * util.normalize(i + 0.5, yNumBuckets);
       }
-      l = new Label(x, y, data.yLabels[i], { side: side });
+      l = new Label(x, y, data.yLabels[i], { classes: side });
       offsetter.rule(l);
       yLabels.push(l);
       this.vertices.append(l.dom);
@@ -375,11 +379,11 @@ angular.module('biggraph').directive('graphView', function() {
 
   function Label(x, y, text, opts) {
     opts = opts || {};
-    var labelClass = 'bucket ' + (opts.side || '');
+    var classes = 'bucket ' + (opts.classes || '');
     this.x = x;
     this.y = y;
     this.vertical = opts.vertical;
-    this.dom = svg.create('text', {'class': labelClass}).text(text);
+    this.dom = svg.create('text', { 'class': classes }).text(text);
     if (this.vertical) {
       this.dom.attr({ transform: 'rotate(-90)' });
     }
