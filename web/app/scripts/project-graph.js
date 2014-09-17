@@ -61,8 +61,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             radius: parseInt(viewData.sampleRadius),  // angular.js/pull/7370
             centralVertexIds: viewData.centers,
             sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
-            labelAttributeId: viewData.labelAttribute || '',
-            sizeAttributeId: viewData.sizeAttribute || '',
+            labelAttributeId: viewData.labelAttribute.id || '',
+            sizeAttributeId: viewData.sizeAttribute.id || '',
           });
         }
         if (sides.length === 2 && scope.leftToRightPath !== undefined) {
@@ -78,6 +78,102 @@ angular.module('biggraph').directive('projectGraph', function (util) {
           });
         }
         scope.graphView = util.get('/ajax/complexView', q);
+      }
+
+      scope.$watch('graphView.$resolved', function() {
+        // Generate the TSV representation.
+        scope.tsv = '';
+        var gv = scope.graphView;
+        if (!gv || !gv.$resolved) {
+          return;
+        }
+        var sides = [scope.left, scope.right];
+        var vsIndex = 0;
+        for (var i = 0; i < sides.length; ++i) {
+          if (sides[i] && sides[i].graphMode) {
+            scope.tsv += vertexSetToTSV(gv.vertexSets[vsIndex], sides[i]);
+            vsIndex += 1;
+          }
+        }
+        for (i = 0; i < gv.edgeBundles.length; ++i) {
+          scope.tsv += edgeBundleToTSV(gv.edgeBundles[i]);
+        }
+      });
+
+      function vertexSetToTSV(vs, side) {
+        var i, j, v;
+        var tsv = '\n';
+        if (vs.mode === 'sampled') {
+          tsv += 'Samples:\n';
+          tsv += 'id';
+          if (side.labelAttribute.id) { tsv += '\t' + side.labelAttribute.title; }
+          if (side.sizeAttribute.id) { tsv += '\t' + side.sizeAttribute.title; }
+          tsv += '\n';
+          for (i = 0; i < vs.vertices.length; ++i) {
+            v = vs.vertices[i];
+            tsv += v.id;
+            if (side.labelAttribute.id) { tsv += '\t' + v.label; }
+            if (side.sizeAttribute.id) { tsv += '\t' + v.size; }
+            tsv += '\n';
+          }
+        } else {
+          var xAxis = side.xAttribute.title;
+          var yAxis = side.yAttribute.title;
+          var xDescription =
+            xAxis + ' (horizontal' + (vs.xLabelType === 'between' ? ', lower bounds' : '') + ')';
+          var yDescription =
+            yAxis + ' (vertical' + (vs.yLabelType === 'between' ? ', lower bounds' : '') + ')';
+          if (xAxis && yAxis) {
+            tsv += yDescription + ' by ' + xDescription + ':\n';
+          } else if (xAxis) {
+            tsv += xDescription + ':\n';
+          } else if (yAxis) {
+            tsv += yDescription + ':\n';
+          } else {
+            tsv += 'Count:\n';
+          }
+          var byBucket = {};
+          for (i = 0; i < vs.vertices.length; ++i) {
+            v = vs.vertices[i];
+            byBucket[v.x + ', ' + v.y] = v;
+          }
+          var xl = vs.xLabelType === 'between' ? vs.xLabels.length - 1 : vs.xLabels.length;
+          var yl = vs.yLabelType === 'between' ? vs.yLabels.length - 1 : vs.yLabels.length;
+          for (j = 0; j < xl; ++j) {
+            // X-axis header.
+            tsv += '\t' + vs.xLabels[j];
+          }
+          tsv += '\n';
+          for (j = 0; j < yl; ++j) {
+            tsv += vs.yLabels[j];  // Y-axis header.
+            for (i = 0; i < xl; ++i) {
+              tsv += '\t' + byBucket[i + ', ' + j].size;
+            }
+            tsv += '\n';
+          }
+        }
+        return tsv;
+      }
+
+      function edgeBundleToTSV(eb) {
+        var i, j;
+        var tsv = '\n';
+        tsv += 'Edges from graph ' + eb.srcIdx + ' (vertical) to graph ' + eb.dstIdx + ' (horizontal):\n';
+        // A simple dump. Adding the vertex indices would not make it clearer.
+        var maxA = 0, maxB = 0;
+        var byPair = {};
+        for (i = 0; i < eb.edges.length; ++i) {
+          var e = eb.edges[i];
+          byPair[e.a + ', ' + e.b] = e.size;
+          if (e.a > maxA) { maxA = e.a; }
+          if (e.b > maxB) { maxB = e.b; }
+        }
+        for (j = 0; j <= maxB; ++j) {
+          for (i = 0; i <= maxA; ++i) {
+            tsv += (byPair[i + ', ' + j] || 0) + (i === maxA ? '\n' : '\t');
+          }
+        }
+        return tsv;
       }
     }
   };
