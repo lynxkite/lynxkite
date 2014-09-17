@@ -25,5 +25,10 @@
     "angular-ui-layout": "~0.0.1",
     "bootstrap": "~3.0.3",
     "jquery": "~2.1.0"
+  },
+  "overrides": {
+    "angular-ui-layout": {
+      "main": ["ui-layout.js", "ui-layout.css"]
+    }
   }
 }
