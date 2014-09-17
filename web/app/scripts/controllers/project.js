@@ -67,20 +67,14 @@ angular.module('biggraph')
       vd.bucketCount = this.state.bucketCount;
 
       // "state" uses attribute names, while "viewData" needs attribute UUIDs.
-      vd.xAttribute = {
-        title: this.state.xAttributeTitle,
-        id: this.resolveVertexAttribute(this.state.xAttributeTitle),
-      };
-      vd.yAttribute = {
-        title: this.state.yAttributeTitle,
-        id: this.resolveVertexAttribute(this.state.yAttributeTitle),
-      };
+      vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
+      vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
       vd.sizeAttribute = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
       vd.labelAttribute = this.resolveVertexAttribute(this.state.labelAttributeTitle);
 
       vd.filters = {};
       for(var name in this.state.filters) {
-        vd.filters[this.resolveVertexAttribute(name)] = this.state.filters[name];
+        vd.filters[this.resolveVertexAttribute(name).id] = this.state.filters[name];
       }
 
       vd.centers = this.state.centers || [];
@@ -283,7 +277,7 @@ angular.module('biggraph')
       for (var attr in this.state.filters) {
         if (this.state.filters[attr] !== '') {
           res.push({
-            attributeId: this.resolveVertexAttribute(attr),
+            attributeId: this.resolveVertexAttribute(attr).id,
             valueSpec: this.state.filters[attr] });
         }
       }
@@ -308,10 +302,10 @@ angular.module('biggraph')
       for (var attrIdx = 0; attrIdx < this.project.vertexAttributes.length; attrIdx++) {
         var attr = this.project.vertexAttributes[attrIdx];
         if (attr.title === title) {
-          return attr.id;
+          return { id: attr.id, title: title };
         }
       }
-      return undefined;
+      return { title: title };
     };
 
     Side.prototype.openSegmentation = function(seg) {
