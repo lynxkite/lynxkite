@@ -382,7 +382,11 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     this.label = svg.create('text').text(text || '');
     this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript || '');
-    this.dom = svg.group([this.circle, this.touch, this.label, this.subscript], {'class': 'vertex' });
+    this.labelBackground = svg.create(
+        'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
+    this.dom = svg.group(
+        [this.circle, this.touch, this.labelBackground, this.label, this.subscript],
+        {'class': 'vertex' });
     this.moveListeners = [];
     this.hoverListeners = [];
     var that = this;
@@ -391,6 +395,9 @@ angular.module('biggraph').directive('graphView', function($window) {
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
+      // Size labelBackground here, because we may not know the label size earlier.
+      that.labelBackground.attr({ width: that.label.width() + 4, height: that.label.height() });
+      that.reDraw();
     });
     this.touch.mouseleave(function() {
       svg.removeClass(that.dom, 'highlight');
@@ -412,10 +419,14 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.reDraw();
   };
   Vertex.prototype.reDraw = function() {
-    this.circle.attr({cx: this.screenX(), cy: this.screenY()});
-    this.touch.attr({cx: this.screenX(), cy: this.screenY()});
-    this.label.attr({x: this.screenX(), y: this.screenY()});
-    this.subscript.attr({x: this.screenX(), y: this.screenY() - 12});
+    var sx = this.screenX(), sy = this.screenY();
+    this.circle.attr({ cx: sx, cy: sy });
+    this.touch.attr({ cx: sx, cy: sy });
+    this.label.attr({ x: sx, y: sy });
+    var backgroundWidth = this.labelBackground.attr('width');
+    var backgroundHeight = this.labelBackground.attr('height');
+    this.labelBackground.attr({ x: sx - backgroundWidth / 2, y: sy - backgroundHeight / 2 });
+    this.subscript.attr({ x: sx, y: sy - 12 });
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }
