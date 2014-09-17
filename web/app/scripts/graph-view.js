@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('graphView', function($window) {
+angular.module('biggraph').directive('graphView', function() {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
   var svg = SVG_UTIL;
   var util = COMMON_UTIL;
@@ -20,7 +20,6 @@ angular.module('biggraph').directive('graphView', function($window) {
           }
         }
         scope.$watch('graph', updateGraph, true);
-        angular.element($window).bind('resize', updateGraph);
       },
     };
 
@@ -54,15 +53,13 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.svg = angular.element(element);
     this.svg.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
     this.root = svg.create('g', {'class': 'root'});
-    var graphToSVGRatio = 0.67;
-    this.zoom = 500 * graphToSVGRatio; // todo: replace 500 with the actual svg height
     this.svg.append(this.root);
   }
 
   GraphView.prototype.loading = function() {
     this.root.empty();
-    var x = this.svg.width() / 2, y = 250;
-    var w = 5000, h = 500;
+    var w = 5000, h = this.svg.height();
+    var x = this.svg.width() / 2, y = h / 2;
     var loading = svg.create('rect', {'class': 'loading', width: w, height: h, x: x - w/2, y: y - h/2});
     var anchor = ' ' + x + ' ' + y;
     var rotate = svg.create('animateTransform', {
@@ -79,7 +76,7 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.error = function(msg) {
     this.root.empty();
-    var x = this.svg.width() / 2, y = 250;
+    var x = this.svg.width() / 2, y = this.svg.height() / 2;
     var text = svg.create('text', {'class': 'error', x: x, y: y, 'text-anchor': 'middle'});
     var maxLength = 100;  // The error message can be very long and SVG does not wrap text.
     for (var i = 0; i < msg.length; i += maxLength) {
@@ -93,6 +90,8 @@ angular.module('biggraph').directive('graphView', function($window) {
     for (var i = 0; i < this.unwatch.length; ++i) {
       this.unwatch[i]();
     }
+    var graphToSVGRatio = 0.8;
+    this.zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.left, this.scope.right];
     this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
@@ -106,7 +105,7 @@ angular.module('biggraph').directive('graphView', function($window) {
         var xMin = (i * 2) * halfColumnWidth;
         var xOff = (i * 2 + 1) * halfColumnWidth;
         var xMax = (i * 2 + 2) * halfColumnWidth;
-        var yOff = 500 / 2; // todo: replace 500 with the actual svg height
+        var yOff = this.svg.height() / 2;
         var vs = data.vertexSets[vsIndex];
         vsIndex += 1;
         var offsetter = new Offsetter(xOff, yOff);
@@ -242,7 +241,8 @@ angular.module('biggraph').directive('graphView', function($window) {
       e.src.forceMass += 1;
       e.dst.forceMass += 1;
     }
-    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: 500, gravity: 0.05, drag: 0.2 });
+    var scale = this.svg.height();
+    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: scale, gravity: 0.05, drag: 0.2 });
     // Initial layout.
     var t1 = Date.now();
     while (engine.step(vertices) && Date.now() - t1 <= 2000) {}
@@ -273,7 +273,8 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertices = [];
     var xLabels = [], yLabels = [];
     var i, x, y, l, side;
-    var labelSpace = 50;
+    var labelSpace = this.zoom * 0.05;
+    y = this.zoom * 0.5 + labelSpace;
     
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
@@ -406,7 +407,11 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     this.label = svg.create('text').text(text || '');
     this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript || '');
-    this.dom = svg.group([this.circle, this.touch, this.label, this.subscript], {'class': 'vertex' });
+    this.labelBackground = svg.create(
+        'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
+    this.dom = svg.group(
+        [this.circle, this.touch, this.labelBackground, this.label, this.subscript],
+        {'class': 'vertex' });
     this.moveListeners = [];
     this.hoverListeners = [];
     var that = this;
@@ -415,6 +420,9 @@ angular.module('biggraph').directive('graphView', function($window) {
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
+      // Size labelBackground here, because we may not know the label size earlier.
+      that.labelBackground.attr({ width: that.label.width() + 4, height: that.label.height() });
+      that.reDraw();
     });
     this.touch.mouseleave(function() {
       svg.removeClass(that.dom, 'highlight');
@@ -436,10 +444,14 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.reDraw();
   };
   Vertex.prototype.reDraw = function() {
-    this.circle.attr({cx: this.screenX(), cy: this.screenY()});
-    this.touch.attr({cx: this.screenX(), cy: this.screenY()});
-    this.label.attr({x: this.screenX(), y: this.screenY()});
-    this.subscript.attr({x: this.screenX(), y: this.screenY() - 12});
+    var sx = this.screenX(), sy = this.screenY();
+    this.circle.attr({ cx: sx, cy: sy });
+    this.touch.attr({ cx: sx, cy: sy });
+    this.label.attr({ x: sx, y: sy });
+    var backgroundWidth = this.labelBackground.attr('width');
+    var backgroundHeight = this.labelBackground.attr('height');
+    this.labelBackground.attr({ x: sx - backgroundWidth / 2, y: sy - backgroundHeight / 2 });
+    this.subscript.attr({ x: sx, y: sy - 12 });
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }
