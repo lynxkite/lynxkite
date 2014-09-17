@@ -57,6 +57,11 @@ svg .vertex text {
   font-family: 'Arial Black', sans-serif;
   font-size: 15px;
 }
+svg .vertex .subscript {
+  font-size: 9px;
+  opacity: 0.5;
+}
+
 svg .vertex.highlight circle {
   fill: white;
 }
