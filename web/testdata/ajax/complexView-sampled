@@ -2,12 +2,12 @@
   "vertexSets": [{
     "mode": "sampled",
     "vertices": [
-      { "id": 1111111, "size": 10, "label": "one" },
-      { "id": 2222222, "size": 20, "label": "two" },
-      { "id": 3333333, "size": 10, "label": "three" },
-      { "id": 4444444, "size": 20, "label": "four" },
-      { "id": 5555555, "size": 15, "label": "five" },
-      { "id": 6666666, "size": 5, "label": "six" }
+      { "id": 1, "size": 10, "label": "one" },
+      { "id": 2, "size": 20, "label": "two" },
+      { "id": 3, "size": 10, "label": "three" },
+      { "id": 4, "size": 20, "label": "four" },
+      { "id": 5, "size": 15, "label": "five" },
+      { "id": 6, "size": 5, "label": "six" }
     ],
     "center": 1
   }],
