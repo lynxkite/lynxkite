@@ -105,7 +105,8 @@ angular.module('biggraph')
         count: count,
       };
       var that = this;
-      return util.get('/ajax/center', params).$promise.then(
+      this.centerRequest = util.get('/ajax/center', params);
+      return this.centerRequest.$promise.then(
         function(result) { that.state.centers = result.centers; },
         function(response) { util.ajaxError(response); }
       );
