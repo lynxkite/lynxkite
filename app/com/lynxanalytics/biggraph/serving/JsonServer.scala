@@ -2,10 +2,10 @@ package com.lynxanalytics.biggraph.serving
 
 import play.api.mvc
 import play.api.libs.json
-import play.api.libs.json._
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_util.Filename
 import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
@@ -39,7 +39,7 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
       request.getQueryString(key) match {
         case Some(s) =>
           log.info(s"GET ${request.path} $s")
-          Json.parse(s).validate[I].fold(
+          json.Json.parse(s).validate[I].fold(
             errors => jsonBadRequest(errors),
             result => Ok(json.Json.toJson(handler(result))))
         case None => BadRequest(json.Json.obj(
@@ -74,7 +74,7 @@ object ProductionJsonServer extends JsonServer {
   // TODO: do this without a fake field, e.g. by not using inception.
   implicit val rEmpty = json.Json.reads[Empty]
   implicit val wUnit = new json.Writes[Unit] {
-    def writes(u: Unit) = Json.obj()
+    def writes(u: Unit) = json.Json.obj()
   }
 
   implicit val rVertexSetRequest = json.Json.reads[VertexSetRequest]
@@ -138,6 +138,23 @@ object ProductionJsonServer extends JsonServer {
       finally stream.close()
       Ok(output.fullString)
     }
+  }
+
+  def download = action(parse.anyContent) { request =>
+    import play.api.libs.concurrent.Execution.Implicits._
+    import scala.collection.JavaConversions._
+    val path = Filename(request.getQueryString("path").get)
+    val name = Filename(request.getQueryString("name").get)
+    // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
+    val files = Seq(path / "header") ++ (path / "data" / "*").list
+    val length = files.map(_.length).sum
+    val stream = new java.io.SequenceInputStream(files.map(_.open).iterator)
+    mvc.SimpleResult(
+      header = mvc.ResponseHeader(200, Map(
+        CONTENT_LENGTH -> length.toString,
+        CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
+      body = play.api.libs.iteratee.Enumerator.fromStream(stream)
+    )
   }
 
   // Methods called by the web framework
