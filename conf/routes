@@ -23,6 +23,7 @@ GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
 
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
+GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
 
 # SecureSocial
 GET  /login                  securesocial.controllers.LoginPage.login
