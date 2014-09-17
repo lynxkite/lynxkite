@@ -236,6 +236,16 @@ operation file-parameter .progress-bar {
   animation: progress-bar-stripes 2s linear infinite;
 }
 
+.split-screen > .ui-splitbar {
+  background: black;
+}
+.project-sides {
+  margin-top: 10px;
+}
+.split-screen > .project-sides {
+  padding-top: 10px;  /* Get out from under the split-bar. */
+}
+
 copy-box {
   position: relative;
 }

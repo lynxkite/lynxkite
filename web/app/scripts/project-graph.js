@@ -7,10 +7,6 @@ angular.module('biggraph').directive('projectGraph', function (util) {
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope) {
-      scope.showGraph = function() {
-        return (scope.left && scope.left.graphMode) || (scope.right && scope.right.graphMode);
-      };
-
       util.deepWatch(scope, 'left', update);
       util.deepWatch(scope, 'right', update);
 

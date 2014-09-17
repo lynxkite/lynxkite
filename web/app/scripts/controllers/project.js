@@ -54,8 +54,9 @@ angular.module('biggraph')
 
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
-      if (!this.loaded() || (this.state.graphMode === 'sampled' && !this.state.centers)) {
-        this.viewData = {};
+      if (!this.loaded() || !this.state.graphMode ||
+          (this.state.graphMode === 'sampled' && !this.state.centers)) {
+        this.viewData = undefined;
         return;
       }
 
@@ -356,6 +357,10 @@ angular.module('biggraph')
       }
       return undefined;
     }
+
+    $scope.showGraph = function() {
+      return $scope.left.viewData || $scope.right.viewData;
+    };
 
     $scope.$watch('left.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
     $scope.$watch('right.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
