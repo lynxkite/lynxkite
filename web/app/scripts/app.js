@@ -5,6 +5,7 @@ angular
     'ngResource',
     'ngRoute',
     'ui.bootstrap',
+    'ui.layout',
     'cfp.hotkeys',
   ])
   .config(function ($routeProvider) {
