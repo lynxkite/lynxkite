@@ -61,6 +61,14 @@ svg .vertex .subscript {
   opacity: 0.5;
 }
 
+svg .vertex .label-background {
+  fill: transparent;
+  pointer-events: none;
+}
+svg .vertex.highlight .label-background {
+  fill: white;
+}
+
 svg .vertex.highlight circle {
   fill: white;
 }
