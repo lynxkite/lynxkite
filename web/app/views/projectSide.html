@@ -112,7 +112,8 @@
           <tr>
             <td>Centers:</td>
             <td>
-              <div class="input-group" id="sample-center">
+              <div class="input-group" id="sample-center"
+                ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
                 <input class="form-control" ng-model="side.state.centers" tokenfield>
                 <div class="input-group-btn">
                   <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
