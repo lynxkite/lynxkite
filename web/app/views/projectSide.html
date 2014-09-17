@@ -70,24 +70,6 @@
         </label>
       </div>
 
-      <div class="btn-group pull-right" ng-if="side.state.graphMode == 'sampled'">
-        <label ng-if="side.project.edgeBundle !== ''" class="btn btn-default"
-          ng-click="side.state.animate = !side.state.animate" tooltip="Animate&nbsp;graph"
-          tooltip-append-to-body="true" tooltip-placement="bottom">
-          <i class="glyphicon glyphicon-{{side.state.animate ? 'pause' : 'play'}}"></i>
-        </label>
-        <form style="display: inline;">
-          <input class="form-control center" ng-model="side.state.center" ng-list
-            ng-model-options="{ updateOn: 'blur' }" tooltip="Set&nbsp;sample&nbsp;center(s)"
-            tooltip-append-to-body="true" tooltip-placement="bottom">
-        </form>
-        <label class="btn btn-default" ng-click="side.requestNewCenter(true)"
-          tooltip="New&nbsp;sample from&nbsp;filtered&nbsp;vertices"
-          tooltip-append-to-body="true" tooltip-placement="bottom">
-          <i class="glyphicon glyphicon-refresh"></i>
-        </label>
-      </div>
-
       <div class="btn-group pull-right">
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'"
           uncheckable tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true"
@@ -101,16 +83,81 @@
         </label>
       </div>
 
-      <input class="right-range-input" ng-show="side.state.graphMode == 'bucketed'"
-        tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets" tooltip-placement="bottom"
-        type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
-      <input class="right-range-input" ng-show="side.state.graphMode == 'sampled'"
-        tooltip="radius {{side.state.sampleRadius}}" tooltip-placement="bottom"
-        type="range" max="10" step="1" ng-model="side.state.sampleRadius">
       <div class="clearfix"></div>
     </div>
 
     <div class="list-group">
+
+      <!-- Extra controls for the sampled view. -->
+      <div class="list-group-item extra-controls"
+        ng-if="side.state.graphMode == 'sampled' && side.project.edgeBundle !== ''">
+        <table>
+          <tr>
+            <td>Layout animation:</td>
+            <td>
+              <div class="btn-group">
+                <label class="btn btn-default"
+                  ng-model="side.state.animate"
+                  btn-radio="true">
+                  <i class="glyphicon glyphicon-play"></i>
+                </label>
+                <label class="btn btn-default"
+                  ng-model="side.state.animate"
+                  btn-radio="undefined">
+                  <i class="glyphicon glyphicon-pause"></i>
+                </label>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>Centers:</td>
+            <td>
+              <div class="input-group" id="sample-center"
+                ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
+                <input class="form-control" ng-model="side.state.centers" tokenfield>
+                <div class="input-group-btn">
+                  <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
+                    Pick
+                  </button><button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu">
+                    <li><a ng-click="side.requestRandomCenter()" href>Pick random center</a></li>
+                    <li class="divider"></li>
+                    <li><a ng-repeat="n in [2, 3, 4, 5]"
+                      ng-click="side.requestNewCenter(n)" href>Pick {{n}} centers</a></li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>Radius:</td>
+            <td>
+              <input
+                tooltip="radius {{side.state.sampleRadius}}" tooltip-placement="bottom"
+                type="range" max="10" step="1" ng-model="side.state.sampleRadius">
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Extra controls for the bucketed view. -->
+      <div class="list-group-item extra-controls"
+        ng-if="side.state.graphMode == 'bucketed'">
+        <table>
+          <tr>
+            <td>Buckets:</td>
+            <td>
+              <input
+                tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets" tooltip-placement="bottom"
+                type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Summary. -->
       <li class="list-group-item">
         <span class="lead">
           <span ng-if="side.project.vertexSet !== ''">{{util.human(side.scalars['vertex_count'].value)}}</span>

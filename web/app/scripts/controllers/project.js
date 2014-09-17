@@ -55,7 +55,7 @@ angular.module('biggraph')
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
       if (!this.loaded() || !this.state.graphMode ||
-          (this.state.graphMode === 'sampled' && !this.state.center)) {
+          (this.state.graphMode === 'sampled' && !this.state.centers)) {
         this.viewData = undefined;
         return;
       }
@@ -77,27 +77,40 @@ angular.module('biggraph')
         vd.filters[this.resolveVertexAttribute(name)] = this.state.filters[name];
       }
 
-      vd.center = this.state.center ? util.convertToIntList(this.state.center) : [];
+      vd.centers = this.state.centers || [];
       var that = this;
-      vd.setCenter = function(id) { that.state.center = [id]; };
+      vd.setCenter = function(id) { that.state.centers = [id]; };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
 
       this.viewData = vd;
     };
 
-    Side.prototype.requestNewCenter = function(force) {
-      if (this.state.graphMode === 'sampled' && (force || !this.state.center)) {
-        var params = {
-          vertexSetId: this.project.vertexSet,
-          filters: this.nonEmptyFilters() || '',
-        };
-        var that = this;
-        util.get('/ajax/center', params).$promise.then(
-          function(result) { that.state.center = result.center; },
-          function(response) { util.ajaxError(response); }
-        );
+    Side.prototype.maybeRequestNewCenter = function() {
+      if (this.state.graphMode === 'sampled' && !this.state.centers) {
+        this.requestNewCenter(1);
       }
+    };
+    Side.prototype.requestRandomCenter = function() {
+      var that = this;
+      this.requestNewCenter(100).then(function() {
+        var centers = that.state.centers;
+        var i = Math.floor(Math.random() * centers.length);
+        that.state.centers = [centers[i]];
+      });
+    };
+    Side.prototype.requestNewCenter = function(count) {
+      var params = {
+        vertexSetId: this.project.vertexSet,
+        filters: this.nonEmptyFilters() || '',
+        count: count,
+      };
+      var that = this;
+      this.centerRequest = util.get('/ajax/center', params);
+      return this.centerRequest.$promise.then(
+        function(result) { that.state.centers = result.centers; },
+        function(response) { util.ajaxError(response); }
+      );
     };
 
     Side.prototype.shortName = function() {
@@ -364,8 +377,8 @@ angular.module('biggraph')
     $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
-    $scope.$watch('left.state.graphMode', function() { $scope.left.requestNewCenter(false); });
-    $scope.$watch('right.state.graphMode', function() { $scope.right.requestNewCenter(false); });
+    $scope.$watch('left.state.graphMode', function() { $scope.left.maybeRequestNewCenter(); });
+    $scope.$watch('right.state.graphMode', function() { $scope.right.maybeRequestNewCenter(); });
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes

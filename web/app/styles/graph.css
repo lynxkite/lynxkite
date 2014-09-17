@@ -146,15 +146,3 @@ input.form-control.filter {
   width: 120px;
   display: inline-block;
 }
-
-input.form-control.center {
-  color: white;
-  background-color: #444;
-  width: 80px;
-  display: inline-block;
-  padding: 0;
-  vertical-align: top;
-  text-align: center;
-  margin-left: 3px;
-  border: 3px solid #777;
-}
