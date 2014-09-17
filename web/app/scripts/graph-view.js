@@ -120,6 +120,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
+      // Avoid an error with the Grunt test data, which has edges going to the other side
+      // even if we only have one side.
+      if (e.srcIdx >= vsIndex || e.dstIdx >= vsIndex) { continue; }
       var edges = this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
       if (e.srcIdx === e.dstIdx) {
         vertices[e.srcIdx].edges = edges;
@@ -140,17 +143,14 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertexScale = this.zoom * 2 / vertexBounds.max;
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      // Use vertex.label if set. Use vertex.id otherwise.
-      var label = vertex.id;
-      label = vertex.label || label;
       var v = new Vertex(Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
                          Math.sqrt(vertexScale * vertex.size),
-                         label);
+                         vertex.label, vertex.id);
       offsetter.rule(v);
       v.id = vertex.id;
       svg.addClass(v.dom, 'sampled');
-      if (side.center.indexOf(v.id) > -1) {
+      if (side.centers.indexOf(v.id) > -1) {
         svg.addClass(v.dom, 'center');
       }
       vertices.push(v);
@@ -332,8 +332,7 @@ angular.module('biggraph').directive('graphView', function($window) {
       var v = new Vertex(this.zoom * util.normalize(vertex.x + 0.5, xNumBuckets),
                          this.zoom * util.normalize(vertex.y + 0.5, yNumBuckets),
                          Math.sqrt(vertexScale * vertex.size),
-                         vertex.size,
-                         vertices);
+                         vertex.size);
       offsetter.rule(v);
       vertices.push(v);
       if (vertex.size === 0) {
@@ -394,7 +393,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     }
   };
 
-  function Vertex(x, y, r, text) {
+  function Vertex(x, y, r, text, subscript) {
     this.x = x;
     this.y = y;
     this.r = r;
@@ -405,8 +404,9 @@ angular.module('biggraph').directive('graphView', function($window) {
     } else {
       this.touch = this.circle;
     }
-    this.label = svg.create('text').text(text);
-    this.dom = svg.group([this.circle, this.touch, this.label], {'class': 'vertex' });
+    this.label = svg.create('text').text(text || '');
+    this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript || '');
+    this.dom = svg.group([this.circle, this.touch, this.label, this.subscript], {'class': 'vertex' });
     this.moveListeners = [];
     this.hoverListeners = [];
     var that = this;
@@ -439,6 +439,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.circle.attr({cx: this.screenX(), cy: this.screenY()});
     this.touch.attr({cx: this.screenX(), cy: this.screenY()});
     this.label.attr({x: this.screenX(), y: this.screenY()});
+    this.subscript.attr({x: this.screenX(), y: this.screenY() - 12});
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }

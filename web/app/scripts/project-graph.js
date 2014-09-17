@@ -7,10 +7,6 @@ angular.module('biggraph').directive('projectGraph', function (util) {
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope) {
-      scope.showGraph = function() {
-        return (scope.left && scope.left.graphMode) || (scope.right && scope.right.graphMode);
-      };
-
       util.deepWatch(scope, 'left', update);
       util.deepWatch(scope, 'right', update);
 
@@ -63,7 +59,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             // Sampled view parameters.
             radius: parseInt(viewData.sampleRadius),  // angular.js/pull/7370
-            centralVertexIds: viewData.center,
+            centralVertexIds: viewData.centers,
             sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
             labelAttributeId: viewData.labelAttribute || '',
             sizeAttributeId: viewData.sizeAttribute || '',

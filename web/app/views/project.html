@@ -1,16 +1,9 @@
-<project-graph left="left.viewData" right="right.viewData" left-to-right-path="leftToRightPath"></project-graph>
-<div class="row-fluid" style="position: relative;">
-
-  <!-- The project panels. -->
-  <div ng-repeat="side in sides" ng-include="'views/projectSide.html'"></div>
-
-  <!-- Toolboxes are in a separate <div> after the sides, so they appear on top. -->
-  <div class="operation-toolboxes">
-    <div ng-repeat="side in sides" class="col-sm-6">
-      <div ng-class="{ rightmost: $last }" ng-if="side.project.$resolved && !side.project.error">
-        <operation-toolbox side="side"></operation-toolbox>
-      </div>
-    </div>
+<ui-layout ng-if="showGraph()" class="split-screen">
+  <project-graph size="50%" left="left.viewData" right="right.viewData" left-to-right-path="leftToRightPath"></project-graph>
+  <div class="project-sides">
+    <div ng-include="'views/projects.html'"></div>
   </div>
-
+</ui-layout>
+<div ng-if="!showGraph()" class="project-sides">
+  <div ng-include="'views/projects.html'"></div>
 </div>
