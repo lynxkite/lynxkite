@@ -57,8 +57,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             filters: filters,
             mode: viewData.graphMode,
             // Bucketed view parameters.
-            xBucketingAttributeId: viewData.xAttribute || '',
-            yBucketingAttributeId: viewData.yAttribute || '',
+            xBucketingAttributeId: viewData.xAttribute.id || '',
+            yBucketingAttributeId: viewData.yAttribute.id || '',
             xNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             // Sampled view parameters.

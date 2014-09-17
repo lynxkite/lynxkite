@@ -113,7 +113,7 @@ angular.module('biggraph').directive('graphView', function($window) {
         if (vs.mode === 'sampled') {
           vertices.push(this.addSampledVertices(vs, offsetter, sides[i]));
         } else {
-          vertices.push(this.addBucketedVertices(vs, offsetter));
+          vertices.push(this.addBucketedVertices(vs, offsetter, sides[i]));
         }
         this.sideMouseBindings(offsetter, xMin, xMax);
       }
@@ -269,19 +269,25 @@ angular.module('biggraph').directive('graphView', function($window) {
         function() { vertices.animate(); }));
   };
 
-  GraphView.prototype.addBucketedVertices = function(data, offsetter) {
+  GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData) {
     var vertices = [];
     var xLabels = [], yLabels = [];
     var i, x, y, l, side;
     var labelSpace = 50;
-    y = this.zoom * 0.5 + labelSpace;
     
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
     
     var xNumBuckets = xb.span + 1;
     var yNumBuckets = yb.span + 1;
-    
+
+    y = this.zoom * 0.5 + labelSpace;
+    if (viewData.xAttribute.title) {
+      // Label the X axis with the attribute name.
+      l = new Label(0, y - 0.5 * labelSpace, viewData.xAttribute.title);
+      offsetter.rule(l);
+      this.vertices.append(l.dom);
+    }
     for (i = 0; i < data.xLabels.length; ++i) {
       if (data.xLabelType === 'between') {
         x = this.zoom * util.normalize(i, xNumBuckets);
@@ -301,13 +307,20 @@ angular.module('biggraph').directive('graphView', function($window) {
       x = this.zoom * 0.5 + labelSpace;
       side = 'right';
     }
+    if (viewData.yAttribute.title) {
+      // Label the Y axis with the attribute name.
+      var mul = side === 'left' ? 0.5 : -0.5;
+      l = new Label(x + mul * labelSpace, 0, viewData.yAttribute.title, { vertical: true });
+      offsetter.rule(l);
+      this.vertices.append(l.dom);
+    }
     for (i = 0; i < data.yLabels.length; ++i) {
       if (data.yLabelType === 'between') {
         y = this.zoom * util.normalize(i, yNumBuckets);
       } else {
         y = this.zoom * util.normalize(i + 0.5, yNumBuckets);
       }
-      l = new Label(x, y, data.yLabels[i], side);
+      l = new Label(x, y, data.yLabels[i], { side: side });
       offsetter.rule(l);
       yLabels.push(l);
       this.vertices.append(l.dom);
@@ -360,16 +373,25 @@ angular.module('biggraph').directive('graphView', function($window) {
     return edgeObjects;
   };
 
-  function Label(x, y, text, side) {
-    var labelClass = 'bucket ' + (side || '');
+  function Label(x, y, text, opts) {
+    opts = opts || {};
+    var labelClass = 'bucket ' + (opts.side || '');
     this.x = x;
     this.y = y;
+    this.vertical = opts.vertical;
     this.dom = svg.create('text', {'class': labelClass}).text(text);
+    if (this.vertical) {
+      this.dom.attr({ transform: 'rotate(-90)' });
+    }
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
   Label.prototype.off = function() { svg.removeClass(this.dom, 'highlight'); };
   Label.prototype.reDraw = function() {
-    this.dom.attr({x: this.screenX(), y: this.screenY()});
+    if (this.vertical) {
+      this.dom.attr({x: -this.screenY(), y: this.screenX()});
+    } else {
+      this.dom.attr({x: this.screenX(), y: this.screenY()});
+    }
   };
 
   function Vertex(x, y, r, text) {
