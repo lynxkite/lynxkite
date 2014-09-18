@@ -134,9 +134,9 @@ angular.module('biggraph').directive('graphView', function() {
     }
   };
 
-  function mapByAttr(vert, attr) {
-    return vert.map(function(n) {
-      return n.attrs[attr];
+  function mapByAttr(vs, attr) {
+    return vs.map(function(v) {
+      return v.attrs[attr];
     });
   }
 
@@ -169,18 +169,24 @@ angular.module('biggraph').directive('graphView', function() {
         var cdist = Math.floor(360 / Object.keys(enumMap).length);
         var ci = 0;
         angular.forEach(enumMap, function(v, k) { colorMap[k] = ci; ci += cdist; });
-        console.log(colorMap);
+      } else {
+        console.error('The type of ' + side.attrs.color + ' (' + side.attrs.color.typeName + ') is not supported for vertex color visualization!');
       }
+
     }
 
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
 
-      var label = (side.attrs.label) ? vertex.attrs[side.attrs.label.id] || '' : '';
+      var label;
+      if (side.attrs.label) { label = vertex.attrs[side.attrs.label.id]; }
 
       // todo: set a minimum size for 0 and undefined vertices here
-      var vertexSize =
-        (size) ? Math.sqrt(vertexSizeScale * vertex.attrs[size]) || 0 : Math.sqrt(this.zoom * 2);
+      var vertexSize = this.zoom * 0.1;
+      if (size) {
+        var sizeAttr = vertex.attrs[size] || 0;
+        vertexSize = Math.sqrt(vertexSizeScale * sizeAttr);
+      }
 
       var hslColor, h, s, l;
       if (color && side.attrs.color.typeName === 'Double') {
