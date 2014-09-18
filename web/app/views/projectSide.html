@@ -78,7 +78,7 @@
         </label>
         <label ng-if="side.project.edgeBundle !== ''" class="btn btn-default"
           ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
-          tooltip="Sampled&nbsp;graph" tooltip-append-to-body="true" tooltip-placement="bottom">
+          tooltip="Concrete&nbsp;vertices" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
         </label>
       </div>
@@ -110,7 +110,7 @@
             </td>
           </tr>
           <tr>
-            <td>Centers:</td>
+            <td>Show vertices:</td>
             <td>
               <div class="input-group" id="sample-center"
                 ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
@@ -124,7 +124,7 @@
                   <ul class="dropdown-menu" role="menu">
                     <li><a ng-click="side.requestRandomCenter()" href>Pick random center</a></li>
                     <li class="divider"></li>
-                    <li><a ng-repeat="n in [2, 3, 4, 5]"
+                    <li><a ng-repeat="n in [3, 10, 30, 100]"
                       ng-click="side.requestNewCenter(n)" href>Pick {{n}} centers</a></li>
                   </ul>
                 </div>
@@ -132,7 +132,7 @@
             </td>
           </tr>
           <tr>
-            <td>Radius:</td>
+            <td>Show neighborhood:</td>
             <td>
               <input
                 tooltip="radius {{side.state.sampleRadius}}" tooltip-placement="bottom"
