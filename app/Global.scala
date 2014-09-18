@@ -17,6 +17,6 @@ object Global extends GlobalSettings {
   private def format(t: Throwable): String = rootCause(t) match {
     // Trim "assertion failed: " from AssertionErrors.
     case e: AssertionError => assertionFailed.replaceFirstIn(e.getMessage, "")
-    case e => e.getMessage
+    case e => e.toString
   }
 }
