@@ -16,7 +16,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feAttr[T](e: TypedEntity[T], name: String) = {
       val canBucket = Seq(typeOf[Double], typeOf[String]).exists(_ =:= e.typeTag.tpe)
-      val canFilter = Seq(typeOf[Double], typeOf[String]).exists(_ =:= e.typeTag.tpe)
+      val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[ID]).exists(_ =:= e.typeTag.tpe)
       FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter)
     }
     FEProject(
