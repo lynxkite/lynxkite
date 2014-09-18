@@ -2,20 +2,19 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import com.lynxanalytics.biggraph.controllers.DynamicValue
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.MapBucketer
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class SampledViewVertex(id: Long, nums: Seq[Double], strs: Seq[String], vecs: Seq[Vector[Any]])
+case class SampledViewVertex(id: Long, attrs: Array[DynamicValue])
 
 object SampledView {
-  type ByType = (Seq[Double], Seq[String], Seq[Vector[Any]])
-
   class Input() extends MagicInputSignature {
     val vertices = vertexSet
     val ids = vertexAttribute[ID](vertices)
     val filtered = vertexSet
-    val attr = vertexAttribute[ByType](vertices)
+    val attr = vertexAttribute[Array[DynamicValue]](vertices)
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val svVertices = scalar[Seq[SampledViewVertex]]
@@ -41,14 +40,14 @@ case class SampledView(
       .sortedJoin(inputs.attr.rdd)
       .take(maxCount)
       .map {
-        case (id, (_, (nums, strs, vecs))) =>
-          (idToIdx(id), SampledViewVertex(id, nums, strs, vecs))
+        case (id, (_, arr)) =>
+          (idToIdx(id), SampledViewVertex(id, arr))
       }
       .toMap
 
     val maxKey = svVerticesMap.keys.max
     val svVertices = (0 to maxKey)
-      .map(svVerticesMap.get(_).getOrElse(SampledViewVertex(-1, Seq(), Seq(), Seq())))
+      .map(svVerticesMap.get(_).getOrElse(SampledViewVertex(-1, Array())))
       .toSeq
 
     output(o.svVertices, svVertices)

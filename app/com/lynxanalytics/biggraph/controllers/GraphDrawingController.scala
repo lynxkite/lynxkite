@@ -30,6 +30,11 @@ case class VertexDiagramSpec(
   val attrs: Seq[String] = Seq(),
   val radius: Int = 1)
 
+case class DynamicValue(
+  double: Double = 0.0,
+  string: String = "")
+  //vector: Array[DynamicValue] = Array())
+
 case class FEVertex(
   // For bucketed view:
   size: Double = 0.0,
@@ -38,7 +43,7 @@ case class FEVertex(
 
   // For sampled view:
   id: Long = 0,
-  attrs: Map[String, String] = Map())
+  attrs: Map[String, DynamicValue] = Map())
 
 case class VertexDiagramResponse(
   val diagramId: String,
@@ -148,34 +153,24 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     cacheVertexAttributes(request.filters.map(_.attributeId))
     val filtered = FEFilters.filterMore(sample, request.filters)
 
-    var numAttrs = List[VertexAttribute[Double]]()
-    var numAttrIds = List[String]()
-    var strAttrs = List[VertexAttribute[String]]()
-    var strAttrIds = List[String]()
-    var vecAttrs = List[VertexAttribute[Vector[_]]]()
-    var vecAttrIds = List[String]()
-    request.attrs.foreach { uuid =>
-      val attr = metaManager.vertexAttribute(uuid.asUUID)
-      attr.rdd.cache
-      if (attr.is[Double]) {
-        numAttrIds +:= uuid
-        numAttrs +:= attr.runtimeSafeCast[Double]
-      } else if (attr.is[String]) {
-        strAttrIds +:= uuid
-        strAttrs +:= attr.runtimeSafeCast[String]
-        /*} else if (isVector(attr)) {
-        vecAttrIds +:= uuid
-        implicit var tt = attr.typeTag
-        vecAttrs +:= vectorToAny(attr.asInstanceOf[VectorAttr[_]])*/
-      } else {
-        log.warn(s"'${attr.name}' is of an unsupported type: ${attr.typeTag.tpe}")
-      }
+    val attrs = request.attrs.map(x => metaManager.vertexAttribute(x.asUUID))
+    val numAttrs = attrs.collect { case attr if attr.is[Double] => attr.runtimeSafeCast[Double] }.toList
+    val strAttrs = attrs.collect { case attr if attr.is[String] => attr.runtimeSafeCast[String] }.toList
+    val attrIds = numAttrs.map(_.gUID.toString) ++ strAttrs.map(_.gUID.toString)
+
+    val dynAttrs = numAttrs.map { attr =>
+      val op = graph_operations.VertexAttributeToDynamicValue[Double]()
+      op(op.attr, attr).result.attr.entity
+    } ++ strAttrs.map { attr =>
+      val op = graph_operations.VertexAttributeToDynamicValue[String]()
+      op(op.attr, attr).result.attr.entity
     }
 
     val joined = {
-      val op = graph_operations.JoinMoreAttributes(numAttrs.size, strAttrs.size, vecAttrs.size)
-      op(op.vs, vertexSet)(op.numAttrs, numAttrs)(op.strAttrs, strAttrs)(op.vecAttrs, vecAttrs).result.attr
+      val op = graph_operations.JoinMoreAttributes(dynAttrs.size)
+      op(op.vs, vertexSet)(op.attrs, dynAttrs).result.attr.entity
     }
+
     val diagramMeta = {
       val op = graph_operations.SampledView(idToIdx)
       op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)(op.attr, joined).result.svVertices
@@ -187,11 +182,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       vertices = vertices.map(v =>
         FEVertex(
           id = v.id,
-          // we should return String Any rather, this is a temporary solution
-          attrs = (numAttrIds.zip(v.nums.map(_.toString))
-            ++ strAttrIds.zip(v.strs)
-            ++ vecAttrIds.zip(v.vecs.map(_.toString)))
-            .toMap)),
+          attrs = attrIds.zip(v.attrs).toMap)),
       mode = "sampled")
   }
 
