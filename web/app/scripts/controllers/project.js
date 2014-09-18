@@ -46,7 +46,8 @@ angular.module('biggraph')
       });
       // The state of controls. E.g. bucket count.
       this.state = defaultSideState();
-      // Everything needed for a view (state included), use this for rendering graph view instead of using state directly.
+      // Everything needed for a view (state included).
+      // Use this for rendering graph view instead of using state directly.
       this.viewData = {};
       // The /ajax/project Ajax response.
       this.project = undefined;
@@ -263,7 +264,11 @@ angular.module('biggraph')
           for (var j = 0; j < this.project.segmentations.length; ++j) {
             var seg = this.project.segmentations[j];
             if (seg.name === name) {
-              if (side.project && seg.fullName === side.project.name) { side.close(); } else { break; }
+              if (side.project && seg.fullName === side.project.name) {
+                side.close();
+              } else {
+                break;
+              }
             }
           }
         }
@@ -362,8 +367,12 @@ angular.module('biggraph')
       return $scope.left.viewData || $scope.right.viewData;
     };
 
-    $scope.$watch('left.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
-    $scope.$watch('right.project.$resolved', function() { $scope.leftToRightPath = getLeftToRightPath(); });
+    $scope.$watch('left.project.$resolved', function() {
+      $scope.leftToRightPath = getLeftToRightPath();
+    });
+    $scope.$watch('right.project.$resolved', function() {
+      $scope.leftToRightPath = getLeftToRightPath();
+    });
     $scope.$watch('left.project.$resolved', function() { $scope.left.loadScalars(); });
     $scope.$watch('right.project.$resolved', function() { $scope.right.loadScalars(); });
 

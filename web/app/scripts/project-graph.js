@@ -159,7 +159,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
 
       function edgeBundleToTSV(eb) {
         var tsv = '\n';
-        tsv += 'Edges from ' + graphName(eb.srcIdx) + ' (vertical) to ' + graphName(eb.dstIdx) + ' (horizontal):\n';
+        tsv += 'Edges from ' + graphName(eb.srcIdx) + ' (vertical)';
+        tsv += ' to ' + graphName(eb.dstIdx) + ' (horizontal):\n';
         tsv += 'src\tdst\tsize\n';
         for (var i = 0; i < eb.edges.length; ++i) {
           var e = eb.edges[i];
