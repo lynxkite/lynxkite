@@ -40,7 +40,7 @@ angular
       var req = res.get({ q: params }, function() {}, function(failure) {
         if (failure.status === 401) {  // Unauthorized.
           req.error = 'Redirecting to login page.';
-          window.location.href = '/authenticate/google';
+          window.location.href = 'https://' + window.location.hostname + '/authenticate/google';
         } else {
           req.error = util.responseToErrorMessage(failure);
         }
