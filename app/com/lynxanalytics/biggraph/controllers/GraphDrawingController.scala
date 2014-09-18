@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
@@ -26,22 +27,18 @@ case class VertexDiagramSpec(
   val centralVertexIds: Seq[ID] = Seq(),
   // Edge bundle used to find neighborhood of the central vertex.
   val sampleSmearEdgeBundleId: String = "",
-  val sizeAttributeId: String = "",
-  val labelAttributeId: String = "",
-  val colorAttributeId: String = "",
+  val attrs: Seq[String] = Seq(),
   val radius: Int = 1)
 
 case class FEVertex(
-  size: Double,
-
   // For bucketed view:
+  size: Double = 0.0,
   x: Int = 0,
   y: Int = 0,
 
   // For sampled view:
   id: Long = 0,
-  label: String = "",
-  color: String = "")
+  attrs: Map[String, String] = Map())
 
 case class VertexDiagramResponse(
   val diagramId: String,
@@ -150,41 +147,52 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     cacheVertexAttributes(request.filters.map(_.attributeId))
     val filtered = FEFilters.filterMore(sample, request.filters)
 
-    val op = graph_operations.SampledView(
-      idToIdx,
-      request.sizeAttributeId.nonEmpty,
-      request.labelAttributeId.nonEmpty,
-      request.colorAttributeId.nonEmpty)
-    var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
-    if (request.sizeAttributeId.nonEmpty) {
-      val attr = metaManager.vertexAttributeOf[Double](request.sizeAttributeId.asUUID)
+    var numAttrs = List[VertexAttribute[Double]]()
+    var numAttrIds = List[String]()
+    var strAttrs = List[VertexAttribute[String]]()
+    var strAttrIds = List[String]()
+    var vecAttrs = List[VertexAttribute[Vector[_]]]()
+    var vecAttrIds = List[String]()
+    request.attrs.foreach { uuid =>
+      val attr = metaManager.vertexAttribute(uuid.asUUID)
       attr.rdd.cache
-      builder = builder(op.sizeAttr, attr)
+      if (attr.is[Double]) {
+        numAttrIds +:= uuid
+        numAttrs +:= attr.runtimeSafeCast[Double]
+      } else if (attr.is[String]) {
+        strAttrIds +:= uuid
+        strAttrs +:= attr.runtimeSafeCast[String]
+        /*} else if (isVector(attr)) {
+        vecAttrIds +:= uuid
+        implicit var tt = attr.typeTag
+        vecAttrs +:= vectorToAny(attr.asInstanceOf[VectorAttr[_]])*/
+      } else {
+        log.warn(s"'${attr.name}' is of an unsupported type: ${attr.typeTag.tpe}")
+      }
     }
-    if (request.labelAttributeId.nonEmpty) {
-      val attr = metaManager.vertexAttribute(request.labelAttributeId.asUUID)
-      attr.rdd.cache
-      val sattr: VertexAttribute[String] =
-        if (attr.is[String]) attr.runtimeSafeCast[String]
-        else graph_operations.VertexAttributeToString.run(attr)
 
-      builder = builder(op.labelAttr, sattr)
+    val joined = {
+      val op = graph_operations.JoinMoreAttributes(numAttrs.size, strAttrs.size, vecAttrs.size)
+      op(op.vs, vertexSet)(op.numAttrs, numAttrs)(op.strAttrs, strAttrs)(op.vecAttrs, vecAttrs).result.attr
     }
-    if (request.colorAttributeId.nonEmpty) {
-      val attr = metaManager.vertexAttribute(request.colorAttributeId.asUUID)
-      attr.rdd.cache
-      val cattr: VertexAttribute[String] =
-        if (attr.is[String]) attr.runtimeSafeCast[String]
-        else graph_operations.VertexAttributeToString.run(attr)
 
-      builder = builder(op.colorAttr, cattr)
+    val diagramMeta = {
+      val op = graph_operations.SampledView(idToIdx)
+      op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)(op.attr, joined).result.svVertices
     }
-    val diagramMeta = builder.result.svVertices
+
     val vertices = diagramMeta.value
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
-      vertices = vertices.map(v => FEVertex(id = v.id, size = v.size, label = v.label, color = v.color)),
+      vertices = vertices.map(v =>
+        FEVertex(
+          id = v.id,
+          // we should return String Any rather, this is a temporary solution
+          attrs = (numAttrIds.zip(v.nums.map(_.toString))
+            ++ strAttrIds.zip(v.strs)
+            ++ vecAttrIds.zip(v.vecs.map(_.toString)))
+            .toMap)),
       mode = "sampled")
   }
 

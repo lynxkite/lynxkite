@@ -6,8 +6,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object JoinMoreAttributes {
-  type ByType = (Seq[Double], Seq[String], Seq[Vector[Any]])
-  
+  type ByType = (Seq[Double], Seq[String], Seq[Vector[Any]]) // todo: should handle Options rather
+
   class Input(numAttrCount: Int, strAttrCount: Int, vecAttrCount: Int)
       extends MagicInputSignature {
     val vs = vertexSet
@@ -35,24 +35,24 @@ case class JoinMoreAttributes(numAttrCount: Int, strAttrCount: Int, vecAttrCount
     val numJoined = {
       val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[Double]())
       inputs.numAttrs.foldLeft(noAttrs) { (rdd, attr) =>
-        rdd.sortedJoin(attr.rdd).mapValues {
-          case (attrs, attr) => attrs :+ attr
+        rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
+          case (attrs, attr) => attrs :+ attr.getOrElse(0.0)
         }
       }
     }
     val strJoined = {
       val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[String]())
       inputs.strAttrs.foldLeft(noAttrs) { (rdd, attr) =>
-        rdd.sortedJoin(attr.rdd).mapValues {
-          case (attrs, attr) => attrs :+ attr
+        rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
+          case (attrs, attr) => attrs :+ attr.getOrElse("")
         }
       }
     }
     val vecJoined = {
       val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[Vector[Any]]())
       inputs.vecAttrs.foldLeft(noAttrs) { (rdd, attr) =>
-        rdd.sortedJoin(attr.rdd).mapValues {
-          case (attrs, attr) => attrs :+ attr
+        rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
+          case (attrs, attr) => attrs :+ attr.getOrElse(Vector())
         }
       }
     }
