@@ -2,29 +2,25 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._
 
+import com.lynxanalytics.biggraph.controllers.DynamicValue
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object JoinMoreAttributes {
-  type ByType = (Seq[Double], Seq[String], Seq[Vector[Any]]) // todo: should handle Options rather
-
-  class Input(numAttrCount: Int, strAttrCount: Int, vecAttrCount: Int)
+  class Input(attrCount: Int)
       extends MagicInputSignature {
     val vs = vertexSet
-    val numAttrs = (0 until numAttrCount).map(i => vertexAttribute[Double](vs, Symbol("numAttr-" + i)))
-    val strAttrs = (0 until strAttrCount).map(i => vertexAttribute[String](vs, Symbol("strAttr-" + i)))
-    val vecAttrs = (0 until vecAttrCount).map(i => vertexAttribute[Vector[Any]](vs, Symbol("vecAttr-" + i)))
+    val attrs = (0 until attrCount).map(i => vertexAttribute[DynamicValue](vs, Symbol("dynAttr-" + i)))
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val attr = vertexAttribute[ByType](inputs.vs.entity)
+    val attr = vertexAttribute[Array[DynamicValue]](inputs.vs.entity)
   }
 }
 import JoinMoreAttributes._
-case class JoinMoreAttributes(numAttrCount: Int, strAttrCount: Int, vecAttrCount: Int)
-    extends TypedMetaGraphOp[Input, Output] {
+case class JoinMoreAttributes(attrCount: Int) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
-  @transient override lazy val inputs = new Input(numAttrCount, strAttrCount, vecAttrCount)
+  @transient override lazy val inputs = new Input(attrCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
@@ -32,33 +28,17 @@ case class JoinMoreAttributes(numAttrCount: Int, strAttrCount: Int, vecAttrCount
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val numJoined = {
-      val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[Double]())
-      inputs.numAttrs.foldLeft(noAttrs) { (rdd, attr) =>
-        rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
-          case (attrs, attr) => attrs :+ attr.getOrElse(0.0)
-        }
+    val joined = {
+      val noAttrs = inputs.vs.rdd.mapValues(_ => Array[DynamicValue]())
+      inputs.attrs.zipWithIndex.foldLeft(noAttrs) {
+        case (rdd, (attr, i)) =>
+          rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
+            case (attrs, attr) =>
+              attrs(i) = attr.get // TODO: what to do here?
+              attrs
+          }
       }
     }
-    val strJoined = {
-      val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[String]())
-      inputs.strAttrs.foldLeft(noAttrs) { (rdd, attr) =>
-        rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
-          case (attrs, attr) => attrs :+ attr.getOrElse("")
-        }
-      }
-    }
-    val vecJoined = {
-      val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[Vector[Any]]())
-      inputs.vecAttrs.foldLeft(noAttrs) { (rdd, attr) =>
-        rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
-          case (attrs, attr) => attrs :+ attr.getOrElse(Vector())
-        }
-      }
-    }
-    val allJoined = numJoined.sortedJoin(strJoined).sortedJoin(vecJoined).mapValues {
-      case ((nums, strs), vecs) => (nums, strs, vecs)
-    }
-    output(o.attr, allJoined)
+    output(o.attr, joined)
   }
 }

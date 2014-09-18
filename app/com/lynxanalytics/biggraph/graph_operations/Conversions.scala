@@ -4,6 +4,7 @@ import scala.reflect.runtime.universe._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.controllers.DynamicValue
 
 object VertexAttributeToString {
   class Output[T](implicit instance: MetaGraphOperationInstance,
@@ -55,6 +56,45 @@ case class VertexAttributeToDouble()
     implicit val id = inputDatas
     output(o.attr, inputs.attr.rdd.flatMapValues(str =>
       if (str.nonEmpty) Some(str.toDouble) else None))
+  }
+}
+
+object VertexAttributeToDynamicValue {
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+               inputs: VertexAttributeInput[T])
+      extends MagicOutput(instance) {
+    val attr = vertexAttribute[DynamicValue](inputs.vs.entity)
+  }
+  def run[T](attr: VertexAttribute[T])(
+    implicit manager: MetaGraphManager): VertexAttribute[DynamicValue] = {
+
+    import Scripting._
+    val op = VertexAttributeToDynamicValue[T]()
+    op(op.attr, attr).result.attr
+  }
+}
+case class VertexAttributeToDynamicValue[T]()
+    extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
+  import VertexAttributeToDynamicValue._
+  @transient override lazy val inputs = new VertexAttributeInput[T]
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val ct = inputs.attr.data.classTag
+    implicit val tt = inputs.attr.data.typeTag
+    val attr = inputs.attr.rdd
+    
+    val dv = {
+      if (typeOf[T] =:= typeOf[Double]) attr.mapValues(x => DynamicValue(double = x.asInstanceOf[Double]))
+      else if (typeOf[T] =:= typeOf[String]) attr.mapValues(x => DynamicValue(string = x.asInstanceOf[String]))
+      else if (typeOf[T] =:= typeOf[Vector[Any]]) ???
+      else ???
+    }
+    output(o.attr, dv)
   }
 }
 
