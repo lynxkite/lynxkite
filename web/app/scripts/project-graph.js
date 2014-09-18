@@ -160,22 +160,12 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       }
 
       function edgeBundleToTSV(eb) {
-        var i, j;
         var tsv = '\n';
         tsv += 'Edges from ' + graphName(eb.srcIdx) + ' (vertical) to ' + graphName(eb.dstIdx) + ' (horizontal):\n';
-        // A simple dump. Adding the vertex indices would not make it clearer.
-        var maxA = 0, maxB = 0;
-        var byPair = {};
-        for (i = 0; i < eb.edges.length; ++i) {
+        tsv += 'src\tdst\tsize\n';
+        for (var i = 0; i < eb.edges.length; ++i) {
           var e = eb.edges[i];
-          byPair[e.a + ', ' + e.b] = e.size;
-          if (e.a > maxA) { maxA = e.a; }
-          if (e.b > maxB) { maxB = e.b; }
-        }
-        for (j = 0; j <= maxB; ++j) {
-          for (i = 0; i <= maxA; ++i) {
-            tsv += (byPair[i + ', ' + j] || 0) + (i === maxA ? '\n' : '\t');
-          }
+          tsv += e.a + '\t' + e.b + '\t' + e.size + '\n';
         }
         return tsv;
       }
