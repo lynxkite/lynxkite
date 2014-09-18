@@ -523,10 +523,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           log.warn(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
         case _ => ()
       }
-      val joined = {
-        val op = graph_operations.JoinMoreAttributes(numAttrNames.size, strAttrNames.size, vecAttrNames.size)
-        op(op.numAttrs, numAttrs)(op.strAttrs, strAttrs)(op.vecAttrs, vecAttrs).result.attr
-      }
       val js = JavaScript(expr)
       // Figure out the return type.
       val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames, vecAttrNames) match {
@@ -538,7 +534,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           throw new Exception(s"Test evaluation of '$js' returned '$result'.")
       }
       val result = op(
-        op.vs, project.vertexSet)(op.attr, joined).result
+        op.vs, project.vertexSet)(
+          op.numAttrs, numAttrs)(
+            op.strAttrs, strAttrs)(
+              op.vecAttrs, vecAttrs).result
       project.vertexAttributes(params("output")) = result.attr
     }
 

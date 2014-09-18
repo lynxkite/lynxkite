@@ -9,33 +9,27 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object DeriveJS {
-  type ByType = (Seq[Double], Seq[String], Seq[Vector[Any]])
-
+  class Input(numAttrCount: Int, strAttrCount: Int, vecAttrCount: Int)
+      extends MagicInputSignature {
+    val vs = vertexSet
+    val numAttrs = (0 until numAttrCount).map(i => vertexAttribute[Double](vs, Symbol("numAttr-" + i)))
+    val strAttrs = (0 until strAttrCount).map(i => vertexAttribute[String](vs, Symbol("strAttr-" + i)))
+    val vecAttrs = (0 until vecAttrCount).map(i => vertexAttribute[Vector[Any]](vs, Symbol("vecAttr-" + i)))
+  }
   class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance,
-                           inputs: VertexAttributeInput[ByType])
-      extends MagicOutput(instance) {
+                           inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
-
   def add(a: VertexAttribute[Double],
           b: VertexAttribute[Double])(implicit manager: MetaGraphManager): VertexAttribute[Double] = {
     import Scripting._
-    val joined = {
-      val op = JoinMoreAttributes(2, 0, 0)
-      op(op.numAttrs, Seq(a, b)).result.attr
-    }
     val op = DeriveJSDouble(JavaScript("a + b"), Seq("a", "b"), Seq(), Seq())
-    op(op.attr, joined).result.attr
+    op(op.numAttrs, Seq(a, b)).result.attr
   }
-
   def negative(x: VertexAttribute[Double])(implicit manager: MetaGraphManager): VertexAttribute[Double] = {
     import Scripting._
-    val joined = {
-      val op = JoinMoreAttributes(1, 0, 0)
-      op(op.numAttrs, Seq(x)).result.attr
-    }
     val op = DeriveJSDouble(JavaScript("-x"), Seq("x"), Seq(), Seq())
-    op(op.attr, joined).result.attr
+    op(op.numAttrs, Seq(x)).result.attr
   }
 }
 import DeriveJS._
@@ -44,10 +38,10 @@ abstract class DeriveJS[T](
   numAttrNames: Seq[String],
   strAttrNames: Seq[String],
   vecAttrNames: Seq[String])
-    extends TypedMetaGraphOp[VertexAttributeInput[ByType], Output[T]] {
+    extends TypedMetaGraphOp[Input, Output[T]] {
   implicit def tt: TypeTag[T]
   override val isHeavy = true
-  @transient override lazy val inputs = new VertexAttributeInput[ByType]()
+  @transient override lazy val inputs = new Input(numAttrNames.size, strAttrNames.size, vecAttrNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(tt, instance, inputs)
 
   def execute(inputDatas: DataSet,
@@ -55,8 +49,32 @@ abstract class DeriveJS[T](
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val derived = inputs.attr.rdd.mapValues {
-      case (nums, strs, vecs) =>
+    val numJoined = {
+      val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[Double]())
+      inputs.numAttrs.foldLeft(noAttrs) { (rdd, attr) =>
+        rdd.sortedJoin(attr.rdd).mapValues {
+          case (attrs, attr) => attrs :+ attr
+        }
+      }
+    }
+    val strJoined = {
+      val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[String]())
+      inputs.strAttrs.foldLeft(noAttrs) { (rdd, attr) =>
+        rdd.sortedJoin(attr.rdd).mapValues {
+          case (attrs, attr) => attrs :+ attr
+        }
+      }
+    }
+    val vecJoined = {
+      val noAttrs = inputs.vs.rdd.mapValues(_ => Seq[Vector[Any]]())
+      inputs.vecAttrs.foldLeft(noAttrs) { (rdd, attr) =>
+        rdd.sortedJoin(attr.rdd).mapValues {
+          case (attrs, attr) => attrs :+ attr
+        }
+      }
+    }
+    val derived = numJoined.sortedJoin(strJoined).sortedJoin(vecJoined).mapValues {
+      case ((nums, strs), vecs) =>
         val numValues = numAttrNames.zip(nums).toMap
         val strValues = strAttrNames.zip(strs).toMap
         // There is no autounboxing in Javascript. So we unbox primitive arrays.
