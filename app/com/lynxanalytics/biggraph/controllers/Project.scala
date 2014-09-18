@@ -286,6 +286,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
         }
         .iterator
     }
+
+    def contains(x: String) = iterator.contains(x)
   }
   class ScalarHolder extends Holder[Scalar[_]]("scalars") {
     def validate(name: String, scalar: Scalar[_]) = {}
