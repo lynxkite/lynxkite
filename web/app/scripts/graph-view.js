@@ -51,7 +51,11 @@ angular.module('biggraph').directive('graphView', function() {
     this.scope = scope;
     this.unwatch = [];  // Watchers to be removed when drawing new graph.
     this.svg = angular.element(element);
-    this.svg.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
+    this.svg.append([
+      svg.marker('arrow'),
+      svg.marker('arrow-highlight-in'),
+      svg.marker('arrow-highlight-out'),
+    ]);
     this.root = svg.create('g', {'class': 'root'});
     this.svg.append(this.root);
   }
@@ -60,7 +64,13 @@ angular.module('biggraph').directive('graphView', function() {
     this.root.empty();
     var w = 5000, h = this.svg.height();
     var x = this.svg.width() / 2, y = h / 2;
-    var loading = svg.create('rect', {'class': 'loading', width: w, height: h, x: x - w/2, y: y - h/2});
+    var loading = svg.create('rect', {
+      'class': 'loading',
+      width: w,
+      height: h,
+      x: x - w/2,
+      y: y - h/2,
+    });
     var anchor = ' ' + x + ' ' + y;
     var rotate = svg.create('animateTransform', {
       attributeName: 'transform',
@@ -242,7 +252,12 @@ angular.module('biggraph').directive('graphView', function() {
       e.dst.forceMass += 1;
     }
     var scale = this.svg.height();
-    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: scale, gravity: 0.05, drag: 0.2 });
+    var engine = new FORCE_LAYOUT.Engine({
+      attraction: 0.01,
+      repulsion: scale,
+      gravity: 0.05,
+      drag: 0.2,
+    });
     // Initial layout.
     var t1 = Date.now();
     while (engine.step(vertices) && Date.now() - t1 <= 2000) {}
@@ -331,7 +346,8 @@ angular.module('biggraph').directive('graphView', function() {
       this.vertices.append(l.dom);
     }
      
-    var vertexScale = this.zoom * 2 / util.minmax(data.vertices.map(function(n) { return n.size; })).max;
+    var sizes = data.vertices.map(function(n) { return n.size; });
+    var vertexScale = this.zoom * 2 / util.minmax(sizes).max;
     for (i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
       var v = new Vertex(this.zoom * util.normalize(vertex.x + 0.5, xNumBuckets),
@@ -471,11 +487,15 @@ angular.module('biggraph').directive('graphView', function() {
     src.addMoveListener(function() { that.reposition(zoom); });
     dst.addMoveListener(function() { that.reposition(zoom); });
     this.reposition(zoom);
-    src.addHoverListener({on: function() { svg.addClass(that.dom, 'highlight-out'); that.toFront(); },
-                          off: function() { svg.removeClass(that.dom, 'highlight-out'); }});
+    src.addHoverListener({
+      on: function() { svg.addClass(that.dom, 'highlight-out'); that.toFront(); },
+      off: function() { svg.removeClass(that.dom, 'highlight-out'); }
+    });
     if (src !== dst) {
-      dst.addHoverListener({on: function() { svg.addClass(that.dom, 'highlight-in'); that.toFront(); },
-                            off: function() { svg.removeClass(that.dom, 'highlight-in'); }});
+      dst.addHoverListener({
+        on: function() { svg.addClass(that.dom, 'highlight-in'); that.toFront(); },
+        off: function() { svg.removeClass(that.dom, 'highlight-in'); }
+      });
     }
   }
   Edge.prototype.toFront = function() {
