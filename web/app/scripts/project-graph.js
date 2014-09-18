@@ -54,7 +54,11 @@ angular.module('biggraph').directive('projectGraph', function (util) {
           }
           // we sort attributes by UUID to avoid recomputing the same combination
           var attrs = [];
-          for (var index in viewData.attrs) { attrs.push(viewData.attrs[index].id); }
+          for (var index in viewData.attrs) {
+            if (viewData.attrs[index]) {
+              attrs.push(viewData.attrs[index].id);
+            }
+          }
           attrs.sort();
 
           q.vertexSets.push({
