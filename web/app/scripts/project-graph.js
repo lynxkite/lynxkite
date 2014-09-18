@@ -145,7 +145,9 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             // X-axis header.
             tsv += '\t' + vs.xLabels[j];
           }
-          tsv += '\n';
+          if (vs.xLabels.length !== 0) {
+            tsv += '\n';
+          }
           for (j = 0; j < vs.yLabels.length; ++j) {
             tsv += vs.yLabels[j];  // Y-axis header.
             for (i = 0; j < yl && i < xl; ++i) {
