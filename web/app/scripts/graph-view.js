@@ -142,48 +142,64 @@ angular.module('biggraph').directive('graphView', function($window) {
     var vertices = [];
     vertices.side = side;
     vertices.mode = 'sampled';
-    var size = side.attrs.size.id;
-    var color = side.attrs.color.id;
-    var vertexSizeBounds = util.minmax(mapByAttr(data.vertices, size));
-    var vertexSizeScale = this.zoom * 2 / vertexSizeBounds.max;
 
+    var size = (side.attrs.size) ? side.attrs.size.id : undefined;
+    var vertexSizeScale;
+    if (size) {
+      var vertexSizeBounds = util.minmax(mapByAttr(data.vertices, size));
+      vertexSizeScale = this.zoom * 2 / vertexSizeBounds.max;
+    }
+
+    var color = (side.attrs.color) ? side.attrs.color.id : undefined;
     var vertexColorBounds, vertexColorScale, colorMap;
-
-    if (side.attrs.color.typeName === 'Double') {
-      vertexColorBounds = util.minmax(mapByAttr(data.vertices, color));
-      vertexColorScale =
-        100 / Math.max(vertexColorBounds.max, Math.abs(vertexColorBounds.min));
-    } else if (side.attrs.color.typeName === 'String') {
-      var enumMap = {};
-      colorMap = {};
-      angular.forEach(data.vertices, function(n) {
-        enumMap[n.attrs[color]] =
-          (enumMap[n.attrs[color]]) ? enumMap[n.attrs[color]] + 1 : 1;
-      });
-      var cdist = Math.floor(360 / Object.keys(enumMap).length);
-      var ci = 0;
-      angular.forEach(enumMap, function(v, k) { colorMap[k] = ci; ci += cdist; });
-      console.log(colorMap);
+    if (color) {
+      if (side.attrs.color.typeName === 'Double') {
+        vertexColorBounds = util.minmax(mapByAttr(data.vertices, color));
+        vertexColorScale =
+          100 / Math.max(vertexColorBounds.max, Math.abs(vertexColorBounds.min));
+      } else if (side.attrs.color.typeName === 'String') {
+        var enumMap = {};
+        colorMap = {};
+        angular.forEach(data.vertices, function(n) {
+          enumMap[n.attrs[color]] =
+            (enumMap[n.attrs[color]]) ? enumMap[n.attrs[color]] + 1 : 1;
+        });
+        var cdist = Math.floor(360 / Object.keys(enumMap).length);
+        var ci = 0;
+        angular.forEach(enumMap, function(v, k) { colorMap[k] = ci; ci += cdist; });
+        console.log(colorMap);
+      }
     }
 
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      var label = vertex.attrs[side.attrs.label.id] || vertex.id;
+
+      var label = (side.attrs.label) ? vertex.attrs[side.attrs.label.id] || vertex.id : vertex.id;
+
+      // todo: set a minimum size for 0 and undefined vertices here
+      var vertexSize =
+        (size) ? Math.sqrt(vertexSizeScale * vertex.attrs[size]) || 0 : Math.sqrt(this.zoom * 2);
+
       var hslColor, h, s, l;
-      if (side.attrs.color.typeName === 'Double') {
+      if (color && side.attrs.color.typeName === 'Double') {
         // negative is blue, positive is red, zero lighter grey
         h = (vertex.attrs[color] >= 0) ? 0 : 240;
         s = Math.abs(vertexColorScale * vertex.attrs[color]);
         l = (vertexColorScale) ? 50 : 25; // default color is dark grey
-      } else if (side.attrs.color.typeName === 'String') {
+      } else if (color && side.attrs.color.typeName === 'String') {
         h = colorMap[vertex.attrs[color]];
         s = 100;
         l = 42;
+      } else {
+        h = 0;
+        s = 0;
+        l = 25;
       }
       hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
+
       var v = new Vertex(Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
-                         Math.sqrt(vertexSizeScale * vertex.attrs[size]),
+                         vertexSize,
                          label,
                          hslColor);
       offsetter.rule(v);
@@ -193,7 +209,7 @@ angular.module('biggraph').directive('graphView', function($window) {
         svg.addClass(v.dom, 'center');
       }
       vertices.push(v);
-      if (vertex.size === 0) {
+      if (vertexSize === 0) {
         continue;
       }
       this.sampledVertexMouseBindings(vertices, v, offsetter);
