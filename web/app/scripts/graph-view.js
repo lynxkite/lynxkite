@@ -297,7 +297,7 @@ angular.module('biggraph').directive('graphView', function() {
       } else {
         x = this.zoom * util.normalize(i + 0.5, xNumBuckets);
       }
-      l = new Label(x, y, data.xLabels[i], vertices);
+      l = new Label(x, y, data.xLabels[i]);
       offsetter.rule(l);
       xLabels.push(l);
       this.vertices.append(l.dom);
