@@ -24,7 +24,7 @@ case class VertexDiagramSpec(
   val yNumBuckets: Int = 1,
 
   // ** Parameters for sampled view **
-  val centralVertexIds: Seq[ID] = Seq(),
+  val centralVertexIds: Seq[String] = Seq(),
   // Edge bundle used to find neighborhood of the central vertex.
   val sampleSmearEdgeBundleId: String = "",
   val attrs: Seq[String] = Seq(),
@@ -113,10 +113,11 @@ case class ScalarValueResponse(
 
 case class CenterRequest(
   vertexSetId: String,
+  count: Int,
   filters: Seq[FEVertexAttributeFilter])
 
 case class CenterResponse(
-  val center: Seq[ID])
+  val centers: Seq[String])
 
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -132,7 +133,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
-    val centers = request.centralVertexIds
+    val centers = request.centralVertexIds.map(_.toLong)
 
     val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
     val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
@@ -175,12 +176,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val op = graph_operations.JoinMoreAttributes(numAttrs.size, strAttrs.size, vecAttrs.size)
       op(op.vs, vertexSet)(op.numAttrs, numAttrs)(op.strAttrs, strAttrs)(op.vecAttrs, vecAttrs).result.attr
     }
-
     val diagramMeta = {
       val op = graph_operations.SampledView(idToIdx)
       op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)(op.attr, joined).result.svVertices
     }
-
     val vertices = diagramMeta.value
 
     VertexDiagramResponse(
@@ -427,7 +426,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     cacheVertexAttributes(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
-    CenterResponse(Seq(filtered.rdd.keys.first))
+    CenterResponse(filtered.rdd.keys.take(request.count).map(_.toString))
   }
 
   def getHistogram(request: HistogramSpec): HistogramResponse = {

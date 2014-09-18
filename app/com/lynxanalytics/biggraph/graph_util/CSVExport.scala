@@ -25,12 +25,6 @@ case class CSVData(val header: Seq[String],
     (path / "header").createFromStrings(CSVData.lineToString(header))
     saveDataToDir(path / "data")
   }
-
-  def saveToSingleFile(path: Filename) = {
-    val stringRDD = toStringRDD.repartition(1)
-    val full = stringRDD.mapPartitions(it => Iterator(CSVData.lineToStringNoNewLine(header)) ++ it)
-    path.saveAsTextFile(full)
-  }
 }
 object CSVData {
   def lineToStringNoNewLine(line: Seq[String]): String = line.mkString(",")

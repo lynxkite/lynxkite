@@ -13,7 +13,7 @@ angular.module('biggraph')
         graphMode: undefined,
         bucketCount: 4,
         sampleRadius: 1,
-        center: [0],
+        centers: ['0'],
       };
     }
     function defaultState() {
@@ -26,8 +26,8 @@ angular.module('biggraph')
 
     function setState(state) {
       $scope.state = state;
-      $scope.state.left.setCenter = function(id) { $scope.state.left.center = id; };
-      $scope.state.right.setCenter = function(id) { $scope.state.right.center = id; };
+      $scope.state.left.setCenter = function(id) { $scope.state.left.centers = [id]; };
+      $scope.state.right.setCenter = function(id) { $scope.state.right.centers = [id]; };
     }
 
     setState(defaultState());

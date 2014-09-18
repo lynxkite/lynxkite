@@ -7,10 +7,6 @@ angular.module('biggraph').directive('projectGraph', function (util) {
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope) {
-      scope.showGraph = function() {
-        return (scope.left && scope.left.graphMode) || (scope.right && scope.right.graphMode);
-      };
-
       util.deepWatch(scope, 'left', update);
       util.deepWatch(scope, 'right', update);
 
@@ -60,19 +56,21 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             }
           }
           attrs.sort();
+          var xAttr = (viewData.xAttribute) ? viewData.xAttribute.id : '';
+          var yAttr = (viewData.yAttribute) ? viewData.yAttribute.id : '';
 
           q.vertexSets.push({
             vertexSetId: viewData.vertexSet.id,
             filters: filters,
             mode: viewData.graphMode,
             // Bucketed view parameters.
-            xBucketingAttributeId: viewData.xAttribute || '',
-            yBucketingAttributeId: viewData.yAttribute || '',
+            xBucketingAttributeId: xAttr,
+            yBucketingAttributeId: yAttr,
             xNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             // Sampled view parameters.
             radius: parseInt(viewData.sampleRadius),  // angular.js/pull/7370
-            centralVertexIds: viewData.center,
+            centralVertexIds: viewData.centers,
             sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
             attrs: attrs,
           });
