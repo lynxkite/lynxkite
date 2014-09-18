@@ -91,7 +91,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         var vsIndex = 0;
         for (var i = 0; i < sides.length; ++i) {
           if (sides[i] && sides[i].graphMode) {
-            scope.tsv += vertexSetToTSV(gv.vertexSets[vsIndex], sides[i]);
+            scope.tsv += vertexSetToTSV(i, gv.vertexSets[vsIndex], sides[i]);
             vsIndex += 1;
           }
         }
@@ -100,11 +100,12 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         }
       });
 
-      function vertexSetToTSV(vs, side) {
+      function vertexSetToTSV(index, vs, side) {
         var i, j, v;
+        var name = graphName(index);
         var tsv = '\n';
         if (vs.mode === 'sampled') {
-          tsv += 'Samples:\n';
+          tsv += 'Vertices of ' + name + ':\n';
           tsv += 'id';
           if (side.labelAttribute.id) { tsv += '\t' + side.labelAttribute.title; }
           if (side.sizeAttribute.id) { tsv += '\t' + side.sizeAttribute.title; }
@@ -123,14 +124,15 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             xAxis + ' (horizontal' + (vs.xLabelType === 'between' ? ', lower bounds' : '') + ')';
           var yDescription =
             yAxis + ' (vertical' + (vs.yLabelType === 'between' ? ', lower bounds' : '') + ')';
+          tsv += 'Buckets of ' + name;
           if (xAxis && yAxis) {
-            tsv += yDescription + ' by ' + xDescription + ':\n';
+            tsv += ' by ' + yDescription + ' and ' + xDescription + ':\n';
           } else if (xAxis) {
-            tsv += xDescription + ':\n';
+            tsv += ' by ' + xDescription + ':\n';
           } else if (yAxis) {
-            tsv += yDescription + ':\n';
+            tsv += ' by ' + yDescription + ':\n';
           } else {
-            tsv += 'Count:\n';
+            tsv += ':\n';
           }
           var byBucket = {};
           for (i = 0; i < vs.vertices.length; ++i) {
@@ -158,7 +160,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       function edgeBundleToTSV(eb) {
         var i, j;
         var tsv = '\n';
-        tsv += 'Edges from graph ' + eb.srcIdx + ' (vertical) to graph ' + eb.dstIdx + ' (horizontal):\n';
+        tsv += 'Edges from ' + graphName(eb.srcIdx) + ' (vertical) to ' + graphName(eb.dstIdx) + ' (horizontal):\n';
         // A simple dump. Adding the vertex indices would not make it clearer.
         var maxA = 0, maxB = 0;
         var byPair = {};
@@ -174,6 +176,10 @@ angular.module('biggraph').directive('projectGraph', function (util) {
           }
         }
         return tsv;
+      }
+
+      function graphName(index) {
+        return ['the left-side graph', 'the right-side graph'][index] || 'graph ' + (index + 1);
       }
     }
   };
