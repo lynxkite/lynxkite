@@ -45,10 +45,6 @@ svg .edge.highlight-out .first {
 svg .edge.highlight-in .first {
   marker-end: url(#arrow-highlight-in);
 }
-/* commented out until we decide on style or use less?
-svg .vertex circle {
-}
-*/
 svg .vertex .touch {
   fill: transparent;
 }
