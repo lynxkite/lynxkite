@@ -1131,46 +1131,49 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val title = "Export vertex attributes to CSV"
       val description = ""
       val parameters = Seq(
-        Param("path", "Destination path"),
-        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
+        Param("path", "Destination path", defaultValue = "<auto>"),
+        Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
         Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
         val attrs = labels.map(label => project.vertexAttributes(label))
-        assert(params("path").nonEmpty, "No export path specified.")
-        val path = Filename(params("path"))
+        val path = getExportFilename(params("path"))
         val csv = graph_util.CSVExport.exportVertexAttributes(attrs, labels)
-        if (params("single") == "true") {
-          csv.saveToSingleFile(path)
-        } else {
-          csv.saveToDir(path)
-        }
+        csv.saveToDir(path)
+        project.scalars(params("link")) =
+          downloadLink(path, project.projectName + "_" + params("link"))
       }
     })
+
+    def getExportFilename(param: String): Filename = {
+      assert(param.nonEmpty, "No export path specified.")
+      if (param == "<auto>") {
+        dataManager.repositoryPath / "exports" / Timestamp.toString
+      } else {
+        Filename(param)
+      }
+    }
 
     register(new AttributeOperation(_) {
       val title = "Export edge attributes to CSV"
       val description = ""
       val parameters = Seq(
-        Param("path", "Destination path"),
-        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))),
+        Param("path", "Destination path", defaultValue = "<auto>"),
+        Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
         Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
         val attrs = labels.map(label => project.edgeAttributes(label))
-        assert(params("path").nonEmpty, "No export path specified.")
-        val path = Filename(params("path"))
+        val path = getExportFilename(params("path"))
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(project.edgeBundle, attrs, labels)
-        if (params("single") == "true") {
-          csv.saveToSingleFile(path)
-        } else {
-          csv.saveToDir(path)
-        }
+        csv.saveToDir(path)
+        project.scalars(params("link")) =
+          downloadLink(path, project.projectName + "_" + params("link"))
       }
     })
 
@@ -1178,18 +1181,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val title = "Export segmentation to CSV"
       val description = ""
       val parameters = Seq(
-        Param("path", "Destination path"),
-        Param("single", "Export as single csv", options = UIValue.seq(Seq("false", "true"))))
+        Param("path", "Destination path", defaultValue = "<auto>"),
+        Param("link", "Download link name", defaultValue = "segmentation_csv"))
       def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
-        val path = Filename(params("path"))
+        val path = getExportFilename(params("path"))
         val csv = graph_util.CSVExport
           .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
-        if (params("single") == "true") {
-          csv.saveToSingleFile(path)
-        } else {
-          csv.saveToDir(path)
-        }
+        csv.saveToDir(path)
+        project.scalars(params("link")) =
+          downloadLink(path, project.projectName + "_" + params("link"))
       }
     })
   }
@@ -1365,5 +1366,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def concat(eb1: EdgeBundle, eb2: EdgeBundle): EdgeBundle = {
     new graph_util.BundleChain(Seq(eb1, eb2)).getCompositeEdgeBundle._1
+  }
+
+  def newScalar(data: String): Scalar[String] = {
+    val op = graph_operations.CreateStringScalar(data)
+    op.result.created
+  }
+
+  def downloadLink(fn: Filename, name: String) = {
+    val urlPath = java.net.URLEncoder.encode(fn.fullString, "utf-8")
+    val urlName = java.net.URLEncoder.encode(name, "utf-8")
+    val url = s"/download?path=$urlPath&name=$urlName"
+    val quoted = '"' + url + '"'
+    newScalar(s"<a href=$quoted>download</a>")
   }
 }

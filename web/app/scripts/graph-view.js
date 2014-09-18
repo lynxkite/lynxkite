@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('graphView', function($window) {
+angular.module('biggraph').directive('graphView', function() {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
   var svg = SVG_UTIL;
   var util = COMMON_UTIL;
@@ -20,7 +20,6 @@ angular.module('biggraph').directive('graphView', function($window) {
           }
         }
         scope.$watch('graph', updateGraph, true);
-        angular.element($window).bind('resize', updateGraph);
       },
     };
 
@@ -54,15 +53,13 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.svg = angular.element(element);
     this.svg.append([svg.marker('arrow'), svg.marker('arrow-highlight-in'), svg.marker('arrow-highlight-out')]);
     this.root = svg.create('g', {'class': 'root'});
-    var graphToSVGRatio = 0.67;
-    this.zoom = 500 * graphToSVGRatio; // todo: replace 500 with the actual svg height
     this.svg.append(this.root);
   }
 
   GraphView.prototype.loading = function() {
     this.root.empty();
-    var x = this.svg.width() / 2, y = 250;
-    var w = 5000, h = 500;
+    var w = 5000, h = this.svg.height();
+    var x = this.svg.width() / 2, y = h / 2;
     var loading = svg.create('rect', {'class': 'loading', width: w, height: h, x: x - w/2, y: y - h/2});
     var anchor = ' ' + x + ' ' + y;
     var rotate = svg.create('animateTransform', {
@@ -79,7 +76,7 @@ angular.module('biggraph').directive('graphView', function($window) {
 
   GraphView.prototype.error = function(msg) {
     this.root.empty();
-    var x = this.svg.width() / 2, y = 250;
+    var x = this.svg.width() / 2, y = this.svg.height() / 2;
     var text = svg.create('text', {'class': 'error', x: x, y: y, 'text-anchor': 'middle'});
     var maxLength = 100;  // The error message can be very long and SVG does not wrap text.
     for (var i = 0; i < msg.length; i += maxLength) {
@@ -93,6 +90,8 @@ angular.module('biggraph').directive('graphView', function($window) {
     for (var i = 0; i < this.unwatch.length; ++i) {
       this.unwatch[i]();
     }
+    var graphToSVGRatio = 0.8;
+    this.zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.left, this.scope.right];
     this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
@@ -106,20 +105,23 @@ angular.module('biggraph').directive('graphView', function($window) {
         var xMin = (i * 2) * halfColumnWidth;
         var xOff = (i * 2 + 1) * halfColumnWidth;
         var xMax = (i * 2 + 2) * halfColumnWidth;
-        var yOff = 500 / 2; // todo: replace 500 with the actual svg height
+        var yOff = this.svg.height() / 2;
         var vs = data.vertexSets[vsIndex];
         vsIndex += 1;
         var offsetter = new Offsetter(xOff, yOff);
         if (vs.mode === 'sampled') {
           vertices.push(this.addSampledVertices(vs, offsetter, sides[i]));
         } else {
-          vertices.push(this.addBucketedVertices(vs, offsetter));
+          vertices.push(this.addBucketedVertices(vs, offsetter, sides[i]));
         }
         this.sideMouseBindings(offsetter, xMin, xMax);
       }
     }
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
+      // Avoid an error with the Grunt test data, which has edges going to the other side
+      // even if we only have one side.
+      if (e.srcIdx >= vsIndex || e.dstIdx >= vsIndex) { continue; }
       var edges = this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
       if (e.srcIdx === e.dstIdx) {
         vertices[e.srcIdx].edges = edges;
@@ -174,7 +176,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
 
-      var label = (side.attrs.label) ? vertex.attrs[side.attrs.label.id] || vertex.id : vertex.id;
+      var label = (side.attrs.label) ? vertex.attrs[side.attrs.label.id] || '' : '';
 
       // todo: set a minimum size for 0 and undefined vertices here
       var vertexSize =
@@ -201,11 +203,12 @@ angular.module('biggraph').directive('graphView', function($window) {
                          Math.random() * 400 - 200,
                          vertexSize,
                          label,
+                         vertex.id,
                          hslColor);
       offsetter.rule(v);
-      v.id = vertex.id;
+      v.id = vertex.id.toString();
       svg.addClass(v.dom, 'sampled');
-      if (side.center.indexOf(v.id) > -1) {
+      if (side.centers.indexOf(v.id) > -1) {
         svg.addClass(v.dom, 'center');
       }
       vertices.push(v);
@@ -232,7 +235,7 @@ angular.module('biggraph').directive('graphView', function($window) {
     var svgElement = this.svg;
     function setCenter() {
       scope.$apply(function() {
-        vertices.side.setCenter(vertex.id);
+        vertices.side.setCenter(vertex.id.toString());
       });
     }
     vertex.dom.on('mousedown touchstart', function(evStart) {
@@ -297,7 +300,8 @@ angular.module('biggraph').directive('graphView', function($window) {
       e.src.forceMass += 1;
       e.dst.forceMass += 1;
     }
-    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: 500, gravity: 0.05, drag: 0.2 });
+    var scale = this.svg.height();
+    var engine = new FORCE_LAYOUT.Engine({ attraction: 0.01, repulsion: scale, gravity: 0.05, drag: 0.2 });
     // Initial layout.
     var t1 = Date.now();
     while (engine.step(vertices) && Date.now() - t1 <= 2000) {}
@@ -324,11 +328,11 @@ angular.module('biggraph').directive('graphView', function($window) {
         function() { vertices.animate(); }));
   };
 
-  GraphView.prototype.addBucketedVertices = function(data, offsetter) {
+  GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData) {
     var vertices = [];
     var xLabels = [], yLabels = [];
     var i, x, y, l, side;
-    var labelSpace = 50;
+    var labelSpace = this.zoom * 0.05;
     y = this.zoom * 0.5 + labelSpace;
     
     var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
@@ -336,14 +340,23 @@ angular.module('biggraph').directive('graphView', function($window) {
     
     var xNumBuckets = xb.span + 1;
     var yNumBuckets = yb.span + 1;
-    
+
+    y = this.zoom * 0.5 + labelSpace;
+    if (viewData.xAttribute) {
+      // Label the X axis with the attribute name.
+      l = new Label(
+          0, y - labelSpace, viewData.xAttribute.title,
+          { classes: 'axis-label' });
+      offsetter.rule(l);
+      this.vertices.append(l.dom);
+    }
     for (i = 0; i < data.xLabels.length; ++i) {
       if (data.xLabelType === 'between') {
         x = this.zoom * util.normalize(i, xNumBuckets);
       } else {
         x = this.zoom * util.normalize(i + 0.5, xNumBuckets);
       }
-      l = new Label(x, y, data.xLabels[i], vertices);
+      l = new Label(x, y, data.xLabels[i]);
       offsetter.rule(l);
       xLabels.push(l);
       this.vertices.append(l.dom);
@@ -356,13 +369,22 @@ angular.module('biggraph').directive('graphView', function($window) {
       x = this.zoom * 0.5 + labelSpace;
       side = 'right';
     }
+    if (viewData.yAttribute) {
+      // Label the Y axis with the attribute name.
+      var mul = side === 'left' ? 1 : -1;
+      l = new Label(
+          x + mul * labelSpace, 0, viewData.yAttribute.title,
+          { vertical: true, classes: 'axis-label' });
+      offsetter.rule(l);
+      this.vertices.append(l.dom);
+    }
     for (i = 0; i < data.yLabels.length; ++i) {
       if (data.yLabelType === 'between') {
         y = this.zoom * util.normalize(i, yNumBuckets);
       } else {
         y = this.zoom * util.normalize(i + 0.5, yNumBuckets);
       }
-      l = new Label(x, y, data.yLabels[i], side);
+      l = new Label(x, y, data.yLabels[i], { classes: side });
       offsetter.rule(l);
       yLabels.push(l);
       this.vertices.append(l.dom);
@@ -374,8 +396,7 @@ angular.module('biggraph').directive('graphView', function($window) {
       var v = new Vertex(this.zoom * util.normalize(vertex.x + 0.5, xNumBuckets),
                          this.zoom * util.normalize(vertex.y + 0.5, yNumBuckets),
                          Math.sqrt(vertexScale * vertex.size),
-                         vertex.size,
-                         vertices);
+                         vertex.size);
       offsetter.rule(v);
       vertices.push(v);
       if (vertex.size === 0) {
@@ -415,19 +436,28 @@ angular.module('biggraph').directive('graphView', function($window) {
     return edgeObjects;
   };
 
-  function Label(x, y, text, side) {
-    var labelClass = 'bucket ' + (side || '');
+  function Label(x, y, text, opts) {
+    opts = opts || {};
+    var classes = 'bucket ' + (opts.classes || '');
     this.x = x;
     this.y = y;
-    this.dom = svg.create('text', {'class': labelClass}).text(text);
+    this.vertical = opts.vertical;
+    this.dom = svg.create('text', { 'class': classes }).text(text);
+    if (this.vertical) {
+      this.dom.attr({ transform: 'rotate(-90)' });
+    }
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
   Label.prototype.off = function() { svg.removeClass(this.dom, 'highlight'); };
   Label.prototype.reDraw = function() {
-    this.dom.attr({x: this.screenX(), y: this.screenY()});
+    if (this.vertical) {
+      this.dom.attr({x: -this.screenY(), y: this.screenX()});
+    } else {
+      this.dom.attr({x: this.screenX(), y: this.screenY()});
+    }
   };
 
-  function Vertex(x, y, r, text, color) {
+  function Vertex(x, y, r, text, subscript, color) {
     this.x = x;
     this.y = y;
     this.r = r;
@@ -440,8 +470,13 @@ angular.module('biggraph').directive('graphView', function($window) {
     } else {
       this.touch = this.circle;
     }
-    this.label = svg.create('text').text(text);
-    this.dom = svg.group([this.circle, this.touch, this.label], {'class': 'vertex' });
+    this.label = svg.create('text').text(text || '');
+    this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript);
+    this.labelBackground = svg.create(
+        'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
+    this.dom = svg.group(
+        [this.circle, this.touch, this.labelBackground, this.label, this.subscript],
+        {'class': 'vertex' });
     this.moveListeners = [];
     this.hoverListeners = [];
     var that = this;
@@ -451,6 +486,9 @@ angular.module('biggraph').directive('graphView', function($window) {
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
+      // Size labelBackground here, because we may not know the label size earlier.
+      that.labelBackground.attr({ width: that.label.width() + 4, height: that.label.height() });
+      that.reDraw();
     });
     this.touch.mouseleave(function() {
       svg.removeClass(that.dom, 'highlight');
@@ -473,9 +511,14 @@ angular.module('biggraph').directive('graphView', function($window) {
     this.reDraw();
   };
   Vertex.prototype.reDraw = function() {
-    this.circle.attr({cx: this.screenX(), cy: this.screenY()});
-    this.touch.attr({cx: this.screenX(), cy: this.screenY()});
-    this.label.attr({x: this.screenX(), y: this.screenY()});
+    var sx = this.screenX(), sy = this.screenY();
+    this.circle.attr({ cx: sx, cy: sy });
+    this.touch.attr({ cx: sx, cy: sy });
+    this.label.attr({ x: sx, y: sy });
+    var backgroundWidth = this.labelBackground.attr('width');
+    var backgroundHeight = this.labelBackground.attr('height');
+    this.labelBackground.attr({ x: sx - backgroundWidth / 2, y: sy - backgroundHeight / 2 });
+    this.subscript.attr({ x: sx, y: sy - 12 });
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }

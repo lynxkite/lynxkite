@@ -21,7 +21,7 @@
   <div ng-if="searching && !op" class="panel box col-sm-11 yellow">
     <h1><input id="filter" ng-model="opFilter"></h1>
     <div class="list-group">
-      <div ng-repeat="op in allOps | filter: opFilter | orderBy: 'title'" ng-click="clickedOp(op)"
+      <div ng-repeat="op in allOps | filter: { title: opFilter } | orderBy: 'title'" ng-click="clickedOp(op)"
           class="list-group-item operation"
           ng-class="{ disabled: !op.status.enabled, highlight: $index === searchSelection }"
           tooltip="{{op.status.disabledReason}}"
