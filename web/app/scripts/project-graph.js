@@ -141,14 +141,14 @@ angular.module('biggraph').directive('projectGraph', function (util) {
           }
           var xl = vs.xLabelType === 'between' ? vs.xLabels.length - 1 : vs.xLabels.length;
           var yl = vs.yLabelType === 'between' ? vs.yLabels.length - 1 : vs.yLabels.length;
-          for (j = 0; j < xl; ++j) {
+          for (j = 0; j < vs.xLabels.length; ++j) {
             // X-axis header.
             tsv += '\t' + vs.xLabels[j];
           }
           tsv += '\n';
-          for (j = 0; j < yl; ++j) {
+          for (j = 0; j < vs.yLabels.length; ++j) {
             tsv += vs.yLabels[j];  // Y-axis header.
-            for (i = 0; i < xl; ++i) {
+            for (i = 0; j < yl && i < xl; ++i) {
               tsv += '\t' + byBucket[i + ', ' + j].size;
             }
             tsv += '\n';
