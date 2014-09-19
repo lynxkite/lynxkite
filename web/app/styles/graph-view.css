@@ -45,6 +45,10 @@ svg .edge.highlight-out .first {
 svg .edge.highlight-in .first {
   marker-end: url(#arrow-highlight-in);
 }
+
+svg .vertex circle {
+  fill: #444;
+}
 svg .vertex .touch {
   fill: transparent;
 }
@@ -52,7 +56,6 @@ svg .vertex text {
   font-family: 'Arial Black', sans-serif;
   font-size: 15px;
 }
-
 svg .vertex .subscript {
   font-size: 9px;
   opacity: 0.5;
@@ -65,6 +68,10 @@ svg .vertex .label-background {
 svg .vertex.highlight .label-background {
   fill: white;
 }
+
+svg .vertex.highlight circle {
+  fill: white;
+}
 svg .vertex.highlight text {
   fill: black;
 }
@@ -72,7 +79,7 @@ svg .vertex.sampled circle {
   cursor: pointer;
 }
 svg .vertex.center circle {
-  stroke: #ddd;
+  stroke: #777;
   stroke-width: 3;
 }
 
