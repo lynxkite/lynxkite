@@ -36,6 +36,10 @@ angular.module('biggraph')
         graphMode: undefined,
         bucketCount: 4,
         sampleRadius: 1,
+        animate: {
+          enabled: false,
+          labelAttraction: 0,
+        },
       };
     }
 
