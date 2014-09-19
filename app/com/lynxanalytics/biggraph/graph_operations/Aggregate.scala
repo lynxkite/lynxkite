@@ -228,33 +228,16 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
-  // Returns TypeTags for the type parameters of T.
-  // For example typeArgs(typeTag[Map[Int, Double]]) returns Seq(typeTag[Int], typeTag[Double]).
-  private def typeArgs[T](tt: TypeTag[T]): Seq[TypeTag[_]] = {
-    val args = tt.tpe.asInstanceOf[TypeRefApi].args
-    val mirror = tt.mirror
-    args.map { arg =>
-      TypeTag(mirror, new reflect.api.TypeCreator {
-        def apply[U <: reflect.api.Universe with Singleton](m: reflect.api.Mirror[U]) = {
-          assert(m eq mirror, s"TypeTag[$arg] defined in $mirror cannot be migrated to mirror $m.")
-          arg.asInstanceOf[U#Type]
-        }
-      })
-    }
-  }
-
-  private def optionTypeTag[T: TypeTag] = typeTag[Option[T]]
-
   case class MaxBy[Weight: Ordering, Value]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
       // The intermediate type is Option[(Weight, Value)], which is None for empty input and
       // Some(maximal element) otherwise.
-      optionTypeTag[(Weight, Value)]
+      TypeTagUtil.optionTypeTag[(Weight, Value)]
     }
     def outputTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) =
-      typeArgs(inputTypeTag).last.asInstanceOf[TypeTag[Value]]
+      TypeTagUtil.typeArgs(inputTypeTag).last.asInstanceOf[TypeTag[Value]]
     def zero = None
     def merge(aOpt: Option[(Weight, Value)], b: (Weight, Value)) = {
       aOpt match {
