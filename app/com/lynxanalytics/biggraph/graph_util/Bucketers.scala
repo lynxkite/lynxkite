@@ -51,15 +51,10 @@ abstract class NumericBucketer[T: Numeric](
   @transient lazy val bounds: Seq[T] =
     (1 until nb).map(idx => min + num.fromInt(idx) * bucketSize)
 
-  implicit class Formatter(val stringContext: StringContext) {
-    def fmt(args: Any*) = {
-      val df = new java.text.DecimalFormat("#.##")
-      val formatted = args.map(a => df.format(a.asInstanceOf[T]))
-      stringContext.s(formatted: _*)
-    }
+  def bucketLabels: Seq[String] = {
+    var labels = min +: bounds :+ max
+    labels.map(_.toString)
   }
-
-  def bucketLabels: Seq[String] = fmt"$min" +: bounds.map(x => fmt"$x") :+ fmt"$max"
 }
 
 abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
@@ -74,18 +69,38 @@ case class StringBucketer(options: Seq[String], hasOther: Boolean)
     extends EnumBucketer[String](options, hasOther) {
   val labelType = "bucket"
 }
+
 case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
     extends FractionalBucketer[Double](min, max, numBuckets) {
   val labelType = "between"
+
+  def fmt(num: Double, decimals: Int): String =
+    s"%.${decimals}f".format(num)
+  def fmt(nums: Seq[Double], decimals: Int): Seq[String] =
+    nums.map(fmt(_, decimals))
+  override def bucketLabels: Seq[String] = {
+    val labels = min +: bounds :+ max
+    if (min == max) {
+      fmt(labels, 2)
+    } else {
+      val maxDecimals = 10
+      // Use enough decimals that all the labels are different.
+      val decimals = (0 to maxDecimals).find { decimals =>
+        fmt(labels, decimals).toSet.size == labels.size
+      }
+      fmt(labels, decimals.getOrElse(2))
+    }
+  }
 }
+
 case class LongBucketer(min: Long, max: Long, numBuckets: Int)
     extends NumericBucketer[Long](min, max, numBuckets) {
   val labelType = if ((max - min) / numBuckets == 0) "bucket" else "between"
   override def bucketLabels: Seq[String] = {
     if ((max - min) / numBuckets == 0)
-      fmt"$min" +: bounds.map(x => fmt"$x")
+      super.bucketLabels.init
     else
-      fmt"$min" +: bounds.map(x => fmt"$x") :+ fmt"$max"
+      super.bucketLabels
   }
 }
 
