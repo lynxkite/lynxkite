@@ -62,8 +62,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val vs = graph_operations.CreateVertexSet(params("size").toInt)().result.vs
-      project.vertexSet = vs
-      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      project.setVertexSet(vs, idAttr = "id")
     }
   })
 
@@ -205,11 +204,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val src = params("src")
       val dst = params("dst")
       val imp = graph_operations.ImportEdgeList(csv, src, dst)().result
-      project.vertexSet = imp.vertices
+      project.setVertexSet(imp.vertices, idAttr = "id")
+      project.vertexAttributes("stringID") = imp.stringID
       project.edgeBundle = imp.edges
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
-      project.vertexAttributes("stringID") = imp.stringID
-      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
     }
   })
 
@@ -225,8 +223,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.vertexSet = result.segments
-      segmentation.project.vertexAttributes("id") = idAsAttribute(result.segments)
+      segmentation.project.setVertexSet(result.segments, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
     }
@@ -242,8 +239,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.vertexSet = result.segments
-      segmentation.project.vertexAttributes("id") = idAsAttribute(result.segments)
+      segmentation.project.setVertexSet(result.segments, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
     }
@@ -269,8 +265,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
 
       val cliquesSegmentation = project.segmentation(params("cliques_name"))
-      cliquesSegmentation.project.vertexSet = cliquesResult.segments
-      cliquesSegmentation.project.vertexAttributes("id") = idAsAttribute(cliquesResult.segments)
+      cliquesSegmentation.project.setVertexSet(cliquesResult.segments, idAttr = "id")
       cliquesSegmentation.project.notes = "Maximal cliques of %s".format(project.projectName)
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
       computeSegmentSizes(cliquesSegmentation)
@@ -300,8 +295,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
 
       val communitiesSegmentation = project.segmentation(params("communities_name"))
-      communitiesSegmentation.project.vertexSet = ccResult.segments
-      communitiesSegmentation.project.vertexAttributes("id") = idAsAttribute(ccResult.segments)
+      communitiesSegmentation.project.setVertexSet(ccResult.segments, idAttr = "id")
       communitiesSegmentation.project.notes =
         "Infocom Communities of %s".format(project.projectName)
       communitiesSegmentation.belongsTo = vertexToCommunity
@@ -523,8 +517,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val op = graph_operations.EdgeGraph()
       val g = op(op.es, project.edgeBundle).result
-      project.vertexSet = g.newVS
-      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      project.setVertexSet(g.newVS, idAttr = "id")
       project.edgeBundle = g.newES
     }
   })
@@ -771,8 +764,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldVAttrs = project.vertexAttributes.toMap
       val oldEdges = project.edgeBundle
       val oldEAttrs = project.edgeAttributes.toMap
-      project.vertexSet = m.segments
-      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      project.setVertexSet(m.segments, idAttr = "id")
       // Always use most_common for the key attribute.
       val hack = "aggregate-" + params("key") -> "most_common"
       for ((attr, choice) <- parseAggregateParams(params + hack)) {
