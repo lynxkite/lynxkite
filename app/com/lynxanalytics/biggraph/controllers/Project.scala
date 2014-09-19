@@ -16,7 +16,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feAttr[T](e: TypedEntity[T], name: String) = {
       val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
-      val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Vector[_]])
+      val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[_]])
         .exists(e.typeTag.tpe <:< _)
       FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter)
     }
@@ -109,6 +109,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
   def vertexSet_=(e: VertexSet): Unit = {
     updateVertexSet(e, killSegmentations = true)
+  }
+
+  def setVertexSet(e: VertexSet, idAttr: String): Unit = manager.synchronized {
+    vertexSet = e
+    vertexAttributes(idAttr) = {
+      val op = graph_operations.IdAsAttribute()
+      op(op.vertices, e).result.vertexIds
+    }
   }
 
   private def updateVertexSet(e: VertexSet, killSegmentations: Boolean) = manager.synchronized {
@@ -287,6 +295,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
         }
         .iterator
     }
+
+    def contains(x: String) = iterator.contains(x)
   }
   class ScalarHolder extends Holder[Scalar[_]]("scalars") {
     def validate(name: String, scalar: Scalar[_]) = {}
