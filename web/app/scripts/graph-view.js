@@ -1,9 +1,9 @@
 'use strict';
 
-angular.module('biggraph').directive('graphView', function() {
+angular.module('biggraph').directive('graphView', function(util) {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
   var svg = SVG_UTIL;
-  var util = COMMON_UTIL;
+  var common = COMMON_UTIL;
   var directive = {
       template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
       scope: { graph: '=', left: '=', right: '=' },
@@ -148,7 +148,7 @@ angular.module('biggraph').directive('graphView', function() {
     var vertices = [];
     vertices.side = side;
     vertices.mode = 'sampled';
-    var vertexBounds = util.minmax(data.vertices.map(function(n) { return n.size; }));
+    var vertexBounds = common.minmax(data.vertices.map(function(n) { return n.size; }));
     var vertexScale = this.zoom * 2 / vertexBounds.max;
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
@@ -257,6 +257,7 @@ angular.module('biggraph').directive('graphView', function() {
       repulsion: scale,
       gravity: 0.05,
       drag: 0.2,
+      labelAttraction: parseFloat(vertices.side.animate.labelAttraction),
     });
     // Initial layout.
     var t1 = Date.now();
@@ -270,7 +271,8 @@ angular.module('biggraph').directive('graphView', function() {
       }
     };
     vertices.step = function() {
-      if (vertices.side.animate && engine.step(vertices)) {
+      engine.opts.labelAttraction = parseFloat(vertices.side.animate.labelAttraction);
+      if (vertices.side.animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {
         animating = false;
@@ -279,7 +281,7 @@ angular.module('biggraph').directive('graphView', function() {
     vertices.animate();
     // Kick off animation when the user manually turns it on.
     // (This watcher is unregistered when a new graph is loaded.)
-    this.unwatch.push(this.scope.$watch(
+    this.unwatch.push(util.deepWatch(this.scope,
         function() { return vertices.side.animate; },
         function() { vertices.animate(); }));
   };
@@ -291,8 +293,8 @@ angular.module('biggraph').directive('graphView', function() {
     var labelSpace = this.zoom * 0.05;
     y = this.zoom * 0.5 + labelSpace;
     
-    var xb = util.minmax(data.vertices.map(function(n) { return n.x; }));
-    var yb = util.minmax(data.vertices.map(function(n) { return n.y; }));
+    var xb = common.minmax(data.vertices.map(function(n) { return n.x; }));
+    var yb = common.minmax(data.vertices.map(function(n) { return n.y; }));
     
     var xNumBuckets = xb.span + 1;
     var yNumBuckets = yb.span + 1;
@@ -308,9 +310,9 @@ angular.module('biggraph').directive('graphView', function() {
     }
     for (i = 0; i < data.xLabels.length; ++i) {
       if (data.xLabelType === 'between') {
-        x = this.zoom * util.normalize(i, xNumBuckets);
+        x = this.zoom * common.normalize(i, xNumBuckets);
       } else {
-        x = this.zoom * util.normalize(i + 0.5, xNumBuckets);
+        x = this.zoom * common.normalize(i + 0.5, xNumBuckets);
       }
       l = new Label(x, y, data.xLabels[i]);
       offsetter.rule(l);
@@ -336,9 +338,9 @@ angular.module('biggraph').directive('graphView', function() {
     }
     for (i = 0; i < data.yLabels.length; ++i) {
       if (data.yLabelType === 'between') {
-        y = this.zoom * util.normalize(i, yNumBuckets);
+        y = this.zoom * common.normalize(i, yNumBuckets);
       } else {
-        y = this.zoom * util.normalize(i + 0.5, yNumBuckets);
+        y = this.zoom * common.normalize(i + 0.5, yNumBuckets);
       }
       l = new Label(x, y, data.yLabels[i], { classes: side });
       offsetter.rule(l);
@@ -347,11 +349,11 @@ angular.module('biggraph').directive('graphView', function() {
     }
      
     var sizes = data.vertices.map(function(n) { return n.size; });
-    var vertexScale = this.zoom * 2 / util.minmax(sizes).max;
+    var vertexScale = this.zoom * 2 / common.minmax(sizes).max;
     for (i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      var v = new Vertex(this.zoom * util.normalize(vertex.x + 0.5, xNumBuckets),
-                         this.zoom * util.normalize(vertex.y + 0.5, yNumBuckets),
+      var v = new Vertex(this.zoom * common.normalize(vertex.x + 0.5, xNumBuckets),
+                         this.zoom * common.normalize(vertex.y + 0.5, yNumBuckets),
                          Math.sqrt(vertexScale * vertex.size),
                          vertex.size);
       offsetter.rule(v);
@@ -374,7 +376,7 @@ angular.module('biggraph').directive('graphView', function() {
 
   GraphView.prototype.addEdges = function(edges, srcs, dsts) {
     var edgeObjects = [];
-    var bounds = util.minmax(edges.map(function(n) { return n.size; }));
+    var bounds = common.minmax(edges.map(function(n) { return n.size; }));
     var normalWidth = this.zoom * 0.02;
     var info = bounds.span / bounds.max;  // Information content of edge widths. (0 to 1)
     // Go up to 3x thicker lines if they are meaningful.
@@ -425,6 +427,7 @@ angular.module('biggraph').directive('graphView', function() {
     } else {
       this.touch = this.circle;
     }
+    this.text = text;
     this.label = svg.create('text').text(text || '');
     this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript || '');
     this.labelBackground = svg.create(

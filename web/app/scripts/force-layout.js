@@ -4,10 +4,11 @@
 var FORCE_LAYOUT = (function() {
   var lib = {};
   // Options:
-  //   attraction: force/distance ratio along edges
-  //   repulsion:  force absolute value between all vertices
-  //   gravity:    force/distance from origin ratio
-  //   drag:       force/speed ratio (fluid resistance)
+  //   attraction:      force/distance ratio along edges
+  //   repulsion:       force absolute value between all vertices
+  //   gravity:         force/distance from origin ratio
+  //   drag:            force/speed ratio (fluid resistance)
+  //   labelAttraction: attraction between matching labels, as fraction of repulsion
   lib.Engine = function(opts) {
     this.opts = opts;
   };
@@ -34,6 +35,7 @@ var FORCE_LAYOUT = (function() {
       if (maxDist < Math.abs(dx)) { maxDist = Math.abs(dx); }
       if (maxDist < Math.abs(dy)) { maxDist = Math.abs(dy); }
       for (j = 0; j < vertices.length; ++j) {
+        if (i === j) { continue; }
         b = vertices[j];
         dx = a.forceOX - b.forceOX;
         dy = a.forceOY - b.forceOY;
@@ -42,10 +44,16 @@ var FORCE_LAYOUT = (function() {
           dy = Math.random();
         }
         var d2 = dx * dx + dy * dy;
-        a.x += this.opts.repulsion * dx / d2 / a.forceMass;
-        a.y += this.opts.repulsion * dy / d2 / a.forceMass;
-        b.x -= this.opts.repulsion * dx / d2 / b.forceMass;
-        b.y -= this.opts.repulsion * dy / d2 / b.forceMass;
+        var repulsion = this.opts.repulsion;
+        if (a.text && b.text && a.text === b.text) {
+          // Apply reduced repulsion between vertices that have the same label.
+          // This causes the vertices to cluster a bit by label.
+          repulsion *= 1.0 - this.opts.labelAttraction;
+        }
+        a.x += repulsion * dx / d2 / a.forceMass;
+        a.y += repulsion * dy / d2 / a.forceMass;
+        b.x -= repulsion * dx / d2 / b.forceMass;
+        b.y -= repulsion * dy / d2 / b.forceMass;
       }
     }
     var totalChange = 0;
