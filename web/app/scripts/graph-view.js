@@ -134,9 +134,9 @@ angular.module('biggraph').directive('graphView', function() {
     }
   };
 
-  function mapByAttr(vs, attr) {
+  function mapByAttr(vs, attr, type) {
     return vs.map(function(v) {
-      return v.attrs[attr];
+      return v.attrs[attr][type];
     });
   }
 
@@ -148,7 +148,7 @@ angular.module('biggraph').directive('graphView', function() {
     var size = (side.attrs.size) ? side.attrs.size.id : undefined;
     var vertexSizeScale;
     if (size) {
-      var vertexSizeBounds = util.minmax(mapByAttr(data.vertices, size));
+      var vertexSizeBounds = util.minmax(mapByAttr(data.vertices, size, 'double'));
       vertexSizeScale = this.zoom * 2 / vertexSizeBounds.max;
     }
 
@@ -156,21 +156,23 @@ angular.module('biggraph').directive('graphView', function() {
     var vertexColorBounds, vertexColorScale, colorMap;
     if (color) {
       if (side.attrs.color.typeName === 'Double') {
-        vertexColorBounds = util.minmax(mapByAttr(data.vertices, color));
+        vertexColorBounds = util.minmax(mapByAttr(data.vertices, color, 'double'));
         vertexColorScale =
           100 / Math.max(vertexColorBounds.max, Math.abs(vertexColorBounds.min));
       } else if (side.attrs.color.typeName === 'String') {
         var enumMap = {};
         colorMap = {};
         angular.forEach(data.vertices, function(n) {
-          enumMap[n.attrs[color]] =
-            (enumMap[n.attrs[color]]) ? enumMap[n.attrs[color]] + 1 : 1;
+          enumMap[n.attrs[color].string] =
+          (enumMap[n.attrs[color].string]) ? enumMap[n.attrs[color].string] + 1 : 1;
         });
         var cdist = Math.floor(360 / Object.keys(enumMap).length);
         var ci = 0;
         angular.forEach(enumMap, function(v, k) { colorMap[k] = ci; ci += cdist; });
       } else {
-        console.error('The type of ' + side.attrs.color + ' (' + side.attrs.color.typeName + ') is not supported for vertex color visualization!');
+        console.error('The type of ' +
+          side.attrs.color + ' (' + side.attrs.color.typeName +
+          ') is not supported for vertex color visualization!');
       }
 
     }
@@ -179,23 +181,23 @@ angular.module('biggraph').directive('graphView', function() {
       var vertex = data.vertices[i];
 
       var label;
-      if (side.attrs.label) { label = vertex.attrs[side.attrs.label.id]; }
+      if (side.attrs.label) { label = vertex.attrs[side.attrs.label.id].string; }
 
-      // todo: set a minimum size for 0 and undefined vertices here
+      var minSize = 1;
       var vertexSize = this.zoom * 0.1;
       if (size) {
-        var sizeAttr = vertex.attrs[size] || 0;
+        var sizeAttr = Math.max(vertex.attrs[size].double, minSize);
         vertexSize = Math.sqrt(vertexSizeScale * sizeAttr);
       }
 
       var hslColor, h, s, l;
       if (color && side.attrs.color.typeName === 'Double') {
         // negative is blue, positive is red, zero lighter grey
-        h = (vertex.attrs[color] >= 0) ? 0 : 240;
-        s = Math.abs(vertexColorScale * vertex.attrs[color]);
+        h = (vertex.attrs[color].double >= 0) ? 0 : 240;
+        s = Math.abs(vertexColorScale * vertex.attrs[color].double);
         l = (vertexColorScale) ? 50 : 25; // default color is dark grey
       } else if (color && side.attrs.color.typeName === 'String') {
-        h = colorMap[vertex.attrs[color]];
+        h = colorMap[vertex.attrs[color].string];
         s = 100;
         l = 42;
       } else {
