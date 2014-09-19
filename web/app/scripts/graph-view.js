@@ -163,12 +163,10 @@ angular.module('biggraph').directive('graphView', function() {
     }
 
     var color = (side.attrs.color) ? side.attrs.color.id : undefined;
-    var vertexColorBounds, vertexColorScale, colorMap;
+    var vertexColorBounds, colorMap;
     if (color) {
       if (side.attrs.color.typeName === 'Double') {
         vertexColorBounds = util.minmax(mapByAttr(data.vertices, color, 'double'));
-        vertexColorScale =
-          100 / Math.max(vertexColorBounds.max, Math.abs(vertexColorBounds.min));
       } else if (side.attrs.color.typeName === 'String') {
         var enumMap = {};
         colorMap = {};
@@ -202,10 +200,9 @@ angular.module('biggraph').directive('graphView', function() {
 
       var hslColor, h, s, l;
       if (color && side.attrs.color.typeName === 'Double') {
-        // negative is blue, positive is red, zero lighter grey
-        h = (vertex.attrs[color].double >= 0) ? 0 : 240;
-        s = Math.abs(vertexColorScale * vertex.attrs[color].double);
-        l = (vertexColorScale) ? 50 : 25; // default color is dark grey
+        h = 240 + util.normalizeToOne(vertex.attrs[color].double, vertexColorBounds) * 120;
+        s = 100;
+        l = 42;
       } else if (color && side.attrs.color.typeName === 'String') {
         h = colorMap[vertex.attrs[color].string];
         s = 100;
