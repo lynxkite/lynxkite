@@ -11,7 +11,6 @@ import com.lynxanalytics.biggraph.graph_api._
 case class DynamicValue(
   double: Double = 0.0,
   string: String = "")
-// TODO: support for Vectors
 
 object VertexAttributeToString {
   class Output[T](implicit instance: MetaGraphOperationInstance,
