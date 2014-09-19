@@ -319,11 +319,21 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   def parent = Project(parentName)
   val path: SymbolPath = s"projects/$parentName/segmentations/$name"
   def toFE =
-    FESegmentation(name, project.projectName, UIValue.fromEntity(belongsTo))
+    FESegmentation(
+      name, project.projectName, UIValue.fromEntity(belongsTo), belongsToAttribute.gUID.toString)
   def belongsTo = manager.edgeBundle(path / "belongsTo")
   def belongsTo_=(eb: EdgeBundle) = manager.synchronized {
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
+  }
+  def belongsToAttribute: VertexAttribute[Vector[ID]] = {
+    val segmentationIds = {
+      val op = graph_operations.IdAsAttribute()
+      op(op.vertices, project.vertexSet).result.vertexIds
+    }
+    val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
+    val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
+    aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
   }
   def project = Project(s"$parentName/segmentations/$name/project")
 
