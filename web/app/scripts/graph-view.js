@@ -172,7 +172,7 @@ angular.module('biggraph').directive('graphView', function() {
         colorMap = {};
         angular.forEach(data.vertices, function(n) {
           enumMap[n.attrs[color].string] =
-          (enumMap[n.attrs[color].string]) ? enumMap[n.attrs[color].string] + 1 : 1;
+          enumMap[n.attrs[color].string] ? enumMap[n.attrs[color].string] + 1 : 1;
         });
         var cdist = Math.floor(360 / Object.keys(enumMap).length);
         var ci = 0;
@@ -191,10 +191,9 @@ angular.module('biggraph').directive('graphView', function() {
       var label;
       if (side.attrs.label) { label = vertex.attrs[side.attrs.label.id].string; }
 
-      var minSize = 1;
       var vertexSize = this.zoom * 0.1;
       if (size) {
-        var sizeAttr = Math.max(vertex.attrs[size].double, minSize);
+        var sizeAttr = vertex.attrs[size].double;
         vertexSize = Math.sqrt(vertexSizeScale * sizeAttr);
       }
 
@@ -227,9 +226,7 @@ angular.module('biggraph').directive('graphView', function() {
         svg.addClass(v.dom, 'center');
       }
       vertices.push(v);
-      if (vertexSize === 0) {
-        continue;
-      }
+
       this.sampledVertexMouseBindings(vertices, v, offsetter);
       this.vertices.append(v.dom);
     }
