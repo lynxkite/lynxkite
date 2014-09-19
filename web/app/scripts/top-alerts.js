@@ -17,10 +17,12 @@ angular.module('biggraph').directive('topAlerts', function() {
         scope.alerts.splice(i, 1);
       };
       scope.mailto = function(alert) {
-        var support = 'rnd-team@lynxanalytics.com';
-        var body = 'Happened at ' + window.location.href + ' on ' + alert.time + '\n\nPlease advise.';
+        var support = 'pizza-support@lynxanalytics.com';
+        var body = 'Happened at ' + window.location.href + ' on ' + alert.time;
+        body += '\n\nPlease advise.';
         if (alert.details) {
-          body += '\n\nExtra info:\n\n' + JSON.stringify(alert.details, null, '  ');
+          body += '\n\nExtra info:';
+          body += '\n\n' + JSON.stringify(alert.details, null, '  ');
         }
         return (
           'mailto:' + support +

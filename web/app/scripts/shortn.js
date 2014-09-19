@@ -1,6 +1,7 @@
 'use strict';
 
-// Collapses parenthesised sections of its "text" attribute, replaced by a colored, 2-letter mnemonic.
+// Collapses parenthesised sections of its "text" attribute,
+// replaced by a colored, 2-letter mnemonic.
 angular.module('biggraph').directive('shortn', ['$compile', function($compile) {
   // Java's hash function in JS.
   function hashCode(text) {

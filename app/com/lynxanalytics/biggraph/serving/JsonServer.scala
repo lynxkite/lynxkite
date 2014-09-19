@@ -145,12 +145,14 @@ object ProductionJsonServer extends JsonServer {
   def download = action(parse.anyContent) { request =>
     import play.api.libs.concurrent.Execution.Implicits._
     import scala.collection.JavaConversions._
+    log.info(s"download: ${request.path}")
     val path = Filename(request.getQueryString("path").get)
     val name = Filename(request.getQueryString("name").get)
     // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
     val files = Seq(path / "header") ++ (path / "data" / "*").list
     val length = files.map(_.length).sum
-    val stream = new java.io.SequenceInputStream(files.map(_.open).iterator)
+    log.info(s"downloading $length bytes: $files")
+    val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
     mvc.SimpleResult(
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,

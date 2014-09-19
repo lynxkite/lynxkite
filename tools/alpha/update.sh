@@ -23,4 +23,4 @@ ssh \
   -o StrictHostKeyChecking=no \
   -t -t \
   ec2-user@$ELASTIC_IP \
-  biggraphstage/alpha/setup.sh $CREDENTIALS $GOOGLE_CLIENT_SECRET
+  biggraphstage/alpha/setup.sh $CREDENTIALS $GOOGLE_CLIENT_SECRET "$@"
