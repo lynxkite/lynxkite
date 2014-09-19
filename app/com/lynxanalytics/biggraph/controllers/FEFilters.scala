@@ -66,7 +66,10 @@ object FEFilters {
     val innerSpec = if (negated) spec.drop(1) else spec
     val innerFilter: Filter[T] =
       if (typeOf[T] =:= typeOf[String]) {
-        OneOf(innerSpec.split(",").toSet)
+        OneOf(innerSpec.split(",").map(_.trim).toSet)
+          .asInstanceOf[Filter[T]]
+      } else if (typeOf[T] =:= typeOf[Long]) {
+        OneOf(innerSpec.split(",").map(_.trim.toLong).toSet)
           .asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[Double]) {
         val doubleFilter = innerSpec match {
@@ -88,6 +91,14 @@ object FEFilters {
           }
         }
         doubleFilter.asInstanceOf[Filter[T]]
+      } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
+        val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
+        innerSpec match {
+          case existsRE(elementSpec) =>
+            Exists(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
+          case forallRE(elementSpec) =>
+            ForAll(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
+        }
       } else ???
     if (negated) NotFilter(innerFilter) else innerFilter
   }
@@ -113,4 +124,6 @@ object FEFilters {
   private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
   private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
   private val boundRE = s"$comparatorPattern$numberPattern".r
+  private val forallRE = s"\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r
+  private val existsRE = s"\\s*(?:exists|any|some|∃)\\((.*)\\)\\s*".r
 }
