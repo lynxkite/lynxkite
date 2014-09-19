@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util
@@ -29,11 +30,6 @@ case class VertexDiagramSpec(
   val sampleSmearEdgeBundleId: String = "",
   val attrs: Seq[String] = Seq(),
   val radius: Int = 1)
-
-case class DynamicValue(
-  double: Double = 0.0,
-  string: String = "")
-  //vector: Array[DynamicValue] = Array())
 
 case class FEVertex(
   // For bucketed view:
@@ -154,20 +150,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val filtered = FEFilters.filterMore(sample, request.filters)
 
     val attrs = request.attrs.map(x => metaManager.vertexAttribute(x.asUUID))
-    val numAttrs = attrs.collect { case attr if attr.is[Double] => attr.runtimeSafeCast[Double] }.toList
-    val strAttrs = attrs.collect { case attr if attr.is[String] => attr.runtimeSafeCast[String] }.toList
-    val attrIds = numAttrs.map(_.gUID.toString) ++ strAttrs.map(_.gUID.toString)
-
-    val dynAttrs = numAttrs.map { attr =>
-      val op = graph_operations.VertexAttributeToDynamicValue[Double]()
-      op(op.attr, attr).result.attr.entity
-    } ++ strAttrs.map { attr =>
-      val op = graph_operations.VertexAttributeToDynamicValue[String]()
-      op(op.attr, attr).result.attr.entity
-    }
+    val dynAttrs = attrs.map(graph_operations.VertexAttributeToDynamicValue.run(_))
 
     val joined = {
-      val op = graph_operations.JoinMoreAttributes(dynAttrs.size)
+      val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue())
       op(op.vs, vertexSet)(op.attrs, dynAttrs).result.attr.entity
     }
 
@@ -182,7 +168,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       vertices = vertices.map(v =>
         FEVertex(
           id = v.id,
-          attrs = attrIds.zip(v.attrs).toMap)),
+          attrs = request.attrs.zip(v.attrs).toMap)),
       mode = "sampled")
   }
 
