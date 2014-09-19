@@ -33,7 +33,7 @@ for i in $(seq 10); do
   sleep 1
 done
 if [ -e biggraphstage/RUNNING_PID ]; then
-  killall -9 java
+  killall -9 java || true
   rm -f biggraphstage/RUNNING_PID
 fi
 
