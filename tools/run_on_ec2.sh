@@ -10,11 +10,11 @@ EXTRA_ARGS="$@"
 
 # Stop the server in case it's already running.
 if [ -e ${ROOT}/RUNNING_PID ]; then
-  kill `cat ${ROOT}/RUNNING_PID`
+  kill `cat ${ROOT}/RUNNING_PID` || true
   sleep 2
 fi
 if [ -e ${ROOT}/RUNNING_PID ]; then
-  killall -9 `cat ${ROOT}/RUNNING_PID`
+  killall -9 `cat ${ROOT}/RUNNING_PID` || true
   rm -f ${ROOT}/RUNNING_PID
 fi
 
