@@ -2,12 +2,54 @@
   "vertexSets": [{
     "mode": "sampled",
     "vertices": [
-      { "id": 1111111, "size": 10, "label": "one" },
-      { "id": 2222222, "size": 20, "label": "two" },
-      { "id": 3333333, "size": 10, "label": "three" },
-      { "id": 4444444, "size": 20, "label": "four" },
-      { "id": 5555555, "size": 15, "label": "five" },
-      { "id": 6666666, "size": 5, "label": "six" }
+      { "id": 1111111,
+        "attrs": {
+          "5": { "double": 10, "string": "10" },
+          "7": { "double": 0, "string": "male" },
+          "6": { "double": 0, "string": "0" },
+          "8": { "double": 0, "string": "red" }
+        }
+      },
+      { "id": 2222222,
+        "attrs": {
+          "5": { "double": 20, "string": "20" },
+          "7": { "double": 0, "string": "female" },
+          "6": { "double": 10, "string": "10" },
+          "8": { "double": 0, "string": "pink" }
+        }
+      },
+      { "id": 3333333,
+        "attrs": {
+          "5": { "double": 10, "string": "10" },
+          "7": { "double": 0, "string": "female" },
+          "6": { "double": 20, "string": "20" },
+          "8": { "double": 0, "string": "green" }
+        }
+      },
+      { "id": 4444444,
+        "attrs": {
+          "5": { "double": 20, "string": "20" },
+          "7": { "double": 0, "string": "" },
+          "6": { "double": 30, "string": "30" },
+          "8": { "double": 0, "string": "black" }
+        }
+      },
+      { "id": 5555555,
+        "attrs": {
+          "5": { "double": 15, "string": "15" },
+          "7": { "double": 0, "string": "female" },
+          "6": { "double": 40, "string": "40" },
+          "8": { "double": 0, "string": "violet" }
+        }
+      },
+      { "id": 6666666,
+        "attrs": {
+          "5": { "double": 5, "string": "5" },
+          "7": { "double": 0, "string": "female" },
+          "6": { "double": 0, "string": "-50" },
+          "8": { "double": 0, "string": "blue" }
+        }
+      }
     ],
     "center": 1
   }],
