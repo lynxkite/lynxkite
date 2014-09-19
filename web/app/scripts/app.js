@@ -40,7 +40,7 @@ angular
       var req = res.get({ q: params }, function() {}, function(failure) {
         if (failure.status === 401) {  // Unauthorized.
           req.error = 'Redirecting to login page.';
-          window.location.href = '/authenticate/google';
+          window.location.href = 'https://' + window.location.hostname + '/authenticate/google';
         } else {
           req.error = util.responseToErrorMessage(failure);
         }
@@ -82,13 +82,17 @@ angular
         return s.replace(/_/g, ' ');
       },
       ajaxError: function(resp) {
-        util.error(util.responseToErrorMessage(resp), { request: resp.config.url, data: resp.config.data });
+        util.error(
+          util.responseToErrorMessage(resp),
+          { request: resp.config.url, data: resp.config.data });
       },
       error: function(message, details) {
         $rootScope.$broadcast('topAlert', { message: message, details: details });
       },
       responseToErrorMessage: function(resp) {
-        return resp.data.error || resp.data || (resp.config.url + ' ' + (resp.statusText || 'failed'));
+        if (resp.data.error) { return resp.data.error; }
+        if (resp.data) { return resp.data; }
+        return resp.config.url + ' ' + (resp.statusText || 'failed');
       },
     };
     return util;

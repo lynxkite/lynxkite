@@ -89,6 +89,99 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         }
         scope.graphView = util.get('/ajax/complexView', q);
       }
+
+      scope.$watch('graphView.$resolved', function() {
+        // Generate the TSV representation.
+        scope.tsv = '';
+        var gv = scope.graphView;
+        if (!gv || !gv.$resolved) {
+          return;
+        }
+        var sides = [scope.left, scope.right];
+        var vsIndex = 0;
+        for (var i = 0; i < sides.length; ++i) {
+          if (sides[i] && sides[i].graphMode) {
+            scope.tsv += vertexSetToTSV(i, gv.vertexSets[vsIndex], sides[i]);
+            vsIndex += 1;
+          }
+        }
+        for (i = 0; i < gv.edgeBundles.length; ++i) {
+          scope.tsv += edgeBundleToTSV(gv.edgeBundles[i]);
+        }
+      });
+
+      function vertexSetToTSV(index, vs, side) {
+        var i, j, v;
+        var name = graphName(index);
+        var tsv = '\n';
+        if (vs.mode === 'sampled') {
+          tsv += 'Vertices of ' + name + ':\n';
+          tsv += 'id';
+          if (side.labelAttribute.id) { tsv += '\t' + side.labelAttribute.title; }
+          if (side.sizeAttribute.id) { tsv += '\t' + side.sizeAttribute.title; }
+          tsv += '\n';
+          for (i = 0; i < vs.vertices.length; ++i) {
+            v = vs.vertices[i];
+            tsv += v.id;
+            if (side.labelAttribute.id) { tsv += '\t' + v.label; }
+            if (side.sizeAttribute.id) { tsv += '\t' + v.size; }
+            tsv += '\n';
+          }
+        } else {
+          var xAxis = side.xAttribute.title;
+          var yAxis = side.yAttribute.title;
+          var xDescription =
+            xAxis + ' (horizontal' + (vs.xLabelType === 'between' ? ', lower bounds' : '') + ')';
+          var yDescription =
+            yAxis + ' (vertical' + (vs.yLabelType === 'between' ? ', lower bounds' : '') + ')';
+          tsv += 'Buckets of ' + name;
+          if (xAxis && yAxis) {
+            tsv += ' by ' + yDescription + ' and ' + xDescription + ':\n';
+          } else if (xAxis) {
+            tsv += ' by ' + xDescription + ':\n';
+          } else if (yAxis) {
+            tsv += ' by ' + yDescription + ':\n';
+          } else {
+            tsv += ':\n';
+          }
+          var byBucket = {};
+          for (i = 0; i < vs.vertices.length; ++i) {
+            v = vs.vertices[i];
+            byBucket[v.x + ', ' + v.y] = v;
+          }
+          var xl = vs.xLabelType === 'between' ? vs.xLabels.length - 1 : vs.xLabels.length;
+          var yl = vs.yLabelType === 'between' ? vs.yLabels.length - 1 : vs.yLabels.length;
+          for (j = 0; j < vs.xLabels.length; ++j) {
+            // X-axis header.
+            tsv += '\t' + vs.xLabels[j];
+          }
+          tsv += '\n';
+          for (j = 0; j < vs.yLabels.length; ++j) {
+            tsv += vs.yLabels[j];  // Y-axis header.
+            for (i = 0; j < yl && i < xl; ++i) {
+              tsv += '\t' + byBucket[i + ', ' + j].size;
+            }
+            tsv += '\n';
+          }
+        }
+        return tsv;
+      }
+
+      function edgeBundleToTSV(eb) {
+        var tsv = '\n';
+        tsv += 'Edges from ' + graphName(eb.srcIdx) + ' (vertical)';
+        tsv += ' to ' + graphName(eb.dstIdx) + ' (horizontal):\n';
+        tsv += 'src\tdst\tsize\n';
+        for (var i = 0; i < eb.edges.length; ++i) {
+          var e = eb.edges[i];
+          tsv += e.a + '\t' + e.b + '\t' + e.size + '\n';
+        }
+        return tsv;
+      }
+
+      function graphName(index) {
+        return ['the left-side graph', 'the right-side graph'][index] || 'graph ' + (index + 1);
+      }
     }
   };
 });

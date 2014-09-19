@@ -6,7 +6,7 @@ angular.module('biggraph').directive('operation', function (util, hotkeys) {
     scope: { op: '=', side: '=' },
     replace: false,
     templateUrl: 'operation.html',
-    link: function(scope) {
+    link: function(scope, element) {
       scope.params = {};
       scope.multiParams = {};
       util.deepWatch(scope, 'op', function() {
@@ -38,6 +38,16 @@ angular.module('biggraph').directive('operation', function (util, hotkeys) {
       hotkeys.bindTo(scope).add({
         combo: 'enter',
         callback: scope.apply,
+      });
+
+      // Focus the first input box when the operation is opened.
+      scope.$watch(function() {
+        // Have to watch for the parameters to finish rendering.
+        return element.find('input')[0];
+      }, function(firstInput) {
+        if (firstInput) {
+          firstInput.select();
+        }
       });
     }
   };
