@@ -88,6 +88,8 @@ object FEFilters {
           }
         }
         doubleFilter.asInstanceOf[Filter[T]]
+      } else if (typeOf[T] <:< typeOf[Vector[_]]) {
+        ???
       } else ???
     if (negated) NotFilter(innerFilter) else innerFilter
   }
@@ -113,4 +115,6 @@ object FEFilters {
   private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
   private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
   private val boundRE = s"$comparatorPattern$numberPattern".r
+  private val forallRE = s"\\s*forall\\((\\.*)\\)\\s*".r
+  private val existsRE = s"\\s*exists\\((\\.*)\\)\\s*".r
 }
