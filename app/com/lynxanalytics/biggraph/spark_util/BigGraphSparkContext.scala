@@ -28,7 +28,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // Types will change IDs otherwise.
     kryo.setRegistrationRequired(true)
     kryo.register(classOf[scala.Tuple2[_, _]])
-    kryo.register(classOf[scala.Tuple3[_, _, _]])
     kryo.register(classOf[Array[Any]])
     kryo.register(classOf[mutable.WrappedArray$ofRef])
     kryo.register(classOf[mutable.ArrayBuffer[_]])

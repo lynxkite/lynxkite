@@ -3,8 +3,15 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.reflect.runtime.universe._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.controllers.DynamicValue
+
+// Dynamic values wrap various types into a combined type that we unwrap on FE side
+// The combined type helps us joining arbitrary number of different typed attributes.
+case class DynamicValue(
+  double: Double = 0.0,
+  string: String = "")
+// TODO: support for Vectors
 
 object VertexAttributeToString {
   class Output[T](implicit instance: MetaGraphOperationInstance,
@@ -61,7 +68,7 @@ case class VertexAttributeToDouble()
 
 object VertexAttributeToDynamicValue {
   class Output[T](implicit instance: MetaGraphOperationInstance,
-               inputs: VertexAttributeInput[T])
+                  inputs: VertexAttributeInput[T])
       extends MagicOutput(instance) {
     val attr = vertexAttribute[DynamicValue](inputs.vs.entity)
   }
@@ -87,12 +94,13 @@ case class VertexAttributeToDynamicValue[T]()
     implicit val ct = inputs.attr.data.classTag
     implicit val tt = inputs.attr.data.typeTag
     val attr = inputs.attr.rdd
-    
+
     val dv = {
-      if (typeOf[T] =:= typeOf[Double]) attr.mapValues(x => DynamicValue(double = x.asInstanceOf[Double]))
+      if (typeOf[T] =:= typeOf[Double]) attr.mapValues(x => DynamicValue(double = x.asInstanceOf[Double], string = x.toString))
       else if (typeOf[T] =:= typeOf[String]) attr.mapValues(x => DynamicValue(string = x.asInstanceOf[String]))
-      else if (typeOf[T] =:= typeOf[Vector[Any]]) ???
-      else ???
+      else {
+        throw new AssertionError(s"Attribute of unsupported type: ${typeOf[T]}")
+      }
     }
     output(o.attr, dv)
   }
