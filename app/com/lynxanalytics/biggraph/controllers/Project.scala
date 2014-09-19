@@ -330,7 +330,10 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   val path: SymbolPath = s"projects/$parentName/segmentations/$name"
   def toFE =
     FESegmentation(
-      name, project.projectName, UIValue.fromEntity(belongsTo), belongsToAttribute.gUID.toString)
+      name,
+      project.projectName,
+      UIValue.fromEntity(belongsTo),
+      UIValue(id = belongsToAttribute.gUID.toString, title = "segmentation[%s]".format(name)))
   def belongsTo = manager.edgeBundle(path / "belongsTo")
   def belongsTo_=(eb: EdgeBundle) = manager.synchronized {
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
