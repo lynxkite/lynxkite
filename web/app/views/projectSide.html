@@ -110,9 +110,9 @@
             </td>
           </tr>
           <tr>
-            <td>Label attraction:</td>
+            <td ng-class="{ 'de-emph': !side.state.animate.enabled }">Label attraction:</td>
             <td>
-              <input
+              <input ng-disabled="!side.state.animate.enabled"
                 tooltip="{{side.state.animate.labelAttraction * 100}}%"
                 type="range" max="1" step="0.1" ng-model="side.state.animate.labelAttraction">
             </td>
