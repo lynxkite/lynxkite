@@ -310,6 +310,12 @@ angular.module('biggraph')
           return { id: attr.id, title: title };
         }
       }
+      for (var segIdx = 0; segIdx < this.project.segmentations.length; segIdx++) {
+        var sattr = this.project.segmentations[segIdx].equivalentAttribute;
+        if (sattr.title === title) {
+          return { id: sattr.id, title: title };
+        }
+      }
       return { title: title };
     };
 
