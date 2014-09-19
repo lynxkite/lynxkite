@@ -199,7 +199,7 @@ angular.module('biggraph').directive('graphView', function() {
 
       var hslColor, h, s, l;
       if (color && side.attrs.color.typeName === 'Double') {
-        h = 240 + util.normalizeToOne(vertex.attrs[color].double, vertexColorBounds) * 120;
+        h = 300 + util.normalize(vertex.attrs[color].double, vertexColorBounds) * 120;
         s = 100;
         l = 42;
       } else if (color && side.attrs.color.typeName === 'String') {

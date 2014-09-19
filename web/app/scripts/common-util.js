@@ -30,10 +30,4 @@ var COMMON_UTIL = {
       }
     }
   },
-
-  normalizeToOne: function(x, minmax) {
-    if (minmax.span > 0) {
-      return (x - minmax.min) / minmax.span;
-    }
-  }
 };
