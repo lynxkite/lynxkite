@@ -2,10 +2,12 @@ package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util
@@ -26,20 +28,18 @@ case class VertexDiagramSpec(
   val centralVertexIds: Seq[String] = Seq(),
   // Edge bundle used to find neighborhood of the central vertex.
   val sampleSmearEdgeBundleId: String = "",
-  val sizeAttributeId: String = "",
-  val labelAttributeId: String = "",
+  val attrs: Seq[String] = Seq(),
   val radius: Int = 1)
 
 case class FEVertex(
-  size: Double,
-
   // For bucketed view:
+  size: Double = 0.0,
   x: Int = 0,
   y: Int = 0,
 
   // For sampled view:
-  id: String = "",
-  label: String = "")
+  id: Long = 0,
+  attrs: Map[String, DynamicValue] = Map())
 
 case class VertexDiagramResponse(
   val diagramId: String,
@@ -149,31 +149,26 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     cacheVertexAttributes(request.filters.map(_.attributeId))
     val filtered = FEFilters.filterMore(sample, request.filters)
 
-    val op = graph_operations.SampledView(
-      idToIdx,
-      request.sizeAttributeId.nonEmpty,
-      request.labelAttributeId.nonEmpty)
-    var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
-    if (request.sizeAttributeId.nonEmpty) {
-      val attr = metaManager.vertexAttributeOf[Double](request.sizeAttributeId.asUUID)
-      attr.rdd.cache
-      builder = builder(op.sizeAttr, attr)
-    }
-    if (request.labelAttributeId.nonEmpty) {
-      val attr = metaManager.vertexAttribute(request.labelAttributeId.asUUID)
-      attr.rdd.cache
-      val sattr: VertexAttribute[String] =
-        if (attr.is[String]) attr.runtimeSafeCast[String]
-        else graph_operations.VertexAttributeToString.run(attr)
+    val attrs = request.attrs.map(x => metaManager.vertexAttribute(x.asUUID))
+    val dynAttrs = attrs.map(graph_operations.VertexAttributeToDynamicValue.run(_))
 
-      builder = builder(op.labelAttr, sattr)
+    val joined = {
+      val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue())
+      op(op.vs, vertexSet)(op.attrs, dynAttrs).result.attr.entity
     }
-    val diagramMeta = builder.result.svVertices
+
+    val diagramMeta = {
+      val op = graph_operations.SampledView(idToIdx)
+      op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)(op.attr, joined).result.svVertices
+    }
     val vertices = diagramMeta.value
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
-      vertices = vertices.map(v => FEVertex(id = v.id.toString, size = v.size, label = v.label)),
+      vertices = vertices.map(v =>
+        FEVertex(
+          id = v.id,
+          attrs = request.attrs.zip(v.attrs).toMap)),
       mode = "sampled")
   }
 

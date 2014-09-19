@@ -96,14 +96,14 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     project.copy(other)
     run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = other)
     run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = other)
-    run("Union with another project", Map("other" -> "ExampleGraph2"))
+    run("Union with another project", Map("other" -> "ExampleGraph2", "id-attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 8)
     assert(project.edgeBundle.rdd.count == 8)
 
     val vAttrs = project.vertexAttributes.toMap
-    // 3 original +1 renamed
-    assert(vAttrs.size == 4)
+    // 4 original +1 renamed +1 new_id
+    assert(vAttrs.size == 6)
     val eAttrs = project.edgeAttributes.toMap
     // 2 original +1 renamed
     assert(eAttrs.size == 3)

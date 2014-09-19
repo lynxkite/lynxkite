@@ -144,28 +144,89 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
+  function mapByAttr(vs, attr, type) {
+    return vs.map(function(v) {
+      return v.attrs[attr][type];
+    });
+  }
+
   GraphView.prototype.addSampledVertices = function(data, offsetter, side) {
     var vertices = [];
     vertices.side = side;
     vertices.mode = 'sampled';
-    var vertexBounds = common.minmax(data.vertices.map(function(n) { return n.size; }));
-    var vertexScale = this.zoom * 2 / vertexBounds.max;
+
+    var size = (side.attrs.size) ? side.attrs.size.id : undefined;
+    var vertexSizeScale;
+    if (size) {
+      var vertexSizeBounds = common.minmax(mapByAttr(data.vertices, size, 'double'));
+      vertexSizeScale = this.zoom * 2 / vertexSizeBounds.max;
+    }
+
+    var color = (side.attrs.color) ? side.attrs.color.id : undefined;
+    var vertexColorBounds, colorMap;
+    if (color) {
+      if (side.attrs.color.typeName === 'Double') {
+        vertexColorBounds = common.minmax(mapByAttr(data.vertices, color, 'double'));
+      } else if (side.attrs.color.typeName === 'String') {
+        var enumMap = {};
+        colorMap = {};
+        angular.forEach(data.vertices, function(n) {
+          enumMap[n.attrs[color].string] =
+          enumMap[n.attrs[color].string] ? enumMap[n.attrs[color].string] + 1 : 1;
+        });
+        var cdist = Math.floor(360 / Object.keys(enumMap).length);
+        var ci = 0;
+        angular.forEach(enumMap, function(v, k) { colorMap[k] = ci; ci += cdist; });
+      } else {
+        console.error('The type of ' +
+          side.attrs.color + ' (' + side.attrs.color.typeName +
+          ') is not supported for vertex color visualization!');
+      }
+
+    }
+
     for (var i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
+
+      var label;
+      if (side.attrs.label) { label = vertex.attrs[side.attrs.label.id].string; }
+
+      var vertexSize = this.zoom * 0.1;
+      if (size) {
+        var sizeAttr = vertex.attrs[size].double;
+        vertexSize = Math.sqrt(vertexSizeScale * sizeAttr);
+      }
+
+      var hslColor, h, s, l;
+      if (color && side.attrs.color.typeName === 'Double') {
+        h = 300 + common.normalize(vertex.attrs[color].double, vertexColorBounds) * 120;
+        s = 100;
+        l = 42;
+      } else if (color && side.attrs.color.typeName === 'String') {
+        h = colorMap[vertex.attrs[color].string];
+        s = 100;
+        l = 42;
+      } else {
+        h = 0;
+        s = 0;
+        l = 25;
+      }
+      hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
+
       var v = new Vertex(Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
-                         Math.sqrt(vertexScale * vertex.size),
-                         vertex.label, vertex.id);
+                         vertexSize,
+                         label,
+                         vertex.id,
+                         hslColor);
       offsetter.rule(v);
-      v.id = vertex.id;
+      v.id = vertex.id.toString();
       svg.addClass(v.dom, 'sampled');
       if (side.centers.indexOf(v.id) > -1) {
         svg.addClass(v.dom, 'center');
       }
       vertices.push(v);
-      if (vertex.size === 0) {
-        continue;
-      }
+
       this.sampledVertexMouseBindings(vertices, v, offsetter);
       this.vertices.append(v.dom);
     }
@@ -186,7 +247,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var svgElement = this.svg;
     function setCenter() {
       scope.$apply(function() {
-        vertices.side.setCenter(vertex.id);
+        vertices.side.setCenter(vertex.id.toString());
       });
     }
     vertex.dom.on('mousedown touchstart', function(evStart) {
@@ -300,7 +361,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var yNumBuckets = yb.span + 1;
 
     y = this.zoom * 0.5 + labelSpace;
-    if (viewData.xAttribute.title) {
+    if (viewData.xAttribute) {
       // Label the X axis with the attribute name.
       l = new Label(
           0, y - labelSpace, viewData.xAttribute.title,
@@ -327,7 +388,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       x = this.zoom * 0.5 + labelSpace;
       side = 'right';
     }
-    if (viewData.yAttribute.title) {
+    if (viewData.yAttribute) {
       // Label the Y axis with the attribute name.
       var mul = side === 'left' ? 1 : -1;
       l = new Label(
@@ -416,11 +477,13 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Vertex(x, y, r, text, subscript) {
+  function Vertex(x, y, r, text, subscript, color) {
     this.x = x;
     this.y = y;
     this.r = r;
-    this.circle = svg.create('circle', {r: r});
+    this.color = color || '#444';
+    this.highlight = 'white';
+    this.circle = svg.create('circle', {r: r, style: 'fill: ' + this.color});
     var minTouchRadius = 10;
     if (r < minTouchRadius) {
       this.touch = svg.create('circle', {r: minTouchRadius, 'class': 'touch'});
@@ -429,7 +492,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     this.text = text;
     this.label = svg.create('text').text(text || '');
-    this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript || '');
+    this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript);
     this.labelBackground = svg.create(
         'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
     this.dom = svg.group(
@@ -440,6 +503,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var that = this;
     this.touch.mouseenter(function() {
       svg.addClass(that.dom, 'highlight');
+      that.circle.attr({style: 'fill: ' + that.highlight});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
@@ -449,6 +513,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
     this.touch.mouseleave(function() {
       svg.removeClass(that.dom, 'highlight');
+      that.circle.attr({style: 'fill: ' + that.color});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].off(that);
       }

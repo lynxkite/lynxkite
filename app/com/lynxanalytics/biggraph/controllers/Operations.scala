@@ -62,7 +62,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val vs = graph_operations.CreateVertexSet(params("size").toInt)().result.vs
-      project.vertexSet = vs
+      project.setVertexSet(vs, idAttr = "id")
     }
   })
 
@@ -107,11 +107,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new VertexOperation(_) {
     val title = "Import vertices"
     val description =
-      "Imports vertices (no edges) from a CSV file, or files." + importHelpText
+      """Imports vertices (no edges) from a CSV file, or files.
+      Each field in the CSV will be accessible as a vertex attribute.
+      An extra vertex attribute is generated to hold the internal vertex ID.
+      """ + importHelpText
     val parameters = Seq(
       Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("id-attr", "ID attribute name", defaultValue = "id"),
       Param("filter", "(optional) Filtering expression"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
@@ -126,6 +130,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val imp = graph_operations.ImportVertexList(csv)().result
       project.vertexSet = imp.vertices
       project.vertexAttributes = imp.attrs.mapValues(_.entity)
+      val idAttr = params("id-attr")
+      assert(
+        !project.vertexAttributes.contains(idAttr),
+        s"The CSV also contains a field called '$idAttr'. Please pick a different name.")
+      project.vertexAttributes(idAttr) = idAsAttribute(project.vertexSet)
     }
   })
 
@@ -168,7 +177,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new EdgeOperation(_) {
     val title = "Import vertices and edges from single CSV fileset"
     val description =
-      "Imports edges from a CSV file, or files." + importHelpText
+      """Imports edges from a CSV file, or files.
+      Each field in the CSV will be accessible as an edge attribute.
+      Vertices will be generated for the endpoints of the edges.
+      Two vertex attributes will be generated.
+      "stringID" will contain the ID string that was used in the CSV.
+      "id" will contain the internal vertex ID.
+      """ + importHelpText
     val parameters = Seq(
       Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
@@ -189,10 +204,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val src = params("src")
       val dst = params("dst")
       val imp = graph_operations.ImportEdgeList(csv, src, dst)().result
-      project.vertexSet = imp.vertices
+      project.setVertexSet(imp.vertices, idAttr = "id")
+      project.vertexAttributes("stringID") = imp.stringID
       project.edgeBundle = imp.edges
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
-      project.vertexAttributes("stringID") = imp.stringID
     }
   })
 
@@ -208,7 +223,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.vertexSet = result.segments
+      segmentation.project.setVertexSet(result.segments, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
     }
@@ -224,7 +239,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.vertexSet = result.segments
+      segmentation.project.setVertexSet(result.segments, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
     }
@@ -250,7 +265,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
 
       val cliquesSegmentation = project.segmentation(params("cliques_name"))
-      cliquesSegmentation.project.vertexSet = cliquesResult.segments
+      cliquesSegmentation.project.setVertexSet(cliquesResult.segments, idAttr = "id")
       cliquesSegmentation.project.notes = "Maximal cliques of %s".format(project.projectName)
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
       computeSegmentSizes(cliquesSegmentation)
@@ -280,13 +295,32 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
 
       val communitiesSegmentation = project.segmentation(params("communities_name"))
-      communitiesSegmentation.project.vertexSet = ccResult.segments
+      communitiesSegmentation.project.setVertexSet(ccResult.segments, idAttr = "id")
       communitiesSegmentation.project.notes =
         "Infocom Communities of %s".format(project.projectName)
       communitiesSegmentation.belongsTo = vertexToCommunity
       computeSegmentSizes(communitiesSegmentation)
     }
   })
+
+  register(new AttributeOperation(_) {
+    val title = "Internal vertex ID as attribute"
+    val description =
+      """Exposes the internal vertex ID as an attribute. This attribute is automatically generated
+      by operations that generate new vertex sets. But you can regenerate it with this operation
+      if necessary."""
+    val parameters = Seq(
+      Param("name", "Attribute name", defaultValue = "id"))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      project.vertexAttributes(params("name")) = idAsAttribute(project.vertexSet)
+    }
+  })
+
+  def idAsAttribute(vs: VertexSet) = {
+    val op = graph_operations.IdAsAttribute()
+    op(op.vertices, vs).result.vertexIds
+  }
 
   register(new AttributeOperation(_) {
     val title = "Add gaussian vertex attribute"
@@ -436,6 +470,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexSet = g.vertices
       project.edgeBundle = g.edges
       project.vertexAttributes = g.vertexAttributes.mapValues(_.entity)
+      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
       project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
     }
   })
@@ -482,7 +517,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val op = graph_operations.EdgeGraph()
       val g = op(op.es, project.edgeBundle).result
-      project.vertexSet = g.newVS
+      project.setVertexSet(g.newVS, idAttr = "id")
       project.edgeBundle = g.newES
     }
   })
@@ -729,7 +764,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldVAttrs = project.vertexAttributes.toMap
       val oldEdges = project.edgeBundle
       val oldEAttrs = project.edgeAttributes.toMap
-      project.vertexSet = m.segments
+      project.setVertexSet(m.segments, idAttr = "id")
       // Always use most_common for the key attribute.
       val hack = "aggregate-" + params("key") -> "most_common"
       for ((attr, choice) <- parseAggregateParams(params + hack)) {
@@ -1014,7 +1049,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       exists in both projects, it must have the same data type in both.
       """
     val parameters = Seq(
-      Param("other", "Other project's name", options = uIProjects))
+      Param("other", "Other project's name", options = uIProjects),
+      Param("id-attr", "ID attribute name", defaultValue = "new_id"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]): Unit = {
       val other = Project(params("other"))
@@ -1095,6 +1131,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       project.vertexSet = vsUnion.union
       project.vertexAttributes = newVertexAttributes
+      val idAttr = params("id-attr")
+      assert(
+        !project.vertexAttributes.contains(idAttr),
+        s"The project already contains a field called '$idAttr'. Please pick a different name.")
+      project.vertexAttributes(idAttr) = idAsAttribute(project.vertexSet)
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
     }
