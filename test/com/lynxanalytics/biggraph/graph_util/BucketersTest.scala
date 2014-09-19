@@ -39,7 +39,7 @@ class VertexBucketerTest extends FunSuite {
     assert(DoubleBucketer(0.001, 0.002, 2).bucketLabels == Seq("0.0010", "0.0015", "0.0020"))
   }
   test("Bucketing double labels for small differences") {
-    assert(DoubleBucketer(3.001, 3.002, 3).bucketLabels == Seq("3.001", "3.002", "3.003", "3.004"))
+    assert(DoubleBucketer(3.001, 3.004, 3).bucketLabels == Seq("3.001", "3.002", "3.003", "3.004"))
   }
 
   test("Bucketing long labels by integer division") {
