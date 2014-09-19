@@ -89,3 +89,11 @@ case class DoubleGE(bound: Double) extends Filter[Double] {
 case class OneOf[T](options: Set[T]) extends Filter[T] {
   def matches(value: T) = options.contains(value)
 }
+
+case class Exists[T](filter: Filter[T]) extends Filter[Vector[T]] {
+  def matches(value: Vector[T]) = value.exists(filter.matches(_))
+}
+
+case class ForAll[T](filter: Filter[T]) extends Filter[Vector[T]] {
+  def matches(value: Vector[T]) = value.forall(filter.matches(_))
+}

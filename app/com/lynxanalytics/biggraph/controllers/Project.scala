@@ -15,8 +15,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feAttr[T](e: TypedEntity[T], name: String) = {
-      val canBucket = Seq(typeOf[Double], typeOf[String]).exists(_ =:= e.typeTag.tpe)
-      val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long]).exists(_ =:= e.typeTag.tpe)
+      val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
+      val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[_]])
+        .exists(e.typeTag.tpe <:< _)
       FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter)
     }
     FEProject(
