@@ -110,6 +110,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     updateVertexSet(e, killSegmentations = true)
   }
 
+  def setVertexSet(e: VertexSet, idAttr: String): Unit = manager.synchronized {
+    vertexSet = e
+    vertexAttributes(idAttr) = {
+      val op = graph_operations.IdAsAttribute()
+      op(op.vertices, e).result.vertexIds
+    }
+  }
+
   private def updateVertexSet(e: VertexSet, killSegmentations: Boolean) = manager.synchronized {
     if (e != vertexSet) {
       // TODO: "Induce" the edges and attributes to the new vertex set.
