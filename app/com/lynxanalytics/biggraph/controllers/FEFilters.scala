@@ -68,7 +68,7 @@ object FEFilters {
       if (typeOf[T] =:= typeOf[String]) {
         OneOf(innerSpec.split(",").map(_.trim).toSet)
           .asInstanceOf[Filter[T]]
-      } else if (typeOf[T] =:= typeOf[ID]) {
+      } else if (typeOf[T] =:= typeOf[Long]) {
         OneOf(innerSpec.split(",").map(_.trim.toLong).toSet)
           .asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[Double]) {
