@@ -97,9 +97,7 @@ case class VertexAttributeToDynamicValue[T]()
     val dv = {
       if (typeOf[T] =:= typeOf[Double]) attr.mapValues(x => DynamicValue(double = x.asInstanceOf[Double], string = x.toString))
       else if (typeOf[T] =:= typeOf[String]) attr.mapValues(x => DynamicValue(string = x.asInstanceOf[String]))
-      else {
-        throw new AssertionError(s"Attribute of unsupported type: ${typeOf[T]}")
-      }
+      else attr.mapValues(x => DynamicValue(string = x.toString))
     }
     output(o.attr, dv)
   }
