@@ -39,6 +39,12 @@
             ng-click="side.set('labelAttributeTitle', attr.title)">
       Label
     </button>
+    <button class="btn btn-default"
+            ng-if="attr.typeName === 'Double' || attr.typeName === 'String'"
+            ng-class="{ active: side.state.colorAttributeTitle === attr.title }"
+            ng-click="side.set('colorAttributeTitle', attr.title)">
+      Color
+    </button>
   </div>
 </span>
 <form ng-if="attr.canFilter" style="display: inline;">
