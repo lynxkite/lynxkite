@@ -103,8 +103,11 @@ case class FEProject(
 case class FESegmentation(
   name: String,
   fullName: String,
-  belongsTo: UIValue) // The connecting edge bundle.
-
+  // The connecting edge bundle.
+  belongsTo: UIValue,
+  // A Vector[ID] vertex attribute, that contains for each vertex
+  // the vector of ids of segments the vertex belongs to.
+  equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
 case class Splash(version: String, projects: Seq[FEProject])
 case class OperationCategory(title: String, icon: String, color: String, ops: Seq[FEOperationMeta])

@@ -318,8 +318,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   def idAsAttribute(vs: VertexSet) = {
-    val op = graph_operations.IdAsAttribute()
-    op(op.vertices, vs).result.vertexIds
+    graph_operations.IdAsAttribute.run(vs)
   }
 
   register(new AttributeOperation(_) {

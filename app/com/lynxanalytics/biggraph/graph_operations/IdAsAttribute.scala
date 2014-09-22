@@ -10,6 +10,11 @@ object IdAsAttribute {
                inputs: Input) extends MagicOutput(instance) {
     val vertexIds = vertexAttribute[ID](inputs.vertices.entity)
   }
+  def run(vs: VertexSet)(implicit manager: MetaGraphManager): VertexAttribute[ID] = {
+    val op = IdAsAttribute()
+    import Scripting._
+    op(op.vertices, vs).result.vertexIds
+  }
 }
 import IdAsAttribute._
 case class IdAsAttribute() extends TypedMetaGraphOp[Input, Output] {
