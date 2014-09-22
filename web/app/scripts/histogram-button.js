@@ -4,7 +4,8 @@ angular.module('biggraph').directive('histogramButton', function(util) {
   return {
     restrict: 'E',
     scope: {
-      attr: '=', side: '=', type: '=',
+      attr: '=', side: '=',
+      type: '@', // 'edge' or 'vertex'
       model: '=?', // The Ajax response is exported through this field.
       tsv: '=?', // A tab-separated table is exported through this field.
     },
