@@ -85,7 +85,8 @@ case class FEAttribute(
   title: String,
   typeName: String,
   canBucket: Boolean,
-  canFilter: Boolean)
+  canFilter: Boolean,
+  isNumeric: Boolean)
 
 case class FEProject(
   name: String,

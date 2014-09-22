@@ -21,8 +21,10 @@ case class VertexDiagramSpec(
   // Empty string means no bucketing on that axis.
   val xBucketingAttributeId: String = "",
   val xNumBuckets: Int = 1,
+  val xAxisOptions: Option[AxisOptions] = None,
   val yBucketingAttributeId: String = "",
   val yNumBuckets: Int = 1,
+  val yAxisOptions: Option[AxisOptions] = None,
 
   // ** Parameters for sampled view **
   val centralVertexIds: Seq[String] = Seq(),
@@ -89,10 +91,14 @@ case class FEGraphResponse(
   vertexSets: Seq[VertexDiagramResponse],
   edgeBundles: Seq[EdgeDiagramResponse])
 
+case class AxisOptions(
+  logarithmic: Boolean)
+
 case class HistogramSpec(
   attributeId: String,
   vertexFilters: Seq[FEVertexAttributeFilter],
   numBuckets: Int,
+  axisOptions: AxisOptions,
   // Set only if we ask for an edge attribute histogram and provided vertexFilters should be
   // applied on the end-vertices of edges.
   edgeBundleId: String = "")
@@ -201,7 +207,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val xBucketedAttr = if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
       attribute.rdd.cache
-      FEBucketers.bucketedAttribute(metaManager, dataManager, attribute, request.xNumBuckets)
+      FEBucketers.bucketedAttribute(
+        metaManager, dataManager, attribute, request.xNumBuckets, request.xAxisOptions.get)
     } else {
       graph_operations.BucketedAttribute[Nothing](
         null, graph_util.EmptyBucketer())
@@ -209,7 +216,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val yBucketedAttr = if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
       attribute.rdd.cache
-      FEBucketers.bucketedAttribute(metaManager, dataManager, attribute, request.yNumBuckets)
+      FEBucketers.bucketedAttribute(
+        metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions.get)
     } else {
       graph_operations.BucketedAttribute[Nothing](
         null, graph_util.EmptyBucketer())
@@ -411,7 +419,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getHistogram(request: HistogramSpec): HistogramResponse = {
     val vertexAttribute = metaManager.vertexAttribute(request.attributeId.asUUID)
     val bucketedAttr = FEBucketers.bucketedAttribute(
-      metaManager, dataManager, vertexAttribute, request.numBuckets)
+      metaManager, dataManager, vertexAttribute, request.numBuckets, request.axisOptions)
     val filteredVS = if (request.edgeBundleId.isEmpty) {
       getFilteredVS(vertexAttribute.vertexSet, request.vertexFilters)
     } else {
