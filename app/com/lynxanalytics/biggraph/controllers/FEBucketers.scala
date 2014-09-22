@@ -12,7 +12,8 @@ object FEBucketers {
     metaManager: MetaGraphManager,
     dataManager: DataManager,
     attr: VertexAttribute[T],
-    numBuckets: Int): BucketedAttribute[T] = {
+    numBuckets: Int,
+    axisOptions: AxisOptions): BucketedAttribute[T] = {
 
     implicit val tt = attr.typeTag
     implicit val mm = metaManager
@@ -31,7 +32,10 @@ object FEBucketers {
       val min = res.min.value
       val max = res.max.value
       val actualNumBuckets = if (min == max) 1 else numBuckets
-      DoubleBucketer(min, max, actualNumBuckets).asInstanceOf[Bucketer[T]]
+      if (axisOptions.logarithmic)
+        DoubleLogBucketer(min, max, actualNumBuckets).asInstanceOf[Bucketer[T]]
+      else
+        DoubleLinearBucketer(min, max, actualNumBuckets).asInstanceOf[Bucketer[T]]
     } else ???
 
     BucketedAttribute(attr, bucketer)

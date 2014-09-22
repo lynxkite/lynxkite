@@ -21,10 +21,12 @@ angular.module('biggraph').directive('histogramButton', function(util) {
           attributeId: scope.attr.id,
           vertexFilters: scope.side.nonEmptyFilters(),
           numBuckets: 20,
+          axisOptions: scope.side.axisOptions(scope.type, scope.attr.title),
           edgeBundleId: scope.type === 'edge' ? scope.side.project.edgeBundle : '',
         };
         scope.model = util.get('/ajax/histo', q);
       }
+
       function updateTSV() {
         var model = scope.model;
         if (!model || !model.$resolved) {

@@ -17,6 +17,9 @@
 <span class="pull-right" ng-click="side.discard('edge-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
 </span>
+<label ng-show="histogram && attr.isNumeric">
+  <input type="checkbox" ng-model="side.axisOptions('edge', attr.title).logarithmic"> logarithmic
+</label>
 <span class="type-name">{{attr.typeName}}</span>
 <div class="clearfix"></div>
 <histogram ng-show="histogram" model="histogram"></histogram>
