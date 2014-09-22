@@ -113,10 +113,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def setVertexSet(e: VertexSet, idAttr: String): Unit = manager.synchronized {
     vertexSet = e
-    vertexAttributes(idAttr) = {
-      val op = graph_operations.IdAsAttribute()
-      op(op.vertices, e).result.vertexIds
-    }
+    vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e)
   }
 
   private def updateVertexSet(e: VertexSet, killSegmentations: Boolean) = manager.synchronized {
@@ -340,10 +337,7 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     manager.setTag(path / "belongsTo", eb)
   }
   def belongsToAttribute: VertexAttribute[Vector[ID]] = {
-    val segmentationIds = {
-      val op = graph_operations.IdAsAttribute()
-      op(op.vertices, project.vertexSet).result.vertexIds
-    }
+    val segmentationIds = graph_operations.IdAsAttribute.run(project.vertexSet)
     val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
