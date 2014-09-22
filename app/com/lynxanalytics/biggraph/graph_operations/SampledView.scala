@@ -9,11 +9,11 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 case class SampledViewVertex(id: Long, attrs: Array[DynamicValue])
 
 object SampledView {
-  class Input() extends MagicInputSignature {
+  class Input(hasAttr: Boolean) extends MagicInputSignature {
     val vertices = vertexSet
     val ids = vertexAttribute[ID](vertices)
     val filtered = vertexSet
-    val attr = vertexAttribute[Array[DynamicValue]](vertices)
+    val attr = if (hasAttr) vertexAttribute[Array[DynamicValue]](vertices) else null
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val svVertices = scalar[Seq[SampledViewVertex]]
@@ -23,9 +23,10 @@ object SampledView {
 import SampledView._
 case class SampledView(
     idToIdx: Map[ID, Int],
+    hasAttr: Boolean,
     maxCount: Int = 1000) extends TypedMetaGraphOp[Input, Output] {
 
-  @transient override lazy val inputs = new Input()
+  @transient override lazy val inputs = new Input(hasAttr)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
@@ -34,9 +35,9 @@ case class SampledView(
     implicit val instance = output.instance
 
     val filtered = inputs.filtered.rdd
+    val joined = if (hasAttr) filtered.sortedJoin(inputs.attr.rdd) else filtered.mapValues(x => (x, Array[DynamicValue]()))
 
-    val svVerticesMap = filtered
-      .sortedJoin(inputs.attr.rdd)
+    val svVerticesMap = joined
       .take(maxCount)
       .map {
         case (id, (_, arr)) =>
