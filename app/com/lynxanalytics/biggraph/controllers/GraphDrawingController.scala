@@ -152,15 +152,17 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val attrs = request.attrs.map(x => metaManager.vertexAttribute(x.asUUID))
     val dynAttrs = attrs.map(graph_operations.VertexAttributeToDynamicValue.run(_))
 
-    val joined = {
-      val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue())
-      op(op.vs, vertexSet)(op.attrs, dynAttrs).result.attr.entity
+    val op = graph_operations.SampledView(idToIdx, dynAttrs.size > 0)
+    var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
+    if (dynAttrs.size > 0) {
+      val joined = {
+        val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue())
+        op(op.vs, vertexSet)(op.attrs, dynAttrs).result.attr.entity
+      }
+      builder = builder(op.attr, joined)
     }
+    val diagramMeta = builder.result.svVertices
 
-    val diagramMeta = {
-      val op = graph_operations.SampledView(idToIdx)
-      op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)(op.attr, joined).result.svVertices
-    }
     val vertices = diagramMeta.value
 
     VertexDiagramResponse(
