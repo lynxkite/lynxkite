@@ -15,21 +15,6 @@
    version="1.1"
    inkscape:version="0.48.4 r9939"
    sodipodi:docname="icons.svg">
-  <defs
-     id="defs4">
-    <inkscape:path-effect
-       effect="spiro"
-       id="path-effect3850"
-       is_visible="true" />
-    <inkscape:path-effect
-       is_visible="true"
-       id="path-effect3800"
-       effect="spiro" />
-    <inkscape:path-effect
-       effect="spiro"
-       id="path-effect3028"
-       is_visible="true" />
-  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -39,7 +24,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.52"
      inkscape:cx="320.93916"
-     inkscape:cy="778.68743"
+     inkscape:cy="726.05585"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -127,7 +112,7 @@
          x="34.090904"
          y="298.99854"
          style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Droid Sans;-inkscape-font-specification:Droid Sans"
-         id="tspan3846">female, male and person</tspan></text>
+         id="tspan3846">female, male, person</tspan></text>
     <path
        style="fill:#e6e6e6;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m 554.76519,314.84717 c 3.42497,-1.66045 7.06357,-2.85436 10.46264,-4.56721 3.39906,-1.71286 6.63533,-4.04445 8.52193,-7.35024 1.30523,-2.28708 1.89892,-4.9737 1.67898,-7.59781 -8.6117,-7.89025 -14.12788,-19.07409 -15.1467,-30.70936 -0.76747,-8.7647 1.04371,-17.89171 5.94209,-25.20025 2.44919,-3.65427 5.64579,-6.82111 9.39122,-9.1285 3.74542,-2.30739 8.04099,-3.74354 12.43098,-4.02675 4.91625,-0.31716 9.8971,0.82089 14.26196,3.1052 4.36485,2.28432 8.11298,5.69576 10.927,9.73945 5.62803,8.08737 7.37013,18.5128 5.84215,28.24654 -1.6422,10.46132 -6.96131,20.30828 -14.81005,27.41696 -0.38288,2.75656 0.15215,5.63273 1.50066,8.06722 1.0636,1.92013 2.60796,3.54943 4.36553,4.86438 1.75758,1.31495 3.72712,2.32542 5.75724,3.16015 4.06023,1.66948 8.37786,2.65261 12.42668,4.34957 3.29196,1.37974 6.40942,3.24464 8.97652,5.7247 2.56709,2.48006 4.56847,5.59733 5.46558,9.05217 0.89711,3.45483 0.63942,7.24882 -0.98297,10.42822 -1.62238,3.17939 -4.65854,5.66916 -8.15978,6.36342 -1.7463,0.34627 -3.54579,0.25588 -5.32404,0.17041 -24.4049,-1.17299 -48.85747,-1.1466 -73.27923,-0.40329 -1.79625,0.0547 -3.61544,0.11116 -5.36844,-0.28443 -3.3995,-0.76715 -6.30059,-3.26366 -7.82955,-6.39534 -1.52896,-3.13168 -1.73761,-6.82887 -0.85715,-10.20081 0.88046,-3.37193 2.80228,-6.42307 5.25303,-8.90076 2.45075,-2.4777 5.41783,-4.40334 8.55372,-5.92364"
@@ -135,15 +120,38 @@
     <rect
        style="fill:#e6e6e6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        id="square"
-       width="68.421051"
-       height="68.421051"
-       x="434.21051"
-       y="123.41482"
+       width="74.905228"
+       height="74.905228"
+       x="429.67896"
+       y="120.88326"
        inkscape:label="#square" />
     <path
-       style="fill:#e6e6e6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1"
+       style="fill:#e6e6e6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m 602.3919,196.17578 -44.77899,0.4586 -22.78664,-38.55045 21.99234,-39.00904 44.77899,-0.45859 22.78664,38.55044 z"
        id="hexagon"
        inkscape:connector-curvature="0" />
+    <path
+       id="phone"
+       style="fill:#e6e6e6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 358.30888,502.32645 c 0,1.59071 -1.28952,2.88023 -2.88023,2.88023 -1.59071,0 -2.88023,-1.28952 -2.88023,-2.88023 0,-1.59071 1.28952,-2.88023 2.88023,-2.88023 1.59071,0 2.88023,1.28952 2.88023,2.88023 z m -26.37583,0 c 0,1.59071 -1.28952,2.88023 -2.88023,2.88023 -1.59071,0 -2.88023,-1.28952 -2.88023,-2.88023 0,-1.59071 1.28952,-2.88023 2.88023,-2.88023 1.59071,0 2.88023,1.28952 2.88023,2.88023 z m -12.00767,-21.698 45.32479,-28.57354 c 2.46582,-1.55449 4.45093,-1.1469 4.45093,0.91387 0,2.06078 -1.98511,4.97127 -4.45093,6.52577 l -45.32479,28.57354 c -2.4658,1.55449 -4.45091,1.1469 -4.45091,-0.91388 0,-2.06077 1.98511,-4.97127 4.45091,-6.52576 z m 27.19575,21.698 c 0,2.69537 -2.18503,4.88039 -4.8804,4.88039 -2.69537,0 -4.8804,-2.18502 -4.8804,-4.88039 0,-2.69537 2.18503,-4.88039 4.8804,-4.88039 2.69537,0 4.8804,2.18502 4.8804,4.88039 z m -27.19575,-57.96476 45.32479,-28.57354 c 2.46582,-1.5545 4.45093,-0.45929 4.45093,2.45561 l 0,18.75927 c 0,2.91489 -1.98511,6.513 -4.45093,8.0675 l -45.32479,28.57354 c -2.4658,1.55449 -4.45091,0.45928 -4.45091,-2.45562 l 0,-18.75927 c 0,-2.91489 1.98511,-6.513 4.45091,-8.06749 z m -7.59172,-46.69264 61.59278,0 c 2.46581,0 4.45092,1.98512 4.45092,4.45093 l 0,104.43181 c 0,2.46581 -1.98511,4.45092 -4.45092,4.45092 l -61.59278,0 c -2.46581,0 -4.45092,-1.98511 -4.45092,-4.45092 l 0,-104.43181 c 0,-2.46581 1.98511,-4.45093 4.45092,-4.45093 z"
+       inkscape:connector-curvature="0" />
+    <path
+       id="home"
+       style="fill:#e6e6e6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;opacity:0.98"
+       d="m 457.18599,464.45357 8.71283,0 0,8.71282 -8.71283,0 z m -11.09358,0 8.71283,0 0,8.71282 -8.71283,0 z m 11.09358,-11.09359 8.71283,0 0,8.71283 -8.71283,0 z m -11.09358,0 8.71283,0 0,8.71283 -8.71283,0 z m 19.66026,-48.83031 -48.15886,48.18775 14.0981,0 0,49.61476 68.12153,0 0,-49.61476 14.12698,0 -26.17392,-26.17392 0,-19.87601 -8.06018,0 0,11.81583 z"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccccccccccccccccccccccccccccc" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text3904"
+       y="458.99854"
+       x="34.090904"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Atavyros;-inkscape-font-specification:Atavyros"
+       xml:space="preserve"><tspan
+         id="tspan3906"
+         style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Droid Sans;-inkscape-font-specification:Droid Sans"
+         y="458.99854"
+         x="34.090904"
+         sodipodi:role="line">phone, home</tspan></text>
   </g>
 </svg>
