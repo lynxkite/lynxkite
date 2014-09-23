@@ -270,7 +270,9 @@ angular.module('biggraph').directive('graphView', function(util) {
           vertices.animate();
         } else {  // It was a click.
           vertex.activateMenu({ type: 'vertex', id: vertex.id });
-          setCenter();
+          if (false) {
+            setCenter();
+          }
         }
       });
       angular.element(window).on('mousemove touchmove', function(ev) {

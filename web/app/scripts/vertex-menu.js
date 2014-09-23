@@ -7,5 +7,7 @@ angular.module('biggraph').directive('vertexMenu', function() {
     restrict: 'E',
     scope: { model: '=' },
     templateUrl: 'vertex-menu.html',
+    link: function() {
+    },
   };
 });

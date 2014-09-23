@@ -1,3 +1,5 @@
-<div ng-show="model.enabled" class="context-menu">
-  Hello Mr!
+<div ng-show="model.enabled"
+     class="context-menu"
+     ng-style="{ top: model.y + 'px', left: model.x + 'px' }">
+  Hello Mr {{model.data.type}} {{model.data.id}}!
 </div>
