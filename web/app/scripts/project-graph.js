@@ -111,6 +111,13 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         }
       });
 
+      scope.vertexMenu = {
+        enabled: false,
+        x: 0,
+        y: 0,
+        data: {}
+      };
+
       function vertexSetToTSV(index, vs, side) {
         var i, j, v;
         var name = graphName(index);
