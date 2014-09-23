@@ -10,6 +10,10 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       util.deepWatch(scope, 'left', update);
       util.deepWatch(scope, 'right', update);
 
+      scope.iconsLoaded = function() {
+        scope.$broadcast('#svg-icons is loaded');
+      };
+
       function update(after, before) {
         if (after && before && before !== after) {
           before.animate = after.animate;
