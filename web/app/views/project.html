@@ -2,8 +2,12 @@
   <project-graph size="50%" left="left.viewData" right="right.viewData" left-to-right-path="leftToRightPath"></project-graph>
   <div class="project-sides">
     <div ng-include="'views/projects.html'"></div>
+    <div class="clearfix"></div>
+    <div ng-if="linked" class="text-center"><span class="glyphicon glyphicon-link"></span></div>
   </div>
 </ui-layout>
 <div ng-if="!showGraph()" class="project-sides">
   <div ng-include="'views/projects.html'"></div>
+  <div class="clearfix"></div>
+  <div ng-if="linked" class="text-center"><span class="glyphicon glyphicon-link" tooltip="Multi-window mode enabled!"></span></div>
 </div>
