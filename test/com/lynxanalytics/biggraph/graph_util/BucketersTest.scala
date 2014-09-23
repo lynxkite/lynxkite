@@ -16,7 +16,7 @@ class VertexBucketerTest extends FunSuite {
   }
 
   test("Double bucketer works as expected") {
-    var fb = new DoubleBucketer(1, 6, 3)
+    var fb = DoubleLinearBucketer(1, 6, 3)
     assert(fb.bounds == Seq(1 + 5.0 / 3, 1 + 2 * 5.0 / 3))
     assert(fb.whichBucket(1.00) == 0)
     assert(fb.whichBucket(2.66) == 0)
@@ -24,7 +24,7 @@ class VertexBucketerTest extends FunSuite {
     assert(fb.whichBucket(4.33) == 1)
     assert(fb.whichBucket(4.34) == 2)
     assert(fb.whichBucket(6.00) == 2)
-    fb = DoubleBucketer(0.2, 0.9, 7)
+    fb = DoubleLinearBucketer(0.2, 0.9, 7)
     assert(fb.bounds == Seq(0.3, 0.4, 0.5, 0.6, 0.7, 0.8))
   }
 
@@ -33,13 +33,13 @@ class VertexBucketerTest extends FunSuite {
   }
 
   test("Bucketing double labels for large numbers") {
-    assert(DoubleBucketer(100, 400, 3).bucketLabels == Seq("100", "200", "300", "400"))
+    assert(DoubleLinearBucketer(100, 400, 3).bucketLabels == Seq("100", "200", "300", "400"))
   }
   test("Bucketing double labels for small numbers") {
-    assert(DoubleBucketer(0.001, 0.002, 2).bucketLabels == Seq("0.0010", "0.0015", "0.0020"))
+    assert(DoubleLinearBucketer(0.001, 0.002, 2).bucketLabels == Seq("0.0010", "0.0015", "0.0020"))
   }
   test("Bucketing double labels for small differences") {
-    assert(DoubleBucketer(3.001, 3.004, 3).bucketLabels == Seq("3.001", "3.002", "3.003", "3.004"))
+    assert(DoubleLinearBucketer(3.001, 3.004, 3).bucketLabels == Seq("3.001", "3.002", "3.003", "3.004"))
   }
 
   test("Bucketing long labels by integer division") {
