@@ -6,7 +6,7 @@ angular.module('biggraph').directive('graphView', function(util) {
   var common = COMMON_UTIL;
   var directive = {
       template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
-      scope: { graph: '=', left: '=', right: '=' },
+      scope: { graph: '=', left: '=', right: '=', menu: '=' },
       replace: true,
       link: function(scope, element) {
         var gv = new GraphView(scope, element);
@@ -16,16 +16,17 @@ angular.module('biggraph').directive('graphView', function(util) {
           } else if (scope.graph.error) {
             gv.error(scope.graph.error);
           } else {
-            gv.update(scope.graph);
+            gv.update(scope.graph, scope.menu);
           }
         }
         scope.$watch('graph', updateGraph, true);
       },
     };
 
-  function Offsetter(xOff, yOff) {
+  function Offsetter(xOff, yOff, menu) {
     this.xOff = xOff;
     this.yOff = yOff;
+    this.menu = menu;
     this.elements = [];
   }
   Offsetter.prototype.rule = function(element) {
@@ -36,6 +37,12 @@ angular.module('biggraph').directive('graphView', function(util) {
     };
     element.screenY = function() {
       return element.y + that.yOff;
+    };
+    element.activateMenu = function(menuData) {
+      that.menu.x = element.screenX();
+      that.menu.y = element.screenY();
+      that.menu.data = menuData;
+      that.menu.enabled = true;
     };
     element.reDraw();
   };
@@ -95,7 +102,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.root.append(text);
   };
 
-  GraphView.prototype.update = function(data) {
+  GraphView.prototype.update = function(data, menu) {
     // Remove old watchers.
     for (var i = 0; i < this.unwatch.length; ++i) {
       this.unwatch[i]();
@@ -118,7 +125,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         var yOff = this.svg.height() / 2;
         var vs = data.vertexSets[vsIndex];
         vsIndex += 1;
-        var offsetter = new Offsetter(xOff, yOff);
+        var offsetter = new Offsetter(xOff, yOff, menu);
         if (vs.mode === 'sampled') {
           vertices.push(this.addSampledVertices(vs, offsetter, sides[i]));
         } else {
@@ -264,6 +271,7 @@ angular.module('biggraph').directive('graphView', function(util) {
           vertex.dragged = false;
           vertices.animate();
         } else {  // It was a click.
+          vertex.activateMenu({ type: 'vertex', id: vertex.id });
           setCenter();
         }
       });
