@@ -11,7 +11,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       link: function(scope, element) {
         var gv = new GraphView(scope, element);
         function updateGraph() {
-          if (scope.graph === undefined || !scope.graph.$resolved) {
+          if (scope.graph === undefined || !scope.graph.$resolved || !iconsLoaded()) {
             gv.loading();
           } else if (scope.graph.error) {
             gv.error(scope.graph.error);
@@ -19,9 +19,16 @@ angular.module('biggraph').directive('graphView', function(util) {
             gv.update(scope.graph);
           }
         }
-        scope.$watch('graph', updateGraph, true);
+        util.deepWatch(scope, 'graph', updateGraph);
+        // It is possible, especially in testing, that we get the graph data faster than the icons.
+        // In this case we delay the drawing until the icons are loaded.
+        scope.$on('#svg-icons is loaded', updateGraph);
       },
     };
+
+  function iconsLoaded() {
+    return angular.element('#svg-icons #circle').length > 0;
+  }
 
   function getIcon(name) {
     if (!name) { name = 'circle'; }
