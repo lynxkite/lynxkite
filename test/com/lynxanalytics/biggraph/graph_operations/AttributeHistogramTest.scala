@@ -4,13 +4,13 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_util.DoubleBucketer
+import com.lynxanalytics.biggraph.graph_util.DoubleLinearBucketer
 
 class AttributeHistogramTest extends FunSuite with TestGraphOp {
   val g = ExampleGraph()().result
 
   test("works on edges") {
-    val bucketer = DoubleBucketer(0.0, 5.0, 2)
+    val bucketer = DoubleLinearBucketer(0.0, 5.0, 2)
     val cop = CountVertices()
     val count = cop(cop.vertices, g.edges.asVertexSet).result.count
     val op = AttributeHistogram(bucketer)
