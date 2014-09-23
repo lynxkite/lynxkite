@@ -61,8 +61,12 @@
   model="histogram" type="vertex" tsv="histogramTSV">
 </histogram-button>
 <copy-box ng-show="histogram" description="Histogram as TSV" data="{{histogramTSV}}"></copy-box>
-<histogram ng-show="histogram" model="histogram"></histogram>
 <span class="pull-right" ng-click="side.discard('vertex-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
 </span>
+<label ng-show="showLogCheckbox()">
+  <input type="checkbox" ng-model="side.axisOptions('vertex', attr.title).logarithmic"> logarithmic
+</label>
 <span class="type-name">{{attr.typeName}}</span>
+<div class="clearfix"></div>
+<histogram ng-show="histogram" model="histogram"></histogram>

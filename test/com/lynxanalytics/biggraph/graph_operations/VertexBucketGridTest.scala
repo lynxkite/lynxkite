@@ -22,7 +22,7 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
   test("String-Double bucketing") {
     val numBuckets = 2
     val xBucketer = StringBucketer(Seq("Adam", "Eve"), hasOther = true)
-    val yBucketer = DoubleBucketer(2.0, 50.3, numBuckets)
+    val yBucketer = DoubleLinearBucketer(2.0, 50.3, numBuckets)
 
     val cop = CountVertices()
     val count = cop(cop.vertices, g.vertices).result.count
