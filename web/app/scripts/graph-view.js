@@ -213,16 +213,16 @@ angular.module('biggraph').directive('graphView', function(util) {
       var hslColor, h, s, l;
       if (color && side.attrs.color.typeName === 'Double') {
         h = 300 + common.normalize(vertex.attrs[color].double, vertexColorBounds) * 120;
-        s = 100;
+        s = 50;
         l = 42;
       } else if (color && side.attrs.color.typeName === 'String') {
         h = colorMap[vertex.attrs[color].string];
-        s = 100;
+        s = 50;
         l = 42;
       } else {
         h = 0;
         s = 0;
-        l = 25;
+        l = 42;
       }
       hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
 
