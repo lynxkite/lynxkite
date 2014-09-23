@@ -35,7 +35,7 @@ angular.module('biggraph')
         filters: {},
         graphMode: undefined,
         bucketCount: 4,
-        sampleRadius: 0,
+        sampleRadius: 1,
         animate: {
           enabled: false,
           labelAttraction: 0,
