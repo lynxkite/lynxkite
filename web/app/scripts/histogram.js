@@ -15,21 +15,32 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         }
         return max;
       }
-      function loading() {
-        if (!scope.model || scope.model.$resolved) { return; }
+
+      function startLoading() {
+        if (!scope.loading) {
+          loadingAnimation();
+        }
+      }
+      function loadingAnimation() {
+        scope.loading = scope.model && !scope.model.$resolved;
+        if (!scope.loading) { return; }
         scope.model.sizes = [];
         for (var i = 0; i < 20; ++i) {
           scope.model.sizes.push(Math.random());
         }
         scope.max = 1;
         scope.origMax = 1;
-        $timeout(loading, 200);
+        $timeout(loadingAnimation, 200);
       }
-      scope.$watch('model.$resolved', function() {
+
+      scope.$watch('model', update);
+      scope.$watch('model.$resolved', update);
+
+      function update() {
         var model = scope.model;
         if (!model) { return; }
         if (!model.$resolved) {
-          loading();
+          startLoading();
           return;
         }
         scope.highlighted = undefined;  // Index of highlighted bar.
@@ -44,7 +55,8 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         } else {
           scope.histoLabels = model.labels;
         }
-      });
+      }
+
       scope.height = function(s) {
         return Math.max(0, Math.min(100, Math.floor(100 * s / scope.max))) + '%';
       };

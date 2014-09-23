@@ -68,6 +68,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             yBucketingAttributeId: yAttr,
             xNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
+            xAxisOptions: viewData.xAxisOptions,
+            yAxisOptions: viewData.yAxisOptions,
             // Sampled view parameters.
             // angular.js/pull/7370
             radius: viewData.edgeBundle ? parseInt(viewData.sampleRadius) : 0,

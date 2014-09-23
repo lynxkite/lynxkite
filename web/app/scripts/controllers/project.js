@@ -33,6 +33,10 @@ angular.module('biggraph')
       return {
         projectName: undefined,
         filters: {},
+        axisOptions: {
+          edge: {},
+          vertex: {},
+        },
         graphMode: undefined,
         bucketCount: 4,
         sampleRadius: 1,
@@ -74,6 +78,8 @@ angular.module('biggraph')
       // "state" uses attribute names, while "viewData" uses attribute UUIDs.
       vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
       vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
+      vd.xAxisOptions = this.axisOptions('vertex', this.state.xAttributeTitle);
+      vd.yAxisOptions = this.axisOptions('vertex', this.state.yAttributeTitle);
       vd.attrs = {};
       vd.attrs.size = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
       vd.attrs.label = this.resolveVertexAttribute(this.state.labelAttributeTitle);
@@ -92,6 +98,16 @@ angular.module('biggraph')
       vd.animate = this.state.animate;
 
       this.viewData = vd;
+    };
+
+    Side.prototype.axisOptions = function(type, attr) {
+      var defaultAxisOptions = {
+        logarithmic: false,
+      };
+      if (this.state.axisOptions[type][attr] === undefined) {
+        this.state.axisOptions[type][attr] = defaultAxisOptions;
+      }
+      return this.state.axisOptions[type][attr];
     };
 
     Side.prototype.maybeRequestNewCenter = function() {
