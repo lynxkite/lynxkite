@@ -155,11 +155,11 @@ angular.module('biggraph').directive('graphView', function(util) {
     vertices.side = side;
     vertices.mode = 'sampled';
 
-    var size = (side.attrs.size) ? side.attrs.size.id : undefined;
-    var vertexSizeScale;
-    if (size) {
-      var vertexSizeBounds = common.minmax(mapByAttr(data.vertices, size, 'double'));
-      vertexSizeScale = this.zoom * 2 / vertexSizeBounds.max;
+    var sizeAttr = (side.attrs.size) ? side.attrs.size.id : undefined;
+    var sizeMax = 1;
+    if (sizeAttr) {
+      var vertexSizeBounds = common.minmax(mapByAttr(data.vertices, sizeAttr, 'double'));
+      sizeMax = vertexSizeBounds.max;
     }
 
     var color = (side.attrs.color) ? side.attrs.color.id : undefined;
@@ -191,11 +191,8 @@ angular.module('biggraph').directive('graphView', function(util) {
       var label;
       if (side.attrs.label) { label = vertex.attrs[side.attrs.label.id].string; }
 
-      var vertexSize = this.zoom * 0.1;
-      if (size) {
-        var sizeAttr = vertex.attrs[size].double;
-        vertexSize = Math.sqrt(vertexSizeScale * sizeAttr);
-      }
+      var size = 0.5;
+      if (sizeAttr) { size = vertex.attrs[sizeAttr].double / sizeMax; }
 
       var hslColor, h, s, l;
       if (color && side.attrs.color.typeName === 'Double') {
@@ -213,9 +210,10 @@ angular.module('biggraph').directive('graphView', function(util) {
       }
       hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
 
+      var radius = this.zoom * 0.1 * Math.sqrt(size);
       var v = new Vertex(Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
-                         vertexSize,
+                         radius,
                          label,
                          vertex.id,
                          hslColor);
