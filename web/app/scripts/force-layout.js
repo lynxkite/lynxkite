@@ -15,15 +15,17 @@ var FORCE_LAYOUT = (function() {
   lib.Engine.prototype.step = function(vertices) {
     var a, b, dx, dy, i, j;
     var maxDist = 0;
-    for (i = 0; i < vertices.edges.length; ++i) {
-      var e = vertices.edges[i];
-      if (e.size === 0) { continue; }
-      a = e.src;
-      b = e.dst;
-      a.x += this.opts.attraction * (b.forceOX - a.forceOX) / a.forceMass;
-      a.y += this.opts.attraction * (b.forceOY - a.forceOY) / a.forceMass;
-      b.x += this.opts.attraction * (a.forceOX - b.forceOX) / b.forceMass;
-      b.y += this.opts.attraction * (a.forceOY - b.forceOY) / b.forceMass;
+    if (vertices.edges !== undefined) {
+      for (i = 0; i < vertices.edges.length; ++i) {
+        var e = vertices.edges[i];
+        if (e.size === 0) { continue; }
+        a = e.src;
+        b = e.dst;
+        a.x += this.opts.attraction * (b.forceOX - a.forceOX) / a.forceMass;
+        a.y += this.opts.attraction * (b.forceOY - a.forceOY) / a.forceMass;
+        b.x += this.opts.attraction * (a.forceOX - b.forceOX) / b.forceMass;
+        b.y += this.opts.attraction * (a.forceOY - b.forceOY) / b.forceMass;
+      }
     }
     for (i = 0; i < vertices.length; ++i) {
       a = vertices[i];

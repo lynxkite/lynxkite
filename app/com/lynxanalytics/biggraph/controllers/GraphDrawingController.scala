@@ -139,12 +139,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
     val centers = request.centralVertexIds.map(_.toLong)
 
-    val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
-    val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
-    val idToIdx = nopres.neighborsIdToIndex.value
+    val idToIdx = if (request.radius > 0) {
+      val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
+      val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
+      val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
+      nopres.neighborsIdToIndex.value
+    } else {
+      centers.zipWithIndex.toMap
+    }
 
     val iaaop = graph_operations.IdAsAttribute()
     val idAttr = iaaop(iaaop.vertices, vertexSet).result.vertexIds

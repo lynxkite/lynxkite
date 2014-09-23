@@ -27,12 +27,14 @@
     {
       "name": "maximal_cliques",
       "fullName": "My_Little_Project/segmentations/maximal_cliques/project",
-      "belongsTo": { "id": "belongsTo-maximal_cliques", "title": "belongsTo of maximal_cliques" }
+      "belongsTo": { "id": "belongsTo-maximal_cliques", "title": "belongsTo of maximal_cliques" },
+      "equivalentAttribute": { "id": "eq-max-cliques", "title": "segmentation[maximal_cliques]" }
     },
     {
       "name": "connected_components",
       "fullName": "My_Little_Project/segmentations/connected_components/project",
-      "belongsTo": { "id": "belongsTo-connected_components", "title": "belongsTo of connected_components" }
+      "belongsTo": { "id": "belongsTo-connected_components", "title": "belongsTo of connected_components" },
+      "equivalentAttribute": { "id": "eq-cc", "title": "segmentation[connected_components]" }
     }
   ],
 
