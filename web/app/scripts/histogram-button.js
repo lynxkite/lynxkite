@@ -4,7 +4,8 @@ angular.module('biggraph').directive('histogramButton', function(util) {
   return {
     restrict: 'E',
     scope: {
-      attr: '=', side: '=', type: '=',
+      attr: '=', side: '=',
+      type: '@', // 'edge' or 'vertex'
       model: '=?', // The Ajax response is exported through this field.
       tsv: '=?', // A tab-separated table is exported through this field.
     },
@@ -20,10 +21,12 @@ angular.module('biggraph').directive('histogramButton', function(util) {
           attributeId: scope.attr.id,
           vertexFilters: scope.side.nonEmptyFilters(),
           numBuckets: 20,
+          axisOptions: scope.side.axisOptions(scope.type, scope.attr.title),
           edgeBundleId: scope.type === 'edge' ? scope.side.project.edgeBundle : '',
         };
         scope.model = util.get('/ajax/histo', q);
       }
+
       function updateTSV() {
         var model = scope.model;
         if (!model || !model.$resolved) {
