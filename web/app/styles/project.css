@@ -266,7 +266,8 @@ copy-box {
   padding: 0;
   outline: 0;
 }
-/*.context-menu {
-  width: 100px;
-  height: 34px;
-}*/
+.context-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
