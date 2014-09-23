@@ -307,10 +307,12 @@ angular.module('biggraph').directive('graphView', function(util) {
       v.forceOX = v.x;
       v.forceOY = v.y;
     }
-    for (i = 0; i < vertices.edges.length; ++i) {
-      var e = vertices.edges[i];
-      e.src.forceMass += 1;
-      e.dst.forceMass += 1;
+    if (vertices.edges !== undefined) {
+      for (i = 0; i < vertices.edges.length; ++i) {
+        var e = vertices.edges[i];
+        e.src.forceMass += 1;
+        e.dst.forceMass += 1;
+      }
     }
     var scale = this.svg.height();
     var engine = new FORCE_LAYOUT.Engine({
