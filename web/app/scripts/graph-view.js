@@ -504,7 +504,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.color = color || '#444';
     this.highlight = 'white';
     this.icon = getIcon(icon);
-    this.icon.attr({ style: 'stroke: none; fill: ' + this.color });
+    this.icon.attr({ style: 'fill: ' + this.color, 'class': 'icon' });
     var minTouchRadius = 10;
     if (r < minTouchRadius) {
       this.touch = svg.create('circle', {r: minTouchRadius, 'class': 'touch'});
