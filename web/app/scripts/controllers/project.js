@@ -78,6 +78,7 @@ angular.module('biggraph')
       vd.attrs.size = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
       vd.attrs.label = this.resolveVertexAttribute(this.state.labelAttributeTitle);
       vd.attrs.color = this.resolveVertexAttribute(this.state.colorAttributeTitle);
+      vd.attrs.icon = this.resolveVertexAttribute(this.state.iconAttributeTitle);
 
       vd.filters = {};
       for(var name in this.state.filters) {
