@@ -118,29 +118,31 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         if (vs.mode === 'sampled') {
           tsv += 'Vertices of ' + name + ':\n';
           tsv += 'id';
-          if (side.labelAttribute.id) { tsv += '\t' + side.labelAttribute.title; }
-          if (side.sizeAttribute.id) { tsv += '\t' + side.sizeAttribute.title; }
+          if (side.labelAttribute) { tsv += '\t' + side.labelAttribute.title; }
+          if (side.sizeAttribute) { tsv += '\t' + side.sizeAttribute.title; }
           tsv += '\n';
           for (i = 0; i < vs.vertices.length; ++i) {
             v = vs.vertices[i];
             tsv += v.id;
-            if (side.labelAttribute.id) { tsv += '\t' + v.label; }
-            if (side.sizeAttribute.id) { tsv += '\t' + v.size; }
+            if (side.labelAttribute) { tsv += '\t' + v.label; }
+            if (side.sizeAttribute) { tsv += '\t' + v.size; }
             tsv += '\n';
           }
         } else {
-          var xAxis = side.xAttribute.title;
-          var yAxis = side.yAttribute.title;
-          var xDescription =
-            xAxis + ' (horizontal' + (vs.xLabelType === 'between' ? ', lower bounds' : '') + ')';
-          var yDescription =
-            yAxis + ' (vertical' + (vs.yLabelType === 'between' ? ', lower bounds' : '') + ')';
+          var xAxis = side.xAttribute || {};
+          var yAxis = side.yAttribute || {};
+          var xDescription = xAxis.title + ' (horizontal';
+          if (vs.xLabelType === 'between') { xDescription += ', lower bounds'; }
+          xDescription += ')';
+          var yDescription = yAxis.title + ' (vertical';
+          if (vs.yLabelType === 'between') { yDescription += ', lower bounds'; }
+          yDescription += ')';
           tsv += 'Buckets of ' + name;
-          if (xAxis && yAxis) {
+          if (xAxis.id && yAxis.id) {
             tsv += ' by ' + yDescription + ' and ' + xDescription + ':\n';
-          } else if (xAxis) {
+          } else if (xAxis.id) {
             tsv += ' by ' + xDescription + ':\n';
-          } else if (yAxis) {
+          } else if (yAxis.id) {
             tsv += ' by ' + yDescription + ':\n';
           } else {
             tsv += ':\n';
@@ -170,8 +172,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
 
       function edgeBundleToTSV(eb) {
         var tsv = '\n';
-        tsv += 'Edges from ' + graphName(eb.srcIdx) + ' (vertical)';
-        tsv += ' to ' + graphName(eb.dstIdx) + ' (horizontal):\n';
+        tsv += 'Edges from ' + graphName(eb.srcIdx);
+        tsv += ' to ' + graphName(eb.dstIdx) + ':\n';
         tsv += 'src\tdst\tsize\n';
         for (var i = 0; i < eb.edges.length; ++i) {
           var e = eb.edges[i];
