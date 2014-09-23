@@ -21,10 +21,10 @@ case class VertexDiagramSpec(
   // Empty string means no bucketing on that axis.
   val xBucketingAttributeId: String = "",
   val xNumBuckets: Int = 1,
-  val xAxisOptions: Option[AxisOptions] = None,
+  val xAxisOptions: AxisOptions = AxisOptions(),
   val yBucketingAttributeId: String = "",
   val yNumBuckets: Int = 1,
-  val yAxisOptions: Option[AxisOptions] = None,
+  val yAxisOptions: AxisOptions = AxisOptions(),
 
   // ** Parameters for sampled view **
   val centralVertexIds: Seq[String] = Seq(),
@@ -92,7 +92,7 @@ case class FEGraphResponse(
   edgeBundles: Seq[EdgeDiagramResponse])
 
 case class AxisOptions(
-  logarithmic: Boolean)
+  logarithmic: Boolean = false)
 
 case class HistogramSpec(
   attributeId: String,
@@ -208,7 +208,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
       attribute.rdd.cache
       FEBucketers.bucketedAttribute(
-        metaManager, dataManager, attribute, request.xNumBuckets, request.xAxisOptions.get)
+        metaManager, dataManager, attribute, request.xNumBuckets, request.xAxisOptions)
     } else {
       graph_operations.BucketedAttribute[Nothing](
         null, graph_util.EmptyBucketer())
@@ -217,7 +217,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
       attribute.rdd.cache
       FEBucketers.bucketedAttribute(
-        metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions.get)
+        metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions)
     } else {
       graph_operations.BucketedAttribute[Nothing](
         null, graph_util.EmptyBucketer())
