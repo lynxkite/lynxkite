@@ -23,6 +23,22 @@ angular.module('biggraph').directive('graphView', function(util) {
       },
     };
 
+  function getIcon(name) {
+    if (!name) { name = 'circle'; }
+    var circle = angular.element('#svg-icons #circle');
+    var cbb = circle[0].getBBox();
+    var icon = angular.element('#svg-icons #' + name.toLowerCase());
+    var bb = icon[0].getBBox();
+    var clone = icon.clone();
+    // Take the scaling factor from the circle icon.
+    clone.scale = 2 / Math.max(cbb.width, cbb.height);
+    clone.center = {
+      x: bb.x + bb.width / 2,
+      y: bb.y + bb.height / 2,
+    };
+    return clone;
+  }
+
   function Offsetter(xOff, yOff) {
     this.xOff = xOff;
     this.yOff = yOff;
@@ -210,13 +226,17 @@ angular.module('biggraph').directive('graphView', function(util) {
       }
       hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
 
+      var icon;
+      if (side.attrs.icon) { icon = vertex.attrs[side.attrs.icon.id].string; }
+
       var radius = this.zoom * 0.1 * Math.sqrt(size);
       var v = new Vertex(Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
                          radius,
                          label,
                          vertex.id,
-                         hslColor);
+                         hslColor,
+                         icon);
       offsetter.rule(v);
       v.id = vertex.id.toString();
       svg.addClass(v.dom, 'sampled');
@@ -464,7 +484,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.vertical = opts.vertical;
     this.dom = svg.create('text', { 'class': classes }).text(text);
     if (this.vertical) {
-      this.dom.attr({ transform: 'rotate(-90)' });
+      this.dom.attr({ transform: svgRotate(-90) });
     }
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
@@ -477,18 +497,19 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Vertex(x, y, r, text, subscript, color) {
+  function Vertex(x, y, r, text, subscript, color, icon) {
     this.x = x;
     this.y = y;
     this.r = r;
     this.color = color || '#444';
     this.highlight = 'white';
-    this.circle = svg.create('circle', {r: r, style: 'fill: ' + this.color});
+    this.icon = getIcon(icon);
+    this.icon.attr({ style: 'stroke: none; fill: ' + this.color });
     var minTouchRadius = 10;
     if (r < minTouchRadius) {
       this.touch = svg.create('circle', {r: minTouchRadius, 'class': 'touch'});
     } else {
-      this.touch = this.circle;
+      this.touch = this.icon;
     }
     this.text = text;
     this.label = svg.create('text').text(text || '');
@@ -496,14 +517,14 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.labelBackground = svg.create(
         'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
     this.dom = svg.group(
-        [this.circle, this.touch, this.labelBackground, this.label, this.subscript],
+        [this.icon, this.touch, this.labelBackground, this.label, this.subscript],
         {'class': 'vertex' });
     this.moveListeners = [];
     this.hoverListeners = [];
     var that = this;
     this.touch.mouseenter(function() {
       svg.addClass(that.dom, 'highlight');
-      that.circle.attr({style: 'fill: ' + that.highlight});
+      that.icon.attr({style: 'fill: ' + that.highlight});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
@@ -513,7 +534,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
     this.touch.mouseleave(function() {
       svg.removeClass(that.dom, 'highlight');
-      that.circle.attr({style: 'fill: ' + that.color});
+      that.icon.attr({style: 'fill: ' + that.color});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].off(that);
       }
@@ -531,9 +552,15 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.y = y;
     this.reDraw();
   };
+  function svgTranslate(x, y) { return ' translate(' + x + ' ' + y + ')'; }
+  function svgScale(s) { return ' scale(' + s + ')'; }
+  function svgRotate(deg) { return ' rotate(' + deg + ')'; }
   Vertex.prototype.reDraw = function() {
     var sx = this.screenX(), sy = this.screenY();
-    this.circle.attr({ cx: sx, cy: sy });
+    this.icon.attr({ transform:
+      svgTranslate(sx, sy) +
+      svgScale(this.r * this.icon.scale) +
+      svgTranslate(-this.icon.center.x, -this.icon.center.y) });
     this.touch.attr({ cx: sx, cy: sy });
     this.label.attr({ x: sx, y: sy });
     var backgroundWidth = this.labelBackground.attr('width');
