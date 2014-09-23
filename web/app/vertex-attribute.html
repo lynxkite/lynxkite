@@ -58,7 +58,7 @@
 <span class="pull-right" ng-click="side.discard('vertex-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
 </span>
-<label ng-show="histogram && attr.isNumeric">
+<label ng-show="showLogCheckbox()">
   <input type="checkbox" ng-model="side.axisOptions('vertex', attr.title).logarithmic"> logarithmic
 </label>
 <span class="type-name">{{attr.typeName}}</span>
