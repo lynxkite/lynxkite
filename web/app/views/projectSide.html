@@ -90,7 +90,7 @@
 
       <!-- Extra controls for the sampled view. -->
       <div class="list-group-item extra-controls"
-        ng-if="side.state.graphMode == 'sampled'">
+        ng-if="side.state.graphMode == 'sampled' && side.project.vertexSet !== ''">
         <table>
           <tr>
             <td>Layout animation:</td>
