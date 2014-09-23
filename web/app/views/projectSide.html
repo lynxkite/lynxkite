@@ -76,7 +76,7 @@
           tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
         </label>
-        <label ng-if="side.project.edgeBundle !== ''" class="btn btn-default"
+        <label ng-if="side.project.vertexSet !== ''" class="btn btn-default"
           ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
           tooltip="Concrete&nbsp;vertices" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
@@ -90,7 +90,7 @@
 
       <!-- Extra controls for the sampled view. -->
       <div class="list-group-item extra-controls"
-        ng-if="side.state.graphMode == 'sampled' && side.project.edgeBundle !== ''">
+        ng-if="side.state.graphMode == 'sampled'">
         <table>
           <tr>
             <td>Layout animation:</td>
@@ -139,7 +139,7 @@
               </div>
             </td>
           </tr>
-          <tr>
+          <tr ng-if="side.project.edgeBundle !== ''">
             <td>Show neighborhood:</td>
             <td>
               <input
