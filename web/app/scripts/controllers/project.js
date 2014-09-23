@@ -468,7 +468,39 @@ angular.module('biggraph')
           return;  // Navigating away. Leave the URL alone.
         }
         $location.search({ q: JSON.stringify(after) });
+        window.localStorage.setItem('state', JSON.stringify(after));
       });
+
+    function updateFromAnotherWindow(e) {
+      console.log(e);
+      if (e.key !== 'state') { return; }
+      var beforeState = JSON.parse(e.oldValue);
+      var afterState = JSON.parse(e.newValue);
+      console.log(beforeState.left.graphMode, afterState.left.graphMode, getState().left.graphMode);
+      if (angular.equals(beforeState, getState())) {
+        if ($scope.linked === undefined) {
+          $scope.linked = window.confirm(
+            'Enable multi-window mode?\n\n' +
+            'When enabled, you will be able to control this window from another.' +
+            ' You can, for example, have full-size graph visualization in one window' +
+            ' and use full-size controls to pick the buckets and run operations in' +
+            ' another. Two-way linking is entirely possible too.');
+        }
+        if ($scope.linked) {
+          $scope.$apply(function() {
+            console.log('loading');
+            $scope.linked = true;
+            $scope.leftToRightPath = afterState.leftToRightPath;
+            $scope.left.state = afterState.left;
+            $scope.right.state = afterState.right;
+          });
+        }
+      }
+    }
+    window.addEventListener('storage', updateFromAnotherWindow);
+    $scope.$on('$destroy', function() {
+      window.removeEventListener('storage', updateFromAnotherWindow);
+    });
 
     function getState() {
       return {
