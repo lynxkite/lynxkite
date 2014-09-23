@@ -15,7 +15,7 @@ class VertexBucketerTest extends FunSuite {
     assert(new LongBucketer(1, 6, 3).bounds == Seq(3, 5))
   }
 
-  test("Double bucketer works as expected") {
+  test("Double linear bucketer works as expected") {
     var fb = DoubleLinearBucketer(1, 6, 3)
     assert(fb.bounds == Seq(1 + 5.0 / 3, 1 + 2 * 5.0 / 3))
     assert(fb.whichBucket(1.00) == 0)
@@ -26,6 +26,22 @@ class VertexBucketerTest extends FunSuite {
     assert(fb.whichBucket(6.00) == 2)
     fb = DoubleLinearBucketer(0.2, 0.9, 7)
     assert(fb.bounds == Seq(0.3, 0.4, 0.5, 0.6, 0.7, 0.8))
+  }
+
+  test("Double logarithmic bucketer works as expected") {
+    var fb = DoubleLogBucketer(1, 1000, 3)
+    // This is not exactly true, thanks to inaccuracies in the arithmetic.
+    // assert(fb.bounds == Seq(10, 100))
+    // But when rounded for string formatting, we get the expected result.
+    assert(fb.bucketLabels == Seq("1", "10", "100", "1000"))
+    // And numbers generally end up in the right bucket.
+    assert(fb.whichBucket(0) == 0)
+    assert(fb.whichBucket(1) == 0)
+    assert(fb.whichBucket(9) == 0)
+    assert(fb.whichBucket(10) == 1)
+    assert(fb.whichBucket(99) == 1)
+    assert(fb.whichBucket(100) == 2)
+    assert(fb.whichBucket(1000) == 2)
   }
 
   test("Bucketing numeric labels are wonderful") {
