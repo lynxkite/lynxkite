@@ -32,20 +32,14 @@ abstract class NumericBucketer[T: Numeric](
   min: T, max: T, nb: Int)
     extends Bucketer[T] {
   protected val num: Numeric[T] = implicitly[Numeric[T]]
-  protected implicit val ops = num.mkNumericOps _
+  import num.mkNumericOps
+  import num.mkOrderingOps
 
   val bucketSize: T = num.fromInt(((max - min).toLong / nb + 1).toInt)
 
-  def divideByBucketSize(value: T): Int = {
-    (value.toLong / bucketSize.toLong).toInt
-  }
-
   def whichBucket(value: T): Int = {
-    if (min == max) {
-      return 0
-    }
-    val res = divideByBucketSize(value - min)
-    if (res < nb) res else nb - 1
+    val lessThan = bounds.indexWhere(value < _)
+    if (lessThan == -1) nb - 1 else lessThan
   }
 
   @transient lazy val bounds: Seq[T] =
@@ -62,7 +56,6 @@ abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
   private val frac: Fractional[T] = implicitly[Fractional[T]]
   private implicit val fops = frac.mkNumericOps _
   override val bucketSize: T = (max - min) / num.fromInt(nb)
-  override def divideByBucketSize(value: T): Int = (value / bucketSize).toInt
 }
 
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
@@ -70,7 +63,7 @@ case class StringBucketer(options: Seq[String], hasOther: Boolean)
   val labelType = "bucket"
 }
 
-case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
+abstract class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
     extends FractionalBucketer[Double](min, max, numBuckets) {
   val labelType = "between"
 
@@ -90,6 +83,22 @@ case class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
       }
       fmt(labels, decimals.getOrElse(2))
     }
+  }
+}
+
+case class DoubleLinearBucketer(min: Double, max: Double, numBuckets: Int)
+    extends DoubleBucketer(min, max, numBuckets) {
+}
+
+case class DoubleLogBucketer(min: Double, max: Double, numBuckets: Int)
+    extends DoubleBucketer(min, max, numBuckets) {
+  assert(min > 0, s"Cannot take the logarithm of $min.")
+  @transient override lazy val bounds: Seq[Double] = {
+    val logMin = math.log(min)
+    val logMax = math.log(max)
+    val logBucketSize = (logMax - logMin) / numBuckets
+    val logBounds = (1 until numBuckets).map(idx => logMin + idx * logBucketSize)
+    logBounds.map(x => math.exp(x))
   }
 }
 
