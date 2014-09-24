@@ -10,6 +10,10 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       util.deepWatch(scope, 'left', updateRequest);
       util.deepWatch(scope, 'right', updateRequest);
 
+      scope.onIconsLoaded = function() {
+        scope.$broadcast('#svg-icons is loaded');
+      };
+
       function updateRequest() {
         var sides = [];
         if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
@@ -113,6 +117,13 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         }
       }
 
+      scope.contextMenu = {
+        enabled: false,
+        x: 0,
+        y: 0,
+        data: {}
+      };
+
       function vertexSetToTSV(index, vs, side) {
         var i, j, v;
         var name = graphName(index);
@@ -121,7 +132,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
           tsv += 'Vertices of ' + name + ':\n';
           tsv += 'id';
           var attrs = [];
-          angular.forEach(side.attrs, function(attr) { attrs.push(attr); });
+          angular.forEach(side.attrs, function(attr) { if (attr) { attrs.push(attr); } });
           for (i = 0; i < attrs.length; ++i) {
             tsv += '\t' + attrs[i].title;
           }
