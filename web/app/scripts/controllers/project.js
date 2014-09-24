@@ -104,16 +104,18 @@ angular.module('biggraph')
       vd.animate = this.state.animate;
 
       var parent;
+      var segmentationEntry;
       for (var i = 0; i < $scope.sides.length; ++i) {
         var side = $scope.sides[i];
         if (side === this) { continue; }
-        if (this.isSegmentationOf(side)) {
+        segmentationEntry = side.getSegmentationEntry(this);
+        if (segmentationEntry) {
           parent = side;
           break;
         }
       }
       if (parent) {
-        var filterName = 'segmentation[' +this.lastName() +']';
+        var filterName = segmentationEntry.equivalentAttribute.title;
         var filterValue = function(segmentId) {
           return 'exists(' + segmentId + ')';
         };
@@ -168,17 +170,14 @@ angular.module('biggraph')
       );
     };
 
-    Side.prototype.lastName = function() {
+    Side.prototype.shortName = function() {
       var name = this.state.projectName;
       if (!name) { return undefined; }
       var parts = name.split('/');
       if (parts[parts.length - 1] === 'project') {
         parts.pop();
       }
-      return parts[parts.length - 1];
-    };
-    Side.prototype.shortName = function() {
-      return util.spaced(this.lastName());
+      return util.spaced(parts[parts.length - 1]);
     };
     Side.prototype.parentProjects = function() {
       var name = this.state.projectName;
@@ -395,12 +394,19 @@ angular.module('biggraph')
       return parent.getBelongsTo(this) !== undefined;
     };
     Side.prototype.getBelongsTo = function(segmentation) {
+      var entry = this.getSegmentationEntry(segmentation);
+      if (entry) {
+        return entry.belongsTo;
+      }
+      return undefined;
+    };
+    Side.prototype.getSegmentationEntry = function(segmentation) {
       if (!this.loaded()) { return undefined; }
       if (!segmentation.project || !segmentation.project.$resolved) { return undefined; }
       for (var i = 0; i < this.project.segmentations.length; ++i) {
         var seg = this.project.segmentations[i];
         if (segmentation.project.name === seg.fullName) {
-          return seg.belongsTo;
+          return seg;
         }
       }
       return undefined;
