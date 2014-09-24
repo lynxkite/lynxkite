@@ -126,7 +126,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     for (i = 0; i < vertices.length; ++i) {
       if (vertices[i].mode === 'sampled') {
-        this.layout(vertices[i]);
+        this.initSampled(vertices[i]);
       }
     }
   };
@@ -198,7 +198,8 @@ angular.module('biggraph').directive('graphView', function(util) {
       hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
 
       var radius = this.zoom * 0.1 * Math.sqrt(size);
-      var v = new Vertex(Math.random() * 400 - 200,
+      var v = new Vertex(vertex,
+                         Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
                          radius,
                          label,
@@ -283,6 +284,32 @@ angular.module('biggraph').directive('graphView', function(util) {
         angular.element(window).off('mousemove mouseup touchmove touchend');
       });
     });
+  };
+
+  GraphView.prototype.initSampled = function(vertices) {
+    this.layout(vertices);
+    this.unwatch.push(this.scope.$watch(
+        function() { return vertices.side.sliderPos; },
+        onSlider));
+    function onSlider() {
+      var sliderAttr = vertices.side.attrs.slider;
+      if (!sliderAttr) { return; }
+      var sb = common.minmax(
+          vertices.map(function(v) { return v.data.attrs[sliderAttr.id].double; }));
+      var pos = vertices.side.sliderPos * sb.span / 1260 + sb.min;
+      for (var i = 0; i < vertices.length; ++i) {
+        var v = vertices[i];
+        var x = v.data.attrs[sliderAttr.id].double;
+        if (x < pos) {
+          v.color = 'hsl(100, 50%, 42%)';
+        } else if (x > pos) {
+          v.color = 'hsl(0, 50%, 42%)';
+        } else {
+          v.color = 'hsl(50, 50%, 42%)';
+        }
+        v.circle.attr({ style: 'fill: ' + v.color });
+      }
+    }
   };
 
   GraphView.prototype.layout = function(vertices) {
@@ -400,7 +427,8 @@ angular.module('biggraph').directive('graphView', function(util) {
     var vertexScale = this.zoom * 2 / common.minmax(sizes).max;
     for (i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      var v = new Vertex(this.zoom * common.normalize(vertex.x + 0.5, xNumBuckets),
+      var v = new Vertex(vertex,
+                         this.zoom * common.normalize(vertex.x + 0.5, xNumBuckets),
                          this.zoom * common.normalize(vertex.y + 0.5, yNumBuckets),
                          Math.sqrt(vertexScale * vertex.size),
                          vertex.size);
@@ -464,7 +492,8 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Vertex(x, y, r, text, subscript, color) {
+  function Vertex(data, x, y, r, text, subscript, color) {
+    this.data = data;
     this.x = x;
     this.y = y;
     this.r = r;

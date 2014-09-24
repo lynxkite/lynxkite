@@ -45,8 +45,17 @@
             ng-click="side.set('colorAttributeTitle', attr.title)">
       Color
     </button>
+    <button class="btn btn-default"
+            ng-if="attr.typeName === 'Double'"
+            ng-class="{ active: side.state.sliderAttributeTitle === attr.title }"
+            ng-click="side.set('sliderAttributeTitle', attr.title)">
+      Slider
+    </button>
   </div>
 </span>
+<input ng-if="side.state.sliderAttributeTitle === attr.title"
+  type="range" ng-model="side.state.sliderPos" min="0" max="1260" tooltip="Threshold">
+
 <form ng-if="attr.canFilter" style="display: inline;">
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.title]"
     ng-model-options="{ updateOn: 'blur' }">
