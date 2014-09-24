@@ -528,12 +528,15 @@ angular.module('biggraph')
     // Handle state change and reload notifications from other windows.
     function updateFromAnotherWindow(e) {
       if (e.key === $scope.linkChannel) {
+        var oldState = JSON.parse(e.oldValue);
         var newState = JSON.parse(e.newValue);
-        $scope.$apply(function() {
-          $scope.leftToRightPath = newState.leftToRightPath;
-          $scope.left.state = newState.left;
-          $scope.right.state = newState.right;
-        });
+        if (angular.equals(oldState, getState())) {
+          $scope.$apply(function() {
+            $scope.leftToRightPath = newState.leftToRightPath;
+            $scope.left.state = newState.left;
+            $scope.right.state = newState.right;
+          });
+        }
       } else if (e.key === $scope.linkChannel + '-reload') {
         // Unconditionally reload everything.
         for (var i = 0; i < $scope.sides.length; ++i) {
