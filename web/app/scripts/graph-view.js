@@ -279,6 +279,23 @@ angular.module('biggraph').directive('graphView', function(util) {
                 },
               });
             }
+            if (side.filterParentToSegment) {
+              if (side.isParentFilteredToSegment(id)) {
+                actions.push({
+                  title: 'Stop filtering base project to this segment',
+                  callback: function() {
+                    side.deleteParentsSegmentFilter();
+                  },
+                });
+              } else {
+                actions.push({
+                  title: 'Filter base project to this segment',
+                  callback: function() {
+                    side.filterParentToSegment(id);
+                  },
+                });
+              }
+            }
             vertex.activateMenu({
               header: 'Vertex ' + id,
               type: 'vertex',
