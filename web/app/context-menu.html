@@ -2,4 +2,9 @@
      class="context-menu"
      ng-style="{ top: model.y + 'px', left: model.x + 'px' }">
   Hello Mr {{model.data.type}} {{model.data.id}}!
+  <div class="menu-item"
+       ng-repeat="action in model.data.actions"
+       ng-click="action.callback(model.data); model.enabled = false">
+    {{action.title}}
+  </div>
 </div>

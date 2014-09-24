@@ -250,11 +250,6 @@ angular.module('biggraph').directive('graphView', function(util) {
   GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex, offsetter) {
     var scope = this.scope;
     var svgElement = this.svg;
-    function setCenter() {
-      scope.$apply(function() {
-        vertices.side.setCenter(vertex.id.toString());
-      });
-    }
     vertex.dom.on('mousedown touchstart', function(evStart) {
       evStart.stopPropagation();
       vertex.held = true;
@@ -270,11 +265,39 @@ angular.module('biggraph').directive('graphView', function(util) {
           vertices.animate();
         } else {  // It was a click.
           scope.$apply(function() {
-            vertex.activateMenu({ type: 'vertex', id: vertex.id });
+            var actions = [];
+            var side = vertices.side;
+            var id = vertex.id.toString();
+            if (!side.hasCenter(id)) {
+              actions.push({
+                title: 'Add to centers',
+                callback: function() {
+                  side.addCenter(id);
+                },
+              });
+            }
+            if (side.hasCenter(id)) {
+              actions.push({
+                title: 'Remove from centers',
+                callback: function() {
+                  side.removeCenter(id);
+                },
+              });
+            }
+            if (!side.hasCenter(id) || (side.centers.length !== 1)) {
+              actions.push({
+                title: 'Set as only center',
+                callback: function() {
+                  side.setCenter(id);
+                },
+              });
+            }
+            vertex.activateMenu({
+              type: 'vertex',
+              id: id,
+              actions: actions,
+            });
           });
-          if (false) {
-            setCenter();
-          }
         }
       });
       angular.element(window).on('mousemove touchmove', function(ev) {

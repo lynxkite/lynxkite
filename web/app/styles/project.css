@@ -270,4 +270,11 @@ copy-box {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 3;
+  border-radius: 4px;
+  background: #f5f5f5;
+  padding: 6px;
+}
+.context-menu .menu-item:hover {
+  background: black !important;
 }
