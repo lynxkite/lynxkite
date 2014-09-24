@@ -86,7 +86,13 @@ angular.module('biggraph')
 
       vd.centers = this.state.centers || [];
       var that = this;
+      vd.hasCenter = function(id) { return that.state.centers.indexOf(id) !== -1; };
       vd.setCenter = function(id) { that.state.centers = [id]; };
+      vd.addCenter = function(id) { that.state.centers = that.state.centers.concat([id]); };
+      vd.removeCenter = function(id) {
+        that.state.centers =
+          that.state.centers.filter(function(element) { return element !== id; });
+      };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
 
