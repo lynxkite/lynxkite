@@ -35,6 +35,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var circle = angular.element('#svg-icons #circle');
     var cbb = circle[0].getBBox();
     var icon = angular.element('#svg-icons #' + name.toLowerCase());
+    if (icon.length === 0) { icon = circle; }
     var bb = icon[0].getBBox();
     var clone = icon.clone();
     // Take the scaling factor from the circle icon.
