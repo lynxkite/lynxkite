@@ -280,6 +280,7 @@ angular.module('biggraph').directive('graphView', function(util) {
               });
             }
             vertex.activateMenu({
+              header: 'Vertex ' + id,
               type: 'vertex',
               id: id,
               actions: actions,
