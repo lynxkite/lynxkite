@@ -1,5 +1,6 @@
 <svg class="graph-view"
-  graph-view graph="graphView" left="left" right="right"
+  graph-view graph="graphView" left="left" right="right" menu="contextMenu"
   version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
 <div id="svg-icons" ng-include="'/icons.svg'" onload="onIconsLoaded()"></div>
 <copy-box style="position: absolute; top: 0;" description="Graph data as TSV" data="{{tsv}}"></copy-box>
+<context-menu model="contextMenu"></context-menu>
