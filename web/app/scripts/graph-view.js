@@ -157,7 +157,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     for (i = 0; i < vertices.length; ++i) {
       if (vertices[i].mode === 'sampled') {
-        this.layout(vertices[i]);
+        this.initSampled(vertices[i]);
       }
     }
   };
@@ -232,7 +232,8 @@ angular.module('biggraph').directive('graphView', function(util) {
       if (side.attrs.icon) { icon = vertex.attrs[side.attrs.icon.id].string; }
 
       var radius = this.zoom * 0.1 * Math.sqrt(size);
-      var v = new Vertex(Math.random() * 400 - 200,
+      var v = new Vertex(vertex,
+                         Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
                          radius,
                          label,
@@ -366,6 +367,34 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
   };
 
+  GraphView.prototype.initSampled = function(vertices) {
+    this.layout(vertices);
+    this.unwatch.push(this.scope.$watch(sliderPos, onSlider));
+    function sliderPos() {
+      return vertices.side.sliderPos;
+    }
+    function onSlider() {
+      var sliderAttr = vertices.side.attrs.slider;
+      if (!sliderAttr) { return; }
+      var sb = common.minmax(
+          vertices.map(function(v) { return v.data.attrs[sliderAttr.id].double; }));
+      var pos = sliderPos();
+      for (var i = 0; i < vertices.length; ++i) {
+        var v = vertices[i];
+        var x = v.data.attrs[sliderAttr.id].double;
+        var norm = Math.floor(100 * common.normalize(x, sb) + 50);  // Normalize to 0 - 100.
+        if (norm < pos) {
+          v.color = 'hsl(100, 50%, 42%)';
+        } else if (norm > pos) {
+          v.color = 'hsl(0, 50%, 42%)';
+        } else {
+          v.color = 'hsl(50, 50%, 42%)';
+        }
+        v.icon.attr({ style: 'fill: ' + v.color });
+      }
+    }
+  };
+
   GraphView.prototype.layout = function(vertices) {
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
@@ -481,7 +510,8 @@ angular.module('biggraph').directive('graphView', function(util) {
     var vertexScale = this.zoom * 2 / common.minmax(sizes).max;
     for (i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
-      var v = new Vertex(this.zoom * common.normalize(vertex.x + 0.5, xNumBuckets),
+      var v = new Vertex(vertex,
+                         this.zoom * common.normalize(vertex.x + 0.5, xNumBuckets),
                          this.zoom * common.normalize(vertex.y + 0.5, yNumBuckets),
                          Math.sqrt(vertexScale * vertex.size),
                          vertex.size);
@@ -545,7 +575,8 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Vertex(x, y, r, text, subscript, color, icon) {
+  function Vertex(data, x, y, r, text, subscript, color, icon) {
+    this.data = data;
     this.x = x;
     this.y = y;
     this.r = r;
