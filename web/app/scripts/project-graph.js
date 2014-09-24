@@ -111,7 +111,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         }
       });
 
-      scope.vertexMenu = {
+      scope.contextMenu = {
         enabled: false,
         x: 0,
         y: 0,
