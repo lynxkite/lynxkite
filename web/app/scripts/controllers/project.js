@@ -85,6 +85,7 @@ angular.module('biggraph')
       vd.attrs.label = this.resolveVertexAttribute(this.state.labelAttributeTitle);
       vd.attrs.color = this.resolveVertexAttribute(this.state.colorAttributeTitle);
       vd.attrs.slider = this.resolveVertexAttribute(this.state.sliderAttributeTitle);
+      vd.attrs.icon = this.resolveVertexAttribute(this.state.iconAttributeTitle);
 
       vd.filters = {};
       for(var name in this.state.filters) {
@@ -93,10 +94,43 @@ angular.module('biggraph')
 
       vd.centers = this.state.centers || [];
       var that = this;
+      vd.hasCenter = function(id) { return that.state.centers.indexOf(id) !== -1; };
       vd.setCenter = function(id) { that.state.centers = [id]; };
+      vd.addCenter = function(id) { that.state.centers = that.state.centers.concat([id]); };
+      vd.removeCenter = function(id) {
+        that.state.centers =
+          that.state.centers.filter(function(element) { return element !== id; });
+      };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
       vd.sliderPos = this.state.sliderPos;
+
+      var parent;
+      var segmentationEntry;
+      for (var i = 0; i < $scope.sides.length; ++i) {
+        var side = $scope.sides[i];
+        if (side === this) { continue; }
+        segmentationEntry = side.getSegmentationEntry(this);
+        if (segmentationEntry) {
+          parent = side;
+          break;
+        }
+      }
+      if (parent) {
+        var filterName = segmentationEntry.equivalentAttribute.title;
+        var filterValue = function(segmentId) {
+          return 'exists(' + segmentId + ')';
+        };
+        vd.filterParentToSegment = function(segmentId) {
+          parent.state.filters[filterName] = filterValue(segmentId);
+        };
+        vd.isParentFilteredToSegment = function(segmentId) {
+          return parent.state.filters[filterName] === filterValue(segmentId);
+        };
+        vd.deleteParentsSegmentFilter = function() {
+          delete parent.state.filters[filterName];
+        };
+      }
 
       this.viewData = vd;
     };
@@ -368,12 +402,19 @@ angular.module('biggraph')
       return parent.getBelongsTo(this) !== undefined;
     };
     Side.prototype.getBelongsTo = function(segmentation) {
+      var entry = this.getSegmentationEntry(segmentation);
+      if (entry) {
+        return entry.belongsTo;
+      }
+      return undefined;
+    };
+    Side.prototype.getSegmentationEntry = function(segmentation) {
       if (!this.loaded()) { return undefined; }
       if (!segmentation.project || !segmentation.project.$resolved) { return undefined; }
       for (var i = 0; i < this.project.segmentations.length; ++i) {
         var seg = this.project.segmentations[i];
         if (segmentation.project.name === seg.fullName) {
-          return seg.belongsTo;
+          return seg;
         }
       }
       return undefined;
