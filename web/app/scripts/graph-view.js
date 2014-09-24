@@ -390,7 +390,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         } else {
           v.color = 'hsl(50, 50%, 42%)';
         }
-        v.circle.attr({ style: 'fill: ' + v.color });
+        v.icon.attr({ style: 'fill: ' + v.color });
       }
     }
   };
