@@ -84,6 +84,7 @@ angular.module('biggraph')
       vd.attrs.size = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
       vd.attrs.label = this.resolveVertexAttribute(this.state.labelAttributeTitle);
       vd.attrs.color = this.resolveVertexAttribute(this.state.colorAttributeTitle);
+      vd.attrs.slider = this.resolveVertexAttribute(this.state.sliderAttributeTitle);
 
       vd.filters = {};
       for(var name in this.state.filters) {
@@ -95,6 +96,7 @@ angular.module('biggraph')
       vd.setCenter = function(id) { that.state.centers = [id]; };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
+      vd.sliderPos = this.state.sliderPos;
 
       this.viewData = vd;
     };
@@ -201,6 +203,12 @@ angular.module('biggraph')
         delete this.state[setting];
       } else {
         this.state[setting] = value;
+        // Apply mutual exclusions.
+        if (setting === 'sliderAttributeTitle') {
+          this.state.colorAttributeTitle = undefined;
+        } else if (setting === 'colorAttributeTitle') {
+          this.state.sliderAttributeTitle = undefined;
+        }
       }
     };
 
