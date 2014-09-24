@@ -7,22 +7,14 @@ angular.module('biggraph').directive('projectGraph', function (util) {
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope) {
-      util.deepWatch(scope, 'left', update);
-      util.deepWatch(scope, 'right', update);
+      util.deepWatch(scope, 'left', updateRequest);
+      util.deepWatch(scope, 'right', updateRequest);
 
       scope.onIconsLoaded = function() {
         scope.$broadcast('#svg-icons is loaded');
       };
 
-      function update(after, before) {
-        if (after && before && before !== after) {
-          before.animate = after.animate;
-          if (angular.equals(before, after)) {
-            // The only difference is in the "animate" setting. Do not reload.
-            return;
-          }
-        }
-
+      function updateRequest() {
         var sides = [];
         if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
           sides.push(scope.left);
@@ -31,7 +23,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
           sides.push(scope.right);
         }
         if (sides.length === 0) {  // Nothing to draw.
-          scope.graphView = undefined;
+          scope.request = undefined;
           return;
         }
         var q = { vertexSets: [], edgeBundles: [] };
@@ -94,10 +86,18 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             bundleSequence: bundles,
           });
         }
-        scope.graphView = util.get('/ajax/complexView', q);
+        scope.request = q;
       }
 
-      scope.$watch('graphView.$resolved', function() {
+      util.deepWatch(scope, 'request', function() {
+        if (scope.request) {
+          scope.graphView = util.get('/ajax/complexView', scope.request);
+        }
+      });
+
+      scope.$watch('graphView', updateTSV);
+      scope.$watch('graphView.$resolved', updateTSV);
+      function updateTSV() {
         // Generate the TSV representation.
         scope.tsv = '';
         var gv = scope.graphView;
@@ -115,7 +115,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         for (i = 0; i < gv.edgeBundles.length; ++i) {
           scope.tsv += edgeBundleToTSV(gv.edgeBundles[i]);
         }
-      });
+      }
 
       scope.contextMenu = {
         enabled: false,
