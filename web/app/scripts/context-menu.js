@@ -14,7 +14,7 @@ angular.module('biggraph').directive('contextMenu', function() {
           // (that is, if the user mouse downs anywhere outside).
           element.focus();
         }
-      });      
+      });
       scope.executeAction = function(action) {
         action.callback(scope.model.data);
         scope.model.enabled = false;

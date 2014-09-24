@@ -102,6 +102,31 @@ angular.module('biggraph')
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
 
+      var parent;
+      for (var i = 0; i < $scope.sides.length; ++i) {
+        var side = $scope.sides[i];
+        if (side === this) { continue; }
+        if (this.isSegmentationOf(side)) {
+          parent = side;
+          break;
+        }
+      }
+      if (parent) {
+        var filterName = 'segmentation[' +this.lastName() +']';
+        var filterValue = function(segmentId) {
+          return 'exists(' + segmentId + ')';
+        };
+        vd.filterParentToSegment = function(segmentId) {
+          parent.state.filters[filterName] = filterValue(segmentId);
+        };
+        vd.isParentFilteredToSegment = function(segmentId) {
+          return parent.state.filters[filterName] === filterValue(segmentId);
+        };
+        vd.deleteParentsSegmentFilter = function() {
+          delete parent.state.filters[filterName];
+        };
+      }
+
       this.viewData = vd;
     };
 
@@ -142,14 +167,17 @@ angular.module('biggraph')
       );
     };
 
-    Side.prototype.shortName = function() {
+    Side.prototype.lastName = function() {
       var name = this.state.projectName;
       if (!name) { return undefined; }
       var parts = name.split('/');
       if (parts[parts.length - 1] === 'project') {
         parts.pop();
       }
-      return util.spaced(parts[parts.length - 1]);
+      return parts[parts.length - 1];
+    };
+    Side.prototype.shortName = function() {
+      return util.spaced(this.lastName());
     };
     Side.prototype.parentProjects = function() {
       var name = this.state.projectName;
