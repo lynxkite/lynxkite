@@ -67,32 +67,23 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.svg.append(this.root);
   }
 
-  GraphView.prototype.loading = function() {
+  GraphView.prototype.clear = function() {
+    svg.removeClass(this.svg, 'loading');
     this.root.empty();
-    var w = 5000, h = this.svg.height();
-    var x = this.svg.width() / 2, y = h / 2;
-    var loading = svg.create('rect', {
-      'class': 'loading',
-      width: w,
-      height: h,
-      x: x - w/2,
-      y: y - h/2,
-    });
-    var anchor = ' ' + x + ' ' + y;
-    var rotate = svg.create('animateTransform', {
-      attributeName: 'transform',
-      type: 'rotate',
-      from: '0' + anchor,
-      to: '360' + anchor,
-      dur: '3s',
-      repeatCount: 'indefinite',
-    });
-    loading.append(rotate);
-    this.root.append(loading);
+    // Remove old watchers.
+    for (var i = 0; i < this.unwatch.length; ++i) {
+      this.unwatch[i]();
+    }
+    this.unwatch = [];
+  };
+
+  GraphView.prototype.loading = function() {
+    this.clear();
+    svg.addClass(this.svg, 'loading');
   };
 
   GraphView.prototype.error = function(msg) {
-    this.root.empty();
+    this.clear();
     var x = this.svg.width() / 2, y = this.svg.height() / 2;
     var text = svg.create('text', {'class': 'error', x: x, y: y, 'text-anchor': 'middle'});
     var maxLength = 100;  // The error message can be very long and SVG does not wrap text.
@@ -103,21 +94,17 @@ angular.module('biggraph').directive('graphView', function(util) {
   };
 
   GraphView.prototype.update = function(data, menu) {
-    // Remove old watchers.
-    for (var i = 0; i < this.unwatch.length; ++i) {
-      this.unwatch[i]();
-    }
+    this.clear();
     var graphToSVGRatio = 0.8;
     this.zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.left, this.scope.right];
-    this.root.empty();
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
     this.root.append([this.edges, this.vertices]);
     var vertices = [];
     var vsIndex = 0;
     var halfColumnWidth = this.svg.width() / sides.length / 2;
-    for (i = 0; i < sides.length; ++i) {
+    for (var i = 0; i < sides.length; ++i) {
       if (sides[i] && sides[i].graphMode) {
         var xMin = (i * 2) * halfColumnWidth;
         var xOff = (i * 2 + 1) * halfColumnWidth;

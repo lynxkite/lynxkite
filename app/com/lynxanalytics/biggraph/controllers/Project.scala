@@ -18,7 +18,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
       val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
         .exists(e.typeTag.tpe <:< _)
-      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter)
+      val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
+      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric)
     }
     FEProject(
       projectName, lastOperation, nextOperation, vs, eb, notes,

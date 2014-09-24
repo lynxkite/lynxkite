@@ -34,6 +34,14 @@ input.save-as {
   width: 200px;
 }
 
+.project .sublist label {
+  font-weight: normal;
+  color: rgba(0, 0, 0, 0.5);
+}
+.project .sublist label:hover {
+  color: black;
+}
+
 .project .sublist .clicky {
   color: rgba(0, 0, 0, 0.3);
 }

@@ -68,6 +68,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             yBucketingAttributeId: yAttr,
             xNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
             yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
+            xAxisOptions: viewData.xAxisOptions,
+            yAxisOptions: viewData.yAxisOptions,
             // Sampled view parameters.
             // angular.js/pull/7370
             radius: viewData.edgeBundle ? parseInt(viewData.sampleRadius) : 0,
@@ -125,14 +127,18 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         if (vs.mode === 'sampled') {
           tsv += 'Vertices of ' + name + ':\n';
           tsv += 'id';
-          if (side.labelAttribute) { tsv += '\t' + side.labelAttribute.title; }
-          if (side.sizeAttribute) { tsv += '\t' + side.sizeAttribute.title; }
+          var attrs = [];
+          angular.forEach(side.attrs, function(attr) { attrs.push(attr); });
+          for (i = 0; i < attrs.length; ++i) {
+            tsv += '\t' + attrs[i].title;
+          }
           tsv += '\n';
           for (i = 0; i < vs.vertices.length; ++i) {
             v = vs.vertices[i];
             tsv += v.id;
-            if (side.labelAttribute) { tsv += '\t' + v.label; }
-            if (side.sizeAttribute) { tsv += '\t' + v.size; }
+            for (j = 0; j < attrs.length; ++j) {
+              tsv += '\t' + v.attrs[attrs[j].id].string;
+            }
             tsv += '\n';
           }
         } else {
