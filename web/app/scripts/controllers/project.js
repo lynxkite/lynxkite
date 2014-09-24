@@ -501,7 +501,11 @@ angular.module('biggraph')
       window.removeEventListener('storage', updateFromAnotherWindow);
     });
     $scope.linkedURL = function() {
-      return $location.absUrl() + '&link=' + $scope.linkChannel;
+      if (Object.keys($location.search()).length > 0) {
+        return $location.absUrl() + '&link=' + $scope.linkChannel;
+      } else {
+        return $location.absUrl() + '?link=' + $scope.linkChannel;
+      }
     };
 
     function getState() {
