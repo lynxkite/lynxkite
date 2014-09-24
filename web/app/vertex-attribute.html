@@ -46,7 +46,7 @@
       Color
     </button>
     <button class="btn btn-default"
-            ng-if="attr.typeName === 'Double'"
+            ng-if="attr.isNumeric"
             ng-class="{ active: side.state.sliderAttributeTitle === attr.title }"
             ng-click="side.set('sliderAttributeTitle', attr.title)">
       Slider
