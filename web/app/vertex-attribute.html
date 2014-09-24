@@ -54,7 +54,7 @@
   </div>
 </span>
 <input ng-if="side.state.sliderAttributeTitle === attr.title"
-  type="range" ng-model="side.state.sliderPos" min="0" max="1260" tooltip="Threshold">
+  type="range" ng-model="side.state.sliderPos" min="-1" max="101" tooltip="Threshold">
 
 <form ng-if="attr.canFilter" style="display: inline;">
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.title]"

@@ -288,21 +288,23 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   GraphView.prototype.initSampled = function(vertices) {
     this.layout(vertices);
-    this.unwatch.push(this.scope.$watch(
-        function() { return vertices.side.sliderPos; },
-        onSlider));
+    this.unwatch.push(this.scope.$watch(sliderPos, onSlider));
+    function sliderPos() {
+      return vertices.side.sliderPos;
+    }
     function onSlider() {
       var sliderAttr = vertices.side.attrs.slider;
       if (!sliderAttr) { return; }
       var sb = common.minmax(
           vertices.map(function(v) { return v.data.attrs[sliderAttr.id].double; }));
-      var pos = vertices.side.sliderPos * sb.span / 1260 + sb.min;
+      var pos = sliderPos();
       for (var i = 0; i < vertices.length; ++i) {
         var v = vertices[i];
         var x = v.data.attrs[sliderAttr.id].double;
-        if (x < pos) {
+        var norm = Math.floor(100 * common.normalize(x, sb) + 50);  // Normalize to 0 - 100.
+        if (norm < pos) {
           v.color = 'hsl(100, 50%, 42%)';
-        } else if (x > pos) {
+        } else if (norm > pos) {
           v.color = 'hsl(0, 50%, 42%)';
         } else {
           v.color = 'hsl(50, 50%, 42%)';
