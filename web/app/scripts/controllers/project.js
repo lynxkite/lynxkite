@@ -480,6 +480,7 @@ angular.module('biggraph')
           return;  // Navigating away. Leave the URL alone.
         }
         $location.search({ q: JSON.stringify(after) });
+        // TODO: Clean up old channels.
         window.localStorage.setItem($scope.linkChannel, JSON.stringify(after));
       });
 
