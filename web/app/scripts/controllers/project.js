@@ -447,6 +447,11 @@ angular.module('biggraph')
           $scope.right.state = afterState.right;
           console.log('Loaded state from URL:', afterState);
         }
+        if (after.link) {
+          $scope.linkChannel = after.link;
+          console.log('Tuned in to parent\'s link channel:', after.link);
+          $location.search('link', null);
+        }
       });
 
     function parseState(search) {
@@ -475,35 +480,28 @@ angular.module('biggraph')
           return;  // Navigating away. Leave the URL alone.
         }
         $location.search({ q: JSON.stringify(after) });
-        window.localStorage.setItem('state', JSON.stringify(after));
+        window.localStorage.setItem($scope.linkChannel, JSON.stringify(after));
       });
 
+    // Code for linking between windows.
+    $scope.linkChannel = 'channel-' + Math.random().toString(36);  // Random channel.
+    console.log('link channel is:', $scope.linkChannel);
     function updateFromAnotherWindow(e) {
-      if (e.key !== 'state') { return; }
-      var beforeState = JSON.parse(e.oldValue);
-      var afterState = JSON.parse(e.newValue);
-      if (angular.equals(beforeState, getState())) {
-        if ($scope.linked === undefined) {
-          $scope.linked = window.confirm(
-            'Enable multi-window mode?\n\n' +
-            'When enabled, you will be able to control this window from another.' +
-            ' You can, for example, have full-size graph visualization in one window' +
-            ' and use full-size controls to pick the buckets and run operations in' +
-            ' another. Two-way linking is entirely possible too.');
-        }
-        if ($scope.linked) {
-          $scope.$apply(function() {
-            $scope.leftToRightPath = afterState.leftToRightPath;
-            $scope.left.state = afterState.left;
-            $scope.right.state = afterState.right;
-          });
-        }
-      }
+      if (e.key !== $scope.linkChannel) { return; }
+      var newState = JSON.parse(e.newValue);
+      $scope.$apply(function() {
+        $scope.leftToRightPath = newState.leftToRightPath;
+        $scope.left.state = newState.left;
+        $scope.right.state = newState.right;
+      });
     }
     window.addEventListener('storage', updateFromAnotherWindow);
     $scope.$on('$destroy', function() {
       window.removeEventListener('storage', updateFromAnotherWindow);
     });
+    $scope.linkedURL = function() {
+      return $location.absUrl() + '&link=' + $scope.linkChannel;
+    };
 
     function getState() {
       return {

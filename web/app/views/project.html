@@ -3,11 +3,19 @@
   <div class="project-sides">
     <div ng-include="'views/projects.html'"></div>
     <div class="clearfix"></div>
-    <div ng-if="linked" class="text-center"><span class="glyphicon glyphicon-link"></span></div>
+    <div class="text-center">
+      <a target="_blank" href="{{linkedURL()}}" tooltip="Open linked window">
+        <span class="glyphicon glyphicon-link"></span>
+      </a>
+    </div>
   </div>
 </ui-layout>
 <div ng-if="!showGraph()" class="project-sides">
   <div ng-include="'views/projects.html'"></div>
   <div class="clearfix"></div>
-  <div ng-if="linked" class="text-center"><span class="glyphicon glyphicon-link" tooltip="Multi-window mode enabled!"></span></div>
+  <div class="text-center">
+    <a target="_blank" href="{{linkedURL()}}" tooltip="Open linked window">
+      <span class="glyphicon glyphicon-link"></span>
+    </a>
+  </div>
 </div>
