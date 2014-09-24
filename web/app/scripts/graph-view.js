@@ -269,7 +269,9 @@ angular.module('biggraph').directive('graphView', function(util) {
           vertex.dragged = false;
           vertices.animate();
         } else {  // It was a click.
-          vertex.activateMenu({ type: 'vertex', id: vertex.id });
+          scope.$apply(function() {
+            vertex.activateMenu({ type: 'vertex', id: vertex.id });
+          });
           if (false) {
             setCenter();
           }
