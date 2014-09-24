@@ -73,10 +73,12 @@ svg .vertex.highlight .label-background {
 svg .vertex.highlight text {
   fill: black;
 }
-svg .vertex.sampled circle {
+svg .vertex.sampled .icon {
+  stroke: none;
   cursor: pointer;
+  fill-rule: evenodd;  /* Allow hollow shapes. */
 }
-svg .vertex.center circle {
+svg .vertex.center .icon {
   stroke: #ddd;
   stroke-width: 3;
 }

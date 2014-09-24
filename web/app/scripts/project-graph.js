@@ -10,6 +10,10 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       util.deepWatch(scope, 'left', update);
       util.deepWatch(scope, 'right', update);
 
+      scope.onIconsLoaded = function() {
+        scope.$broadcast('#svg-icons is loaded');
+      };
+
       function update(after, before) {
         if (after && before && before !== after) {
           before.animate = after.animate;
@@ -128,7 +132,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
           tsv += 'Vertices of ' + name + ':\n';
           tsv += 'id';
           var attrs = [];
-          angular.forEach(side.attrs, function(attr) { attrs.push(attr); });
+          angular.forEach(side.attrs, function(attr) { if (attr) { attrs.push(attr); } });
           for (i = 0; i < attrs.length; ++i) {
             tsv += '\t' + attrs[i].title;
           }
