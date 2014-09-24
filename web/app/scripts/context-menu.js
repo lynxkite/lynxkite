@@ -1,12 +1,12 @@
 'use strict';
 
 // A context menu for graph vertices.
-angular.module('biggraph').directive('vertexMenu', function() {
+angular.module('biggraph').directive('contextMenu', function() {
   return {
     replace: true,
     restrict: 'E',
     scope: { model: '=' },
-    templateUrl: 'vertex-menu.html',
+    templateUrl: 'context-menu.html',
     link: function() {
     },
   };
