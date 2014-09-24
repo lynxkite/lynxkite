@@ -519,9 +519,13 @@ angular.module('biggraph')
         window.localStorage.setItem($scope.linkChannel, JSON.stringify(after));
       });
 
-    // Code for linking between windows.
-    $scope.linkChannel = 'channel-' + Math.random().toString(36);  // Random channel.
+    // Persist channel name across refreshes.
+    var randomChannel = 'channel-' + Math.random().toString(36);
+    $scope.linkChannel = sessionStorage.getItem('link') || randomChannel;
+    sessionStorage.setItem('link', $scope.linkChannel);
     console.log('link channel is:', $scope.linkChannel);
+
+    // Handle state change and reload notifications from other windows.
     function updateFromAnotherWindow(e) {
       if (e.key === $scope.linkChannel) {
         var newState = JSON.parse(e.newValue);
@@ -546,6 +550,8 @@ angular.module('biggraph')
     $scope.$on('$destroy', function() {
       window.removeEventListener('storage', updateFromAnotherWindow);
     });
+
+    // URL for a linked window.
     $scope.linkedURL = function() {
       if (Object.keys($location.search()).length > 0) {
         return $location.absUrl() + '&link=' + $scope.linkChannel;
