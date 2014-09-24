@@ -219,6 +219,7 @@ angular.module('biggraph')
       } else {
         this.project = undefined;
       }
+      sendReloadNotification();
     };
 
     Side.prototype.load = function() {
@@ -522,13 +523,24 @@ angular.module('biggraph')
     $scope.linkChannel = 'channel-' + Math.random().toString(36);  // Random channel.
     console.log('link channel is:', $scope.linkChannel);
     function updateFromAnotherWindow(e) {
-      if (e.key !== $scope.linkChannel) { return; }
-      var newState = JSON.parse(e.newValue);
-      $scope.$apply(function() {
-        $scope.leftToRightPath = newState.leftToRightPath;
-        $scope.left.state = newState.left;
-        $scope.right.state = newState.right;
-      });
+      if (e.key === $scope.linkChannel) {
+        var newState = JSON.parse(e.newValue);
+        $scope.$apply(function() {
+          $scope.leftToRightPath = newState.leftToRightPath;
+          $scope.left.state = newState.left;
+          $scope.right.state = newState.right;
+        });
+      } else if (e.key === $scope.linkChannel + '-reload') {
+        // Unconditionally reload everything.
+        for (var i = 0; i < $scope.sides.length; ++i) {
+          var side = $scope.sides[i];
+          if (side.state.projectName) {
+            side.project = side.load();
+          } else {
+            side.project = undefined;
+          }
+        }
+      }
     }
     window.addEventListener('storage', updateFromAnotherWindow);
     $scope.$on('$destroy', function() {
@@ -541,6 +553,12 @@ angular.module('biggraph')
         return $location.absUrl() + '?link=' + $scope.linkChannel;
       }
     };
+
+    function sendReloadNotification() {
+      var channel = $scope.linkChannel + '-reload';
+      var counter = parseInt(localStorage.getItem(channel)) || 0;
+      localStorage.setItem(channel, counter + 1);
+    }
 
     function getState() {
       return {
