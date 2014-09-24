@@ -7,7 +7,16 @@ angular.module('biggraph').directive('contextMenu', function() {
     restrict: 'E',
     scope: { model: '=' },
     templateUrl: 'context-menu.html',
-    link: function() {
+    link: function(scope, element) {
+      scope.$watch('model.enabled', function(enabled) {
+        if (enabled) {
+          element.focus();
+        }
+      });      
+      scope.executeAction = function(action) {
+        action.callback(scope.model.data);
+        scope.model.enabled = false;
+      };
     },
   };
 });
