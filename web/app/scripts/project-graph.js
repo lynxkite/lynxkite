@@ -121,7 +121,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
           tsv += 'Vertices of ' + name + ':\n';
           tsv += 'id';
           var attrs = [];
-          angular.forEach(side.attrs, function(attr) { attrs.push(attr); });
+          angular.forEach(side.attrs, function(attr) { if (attr) { attrs.push(attr); } });
           for (i = 0; i < attrs.length; ++i) {
             tsv += '\t' + attrs[i].title;
           }
