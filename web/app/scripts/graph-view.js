@@ -11,7 +11,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       link: function(scope, element) {
         var gv = new GraphView(scope, element);
         function updateGraph() {
-          if (scope.graph === undefined || !scope.graph.$resolved) {
+          if (scope.graph === undefined || !scope.graph.$resolved || !iconsLoaded()) {
             gv.loading();
           } else if (scope.graph.error) {
             gv.error(scope.graph.error);
@@ -19,9 +19,33 @@ angular.module('biggraph').directive('graphView', function(util) {
             gv.update(scope.graph, scope.menu);
           }
         }
-        scope.$watch('graph', updateGraph, true);
+        util.deepWatch(scope, 'graph', updateGraph);
+        // It is possible, especially in testing, that we get the graph data faster than the icons.
+        // In this case we delay the drawing until the icons are loaded.
+        scope.$on('#svg-icons is loaded', updateGraph);
       },
     };
+
+  function iconsLoaded() {
+    return angular.element('#svg-icons #circle').length > 0;
+  }
+
+  function getIcon(name) {
+    if (!name) { name = 'circle'; }
+    var circle = angular.element('#svg-icons #circle');
+    var cbb = circle[0].getBBox();
+    var icon = angular.element('#svg-icons #' + name.toLowerCase());
+    if (icon.length === 0) { icon = circle; }
+    var bb = icon[0].getBBox();
+    var clone = icon.clone();
+    // Take the scaling factor from the circle icon.
+    clone.scale = 2 / Math.max(cbb.width, cbb.height);
+    clone.center = {
+      x: bb.x + bb.width / 2,
+      y: bb.y + bb.height / 2,
+    };
+    return clone;
+  }
 
   function Offsetter(xOff, yOff, menu) {
     this.xOff = xOff;
@@ -191,18 +215,21 @@ angular.module('biggraph').directive('graphView', function(util) {
       var hslColor, h, s, l;
       if (color && side.attrs.color.typeName === 'Double') {
         h = 300 + common.normalize(vertex.attrs[color].double, vertexColorBounds) * 120;
-        s = 100;
+        s = 50;
         l = 42;
       } else if (color && side.attrs.color.typeName === 'String') {
         h = colorMap[vertex.attrs[color].string];
-        s = 100;
+        s = 50;
         l = 42;
       } else {
         h = 0;
         s = 0;
-        l = 25;
+        l = 42;
       }
       hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
+
+      var icon;
+      if (side.attrs.icon) { icon = vertex.attrs[side.attrs.icon.id].string; }
 
       var radius = this.zoom * 0.1 * Math.sqrt(size);
       var v = new Vertex(Math.random() * 400 - 200,
@@ -210,7 +237,8 @@ angular.module('biggraph').directive('graphView', function(util) {
                          radius,
                          label,
                          vertex.id,
-                         hslColor);
+                         hslColor,
+                         icon);
       offsetter.rule(v);
       v.id = vertex.id.toString();
       svg.addClass(v.dom, 'sampled');
@@ -504,7 +532,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.vertical = opts.vertical;
     this.dom = svg.create('text', { 'class': classes }).text(text);
     if (this.vertical) {
-      this.dom.attr({ transform: 'rotate(-90)' });
+      this.dom.attr({ transform: svgRotate(-90) });
     }
   }
   Label.prototype.on = function() { svg.addClass(this.dom, 'highlight'); };
@@ -517,18 +545,19 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Vertex(x, y, r, text, subscript, color) {
+  function Vertex(x, y, r, text, subscript, color, icon) {
     this.x = x;
     this.y = y;
     this.r = r;
     this.color = color || '#444';
     this.highlight = 'white';
-    this.circle = svg.create('circle', {r: r, style: 'fill: ' + this.color});
+    this.icon = getIcon(icon);
+    this.icon.attr({ style: 'fill: ' + this.color, 'class': 'icon' });
     var minTouchRadius = 10;
     if (r < minTouchRadius) {
       this.touch = svg.create('circle', {r: minTouchRadius, 'class': 'touch'});
     } else {
-      this.touch = this.circle;
+      this.touch = this.icon;
     }
     this.text = text;
     this.label = svg.create('text').text(text || '');
@@ -536,14 +565,14 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.labelBackground = svg.create(
         'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
     this.dom = svg.group(
-        [this.circle, this.touch, this.labelBackground, this.label, this.subscript],
+        [this.icon, this.touch, this.labelBackground, this.label, this.subscript],
         {'class': 'vertex' });
     this.moveListeners = [];
     this.hoverListeners = [];
     var that = this;
     this.touch.mouseenter(function() {
       svg.addClass(that.dom, 'highlight');
-      that.circle.attr({style: 'fill: ' + that.highlight});
+      that.icon.attr({style: 'fill: ' + that.highlight});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
@@ -553,7 +582,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
     this.touch.mouseleave(function() {
       svg.removeClass(that.dom, 'highlight');
-      that.circle.attr({style: 'fill: ' + that.color});
+      that.icon.attr({style: 'fill: ' + that.color});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].off(that);
       }
@@ -571,9 +600,15 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.y = y;
     this.reDraw();
   };
+  function svgTranslate(x, y) { return ' translate(' + x + ' ' + y + ')'; }
+  function svgScale(s) { return ' scale(' + s + ')'; }
+  function svgRotate(deg) { return ' rotate(' + deg + ')'; }
   Vertex.prototype.reDraw = function() {
     var sx = this.screenX(), sy = this.screenY();
-    this.circle.attr({ cx: sx, cy: sy });
+    this.icon.attr({ transform:
+      svgTranslate(sx, sy) +
+      svgScale(this.r * this.icon.scale) +
+      svgTranslate(-this.icon.center.x, -this.icon.center.y) });
     this.touch.attr({ cx: sx, cy: sy });
     this.label.attr({ x: sx, y: sy });
     var backgroundWidth = this.labelBackground.attr('width');
