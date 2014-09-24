@@ -472,11 +472,9 @@ angular.module('biggraph')
       });
 
     function updateFromAnotherWindow(e) {
-      console.log(e);
       if (e.key !== 'state') { return; }
       var beforeState = JSON.parse(e.oldValue);
       var afterState = JSON.parse(e.newValue);
-      console.log(beforeState.left.graphMode, afterState.left.graphMode, getState().left.graphMode);
       if (angular.equals(beforeState, getState())) {
         if ($scope.linked === undefined) {
           $scope.linked = window.confirm(
@@ -488,8 +486,6 @@ angular.module('biggraph')
         }
         if ($scope.linked) {
           $scope.$apply(function() {
-            console.log('loading');
-            $scope.linked = true;
             $scope.leftToRightPath = afterState.leftToRightPath;
             $scope.left.state = afterState.left;
             $scope.right.state = afterState.right;
