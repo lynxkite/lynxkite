@@ -687,6 +687,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new SegmentationOperation(_) {
+    val title = "Create edges from set overlaps"
+    val description = "Connects segments with large enough overlaps."
+    def parameters = Seq(
+      Param("minOverlap", "Minimal overlap for connecting two segments", defaultValue = "3"))
+    def enabled = hasNoEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.SetOverlap(params("minOverlap").toInt)
+      val res = op(op.belongsTo, seg.belongsTo).result
+      project.edgeBundle = res.overlaps
+      project.edgeAttributes("Overlap size") =
+        graph_operations.VertexAttributeToDouble.run(
+          graph_operations.VertexAttributeToString.run(res.overlapSize))
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Aggregate on neighbors"
     val description =

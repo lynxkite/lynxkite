@@ -48,6 +48,13 @@ object VertexAttributeToDouble {
       extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vs.entity)
   }
+  def run(attr: VertexAttribute[String])(
+    implicit manager: MetaGraphManager): VertexAttribute[Double] = {
+
+    import Scripting._
+    val op = VertexAttributeToDouble()
+    op(op.attr, attr).result.attr
+  }
 }
 case class VertexAttributeToDouble()
     extends TypedMetaGraphOp[VertexAttributeInput[String], VertexAttributeToDouble.Output] {
