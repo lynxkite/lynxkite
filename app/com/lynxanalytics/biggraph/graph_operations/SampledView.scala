@@ -22,7 +22,6 @@ object SampledView {
 }
 import SampledView._
 case class SampledView(
-    idToIdx: Map[ID, Int],
     hasAttr: Boolean,
     maxCount: Int = 1000) extends TypedMetaGraphOp[Input, Output] {
 
@@ -37,18 +36,14 @@ case class SampledView(
     val filtered = inputs.filtered.rdd
     val joined = if (hasAttr) filtered.sortedJoin(inputs.attr.rdd) else filtered.mapValues(x => (x, Array[DynamicValue]()))
 
-    val svVerticesMap = joined
+    val svVertices = joined
       .take(maxCount)
-      .map {
-        case (id, (_, arr)) =>
-          (idToIdx(id), SampledViewVertex(id, arr))
-      }
-      .toMap
-
-    val maxKey = svVerticesMap.keys.max
-    val svVertices = (0 to maxKey)
-      .map(svVerticesMap.get(_).getOrElse(SampledViewVertex(-1, Array())))
       .toSeq
+      .map {
+        case (id, (_, arr)) => SampledViewVertex(id, arr)
+      }
+
+    val idToIdx = svVertices.zipWithIndex.map { case (svv, idx) => (svv.id, idx) }.toMap
 
     output(o.svVertices, svVertices)
     output(o.indexingSeq, Seq(BucketedAttribute(inputs.ids, MapBucketer(idToIdx))))
