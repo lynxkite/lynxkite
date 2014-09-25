@@ -7,6 +7,7 @@ angular.module('biggraph').directive('copyBox', function() {
     scope: { data: '@', description: '@' },
     templateUrl: 'copy-box.html',
     link: function(scope, element) {
+      ZeroClipboard.config({ swfPath: 'bower_components/zeroclipboard/dist/ZeroClipboard.swf' });
       var client = new ZeroClipboard(element.find('.clicky'));
       client.on('error', function() {
         // No flash, no copy.
