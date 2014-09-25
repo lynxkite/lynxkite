@@ -221,6 +221,7 @@ angular.module('biggraph')
       } else {
         this.project = undefined;
       }
+      sendReloadNotification();
     };
 
     Side.prototype.load = function() {
@@ -526,22 +527,45 @@ angular.module('biggraph')
         window.localStorage.setItem($scope.linkChannel, JSON.stringify(after));
       });
 
-    // Code for linking between windows.
-    $scope.linkChannel = 'channel-' + Math.random().toString(36);  // Random channel.
+    // Persist channel name across refreshes.
+    var randomChannel = 'channel-' + Math.random().toString(36);
+    $scope.linkChannel = sessionStorage.getItem('link') || randomChannel;
+    sessionStorage.setItem('link', $scope.linkChannel);
     console.log('link channel is:', $scope.linkChannel);
+
+    // Handle state change and reload notifications from other windows.
     function updateFromAnotherWindow(e) {
-      if (e.key !== $scope.linkChannel) { return; }
-      var newState = JSON.parse(e.newValue);
-      $scope.$apply(function() {
-        $scope.leftToRightPath = newState.leftToRightPath;
-        $scope.left.state = newState.left;
-        $scope.right.state = newState.right;
-      });
+      if (e.key === $scope.linkChannel) {
+        var oldState = JSON.parse(e.oldValue);
+        var newState = JSON.parse(e.newValue);
+        if (angular.equals(oldState, getState())) {
+          $scope.$apply(function() {
+            $scope.leftToRightPath = newState.leftToRightPath;
+            $scope.left.state = newState.left;
+            $scope.right.state = newState.right;
+          });
+        }
+      } else if (e.key === $scope.linkChannel + '-reload') {
+        // Unconditionally reload everything.
+        for (var i = 0; i < $scope.sides.length; ++i) {
+          var side = $scope.sides[i];
+          if (side.state.projectName) {
+            side.project = side.load();
+          } else {
+            side.project = undefined;
+          }
+        }
+      }
     }
+    // This listener is only triggered on localStorage changes from another window.
+    // If the change originates from this window, or the new value matches the old value,
+    // it will not be triggered. sessionStorage changes also do not trigger it.
     window.addEventListener('storage', updateFromAnotherWindow);
     $scope.$on('$destroy', function() {
       window.removeEventListener('storage', updateFromAnotherWindow);
     });
+
+    // URL for a linked window.
     $scope.linkedURL = function() {
       if (Object.keys($location.search()).length > 0) {
         return $location.absUrl() + '&link=' + $scope.linkChannel;
@@ -549,6 +573,12 @@ angular.module('biggraph')
         return $location.absUrl() + '?link=' + $scope.linkChannel;
       }
     };
+
+    function sendReloadNotification() {
+      var channel = $scope.linkChannel + '-reload';
+      // Write a random string to almost certainly trigger a storage event.
+      localStorage.setItem(channel, Math.random().toString(36));
+    }
 
     function getState() {
       return {
