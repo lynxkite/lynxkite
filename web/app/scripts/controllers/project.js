@@ -568,8 +568,8 @@ angular.module('biggraph')
 
     function sendReloadNotification() {
       var channel = $scope.linkChannel + '-reload';
-      var counter = parseInt(localStorage.getItem(channel)) || 0;
-      localStorage.setItem(channel, counter + 1);
+      // Write a random string to almost certainly trigger a storage event.
+      localStorage.setItem(channel, Math.random().toString(36));
     }
 
     function getState() {
