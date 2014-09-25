@@ -1,7 +1,1 @@
-<span ng-click="show = !show">
-  <span class="clicky glyphicon glyphicon-th" tooltip="{{description}}"></span>
-</span>
-<div ng-show="show" class="copy-box">
-  <textarea rows="{{data.split('\n').length}}"
-    ng-blur="show = false">{{data}}</textarea>
-</div>
+<span class="clicky glyphicon glyphicon-th" tooltip="{{description}}" data-clipboard-text="{{data}}"></span>
