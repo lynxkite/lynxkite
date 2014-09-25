@@ -454,7 +454,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
       val weights = project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-      project.vertexAttributes(params("name")) = op(op.weights, weights).result.pagerank
+      project.vertexAttributes(params("name")) =
+        op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank
     }
   })
 
