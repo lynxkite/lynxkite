@@ -141,19 +141,19 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val centers = request.centralVertexIds.map(_.toLong)
 
-    val idToIdx = if (request.radius > 0) {
+    val ids = if (request.radius > 0) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
       val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
-      nopres.neighborsIdToIndex.value
+      nopres.neighborhood.value
     } else {
-      centers.zipWithIndex.toMap
+      centers.toSet
     }
 
     val iaaop = graph_operations.IdAsAttribute()
     val idAttr = iaaop(iaaop.vertices, vertexSet).result.vertexIds
 
-    val fop = graph_operations.VertexAttributeFilter(graph_operations.OneOf(idToIdx.keySet))
+    val fop = graph_operations.VertexAttributeFilter(graph_operations.OneOf(ids))
     val sample = fop(fop.attr, idAttr).result.fvs
 
     cacheVertexAttributes(request.filters.map(_.attributeId))
@@ -162,7 +162,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val attrs = request.attrs.map(x => metaManager.vertexAttribute(x.asUUID))
     val dynAttrs = attrs.map(graph_operations.VertexAttributeToDynamicValue.run(_))
 
-    val op = graph_operations.SampledView(idToIdx, dynAttrs.size > 0)
+    val op = graph_operations.SampledView(dynAttrs.size > 0)
     var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
     if (dynAttrs.size > 0) {
       val joined = {
