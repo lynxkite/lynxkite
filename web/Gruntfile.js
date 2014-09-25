@@ -298,6 +298,7 @@ module.exports = function (grunt) {
             'views/{,*/}*.html',
             'images/{,*/}*.{webp}',
             'fonts/*',
+            'bower_components/zeroclipboard/dist/ZeroClipboard.swf',
             'bower_components/bootstrap/dist/fonts/*'
           ]
         }, {

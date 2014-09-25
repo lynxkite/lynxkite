@@ -69,7 +69,7 @@
 <histogram-button ng-show="attr.canBucket" attr="attr" side="side"
   model="histogram" type="vertex" tsv="histogramTSV">
 </histogram-button>
-<copy-box ng-show="histogram" description="Histogram as TSV" data="{{histogramTSV}}"></copy-box>
+<copy-box ng-show="histogram" description="Copy&nbsp;histogram to&nbsp;clipboard" data="{{histogramTSV}}"></copy-box>
 <span class="pull-right" ng-click="side.discard('vertex-attribute', attr.title);">
   <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
 </span>

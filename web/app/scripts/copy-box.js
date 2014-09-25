@@ -7,14 +7,14 @@ angular.module('biggraph').directive('copyBox', function() {
     scope: { data: '@', description: '@' },
     templateUrl: 'copy-box.html',
     link: function(scope, element) {
-      scope.$watch('show', function(show) {
-        if (show) {
-          // Need to select the contents a moment later, so that mouseup/keyup events do not
-          // undo the selection.
-          window.setTimeout(function() {
-            element.find('textarea').select();
-          });
-        }
+      ZeroClipboard.config({ swfPath: 'bower_components/zeroclipboard/dist/ZeroClipboard.swf' });
+      var client = new ZeroClipboard(element.find('.clicky'));
+      client.on('error', function() {
+        // No flash, no copy.
+        element.empty();
+      });
+      scope.$on('$destroy', function() {
+        client.destroy();
       });
     },
   };

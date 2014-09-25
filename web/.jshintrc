@@ -20,6 +20,7 @@
   "smarttabs": true,
   "maxlen": 100,
   "globals": {
-    "angular": false
+    "angular": false,
+    "ZeroClipboard": false
   }
 }
