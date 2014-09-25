@@ -549,6 +549,9 @@ angular.module('biggraph')
         }
       }
     }
+    // This listener is only triggered on localStorage changes from another window.
+    // If the change originates from this window, or the new value matches the old value,
+    // it will not be triggered. sessionStorage changes also do not trigger it.
     window.addEventListener('storage', updateFromAnotherWindow);
     $scope.$on('$destroy', function() {
       window.removeEventListener('storage', updateFromAnotherWindow);
