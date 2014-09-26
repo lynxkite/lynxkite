@@ -1,0 +1,4 @@
+<span ng-if="ref.value !== undefined">{{format(ref.value)}}</span>
+<span ng-if="ref.$resolved === false" class="spinner">|</span>
+<span ng-if="ref.error" class="value-error" tooltip="{{ref.error}}">&times;</span>
+<span ng-if="ref === undefined" class="value-error">&times;</span>

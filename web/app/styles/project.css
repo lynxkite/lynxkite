@@ -301,3 +301,16 @@ copy-box {
   background: black !important;
   color: rgba(255, 255, 255, 0.8);
 }
+
+.spinner {
+  animation: spinner 0.5s infinite linear;
+}
+@keyframes spinner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.value-error {
+  font-weight: bold;
+  color: darkred;
+}

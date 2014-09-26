@@ -168,10 +168,10 @@
       <!-- Summary. -->
       <li class="list-group-item">
         <span class="lead">
-          <span ng-if="side.project.vertexSet !== ''">{{util.human(side.scalars['vertex_count'].value)}}</span>
+          <value ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']" human></value>
           <span ng-if="side.project.vertexSet === ''">no</span>
           <span class="de-emph">vertices with</span>
-          <span ng-if="side.project.edgeBundle !== ''">{{util.human(side.scalars['edge_count'].value)}}</span>
+          <value ng-if="side.project.edgeBundle !== ''" ref="side.scalars['edge_count']" human></value>
           <span ng-if="side.project.edgeBundle === ''">no</span>
           <span class="de-emph">edges</span>
         </span>
