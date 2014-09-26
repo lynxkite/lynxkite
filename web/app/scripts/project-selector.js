@@ -23,7 +23,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
             return util.get('/ajax/scalarValue', { scalarId: p.scalars[i].id });
           }
         }
-        return { value: undefined };
+        return { error: 'Attribute not found: ' + name };
       }
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved) { return; }
