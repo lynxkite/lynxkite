@@ -368,6 +368,21 @@ angular.module('biggraph')
           that.reload();
         });
     };
+    Side.prototype.clearFilters = function() {
+      this.state.filters = {};
+    };
+    Side.prototype.filterSummary = function() {
+      var res = [];
+      for (var attr in this.state.filters) {
+        var f = this.state.filters[attr];
+        if (f) {
+          var nbsp = '\u00a0';
+          res.push(' ' + attr + nbsp + f);
+        }
+      }
+      return res.join(', ');
+    };
+
     Side.prototype.resolveVertexAttribute = function(title) {
       for (var attrIdx = 0; attrIdx < this.project.vertexAttributes.length; attrIdx++) {
         var attr = this.project.vertexAttributes[attrIdx];
