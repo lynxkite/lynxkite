@@ -39,14 +39,6 @@
       {{side.shortName()}}
 
       <div class="btn-group pull-right">
-        <label class="btn btn-default"
-               ng-if="side.hasFilters()"
-               ng-click="side.applyFilters()"
-               tooltip="Apply&nbsp;current&nbsp;filters"
-               tooltip-append-to-body="true"
-               tooltip-placement="bottom">
-          <i class="glyphicon glyphicon-filter"></i>
-        </label>
         <label class="btn btn-default" ng-if="side.project.undoOp" ng-click="side.undo()"
           tooltip="Undo {{side.project.undoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-backward"></i>
@@ -80,6 +72,23 @@
           ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
           tooltip="Concrete&nbsp;vertices" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
+        </label>
+      </div>
+
+      <div class="btn-group pull-right" ng-if="side.hasFilters()">
+         <label class="btn btn-default"
+               ng-click="side.applyFilters()"
+               tooltip="Apply&nbsp;current&nbsp;filters: {{side.filterSummary()}}"
+               tooltip-append-to-body="true"
+               tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-filter"></i>
+        </label>
+        <label class="btn btn-default"
+               ng-click="side.clearFilters()"
+               tooltip="Discard&nbsp;current&nbsp;filters: {{side.filterSummary()}}"
+               tooltip-append-to-body="true"
+               tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-minus"></i>
         </label>
       </div>
 
