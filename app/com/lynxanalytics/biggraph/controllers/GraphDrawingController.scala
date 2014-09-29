@@ -62,7 +62,9 @@ case class EdgeDiagramSpec(
   // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
   val srcIdx: Int,
   val dstIdx: Int,
-  val edgeBundleId: String)
+  val edgeBundleId: String,
+  // If not set, we use constant 1 as weight.
+  val edgeWeightId: String = "")
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
@@ -71,7 +73,7 @@ case class FEEdge(
   a: Int,
   // idx of destination vertex in the vertices Seq in the corresponding VertexDiagramResponse.
   b: Int,
-  size: Int)
+  size: Double)
 
 case class EdgeDiagramResponse(
   val srcDiagramId: String,
@@ -323,6 +325,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val dstView = graph_operations.VertexView.fromDiagram(
       metaManager.scalar(request.dstDiagramId.asUUID))
     val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
+    val weights = if (request.edgeWeightId.isEmpty) {
+      graph_operations.AddConstantAttribute.run(edgeBundle.asVertexSet, 1.0)
+    } else {
+      metaManager.vertexAttribute(request.edgeWeightId.asUUID).runtimeSafeCast[Double]
+    }
+    assert(weights.vertexSet == edgeBundle.asVertexSet)
     assert(srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
       "Source vertex set does not match edge bundle source." +
         s"\nSource: ${srcView.vertexSet}\nEdge bundle source: ${edgeBundle.srcVertexSet}")
@@ -358,7 +366,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         countOp.xIndices, srcIndices)(
           countOp.yIndices, dstIndices)(
             countOp.original, edgeBundle.asVertexSet)(
-              countOp.originalCount, originalEdgeCount).result.counts.value
+              countOp.weights, weights)(
+                countOp.originalCount, originalEdgeCount).result.counts.value
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
