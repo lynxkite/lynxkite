@@ -10,6 +10,18 @@
   </span>
 </label>
 
+<span ng-if="attr.typeName === 'Double'" class="de-emph">
+  Graph as
+  <div class="btn-group">
+    <button class="btn btn-default"
+            ng-if="attr.typeName === 'Double'"
+            ng-class="{ active: side.state.widthAttributeTitle === attr.title }"
+            ng-click="side.set('widthAttributeTitle', attr.title)">
+      Width
+    </button>
+  </div>
+</span>
+
 <histogram-button ng-show="attr.canBucket" attr="attr" side="side"
   model="histogram" type="edge" tsv="histogramTSV">
 </histogram-button>

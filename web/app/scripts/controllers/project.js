@@ -87,6 +87,8 @@ angular.module('biggraph')
       vd.attrs.slider = this.resolveVertexAttribute(this.state.sliderAttributeTitle);
       vd.attrs.icon = this.resolveVertexAttribute(this.state.iconAttributeTitle);
 
+      vd.edgeWidth = this.resolveEdgeAttribute(this.state.widthAttributeTitle);
+
       vd.filters = {};
       for(var name in this.state.filters) {
         vd.filters[this.resolveVertexAttribute(name).id] = this.state.filters[name];
@@ -393,6 +395,16 @@ angular.module('biggraph')
         var sattr = this.project.segmentations[segIdx].equivalentAttribute;
         if (sattr.title === title) {
           return { id: sattr.id, title: title };
+        }
+      }
+      return undefined;
+    };
+
+    Side.prototype.resolveEdgeAttribute = function(title) {
+      for (var attrIdx = 0; attrIdx < this.project.edgeAttributes.length; attrIdx++) {
+        var attr = this.project.edgeAttributes[attrIdx];
+        if (attr.title === title) {
+          return attr;
         }
       }
       return undefined;
