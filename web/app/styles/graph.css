@@ -120,16 +120,6 @@ h6 {
   font-weight: bold;
 }
 
-a.graphlink {
-  color: navy;
-}
-
-a.graphlink:hover {
-  text-decoration: none;
-  color: lightblue;
-  background: navy;
-}
-
 .token {
   display: inline-block;
   border-radius: 3px;
@@ -137,10 +127,6 @@ a.graphlink:hover {
   padding-right: 3px;
   margin: 2px;
   background: lightblue;
-}
-
-ul.bundles {
-  padding-left: 0;
 }
 
 input.form-control.filter {
