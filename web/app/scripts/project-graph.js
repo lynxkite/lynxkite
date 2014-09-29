@@ -3,7 +3,7 @@
 angular.module('biggraph').directive('projectGraph', function (util) {
   return {
     restrict: 'E',
-    scope: { left: '=', right: '=', leftToRightPath: '=' },
+    scope: { left: '=', right: '=', leftToRightBundle: '=' },
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope) {
@@ -35,7 +35,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               dstDiagramId: 'idx[' + i + ']',
               srcIdx: i,
               dstIdx: i,
-              bundleSequence: [{ bundle: viewData.edgeBundle.id, reversed: false }]
+              edgeBundleId: viewData.edgeBundle.id,
             });
           }
           var filters = [];
@@ -74,16 +74,13 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             attrs: attrs,
           });
         }
-        if (sides.length === 2 && scope.leftToRightPath !== undefined) {
-          var bundles = scope.leftToRightPath.map(function(step) {
-            return { bundle: step.bundle.id, reversed: step.pointsLeft };
-          });
+        if (sides.length === 2 && scope.leftToRightBundle !== undefined) {
           q.edgeBundles.push({
             srcDiagramId: 'idx[0]',
             dstDiagramId: 'idx[1]',
             srcIdx: 0,
             dstIdx: 1,
-            bundleSequence: bundles,
+            edgeBundleId: scope.leftToRightBundle,
           });
         }
         scope.request = q;
