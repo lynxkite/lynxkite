@@ -1,0 +1,7 @@
+.file-parameter .progress {
+  height: 34px;
+  margin-bottom: 0;
+}
+.file-parameter .progress-bar {
+  line-height: 32px;
+}
