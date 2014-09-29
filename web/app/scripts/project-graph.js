@@ -36,7 +36,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               srcIdx: i,
               dstIdx: i,
               edgeBundleId: viewData.edgeBundle.id,
-              edgeWeightId: '',
+              edgeWeightId: (viewData.edgeWidth || { id: '' }).id
             });
           }
           var filters = [];
