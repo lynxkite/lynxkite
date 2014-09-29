@@ -1,0 +1,12 @@
+.spinner {
+  animation: spinner 0.5s infinite linear;
+}
+@keyframes spinner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.value-error {
+  font-weight: bold;
+  color: darkred;
+}
