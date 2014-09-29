@@ -62,7 +62,7 @@ case class EdgeDiagramSpec(
   // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
   val srcIdx: Int,
   val dstIdx: Int,
-  val bundleSequence: Seq[BundleSequenceStep])
+  val edgeBundleId: String)
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
@@ -322,7 +322,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       metaManager.scalar(request.srcDiagramId.asUUID))
     val dstView = graph_operations.VertexView.fromDiagram(
       metaManager.scalar(request.dstDiagramId.asUUID))
-    val (edgeBundle, bundleWeights) = getCompositeBundle(request.bundleSequence)
+    val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
     assert(srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
       "Source vertex set does not match edge bundle source." +
         s"\nSource: ${srcView.vertexSet}\nEdge bundle source: ${edgeBundle.srcVertexSet}")

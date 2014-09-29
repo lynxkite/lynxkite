@@ -1,7 +1,7 @@
 <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">
   {{alert.msg}}
 </alert>
-<project-graph left="state.left" right="state.right" left-to-right-path="state.leftToRightPath"></project-graph>
+<project-graph left="state.left" right="state.right"></project-graph>
 <div class="row-fluid">
   <div ng-repeat="side in [left, right]" ng-include="'views/vertexSet.html'"/>
 </div>

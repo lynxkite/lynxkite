@@ -131,7 +131,6 @@ angular.module('biggraph')
           delete parent.state.filters[filterName];
         };
       }
-
       this.viewData = vd;
     };
 
@@ -441,17 +440,17 @@ angular.module('biggraph')
       return s.title !== 'vertex_count' && s.title !== 'edge_count';
     };
 
-    function getLeftToRightPath() {
+    function getLeftToRightBundle() {
       var left = $scope.left;
       var right = $scope.right;
       if (!left.loaded() || !right.loaded()) { return undefined; }
       // If it is a segmentation, use "belongsTo" as the connecting path.
       if (right.isSegmentationOf(left)) {
-        return [{ bundle: left.getBelongsTo(right), pointsLeft: false }];
+        return left.getBelongsTo(right).id;
       }
       // If it is the same project on both sides, use its internal edges.
       if (left.project.name === right.project.name) {
-        return [{ bundle: { id: left.project.edgeBundle }, pointsLeft: false }];
+        return left.project.edgeBundle;
       }
       return undefined;
     }
@@ -461,11 +460,12 @@ angular.module('biggraph')
     };
 
     $scope.$watch('left.project.$resolved', function() {
-      $scope.leftToRightPath = getLeftToRightPath();
+      $scope.leftToRightBundle = getLeftToRightBundle();
     });
     $scope.$watch('right.project.$resolved', function() {
-      $scope.leftToRightPath = getLeftToRightPath();
+      $scope.leftToRightBundle = getLeftToRightBundle();
     });
+
     $scope.$watch('left.project.$resolved', function() { $scope.left.loadScalars(); });
     $scope.$watch('right.project.$resolved', function() { $scope.right.loadScalars(); });
 
@@ -500,7 +500,6 @@ angular.module('biggraph')
         var initialLoad = before.q === after.q;
         if (initialLoad || angular.equals(beforeState, getState())) {
           var afterState = parseState(after);
-          $scope.leftToRightPath = afterState.leftToRightPath;
           $scope.left.state = afterState.left;
           $scope.right.state = afterState.right;
           console.log('Loaded state from URL:', afterState);
@@ -515,7 +514,6 @@ angular.module('biggraph')
     function parseState(search) {
       var state = {};
       if (search.q === undefined) {
-        state.leftToRightPath = undefined;
         state.left = defaultSideState();
         state.right = defaultSideState();
         // In the absence of query parameters, take the left-side project
@@ -555,7 +553,6 @@ angular.module('biggraph')
         var newState = JSON.parse(e.newValue);
         if (angular.equals(oldState, getState())) {
           $scope.$apply(function() {
-            $scope.leftToRightPath = newState.leftToRightPath;
             $scope.left.state = newState.left;
             $scope.right.state = newState.right;
           });
@@ -597,7 +594,6 @@ angular.module('biggraph')
 
     function getState() {
       return {
-        leftToRightPath: $scope.leftToRightPath,
         left: $scope.left.state,
         right: $scope.right.state,
       };
