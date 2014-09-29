@@ -22,11 +22,12 @@ object IndexPairCounter {
     val filtered = vertexSet
     val xIndices = vertexAttribute[Int](filtered)
     val yIndices = vertexAttribute[Int](filtered)
+    val weights = vertexAttribute[Double](original)
     val originalCount = scalar[Long]
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val counts = scalar[Map[(Int, Int), Int]]
+    val counts = scalar[Map[(Int, Int), Double]]
   }
 }
 import IndexPairCounter._
@@ -45,8 +46,9 @@ case class IndexPairCounter() extends TypedMetaGraphOp[Input, Output] {
 
     output(
       o.counts,
-      RDDUtils.estimateValueCounts(
+      RDDUtils.estimateValueWeights(
         inputs.original.rdd,
+        inputs.weights.rdd,
         xIndices.sortedJoin(yIndices),
         inputs.originalCount.value,
         50000))

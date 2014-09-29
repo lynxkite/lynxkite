@@ -106,7 +106,45 @@ object RDDUtils {
     valueCounts.toMap.mapValues(c => math.round(multiplier * c / rounder).toInt * rounder)
   }
 
+  def estimateValueWeights[T](
+    fullRDD: SortedRDD[ID, _],
+    weightsRDD: SortedRDD[ID, Double],
+    data: SortedRDD[ID, T],
+    totalVertexCount: Long,
+    requiredPositiveSamples: Int): Map[T, Double] = {
+
+    val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
+    val withWeightsAndCounts = unfilteredCounts(fullRDD, dataUsed.sortedJoin(weightsRDD))
+    val (valueWeights, unfilteredCount, filteredCount) = withWeightsAndCounts
+      .values
+      .aggregate((
+        mutable.Map[T, Double]() /* observed value weights */ ,
+        0 /* estimated total count corresponding to the observed filtered sample */ ,
+        0 /* observed filtered sample size */ ))(
+        {
+          case ((map, uct, fct), ((key, weight), uc)) =>
+            incrementWeightMap(map, key, weight)
+            (map, uct + uc, fct + 1)
+        },
+        {
+          case ((map1, uct1, fct1), (map2, uct2, fct2)) =>
+            map2.foreach { case (k, v) => incrementWeightMap(map1, k, v) }
+            (map1, uct1 + uct2, fct1 + fct2)
+        })
+    val multiplier = if (filteredCount < requiredPositiveSamples / 2) {
+      // No sampling must have happened.
+      1.0
+    } else {
+      totalVertexCount * 1.0 / unfilteredCount
+    }
+    valueWeights.toMap.mapValues(c => multiplier * c)
+  }
+
   def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
+    map(key) = if (map.contains(key)) (map(key) + increment) else increment
+  }
+
+  def incrementWeightMap[K](map: mutable.Map[K, Double], key: K, increment: Double): Unit = {
     map(key) = if (map.contains(key)) (map(key) + increment) else increment
   }
 }
