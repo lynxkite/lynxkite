@@ -252,19 +252,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     attributeGUIDs.foreach(id => metaManager.vertexAttribute(id.asUUID).rdd.cache)
   }
 
-  private def getCompositeBundle(
-    steps: Seq[BundleSequenceStep]): (EdgeBundle, VertexAttribute[Double]) = {
-
-    val chain = steps.map { step =>
-      val bundle = metaManager.edgeBundle(step.bundle.asUUID)
-      if (step.reversed) {
-        metaManager.apply(graph_operations.ReverseEdges(), 'esAB -> bundle)
-          .outputs.edgeBundles('esBA)
-      } else bundle
-    }
-    return new graph_util.BundleChain(chain).getCompositeEdgeBundle
-  }
-
   private def tripletMapping(eb: EdgeBundle): (VertexAttribute[Array[ID]], VertexAttribute[Array[ID]]) = {
     val op = graph_operations.TripletMapping()
     val res = op(op.edges, eb).result
@@ -328,9 +315,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val weights = if (request.edgeWeightId.isEmpty) {
       graph_operations.AddConstantAttribute.run(edgeBundle.asVertexSet, 1.0)
     } else {
-      metaManager.vertexAttribute(request.edgeWeightId.asUUID).runtimeSafeCast[Double]
+      metaManager.vertexAttributeOf[Double](request.edgeWeightId.asUUID)
     }
-    assert(weights.vertexSet == edgeBundle.asVertexSet)
+    assert(
+      weights.vertexSet == edgeBundle.asVertexSet,
+      "The requested edge weight attribute does not belong to the requested edge bundle.\n" +
+        "Edge bundle: $edgeBundle\nWeight attribute: $weights")
     assert(srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
       "Source vertex set does not match edge bundle source." +
         s"\nSource: ${srcView.vertexSet}\nEdge bundle source: ${edgeBundle.srcVertexSet}")
