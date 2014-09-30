@@ -50,8 +50,8 @@ angular.module('biggraph').directive('graphView', function(util) {
   function Offsetter(xOff, yOff, zoom, menu) {
     this.xOff = xOff;
     this.yOff = yOff;
-    this.zoom = zoom;
-    this.thickness = zoom;
+    this.zoom = zoom;  // Zoom for positions.
+    this.thickness = zoom;  // Zoom for radius/width.
     this.menu = menu;
     this.elements = [];
   }
