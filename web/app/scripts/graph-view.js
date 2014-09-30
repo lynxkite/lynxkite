@@ -102,7 +102,6 @@ angular.module('biggraph').directive('graphView', function(util) {
   };
 
   GraphView.prototype.loading = function() {
-    this.clear();
     svg.addClass(this.svg, 'loading');
   };
 
