@@ -173,7 +173,9 @@ angular.module('biggraph').directive('graphView', function(util) {
         }
         this.initSampled(vs);
         for (j = 0; j < vs.length; ++j) {
-          vs[j].frozen = false;
+          if (vs[j].frozen) {  // Copied from the old layout.
+            vs[j].frozen -= 1;
+          }
         }
       }
     }
@@ -190,7 +192,8 @@ angular.module('biggraph').directive('graphView', function(util) {
       if (fv) {
         v.x = fv.x;
         v.y = fv.y;
-        v.frozen = true;
+        // Copy frozen status, plus add one more freeze.
+        v.frozen = fv.frozen + 1;
       }
     }
   }
@@ -358,6 +361,22 @@ angular.module('biggraph').directive('graphView', function(util) {
                 });
               }
             }
+            if (vertex.frozen) {
+              actions.push({
+                title: 'Unfreeze',
+                callback: function() {
+                  vertex.frozen -= 1;
+                },
+              });
+            } else {
+              actions.push({
+                title: 'Freeze',
+                callback: function() {
+                  vertex.frozen += 1;
+                },
+              });
+            }
+
             vertex.activateMenu({
               header: 'Vertex ' + id,
               type: 'vertex',
@@ -615,6 +634,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.r = r;
     this.color = color || '#444';
     this.highlight = 'white';
+    this.frozen = 0;  // Number of reasons why this vertex should not be animated.
     this.icon = getIcon(icon);
     this.icon.attr({ style: 'fill: ' + this.color, 'class': 'icon' });
     var minTouchRadius = 10;
