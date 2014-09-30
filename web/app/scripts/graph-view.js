@@ -122,26 +122,34 @@ angular.module('biggraph').directive('graphView', function(util) {
     var graphToSVGRatio = 0.8;
     this.zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.left, this.scope.right];
-    this.edges = svg.create('g', {'class': 'edges'});
-    this.vertices = svg.create('g', {'class': 'nodes'});
-    this.root.append([this.edges, this.vertices]);
-    var vertices = [];
+    this.edgeGroup = svg.create('g', {'class': 'edges'});
+    this.vertexGroup = svg.create('g', {'class': 'nodes'});
+    this.root.append([this.edgeGroup, this.vertexGroup]);
+    var oldVertices = this.vertices || [];
+    this.vertices = [];  // Sparse, indexed by side.
+    var vsIndices = [];  // Packed, indexed by position in the JSON.
     var vsIndex = 0;
     var halfColumnWidth = this.svg.width() / sides.length / 2;
-    for (var i = 0; i < sides.length; ++i) {
+    var i, j, vs;
+    for (i = 0; i < sides.length; ++i) {
       if (sides[i] && sides[i].graphMode) {
         var xMin = (i * 2) * halfColumnWidth;
         var xOff = (i * 2 + 1) * halfColumnWidth;
         var xMax = (i * 2 + 2) * halfColumnWidth;
         var yOff = this.svg.height() / 2;
-        var vs = data.vertexSets[vsIndex];
+        var dataVs = data.vertexSets[vsIndex];
         vsIndex += 1;
-        var offsetter = new Offsetter(xOff, yOff, menu);
-        if (vs.mode === 'sampled') {
-          vertices.push(this.addSampledVertices(vs, offsetter, sides[i]));
+        var oldOffsetter = (oldVertices[i] || {}).offsetter;
+        var offsetter = oldOffsetter || new Offsetter(xOff, yOff, menu);
+        if (dataVs.mode === 'sampled') {
+          vs = this.addSampledVertices(dataVs, offsetter, sides[i]);
+          vs.vertexSetId = sides[i].vertexSet.id;
         } else {
-          vertices.push(this.addBucketedVertices(vs, offsetter, sides[i]));
+          vs = this.addBucketedVertices(dataVs, offsetter, sides[i]);
         }
+        vs.offsetter = offsetter;
+        vsIndices.push(i);
+        this.vertices[i] = vs;
         this.sideMouseBindings(offsetter, xMin, xMax);
       }
     }
@@ -150,17 +158,43 @@ angular.module('biggraph').directive('graphView', function(util) {
       // Avoid an error with the Grunt test data, which has edges going to the other side
       // even if we only have one side.
       if (e.srcIdx >= vsIndex || e.dstIdx >= vsIndex) { continue; }
-      var edges = this.addEdges(e.edges, vertices[e.srcIdx], vertices[e.dstIdx]);
+      var src = this.vertices[vsIndices[e.srcIdx]];
+      var dst = this.vertices[vsIndices[e.dstIdx]];
+      var edges = this.addEdges(e.edges, src, dst);
       if (e.srcIdx === e.dstIdx) {
-        vertices[e.srcIdx].edges = edges;
+        src.edges = edges;
       }
     }
-    for (i = 0; i < vertices.length; ++i) {
-      if (vertices[i].mode === 'sampled') {
-        this.initSampled(vertices[i]);
+    for (i = 0; i < this.vertices.length; ++i) {
+      vs = this.vertices[i];
+      if (vs && vs.mode === 'sampled') {
+        var old = oldVertices[i];
+        if (old && old.vertexSetId === vs.vertexSetId) {
+          copyLayoutAndFreeze(old, vs);
+        }
+        this.initSampled(vs);
+        for (j = 0; j < vs.length; ++j) {
+          vs[j].frozen = false;
+        }
       }
     }
   };
+
+  function copyLayoutAndFreeze(from, to) {
+    var fromById = {};
+    for (var i = 0; i < from.length; ++i) {
+      fromById[from[i].id] = from[i];
+    }
+    for (i = 0; i < to.length; ++i) {
+      var v = to[i];
+      var fv = fromById[v.id];
+      if (fv) {
+        v.x = fv.x;
+        v.y = fv.y;
+        v.frozen = true;
+      }
+    }
+  }
 
   function mapByAttr(vs, attr, type) {
     return vs.map(function(v) {
@@ -249,7 +283,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       vertices.push(v);
 
       this.sampledVertexMouseBindings(vertices, v, offsetter);
-      this.vertices.append(v.dom);
+      this.vertexGroup.append(v.dom);
     }
     return vertices;
   };
@@ -464,7 +498,7 @@ angular.module('biggraph').directive('graphView', function(util) {
           0, y - labelSpace, viewData.xAttribute.title,
           { classes: 'axis-label' });
       offsetter.rule(l);
-      this.vertices.append(l.dom);
+      this.vertexGroup.append(l.dom);
     }
     for (i = 0; i < data.xLabels.length; ++i) {
       if (data.xLabelType === 'between') {
@@ -475,7 +509,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       l = new Label(x, y, data.xLabels[i]);
       offsetter.rule(l);
       xLabels.push(l);
-      this.vertices.append(l.dom);
+      this.vertexGroup.append(l.dom);
     }
     // Labels on the left on the left and on the right on the right.
     if (offsetter.xOff < this.svg.width() / 2) {
@@ -492,7 +526,7 @@ angular.module('biggraph').directive('graphView', function(util) {
           x + mul * labelSpace, 0, viewData.yAttribute.title,
           { vertical: true, classes: 'axis-label' });
       offsetter.rule(l);
-      this.vertices.append(l.dom);
+      this.vertexGroup.append(l.dom);
     }
     for (i = 0; i < data.yLabels.length; ++i) {
       if (data.yLabelType === 'between') {
@@ -503,7 +537,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       l = new Label(x, y, data.yLabels[i], { classes: side });
       offsetter.rule(l);
       yLabels.push(l);
-      this.vertices.append(l.dom);
+      this.vertexGroup.append(l.dom);
     }
      
     var sizes = data.vertices.map(function(n) { return n.size; });
@@ -520,7 +554,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       if (vertex.size === 0) {
         continue;
       }
-      this.vertices.append(v.dom);
+      this.vertexGroup.append(v.dom);
       if (xLabels.length !== 0) {
         v.addHoverListener(xLabels[vertex.x]);
         if (data.xLabelType === 'between') { v.addHoverListener(xLabels[vertex.x + 1]); }
@@ -549,7 +583,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       var b = dsts[edge.b];
       var e = new Edge(a, b, edgeScale * edge.size, this.zoom);
       edgeObjects.push(e);
-      this.edges.append(e.dom);
+      this.edgeGroup.append(e.dom);
     }
     return edgeObjects;
   };
