@@ -47,20 +47,23 @@ angular.module('biggraph').directive('graphView', function(util) {
     return clone;
   }
 
-  function Offsetter(xOff, yOff, menu) {
+  function Offsetter(xOff, yOff, zoom, menu) {
     this.xOff = xOff;
     this.yOff = yOff;
+    this.zoom = zoom;
+    this.thickness = zoom;
     this.menu = menu;
     this.elements = [];
   }
   Offsetter.prototype.rule = function(element) {
     this.elements.push(element);
     var that = this;
+    element.offsetter = this;
     element.screenX = function() {
-      return element.x + that.xOff;
+      return element.x * that.zoom + that.xOff;
     };
     element.screenY = function() {
-      return element.y + that.yOff;
+      return element.y * that.zoom + that.yOff;
     };
     element.activateMenu = function(menuData) {
       that.menu.x = element.screenX();
@@ -73,6 +76,9 @@ angular.module('biggraph').directive('graphView', function(util) {
   Offsetter.prototype.panTo = function(x, y) {
     this.xOff = x;
     this.yOff = y;
+    this.reDraw();
+  };
+  Offsetter.prototype.reDraw = function() {
     for (var i = 0; i < this.elements.length; ++i) {
       this.elements[i].reDraw();
     }
@@ -89,11 +95,18 @@ angular.module('biggraph').directive('graphView', function(util) {
     ]);
     this.root = svg.create('g', {'class': 'root'});
     this.svg.append(this.root);
-    this.svgMouseListeners = [];  // Top-level mouse/touch listeners.
+    // Top-level mouse/touch listeners.
+    this.svgMouseDownListeners = [];
     var that = this;
     this.svg.on('mousedown touchstart', function(e) {
-      for (var i = 0; i < that.svgMouseListeners.length; ++i) {
-        that.svgMouseListeners[i](e);
+      for (var i = 0; i < that.svgMouseDownListeners.length; ++i) {
+        that.svgMouseDownListeners[i](e);
+      }
+    });
+    this.svgMouseWheelListeners = [];
+    this.svg.on('wheel', function(e) {
+      for (var i = 0; i < that.svgMouseWheelListeners.length; ++i) {
+        that.svgMouseWheelListeners[i](e);
       }
     });
   }
@@ -106,7 +119,8 @@ angular.module('biggraph').directive('graphView', function(util) {
       this.unwatch[i]();
     }
     this.unwatch = [];
-    this.svgMouseListeners = [];
+    this.svgMouseDownListeners = [];
+    this.svgMouseWheelListeners = [];
   };
 
   GraphView.prototype.loading = function() {
@@ -128,7 +142,7 @@ angular.module('biggraph').directive('graphView', function(util) {
   GraphView.prototype.update = function(data, menu) {
     this.clear();
     var graphToSVGRatio = 0.8;
-    this.zoom = this.svg.height() * graphToSVGRatio;
+    var zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.left, this.scope.right];
     this.edges = svg.create('g', {'class': 'edges'});
     this.vertices = svg.create('g', {'class': 'nodes'});
@@ -144,7 +158,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         var yOff = this.svg.height() / 2;
         var vs = data.vertexSets[vsIndex];
         vsIndex += 1;
-        var offsetter = new Offsetter(xOff, yOff, menu);
+        var offsetter = new Offsetter(xOff, yOff, zoom, menu);
         if (vs.mode === 'sampled') {
           vertices.push(this.addSampledVertices(vs, offsetter, sides[i]));
         } else {
@@ -180,6 +194,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var vertices = [];
     vertices.side = side;
     vertices.mode = 'sampled';
+    vertices.offsetter = offsetter;
 
     var sizeAttr = (side.attrs.size) ? side.attrs.size.id : undefined;
     var sizeMax = 1;
@@ -239,7 +254,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       var icon;
       if (side.attrs.icon) { icon = vertex.attrs[side.attrs.icon.id].string; }
 
-      var radius = this.zoom * 0.1 * Math.sqrt(size);
+      var radius = 0.1 * Math.sqrt(size);
       var v = new Vertex(vertex,
                          Math.random() * 400 - 200,
                          Math.random() * 400 - 200,
@@ -256,7 +271,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       }
       vertices.push(v);
 
-      this.sampledVertexMouseBindings(vertices, v, offsetter);
+      this.sampledVertexMouseBindings(vertices, v);
       this.vertices.append(v.dom);
     }
     return vertices;
@@ -271,7 +286,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   }
 
-  GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex, offsetter) {
+  GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex) {
     var scope = this.scope;
     var svgElement = this.svg;
     vertex.dom.on('mousedown touchstart', function(evStart) {
@@ -344,8 +359,8 @@ angular.module('biggraph').directive('graphView', function(util) {
       });
       angular.element(window).on('mousemove touchmove', function(ev) {
         translateTouchToMouseEvent(ev);
-        var x = ev.pageX - svgElement.offset().left - offsetter.xOff;
-        var y = ev.pageY - svgElement.offset().top - offsetter.yOff;
+        var x = ev.pageX - svgElement.offset().left - vertices.offsetter.xOff;
+        var y = ev.pageY - svgElement.offset().top - vertices.offsetter.yOff;
         vertex.moveTo(x, y);
         vertex.forceOX = x;
         vertex.forceOY = y;
@@ -357,7 +372,7 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   GraphView.prototype.sideMouseBindings = function(offsetter, xMin, xMax) {
     var svgElement = this.svg;
-    this.svgMouseListeners.push(function(evStart) {
+    this.svgMouseDownListeners.push(function(evStart) {
       translateTouchToMouseEvent(evStart);
       var svgX = evStart.pageX - svgElement.offset().left;
       if ((svgX < xMin) || (svgX >= xMax)) {
@@ -373,10 +388,41 @@ angular.module('biggraph').directive('graphView', function(util) {
         angular.element(window).off('mousemove mouseup touchmove touchend');
       });
     });
+    this.svgMouseWheelListeners.push(function(e) {
+      translateTouchToMouseEvent(e);
+      var mx = e.originalEvent.pageX;
+      var my = e.originalEvent.pageY;
+      var svgX = mx - svgElement.offset().left;
+      if ((svgX < xMin) || (svgX >= xMax)) {
+        return;
+      }
+      e.preventDefault();
+      var delta = 0.001 * e.originalEvent.deltaY;
+      // Graph-space point under the mouse should remain unchanged.
+      // mxOff * zoom + xOff = mx
+      var mxOff = (mx - offsetter.xOff) / offsetter.zoom;
+      var myOff = (my - offsetter.yOff) / offsetter.zoom;
+      console.log(offsetter.zoom, offsetter.xOff, offsetter.yOff);
+      offsetter.zoom *= Math.exp(delta);
+      offsetter.xOff = mx - mxOff * offsetter.zoom;
+      offsetter.yOff = my - myOff * offsetter.zoom;
+      // Thickness (vertex radius and edge width) changes by a square-root function.
+      offsetter.thickness *= Math.exp(0.5 * delta);
+      offsetter.reDraw();
+    });
   };
 
   GraphView.prototype.initSampled = function(vertices) {
+    // Initial layout.
     this.layout(vertices);
+
+    // Initial zoom.
+    var xb = common.minmax(vertices.map(function(v) { return v.x; }));
+    var yb = common.minmax(vertices.map(function(v) { return v.y; }));
+    vertices.offsetter.zoom = 250 / Math.max(xb.span, yb.span);
+    vertices.offsetter.reDraw();
+
+    // Slider.
     this.unwatch.push(this.scope.$watch(sliderPos, onSlider));
     function sliderPos() {
       return vertices.side.sliderPos;
@@ -454,10 +500,11 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData) {
     var vertices = [];
+    vertices.offsetter = offsetter;
     var xLabels = [], yLabels = [];
     var i, x, y, l, side;
-    var labelSpace = this.zoom * 0.05;
-    y = this.zoom * 0.5 + labelSpace;
+    var labelSpace = 0.05;
+    y = 0.5 + labelSpace;
     
     var xb = common.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = common.minmax(data.vertices.map(function(n) { return n.y; }));
@@ -465,7 +512,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var xNumBuckets = xb.span + 1;
     var yNumBuckets = yb.span + 1;
 
-    y = this.zoom * 0.5 + labelSpace;
+    y = 0.5 + labelSpace;
     if (viewData.xAttribute) {
       // Label the X axis with the attribute name.
       l = new Label(
@@ -476,9 +523,9 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     for (i = 0; i < data.xLabels.length; ++i) {
       if (data.xLabelType === 'between') {
-        x = this.zoom * common.normalize(i, xNumBuckets);
+        x = common.normalize(i, xNumBuckets);
       } else {
-        x = this.zoom * common.normalize(i + 0.5, xNumBuckets);
+        x = common.normalize(i + 0.5, xNumBuckets);
       }
       l = new Label(x, y, data.xLabels[i]);
       offsetter.rule(l);
@@ -487,10 +534,10 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     // Labels on the left on the left and on the right on the right.
     if (offsetter.xOff < this.svg.width() / 2) {
-      x = 0 - this.zoom * 0.5 - labelSpace;
+      x = -0.5 - labelSpace;
       side = 'left';
     } else {
-      x = this.zoom * 0.5 + labelSpace;
+      x = 0.5 + labelSpace;
       side = 'right';
     }
     if (viewData.yAttribute) {
@@ -504,9 +551,9 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     for (i = 0; i < data.yLabels.length; ++i) {
       if (data.yLabelType === 'between') {
-        y = this.zoom * common.normalize(i, yNumBuckets);
+        y = common.normalize(i, yNumBuckets);
       } else {
-        y = this.zoom * common.normalize(i + 0.5, yNumBuckets);
+        y = common.normalize(i + 0.5, yNumBuckets);
       }
       l = new Label(x, y, data.yLabels[i], { classes: side });
       offsetter.rule(l);
@@ -515,13 +562,14 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
      
     var sizes = data.vertices.map(function(n) { return n.size; });
-    var vertexScale = this.zoom * 2 / common.minmax(sizes).max;
+    var vertexScale = 1 / common.minmax(sizes).max;
     for (i = 0; i < data.vertices.length; ++i) {
       var vertex = data.vertices[i];
+      var radius = 0.1 * Math.sqrt(vertexScale * vertex.size);
       var v = new Vertex(vertex,
-                         this.zoom * common.normalize(vertex.x + 0.5, xNumBuckets),
-                         this.zoom * common.normalize(vertex.y + 0.5, yNumBuckets),
-                         Math.sqrt(vertexScale * vertex.size),
+                         common.normalize(vertex.x + 0.5, xNumBuckets),
+                         common.normalize(vertex.y + 0.5, yNumBuckets),
+                         radius,
                          vertex.size);
       offsetter.rule(v);
       vertices.push(v);
@@ -544,18 +592,18 @@ angular.module('biggraph').directive('graphView', function(util) {
   GraphView.prototype.addEdges = function(edges, srcs, dsts) {
     var edgeObjects = [];
     var bounds = common.minmax(edges.map(function(n) { return n.size; }));
-    var normalWidth = this.zoom * 0.02;
+    var normalWidth = 0.02;
     var info = bounds.span / bounds.max;  // Information content of edge widths. (0 to 1)
     // Go up to 3x thicker lines if they are meaningful.
     var edgeScale = normalWidth * (1 + info * 2) / bounds.max;
     for (var i = 0; i < edges.length; ++i) {
       var edge = edges[i];
-      if (edgeScale * edge.size < 0.1) {
+      if (edge.size === 0) {
         continue;
       }
       var a = srcs[edge.a];
       var b = dsts[edge.b];
-      var e = new Edge(a, b, edgeScale * edge.size, this.zoom);
+      var e = new Edge(a, b, edgeScale * edge.size);
       edgeObjects.push(e);
       this.edges.append(e.dom);
     }
@@ -592,9 +640,9 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.highlight = 'white';
     this.icon = getIcon(icon);
     this.icon.attr({ style: 'fill: ' + this.color, 'class': 'icon' });
-    var minTouchRadius = 10;
-    if (r < minTouchRadius) {
-      this.touch = svg.create('circle', {r: minTouchRadius, 'class': 'touch'});
+    this.minTouchRadius = 10;
+    if (r < this.minTouchRadius) {
+      this.touch = svg.create('circle', { 'class': 'touch' });
     } else {
       this.touch = this.icon;
     }
@@ -644,11 +692,12 @@ angular.module('biggraph').directive('graphView', function(util) {
   function svgRotate(deg) { return ' rotate(' + deg + ')'; }
   Vertex.prototype.reDraw = function() {
     var sx = this.screenX(), sy = this.screenY();
+    var r = this.offsetter.thickness * this.r;
     this.icon.attr({ transform:
       svgTranslate(sx, sy) +
-      svgScale(this.r * this.icon.scale) +
+      svgScale(r * this.icon.scale) +
       svgTranslate(-this.icon.center.x, -this.icon.center.y) });
-    this.touch.attr({ cx: sx, cy: sy });
+    this.touch.attr({ cx: sx, cy: sy, r: r });
     this.label.attr({ x: sx, y: sy });
     var backgroundWidth = this.labelBackground.attr('width');
     var backgroundHeight = this.labelBackground.attr('height');
@@ -659,16 +708,17 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Edge(src, dst, w, zoom) {
+  function Edge(src, dst, w) {
     this.src = src;
     this.dst = dst;
-    this.first = svg.create('path', {'class': 'first', 'stroke-width': w});
-    this.second = svg.create('path', {'class': 'second', 'stroke-width': w});
+    this.w = w;
+    this.first = svg.create('path', { 'class': 'first' });
+    this.second = svg.create('path', { 'class': 'second' });
     this.dom = svg.group([this.first, this.second], {'class': 'edge'});
     var that = this;
-    src.addMoveListener(function() { that.reposition(zoom); });
-    dst.addMoveListener(function() { that.reposition(zoom); });
-    this.reposition(zoom);
+    src.addMoveListener(function() { that.reposition(); });
+    dst.addMoveListener(function() { that.reposition(); });
+    this.reposition();
     src.addHoverListener({
       on: function() { svg.addClass(that.dom, 'highlight-out'); that.toFront(); },
       off: function() { svg.removeClass(that.dom, 'highlight-out'); }
@@ -683,15 +733,19 @@ angular.module('biggraph').directive('graphView', function(util) {
   Edge.prototype.toFront = function() {
     this.dom.parent().append(this.dom);
   };
-  Edge.prototype.reposition = function(zoom) {
-    this.first.attr(
-      'd',
-      svg.arrow1(
-        this.src.screenX(), this.src.screenY(), this.dst.screenX(), this.dst.screenY(), zoom));
-    this.second.attr(
-      'd',
-      svg.arrow2(
-        this.src.screenX(), this.src.screenY(), this.dst.screenX(), this.dst.screenY(), zoom));
+  Edge.prototype.reposition = function() {
+    var src = this.src, dst = this.dst;
+    var avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
+    this.first.attr({
+      d: svg.arrow1(
+        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom),
+      'stroke-width': avgZoom * this.w,
+    });
+    this.second.attr({
+      d: svg.arrow2(
+        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom),
+      'stroke-width': avgZoom * this.w,
+    });
   };
 
   return directive;
