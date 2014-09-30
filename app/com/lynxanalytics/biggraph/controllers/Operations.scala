@@ -233,11 +233,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Connected components"
     val description = ""
     val parameters = Seq(
-      Param("name", "Segmentation name", defaultValue = "connected_components"))
+      Param("name", "Segmentation name", defaultValue = "connected_components"),
+      Param(
+        "type",
+        "Connectedness type",
+        options = UIValue.seq(Seq("weak", "strong"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
+      val symmetric = if (params("type") == "weak") {
+        val areop = graph_operations.AddReversedEdges()
+        areop(areop.es, project.edgeBundle).result.esPlus.entity
+      } else {
+        val rnseop = graph_operations.RemoveNonSymmetricEdges()
+        rnseop(rnseop.es, project.edgeBundle).result.symmetric.entity
+      }
       val op = graph_operations.ConnectedComponents()
-      val result = op(op.es, project.edgeBundle).result
+      val result = op(op.es, symmetric).result
       val segmentation = project.segmentation(params("name"))
       segmentation.project.setVertexSet(result.segments, idAttr = "id")
       segmentation.project.notes = title
