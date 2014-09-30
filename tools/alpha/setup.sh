@@ -24,9 +24,13 @@ shift
 CORES=4
 RAM_MB=28000
 
+# Create script for running the server.
+EXTRA_ARGS="$@"
+cat > run.sh <<EOF
+#!/bin/sh -xue
 # Stop the server in case it's already running.
 killall java || true
-for i in $(seq 10); do
+for i in \$(seq 10); do
   if [ ! -e biggraphstage/RUNNING_PID ]; then
     break
   fi
@@ -37,20 +41,31 @@ if [ -e biggraphstage/RUNNING_PID ]; then
   rm -f biggraphstage/RUNNING_PID
 fi
 
-# Start the server.
-EXTRA_ARGS="$@"
-sh -c "( ( \
-  NUM_CORES_PER_EXECUTOR=${CORES} \
-  REPOSITORY_MODE=\"static</home/ec2-user/metagraph,s3n://${CREDENTIALS}@lynx-bnw-data>\" \
-  SPARK_CLUSTER_MODE=\"static<local[${CORES}]>\" \
-  SPARK_JAVA_OPTS=\"-Dhadoop.tmp.dir=/media/ephemeral0/hadoop-tmp\" \
-  SPARK_DIR=\"/media/ephemeral0/\" \
-  EXECUTOR_MEMORY=${RAM_MB}m \
-  nohup biggraphstage/bin/biggraph \
-    -mem $RAM_MB \
-    -Dapplication.secret=$CREDENTIALS \
-    -Dsecuresocial.google.clientSecret=$GOOGLE_CLIENT_SECRET \
-    $EXTRA_ARGS \
-  &> setup.sh.out \
-) & ls > /dev/null )"
-# I have no idea why, but if I remove "ls", nohup does not work.
+# Start it up.
+export NUM_CORES_PER_EXECUTOR=${CORES}
+export REPOSITORY_MODE="static</home/ec2-user/metagraph,s3n://${CREDENTIALS}@lynx-bnw-data>"
+export SPARK_CLUSTER_MODE="static<local[${CORES}]>"
+export SPARK_JAVA_OPTS="-Dhadoop.tmp.dir=/media/ephemeral0/hadoop-tmp"
+export SPARK_DIR="/media/ephemeral0/"
+export EXECUTOR_MEMORY=${RAM_MB}m
+biggraphstage/bin/biggraph \
+  -mem $RAM_MB \
+  -Dapplication.secret=$CREDENTIALS \
+  -Dsecuresocial.google.clientSecret=$GOOGLE_CLIENT_SECRET \
+  $EXTRA_ARGS
+EOF
+chmod +x run.sh
+
+# Start server.
+biggraphstage/alpha/detached_run.sh ./run.sh
+
+# Start watchdog.
+killall -9 python || true
+biggraphstage/alpha/detached_run.sh " \
+  biggraphstage/watchdog.py \
+    --status_port=9999 \
+    --watched_url=http://pizzakite.lynxanalytics.com/ \
+    --sleep_seconds=10 \
+    --max_failures=10 \
+    --script='/home/ec2-user/biggraphstage/alpha/detached_run.sh /home/ec2-user/run.sh' \
+  "
