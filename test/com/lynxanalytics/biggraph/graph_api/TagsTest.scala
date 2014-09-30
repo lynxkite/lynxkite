@@ -31,7 +31,6 @@ class TagsTest extends FunSuite {
     val root = TagRoot()
     root.setTag("alma/korte/barack", "hello")
     root.cp("alma", "brave_new_world/batoralma")
-    println(root.saveToString)
     val root2 = TagRoot()
     root2.loadFromString(root.saveToString)
     assert((root2 / "brave_new_world/batoralma/korte/barack").content == "hello")
