@@ -129,7 +129,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var vsIndices = [];  // Packed, indexed by position in the JSON.
     var vsIndex = 0;
     var halfColumnWidth = this.svg.width() / sides.length / 2;
-    var i, j, vs;
+    var i, vs;
     for (i = 0; i < sides.length; ++i) {
       if (sides[i] && sides[i].graphMode) {
         var xMin = (i * 2) * halfColumnWidth;
@@ -172,11 +172,7 @@ angular.module('biggraph').directive('graphView', function(util) {
           copyLayoutAndFreezeOld(old, vs);
         }
         this.initSampled(vs);
-        for (j = 0; j < vs.length; ++j) {
-          if (vs[j].frozen) {  // Copied from the old layout.
-            vs[j].frozen -= 1;
-          }
-        }
+        unfreezeAll(vs);
       }
     }
   };
@@ -194,6 +190,14 @@ angular.module('biggraph').directive('graphView', function(util) {
         v.y = fv.y;
         // Copy frozen status, plus add one more freeze.
         v.frozen = fv.frozen + 1;
+      }
+    }
+  }
+
+  function unfreezeAll(vs) {
+    for (var i = 0; i < vs.length; ++i) {
+      if (vs[i].frozen) {
+        vs[i].frozen -= 1;
       }
     }
   }
