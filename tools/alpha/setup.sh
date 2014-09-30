@@ -29,16 +29,19 @@ EXTRA_ARGS="$@"
 cat > run.sh <<EOF
 #!/bin/sh -xue
 # Stop the server in case it's already running.
-killall java || true
-for i in \$(seq 10); do
-  if [ ! -e biggraphstage/RUNNING_PID ]; then
-    break
-  fi
-  sleep 1
-done
 if [ -e biggraphstage/RUNNING_PID ]; then
-  killall -9 java || true
-  rm -f biggraphstage/RUNNING_PID
+  PID=\$(cat biggraphstage/RUNNING_PID)
+  kill \$PID || true
+  for i in \$(seq 10); do
+    if [ ! -e /proc/\$PID ]; then
+      break
+    fi
+    sleep 1
+  done
+  if [ ! -e /proc/\$PID ]; then
+    kill -9 \$PID || true
+    rm -f biggraphstage/RUNNING_PID
+  fi
 fi
 
 # Start it up.
