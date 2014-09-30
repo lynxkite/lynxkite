@@ -169,7 +169,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       if (vs && vs.mode === 'sampled') {
         var old = oldVertices[i];
         if (old && old.vertexSetId === vs.vertexSetId) {
-          copyLayoutAndFreeze(old, vs);
+          copyLayoutAndFreezeOld(old, vs);
         }
         this.initSampled(vs);
         for (j = 0; j < vs.length; ++j) {
@@ -181,7 +181,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function copyLayoutAndFreeze(from, to) {
+  function copyLayoutAndFreezeOld(from, to) {
     var fromById = {};
     for (var i = 0; i < from.length; ++i) {
       fromById[from[i].id] = from[i];
