@@ -89,6 +89,13 @@ angular.module('biggraph').directive('graphView', function(util) {
     ]);
     this.root = svg.create('g', {'class': 'root'});
     this.svg.append(this.root);
+    this.svgMouseListeners = [];  // Top-level mouse/touch listeners.
+    var that = this;
+    this.svg.on('mousedown touchstart', function(e) {
+      for (var i = 0; i < that.svgMouseListeners.length; ++i) {
+        that.svgMouseListeners[i](e);
+      }
+    });
   }
 
   GraphView.prototype.clear = function() {
@@ -99,6 +106,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       this.unwatch[i]();
     }
     this.unwatch = [];
+    this.svgMouseListeners = [];
   };
 
   GraphView.prototype.loading = function() {
@@ -349,7 +357,7 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   GraphView.prototype.sideMouseBindings = function(offsetter, xMin, xMax) {
     var svgElement = this.svg;
-    svgElement.on('mousedown touchstart', function(evStart) {
+    this.svgMouseListeners.push(function(evStart) {
       translateTouchToMouseEvent(evStart);
       var svgX = evStart.pageX - svgElement.offset().left;
       if ((svgX < xMin) || (svgX >= xMax)) {
