@@ -161,11 +161,15 @@ angular.module('biggraph').directive('graphView', function(util) {
         var yOff = this.svg.height() / 2;
         var dataVs = data.vertexSets[vsIndex];
         vsIndex += 1;
-        var oldOffsetter = (oldVertices[i] || {}).offsetter;
-        var offsetter = oldOffsetter || new Offsetter(xOff, yOff, zoom, menu);
+        var offsetter;
+        if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
+          offsetter = oldVertices[i].offsetter;
+          offsetter.inherited = true;  // Do not adjust zoom level.
+        } else {
+          offsetter = new Offsetter(xOff, yOff, zoom, menu);
+        }
         if (dataVs.mode === 'sampled') {
           vs = this.addSampledVertices(dataVs, offsetter, sides[i]);
-          vs.vertexSetId = sides[i].vertexSet.id;
         } else {
           vs = this.addBucketedVertices(dataVs, offsetter, sides[i]);
         }
@@ -236,6 +240,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     vertices.side = side;
     vertices.mode = 'sampled';
     vertices.offsetter = offsetter;
+    vertices.vertexSetId = side.vertexSet.id;
 
     var sizeAttr = (side.attrs.size) ? side.attrs.size.id : undefined;
     var sizeMax = 1;
@@ -472,12 +477,14 @@ angular.module('biggraph').directive('graphView', function(util) {
     // Initial layout.
     this.layout(vertices);
 
-    // Initial zoom to fit the layout on the SVG.
-    var yb = common.minmax(vertices.map(function(v) { return v.y; }));
-    var fit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
-    vertices.offsetter.zoom = graphToSVGRatio * fit;
-    // "Thickness" is scaled to the SVG size. We leave it unchanged.
-    vertices.offsetter.reDraw();
+    if (!vertices.offsetter.inherited) {
+      // Initial zoom to fit the layout on the SVG.
+      var yb = common.minmax(vertices.map(function(v) { return v.y; }));
+      var fit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
+      vertices.offsetter.zoom = graphToSVGRatio * fit;
+      // "Thickness" is scaled to the SVG size. We leave it unchanged.
+      vertices.offsetter.reDraw();
+    }
 
     // Slider.
     this.unwatch.push(this.scope.$watch(sliderPos, onSlider));
@@ -557,6 +564,7 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData) {
     var vertices = [];
+    vertices.mode = 'bucketed';
     vertices.offsetter = offsetter;
     var xLabels = [], yLabels = [];
     var i, x, y, l, side;
