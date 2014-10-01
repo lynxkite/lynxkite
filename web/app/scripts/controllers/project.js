@@ -421,7 +421,7 @@ angular.module('biggraph')
       this.scalars = {};
       for (var i = 0; i < scalars.length; ++i) {
         var s = scalars[i];
-        this.scalars[s.title] = util.get('/ajax/scalarValue', { scalarId: s.id });
+        this.scalars[s.title] = util.get('/ajax/scalarValue', { scalarId: s.id, calculate: true });
       }
     };
 
