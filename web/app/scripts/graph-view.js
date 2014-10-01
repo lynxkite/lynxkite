@@ -138,9 +138,10 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.root.append(text);
   };
 
+  var graphToSVGRatio = 0.8;  // Leave some margin.
+
   GraphView.prototype.update = function(data, menu) {
     this.clear();
-    var graphToSVGRatio = 0.8;
     var zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.left, this.scope.right];
     this.edgeGroup = svg.create('g', {'class': 'edges'});
@@ -471,10 +472,11 @@ angular.module('biggraph').directive('graphView', function(util) {
     // Initial layout.
     this.layout(vertices);
 
-    // Initial zoom.
-    var xb = common.minmax(vertices.map(function(v) { return v.x; }));
+    // Initial zoom to fit the layout on the SVG.
     var yb = common.minmax(vertices.map(function(v) { return v.y; }));
-    vertices.offsetter.zoom = 250 / Math.max(xb.span, yb.span);
+    var fit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
+    vertices.offsetter.zoom = graphToSVGRatio * fit;
+    // "Thickness" is scaled to the SVG size. We leave it unchanged.
     vertices.offsetter.reDraw();
 
     // Slider.
