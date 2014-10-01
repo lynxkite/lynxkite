@@ -446,7 +446,6 @@ angular.module('biggraph').directive('graphView', function(util) {
       });
     });
     this.svgMouseWheelListeners.push(function(e) {
-      translateTouchToMouseEvent(e);
       var mx = e.originalEvent.pageX;
       var my = e.originalEvent.pageY;
       var svgX = mx - svgElement.offset().left;
@@ -459,7 +458,6 @@ angular.module('biggraph').directive('graphView', function(util) {
       // mxOff * zoom + xOff = mx
       var mxOff = (mx - offsetter.xOff) / offsetter.zoom;
       var myOff = (my - offsetter.yOff) / offsetter.zoom;
-      console.log(offsetter.zoom, offsetter.xOff, offsetter.yOff);
       offsetter.zoom *= Math.exp(delta);
       offsetter.xOff = mx - mxOff * offsetter.zoom;
       offsetter.yOff = my - myOff * offsetter.zoom;
