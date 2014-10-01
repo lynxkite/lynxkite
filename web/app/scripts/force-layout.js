@@ -13,6 +13,11 @@ var FORCE_LAYOUT = (function() {
     this.opts = opts;
   };
   lib.Engine.prototype.step = function(vertices) {
+    var changed = this.calculate(vertices);
+    this.apply(vertices);
+    return changed;
+  };
+  lib.Engine.prototype.calculate = function(vertices) {
     var a, b, dx, dy, i, j;
     var maxDist = 0;
     if (vertices.edges !== undefined) {
@@ -70,10 +75,15 @@ var FORCE_LAYOUT = (function() {
       v.forceOX = v.x; v.forceOY = v.y;
       v.x += (1 - this.opts.drag) * (v.forceOX - oox);
       v.y += (1 - this.opts.drag) * (v.forceOY - ooy);
-      v.moveTo(v.x, v.y);
       totalChange += Math.abs(v.x - oox) + Math.abs(v.y - ooy);
     }
     return 0.0001 < totalChange / vertices.length / maxDist;
+  };
+  lib.Engine.prototype.apply = function(vertices) {
+    for (var i = 0; i < vertices.length; ++i) {
+      var v = vertices[i];
+      v.moveTo(v.x, v.y);
+    }
   };
   return lib;
 }());

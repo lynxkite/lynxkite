@@ -537,7 +537,8 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
     // Initial layout.
     var t1 = Date.now();
-    while (engine.step(vertices) && Date.now() - t1 <= 2000) {}
+    while (engine.calculate(vertices) && Date.now() - t1 <= 2000) {}
+    engine.apply(vertices);
     var animating = false;
     // Call vertices.animate() later to trigger interactive layout.
     vertices.animate = function() {
