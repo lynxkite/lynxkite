@@ -421,7 +421,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       });
       angular.element(window).on('mousemove touchmove', function(ev) {
         translateTouchToMouseEvent(ev);
-        var offsetter = vertices.offsetter;
+        var offsetter = vertex.offsetter;
         var x = (ev.pageX - svgElement.offset().left - offsetter.xOff) / offsetter.zoom;
         var y = (ev.pageY - svgElement.offset().top - offsetter.yOff) / offsetter.zoom;
         vertex.moveTo(x, y);
