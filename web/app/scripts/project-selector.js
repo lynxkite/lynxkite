@@ -20,7 +20,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
       function getScalar(p, name) {
         for (var i = 0; i < p.scalars.length; ++i) {
           if (p.scalars[i].title === name) {
-            return util.nocache('/ajax/scalarValue', {
+            return util.get('/ajax/scalarValue', {
               scalarId: p.scalars[i].id, calculate: false
             });
           }
