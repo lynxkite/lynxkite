@@ -440,7 +440,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getScalarValue(request: ScalarValueRequest): ScalarValueResponse = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    if (request.calculate || scalar)
+    if (request.calculate || dataManager.isCalculated(scalar))
       ScalarValueResponse(scalar.value.toString)
     else
       ScalarValueResponse("?")

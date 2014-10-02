@@ -67,9 +67,6 @@ object Scripting {
   implicit def getData[T](entity: Scalar[T])(
     implicit dataManager: DataManager): ScalarData[T] =
     dataManager.get(entity)
-  implicit def isCalculated[T](entity: Scalar[T])(
-    implicit dataManager: DataManager): Boolean =
-    dataManager.isCalculated(entity)
 
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     op: TypedMetaGraphOp[IS, OMDS]): IS = op.inputs
