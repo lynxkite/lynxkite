@@ -27,20 +27,20 @@ sealed trait MetaGraphEntity extends Serializable {
     UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
   override def toString = toStringStruct.toString
-  def toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
+  lazy val toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
   def manager = source.manager
 }
 case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
-  override def toString = {
+  lazy val asString: String = {
     val stuff = contents.map {
       case (k, v) =>
-        val s = v.toString
+        val s = v.asString
         val guarded = if (s.contains(" ")) s"($s)" else s
         if (k.isEmpty) guarded else s"$k=$guarded"
     }.mkString(" ")
-    if (stuff.isEmpty) name
-    else s"$name of $stuff"
+    if (stuff.isEmpty) name else s"$name of $stuff"
   }
+  override def toString = asString
 }
 object StringStruct {
   def apply(name: String, contents: Map[String, StringStruct]) =
@@ -375,7 +375,8 @@ trait MetaGraphOp extends Serializable {
     val className = mirror.symbol.name.toString
     val params = mirror.symbol.toType.members.collect { case m: MethodSymbol if m.isCaseAccessor => m }
     def get(param: MethodSymbol) = mirror.reflectField(param).get
-    StringStruct(className, params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
+    StringStruct(
+      className, params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
   }
 }
 
@@ -422,19 +423,19 @@ trait MetaGraphOperationInstance {
   def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData]
 
   override def toString = toStringStruct.toString
-  def toStringStruct: StringStruct = {
+  lazy val toStringStruct: StringStruct = {
     val op = operation.toStringStruct
     val fixed = mutable.Set[Symbol]()
-    val mentioned = mutable.Map[MetaGraphEntity, Symbol]()
+    val mentioned = mutable.Map[UUID, Symbol]()
     val span = mutable.Map[String, StringStruct]()
     def put(k: Symbol, v: MetaGraphEntity): Unit = {
       if (!fixed.contains(k)) {
-        mentioned.get(v) match {
+        mentioned.get(v.gUID) match {
           case Some(k0) =>
             span(k.name) = StringStruct(k0.name)
           case None =>
             span(k.name) = v.toStringStruct
-            mentioned(v) = k
+            mentioned(v.gUID) = k
         }
       }
     }
