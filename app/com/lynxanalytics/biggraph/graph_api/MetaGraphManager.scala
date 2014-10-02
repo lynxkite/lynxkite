@@ -161,7 +161,6 @@ class MetaGraphManager(val repositoryPath: String) {
       assert(
         !entities.contains(gUID),
         "Fatal conflict %s <=> %s".format(entity, entities(gUID)))
-      log.info(s"Stored $entity with GUID $gUID")
       entities(gUID) = entity
     }
     operationInstance.outputs.edgeBundles.values.foreach { eb =>
