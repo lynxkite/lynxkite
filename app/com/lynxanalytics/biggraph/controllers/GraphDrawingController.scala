@@ -115,7 +115,8 @@ case class HistogramResponse(
 }
 
 case class ScalarValueRequest(
-  val scalarId: String)
+  val scalarId: String,
+  val calculate: Boolean)
 
 case class ScalarValueResponse(
   val value: String)
@@ -439,6 +440,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getScalarValue(request: ScalarValueRequest): ScalarValueResponse = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
+    assert(request.calculate || dataManager.isCalculated(scalar), "Value is not calculated yet")
     ScalarValueResponse(scalar.value.toString)
   }
 }
