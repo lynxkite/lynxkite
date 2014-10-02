@@ -479,9 +479,11 @@ angular.module('biggraph').directive('graphView', function(util) {
 
     if (!vertices.offsetter.inherited) {
       // Initial zoom to fit the layout on the SVG.
+      var xb = common.minmax(vertices.map(function(v) { return v.x; }));
       var yb = common.minmax(vertices.map(function(v) { return v.y; }));
-      var fit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
-      vertices.offsetter.zoom = graphToSVGRatio * fit;
+      var xFit = 0.25 * this.svg.width() / Math.max(Math.abs(xb.min), Math.abs(xb.max));
+      var yFit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
+      vertices.offsetter.zoom = graphToSVGRatio * Math.min(xFit, yFit);
       // "Thickness" is scaled to the SVG size. We leave it unchanged.
       vertices.offsetter.reDraw();
     }
