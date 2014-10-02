@@ -104,6 +104,8 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
+  def isCalculated(entity: MetaGraphEntity): Boolean = hasEntity(entity) || hasEntityOnDisk(entity)
+
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = {
     this.synchronized {
       if (!hasEntity(entity)) {
