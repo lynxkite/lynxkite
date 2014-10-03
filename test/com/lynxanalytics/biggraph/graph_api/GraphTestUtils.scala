@@ -91,21 +91,44 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
   }
 }
 
-object SegmentedTestGraph {
-  class Input(hasInput: Boolean) extends MagicInputSignature {
-    val vs = if (hasInput) vertexSet else null
+object AddEdgeBundle {
+  class Input extends MagicInputSignature {
+    val vsA = vertexSet
+    val vsB = vertexSet
   }
-  class Output(hasInput: Boolean)(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity)
+  }
+}
+case class AddEdgeBundle(edgeLists: Seq[(Seq[Int], Int)])
+    extends TypedMetaGraphOp[AddEdgeBundle.Input, AddEdgeBundle.Output] {
+  import AddEdgeBundle._
+  @transient override lazy val inputs = new Input
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+    val sc = rc.sparkContext
+    val (srcs, dsts) = edgeLists.unzip
+    val es = sc.parallelize(
+      edgeLists.flatMap {
+        case (s, i) => s.map(j => Edge(j.toLong, i.toLong))
+      }).randomNumbered(rc.onePartitionPartitioner)
+    output(o.esAB, es)
+  }
+}
+
+object SegmentedTestGraph {
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val vs = vertexSet
     val segments = vertexSet
-    val belongsTo = if (hasInput) edgeBundle(inputs.vs.entity, segments) else edgeBundle(vs, segments)
+    val belongsTo = edgeBundle(vs, segments)
   }
 }
 case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)], hasInput: Boolean = false)
-    extends TypedMetaGraphOp[SegmentedTestGraph.Input, SegmentedTestGraph.Output] {
+    extends TypedMetaGraphOp[NoInput, SegmentedTestGraph.Output] {
   import SegmentedTestGraph._
-  @transient override lazy val inputs = new Input(hasInput)
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output(hasInput)(instance, inputs)
+  @transient override lazy val inputs = new NoInput
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
