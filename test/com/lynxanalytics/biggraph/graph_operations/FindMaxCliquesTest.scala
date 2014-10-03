@@ -35,7 +35,7 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
     }
     val check = {
       val op = CheckClique()
-      op(op.vs, g.vs)(op.es, g.es)(op.cliques, s.vs)(op.belongsTo, bTo.esAB).result
+      op(op.es, g.es)(op.belongsTo, bTo.esAB).result
     }
     intercept[org.apache.spark.SparkException] {
       check.dummy.value
