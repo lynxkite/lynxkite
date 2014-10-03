@@ -15,20 +15,31 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
   }
 
   test("test CheckClique") {
-    val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1), 3 -> Seq())).result
-    val seg = {
-      val op = SegmentedTestGraph(Seq(
+    val g = SmallTestGraph(Map(
+      0 -> Seq(1, 2, 3),
+      1 -> Seq(0, 2),
+      2 -> Seq(0, 1),
+      3 -> Seq())).result
+    val s = SmallTestGraph(Map(
+      10 -> Seq(),
+      20 -> Seq(),
+      30 -> Seq(),
+      40 -> Seq())).result
+    val bTo = {
+      val op = AddEdgeBundle(Seq(
         Seq(0, 1, 2) -> 10,
         Seq(1, 2) -> 20,
         Seq(3) -> 30,
-        Seq(0, 3) -> 40), hasInput = true)
-      op(op.vs, g.vs).result
+        Seq(0, 3) -> 40))
+      op(op.vsA, g.vs)(op.vsB, s.vs).result
     }
     val check = {
       val op = CheckClique()
-      op(op.vs, g.vs)(op.es, g.es)(op.cliques, seg.segments)(op.belongsTo, seg.belongsTo).result
+      op(op.vs, g.vs)(op.es, g.es)(op.cliques, s.vs)(op.belongsTo, bTo.esAB).result
     }
-    assert(check.validCliques.rdd.collect.map(_._1).toSet == Set(10, 20, 30))
+    intercept[org.apache.spark.SparkException] {
+      check.dummy.value
+    }
   }
 
   test("check if a clique from triangle is really a maximal clique") {
@@ -39,7 +50,6 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
       val op = CheckClique()
       op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
     }
-    assert(check.validCliques.rdd.count == 1)
   }
 
 }
