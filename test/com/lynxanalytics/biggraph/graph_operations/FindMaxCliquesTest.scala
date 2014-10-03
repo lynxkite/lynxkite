@@ -14,5 +14,32 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
     assert(fmcOut.segments.rdd.count == 1)
   }
 
-  //TODO: some more creative tests
+  test("test CheckClique") {
+    val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1), 3 -> Seq())).result
+    val seg = {
+      val op = SegmentedTestGraph(Seq(
+        Seq(0, 1, 2) -> 10,
+        Seq(1, 2) -> 20,
+        Seq(3) -> 30,
+        Seq(0, 3) -> 40), hasInput = true)
+      op(op.vs, g.vs).result
+    }
+    val check = {
+      val op = CheckClique()
+      op(op.vs, g.vs)(op.es, g.es)(op.cliques, seg.segments)(op.belongsTo, seg.belongsTo).result
+    }
+    assert(check.validCliques.rdd.collect.map(_._1).toSet == Set(10, 20, 30))
+  }
+
+  test("check if a clique from triangle is really a maximal clique") {
+    val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))).result
+    val op = FindMaxCliques(3)
+    val fmcOut = op(op.vs, g.vs)(op.es, g.es).result
+    val check = {
+      val op = CheckClique()
+      op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
+    }
+    assert(check.validCliques.rdd.count == 1)
+  }
+
 }
