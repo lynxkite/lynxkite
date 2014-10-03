@@ -100,7 +100,7 @@ object AddEdgeBundle {
     val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity)
   }
 }
-case class AddEdgeBundle(edgeLists: Seq[(Seq[Int], Int)])
+case class AddEdgeBundle(edgeLists: Seq[(Int, Int)])
     extends TypedMetaGraphOp[AddEdgeBundle.Input, AddEdgeBundle.Output] {
   import AddEdgeBundle._
   @transient override lazy val inputs = new Input
@@ -110,8 +110,8 @@ case class AddEdgeBundle(edgeLists: Seq[(Seq[Int], Int)])
     val sc = rc.sparkContext
     val (srcs, dsts) = edgeLists.unzip
     val es = sc.parallelize(
-      edgeLists.flatMap {
-        case (s, i) => s.map(j => Edge(j.toLong, i.toLong))
+      edgeLists.map {
+        case (a, b) => Edge(a.toLong, b.toLong)
       }).randomNumbered(rc.onePartitionPartitioner)
     output(o.esAB, es)
   }

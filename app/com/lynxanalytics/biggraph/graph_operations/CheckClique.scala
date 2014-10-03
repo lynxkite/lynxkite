@@ -44,7 +44,10 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None) extends TypedMeta
       .toSortedRDD(vertexPartitioner)
 
     val cliquesToVsWithNs = vsToCliques.sortedLeftOuterJoin(neighborsOut).sortedLeftOuterJoin(neighborsIn)
-      .map { case (v, ((clique, nsOut), nsIn)) => clique -> (v, nsOut.getOrElse(Iterable()), nsIn.getOrElse(Iterable())) }
+      .map {
+        case (v, ((clique, nsOut), nsIn)) =>
+          clique -> (v, nsOut.getOrElse(Iterable()), nsIn.getOrElse(Iterable()))
+      }
       .groupBySortedKey(cliquePartitioner)
 
     // for every node in the clique create outgoing and ingoing adjacency sets
@@ -56,7 +59,7 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None) extends TypedMeta
         val outSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
         val inSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
         vsToNs.foreach {
-          case (v, nsOut, nsIn) if members.contains(v) =>
+          case (v, nsOut, nsIn) =>
             outSets(v) ++= nsOut
             inSets(v) ++= nsIn
         }
