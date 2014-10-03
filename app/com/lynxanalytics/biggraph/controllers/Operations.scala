@@ -229,6 +229,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new SegmentationOperation(_) {
+    val title = "Check cliques"
+    val description = """Checks if the given cliques are maximal.
+      Throws an AssertionError exception for every non-maximal clique.
+      Edges required in both directions."""
+    val parameters = Seq(
+      Param("selected", "Clique ids to check", defaultValue = "<All>"))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      val selected =
+        if (params("selected") == "<All>") None
+        else Some(params("selected").split(",").map(_.toLong).toSet)
+      val op = graph_operations.CheckClique(selected)
+      val result = op(op.es, parent.edgeBundle)(op.belongsTo, seg.belongsTo).result
+      parent.scalars("dummy") = result.dummy
+    }
+  })
+
   register(new CreateSegmentationOperation(_) {
     val title = "Connected components"
     val description = ""
