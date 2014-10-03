@@ -33,16 +33,15 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None) extends TypedMeta
     val vertexPartitioner = inputs.vs.rdd.partitioner.get
     val cliquePartitioner = inputs.cliques.rdd.partitioner.get
     val belongsTo = inputs.belongsTo.rdd
+      .filter { case (_, edge) => cliquesToCheck.map(c => c.contains(edge.dst)).getOrElse(true) }
     val es = inputs.es.rdd
 
     val neighbors = es.map { case (_, edge) => edge.src -> edge.dst }
       .groupBySortedKey(vertexPartitioner)
     val vsToCliques = belongsTo.map { case (_, edge) => edge.src -> edge.dst }
       .toSortedRDD(vertexPartitioner)
-      
-    // filtering is to only check cliques that are in the cliquesToCheck set
+
     val cliquesToVsWithNs = vsToCliques.sortedLeftOuterJoin(neighbors)
-      .filter { case (_, (clique, _)) => cliquesToCheck.map(c => c.contains(clique)).getOrElse(true) }
       .map { case (v, (clique, ns)) => clique -> (v, ns.getOrElse(Iterable())) }
       .groupBySortedKey(cliquePartitioner)
 
