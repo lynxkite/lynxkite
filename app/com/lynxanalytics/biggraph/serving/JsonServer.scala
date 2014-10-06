@@ -19,12 +19,23 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
-  def action = {
+  def action[A](parser: mvc.BodyParser[A])(block: mvc.Request[A] => mvc.Result): mvc.Action[A] = {
     // Turn off authentication in development mode.
     if (productionMode) {
-      SecuredAction(authorize = LynxUser, ajaxCall = true)
+      SecuredAction(authorize = LynxUser, ajaxCall = true)(parser)(block(_))
     } else {
-      mvc.Action
+      mvc.Action(parser)(block(_))
+    }
+  }
+
+  // It would be great to merge this with action[A], but the compiler crashes when I try.
+  def asyncAction[A](parser: mvc.BodyParser[A])(
+    block: mvc.Request[A] => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
+    // Turn off authentication in development mode.
+    if (productionMode) {
+      SecuredAction(authorize = LynxUser, ajaxCall = true).async(parser)(block(_))
+    } else {
+      mvc.Action.async(parser)(block(_))
     }
   }
 
@@ -55,7 +66,7 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
   }
 
   def jsonFuture[I: json.Reads, O: json.Writes](handler: I => concurrent.Future[O]) = {
-    action.async(parse.anyContent) { request =>
+    asyncAction(parse.anyContent) { request =>
       jsonQuery(request) { i: I =>
         handler(i).map(o => Ok(json.Json.toJson(o)))
       }
