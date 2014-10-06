@@ -27,8 +27,8 @@ object ImportUtil {
     val quote = "\""
     val nonQuote = "[^\"]"
     val doubleQuote = quote + quote
-    val quotedString = capture(quote + any(oneOf(nonQuote, doubleQuote)) + quote)
-    val anyString = capture(".*?")
+    val quotedString = quote + any(oneOf(nonQuote, doubleQuote)) + quote
+    val anyString = ".*?"
     val r = oneOf(oneField(quotedString), oneField(anyString)).r
     val splitter = { line: String =>
       val matches = r.findAllMatchIn(line)
