@@ -63,6 +63,10 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     listener.promise(req.timestamp).future
   }
 
+  def sparkCancelJobs(req: serving.Empty): Unit = {
+    sc.cancelAllJobs()
+  }
+
   def getClusterStatus(request: serving.Empty): SparkClusterStatusResponse = {
     SparkClusterStatusResponse(environment.sparkContext.master, environment.numInstances)
   }

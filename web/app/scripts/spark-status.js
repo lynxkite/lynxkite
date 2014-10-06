@@ -26,7 +26,7 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
       }
 
       scope.kill = function() {
-        util.nocache('/ajax/spark-cancel-jobs');
+        util.post('/ajax/spark-cancel-jobs', { fake: 1 });
       };
     },
   };

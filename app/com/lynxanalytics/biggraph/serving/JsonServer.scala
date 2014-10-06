@@ -200,6 +200,7 @@ object ProductionJsonServer extends JsonServer {
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
   def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
+  def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
