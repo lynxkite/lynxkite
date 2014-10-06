@@ -103,7 +103,12 @@ object BigGraphSparkContext {
       .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
       .set("spark.speculation.quantile", "0.90") // (Fraction.) This much of the stage has to complete first.
       .set("spark.speculation.multiplier", "2") // (Ratio.) Task has to be this much slower than the median.
-      .set("spark.scheduler.mode", "FAIR")
+      .set(
+        // Enables fair scheduling, that is tasks of all running jobs are scheduled round-robin
+        // instead of one job finishes completely first. See:
+        // http://spark.apache.org/docs/latest/job-scheduling.html
+        "spark.scheduler.mode",
+        "FAIR")
     if (useKryo) {
       sparkConf = sparkConf
         .set("spark.serializer",
