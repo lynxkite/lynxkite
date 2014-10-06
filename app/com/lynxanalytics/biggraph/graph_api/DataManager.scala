@@ -9,7 +9,7 @@ import scala.collection.mutable
 import scala.concurrent._
 import ExecutionContext.Implicits.global
 
-import com.lynxanalytics.biggraph.bigGraphLogger
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
@@ -75,6 +75,7 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def load(entity: MetaGraphEntity): Future[EntityData] = {
+    log.info(s"PERF Found entity $entity of GUID ${entity.gUID} on disk")
     entity match {
       case vs: VertexSet => load(vs)
       case eb: EdgeBundle => load(eb)
@@ -98,9 +99,14 @@ class DataManager(sc: spark.SparkContext,
       inputs <- futureInputs
     } yield {
       val inputDatas = DataSet(inputs.toMap)
-      blocking {
+      instance.outputs.scalars.values
+        .foreach(scalar => log.info(s"PERF Computing scalar $scalar of GUID ${scalar.gUID}"))
+      val res = blocking {
         instance.run(inputDatas, runtimeContext)
       }
+      instance.outputs.scalars.values
+        .foreach(scalar => log.info(s"PERF Computed scalar of GUID ${scalar.gUID}"))
+      res
     }
     instance.outputs.all.foreach {
       case (name, entity) =>
@@ -186,22 +192,49 @@ class DataManager(sc: spark.SparkContext,
     Await.result(getFuture(entity), duration.Duration.Inf)
   }
 
+  def loadToMemory(entity: MetaGraphEntity): Unit = {
+    val data = get(entity)
+    data match {
+      case rddData: EntityRDDData => {
+        val rdd = rddData.rdd
+        val fullyCached = sc
+          .getRDDStorageInfo
+          .find(_.id == rdd.id)
+          .map(rddInfo => rddInfo.isCached && rddInfo.numCachedPartitions == rddInfo.numPartitions)
+          .getOrElse(false)
+        if (!fullyCached) {
+          log.info(s"PERF Loading to memory RDD: $rdd")
+          rddData.rdd.cache
+          rddData.rdd.foreach(_ => ())
+          log.info(s"PERF RDD load completed: ${rdd.id}")
+        } else {
+          log.info(s"PERF RDD $rdd found in memory")
+        }
+      }
+      case _ => ()
+    }
+  }
+
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
-    bigGraphLogger.info(s"Saving entity $entity ...")
+    log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>
+        log.info(s"PERF Instantiating entity $entity of GUID ${entity.gUID} on disk")
         entityPath(entity).saveAsObjectFile(rddData.rdd)
+        log.info(s"PERF Instantiated entity of GUID ${entity.gUID} on disk")
       case scalarData: ScalarData[_] => {
+        log.info(s"PERF Writing scalar $entity of GUID ${entity.gUID} to disk")
         val targetDir = entityPath(entity)
         targetDir.mkdirs
         val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
         oos.writeObject(scalarData.value)
         oos.close()
         successPath(targetDir).createFromStrings("")
+        log.info(s"PERF Written scalar of GUID ${entity.gUID} to disk")
       }
     }
-    bigGraphLogger.info(s"Entity $entity saved.")
+    log.info(s"Entity $entity saved.")
   }
 
   // This is pretty sad, but I haven't find an automatic way to get the number of cores.
