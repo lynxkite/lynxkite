@@ -107,7 +107,7 @@ class DataManager(sc: spark.SparkContext,
         if (instance.operation.isHeavy) {
           if (hasEntityOnDisk(entity)) {
             // This could happen if the operation partially succeeded before.
-            // In this case no need to way for the current run, we can just load the
+            // In this case no need to wait for the current run, we can just load the
             // data for this particular entity.
             set(entity, load(entity))
           } else {
