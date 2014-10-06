@@ -7,6 +7,7 @@ angular
     'ui.bootstrap',
     'ui.layout',
     'cfp.hotkeys',
+    'jmdobry.angular-cache',
   ])
   .config(function ($routeProvider) {
     $routeProvider
@@ -32,8 +33,14 @@ angular
         redirectTo: '/',
       });
   })
-  .factory('util', function utilFactory($resource, $rootScope) {
+  .factory('util', function utilFactory($resource, $rootScope, $angularCacheFactory) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+    // A persistent cache. Requests made through util.get() will not be repeated
+    // even if the browser is restarted.
+    var localCache = $angularCacheFactory('localCache', {
+      maxAge: 24 * 3600,
+      storageMode: 'localStorage',
+    });
     function ajax(url, params, cache) {
       if (params === undefined) { params = { fake: 1 }; }
       var res = $resource(url, {}, { get: { method: 'GET', cache: cache } });
@@ -53,7 +60,7 @@ angular
         return scope.$watch(expr, fun, true);
       },
       // Json GET with caching and parameter wrapping.
-      get: function(url, params) { return ajax(url, params, true); },
+      get: function(url, params) { return ajax(url, params, localCache); },
       // Json GET with parameter wrapping and no caching.
       nocache: function(url, params) { return ajax(url, params, false); },
       // Json POST with simple error handling.
