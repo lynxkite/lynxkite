@@ -49,9 +49,7 @@ class DataManager(sc: spark.SparkContext,
 
   private def load[T](vertexAttribute: VertexAttribute[T]): Future[VertexAttributeData[T]] = {
     implicit val ct = vertexAttribute.classTag
-    for {
-      vs <- getFuture(vertexAttribute.vertexSet)
-    } yield {
+    getFuture(vertexAttribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val vsRDD = vs.rdd.cache
       val rawRDD = SortedRDD.fromUnsorted(entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
@@ -94,9 +92,7 @@ class DataManager(sc: spark.SparkContext,
         case (name, entity) =>
           getFuture(entity).map(data => (name, data))
       })
-    val outputDataSetFuture = for {
-      inputs <- futureInputs
-    } yield {
+    val outputDataSetFuture = futureInputs.map { inputs =>
       val inputDatas = DataSet(inputs.toMap)
       blocking {
         instance.run(inputDatas, runtimeContext)
