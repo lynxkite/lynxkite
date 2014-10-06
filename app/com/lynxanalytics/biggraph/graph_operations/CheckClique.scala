@@ -72,7 +72,7 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
           } else {
             outSets.values.reduceLeft(_ & _) != members
           }
-          if (inv) log.error(s"clique $clique is not a maximal clique")
+          if (inv) log.error(s"Clique $clique is not a maximal clique!\nmembers: ${members}\nout neighbor sets: ${outSets}\nin neighbor sets: $inSets")
           inv
       }
 
