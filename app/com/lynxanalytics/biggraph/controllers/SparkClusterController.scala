@@ -24,12 +24,14 @@ class SparkListener extends spark.scheduler.SparkListener {
   val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
   var currentResp = SparkStatusResponse(Seq(), 0)
 
-  override def onStageCompleted(stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = {
+  override def onStageCompleted(
+    stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
     activeStages -= stageCompleted.stageInfo.stageId
     send()
   }
 
-  override def onStageSubmitted(stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = {
+  override def onStageSubmitted(
+    stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
     activeStages += stageSubmitted.stageInfo.stageId
     send()
   }
