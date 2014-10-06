@@ -101,6 +101,16 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
          |((Voldemort,Harry),Voldemort loves Harry)""".stripMargin)
   }
 
+  test("Splitting edge cases") {
+    assert(ImportUtil.split("", delimiter = ",") == Seq(""))
+    assert(ImportUtil.split("a", delimiter = ",") == Seq("a"))
+    assert(ImportUtil.split(",", delimiter = ",") == Seq("", ""))
+    assert(ImportUtil.split("a,", delimiter = ",") == Seq("a", ""))
+    assert(ImportUtil.split("a,,", delimiter = ",") == Seq("a", "", ""))
+    assert(ImportUtil.split(",a,b", delimiter = ",") == Seq("", "a", "b"))
+    assert(ImportUtil.split(",,a,b,", delimiter = ",") == Seq("", "", "a", "b", ""))
+  }
+
   test("Splitting with quoted delimiters") {
     val input = """ "Hello, ""mr, smith""!", How are you "doing"?, "Okay, thanks." """.trim
     assert(ImportUtil.split(input, delimiter = ", ") ==
