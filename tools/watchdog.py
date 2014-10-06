@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import BaseHTTPServer
+import socket
 import subprocess
 import thread
 import time
@@ -46,6 +47,11 @@ class Server(BaseHTTPServer.HTTPServer):
     self.log = []  # Health check history.
     self.worry = 0  # Number of consecutive failures in the last period.
     BaseHTTPServer.HTTPServer.__init__(self, ('', flags.status_port), Handler)
+
+  def server_bind(self):
+    '''Allow re-using the port.'''
+    self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    BaseHTTPServer.HTTPServer.server_bind(self)
 
   def snippet(self):
     '''Returns a string that encodes the results of the last 100 health checks.'''
