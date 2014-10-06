@@ -34,7 +34,7 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
       op(op.vsA, g.vs)(op.vsB, s.vs).result
     }
     val check = {
-      val op = CheckClique()
+      val op = CheckClique(needsBothDirections = true)
       op(op.es, g.es)(op.belongsTo, bTo.esAB).result
     }
     // we expect clique 20 to be invalid as it is non maximal
@@ -47,8 +47,20 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
     val op = FindMaxCliques(3)
     val fmcOut = op(op.vs, g.vs)(op.es, g.es).result
     val check = {
-      val op = CheckClique()
+      val op = CheckClique(needsBothDirections = true)
       op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
     }
+    assert(check.invalid.value == 0)
+  }
+
+  test("check if a clique from a DAG triangle is a clique") {
+    val g = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(2), 2 -> Seq(0))).result
+    val op = FindMaxCliques(3)
+    val fmcOut = op(op.vs, g.vs)(op.es, g.es).result
+    val check = {
+      val op = CheckClique(needsBothDirections = false)
+      op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
+    }
+    assert(check.invalid.value == 0)
   }
 }
