@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class FindMaxCliquesTest extends FunSuite with TestGraphOp {
   test("triangle") {
     val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))).result
-    val op = FindMaxCliques(3)
+    val op = FindMaxCliques(3, needsBothDirections = true)
     val fmcOut = op(op.vs, g.vs)(op.es, g.es).result
     assert(fmcOut.segments.rdd.count == 1)
   }
@@ -44,7 +44,7 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
 
   test("check if a clique from triangle is a clique") {
     val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))).result
-    val op = FindMaxCliques(3)
+    val op = FindMaxCliques(3, needsBothDirections = true)
     val fmcOut = op(op.vs, g.vs)(op.es, g.es).result
     val check = {
       val op = CheckClique(needsBothDirections = true)
@@ -55,12 +55,36 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
 
   test("check if a clique from a DAG triangle is a clique") {
     val g = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(2), 2 -> Seq(0))).result
-    val op = FindMaxCliques(3)
+    val op = FindMaxCliques(3, needsBothDirections = false)
     val fmcOut = op(op.vs, g.vs)(op.es, g.es).result
     val check = {
       val op = CheckClique(needsBothDirections = false)
       op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
     }
+    assert(check.invalid.value == 0)
+  }
+
+  test("another directed triangle clique") {
+    val g = SmallTestGraph(Map(0 -> Seq(2), 1 -> Seq(0, 2), 2 -> Seq())).result
+    val op = FindMaxCliques(3, needsBothDirections = false)
+    val fmcOut = op(op.vs, g.vs)(op.es, g.es).result
+    val check = {
+      val op = CheckClique(needsBothDirections = false)
+      op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
+    }
+    assert(fmcOut.segments.rdd.count == 1)
+    assert(check.invalid.value == 0)
+  }
+
+  test("directed square clique") {
+    val g = SmallTestGraph(Map(0 -> Seq(2), 1 -> Seq(0, 2, 3), 2 -> Seq(), 3 -> Seq(0, 2))).result
+    val op = FindMaxCliques(3, needsBothDirections = false)
+    val fmcOut = op(op.vs, g.vs)(op.es, g.es).result
+    val check = {
+      val op = CheckClique(needsBothDirections = false)
+      op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
+    }
+    assert(fmcOut.segments.rdd.count == 1)
     assert(check.invalid.value == 0)
   }
 }
