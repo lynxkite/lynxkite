@@ -1,3 +1,4 @@
-<div class="spark-status">
-  {{status.activeStages}}
+<div class="spark-status" ng-if="status.activeStages">
+  <span class="spinner" tooltip="Calculating...">&#9881;</span>
+  <span class="glyphicon glyphicon-remove kill" tooltip="Stop&nbsp;calculation" ng-click="kill()"></span>
 </div>
