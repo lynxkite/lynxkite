@@ -31,23 +31,19 @@ class DataManager(sc: spark.SparkContext,
 
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
-      blocking {
-        new VertexSetData(
-          vertexSet,
-          SortedRDD.fromUnsorted(entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)
-            .partitionBy(runtimeContext.defaultPartitioner)))
-      }
+      new VertexSetData(
+        vertexSet,
+        SortedRDD.fromUnsorted(entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)
+          .partitionBy(runtimeContext.defaultPartitioner)))
     }
   }
 
   private def load(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
     future {
-      blocking {
-        new EdgeBundleData(
-          edgeBundle,
-          SortedRDD.fromUnsorted(entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)
-            .partitionBy(runtimeContext.defaultPartitioner)))
-      }
+      new EdgeBundleData(
+        edgeBundle,
+        SortedRDD.fromUnsorted(entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)
+          .partitionBy(runtimeContext.defaultPartitioner)))
     }
   }
 
@@ -57,15 +53,13 @@ class DataManager(sc: spark.SparkContext,
       vs <- getFuture(vertexAttribute.vertexSet)
     } yield {
       // We do our best to colocate partitions to corresponding vertex set partitions.
-      blocking {
-        val vsRDD = vs.rdd.cache
-        val rawRDD = SortedRDD.fromUnsorted(entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
-          .partitionBy(vsRDD.partitioner.get))
-        new VertexAttributeData[T](
-          vertexAttribute,
-          // This join does nothing except enforcing colocation.
-          vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
-      }
+      val vsRDD = vs.rdd.cache
+      val rawRDD = SortedRDD.fromUnsorted(entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
+        .partitionBy(vsRDD.partitioner.get))
+      new VertexAttributeData[T](
+        vertexAttribute,
+        // This join does nothing except enforcing colocation.
+        vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
     }
   }
 
@@ -93,7 +87,7 @@ class DataManager(sc: spark.SparkContext,
     entityCache(entity.gUID) = data
   }
 
-  private def execute(instance: MetaGraphOperationInstance): Unit = {
+  private def execute(instance: MetaGraphOperationInstance): Unit = synchronized {
     val inputs = instance.inputs
     val futureInputs = Future.sequence(
       inputs.all.toSeq.map {
@@ -111,16 +105,22 @@ class DataManager(sc: spark.SparkContext,
     instance.outputs.all.foreach {
       case (name, entity) =>
         if (instance.operation.isHeavy) {
-          set(
-            entity,
-            outputDataSetFuture
-              .flatMap { outputDataSet =>
+          if (hasEntityOnDisk(entity)) {
+            // This could happen if the operation partially succeeded before.
+            // In this case no need to way for the current run, we can just load the
+            // data for this particular entity.
+            set(entity, load(entity))
+          } else {
+            set(
+              entity,
+              outputDataSetFuture.flatMap { outputDataSet =>
                 val data = outputDataSet(entity.gUID)
                 blocking {
                   saveToDisk(data)
                 }
                 load(entity)
               })
+          }
         } else {
           set(entity, outputDataSetFuture.map(_(entity.gUID)))
         }
@@ -129,14 +129,12 @@ class DataManager(sc: spark.SparkContext,
 
   def isCalculated(entity: MetaGraphEntity): Boolean = hasEntity(entity) || hasEntityOnDisk(entity)
 
-  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = {
-    this.synchronized {
-      if (!hasEntity(entity)) {
-        if (hasEntityOnDisk(entity)) {
-          set(entity, load(entity))
-        } else {
-          execute(entity.source)
-        }
+  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
+    if (!hasEntity(entity)) {
+      if (hasEntityOnDisk(entity)) {
+        set(entity, load(entity))
+      } else {
+        execute(entity.source)
       }
     }
   }
@@ -189,28 +187,21 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def saveToDisk(data: EntityData): Unit = {
-    this.synchronized {
-      val entity = data.entity
-      if (!hasEntityOnDisk(data.entity)) {
-        bigGraphLogger.info(s"Saving entity $entity ...")
-        bigGraphLogger.debug(s"Parallelism is set to ${runtimeContext.numAvailableCores}")
-        data match {
-          case rddData: EntityRDDData =>
-            entityPath(entity).saveAsObjectFile(rddData.rdd)
-          case scalarData: ScalarData[_] => {
-            val targetDir = entityPath(entity)
-            targetDir.mkdirs
-            val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
-            oos.writeObject(scalarData.value)
-            oos.close()
-            successPath(targetDir).createFromStrings("")
-          }
-        }
-        bigGraphLogger.info(s"Entity $entity saved.")
-      } else {
-        bigGraphLogger.info(s"Skip saving entity $entity as it's already saved.")
+    val entity = data.entity
+    bigGraphLogger.info(s"Saving entity $entity ...")
+    data match {
+      case rddData: EntityRDDData =>
+        entityPath(entity).saveAsObjectFile(rddData.rdd)
+      case scalarData: ScalarData[_] => {
+        val targetDir = entityPath(entity)
+        targetDir.mkdirs
+        val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
+        oos.writeObject(scalarData.value)
+        oos.close()
+        successPath(targetDir).createFromStrings("")
       }
     }
+    bigGraphLogger.info(s"Entity $entity saved.")
   }
 
   // This is pretty sad, but I haven't find an automatic way to get the number of cores.
