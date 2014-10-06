@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import scala.collection.mutable
@@ -14,11 +15,12 @@ object CheckClique {
     val belongsTo = edgeBundle(vs, cliques)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
-    val dummy = scalar[Unit]
+    val invalid = scalar[Long]
   }
 }
 import CheckClique._
-case class CheckClique(cliquesToCheck: Option[Set[ID]] = None) extends TypedMetaGraphOp[Input, Output] {
+case class CheckClique(cliquesToCheck: Option[Set[ID]] = None)
+    extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -53,7 +55,7 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None) extends TypedMeta
     // for every node in the clique create outgoing and ingoing adjacency sets
     // put the node itself into these sets
     // create the intersection of all the sets, this should be the same as the clique members set
-    val valid = cliquesToVsWithNs.foreach {
+    val invalid = cliquesToVsWithNs.filter {
       case (clique, vsToNs) =>
         val members = vsToNs.map(_._1).toSet
         val outSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
@@ -63,10 +65,11 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None) extends TypedMeta
             outSets(v) ++= nsOut
             inSets(v) ++= nsIn
         }
-        assert((outSets.values.reduceLeft(_ & _) & inSets.values.reduceLeft(_ & _)) == members,
-          s"clique $clique is not a maximal clique")
+        val inv = (outSets.values.reduceLeft(_ & _) & inSets.values.reduceLeft(_ & _)) != members
+        if (inv) log.error(s"clique $clique is not a maximal clique")
+        inv
     }
 
-    output(o.dummy, ())
+    output(o.invalid, invalid.count)
   }
 }

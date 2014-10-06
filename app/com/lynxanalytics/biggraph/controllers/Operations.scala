@@ -243,7 +243,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         else Some(params("selected").split(",").map(_.toLong).toSet)
       val op = graph_operations.CheckClique(selected)
       val result = op(op.es, parent.edgeBundle)(op.belongsTo, seg.belongsTo).result
-      parent.scalars("dummy") = result.dummy
+      parent.scalars("invalid_cliques") = result.invalid
     }
   })
 
