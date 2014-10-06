@@ -23,20 +23,21 @@ object ImportUtil {
     def oneOf(options: String*) = options.mkString("|")
     def any(p: String) = capture(p) + "*"
     def capture(p: String) = "(" + p + ")"
-    def oneField(p: String) = oneOf(p + delim, p + "$") // Delimiter or line end.
+    def oneField(p: String) = oneOf(capture(p + delim), capture(p + "$")) // Delimiter or line end.
     val quote = "\""
     val nonQuote = "[^\"]"
     val doubleQuote = quote + quote
-    val quotedString = capture(quote + any(oneOf(nonQuote, doubleQuote)) + quote)
-    val anyString = capture(".*?")
+    val quotedString = quote + any(oneOf(nonQuote, doubleQuote)) + quote
+    val anyString = ".*?"
     val r = oneOf(oneField(quotedString), oneField(anyString)).r
     val splitter = { line: String =>
       val matches = r.findAllMatchIn(line)
       // Find the top-level group that has matched in each field.
       val fields = matches.map(_.subgroups.find(_ != null).get).toList
-      val l = fields.length
-      // The last field may be a mistake. (Sorry, I couldn't write a better regex.)
-      val fixed = if (l < 2 || fields(l - 2).endsWith(delimiter)) fields else fields.take(l - 1)
+      // The regex will always have an empty match at the end, which we may or may not need to
+      // include. We include all the matches that end with a comma, plus one that does not.
+      val lastIndex = fields.indexWhere(!_.endsWith(delimiter))
+      val fixed = fields.take(lastIndex + 1).map(_.stripSuffix(delimiter))
       // Remove quotes and unescape double-quotes in quoted fields.
       fixed.map { field =>
         if (field.startsWith(quote) && field.endsWith(quote)) {
