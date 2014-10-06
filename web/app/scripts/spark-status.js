@@ -15,12 +15,15 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
       scope.$watch('update.$resolved', update);
       function update() {
         if (scope.update && scope.update.$resolved) {
-          scope.status = scope.update;
-          // -1 is used for the timestamp in Grunt testing.
-          // We throttle in this case to avoid a busy loop.
-          if (scope.update.error || scope.update.timestamp === -1) {
+          if (scope.update.error) {
             $timeout(load, 10000);  // Try again in a bit.
+          } else if (scope.update.timestamp === -1) {
+            scope.status = scope.update;
+            // -1 is used for the timestamp in Grunt testing.
+            // We throttle in this case to avoid a busy loop.
+            $timeout(load, 10000);
           } else {
+            scope.status = scope.update;
             load();
           }
         }
