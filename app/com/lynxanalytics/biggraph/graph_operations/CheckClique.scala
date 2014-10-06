@@ -19,7 +19,7 @@ object CheckClique {
   }
 }
 import CheckClique._
-case class CheckClique(cliquesToCheck: Option[Set[ID]] = None)
+case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirections: Boolean = false)
     extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input
 
@@ -54,21 +54,27 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None)
 
     // for every node in the clique create outgoing and ingoing adjacency sets
     // put the node itself into these sets
-    // create the intersection of all the sets, this should be the same as the clique members set
-    val invalid = cliquesToVsWithNs.filter {
-      case (clique, vsToNs) =>
-        val members = vsToNs.map(_._1).toSet
-        val outSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
-        val inSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
-        vsToNs.foreach {
-          case (v, nsOut, nsIn) =>
-            outSets(v) ++= nsOut
-            inSets(v) ++= nsIn
-        }
-        val inv = (outSets.values.reduceLeft(_ & _) & inSets.values.reduceLeft(_ & _)) != members
-        if (inv) log.error(s"clique $clique is not a maximal clique")
-        inv
-    }
+    // create the intersection of all the sets, this should be the same as the clique members set      
+    val invalid =
+      cliquesToVsWithNs.filter {
+        case (clique, vsToNs) =>
+          val members = vsToNs.map(_._1).toSet
+          val outSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
+          val inSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
+          vsToNs.foreach {
+            case (v, nsOut, nsIn) =>
+              outSets(v) ++= nsOut
+              // if one direction is enough, we only use the outSets
+              if (needsBothDirections) inSets(v) ++= nsIn else outSets(v) ++= nsIn
+          }
+          val inv = if (needsBothDirections) {
+            (outSets.values.reduceLeft(_ & _) & inSets.values.reduceLeft(_ & _)) != members
+          } else {
+            outSets.values.reduceLeft(_ & _) != members
+          }
+          if (inv) log.error(s"clique $clique is not a maximal clique")
+          inv
+      }
 
     output(o.invalid, invalid.count)
   }
