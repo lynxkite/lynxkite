@@ -65,7 +65,7 @@ angular
       nocache: function(url, params) { return ajax(url, params, false); },
       // Json POST with simple error handling.
       post: function(url, params, onSuccess) {
-        var resource = $resource(url).save(params, onSuccess, function(failure) {
+        var resource = $resource(url).save({}, params, onSuccess, function(failure) {
           util.ajaxError(failure);
         });
         // Returns a promise of the success state, for flexibility.
