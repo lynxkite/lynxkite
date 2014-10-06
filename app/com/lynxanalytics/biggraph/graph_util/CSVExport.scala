@@ -73,7 +73,7 @@ object CSVExport {
 
   private def attachAttributeData(
     keyData: rdd.RDD[(ID, Seq[String])],
-    attributes: Seq[Attribute[_]],
+    attributes: Seq[VertexAttribute[_]],
     dataManager: DataManager): rdd.RDD[(ID, Seq[String])] = {
 
     var indexedData = keyData
@@ -92,7 +92,7 @@ object CSVExport {
   }
 
   private def stringRDDFromAttribute[T: ClassTag](
-    dataManager: DataManager, attribute: Attribute[T]): rdd.RDD[(ID, String)] = {
+    dataManager: DataManager, attribute: VertexAttribute[T]): rdd.RDD[(ID, String)] = {
     implicit val tagForT = attribute.typeTag
     val op = toCSVStringOperation[T]
     dataManager.get(attribute).rdd.mapValues(op)

@@ -165,8 +165,10 @@ case class SimpleInputSignature(
   vertexAttributes: Map[Symbol, Symbol] = Map(),
   scalars: Set[Symbol] = Set()) extends InputSignature
 
+object ReflectionMutex
+
 trait FieldNaming {
-  private lazy val naming: IdentityHashMap[Any, Symbol] = {
+  private lazy val naming: IdentityHashMap[Any, Symbol] = ReflectionMutex.synchronized {
     val res = new IdentityHashMap[Any, Symbol]()
     val mirror = reflect.runtime.currentMirror.reflect(this)
 
@@ -370,7 +372,7 @@ trait MetaGraphOp extends Serializable {
   }
 
   override def toString = toStringStruct.toString
-  def toStringStruct = {
+  def toStringStruct = ReflectionMutex.synchronized {
     val mirror = reflect.runtime.currentMirror.reflect(this)
     val className = mirror.symbol.name.toString
     val params = mirror.symbol.toType.members.collect { case m: MethodSymbol if m.isCaseAccessor => m }
@@ -599,6 +601,16 @@ case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
 
   def all: Map[Symbol, EntityData] =
     vertexSets ++ edgeBundles ++ vertexAttributes ++ scalars
+}
+
+object DataSet {
+  def apply(all: Map[Symbol, EntityData]): DataSet = {
+    DataSet(
+      vertexSets = all.collect { case (k, v: VertexSetData) => (k, v) },
+      edgeBundles = all.collect { case (k, v: EdgeBundleData) => (k, v) },
+      vertexAttributes = all.collect { case (k, v: VertexAttributeData[_]) => (k, v) }.toMap,
+      scalars = all.collect { case (k, v: ScalarData[_]) => (k, v) }.toMap)
+  }
 }
 
 class OutputBuilder(val instance: MetaGraphOperationInstance) {
