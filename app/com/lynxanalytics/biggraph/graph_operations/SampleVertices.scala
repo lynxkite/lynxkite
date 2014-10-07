@@ -24,7 +24,7 @@ case class SampleVertices(maxCount: Int) extends TypedMetaGraphOp[Input, Output]
 
     val vs = inputs.vs.rdd
     val sample = vs.takeFirstNValuesOrSo(maxCount).keys.collect.toSeq
-    
+
     output(o.sample, sample)
   }
 }
