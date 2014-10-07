@@ -1,14 +1,10 @@
-<span ng-if="!renaming">
+<span ng-hide="renaming">
   {{attr.title}}
 </span>
-<label>
-  <form ng-submit="renaming = side.rename('vertex-attribute', attr.title, newName)" style="display: inline;" ng-show="renaming">
-    <input class="form-control" ng-model="newName" ng-blur="renaming = newName !== attr.title">
-  </form>
-  <span ng-click="newName = renaming ? newName : attr.title; renaming = !renaming || side.rename('vertex-attribute', attr.title, newName);">
-    <i class="clicky glyphicon glyphicon-pencil" tooltip="Rename" tooltip-append-to-body="true"></i>
-  </span>
-</label>
+<form ng-submit="renaming = side.rename('vertex-attribute', attr.title, newName)" style="display: inline;" ng-show="renaming">
+  <input id="renameBox" class="form-control" style="display: inline; width: 200px;"
+    ng-model="newName" ng-blur="renaming = newName !== attr.title">
+</form>
 
 <span ng-if="side.state.graphMode === 'bucketed' && attr.canBucket" class="de-emph">
   Graph on
@@ -70,12 +66,22 @@
   model="histogram" type="vertex" tsv="histogramTSV">
 </histogram-button>
 <copy-box ng-show="histogram" description="Copy&nbsp;histogram to&nbsp;clipboard" data="{{histogramTSV}}"></copy-box>
-<span class="pull-right" ng-click="side.discard('vertex-attribute', attr.title);">
-  <i class="clicky glyphicon glyphicon-remove" tooltip="Discard attribute" tooltip-append-to-body="true"></i>
-</span>
 <label ng-show="showLogCheckbox()">
   <input type="checkbox" ng-model="side.axisOptions('vertex', attr.title).logarithmic"> logarithmic
 </label>
+
+<div class="btn-group pull-right" dropdown>
+  <a href class="btn-dropdown dropdown-toggle"><span class="caret"></span></a>
+  <ul class="dropdown-menu">
+    <li><a href ng-click="toggleRenaming()">
+      <i class="glyphicon glyphicon-pencil"></i> Rename...
+    </a></li>
+    <li><a href ng-click="side.discard('vertex-attribute', attr.title);">
+      <i class="glyphicon glyphicon-trash"></i> Discard
+    </a></li>
+  </ul>
+</div>
+
 <span class="type-name">{{attr.typeName}}</span>
 <div class="clearfix"></div>
 <histogram ng-show="histogram" model="histogram"></histogram>

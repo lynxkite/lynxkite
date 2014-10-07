@@ -50,6 +50,22 @@ input.save-as {
   color: black;
 }
 
+.sublist .btn-dropdown {
+  display: inline-block;
+  color: rgba(0, 0, 0, 0.3);
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  box-shadow: none !important;
+}
+.sublist .btn-dropdown .caret {
+  border-width: 5px;
+}
+.sublist .btn-group.open .btn-dropdown,
+.sublist .btn-dropdown:hover {
+  color: black;
+}
+
 .type-name {
   position: absolute;
   bottom: 0;
