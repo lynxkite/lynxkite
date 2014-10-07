@@ -28,6 +28,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       extends Operation(p, Category("Hidden", "", visible = false)) {
     val description = ""
   }
+  abstract class HiddenSegmentationOperation(p: Project)
+      extends HiddenOperation(p) {
+    protected def seg = project.asSegmentation
+    protected def parent = seg.parent
+  }
   abstract class SegmentationOperation(p: Project)
       extends Operation(p, Category("Segmentation operations", "yellow", visible = p.isSegmentation)) {
     protected def seg = project.asSegmentation
@@ -229,11 +234,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
+  register(new HiddenSegmentationOperation(_) {
     val title = "Check cliques"
-    val description = """Checks if the given cliques are maximal.
-      Throws an AssertionError exception for every non-maximal clique.
-      Edges required in both directions."""
     val parameters = Seq(
       Param("selected", "Clique ids to check", defaultValue = "<All>"),
       Param("bothdir", "Edges required in both directions", options = UIValue.seq(Seq("true", "false"))))
