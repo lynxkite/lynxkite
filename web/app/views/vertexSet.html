@@ -28,18 +28,6 @@
   <div class="panel panel-default" ng-if="side.data.$resolved && !side.data.error">
     <div class="panel-heading">
       <shortn text="{{side.data.title}}"></shortn>
-      <div class="btn-group">
-        <label class="btn btn-default" ng-model="side.state().graphMode" btn-radio="'bucketed'" uncheckable>
-          <i tooltip="Bucketed&nbsp;Graph" class="glyphicon glyphicon-th"></i>
-        </label>
-        <label class="btn btn-default" ng-model="side.state().graphMode" btn-radio="'sampled'" uncheckable>
-          <i tooltip="Sampled&nbsp;Graph" class="glyphicon glyphicon-eye-open"></i>
-        </label>
-      </div>
-      <input style="vertical-align: middle;" ng-show="side.state().graphMode == 'bucketed'"
-      tooltip="{{side.state().bucketCount}}&times;{{side.state().bucketCount}} buckets" type="range" min="1" max="10" step="1" ng-model="side.state().bucketCount">
-      <input style="vertical-align: middle;" ng-show="side.state().graphMode == 'sampled'"
-        tooltip="radius {{side.state().sampleRadius}}" type="range" max="10" step="1" ng-model="side.state().sampleRadius">
       <span style="float: right">
         <span class="glyphicon clicky glyphicon-arrow-{{side.other.name}}"
           tooltip="Show on the {{side.other.name}}"
@@ -53,26 +41,6 @@
       <sublist ng-show="side.data.attributes" heading="Vertex Attributes">
         <li class="list-group-item" ng-repeat="attr in side.data.attributes">
           <shortn text="{{attr.title}}"></shortn>
-          <span ng-if="side.state().graphMode == 'bucketed'">
-            <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().xAttribute === attr.id }"
-                ng-click="setState(side, 'xAttribute', attr.id)">Graph on X</button>
-            <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().yAttribute === attr.id }"
-                ng-click="setState(side, 'yAttribute', attr.id)">Graph on Y</button>
-          </span>
-          <span ng-if="side.state().graphMode == 'sampled'">
-            <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().sizeAttribute === attr.id }"
-                ng-click="setState(side, 'sizeAttribute', attr.id)">Graph as size</button>
-            <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().labelAttribute === attr.id }"
-                ng-click="setState(side, 'labelAttribute', attr.id)">Graph as label</button>
-          </span>
-          <input class="form-control filter" placeholder="filter" ng-model="side.state().filters[attr.id]"
-              ng-model-options="{ updateOn: 'blur' }">
-          <span
-            ng-hide="attr.showHistogram"
-            class="clicky glyphicon glyphicon-stats"
-            tooltip="Show histogram"
-            ng-click="startToShowHistogram(side, attr)"></span>
-          <histogram ng-show="attr.showHistogram" model="attr.histogram"></histogram>
         </li>
       </sublist>
       <sublist ng-show="side.data.localEdges" heading="Local Edge Bundles">
@@ -84,8 +52,6 @@
           <button class="btn btn-default" ng-click="side.followEB(bundle, false)">
             Follow reverse
           </button>
-          <button class="btn btn-default" ng-class="{ 'btn-primary': side.state().edgeBundle === bundle }"
-              ng-click="setState(side, 'edgeBundle', bundle)">Graph</button>
         </li>
       </sublist>
       <sublist ng-show="side.data.inEdges" heading="Incoming Edge Bundles">

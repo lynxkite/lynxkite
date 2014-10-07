@@ -168,7 +168,7 @@ object ProductionJsonServer extends JsonServer {
 
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
   def vertexSetGet = jsonGet(bigGraphController.vertexSet)
-  def applyOpGet = jsonGet(bigGraphController.applyOp)
+  def applyOp = jsonPost(bigGraphController.applyOp)
   def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
   def startingVertexSetsGet = jsonGet(bigGraphController.startingVertexSets)
   def createProject = jsonPost(bigGraphController.createProject)

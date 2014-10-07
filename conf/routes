@@ -1,5 +1,5 @@
 GET  /ajax/vertexSet   com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexSetGet
-GET  /ajax/applyOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.applyOpGet
+POST /ajax/applyOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.applyOp
 GET  /ajax/startingOps com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingOperationsGet
 GET  /ajax/startingVs  com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingVertexSetsGet
 GET  /ajax/sparkStatus com.lynxanalytics.biggraph.serving.ProductionJsonServer.getClusterStatus
