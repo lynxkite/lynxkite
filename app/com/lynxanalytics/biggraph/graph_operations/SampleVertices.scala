@@ -23,12 +23,12 @@ case class SampleVertices(n: Int) extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
 
     val vs = inputs.vs.rdd
-    val sampleOrSo = vs.takeFirstNValuesOrSo(n * 2).keys
-    val sizeOrSo = sampleOrSo.count
+    val sampleOrSo = vs.takeFirstNValuesOrSo(n * 2).collect.map(_._1)
+    val sizeOrSo = sampleOrSo.size
     val sample = {
-      if (sizeOrSo == n) sampleOrSo.collect
-      else if (sizeOrSo > n) sampleOrSo.take(n)
-      else vs.keys.take(n)
+      if (sizeOrSo > n) sampleOrSo.take(n)
+      else if (sizeOrSo == n) sampleOrSo
+      else vs.take(n).map(_._1)
     }.toSeq
 
     output(o.sample, sample)
