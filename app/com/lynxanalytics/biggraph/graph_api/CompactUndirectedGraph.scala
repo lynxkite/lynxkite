@@ -4,21 +4,22 @@ import org.apache.spark.SparkContext._
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.util.Sorting
-
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 object CompactUndirectedGraph {
   def apply(edges: EdgeBundleData, needsBothDirections: Boolean = true): CompactUndirectedGraph = {
     assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
-    val outEdges = edges.rdd.map {
+    val edgesRDD = edges.rdd
+    val outEdges = edgesRDD.map {
       case (id, edge) => (edge.src, edge.dst)
-    }.groupByKey()
-    val inEdges = edges.rdd.map {
+    }.groupBySortedKey(edgesRDD.partitioner.get)
+    val inEdges = edgesRDD.map {
       case (id, edge) => (edge.dst, edge.src)
-    }.groupByKey()
-    val adjList = outEdges.join(inEdges)
+    }.groupBySortedKey(edgesRDD.partitioner.get)
+    val adjList = outEdges.fullOuterJoin(inEdges)
       .map {
         case (v, (outs, ins)) => {
-          val outSet = outs.toSet
-          val inSet = ins.toSet
+          val outSet = outs.getOrElse(Seq()).toSet
+          val inSet = ins.getOrElse(Seq()).toSet
           val combined = if (needsBothDirections) (outSet & inSet) else (outSet | inSet)
           (v, (combined - v).toArray.sorted)
         }
