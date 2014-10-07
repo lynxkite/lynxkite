@@ -19,6 +19,8 @@ case class SetClusterNumInstanceRequest(
   password: String,
   workerInstances: Int)
 
+// This listener is used for long polling on /ajax/spark-status.
+// The response is delayed until there is an update.
 class SparkListener extends spark.scheduler.SparkListener {
   val activeStages = collection.mutable.Set[Int]()
   val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
@@ -36,7 +38,7 @@ class SparkListener extends spark.scheduler.SparkListener {
     send()
   }
 
-  def send(): Unit = synchronized {
+  private def send(): Unit = synchronized {
     val time = System.currentTimeMillis
     currentResp = SparkStatusResponse(activeStages.toSeq, time)
     for (p <- promises) {
@@ -45,14 +47,15 @@ class SparkListener extends spark.scheduler.SparkListener {
     promises.clear()
   }
 
-  def promise(timestamp: Long): concurrent.Promise[SparkStatusResponse] = synchronized {
+  // Returns a future response to a client who is up to date until the given timestamp.
+  def future(timestamp: Long): concurrent.Future[SparkStatusResponse] = synchronized {
     val p = concurrent.promise[SparkStatusResponse]
     if (timestamp < currentResp.timestamp) {
       p.success(currentResp) // We immediately have news for you.
     } else {
       promises += p // No news currently. You have successfully subscribed.
     }
-    return p
+    return p.future
   }
 }
 
@@ -62,7 +65,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   sc.addSparkListener(listener)
 
   def sparkStatus(req: SparkStatusRequest): concurrent.Future[SparkStatusResponse] = {
-    listener.promise(req.timestamp).future
+    listener.future(req.timestamp)
   }
 
   def sparkCancelJobs(req: serving.Empty): Unit = {

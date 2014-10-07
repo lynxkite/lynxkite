@@ -6,6 +6,8 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
     scope: {},
     templateUrl: 'spark-status.html',
     link: function(scope) {
+      // The status is updated in a "long poll". The server delays the response until
+      // there is an update.
       scope.status = { timestamp: 0 };
       load();
       function load() {
