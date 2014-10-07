@@ -425,7 +425,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     dataManager.loadToMemory(vertexSet)
     loadGUIDsToMemory(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
-    CenterResponse(filtered.rdd.keys.take(request.count).map(_.toString))
+    val sampled = {
+      val op = graph_operations.SampleVertices(request.count)
+      op(op.vs, filtered).result.sample.value
+    }
+    CenterResponse(sampled.map(_.toString))
   }
 
   def getHistogram(request: HistogramSpec): HistogramResponse = {
