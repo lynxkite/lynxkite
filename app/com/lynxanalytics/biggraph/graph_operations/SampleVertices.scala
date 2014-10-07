@@ -14,7 +14,7 @@ object SampleVertices {
   }
 }
 import SampleVertices._
-case class SampleVertices(maxCount: Int) extends TypedMetaGraphOp[Input, Output] {
+case class SampleVertices(n: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
@@ -23,7 +23,13 @@ case class SampleVertices(maxCount: Int) extends TypedMetaGraphOp[Input, Output]
     implicit val id = inputDatas
 
     val vs = inputs.vs.rdd
-    val sample = vs.takeFirstNValuesOrSo(maxCount).keys.collect.toSeq
+    val sampleOrSo = vs.takeFirstNValuesOrSo(n * 2).keys
+    val sizeOrSo = sampleOrSo.count
+    val sample = {
+      if (sizeOrSo == n) sampleOrSo.collect
+      else if (sizeOrSo > n) sampleOrSo.take(n)
+      else vs.keys.take(n)
+    }.toSeq
 
     output(o.sample, sample)
   }
