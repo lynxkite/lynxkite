@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
  * specification, see the comment for VertexView's indexingSeq field.
  *
  * One application of this operation computes one step in the product, that is given the index
- * based on the previous bucketed attributes (baseIndices), it comutes the index based on the
+ * based on the previous bucketed attributes (baseIndices), it computes the index based on the
  * previous and the current bucketed attribute.
  */
 object Indexer {
