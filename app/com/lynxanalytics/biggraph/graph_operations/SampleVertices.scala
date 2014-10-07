@@ -26,8 +26,7 @@ case class SampleVertices(n: Int) extends TypedMetaGraphOp[Input, Output] {
     val sampleOrSo = vs.takeFirstNValuesOrSo(n * 2).collect.map(_._1)
     val sizeOrSo = sampleOrSo.size
     val sample = {
-      if (sizeOrSo > n) sampleOrSo.take(n)
-      else if (sizeOrSo == n) sampleOrSo
+      if (sizeOrSo >= n) sampleOrSo.take(n)
       else vs.take(n).map(_._1)
     }.toSeq
 
