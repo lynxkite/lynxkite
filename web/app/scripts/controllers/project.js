@@ -321,7 +321,7 @@ angular.module('biggraph')
       this.applyOp('Rename-' + kind, { from: oldName, to: newName });
     };
 
-    Side.prototype.clone = function(kind, name) {
+    Side.prototype.duplicate = function(kind, name) {
       this.applyOp('Copy-' + kind, { from: name, to: 'Copy of ' + name });
     };
 

@@ -22,8 +22,8 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout) {
         scope.side.discard(scope.type, scope.name);
       };
 
-      scope.clone = function() {
-        scope.side.clone(scope.type, scope.name);
+      scope.duplicate = function() {
+        scope.side.duplicate(scope.type, scope.name);
       };
     },
   };
