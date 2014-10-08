@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
 
 case class SparkStatusRequest(
-  timestamp: Long) // Client requests to be notified only of events after this time.
+  syncedUntil: Long) // Client requests to be notified only of events after this time.
 
 case class SparkStatusResponse(
   activeStages: Seq[Int],
@@ -48,9 +48,9 @@ class SparkListener extends spark.scheduler.SparkListener {
   }
 
   // Returns a future response to a client who is up to date until the given timestamp.
-  def future(timestamp: Long): concurrent.Future[SparkStatusResponse] = synchronized {
+  def future(syncedUntil: Long): concurrent.Future[SparkStatusResponse] = synchronized {
     val p = concurrent.promise[SparkStatusResponse]
-    if (timestamp < currentResp.timestamp) {
+    if (syncedUntil < currentResp.timestamp) {
       p.success(currentResp) // We immediately have news for you.
     } else {
       promises += p // No news currently. You have successfully subscribed.
@@ -65,7 +65,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   sc.addSparkListener(listener)
 
   def sparkStatus(req: SparkStatusRequest): concurrent.Future[SparkStatusResponse] = {
-    listener.future(req.timestamp)
+    listener.future(req.syncedUntil)
   }
 
   def sparkCancelJobs(req: serving.Empty): Unit = {
