@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.serving
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.mvc
 import play.api.libs.json
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
@@ -17,6 +18,7 @@ object LynxUser extends securesocial.core.Authorization {
 class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
+
   def action[A](parser: mvc.BodyParser[A])(block: mvc.Request[A] => mvc.Result): mvc.Action[A] = {
     // Turn off authentication in development mode.
     if (productionMode) {
@@ -26,38 +28,49 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
     }
   }
 
-  def jsonPost[I: json.Reads, O: json.Writes](handler: I => O) = {
-    action(parse.json) { request =>
-      log.info(s"POST ${request.path} ${request.body}")
-      request.body.validate[I].fold(
-        errors => jsonBadRequest(errors),
-        result => Ok(json.Json.toJson(handler(result))))
+  // It would be great to merge this with action[A], but the compiler crashes when I try.
+  def asyncAction[A](parser: mvc.BodyParser[A])(
+    block: mvc.Request[A] => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
+    // Turn off authentication in development mode.
+    if (productionMode) {
+      SecuredAction(authorize = LynxUser, ajaxCall = true).async(parser)(block(_))
+    } else {
+      mvc.Action.async(parser)(block(_))
     }
   }
 
-  def jsonGet[I: json.Reads, O: json.Writes](handler: I => O, key: String = "q") = {
+  def jsonPost[I: json.Reads, O: json.Writes](handler: I => O) = {
+    action(parse.json) { request =>
+      log.info(s"POST ${request.path} ${request.body}")
+      val i = request.body.as[I]
+      Ok(json.Json.toJson(handler(i)))
+    }
+  }
+
+  def jsonQuery[I: json.Reads, R](request: mvc.Request[mvc.AnyContent])(handler: I => R): R = {
+    val key = "q"
+    val value = request.getQueryString(key)
+    assert(value.nonEmpty, s"Missing query parameter $key.")
+    val s = value.get
+    log.info(s"GET ${request.path} $s")
+    val i = json.Json.parse(s).as[I]
+    handler(i)
+  }
+
+  def jsonGet[I: json.Reads, O: json.Writes](handler: I => O) = {
     action(parse.anyContent) { request =>
-      request.getQueryString(key) match {
-        case Some(s) =>
-          log.info(s"GET ${request.path} $s")
-          json.Json.parse(s).validate[I].fold(
-            errors => jsonBadRequest(errors),
-            result => Ok(json.Json.toJson(handler(result))))
-        case None => BadRequest(json.Json.obj(
-          "status" -> "Error",
-          "message" -> "Bad query string",
-          "details" -> "You need to specify query parameter %s with a JSON value".format(key)))
+      jsonQuery(request) { i: I =>
+        Ok(json.Json.toJson(handler(i)))
       }
     }
   }
 
-  def jsonBadRequest(
-    details: Seq[(play.api.libs.json.JsPath, Seq[play.api.data.validation.ValidationError])]) = {
-    log.error(s"Bad JSON: $details")
-    BadRequest(json.Json.obj(
-      "status" -> "Error",
-      "message" -> "Bad JSON",
-      "details" -> json.JsError.toFlatJson(details)))
+  def jsonFuture[I: json.Reads, O: json.Writes](handler: I => concurrent.Future[O]) = {
+    asyncAction(parse.anyContent) { request =>
+      jsonQuery(request) { i: I =>
+        handler(i).map(o => Ok(json.Json.toJson(o)))
+      }
+    }
   }
 }
 
@@ -88,7 +101,9 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
 
+  implicit val rSparkStatusRequest = json.Json.reads[SparkStatusRequest]
   implicit val rSetClusterNumInstanceRequest = json.Json.reads[SetClusterNumInstanceRequest]
+  implicit val wSparkStatusResponse = json.Json.writes[SparkStatusResponse]
   implicit val wSparkClusterStatusResponse = json.Json.writes[SparkClusterStatusResponse]
 
   implicit val rFEVertexAttributeFilter = json.Json.reads[FEVertexAttributeFilter]
@@ -184,6 +199,8 @@ object ProductionJsonServer extends JsonServer {
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
   def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
+  def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
+  def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
