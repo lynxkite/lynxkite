@@ -1,4 +1,10 @@
-<span ng-if="ref.value !== undefined">{{format(ref.value)}}</span>
+<span ng-if="ref.value !== undefined && humanized(ref.value)" class="value human"
+  ng-click="$parent.human = false; $event.preventDefault(); $event.stopPropagation();">
+  {{format(ref.value)}}
+</span>
+<span ng-if="ref.value !== undefined && !humanized(ref.value)" class="value">
+  {{ref.value}}
+</span>
 <span ng-if="ref.$resolved === false" class="spinner">|</span>
 <span ng-if="ref.error" class="value-error" tooltip="{{ref.error}}">&times;</span>
 <span ng-if="ref === undefined" class="value-error">&times;</span>
