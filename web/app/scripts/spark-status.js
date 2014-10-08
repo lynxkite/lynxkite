@@ -11,7 +11,7 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
       scope.status = { timestamp: 0 };
       load();
       function load() {
-        scope.update = util.nocache('/ajax/spark-status', { timestamp: scope.status.timestamp });
+        scope.update = util.nocache('/ajax/spark-status', { syncedUntil: scope.status.timestamp });
       }
       scope.$watch('update', update);
       scope.$watch('update.$resolved', update);
