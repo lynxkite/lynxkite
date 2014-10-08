@@ -321,6 +321,10 @@ angular.module('biggraph')
       this.applyOp('Rename-' + kind, { from: oldName, to: newName });
     };
 
+    Side.prototype.duplicate = function(kind, name) {
+      this.applyOp('Copy-' + kind, { from: name, to: 'Copy of ' + name });
+    };
+
     Side.prototype.discard = function(kind, name) {
       // if the other side is the segmentation to be discarded, close it
       if (kind === 'segmentation') {

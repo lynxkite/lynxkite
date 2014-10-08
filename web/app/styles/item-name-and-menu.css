@@ -1,0 +1,16 @@
+item-name-and-menu .btn-dropdown {
+  display: inline-block;
+  color: rgba(0, 0, 0, 0.3);
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  box-shadow: none !important;
+}
+item-name-and-menu .btn-dropdown .caret {
+  border-width: 5px;
+}
+
+item-name-and-menu .btn-group.open .btn-dropdown,
+item-name-and-menu .btn-dropdown:hover {
+  color: black;
+}
