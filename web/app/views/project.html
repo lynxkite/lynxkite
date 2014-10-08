@@ -1,5 +1,6 @@
 <ui-layout ng-if="showGraph()" class="split-screen">
-  <project-graph size="50%" left="left.viewData" right="right.viewData" left-to-right-bundle="leftToRightBundle"></project-graph>
+  <project-graph size="50%" left="left.viewData" right="right.viewData" left-to-right-bundle="leftToRightBundle"
+    context-menu="$parent.contextMenu"></project-graph>
   <div class="project-sides">
     <div ng-include="'views/projects.html'"></div>
     <div class="clearfix"></div>
@@ -19,3 +20,4 @@
     </a>
   </div>
 </div>
+<context-menu model="contextMenu"></context-menu>

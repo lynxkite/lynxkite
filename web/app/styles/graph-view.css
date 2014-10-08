@@ -1,8 +1,9 @@
 .split-screen > project-graph {
   overflow: hidden;
 }
+
 svg.graph-view {
-  margin-bottom: 10px;
+  position: absolute;
   width: 100%;
   height: 100%;
   background: #222;
@@ -11,6 +12,11 @@ svg.graph-view.loading {
   background-image: linear-gradient(45deg, #1e1e1e 25%, #262626 25%, #262626 50%, #1e1e1e 50%, #1e1e1e 75%, #262626 75%, #262626);
   background-size: 40px 40px;
   animation: progress-bar-stripes 2s linear infinite;
+}
+
+#svg-icons {
+  /* Used as a source of icons. Must be loaded and laid out, but not visible. */
+  height: 0;
 }
 
 svg text {
