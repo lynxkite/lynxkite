@@ -75,13 +75,6 @@ angular
       // Easier to read numbers. 1234 -> 1k
       human: function(x) {
         if (x === undefined) { return '?'; }
-        if (typeof x === 'string') {
-          var parsed;
-          try {
-            parsed = JSON.parse(x);  // Maybe it's a number in a string.
-          } catch (e) {}
-          if (typeof parsed === 'number') { x = parsed; }
-        }
         if (typeof x !== 'number') { return x; }
         if (isNaN(x)) { return x; }
         for (var i = 0; true; ++i) {

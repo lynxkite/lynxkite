@@ -7,11 +7,11 @@ angular.module('biggraph').directive('value', function(util) {
     templateUrl: 'value.html',
     link: function(scope, element, attrs) {
       scope.human = attrs.human !== undefined;
-      scope.humanized = function(x) {
-        return scope.human && x !== util.human(x);
+      scope.humanized = function(ref) {
+        return scope.human && ref.double && ref.double.toString() !== util.human(ref.double);
       };
-      scope.format = function(x) {
-        return util.human(x);
+      scope.format = function(ref) {
+        return util.human(ref.double);
       };
     },
   };
