@@ -89,7 +89,7 @@ angular.module('biggraph')
       });
 
     function loadStartingVertexSets() {
-      $scope.startingVertexSets = util.nocache('/ajax/startingVs', undefined, { isArray: true });
+      $scope.startingVertexSets = util.nocache('/ajax/startingVs');
     }
 
     function openOperationModal(operation) {
@@ -133,7 +133,7 @@ angular.module('biggraph')
       });
     }
 
-    $scope.startingOps = util.nocache('/ajax/startingOps', undefined, { isArray: true });
+    $scope.startingOps = util.nocache('/ajax/startingOps');
     loadStartingVertexSets();
 
     $scope.apply = applyOperationFlow;

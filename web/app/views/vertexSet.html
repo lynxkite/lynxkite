@@ -2,11 +2,11 @@
   <div class="panel panel-default" ng-if="!side.data">
     <div class="list-group">
       <sublist heading="New">
-        <a href class="list-group-item" ng-repeat="op in startingOps"
+        <a href class="list-group-item" ng-repeat="op in startingOps.ops"
           ng-click="apply(op)">{{op.title}}</a>
       </sublist>
       <sublist heading="Existing">
-        <a href class="list-group-item" ng-repeat="vs in startingVertexSets"
+        <a href class="list-group-item" ng-repeat="vs in startingVertexSets.values"
           ng-click="side.setNewVS(vs.id)"><shortn text="{{vs.title}}"></shortn></a>
       </sublist>
     </div>
