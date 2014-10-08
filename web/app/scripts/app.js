@@ -41,12 +41,9 @@ angular
       maxAge: 24 * 3600,
       storageMode: 'localStorage',
     });
-    function ajax(url, params, cache, opts) {
+    function ajax(url, params, cache) {
       if (params === undefined) { params = { fake: 1 }; }
-      if (opts === undefined) { opts = {}; }
-      opts.method = 'GET';
-      opts.cache = cache;
-      var res = $resource(url, {}, { get: opts });
+      var res = $resource(url, {}, { get: { method: 'GET', cache: cache } });
       var req = res.get({ q: params }, function() {}, function(failure) {
         if (failure.status === 401) {  // Unauthorized.
           req.error = 'Redirecting to login page.';
@@ -63,9 +60,9 @@ angular
         return scope.$watch(expr, fun, true);
       },
       // Json GET with caching and parameter wrapping.
-      get: function(url, params, opts) { return ajax(url, params, localCache, opts); },
+      get: function(url, params) { return ajax(url, params, localCache); },
       // Json GET with parameter wrapping and no caching.
-      nocache: function(url, params, opts) { return ajax(url, params, false, opts); },
+      nocache: function(url, params) { return ajax(url, params, false); },
       // Json POST with simple error handling.
       post: function(url, params, onSuccess) {
         var resource = $resource(url).save(params, onSuccess, function(failure) {
