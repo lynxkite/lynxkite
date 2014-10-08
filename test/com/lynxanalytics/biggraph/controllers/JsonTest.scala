@@ -28,7 +28,7 @@ object TestJsonServer extends JsonServer {
 
   val testController = new TestController
   def testPost = jsonPost(testController.process)
-  def testGet = jsonGet(testController.process, "q")
+  def testGet = jsonGet(testController.process)
 }
 
 class JsonTest extends FunSuite {
@@ -54,28 +54,31 @@ class JsonTest extends FunSuite {
       === "\"test string: Hello BigGraph!\"")
   }
 
-  test("testPost should respond with BAD_REQUEST if JSON is incorrect") {
+  test("testPost should raise exception if JSON is incorrect") {
     val jsonString = """{"bad attr":"Hello BigGraph!"}"""
     val request = FakeRequest(
       POST,
       "/api/test",
       FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
       Json.parse(jsonString))
-    val result = TestJsonServer.testPost(request)
-    assert(Helpers.status(result) === BAD_REQUEST)
+    intercept[Throwable] {
+      TestJsonServer.testPost(request)
+    }
   }
 
-  test("testGet should respond with BAD_REQUEST if JSON is incorrect") {
+  test("testGet should raise exception if JSON is incorrect") {
     val jsonString = """{"bad attr":"Hello BigGraph!"}"""
     val request = FakeRequest(GET, "/api/test?q=" + jsonString)
-    val result = TestJsonServer.testGet(request)
-    assert(Helpers.status(result) === BAD_REQUEST)
+    intercept[Throwable] {
+      TestJsonServer.testGet(request)
+    }
   }
 
-  test("testGet should respond with BAD_REQUEST if query parameter is incorrect") {
+  test("testGet should raise exception if query parameter is incorrect") {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
     val request = FakeRequest(GET, "/api/test?gugu=" + jsonString)
-    val result = TestJsonServer.testGet(request)
-    assert(Helpers.status(result) === BAD_REQUEST)
+    intercept[Throwable] {
+      TestJsonServer.testGet(request)
+    }
   }
 }

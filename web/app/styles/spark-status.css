@@ -1,0 +1,20 @@
+.spark-status {
+  position: fixed;
+  bottom: 0;
+  right: 50px;
+}
+
+.spark-status .spinner {
+  animation: spinner 4s infinite linear;
+  font-size: 30px;
+  opacity: 0.5;
+}
+
+.spark-status .kill {
+  opacity: 0;
+  font-size: 30px;
+  cursor: pointer;
+}
+.spark-status:hover .kill {
+  opacity: 0.5;
+}

@@ -64,9 +64,11 @@ class DataManager(sc: spark.SparkContext,
   private def load[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
     future {
       blocking {
+        log.info(s"PERF Loading scalar $scalar of GUID ${scalar.gUID} from disk")
         val ois = new java.io.ObjectInputStream(serializedScalarFileName(entityPath(scalar)).open())
         val value = ois.readObject.asInstanceOf[T]
         ois.close()
+        log.info(s"PERF Scalar of GUID ${scalar.gUID} loaded from disk")
         new ScalarData[T](scalar, value)
       }
     }
