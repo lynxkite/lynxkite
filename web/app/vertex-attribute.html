@@ -1,10 +1,4 @@
-<span ng-hide="renaming">
-  {{attr.title}}
-</span>
-<form ng-submit="renaming = side.rename('vertex-attribute', attr.title, newName)" style="display: inline;" ng-show="renaming">
-  <input id="renameBox" class="form-control" style="display: inline; width: 200px;"
-    ng-model="newName" ng-blur="renaming = newName !== attr.title">
-</form>
+<item-name-and-menu side="side" name="{{attr.title}}" type="vertex-attribute"></item-name-and-menu>
 
 <span ng-if="side.state.graphMode === 'bucketed' && attr.canBucket" class="de-emph">
   Graph on
@@ -69,21 +63,6 @@
 <label ng-show="showLogCheckbox()">
   <input type="checkbox" ng-model="side.axisOptions('vertex', attr.title).logarithmic"> logarithmic
 </label>
-
-<div class="btn-group pull-right" dropdown>
-  <a href class="btn-dropdown dropdown-toggle"><span class="caret"></span></a>
-  <ul class="dropdown-menu">
-    <li><a href ng-click="toggleRenaming()">
-      <i class="glyphicon glyphicon-pencil"></i> Rename...
-    </a></li>
-    <li><a href ng-click="side.discard('vertex-attribute', attr.title);">
-      <i class="glyphicon glyphicon-trash"></i> Discard
-    </a></li>
-    <li><a href ng-click="side.clone('vertex-attribute', attr.title);">
-      <i class="glyphicon glyphicon-floppy-disk"></i> Clone
-    </a></li>
-  </ul>
-</div>
 
 <span class="type-name">{{attr.typeName}}</span>
 <div class="clearfix"></div>

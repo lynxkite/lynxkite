@@ -1,0 +1,22 @@
+<span ng-hide="renaming">
+  {{name}}
+</span>
+
+<form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming">
+  <input id="renameBox" class="form-control" style="display: inline; width: 200px;" ng-model="newName">
+</form>
+
+<div class="btn-group pull-right" dropdown>
+  <a href class="btn-dropdown dropdown-toggle"><span class="caret"></span></a>
+  <ul class="dropdown-menu">
+    <li><a href ng-click="toggleRenaming()">
+      <i class="glyphicon glyphicon-pencil"></i> Rename...
+    </a></li>
+    <li><a href ng-click="discard()">
+      <i class="glyphicon glyphicon-trash"></i> Discard
+    </a></li>
+    <li><a href ng-click="clone()">
+      <i class="glyphicon glyphicon-floppy-disk"></i> Clone
+    </a></li>
+  </ul>
+</div>
