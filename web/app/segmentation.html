@@ -1,10 +1,4 @@
-<span ng-hide="renaming">
-  {{segmentation.name}}
-</span>
-<form ng-submit="renaming = side.rename('segmentation', segmentation.name, newName)" style="display: inline;" ng-show="renaming">
-  <input id="renameBox" class="form-control" style="display: inline; width: 200px;"
-    ng-model="newName" ng-blur="renaming = newName !== segmentation.name">
-</form>
+<item-name-and-menu side="side" name="{{segmentation.name}}" type="segmentation"></item-name-and-menu>
 
 <form style="display: inline;">
   <input
@@ -16,20 +10,5 @@
 
 <span class="clicky glyphicon glyphicon-arrow-right" tooltip="Open"
   ng-click="side.openSegmentation(segmentation)"></span>
-
-<div class="btn-group pull-right" dropdown>
-  <a href class="btn-dropdown dropdown-toggle"><span class="caret"></span></a>
-  <ul class="dropdown-menu">
-    <li><a href ng-click="toggleRenaming()">
-      <i class="glyphicon glyphicon-pencil"></i> Rename...
-    </a></li>
-    <li><a href ng-click="side.discard('segmentation', segmentation.name);">
-      <i class="glyphicon glyphicon-trash"></i> Discard
-    </a></li>
-    <li><a href ng-click="side.clone('segmentation', segmentation.name);">
-      <i class="glyphicon glyphicon-floppy-disk"></i> Clone
-    </a></li>
-  </ul>
-</div>
 
 <div class="clearfix"></div>
