@@ -3,7 +3,7 @@
 angular.module('biggraph').directive('projectGraph', function (util) {
   return {
     restrict: 'E',
-    scope: { left: '=', right: '=', leftToRightBundle: '=' },
+    scope: { left: '=', right: '=', leftToRightBundle: '=', contextMenu: '=' },
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope) {
