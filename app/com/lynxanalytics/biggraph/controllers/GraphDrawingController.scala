@@ -442,6 +442,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
     val histogram = bucketedAttr.toHistogram(filteredVS)
     val counts = histogram.counts.value
+    spark_util.Counters.printAll
     HistogramResponse(
       bucketedAttr.bucketer.labelType,
       bucketedAttr.bucketer.bucketLabels,
