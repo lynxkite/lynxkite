@@ -11,8 +11,6 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 
 class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val controller = new GraphDrawingController(this)
-  val project = Project("Test_Project")
-  project.notes = "test project" // Make sure project directory exists.
 
   test("get center of ExampleGraph with no filters") {
     val g = graph_operations.ExampleGraph()().result
