@@ -39,7 +39,7 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
     }
     // we expect clique 20 to be invalid as it is non maximal
     // we expect clique 40 to be invalid as there is no 3 -> 0 edge
-    assert(check.invalid.value == 2)
+    assert(check.invalid.value.toSet == Set(20, 40))
   }
 
   test("check if a clique from triangle is a clique") {
@@ -50,7 +50,7 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
       val op = CheckClique(needsBothDirections = true)
       op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
     }
-    assert(check.invalid.value == 0)
+    assert(check.invalid.value.size == 0)
   }
 
   test("check if a clique from a DAG triangle is a clique") {
@@ -61,7 +61,7 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
       val op = CheckClique(needsBothDirections = false)
       op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
     }
-    assert(check.invalid.value == 0)
+    assert(check.invalid.value.size == 0)
   }
 
   test("another directed triangle clique") {
@@ -73,7 +73,7 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
       op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
     }
     assert(fmcOut.segments.rdd.count == 1)
-    assert(check.invalid.value == 0)
+    assert(check.invalid.value.size == 0)
   }
 
   test("directed square clique") {
@@ -85,6 +85,6 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
       op(op.vs, g.vs)(op.es, g.es)(op.cliques, fmcOut.segments)(op.belongsTo, fmcOut.belongsTo).result
     }
     assert(fmcOut.segments.rdd.count == 1)
-    assert(check.invalid.value == 0)
+    assert(check.invalid.value.size == 0)
   }
 }

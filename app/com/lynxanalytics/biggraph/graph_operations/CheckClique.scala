@@ -1,11 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import org.apache.spark.rdd.RDD
+
+import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import scala.collection.mutable
 
 object CheckClique {
   class Input extends MagicInputSignature {
@@ -15,7 +17,7 @@ object CheckClique {
     val belongsTo = edgeBundle(vs, cliques)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
-    val invalid = scalar[Long]
+    val invalid = scalar[List[ID]] // first 100 invalid clique IDs
   }
 }
 import CheckClique._
@@ -54,8 +56,8 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
 
     // for every node in the clique create outgoing and ingoing adjacency sets
     // put the node itself into these sets
-    // create the intersection of all the sets, this should be the same as the clique members set      
-    val invalid =
+    // create the intersection of all the sets, this should be the same as the clique members set
+    val invalid: RDD[ID] =
       cliquesToVsWithNs.filter {
         case (clique, vsToNs) =>
           val members = vsToNs.map(_._1).toSet
@@ -74,8 +76,8 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
           }
           if (inv) log.error(s"Clique $clique is not a maximal clique!\nmembers: ${members}\nout neighbor sets: ${outSets}\nin neighbor sets: $inSets")
           inv
-      }
+      }.keys
 
-    output(o.invalid, invalid.count)
+    output(o.invalid, invalid.take(100).toList)
   }
 }
