@@ -5,8 +5,8 @@ angular.module('biggraph').directive('value', function(util) {
     restrict: 'E',
     scope: { ref: '=' },
     templateUrl: 'value.html',
-    link: function(scope, element, attrs) {
-      scope.human = attrs.human !== undefined;
+    link: function(scope) {
+      scope.human = true;
       scope.humanized = function(ref) {
         return scope.human && ref.double && ref.double.toString() !== util.human(ref.double);
       };
