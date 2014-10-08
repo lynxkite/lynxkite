@@ -128,7 +128,6 @@ object ProductionJsonServer extends JsonServer {
   implicit val wHistogramResponse = json.Json.writes[HistogramResponse]
 
   implicit val rScalarValueRequest = json.Json.reads[ScalarValueRequest]
-  implicit val wScalarValueResponse = json.Json.writes[ScalarValueResponse]
 
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rDiscardProjectRequest = json.Json.reads[DiscardProjectRequest]

@@ -202,7 +202,8 @@
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of the</span> graph</span>
       </li>
-      <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars | filter: commonScalar" scalar="scalar" value="{{side.scalars[scalar.title].value}}" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars | filter: commonScalar"
+        scalar="scalar" value="side.scalars[scalar.title]" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>

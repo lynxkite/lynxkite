@@ -110,6 +110,46 @@ case class VertexAttributeToDynamicValue[T]()
   }
 }
 
+object ScalarToDynamicValue {
+  class Input[T] extends MagicInputSignature {
+    val s = scalar[T]
+  }
+  class Output(implicit instance: MetaGraphOperationInstance)
+      extends MagicOutput(instance) {
+    val s = scalar[DynamicValue]
+  }
+  def run[T](s: Scalar[T])(
+    implicit manager: MetaGraphManager): Scalar[DynamicValue] = {
+    import Scripting._
+    val op = ScalarToDynamicValue[T]()
+    op(op.s, s).result.s
+  }
+}
+case class ScalarToDynamicValue[T]()
+    extends TypedMetaGraphOp[ScalarToDynamicValue.Input[T], ScalarToDynamicValue.Output] {
+  import ScalarToDynamicValue._
+  @transient override lazy val inputs = new Input[T]
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val ct = inputs.s.data.classTag
+    implicit val tt = inputs.s.data.typeTag
+    val s: T = inputs.s.value
+
+    val dv = {
+      if (typeOf[T] =:= typeOf[Double]) DynamicValue(double = s.asInstanceOf[Double], string = s.toString)
+      else if (typeOf[T] =:= typeOf[Long]) DynamicValue(double = s.asInstanceOf[Long].toDouble, string = s.toString)
+      else if (typeOf[T] =:= typeOf[String]) DynamicValue(string = s.asInstanceOf[String])
+      else DynamicValue(string = s.toString)
+    }
+    output(o.s, dv)
+  }
+}
+
 object AttributeCast {
   class Output[From, To: TypeTag](
     implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[From])
