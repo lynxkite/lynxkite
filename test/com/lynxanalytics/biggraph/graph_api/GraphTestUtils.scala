@@ -124,7 +124,7 @@ object SegmentedTestGraph {
     val belongsTo = edgeBundle(vs, segments)
   }
 }
-case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)], hasInput: Boolean = false)
+case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
     extends TypedMetaGraphOp[NoInput, SegmentedTestGraph.Output] {
   import SegmentedTestGraph._
   @transient override lazy val inputs = new NoInput
