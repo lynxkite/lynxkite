@@ -18,7 +18,7 @@ object Counters {
 
   def printAll: Unit = {
     for ((name, counter) <- counters) {
-      log.debug(s"$name: ${counter.value}")
+      log.info(s"$name: ${counter.value}")
     }
   }
 

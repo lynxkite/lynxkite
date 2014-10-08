@@ -1,21 +1,12 @@
 <ui-layout ng-if="showGraph()" class="split-screen">
-  <project-graph size="50%" left="left.viewData" right="right.viewData" left-to-right-bundle="leftToRightBundle"></project-graph>
+  <project-graph size="50%" left="left.viewData" right="right.viewData" left-to-right-bundle="leftToRightBundle"
+    context-menu="$parent.contextMenu"></project-graph>
   <div class="project-sides">
     <div ng-include="'views/projects.html'"></div>
-    <div class="clearfix"></div>
-    <div class="text-center">
-      <a target="_blank" href="{{linkedURL()}}" tooltip="Open linked window">
-        <span class="glyphicon glyphicon-link"></span>
-      </a>
-    </div>
   </div>
 </ui-layout>
 <div ng-if="!showGraph()" class="project-sides">
   <div ng-include="'views/projects.html'"></div>
-  <div class="clearfix"></div>
-  <div class="text-center">
-    <a target="_blank" href="{{linkedURL()}}" tooltip="Open linked window">
-      <span class="glyphicon glyphicon-link"></span>
-    </a>
-  </div>
 </div>
+<context-menu model="contextMenu"></context-menu>
+<spark-status></spark-status>

@@ -69,7 +69,7 @@ module.exports = function (grunt) {
         hostname: 'localhost',
         livereload: 35729,
         middleware: function(connect, options, mws) {
-          // Switch between two test files for /ajax/complexView.
+          // Custom behavior for some Ajax requests.
           mws.unshift(function(req, res, next) {
             if (req.url.indexOf('/ajax/complexView') === 0) {
               if (req.url.indexOf('sampled') !== -1) {
@@ -80,6 +80,10 @@ module.exports = function (grunt) {
             }
             if (req.url.indexOf('/ajax/createProject') === 0) {
               res.end();
+              return;
+            }
+            if (req.url.indexOf('/ajax/spark-status') === 0) {
+              setTimeout(next, 10000);  // Delayed response.
               return;
             }
             next();
