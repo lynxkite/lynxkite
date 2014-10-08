@@ -1,17 +1,10 @@
 'use strict';
 
-angular.module('biggraph').directive('vertexAttribute', function($timeout) {
+angular.module('biggraph').directive('vertexAttribute', function() {
   return {
     scope: { attr: '=vertexAttribute', side: '=' },
     templateUrl: 'vertex-attribute.html',
-    link: function(scope, element) {
-      scope.toggleRenaming = function() {
-        scope.renaming = !scope.renaming;
-        scope.newName = scope.attr.title;
-        // Focus #renameBox once it has appeared.
-        $timeout(function() { element.find('#renameBox').focus(); });
-      };
-
+    link: function(scope) {
       scope.showLogCheckbox = function() {
         if (!scope.attr.isNumeric) { return false; }
         if (scope.histogram) { return true; }
