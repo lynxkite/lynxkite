@@ -28,6 +28,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       extends Operation(p, Category("Hidden", "", visible = false)) {
     val description = ""
   }
+  abstract class HiddenSegmentationOperation(p: Project)
+      extends HiddenOperation(p) {
+    protected def seg = project.asSegmentation
+    protected def parent = seg.parent
+  }
   abstract class SegmentationOperation(p: Project)
       extends Operation(p, Category("Segmentation operations", "yellow", visible = p.isSegmentation)) {
     protected def seg = project.asSegmentation
@@ -226,6 +231,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.project.setVertexSet(result.segments, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
+    }
+  })
+
+  register(new HiddenSegmentationOperation(_) {
+    val title = "Check cliques"
+    val parameters = Seq(
+      Param("selected", "Clique ids to check", defaultValue = "<All>"),
+      Param("bothdir", "Edges required in both directions", options = UIValue.seq(Seq("true", "false"))))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      val selected =
+        if (params("selected") == "<All>") None
+        else Some(params("selected").split(",").map(_.toLong).toSet)
+      val op = graph_operations.CheckClique(selected, params("bothdir").toBoolean)
+      val result = op(op.es, parent.edgeBundle)(op.belongsTo, seg.belongsTo).result
+      parent.scalars("invalid_cliques") = result.invalid
     }
   })
 

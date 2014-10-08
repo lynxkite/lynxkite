@@ -91,6 +91,32 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
   }
 }
 
+object AddEdgeBundle {
+  class Input extends MagicInputSignature {
+    val vsA = vertexSet
+    val vsB = vertexSet
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity)
+  }
+}
+case class AddEdgeBundle(edgeLists: Seq[(Int, Int)])
+    extends TypedMetaGraphOp[AddEdgeBundle.Input, AddEdgeBundle.Output] {
+  import AddEdgeBundle._
+  @transient override lazy val inputs = new Input
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+    val sc = rc.sparkContext
+    val (srcs, dsts) = edgeLists.unzip
+    val es = sc.parallelize(
+      edgeLists.map {
+        case (a, b) => Edge(a.toLong, b.toLong)
+      }).randomNumbered(rc.onePartitionPartitioner)
+    output(o.esAB, es)
+  }
+}
+
 object SegmentedTestGraph {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val vs = vertexSet
@@ -101,7 +127,7 @@ object SegmentedTestGraph {
 case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
     extends TypedMetaGraphOp[NoInput, SegmentedTestGraph.Output] {
   import SegmentedTestGraph._
-  @transient override lazy val inputs = new NoInput()
+  @transient override lazy val inputs = new NoInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
