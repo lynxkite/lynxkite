@@ -2,10 +2,12 @@
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 3;
+  z-index: 100000;  /* Has to beat .ui-splitbar's 99999. */
   border-radius: 4px;
   background: #f5f5f5;
   padding-bottom: 4px;
+  outline: none;  /* No highlight on focus. */
+  box-shadow: 0px 2px 4px;
 }
 .context-menu .menu-title {
   background: grey;
