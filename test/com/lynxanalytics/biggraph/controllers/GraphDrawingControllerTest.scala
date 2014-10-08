@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 
 class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val controller = new GraphDrawingController(this)
@@ -14,9 +15,9 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
   project.notes = "test project" // Make sure project directory exists.
 
   test("get center of ExampleGraph with no filters") {
-    val eg = graph_operations.ExampleGraph()().result
+    val g = graph_operations.ExampleGraph()().result
     val req = CenterRequest(
-      vertexSetId = eg.vertices.gUID.toString,
+      vertexSetId = g.vertices.gUID.toString,
       count = 1,
       filters = Seq())
     val res = controller.getCenter(req)
@@ -24,9 +25,9 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
   }
 
   test("get 5 centers of ExampleGraph with no filters") {
-    val eg = graph_operations.ExampleGraph()().result
+    val g = graph_operations.ExampleGraph()().result
     val req = CenterRequest(
-      vertexSetId = eg.vertices.gUID.toString,
+      vertexSetId = g.vertices.gUID.toString,
       count = 5,
       filters = Seq())
     val res = controller.getCenter(req)
@@ -34,15 +35,63 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
   }
 
   test("get center of ExampleGraph with filters set") {
-    val eg = graph_operations.ExampleGraph()().result
+    val g = graph_operations.ExampleGraph()().result
     val f = FEVertexAttributeFilter(
-      attributeId = eg.age.gUID.toString,
+      attributeId = g.age.gUID.toString,
       valueSpec = "<=10")
     val req = CenterRequest(
-      vertexSetId = eg.vertices.gUID.toString,
+      vertexSetId = g.vertices.gUID.toString,
       count = 1,
       filters = Seq(f))
     val res = controller.getCenter(req)
     assert(res.centers.toSet == Set("3"))
   }
+
+  test("get sampled vertex diagram of ExampleGraph with no filters, no attrs") {
+    val g = graph_operations.ExampleGraph()().result
+    val req = VertexDiagramSpec(
+      vertexSetId = g.vertices.gUID.toString,
+      filters = Seq(),
+      mode = "sampled",
+      centralVertexIds = Seq("0"),
+      sampleSmearEdgeBundleId = g.edges.gUID.toString,
+      attrs = Seq(),
+      radius = 1)
+    val res = controller.getSampledVertexDiagram(req)
+    assert(res.mode == "sampled")
+    assert(res.vertices.toSet == Set(
+      FEVertex(0.0, 0, 0, id = 0, attrs = Map()),
+      FEVertex(0.0, 0, 0, id = 1, attrs = Map()),
+      FEVertex(0.0, 0, 0, id = 2, attrs = Map())))
+  }
+
+  test("get sampled vertex diagram of ExampleGraph with filters and attrs") {
+    val g = graph_operations.ExampleGraph()().result
+    val age = g.age.gUID.toString
+    val gender = g.gender.gUID.toString
+
+    val f = FEVertexAttributeFilter(
+      attributeId = age,
+      valueSpec = "<=25")
+    val req = VertexDiagramSpec(
+      vertexSetId = g.vertices.gUID.toString,
+      filters = Seq(f),
+      mode = "sampled",
+      centralVertexIds = Seq("0"),
+      sampleSmearEdgeBundleId = g.edges.gUID.toString,
+      attrs = Seq(age, gender),
+      radius = 1)
+    val res = controller.getSampledVertexDiagram(req)
+    assert(res.mode == "sampled")
+    assert(res.vertices.toSet == Set(
+      FEVertex(0.0, 0, 0, id = 0, attrs = Map(
+        age -> DynamicValue(20.3, "20.3"),
+        gender -> DynamicValue(0.0, "Male"))),
+      FEVertex(0.0, 0, 0, id = 1, attrs = Map(
+        age -> DynamicValue(18.2, "18.2"),
+        gender -> DynamicValue(0.0, "Female")))))
+  }
+
+  //TODO: bucketed, histo, scalar, edgeDiagram tests
+
 }
