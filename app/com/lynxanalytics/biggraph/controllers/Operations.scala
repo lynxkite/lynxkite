@@ -1090,6 +1090,65 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new HiddenOperation(_) {
+    val title = "Rename scalar"
+    val parameters = Seq(
+      Param("from", "Old name", options = scalars),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    def apply(params: Map[String, String]) = {
+      project.scalars(params("to")) = project.scalars(params("from"))
+      project.scalars(params("from")) = null
+    }
+  })
+
+  register(new HiddenOperation(_) {
+    val title = "Copy edge attribute"
+    val parameters = Seq(
+      Param("from", "Old name", options = edgeAttributes),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    def apply(params: Map[String, String]) = {
+      project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
+    }
+  })
+
+  register(new HiddenOperation(_) {
+    val title = "Copy vertex attribute"
+    val parameters = Seq(
+      Param("from", "Old name", options = vertexAttributes),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    def apply(params: Map[String, String]) = {
+      project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
+    }
+  })
+
+  register(new HiddenOperation(_) {
+    val title = "Copy segmentation"
+    val parameters = Seq(
+      Param("from", "Old name", options = segmentations),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+    def apply(params: Map[String, String]) = {
+      val from = project.segmentation(params("from"))
+      val to = project.segmentation(params("to"))
+      from.project.copy(to.project)
+      to.belongsTo = from.belongsTo
+    }
+  })
+
+  register(new HiddenOperation(_) {
+    val title = "Copy scalar"
+    val parameters = Seq(
+      Param("from", "Old name", options = scalars),
+      Param("to", "New name"))
+    def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    def apply(params: Map[String, String]) = {
+      project.scalars(params("to")) = project.scalars(params("from"))
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Union with another project"
     val description =
@@ -1187,18 +1246,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexAttributes(idAttr) = idAsAttribute(project.vertexSet)
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
-    }
-  })
-
-  register(new HiddenOperation(_) {
-    val title = "Rename scalar"
-    val parameters = Seq(
-      Param("from", "Old name", options = scalars),
-      Param("to", "New name"))
-    def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
-    def apply(params: Map[String, String]) = {
-      project.scalars(params("to")) = project.scalars(params("from"))
-      project.scalars(params("from")) = null
     }
   })
 
