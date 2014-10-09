@@ -34,8 +34,8 @@ class PartialRunTest extends FunSuite with TestSparkContext {
       println("Caching initial data", Timed(d.calculate).nanos / 1000000)
       println("Second calculate", Timed(d.calculate).nanos / 1000000)
       for (pref <- 1 to 10) {
-        val d1 = d.filter(a => { Thread.sleep(10L); true }).asSortedRDD
-        val d2 = d.mapValues(a => { Thread.sleep(10L); a }).asSortedRDD
+        val d1 = d.filter(a => { Thread.sleep(10L); true }).toSortedRDD
+        val d2 = d.mapValues(a => { Thread.sleep(10L); a }).toSortedRDD
         val data = d1.join(d2).mapValues { case (a, b) => a }
         val prefLength = pref * rows / 10
         val t = Timed(countAs(data, prefLength))

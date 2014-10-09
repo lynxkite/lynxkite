@@ -225,7 +225,7 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
         .partitionBy(data.partitioner.get).cache
       other.calculate
       def oldJoin = getSum(data.leftOuterJoin(other).mapValues { case (a, b) => a -> b.getOrElse('0') }.toSortedRDD)
-      def newJoin = getSum(data.sortedLeftOuterJoin(other.toSortedRDD).mapValues { case (a, b) => a -> b.getOrElse('0') }.asSortedRDD)
+      def newJoin = getSum(data.sortedLeftOuterJoin(other.toSortedRDD).mapValues { case (a, b) => a -> b.getOrElse('0') }.toSortedRDD)
       def getSum(rdd: RDD[(Long, (Char, Char))]) = rdd.mapValues { case (a, b) => a compare b }.values.reduce(_ + _)
     }
     val parts = 4

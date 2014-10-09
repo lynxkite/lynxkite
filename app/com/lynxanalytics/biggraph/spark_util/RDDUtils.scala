@@ -54,22 +54,25 @@ object RDDUtils {
    * estimate totals from the filtered numbers.
    */
   private def unfilteredCounts[T](
-    fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]): SortedRDD[ID, (T, Int)] = {
-    val res = fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
-      val bfit = fit.buffered
-      val brit = rit.buffered
-      new Iterator[(ID, (T, Int))] {
-        def hasNext = rit.hasNext
-        def next() = {
-          val nxt = rit.next
-          var c = 1
-          while (fit.next._1 < nxt._1) c += 1
-          (nxt._1, (nxt._2, c))
+    full: SortedRDD[ID, _], restricted: SortedRDD[ID, T]): SortedRDD[ID, (T, Int)] =
+    new BiDerivedSortedRDD(
+      full,
+      restricted,
+      { (fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]) =>
+        fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
+          val bfit = fit.buffered
+          val brit = rit.buffered
+          new Iterator[(ID, (T, Int))] {
+            def hasNext = rit.hasNext
+            def next() = {
+              val nxt = rit.next
+              var c = 1
+              while (fit.next._1 < nxt._1) c += 1
+              (nxt._1, (nxt._2, c))
+            }
+          }
         }
-      }
-    }
-    new SortedRDD(res)
-  }
+      })
 
   def estimateValueCounts[T](
     fullRDD: SortedRDD[ID, _],
@@ -261,6 +264,5 @@ object Implicits {
       SortedRDD.fromUnsorted(self.groupByKey(partitioner))
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
       SortedRDD.fromUnsorted(self.reduceByKey(partitioner, f))
-    def asSortedRDD = SortedRDD.fromSorted(self)
   }
 }
