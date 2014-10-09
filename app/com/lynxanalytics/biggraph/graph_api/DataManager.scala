@@ -15,6 +15,7 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: Filename) {
+  private val instanceOutputCache = mutable.Map[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = mutable.Map[UUID, Future[EntityData]]()
 
   private def entityPath(entity: MetaGraphEntity) =
@@ -88,47 +89,43 @@ class DataManager(sc: spark.SparkContext,
     entityCache(entity.gUID) = data
   }
 
-  private def execute(instance: MetaGraphOperationInstance): Unit = synchronized {
+  private def execute(instance: MetaGraphOperationInstance): Future[Map[UUID, EntityData]] = {
     val inputs = instance.inputs
     val futureInputs = Future.sequence(
       inputs.all.toSeq.map {
         case (name, entity) =>
           getFuture(entity).map(data => (name, data))
       })
-    val outputDataSetFuture = futureInputs.map { inputs =>
+    futureInputs.map { inputs =>
       val inputDatas = DataSet(inputs.toMap)
       instance.outputs.scalars.values
         .foreach(scalar => log.info(s"PERF Computing scalar $scalar of GUID ${scalar.gUID}"))
-      val res = blocking {
+      val outputDatas = blocking {
         instance.run(inputDatas, runtimeContext)
+      }
+      if (instance.operation.isHeavy) {
+        blocking {
+          outputDatas.values.foreach { entityData =>
+            if (!hasEntityOnDisk(entityData.entity)) {
+              saveToDisk(entityData)
+            }
+          }
+        }
       }
       instance.outputs.scalars.values
         .foreach(scalar => log.info(s"PERF Computed scalar of GUID ${scalar.gUID}"))
-      res
+      outputDatas
     }
-    instance.outputs.all.foreach {
-      case (name, entity) =>
-        if (instance.operation.isHeavy) {
-          if (hasEntityOnDisk(entity)) {
-            // This could happen if the operation partially succeeded before.
-            // In this case no need to wait for the current run, we can just load the
-            // data for this particular entity.
-            set(entity, load(entity))
-          } else {
-            set(
-              entity,
-              outputDataSetFuture.flatMap { outputDataSet =>
-                val data = outputDataSet(entity.gUID)
-                blocking {
-                  saveToDisk(data)
-                }
-                load(entity)
-              })
-          }
-        } else {
-          set(entity, outputDataSetFuture.map(_(entity.gUID)))
-        }
+  }
+
+  private def getInstanceFuture(
+    instance: MetaGraphOperationInstance): Future[Map[UUID, EntityData]] = synchronized {
+
+    val gUID = instance.gUID
+    if (!instanceOutputCache.contains(gUID)) {
+      instanceOutputCache(gUID) = execute(instance)
     }
+    instanceOutputCache(gUID)
   }
 
   def isCalculated(entity: MetaGraphEntity): Boolean = hasEntity(entity) || hasEntityOnDisk(entity)
@@ -136,9 +133,20 @@ class DataManager(sc: spark.SparkContext,
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {
       if (hasEntityOnDisk(entity)) {
+        // If on disk already, we just load it.
         set(entity, load(entity))
       } else {
-        execute(entity.source)
+        // Otherwise we schedule execution of its operation.
+        val instance = entity.source
+        val instanceFuture = getInstanceFuture(instance)
+        set(
+          entity,
+          // And the entity will have to wait until its full completion (including saves).
+          if (instance.operation.isHeavy) {
+            instanceFuture.flatMap(_ => load(entity))
+          } else {
+            instanceFuture.map(_(entity.gUID))
+          })
       }
     }
   }
