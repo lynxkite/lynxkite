@@ -83,6 +83,16 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
   }
 
   test("No infinite recursion even when there is recursive dependency between operations") {
+    // In a previous implementation we've seen an infinite recursion in the data manager
+    // due to a kind of circular dependency between the operations ImportEdgeList and the
+    // implicitly created EdgeBundleAsVertexSet operation. This is how the circular dependency
+    // goeas:
+    //  - EdgeBundleAsVertexSet takes as input the edge bundle output of ImportEdgeList
+    //  - ImportEdgeList outputs edge attributes. When loading those, we depend on the id set
+    //    of those attributes, which in this case is the output of EdgeBundleAsVertexSet
+    // This DataManager got into an infinite recursion trying to provide alternatingly the inputs
+    // for these two operations.
+    // This test is to ensure that this daemon does not come back.
     implicit val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
     import Scripting._
