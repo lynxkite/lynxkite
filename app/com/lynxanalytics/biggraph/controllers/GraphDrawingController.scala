@@ -453,6 +453,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getScalarValue(request: ScalarValueRequest): DynamicValue = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
     assert(request.calculate || dataManager.isCalculated(scalar), "Value is not calculated yet")
-    graph_operations.ScalarToDynamicValue.run(scalar).value
+    graph_operations.DynamicValue.convert(scalar.value)
   }
 }

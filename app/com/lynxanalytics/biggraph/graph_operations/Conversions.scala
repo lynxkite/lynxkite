@@ -11,6 +11,18 @@ import com.lynxanalytics.biggraph.graph_api._
 case class DynamicValue(
   double: Double = 0.0,
   string: String = "")
+object DynamicValue {
+  def convert[T: TypeTag](value: T): DynamicValue = {
+    if (typeOf[T] =:= typeOf[Double])
+      DynamicValue(double = value.asInstanceOf[Double], string = value.toString)
+    else if (typeOf[T] =:= typeOf[Long])
+      DynamicValue(double = value.asInstanceOf[Long].toDouble, string = value.toString)
+    else if (typeOf[T] =:= typeOf[String])
+      DynamicValue(string = value.asInstanceOf[String])
+    else
+      DynamicValue(string = value.toString)
+  }
+}
 
 object VertexAttributeToString {
   class Output[T](implicit instance: MetaGraphOperationInstance,
@@ -100,53 +112,7 @@ case class VertexAttributeToDynamicValue[T]()
     implicit val ct = inputs.attr.data.classTag
     implicit val tt = inputs.attr.data.typeTag
     val attr = inputs.attr.rdd
-
-    val dv = {
-      if (typeOf[T] =:= typeOf[Double]) attr.mapValues(x => DynamicValue(double = x.asInstanceOf[Double], string = x.toString))
-      else if (typeOf[T] =:= typeOf[String]) attr.mapValues(x => DynamicValue(string = x.asInstanceOf[String]))
-      else attr.mapValues(x => DynamicValue(string = x.toString))
-    }
-    output(o.attr, dv)
-  }
-}
-
-object ScalarToDynamicValue {
-  class Input[T] extends MagicInputSignature {
-    val s = scalar[T]
-  }
-  class Output(implicit instance: MetaGraphOperationInstance)
-      extends MagicOutput(instance) {
-    val s = scalar[DynamicValue]
-  }
-  def run[T](s: Scalar[T])(
-    implicit manager: MetaGraphManager): Scalar[DynamicValue] = {
-    import Scripting._
-    val op = ScalarToDynamicValue[T]()
-    op(op.s, s).result.s
-  }
-}
-case class ScalarToDynamicValue[T]()
-    extends TypedMetaGraphOp[ScalarToDynamicValue.Input[T], ScalarToDynamicValue.Output] {
-  import ScalarToDynamicValue._
-  @transient override lazy val inputs = new Input[T]
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    implicit val id = inputDatas
-    implicit val ct = inputs.s.data.classTag
-    implicit val tt = inputs.s.data.typeTag
-    val s: T = inputs.s.value
-
-    val dv = {
-      if (typeOf[T] =:= typeOf[Double]) DynamicValue(double = s.asInstanceOf[Double], string = s.toString)
-      else if (typeOf[T] =:= typeOf[Long]) DynamicValue(double = s.asInstanceOf[Long].toDouble, string = s.toString)
-      else if (typeOf[T] =:= typeOf[String]) DynamicValue(string = s.asInstanceOf[String])
-      else DynamicValue(string = s.toString)
-    }
-    output(o.s, dv)
+    output(o.attr, attr.mapValues(DynamicValue.convert(_)))
   }
 }
 
