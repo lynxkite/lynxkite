@@ -312,7 +312,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       if (colorAttr) {
         color = colorMap[vertex.attrs[colorAttr].string];
       } else {
-        color = 'hsl(0,50%,42%)';
+        color = 'hsl(0,0%,42%)';
       }
 
       var icon;
