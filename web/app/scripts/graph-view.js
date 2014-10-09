@@ -139,6 +139,7 @@ angular.module('biggraph').directive('graphView', function(util) {
   };
 
   var graphToSVGRatio = 0.8;  // Leave some margin.
+  var UNCOLORED = 'hsl(0,0%,42%)';
 
   GraphView.prototype.update = function(data, menu) {
     this.clear();
@@ -308,11 +309,9 @@ angular.module('biggraph').directive('graphView', function(util) {
       var size = 0.5;
       if (sizeAttr) { size = vertex.attrs[sizeAttr].double / sizeMax; }
 
-      var color;
+      var color = UNCOLORED;
       if (colorAttr) {
         color = colorMap[vertex.attrs[colorAttr].string];
-      } else {
-        color = 'hsl(0,0%,42%)';
       }
 
       var icon;
@@ -722,7 +721,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.x = x;
     this.y = y;
     this.r = r;
-    this.color = color || '#444';
+    this.color = color || UNCOLORED;
     this.highlight = 'white';
     this.frozen = 0;  // Number of reasons why this vertex should not be animated.
     this.icon = getIcon(icon);
