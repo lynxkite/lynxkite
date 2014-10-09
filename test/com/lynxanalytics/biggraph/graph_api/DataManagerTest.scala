@@ -92,7 +92,16 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     //    of those attributes, which in this case is the output of EdgeBundleAsVertexSet
     // This DataManager got into an infinite recursion trying to provide alternatingly the inputs
     // for these two operations.
-    // This test is to ensure that this daemon does not come back.
+    //
+    // To actually trigger this bug for sure, you need to be in a special case where the edge
+    // attribute is already saved to disk but the edge bundle is not. If nothing is on disk,
+    // the operation will run, save everything and load back results one by one. If it loads
+    // the edge bundle before the edge attribute, then no problem happens.
+    // On the other hand, if everything is already on disk, then the ImportEdgeList operation
+    // never even triggers, so again, no problem happens.
+    //
+    // Anyways, this test was able to reproduce the issue and is here to ensure that this daemon
+    // does not ever come back.
     implicit val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
     import Scripting._
