@@ -12,15 +12,19 @@ case class DynamicValue(
   double: Double = 0.0,
   string: String = "")
 object DynamicValue {
-  def convert[T: TypeTag](value: T): DynamicValue = {
-    if (typeOf[T] =:= typeOf[Double])
+  def converter[T: TypeTag]: (T => DynamicValue) = {
+    if (typeOf[T] =:= typeOf[Double]) value =>
       DynamicValue(double = value.asInstanceOf[Double], string = value.toString)
-    else if (typeOf[T] =:= typeOf[Long])
+    else if (typeOf[T] =:= typeOf[Long]) value =>
       DynamicValue(double = value.asInstanceOf[Long].toDouble, string = value.toString)
-    else if (typeOf[T] =:= typeOf[String])
+    else if (typeOf[T] =:= typeOf[String]) value =>
       DynamicValue(string = value.asInstanceOf[String])
-    else
+    else value =>
       DynamicValue(string = value.toString)
+  }
+  def convert[T: TypeTag](value: T): DynamicValue = {
+    val c = converter[T]
+    c(value)
   }
 }
 
@@ -112,7 +116,8 @@ case class VertexAttributeToDynamicValue[T]()
     implicit val ct = inputs.attr.data.classTag
     implicit val tt = inputs.attr.data.typeTag
     val attr = inputs.attr.rdd
-    output(o.attr, attr.mapValues(DynamicValue.convert(_)))
+    val converter = DynamicValue.converter[T]
+    output(o.attr, attr.mapValues(converter(_)))
   }
 }
 
