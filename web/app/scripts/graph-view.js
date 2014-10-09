@@ -235,6 +235,41 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
   }
 
+  function doubleColorMap(values) {
+    var bounds = common.minmax(values);
+    var colorMap = {};
+    for (var i = 0; i < values.length; ++i) {
+      var h = 300 + common.normalize(values[i], bounds) * 120;
+      colorMap[values[i]] = 'hsl(' + h + ',50%,42%)';
+    }
+    return colorMap;
+  }
+
+  function stringColorMap(values) {
+    var i, set = {};
+    for (i = 0; i < values.length; ++i) {
+      set[values[i]] = 1;
+    }
+    var keys = Object.keys(set);
+    keys.sort();  // This provides some degree of stability.
+    var colorMap = {};
+    for (i = 0; i < keys.length; ++i) {
+      var h = Math.floor(360 * i / keys.length);
+      colorMap[keys[i]] = 'hsl(' + h + ',50%,42%)';
+    }
+    // Strings that are valid CSS color names will be used as they are.
+    // To identify them we have to try setting them as color on a hidden element.
+    var colorTester = angular.element('#svg-icons')[0];
+    for (i = 0; i < keys.length; ++i) {
+      colorTester.style.color = 'transparent';
+      colorTester.style.color = keys[i];
+      if (colorTester.style.color !== 'transparent') {
+        colorMap[keys[i]] = keys[i];
+      }
+    }
+    return colorMap;
+  }
+
   GraphView.prototype.addSampledVertices = function(data, offsetter, side) {
     var vertices = [];
     vertices.side = side;
@@ -249,21 +284,13 @@ angular.module('biggraph').directive('graphView', function(util) {
       sizeMax = vertexSizeBounds.max;
     }
 
-    var color = (side.attrs.color) ? side.attrs.color.id : undefined;
-    var vertexColorBounds, colorMap;
-    if (color) {
+    var colorAttr = (side.attrs.color) ? side.attrs.color.id : undefined;
+    var colorMap;
+    if (colorAttr) {
       if (side.attrs.color.typeName === 'Double') {
-        vertexColorBounds = common.minmax(mapByAttr(data.vertices, color, 'double'));
+        colorMap = doubleColorMap(mapByAttr(data.vertices, colorAttr, 'double'));
       } else if (side.attrs.color.typeName === 'String') {
-        var enumMap = {};
-        colorMap = {};
-        angular.forEach(data.vertices, function(n) {
-          enumMap[n.attrs[color].string] =
-          enumMap[n.attrs[color].string] ? enumMap[n.attrs[color].string] + 1 : 1;
-        });
-        var cdist = Math.floor(360 / Object.keys(enumMap).length);
-        var ci = 0;
-        angular.forEach(enumMap, function(v, k) { colorMap[k] = ci; ci += cdist; });
+        colorMap = stringColorMap(mapByAttr(data.vertices, colorAttr, 'string'));
       } else {
         console.error('The type of ' +
           side.attrs.color + ' (' + side.attrs.color.typeName +
@@ -281,21 +308,12 @@ angular.module('biggraph').directive('graphView', function(util) {
       var size = 0.5;
       if (sizeAttr) { size = vertex.attrs[sizeAttr].double / sizeMax; }
 
-      var hslColor, h, s, l;
-      if (color && side.attrs.color.typeName === 'Double') {
-        h = 300 + common.normalize(vertex.attrs[color].double, vertexColorBounds) * 120;
-        s = 50;
-        l = 42;
-      } else if (color && side.attrs.color.typeName === 'String') {
-        h = colorMap[vertex.attrs[color].string];
-        s = 50;
-        l = 42;
+      var color;
+      if (colorAttr) {
+        color = colorMap[vertex.attrs[colorAttr].string];
       } else {
-        h = 0;
-        s = 0;
-        l = 42;
+        color = 'hsl(0,50%,42%)';
       }
-      hslColor = 'hsl(' + h + ',' + s + '%,' + l + '%)';
 
       var icon;
       if (side.attrs.icon) { icon = vertex.attrs[side.attrs.icon.id].string; }
@@ -307,7 +325,7 @@ angular.module('biggraph').directive('graphView', function(util) {
                          radius,
                          label,
                          vertex.id,
-                         hslColor,
+                         color,
                          icon);
       offsetter.rule(v);
       v.id = vertex.id.toString();
