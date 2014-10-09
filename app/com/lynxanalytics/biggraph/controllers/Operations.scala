@@ -405,7 +405,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
-    val title = "Pad with constant default value"
+    val title = "Fill with constant default value"
     val description =
       """An attribute may not be defined on every vertex. This operation sets a default value
       for the vertices where it was not defined."""
