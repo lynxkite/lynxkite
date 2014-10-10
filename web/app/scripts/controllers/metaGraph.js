@@ -2,9 +2,6 @@
 
 angular.module('biggraph')
   .controller('MetaGraphViewCtrl', function ($scope, $resource, $modal, $location, util) {
-    $scope.alerts = [];
-    $scope.closeAlert = function(index) { $scope.alerts.splice(index, 1); };
-
     function defaultSideState() {
       return {
         vertexSet: undefined,
@@ -54,7 +51,7 @@ angular.module('biggraph')
           }
         }
       });
-    
+
     util.deepWatch(
       $scope,
       'state',
@@ -64,12 +61,8 @@ angular.module('biggraph')
         $location.search(s);
       });
 
-    var VertexSet = $resource('/ajax/vertexSet');
     function loadVertexSet(id) {
-      var req = VertexSet.get({q: {id: id}}, function() {}, function(failure) {
-        req.error = 'Request failed: ' + failure.data;
-      });
-      return req;
+      return util.nocache('/ajax/vertexSet', { id: id });
     }
 
     $scope.$watch(
@@ -95,60 +88,8 @@ angular.module('biggraph')
         }
       });
 
-    util.deepWatch(
-      $scope,
-      'state', // TODO: Finer grained triggering.
-      function() {
-        if ($scope.left.data !== undefined) {
-          $scope.left.data.$promise.then(function() { loadHistograms($scope.left); });
-        }
-        if ($scope.right.data !== undefined) {
-          $scope.right.data.$promise.then(function() { loadHistograms($scope.right); });
-        }
-      });
-    function loadHistogram(side, attr) {
-      var filters = [];
-      var state = side.state();
-      var data = side.data;
-      for (var filteredAttr in state.filters) {
-        if (state.filters[filteredAttr] !== '') {
-          filters.push({ attributeId: filteredAttr, valueSpec: state.filters[filteredAttr] });
-        }
-      }
-      var q = {
-        vertexSetId: data.id,
-        filters: filters,
-        mode: 'bucketed',
-        xBucketingAttributeId: attr.id,
-        xNumBuckets: 20,
-        yBucketingAttributeId: '',
-        yNumBuckets: 1,
-        // Unused.
-        centralVertexIds: [],
-        sampleSmearEdgeBundleId: '',
-        radius: 0,
-        labelAttributeId: '',
-        sizeAttributeId: '',
-      };
-      attr.histogram = $resource('/ajax/vertexDiag').get({q: q});
-    }
-    function loadHistograms(side) {
-      var data = side.data;
-      for (var i = 0; i < data.attributes.length; ++i) {
-        var a = data.attributes[i];
-        if (a.showHistogram) {
-          loadHistogram(side, a);
-        }
-      }
-    }
-    $scope.startToShowHistogram = function(side, attr) {
-      attr.showHistogram = true;
-      loadHistogram(side, attr);
-    };
-
-    var StartingVertexSets = $resource('/ajax/startingVs');
     function loadStartingVertexSets() {
-      $scope.startingVertexSets = StartingVertexSets.query({q: {fake: 0}});
+      $scope.startingVertexSets = util.nocache('/ajax/startingVs');
     }
 
     function openOperationModal(operation) {
@@ -165,33 +106,25 @@ angular.module('biggraph')
       return modalInstance.result;
     }
 
-    var ApplyOperation = $resource('/ajax/applyOp');
     function applyOperation(operation, modalResult) {
       var request = {
         id: operation.id,
         parameters: modalResult
       };
-      ApplyOperation.get(
-        {q: request},
+      util.post('/ajax/applyOp',
+        request,
         function() {
-          update();
-        },
-        function(response) {
-          $scope.alerts.push({type: 'danger', msg: 'Request failed: ' + response.status});
-          update();
+          // Force reloads of graphs by creating new objects.
+          var oldLeftVS = $scope.state.left.vertexSet;
+          if (oldLeftVS !== undefined) {
+            $scope.state.left.vertexSet = { id: oldLeftVS.id };
+          }
+          var oldRightVS = $scope.state.right.vertexSet;
+          if (oldRightVS !== undefined) {
+            $scope.state.right.vertexSet = { id: oldRightVS.id };
+          }
+          loadStartingVertexSets();
         });
-      function update() {
-        // Force reloads of graphs by creating new objects.
-        var oldLeftVS = $scope.state.left.vertexSet;
-        if (oldLeftVS !== undefined) {
-          $scope.state.left.vertexSet = { id: oldLeftVS.id };
-        }
-        var oldRightVS = $scope.state.right.vertexSet;
-        if (oldRightVS !== undefined) {
-          $scope.state.right.vertexSet = { id: oldRightVS.id };
-        }
-        loadStartingVertexSets();
-      }
     }
 
     function applyOperationFlow(operation) {
@@ -200,8 +133,7 @@ angular.module('biggraph')
       });
     }
 
-    var StartingOps = $resource('/ajax/startingOps');
-    $scope.startingOps = StartingOps.query({q: {fake: 0}});
+    $scope.startingOps = util.nocache('/ajax/startingOps');
     loadStartingVertexSets();
 
     $scope.apply = applyOperationFlow;

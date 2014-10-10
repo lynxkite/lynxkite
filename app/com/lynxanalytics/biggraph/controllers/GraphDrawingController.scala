@@ -118,9 +118,6 @@ case class ScalarValueRequest(
   val scalarId: String,
   val calculate: Boolean)
 
-case class ScalarValueResponse(
-  val value: String)
-
 case class CenterRequest(
   vertexSetId: String,
   count: Int,
@@ -454,9 +451,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0)))
   }
 
-  def getScalarValue(request: ScalarValueRequest): ScalarValueResponse = {
+  def getScalarValue(request: ScalarValueRequest): DynamicValue = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
     assert(request.calculate || dataManager.isCalculated(scalar), "Value is not calculated yet")
-    ScalarValueResponse(scalar.value.toString)
+    graph_operations.DynamicValue.convert(scalar.value)
   }
 }
