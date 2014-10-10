@@ -62,13 +62,13 @@
         </label>
       </div>
 
-      <div class="btn-group pull-right">
+      <div class="btn-group pull-right" ng-if="side.project.vertexSet !== ''">
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'"
           uncheckable tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true"
           tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
         </label>
-        <label ng-if="side.project.vertexSet !== ''" class="btn btn-default"
+        <label class="btn btn-default"
           ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
           tooltip="Concrete&nbsp;vertices" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
@@ -99,7 +99,7 @@
 
       <!-- Extra controls for the sampled view. -->
       <div class="list-group-item extra-controls"
-        ng-if="side.state.graphMode == 'sampled' && side.project.vertexSet !== ''">
+        ng-if="side.graphing() === 'sampled'">
         <table>
           <tr>
             <td>Layout animation:</td>
@@ -161,7 +161,7 @@
 
       <!-- Extra controls for the bucketed view. -->
       <div class="list-group-item extra-controls"
-        ng-if="side.state.graphMode == 'bucketed'">
+        ng-if="side.graphing() === 'bucketed'">
         <table>
           <tr>
             <td>Buckets:</td>
@@ -177,10 +177,10 @@
       <!-- Summary. -->
       <li class="list-group-item">
         <span class="lead">
-          <value ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']" human></value>
+          <value ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']"></value>
           <span ng-if="side.project.vertexSet === ''">no</span>
           <span class="de-emph">vertices with</span>
-          <value ng-if="side.project.edgeBundle !== ''" ref="side.scalars['edge_count']" human></value>
+          <value ng-if="side.project.edgeBundle !== ''" ref="side.scalars['edge_count']"></value>
           <span ng-if="side.project.edgeBundle === ''">no</span>
           <span class="de-emph">edges</span>
         </span>
@@ -202,7 +202,8 @@
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of the</span> graph</span>
       </li>
-      <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars | filter: commonScalar" scalar="scalar" value="{{side.scalars[scalar.title].value}}" side="side"></li>
+      <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars | filter: commonScalar"
+        scalar="scalar" value="side.scalars[scalar.title]" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>

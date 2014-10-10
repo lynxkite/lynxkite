@@ -61,17 +61,22 @@ angular.module('biggraph')
       this.project = undefined;
     }
 
+    // Returns state.graphMode if the mode setting is applicable.
+    Side.prototype.graphing = function() {
+      return this.project && this.project.vertexSet && this.state.graphMode;
+    };
+
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
-      if (!this.loaded() || !this.state.graphMode ||
-          (this.state.graphMode === 'sampled' && !this.state.centers)) {
+      if (!this.loaded() || !this.graphing() ||
+          (this.graphing() === 'sampled' && !this.state.centers)) {
         this.viewData = undefined;
         return;
       }
 
       vd.vertexSet = { id: this.project.vertexSet };
       if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
-      vd.graphMode = this.state.graphMode;
+      vd.graphMode = this.graphing();
 
       vd.bucketCount = this.state.bucketCount;
 
@@ -147,7 +152,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.maybeRequestNewCenter = function() {
-      if (this.state.graphMode === 'sampled' && !this.state.centers) {
+      if (this.graphing() === 'sampled' && !this.state.centers) {
         this.requestNewCenter(1);
       }
     };

@@ -33,8 +33,10 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
         scope.edgeCounts = {};
         for (var i = 0; i < scope.data.projects.length; ++i) {
           var p = scope.data.projects[i];
-          scope.vertexCounts[p.name] = p.vertexSet ? getScalar(p, 'vertex_count') : { value: 'no' };
-          scope.edgeCounts[p.name] = p.edgeBundle ? getScalar(p, 'edge_count') : { value: 'no' };
+          scope.vertexCounts[p.name] =
+            p.vertexSet ? getScalar(p, 'vertex_count') : { string: 'no' };
+          scope.edgeCounts[p.name] =
+            p.edgeBundle ? getScalar(p, 'edge_count') : { string: 'no' };
         }
       });
       scope.createProject = function() {

@@ -1,3 +1,11 @@
+.value.human {
+  cursor: pointer;
+  display: inline-block;
+}
+.value.human:hover {
+  text-decoration: underline;
+}
+
 .spinner {
   animation: spinner 0.5s infinite linear;
 }

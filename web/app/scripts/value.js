@@ -5,14 +5,13 @@ angular.module('biggraph').directive('value', function(util) {
     restrict: 'E',
     scope: { ref: '=' },
     templateUrl: 'value.html',
-    link: function(scope, element, attrs) {
-      scope.human = attrs.human !== undefined;
-      scope.format = function(x) {
-        if (scope.human) {
-          return util.human(x);
-        } else {
-          return x;
-        }
+    link: function(scope) {
+      scope.human = true;
+      scope.humanized = function(ref) {
+        return scope.human && ref.double && ref.double.toString() !== util.human(ref.double);
+      };
+      scope.format = function(ref) {
+        return util.human(ref.double);
       };
     },
   };
