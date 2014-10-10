@@ -21,6 +21,15 @@ object SortedRDD {
 }
 
 private object SortedRDDUtil {
+  def assertMatchingRDDs[K](first: SortedRDD[K, _], second: SortedRDD[K, _]): Unit = {
+    assert(
+      first.partitions.size == second.partitions.size,
+      s"Size mismatch between $first and $second")
+    assert(
+      first.partitioner == second.partitioner,
+      s"Partitioner mismatch between $first and $second")
+  }
+
   def merge[K, V, W](
     bi1: collection.BufferedIterator[(K, V)],
     bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
@@ -96,15 +105,19 @@ private object SortedRDDUtil {
 abstract class SortedRDD[K: Ordering, V] private[spark_util] (
   val self: RDD[(K, V)])
     extends RDD[(K, V)](self) {
-  assert(self.partitioner.isDefined)
+  assert(
+    self.partitioner.isDefined,
+    s"$self was used to create a SortedRDD, but it wasn't partitioned")
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
 
-  def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
+  // See comments at DerivedSortedRDD before blindly using this method!
+  private def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
     new DerivedSortedRDD(this, derivation)
 
-  def biDeriveWith[W, R](
+  // See comments at DerivedSortedRDD before blindly using this method!
+  private def biDeriveWith[W, R](
     other: SortedRDD[K, W],
     derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
     new BiDerivedSortedRDD(this, other, derivation)
@@ -117,13 +130,8 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     biDeriveWith[W, (V, W)](
       other,
       { (first, second) =>
-        assert(
-          first.partitions.size == second.partitions.size,
-          s"Size mismatch between $first and $second")
-        assert(
-          first.partitioner == second.partitioner,
-          s"Partitioner mismatch between $first and $second")
-        first.zipPartitions(second, true) { (it1, it2) =>
+        SortedRDDUtil.assertMatchingRDDs(first, second)
+        first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.merge(it1.buffered, it2.buffered).iterator
         }
       })
@@ -136,13 +144,8 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     biDeriveWith[W, (V, Option[W])](
       other,
       { (first, second) =>
-        assert(
-          first.partitions.size == second.partitions.size,
-          s"Size mismatch between $first and $second")
-        assert(
-          first.partitioner == second.partitioner,
-          s"Partitioner mismatch between $first and $second")
-        first.zipPartitions(second, true) { (it1, it2) =>
+        SortedRDDUtil.assertMatchingRDDs(first, second)
+        first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.leftOuterMerge(it1.buffered, it2.buffered).iterator
         }
       })
@@ -157,13 +160,8 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     biDeriveWith[W, (Option[V], Option[W])](
       other,
       { (first: SortedRDD[K, V], second: SortedRDD[K, W]) =>
-        assert(
-          first.partitions.size == second.partitions.size,
-          s"Size mismatch between $first and $second")
-        assert(
-          first.partitioner == second.partitioner,
-          s"Partitioner mismatch between $first and $second")
-        first.zipPartitions(second, true) { (it1, it2) =>
+        SortedRDDUtil.assertMatchingRDDs(first, second)
+        first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.fullOuterMerge(it1.buffered, it2.buffered).iterator
         }
       })
@@ -227,6 +225,9 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     val numPartitions = partitions.size
     val div = n / numPartitions
     val mod = n % numPartitions
+    // Actually, normal assumptions of derive does NOT apply here. This means that if you have
+    // an RDD x returned by this call and then you call y = x.restrictToIdSet,
+    // you might see items in y not present x.
     derive(
       _.mapPartitionsWithIndex(
         { (pid, it) =>
@@ -246,6 +247,10 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
 }
 
 // SortedRDD which was derived from one other sorted rdd without changing the id space.
+// Also, the derivation must be such that the value of on item (k, v) in the result only depends
+// on the value of items (k, ?) in the input. E.g. it can not depend on the ordinal of (k, ?)s in
+// the input or values of other items.
+// With other words, we assume that the order filter by id and derivation are exchangeable.
 private[spark_util] object DerivedSortedRDD {
   type Derivation[K, VOld, VNew] = SortedRDD[K, VOld] => RDD[(K, VNew)]
 }
@@ -259,6 +264,7 @@ private[spark_util] class DerivedSortedRDD[K: Ordering, VOld, VNew](
 }
 
 // SortedRDD which was derived from two other sorted rdds without changing the id space.
+// See comments at DerivedSortedRDD, the same restrictions apply here.
 private[spark_util] object BiDerivedSortedRDD {
   type Derivation[K, VOld1, VOld2, VNew] = (SortedRDD[K, VOld1], SortedRDD[K, VOld2]) => RDD[(K, VNew)]
 }
@@ -280,8 +286,14 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
 private[spark_util] class SortedArrayRDD[K: Ordering, V] private[spark_util] (data: RDD[(K, V)])
     extends RDD[(Int, Array[(K, V)])](data) {
 
-  assert(data.partitioner.isDefined)
-  assert(data.partitioner.get.isInstanceOf[HashPartitioner])
+  assert(
+    data.partitioner.isDefined,
+    s"$data was used to create a SortedArrayRDD, but it wasn't partitioned")
+
+  assert(
+    data.partitioner.get.isInstanceOf[HashPartitioner],
+    s"$data was used to create a SortedArrayRDD, but it wasn't partitioned via a HashPartitioner")
+
   override def getPartitions: Array[Partition] = data.partitions
   override val partitioner = data.partitioner
   override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
