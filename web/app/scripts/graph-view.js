@@ -165,7 +165,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         var offsetter;
         if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
           offsetter = oldVertices[i].offsetter;
-          offsetter.inherited = true;  // Do not adjust zoom level.
+          offsetter.inherited = true;
         } else {
           offsetter = new Offsetter(xOff, yOff, zoom, menu);
         }
@@ -491,21 +491,31 @@ angular.module('biggraph').directive('graphView', function(util) {
   };
 
   GraphView.prototype.initSampled = function(vertices) {
-    // Initial layout.
-    this.layout(vertices);
+    this.initLayout(vertices);
+    this.initZoom(vertices);
+    this.initSlider(vertices);
+  };
 
-    if (!vertices.offsetter.inherited) {
-      // Initial zoom to fit the layout on the SVG.
-      var xb = common.minmax(vertices.map(function(v) { return v.x; }));
-      var yb = common.minmax(vertices.map(function(v) { return v.y; }));
-      var xFit = 0.25 * this.svg.width() / Math.max(Math.abs(xb.min), Math.abs(xb.max));
-      var yFit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
-      vertices.offsetter.zoom = graphToSVGRatio * Math.min(xFit, yFit);
+  GraphView.prototype.initZoom = function(vertices) {
+    // Initial zoom to fit the layout on the SVG.
+    var xb = common.minmax(vertices.map(function(v) { return v.x; }));
+    var yb = common.minmax(vertices.map(function(v) { return v.y; }));
+    var xFit = 0.25 * this.svg.width() / Math.max(Math.abs(xb.min), Math.abs(xb.max));
+    var yFit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
+    // Avoid infinite zoom for 1-vertex graphs.
+    if (!isFinite(xFit) && !isFinite(yFit)) { return; }
+    var newZoom = graphToSVGRatio * Math.min(xFit, yFit);
+
+    // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
+    var ratio = newZoom / vertices.offsetter.zoom;
+    if (!vertices.offsetter.inherited || ratio < 0.1 || ratio > 10) {
+      vertices.offsetter.zoom = newZoom;
       // "Thickness" is scaled to the SVG size. We leave it unchanged.
       vertices.offsetter.reDraw();
     }
+  };
 
-    // Slider.
+  GraphView.prototype.initSlider = function(vertices) {
     this.unwatch.push(this.scope.$watch(sliderPos, onSlider));
     function sliderPos() {
       return vertices.side.sliderPos;
@@ -532,7 +542,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  GraphView.prototype.layout = function(vertices) {
+  GraphView.prototype.initLayout = function(vertices) {
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
       v.forceMass = 1;
