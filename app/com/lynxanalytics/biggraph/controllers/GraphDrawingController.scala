@@ -434,6 +434,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getHistogram(request: HistogramSpec): HistogramResponse = {
     val vertexAttribute = metaManager.vertexAttribute(request.attributeId.asUUID)
+    dataManager.loadToMemory(vertexAttribute.vertexSet)
     dataManager.loadToMemory(vertexAttribute)
     loadGUIDsToMemory(request.vertexFilters.map(_.attributeId))
     val bucketedAttr = FEBucketers.bucketedAttribute(
