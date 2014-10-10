@@ -456,7 +456,7 @@ angular.module('biggraph')
       $scope.leftToRightBundle = getLeftToRightBundle();
       this.loadScalars();
       this.updateViewData();
-      if (!this.vertexSet) {
+      if (!this.project.vertexSet) {
         this.state.graphMode = undefined;
       }
     };
