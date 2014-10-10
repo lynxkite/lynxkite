@@ -58,7 +58,7 @@ object RDDUtils {
     new BiDerivedSortedRDD(
       full,
       restricted,
-      { (fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]) =>
+      (fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]) =>
         fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
           val bfit = fit.buffered
           val brit = rit.buffered
@@ -71,8 +71,7 @@ object RDDUtils {
               (nxt._1, (nxt._2, c))
             }
           }
-        }
-      })
+        })
 
   def estimateValueCounts[T](
     fullRDD: SortedRDD[ID, _],
