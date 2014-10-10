@@ -114,10 +114,7 @@ case class LongBucketer(min: Long, max: Long, numBuckets: Int)
 }
 
 case class MapBucketer[T](toBucket: Map[T, Int]) extends Bucketer[T] {
-  val numBuckets = toBucket.values.reduceLeftOption(_ max _) match {
-    case None => 0
-    case Some(a) => a + 1
-  }
+  val numBuckets = if (toBucket.isEmpty) 0 else toBucket.values.max + 1
   def whichBucket(value: T) = toBucket(value)
   def bucketLabels = ???
   def labelType = ???
