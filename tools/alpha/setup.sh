@@ -38,7 +38,7 @@ if [ -e biggraphstage/RUNNING_PID ]; then
     fi
     sleep 1
   done
-  if [ ! -e /proc/\$PID ]; then
+  if [ -e /proc/\$PID ]; then
     kill -9 \$PID || true
     rm -f biggraphstage/RUNNING_PID
   fi
