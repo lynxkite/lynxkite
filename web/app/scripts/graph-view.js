@@ -500,9 +500,11 @@ angular.module('biggraph').directive('graphView', function(util) {
       var yb = common.minmax(vertices.map(function(v) { return v.y; }));
       var xFit = 0.25 * this.svg.width() / Math.max(Math.abs(xb.min), Math.abs(xb.max));
       var yFit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
-      vertices.offsetter.zoom = graphToSVGRatio * Math.min(xFit, yFit);
-      // "Thickness" is scaled to the SVG size. We leave it unchanged.
-      vertices.offsetter.reDraw();
+      if (isFinite(xFit) || isFinite(yFit)) {  // Avoid infinite zoom for 1-vertex graphs.
+        vertices.offsetter.zoom = graphToSVGRatio * Math.min(xFit, yFit);
+        // "Thickness" is scaled to the SVG size. We leave it unchanged.
+        vertices.offsetter.reDraw();
+      }
     }
 
     // Slider.
