@@ -30,12 +30,16 @@ object UIValue {
   def seq(list: Seq[String]) = list.map(id => UIValue(id, id))
 }
 
+case class UIValues(values: Seq[UIValue])
+
 case class FEOperationMeta(
   id: String,
   title: String,
   parameters: Seq[FEOperationParameterMeta],
   status: FEStatus = FEStatus.enabled,
   description: String = "")
+
+case class FEOperationMetas(ops: Seq[FEOperationMeta])
 
 case class FEOperationParameterMeta(
     id: String,
@@ -238,14 +242,14 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def applyOp(request: FEOperationSpec): Unit =
     operations.applyOp(request)
 
-  def startingOperations(request: serving.Empty): Seq[FEOperationMeta] =
-    operations.getStartingOperationMetas.sortBy(_.title)
+  def startingOperations(request: serving.Empty): FEOperationMetas =
+    FEOperationMetas(operations.getStartingOperationMetas.sortBy(_.title))
 
-  def startingVertexSets(request: serving.Empty): Seq[UIValue] =
-    metaManager.allVertexSets
+  def startingVertexSets(request: serving.Empty): UIValues =
+    UIValues(metaManager.allVertexSets
       .filter(_.source.inputs.all.isEmpty)
       .filter(metaManager.isVisible(_))
-      .map(UIValue.fromEntity(_)).toSeq
+      .map(UIValue.fromEntity(_)).toSeq)
 
   // Project view stuff below.
 

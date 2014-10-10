@@ -30,6 +30,10 @@
   font-weight: bold;
 }
 
+.metagraph {
+  margin-top: 10px;
+}
+
 .panel-heading + .list-group sublist .list-group-item:first-child {
   border-top-width: 1px;
 }
