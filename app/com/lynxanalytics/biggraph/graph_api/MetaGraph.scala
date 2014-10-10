@@ -477,7 +477,7 @@ sealed trait EntityData {
 }
 sealed trait EntityRDDData extends EntityData {
   val rdd: SortedRDD[ID, _]
-  rdd.name = "RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID)
+  rdd.setName("RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID))
 }
 class VertexSetData(val entity: VertexSet,
                     val rdd: VertexSetRDD) extends EntityRDDData {

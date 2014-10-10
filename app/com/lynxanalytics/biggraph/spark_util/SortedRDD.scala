@@ -1,15 +1,16 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark.{ HashPartitioner, Partition, TaskContext }
-import org.apache.spark.rdd._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import org.apache.spark.rdd._
+import org.apache.spark.storage.RDDInfo
 import scala.collection.SortedSet
 import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering
 import scala.reflect.ClassTag
 import scala.util.Sorting
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{ bigGraphLogger => bGLog }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {
@@ -244,6 +245,8 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
   }
 
   def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, V]
+
+  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit
 }
 
 // SortedRDD which was derived from one other sorted rdd without changing the id space.
@@ -261,6 +264,9 @@ private[spark_util] class DerivedSortedRDD[K: Ordering, VOld, VNew](
 
   def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, VNew] =
     new DerivedSortedRDD(source.restrictToIdSet(idSet), derivation)
+
+  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
+    source.memorizeBackingArray(storageInfo)
 }
 
 // SortedRDD which was derived from two other sorted rdds without changing the id space.
@@ -277,6 +283,11 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
   def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, VNew] =
     new BiDerivedSortedRDD(
       source1.restrictToIdSet(idSet), source2.restrictToIdSet(idSet), derivation)
+
+  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit = {
+    source1.memorizeBackingArray(storageInfo)
+    source2.memorizeBackingArray(storageInfo)
+  }
 }
 
 // An RDD with each partition having a single value, an x: (Int, Array[(K, V)]). The x._1 is simply
@@ -302,6 +313,22 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V] private[spark_util] (da
     Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
     Iterator((split.index, array))
   }
+
+  def memorize(storageInfo: Array[RDDInfo]): Unit = {
+    val fullyCached =
+      storageInfo
+        .find(_.id == id)
+        .map(rddInfo => rddInfo.isCached && rddInfo.numCachedPartitions == rddInfo.numPartitions)
+        .getOrElse(false)
+    if (!fullyCached) {
+      bGLog.info(s"PERF Loading to memory RDD: $this")
+      cache()
+      foreach(_ => ())
+      bGLog.info(s"PERF RDD load completed: $id")
+    } else {
+      bGLog.info(s"PERF RDD $this found in memory")
+    }
+  }
 }
 
 private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedArrayRDD[K, V])
@@ -309,8 +336,17 @@ private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedA
       arrayRDD.mapPartitions(
         it => it.next._2.iterator,
         preservesPartitioning = true)) {
-  override def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, V] =
+  def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, V] =
     new RestrictedArrayBackedSortedRDD(arrayRDD, idSet)
+
+  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
+    arrayRDD.memorize(storageInfo)
+
+  override def setName(newName: String): this.type = {
+    name = newName
+    arrayRDD.name = s"Backing ArrayRDD of $newName"
+    this
+  }
 }
 private[spark_util] class RestrictedArrayBackedSortedRDD[K: Ordering, V](
   arrayRDD: SortedArrayRDD[K, V],
@@ -319,6 +355,9 @@ private[spark_util] class RestrictedArrayBackedSortedRDD[K: Ordering, V](
       arrayRDD.mapPartitions(
         it => it.next._2.iterator.filter { case (key, value) => idSet.contains(key) },
         preservesPartitioning = true)) {
-  override def restrictToIdSet(newIdSet: SortedSet[K]): SortedRDD[K, V] =
+  def restrictToIdSet(newIdSet: SortedSet[K]): SortedRDD[K, V] =
     new RestrictedArrayBackedSortedRDD(arrayRDD, idSet & newIdSet)
+
+  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
+    arrayRDD.memorize(storageInfo)
 }
