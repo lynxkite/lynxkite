@@ -61,22 +61,17 @@ angular.module('biggraph')
       this.project = undefined;
     }
 
-    // Returns state.graphMode if the mode setting is applicable.
-    Side.prototype.graphing = function() {
-      return this.project && this.project.vertexSet && this.state.graphMode;
-    };
-
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
-      if (!this.loaded() || !this.graphing() ||
-          (this.graphing() === 'sampled' && !this.state.centers)) {
+      if (!this.loaded() || !this.state.graphMode ||
+          (this.state.graphMode === 'sampled' && !this.state.centers)) {
         this.viewData = undefined;
         return;
       }
 
       vd.vertexSet = { id: this.project.vertexSet };
       if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
-      vd.graphMode = this.graphing();
+      vd.graphMode = this.state.graphMode;
 
       vd.bucketCount = this.state.bucketCount;
 
@@ -152,7 +147,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.maybeRequestNewCenter = function() {
-      if (this.graphing() === 'sampled' && !this.state.centers) {
+      if (this.state.graphMode === 'sampled' && !this.state.centers) {
         this.requestNewCenter(1);
       }
     };
@@ -456,6 +451,16 @@ angular.module('biggraph')
       return undefined;
     };
 
+    // Called when Side.project is loaded.
+    Side.prototype.onProjectLoaded = function() {
+      $scope.leftToRightBundle = getLeftToRightBundle();
+      this.loadScalars();
+      this.updateViewData();
+      if (!this.vertexSet) {
+        this.state.graphMode = undefined;
+      }
+    };
+
     // "vertex_count" and "edge_count" are displayed separately at the top.
     $scope.commonScalar = function(s) {
       return s.title !== 'vertex_count' && s.title !== 'edge_count';
@@ -480,15 +485,10 @@ angular.module('biggraph')
       return $scope.left.viewData || $scope.right.viewData;
     };
 
-    $scope.$watch('left.project.$resolved', function() {
-      $scope.leftToRightBundle = getLeftToRightBundle();
-    });
-    $scope.$watch('right.project.$resolved', function() {
-      $scope.leftToRightBundle = getLeftToRightBundle();
-    });
-
-    $scope.$watch('left.project.$resolved', function() { $scope.left.loadScalars(); });
-    $scope.$watch('right.project.$resolved', function() { $scope.right.loadScalars(); });
+    $scope.$watch('left.project.$resolved', function(loaded) {
+      if (loaded) { $scope.left.onProjectLoaded(); } });
+    $scope.$watch('right.project.$resolved', function(loaded) {
+      if (loaded) { $scope.right.onProjectLoaded(); } });
 
     $scope.left = new Side({ primary: true });
     $scope.right = new Side();
@@ -496,8 +496,6 @@ angular.module('biggraph')
 
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
-    $scope.$watch('left.project.$resolved', function() { $scope.left.updateViewData(); });
-    $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
     $scope.$watch('left.state.graphMode', function() { $scope.left.maybeRequestNewCenter(); });
