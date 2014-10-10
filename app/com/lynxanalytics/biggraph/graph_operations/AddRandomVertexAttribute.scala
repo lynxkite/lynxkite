@@ -32,6 +32,6 @@ case class AddGaussianVertexAttribute(seed: Int) extends TypedMetaGraphOp[Input,
           val rnd = new Random((pid << 16) + seed)
           it.map { case (vid, _) => vid -> rnd.nextGaussian() }
       },
-      preservesPartitioning = true).asSortedRDD)
+      preservesPartitioning = true).toSortedRDD)
   }
 }
