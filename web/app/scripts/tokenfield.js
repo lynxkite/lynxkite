@@ -13,7 +13,11 @@ angular.module('biggraph').directive('tokenfield', function() {
         element.tokenfield('setTokens', tokens);
       };
       ctrl.$parsers.push(function(str) {
-        return str.split(',').map(function(x) { return x.trim(); });
+        if (str) {
+          return str.split(',').map(function(x) { return x.trim(); });
+        } else {
+          return [];
+        }
       });
     },
   };
