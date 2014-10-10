@@ -210,6 +210,7 @@ class MetaGraphManager(val repositoryPath: String) {
         val file = new File(repo, fileName)
         val stream = new ObjectInputStream(new FileInputStream(file))
         val instance = stream.readObject().asInstanceOf[SerializedOperation].toInstance(this)
+        stream.close()
         internalApply(instance)
       } catch {
         // TODO(xandrew): Be more selective here...
@@ -224,6 +225,7 @@ class MetaGraphManager(val repositoryPath: String) {
       try {
         val stream = new ObjectInputStream(new FileInputStream(s"$repositoryPath/visibles"))
         visibles ++= stream.readObject().asInstanceOf[mutable.Set[UUID]]
+        stream.close()
       } catch {
         case e: Exception => log.error("Error loading visible set:", e)
       }
