@@ -201,22 +201,7 @@ class DataManager(sc: spark.SparkContext,
   def loadToMemory(entity: MetaGraphEntity): Unit = {
     val data = get(entity)
     data match {
-      case rddData: EntityRDDData => {
-        val rdd = rddData.rdd
-        val fullyCached = sc
-          .getRDDStorageInfo
-          .find(_.id == rdd.id)
-          .map(rddInfo => rddInfo.isCached && rddInfo.numCachedPartitions == rddInfo.numPartitions)
-          .getOrElse(false)
-        if (!fullyCached) {
-          log.info(s"PERF Loading to memory RDD: $rdd")
-          rddData.rdd.cache
-          rddData.rdd.foreach(_ => ())
-          log.info(s"PERF RDD load completed: ${rdd.id}")
-        } else {
-          log.info(s"PERF RDD $rdd found in memory")
-        }
-      }
+      case rddData: EntityRDDData => rddData.rdd.memorizeBackingArray(sc.getRDDStorageInfo)
       case _ => ()
     }
   }
