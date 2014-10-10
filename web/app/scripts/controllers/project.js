@@ -451,6 +451,16 @@ angular.module('biggraph')
       return undefined;
     };
 
+    // Called when Side.project is loaded.
+    Side.prototype.onProjectLoaded = function() {
+      $scope.leftToRightBundle = getLeftToRightBundle();
+      this.loadScalars();
+      this.updateViewData();
+      if (!this.vertexSet) {
+        this.state.graphMode = undefined;
+      }
+    };
+
     // "vertex_count" and "edge_count" are displayed separately at the top.
     $scope.commonScalar = function(s) {
       return s.title !== 'vertex_count' && s.title !== 'edge_count';
@@ -475,15 +485,10 @@ angular.module('biggraph')
       return $scope.left.viewData || $scope.right.viewData;
     };
 
-    $scope.$watch('left.project.$resolved', function() {
-      $scope.leftToRightBundle = getLeftToRightBundle();
-    });
-    $scope.$watch('right.project.$resolved', function() {
-      $scope.leftToRightBundle = getLeftToRightBundle();
-    });
-
-    $scope.$watch('left.project.$resolved', function() { $scope.left.loadScalars(); });
-    $scope.$watch('right.project.$resolved', function() { $scope.right.loadScalars(); });
+    $scope.$watch('left.project.$resolved', function(loaded) {
+      if (loaded) { $scope.left.onProjectLoaded(); } });
+    $scope.$watch('right.project.$resolved', function(loaded) {
+      if (loaded) { $scope.right.onProjectLoaded(); } });
 
     $scope.left = new Side({ primary: true });
     $scope.right = new Side();
@@ -491,8 +496,6 @@ angular.module('biggraph')
 
     $scope.$watch('left.state.projectName', function() { $scope.left.reload(); });
     $scope.$watch('right.state.projectName', function() { $scope.right.reload(); });
-    $scope.$watch('left.project.$resolved', function() { $scope.left.updateViewData(); });
-    $scope.$watch('right.project.$resolved', function() { $scope.right.updateViewData(); });
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
     $scope.$watch('left.state.graphMode', function() { $scope.left.maybeRequestNewCenter(); });
