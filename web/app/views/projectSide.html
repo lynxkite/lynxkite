@@ -62,13 +62,13 @@
         </label>
       </div>
 
-      <div class="btn-group pull-right" ng-if="side.project.vertexSet !== ''">
+      <div class="btn-group pull-right">
         <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'"
           uncheckable tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true"
           tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
         </label>
-        <label class="btn btn-default"
+        <label ng-if="side.project.vertexSet !== ''" class="btn btn-default"
           ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
           tooltip="Concrete&nbsp;vertices" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
@@ -99,7 +99,7 @@
 
       <!-- Extra controls for the sampled view. -->
       <div class="list-group-item extra-controls"
-        ng-if="side.graphing() === 'sampled'">
+        ng-if="side.state.graphMode == 'sampled' && side.project.vertexSet !== ''">
         <table>
           <tr>
             <td>Layout animation:</td>
@@ -161,7 +161,7 @@
 
       <!-- Extra controls for the bucketed view. -->
       <div class="list-group-item extra-controls"
-        ng-if="side.graphing() === 'bucketed'">
+        ng-if="side.state.graphMode == 'bucketed'">
         <table>
           <tr>
             <td>Buckets:</td>
