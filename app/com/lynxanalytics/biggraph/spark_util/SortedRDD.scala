@@ -6,7 +6,6 @@ import org.apache.spark.rdd._
 import org.apache.spark.storage.RDDInfo
 import scala.collection.SortedSet
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.Stack
 import scala.math.Ordering
 import scala.reflect.ClassTag
 import scala.util.Sorting
@@ -354,7 +353,7 @@ private object BinarySearchUtils {
   // in the given [startIdx, endIdx) range.
   // If the id is not found in the array, it returns an empty range with elemnts to the left
   // of the range being strictly less while elements to the right being strictly more than id.
-  // Both input and output start indexes are inclusive, end indexes are exclusive.
+  // Both input and output start indices are inclusive, end indices are exclusive.
   def findRange[K: Ordering, V](
     array: Array[(K, V)], id: K, startIdx: Int, endIdx: Int): (Int, Int) = {
 
