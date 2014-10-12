@@ -284,6 +284,30 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     assert(mew.collect.toMap == mewKeys.collect.toMap)
   }
 
+  test("id filter on ArrayBackedSortedRDD") {
+    val sorted = genData(4, 1000, 1).values.map(x => (x, x))
+      .partitionBy(new HashPartitioner(4)).toSortedRDD
+    val ids = IndexedSeq('l', 'n', 'x', 'y')
+    val restricted = sorted.restrictToIdSet(ids)
+    val filtered = sorted.filter { case (id, value) => ids.contains(id) }
+    assert(restricted.collect.toSeq.sorted == filtered.collect.toSeq.sorted)
+  }
+
+  test("id filter on DerivedRDD") {
+    val sorted1 = genData(4, 1000, 1).values.map(x => (x, x))
+      .partitionBy(new HashPartitioner(4)).toSortedRDD
+    val sorted2 = genData(4, 1000, 2).values.map(x => (x, x))
+      .partitionBy(new HashPartitioner(4)).toSortedRDD
+    val complex =
+      sorted1.mapValues(2 * _).sortedLeftOuterJoin(
+        sorted2.distinct.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
+
+    val ids = IndexedSeq('l', 'n', 'x', 'y')
+    val restricted = complex.restrictToIdSet(ids)
+    val filtered = complex.filter { case (id, value) => ids.contains(id) }
+    assert(restricted.collect.toSeq.sorted == filtered.collect.toSeq.sorted)
+  }
+
   test("benchmark mapValues with keys", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
