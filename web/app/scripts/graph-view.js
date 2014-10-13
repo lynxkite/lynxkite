@@ -646,9 +646,9 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     for (i = 0; i < data.yLabels.length; ++i) {
       if (data.yLabelType === 'between') {
-        y = common.normalize(i, yNumBuckets);
+        y = -common.normalize(i, yNumBuckets);
       } else {
-        y = common.normalize(i + 0.5, yNumBuckets);
+        y = -common.normalize(i + 0.5, yNumBuckets);
       }
       l = new Label(x, y, data.yLabels[i], { classes: side });
       offsetter.rule(l);
