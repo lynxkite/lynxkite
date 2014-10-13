@@ -56,6 +56,8 @@ case class VertexView(
 object VertexView {
   def fromDiagram(diagram: Scalar[_])(implicit dataManager: DataManager): VertexView = {
     val indexerInstance = diagram.source
+    assert(indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]],
+      s"$indexerInstance is not a VertexBucketGrid")
     val indexingSeq =
       indexerInstance.outputs.scalars('indexingSeq).runtimeSafeCast[Seq[BucketedAttribute[_]]].value
     val vertexSet = indexerInstance.inputs.vertexSets('vertices)
