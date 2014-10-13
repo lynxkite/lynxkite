@@ -450,6 +450,9 @@ angular.module('biggraph')
       }
       return undefined;
     };
+    Side.prototype.isActiveSegmentation = function() {
+      return $scope.right.isSegmentationOf($scope.left);
+    };
 
     // Called when Side.project is loaded.
     Side.prototype.onProjectLoaded = function() {
