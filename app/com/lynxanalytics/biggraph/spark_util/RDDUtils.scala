@@ -60,8 +60,6 @@ object RDDUtils {
       restricted,
       (fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]) =>
         fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
-          val bfit = fit.buffered
-          val brit = rit.buffered
           new Iterator[(ID, (T, Int))] {
             def hasNext = rit.hasNext
             def next() = {
