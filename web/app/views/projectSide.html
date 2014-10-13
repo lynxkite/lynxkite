@@ -33,7 +33,7 @@
   <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.error">
 
     <div class="panel-heading project-name">
-      <span class="de-emph" ng-repeat="parent in side.parentProjects()">
+      <span ng-class="parentAndSegmentation ? 'de-emph' : 'warning'" ng-repeat="parent in side.parentProjects()">
         {{parent}} &raquo;
       </span>
       {{side.shortName()}}
