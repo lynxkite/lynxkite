@@ -447,6 +447,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
+    val title = "Embeddedness"
+    val description = "Calculates the overlap size of vertex neighborhoods along the edges."
+    val parameters = Seq(
+      Param("name", "Attribute name", defaultValue = "embeddedness"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.Embeddedness()
+      project.edgeAttributes(params("name")) = op(op.es, project.edgeBundle).result.embeddedness
+    }
+  })
+
+  register(new AttributeOperation(_) {
     val title = "Degree"
     val description = ""
     val parameters = Seq(
