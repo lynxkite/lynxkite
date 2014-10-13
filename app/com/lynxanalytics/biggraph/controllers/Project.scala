@@ -50,13 +50,17 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
 
   def checkpointAfter(op: String): Unit = manager.synchronized {
-    lastOperation = op
-    val nextIndex = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
-    val timestamp = Timestamp.toString
-    val checkpoint = s"checkpoints/$path/$timestamp"
-    checkpoints = checkpoints.take(nextIndex) :+ checkpoint
-    checkpointIndex = nextIndex
-    cp(path, checkpoint)
+    if (isSegmentation) {
+      asSegmentation.parent.checkpointAfter(op)
+    } else {
+      lastOperation = op
+      val nextIndex = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
+      val timestamp = Timestamp.toString
+      val checkpoint = s"checkpoints/$path/$timestamp"
+      checkpoints = checkpoints.take(nextIndex) :+ checkpoint
+      checkpointIndex = nextIndex
+      cp(path, checkpoint)
+    }
   }
   def undo(): Unit = manager.synchronized {
     // checkpoints and checkpointIndex are not restored, but copied over from the current state.
