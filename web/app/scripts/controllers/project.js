@@ -450,9 +450,6 @@ angular.module('biggraph')
       }
       return undefined;
     };
-    Side.prototype.isActiveSegmentation = function() {
-      return $scope.right.isSegmentationOf($scope.left);
-    };
 
     // Called when Side.project is loaded.
     Side.prototype.onProjectLoaded = function() {
@@ -469,6 +466,9 @@ angular.module('biggraph')
       return s.title !== 'vertex_count' && s.title !== 'edge_count';
     };
 
+    $scope.parentAndSegmentation = function() {
+      return $scope.right.isSegmentationOf($scope.left);
+    };
     function getLeftToRightBundle() {
       var left = $scope.left;
       var right = $scope.right;
