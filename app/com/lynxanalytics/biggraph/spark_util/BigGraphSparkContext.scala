@@ -11,6 +11,7 @@ import scala.reflect.ClassTag
 
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.spark_util
 
 private object SparkStageJars {
   val classesToBundle: Seq[Class[_]] = Seq(
@@ -66,6 +67,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_operations.DynamicValue])
     kryo.register(classOf[Array[graph_operations.DynamicValue]])
     kryo.register(ClassTag(Class.forName("org.apache.spark.util.collection.CompactBuffer")).wrap.runtimeClass)
+    kryo.register(classOf[collection.mutable.Map$WithDefault])
+    kryo.register(classOf[collection.mutable.Map$$anonfun$withDefaultValue$1])
+    kryo.register(classOf[spark_util.IDBucket])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

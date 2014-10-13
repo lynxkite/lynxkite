@@ -108,7 +108,7 @@ case class HistogramSpec(
 case class HistogramResponse(
     labelType: String,
     labels: Seq[String],
-    sizes: Seq[Int]) {
+    sizes: Seq[Long]) {
   val validLabelTypes = Seq("between", "bucket")
   assert(validLabelTypes.contains(labelType),
     s"$labelType is not a valid label type. They are: $validLabelTypes")
@@ -191,7 +191,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     original: VertexSet,
     filtered: VertexSet,
     xBucketedAttr: graph_operations.BucketedAttribute[S],
-    yBucketedAttr: graph_operations.BucketedAttribute[T]): Scalar[Map[(Int, Int), Int]] = {
+    yBucketedAttr: graph_operations.BucketedAttribute[T]): Scalar[Map[(Int, Int), spark_util.IDBucket]] = {
 
     val cop = graph_operations.CountVertices()
     val originalCount = cop(cop.vertices, original).result.count
@@ -203,7 +203,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     if (yBucketedAttr.bucketer.numBuckets > 1) {
       builder = builder(op.yAttribute, yBucketedAttr.attribute)
     }
-    builder.result.bucketSizes
+    builder.result.buckets
   }
 
   def getBucketedVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
@@ -238,7 +238,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val xBucketer = xBucketedAttr.bucketer
     val yBucketer = yBucketedAttr.bucketer
     val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
-      yield FEVertex(x = x, y = y, size = (diagram.getOrElse((x, y), 0) * 1.0).toInt)
+      yield FEVertex(x = x, y = y, size = diagram.getOrElse((x, y), spark_util.IDBucket()).count)
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
@@ -448,7 +448,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     HistogramResponse(
       bucketedAttr.bucketer.labelType,
       bucketedAttr.bucketer.bucketLabels,
-      (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0)))
+      (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0L)))
   }
 
   def getScalarValue(request: ScalarValueRequest): DynamicValue = {
