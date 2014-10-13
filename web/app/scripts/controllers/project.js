@@ -466,6 +466,9 @@ angular.module('biggraph')
       return s.title !== 'vertex_count' && s.title !== 'edge_count';
     };
 
+    $scope.parentAndSegmentation = function() {
+      return $scope.right.isSegmentationOf($scope.left);
+    };
     function getLeftToRightBundle() {
       var left = $scope.left;
       var right = $scope.right;
