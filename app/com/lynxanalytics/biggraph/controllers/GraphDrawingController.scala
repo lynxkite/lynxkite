@@ -394,6 +394,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     dstFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
     val sampledTrips = tripletMapping(edgeBundle, sampled = true)
     val sampledEdges = getFilteredEdgeIds(sampledTrips, edgeBundle, srcFilters, dstFilters)
+    // TODO: See if we can eliminate the extra stage from this "count".
     if (sampledEdges.ids.rdd.count >= 50000) {
       sampledEdges
     } else {
