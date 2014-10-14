@@ -16,11 +16,15 @@ object TripletMapping {
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
+    // The list of outgoing edges.
     val srcEdges = vertexAttribute[Array[ID]](inputs.src.entity)
+    // The list of incoming edges.
     val dstEdges = vertexAttribute[Array[ID]](inputs.dst.entity)
   }
 }
-case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, TripletMapping.Output] {
+// A negative sampleSize means no sampling.
+case class TripletMapping(sampleSize: Int = -1)
+    extends TypedMetaGraphOp[TripletMapping.Input, TripletMapping.Output] {
   import TripletMapping._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -33,7 +37,9 @@ case class TripletMapping() extends TypedMetaGraphOp[TripletMapping.Input, Tripl
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val edges = inputs.edges.rdd
+    val edges =
+      if (sampleSize >= 0) inputs.edges.rdd.takeFirstNValuesOrSo(sampleSize)
+      else inputs.edges.rdd
     val src = inputs.src.rdd
     val bySrc = edges
       .map { case (id, edge) => (edge.src, id) }
