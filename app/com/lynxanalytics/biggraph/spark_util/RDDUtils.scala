@@ -11,19 +11,33 @@ import scala.util.Random
 
 import com.lynxanalytics.biggraph.graph_api._
 
-case class IDBucket(count: Long = 0, sample: Seq[ID] = Seq()) {
-  def :+(id: ID) = {
-    if (count < IDBucket.MaxSampleSize)
-      IDBucket(count + 1, sample :+ id)
-    else
-      IDBucket(count + 1, sample)
+// A container for storing ID counts per bucket and a sample.
+class IDBuckets[T] extends Serializable {
+  val counts = mutable.Map[T, Long]().withDefaultValue(0)
+  var sample = mutable.Map[ID, T]() // May be null!
+  def add(id: ID, t: T) = {
+    counts(t) += 1
+    addSample(id, t)
   }
-  def ++(b: IDBucket) =
-    IDBucket(count + b.count, (sample ++ b.sample).take(IDBucket.MaxSampleSize))
+  def add(b: IDBuckets[T]) = {
+    for ((k, v) <- b.counts) {
+      counts(k) += v
+    }
+    for ((id, t) <- b.sample) {
+      addSample(id, t)
+    }
+  }
+  private def addSample(id: ID, t: T) = {
+    if (sample != null) {
+      sample(id) = t
+      if (sample.size > IDBuckets.MaxSampleSize) {
+        sample = null
+      }
+    }
+  }
 }
-object IDBucket {
+object IDBuckets {
   val MaxSampleSize = 50
-  def apply(sample: ID*): IDBucket = IDBucket(sample.size, sample)
 }
 
 object RDDUtils {
@@ -90,24 +104,23 @@ object RDDUtils {
     fullRDD: SortedRDD[ID, _],
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
-    requiredPositiveSamples: Int): Map[T, IDBucket] = {
+    requiredPositiveSamples: Int): IDBuckets[T] = {
 
     val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
     val withCounts = unfilteredCounts(fullRDD, dataUsed)
-    val emptyBuckets = mutable.Map[T, IDBucket]().withDefaultValue(IDBucket())
     val (valueBuckets, unfilteredCount, filteredCount) = withCounts
       .aggregate((
-        emptyBuckets /* observed value counts */ ,
+        new IDBuckets[T]() /* observed value counts */ ,
         0 /* estimated total count corresponding to the observed filtered sample */ ,
         0 /* observed filtered sample size */ ))(
         {
           case ((buckets, uct, fct), (id, (value, uc))) =>
-            buckets(value) :+= id
+            buckets.add(id, value)
             (buckets, uct + uc, fct + 1)
         },
         {
           case ((buckets1, uct1, fct1), (buckets2, uct2, fct2)) =>
-            buckets2.foreach { case (k, v) => buckets1(k) ++= v }
+            buckets1.add(buckets2)
             (buckets1, uct1 + uct2, fct1 + fct2)
         })
     val multiplier = if (filteredCount < requiredPositiveSamples / 2) {
@@ -118,10 +131,10 @@ object RDDUtils {
     }
     // round to next power of 10
     val rounder = math.pow(10, math.ceil(math.log10(multiplier))).toInt
-    valueBuckets.toMap.mapValues { b =>
-      val count = math.round(multiplier * b.count / rounder).toInt * rounder
-      IDBucket(count, b.sample)
+    valueBuckets.counts.transform {
+      (value, count) => math.round(multiplier * count / rounder).toInt * rounder
     }
+    return valueBuckets
   }
 
   def estimateValueWeights[T](

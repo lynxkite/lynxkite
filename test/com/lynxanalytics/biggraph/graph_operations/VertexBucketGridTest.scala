@@ -17,7 +17,7 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
     val count = cop(cop.vertices, g.vertices).result.count
     val op = VertexBucketGrid[Nothing, Nothing](xBucketer, yBucketer)
     val out = op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.originalCount, count).result
-    assert(out.buckets.value == Map((0, 0) -> IDBucket(0, 1, 2, 3)))
+    assert(out.buckets.value.counts == Map((0, 0) -> 4))
   }
 
   test("String-Double bucketing") {
@@ -30,8 +30,7 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
     val op = VertexBucketGrid(xBucketer, yBucketer)
     val out = op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.xAttribute, g.name)(op.yAttribute, g.age)(op.originalCount, count).result
 
-    assert(out.buckets.value ==
-      Map((0, 0) -> IDBucket(0), (1, 0) -> IDBucket(1), (2, 0) -> IDBucket(3), (2, 1) -> IDBucket(2)))
+    assert(out.buckets.value.counts == Map((0, 0) -> 1, (1, 0) -> 1, (2, 0) -> 1, (2, 1) -> 1))
     assert(out.xBuckets.rdd.collect.toMap == Map((0 -> 0), (1 -> 1), (2 -> 2), (3 -> 2)))
     assert(out.yBuckets.rdd.collect.toMap == Map((0 -> 0), (1 -> 0), (2 -> 1), (3 -> 0)))
   }

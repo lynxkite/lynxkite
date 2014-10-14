@@ -17,7 +17,7 @@ object VertexBucketGrid {
   }
   class Output[S, T](implicit instance: MetaGraphOperationInstance,
                      inputs: Input[S, T]) extends MagicOutput(instance) {
-    val buckets = scalar[Map[(Int, Int), IDBucket]]
+    val buckets = scalar[IDBuckets[(Int, Int)]]
     val xBuckets = vertexAttribute[Int](inputs.filtered.entity)
     val yBuckets = vertexAttribute[Int](inputs.filtered.entity)
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
