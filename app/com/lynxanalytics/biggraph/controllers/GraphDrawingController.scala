@@ -191,7 +191,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     original: VertexSet,
     filtered: VertexSet,
     xBucketedAttr: graph_operations.BucketedAttribute[S],
-    yBucketedAttr: graph_operations.BucketedAttribute[T]): Scalar[Map[(Int, Int), spark_util.IDBucket]] = {
+    yBucketedAttr: graph_operations.BucketedAttribute[T]): Scalar[spark_util.IDBuckets[(Int, Int)]] = {
 
     val cop = graph_operations.CountVertices()
     val originalCount = cop(cop.vertices, original).result.count
@@ -238,7 +238,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val xBucketer = xBucketedAttr.bucketer
     val yBucketer = yBucketedAttr.bucketer
     val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
-      yield FEVertex(x = x, y = y, size = diagram.getOrElse((x, y), spark_util.IDBucket()).count)
+      yield FEVertex(x = x, y = y, size = diagram.counts((x, y)))
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
