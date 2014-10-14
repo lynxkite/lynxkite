@@ -53,7 +53,8 @@ object ClusteringCoefficient {
     result
   }
 
-  private[graph_operations] case class Neighbors(vertices: VertexSetRDD, nonLoopEdges: EdgeBundleRDD) {
+  private[graph_operations]
+  case class Neighbors(vertices: VertexSetRDD, nonLoopEdges: EdgeBundleRDD) {
     val vertexPartitioner = vertices.partitioner.get
 
     val in = nonLoopEdges
