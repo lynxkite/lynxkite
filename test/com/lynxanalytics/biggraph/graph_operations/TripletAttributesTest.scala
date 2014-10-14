@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class TripletAttributesTest extends FunSuite with TestGraphOp {
   test("triplets of example graph") {
     val g = ExampleGraph()().result
-    val mapping = TripletMapping(sampled = false)
+    val mapping = TripletMapping()
     val mapped = mapping(mapping.edges, g.edges).result
     assert(mapped.srcEdges.rdd.collect.toMap.mapValues(_.toSet) == Map(0 -> Set(0), 1 -> Set(1), 2 -> Set(2, 3), 3 -> Set()))
     assert(mapped.dstEdges.rdd.collect.toMap.mapValues(_.toSet) == Map(0 -> Set(1, 2), 1 -> Set(0, 3), 2 -> Set(), 3 -> Set()))

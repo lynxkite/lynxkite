@@ -256,7 +256,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   private def tripletMapping(
     eb: EdgeBundle, sampled: Boolean): graph_operations.TripletMapping.Output = {
-    val op = graph_operations.TripletMapping(sampled)
+    val op =
+      if (sampled) graph_operations.TripletMapping(sampleSize = 500000)
+      else graph_operations.TripletMapping()
     val res = op(op.edges, eb).result
     dataManager.loadToMemory(res.srcEdges)
     dataManager.loadToMemory(res.dstEdges)
