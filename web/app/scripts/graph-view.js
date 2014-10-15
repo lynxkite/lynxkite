@@ -476,7 +476,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         return;
       }
       e.preventDefault();
-      var delta = 0.001 * e.originalEvent.deltaY;
+      var delta = -0.001 * e.originalEvent.deltaY;
       // Graph-space point under the mouse should remain unchanged.
       // mxOff * zoom + xOff = mx
       var mxOff = (mx - offsetter.xOff) / offsetter.zoom;
