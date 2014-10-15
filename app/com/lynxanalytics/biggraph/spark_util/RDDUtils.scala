@@ -11,6 +11,37 @@ import scala.util.Random
 
 import com.lynxanalytics.biggraph.graph_api._
 
+// A container for storing ID counts per bucket and a sample.
+class IDBuckets[T] extends Serializable {
+  val counts = mutable.Map[T, Long]().withDefaultValue(0)
+  var sample = mutable.Map[ID, T]() // May be null!
+  def add(id: ID, t: T) = {
+    counts(t) += 1
+    addSample(id, t)
+  }
+  def absorb(b: IDBuckets[T]) = {
+    for ((k, v) <- b.counts) {
+      counts(k) += v
+    }
+    if (b.sample == null) {
+      sample = null
+    } else for ((id, t) <- b.sample) {
+      addSample(id, t)
+    }
+  }
+  private def addSample(id: ID, t: T) = {
+    if (sample != null) {
+      sample(id) = t
+      if (sample.size > IDBuckets.MaxSampleSize) {
+        sample = null
+      }
+    }
+  }
+}
+object IDBuckets {
+  val MaxSampleSize = 50
+}
+
 object RDDUtils {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
     override def initialValue(): kryo.Kryo = {
@@ -60,8 +91,6 @@ object RDDUtils {
       restricted,
       (fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]) =>
         fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
-          val bfit = fit.buffered
-          val brit = rit.buffered
           new Iterator[(ID, (T, Int))] {
             def hasNext = rit.hasNext
             def next() = {
@@ -77,35 +106,40 @@ object RDDUtils {
     fullRDD: SortedRDD[ID, _],
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
-    requiredPositiveSamples: Int): Map[T, Int] = {
+    requiredPositiveSamples: Int): IDBuckets[T] = {
 
     val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
     val withCounts = unfilteredCounts(fullRDD, dataUsed)
-    val (valueCounts, unfilteredCount, filteredCount) = withCounts
-      .values
+    val (valueBuckets, unfilteredCount, filteredCount) = withCounts
       .aggregate((
-        mutable.Map[T, Int]() /* observed value counts */ ,
+        new IDBuckets[T]() /* observed value counts */ ,
         0 /* estimated total count corresponding to the observed filtered sample */ ,
         0 /* observed filtered sample size */ ))(
         {
-          case ((map, uct, fct), (key, uc)) =>
-            incrementMap(map, key)
-            (map, uct + uc, fct + 1)
+          case ((buckets, uct, fct), (id, (value, uc))) =>
+            buckets.add(id, value)
+            (buckets, uct + uc, fct + 1)
         },
         {
-          case ((map1, uct1, fct1), (map2, uct2, fct2)) =>
-            map2.foreach { case (k, v) => incrementMap(map1, k, v) }
-            (map1, uct1 + uct2, fct1 + fct2)
+          case ((buckets1, uct1, fct1), (buckets2, uct2, fct2)) =>
+            buckets1.absorb(buckets2)
+            (buckets1, uct1 + uct2, fct1 + fct2)
         })
+    // Extrapolate from sample.
     val multiplier = if (filteredCount < requiredPositiveSamples / 2) {
       // No sampling must have happened.
       1.0
     } else {
       totalVertexCount * 1.0 / unfilteredCount
     }
-    // round to next power of 10
+    valueBuckets.counts.transform { (value, count) => (multiplier * count).toInt }
+    // Round to next power of 10.
+    // TODO: Move this closer to the UI.
     val rounder = math.pow(10, math.ceil(math.log10(multiplier))).toInt
-    valueCounts.toMap.mapValues(c => math.round(multiplier * c / rounder).toInt * rounder)
+    valueBuckets.counts.transform {
+      (value, count) => math.round(count / rounder).toInt * rounder
+    }
+    return valueBuckets
   }
 
   def estimateValueWeights[T](

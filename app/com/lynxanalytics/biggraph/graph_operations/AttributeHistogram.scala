@@ -16,7 +16,7 @@ object AttributeHistogram {
     val originalCount = scalar[Long]
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-    val counts = scalar[Map[Int, Int]]
+    val counts = scalar[Map[Int, Long]]
   }
 }
 import AttributeHistogram._
@@ -44,6 +44,6 @@ case class AttributeHistogram[T](bucketer: Bucketer[T])
         inputs.original.rdd,
         bucketedAttr,
         inputs.originalCount.value,
-        50000))
+        50000).counts.toMap)
   }
 }
