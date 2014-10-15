@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import scala.reflect.runtime.universe._
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
+  override def toString = projectName
   val separator = "|"
   assert(!projectName.contains(separator), s"Invalid project name: $projectName")
   val path: SymbolPath = s"projects/$projectName"
