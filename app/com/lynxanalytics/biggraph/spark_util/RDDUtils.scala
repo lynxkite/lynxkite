@@ -23,7 +23,9 @@ class IDBuckets[T] extends Serializable {
     for ((k, v) <- b.counts) {
       counts(k) += v
     }
-    for ((id, t) <- b.sample) {
+    if (b.sample == null) {
+      sample = null
+    } else for ((id, t) <- b.sample) {
       addSample(id, t)
     }
   }
