@@ -663,7 +663,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       var radius = 0.1 * Math.sqrt(vertexScale * vertex.size);
       var v = new Vertex(vertex,
                          common.normalize(vertex.x + 0.5, xNumBuckets),
-                         common.normalize(vertex.y + 0.5, yNumBuckets),
+                         -common.normalize(vertex.y + 0.5, yNumBuckets),
                          radius,
                          vertex.size);
       offsetter.rule(v);
