@@ -19,7 +19,7 @@ class IDBuckets[T] extends Serializable {
     counts(t) += 1
     addSample(id, t)
   }
-  def add(b: IDBuckets[T]) = {
+  def absorb(b: IDBuckets[T]) = {
     for ((k, v) <- b.counts) {
       counts(k) += v
     }
@@ -122,7 +122,7 @@ object RDDUtils {
         },
         {
           case ((buckets1, uct1, fct1), (buckets2, uct2, fct2)) =>
-            buckets1.add(buckets2)
+            buckets1.absorb(buckets2)
             (buckets1, uct1 + uct2, fct1 + fct2)
         })
     val multiplier = if (filteredCount < requiredPositiveSamples / 2) {
