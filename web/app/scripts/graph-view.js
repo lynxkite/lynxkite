@@ -147,7 +147,8 @@ angular.module('biggraph').directive('graphView', function(util) {
     var sides = [this.scope.left, this.scope.right];
     this.edgeGroup = svg.create('g', {'class': 'edges'});
     this.vertexGroup = svg.create('g', {'class': 'nodes'});
-    this.root.append([this.edgeGroup, this.vertexGroup]);
+    this.legend = svg.create('g', {'class': 'legend'});
+    this.root.append([this.edgeGroup, this.vertexGroup, this.legend]);
     var oldVertices = this.vertices || [];
     this.vertices = [];  // Sparse, indexed by side.
     var vsIndices = [];  // Packed, indexed by position in the JSON.
@@ -297,7 +298,6 @@ angular.module('biggraph').directive('graphView', function(util) {
           side.attrs.color + ' (' + side.attrs.color.typeName +
           ') is not supported for vertex color visualization!');
       }
-
     }
 
     for (var i = 0; i < data.vertices.length; ++i) {
@@ -337,8 +337,32 @@ angular.module('biggraph').directive('graphView', function(util) {
       this.sampledVertexMouseBindings(vertices, v);
       this.vertexGroup.append(v.dom);
     }
+
+    if (colorAttr) {
+      var pad = 50;
+      var x, anchor;
+      if (offsetter.xOff < this.svg.width() / 2) {
+        x = pad;
+        anchor = 'start';
+      } else {
+        x = this.svg.width() - pad;
+        anchor = 'end';
+      }
+      var j = 0;
+      for (var attr in colorMap) {
+        var l = new Legend(x, pad + j * 20, attr, colorMap[attr], anchor);
+        this.legend.append(l.dom);
+        j++;
+      }
+    }
     return vertices;
   };
+
+  function Legend(x, y, text, color, anchor) {
+    this.dom = svg.create('text', { 'class': 'legend', 'x': x, 'y': y }).text(text || 'undefined');
+    this.dom.attr('fill', color || 'hsl(0,0%,42%)');
+    this.dom.attr('text-anchor', anchor);
+  }
 
   function translateTouchToMouseEvent(ev) {
     if (ev.type === 'touchmove') {
