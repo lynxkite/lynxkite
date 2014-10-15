@@ -24,11 +24,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
     FEProject(
       projectName, lastOperation, nextOperation, vs, eb, notes,
-      scalars.map { case (name, scalar) => feAttr(scalar, name) }.toSeq,
-      vertexAttributes.map { case (name, attr) => feAttr(attr, name) }.toSeq,
-      edgeAttributes.map { case (name, attr) => feAttr(attr, name) }.toSeq,
-      segmentations.map(_.toFE),
-      opCategories = Seq())
+      scalars.map { case (name, scalar) => feAttr(scalar, name) }.toList,
+      vertexAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
+      edgeAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
+      segmentations.map(_.toFE).toList,
+      opCategories = List())
   }
 
   private def checkpoints: Seq[String] = get("checkpoints") match {
