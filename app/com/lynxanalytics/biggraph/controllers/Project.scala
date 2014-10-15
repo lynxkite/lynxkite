@@ -336,13 +336,20 @@ object Project {
 case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
   def parent = Project(parentName)
   val path: SymbolPath = s"projects/$parentName/segmentations/$name"
-  def toFE =
+  def toFE = {
+    val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
+    val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
     FESegmentation(
       name,
       project.projectName,
-      UIValue.fromEntity(belongsTo),
-      UIValue(id = belongsToAttribute.gUID.toString, title = "segmentation[%s]".format(name)))
-  def belongsTo = manager.edgeBundle(path / "belongsTo")
+      bt,
+      UIValue(id = bta, title = "segmentation[%s]".format(name)))
+  }
+  def belongsTo = {
+    Project.withErrorLogging(s"Cannot get 'belongsTo' for $this") {
+      manager.edgeBundle(path / "belongsTo")
+    }.getOrElse(null)
+  }
   def belongsTo_=(eb: EdgeBundle) = manager.synchronized {
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
@@ -351,7 +358,9 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     val segmentationIds = graph_operations.IdAsAttribute.run(project.vertexSet)
     val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
-    aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
+    Project.withErrorLogging(s"Cannot get 'belongsToAttribute' for $this") {
+      aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr: VertexAttribute[Vector[ID]]
+    }.getOrElse(null)
   }
   def project = Project(s"$parentName/segmentations/$name/project")
 
