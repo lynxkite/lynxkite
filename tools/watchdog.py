@@ -25,17 +25,28 @@ flags = flags.parse_args()
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
   def do_GET(self):
-    '''Status page with log and restart button.'''
+    '''Status page with log and controls.'''
     self.send_response(200)
     self.send_header('Content-type', 'text/html')
     self.end_headers()
     log = '<pre>' + self.server.snippet() + '</pre>'
-    form = '<form method="POST" action="/restart"><button>Restart</button></form>'
-    self.wfile.write('<html>' + log + form + '</html>')
+    restart = '<form method="POST" action="/restart"><button>Restart</button></form>'
+    if self.server.enabled:
+      toggle = '<form method="POST" action="/disable"><button>Disable</button></form>'
+    else:
+      toggle = '<form method="POST" action="/enable"><button>Enable</button></form>'
+    self.wfile.write('<html>' + log + restart + toggle + '</html>')
 
   def do_POST(self):
-    '''It can only be the restart button.'''
-    self.server.restart()
+    print self.path
+    if self.path == '/restart':
+      self.server.restart()
+    elif self.path == '/enable':
+      self.server.enabled = True
+    elif self.path == '/disable':
+      self.server.enabled = False
+    else:
+      assert False, 'Unexpected request: ' + self.path
     self.send_response(301)
     self.send_header('Location', '/')
     self.end_headers()
@@ -46,6 +57,7 @@ class Server(BaseHTTPServer.HTTPServer):
   def __init__(self):
     self.log = []  # Health check history.
     self.worry = 0  # Number of consecutive failures in the last period.
+    self.enabled = True
     BaseHTTPServer.HTTPServer.__init__(self, ('', flags.status_port), Handler)
 
   def server_bind(self):
@@ -64,7 +76,7 @@ class Server(BaseHTTPServer.HTTPServer):
   def log_failure(self):
     self.log.append('X')
     self.worry += 1
-    if self.worry == flags.max_failures:
+    if self.worry == flags.max_failures and self.enabled:
       self.restart()
 
   def restart(self):
