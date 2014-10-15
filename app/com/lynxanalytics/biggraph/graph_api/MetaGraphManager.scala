@@ -209,9 +209,10 @@ class MetaGraphManager(val repositoryPath: String) {
       try {
         val file = new File(repo, fileName)
         val stream = new ObjectInputStream(new FileInputStream(file))
-        val instance = stream.readObject().asInstanceOf[SerializedOperation].toInstance(this)
-        stream.close()
-        internalApply(instance)
+        try {
+          val instance = stream.readObject().asInstanceOf[SerializedOperation].toInstance(this)
+          internalApply(instance)
+        } finally { stream.close() }
       } catch {
         // TODO(xandrew): Be more selective here...
         case e: Exception =>
