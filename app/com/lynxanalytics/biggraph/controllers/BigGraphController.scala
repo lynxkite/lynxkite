@@ -262,7 +262,16 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def splash(request: serving.Empty): Splash = {
-    return Splash(version, ops.projects.map(_.toFE))
+    val projects = ops.projects.flatMap { p =>
+      Try(p.toFE) match {
+        case Success(fe) =>
+          Some(fe)
+        case Failure(ex) =>
+          log.error(s"Problem with project $p:", ex)
+          None
+      }
+    }
+    return Splash(version, projects.toList)
   }
 
   def project(request: ProjectRequest): FEProject = {
