@@ -17,7 +17,7 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
       scope.$watch('update.$resolved', update);
       function update() {
         if (scope.update && scope.update.$resolved) {
-          if (scope.update.error) {
+          if (scope.update.$error) {
             $timeout(load, 10000);  // Try again in a bit.
           } else {
             scope.status = scope.update;

@@ -230,7 +230,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.loaded = function() {
-      return this.project && this.project.$resolved && !this.project.error;
+      return this.project && this.project.$resolved && !this.project.$error;
     };
 
     Side.prototype.set = function(setting, value) {
