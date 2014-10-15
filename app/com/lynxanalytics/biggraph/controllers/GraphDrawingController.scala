@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.serving.FlyingResult
 import com.lynxanalytics.biggraph.spark_util
 
 case class VertexDiagramSpec(
@@ -463,7 +464,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getScalarValue(request: ScalarValueRequest): DynamicValue = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
-    assert(request.calculate || dataManager.isCalculated(scalar), "Value is not calculated yet")
+    if (!request.calculate && !dataManager.isCalculated(scalar)) {
+      throw new FlyingResult(play.api.mvc.Results.NotFound("Value is not calculated yet"))
+    }
     graph_operations.DynamicValue.convert(scalar.value)
   }
 }
