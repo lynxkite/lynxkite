@@ -109,8 +109,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def vertexSet = manager.synchronized {
     existing(path / "vertexSet")
-      .flatMap(vsPath => Project.doOrNone(
-        manager.vertexSet(vsPath), s"Couldn't resolve vertex set of project $projectName"))
+      .flatMap(vsPath =>
+        Project.withErrorLogging(s"Couldn't resolve vertex set of project $this") {
+          manager.vertexSet(vsPath)
+        })
       .getOrElse(null)
   }
   def vertexSet_=(e: VertexSet): Unit = {
@@ -187,8 +189,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def edgeBundle = manager.synchronized {
     existing(path / "edgeBundle")
-      .flatMap(ebPath => Project.doOrNone(
-        manager.edgeBundle(ebPath), s"Couldn't resolve edge bundle of project $projectName"))
+      .flatMap(ebPath =>
+        Project.withErrorLogging(s"Couldn't resolve edge bundle of project $this") {
+          manager.edgeBundle(ebPath)
+        })
       .getOrElse(null)
   }
   def edgeBundle_=(e: EdgeBundle) = manager.synchronized {
@@ -294,7 +298,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       ls(dir)
         .flatMap { path =>
           val name = path.last.name
-          Project.doOrNone(apply(name), s"Couldn't resolve $path").map(name -> _)
+          Project.withErrorLogging(s"Couldn't resolve $path") { apply(name) }
+            .map(name -> _)
         }
         .iterator
     }
@@ -317,12 +322,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 object Project {
   def apply(projectName: String)(implicit metaManager: MetaGraphManager): Project = new Project(projectName)
 
-  def doOrNone[T](op: => T, onErrorLog: String): Option[T] =
+  def withErrorLogging[T](message: String)(op: => T): Option[T] =
     try {
       Some(op)
     } catch {
-      case e: Exception => {
-        log.error(onErrorLog, e)
+      case e: Throwable => {
+        log.error(message, e)
         None
       }
     }
@@ -331,13 +336,20 @@ object Project {
 case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
   def parent = Project(parentName)
   val path: SymbolPath = s"projects/$parentName/segmentations/$name"
-  def toFE =
+  def toFE = {
+    val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
+    val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
     FESegmentation(
       name,
       project.projectName,
-      UIValue.fromEntity(belongsTo),
-      UIValue(id = belongsToAttribute.gUID.toString, title = "segmentation[%s]".format(name)))
-  def belongsTo = manager.edgeBundle(path / "belongsTo")
+      bt,
+      UIValue(id = bta, title = "segmentation[%s]".format(name)))
+  }
+  def belongsTo = {
+    Project.withErrorLogging(s"Cannot get 'belongsTo' for $this") {
+      manager.edgeBundle(path / "belongsTo")
+    }.getOrElse(null)
+  }
   def belongsTo_=(eb: EdgeBundle) = manager.synchronized {
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
@@ -346,7 +358,9 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     val segmentationIds = graph_operations.IdAsAttribute.run(project.vertexSet)
     val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
-    aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
+    Project.withErrorLogging(s"Cannot get 'belongsToAttribute' for $this") {
+      aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr: VertexAttribute[Vector[ID]]
+    }.getOrElse(null)
   }
   def project = Project(s"$parentName/segmentations/$name/project")
 
