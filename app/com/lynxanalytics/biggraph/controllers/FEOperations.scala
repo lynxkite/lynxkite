@@ -16,7 +16,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object CreateVertexSet extends FEOperation {
     val title = "New vertex set"
     val category = "Vertex operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("size", "Vertex set size"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.CreateVertexSet(params("size").toInt))
@@ -27,7 +27,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object RandomEdgeBundle extends FEOperation {
     val title = "Create random edge bundle"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("vsSrc", "Source vertex set", kind = "vertex-set"),
       Param("vsDst", "Destination vertex set", kind = "vertex-set"),
       Param("density", "density", defaultValue = "0.5"),
@@ -44,7 +44,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ImportVertices extends FEOperation {
     val title = "Import vertices"
     val category = "Vertex operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("files", "Files"),
       Param("header", "Header"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -63,7 +63,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ImportEdges extends FEOperation {
     val title = "Import edges"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("files", "Files"),
       Param("header", "Header"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -86,7 +86,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ImportEdgesForExistingVertexSet extends FEOperation {
     val title = "Import edges"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("vsSrc", "Source vertex id attributes", kind = "vertex-attribute"),
       Param("vsDst", "Destination vertex id attributes", kind = "vertex-attribute"),
       Param("files", "Files"),
@@ -114,7 +114,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object FindMaxCliques extends FEOperation {
     val title = "Maximal cliques"
     val category = "Segmentations"
-    val parameters = Seq(
+    val parameters = List(
       Param("es", "Edge bundle", kind = "edge-bundle"),
       Param("min", "Minimum clique size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
@@ -127,7 +127,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object SetOverlap extends FEOperation {
     val title = "Set overlaps (complete, regular)"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("belongsTo", "Edge bundle linking the input and its segments", kind = "edge-bundle"),
       Param("min", "Minimum overlap size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
@@ -140,7 +140,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object UniformOverlapForCC extends FEOperation {
     val title = "Set overlaps (for connected components, regular)"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("belongsTo", "Edge bundle linking the input and its segments", kind = "edge-bundle"),
       Param("min", "Minimum overlap size", defaultValue = "3"))
     def apply(params: Map[String, String]) = {
@@ -153,7 +153,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object InfocomOverlapForCC extends FEOperation {
     val title = "Set overlaps (for connected components, infocom)"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("belongsTo", "Edge bundle linking the input and its groups", kind = "edge-bundle"),
       Param("thr", "Adjacency threshold of infocom overlap function", defaultValue = "0.6"))
     def apply(params: Map[String, String]) = {
@@ -166,7 +166,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ConnectedComponents extends FEOperation {
     val title = "Connected components"
     val category = "Segmentations"
-    val parameters = Seq(
+    val parameters = List(
       Param("es", "Edge bundle", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.ConnectedComponents(),
@@ -178,7 +178,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ConcatenateBundles extends FEOperation {
     val title = "Concatenate edge bundles, weighted"
     val category = "X - Expert operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("wAB", "Edge weight A->B", kind = "edge-attribute"),
       Param("wBC", "Edge weight B->C", kind = "edge-attribute"))
     def apply(params: Map[String, String]) = {
@@ -192,7 +192,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object AddConstantDoubleEdgeAttribute extends FEOperation {
     val title = "Add constant edge attribute"
     val category = "Attribute operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("eb", "Edge bundle", kind = "edge-bundle"),
       Param("v", "Value", defaultValue = "1"))
     def apply(params: Map[String, String]) = {
@@ -208,7 +208,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object AddGaussianVertexAttribute extends FEOperation {
     val title = "Add Gaussian vertex attribute"
     val category = "Attribute operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("vs", "Vertex set", kind = "vertex-set"),
       Param("seed", "Seed", defaultValue = "0"))
     def apply(params: Map[String, String]) = {
@@ -223,7 +223,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ReverseEdges extends FEOperation {
     val title = "Reverse edge direction"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("eb", "Edge bundle", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
       manager.show(
@@ -236,7 +236,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ClusteringCoefficient extends FEOperation {
     val title = "Clustering coefficient"
     val category = "Attribute operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("eb", "Edge bundle", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
       manager.show(
@@ -249,7 +249,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object OutDegree extends FEOperation {
     val title = "Out degree"
     val category = "Attribute operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("w", "Edges", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
       manager.show(
@@ -262,7 +262,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object ExampleGraph extends FEOperation {
     val title = "Example Graph"
     val category = "Vertex operations"
-    val parameters = Seq()
+    val parameters = List()
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.ExampleGraph())
     }
@@ -272,10 +272,10 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object AttributeConversion extends FEOperation {
     val title = "Convert attributes"
     val category = "Attribute operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("vattrs", "Vertex attributes", kind = "multi-vertex-attribute"),
       Param("eattrs", "Edge attributes", kind = "multi-edge-attribute"),
-      Param("type", "Convert into", options = UIValue.seq(Seq("string", "double"))))
+      Param("type", "Convert into", options = UIValue.list(List("string", "double"))))
 
     def apply(params: Map[String, String]) = {
       val vAttrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")
@@ -299,7 +299,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object AddReversedEdges extends FEOperation {
     val title = "Add reversed edges"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("es", "Edges", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.AddReversedEdges(),
@@ -311,7 +311,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object EdgeGraph extends FEOperation {
     val title = "Dual graph"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("es", "Edges", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.EdgeGraph(),
@@ -323,7 +323,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object PageRank extends FEOperation {
     val title = "PageRank"
     val category = "Attribute operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("ws", "Weights", kind = "edge-attribute"),
       Param("df", "Damping factor"),
       Param("iter", "Iterations"))
@@ -337,7 +337,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
   object RemoveNonSymmetricEdges extends FEOperation {
     val title = "Remove non-symmetric edges"
     val category = "Edge operations"
-    val parameters = Seq(
+    val parameters = List(
       Param("es", "Edges", kind = "edge-bundle"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.RemoveNonSymmetricEdges(),
