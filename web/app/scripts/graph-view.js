@@ -237,7 +237,8 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
   }
 
-  function doubleColorMap(bounds, values) {
+  function doubleColorMap(values) {
+    var bounds = common.minmax(values);
     var colorMap = {};
     for (var i = 0; i < values.length; ++i) {
       var h = 300 + common.normalize(values[i], bounds) * 120;
@@ -288,31 +289,18 @@ angular.module('biggraph').directive('graphView', function(util) {
     var colorAttr = (side.attrs.color) ? side.attrs.color.id : undefined;
     var colorMap;
     if (colorAttr) {
-      var margin = 50;
-      var x, anchor, bounds;
-      if (offsetter.xOff < this.svg.width() / 2) {
-        x = margin;
-        anchor = 'start';
-      } else {
-        x = this.svg.width() - margin;
-        anchor = 'end';
-      }
+      var s = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
       if (side.attrs.color.typeName === 'Double') {
         var values = mapByAttr(data.vertices, colorAttr, 'double');
-        bounds = common.minmax(values);
-        colorMap = doubleColorMap(bounds, values);
-        var h = new Legend(x, margin, 'min: ' + bounds.min, colorMap[bounds.min], anchor);
-        this.legend.append(h.dom);
-        var l = new Legend(x, margin + 22, 'max: ' + bounds.max, colorMap[bounds.max], anchor);
-        this.legend.append(l.dom);
+        colorMap = doubleColorMap(values);
+        var bounds = common.minmax(values);
+        var legendMap = {};
+        legendMap['min: ' + bounds.min] = colorMap[bounds.min];
+        legendMap['max: ' + bounds.max] = colorMap[bounds.max];
+        this.createLegend(legendMap, s); // only shows the min max values
       } else if (side.attrs.color.typeName === 'String') {
         colorMap = stringColorMap(mapByAttr(data.vertices, colorAttr, 'string'));
-        var j = 0;
-        for (var attr in colorMap) {
-          var e = new Legend(x, margin + j * 22, attr, colorMap[attr], anchor);
-          this.legend.append(e.dom);
-          j++;
-        }
+        this.createLegend(colorMap, s);
       } else {
         console.error('The type of ' +
           side.attrs.color + ' (' + side.attrs.color.typeName +
@@ -331,7 +319,8 @@ angular.module('biggraph').directive('graphView', function(util) {
 
       var color = UNCOLORED;
       if (colorAttr) {
-        color = colorMap[vertex.attrs[colorAttr].string];
+        color = (side.attrs.color.typeName === 'Double') ?
+          colorMap[vertex.attrs[colorAttr].double] : colorMap[vertex.attrs[colorAttr].string];
       }
 
       var icon;
@@ -361,11 +350,20 @@ angular.module('biggraph').directive('graphView', function(util) {
     return vertices;
   };
 
-  function Legend(x, y, text, color, anchor) {
-    this.dom = svg.create('text', { 'class': 'legend', 'x': x, 'y': y }).text(text || 'undefined');
-    this.dom.attr('fill', color || 'hsl(0,0%,42%)');
-    this.dom.attr('text-anchor', anchor);
-  }
+  GraphView.prototype.createLegend = function (colorMap, side) {
+    var margin = 50;
+    var x = side === 'left' ? margin : this.svg.width() - margin;
+    var anchor = side === 'left' ? 'start' : 'end';
+    var i = 0;
+    for (var attr in colorMap) {
+      var l = svg.create('text', { 'class': 'legend', 'x': x, 'y': i * 22 + margin })
+        .text(attr || 'undefined');
+      l.attr('fill', colorMap[attr] || UNCOLORED);
+      l.attr('text-anchor', anchor);
+      this.legend.append(l);
+      i++;
+    }
+  };
 
   function translateTouchToMouseEvent(ev) {
     if (ev.type === 'touchmove') {
