@@ -125,16 +125,19 @@ object RDDUtils {
             buckets1.absorb(buckets2)
             (buckets1, uct1 + uct2, fct1 + fct2)
         })
+    // Extrapolate from sample.
     val multiplier = if (filteredCount < requiredPositiveSamples / 2) {
       // No sampling must have happened.
       1.0
     } else {
       totalVertexCount * 1.0 / unfilteredCount
     }
-    // round to next power of 10
+    valueBuckets.counts.transform { (value, count) => (multiplier * count).toInt }
+    // Round to next power of 10.
+    // TODO: Move this closer to the UI.
     val rounder = math.pow(10, math.ceil(math.log10(multiplier))).toInt
     valueBuckets.counts.transform {
-      (value, count) => math.round(multiplier * count / rounder).toInt * rounder
+      (value, count) => math.round(count / rounder).toInt * rounder
     }
     return valueBuckets
   }
