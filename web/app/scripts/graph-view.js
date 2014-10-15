@@ -237,8 +237,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
   }
 
-  function doubleColorMap(values) {
-    var bounds = common.minmax(values);
+  function doubleColorMap(bounds, values) {
     var colorMap = {};
     for (var i = 0; i < values.length; ++i) {
       var h = 300 + common.normalize(values[i], bounds) * 120;
@@ -289,10 +288,31 @@ angular.module('biggraph').directive('graphView', function(util) {
     var colorAttr = (side.attrs.color) ? side.attrs.color.id : undefined;
     var colorMap;
     if (colorAttr) {
+      var margin = 50;
+      var x, anchor, bounds;
+      if (offsetter.xOff < this.svg.width() / 2) {
+        x = margin;
+        anchor = 'start';
+      } else {
+        x = this.svg.width() - margin;
+        anchor = 'end';
+      }
       if (side.attrs.color.typeName === 'Double') {
-        colorMap = doubleColorMap(mapByAttr(data.vertices, colorAttr, 'double'));
+        var values = mapByAttr(data.vertices, colorAttr, 'double');
+        bounds = common.minmax(values);
+        colorMap = doubleColorMap(bounds, values);
+        var h = new Legend(x, margin, 'min: ' + bounds.min, colorMap[bounds.min], anchor);
+        this.legend.append(h.dom);
+        var l = new Legend(x, margin + 22, 'max: ' + bounds.max, colorMap[bounds.max], anchor);
+        this.legend.append(l.dom);
       } else if (side.attrs.color.typeName === 'String') {
         colorMap = stringColorMap(mapByAttr(data.vertices, colorAttr, 'string'));
+        var j = 0;
+        for (var attr in colorMap) {
+          var e = new Legend(x, margin + j * 22, attr, colorMap[attr], anchor);
+          this.legend.append(e.dom);
+          j++;
+        }
       } else {
         console.error('The type of ' +
           side.attrs.color + ' (' + side.attrs.color.typeName +
@@ -338,23 +358,6 @@ angular.module('biggraph').directive('graphView', function(util) {
       this.vertexGroup.append(v.dom);
     }
 
-    if (colorAttr) {
-      var pad = 50;
-      var x, anchor;
-      if (offsetter.xOff < this.svg.width() / 2) {
-        x = pad;
-        anchor = 'start';
-      } else {
-        x = this.svg.width() - pad;
-        anchor = 'end';
-      }
-      var j = 0;
-      for (var attr in colorMap) {
-        var l = new Legend(x, pad + j * 20, attr, colorMap[attr], anchor);
-        this.legend.append(l.dom);
-        j++;
-      }
-    }
     return vertices;
   };
 
