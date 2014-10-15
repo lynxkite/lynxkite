@@ -326,7 +326,7 @@ object Project {
     try {
       Some(op)
     } catch {
-      case e: Exception => {
+      case e: Throwable => {
         log.error(message, e)
         None
       }
