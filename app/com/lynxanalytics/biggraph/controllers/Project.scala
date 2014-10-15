@@ -109,8 +109,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def vertexSet = manager.synchronized {
     existing(path / "vertexSet")
-      .flatMap(vsPath => Project.doOrNone(
-        manager.vertexSet(vsPath), s"Couldn't resolve vertex set of project $projectName"))
+      .flatMap(vsPath =>
+        Project.withErrorLogging(s"Couldn't resolve vertex set of project $this") {
+          manager.vertexSet(vsPath)
+        })
       .getOrElse(null)
   }
   def vertexSet_=(e: VertexSet): Unit = {
@@ -187,8 +189,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def edgeBundle = manager.synchronized {
     existing(path / "edgeBundle")
-      .flatMap(ebPath => Project.doOrNone(
-        manager.edgeBundle(ebPath), s"Couldn't resolve edge bundle of project $projectName"))
+      .flatMap(ebPath =>
+        Project.withErrorLogging(s"Couldn't resolve edge bundle of project $this") {
+          manager.edgeBundle(ebPath)
+        })
       .getOrElse(null)
   }
   def edgeBundle_=(e: EdgeBundle) = manager.synchronized {
@@ -294,7 +298,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       ls(dir)
         .flatMap { path =>
           val name = path.last.name
-          Project.doOrNone(apply(name), s"Couldn't resolve $path").map(name -> _)
+          Project.withErrorLogging(s"Couldn't resolve $path") { apply(name) }
+            .map(name -> _)
         }
         .iterator
     }
@@ -317,12 +322,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 object Project {
   def apply(projectName: String)(implicit metaManager: MetaGraphManager): Project = new Project(projectName)
 
-  def doOrNone[T](op: => T, onErrorLog: String): Option[T] =
+  def withErrorLogging[T](message: String)(op: => T): Option[T] =
     try {
       Some(op)
     } catch {
       case e: Exception => {
-        log.error(onErrorLog, e)
+        log.error(message, e)
         None
       }
     }
