@@ -142,8 +142,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
 
   def pullBackWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
-    assert(injection.properties.compliesWith(EdgeBundleProperties.injection))
-    assert(injection.dstVertexSet.gUID == vertexSet.gUID)
+    assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
+      s"Not an injection: $injection")
+    assert(injection.dstVertexSet.gUID == vertexSet.gUID,
+      s"Wrong destination: $injection")
     val origVS = vertexSet
     val origVAttrs = vertexAttributes.toIndexedSeq
     val origEB = edgeBundle
