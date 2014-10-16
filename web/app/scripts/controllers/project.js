@@ -323,9 +323,23 @@ angular.module('biggraph')
       var that = this;
       this.applyOp('Rename-' + kind, { from: oldName, to: newName })
         .then(function(success) {
-          if (success && that.state.filters[oldName]) {
-            that.state.filters[newName] = that.state.filters[oldName];
-            delete that.state.filters[oldName];
+          if (success) {
+            if (that.state.filters[oldName]) {
+              that.state.filters[newName] = that.state.filters[oldName];
+              delete that.state.filters[oldName];
+            }
+            var toUpdate = common.getKeysByValue(that.state, oldName);
+            for (var i = 0; i < toUpdate.length; i++) {
+              // TODO: do not rename projecName and such if named the same
+              that.state[toUpdate[i]] = newName;
+            }
+            if (kind === 'vertex-attribute') {
+              that.state.axisOptions.vertex[newName] = that.state.axisOptions.vertex[oldName];
+              delete that.state.axisOptions.vertex[oldName];
+            } else if (kind === 'edge-attribute') {
+              that.state.axisOptions.edge[newName] = that.state.axisOptions.edge[oldName];
+              delete that.state.axisOptions.edge[oldName];
+            }
           }
         });
     };
@@ -359,7 +373,13 @@ angular.module('biggraph')
             if (that.state.filters[name]) { delete that.state.filters[name]; }
             var toUpdate = common.getKeysByValue(that.state, name);
             for (i = 0; i < toUpdate.length; i++) {
-              delete that.state[toUpdate];
+              // TODO: do not delete projecName and such if named the same
+              delete that.state[toUpdate[i]];
+            }
+            if (kind === 'vertex-attribute') {
+              delete that.state.axisOptions.vertex[name];
+            } else if (kind === 'edge-attribute') {
+              delete that.state.axisOptions.edge[name];
             }
           }
         });
