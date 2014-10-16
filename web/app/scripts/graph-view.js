@@ -319,6 +319,8 @@ angular.module('biggraph').directive('graphView', function(util) {
 
       var color = UNCOLORED;
       if (colorAttr) {
+        // in case of doubles the keys are strings converted from the DynamicValue's double field
+        // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
         color = (side.attrs.color.typeName === 'Double') ?
           colorMap[vertex.attrs[colorAttr].double] : colorMap[vertex.attrs[colorAttr].string];
       }
