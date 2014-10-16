@@ -147,7 +147,8 @@ angular.module('biggraph').directive('graphView', function(util) {
     var sides = [this.scope.left, this.scope.right];
     this.edgeGroup = svg.create('g', {'class': 'edges'});
     this.vertexGroup = svg.create('g', {'class': 'nodes'});
-    this.root.append([this.edgeGroup, this.vertexGroup]);
+    this.legend = svg.create('g', {'class': 'legend'});
+    this.root.append([this.edgeGroup, this.vertexGroup, this.legend]);
     var oldVertices = this.vertices || [];
     this.vertices = [];  // Sparse, indexed by side.
     var vsIndices = [];  // Packed, indexed by position in the JSON.
@@ -288,16 +289,23 @@ angular.module('biggraph').directive('graphView', function(util) {
     var colorAttr = (side.attrs.color) ? side.attrs.color.id : undefined;
     var colorMap;
     if (colorAttr) {
+      var s = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
       if (side.attrs.color.typeName === 'Double') {
-        colorMap = doubleColorMap(mapByAttr(data.vertices, colorAttr, 'double'));
+        var values = mapByAttr(data.vertices, colorAttr, 'double');
+        colorMap = doubleColorMap(values);
+        var bounds = common.minmax(values);
+        var legendMap = {};
+        legendMap['min: ' + bounds.min] = colorMap[bounds.min];
+        legendMap['max: ' + bounds.max] = colorMap[bounds.max];
+        this.createLegend(legendMap, s); // only shows the min max values
       } else if (side.attrs.color.typeName === 'String') {
         colorMap = stringColorMap(mapByAttr(data.vertices, colorAttr, 'string'));
+        this.createLegend(colorMap, s);
       } else {
         console.error('The type of ' +
           side.attrs.color + ' (' + side.attrs.color.typeName +
           ') is not supported for vertex color visualization!');
       }
-
     }
 
     for (var i = 0; i < data.vertices.length; ++i) {
@@ -311,7 +319,10 @@ angular.module('biggraph').directive('graphView', function(util) {
 
       var color = UNCOLORED;
       if (colorAttr) {
-        color = colorMap[vertex.attrs[colorAttr].string];
+        // in case of doubles the keys are strings converted from the DynamicValue's double field
+        // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
+        color = (side.attrs.color.typeName === 'Double') ?
+          colorMap[vertex.attrs[colorAttr].double] : colorMap[vertex.attrs[colorAttr].string];
       }
 
       var icon;
@@ -337,7 +348,23 @@ angular.module('biggraph').directive('graphView', function(util) {
       this.sampledVertexMouseBindings(vertices, v);
       this.vertexGroup.append(v.dom);
     }
+
     return vertices;
+  };
+
+  GraphView.prototype.createLegend = function (colorMap, side) {
+    var margin = 50;
+    var x = side === 'left' ? margin : this.svg.width() - margin;
+    var anchor = side === 'left' ? 'start' : 'end';
+    var i = 0;
+    for (var attr in colorMap) {
+      var l = svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin })
+        .text(attr || 'undefined');
+      l.attr('fill', colorMap[attr] || UNCOLORED);
+      l.attr('text-anchor', anchor);
+      this.legend.append(l);
+      i++;
+    }
   };
 
   function translateTouchToMouseEvent(ev) {
