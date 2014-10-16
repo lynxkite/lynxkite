@@ -209,12 +209,13 @@ class MetaGraphManager(val repositoryPath: String) {
       try {
         val file = new File(repo, fileName)
         val stream = new ObjectInputStream(new FileInputStream(file))
-        val instance = stream.readObject().asInstanceOf[SerializedOperation].toInstance(this)
-        stream.close()
-        internalApply(instance)
+        try {
+          val instance = stream.readObject().asInstanceOf[SerializedOperation].toInstance(this)
+          internalApply(instance)
+        } finally { stream.close() }
       } catch {
         // TODO(xandrew): Be more selective here...
-        case e: Exception =>
+        case e: Throwable =>
           log.error(s"Error loading operation from file: $fileName", e)
       }
     }
@@ -227,7 +228,7 @@ class MetaGraphManager(val repositoryPath: String) {
         visibles ++= stream.readObject().asInstanceOf[mutable.Set[UUID]]
         stream.close()
       } catch {
-        case e: Exception => log.error("Error loading visible set:", e)
+        case e: Throwable => log.error("Error loading visible set:", e)
       }
     }
 
@@ -239,7 +240,7 @@ class MetaGraphManager(val repositoryPath: String) {
           tagRoot.loadFromString(FileUtils.readFileToString(tagsFile, "utf8"))
         }
       } catch {
-        case e: Exception => log.error("Error loading tags set:", e)
+        case e: Throwable => log.error("Error loading tags set:", e)
       }
     } else {
       synchronized {

@@ -476,7 +476,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         return;
       }
       e.preventDefault();
-      var delta = 0.001 * e.originalEvent.deltaY;
+      var delta = -0.001 * e.originalEvent.deltaY;
       // Graph-space point under the mouse should remain unchanged.
       // mxOff * zoom + xOff = mx
       var mxOff = (mx - offsetter.xOff) / offsetter.zoom;
@@ -646,9 +646,9 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     for (i = 0; i < data.yLabels.length; ++i) {
       if (data.yLabelType === 'between') {
-        y = common.normalize(i, yNumBuckets);
+        y = -common.normalize(i, yNumBuckets);
       } else {
-        y = common.normalize(i + 0.5, yNumBuckets);
+        y = -common.normalize(i + 0.5, yNumBuckets);
       }
       l = new Label(x, y, data.yLabels[i], { classes: side });
       offsetter.rule(l);
@@ -663,7 +663,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       var radius = 0.1 * Math.sqrt(vertexScale * vertex.size);
       var v = new Vertex(vertex,
                          common.normalize(vertex.x + 0.5, xNumBuckets),
-                         common.normalize(vertex.y + 0.5, yNumBuckets),
+                         -common.normalize(vertex.y + 0.5, yNumBuckets),
                          radius,
                          vertex.size);
       offsetter.rule(v);
