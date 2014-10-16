@@ -39,7 +39,8 @@ angular
     // even if the browser is restarted.
     var localCache = $angularCacheFactory('localCache', {
       maxAge: 24 * 3600,
-      storageMode: 'localStorage',
+      // TODO: Temporarily disabled, because this makes testing confusing during development.
+      // storageMode: 'localStorage',
     });
     function ajax(url, params, cache) {
       if (params === undefined) { params = { fake: 1 }; }
