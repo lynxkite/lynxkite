@@ -351,7 +351,7 @@ private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedA
 private object BinarySearchUtils {
   // Finds the range in a sorted array where all ids == a given id, assuming the range must be
   // in the given [startIdx, endIdx) range.
-  // If the id is not found in the array, it returns an empty range with elemnts to the left
+  // If the id is not found in the array, it returns an empty range with elements to the left
   // of the range being strictly less while elements to the right being strictly more than id.
   // Both input and output start indices are inclusive, end indices are exclusive.
   def findRange[K: Ordering, V](
