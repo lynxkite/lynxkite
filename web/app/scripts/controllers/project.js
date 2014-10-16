@@ -2,6 +2,8 @@
 
 angular.module('biggraph')
   .controller('ProjectViewCtrl', function ($scope, $routeParams, $location, util, hotkeys) {
+    /* global COMMON_UTIL*/
+    var common = COMMON_UTIL;
     var hk = hotkeys.bindTo($scope);
     hk.add({
       combo: 'ctrl+z', description: 'Undo',
@@ -309,16 +311,23 @@ angular.module('biggraph')
       this.savingNotes = true;
       this.applyOp('Change-project-notes', { notes: this.project.notes })
         .then(function(success) {
-        if (success) {
-          that.unsavedNotes = false;
-          that.savingNotes = false;
-        }
-      });
+          if (success) {
+            that.unsavedNotes = false;
+            that.savingNotes = false;
+          }
+        });
     };
 
     Side.prototype.rename = function(kind, oldName, newName) {
       if (oldName === newName) { return; }
-      this.applyOp('Rename-' + kind, { from: oldName, to: newName });
+      var that = this;
+      this.applyOp('Rename-' + kind, { from: oldName, to: newName })
+        .then(function(success) {
+          if (success && that.state.filters[oldName]) {
+            that.state.filters[newName] = that.state.filters[oldName];
+            delete that.state.filters[oldName];
+          }
+        });
     };
 
     Side.prototype.duplicate = function(kind, name) {
@@ -343,7 +352,17 @@ angular.module('biggraph')
           }
         }
       }
-      this.applyOp('Discard-' + kind, { name: name });
+      var that = this;
+      this.applyOp('Discard-' + kind, { name: name })
+        .then(function(success) {
+          if (success) {
+            if (that.state.filters[name]) { delete that.state.filters[name]; }
+            var toUpdate = common.getKeysByValue(that.state, name);
+            for (i = 0; i < toUpdate.length; i++) {
+              delete that.state[toUpdate];
+            }
+          }
+        });
     };
 
     // Returns resolved filters (i.e. keyed by UUID).
