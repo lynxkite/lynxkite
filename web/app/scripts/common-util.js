@@ -12,6 +12,18 @@ var COMMON_UTIL = {
     return {min: min, max: max, span: max - min};
   },
 
+  // minmax for dynamicValue
+  dynMinmax: function(xs) {
+    var Inf = parseFloat('Infinity');
+    var min = Inf, max = -Inf;
+    var minIdx, maxIdx;
+    for (var i = 0; i < xs.length; ++i) {
+      if (xs[i].double < min) { min = xs[i].double; minIdx = i; }
+      if (xs[i].double > max) { max = xs[i].double; maxIdx = i; }
+    }
+    return {min: xs[minIdx], max: xs[maxIdx], span: max - min};
+  },
+
   // normalization between [-0.5,0.5]
   normalize: function(x, minmax) {
     if (minmax.span) {
