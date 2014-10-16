@@ -30,4 +30,15 @@ var COMMON_UTIL = {
       }
     }
   },
+
+  // returns an array with the keys of obj which equals to value
+  getKeysByValue: function(obj, value) {
+    var keys = [];
+    for (var prop in obj) {
+      if (obj[prop] === value) {
+        keys.push(prop);
+      }
+    }
+    return keys;
+  },
 };
