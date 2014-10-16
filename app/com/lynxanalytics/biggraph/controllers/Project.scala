@@ -52,7 +52,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def checkpointAfter(op: String): Unit = manager.synchronized {
     if (isSegmentation) {
-      asSegmentation.parent.checkpointAfter(op)
+      val name = asSegmentation.name
+      asSegmentation.parent.checkpointAfter(s"$op on $name")
     } else {
       lastOperation = op
       val nextIndex = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
