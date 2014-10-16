@@ -300,8 +300,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assert(vertexSet != null)
     assert(request.filters.nonEmpty)
     val embedding = FEFilters.embedFilteredVertices(vertexSet, request.filters)
-    project.pullBackWithInjection(embedding)
-    project.checkpointAfter("Filter")
+    project.checkpoint("Filter") {
+      project.pullBackWithInjection(embedding)
+    }
   }
 
   def forkProject(request: ForkProjectRequest): Unit = {
@@ -372,14 +373,8 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val ops = forProject(p).filter(_.id == req.op.id)
     assert(ops.nonEmpty, s"Cannot find operation: ${req.op.id}")
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
-    Try(ops.head.apply(req.op.parameters)) match {
-      case Success(_) =>
-        // Save changes.
-        p.checkpointAfter(ops.head.title)
-      case Failure(e) =>
-        // Discard potentially corrupt changes.
-        p.reloadCurrentCheckpoint()
-        throw e;
+    p.checkpoint(ops.head.title) {
+      ops.head.apply(req.op.parameters)
     }
   }
 }
