@@ -358,7 +358,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var anchor = side === 'left' ? 'start' : 'end';
     var i = 0;
     for (var attr in colorMap) {
-      var l = svg.create('text', { 'class': 'legend', 'x': x, 'y': i * 22 + margin })
+      var l = svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin })
         .text(attr || 'undefined');
       l.attr('fill', colorMap[attr] || UNCOLORED);
       l.attr('text-anchor', anchor);
