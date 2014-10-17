@@ -330,25 +330,27 @@ angular.module('biggraph')
 
     Side.prototype.rename = function(kind, oldName, newName) {
       if (oldName === newName) { return; }
+      if (this.hasEntity(kind, newName)) {
+        util.error('Can\'t rename \'' + oldName + '\', choose another name or discard ' +
+          kind + ' \'' + newName + '\'', '');
+        return;
+      }
       var that = this;
       this.applyOp('Rename-' + kind, { from: oldName, to: newName })
         .then(function(success) {
           if (success) {
+            // we need to copy state manually, otherwise it will be cleaned up by cleanState()
+            var toUpdate = common.getKeysByValue(that.state.attributeTitles, oldName);
+            for (var i = 0; i < toUpdate.length; i++) {
+              that.state.attributeTitles[toUpdate[i]] = newName;
+            }
             if (that.state.filters[oldName]) {
               that.state.filters[newName] = that.state.filters[oldName];
-              delete that.state.filters[oldName];
-            }
-            var toUpdate = common.getKeysByValue(that.state, oldName);
-            for (var i = 0; i < toUpdate.length; i++) {
-              // TODO: do not rename projecName and such if named the same
-              that.state[toUpdate[i]] = newName;
             }
             if (kind === 'vertex-attribute') {
               that.state.axisOptions.vertex[newName] = that.state.axisOptions.vertex[oldName];
-              delete that.state.axisOptions.vertex[oldName];
             } else if (kind === 'edge-attribute') {
               that.state.axisOptions.edge[newName] = that.state.axisOptions.edge[oldName];
-              delete that.state.axisOptions.edge[oldName];
             }
           }
         });
@@ -376,23 +378,7 @@ angular.module('biggraph')
           }
         }
       }
-      var that = this;
-      this.applyOp('Discard-' + kind, { name: name })
-        .then(function(success) {
-          if (success) {
-            if (that.state.filters[name]) { delete that.state.filters[name]; }
-            var toUpdate = common.getKeysByValue(that.state, name);
-            for (i = 0; i < toUpdate.length; i++) {
-              // TODO: do not delete projecName and such if named the same
-              delete that.state[toUpdate[i]];
-            }
-            if (kind === 'vertex-attribute') {
-              delete that.state.axisOptions.vertex[name];
-            } else if (kind === 'edge-attribute') {
-              delete that.state.axisOptions.edge[name];
-            }
-          }
-        });
+      this.applyOp('Discard-' + kind, { name: name });
     };
 
     // Returns resolved filters (i.e. keyed by UUID).
@@ -502,12 +488,59 @@ angular.module('biggraph')
 
     // Called when Side.project is loaded.
     Side.prototype.onProjectLoaded = function() {
+      this.cleanState();
       $scope.leftToRightBundle = getLeftToRightBundle();
       this.loadScalars();
       this.updateViewData();
       if (!this.project.vertexSet) {
         this.state.graphMode = undefined;
       }
+    };
+
+    // Removes entries from state which depend on nonexistent attributes
+    Side.prototype.cleanState = function() {
+      var vTitles = this.project.vertexAttributes.map(function(a) { return a.title; });
+      var eTitles = this.project.edgeAttributes.map(function(a) { return a.title; });
+      for (var attr in this.state.filters) {
+        if (vTitles.indexOf(attr) === -1) {
+          delete this.state.filters[attr];
+        }
+      }
+      for (attr in this.state.axisOptions.vertex) {
+        if (vTitles.indexOf(attr) === -1) {
+          delete this.state.axisOptions.vertex[attr];
+        }
+      }
+      for (attr in this.state.axisOptions.edge) {
+        if (eTitles.indexOf(attr) === -1) {
+          delete this.state.axisOptions.edge[attr];
+        }
+      }
+      for (attr in this.state.attributeTitles) {
+        if (attr === 'width') {
+          if (eTitles.indexOf(this.state.attributeTitles[attr]) === -1) {
+            delete this.state.attributeTitles[attr];
+          }
+        } else {
+          if (vTitles.indexOf(this.state.attributeTitles[attr]) === -1) {
+            delete this.state.attributeTitles[attr];
+          }
+        }
+      }
+    };
+
+    Side.prototype.hasEntity = function(kind, name) {
+      var names = [];
+      if (kind === 'vertex-attribute') {
+        names = this.project.vertexAttributes.map(function(a) { return a.title; });
+      } else if (kind === 'edge-attribute') {
+        names = this.project.edgeAttributes.map(function(a) { return a.title; });
+      } else if (kind === 'segmentation') {
+        names = this.project.segmentations.map(function(a) { return a.title; });
+      } else {
+        console.log('Looking for an unknown kind: ' + kind);
+      }
+      return (names.indexOf(name) !== -1);
     };
 
     // "vertex_count" and "edge_count" are displayed separately at the top.
