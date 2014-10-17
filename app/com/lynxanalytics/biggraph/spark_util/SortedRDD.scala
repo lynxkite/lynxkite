@@ -244,6 +244,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
       .collect
   }
 
+  // The ids seq needs to be sorted.
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V]
 
   def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit
@@ -365,17 +366,12 @@ private object BinarySearchUtils {
       val midIdx = (startIdx + endIdx) / 2
       val midId = array(midIdx)._1
       if (midId < id) {
-        var newStartIdx = midIdx + 1
-        // Let's find the first strictly larger element.
-        while ((newStartIdx < endIdx) && (array(newStartIdx)._1 == midId)) newStartIdx += 1
-        findRange(array, id, newStartIdx, endIdx)
+        findRange(array, id, midIdx + 1, endIdx)
       } else if (midId > id) {
-        var newEndIdx = midIdx
-        // Let's find the first element == midId.
-        while ((newEndIdx > startIdx) && (array(newEndIdx - 1)._1 == midId)) newEndIdx -= 1
-        findRange(array, id, startIdx, newEndIdx)
+        findRange(array, id, startIdx, midIdx)
       } else {
-        // Bingo!
+        // TODO(xandrew): replace the below code with binary search to retain speed for
+        // huge blocks of identical ids.
         var resStartIdx = midIdx
         // Let's find the first element equal to id.
         while ((resStartIdx > startIdx) && (array(resStartIdx - 1)._1 == id)) resStartIdx -= 1
@@ -387,6 +383,7 @@ private object BinarySearchUtils {
     }
   }
 
+  // The ids seq needs to be sorted.
   def findIds[K: Ordering, V](
     array: Array[(K, V)], ids: IndexedSeq[K], startIdx: Int, endIdx: Int): Iterator[(K, V)] = {
 
@@ -407,9 +404,9 @@ object RestrictedArrayBackedSortedRDD {
     arrayRDD: SortedArrayRDD[K, V],
     ids: IndexedSeq[K]): RDD[(K, V)] = {
     val partitioner = arrayRDD.partitioner.get
-    arrayRDD.mapPartitionsWithIndex(
-      { (pid, it) =>
-        val array = it.next._2
+    arrayRDD.mapPartitions(
+      { it =>
+        val (pid, array) = it.next
         val idsInThisPartition = ids.filter(id => partitioner.getPartition(id) == pid)
         BinarySearchUtils.findIds[K, V](array, idsInThisPartition, 0, array.size)
       },

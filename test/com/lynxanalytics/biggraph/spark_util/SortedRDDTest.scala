@@ -301,10 +301,16 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     val complex =
       sorted1.mapValues(2 * _).sortedLeftOuterJoin(
         sorted2.distinct.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
+    // Make sure the test is not trivial.
+    assert(complex.count > 1000)
 
     val ids = IndexedSeq('l', 'n', 'x', 'y')
     val restricted = complex.restrictToIdSet(ids)
     val filtered = complex.filter { case (id, value) => ids.contains(id) }
+    // Make sure the test is not trivial.
+    assert(filtered.count > 100)
+    assert(filtered.count < 1000)
+    // Our restiction is identical the result of the trusted RDD filter.
     assert(restricted.collect.toSeq.sorted == filtered.collect.toSeq.sorted)
   }
 
