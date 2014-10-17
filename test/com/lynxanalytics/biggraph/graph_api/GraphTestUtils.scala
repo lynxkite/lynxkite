@@ -173,3 +173,23 @@ case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
     output(o.weight, es.mapValues(_ => weight))
   }
 }
+
+object AddVertexAttribute {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    val attr = vertexAttribute[String](inputs.vs.entity)
+  }
+}
+case class AddVertexAttribute(values: Map[Int, String])
+    extends TypedMetaGraphOp[AddVertexAttribute.Input, AddVertexAttribute.Output] {
+  import AddVertexAttribute._
+  @transient override lazy val inputs = new Input
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+    val sc = rc.sparkContext
+    val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
+    output(o.attr, sc.parallelize(idMap).toSortedRDD(rc.onePartitionPartitioner))
+  }
+}
