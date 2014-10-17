@@ -244,7 +244,8 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
       .collect
   }
 
-  def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, V]
+  // The ids seq needs to be sorted.
+  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V]
 
   def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit
 }
@@ -262,8 +263,8 @@ private[spark_util] class DerivedSortedRDD[K: Ordering, VOld, VNew](
   derivation: DerivedSortedRDD.Derivation[K, VOld, VNew])
     extends SortedRDD[K, VNew](derivation(source)) {
 
-  def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, VNew] =
-    new DerivedSortedRDD(source.restrictToIdSet(idSet), derivation)
+  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, VNew] =
+    new DerivedSortedRDD(source.restrictToIdSet(ids), derivation)
 
   def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
     source.memorizeBackingArray(storageInfo)
@@ -280,9 +281,9 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
   derivation: BiDerivedSortedRDD.Derivation[K, VOld1, VOld2, VNew])
     extends SortedRDD[K, VNew](derivation(source1, source2)) {
 
-  def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, VNew] =
+  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, VNew] =
     new BiDerivedSortedRDD(
-      source1.restrictToIdSet(idSet), source2.restrictToIdSet(idSet), derivation)
+      source1.restrictToIdSet(ids), source2.restrictToIdSet(ids), derivation)
 
   def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit = {
     source1.memorizeBackingArray(storageInfo)
@@ -336,8 +337,8 @@ private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedA
       arrayRDD.mapPartitions(
         it => it.next._2.iterator,
         preservesPartitioning = true)) {
-  def restrictToIdSet(idSet: SortedSet[K]): SortedRDD[K, V] =
-    new RestrictedArrayBackedSortedRDD(arrayRDD, idSet)
+  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
+    new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
 
   def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
     arrayRDD.memorize(storageInfo)
@@ -348,15 +349,76 @@ private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedA
     this
   }
 }
+private object BinarySearchUtils {
+  // Finds the range in a sorted array where all ids == a given id, assuming the range must be
+  // in the given [startIdx, endIdx) range.
+  // If the id is not found in the array, it returns an empty range with elements to the left
+  // of the range being strictly less while elements to the right being strictly more than id.
+  // Both input and output start indices are inclusive, end indices are exclusive.
+  def findRange[K: Ordering, V](
+    array: Array[(K, V)], id: K, startIdx: Int, endIdx: Int): (Int, Int) = {
+
+    val ord = implicitly[Ordering[K]]
+    import ord.mkOrderingOps
+
+    if (startIdx == endIdx) (startIdx, endIdx)
+    else {
+      val midIdx = (startIdx + endIdx) / 2
+      val midId = array(midIdx)._1
+      if (midId < id) {
+        findRange(array, id, midIdx + 1, endIdx)
+      } else if (midId > id) {
+        findRange(array, id, startIdx, midIdx)
+      } else {
+        // TODO(xandrew): replace the below code with binary search to retain speed for
+        // huge blocks of identical ids.
+        var resStartIdx = midIdx
+        // Let's find the first element equal to id.
+        while ((resStartIdx > startIdx) && (array(resStartIdx - 1)._1 == id)) resStartIdx -= 1
+        var resEndIdx = midIdx
+        // Let's find the first element greater than id.
+        while ((resEndIdx < endIdx) && (array(resEndIdx)._1 == id)) resEndIdx += 1
+        (resStartIdx, resEndIdx)
+      }
+    }
+  }
+
+  // The ids seq needs to be sorted.
+  def findIds[K: Ordering, V](
+    array: Array[(K, V)], ids: IndexedSeq[K], startIdx: Int, endIdx: Int): Iterator[(K, V)] = {
+
+    if (ids.size == 0) Iterator()
+    else {
+      val midIdIdx = ids.size / 2
+      val midId = ids(midIdIdx)
+      val midRange = findRange(array, midId, startIdx, endIdx)
+      findIds(array, ids.slice(0, midIdIdx), startIdx, midRange._1) ++
+        array.view(midRange._1, midRange._2).iterator ++
+        findIds(array, ids.slice(midIdIdx + 1, ids.size), midRange._2, endIdx)
+    }
+  }
+}
+
+object RestrictedArrayBackedSortedRDD {
+  def restrictArrayRDDToIds[K: Ordering, V](
+    arrayRDD: SortedArrayRDD[K, V],
+    ids: IndexedSeq[K]): RDD[(K, V)] = {
+    val partitioner = arrayRDD.partitioner.get
+    arrayRDD.mapPartitions(
+      { it =>
+        val (pid, array) = it.next
+        val idsInThisPartition = ids.filter(id => partitioner.getPartition(id) == pid)
+        BinarySearchUtils.findIds[K, V](array, idsInThisPartition, 0, array.size)
+      },
+      preservesPartitioning = true)
+  }
+}
 private[spark_util] class RestrictedArrayBackedSortedRDD[K: Ordering, V](
   arrayRDD: SortedArrayRDD[K, V],
-  idSet: SortedSet[K])
-    extends SortedRDD[K, V](
-      arrayRDD.mapPartitions(
-        it => it.next._2.iterator.filter { case (key, value) => idSet.contains(key) },
-        preservesPartitioning = true)) {
-  def restrictToIdSet(newIdSet: SortedSet[K]): SortedRDD[K, V] =
-    new RestrictedArrayBackedSortedRDD(arrayRDD, idSet & newIdSet)
+  ids: IndexedSeq[K])
+    extends SortedRDD[K, V](RestrictedArrayBackedSortedRDD.restrictArrayRDDToIds(arrayRDD, ids)) {
+  def restrictToIdSet(newIds: IndexedSeq[K]): SortedRDD[K, V] =
+    new RestrictedArrayBackedSortedRDD(arrayRDD, ids.intersect(newIds))
 
   def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
     arrayRDD.memorize(storageInfo)
