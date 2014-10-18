@@ -44,6 +44,7 @@ angular.module('biggraph')
           enabled: false,
           labelAttraction: 0,
         },
+        attributeTitles: {},
       };
     }
 
@@ -76,18 +77,18 @@ angular.module('biggraph')
       vd.bucketCount = this.state.bucketCount;
 
       // "state" uses attribute names, while "viewData" uses attribute UUIDs.
-      vd.xAttribute = this.resolveVertexAttribute(this.state.xAttributeTitle);
-      vd.yAttribute = this.resolveVertexAttribute(this.state.yAttributeTitle);
-      vd.xAxisOptions = this.axisOptions('vertex', this.state.xAttributeTitle);
-      vd.yAxisOptions = this.axisOptions('vertex', this.state.yAttributeTitle);
+      vd.xAttribute = this.resolveVertexAttribute(this.state.attributeTitles.x);
+      vd.yAttribute = this.resolveVertexAttribute(this.state.attributeTitles.y);
+      vd.xAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.x);
+      vd.yAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.y);
       vd.attrs = {};
-      vd.attrs.size = this.resolveVertexAttribute(this.state.sizeAttributeTitle);
-      vd.attrs.label = this.resolveVertexAttribute(this.state.labelAttributeTitle);
-      vd.attrs.color = this.resolveVertexAttribute(this.state.colorAttributeTitle);
-      vd.attrs.slider = this.resolveVertexAttribute(this.state.sliderAttributeTitle);
-      vd.attrs.icon = this.resolveVertexAttribute(this.state.iconAttributeTitle);
+      vd.attrs.size = this.resolveVertexAttribute(this.state.attributeTitles.size);
+      vd.attrs.label = this.resolveVertexAttribute(this.state.attributeTitles.label);
+      vd.attrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
+      vd.attrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
+      vd.attrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
 
-      vd.edgeWidth = this.resolveEdgeAttribute(this.state.widthAttributeTitle);
+      vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
 
       vd.filters = {};
       for(var name in this.state.filters) {
@@ -233,17 +234,17 @@ angular.module('biggraph')
       return this.project && this.project.$resolved && !this.project.$error;
     };
 
-    Side.prototype.set = function(setting, value) {
-      if (this.state[setting] === value) {
+    Side.prototype.toggleAttributeTitle = function(setting, value) {
+      if (this.state.attributeTitles[setting] === value) {
         // Clicking the same attribute setting again turns it off.
-        delete this.state[setting];
+        delete this.state.attributeTitles[setting];
       } else {
-        this.state[setting] = value;
+        this.state.attributeTitles[setting] = value;
         // Apply mutual exclusions.
-        if (setting === 'sliderAttributeTitle') {
-          this.state.colorAttributeTitle = undefined;
-        } else if (setting === 'colorAttributeTitle') {
-          this.state.sliderAttributeTitle = undefined;
+        if (setting === 'slider') {
+          this.state.attributeTitles.color = undefined;
+        } else if (setting === 'color') {
+          this.state.attributeTitles.slider = undefined;
         }
       }
     };
@@ -309,11 +310,11 @@ angular.module('biggraph')
       this.savingNotes = true;
       this.applyOp('Change-project-notes', { notes: this.project.notes })
         .then(function(success) {
-        if (success) {
-          that.unsavedNotes = false;
-          that.savingNotes = false;
-        }
-      });
+          if (success) {
+            that.unsavedNotes = false;
+            that.savingNotes = false;
+          }
+        });
     };
 
     Side.prototype.rename = function(kind, oldName, newName) {
@@ -453,11 +454,44 @@ angular.module('biggraph')
 
     // Called when Side.project is loaded.
     Side.prototype.onProjectLoaded = function() {
+      this.cleanState();
       $scope.leftToRightBundle = getLeftToRightBundle();
       this.loadScalars();
       this.updateViewData();
       if (!this.project.vertexSet) {
         this.state.graphMode = undefined;
+      }
+    };
+
+    // Removes entries from state which depend on nonexistent attributes
+    Side.prototype.cleanState = function() {
+      var vTitles = this.project.vertexAttributes.map(function(a) { return a.title; });
+      var eTitles = this.project.edgeAttributes.map(function(a) { return a.title; });
+      for (var attr in this.state.filters) {
+        if (vTitles.indexOf(attr) === -1) {
+          delete this.state.filters[attr];
+        }
+      }
+      for (attr in this.state.axisOptions.vertex) {
+        if (vTitles.indexOf(attr) === -1) {
+          delete this.state.axisOptions.vertex[attr];
+        }
+      }
+      for (attr in this.state.axisOptions.edge) {
+        if (eTitles.indexOf(attr) === -1) {
+          delete this.state.axisOptions.edge[attr];
+        }
+      }
+      for (attr in this.state.attributeTitles) {
+        if (attr === 'width') {
+          if (eTitles.indexOf(this.state.attributeTitles[attr]) === -1) {
+            delete this.state.attributeTitles[attr];
+          }
+        } else {
+          if (vTitles.indexOf(this.state.attributeTitles[attr]) === -1) {
+            delete this.state.attributeTitles[attr];
+          }
+        }
       }
     };
 
