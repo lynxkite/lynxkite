@@ -20,10 +20,8 @@ svg.graph-view.loading {
 }
 
 svg text {
-  text-anchor: middle;
   dominant-baseline: middle;
   pointer-events: none;
-  fill: white;
 }
 
 svg .edge {
@@ -60,13 +58,17 @@ svg .vertex .touch {
   fill: transparent;
 }
 svg .vertex text {
+  text-anchor: middle;
   font-family: 'Arial Black', sans-serif;
   font-size: 15px;
+  fill: white;
 }
 
 svg .vertex .subscript {
+  text-anchor: middle;
   font-size: 9px;
   opacity: 0.5;
+  fill: white;
 }
 
 svg .vertex .label-background {
@@ -103,9 +105,14 @@ svg .bucket.right {
   text-anchor: start;
 }
 svg .bucket.axis-label {
+  text-anchor: middle;
   font-size: 18px;
   font-weight: bold;
   fill: #444;
+}
+svg .legend text {
+  font-size: 18px;
+  font-weight: bold;
 }
 
 svg .loading {
