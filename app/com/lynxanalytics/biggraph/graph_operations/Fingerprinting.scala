@@ -84,8 +84,8 @@ case class Fingerprinting(
         case (leftID, leftNeighbors, rightID, rightNeighbors) =>
           val ln = leftNeighbors.toMap
           val rn = rightNeighbors.toMap
-          val common = ln.keySet intersect rn.keySet
-          val all = ln.keySet union rn.keySet
+          val common = (ln.keySet intersect rn.keySet).toSeq
+          val all = (ln.keySet union rn.keySet).toSeq
           // Weights.
           val lw = ln.mapValues(_._1).withDefaultValue(0.0)
           val rw = rn.mapValues(_._1).withDefaultValue(0.0)
@@ -94,12 +94,12 @@ case class Fingerprinting(
           val rd = rn.mapValues(_._2.toDouble)
           val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
           val avg = degrees.mapValues(ds => ds.sum / ds.size)
-          println(s"common: $common")
+          println(s"common: $common, avg: $avg")
           if (common.size < minimumOverlap) {
             Iterator()
           } else {
             val isect = common.map(k => (lw(k) min rw(k)) / avg(k)).sum
-            val union = common.map(k => (lw(k) max rw(k)) / avg(k)).sum
+            val union = all.map(k => (lw(k) max rw(k)) / avg(k)).sum
             println(s"sim($leftID, $rightID) = $isect / $union")
             val similarity = isect / union
             if (similarity < minimumSimilarity) None
@@ -125,10 +125,10 @@ case class Fingerprinting(
     println(s"preferences: ${preferences.collect.toSeq}")
     val ladiesCount = ladies.count
     val partitioner = ladies.partitioner.get
-    val gentlemenPreferences = gentlemen.sortedJoin(preferences).mapValues(_._2).groupByKey.mapValues {
+    val gentlemenPreferences = preferences.sortedJoin(gentlemen).mapValues(_._1).groupByKey.mapValues {
       case ladies => ladies.sortBy(-_._2).map(_._1)
     }
-    val ladiesPreferences = ladies.sortedJoin(preferences).mapValues(_._2).groupByKey.mapValues {
+    val ladiesPreferences = preferences.sortedJoin(ladies).mapValues(_._1).groupByKey.mapValues {
       case gentlemen => gentlemen.sortBy(-_._2).map(_._1)
     }
     var gentlemenCandidates = gentlemenPreferences // The diminishing list of candidates.
@@ -145,6 +145,7 @@ case class Fingerprinting(
           // Preferences are symmetrical, so we will always find one here.
           preferences.find(g => ps.contains(g)).get -> lady
       }.toSortedRDD(partitioner)
+      println(s"responses: ${responsesByGentlemen.collect.toSeq}")
       println(s"lc: $ladiesCount, rc: ${responsesByGentlemen.count}")
       if (ladiesCount == responsesByGentlemen.count) {
         // All the ladies are happily engaged. Stop iteration.
