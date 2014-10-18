@@ -1074,6 +1074,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]) = {
+      assert(!project.edgeAttributes.contains(params("to")),
+        s"""An edge-attribute named '${params("to")}' already exists,
+            please discard it or choose another name""")
       project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
       project.edgeAttributes(params("from")) = null
     }
@@ -1086,6 +1089,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]) = {
+      assert(!project.vertexAttributes.contains(params("to")),
+        s"""A vertex-attribute named '${params("to")}' already exists,
+            please discard it or choose another name""")
       project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
       project.vertexAttributes(params("from")) = null
     }
@@ -1098,6 +1104,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     def apply(params: Map[String, String]) = {
+      assert(!project.segmentations.contains(params("to")),
+        s"""A segmentation named '${params("to")}' already exists,
+            please discard it or choose another name""")
       project.segmentation(params("from")).rename(params("to"))
     }
   })
@@ -1109,6 +1118,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
     def apply(params: Map[String, String]) = {
+      assert(!project.scalars.contains(params("to")),
+        s"""A scalar named '${params("to")}' already exists,
+            please discard it or choose another name""")
       project.scalars(params("to")) = project.scalars(params("from"))
       project.scalars(params("from")) = null
     }
