@@ -118,7 +118,6 @@ case class Fingerprinting(
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
   def stableMarriage(ladies: SortedRDD[ID, String], gentlemen: SortedRDD[ID, String], preferences: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
-    val ladiesCount = ladies.count
     val partitioner = ladies.partitioner.get
     val gentlemenPreferences = preferences.sortedJoin(gentlemen).mapValues(_._1).groupByKey.mapValues {
       case ladies => ladies.sortBy(-_._2).map(_._1)
@@ -126,8 +125,9 @@ case class Fingerprinting(
     val ladiesPreferences = preferences.sortedJoin(ladies).mapValues(_._1).groupByKey.mapValues {
       case gentlemen => gentlemen.sortBy(-_._2).map(_._1)
     }
-    var gentlemenCandidates = gentlemenPreferences // The diminishing list of candidates.
-    while (true) {
+
+    @annotation.tailrec
+    def iterate(gentlemenCandidates: SortedRDD[ID, ArrayBuffer[ID]]): SortedRDD[ID, ID] = {
       val proposals = gentlemenCandidates.flatMap {
         case (gentleman, ladies) =>
           if (ladies.isEmpty) None else Some(ladies.head -> gentleman)
@@ -141,14 +141,15 @@ case class Fingerprinting(
       }.toSortedRDD(partitioner)
       if (proposals.count == responsesByGentlemen.count) {
         // All proposals accepted. Stop iteration.
-        return responsesByGentlemen
+        responsesByGentlemen
       } else {
-        gentlemenCandidates = gentlemenCandidates.sortedLeftOuterJoin(responsesByGentlemen).mapValues {
+        iterate(gentlemenCandidates.sortedLeftOuterJoin(responsesByGentlemen).mapValues {
           case (ladies, Some(response)) => ladies // The proposal was accepted. Sit tight.
           case (ladies, None) => ladies.drop(1) // Rejected. Try the next lady.
-        }
+        })
       }
     }
-    ???
+
+    iterate(gentlemenPreferences)
   }
 }
