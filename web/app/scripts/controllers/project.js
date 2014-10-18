@@ -2,8 +2,6 @@
 
 angular.module('biggraph')
   .controller('ProjectViewCtrl', function ($scope, $routeParams, $location, util, hotkeys) {
-    /* global COMMON_UTIL*/
-    var common = COMMON_UTIL;
     var hk = hotkeys.bindTo($scope);
     hk.add({
       combo: 'ctrl+z', description: 'Undo',
@@ -321,30 +319,7 @@ angular.module('biggraph')
 
     Side.prototype.rename = function(kind, oldName, newName) {
       if (oldName === newName) { return; }
-      if (this.hasEntity(kind, newName)) {
-        util.error('Can\'t rename \'' + oldName + '\', choose another name or discard ' +
-          kind + ' \'' + newName + '\'', '');
-        return;
-      }
-      var that = this;
-      this.applyOp('Rename-' + kind, { from: oldName, to: newName })
-        .then(function(success) {
-          if (success) {
-            // we need to copy state manually, otherwise it will be cleaned up by cleanState()
-            var toUpdate = common.getKeysByValue(that.state.attributeTitles, oldName);
-            for (var i = 0; i < toUpdate.length; i++) {
-              that.state.attributeTitles[toUpdate[i]] = newName;
-            }
-            if (that.state.filters[oldName]) {
-              that.state.filters[newName] = that.state.filters[oldName];
-            }
-            if (kind === 'vertex-attribute') {
-              that.state.axisOptions.vertex[newName] = that.state.axisOptions.vertex[oldName];
-            } else if (kind === 'edge-attribute') {
-              that.state.axisOptions.edge[newName] = that.state.axisOptions.edge[oldName];
-            }
-          }
-        });
+      this.applyOp('Rename-' + kind, { from: oldName, to: newName });
     };
 
     Side.prototype.duplicate = function(kind, name) {
@@ -518,20 +493,6 @@ angular.module('biggraph')
           }
         }
       }
-    };
-
-    Side.prototype.hasEntity = function(kind, name) {
-      var names = [];
-      if (kind === 'vertex-attribute') {
-        names = this.project.vertexAttributes.map(function(a) { return a.title; });
-      } else if (kind === 'edge-attribute') {
-        names = this.project.edgeAttributes.map(function(a) { return a.title; });
-      } else if (kind === 'segmentation') {
-        names = this.project.segmentations.map(function(a) { return a.title; });
-      } else {
-        console.log('Looking for an unknown kind: ' + kind);
-      }
-      return (names.indexOf(name) !== -1);
     };
 
     // "vertex_count" and "edge_count" are displayed separately at the top.
