@@ -94,13 +94,11 @@ case class Fingerprinting(
           val rd = rn.mapValues(_._2.toDouble)
           val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
           val avg = degrees.mapValues(ds => ds.sum / ds.size)
-          println(s"common: $common, avg: $avg")
           if (common.size < minimumOverlap) {
             Iterator()
           } else {
             val isect = common.map(k => (lw(k) min rw(k)) / avg(k)).sum
             val union = all.map(k => (lw(k) max rw(k)) / avg(k)).sum
-            println(s"sim($leftID, $rightID) = $isect / $union")
             val similarity = isect / union
             if (similarity < minimumSimilarity) None
             else Iterator(leftID -> (rightID, similarity), rightID -> (leftID, similarity))
@@ -120,9 +118,6 @@ case class Fingerprinting(
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
   def stableMarriage(ladies: SortedRDD[ID, String], gentlemen: SortedRDD[ID, String], preferences: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
-    println(s"ladies: ${ladies.collect.toSeq}")
-    println(s"gentlemen: ${gentlemen.collect.toSeq}")
-    println(s"preferences: ${preferences.collect.toSeq}")
     val ladiesCount = ladies.count
     val partitioner = ladies.partitioner.get
     val gentlemenPreferences = preferences.sortedJoin(gentlemen).mapValues(_._1).groupByKey.mapValues {
@@ -133,10 +128,8 @@ case class Fingerprinting(
     }
     var gentlemenCandidates = gentlemenPreferences // The diminishing list of candidates.
     while (true) {
-      println(s"gc: ${gentlemenCandidates.count}")
       val proposals = gentlemenCandidates.flatMap {
         case (gentleman, ladies) =>
-          println(s"gentleman: $gentleman, ladies: ${ladies.toSeq}")
           if (ladies.isEmpty) None else Some(ladies.head -> gentleman)
       }
       val proposalsByLadies = proposals.groupBySortedKey(partitioner)
@@ -146,8 +139,6 @@ case class Fingerprinting(
           // Preferences are symmetrical, so we will always find one here.
           preferences.find(g => ps.contains(g)).get -> lady
       }.toSortedRDD(partitioner)
-      println(s"responses: ${responsesByGentlemen.collect.toSeq}")
-      println(s"lc: $ladiesCount, rc: ${responsesByGentlemen.count}")
       if (proposals.count == responsesByGentlemen.count) {
         // All proposals accepted. Stop iteration.
         return responsesByGentlemen
