@@ -8,27 +8,28 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+// For vertices that only have one of leftName/rightName Fingerprinting will find the most likely
+// match based on networks structure. Nodes that have both leftName/rightName defined are used for
+// finding the matches.
 object Fingerprinting {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val edgeIds = vertexSet
     val es = edgeBundle(vs, vs, idSet = edgeIds)
     val weight = vertexAttribute[Double](edgeIds)
-    val name = vertexAttribute[String](vs)
-    val side = vertexAttribute[String](vs)
+    val leftName = vertexAttribute[String](vs)
+    val rightName = vertexAttribute[String](vs)
+    // A helper edge bundle that restricts the search to a subset of the possible pairings.
+    // It should point left to right.
+    val candidates = edgeBundle(vs, vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
-    val leftName = vertexAttribute[String](inputs.vs.entity)
-    val rightName = vertexAttribute[String](inputs.vs.entity)
+    val leftToRight = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
 }
 import Fingerprinting._
 case class Fingerprinting(
-  leftSide: String,
-  rightSide: String,
-  // TODO: There seems to be a mistake in the doc and MREW's role is unclear.
-  minimumRelativeEdgeWeight: Double,
   minimumOverlap: Int,
   minimumSimilarity: Double)
     extends TypedMetaGraphOp[Input, Output] {
@@ -41,44 +42,46 @@ case class Fingerprinting(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    val vertexPartitioner = inputs.vs.rdd.partitioner.get
+
+    // These are the two sides we are trying to connect.
+    def definedUndefined(defined: SortedRDD[ID, String], undefined: SortedRDD[ID, String]): SortedRDD[ID, String] = {
+      defined.sortedLeftOuterJoin(undefined).flatMapValues {
+        case (_, Some(_)) => None
+        case (name, None) => Some(name)
+      }
+    }
+    val lefts = definedUndefined(inputs.leftName.rdd, inputs.rightName.rdd)
+    val rights = definedUndefined(inputs.rightName.rdd, inputs.leftName.rdd)
+
+    // Get the list of neighbors and their degrees for all candidates pairs.
     val edges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
-    val vertices = inputs.vs.rdd
-    val vertexPartitioner = vertices.partitioner.get
     val weightedEdges = edges.sortedJoin(inputs.weight.rdd)
-    val inNeighbors = weightedEdges
-      .map { case (_, (e, w)) => e.dst -> (w, e.src) }
+    val inDegrees = weightedEdges
+      .map { case (_, (e, w)) => e.dst -> w }
       .groupBySortedKey(vertexPartitioner)
-      .mapValues(it => collection.SortedSet(it.toSeq: _*).toArray)
-    val inDegrees = inNeighbors.mapValues(_.map(_._1).sum)
-
-    def byName[T](rdd: SortedRDD[ID, T]): SortedRDD[String, ArrayBuffer[(ID, T)]] = {
-      val named = inputs.name.rdd.sortedJoin(rdd)
-      named.map {
-        case (id, (name, t)) => name -> (id, t)
-      }.toSortedRDD(vertexPartitioner).groupByKey
-    }
-    def getSide(which: String): SortedRDD[ID, String] = {
-      byName(inputs.side.rdd).flatMap {
-        case (name, idSides) =>
-          def id = idSides(0)._1
-          def side = idSides(0)._2
-          if (idSides.size == 1 && side == which) Some(id -> name) else None
-      }.toSortedRDD(vertexPartitioner)
-    }
-    val lefts = getSide(leftSide)
-    val rights = getSide(rightSide)
-
+      .mapValues(_.sum)
     val outNeighbors = weightedEdges
       .map { case (_, (e, w)) => e.dst -> (w, e.src) }
       .join(inDegrees)
-      .join(inputs.name.rdd)
-      .map { case (dst, (((w, src), deg), dstName)) => src -> (dstName, (w, deg)) }
+      .map { case (dst, ((w, src), deg)) => src -> (dst, (w, deg)) }
       .groupBySortedKey(vertexPartitioner)
+    val candidates = inputs.candidates.rdd
+      .map { case (_, e) => (e.dst, e.src) }
+      .toSortedRDD(vertexPartitioner)
+      .sortedJoin(outNeighbors)
+      .map { case (rightID, (leftID, rightNeighbors)) => (leftID, (rightID, rightNeighbors)) }
+      .toSortedRDD(vertexPartitioner)
+      .sortedJoin(outNeighbors)
+      .map {
+        case (leftID, ((rightID, rightNeighbors), leftNeighbors)) =>
+          (leftID, leftNeighbors, rightID, rightNeighbors)
+      }
 
     // Calculate the similarity metric.
     val similarities =
-      (lefts.sortedJoin(outNeighbors) cartesian rights.sortedJoin(outNeighbors)).flatMap {
-        case ((leftID, (leftName, leftNeighbors)), (rightID, (rightName, rightNeighbors))) =>
+      candidates.flatMap {
+        case (leftID, leftNeighbors, rightID, rightNeighbors) =>
           val ln = leftNeighbors.toMap
           val rn = rightNeighbors.toMap
           val common = ln.keySet intersect rn.keySet
@@ -107,26 +110,15 @@ case class Fingerprinting(
     // Run stableMarriage with the smaller side as "ladies".
     def flipped(rdd: RDD[(ID, ID)]) =
       rdd.map(pair => pair._2 -> pair._1).toSortedRDD(vertexPartitioner)
-    val (leftToRight, rightToLeft) =
-      if (lefts.count < rights.count) {
-        val rightToLeft = stableMarriage(lefts, rights, similarities)
-        (flipped(rightToLeft), rightToLeft)
-      } else {
-        val leftToRight = stableMarriage(rights, lefts, similarities)
-        (leftToRight, flipped(leftToRight))
-      }
-
-    // Map IDs to names in the output.
-    def reverseNameMap(leftToRight: SortedRDD[ID, ID]) = {
-      leftToRight.sortedJoin(inputs.name.rdd).map {
-        case (leftID, (rightID, leftName)) => rightID -> leftName
-      }.toSortedRDD(vertexPartitioner)
-    }
-    output(o.leftName, reverseNameMap(leftToRight))
-    output(o.rightName, reverseNameMap(rightToLeft))
+    val leftToRight =
+      if (rights.count < lefts.count) stableMarriage(rights, lefts, similarities)
+      else flipped(stableMarriage(lefts, rights, similarities))
+    output(o.leftToRight, leftToRight.mapValuesWithKeys {
+      case (src, dst) => Edge(src, dst)
+    })
   }
 
-  // "ladies" is the smaller set.
+  // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
   def stableMarriage(ladies: SortedRDD[ID, String], gentlemen: SortedRDD[ID, String], preferences: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
     println(s"ladies: ${ladies.collect.toSeq}")
     println(s"gentlemen: ${gentlemen.collect.toSeq}")
