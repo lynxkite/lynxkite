@@ -6,7 +6,7 @@
     <button class="btn btn-default"
             ng-if="attr.typeName === 'Double'"
             ng-class="{ active: side.state.attributeTitles.width === attr.title }"
-            ng-click="side.setAttributeTitle('width', attr.title)">
+            ng-click="side.toggleAttributeTitle('width', attr.title)">
       Width
     </button>
   </div>
