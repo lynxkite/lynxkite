@@ -20,11 +20,25 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
       == Set(10 -> 20, 11 -> 21))
   }
 
-  test("one difficult pair") {
+  test("one difficult pair A") {
     assert(fingerprint(
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(1, 2, 3, 4)),
       Map(20 -> Seq(1, 2, 3, 4)))
       == Set(11 -> 20))
+  }
+
+  test("one difficult pair B") {
+    assert(fingerprint(
+      Map(10 -> Seq(1, 2, 3, 4)),
+      Map(20 -> Seq(1, 2, 3), 21 -> Seq(1, 2, 3, 4)))
+      == Set(10 -> 21))
+  }
+
+  test("no match") {
+    assert(fingerprint(
+      Map(10 -> Seq(1, 2, 3)),
+      Map(20 -> Seq(4, 5, 6)))
+      == Set())
   }
 
   def fingerprint(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Set[(Int, Int)] = {
