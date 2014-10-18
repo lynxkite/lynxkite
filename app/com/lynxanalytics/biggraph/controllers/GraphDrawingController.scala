@@ -336,7 +336,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val op = graph_operations.EdgesForVertices(vertexIds, 50000, bySource = true)
       val edges =
         op(op.edges, eb)(op.tripletMapping, tm.srcEdges).result.edges.value
-      println("SRC edges", edges)
       if (edges.isDefined) return edges
     }
     if (dstView.vertexIndices.isDefined) {
@@ -344,10 +343,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val op = graph_operations.EdgesForVertices(vertexIds, 50000, bySource = false)
       val edges =
         op(op.edges, eb)(op.tripletMapping, tm.dstEdges).result.edges.value
-      println("DST edges", edges)
       if (edges.isDefined) return edges
     }
-    println("O... :(")
     return None
   }
 
@@ -379,7 +376,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val smallEdgeSetOption = getSmallEdgeSet(edgeBundle, srcView, dstView)
     val counts = smallEdgeSetOption match {
       case Some(smallEdgeSet) => {
-        println("Small edge set mode for request: ", request)
+        log.info("PERF Small edge set mode for request: ", request)
         val srcIdxMapping = srcView.vertexIndices.getOrElse({
           val indexAttr = indexFromIndexingSeq(srcView.filtered, srcView.indexingSeq)
           val srcVertexIds = smallEdgeSet.map { case (id, edge) => edge.src }.toSet
@@ -404,7 +401,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         counts.toMap
       }
       case None => {
-        println("Huge edge set mode for request: ", request)
+        log.info("PERF Huge edge set mode for request: ", request)
         val filteredEdges = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters)
 
         val srcIndices = edgeIndexFromIndexingSeq(
@@ -423,7 +420,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
                   countOp.originalCount, originalEdgeCount).result.counts.value
       }
     }
-    println("Counts computed")
+    log.info("PERF edge counts computed")
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
