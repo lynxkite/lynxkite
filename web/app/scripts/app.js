@@ -46,11 +46,12 @@ angular
       if (params === undefined) { params = { fake: 1 }; }
       var res = $resource(url, {}, { get: { method: 'GET', cache: cache } });
       var req = res.get({ q: params }, function() {}, function(failure) {
+        req.$status = failure.status;
         if (failure.status === 401) {  // Unauthorized.
-          req.error = 'Redirecting to login page.';
+          req.$error = 'Redirecting to login page.';
           window.location.href = 'https://' + window.location.hostname + '/authenticate/google';
         } else {
-          req.error = util.responseToErrorMessage(failure);
+          req.$error = util.responseToErrorMessage(failure);
         }
       });
       return req;
