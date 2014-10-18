@@ -236,16 +236,7 @@ angular.module('biggraph')
       return this.project && this.project.$resolved && !this.project.error;
     };
 
-    Side.prototype.set = function(setting, value) {
-      if (this.state[setting] === value) {
-        // Clicking the same attribute setting again turns it off.
-        delete this.state[setting];
-      } else {
-        this.state[setting] = value;
-      }
-    };
-
-    Side.prototype.setAttributeTitle = function(setting, value) {
+    Side.prototype.toggleAttributeTitle = function(setting, value) {
       if (this.state.attributeTitles[setting] === value) {
         // Clicking the same attribute setting again turns it off.
         delete this.state.attributeTitles[setting];
