@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util._
+import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class BucketedAttribute[T](
@@ -51,6 +52,9 @@ case class VertexView(
   //   )
   // )
   indexingSeq: Seq[BucketedAttribute[_]],
+  // In case the set of vertices used to create this view, then we may just have a local map
+  // telling the index of each vertex. Otherwise this is None.
+  vertexIndices: Option[Map[ID, Int]],
   // Filtering in a vertex view has to be a conjunction of per attribute filters.
   filters: Seq[FilteredAttribute[_]]) extends Serializable
 object VertexView {
@@ -73,6 +77,19 @@ object VertexView {
         filterInstance.outputs.scalars('filteredAttribute).value.asInstanceOf[FilteredAttribute[_]]
       }.toSeq
     }
-    VertexView(vertexSet, filtered, indexingSeq, filters)
+    val vertexIndices = if (indexerInstance.operation.isInstanceOf[SampledView]) {
+      Some(indexerInstance.outputs.scalars('vertexIndices).runtimeSafeCast[Map[ID, Int]].value)
+    } else {
+      assert(
+        indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]])
+      val idBuckets = indexerInstance.outputs.scalars('buckets)
+        .runtimeSafeCast[IDBuckets[(Int, Int)]].value
+      // This is pretty terrible. TODO: make vertex bucket grid generate indexes directly, not
+      // x-y coordinates. If we are at it, remove duplications between indexer and
+      // vertexbucketgrid.
+      val ySize = if (indexingSeq.size == 2) indexingSeq(1).bucketer.numBuckets else 1
+      Option(idBuckets.sample).map(_.toMap.mapValues { case (x, y) => x * ySize + y })
+    }
+    VertexView(vertexSet, filtered, indexingSeq, vertexIndices, filters)
   }
 }
