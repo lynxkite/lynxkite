@@ -17,8 +17,6 @@ object Fingerprinting {
     val edgeIds = vertexSet
     val es = edgeBundle(vs, vs, idSet = edgeIds)
     val weight = vertexAttribute[Double](edgeIds)
-    val leftName = vertexAttribute[String](vs)
-    val rightName = vertexAttribute[String](vs)
     // A helper edge bundle that restricts the search to a subset of the possible pairings.
     // It should point left to right.
     val candidates = edgeBundle(vs, vs)
@@ -45,14 +43,14 @@ case class Fingerprinting(
     val vertexPartitioner = inputs.vs.rdd.partitioner.get
 
     // These are the two sides we are trying to connect.
-    def definedUndefined(defined: SortedRDD[ID, String], undefined: SortedRDD[ID, String]): SortedRDD[ID, String] = {
-      defined.sortedLeftOuterJoin(undefined).flatMapValues {
-        case (_, Some(_)) => None
-        case (name, None) => Some(name)
-      }
-    }
-    val lefts = definedUndefined(inputs.leftName.rdd, inputs.rightName.rdd)
-    val rights = definedUndefined(inputs.rightName.rdd, inputs.leftName.rdd)
+    val lefts = inputs.candidates.rdd
+      .map { case (_, e) => e.src -> () }
+      .toSortedRDD(vertexPartitioner)
+      .distinct
+    val rights = inputs.candidates.rdd
+      .map { case (_, e) => e.dst -> () }
+      .toSortedRDD(vertexPartitioner)
+      .distinct
 
     // Get the list of neighbors and their degrees for all candidates pairs.
     val edges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
@@ -117,7 +115,7 @@ case class Fingerprinting(
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
-  def stableMarriage(ladies: SortedRDD[ID, String], gentlemen: SortedRDD[ID, String], preferences: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
+  def stableMarriage(ladies: SortedRDD[ID, Unit], gentlemen: SortedRDD[ID, Unit], preferences: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
     val partitioner = ladies.partitioner.get
     val gentlemenPreferences = preferences.sortedJoin(gentlemen).mapValues(_._1).groupByKey.mapValues {
       case ladies => ladies.sortBy(-_._2).map(_._1)

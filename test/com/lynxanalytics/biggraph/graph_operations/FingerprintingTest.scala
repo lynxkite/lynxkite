@@ -43,14 +43,6 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
 
   def fingerprint(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Set[(Int, Int)] = {
     val graph = SmallTestGraph(left ++ right).result
-    val leftName = {
-      val op = AddVertexAttribute(left.map { case (k, v) => k -> s"L$k" })
-      op(op.vs, graph.vs).result.attr
-    }
-    val rightName = {
-      val op = AddVertexAttribute(right.map { case (k, v) => k -> s"R$k" })
-      op(op.vs, graph.vs).result.attr
-    }
     val weight = AddConstantAttribute.run(graph.es.asVertexSet, 1.0)
     val candidates = {
       val op = AddEdgeBundle(for { l <- left.keys.toSeq; r <- right.keys.toSeq } yield l -> r)
@@ -61,9 +53,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
       op(
         op.es, graph.es)(
           op.weight, weight)(
-            op.leftName, leftName)(
-              op.rightName, rightName)(
-                op.candidates, candidates).result
+            op.candidates, candidates).result
     }
     fingerprinting.leftToRight.toPairSet.map { case (l, r) => (l.toInt, r.toInt) }
   }
