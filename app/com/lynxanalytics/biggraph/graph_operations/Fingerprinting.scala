@@ -26,11 +26,11 @@ object Fingerprinting {
     val leftToRight = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
 }
-import Fingerprinting._
 case class Fingerprinting(
   minimumOverlap: Int,
   minimumSimilarity: Double)
-    extends TypedMetaGraphOp[Input, Output] {
+    extends TypedMetaGraphOp[Fingerprinting.Input, Fingerprinting.Output] {
+  import Fingerprinting._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -67,10 +67,10 @@ case class Fingerprinting(
     val candidates = inputs.candidates.rdd
       .map { case (_, e) => (e.dst, e.src) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors)
+      .sortedJoin(outNeighbors) // BUG?
       .map { case (rightID, (leftID, rightNeighbors)) => (leftID, (rightID, rightNeighbors)) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors)
+      .sortedJoin(outNeighbors) // BUG?
       .map {
         case (leftID, ((rightID, rightNeighbors), leftNeighbors)) =>
           (leftID, leftNeighbors, rightID, rightNeighbors)
@@ -149,5 +149,60 @@ case class Fingerprinting(
     }
 
     iterate(gentlemenPreferences)
+  }
+}
+
+object FingerprintingCandidates {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val es = edgeBundle(vs, vs)
+    val leftName = vertexAttribute[String](vs)
+    val rightName = vertexAttribute[String](vs)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
+    val candidates = edgeBundle(inputs.vs.entity, inputs.vs.entity)
+  }
+}
+case class FingerprintingCandidates()
+    extends TypedMetaGraphOp[FingerprintingCandidates.Input, FingerprintingCandidates.Output] {
+  import FingerprintingCandidates._
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val vertexPartitioner = inputs.vs.rdd.partitioner.get
+    val edges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
+    val outEdges = edges.map { case (_, e) => e.src -> e.dst }.toSortedRDD(vertexPartitioner)
+
+    def definedUndefined(defined: SortedRDD[ID, String], undefined: SortedRDD[ID, String]): SortedRDD[ID, String] = {
+      defined.sortedLeftOuterJoin(undefined).flatMapValues {
+        case (_, Some(_)) => None
+        case (name, None) => Some(name)
+      }
+    }
+    val lefts = definedUndefined(inputs.leftName.rdd, inputs.rightName.rdd)
+    val rights = definedUndefined(inputs.rightName.rdd, inputs.leftName.rdd)
+
+    val leftNeighbors = outEdges
+      .sortedJoin(lefts)
+      .map { case (left, (name, mid)) => mid -> left }
+    val rightNeighbors = outEdges
+      .sortedJoin(rights)
+      .map { case (right, (name, mid)) => mid -> right }
+    val candidates = leftNeighbors
+      .join(rightNeighbors)
+      .groupByKey
+      .flatMap { case (mid, pairs) => pairs }
+
+    output(o.candidates,
+      candidates
+        .map { case (left, right) => Edge(left, right) }
+        .randomNumbered(inputs.es.rdd.partitioner.get))
   }
 }
