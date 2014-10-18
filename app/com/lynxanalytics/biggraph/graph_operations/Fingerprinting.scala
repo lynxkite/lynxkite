@@ -134,11 +134,12 @@ case class Fingerprinting(
     var gentlemenCandidates = gentlemenPreferences // The diminishing list of candidates.
     while (true) {
       println(s"gc: ${gentlemenCandidates.count}")
-      val proposalsByLadies = gentlemenCandidates.flatMap {
+      val proposals = gentlemenCandidates.flatMap {
         case (gentleman, ladies) =>
           println(s"gentleman: $gentleman, ladies: ${ladies.toSeq}")
           if (ladies.isEmpty) None else Some(ladies.head -> gentleman)
-      }.groupBySortedKey(partitioner)
+      }
+      val proposalsByLadies = proposals.groupBySortedKey(partitioner)
       val responsesByGentlemen = proposalsByLadies.sortedJoin(ladiesPreferences).map {
         case (lady, (proposals, preferences)) =>
           val ps = proposals.toSet
@@ -147,8 +148,8 @@ case class Fingerprinting(
       }.toSortedRDD(partitioner)
       println(s"responses: ${responsesByGentlemen.collect.toSeq}")
       println(s"lc: $ladiesCount, rc: ${responsesByGentlemen.count}")
-      if (ladiesCount == responsesByGentlemen.count) {
-        // All the ladies are happily engaged. Stop iteration.
+      if (proposals.count == responsesByGentlemen.count) {
+        // All proposals accepted. Stop iteration.
         return responsesByGentlemen
       } else {
         gentlemenCandidates = gentlemenCandidates.sortedLeftOuterJoin(responsesByGentlemen).mapValues {
