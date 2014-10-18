@@ -19,7 +19,6 @@ object JoinMoreAttributes {
 }
 import JoinMoreAttributes._
 case class JoinMoreAttributes[T](attrCount: Int, defaultValue: T) extends TypedMetaGraphOp[Input[T], Output[T]] {
-  override val isHeavy = true
   @transient override lazy val inputs = new Input[T](attrCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 

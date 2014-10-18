@@ -12,6 +12,8 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util
 
+import scala.collection.mutable
+
 case class VertexDiagramSpec(
   val vertexSetId: String,
   val filters: Seq[FEVertexAttributeFilter],
@@ -142,7 +144,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     dataManager.loadToMemory(vertexSet)
     val centers = request.centralVertexIds.map(_.toLong)
 
-    val ids = if (request.radius > 0) {
+    val idSet = if (request.radius > 0) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.loadToMemory(smearBundle)
       val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
@@ -155,17 +157,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val iaaop = graph_operations.IdAsAttribute()
     val idAttr = iaaop(iaaop.vertices, vertexSet).result.vertexIds
 
-    val fop = graph_operations.VertexAttributeFilter(graph_operations.OneOf(ids))
-    val sample = fop(fop.attr, idAttr).result.fvs
-
     loadGUIDsToMemory(request.filters.map(_.attributeId))
-    val filtered = FEFilters.filterMore(sample, request.filters)
+    val filtered = FEFilters.filter(vertexSet, request.filters)
 
     loadGUIDsToMemory(request.attrs)
     val attrs = request.attrs.map(x => metaManager.vertexAttribute(x.asUUID))
     val dynAttrs = attrs.map(graph_operations.VertexAttributeToDynamicValue.run(_))
 
-    val op = graph_operations.SampledView(dynAttrs.size > 0)
+    val op = graph_operations.SampledView(idSet, dynAttrs.size > 0)
     var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
     if (dynAttrs.size > 0) {
       val joined = {
@@ -285,6 +284,22 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   def indexFromBucketedAttribute[T](
+    base: VertexAttribute[Int],
+    ba: graph_operations.BucketedAttribute[T]): VertexAttribute[Int] = {
+
+    val iop = graph_operations.Indexer(ba.bucketer)
+    iop(iop.baseIndices, base)(iop.bucketAttribute, ba.attribute).result.indices
+  }
+
+  def indexFromIndexingSeq(
+    filtered: VertexSet,
+    seq: Seq[graph_operations.BucketedAttribute[_]]): VertexAttribute[Int] = {
+
+    val startingBase: VertexAttribute[Int] = graph_operations.AddConstantAttribute.run(filtered, 0)
+    seq.foldLeft(startingBase) { case (b, ba) => indexFromBucketedAttribute(b, ba) }
+  }
+
+  def edgeIndexFromBucketedAttribute[T](
     original: EdgeBundle,
     base: VertexAttribute[Int],
     tripletMapping: VertexAttribute[Array[ID]],
@@ -296,7 +311,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     iop(iop.baseIndices, base)(iop.bucketAttribute, mattr).result.indices
   }
 
-  def indexFromIndexingSeq(
+  def edgeIndexFromIndexingSeq(
     original: EdgeBundle,
     filteredIds: VertexSet,
     tripletMapping: VertexAttribute[Array[ID]],
@@ -305,8 +320,34 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val startingBase: VertexAttribute[Int] =
       graph_operations.AddConstantAttribute.run(filteredIds, 0)
     seq.foldLeft(startingBase) {
-      case (b, ba) => indexFromBucketedAttribute(original, b, tripletMapping, ba)
+      case (b, ba) => edgeIndexFromBucketedAttribute(original, b, tripletMapping, ba)
     }
+  }
+
+  def getSmallEdgeSet(
+    eb: EdgeBundle,
+    srcView: graph_operations.VertexView,
+    dstView: graph_operations.VertexView): Option[Seq[(ID, Edge)]] = {
+
+    val tm = tripletMapping(eb, sampled = false)
+    if (srcView.vertexIndices.isDefined) {
+      val vertexIds = srcView.vertexIndices.get.keySet
+      val op = graph_operations.EdgesForVertices(vertexIds, 50000, bySource = true)
+      val edges =
+        op(op.edges, eb)(op.tripletMapping, tm.srcEdges).result.edges.value
+      println("SRC edges", edges)
+      if (edges.isDefined) return edges
+    }
+    if (dstView.vertexIndices.isDefined) {
+      val vertexIds = dstView.vertexIndices.get.keySet
+      val op = graph_operations.EdgesForVertices(vertexIds, 50000, bySource = false)
+      val edges =
+        op(op.edges, eb)(op.tripletMapping, tm.dstEdges).result.edges.value
+      println("DST edges", edges)
+      if (edges.isDefined) return edges
+    }
+    println("O... :(")
+    return None
   }
 
   def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
@@ -334,23 +375,54 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       "Destination vertex set does not match edge bundle destination." +
         s"\nSource: ${dstView.vertexSet}\nEdge bundle destination: ${edgeBundle.dstVertexSet}")
 
-    val filteredEdges = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters)
+    val smallEdgeSetOption = getSmallEdgeSet(edgeBundle, srcView, dstView)
+    val counts = smallEdgeSetOption match {
+      case Some(smallEdgeSet) => {
+        println("Small edge set mode for request: ", request)
+        val srcIdxMapping = srcView.vertexIndices.getOrElse({
+          val indexAttr = indexFromIndexingSeq(srcView.filtered, srcView.indexingSeq)
+          val srcVertexIds = smallEdgeSet.map { case (id, edge) => edge.src }.toSet
+          graph_operations.RestrictAttributeToIds.run(indexAttr, srcVertexIds).value.toMap
+        })
+        val dstIdxMapping = dstView.vertexIndices.getOrElse({
+          val indexAttr = indexFromIndexingSeq(dstView.filtered, dstView.indexingSeq)
+          val dstVertexIds = smallEdgeSet.map { case (id, edge) => edge.dst }.toSet
+          graph_operations.RestrictAttributeToIds.run(indexAttr, dstVertexIds).value.toMap
+        })
+        val weightMap = graph_operations.RestrictAttributeToIds.run(
+          weights, smallEdgeSet.map(_._1).toSet).value.toMap
+        val counts = mutable.Map[(Int, Int), Double]().withDefaultValue(0.0)
+        smallEdgeSet.foreach {
+          case (id, edge) =>
+            val src = edge.src
+            val dst = edge.dst
+            if (srcIdxMapping.contains(src) && dstIdxMapping.contains(dst)) {
+              counts((srcIdxMapping(src), dstIdxMapping(dst))) += weightMap(id)
+            }
+        }
+        counts.toMap
+      }
+      case None => {
+        println("Huge edge set mode for request: ", request)
+        val filteredEdges = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters)
 
-    val srcIndices = indexFromIndexingSeq(
-      edgeBundle, filteredEdges.ids, filteredEdges.srcTripletMapping, srcView.indexingSeq)
-    val dstIndices = indexFromIndexingSeq(
-      edgeBundle, filteredEdges.ids, filteredEdges.dstTripletMapping, dstView.indexingSeq)
+        val srcIndices = edgeIndexFromIndexingSeq(
+          edgeBundle, filteredEdges.ids, filteredEdges.srcTripletMapping, srcView.indexingSeq)
+        val dstIndices = edgeIndexFromIndexingSeq(
+          edgeBundle, filteredEdges.ids, filteredEdges.dstTripletMapping, dstView.indexingSeq)
 
-    val cop = graph_operations.CountEdges()
-    val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
-    val countOp = graph_operations.IndexPairCounter()
-    val counts =
-      countOp(
-        countOp.xIndices, srcIndices)(
-          countOp.yIndices, dstIndices)(
-            countOp.original, edgeBundle.asVertexSet)(
-              countOp.weights, weights)(
-                countOp.originalCount, originalEdgeCount).result.counts.value
+        val cop = graph_operations.CountEdges()
+        val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
+        val countOp = graph_operations.IndexPairCounter()
+        countOp(
+          countOp.xIndices, srcIndices)(
+            countOp.yIndices, dstIndices)(
+              countOp.original, edgeBundle.asVertexSet)(
+                countOp.weights, weights)(
+                  countOp.originalCount, originalEdgeCount).result.counts.value
+      }
+    }
+    println("Counts computed")
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
