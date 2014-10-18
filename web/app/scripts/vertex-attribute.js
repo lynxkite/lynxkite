@@ -9,8 +9,8 @@ angular.module('biggraph').directive('vertexAttribute', function() {
         if (!scope.attr.isNumeric) { return false; }
         if (scope.histogram) { return true; }
         if (scope.side.state.graphMode === 'bucketed') {
-          if (scope.side.state.xAttributeTitle === scope.attr.title) { return true; }
-          if (scope.side.state.yAttributeTitle === scope.attr.title) { return true; }
+          if (scope.side.state.attributeTitles.x === scope.attr.title) { return true; }
+          if (scope.side.state.attributeTitles.y === scope.attr.title) { return true; }
         }
         return false;
       };

@@ -4,13 +4,13 @@
   Graph on
   <div class="btn-group">
     <button class="btn btn-default"
-        ng-class="{ active: side.state.xAttributeTitle === attr.title }"
-        ng-click="side.set('xAttributeTitle', attr.title)">
+        ng-class="{ active: side.state.attributeTitles.x === attr.title }"
+        ng-click="side.toggleAttributeTitle('x', attr.title)">
       X
     </button>
     <button class="btn btn-default"
-        ng-class="{ active: side.state.yAttributeTitle === attr.title }"
-        ng-click="side.set('yAttributeTitle', attr.title)">
+        ng-class="{ active: side.state.attributeTitles.y === attr.title }"
+        ng-click="side.toggleAttributeTitle('y', attr.title)">
       Y
     </button>
   </div>
@@ -20,36 +20,36 @@
   <div class="btn-group">
     <button class="btn btn-default"
             ng-if="attr.typeName === 'Double'"
-            ng-class="{ active: side.state.sizeAttributeTitle === attr.title }"
-            ng-click="side.set('sizeAttributeTitle', attr.title)">
+            ng-class="{ active: side.state.attributeTitles.size === attr.title }"
+            ng-click="side.toggleAttributeTitle('size', attr.title)">
       Size
     </button>
     <button class="btn btn-default"
-            ng-class="{ active: side.state.labelAttributeTitle === attr.title }"
-            ng-click="side.set('labelAttributeTitle', attr.title)">
+            ng-class="{ active: side.state.attributeTitles.label === attr.title }"
+            ng-click="side.toggleAttributeTitle('label', attr.title)">
       Label
     </button>
     <button class="btn btn-default"
             ng-if="attr.typeName === 'Double' || attr.typeName === 'String'"
-            ng-class="{ active: side.state.colorAttributeTitle === attr.title }"
-            ng-click="side.set('colorAttributeTitle', attr.title)">
+            ng-class="{ active: side.state.attributeTitles.color === attr.title }"
+            ng-click="side.toggleAttributeTitle('color', attr.title)">
       Color
     </button>
     <button class="btn btn-default"
             ng-if="attr.typeName === 'String'"
-            ng-class="{ active: side.state.iconAttributeTitle === attr.title }"
-            ng-click="side.set('iconAttributeTitle', attr.title)">
+            ng-class="{ active: side.state.attributeTitles.icon === attr.title }"
+            ng-click="side.toggleAttributeTitle('icon', attr.title)">
       Icon
     </button>
     <button class="btn btn-default"
             ng-if="attr.isNumeric"
-            ng-class="{ active: side.state.sliderAttributeTitle === attr.title }"
-            ng-click="side.set('sliderAttributeTitle', attr.title)">
+            ng-class="{ active: side.state.attributeTitles.slider === attr.title }"
+            ng-click="side.toggleAttributeTitle('slider', attr.title)">
       Slider
     </button>
   </div>
 </span>
-<input ng-if="side.state.sliderAttributeTitle === attr.title"
+<input ng-if="side.state.attributeTitles.slider === attr.title"
   type="range" ng-model="side.state.sliderPos" min="-1" max="101" tooltip="Threshold">
 
 <form ng-if="attr.canFilter" style="display: inline;">

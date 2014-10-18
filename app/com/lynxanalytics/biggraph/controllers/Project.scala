@@ -4,6 +4,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
+import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
@@ -52,7 +53,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def checkpointAfter(op: String): Unit = manager.synchronized {
     if (isSegmentation) {
-      asSegmentation.parent.checkpointAfter(op)
+      val name = asSegmentation.name
+      asSegmentation.parent.checkpointAfter(s"$op on $name")
     } else {
       lastOperation = op
       val nextIndex = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
@@ -63,6 +65,19 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       cp(path, checkpoint)
     }
   }
+
+  def checkpoint(title: String)(op: => Unit): Unit = {
+    Try(op) match {
+      case Success(_) =>
+        // Save changes.
+        checkpointAfter(title)
+      case Failure(e) =>
+        // Discard potentially corrupt changes.
+        reloadCurrentCheckpoint()
+        throw e;
+    }
+  }
+
   def undo(): Unit = manager.synchronized {
     // checkpoints and checkpointIndex are not restored, but copied over from the current state.
     val c = checkpoints
@@ -141,8 +156,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
 
   def pullBackWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
-    assert(injection.properties.compliesWith(EdgeBundleProperties.injection))
-    assert(injection.dstVertexSet.gUID == vertexSet.gUID)
+    assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
+      s"Not an injection: $injection")
+    assert(injection.dstVertexSet.gUID == vertexSet.gUID,
+      s"Wrong destination: $injection")
     val origVS = vertexSet
     val origVAttrs = vertexAttributes.toIndexedSeq
     val origEB = edgeBundle
