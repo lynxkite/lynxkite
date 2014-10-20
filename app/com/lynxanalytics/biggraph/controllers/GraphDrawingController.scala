@@ -376,14 +376,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val smallEdgeSetOption = getSmallEdgeSet(edgeBundle, srcView, dstView)
     val counts = smallEdgeSetOption match {
       case Some(smallEdgeSet) => {
-        log.info("PERF Small edge set mode for request: ", request)
+        log.info("PERF Small edge set mode for request: " + request)
         val srcIdxMapping = srcView.vertexIndices.getOrElse({
-          val indexAttr = indexFromIndexingSeq(srcView.filtered, srcView.indexingSeq)
+          val indexAttr = indexFromIndexingSeq(srcView.vertexSet, srcView.indexingSeq)
           val srcVertexIds = smallEdgeSet.map { case (id, edge) => edge.src }.toSet
           graph_operations.RestrictAttributeToIds.run(indexAttr, srcVertexIds).value.toMap
         })
         val dstIdxMapping = dstView.vertexIndices.getOrElse({
-          val indexAttr = indexFromIndexingSeq(dstView.filtered, dstView.indexingSeq)
+          val indexAttr = indexFromIndexingSeq(dstView.vertexSet, dstView.indexingSeq)
           val dstVertexIds = smallEdgeSet.map { case (id, edge) => edge.dst }.toSet
           graph_operations.RestrictAttributeToIds.run(indexAttr, dstVertexIds).value.toMap
         })
@@ -401,7 +401,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         counts.toMap
       }
       case None => {
-        log.info("PERF Huge edge set mode for request: ", request)
+        log.info("PERF Huge edge set mode for request: " + request)
         val filteredEdges = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters)
 
         val srcIndices = edgeIndexFromIndexingSeq(
