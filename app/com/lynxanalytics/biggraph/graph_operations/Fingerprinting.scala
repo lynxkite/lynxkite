@@ -191,10 +191,10 @@ case class FingerprintingCandidates()
 
     val leftNeighbors = outEdges
       .sortedJoin(lefts)
-      .map { case (left, (name, mid)) => mid -> left }
+      .map { case (left, (mid, name)) => mid -> left }
     val rightNeighbors = outEdges
       .sortedJoin(rights)
-      .map { case (right, (name, mid)) => mid -> right }
+      .map { case (right, (mid, name)) => mid -> right }
     val candidates = leftNeighbors
       .join(rightNeighbors)
       .groupByKey
