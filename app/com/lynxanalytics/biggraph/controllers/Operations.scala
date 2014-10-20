@@ -1261,6 +1261,56 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new VertexOperation(_) {
+    val title = "Fingerprinting"
+    val description =
+      """In a graph that has two different string identifier attributes (e.g. name and phone
+      number) this operation will match the vertices that only have the first attribute defined
+      with the vertices that only have the second attribute defined. For the well-matched vertices
+      the new attributes will be added. (For example if a vertex only had a name and we found a
+      matching phone number, this will be saved as the phone number of the vertex.)
+
+      <p>The matched vertices will not be automatically merged, but this can easily be performed
+      with the "Merge vertices by attribute" operation on either of the two identifier attributes.
+      """
+    val parameters = List(
+      Param("leftName", "First ID attribute", options = vertexAttributes[String]),
+      Param("rightName", "Second ID attribute", options = vertexAttributes[String]),
+      Param("weights", "Edge weights", options = edgeAttributes[Double] :+ UIValue("1.0", "1.0")),
+      Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
+      Param("mo", "Minimum overlap", defaultValue = "1"),
+      Param("ms", "Minimum similarity", defaultValue = "0.5"))
+    def enabled =
+      hasEdgeBundle &&
+      FEStatus.assert(vertexAttributes[String].length, "Two string attributes are needed.")
+    def apply(params: Map[String, String]): Unit = {
+      val mrew = params("mrew").toDouble
+      val mo = params("mo").toInt
+      val ms = params("ms").toDouble
+      assert(mo >= 1, "Minimum overlap cannot be less than 1.")
+      val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
+      val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
+      val weights = if (params("weights") == "1.0") {
+        graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, 1.0)
+      } else {
+        project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
+      }
+
+      // Apply MREW filtering.
+      val weightedOutDegree = aggregateFromEdges(
+        project.edgeBundle,
+        true, // Outgoing edges.
+        attributeWithLocalAggregator(weights, "sum"))
+      val filter = FEVertexAttributeFilter(mrewAttr.gUID, s">= $mrew")
+      val embedding = FEFilters.embedFilteredVertices(project.vertexSet, Seq(filter))
+
+      val candidates = {
+        val op = graph_operations.FingerprintingCandidates()
+        op(op.es, project.edgeBundle)(op.leftName, leftName)(op.rightName, rightName).results.candidates
+      }
+    }
+  })
+
   register(new HiddenOperation(_) {
     val title = "Change project notes"
     val parameters = List(
