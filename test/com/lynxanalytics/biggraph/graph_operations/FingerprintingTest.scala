@@ -22,7 +22,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
 
   test("one difficult pair A") {
     assert(fingerprint(
-      Map(10 -> Seq(1, 2, 3), 11 -> Seq(1, 2, 3, 4)),
+      Map(10 -> Seq(1, 2, 3, 10, 11), 11 -> Seq(1, 2, 3, 4)),
       Map(20 -> Seq(1, 2, 3, 4)))
       == Seq(11 -> 20))
   }
@@ -30,7 +30,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
   test("one difficult pair B") {
     assert(fingerprint(
       Map(10 -> Seq(1, 2, 3, 4)),
-      Map(20 -> Seq(1, 2, 3), 21 -> Seq(1, 2, 3, 4)))
+      Map(20 -> Seq(1, 2, 3, 20, 21), 21 -> Seq(1, 2, 3, 4)))
       == Seq(10 -> 21))
   }
 
