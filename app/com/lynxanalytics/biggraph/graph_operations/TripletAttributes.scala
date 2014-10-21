@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import scala.collection.mutable
 import scala.reflect._
 import scala.reflect.runtime.universe._
 
@@ -107,5 +108,64 @@ case class VertexToEdgeAttribute[T]()
         .flatMap { case (vid, (edges, value)) => edges.map((_, value)) }
         .groupBySortedKey(target.partitioner.get)
         .mapValues(values => values.head))
+  }
+}
+
+object EdgesForVertices {
+  class Input(bySource: Boolean) extends MagicInputSignature {
+    val vs = vertexSet
+    val otherVs = vertexSet
+    val tripletMapping = vertexAttribute[Array[ID]](vs)
+    val edges = if (bySource) edgeBundle(vs, otherVs) else edgeBundle(otherVs, vs)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
+    val edges = scalar[Option[Seq[(ID, Edge)]]]
+  }
+}
+case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
+    extends TypedMetaGraphOp[EdgesForVertices.Input, EdgesForVertices.Output] {
+  import EdgesForVertices._
+  @transient override lazy val inputs = new Input(bySource)
+
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val inst = instance
+    // Do some additional checking on the inputs.
+    val tripletMapping = inputs.tripletMapping.entity
+    val tripletMappingInstance = tripletMapping.source
+    assert(tripletMappingInstance.operation.isInstanceOf[TripletMapping])
+    assert(tripletMappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity)
+    new Output()(instance, inputs)
+  }
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val restricted = inputs.tripletMapping.rdd.restrictToIdSet(vertexIdSet.toIndexedSeq.sorted)
+    val aggregatedIds =
+      restricted.aggregate(mutable.Set[ID]())(
+        {
+          case (set, (id, array)) =>
+            if ((set == null) || (set.size + array.size > maxNumEdges)) {
+              null
+            } else {
+              set ++= array
+              set
+            }
+        },
+        {
+          case (set1, set2) =>
+            if ((set1 == null) || (set2 == null)) null
+            else {
+              set1 ++= set2
+              set1
+            }
+        })
+    output(
+      o.edges,
+      Option(aggregatedIds).map(
+        ids => inputs.edges.rdd.restrictToIdSet(ids.toIndexedSeq.sorted).collect.toSeq))
   }
 }

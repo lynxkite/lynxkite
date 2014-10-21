@@ -1,0 +1,19 @@
+.big-brand {
+  margin: 0;
+  padding: 50px;
+  text-align: center;
+  background: black url(/lynx-background.jpg) top center;
+}
+
+.big-brand h1 {
+  font-weight: bold;
+  font-size: 50px;
+  color: white;
+}
+
+.big-brand h2 {
+  padding-left: 50px;
+  font-size: 18px;
+  margin-top: -10px;
+  color: rgba(0, 182, 255, 0.9);
+}

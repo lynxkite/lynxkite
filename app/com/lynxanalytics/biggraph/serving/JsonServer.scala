@@ -60,7 +60,11 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
   def jsonGet[I: json.Reads, O: json.Writes](handler: I => O) = {
     action(parse.anyContent) { request =>
       jsonQuery(request) { i: I =>
-        Ok(json.Json.toJson(handler(i)))
+        try {
+          Ok(json.Json.toJson(handler(i)))
+        } catch {
+          case flying: FlyingResult => flying.result
+        }
       }
     }
   }
@@ -211,3 +215,6 @@ object ProductionJsonServer extends JsonServer {
   def histo = jsonGet(drawingController.getHistogram)
   def scalarValue = jsonGet(drawingController.getScalarValue)
 }
+
+// Throw FlyingResult anywhere to generate non-200 HTTP responses.
+class FlyingResult(val result: mvc.SimpleResult) extends Exception(result.toString)
