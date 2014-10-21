@@ -24,6 +24,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     extends Operation(p, Category("Attribute operations", "yellow"))
   abstract class CreateSegmentationOperation(p: Project)
     extends Operation(p, Category("Create segmentation", "green"))
+  abstract class WorkflowOperation(p: Project)
+    extends Operation(p, Category("Run Workflow", "red"))
   abstract class HiddenOperation(p: Project)
       extends Operation(p, Category("Hidden", "", visible = false)) {
     val description = ""
@@ -1351,6 +1353,47 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         csv.saveToDir(path)
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
+      }
+    })
+
+    register(new WorkflowOperation(_) {
+      val title = "Viral modelling"
+      val description = "Tüttü-rüttü-rüttü-tű!"
+      val parameters = List(
+        Param("target", "Target attribute", options = vertexAttributes),
+        Param("ratio", "Validation set ratio", defaultValue = "0.05"),
+        Param("seed", "Seed", defaultValue = "0"))
+      def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+      def apply(params: Map[String, String]) = {
+        // partition target attribute to test and train sets
+        val target = project.vertexAttributes(params("target"))
+        val roles = {
+          val op = graph_operations.CreateRole(params("ratio").toDouble, params("seed").toInt)
+          op(op.vertices, target.vertexSet).result.role
+        }
+        val (test, train) = part(target, roles)
+        // create segmentation
+        val seg = {
+          val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
+          op(op.es, project.edgeBundle).result
+        }
+        val degree = {
+          val re = graph_operations.ReverseEdges()
+          val reversed = re(re.esAB, seg.belongsTo).result.esBA
+          val op = graph_operations.OutDegree()
+          op(op.es, reversed).result.outDegree
+        }
+        /* TODO for segmentation:
+         * Hardfilter seg: degree
+         * Aggregate to Segmentation: train -> seg_train
+         */
+
+      }
+      def part[T](target: VertexAttribute[T],
+                  roles: VertexAttribute[String]): (VertexAttribute[T], VertexAttribute[T]) = {
+        val op = graph_operations.PartitionAttribute[T]()
+        val res = op(op.attr, target)(op.role, roles).result
+        (res.test, res.train)
       }
     })
   }
