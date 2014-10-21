@@ -66,36 +66,43 @@ div.operation-toolboxes {
   border-left: 1px solid transparent;
 }
 
-.operation-toolbox .category.blue { color: aquamarine; }
 .operation-toolbox .category.orange { color: orange; }
 .operation-toolbox .category.yellow { color: gold; }
 .operation-toolbox .category.green { color: yellowgreen; }
+.operation-toolbox .category.blue { color: aquamarine; }
+.operation-toolbox .category.magenta { color: magenta; }
 .operation-toolbox .category.active { color: black; }
 .operation-toolbox .category.active.yellow { background: gold; }
 .operation-toolbox .category.active.orange { background: orange; }
 .operation-toolbox .category.active.green { background: yellowgreen; }
 .operation-toolbox .category.active.blue { background: aquamarine; }
+.operation-toolbox .category.active.magenta { background: magenta; }
 .operation-toolbox .box.yellow h1 { background: gold; }
 .operation-toolbox .box.orange h1 { background: orange; }
 .operation-toolbox .box.green h1 { background: yellowgreen; }
 .operation-toolbox .box.blue h1 { background: aquamarine; }
+.operation-toolbox .box.magenta h1 { background: magenta; }
 .operation-toolbox .box .clicky:hover { color: black !important; }
 .operation-toolbox .box.yellow .clicky:hover { background: gold; }
 .operation-toolbox .box.orange .clicky:hover { background: orange; }
 .operation-toolbox .box.green .clicky:hover { background: yellowgreen; }
 .operation-toolbox .box.blue .clicky:hover { background: aquamarine; }
+.operation-toolbox .box.magenta .clicky:hover { background: magenta; }
 .operation-toolbox .box.yellow .ok-button:hover { background: gold; }
 .operation-toolbox .box.orange .ok-button:hover { background: orange; }
 .operation-toolbox .box.green .ok-button:hover { background: yellowgreen; }
 .operation-toolbox .box.blue .ok-button:hover { background: aquamarine; }
+.operation-toolbox .box.magenta .ok-button:hover { background: magenta; }
 .operation-toolbox .box.yellow .operation:hover { color: gold; }
 .operation-toolbox .box.orange .operation:hover { color: orange; }
 .operation-toolbox .box.green .operation:hover { color: yellowgreen; }
 .operation-toolbox .box.blue .operation:hover { color: aquamarine; }
+.operation-toolbox .box.magenta .operation:hover { color: magenta; }
 .operation-toolbox .box.yellow .clicky { color: gold; }
 .operation-toolbox .box.orange .clicky { color: orange; }
 .operation-toolbox .box.green .clicky { color: yellowgreen; }
 .operation-toolbox .box.blue .clicky { color: aquamarine; }
+.operation-toolbox .box.magenta .clicky { color: magenta; }
 
 .operation-toolbox .panel .list-group-item {
   border: 0;
