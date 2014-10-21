@@ -51,8 +51,8 @@ case class VertexView(
   //   )
   // )
   indexingSeq: Seq[BucketedAttribute[_]],
-  // In case the set of vertices used to create this view, then we may just have a local map
-  // telling the index of each vertex. Otherwise this is None.
+  // In case the set of vertices used to create this view is small, then this is set to a local map
+  // telling the bucket index of each vertex used. Otherwise this is None.
   vertexIndices: Option[Map[ID, Int]],
   // Filtering in a vertex view has to be a conjunction of per attribute filters.
   filters: Seq[FilteredAttribute[_]]) extends Serializable
@@ -75,7 +75,8 @@ object VertexView {
       Some(indexerInstance.outputs.scalars('vertexIndices).runtimeSafeCast[Map[ID, Int]].value)
     } else {
       assert(
-        indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]])
+        indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]],
+        s"$indexerInstance is neither a VertexBucketGrid nor a SampledView")
       val idBuckets = indexerInstance.outputs.scalars('buckets)
         .runtimeSafeCast[IDBuckets[(Int, Int)]].value
       // This is pretty terrible. TODO: make vertex bucket grid generate indexes directly, not
@@ -104,7 +105,8 @@ object VertexView {
       filtersFromInputs :+ FilteredAttribute(idAttr, OneOf(vertexIndices.get.keySet))
     } else {
       assert(
-        indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]])
+        indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]],
+        s"$indexerInstance is neither a VertexBucketGrid nor a SampledView")
       filtersFromInputs
     }
 

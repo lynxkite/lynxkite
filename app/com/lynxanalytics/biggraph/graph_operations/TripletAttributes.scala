@@ -148,8 +148,12 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
       restricted.aggregate(mutable.Set[ID]())(
         {
           case (set, (id, array)) =>
-            set ++= array
-            if (set.size > maxNumEdges) null else set
+            if ((set == null) || (set.size + array.size > maxNumEdges)) {
+              null
+            } else {
+              set ++= array
+              set
+            }
         },
         {
           case (set1, set2) =>
