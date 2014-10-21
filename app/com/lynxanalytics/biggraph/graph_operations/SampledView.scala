@@ -18,10 +18,12 @@ object SampledView {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val svVertices = scalar[Seq[SampledViewVertex]]
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
+    val vertexIndices = scalar[Map[ID, Int]]
   }
 }
 import SampledView._
 case class SampledView(
+    idSet: Set[ID],
     hasAttr: Boolean,
     maxCount: Int = 1000) extends TypedMetaGraphOp[Input, Output] {
 
@@ -36,7 +38,9 @@ case class SampledView(
     val filtered = inputs.filtered.rdd
     val joined = if (hasAttr) filtered.sortedJoin(inputs.attr.rdd) else filtered.mapValues(x => (x, Array[DynamicValue]()))
 
-    val svVertices = joined
+    val idFiltered = joined.restrictToIdSet(idSet.toIndexedSeq.sorted)
+
+    val svVertices = idFiltered
       .take(maxCount)
       .toSeq
       .map {
@@ -47,5 +51,6 @@ case class SampledView(
 
     output(o.svVertices, svVertices)
     output(o.indexingSeq, Seq(BucketedAttribute(inputs.ids, MapBucketer(idToIdx))))
+    output(o.vertexIndices, idToIdx)
   }
 }

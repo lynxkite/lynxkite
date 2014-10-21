@@ -13,8 +13,8 @@ angular.module('biggraph').directive('graphView', function(util) {
         function updateGraph() {
           if (scope.graph === undefined || !scope.graph.$resolved || !iconsLoaded()) {
             gv.loading();
-          } else if (scope.graph.error) {
-            gv.error(scope.graph.error);
+          } else if (scope.graph.$error) {
+            gv.error(scope.graph.$error);
           } else {
             gv.update(scope.graph, scope.menu);
           }

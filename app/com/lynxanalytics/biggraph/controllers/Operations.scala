@@ -577,6 +577,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       """
     val parameters = List(
       Param("output", "Save as"),
+      Param("type", "Result type", options = UIValue.list(List("double", "string"))),
       Param("expr", "Value", defaultValue = "1"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -604,13 +605,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       val js = JavaScript(expr)
       // Figure out the return type.
-      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames, vecAttrNames) match {
-        case _: String =>
+      val op: graph_operations.DeriveJS[_] = params("type") match {
+        case "string" =>
           graph_operations.DeriveJSString(js, numAttrNames, strAttrNames, vecAttrNames)
-        case _: Double =>
+        case "double" =>
           graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames, vecAttrNames)
-        case result =>
-          throw new Exception(s"Test evaluation of '$js' returned '$result'.")
       }
       val result = op(
         op.vs, project.vertexSet)(
@@ -629,21 +628,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
       val op = graph_operations.AttributeVectorToAny[T]()
       op(op.attr, attr).result.attr
-    }
-
-    // Evaluates the expression with 0/'' parameters.
-    def testEvaluation(
-      js: JavaScript,
-      numAttrNames: Seq[String],
-      strAttrNames: Seq[String],
-      vecAttrNames: Seq[String]): Any = {
-      val mapping = (
-        numAttrNames.map(_ -> 0.0).toMap ++
-        strAttrNames.map(_ -> "").toMap ++
-        // Because the array will be empty for the test, the expression has to be ready
-        // to handle this.
-        vecAttrNames.map(_ -> Array[Any]()))
-      return js.evaluate(mapping)
     }
   })
 
@@ -1074,6 +1058,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]) = {
+      assert(!project.edgeAttributes.contains(params("to")),
+        s"""An edge-attribute named '${params("to")}' already exists,
+            please discard it or choose another name""")
       project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
       project.edgeAttributes(params("from")) = null
     }
@@ -1086,6 +1073,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]) = {
+      assert(!project.vertexAttributes.contains(params("to")),
+        s"""A vertex-attribute named '${params("to")}' already exists,
+            please discard it or choose another name""")
       project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
       project.vertexAttributes(params("from")) = null
     }
@@ -1098,6 +1088,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     def apply(params: Map[String, String]) = {
+      assert(!project.segmentations.contains(params("to")),
+        s"""A segmentation named '${params("to")}' already exists,
+            please discard it or choose another name""")
       project.segmentation(params("from")).rename(params("to"))
     }
   })
@@ -1109,6 +1102,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
     def apply(params: Map[String, String]) = {
+      assert(!project.scalars.contains(params("to")),
+        s"""A scalar named '${params("to")}' already exists,
+            please discard it or choose another name""")
       project.scalars(params("to")) = project.scalars(params("from"))
       project.scalars(params("from")) = null
     }
