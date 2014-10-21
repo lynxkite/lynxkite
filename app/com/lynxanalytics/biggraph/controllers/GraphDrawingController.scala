@@ -377,16 +377,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val counts = smallEdgeSetOption match {
       case Some(smallEdgeSet) => {
         log.info("PERF Small edge set mode for request: " + request)
-        val srcIdxMapping = srcView.vertexIndices.getOrElse({
+        val srcIdxMapping = srcView.vertexIndices.getOrElse {
           val indexAttr = indexFromIndexingSeq(srcView.vertexSet, srcView.indexingSeq)
           val srcVertexIds = smallEdgeSet.map { case (id, edge) => edge.src }.toSet
           graph_operations.RestrictAttributeToIds.run(indexAttr, srcVertexIds).value.toMap
-        })
-        val dstIdxMapping = dstView.vertexIndices.getOrElse({
+        }
+        val dstIdxMapping = dstView.vertexIndices.getOrElse {
           val indexAttr = indexFromIndexingSeq(dstView.vertexSet, dstView.indexingSeq)
           val dstVertexIds = smallEdgeSet.map { case (id, edge) => edge.dst }.toSet
           graph_operations.RestrictAttributeToIds.run(indexAttr, dstVertexIds).value.toMap
-        })
+        }
         val weightMap = graph_operations.RestrictAttributeToIds.run(
           weights, smallEdgeSet.map(_._1).toSet).value.toMap
         val counts = mutable.Map[(Int, Int), Double]().withDefaultValue(0.0)
