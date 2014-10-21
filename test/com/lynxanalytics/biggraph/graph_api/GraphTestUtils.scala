@@ -15,17 +15,18 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object GraphTestUtils {
   implicit class VertexSetOps[T <% VertexSetData](vs: T) {
-    def toSet(): Set[ID] = {
-      vs.rdd.keys.collect.toSet
+    def toSeq(): Seq[ID] = {
+      vs.rdd.keys.collect.toSeq.sorted
     }
   }
 
   implicit class EdgeBundleOps[T <% EdgeBundleData](eb: T) {
-    def toPairSet(): Set[(ID, ID)] = {
+    def toPairSeq(): Seq[(ID, ID)] = {
       eb.rdd
         .collect
         .map { case (id, edge) => (edge.src -> edge.dst) }
-        .toSet
+        .toSeq
+        .sorted
     }
     def toPairCounts(): Map[(ID, ID), Int] = {
       eb.rdd

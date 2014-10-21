@@ -17,31 +17,31 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
     assert(fingerprint(
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(4, 5, 6)),
       Map(20 -> Seq(1, 2, 3), 21 -> Seq(4, 5, 6)))
-      == Set(10 -> 20, 11 -> 21))
+      == Seq(10 -> 20, 11 -> 21))
   }
 
   test("one difficult pair A") {
     assert(fingerprint(
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(1, 2, 3, 4)),
       Map(20 -> Seq(1, 2, 3, 4)))
-      == Set(11 -> 20))
+      == Seq(11 -> 20))
   }
 
   test("one difficult pair B") {
     assert(fingerprint(
       Map(10 -> Seq(1, 2, 3, 4)),
       Map(20 -> Seq(1, 2, 3), 21 -> Seq(1, 2, 3, 4)))
-      == Set(10 -> 21))
+      == Seq(10 -> 21))
   }
 
   test("no match") {
     assert(fingerprint(
       Map(10 -> Seq(1, 2, 3)),
       Map(20 -> Seq(4, 5, 6)))
-      == Set())
+      == Seq())
   }
 
-  def fingerprint(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Set[(Int, Int)] = {
+  def fingerprint(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Seq[(Int, Int)] = {
     val graph = SmallTestGraph(left ++ right).result
     val weight = AddConstantAttribute.run(graph.es.asVertexSet, 1.0)
     val candidates = {
@@ -55,7 +55,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
           op.weight, weight)(
             op.candidates, candidates).result
     }
-    fingerprinting.matching.toPairSet.map { case (l, r) => (l.toInt, r.toInt) }
+    fingerprinting.matching.toPairSeq.map { case (l, r) => (l.toInt, r.toInt) }
   }
 }
 
@@ -64,31 +64,38 @@ class FingerprintingCandidatesTest extends FunSuite with TestGraphOp {
     assert(candidates(
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(4, 5, 6)),
       Map(20 -> Seq(1, 2, 3), 21 -> Seq(4, 5, 6)))
-      == Set(10 -> 20, 11 -> 21))
+      == Seq(10 -> 20, 11 -> 21))
   }
 
   test("two left, one right") {
     assert(candidates(
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(1, 2, 3, 4)),
       Map(20 -> Seq(1, 2, 3, 4)))
-      == Set(10 -> 20, 11 -> 20))
+      == Seq(10 -> 20, 11 -> 20))
   }
 
   test("one left, two right") {
     assert(candidates(
       Map(10 -> Seq(1, 2, 3, 4)),
       Map(20 -> Seq(1, 2, 3), 21 -> Seq(1, 2, 3, 4)))
-      == Set(10 -> 20, 10 -> 21))
+      == Seq(10 -> 20, 10 -> 21))
+  }
+
+  test("two left, two right") {
+    assert(candidates(
+      Map(10 -> Seq(1, 2, 3), 11 -> Seq(1, 2, 3, 4)),
+      Map(20 -> Seq(1, 2, 3), 21 -> Seq(1, 2, 3, 4)))
+      == Seq(10 -> 20, 10 -> 21, 11 -> 20, 11 -> 21))
   }
 
   test("no match") {
     assert(candidates(
       Map(10 -> Seq(1, 2, 3)),
       Map(20 -> Seq(4, 5, 6)))
-      == Set())
+      == Seq())
   }
 
-  def candidates(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Set[(Int, Int)] = {
+  def candidates(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Seq[(Int, Int)] = {
     val graph = SmallTestGraph(left ++ right).result
     val leftName = {
       val op = AddVertexAttribute((left.keys ++ left.values.flatten).map(i => i -> s"L$i").toMap)
@@ -102,6 +109,6 @@ class FingerprintingCandidatesTest extends FunSuite with TestGraphOp {
       val op = FingerprintingCandidates()
       op(op.es, graph.es)(op.leftName, leftName)(op.rightName, rightName).result.candidates
     }
-    candidates.toPairSet.map { case (l, r) => (l.toInt, r.toInt) }
+    candidates.toPairSeq.map { case (l, r) => (l.toInt, r.toInt) }
   }
 }
