@@ -1306,9 +1306,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           .result.matching
       }
       val newLeftName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-        leftName, matching)
+        leftName, reverse(matching))
       val newRightName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-        rightName, reverse(matching))
+        rightName, matching)
 
       project.scalars("fingerprinting candidates found") = count(candidates)
       project.scalars("fingerprinting matches found") = count(matching)
