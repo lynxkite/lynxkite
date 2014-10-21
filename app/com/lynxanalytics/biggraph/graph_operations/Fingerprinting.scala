@@ -113,7 +113,9 @@ case class Fingerprinting(
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
-  def stableMarriage(ladies: SortedRDD[ID, Unit], gentlemen: SortedRDD[ID, Unit], preferences: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
+  def stableMarriage(ladies: SortedRDD[ID, Unit],
+                     gentlemen: SortedRDD[ID, Unit],
+                     preferences: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
     val partitioner = ladies.partitioner.get
     val gentlemenPreferences = preferences.sortedJoin(gentlemen).mapValues(_._1).groupByKey.mapValues {
       case ladies => ladies.sortBy(-_._2).map(_._1)
@@ -182,8 +184,8 @@ case class FingerprintingCandidates()
     val outEdges = edges.map { case (_, e) => e.src -> e.dst }.toSortedRDD(vertexPartitioner)
 
     // Returns the lines from the first attribute where the second attribute is undefined.
-    def definedUndefined(
-      defined: SortedRDD[ID, String], undefined: SortedRDD[ID, String]): SortedRDD[ID, String] = {
+    def definedUndefined(defined: SortedRDD[ID, String],
+                         undefined: SortedRDD[ID, String]): SortedRDD[ID, String] = {
       defined.sortedLeftOuterJoin(undefined).flatMapValues {
         case (_, Some(_)) => None
         case (name, None) => Some(name)
@@ -200,8 +202,7 @@ case class FingerprintingCandidates()
       .map { case (right, (mid, name)) => mid -> right }
     val candidates = leftNeighbors
       .join(rightNeighbors)
-      .groupByKey
-      .flatMap { case (mid, pairs) => pairs }
+      .values.distinct
 
     output(o.candidates,
       candidates
