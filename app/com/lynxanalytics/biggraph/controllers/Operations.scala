@@ -1310,7 +1310,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val newRightName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
         rightName, matching)
 
-      project.scalars("fingerprinting candidates found") = count(candidates)
       project.scalars("fingerprinting matches found") = count(matching)
       project.vertexAttributes(params("leftName")) = unifyAttribute(newLeftName, leftName)
       project.vertexAttributes(params("rightName")) = unifyAttribute(newRightName, rightName)
