@@ -59,7 +59,7 @@ case class Fingerprinting(
     val outNeighbors = weightedEdges
       .map { case (_, (e, w)) => e.dst -> (w, e.src) }
       .join(inDegrees)
-      .map { case (dst, ((w, src), deg)) => src -> (dst, (w, deg)) }
+      .map { case (dst, ((w, src), dstInDegree)) => src -> (dst, (w, dstInDegree)) }
       .groupBySortedKey(vertexPartitioner)
     val candidates = inputs.candidates.rdd
       .map { case (_, e) => (e.dst, e.src) }
