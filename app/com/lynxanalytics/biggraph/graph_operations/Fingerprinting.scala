@@ -64,10 +64,10 @@ case class Fingerprinting(
     val candidates = inputs.candidates.rdd
       .map { case (_, e) => (e.dst, e.src) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors) // BUG?
+      .sortedJoin(outNeighbors)
       .map { case (rightID, (leftID, rightNeighbors)) => (leftID, (rightID, rightNeighbors)) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors) // BUG?
+      .sortedJoin(outNeighbors)
       .map {
         case (leftID, ((rightID, rightNeighbors), leftNeighbors)) =>
           (leftID, leftNeighbors, rightID, rightNeighbors)
@@ -80,18 +80,19 @@ case class Fingerprinting(
           val ln = leftNeighbors.toMap
           val rn = rightNeighbors.toMap
           val common = (ln.keySet intersect rn.keySet).toSeq
-          val all = (ln.keySet union rn.keySet).toSeq
-          // Weights.
-          val lw = ln.mapValues(_._1).withDefaultValue(0.0)
-          val rw = rn.mapValues(_._1).withDefaultValue(0.0)
-          // Degrees.
-          val ld = ln.mapValues(_._2.toDouble)
-          val rd = rn.mapValues(_._2.toDouble)
-          val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
-          val avg = degrees.mapValues(ds => ds.sum / ds.size)
           if (common.size < minimumOverlap) {
             Iterator()
           } else {
+            val all = (ln.keySet union rn.keySet).toSeq
+            // Weights.
+            val lw = ln.mapValues(_._1).withDefaultValue(0.0)
+            val rw = rn.mapValues(_._1).withDefaultValue(0.0)
+            // Degrees.
+            val ld = ln.mapValues(_._2.toDouble)
+            val rd = rn.mapValues(_._2.toDouble)
+            val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
+            val avg = degrees.mapValues(ds => ds.sum / ds.size)
+            // Calculate similarity score.
             val isect = common.map(k => (lw(k) min rw(k)) / avg(k)).sum
             val union = all.map(k => (lw(k) max rw(k)) / avg(k)).sum
             val similarity = isect / union
