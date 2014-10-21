@@ -107,9 +107,9 @@ case class Fingerprinting(
     val leftToRight =
       if (rights.count < lefts.count) stableMarriage(rights, lefts, similarities)
       else flipped(stableMarriage(lefts, rights, similarities))
-    output(o.matching, leftToRight.mapValuesWithKeys {
+    output(o.matching, leftToRight.map {
       case (src, dst) => Edge(src, dst)
-    })
+    }.randomNumbered(vertexPartitioner))
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
