@@ -421,7 +421,7 @@ angular.module('biggraph').directive('graphView', function(util) {
                 },
               });
             }
-            if (side.filterParentToSegment) {
+            if (side.hasParent()) {
               if (side.isParentFilteredToSegment(id)) {
                 actions.push({
                   title: 'Stop filtering base project to this segment',
