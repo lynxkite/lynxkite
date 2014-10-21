@@ -18,6 +18,6 @@ class PulledOverEdgesTest extends FunSuite with TestGraphOp {
     val pulledEB =
       pop(pop.injection, fopRes.identity)(pop.originalEB, g.edges).result.pulledEB
 
-    assert(pulledEB.toPairSet == Set((2L, 0L), (2L, 1L)))
+    assert(pulledEB.toPairSeq == Seq((2L, 0L), (2L, 1L)))
   }
 }
