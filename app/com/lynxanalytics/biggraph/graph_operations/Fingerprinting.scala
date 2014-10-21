@@ -8,22 +8,20 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-// For vertices that only have one of leftName/rightName Fingerprinting will find the most likely
-// match based on networks structure. Nodes that have both leftName/rightName defined are used for
-// finding the matches.
+// For vertices on the two ends of "candidates" Fingerprinting will find the most likely match
+// based on the network structure.
 object Fingerprinting {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val edgeIds = vertexSet
     val es = edgeBundle(vs, vs, idSet = edgeIds)
     val weight = vertexAttribute[Double](edgeIds)
-    // A helper edge bundle that restricts the search to a subset of the possible pairings.
-    // It should point left to right.
     val candidates = edgeBundle(vs, vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
-    val leftToRight = edgeBundle(inputs.vs.entity, inputs.vs.entity)
+    // A subset of "candidates", which make up a strong matching.
+    val matching = edgeBundle(inputs.vs.entity, inputs.vs.entity, EdgeBundleProperties.matching)
   }
 }
 case class Fingerprinting(
@@ -109,7 +107,7 @@ case class Fingerprinting(
     val leftToRight =
       if (rights.count < lefts.count) stableMarriage(rights, lefts, similarities)
       else flipped(stableMarriage(lefts, rights, similarities))
-    output(o.leftToRight, leftToRight.mapValuesWithKeys {
+    output(o.matching, leftToRight.mapValuesWithKeys {
       case (src, dst) => Edge(src, dst)
     })
   }
@@ -152,6 +150,9 @@ case class Fingerprinting(
   }
 }
 
+// Generates the list of candidate matches for Fingerprinting. The vertices where "leftName" is
+// defined but "rightName" is not are candidates for matching against vertices where "rightName" is
+// defined but "leftName" is not, if the two vertices share at least one out-neighbor.
 object FingerprintingCandidates {
   class Input extends MagicInputSignature {
     val vs = vertexSet
@@ -180,7 +181,9 @@ case class FingerprintingCandidates()
     val edges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
     val outEdges = edges.map { case (_, e) => e.src -> e.dst }.toSortedRDD(vertexPartitioner)
 
-    def definedUndefined(defined: SortedRDD[ID, String], undefined: SortedRDD[ID, String]): SortedRDD[ID, String] = {
+    // Returns the lines from the first attribute where the second attribute is undefined.
+    def definedUndefined(
+      defined: SortedRDD[ID, String], undefined: SortedRDD[ID, String]): SortedRDD[ID, String] = {
       defined.sortedLeftOuterJoin(undefined).flatMapValues {
         case (_, Some(_)) => None
         case (name, None) => Some(name)

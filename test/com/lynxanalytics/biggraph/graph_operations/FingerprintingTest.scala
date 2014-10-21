@@ -55,7 +55,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
           op.weight, weight)(
             op.candidates, candidates).result
     }
-    fingerprinting.leftToRight.toPairSet.map { case (l, r) => (l.toInt, r.toInt) }
+    fingerprinting.matching.toPairSet.map { case (l, r) => (l.toInt, r.toInt) }
   }
 }
 
