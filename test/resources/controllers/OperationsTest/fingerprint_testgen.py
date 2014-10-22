@@ -59,14 +59,14 @@ def main(args):
     w.email = ''
     v.name = ''
     for n in v.orig_out_neighbors:
-      if random.random() < args.noise:
+      if random.random() < args.noise and n in v.out_neighbors:
         v.out_neighbors.remove(n)
         vertices[n].in_neighbors.remove(v.index)
       if random.random() > args.noise:
         w.out_neighbors.append(n)
         vertices[n].in_neighbors.append(w.index)
     for n in v.orig_in_neighbors:
-      if random.random() < args.noise:
+      if random.random() < args.noise and n in v.in_neighbors:
         v.in_neighbors.remove(n)
         vertices[n].out_neighbors.remove(v.index)
       if random.random() > args.noise:
