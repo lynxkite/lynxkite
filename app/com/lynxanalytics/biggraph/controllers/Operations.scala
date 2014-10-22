@@ -1348,12 +1348,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("ratio", "Validation set ratio", defaultValue = "0.1"),
         Param("homogeneity", "Homogeneity", defaultValue = "5"),
         Param("seed", "Seed", defaultValue = "0"),
-        Param("iterations", "Iterations", defaultValue = "2"))
+        Param("iterations", "Max iterations", defaultValue = "5"))
       def enabled = hasEdgeBundle &&
         FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
       def apply(params: Map[String, String]) = {
-        val iterations = params("iterations").toInt
-        val train = new Array[VertexAttribute[Double]](iterations + 1)
         // partition target attribute to test and train sets
         val target = project.vertexAttributes(params("target")).runtimeSafeCast[Double]
         val roles = {
@@ -1363,12 +1361,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val parted = part(target, roles)
         project.vertexAttributes("roles") = roles
         project.vertexAttributes("test") = parted.test
-        train(0) = parted.train
-        project.vertexAttributes("train_0") = train(0)
+        val train = parted.train
+        val coverage = {
+          val op = graph_operations.CountAttributes[Double]()
+          op(op.attribute, train).result.count
+        }
+        project.vertexAttributes("train_0") = train
+        project.scalars("coverage_0") = coverage
 
         // create segmentation
         val seg = {
-          // TODO: I think the segmentation could be an input param
+          // TODO: make this a segmentation operation instead
           val op = graph_operations.FindMaxCliques(3, false)
           op(op.es, project.edgeBundle).result
         }
@@ -1385,32 +1388,38 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           op(op.edges, seg.belongsTo)(
             op.dstMapping, reverse(filteredSeg.identity)).result.induced
         }
+        predict(train, parted.test, inducedBelongsTo, params("iterations").toInt, params("homogeneity"))
+      }
 
+      def predict(trainAttr: VertexAttribute[Double],
+                  test: VertexAttribute[Double],
+                  belongsTo: EdgeBundle,
+                  iterations: Int,
+                  homogeneity: String): Unit = {
+        var train = trainAttr
         for (i <- 1 to iterations) {
-          // prediction
           // TODO: use Knuth alg, median, dispersion
           val segTargetAvg = {
             aggregateViaConnection(
-              inducedBelongsTo,
-              attributeWithLocalAggregator(train(i - 1), "average"))
+              belongsTo,
+              attributeWithLocalAggregator(train, "average"))
               .runtimeSafeCast[Double]
           }
           val segTargetMin = {
             aggregateViaConnection(
-              inducedBelongsTo,
-              attributeWithLocalAggregator(train(i - 1), "min"))
+              belongsTo,
+              attributeWithLocalAggregator(train, "min"))
               .runtimeSafeCast[Double]
           }
           val segTargetMax = {
             aggregateViaConnection(
-              inducedBelongsTo,
-              attributeWithLocalAggregator(train(i - 1), "max"))
+              belongsTo,
+              attributeWithLocalAggregator(train, "max"))
               .runtimeSafeCast[Double]
           }
           val segWeight = {
-            val h = params("homogeneity")
             val op = graph_operations.DeriveJSDouble(
-              JavaScript(s"max - min < $h ? max - min : undefined"), Seq("min", "max"), Seq(), Seq())
+              JavaScript(s"max - min < $homogeneity ? max - min : undefined"), Seq("min", "max"), Seq(), Seq())
             op(op.numAttrs, Seq(segTargetMin, segTargetMax)).result.attr
           }
           val segPredict = {
@@ -1419,22 +1428,26 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           }
           val predicted = {
             aggregateViaConnection(
-              reverse(inducedBelongsTo),
+              reverse(belongsTo),
               attributeWithWeightedAggregator(segWeight, segPredict, "by_min_weight"))
               .runtimeSafeCast[Double]
           }
-          /*val error = {
-            // TODO: mean squared error on parted.test
-            // aggregate(attributeWithAggregator(???, "sum"))
-            ???
-          }*/
-          train(i) = unifyAttributeT(train(i - 1), predicted)
+          val error = {
+            val op = graph_operations.DeriveJSDouble(
+              JavaScript("Math.pow(test - predicted, 2)"), Seq("test", "predicted"), Seq(), Seq())
+            val mse = op(op.numAttrs, Seq(test, predicted)).result.attr
+            aggregate(attributeWithAggregator(mse, "sum"))
+          }
+          train = unifyAttributeT(train, predicted)
           val coverage = {
             val op = graph_operations.CountAttributes[Double]()
-            op(op.attribute, train(i)).result.count
+            op(op.attribute, train).result.count
           }
-          project.vertexAttributes("train_" + i) = train(i)
+          project.vertexAttributes("train_" + i) = train
           project.scalars("coverage_" + i) = coverage
+          project.scalars("error_" + i) = error
+          if (project.scalars("coverage_" + i).value == project.scalars("coverage_" + (i - 1)).value) return ();
+          // TODO: add a condition for returning if error is larger than a parameter?
         }
       }
 
