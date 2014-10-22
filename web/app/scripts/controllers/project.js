@@ -71,7 +71,11 @@ angular.module('biggraph')
       }
 
       vd.vertexSet = { id: this.project.vertexSet };
-      if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
+      if (this.project.edgeBundle) {
+        vd.edgeBundle = { id: this.project.edgeBundle };
+      } else {
+        vd.edgeBundle = undefined;
+      }
       vd.graphMode = this.state.graphMode;
 
       vd.bucketCount = this.state.bucketCount;
