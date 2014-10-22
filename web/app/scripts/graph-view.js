@@ -86,7 +86,7 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   function GraphView(scope, element) {
     this.scope = scope;
-    this.unwatch = [];  // Watchers to be removed when drawing new graph.
+    this.unregistration = [];  // Cleanup functions to be called before building a new graph.
     this.svg = angular.element(element);
     this.svg.append([
       svg.marker('arrow'),
@@ -114,11 +114,10 @@ angular.module('biggraph').directive('graphView', function(util) {
   GraphView.prototype.clear = function() {
     svg.removeClass(this.svg, 'loading');
     this.root.empty();
-    // Remove old watchers.
-    for (var i = 0; i < this.unwatch.length; ++i) {
-      this.unwatch[i]();
+    for (var i = 0; i < this.unregistration.length; ++i) {
+      this.unregistration[i]();
     }
-    this.unwatch = [];
+    this.unregistration = [];
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
   };
@@ -543,7 +542,7 @@ angular.module('biggraph').directive('graphView', function(util) {
   };
 
   GraphView.prototype.initSlider = function(vertices) {
-    this.unwatch.push(this.scope.$watch(sliderPos, onSlider));
+    this.unregistration.push(this.scope.$watch(sliderPos, onSlider));
     function sliderPos() {
       return vertices.side.sliderPos;
     }
@@ -605,7 +604,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     };
     vertices.step = function() {
       engine.opts.labelAttraction = parseFloat(vertices.side.animate.labelAttraction);
-      if (vertices.side.animate.enabled && engine.step(vertices)) {
+      if (animating && vertices.side.animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {
         animating = false;
@@ -613,10 +612,13 @@ angular.module('biggraph').directive('graphView', function(util) {
     };
     vertices.animate();
     // Kick off animation when the user manually turns it on.
-    // (This watcher is unregistered when a new graph is loaded.)
-    this.unwatch.push(util.deepWatch(this.scope,
+    var unwatch = util.deepWatch(this.scope,
         function() { return vertices.side.animate; },
-        function() { vertices.animate(); }));
+        function() { vertices.animate(); });
+    this.unregistration.push(function() {
+      unwatch();
+      animating = false;
+    });
   };
 
   GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData) {
