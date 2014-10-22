@@ -216,6 +216,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Import vertex attributes"
+    val description =
+      """Imports vertex attributes for existing vertices from a CSV file.
+      """ + importHelpText
+    val parameters = List(
+      Param("files", "Files", kind = "file"),
+      Param("header", "Header", defaultValue = "<read first line>"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("id-attr", "Vertex id attribute", options = vertexAttributes[String]),
+      Param("id-field", "ID field in the CSV file"),
+      Param("prefix", "Name prefix for the imported vertex attributes", defaultValue = ""))
+    def enabled = hasVertexSet
+    def apply(params: Map[String, String]) = {
+      val files = Filename(params("files"))
+      val header = if (params("header") == "<read first line>")
+        graph_operations.ImportUtil.header(files) else params("header")
+      val csv = graph_operations.CSV(
+        files,
+        params("delimiter"),
+        header)
+      val idAttr = project.vertexAttributes(params("id-attr")).runtimeSafeCast[String]
+      val op = graph_operations.ImportAttributesForExistingVertexSet(csv, params("id-field"))
+      val res = op(op.idAttr, idAttr).result
+      res.attrs.foreach {
+        case (name, attr) =>
+          project.vertexAttributes(params("prefix") + name) = attr
+      }
+    }
+  })
+
   register(new CreateSegmentationOperation(_) {
     val title = "Maximal cliques"
     val description = ""
