@@ -1399,29 +1399,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
         for (i <- 1 to iterations) {
           // prediction
-          val segTarget = {
-            // TODO: set as parameter what to aggregate, we should aggregate more values
+          // TODO: use Knuth alg, median, dispersion
+          val segTargetAvg = {
             aggregateViaConnection(
               inducedBelongsTo,
               attributeWithLocalAggregator(target(i - 1), "average"))
               .runtimeSafeCast[Double]
           }
+          val segTargetMin = {
+            aggregateViaConnection(
+              inducedBelongsTo,
+              attributeWithLocalAggregator(target(i - 1), "min"))
+              .runtimeSafeCast[Double]
+          }
+          val segTargetMax = {
+            aggregateViaConnection(
+              inducedBelongsTo,
+              attributeWithLocalAggregator(target(i - 1), "max"))
+              .runtimeSafeCast[Double]
+          }
           val segWeight = {
-            // TODO: some kind of an operation to weight the segmentations
-            // based on the aggregated seg_train attrs
-            val op = graph_operations.DeriveJSDouble(JavaScript("1.0"), Seq("segTarget"), Seq(), Seq())
-            op(op.numAttrs, Seq(segTarget)).result.attr
+            val op = graph_operations.DeriveJSDouble(JavaScript("max - min"), Seq("min", "max"), Seq(), Seq())
+            op(op.numAttrs, Seq(segTargetMin, segTargetMax)).result.attr
           }
           val segPredict = {
-            // TODO: some kind of an operation to calculate the predicted value
-            // based on the aggregated seg_train attrs
-            val op = graph_operations.DeriveJSDouble(JavaScript("segTarget"), Seq("segTarget"), Seq(), Seq())
-            op(op.numAttrs, Seq(segTarget)).result.attr
+            val op = graph_operations.DeriveJSDouble(JavaScript("avg"), Seq("avg"), Seq(), Seq())
+            op(op.numAttrs, Seq(segTargetAvg)).result.attr
           }
           val predicted = {
             aggregateViaConnection(
               reverse(inducedBelongsTo),
-              attributeWithWeightedAggregator(segWeight, segPredict, "by_max_weight"))
+              attributeWithWeightedAggregator(segWeight, segPredict, "by_min_weight"))
               .runtimeSafeCast[Double]
           }
           /*val error = {
