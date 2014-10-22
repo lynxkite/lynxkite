@@ -44,8 +44,8 @@ class SetOverlapForCCTest extends FunSuite with TestGraphOp {
       val cc4cc = op(op.es, so4cc.overlaps).result
 
       ConnectedComponentsTest.assertSameComponents(
-        cc.belongsTo.toPairSet.toMap,
-        cc4cc.belongsTo.toPairSet.toMap)
+        cc.belongsTo.toPairSeq.toMap,
+        cc4cc.belongsTo.toPairSeq.toMap)
     }
   }
 }

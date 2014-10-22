@@ -19,17 +19,22 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   test("Derived vertex attribute (Double)") {
     run("Example Graph")
     run("Derived vertex attribute",
-      Map("output" -> "output", "expr" -> "100 + age + 10 * name.length"))
+      Map("type" -> "double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
   }
 
   test("Derived vertex attribute (String)") {
     run("Example Graph")
+    // Test dropping values.
     run("Derived vertex attribute",
-      Map("output" -> "output", "expr" -> "gender == 'Male' ? 'Mr ' + name : 'Ms ' + name"))
+      Map("type" -> "string", "output" -> "gender",
+        "expr" -> "name == 'Isolated Joe' ? undefined : gender"))
+    run("Derived vertex attribute",
+      Map("type" -> "string", "output" -> "output",
+        "expr" -> "gender == 'Male' ? 'Mr ' + name : 'Ms ' + name"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[String]
-    assert(attr.rdd.collect.toMap == Map(0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob", 3 -> "Mr Isolated Joe"))
+    assert(attr.rdd.collect.toMap == Map(0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob"))
   }
 
   test("Aggregate to segmentation") {
@@ -119,5 +124,45 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     // Renamed edge attr is defined on half.
     assert(eAttrs("comment").rdd.count == 4)
     assert(eAttrs("newcomment").rdd.count == 4)
+  }
+
+  test("Fingerprinting") {
+    run("Import vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
+      "header" -> "id,email,name",
+      "delimiter" -> ",",
+      "id-attr" -> "delete me",
+      "filter" -> ""))
+    run("Import edges for existing vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-edges.csv").getFile,
+      "header" -> "src,dst",
+      "delimiter" -> ",",
+      "attr" -> "id",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    // Turn empty strings into "undefined".
+    run("Derived vertex attribute", Map(
+      "output" -> "email",
+      "type" -> "string",
+      "expr" -> "email ? email : undefined"))
+    run("Derived vertex attribute", Map(
+      "output" -> "name",
+      "type" -> "string",
+      "expr" -> "name ? name : undefined"))
+    run("Fingerprinting", Map(
+      "leftName" -> "email",
+      "rightName" -> "name",
+      "weight" -> "no weights",
+      "mrew" -> "0.0",
+      "mo" -> "1",
+      "ms" -> "0.5"))
+    assert(project.scalars("fingerprinting matches found").value == 9)
+    run("Discard edges")
+    run("Connect vertices on attribute", Map("attr" -> "email"))
+    assert(project.scalars("edge_count").value == 18)
+    assert(project.scalars("vertex_count").value == 109)
+    run("Merge vertices by attribute", Map("key" -> "name"))
+    assert(project.scalars("vertex_count").value == 100)
   }
 }

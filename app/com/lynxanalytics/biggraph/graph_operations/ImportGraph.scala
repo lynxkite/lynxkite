@@ -106,6 +106,14 @@ trait ImportCommon {
 }
 object ImportCommon {
   def toSymbol(field: String) = Symbol("csv_" + field)
+  def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): SortedRDD[String, ID] =
+    rdd.groupBySortedKey(partitioner)
+      .mapValuesWithKeys {
+        case (key, id) =>
+          assert(id.size == 1,
+            s"The ID attribute must contain unique keys. $key appears ${id.size} times.")
+          id.head
+      }
 }
 
 object ImportVertexList {
@@ -222,13 +230,6 @@ object ImportEdgeListForExistingVertexSet {
       f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
     }.toMap
   }
-
-  def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): SortedRDD[String, ID] =
-    rdd.groupBySortedKey(partitioner)
-      .mapValues { id =>
-        assert(id.size == 1, "VertexId mapping is ambiguous, check supplied VertexAttributes")
-        id.head
-      }
 }
 case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String)
     extends ImportEdges
@@ -246,13 +247,68 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
     val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, csv)
     putEdgeAttributes(columns, o.attrs, output)
-    val srcToId = checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
+    val srcToId =
+      ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
     val dstToId = {
       if (inputs.srcVidAttr.data.gUID == inputs.dstVidAttr.data.gUID)
         srcToId
       else
-        checkIdMapping(inputs.dstVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
+        ImportCommon.checkIdMapping(
+          inputs.dstVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
     }
     putEdgeBundle(columns, srcToId, dstToId, o.edges, output, partitioner)
+  }
+}
+
+object ImportAttributesForExistingVertexSet {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val idAttr = vertexAttribute[String](vs)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input,
+               fields: Set[String])
+      extends MagicOutput(instance) {
+    val attrs = fields.map {
+      f => f -> vertexAttribute[String](inputs.vs.entity, ImportCommon.toSymbol(f))
+    }.toMap
+  }
+}
+case class ImportAttributesForExistingVertexSet(csv: CSV, idField: String)
+    extends ImportCommon
+    with TypedMetaGraphOp[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output] {
+  import ImportAttributesForExistingVertexSet._
+
+  mustHaveField(idField)
+
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs, csv.fields.toSet - idField)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val partitioner = rc.defaultPartitioner
+    val lines = csv.lines(rc.sparkContext)
+    val idFieldIdx = csv.fields.indexOf(idField)
+    val externalIdToInternalId = ImportCommon.checkIdMapping(
+      inputs.idAttr.rdd.map { case (internal, external) => (external, internal) },
+      partitioner)
+    val linesByExternalId = lines
+      .map(line => (line(idFieldIdx), line))
+      .toSortedRDD(partitioner)
+    val linesByInternalId =
+      linesByExternalId.sortedJoin(externalIdToInternalId)
+        .map { case (external, (line, internal)) => (internal, line) }
+        .toSortedRDD(inputs.vs.rdd.partitioner.get)
+    linesByInternalId.memorizeBackingArray(rc.sparkContext.getRDDStorageInfo)
+    csv.fields.zipWithIndex.foreach {
+      case (field, idx) => if (idx != idFieldIdx) {
+        output(o.attrs(field), linesByInternalId.mapValues(line => line(idx)))
+      }
+    }
   }
 }
