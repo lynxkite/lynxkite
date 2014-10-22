@@ -1257,6 +1257,66 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new VertexOperation(_) {
+    val title = "Fingerprinting"
+    val description =
+      """In a graph that has two different string identifier attributes (e.g. Facebook ID and
+      MSISDN) this operation will match the vertices that only have the first attribute defined
+      with the vertices that only have the second attribute defined. For the well-matched vertices
+      the new attributes will be added. (For example if a vertex only had an MSISDN and we found a
+      matching Facebook ID, this will be saved as the Facebook ID of the vertex.)
+
+      <p>The matched vertices will not be automatically merged, but this can easily be performed
+      with the "Merge vertices by attribute" operation on either of the two identifier attributes.
+      """
+    val parameters = List(
+      Param("leftName", "First ID attribute", options = vertexAttributes[String]),
+      Param("rightName", "Second ID attribute", options = vertexAttributes[String]),
+      Param("weight", "Edge weights",
+        options = UIValue("no weights", "no weights") +: edgeAttributes[Double]),
+      Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
+      Param("mo", "Minimum overlap", defaultValue = "1"),
+      Param("ms", "Minimum similarity", defaultValue = "0.5"))
+    def enabled =
+      hasEdgeBundle &&
+        FEStatus.assert(vertexAttributes[String].size >= 2, "Two string attributes are needed.")
+    def apply(params: Map[String, String]): Unit = {
+      val mrew = params("mrew").toDouble
+      val mo = params("mo").toInt
+      val ms = params("ms").toDouble
+      assert(mo >= 1, "Minimum overlap cannot be less than 1.")
+      val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
+      val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
+      val weight = if (params("weight") == "no weights") {
+        graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, 1.0)
+      } else {
+        project.edgeAttributes(params("weight")).runtimeSafeCast[Double]
+      }
+
+      // TODO: Calculate relative edge weight, filter the edge bundle and pull over the weights.
+      assert(mrew == 0, "Minimum relative edge weight is not implemented yet.")
+
+      val candidates = {
+        val op = graph_operations.FingerprintingCandidates()
+        op(op.es, project.edgeBundle)(op.leftName, leftName)(op.rightName, rightName)
+          .result.candidates
+      }
+      val matching = {
+        val op = graph_operations.Fingerprinting(mo, ms)
+        op(op.es, project.edgeBundle)(op.weight, weight)(op.candidates, candidates)
+          .result.matching
+      }
+      val newLeftName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+        leftName, reverse(matching))
+      val newRightName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+        rightName, matching)
+
+      project.scalars("fingerprinting matches found") = count(matching)
+      project.vertexAttributes(params("leftName")) = unifyAttribute(newLeftName, leftName)
+      project.vertexAttributes(params("rightName")) = unifyAttribute(newRightName, rightName)
+    }
+  })
+
   register(new HiddenOperation(_) {
     val title = "Change project notes"
     val parameters = List(
@@ -1345,14 +1405,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
-    val reversed = {
-      val op = graph_operations.ReverseEdges()
-      op(op.esAB, segmentation.belongsTo).result.esBA
-    }
-
     segmentation.project.vertexAttributes(attributeName) = {
       val op = graph_operations.OutDegree()
-      op(op.es, reversed).result.outDegree
+      op(op.es, reverse(segmentation.belongsTo)).result.outDegree
     }
   }
 
@@ -1489,7 +1544,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.esAB, eb).result.esBA
   }
 
-  def unifyAttributeT[T](a1: VertexAttribute[T], a2: VertexAttribute[_]): VertexAttribute[T] = {
+  def count(eb: EdgeBundle): Scalar[Long] = {
+    val op = graph_operations.CountEdges()
+    op(op.edges, eb).result.count
+  }
+
+  private def unifyAttributeT[T](a1: VertexAttribute[T], a2: VertexAttribute[_]): VertexAttribute[T] = {
     val op = graph_operations.AttributeFallback[T]()
     op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast(a1.typeTag)).result.defaultedAttr
   }
