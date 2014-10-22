@@ -1386,10 +1386,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             op(op.es, project.edgeBundle).result
           }
           val degreeOfSeg = {
-            val re = graph_operations.ReverseEdges()
-            val reversed = re(re.esAB, seg.belongsTo).result.esBA
             val op = graph_operations.OutDegree()
-            op(op.es, reversed).result.outDegree
+            op(op.es, reverse(seg.belongsTo)).result.outDegree
           }
           val filteredSeg = {
             val op = graph_operations.VertexAttributeFilter(graph_operations.DoubleLE(500.0))
@@ -1398,7 +1396,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           val inducedBelongsTo = {
             val op = graph_operations.InducedEdgeBundle(induceSrc = false)
             op(op.edges, seg.belongsTo)(
-              op.dstMapping, graph_operations.ReverseEdges.run(filteredSeg.identity)).result.induced
+              op.dstMapping, reverse(filteredSeg.identity)).result.induced
           }
           // prediction
           val segTarget = {
