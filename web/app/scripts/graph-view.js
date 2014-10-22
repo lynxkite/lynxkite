@@ -19,7 +19,12 @@ angular.module('biggraph').directive('graphView', function(util) {
             gv.update(scope.graph, scope.menu);
           }
         }
-        util.deepWatch(scope, 'graph', updateGraph);
+        scope.$watch('graph', updateGraph);
+        scope.$watch('graph.$resolved', updateGraph);
+        // An attribute change can happen without a graph data change. Watch them separately.
+        // (When switching from "color" to "slider", for example.)
+        util.deepWatch(scope, 'left.attrs', updateGraph);
+        util.deepWatch(scope, 'right.attrs', updateGraph);
         // It is possible, especially in testing, that we get the graph data faster than the icons.
         // In this case we delay the drawing until the icons are loaded.
         scope.$on('#svg-icons is loaded', updateGraph);
