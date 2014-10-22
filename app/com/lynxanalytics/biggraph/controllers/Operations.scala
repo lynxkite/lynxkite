@@ -1260,11 +1260,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new VertexOperation(_) {
     val title = "Fingerprinting"
     val description =
-      """In a graph that has two different string identifier attributes (e.g. name and phone
-      number) this operation will match the vertices that only have the first attribute defined
+      """In a graph that has two different string identifier attributes (e.g. Facebook ID and
+      MSISDN) this operation will match the vertices that only have the first attribute defined
       with the vertices that only have the second attribute defined. For the well-matched vertices
-      the new attributes will be added. (For example if a vertex only had a name and we found a
-      matching phone number, this will be saved as the phone number of the vertex.)
+      the new attributes will be added. (For example if a vertex only had an MSISDN and we found a
+      matching Facebook ID, this will be saved as the Facebook ID of the vertex.)
 
       <p>The matched vertices will not be automatically merged, but this can easily be performed
       with the "Merge vertices by attribute" operation on either of the two identifier attributes.
