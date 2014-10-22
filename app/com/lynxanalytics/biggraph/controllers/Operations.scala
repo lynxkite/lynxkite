@@ -1342,28 +1342,33 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     register(new WorkflowOperation(_) {
       val title = "Viral modelling"
-      val description = "Tüttü-rüttü-rüttü-tű!"
+      val description = "Modeling or modelling? Is US or UK grammar to be prefered?"
       val parameters = List(
         Param("target", "Target attribute", options = vertexAttributes[Double]),
-        Param("ratio", "Validation set ratio", defaultValue = "0.05"),
+        Param("ratio", "Validation set ratio", defaultValue = "0.1"),
+        Param("homogeneity", "Homogeneity", defaultValue = "5"),
         Param("seed", "Seed", defaultValue = "0"),
         Param("iterations", "Iterations", defaultValue = "2"))
-      def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+      def enabled = hasEdgeBundle &&
+        FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
       def apply(params: Map[String, String]) = {
         val iterations = params("iterations").toInt
-        val target = new Array[VertexAttribute[Double]](iterations + 1)
-        target(0) = project.vertexAttributes(params("target")).runtimeSafeCast[Double]
+        val train = new Array[VertexAttribute[Double]](iterations + 1)
         // partition target attribute to test and train sets
+        val target = project.vertexAttributes(params("target")).runtimeSafeCast[Double]
         val roles = {
           val op = graph_operations.CreateRole(params("ratio").toDouble, params("seed").toInt)
-          op(op.vertices, target(0).vertexSet).result.role
+          op(op.vertices, target.vertexSet).result.role
         }
-        val parted = part(target(0), roles)
+        val parted = part(target, roles)
         project.vertexAttributes("roles") = roles
+        project.vertexAttributes("test") = parted.test
+        train(0) = parted.train
+        project.vertexAttributes("train_0") = train(0)
 
         // create segmentation
         val seg = {
-          // TODO: what kind of segmentation? what parameters?
+          // TODO: I think the segmentation could be an input param
           val op = graph_operations.FindMaxCliques(3, false)
           op(op.es, project.edgeBundle).result
         }
@@ -1387,23 +1392,25 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           val segTargetAvg = {
             aggregateViaConnection(
               inducedBelongsTo,
-              attributeWithLocalAggregator(target(i - 1), "average"))
+              attributeWithLocalAggregator(train(i - 1), "average"))
               .runtimeSafeCast[Double]
           }
           val segTargetMin = {
             aggregateViaConnection(
               inducedBelongsTo,
-              attributeWithLocalAggregator(target(i - 1), "min"))
+              attributeWithLocalAggregator(train(i - 1), "min"))
               .runtimeSafeCast[Double]
           }
           val segTargetMax = {
             aggregateViaConnection(
               inducedBelongsTo,
-              attributeWithLocalAggregator(target(i - 1), "max"))
+              attributeWithLocalAggregator(train(i - 1), "max"))
               .runtimeSafeCast[Double]
           }
           val segWeight = {
-            val op = graph_operations.DeriveJSDouble(JavaScript("max - min"), Seq("min", "max"), Seq(), Seq())
+            val h = params("homogeneity")
+            val op = graph_operations.DeriveJSDouble(
+              JavaScript(s"max - min < $h ? max - min : undefined"), Seq("min", "max"), Seq(), Seq())
             op(op.numAttrs, Seq(segTargetMin, segTargetMax)).result.attr
           }
           val segPredict = {
@@ -1421,9 +1428,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             // aggregate(attributeWithAggregator(???, "sum"))
             ???
           }*/
-          target(i) = unifyAttribute(target(i - 1), predicted).runtimeSafeCast[Double]
-          project.vertexAttributes("target_" + i) = target(i)
-          // val coverage = ??? // something like train_new.rdd.count - parted.train.rdd.count          
+          train(i) = unifyAttributeT(train(i - 1), predicted)
+          val coverage = {
+            val op = graph_operations.CountAttributes[Double]()
+            op(op.attribute, train(i)).result.count
+          }
+          project.vertexAttributes("train_" + i) = train(i)
+          project.scalars("coverage_" + i) = coverage
         }
       }
 
