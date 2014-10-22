@@ -73,7 +73,7 @@ abstract class DeriveJS[T](
         }
       }
     }
-    val derived = numJoined.sortedJoin(strJoined).sortedJoin(vecJoined).mapValues {
+    val derived = numJoined.sortedJoin(strJoined).sortedJoin(vecJoined).flatMapValues {
       case ((nums, strs), vecs) =>
         val numValues = numAttrNames.zip(nums).toMap
         val strValues = strAttrNames.zip(strs).toMap
@@ -83,7 +83,8 @@ abstract class DeriveJS[T](
           else v.toArray
         }
         val vecValues: Map[String, Array[_]] = vecAttrNames.zip(arrays).toMap
-        expr.evaluate(numValues ++ strValues ++ vecValues).asInstanceOf[T]
+        // JavaScript's "undefined" is returned as a Java "null".
+        Option(expr.evaluate(numValues ++ strValues ++ vecValues).asInstanceOf[T])
     }
     output(o.attr, derived)
   }
