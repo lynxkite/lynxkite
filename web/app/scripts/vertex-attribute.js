@@ -14,6 +14,14 @@ angular.module('biggraph').directive('vertexAttribute', function() {
         }
         return false;
       };
+      scope.logarithmic = function(log) {  // Setter/getter.
+        var ao = scope.side.axisOptions('vertex', scope.attr.title);
+        if (log !== undefined) {
+          ao.logarithmic = log;
+          scope.side.state.axisOptions.vertex[scope.attr.title] = ao;
+        }
+        return ao.logarithmic;
+      };
     },
   };
 });
