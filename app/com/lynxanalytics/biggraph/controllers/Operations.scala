@@ -1272,7 +1272,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = List(
       Param("leftName", "First ID attribute", options = vertexAttributes[String]),
       Param("rightName", "Second ID attribute", options = vertexAttributes[String]),
-      Param("weight", "Edge weights", options = edgeAttributes[Double] :+ UIValue("1.0", "1.0")),
+      Param("weight", "Edge weights",
+        options = edgeAttributes[Double] :+ UIValue("no weights", "no weights")),
       Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
       Param("mo", "Minimum overlap", defaultValue = "1"),
       Param("ms", "Minimum similarity", defaultValue = "0.5"))
@@ -1286,7 +1287,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(mo >= 1, "Minimum overlap cannot be less than 1.")
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
-      val weight = if (params("weight") == "1.0") {
+      val weight = if (params("weight") == "no weights") {
         graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, 1.0)
       } else {
         project.edgeAttributes(params("weight")).runtimeSafeCast[Double]
