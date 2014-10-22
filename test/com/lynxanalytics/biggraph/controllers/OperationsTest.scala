@@ -125,4 +125,44 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(eAttrs("comment").rdd.count == 4)
     assert(eAttrs("newcomment").rdd.count == 4)
   }
+
+  test("Fingerprinting") {
+    run("Import vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
+      "header" -> "id,email,name",
+      "delimiter" -> ",",
+      "id-attr" -> "delete me",
+      "filter" -> ""))
+    run("Import edges for existing vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-edges.csv").getFile,
+      "header" -> "src,dst",
+      "delimiter" -> ",",
+      "attr" -> "id",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    // Turn empty strings into "undefined".
+    run("Derived vertex attribute", Map(
+      "output" -> "email",
+      "type" -> "string",
+      "expr" -> "email ? email : undefined"))
+    run("Derived vertex attribute", Map(
+      "output" -> "name",
+      "type" -> "string",
+      "expr" -> "name ? name : undefined"))
+    run("Fingerprinting", Map(
+      "leftName" -> "email",
+      "rightName" -> "name",
+      "weight" -> "1.0",
+      "mrew" -> "0.0",
+      "mo" -> "1",
+      "ms" -> "0.5"))
+    assert(project.scalars("fingerprinting matches found").value == 9)
+    run("Discard edges")
+    run("Connect vertices on attribute", Map("attr" -> "email"))
+    assert(project.scalars("edge_count").value == 18)
+    assert(project.scalars("vertex_count").value == 109)
+    run("Merge vertices by attribute", Map("key" -> "name"))
+    assert(project.scalars("vertex_count").value == 100)
+  }
 }
