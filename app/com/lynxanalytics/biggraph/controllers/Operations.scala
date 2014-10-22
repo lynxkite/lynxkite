@@ -1360,84 +1360,78 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val title = "Viral modelling"
       val description = "Tüttü-rüttü-rüttü-tű!"
       val parameters = List(
-        Param("target", "Target attribute", options = vertexAttributes),
+        Param("target", "Target attribute", options = vertexAttributes[Double]),
         Param("ratio", "Validation set ratio", defaultValue = "0.05"),
         Param("seed", "Seed", defaultValue = "0"),
         Param("iterations", "Iterations", defaultValue = "2"))
       def enabled = hasEdgeBundle && FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
+        val iterations = params("iterations").toInt
+        val target = new Array[VertexAttribute[Double]](iterations + 1)
+        target(0) = project.vertexAttributes(params("target")).runtimeSafeCast[Double]
         // partition target attribute to test and train sets
-        val target = project.vertexAttributes(params("target"))
         val roles = {
           val op = graph_operations.CreateRole(params("ratio").toDouble, params("seed").toInt)
-          op(op.vertices, target.vertexSet).result.role
+          op(op.vertices, target(0).vertexSet).result.role
         }
-        val parted = part(target, roles)
+        val parted = part(target(0), roles)
         project.vertexAttributes("roles") = roles
-        project.vertexAttributes("test") = parted.test
-        project.vertexAttributes("train") = parted.train
 
-        val iterations = params("iterations").toInt
+        // create segmentation
+        val seg = {
+          // TODO: what kind of segmentation? what parameters?
+          val op = graph_operations.FindMaxCliques(3, false)
+          op(op.es, project.edgeBundle).result
+        }
+        val degreeOfSeg = {
+          val op = graph_operations.OutDegree()
+          op(op.es, reverse(seg.belongsTo)).result.outDegree
+        }
+        val filteredSeg = {
+          val op = graph_operations.VertexAttributeFilter(graph_operations.DoubleLE(500.0))
+          op(op.attr, degreeOfSeg).result
+        }
+        val inducedBelongsTo = {
+          val op = graph_operations.InducedEdgeBundle(induceSrc = false)
+          op(op.edges, seg.belongsTo)(
+            op.dstMapping, reverse(filteredSeg.identity)).result.induced
+        }
+
         for (i <- 1 to iterations) {
-          // create segmentation
-          val seg = {
-            // TODO: what kind of segmentation? what parameters?
-            val op = graph_operations.FindMaxCliques(3, false)
-            op(op.es, project.edgeBundle).result
-          }
-          val degreeOfSeg = {
-            val op = graph_operations.OutDegree()
-            op(op.es, reverse(seg.belongsTo)).result.outDegree
-          }
-          val filteredSeg = {
-            val op = graph_operations.VertexAttributeFilter(graph_operations.DoubleLE(500.0))
-            op(op.attr, degreeOfSeg).result
-          }
-          val inducedBelongsTo = {
-            val op = graph_operations.InducedEdgeBundle(induceSrc = false)
-            op(op.edges, seg.belongsTo)(
-              op.dstMapping, reverse(filteredSeg.identity)).result.induced
-          }
           // prediction
           val segTarget = {
             // TODO: set as parameter what to aggregate, we should aggregate more values
             aggregateViaConnection(
               inducedBelongsTo,
-              attributeWithLocalAggregator(target, "most_common"))
+              attributeWithLocalAggregator(target(i - 1), "average"))
+              .runtimeSafeCast[Double]
           }
-          val segWeight: VertexAttribute[Double] = {
+          val segWeight = {
             // TODO: some kind of an operation to weight the segmentations
             // based on the aggregated seg_train attrs
-            if (segTarget.is[Double]) {
-              val attr = segTarget.runtimeSafeCast[Double]
-              val op = graph_operations.DeriveJSDouble(JavaScript("1.0"), Seq("attr"), Seq(), Seq())
-              op(op.numAttrs, Seq(attr)).result.attr
-            } else if (segTarget.is[String]) {
-              val attr = segTarget.runtimeSafeCast[String]
-              val op = graph_operations.DeriveJSDouble(JavaScript("1.0"), Seq(), Seq("attr"), Seq())
-              op(op.strAttrs, Seq(attr)).result.attr
-            } else ???
+            val op = graph_operations.DeriveJSDouble(JavaScript("1.0"), Seq("segTarget"), Seq(), Seq())
+            op(op.numAttrs, Seq(segTarget)).result.attr
           }
           val segPredict = {
             // TODO: some kind of an operation to calculate the predicted value
             // based on the aggregated seg_train attrs
-            deriveJSSame("attr", segTarget)
+            val op = graph_operations.DeriveJSDouble(JavaScript("segTarget"), Seq("segTarget"), Seq(), Seq())
+            op(op.numAttrs, Seq(segTarget)).result.attr
           }
           val predicted = {
             aggregateViaConnection(
               reverse(inducedBelongsTo),
               attributeWithWeightedAggregator(segWeight, segPredict, "by_max_weight"))
+              .runtimeSafeCast[Double]
           }
           /*val error = {
             // TODO: mean squared error on parted.test
             // aggregate(attributeWithAggregator(???, "sum"))
             ???
           }*/
-          val train_new = {
-            unifyAttribute(parted.train, predicted)
-          }
-          // val coverage = ??? // something like train_new.rdd.count - parted.train.rdd.count
-          project.vertexAttributes("train_" + i) = train_new
+          target(i) = unifyAttribute(target(i - 1), predicted).runtimeSafeCast[Double]
+          project.vertexAttributes("target_" + i) = target(i)
+          // val coverage = ??? // something like train_new.rdd.count - parted.train.rdd.count          
         }
       }
 
@@ -1445,28 +1439,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                   roles: VertexAttribute[String]): graph_operations.PartitionAttribute.Output[T] = {
         val op = graph_operations.PartitionAttribute[T]()
         op(op.attr, target)(op.role, roles).result
-      }
-      // temporary brainfuck, just a DeriveJS with a single input and the output as T
-      def deriveJSSame[T](js: String,
-                          attr: VertexAttribute[T]): VertexAttribute[T] = {
-        implicit val tt = attr.typeTag
-        var numAttr = Seq[VertexAttribute[Double]]()
-        var numAttrName = Seq[String]()
-        var strAttr = Seq[VertexAttribute[String]]()
-        var strAttrName = Seq[String]()
-        if (attr.is[Double]) {
-          numAttr = Seq(attr.runtimeSafeCast[Double])
-          numAttrName = Seq("attr")
-          val op = graph_operations.DeriveJSDouble(JavaScript(js), numAttrName, strAttrName, Seq())
-          val res = op(op.numAttrs, numAttr)(op.strAttrs, strAttr).result.attr.entity
-          res.runtimeSafeCast[T]
-        } else if (attr.is[String]) {
-          strAttr = Seq(attr.runtimeSafeCast[String])
-          strAttrName = Seq("attr")
-          val op = graph_operations.DeriveJSString(JavaScript(js), numAttrName, strAttrName, Seq())
-          val res = op(op.numAttrs, numAttr)(op.strAttrs, strAttr).result.attr.entity
-          res.runtimeSafeCast[T]
-        } else ???
       }
     })
   }
