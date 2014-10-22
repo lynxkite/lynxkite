@@ -1273,7 +1273,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("leftName", "First ID attribute", options = vertexAttributes[String]),
       Param("rightName", "Second ID attribute", options = vertexAttributes[String]),
       Param("weight", "Edge weights",
-        options = edgeAttributes[Double] :+ UIValue("no weights", "no weights")),
+        options = UIValue("no weights", "no weights") +: edgeAttributes[Double]),
       Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
       Param("mo", "Minimum overlap", defaultValue = "1"),
       Param("ms", "Minimum similarity", defaultValue = "0.5"))
