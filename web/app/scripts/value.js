@@ -13,6 +13,9 @@ angular.module('biggraph').directive('value', function(util) {
       scope.format = function(ref) {
         return util.human(ref.double);
       };
+      scope.setHuman = function(h) {
+        scope.human = h;
+      };
     },
   };
 });

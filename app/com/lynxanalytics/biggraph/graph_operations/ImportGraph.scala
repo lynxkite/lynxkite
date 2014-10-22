@@ -108,9 +108,11 @@ object ImportCommon {
   def toSymbol(field: String) = Symbol("csv_" + field)
   def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): SortedRDD[String, ID] =
     rdd.groupBySortedKey(partitioner)
-      .mapValues { id =>
-        assert(id.size == 1, "VertexId mapping is ambiguous, check supplied VertexAttributes")
-        id.head
+      .mapValuesWithKeys {
+        case (key, id) =>
+          assert(id.size == 1,
+            s"The ID attribute must contain unique keys. $key appears ${id.size} times.")
+          id.head
       }
 }
 
