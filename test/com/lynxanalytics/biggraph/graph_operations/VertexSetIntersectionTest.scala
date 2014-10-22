@@ -16,7 +16,7 @@ class VertexSetIntersectionTest extends FunSuite with TestGraphOp {
     val c = SmallTestGraph(cVS.map(_.toInt -> Seq()).toMap).result.vs
     val op = VertexSetIntersection(3)
     val out = op(op.vss(0), a)(op.vss(1), b)(op.vss(2), c).result
-    assert(out.intersection.toSet == Set(8, 9, 10))
+    assert(out.intersection.toSeq == Seq(8, 9, 10))
   }
 
   test("empty set") {
@@ -26,6 +26,6 @@ class VertexSetIntersectionTest extends FunSuite with TestGraphOp {
     val b = SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap).result.vs
     val op = VertexSetIntersection(2)
     val out = op(op.vss(0), a)(op.vss(1), b).result
-    assert(out.intersection.toSet == Set())
+    assert(out.intersection.toSeq == Seq())
   }
 }

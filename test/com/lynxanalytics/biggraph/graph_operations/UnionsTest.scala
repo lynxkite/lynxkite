@@ -12,16 +12,16 @@ class UnionsTest extends FunSuite with TestGraphOp {
     val op = VertexSetUnion(3)
     val verticesEntity = g.vertices.entity
     val out = op(op.vss, Seq(verticesEntity, verticesEntity, verticesEntity)).result
-    val sourceVertices = g.vertices.toSet
-    val unionVertices = out.union.toSet
+    val sourceVertices = g.vertices.toSeq
+    val unionVertices = out.union.toSeq
     assert(unionVertices.size == sourceVertices.size * 3)
     var targetUnion = Set[ID]()
     for (i <- 0 until 3) {
-      val inj = out.injections(i).toPairSet
+      val inj = out.injections(i).toPairSeq
       // Source set == vertex set of one source
       assert(inj.map(_._1) == sourceVertices)
       targetUnion ++= inj.map(_._2)
     }
-    assert(targetUnion == unionVertices)
+    assert(targetUnion.toSeq.sorted == unionVertices)
   }
 }
