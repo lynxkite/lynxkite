@@ -15,17 +15,18 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object GraphTestUtils {
   implicit class VertexSetOps[T <% VertexSetData](vs: T) {
-    def toSet(): Set[ID] = {
-      vs.rdd.keys.collect.toSet
+    def toSeq(): Seq[ID] = {
+      vs.rdd.keys.collect.toSeq.sorted
     }
   }
 
   implicit class EdgeBundleOps[T <% EdgeBundleData](eb: T) {
-    def toPairSet(): Set[(ID, ID)] = {
+    def toPairSeq(): Seq[(ID, ID)] = {
       eb.rdd
         .collect
         .map { case (id, edge) => (edge.src -> edge.dst) }
-        .toSet
+        .toSeq
+        .sorted
     }
     def toPairCounts(): Map[(ID, ID), Int] = {
       eb.rdd
@@ -171,5 +172,25 @@ case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
     }).randomNumbered(rc.onePartitionPartitioner)
     output(o.es, es)
     output(o.weight, es.mapValues(_ => weight))
+  }
+}
+
+object AddVertexAttribute {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    val attr = vertexAttribute[String](inputs.vs.entity)
+  }
+}
+case class AddVertexAttribute(values: Map[Int, String])
+    extends TypedMetaGraphOp[AddVertexAttribute.Input, AddVertexAttribute.Output] {
+  import AddVertexAttribute._
+  @transient override lazy val inputs = new Input
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+    val sc = rc.sparkContext
+    val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
+    output(o.attr, sc.parallelize(idMap).toSortedRDD(rc.onePartitionPartitioner))
   }
 }

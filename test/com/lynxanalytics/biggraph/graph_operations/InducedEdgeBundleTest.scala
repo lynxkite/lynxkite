@@ -21,24 +21,24 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
       op.edges, example.edges)(
         op.srcMapping, ReverseEdges.run(adamless.identity))(
           op.dstMapping, ReverseEdges.run(adamless.identity))
-      .result.induced.toPairSet
-    assert(induced == Set(2 -> 1))
+      .result.induced.toPairSeq
+    assert(induced == Seq(2 -> 1))
   }
 
   test("example graph induce src") {
     val op = InducedEdgeBundle(induceDst = false)
     val induced = op(
       op.edges, example.edges)(
-        op.srcMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSet
-    assert(induced == Set(2 -> 1, 1 -> 0, 2 -> 0))
+        op.srcMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSeq
+    assert(induced == Seq(1 -> 0, 2 -> 0, 2 -> 1))
   }
 
   test("example graph induce dst") {
     val op = InducedEdgeBundle(induceSrc = false)
     val induced = op(
       op.edges, example.edges)(
-        op.dstMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSet
-    assert(induced == Set(2 -> 1, 0 -> 1))
+        op.dstMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSeq
+    assert(induced == Seq(0 -> 1, 2 -> 1))
   }
 
   test("example graph induce on merged") {

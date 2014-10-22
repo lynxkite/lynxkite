@@ -579,6 +579,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       """
     val parameters = List(
       Param("output", "Save as"),
+      Param("type", "Result type", options = UIValue.list(List("double", "string"))),
       Param("expr", "Value", defaultValue = "1"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -606,13 +607,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       val js = JavaScript(expr)
       // Figure out the return type.
-      val op: graph_operations.DeriveJS[_] = testEvaluation(js, numAttrNames, strAttrNames, vecAttrNames) match {
-        case _: String =>
+      val op: graph_operations.DeriveJS[_] = params("type") match {
+        case "string" =>
           graph_operations.DeriveJSString(js, numAttrNames, strAttrNames, vecAttrNames)
-        case _: Double =>
+        case "double" =>
           graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames, vecAttrNames)
-        case result =>
-          throw new Exception(s"Test evaluation of '$js' returned '$result'.")
       }
       val result = op(
         op.vs, project.vertexSet)(
@@ -631,21 +630,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
       val op = graph_operations.AttributeVectorToAny[T]()
       op(op.attr, attr).result.attr
-    }
-
-    // Evaluates the expression with 0/'' parameters.
-    def testEvaluation(
-      js: JavaScript,
-      numAttrNames: Seq[String],
-      strAttrNames: Seq[String],
-      vecAttrNames: Seq[String]): Any = {
-      val mapping = (
-        numAttrNames.map(_ -> 0.0).toMap ++
-        strAttrNames.map(_ -> "").toMap ++
-        // Because the array will be empty for the test, the expression has to be ready
-        // to handle this.
-        vecAttrNames.map(_ -> Array[Any]()))
-      return js.evaluate(mapping)
     }
   })
 
