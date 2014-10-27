@@ -9,14 +9,14 @@ angular.module('biggraph').directive('graphView', function(util) {
       scope: { graph: '=', left: '=', right: '=', menu: '=' },
       replace: true,
       link: function(scope, element) {
-        var gv = new GraphView(scope, element);
+        scope.gv = new GraphView(scope, element);
         function updateGraph() {
           if (scope.graph === undefined || !scope.graph.$resolved || !iconsLoaded()) {
-            gv.loading();
+            scope.gv.loading();
           } else if (scope.graph.$error) {
-            gv.error(scope.graph.$error);
+            scope.gv.error(scope.graph.$error);
           } else {
-            gv.update(scope.graph, scope.menu);
+            scope.gv.update(scope.graph, scope.menu);
           }
         }
         scope.$watch('graph', updateGraph);
