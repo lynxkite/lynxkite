@@ -1328,7 +1328,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new VertexOperation(_) {
-    val title = "Fingerprinting"
+    val title = "Fingerprinting based on attributes"
     val description =
       """In a graph that has two different string identifier attributes (e.g. Facebook ID and
       MSISDN) this operation will match the vertices that only have the first attribute defined
@@ -1389,6 +1389,54 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.scalars("fingerprinting matches found") = count(matching)
       project.vertexAttributes(params("leftName")) = unifyAttribute(newLeftName, leftName)
       project.vertexAttributes(params("rightName")) = unifyAttribute(newRightName, rightName)
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Fingerprinting between project and segmentation"
+    val description =
+      """Finds the best match out of the potential matches that are defined between a project and
+      a segmentation. The best match is chosen by comparing the vertex neighborhoods in the project
+      and the segmentation.
+
+      <p>The result of this operation is an updated edge set between the project and the
+      segmentation, that only includes the matched connections.
+
+      <p>Example use-case: Project M is an MSISDN graph based on call data. Project F is a Facebook
+      graph. A CSV file contains a number of MSISDN -> Facebook ID mappings, a many-to-many
+      relationship. Connect the two projects with "Import project as segmentation", then use this
+      operation to turn the mapping into a high-quality one-to-one relationship. Export the new
+      relationship with "Export segmentation to CSV".
+      """
+    val parameters = List(
+      Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
+      Param("mo", "Minimum overlap", defaultValue = "1"),
+      Param("ms", "Minimum similarity", defaultValue = "0.5"))
+    def enabled =
+      hasEdgeBundle && FEStatus.assert(parent.edgeBundle != null, s"No edges on $parent")
+    def apply(params: Map[String, String]): Unit = {
+      val mrew = params("mrew").toDouble
+      val mo = params("mo").toInt
+      val ms = params("ms").toDouble
+
+      // TODO: Calculate relative edge weight, filter the edge bundle and pull over the weights.
+      assert(mrew == 0, "Minimum relative edge weight is not implemented yet.")
+
+      val candidates = seg.belongsTo
+      val segNeighborsInParent = concat(project.edgeBundle, reverse(seg.belongsTo))
+      val matching = {
+        val op = graph_operations.Fingerprinting(mo, ms)
+        op(
+          op.srcEdges, parent.edgeBundle)(
+            op.srcEdgeWeights, const(parent.edgeBundle))(
+              op.dstEdges, segNeighborsInParent)(
+                op.dstEdgeWeights, const(segNeighborsInParent))(
+                  op.candidates, candidates)
+          .result.matching
+      }
+
+      project.scalars("fingerprinting matches found") = count(matching)
+      seg.belongsTo = matching
     }
   })
 
