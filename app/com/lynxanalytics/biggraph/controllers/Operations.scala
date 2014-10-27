@@ -1188,6 +1188,48 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new CreateSegmentationOperation(_) {
+    val title = "Import project as segmentation"
+    val description =
+      """"Copies another project into a new segmentation for this one. The connection between the
+      two is imported from a CSV.""" + importHelpText
+    val parameters = List(
+      Param("them", "Other project's name", options = otherProjects),
+      Param("files", "CSV", kind = "file"),
+      Param("header", "Header", defaultValue = "<read first line>"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("our-id-attr", s"Identifying vertex attribute in $project", options = vertexAttributes[String]),
+      Param("our-id-field", s"Identifying CSV field for $project"),
+      Param("their-id-attr", "Identifying vertex attribute in the other project"),
+      Param("their-id-field", "Identifying CSV field for the other project"))
+    private def otherProjects = uIProjects.filter(_.id != project.projectName)
+    def enabled =
+      hasVertexSet &&
+        FEStatus.assert(otherProjects.size > 0, "This is the only project") &&
+        FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes")
+    def apply(params: Map[String, String]) = {
+      val them = Project(params("them"))
+      assert(them.vertexSet != null, s"No vertex set in $them")
+      val ourIdAttr = project.vertexAttributes(params("our-id-attr")).runtimeSafeCast[String]
+      val theirIdAttr = them.vertexAttributes(params("their-id-attr")).runtimeSafeCast[String]
+      val files = Filename(params("files"))
+      val header = if (params("header") == "<read first line>")
+        graph_operations.ImportUtil.header(files) else params("header")
+      val csv = graph_operations.CSV(
+        files,
+        params("delimiter"),
+        header)
+      val op = graph_operations.ImportEdgeListForExistingVertexSet(
+        csv, params("our-id-field"), params("their-id-field"))
+      val edges = op(op.srcVidAttr, ourIdAttr)(op.dstVidAttr, theirIdAttr).result.edges
+
+      val segmentation = project.segmentation(params("them"))
+      them.copy(segmentation.project)
+      segmentation.belongsTo = edges
+      segmentation.project.discardCheckpoints()
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Union with another project"
     val description =
