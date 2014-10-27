@@ -1342,7 +1342,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = List(
       Param("leftName", "First ID attribute", options = vertexAttributes[String]),
       Param("rightName", "Second ID attribute", options = vertexAttributes[String]),
-      Param("weight", "Edge weights",
+      Param("weights", "Edge weights",
         options = UIValue("no weights", "no weights") +: edgeAttributes[Double]),
       Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
       Param("mo", "Minimum overlap", defaultValue = "1"),
@@ -1357,10 +1357,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(mo >= 1, "Minimum overlap cannot be less than 1.")
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
-      val weight = if (params("weight") == "no weights") {
+      val weights = if (params("weights") == "no weights") {
         const(project.edgeBundle)
       } else {
-        project.edgeAttributes(params("weight")).runtimeSafeCast[Double]
+        project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       }
 
       // TODO: Calculate relative edge weight, filter the edge bundle and pull over the weights.
@@ -1373,7 +1373,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       val matching = {
         val op = graph_operations.Fingerprinting(mo, ms)
-        op(op.es, project.edgeBundle)(op.weight, weight)(op.candidates, candidates)
+        op(
+          op.srcEdges, project.edgeBundle)(
+            op.dstEdges, project.edgeBundle)(
+              op.srcEdgeWeights, weights)(
+                op.dstEdgeWeights, weights)(
+                  op.candidates, candidates)
           .result.matching
       }
       val newLeftName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
