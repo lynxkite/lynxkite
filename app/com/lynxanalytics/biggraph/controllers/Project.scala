@@ -106,6 +106,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     checkpoints = c
   }
 
+  def discardCheckpoints(): Unit = manager.synchronized {
+    existing(path / "checkpoints").foreach(manager.rmTag(_))
+    existing(path / "checkpointIndex").foreach(manager.rmTag(_))
+    existing(path / "lastOperation").foreach(manager.rmTag(_))
+  }
+
   def isSegmentation = manager.synchronized {
     val grandFather = path.parent.parent
     grandFather.nonEmpty && (grandFather.name == 'segmentations)
