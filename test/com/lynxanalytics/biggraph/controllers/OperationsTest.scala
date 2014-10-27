@@ -10,7 +10,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
   val project = Project("Test_Project")
-  project.notes = "test project" // Make sure project directory exists.
+  project.notes = "test project"
+  project.checkpointAfter("") // Initialize project.
 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     ops.apply(
