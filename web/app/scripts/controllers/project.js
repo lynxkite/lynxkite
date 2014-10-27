@@ -141,10 +141,7 @@ angular.module('biggraph')
       var defaultAxisOptions = {
         logarithmic: false,
       };
-      if (this.state.axisOptions[type][attr] === undefined) {
-        this.state.axisOptions[type][attr] = defaultAxisOptions;
-      }
-      return this.state.axisOptions[type][attr];
+      return this.state.axisOptions[type][attr] || defaultAxisOptions;
     };
 
     Side.prototype.maybeRequestNewCenter = function() {
