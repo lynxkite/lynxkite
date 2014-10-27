@@ -343,10 +343,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, cedges).result
       }
 
-      val weightedVertexToClique =
-        graph_operations.AddConstantAttribute.run(cliquesResult.belongsTo.asVertexSet, 1.0)
-      val weightedCliqueToCommunity =
-        graph_operations.AddConstantAttribute.run(ccResult.belongsTo.asVertexSet, 1.0)
+      val weightedVertexToClique = const(cliquesResult.belongsTo)
+      val weightedCliqueToCommunity = const(ccResult.belongsTo)
 
       val vertexToCommunity = {
         val op = graph_operations.ConcatenateBundles()
@@ -409,8 +407,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val res = {
         if (params("type") == "Double") {
-          val d = params("value").toDouble
-          graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, d)
+          const(project.edgeBundle, params("value").toDouble)
         } else {
           graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, params("value"))
         }
@@ -1361,7 +1358,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
       val weight = if (params("weight") == "no weights") {
-        graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, 1.0)
+        const(project.edgeBundle)
       } else {
         project.edgeAttributes(params("weight")).runtimeSafeCast[Double]
       }
@@ -1643,6 +1640,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def concat(eb1: EdgeBundle, eb2: EdgeBundle): EdgeBundle = {
     new graph_util.BundleChain(Seq(eb1, eb2)).getCompositeEdgeBundle._1
+  }
+
+  def const(eb: EdgeBundle, value: Double = 1.0): VertexAttribute[Double] = {
+    graph_operations.AddConstantAttribute.run(eb.asVertexSet, value)
   }
 
   def newScalar(data: String): Scalar[String] = {
