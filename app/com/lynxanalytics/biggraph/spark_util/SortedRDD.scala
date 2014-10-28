@@ -8,7 +8,6 @@ import scala.collection.SortedSet
 import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering
 import scala.reflect.ClassTag
-import scala.util.Sorting
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => bGLog }
 import com.lynxanalytics.biggraph.spark_util.Implicits._

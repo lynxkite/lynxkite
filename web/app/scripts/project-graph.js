@@ -6,9 +6,10 @@ angular.module('biggraph').directive('projectGraph', function (util) {
     scope: { left: '=', right: '=', leftToRightBundle: '=', contextMenu: '=' },
     replace: false,
     templateUrl: 'project-graph.html',
-    link: function(scope) {
+    link: function(scope, element) {
       util.deepWatch(scope, 'left', updateRequest);
       util.deepWatch(scope, 'right', updateRequest);
+      util.deepWatch(scope, 'leftToRightBundle', updateRequest);
 
       scope.onIconsLoaded = function() {
         scope.$broadcast('#svg-icons is loaded');
@@ -201,6 +202,30 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       function graphName(index) {
         return ['the left-side graph', 'the right-side graph'][index] || 'graph ' + (index + 1);
       }
-    }
+
+      function updateFilters() {
+        var svg = element.find('svg.graph-view');
+        var filter = '';
+        if (scope.filters.inverted) {
+          filter += 'invert(100%) hue-rotate(180deg) ';
+        }
+        filter += 'contrast(' + scope.filters.contrast + '%) ';
+        filter += 'saturate(' + scope.filters.saturation + '%) ';
+        filter += 'brightness(' + scope.filters.brightness + '%) ';
+        svg.css({ filter: filter, '-webkit-filter': filter });
+      }
+      function saveFilters() {
+        window.localStorage.setItem('graph-filters', JSON.stringify(scope.filters));
+      }
+      scope.resetFilters = function() {
+        scope.filters = { inverted: false, contrast: 100, saturation: 100, brightness: 100 };
+      };
+      scope.resetFilters();
+      var loadedFilters = window.localStorage.getItem('graph-filters');
+      if (loadedFilters) {
+        angular.extend(scope.filters, JSON.parse(loadedFilters));
+      }
+      util.deepWatch(scope, 'filters', function() { saveFilters(); updateFilters(); });
+    },
   };
 });

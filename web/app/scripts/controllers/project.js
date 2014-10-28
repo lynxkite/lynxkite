@@ -71,7 +71,11 @@ angular.module('biggraph')
       }
 
       vd.vertexSet = { id: this.project.vertexSet };
-      if (this.project.edgeBundle) { vd.edgeBundle = { id: this.project.edgeBundle }; }
+      if (this.project.edgeBundle) {
+        vd.edgeBundle = { id: this.project.edgeBundle };
+      } else {
+        vd.edgeBundle = undefined;
+      }
       vd.graphMode = this.state.graphMode;
 
       vd.bucketCount = this.state.bucketCount;
@@ -108,32 +112,28 @@ angular.module('biggraph')
       vd.animate = this.state.animate;
       vd.sliderPos = this.state.sliderPos;
 
-      var parent;
-      var segmentationEntry;
-      for (var i = 0; i < $scope.sides.length; ++i) {
-        var side = $scope.sides[i];
-        if (side === this) { continue; }
-        segmentationEntry = side.getSegmentationEntry(this);
-        if (segmentationEntry) {
-          parent = side;
-          break;
-        }
-      }
-      if (parent) {
-        var filterName = segmentationEntry.equivalentAttribute.title;
-        var filterValue = function(segmentId) {
-          return 'exists(' + segmentId + ')';
-        };
-        vd.filterParentToSegment = function(segmentId) {
-          parent.state.filters[filterName] = filterValue(segmentId);
-        };
-        vd.isParentFilteredToSegment = function(segmentId) {
-          return parent.state.filters[filterName] === filterValue(segmentId);
-        };
-        vd.deleteParentsSegmentFilter = function() {
-          delete parent.state.filters[filterName];
-        };
-      }
+      vd.hasParent = function() {
+        return that.getParentSide() !== undefined;
+      };
+      vd.parentFilters = function() {
+        return that.getParentSide().state.filters;
+      };
+      vd.filterName = function() {
+        return that.getParentSide().getSegmentationEntry(that).equivalentAttribute.title;
+      };
+      vd.filterValue = function(segmentId) {
+        return 'exists(' + segmentId + ')';
+      };
+      vd.filterParentToSegment = function(segmentId) {
+        vd.parentFilters()[vd.filterName()] = vd.filterValue(segmentId);
+      };
+      vd.isParentFilteredToSegment = function(segmentId) {
+        return vd.parentFilters()[vd.filterName()] === vd.filterValue(segmentId);
+      };
+      vd.deleteParentsSegmentFilter = function() {
+        delete vd.parentFilters()[vd.filterName()];
+      };
+
       this.viewData = vd;
     };
 
@@ -141,10 +141,7 @@ angular.module('biggraph')
       var defaultAxisOptions = {
         logarithmic: false,
       };
-      if (this.state.axisOptions[type][attr] === undefined) {
-        this.state.axisOptions[type][attr] = defaultAxisOptions;
-      }
-      return this.state.axisOptions[type][attr];
+      return this.state.axisOptions[type][attr] || defaultAxisOptions;
     };
 
     Side.prototype.maybeRequestNewCenter = function() {
@@ -447,6 +444,16 @@ angular.module('biggraph')
         var seg = this.project.segmentations[i];
         if (segmentation.project.name === seg.fullName) {
           return seg;
+        }
+      }
+      return undefined;
+    };
+    Side.prototype.getParentSide = function() {
+      for (var i = 0; i < $scope.sides.length; ++i) {
+        var side = $scope.sides[i];
+        if (side === this) { continue; }
+        if (side.getSegmentationEntry(this)) {
+          return side;
         }
       }
       return undefined;

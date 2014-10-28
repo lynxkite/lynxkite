@@ -1,7 +1,7 @@
 <!-- If the data is present. -->
 <span ng-if="ref.string !== undefined">
   <span ng-if="humanized(ref)" class="value human"
-    ng-click="$parent.human = false; $event.preventDefault(); $event.stopPropagation();">
+    ng-click="setHuman(false); $event.preventDefault(); $event.stopPropagation();">
     {{format(ref)}}
   </span>
   <span ng-if="!humanized(ref)" class="value"

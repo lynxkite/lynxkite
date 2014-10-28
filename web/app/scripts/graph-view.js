@@ -9,17 +9,22 @@ angular.module('biggraph').directive('graphView', function(util) {
       scope: { graph: '=', left: '=', right: '=', menu: '=' },
       replace: true,
       link: function(scope, element) {
-        var gv = new GraphView(scope, element);
+        scope.gv = new GraphView(scope, element);
         function updateGraph() {
           if (scope.graph === undefined || !scope.graph.$resolved || !iconsLoaded()) {
-            gv.loading();
+            scope.gv.loading();
           } else if (scope.graph.$error) {
-            gv.error(scope.graph.$error);
+            scope.gv.error(scope.graph.$error);
           } else {
-            gv.update(scope.graph, scope.menu);
+            scope.gv.update(scope.graph, scope.menu);
           }
         }
-        util.deepWatch(scope, 'graph', updateGraph);
+        scope.$watch('graph', updateGraph);
+        scope.$watch('graph.$resolved', updateGraph);
+        // An attribute change can happen without a graph data change. Watch them separately.
+        // (When switching from "color" to "slider", for example.)
+        util.deepWatch(scope, 'left.attrs', updateGraph);
+        util.deepWatch(scope, 'right.attrs', updateGraph);
         // It is possible, especially in testing, that we get the graph data faster than the icons.
         // In this case we delay the drawing until the icons are loaded.
         scope.$on('#svg-icons is loaded', updateGraph);
@@ -86,7 +91,7 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   function GraphView(scope, element) {
     this.scope = scope;
-    this.unwatch = [];  // Watchers to be removed when drawing new graph.
+    this.unregistration = [];  // Cleanup functions to be called before building a new graph.
     this.svg = angular.element(element);
     this.svg.append([
       svg.marker('arrow'),
@@ -114,11 +119,10 @@ angular.module('biggraph').directive('graphView', function(util) {
   GraphView.prototype.clear = function() {
     svg.removeClass(this.svg, 'loading');
     this.root.empty();
-    // Remove old watchers.
-    for (var i = 0; i < this.unwatch.length; ++i) {
-      this.unwatch[i]();
+    for (var i = 0; i < this.unregistration.length; ++i) {
+      this.unregistration[i]();
     }
-    this.unwatch = [];
+    this.unregistration = [];
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
   };
@@ -421,7 +425,7 @@ angular.module('biggraph').directive('graphView', function(util) {
                 },
               });
             }
-            if (side.filterParentToSegment) {
+            if (side.hasParent()) {
               if (side.isParentFilteredToSegment(id)) {
                 actions.push({
                   title: 'Stop filtering base project to this segment',
@@ -543,7 +547,7 @@ angular.module('biggraph').directive('graphView', function(util) {
   };
 
   GraphView.prototype.initSlider = function(vertices) {
-    this.unwatch.push(this.scope.$watch(sliderPos, onSlider));
+    this.unregistration.push(this.scope.$watch(sliderPos, onSlider));
     function sliderPos() {
       return vertices.side.sliderPos;
     }
@@ -605,7 +609,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     };
     vertices.step = function() {
       engine.opts.labelAttraction = parseFloat(vertices.side.animate.labelAttraction);
-      if (vertices.side.animate.enabled && engine.step(vertices)) {
+      if (animating && vertices.side.animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {
         animating = false;
@@ -613,10 +617,13 @@ angular.module('biggraph').directive('graphView', function(util) {
     };
     vertices.animate();
     // Kick off animation when the user manually turns it on.
-    // (This watcher is unregistered when a new graph is loaded.)
-    this.unwatch.push(util.deepWatch(this.scope,
+    var unwatch = util.deepWatch(this.scope,
         function() { return vertices.side.animate; },
-        function() { vertices.animate(); }));
+        function() { vertices.animate(); });
+    this.unregistration.push(function() {
+      unwatch();
+      animating = false;
+    });
   };
 
   GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData) {

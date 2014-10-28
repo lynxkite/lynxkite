@@ -536,6 +536,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     if (!request.calculate && !dataManager.isCalculated(scalar)) {
       throw new FlyingResult(play.api.mvc.Results.NotFound("Value is not calculated yet"))
     }
+    dynamicValue(scalar)
+  }
+
+  private def dynamicValue[T](scalar: Scalar[T]) = {
+    implicit val tt = scalar.typeTag
     graph_operations.DynamicValue.convert(scalar.value)
   }
 }
