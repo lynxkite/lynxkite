@@ -308,4 +308,33 @@ object Aggregator {
     }
     def aggregate(values: Iterable[T]): Vector[T] = values.toVector
   }
+
+  case class Knuth(n: Long, mean: Double, sigma: Double)
+  case class Variance() extends Aggregator[Double, Knuth, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
+    def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Knuth] = {
+      implicit val tt = inputTypeTag
+      typeTag[Knuth]
+    }
+    def zero = Knuth(0, 0, 0)
+    // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Incremental_algorithm
+    def merge(a: Knuth, b: Double) = {
+      val n = a.n + 1
+      val delta = b - a.mean
+      val mean = a.mean + delta / n
+      val sigma = a.sigma + delta * (b - mean)
+      Knuth(n, mean, sigma)
+    }
+    // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
+    // http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+    def combine(a: Knuth, b: Knuth) = {
+      val delta = b.mean - a.mean
+      val n = a.n + b.n
+      val mean = (a.n * a.mean + b.n * b.mean) / n
+      val sigma = a.sigma + b.sigma + (delta * delta * a.n * b.n) / n
+      Knuth(n, mean, sigma)
+    }
+    // variance, we drop count and mean
+    def finalize(a: Knuth) = if (a.n < 2) 0 else a.sigma / (a.n - 1)
+  }
 }

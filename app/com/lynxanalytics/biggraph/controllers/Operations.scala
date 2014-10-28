@@ -1505,9 +1505,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           if (weighted) { // At the moment all weighted aggregators are global.
             UIValue.list(List("ignore", "weighted_sum", "weighted_average", "by_max_weight", "by_min_weight"))
           } else if (needsGlobal) {
-            UIValue.list(List("ignore", "sum", "average", "min", "max", "count", "first"))
+            UIValue.list(List("ignore", "sum", "average", "min", "max", "count", "first", "variance"))
           } else {
-            UIValue.list(List("ignore", "sum", "average", "min", "max", "most_common", "count", "vector"))
+            UIValue.list(List("ignore", "sum", "average", "min", "max", "most_common", "count", "vector", "variance"))
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
@@ -1560,6 +1560,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "average" => AttributeWithAggregator(
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
+      case "variance" => AttributeWithAggregator(
+        attr.runtimeSafeCast[Double], graph_operations.Aggregator.Variance())
     }
   }
   private def attributeWithWeightedAggregator[T](
