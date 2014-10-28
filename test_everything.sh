@@ -6,6 +6,6 @@ mkdir logs || true
 sbt test
 
 cd web
-bower install --silent --offline --config.interactive=false
+bower install --silent --config.interactive=false
 npm install --offline
 grunt jshint

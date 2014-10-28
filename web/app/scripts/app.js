@@ -99,8 +99,12 @@ angular
         $rootScope.$broadcast('topAlert', { message: message, details: details });
       },
       responseToErrorMessage: function(resp) {
-        if (resp.data.error) { return resp.data.error; }
-        if (resp.data) { return resp.data; }
+        if (resp.data) {
+          if (resp.data.error) {
+            return resp.data.error;
+          }
+          return resp.data;
+        }
         return resp.config.url + ' ' + (resp.statusText || 'failed');
       },
     };

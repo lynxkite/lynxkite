@@ -1,0 +1,50 @@
+.graph-sidebar {
+  position: absolute;
+  top: 50%;
+  left: -100px;
+  transition: left 0.2s ease;
+  height: 160px;
+  width: 100px;
+  margin-top: -80px;
+}
+
+.graph-sidebar.active {
+  left: 0;
+}
+
+.graph-sidebar .inside {
+  background: white;
+  text-align: center;
+  border-radius: 0 5px 5px 0;
+  height: 160px;
+}
+
+.graph-sidebar .handle {
+  cursor: pointer;
+  background: white;
+  height: 30px;
+  width: 10px;
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  margin-top: -15px;
+  border-radius: 0 5px 5px 0;
+  border: 1px solid black;
+  border-left: none;
+}
+
+.graph-sidebar label {
+  font-weight: normal;
+}
+
+.graph-sidebar input[type=range] {
+  width: 70px;
+}
+
+.graph-sidebar .filters {
+  margin-top: 5px;
+}
+
+.graph-sidebar button {
+  margin-top: 5px;
+}
