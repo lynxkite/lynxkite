@@ -1345,7 +1345,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val description = """Viral modeling tries to predict unknown values of an attribute based on
         the known values of the attribute on peers that belong to the same segments."""
       def parameters = List(
-        Param("prefix", "Generated name prefix", defaultValue = "viral "),
+        Param("prefix", "Generated name prefix", defaultValue = "viral"),
         Param("target", "Target attribute",
           options = UIValue.list(parentDoubleAttributes)),
         Param("ratio", "Validation set ratio", defaultValue = "0.1"),
