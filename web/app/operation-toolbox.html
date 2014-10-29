@@ -12,7 +12,7 @@
     <div class="list-group">
       <div ng-repeat="op in active.ops" ng-click="clickedOp(op)"
           class="list-group-item operation" ng-class="{ disabled: !op.status.enabled }"
-          tooltip="{{op.status.disabledReason}}"
+          tooltip-html-unsafe="{{op.status.disabledReason || op.description}}"
           tooltip-append-to-body="true" tooltip-placement="left">
         {{op.title}}
       </div>
@@ -24,7 +24,7 @@
       <div ng-repeat="op in allOps | filter: { title: opFilter } | orderBy: 'title'" ng-click="clickedOp(op)"
           class="list-group-item operation"
           ng-class="{ disabled: !op.status.enabled, highlight: $index === searchSelection }"
-          tooltip="{{op.status.disabledReason}}"
+          tooltip-html-unsafe="{{op.status.disabledReason || op.description}}"
           tooltip-append-to-body="true" tooltip-placement="left">
         {{op.title}}
       </div>

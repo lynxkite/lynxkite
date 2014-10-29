@@ -107,6 +107,14 @@ angular
         }
         return resp.config.url + ' ' + (resp.statusText || 'failed');
       },
+      scopeTitle: function(scope, titleExpr) {
+        scope.$watch(titleExpr, function(title) {
+          angular.element('title').html(title);
+        });
+        scope.$on('$destroy', function() {
+          angular.element('title').html('Lynx PizzaKite');
+        });
+      },
     };
     return util;
   })

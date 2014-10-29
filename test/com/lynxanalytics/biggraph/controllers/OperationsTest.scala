@@ -10,7 +10,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
   val project = Project("Test_Project")
-  project.notes = "test project" // Make sure project directory exists.
+  project.notes = "test project"
+  project.checkpointAfter("") // Initialize project.
 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     ops.apply(
@@ -126,7 +127,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(eAttrs("newcomment").rdd.count == 4)
   }
 
-  test("Fingerprinting") {
+  test("Fingerprinting based on attributes") {
     run("Import vertices", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
       "header" -> "id,email,name",
@@ -150,10 +151,10 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "output" -> "name",
       "type" -> "string",
       "expr" -> "name ? name : undefined"))
-    run("Fingerprinting", Map(
+    run("Fingerprinting based on attributes", Map(
       "leftName" -> "email",
       "rightName" -> "name",
-      "weight" -> "no weights",
+      "weights" -> "no weights",
       "mrew" -> "0.0",
       "mo" -> "1",
       "ms" -> "0.5"))
@@ -164,5 +165,39 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.scalars("vertex_count").value == 109)
     run("Merge vertices by attribute", Map("key" -> "name"))
     assert(project.scalars("vertex_count").value == 100)
+  }
+
+  test("Fingerprinting between project and segmentation") {
+    run("Example Graph")
+    val other = Project("ExampleGraph2")
+    project.copy(other)
+    run("Import project as segmentation", Map(
+      "them" -> "ExampleGraph2",
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-example-connections.csv").getFile,
+      "header" -> "src,dst",
+      "delimiter" -> ",",
+      "our-id-attr" -> "name",
+      "our-id-field" -> "src",
+      "their-id-attr" -> "name",
+      "their-id-field" -> "dst"))
+    val seg = project.segmentation("ExampleGraph2").project
+    run("Fingerprinting between project and segmentation", Map(
+      "mrew" -> "0.0",
+      "mo" -> "1",
+      "ms" -> "0.5"),
+      on = seg)
+    run("Aggregate from segmentation",
+      Map("prefix" -> "seg", "aggregate-age" -> "average"),
+      on = seg)
+    val newAge = project.vertexAttributes("seg_age_average")
+      .runtimeSafeCast[Double].rdd.collect.toSeq.sorted
+    // Two mappings.
+    assert(newAge == Seq(0 -> 20.3, 1 -> 18.2))
+    val oldAge = project.vertexAttributes("age")
+      .runtimeSafeCast[Double].rdd.collect.toMap
+    // They map Adam to Adam, Eve to Eve.
+    for ((k, v) <- newAge) {
+      assert(v == oldAge(k))
+    }
   }
 }
