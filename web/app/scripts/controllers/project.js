@@ -28,6 +28,7 @@ angular.module('biggraph')
       combo: 'r x', description: 'Close graph (right)',
       callback: function() { $scope.right.state.graphMode = undefined; } });
     $scope.util = util;
+    util.scopeTitle($scope, 'left.shortName()');
 
     function defaultSideState() {
       return {
