@@ -257,7 +257,8 @@ object Aggregator {
   case class Average() extends CompoundDoubleAggregator[Double] {
     val agg1 = Count[Double]()
     val agg2 = Sum()
-    def compound(count: Double, sum: Double) = sum / count
+    def compound(count: Double, sum: Double) =
+      if (count != 0) sum / count else 0
   }
 
   case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
@@ -270,7 +271,8 @@ object Aggregator {
   case class WeightedAverage() extends CompoundDoubleAggregator[(Double, Double)] {
     val agg1 = SumOfWeights[Double]()
     val agg2 = WeightedSum()
-    def compound(weights: Double, weightedSum: Double) = weightedSum / weights
+    def compound(weights: Double, weightedSum: Double) =
+      if (weights != 0) weightedSum / weights else 0
   }
 
   case class MostCommon[T]() extends LocalAggregator[T, T] {
