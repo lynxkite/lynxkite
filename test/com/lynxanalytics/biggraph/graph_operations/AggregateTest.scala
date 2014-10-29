@@ -52,4 +52,36 @@ class AggregateTest extends FunSuite with TestGraphOp {
     val res = op(op.edges, g.edges)(op.eattr, g.weight).result.srcAttr
     assert(res.rdd.collect.toMap == Map(0 -> 1.0, 1 -> 2.0, 2 -> 7.0))
   }
+  test("standard deviation - constant") {
+    val example = ExampleGraph()().result
+    val attr = {
+      val op = AddConstantDoubleAttribute(100.0)
+      op(op.vs, example.vertices).result.attr
+    }
+    val devConst = {
+      val op = AggregateAttributeToScalar(Aggregator.Variance())
+      op(op.attr, attr).result.aggregated.value
+    }
+    assert(devConst == 0.0)
+  }
+  test("standard deviation - combine partitions") {
+    val g = SmallTestGraph(
+      Map(1 -> Seq(1), 2 -> Seq(1, 2), 3 -> Seq(1, 2, 3), 4 -> Seq(1, 2, 3, 4)),
+      numPartitions = 2).result
+    val attr = {
+      val op = OutDegree()
+      op(op.es, g.es).result.outDegree
+    }
+    val devWeight = {
+      val op = AggregateAttributeToScalar(Aggregator.Variance())
+      op(op.attr, attr).result.aggregated.value
+    }
+    assert(devWeight == {
+      val n = 4
+      val mean = (1.0 + 2.0 + 3.0 + 4.0) / n
+      val devs = List(Math.abs(mean - 1), Math.abs(mean - 2), Math.abs(mean - 3), Math.abs(mean - 4))
+      val variance = devs.map(Math.pow(_, 2)).reduce(_ + _) / (n - 1) // for sample variance
+      Math.sqrt(variance)
+    })
+  }
 }

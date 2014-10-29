@@ -67,7 +67,7 @@ object SmallTestGraph {
     val (vs, es) = graph
   }
 }
-case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
+case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
     extends TypedMetaGraphOp[NoInput, SmallTestGraph.Output] {
   import SmallTestGraph._
   @transient override lazy val inputs = new NoInput()
@@ -75,10 +75,13 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
+    val p =
+      if (numPartitions == 1) rc.onePartitionPartitioner
+      else new spark.HashPartitioner(numPartitions)
     output(
       o.vs,
       sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))
-        .toSortedRDD(rc.onePartitionPartitioner))
+        .toSortedRDD(p))
 
     val nodePairs = edgeLists.toSeq.flatMap {
       case (i, es) => es.map(e => i -> e)
@@ -88,7 +91,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]])
       sc.parallelize(nodePairs.zipWithIndex.map {
         case ((a, b), i) => i.toLong -> Edge(a, b)
       })
-        .toSortedRDD(rc.onePartitionPartitioner))
+        .toSortedRDD(p))
   }
 }
 
