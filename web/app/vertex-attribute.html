@@ -61,7 +61,7 @@
 </histogram-button>
 <copy-box ng-show="histogram" description="Copy&nbsp;histogram to&nbsp;clipboard" data="{{histogramTSV}}"></copy-box>
 <label ng-show="showLogCheckbox()">
-  <input type="checkbox" ng-model="logarithmic" ng-model-options="{ getterSetter: true }"> logarithmic
+  <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
 </label>
 
 <span class="type-name">{{attr.typeName}}</span>
