@@ -17,7 +17,8 @@
 </histogram-button>
 <copy-box ng-show="histogram" description="Histogram as TSV" data="{{histogramTSV}}"></copy-box>
 <label ng-show="histogram && attr.isNumeric">
-  <input type="checkbox" ng-model="logarithmic" ng-model-options="{ getterSetter: true }"> logarithmic
+  <input type="checkbox" ng-model="logarithmic"> logarithmic
+  <axis-option side="side" type="edge" attr="{{attr.title}}" field="logarithmic" value="logarithmic"></axis-option>
 </label>
 
 <span class="type-name">{{attr.typeName}}</span>
