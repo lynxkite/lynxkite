@@ -1393,6 +1393,48 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new SegmentationOperation(_) {
+    val title = "Copy vertex attributes from segmentation"
+    val description =
+      "Copies all vertex attributes from the segmentation to the parent."
+    def parameters = List(
+      Param("prefix", "Attribute name prefix", defaultValue = seg.name))
+    def enabled =
+      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
+        FEStatus.assert(parent.vertexSet != null, s"No vertices on $parent") &&
+        FEStatus.assert(seg.belongsTo.properties.isFunction,
+          s"Vertices of $parent are not guaranteed to have only one edge to this segmentation")
+    def apply(params: Map[String, String]): Unit = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- project.vertexAttributes.toMap) {
+        parent.vertexAttributes(prefix + name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, seg.belongsTo)
+      }
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Copy vertex attributes to segmentation"
+    val description =
+      "Copies all vertex attributes from the parent to the segmentation."
+    def parameters = List(
+      Param("prefix", "Attribute name prefix"))
+    def enabled =
+      hasVertexSet &&
+        FEStatus.assert(parent.vertexAttributes.size > 0, "No vertex attributes on $parent") &&
+        FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
+          s"Vertices of this segmentation are not guaranteed to have only one edge from $parent")
+    def apply(params: Map[String, String]): Unit = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- parent.vertexAttributes.toMap) {
+        project.vertexAttributes(prefix + name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, seg.belongsTo)
+      }
+    }
+  })
+
+  register(new SegmentationOperation(_) {
     val title = "Fingerprinting between project and segmentation"
     val description =
       """Finds the best match out of the potential matches that are defined between a project and
