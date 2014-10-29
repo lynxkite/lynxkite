@@ -346,10 +346,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, cedges).result
       }
 
-      val weightedVertexToClique =
-        graph_operations.AddConstantAttribute.run(cliquesResult.belongsTo.asVertexSet, 1.0)
-      val weightedCliqueToCommunity =
-        graph_operations.AddConstantAttribute.run(ccResult.belongsTo.asVertexSet, 1.0)
+      val weightedVertexToClique = const(cliquesResult.belongsTo)
+      val weightedCliqueToCommunity = const(ccResult.belongsTo)
 
       val vertexToCommunity = {
         val op = graph_operations.ConcatenateBundles()
@@ -413,8 +411,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val res = {
         if (params("type") == "Double") {
-          val d = params("value").toDouble
-          graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, d)
+          const(project.edgeBundle, params("value").toDouble)
         } else {
           graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, params("value"))
         }
@@ -1335,7 +1332,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new VertexOperation(_) {
-    val title = "Fingerprinting"
+    val title = "Fingerprinting based on attributes"
     val description =
       """In a graph that has two different string identifier attributes (e.g. Facebook ID and
       MSISDN) this operation will match the vertices that only have the first attribute defined
@@ -1349,7 +1346,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val parameters = List(
       Param("leftName", "First ID attribute", options = vertexAttributes[String]),
       Param("rightName", "Second ID attribute", options = vertexAttributes[String]),
-      Param("weight", "Edge weights",
+      Param("weights", "Edge weights",
         options = UIValue("no weights", "no weights") +: edgeAttributes[Double]),
       Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
       Param("mo", "Minimum overlap", defaultValue = "1"),
@@ -1364,10 +1361,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(mo >= 1, "Minimum overlap cannot be less than 1.")
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
-      val weight = if (params("weight") == "no weights") {
-        graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, 1.0)
+      val weights = if (params("weights") == "no weights") {
+        const(project.edgeBundle)
       } else {
-        project.edgeAttributes(params("weight")).runtimeSafeCast[Double]
+        project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       }
 
       // TODO: Calculate relative edge weight, filter the edge bundle and pull over the weights.
@@ -1380,7 +1377,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       val matching = {
         val op = graph_operations.Fingerprinting(mo, ms)
-        op(op.es, project.edgeBundle)(op.weight, weight)(op.candidates, candidates)
+        op(
+          op.leftEdges, project.edgeBundle)(
+            op.leftEdgeWeights, weights)(
+              op.rightEdges, project.edgeBundle)(
+                op.rightEdgeWeights, weights)(
+                  op.candidates, candidates)
           .result.matching
       }
       val newLeftName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
@@ -1391,6 +1393,53 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.scalars("fingerprinting matches found") = count(matching)
       project.vertexAttributes(params("leftName")) = unifyAttribute(newLeftName, leftName)
       project.vertexAttributes(params("rightName")) = unifyAttribute(newRightName, rightName)
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Fingerprinting between project and segmentation"
+    val description =
+      """Finds the best match out of the potential matches that are defined between a project and
+      a segmentation. The best match is chosen by comparing the vertex neighborhoods in the project
+      and the segmentation.
+
+      <p>The result of this operation is an updated edge set between the project and the
+      segmentation, that is a one-to-one matching.
+
+      <p>Example use-case: Project M is an MSISDN graph based on call data. Project F is a Facebook
+      graph. A CSV file contains a number of MSISDN -> Facebook ID mappings, a many-to-many
+      relationship. Connect the two projects with "Import project as segmentation", then use this
+      operation to turn the mapping into a high-quality one-to-one relationship.
+      """
+    val parameters = List(
+      Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
+      Param("mo", "Minimum overlap", defaultValue = "1"),
+      Param("ms", "Minimum similarity", defaultValue = "0.5"))
+    def enabled =
+      hasEdgeBundle && FEStatus.assert(parent.edgeBundle != null, s"No edges on $parent")
+    def apply(params: Map[String, String]): Unit = {
+      val mrew = params("mrew").toDouble
+      val mo = params("mo").toInt
+      val ms = params("ms").toDouble
+
+      // TODO: Calculate relative edge weight, filter the edge bundle and pull over the weights.
+      assert(mrew == 0, "Minimum relative edge weight is not implemented yet.")
+
+      val candidates = seg.belongsTo
+      val segNeighborsInParent = concat(project.edgeBundle, reverse(seg.belongsTo))
+      val matching = {
+        val op = graph_operations.Fingerprinting(mo, ms)
+        op(
+          op.leftEdges, parent.edgeBundle)(
+            op.leftEdgeWeights, const(parent.edgeBundle))(
+              op.rightEdges, segNeighborsInParent)(
+                op.rightEdgeWeights, const(segNeighborsInParent))(
+                  op.candidates, candidates)
+          .result.matching
+      }
+
+      project.scalars("fingerprinting matches found") = count(matching)
+      seg.belongsTo = matching
     }
   })
 
@@ -1763,6 +1812,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def concat(eb1: EdgeBundle, eb2: EdgeBundle): EdgeBundle = {
     new graph_util.BundleChain(Seq(eb1, eb2)).getCompositeEdgeBundle._1
+  }
+
+  def const(eb: EdgeBundle, value: Double = 1.0): VertexAttribute[Double] = {
+    graph_operations.AddConstantAttribute.run(eb.asVertexSet, value)
   }
 
   def newScalar(data: String): Scalar[String] = {
