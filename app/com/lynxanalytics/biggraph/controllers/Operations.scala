@@ -1412,10 +1412,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("prefix", "Generated name prefix", defaultValue = "viral"),
       Param("target", "Target attribute",
         options = UIValue.list(parentDoubleAttributes)),
-      Param("ratio", "Validation set ratio", defaultValue = "0.1"),
-      Param("variance", "Maximal segment variance"),
+      Param("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
+      Param("max_variance", "Maximal segment variance", defaultValue = "1.0"),
       Param("seed", "Seed", defaultValue = "0"),
-      Param("iterations", "Max iterations", defaultValue = "3"))
+      Param("iterations", "Iterations", defaultValue = "3"))
     def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
     def enabled = hasVertexSet &&
       FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
@@ -1424,7 +1424,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       // partition target attribute to test and train sets
       val target = parent.vertexAttributes(params("target")).runtimeSafeCast[Double]
       val roles = {
-        val op = graph_operations.CreateRole(params("ratio").toDouble, params("seed").toInt)
+        val op = graph_operations.CreateRole(params("test_set_ratio").toDouble, params("seed").toInt)
         op(op.vertices, target.vertexSet).result.role
       }
       val parted = {
@@ -1437,7 +1437,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       var train = parted.train.entity
       val segSizes = computeSegmentSizes(seg)
       project.vertexAttributes("size") = segSizes
-      val maxVariance = params("variance")
+      val maxVariance = params("max_variance")
 
       val coverage = {
         val op = graph_operations.CountAttributes[Double]()
@@ -1492,34 +1492,33 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.vertexAttributes(s"$prefix variance on iteration $i") = segVariance
         project.vertexAttributes(s"$prefix average on iteration $i") = segTargetAvg // TODO: use median
         val predicted = {
-          // TODO: this just picks randomly one of the lowest variance ones
           aggregateViaConnection(
             reverse(seg.belongsTo),
             attributeWithWeightedAggregator(segWeight, segTargetAvg, "by_min_weight"))
             .runtimeSafeCast[Double]
         }
         train = unifyAttributeT(train, predicted)
+        val partedPred = {
+          val op = graph_operations.PartitionAttribute[Double]()
+          op(op.attr, train)(op.role, roles).result
+        }
         val error = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript("Math.abs(test - train)"), Seq("test", "train"), Seq(), Seq())
-          val mae = op(op.numAttrs, Seq(parted.test.entity, train)).result.attr
+            JavaScript("Math.abs(test - pred)"), Seq("test", "pred"), Seq(), Seq())
+          val mae = op(op.numAttrs, Seq(parted.test.entity, partedPred.test.entity)).result.attr
           aggregate(attributeWithAggregator(mae, "average"))
-        }
-        val trainPure = {
-          val op = graph_operations.DeriveJSDouble(
-            JavaScript("roles === 'train' ? train : undefined"),
-            Seq("train"), Seq("roles"), Seq())
-          op(op.numAttrs, Seq(train))(op.strAttrs, Seq(roles.entity)).result.attr
         }
         val coverage = {
           val op = graph_operations.CountAttributes[Double]()
-          op(op.attribute, trainPure).result.count
+          op(op.attribute, partedPred.train).result.count
         }
         // the attribute we use for iteration can be defined on the test set as well
         parent.vertexAttributes(s"$prefix train on iteration $i") = train
         parent.scalars(s"$prefix coverage on iteration $i") = coverage
-        parent.scalars(s"$prefix mean absolute error on iteration $i") = error
+        parent.scalars(s"$prefix mean absolute prediction error on iteration $i") = error
       }
+      // TODO: in the end we should calculate with the fact that the real error for
+      // the test set is 0.0
     }
   })
 
