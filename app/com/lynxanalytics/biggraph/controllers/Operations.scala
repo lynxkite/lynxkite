@@ -1610,7 +1610,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
       case "std_deviation" => AttributeWithAggregator(
-        attr.runtimeSafeCast[Double], graph_operations.Aggregator.Variance())
+        attr.runtimeSafeCast[Double], graph_operations.Aggregator.StdDev())
     }
   }
   private def attributeWithWeightedAggregator[T](
