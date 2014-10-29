@@ -12,21 +12,22 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 // based on the network structure.
 object Fingerprinting {
   class Input extends MagicInputSignature {
-    val src = vertexSet
-    val dst = vertexSet
-    val candidates = edgeBundle(src, dst)
-    val vs = vertexSet
-    val srcEdgeIDs = vertexSet
-    val dstEdgeIDs = vertexSet
-    val srcEdges = edgeBundle(src, vs, idSet = srcEdgeIDs)
-    val dstEdges = edgeBundle(dst, vs, idSet = dstEdgeIDs)
-    val srcEdgeWeights = vertexAttribute[Double](srcEdgeIDs)
-    val dstEdgeWeights = vertexAttribute[Double](dstEdgeIDs)
+    val left = vertexSet
+    val right = vertexSet
+    val candidates = edgeBundle(left, right)
+    val target = vertexSet
+    val leftEdgeIDs = vertexSet
+    val rightEdgeIDs = vertexSet
+    val leftEdges = edgeBundle(left, target, idSet = leftEdgeIDs)
+    val rightEdges = edgeBundle(right, target, idSet = rightEdgeIDs)
+    val leftEdgeWeights = vertexAttribute[Double](leftEdgeIDs)
+    val rightEdgeWeights = vertexAttribute[Double](rightEdgeIDs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
     // A subset of "candidates", which make up a strong matching.
-    val matching = edgeBundle(inputs.src.entity, inputs.dst.entity, EdgeBundleProperties.matching)
+    val matching = edgeBundle(
+      inputs.left.entity, inputs.right.entity, EdgeBundleProperties.matching)
   }
 }
 case class Fingerprinting(
@@ -43,7 +44,7 @@ case class Fingerprinting(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val vertexPartitioner = inputs.vs.rdd.partitioner.get
+    val vertexPartitioner = inputs.target.rdd.partitioner.get
 
     // These are the two sides we are trying to connect.
     val lefts = inputs.candidates.rdd
@@ -75,10 +76,10 @@ case class Fingerprinting(
     val candidates = inputs.candidates.rdd
       .map { case (_, e) => (e.dst, e.src) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors(inputs.dstEdges.rdd, inputs.dstEdgeWeights.rdd))
+      .sortedJoin(outNeighbors(inputs.rightEdges.rdd, inputs.rightEdgeWeights.rdd))
       .map { case (rightID, (leftID, rightNeighbors)) => (leftID, (rightID, rightNeighbors)) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors(inputs.srcEdges.rdd, inputs.srcEdgeWeights.rdd))
+      .sortedJoin(outNeighbors(inputs.leftEdges.rdd, inputs.leftEdgeWeights.rdd))
       .map {
         case (leftID, ((rightID, rightNeighbors), leftNeighbors)) =>
           (leftID, leftNeighbors, rightID, rightNeighbors)
