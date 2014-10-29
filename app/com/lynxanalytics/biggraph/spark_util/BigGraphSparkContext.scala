@@ -70,6 +70,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[collection.mutable.Map$WithDefault])
     kryo.register(classOf[collection.mutable.Map$$anonfun$withDefaultValue$1])
     kryo.register(classOf[spark_util.IDBuckets[_]])
+    kryo.register(classOf[graph_operations.Stats])
+    kryo.register(classOf[Array[graph_operations.Stats]])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
