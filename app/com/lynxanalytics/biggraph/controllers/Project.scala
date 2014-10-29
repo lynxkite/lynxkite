@@ -97,13 +97,18 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     checkpoints = c
   }
   def reloadCurrentCheckpoint(): Unit = manager.synchronized {
-    // checkpoints and checkpointIndex are not restored, but copied over from the current state.
-    val c = checkpoints
-    val i = checkpointIndex
-    assert(c.nonEmpty, "No checkpoints.")
-    cp(c(i), path)
-    checkpointIndex = i
-    checkpoints = c
+    if (isSegmentation) {
+      val name = asSegmentation.name
+      asSegmentation.parent.reloadCurrentCheckpoint()
+    } else {
+      // checkpoints and checkpointIndex are not restored, but copied over from the current state.
+      val c = checkpoints
+      val i = checkpointIndex
+      assert(c.nonEmpty, "No checkpoints.")
+      cp(c(i), path)
+      checkpointIndex = i
+      checkpoints = c
+    }
   }
 
   def discardCheckpoints(): Unit = manager.synchronized {

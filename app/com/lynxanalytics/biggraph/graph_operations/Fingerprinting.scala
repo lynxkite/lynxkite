@@ -12,16 +12,22 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 // based on the network structure.
 object Fingerprinting {
   class Input extends MagicInputSignature {
-    val vs = vertexSet
-    val edgeIds = vertexSet
-    val es = edgeBundle(vs, vs, idSet = edgeIds)
-    val weight = vertexAttribute[Double](edgeIds)
-    val candidates = edgeBundle(vs, vs)
+    val left = vertexSet
+    val right = vertexSet
+    val candidates = edgeBundle(left, right)
+    val target = vertexSet
+    val leftEdgeIDs = vertexSet
+    val rightEdgeIDs = vertexSet
+    val leftEdges = edgeBundle(left, target, idSet = leftEdgeIDs)
+    val rightEdges = edgeBundle(right, target, idSet = rightEdgeIDs)
+    val leftEdgeWeights = vertexAttribute[Double](leftEdgeIDs)
+    val rightEdgeWeights = vertexAttribute[Double](rightEdgeIDs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
     // A subset of "candidates", which make up a strong matching.
-    val matching = edgeBundle(inputs.vs.entity, inputs.vs.entity, EdgeBundleProperties.matching)
+    val matching = edgeBundle(
+      inputs.left.entity, inputs.right.entity, EdgeBundleProperties.matching)
   }
 }
 case class Fingerprinting(
@@ -38,7 +44,7 @@ case class Fingerprinting(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val vertexPartitioner = inputs.vs.rdd.partitioner.get
+    val vertexPartitioner = inputs.target.rdd.partitioner.get
 
     // These are the two sides we are trying to connect.
     val lefts = inputs.candidates.rdd
@@ -50,24 +56,30 @@ case class Fingerprinting(
       .toSortedRDD(vertexPartitioner)
       .distinct
 
+    // Returns an RDD that maps each source vertex of "es" to a list of their neigbors.
+    // With each neighbor the edge weight and the neighbor's in-degree are also included.
+    def outNeighbors(
+      es: EdgeBundleRDD,
+      weights: AttributeRDD[Double]): AttributeRDD[Iterable[(ID, (Double, Double))]] = {
+      val weightedEdges = es.sortedJoin(weights)
+      val inDegrees = weightedEdges
+        .map { case (_, (e, w)) => e.dst -> w }
+        .reduceBySortedKey(vertexPartitioner, _ + _)
+      weightedEdges
+        .map { case (_, (e, w)) => e.dst -> (w, e.src) }
+        .join(inDegrees)
+        .map { case (dst, ((w, src), dstInDegree)) => src -> (dst, (w, dstInDegree)) }
+        .groupBySortedKey(vertexPartitioner)
+    }
+
     // Get the list of neighbors and their degrees for all candidates pairs.
-    val edges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
-    val weightedEdges = edges.sortedJoin(inputs.weight.rdd)
-    val inDegrees = weightedEdges
-      .map { case (_, (e, w)) => e.dst -> w }
-      .reduceBySortedKey(vertexPartitioner, _ + _)
-    val outNeighbors = weightedEdges
-      .map { case (_, (e, w)) => e.dst -> (w, e.src) }
-      .join(inDegrees)
-      .map { case (dst, ((w, src), dstInDegree)) => src -> (dst, (w, dstInDegree)) }
-      .groupBySortedKey(vertexPartitioner)
     val candidates = inputs.candidates.rdd
       .map { case (_, e) => (e.dst, e.src) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors)
+      .sortedJoin(outNeighbors(inputs.rightEdges.rdd, inputs.rightEdgeWeights.rdd))
       .map { case (rightID, (leftID, rightNeighbors)) => (leftID, (rightID, rightNeighbors)) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors)
+      .sortedJoin(outNeighbors(inputs.leftEdges.rdd, inputs.leftEdgeWeights.rdd))
       .map {
         case (leftID, ((rightID, rightNeighbors), leftNeighbors)) =>
           (leftID, leftNeighbors, rightID, rightNeighbors)
