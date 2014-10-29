@@ -309,7 +309,7 @@ object Aggregator {
     def aggregate(values: Iterable[T]): Vector[T] = values.toVector
   }
 
-  case class Variance() extends Aggregator[Double, Stats, Double] {
+  case class StdDev() extends Aggregator[Double, Stats, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Stats] = {
       implicit val tt = inputTypeTag
