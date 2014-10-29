@@ -240,9 +240,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val idAttr = project.vertexAttributes(params("id-attr")).runtimeSafeCast[String]
       val op = graph_operations.ImportAttributesForExistingVertexSet(csv, params("id-field"))
       val res = op(op.idAttr, idAttr).result
-      res.attrs.foreach {
-        case (name, attr) =>
-          project.vertexAttributes(params("prefix") + name) = attr
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- res.attrs) {
+        project.vertexAttributes(prefix + name) = attr
       }
     }
   })
