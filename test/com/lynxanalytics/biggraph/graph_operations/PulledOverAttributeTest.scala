@@ -14,7 +14,7 @@ object FakePull {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val pull = edgeBundle(inputs.vs.entity, inputs.vs.entity, EdgeBundleProperties.injection)
+    val pull = edgeBundle(inputs.vs.entity, inputs.vs.entity, EdgeBundleProperties.partialFunction)
   }
 }
 case class FakePull() extends TypedMetaGraphOp[FakePull.Input, FakePull.Output] {
@@ -45,7 +45,7 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
 
     val pop = PulledOverVertexAttribute[String]()
     val pulledAttr =
-      pop(pop.injection, fopRes.identity)(pop.originalAttr, g.name).result.pulledAttr
+      pop(pop.function, fopRes.identity)(pop.originalAttr, g.name).result.pulledAttr
 
     assert(pulledAttr.rdd.collect.toMap == Map(0l -> "Adam", 1 -> "Eve", 2 -> "Bob"))
   }
@@ -57,17 +57,17 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
     val fopRes = fop(fop.vs, g.vertices).result
 
     val pop = PulledOverVertexAttribute[String]()
-    val pulledAttr = pop(pop.injection, fopRes.pull)(pop.originalAttr, g.name).result.pulledAttr
+    val pulledAttr = pop(pop.function, fopRes.pull)(pop.originalAttr, g.name).result.pulledAttr
 
     assert(pulledAttr.rdd.collect.toMap ==
       Map(0l -> "Eve", 1 -> "Bob", 2 -> "Adam", 3 -> "Isolated Joe"))
   }
 
-  test("fails if bundle is not an injection") {
+  test("fails if bundle is not a partial function") {
     val g = ExampleGraph()().result
     val pop = PulledOverVertexAttribute[String]()
     intercept[AssertionError] {
-      pop(pop.injection, g.edges)
+      pop(pop.function, g.edges)
     }
   }
 }
