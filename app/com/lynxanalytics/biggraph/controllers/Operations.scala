@@ -1400,13 +1400,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       and the segmentation.
 
       <p>The result of this operation is an updated edge set between the project and the
-      segmentation, that only includes the matched connections.
+      segmentation, that is a one-to-one matching.
 
       <p>Example use-case: Project M is an MSISDN graph based on call data. Project F is a Facebook
       graph. A CSV file contains a number of MSISDN -> Facebook ID mappings, a many-to-many
       relationship. Connect the two projects with "Import project as segmentation", then use this
-      operation to turn the mapping into a high-quality one-to-one relationship. Export the new
-      relationship with "Export segmentation to CSV".
+      operation to turn the mapping into a high-quality one-to-one relationship.
       """
     val parameters = List(
       Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
