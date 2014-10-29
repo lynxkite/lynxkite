@@ -1374,10 +1374,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val matching = {
         val op = graph_operations.Fingerprinting(mo, ms)
         op(
-          op.srcEdges, project.edgeBundle)(
-            op.dstEdges, project.edgeBundle)(
-              op.srcEdgeWeights, weights)(
-                op.dstEdgeWeights, weights)(
+          op.leftEdges, project.edgeBundle)(
+            op.leftEdgeWeights, weights)(
+              op.rightEdges, project.edgeBundle)(
+                op.rightEdgeWeights, weights)(
                   op.candidates, candidates)
           .result.matching
       }
@@ -1427,10 +1427,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val matching = {
         val op = graph_operations.Fingerprinting(mo, ms)
         op(
-          op.srcEdges, parent.edgeBundle)(
-            op.srcEdgeWeights, const(parent.edgeBundle))(
-              op.dstEdges, segNeighborsInParent)(
-                op.dstEdgeWeights, const(segNeighborsInParent))(
+          op.leftEdges, parent.edgeBundle)(
+            op.leftEdgeWeights, const(parent.edgeBundle))(
+              op.rightEdges, segNeighborsInParent)(
+                op.rightEdgeWeights, const(segNeighborsInParent))(
                   op.candidates, candidates)
           .result.matching
       }

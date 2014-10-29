@@ -51,10 +51,10 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
     val fingerprinting = {
       val op = Fingerprinting(1, 0)
       op(
-        op.srcEdges, graph.es)(
-          op.dstEdges, graph.es)(
-            op.srcEdgeWeights, weights)(
-              op.dstEdgeWeights, weights)(
+        op.leftEdges, graph.es)(
+          op.leftEdgeWeights, weights)(
+            op.rightEdges, graph.es)(
+              op.rightEdgeWeights, weights)(
                 op.candidates, candidates).result
     }
     fingerprinting.matching.toPairSeq.map { case (l, r) => (l.toInt, r.toInt) }
