@@ -65,7 +65,7 @@ case class EdgesFromBipartiteAttributeMatches[T]() extends TypedMetaGraphOp[Edge
     val fromByAttr = inputs.fromAttr.rdd
       .map { case (id, attr) => (attr, id) }
       .groupByKey(partitioner)
-    val toByAttr = inputs.fromAttr.rdd
+    val toByAttr = inputs.toAttr.rdd
       .map { case (id, attr) => (attr, id) }
       .groupByKey(partitioner)
     val edges = fromByAttr.join(toByAttr).flatMap {
