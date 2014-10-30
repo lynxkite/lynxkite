@@ -242,9 +242,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val idAttr = project.vertexAttributes(params("id-attr")).runtimeSafeCast[String]
       val op = graph_operations.ImportAttributesForExistingVertexSet(csv, params("id-field"))
       val res = op(op.idAttr, idAttr).result
-      res.attrs.foreach {
-        case (name, attr) =>
-          project.vertexAttributes(params("prefix") + name) = attr
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- res.attrs) {
+        project.vertexAttributes(prefix + name) = attr
       }
     }
   })
@@ -1393,6 +1393,48 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.scalars("fingerprinting matches found") = count(matching)
       project.vertexAttributes(params("leftName")) = unifyAttribute(newLeftName, leftName)
       project.vertexAttributes(params("rightName")) = unifyAttribute(newRightName, rightName)
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Copy vertex attributes from segmentation"
+    val description =
+      "Copies all vertex attributes from the segmentation to the parent."
+    def parameters = List(
+      Param("prefix", "Attribute name prefix", defaultValue = seg.name))
+    def enabled =
+      FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
+        FEStatus.assert(parent.vertexSet != null, s"No vertices on $parent") &&
+        FEStatus.assert(seg.belongsTo.properties.isFunction,
+          s"Vertices of $parent are not guaranteed to have only one edge to this segmentation")
+    def apply(params: Map[String, String]): Unit = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- project.vertexAttributes.toMap) {
+        parent.vertexAttributes(prefix + name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, seg.belongsTo)
+      }
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Copy vertex attributes to segmentation"
+    val description =
+      "Copies all vertex attributes from the parent to the segmentation."
+    def parameters = List(
+      Param("prefix", "Attribute name prefix"))
+    def enabled =
+      hasVertexSet &&
+        FEStatus.assert(parent.vertexAttributes.size > 0, "No vertex attributes on $parent") &&
+        FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
+          s"Vertices of this segmentation are not guaranteed to have only one edge from $parent")
+    def apply(params: Map[String, String]): Unit = {
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- parent.vertexAttributes.toMap) {
+        project.vertexAttributes(prefix + name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, reverse(seg.belongsTo))
+      }
     }
   })
 

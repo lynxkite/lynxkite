@@ -9,7 +9,7 @@ object PulledOverVertexAttribute {
   class Input[T] extends MagicInputSignature {
     val originalVS = vertexSet
     val destinationVS = vertexSet
-    val injection = edgeBundle(destinationVS, originalVS, EdgeBundleProperties.matching)
+    val function = edgeBundle(destinationVS, originalVS, EdgeBundleProperties.partialFunction)
     val originalAttr = vertexAttribute[T](originalVS)
   }
   class Output[T](implicit instance: MetaGraphOperationInstance,
@@ -18,11 +18,11 @@ object PulledOverVertexAttribute {
     val pulledAttr = vertexAttribute[T](inputs.destinationVS.entity)
   }
   def pullAttributeVia[T](
-    originalAttr: VertexAttribute[T], injection: EdgeBundle)(
+    originalAttr: VertexAttribute[T], function: EdgeBundle)(
       implicit metaManager: MetaGraphManager): VertexAttribute[T] = {
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     val pop = PulledOverVertexAttribute[T]()
-    pop(pop.originalAttr, originalAttr)(pop.injection, injection).result.pulledAttr
+    pop(pop.originalAttr, originalAttr)(pop.function, function).result.pulledAttr
   }
 }
 case class PulledOverVertexAttribute[T]()
@@ -38,20 +38,20 @@ case class PulledOverVertexAttribute[T]()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val injectionEntity = inputs.injection.meta
-    val injection = inputs.injection.rdd
+    val functionEntity = inputs.function.meta
+    val function = inputs.function.rdd
     val originalAttr = inputs.originalAttr.rdd
     val pulledAttr =
-      if (injectionEntity.properties.isIdentity) {
-        originalAttr.sortedJoin(injection).mapValues { case (value, edge) => value }
+      if (functionEntity.properties.isIdentity) {
+        originalAttr.sortedJoin(function).mapValues { case (value, edge) => value }
       } else {
         val destinationVS = inputs.destinationVS.rdd
-        val originalToDestinationID = injection
+        val originalToDestinationID = function
           .map { case (id, edge) => (edge.dst, edge.src) }
           .toSortedRDD(destinationVS.partitioner.get)
         implicit val ct = inputs.originalAttr.meta.classTag
-        originalAttr.sortedJoin(originalToDestinationID)
-          .map { case (originalID, (value, destinationID)) => (destinationID, value) }
+        originalToDestinationID.sortedJoin(originalAttr)
+          .values
           .toSortedRDD(destinationVS.partitioner.get)
       }
     output(o.pulledAttr, pulledAttr)
