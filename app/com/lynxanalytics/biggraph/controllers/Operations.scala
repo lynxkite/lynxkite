@@ -1504,7 +1504,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("target", "Target attribute",
         options = UIValue.list(parentDoubleAttributes)),
       Param("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
-      Param("max_variance", "Maximal segment variance", defaultValue = "1.0"),
+      Param("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
       Param("seed", "Seed", defaultValue = "0"),
       Param("iterations", "Iterations", defaultValue = "3"))
     def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
@@ -1528,7 +1528,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       var train = parted.train.entity
       val segSizes = computeSegmentSizes(seg)
       project.vertexAttributes("size") = segSizes
-      val maxVariance = params("max_variance")
+      val maxDeviation = params("max_deviation")
 
       val coverage = {
         val op = graph_operations.CountAttributes[Double]()
@@ -1545,16 +1545,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             attributeWithLocalAggregator(train, "average"))
             .runtimeSafeCast[Double]
         }
-        val segTargetMin = {
+        val segStdDev = {
           aggregateViaConnection(
             seg.belongsTo,
-            attributeWithLocalAggregator(train, "min"))
-            .runtimeSafeCast[Double]
-        }
-        val segTargetMax = {
-          aggregateViaConnection(
-            seg.belongsTo,
-            attributeWithLocalAggregator(train, "max"))
+            attributeWithLocalAggregator(train, "std_deviation"))
             .runtimeSafeCast[Double]
         }
         val segTargetCount = {
@@ -1563,24 +1557,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             attributeWithLocalAggregator(train, "count"))
             .runtimeSafeCast[Double]
         }
-        val segVariance = {
-          // TODO: use median and dispersion to calculate homogeneity (Knuth)
-          val op = graph_operations.DeriveJSDouble(
-            JavaScript("Math.max(Math.abs(max - avg), Math.abs(min - avg))"),
-            Seq("min", "max", "avg"), Seq(), Seq())
-          op(op.numAttrs, Seq(segTargetMin, segTargetMax, segTargetAvg)).result.attr.entity
-        }
         val segWeight = {
           // 50% should be defined in order to consider a segmentation, is that good enough?
           val op = graph_operations.DeriveJSDouble(
             JavaScript(s"""
-                variance < $maxVariance && defined / ids >= 0.5
-                ? variance
+                deviation < $maxDeviation && defined / ids >= 0.5
+                ? deviation
                 : undefined"""),
-            Seq("variance", "ids", "defined"), Seq(), Seq())
-          op(op.numAttrs, Seq(segVariance, segSizes, segTargetCount)).result.attr
+            Seq("deviation", "ids", "defined"), Seq(), Seq())
+          op(op.numAttrs, Seq(segStdDev, segSizes, segTargetCount)).result.attr
         }
-        project.vertexAttributes(s"$prefix variance on iteration $i") = segVariance
+        project.vertexAttributes(s"$prefix standard deviation on iteration $i") = segStdDev
         project.vertexAttributes(s"$prefix average on iteration $i") = segTargetAvg // TODO: use median
         val predicted = {
           aggregateViaConnection(
