@@ -1557,7 +1557,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             attributeWithLocalAggregator(train, "count"))
             .runtimeSafeCast[Double]
         }
-        val segWeight = {
+        val segStdDevDefined = {
           // 50% should be defined in order to consider a segmentation, is that good enough?
           val op = graph_operations.DeriveJSDouble(
             JavaScript(s"""
@@ -1572,7 +1572,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val predicted = {
           aggregateViaConnection(
             reverse(seg.belongsTo),
-            attributeWithWeightedAggregator(segWeight, segTargetAvg, "by_min_weight"))
+            attributeWithWeightedAggregator(segStdDevDefined, segTargetAvg, "by_min_weight"))
             .runtimeSafeCast[Double]
         }
         train = unifyAttributeT(train, predicted)
