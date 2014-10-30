@@ -14,8 +14,8 @@ object EdgesFromAttributeMatches {
     val edges = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
 }
-import EdgesFromAttributeMatches._
-case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], Output[T]] {
+case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], EdgesFromAttributeMatches.Output[T]] {
+  import EdgesFromAttributeMatches._
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -31,6 +31,45 @@ case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttribu
     val matching = byAttr.groupByKey(partitioner)
     val edges = matching.flatMap {
       case (attr, vertices) => for { a <- vertices; b <- vertices; if a != b } yield Edge(a, b)
+    }
+    output(o.edges, edges.randomNumbered(partitioner))
+  }
+}
+
+// Generates edges between vertices that match on an attribute.
+object EdgesFromBipartiteAttributeMatches {
+  class Input[T] extends MagicInputSignature {
+    val from = vertexSet
+    val to = vertexSet
+    val fromAttr = vertexAttribute[T](from)
+    val toAttr = vertexAttribute[T](to)
+  }
+  class Output[T](implicit instance: MetaGraphOperationInstance, inputs: Input[T])
+      extends MagicOutput(instance) {
+    val edges = edgeBundle(inputs.from.entity, inputs.to.entity)
+  }
+}
+case class EdgesFromBipartiteAttributeMatches[T]() extends TypedMetaGraphOp[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
+  import EdgesFromBipartiteAttributeMatches._
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input[T]
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output[T],
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    implicit val ct = inputs.fromAttr.data.classTag
+    val partitioner = rc.defaultPartitioner
+    val fromByAttr = inputs.fromAttr.rdd
+      .map { case (id, attr) => (attr, id) }
+      .groupByKey(partitioner)
+    val toByAttr = inputs.toAttr.rdd
+      .map { case (id, attr) => (attr, id) }
+      .groupByKey(partitioner)
+    val edges = fromByAttr.join(toByAttr).flatMap {
+      case (attr, (fromIds, toIds)) => for { a <- fromIds; b <- toIds } yield Edge(a, b)
     }
     output(o.edges, edges.randomNumbered(partitioner))
   }
