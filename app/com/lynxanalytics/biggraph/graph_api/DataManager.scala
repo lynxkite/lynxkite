@@ -142,7 +142,7 @@ class DataManager(sc: spark.SparkContext,
         set(
           entity,
           // And the entity will have to wait until its full completion (including saves).
-          if (instance.operation.isHeavy) {
+          if (instance.operation.isHeavy && !entity.isInstanceOf[Scalar[_]]) {
             instanceFuture.flatMap(_ => load(entity))
           } else {
             instanceFuture.map(_(entity.gUID))
@@ -235,6 +235,7 @@ class DataManager(sc: spark.SparkContext,
   def runtimeContext =
     RuntimeContext(
       sparkContext = sc,
+      broadcastDirectory = repositoryPath / "broadcasts",
       numAvailableCores = ((sc.getExecutorStorageStatus.size - 1) max 1) * numCoresPerExecutor,
       availableCacheMemoryGB = sc.getExecutorMemoryStatus.values.map(_._2).sum.toDouble / bytesInGb)
 }
