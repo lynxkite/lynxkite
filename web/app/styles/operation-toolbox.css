@@ -84,9 +84,13 @@ div.operation-toolboxes {
 .operation-toolbox .box.orange .clicky:hover { background: orange; }
 .operation-toolbox .box.green .clicky:hover { background: yellowgreen; }
 .operation-toolbox .box.blue .clicky:hover { background: aquamarine; }
+.operation-toolbox .box.yellow .ok-button:focus,
 .operation-toolbox .box.yellow .ok-button:hover { background: gold; }
+.operation-toolbox .box.orange .ok-button:focus,
 .operation-toolbox .box.orange .ok-button:hover { background: orange; }
+.operation-toolbox .box.green .ok-button:focus,
 .operation-toolbox .box.green .ok-button:hover { background: yellowgreen; }
+.operation-toolbox .box.blue .ok-button:focus,
 .operation-toolbox .box.blue .ok-button:hover { background: aquamarine; }
 .operation-toolbox .box.yellow .operation:hover { color: gold; }
 .operation-toolbox .box.orange .operation:hover { color: orange; }
@@ -125,6 +129,7 @@ div.operation-toolboxes {
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
 }
+.operation-toolbox .ok-button:focus,
 .operation-toolbox .ok-button:hover {
   color: black;
 }
