@@ -1255,8 +1255,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new SegmentationOperation(_) {
     val title = "Define segmentation links from matching attributes"
     val description =
-      "Connection vertices in the main project with segmentations based on matching attributes." +
-        importHelpText
+      "Connection vertices in the main project with segmentations based on matching attributes."
     def parameters = List(
       Param(
         "base-id-attr",
