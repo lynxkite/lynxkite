@@ -28,16 +28,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       extends Operation(p, Category("Hidden", "", visible = false)) {
     val description = ""
   }
+  trait SegOp extends Operation {
+    protected def seg = project.asSegmentation
+    protected def parent = seg.parent
+  }
   abstract class HiddenSegmentationOperation(p: Project)
-      extends HiddenOperation(p) {
-    protected def seg = project.asSegmentation
-    protected def parent = seg.parent
-  }
+    extends HiddenOperation(p) with SegOp
   abstract class SegmentationOperation(p: Project)
-      extends Operation(p, Category("Segmentation operations", "yellow", visible = p.isSegmentation)) {
-    protected def seg = project.asSegmentation
-    protected def parent = seg.parent
-  }
+    extends Operation(
+      p, Category("Segmentation operations", "yellow", visible = p.isSegmentation)) with SegOp
+  abstract class SegmentationWorkflowOperation(p: Project)
+    extends Operation(
+      p, Category("Workflows on segmentation", "magenta", visible = p.isSegmentation)) with SegOp
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
@@ -331,7 +333,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       cliquesSegmentation.project.setVertexSet(cliquesResult.segments, idAttr = "id")
       cliquesSegmentation.project.notes = "Maximal cliques of %s".format(project.projectName)
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
-      computeSegmentSizes(cliquesSegmentation)
+      cliquesSegmentation.project.vertexAttributes("size") =
+        computeSegmentSizes(cliquesSegmentation)
 
       val cedges = {
         val op = graph_operations.InfocomOverlapForCC(params("adjacency_threshold").toDouble)
@@ -360,7 +363,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       communitiesSegmentation.project.notes =
         "Infocom Communities of %s".format(project.projectName)
       communitiesSegmentation.belongsTo = vertexToCommunity
-      computeSegmentSizes(communitiesSegmentation)
+      communitiesSegmentation.project.vertexAttributes("size") =
+        computeSegmentSizes(communitiesSegmentation)
     }
   })
 
@@ -1449,6 +1453,124 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new SegmentationWorkflowOperation(_) {
+    val title = "Viral modeling"
+    val description = """Viral modeling tries to predict unknown values of an attribute based on
+        the known values of the attribute on peers that belong to the same segments."""
+    def parameters = List(
+      Param("prefix", "Generated name prefix", defaultValue = "viral"),
+      Param("target", "Target attribute",
+        options = UIValue.list(parentDoubleAttributes)),
+      Param("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
+      Param("max_variance", "Maximal segment variance", defaultValue = "1.0"),
+      Param("seed", "Seed", defaultValue = "0"),
+      Param("iterations", "Iterations", defaultValue = "3"))
+    def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
+    def enabled = hasVertexSet &&
+      FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
+        "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      // partition target attribute to test and train sets
+      val target = parent.vertexAttributes(params("target")).runtimeSafeCast[Double]
+      val roles = {
+        val op = graph_operations.CreateRole(params("test_set_ratio").toDouble, params("seed").toInt)
+        op(op.vertices, target.vertexSet).result.role
+      }
+      val parted = {
+        val op = graph_operations.PartitionAttribute[Double]()
+        op(op.attr, target)(op.role, roles).result
+      }
+      val prefix = params("prefix")
+      parent.vertexAttributes(s"$prefix roles") = roles
+      parent.vertexAttributes(s"$prefix test") = parted.test
+      var train = parted.train.entity
+      val segSizes = computeSegmentSizes(seg)
+      project.vertexAttributes("size") = segSizes
+      val maxVariance = params("max_variance")
+
+      val coverage = {
+        val op = graph_operations.CountAttributes[Double]()
+        op(op.attribute, train).result.count
+      }
+      parent.vertexAttributes(s"$prefix train initial") = train
+      parent.scalars(s"$prefix coverage initial") = coverage
+
+      // iterative prediction
+      for (i <- 1 to params("iterations").toInt) {
+        val segTargetAvg = {
+          aggregateViaConnection(
+            seg.belongsTo,
+            attributeWithLocalAggregator(train, "average"))
+            .runtimeSafeCast[Double]
+        }
+        val segTargetMin = {
+          aggregateViaConnection(
+            seg.belongsTo,
+            attributeWithLocalAggregator(train, "min"))
+            .runtimeSafeCast[Double]
+        }
+        val segTargetMax = {
+          aggregateViaConnection(
+            seg.belongsTo,
+            attributeWithLocalAggregator(train, "max"))
+            .runtimeSafeCast[Double]
+        }
+        val segTargetCount = {
+          aggregateViaConnection(
+            seg.belongsTo,
+            attributeWithLocalAggregator(train, "count"))
+            .runtimeSafeCast[Double]
+        }
+        val segVariance = {
+          // TODO: use median and dispersion to calculate homogeneity (Knuth)
+          val op = graph_operations.DeriveJSDouble(
+            JavaScript("Math.max(Math.abs(max - avg), Math.abs(min - avg))"),
+            Seq("min", "max", "avg"), Seq(), Seq())
+          op(op.numAttrs, Seq(segTargetMin, segTargetMax, segTargetAvg)).result.attr.entity
+        }
+        val segWeight = {
+          // 50% should be defined in order to consider a segmentation, is that good enough?
+          val op = graph_operations.DeriveJSDouble(
+            JavaScript(s"""
+                variance < $maxVariance && defined / ids >= 0.5
+                ? variance
+                : undefined"""),
+            Seq("variance", "ids", "defined"), Seq(), Seq())
+          op(op.numAttrs, Seq(segVariance, segSizes, segTargetCount)).result.attr
+        }
+        project.vertexAttributes(s"$prefix variance on iteration $i") = segVariance
+        project.vertexAttributes(s"$prefix average on iteration $i") = segTargetAvg // TODO: use median
+        val predicted = {
+          aggregateViaConnection(
+            reverse(seg.belongsTo),
+            attributeWithWeightedAggregator(segWeight, segTargetAvg, "by_min_weight"))
+            .runtimeSafeCast[Double]
+        }
+        train = unifyAttributeT(train, predicted)
+        val partedTrain = {
+          val op = graph_operations.PartitionAttribute[Double]()
+          op(op.attr, train)(op.role, roles).result
+        }
+        val error = {
+          val op = graph_operations.DeriveJSDouble(
+            JavaScript("Math.abs(test - train)"), Seq("test", "train"), Seq(), Seq())
+          val mae = op(op.numAttrs, Seq(parted.test.entity, partedTrain.test.entity)).result.attr
+          aggregate(attributeWithAggregator(mae, "average"))
+        }
+        val coverage = {
+          val op = graph_operations.CountAttributes[Double]()
+          op(op.attribute, partedTrain.train).result.count
+        }
+        // the attribute we use for iteration can be defined on the test set as well
+        parent.vertexAttributes(s"$prefix train on iteration $i") = train
+        parent.scalars(s"$prefix coverage on iteration $i") = coverage
+        parent.scalars(s"$prefix mean absolute prediction error on iteration $i") = error
+      }
+      // TODO: in the end we should calculate with the fact that the real error where the
+      // original attribute is defined is 0.0
+    }
+  })
+
   { // "Dirty operations", that is operations that use a data manager. Think twice if you really
     // need this before putting an operation here.
     implicit val dataManager = env.dataManager
@@ -1526,11 +1648,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.a, a)(op.b, b).result.attr
   }
 
-  def computeSegmentSizes(segmentation: Segmentation, attributeName: String = "size"): Unit = {
-    segmentation.project.vertexAttributes(attributeName) = {
-      val op = graph_operations.OutDegree()
-      op(op.es, reverse(segmentation.belongsTo)).result.outDegree
-    }
+  def computeSegmentSizes(segmentation: Segmentation): VertexAttribute[Double] = {
+    val op = graph_operations.OutDegree()
+    op(op.es, reverse(segmentation.belongsTo)).result.outDegree
   }
 
   def toDouble(attr: VertexAttribute[String]): VertexAttribute[Double] = {
