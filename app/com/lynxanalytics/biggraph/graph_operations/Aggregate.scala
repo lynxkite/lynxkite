@@ -257,7 +257,10 @@ object Aggregator {
   case class Average() extends CompoundDoubleAggregator[Double] {
     val agg1 = Count[Double]()
     val agg2 = Sum()
-    def compound(count: Double, sum: Double) = sum / count
+    def compound(count: Double, sum: Double) = {
+      assert(count != 0, "Average of empty set")
+      sum / count
+    }
   }
 
   case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
@@ -270,7 +273,10 @@ object Aggregator {
   case class WeightedAverage() extends CompoundDoubleAggregator[(Double, Double)] {
     val agg1 = SumOfWeights[Double]()
     val agg2 = WeightedSum()
-    def compound(weights: Double, weightedSum: Double) = weightedSum / weights
+    def compound(weights: Double, weightedSum: Double) = {
+      assert(weights != 0, "Average of 0 weight set")
+      weightedSum / weights
+    }
   }
 
   case class MostCommon[T]() extends LocalAggregator[T, T] {
@@ -298,7 +304,10 @@ object Aggregator {
     def zero = None
     def merge(a: Option[T], b: T) = a.orElse(Some(b))
     def combine(a: Option[T], b: Option[T]) = a.orElse(b)
-    def finalize(opt: Option[T]) = opt.get
+    def finalize(opt: Option[T]) = {
+      assert(opt.nonEmpty, "Average of 0 weight set")
+      opt.get
+    }
   }
 
   case class AsVector[T]() extends LocalAggregator[T, Vector[T]] {
