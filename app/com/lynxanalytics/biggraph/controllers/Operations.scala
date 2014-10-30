@@ -1547,27 +1547,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             .runtimeSafeCast[Double]
         }
         train = unifyAttributeT(train, predicted)
-        val partedPred = {
+        val partedTrain = {
           val op = graph_operations.PartitionAttribute[Double]()
           op(op.attr, train)(op.role, roles).result
         }
         val error = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript("Math.abs(test - pred)"), Seq("test", "pred"), Seq(), Seq())
-          val mae = op(op.numAttrs, Seq(parted.test.entity, partedPred.test.entity)).result.attr
+            JavaScript("Math.abs(test - train)"), Seq("test", "train"), Seq(), Seq())
+          val mae = op(op.numAttrs, Seq(parted.test.entity, partedTrain.test.entity)).result.attr
           aggregate(attributeWithAggregator(mae, "average"))
         }
         val coverage = {
           val op = graph_operations.CountAttributes[Double]()
-          op(op.attribute, partedPred.train).result.count
+          op(op.attribute, partedTrain.train).result.count
         }
         // the attribute we use for iteration can be defined on the test set as well
         parent.vertexAttributes(s"$prefix train on iteration $i") = train
         parent.scalars(s"$prefix coverage on iteration $i") = coverage
         parent.scalars(s"$prefix mean absolute prediction error on iteration $i") = error
       }
-      // TODO: in the end we should calculate with the fact that the real error for
-      // the test set is 0.0
+      // TODO: in the end we should calculate with the fact that the real error where the
+      // original attribute is defined is 0.0
     }
   })
 
