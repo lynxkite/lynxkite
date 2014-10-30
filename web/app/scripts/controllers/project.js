@@ -473,6 +473,7 @@ angular.module('biggraph')
 
     // Removes entries from state which depend on nonexistent attributes
     Side.prototype.cleanState = function() {
+      if (!this.loaded()) { return; }
       var vTitles = this.project.vertexAttributes.map(function(a) { return a.title; });
       var eTitles = this.project.edgeAttributes.map(function(a) { return a.title; });
       for (var attr in this.state.filters) {
