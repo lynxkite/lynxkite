@@ -47,6 +47,9 @@ angular.module('biggraph').directive('operation', function (util, hotkeys) {
       }, function(firstInput) {
         if (firstInput) {
           firstInput.select();
+        } else {
+          // No parameters? Focus on the OK button.
+          element.find('.ok-button').focus();
         }
       });
     }

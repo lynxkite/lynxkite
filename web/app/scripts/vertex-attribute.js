@@ -1,10 +1,11 @@
 'use strict';
 
-angular.module('biggraph').directive('vertexAttribute', function() {
+angular.module('biggraph').directive('vertexAttribute', function(axisOptions) {
   return {
     scope: { attr: '=vertexAttribute', side: '=' },
     templateUrl: 'vertex-attribute.html',
     link: function(scope) {
+      axisOptions.bind(scope, scope.side, 'vertex', scope.attr.title, 'axisOptions');
       scope.showLogCheckbox = function() {
         if (!scope.attr.isNumeric) { return false; }
         if (scope.histogram) { return true; }
@@ -13,14 +14,6 @@ angular.module('biggraph').directive('vertexAttribute', function() {
           if (scope.side.state.attributeTitles.y === scope.attr.title) { return true; }
         }
         return false;
-      };
-      scope.logarithmic = function(log) {  // Setter/getter.
-        var ao = scope.side.axisOptions('vertex', scope.attr.title);
-        if (log !== undefined) {
-          ao.logarithmic = log;
-          scope.side.state.axisOptions.vertex[scope.attr.title] = ao;
-        }
-        return ao.logarithmic;
       };
     },
   };

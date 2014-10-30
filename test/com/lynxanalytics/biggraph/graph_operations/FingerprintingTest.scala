@@ -43,7 +43,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
 
   def fingerprint(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Seq[(Int, Int)] = {
     val graph = SmallTestGraph(left ++ right).result
-    val weight = AddConstantAttribute.run(graph.es.asVertexSet, 1.0)
+    val weights = AddConstantAttribute.run(graph.es.asVertexSet, 1.0)
     val candidates = {
       val op = AddEdgeBundle(for { l <- left.keys.toSeq; r <- right.keys.toSeq } yield l -> r)
       op(op.vsA, graph.vs)(op.vsB, graph.vs).result.esAB
@@ -51,9 +51,11 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
     val fingerprinting = {
       val op = Fingerprinting(1, 0)
       op(
-        op.es, graph.es)(
-          op.weight, weight)(
-            op.candidates, candidates).result
+        op.leftEdges, graph.es)(
+          op.leftEdgeWeights, weights)(
+            op.rightEdges, graph.es)(
+              op.rightEdgeWeights, weights)(
+                op.candidates, candidates).result
     }
     fingerprinting.matching.toPairSeq.map { case (l, r) => (l.toInt, r.toInt) }
   }

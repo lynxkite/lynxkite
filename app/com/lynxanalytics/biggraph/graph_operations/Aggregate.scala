@@ -308,4 +308,37 @@ object Aggregator {
     }
     def aggregate(values: Iterable[T]): Vector[T] = values.toVector
   }
+
+  case class StdDev() extends Aggregator[Double, Stats, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
+    def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Stats] = {
+      implicit val tt = inputTypeTag
+      typeTag[Stats]
+    }
+    def zero = Stats(0, 0, 0)
+    // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Incremental_algorithm
+    def merge(a: Stats, b: Double) = {
+      val n = a.n + 1
+      val delta = b - a.mean
+      val mean = a.mean + delta / n
+      val sigma = a.sigma + delta * (b - mean) // = a.sigma + delta * delta * (n-1) / n
+      Stats(n, mean, sigma)
+    }
+    // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
+    // http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+    def combine(a: Stats, b: Stats) = {
+      val n = a.n + b.n
+      val delta = b.mean - a.mean
+      val mean = (a.n * a.mean + b.n * b.mean) / n
+      val sigma = a.sigma + b.sigma + (delta * delta * a.n * b.n) / n
+      Stats(n, mean, sigma)
+    }
+    // we drop count and mean, calculate standard deviation from variance
+    // TODO: I leave the class name as variance as later we intend to output all 4 possible outputs
+    // TODO: for global aggregation (not on samples) we should do Math.sqrt(a.sigma / a.n)
+    def finalize(a: Stats) = if (a.n < 2) 0 else Math.sqrt(a.sigma / (a.n - 1))
+  }
 }
+
+// sigma: sum of squares of differences from the mean
+case class Stats(n: Long, mean: Double, sigma: Double)

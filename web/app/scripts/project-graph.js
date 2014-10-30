@@ -9,6 +9,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
     link: function(scope, element) {
       util.deepWatch(scope, 'left', updateRequest);
       util.deepWatch(scope, 'right', updateRequest);
+      util.deepWatch(scope, 'leftToRightBundle', updateRequest);
 
       scope.onIconsLoaded = function() {
         scope.$broadcast('#svg-icons is loaded');
