@@ -1429,7 +1429,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- parent.vertexAttributes.toMap) {
         project.vertexAttributes(prefix + name) =
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, seg.belongsTo)
+            attr, reverse(seg.belongsTo))
       }
     }
   })
