@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_util
 
+import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -33,6 +34,7 @@ case class Filename(
   def create() = fs.create(path)
   def exists() = fs.exists(path)
   def reader() = new BufferedReader(new InputStreamReader(open))
+  def delete() = fs.delete(path, true)
   def list = fs.globStatus(path).map(st => this.copy(filename = st.getPath.toString))
   def length = fs.getFileStatus(path).getLen
 
@@ -64,6 +66,16 @@ case class Filename(
     val stream = create()
     stream.write(contents.getBytes("UTF-8"))
     stream.close()
+  }
+
+  def createFromObjectKryo(obj: Any): Unit = {
+    val output = new kryo.io.Output(create())
+    RDDUtils.threadLocalKryo.get.writeClassAndObject(output, obj)
+    output.close()
+  }
+
+  def loadObjectKryo: Any = {
+    RDDUtils.threadLocalKryo.get.readClassAndObject(new kryo.io.Input(open()))
   }
 
   def mkdirs(): Unit = {

@@ -70,6 +70,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[collection.mutable.Map$WithDefault])
     kryo.register(classOf[collection.mutable.Map$$anonfun$withDefaultValue$1])
     kryo.register(classOf[spark_util.IDBuckets[_]])
+    kryo.register((0L, 0).getClass)
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -112,6 +113,7 @@ object BigGraphSparkContext {
         // http://spark.apache.org/docs/latest/job-scheduling.html
         "spark.scheduler.mode",
         "FAIR")
+      .set("spark.core.connection.ack.wait.timeout", "240")
     if (useKryo) {
       sparkConf = sparkConf
         .set(

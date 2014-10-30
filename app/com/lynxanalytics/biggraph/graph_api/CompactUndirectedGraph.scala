@@ -3,8 +3,11 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.spark.SparkContext._
 import scala.collection.immutable
 import scala.collection.mutable
-import scala.util.Sorting
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util.Sorting
+
 object CompactUndirectedGraph {
   def apply(edges: EdgeBundleData, needsBothDirections: Boolean = true): CompactUndirectedGraph = {
     assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
@@ -43,6 +46,7 @@ object CompactUndirectedGraph {
         }
     })
 
+    log.info("CUG Collecting")
     val perPartitionData = compact.collect
     val numVertices = perPartitionData
       .map { case ((ids, indices), neighbors) => ids.size }
@@ -51,9 +55,11 @@ object CompactUndirectedGraph {
       .map { case ((ids, indices), neighbors) => neighbors.size }
       .sum
 
+    log.info("CUG Allocating")
     val fullNeighbors = Array.ofDim[ID](numEdges)
     val vertexIndices = Array.ofDim[(ID, Int)](numVertices)
     val starts = Array.ofDim[Int](numVertices + 1)
+    log.info("CUG Computing")
 
     var offset = 0
     var index = 0
@@ -70,8 +76,10 @@ object CompactUndirectedGraph {
     })
     starts(index) = offset
 
+    log.info("CUG Sorting")
     Sorting.quickSort(vertexIndices)
 
+    log.info("CUG successfully created!")
     return new CompactUndirectedGraph(
       fullNeighbors, vertexIndices, starts)
   }

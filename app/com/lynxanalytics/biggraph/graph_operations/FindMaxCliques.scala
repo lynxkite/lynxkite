@@ -25,7 +25,7 @@ case class FindMaxCliques(minCliqueSize: Int, needsBothDirections: Boolean = fal
     implicit val id = inputDatas
     val cug = CompactUndirectedGraph(inputs.es.data, needsBothDirections)
     val cliqueLists = computeCliques(
-      inputs.vs.data, cug, rc.sparkContext, minCliqueSize, rc.numAvailableCores * 5)
+      inputs.vs.data, cug, rc, minCliqueSize, rc.numAvailableCores * 5)
     val indexedCliqueLists = cliqueLists.randomNumbered(rc.defaultPartitioner)
     output(o.segments, indexedCliqueLists.mapValues(_ => ()))
     output(o.belongsTo, indexedCliqueLists.flatMap {
@@ -125,13 +125,13 @@ case class FindMaxCliques(minCliqueSize: Int, needsBothDirections: Boolean = fal
 
   private def computeCliques(g: VertexSetData,
                              cug: CompactUndirectedGraph,
-                             sc: spark.SparkContext,
+                             rc: RuntimeContext,
                              minCliqueSize: Int,
                              numTasks: Int): rdd.RDD[List[ID]] = {
-    val broadcastGraph = sc.broadcast(cug)
+    val broadcastGraph = rc.broadcast(cug)
     g.rdd.keys.repartition(numTasks).flatMap(
       v => {
-        val fullGraph = broadcastGraph.value
+        val fullGraph = broadcastGraph.get
         val markedCandidates =
           mutable.ArrayBuffer.concat(fullGraph.getNeighbors(v).map(n => (n, n < v)))
         val collector = mutable.ArrayBuffer[List[ID]]()
