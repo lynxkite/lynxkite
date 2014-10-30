@@ -1217,7 +1217,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val description =
       "Import the connection between the main project and this segmentation from a CSV." +
         importHelpText
-    val parameters = List(
+    def parameters = List(
       Param("files", "CSV", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -1257,7 +1257,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val description =
       "Connection vertices in the main project with segmentations based on matching attributes." +
         importHelpText
-    val parameters = List(
+    def parameters = List(
       Param(
         "base-id-attr",
         s"Identifying vertex attribute in $parent",
