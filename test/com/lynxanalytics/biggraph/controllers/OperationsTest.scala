@@ -172,15 +172,17 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val other = Project("ExampleGraph2")
     project.copy(other)
     run("Import project as segmentation", Map(
-      "them" -> "ExampleGraph2",
+      "them" -> "ExampleGraph2"))
+    val seg = project.segmentation("ExampleGraph2").project
+    run("Load segmentation links from CSV", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-example-connections.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
-      "our-id-attr" -> "name",
-      "our-id-field" -> "src",
-      "their-id-attr" -> "name",
-      "their-id-field" -> "dst"))
-    val seg = project.segmentation("ExampleGraph2").project
+      "base-id-attr" -> "name",
+      "base-id-field" -> "src",
+      "seg-id-attr" -> "name",
+      "seg-id-field" -> "dst"),
+      on = seg)
     run("Fingerprinting between project and segmentation", Map(
       "mrew" -> "0.0",
       "mo" -> "1",
