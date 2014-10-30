@@ -26,7 +26,7 @@ sh -c "( ( \
   REPOSITORY_MODE=\"static</home/ec2-user/metagraph,s3n://${CREDENTIALS}@${S3_DATAREPO}>\" \
   SPARK_CLUSTER_MODE=\"static<${SPARK_MASTER}>\" \
   SPARK_JAVA_OPTS=\"-Dhadoop.tmp.dir=/mnt/hadoop-tmp\" \
-  SPARK_DIR=\"/mnt/,/mnt2/\" \
+  SPARK_DIR=\"/mnt/\" \
   EXECUTOR_MEMORY=${EXECUTOR_MB}m \
   nohup $ROOT/bin/biggraph \
     -mem $RAM_MB \
