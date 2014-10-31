@@ -1560,7 +1560,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       // partition target attribute to test and train sets
-      val target = parent.vertexAttributes(params("target")).runtimeSafeCast[Double]
+      val targetName = params("target")
+      val target = parent.vertexAttributes(targetName).runtimeSafeCast[Double]
       val roles = {
         val op = graph_operations.CreateRole(params("test_set_ratio").toDouble, params("seed").toInt)
         op(op.vertices, target.vertexSet).result.role
@@ -1571,7 +1572,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       val prefix = params("prefix")
       parent.vertexAttributes(s"$prefix roles") = roles
-      parent.vertexAttributes(s"$prefix test") = parted.test
+      parent.vertexAttributes(s"$prefix $targetName test") = parted.test
       var train = parted.train.entity
       val segSizes = computeSegmentSizes(seg)
       project.vertexAttributes("size") = segSizes
@@ -1581,8 +1582,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val op = graph_operations.CountAttributes[Double]()
         op(op.attribute, train).result.count
       }
-      parent.vertexAttributes(s"$prefix train initial") = train
-      parent.scalars(s"$prefix coverage initial") = coverage
+      parent.vertexAttributes(s"$prefix $targetName train") = train
+      parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
       // iterative prediction
       for (i <- 1 to params("iterations").toInt) {
@@ -1614,8 +1615,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             Seq("deviation", "ids", "defined"), Seq(), Seq())
           op(op.numAttrs, Seq(segStdDev, segSizes, segTargetCount)).result.attr
         }
-        project.vertexAttributes(s"$prefix standard deviation on iteration $i") = segStdDev
-        project.vertexAttributes(s"$prefix average on iteration $i") = segTargetAvg // TODO: use median
+        project.vertexAttributes(s"$prefix $targetName standard deviation after iteration $i") =
+          segStdDev
+        project.vertexAttributes(s"$prefix $targetName average after iteration $i") =
+          segTargetAvg // TODO: use median
         val predicted = {
           aggregateViaConnection(
             reverse(seg.belongsTo),
@@ -1638,9 +1641,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           op(op.attribute, partedTrain.train).result.count
         }
         // the attribute we use for iteration can be defined on the test set as well
-        parent.vertexAttributes(s"$prefix train on iteration $i") = train
-        parent.scalars(s"$prefix coverage on iteration $i") = coverage
-        parent.scalars(s"$prefix mean absolute prediction error on iteration $i") = error
+        parent.vertexAttributes(s"$prefix $targetName after iteration $i") = train
+        parent.scalars(s"$prefix $targetName coverage after iteration $i") = coverage
+        parent.scalars(s"$prefix $targetName mean absolute prediction error after iteration $i") =
+          error
       }
       // TODO: in the end we should calculate with the fact that the real error where the
       // original attribute is defined is 0.0
