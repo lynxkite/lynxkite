@@ -104,7 +104,12 @@ case class FEProject(
   vertexAttributes: List[FEAttribute],
   edgeAttributes: List[FEAttribute],
   segmentations: List[FESegmentation],
-  opCategories: List[OperationCategory])
+  opCategories: List[OperationCategory],
+  // In case the project is a segmentation
+  // a Vector[ID] vertex attribute, that contains for each vertex
+  // the vector of parent ids the segment contains.
+  // TODO: why list?
+  parents: List[UIValue])
 
 case class FESegmentation(
   name: String,

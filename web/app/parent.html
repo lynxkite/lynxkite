@@ -1,0 +1,11 @@
+{{parent.title}}
+
+<form style="display: inline;">
+  <input
+    class="form-control filter"
+    placeholder="filter"
+    ng-model="side.state.filters[parent.title]"
+    ng-model-options="{ updateOn: 'blur' }">
+</form>
+
+<div class="clearfix"></div>
