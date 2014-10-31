@@ -118,12 +118,14 @@ case class Fingerprinting(
     val rightSimilarities =
       leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(vertexPartitioner)
 
-    // Run stableMarriage with the smaller side as "ladies".
+    // Run findStableMarriage with the smaller side as "ladies".
     def flipped(rdd: RDD[(ID, ID)]) =
       rdd.map(pair => pair._2 -> pair._1).toSortedRDD(vertexPartitioner)
     val leftToRight =
-      if (rights.count < lefts.count) stableMarriage(rights, lefts, rightSimilarities, leftSimilarities)
-      else flipped(stableMarriage(lefts, rights, leftSimilarities, rightSimilarities))
+      if (rights.count < lefts.count)
+        findStableMarriage(rights, lefts, rightSimilarities, leftSimilarities)
+      else
+        flipped(findStableMarriage(lefts, rights, leftSimilarities, rightSimilarities))
     output(o.matching, leftToRight.map {
       case (src, dst) => Edge(src, dst)
     }.randomNumbered(vertexPartitioner))
@@ -138,10 +140,10 @@ case class Fingerprinting(
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
-  def stableMarriage(ladies: SortedRDD[ID, Unit],
-                     gentlemen: SortedRDD[ID, Unit],
-                     ladiesScores: SortedRDD[ID, (ID, Double)],
-                     gentlemenScores: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
+  def findStableMarriage(ladies: SortedRDD[ID, Unit],
+                         gentlemen: SortedRDD[ID, Unit],
+                         ladiesScores: SortedRDD[ID, (ID, Double)],
+                         gentlemenScores: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
     val partitioner = ladies.partitioner.get
     val gentlemenPreferences = gentlemenScores.groupByKey.mapValues {
       case ladies => ladies.sortBy(-_._2).map(_._1)
