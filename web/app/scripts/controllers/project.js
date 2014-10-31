@@ -119,20 +119,39 @@ angular.module('biggraph')
       vd.parentFilters = function() {
         return that.getParentSide().state.filters;
       };
-      vd.filterName = function() {
+      vd.parentFilterName = function() {
         return that.getParentSide().getSegmentationEntry(that).equivalentAttribute.title;
       };
-      vd.filterValue = function(segmentId) {
-        return 'exists(' + segmentId + ')';
+      vd.filterValue = function(id) {
+        return 'exists(' + id + ')';
       };
       vd.filterParentToSegment = function(segmentId) {
-        vd.parentFilters()[vd.filterName()] = vd.filterValue(segmentId);
+        vd.parentFilters()[vd.parentFilterName()] = vd.filterValue(segmentId);
       };
       vd.isParentFilteredToSegment = function(segmentId) {
-        return vd.parentFilters()[vd.filterName()] === vd.filterValue(segmentId);
+        return vd.parentFilters()[vd.parentFilterName()] === vd.filterValue(segmentId);
       };
       vd.deleteParentsSegmentFilter = function() {
-        delete vd.parentFilters()[vd.filterName()];
+        delete vd.parentFilters()[vd.parentFilterName()];
+      };
+
+      vd.hasSegment = function() {
+        return that.getSegmentationSide() !== undefined;
+      };
+      vd.segmentFilterName = function() {
+        return that.getSegmentationSide().project.parents[0].title; // TODO wtf array
+      };
+      vd.segmentFilters = function() {
+        return that.getSegmentationSide().state.filters;
+      };
+      vd.filterSegmentToParent = function(parentId) {
+        vd.segmentFilters()[vd.segmentFilterName()] = vd.filterValue(parentId);
+      };
+      vd.isSegmentFilteredToParent = function(parentId) {
+        return vd.segmentFilters()[vd.segmentFilterName()] === vd.filterValue(parentId);
+      };
+      vd.deleteSegmentsParentFilter = function() {
+        delete vd.segmentFilters()[vd.segmentFilterName()];
       };
 
       this.viewData = vd;
@@ -400,6 +419,12 @@ angular.module('biggraph')
           return { id: sattr.id, title: title };
         }
       }
+      for (var parIdx = 0; parIdx < this.project.parents.length; parIdx++) {
+        var pattr = this.project.parents[parIdx];
+        if (pattr.title === title) {
+          return { id: pattr.id, title: title };
+        }
+      }
       return undefined;
     };
 
@@ -454,6 +479,16 @@ angular.module('biggraph')
         var side = $scope.sides[i];
         if (side === this) { continue; }
         if (side.getSegmentationEntry(this)) {
+          return side;
+        }
+      }
+      return undefined;
+    };
+    Side.prototype.getSegmentationSide = function() {
+      for (var i = 0; i < $scope.sides.length; ++i) {
+        var side = $scope.sides[i];
+        if (side === this) { continue; }
+        if (side.isSegmentationOf(this)) {
           return side;
         }
       }

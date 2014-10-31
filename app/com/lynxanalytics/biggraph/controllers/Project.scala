@@ -23,13 +23,21 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
       FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric)
     }
+    // TODO: why list?
+    val ca = if (isSegmentation) {
+      List(UIValue(
+        id = asSegmentation.containsAttribute.gUID.toString,
+        title = s"IDs of ${asSegmentation.parentName}"))
+    } else List()
+
     FEProject(
       projectName, lastOperation, nextOperation, vs, eb, notes,
       scalars.map { case (name, scalar) => feAttr(scalar, name) }.toList,
       vertexAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
       edgeAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
       segmentations.map(_.toFE).toList,
-      opCategories = List())
+      opCategories = List(),
+      parents = ca)
   }
 
   private def checkpoints: Seq[String] = get("checkpoints") match {
@@ -388,6 +396,13 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     Project.withErrorLogging(s"Cannot get 'belongsToAttribute' for $this") {
       aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr: VertexAttribute[Vector[ID]]
+    }.getOrElse(null)
+  }
+  def containsAttribute: VertexAttribute[Vector[ID]] = {
+    val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
+    val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
+    Project.withErrorLogging(s"Cannot get 'belongsToAttribute' for $this") {
+      aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr: VertexAttribute[Vector[ID]]
     }.getOrElse(null)
   }
   def project = Project(s"$parentName/segmentations/$name/project")
