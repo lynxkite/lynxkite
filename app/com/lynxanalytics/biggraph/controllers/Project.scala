@@ -166,6 +166,30 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
   }
 
+  def pullBackEdgesWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
+    val op = graph_operations.PulledOverEdges()
+    val newEB = op(op.originalEB, edgeBundle)(op.injection, injection).result.pulledEB
+    pullBackEdgesWithInjection(newEB, injection)
+  }
+  def pullBackEdgesWithInjection(newEdgeBundle: EdgeBundle, injection: EdgeBundle): Unit = manager.synchronized {
+    assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
+      s"Not an injection: $injection")
+    assert(injection.srcVertexSet.gUID == newEdgeBundle.asVertexSet.gUID,
+      s"Wrong source: $injection")
+    assert(injection.dstVertexSet.gUID == edgeBundle.asVertexSet.gUID,
+      s"Wrong destination: $injection")
+    val origEB = edgeBundle
+    val origEAttrs = edgeAttributes.toIndexedSeq
+
+    edgeBundle = newEdgeBundle
+
+    origEAttrs.foreach {
+      case (name, attr) =>
+        edgeAttributes(name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
+    }
+  }
+
   def pullBackWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
     assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
       s"Not an injection: $injection")
@@ -183,20 +207,13 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
     }
 
-    var edgeInduction: graph_operations.InducedEdgeBundle.Output = null
     if (origEB != null) {
       val iop = graph_operations.InducedEdgeBundle()
-      edgeInduction = iop(
+      val edgeInduction = iop(
         iop.srcMapping, graph_operations.ReverseEdges.run(injection))(
           iop.dstMapping, graph_operations.ReverseEdges.run(injection))(
             iop.edges, origEB).result
-      edgeBundle = edgeInduction.induced
-    }
-
-    origEAttrs.foreach {
-      case (name, attr) =>
-        edgeAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, edgeInduction.embedding)
+      pullBackEdgesWithInjection(edgeInduction.embedding)
     }
 
     segmentations.foreach { seg =>
