@@ -86,14 +86,14 @@ case class Fingerprinting(
       }
 
     // Calculate the similarity metric.
-    val similarities =
+    val leftSimilarities =
       candidates.flatMap {
         case (leftID, leftNeighbors, rightID, rightNeighbors) =>
           val ln = leftNeighbors.toMap
           val rn = rightNeighbors.toMap
           val common = (ln.keySet intersect rn.keySet).toSeq
           if (common.size < minimumOverlap) {
-            Iterator()
+            None
           } else {
             val all = (ln.keySet union rn.keySet).toSeq
             // Weights.
@@ -109,16 +109,18 @@ case class Fingerprinting(
             val union = all.map(k => (lw(k) max rw(k)) / avg(k)).sum
             val similarity = isect / union
             if (similarity < minimumSimilarity) None
-            else Iterator(leftID -> (rightID, similarity), rightID -> (leftID, similarity))
+            else Some(leftID -> (rightID, similarity))
           }
       }.toSortedRDD(vertexPartitioner)
+    val rightSimilarities =
+      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(vertexPartitioner)
 
     // Run stableMarriage with the smaller side as "ladies".
     def flipped(rdd: RDD[(ID, ID)]) =
       rdd.map(pair => pair._2 -> pair._1).toSortedRDD(vertexPartitioner)
     val leftToRight =
-      if (rights.count < lefts.count) stableMarriage(rights, lefts, similarities)
-      else flipped(stableMarriage(lefts, rights, similarities))
+      if (rights.count < lefts.count) stableMarriage(rights, lefts, rightSimilarities, leftSimilarities)
+      else flipped(stableMarriage(lefts, rights, leftSimilarities, rightSimilarities))
     output(o.matching, leftToRight.map {
       case (src, dst) => Edge(src, dst)
     }.randomNumbered(vertexPartitioner))
@@ -127,12 +129,13 @@ case class Fingerprinting(
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
   def stableMarriage(ladies: SortedRDD[ID, Unit],
                      gentlemen: SortedRDD[ID, Unit],
-                     preferences: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
+                     ladiesScores: SortedRDD[ID, (ID, Double)],
+                     gentlemenScores: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
     val partitioner = ladies.partitioner.get
-    val gentlemenPreferences = preferences.sortedJoin(gentlemen).mapValues(_._1).groupByKey.mapValues {
+    val gentlemenPreferences = gentlemenScores.groupByKey.mapValues {
       case ladies => ladies.sortBy(-_._2).map(_._1)
     }
-    val ladiesPreferences = preferences.sortedJoin(ladies).mapValues(_._1).groupByKey.mapValues {
+    val ladiesPreferences = ladiesScores.groupByKey.mapValues {
       case gentlemen => gentlemen.sortBy(-_._2).map(_._1)
     }
 
