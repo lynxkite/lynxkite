@@ -79,13 +79,18 @@ case class Fingerprinting(
     val candidates = inputs.candidates.rdd
       .map { case (_, e) => (e.dst, e.src) }
       .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors(inputs.rightEdges.rdd, inputs.rightEdgeWeights.rdd))
-      .map { case (rightID, (leftID, rightNeighbors)) => (leftID, (rightID, rightNeighbors)) }
-      .toSortedRDD(vertexPartitioner)
-      .sortedJoin(outNeighbors(inputs.leftEdges.rdd, inputs.leftEdgeWeights.rdd))
+      .sortedLeftOuterJoin(outNeighbors(inputs.rightEdges.rdd, inputs.rightEdgeWeights.rdd))
       .map {
-        case (leftID, ((rightID, rightNeighbors), leftNeighbors)) =>
+        case (rightID, (leftID, Some(rightNeighbors))) => (leftID, (rightID, rightNeighbors))
+        case (rightID, (leftID, None)) => (leftID, (rightID, Seq()))
+      }
+      .toSortedRDD(vertexPartitioner)
+      .sortedLeftOuterJoin(outNeighbors(inputs.leftEdges.rdd, inputs.leftEdgeWeights.rdd))
+      .map {
+        case (leftID, ((rightID, rightNeighbors), Some(leftNeighbors))) =>
           (leftID, leftNeighbors, rightID, rightNeighbors)
+        case (leftID, ((rightID, rightNeighbors), None)) =>
+          (leftID, Seq(), rightID, rightNeighbors)
       }
 
     // Calculate the similarity metric.
@@ -95,7 +100,11 @@ case class Fingerprinting(
           val ln = leftNeighbors.toMap
           val rn = rightNeighbors.toMap
           val common = (ln.keySet intersect rn.keySet).toSeq
-          if (common.size < minimumOverlap) {
+          if (common.isEmpty) {
+            // Not just a shortcut. The formula would divide by zero if ln and rn are both empty.
+            if (minimumOverlap > 0 || minimumSimilarity > 0) None
+            else Some(leftID -> (rightID, 0.0))
+          } else if (common.size < minimumOverlap) {
             None
           } else {
             val all = (ln.keySet union rn.keySet).toSeq
