@@ -28,6 +28,9 @@ object Fingerprinting {
     // A subset of "candidates", which make up a strong matching.
     val matching = edgeBundle(
       inputs.left.entity, inputs.right.entity, EdgeBundleProperties.matching)
+    // The similarity scores calculated for the matched vertices.
+    val leftSimilarities = vertexAttribute[Double](inputs.left.entity)
+    val rightSimilarities = vertexAttribute[Double](inputs.right.entity)
   }
 }
 case class Fingerprinting(
@@ -124,6 +127,14 @@ case class Fingerprinting(
     output(o.matching, leftToRight.map {
       case (src, dst) => Edge(src, dst)
     }.randomNumbered(vertexPartitioner))
+    output(o.leftSimilarities, leftSimilarities.sortedJoin(leftToRight).flatMapValues {
+      case ((simID, sim), id) if simID == id => Some(sim)
+      case _ => None
+    })
+    output(o.rightSimilarities, rightSimilarities.sortedJoin(flipped(leftToRight)).flatMapValues {
+      case ((simID, sim), id) if simID == id => Some(sim)
+      case _ => None
+    })
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".

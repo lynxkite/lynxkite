@@ -1422,7 +1422,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.es, project.edgeBundle)(op.leftName, leftName)(op.rightName, rightName)
           .result.candidates
       }
-      val matching = {
+      val fingerprinting = {
         val op = graph_operations.Fingerprinting(mo, ms)
         op(
           op.leftEdges, project.edgeBundle)(
@@ -1430,16 +1430,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               op.rightEdges, project.edgeBundle)(
                 op.rightEdgeWeights, weights)(
                   op.candidates, candidates)
-          .result.matching
+          .result
       }
       val newLeftName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-        leftName, reverse(matching))
+        leftName, reverse(fingerprinting.matching))
       val newRightName = graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-        rightName, matching)
+        rightName, fingerprinting.matching)
 
-      project.scalars("fingerprinting matches found") = count(matching)
+      project.scalars("fingerprinting matches found") = count(fingerprinting.matching)
       project.vertexAttributes(params("leftName")) = unifyAttribute(newLeftName, leftName)
       project.vertexAttributes(params("rightName")) = unifyAttribute(newRightName, rightName)
+      project.vertexAttributes(params("leftName") + " similarity score") = fingerprinting.leftSimilarities
+      project.vertexAttributes(params("rightName") + " similarity score") = fingerprinting.rightSimilarities
     }
   })
 
@@ -1516,7 +1518,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val candidates = seg.belongsTo
       val segNeighborsInParent = concat(project.edgeBundle, reverse(seg.belongsTo))
-      val matching = {
+      val fingerprinting = {
         val op = graph_operations.Fingerprinting(mo, ms)
         op(
           op.leftEdges, parent.edgeBundle)(
@@ -1524,11 +1526,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               op.rightEdges, segNeighborsInParent)(
                 op.rightEdgeWeights, const(segNeighborsInParent))(
                   op.candidates, candidates)
-          .result.matching
+          .result
       }
 
-      project.scalars("fingerprinting matches found") = count(matching)
-      seg.belongsTo = matching
+      project.scalars("fingerprinting matches found") = count(fingerprinting.matching)
+      seg.belongsTo = fingerprinting.matching
+      parent.vertexAttributes("fingerprinting similarity score") = fingerprinting.leftSimilarities
+      project.vertexAttributes("fingerprinting similarity score") = fingerprinting.rightSimilarities
     }
   })
 
