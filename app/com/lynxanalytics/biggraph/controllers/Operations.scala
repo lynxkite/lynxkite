@@ -903,6 +903,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new EdgeOperation(_) {
+    val title = "Discard loop edges"
+    val description = "Discards edges that connect a vertex to itself."
+    def parameters = List()
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val edgesAsAttr = {
+        val op = graph_operations.EdgeBundleAsVertexAttribute()
+        op(op.edges, project.edgeBundle).result.attr
+      }
+      val guid = edgesAsAttr.entity.gUID.toString
+      val embedding = FEFilters.embedFilteredVertices(
+        project.edgeBundle.asVertexSet,
+        Seq(FEVertexAttributeFilter(guid, "!=")))
+      project.pullBackEdgesWithInjection(embedding)
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Aggregate vertex attribute globally"
     val description = "The result is a single scalar value."

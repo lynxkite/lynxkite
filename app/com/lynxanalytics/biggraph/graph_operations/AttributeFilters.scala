@@ -97,3 +97,7 @@ case class Exists[T](filter: Filter[T]) extends Filter[Vector[T]] {
 case class ForAll[T](filter: Filter[T]) extends Filter[Vector[T]] {
   def matches(value: Vector[T]) = value.forall(filter.matches(_))
 }
+
+case class PairEquals[T]() extends Filter[(T, T)] {
+  def matches(value: (T, T)) = value._1 == value._2
+}

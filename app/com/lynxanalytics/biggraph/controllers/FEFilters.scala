@@ -91,6 +91,10 @@ object FEFilters {
           }
         }
         doubleFilter.asInstanceOf[Filter[T]]
+      } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
+        innerSpec match {
+          case "=" => PairEquals[ID]().asInstanceOf[Filter[T]]
+        }
       } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
         val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
         innerSpec match {
