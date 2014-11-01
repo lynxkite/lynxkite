@@ -14,34 +14,43 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 class FingerprintingTest extends FunSuite with TestGraphOp {
   test("two easy pairs") {
-    assert(fingerprint(
+    val f = new Fingerprint(
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(4, 5, 6)),
       Map(20 -> Seq(1, 2, 3), 21 -> Seq(4, 5, 6)))
-      == Seq(10 -> 20, 11 -> 21))
+    assert(f.matching == Seq(10 -> 20, 11 -> 21))
   }
 
   test("one difficult pair A") {
-    assert(fingerprint(
+    val f = new Fingerprint(
       Map(10 -> Seq(1, 2, 3, 10, 11), 11 -> Seq(1, 2, 3, 4)),
       Map(20 -> Seq(1, 2, 3, 4)))
-      == Seq(11 -> 20))
+    assert(f.matching == Seq(11 -> 20))
   }
 
   test("one difficult pair B") {
-    assert(fingerprint(
+    val f = new Fingerprint(
       Map(10 -> Seq(1, 2, 3, 4)),
       Map(20 -> Seq(1, 2, 3, 20, 21), 21 -> Seq(1, 2, 3, 4)))
-      == Seq(10 -> 21))
+    assert(f.matching == Seq(10 -> 21))
   }
 
-  test("no match") {
-    assert(fingerprint(
+  test("bad match") {
+    val f = new Fingerprint(
       Map(10 -> Seq(1, 2, 3)),
       Map(20 -> Seq(4, 5, 6)))
-      == Seq())
+    assert(f.matching == Seq(10 -> 20))
+    assert(f.similarities(10) == 0)
   }
 
-  def fingerprint(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Seq[(Int, Int)] = {
+  test("isolated points") {
+    val f = new Fingerprint(
+      Map(10 -> Seq()),
+      Map(20 -> Seq()))
+    assert(f.matching == Seq(10 -> 20))
+    assert(f.similarities(10) == 0)
+  }
+
+  class Fingerprint(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]) {
     val graph = SmallTestGraph(left ++ right).result
     val weights = AddConstantAttribute.run(graph.es.asVertexSet, 1.0)
     val candidates = {
@@ -49,7 +58,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
       op(op.vsA, graph.vs)(op.vsB, graph.vs).result.esAB
     }
     val fingerprinting = {
-      val op = Fingerprinting(1, 0)
+      val op = Fingerprinting(0, 0)
       op(
         op.leftEdges, graph.es)(
           op.leftEdgeWeights, weights)(
@@ -57,7 +66,8 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
               op.rightEdgeWeights, weights)(
                 op.candidates, candidates).result
     }
-    fingerprinting.matching.toPairSeq.map { case (l, r) => (l.toInt, r.toInt) }
+    val matching = fingerprinting.matching.toPairSeq.map { case (l, r) => (l.toInt, r.toInt) }
+    val similarities = fingerprinting.leftSimilarities.rdd.collect.toMap
   }
 }
 
