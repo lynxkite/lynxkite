@@ -5,6 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
@@ -201,5 +202,43 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     for ((k, v) <- newAge) {
       assert(v == oldAge(k))
     }
+  }
+
+  test("Fingerprinting between project and segmentation by attribute") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-2.csv").getFile,
+      "header" -> "src,dst",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    val other = Project("other")
+    project.copy(other)
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-1.csv").getFile,
+      "header" -> "src,dst",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    run("Import project as segmentation", Map(
+      "them" -> "other"))
+    val seg = project.segmentation("other").project
+    run("Define segmentation links from matching attributes", Map(
+      "base-id-attr" -> "stringID",
+      "seg-id-attr" -> "stringID"),
+      on = seg)
+    def belongsTo = project.segmentation("other").belongsTo.toPairSeq
+    assert(belongsTo.size == 9)
+    run("Fingerprinting between project and segmentation", Map(
+      "mrew" -> "0",
+      "mo" -> "0",
+      "ms" -> "0"),
+      on = seg)
+    assert(belongsTo.size == 9)
+    val similarity = seg.vertexAttributes("fingerprinting similarity score")
+      .runtimeSafeCast[Double].rdd.values.collect
+    assert(similarity.size == 9)
+    assert(similarity.filter(_ > 0).size == 3)
   }
 }
