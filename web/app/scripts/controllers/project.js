@@ -138,22 +138,17 @@ angular.module('biggraph')
       vd.hasSegmentation = function() {
         return that.getSegmentationSide() !== undefined;
       };
-      vd.segmentationFilterName = function() {
-        if (that.getSegmentationSide().project.containsAttribute.title !== '') {
-          return that.getSegmentationSide().project.containsAttribute.title;
-        }
-      };
       vd.segmentationFilters = function() {
         return that.getSegmentationSide().state.filters;
       };
       vd.filterSegmentationToParent = function(parentId) {
-        vd.segmentationFilters()[vd.segmentationFilterName()] = vd.filterValue(parentId);
+        vd.segmentationFilters().$members = vd.filterValue(parentId);
       };
       vd.isSegmentationFilteredToParent = function(parentId) {
-        return vd.segmentationFilters()[vd.segmentationFilterName()] === vd.filterValue(parentId);
+        return vd.segmentationFilters().$members === vd.filterValue(parentId);
       };
       vd.deleteSegmentationsParentFilter = function() {
-        delete vd.segmentationFilters()[vd.segmentationFilterName()];
+        delete vd.segmentationFilters().$members;
       };
 
       this.viewData = vd;
@@ -420,9 +415,6 @@ angular.module('biggraph')
         if (sattr.title === title) {
           return { id: sattr.id, title: title };
         }
-      }
-      if (this.project.containsAttribute.title === title) {
-        return { id: this.project.containsAttribute.id, title: title };
       }
       return undefined;
     };

@@ -91,7 +91,8 @@ case class FEAttribute(
   typeName: String,
   canBucket: Boolean,
   canFilter: Boolean,
-  isNumeric: Boolean)
+  isNumeric: Boolean,
+  isInternal: Boolean)
 
 case class FEProject(
   name: String,
@@ -104,11 +105,7 @@ case class FEProject(
   vertexAttributes: List[FEAttribute],
   edgeAttributes: List[FEAttribute],
   segmentations: List[FESegmentation],
-  opCategories: List[OperationCategory],
-  // In case the project is a segmentation
-  // a Vector[ID] vertex attribute, that contains for each vertex
-  // the vector of parent ids the segment contains.
-  containsAttribute: UIValue)
+  opCategories: List[OperationCategory])
 
 case class FESegmentation(
   name: String,
