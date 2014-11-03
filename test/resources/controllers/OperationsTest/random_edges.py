@@ -7,6 +7,8 @@ flags = argparse.ArgumentParser(description='Generates random edges.')
 flags.add_argument('--vertices', type=int, help='Vertex count.', required=True)
 flags.add_argument('--degree', type=float, help='Average out degree.', default=10)
 flags.add_argument('--edge_file', type=str, help='Write edges to this file.', required=True)
+flags.add_argument('--loop_chance', type=float,
+                   help='Average number of loops per vertex.', default=0.0)
 
 
 def main(args):
@@ -18,6 +20,11 @@ def main(args):
         b = random.randint(1, args.vertices)
       x = random.random()
       f.write('{},{},{}\n'.format(a, b, x))
+    # Add loops.
+    for i in range(int(args.loop_chance * args.vertices)):
+      a = random.randint(1, args.vertices)
+      x = random.random()
+      f.write('{},{},{}\n'.format(a, a, x))
 
 
 if __name__ == '__main__':
