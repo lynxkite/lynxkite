@@ -26,7 +26,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val ca = if (isSegmentation) {
       UIValue(
         id = asSegmentation.containsAttribute.gUID.toString,
-        title = s"IDs of ${asSegmentation.parentName}")
+        title = s"member IDs of [${asSegmentation.parentName}]")
     } else UIValue("", "")
 
     FEProject(
@@ -36,7 +36,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       edgeAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
       segmentations.map(_.toFE).toList,
       opCategories = List(),
-      parent = ca)
+      containsAttribute = ca)
   }
 
   private def checkpoints: Seq[String] = get("checkpoints") match {
