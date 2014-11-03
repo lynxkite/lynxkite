@@ -11,12 +11,13 @@ flags.add_argument('--edge_file', type=str, help='Write edges to this file.', re
 
 def main(args):
   with file(args.edge_file, 'w') as f:
-    f.write('src,dst\n')
+    f.write('src,dst,x\n')
     for i in range(int(args.degree * args.vertices)):
       a = b = random.randint(1, args.vertices)
       while a == b:
         b = random.randint(1, args.vertices)
-      f.write('{},{}\n'.format(a, b))
+      x = random.random()
+      f.write('{},{},{}\n'.format(a, b, x))
 
 
 if __name__ == '__main__':
