@@ -5,6 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
@@ -216,5 +217,48 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(colors == Seq("blue", "green", "red"))
     run("Discard loop edges")
     assert(colors == Seq("blue", "green")) // "red" was the loop edge.
+  }
+
+  test("Fingerprinting between project and segmentation by attribute") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-2.csv").getFile,
+      "header" -> "src,dst,src_link",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    run("Aggregate edge attribute to vertices", Map(
+      "prefix" -> "",
+      "direction" -> "outgoing edges",
+      "aggregate-src_link" -> "most_common"))
+    run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
+    val other = Project("other")
+    project.copy(other)
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-1.csv").getFile,
+      "header" -> "src,dst",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    run("Import project as segmentation", Map(
+      "them" -> "other"))
+    val seg = project.segmentation("other").project
+    run("Define segmentation links from matching attributes", Map(
+      "base-id-attr" -> "stringID",
+      "seg-id-attr" -> "link"),
+      on = seg)
+    def belongsTo = project.segmentation("other").belongsTo.toPairSeq
+    assert(belongsTo.size == 6)
+    run("Fingerprinting between project and segmentation", Map(
+      "mrew" -> "0",
+      "mo" -> "0",
+      "ms" -> "0"),
+      on = seg)
+    assert(belongsTo.size == 5)
+    val similarity = seg.vertexAttributes("fingerprinting similarity score")
+      .runtimeSafeCast[Double].rdd.values.collect
+    assert(similarity.size == 5)
+    assert(similarity.filter(_ > 0).size == 2)
   }
 }
