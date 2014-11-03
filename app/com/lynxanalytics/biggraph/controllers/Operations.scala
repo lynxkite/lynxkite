@@ -228,8 +228,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("src", "Source", options = vertexAttributes[String]),
       Param("dst", "Destination", options = vertexAttributes[String]))
-    def enabled = hasNoEdgeBundle
+    def enabled = hasNoEdgeBundle &&
+      FEStatus.assert(vertexAttributes[String].size > 2, "Two string attributes are needed.")
     def apply(params: Map[String, String]) = {
+      val srcAttr = project.vertexAttributes(params("src")).runtimeSafeCast[String]
+      val dstAttr = project.vertexAttributes(params("dst")).runtimeSafeCast[String]
+      val newGraph = {
+        val op = graph_operations.VerticesToEdges()
+        op(op.srcAttr, srcAttr)(op.dstAttr, dstAttr).result
+      }
+      val oldAttrs = project.vertexAttributes.toMap
+      project.vertexSet = newGraph.vs
+      project.edgeBundle = newGraph.es
+      project.vertexAttributes("stringID") = newGraph.stringID
+      for ((name, attr) <- oldAttrs) {
+        project.edgeAttributes(name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, newGraph.embedding)
+      }
     }
   })
 
