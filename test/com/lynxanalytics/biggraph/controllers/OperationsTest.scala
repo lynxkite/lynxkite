@@ -202,4 +202,19 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       assert(v == oldAge(k))
     }
   }
+
+  test("Discard loop edges") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
+      "header" -> "src,dst,color",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    def colors =
+      project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
+    assert(colors == Seq("blue", "green", "red"))
+    run("Discard loop edges")
+    assert(colors == Seq("blue", "green")) // "red" was the loop edge.
+  }
 }
