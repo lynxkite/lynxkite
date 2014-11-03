@@ -261,4 +261,23 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Discard loop edges")
     assert(colors == Seq("blue", "green")) // "red" was the loop edge.
   }
+
+  test("Convert vertices into edges") {
+    run("Import vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
+      "header" -> "src,dst,color",
+      "delimiter" -> ",",
+      "id-attr" -> "id",
+      "filter" -> ""))
+    var colors =
+      project.vertexAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
+    assert(colors == Seq("blue", "green", "red"))
+    run("Convert vertices into edges", Map("src" -> "src", "dst" -> "dst"))
+    colors =
+      project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
+    assert(colors == Seq("blue", "green", "red"))
+    val stringIDs =
+      project.vertexAttributes("stringID").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
+    assert(stringIDs == Seq("0", "1", "2"))
+  }
 }
