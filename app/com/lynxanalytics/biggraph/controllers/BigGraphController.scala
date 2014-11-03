@@ -108,8 +108,7 @@ case class FEProject(
   // In case the project is a segmentation
   // a Vector[ID] vertex attribute, that contains for each vertex
   // the vector of parent ids the segment contains.
-  // TODO: why list?
-  parents: List[UIValue])
+  parent: UIValue)
 
 case class FESegmentation(
   name: String,

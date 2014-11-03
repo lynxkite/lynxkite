@@ -220,10 +220,10 @@
       </li>
       <li class="sublist list-group-item" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
 
-      <li class="list-group-item" ng-if="side.project.parents.length !== 0">
-        <span class="lead de-emph">Parents</span>
+      <li class="list-group-item" ng-if="side.project.parent.title !== ''">
+        <span class="lead de-emph">Parent project</span>
       </li>
-      <li class="sublist list-group-item" ng-repeat="parent in side.project.parents" parent="parent" side="side"></li>
+      <li class="sublist list-group-item" ng-if="side.project.parent.title !== ''" parent="side.project.parent" side="side"></li>
 
     </div>
   </div>

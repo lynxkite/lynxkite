@@ -442,19 +442,19 @@ angular.module('biggraph').directive('graphView', function(util) {
                 });
               }
             }
-            if (side.hasSegment()) {
-              if (side.isSegmentFilteredToParent(id)) {
+            if (side.hasSegmentation()) {
+              if (side.isSegmentationFilteredToParent(id)) {
                 actions.push({
-                  title: 'Stop filtering segment to this base project',
+                  title: 'Stop filtering segmentation to this vertex',
                   callback: function() {
-                    side.deleteSegmentsParentFilter();
+                    side.deleteSegmentationsParentFilter();
                   },
                 });
               } else {
                 actions.push({
-                  title: 'Filter segment to this base project',
+                  title: 'Filter segmentation to this vertex',
                   callback: function() {
-                    side.filterSegmentToParent(id);
+                    side.filterSegmentationToParent(id);
                   },
                 });
               }

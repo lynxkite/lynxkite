@@ -135,23 +135,25 @@ angular.module('biggraph')
         delete vd.parentFilters()[vd.parentFilterName()];
       };
 
-      vd.hasSegment = function() {
+      vd.hasSegmentation = function() {
         return that.getSegmentationSide() !== undefined;
       };
-      vd.segmentFilterName = function() {
-        return that.getSegmentationSide().project.parents[0].title; // TODO wtf array
+      vd.segmentationFilterName = function() {
+        if (that.getSegmentationSide().project.parent.title !== '') {
+          return that.getSegmentationSide().project.parent.title;
+        }
       };
-      vd.segmentFilters = function() {
+      vd.segmentationFilters = function() {
         return that.getSegmentationSide().state.filters;
       };
-      vd.filterSegmentToParent = function(parentId) {
-        vd.segmentFilters()[vd.segmentFilterName()] = vd.filterValue(parentId);
+      vd.filterSegmentationToParent = function(parentId) {
+        vd.segmentationFilters()[vd.segmentationFilterName()] = vd.filterValue(parentId);
       };
-      vd.isSegmentFilteredToParent = function(parentId) {
-        return vd.segmentFilters()[vd.segmentFilterName()] === vd.filterValue(parentId);
+      vd.isSegmentationFilteredToParent = function(parentId) {
+        return vd.segmentationFilters()[vd.segmentationFilterName()] === vd.filterValue(parentId);
       };
-      vd.deleteSegmentsParentFilter = function() {
-        delete vd.segmentFilters()[vd.segmentFilterName()];
+      vd.deleteSegmentationsParentFilter = function() {
+        delete vd.segmentationFilters()[vd.segmentationFilterName()];
       };
 
       this.viewData = vd;
@@ -419,11 +421,8 @@ angular.module('biggraph')
           return { id: sattr.id, title: title };
         }
       }
-      for (var parIdx = 0; parIdx < this.project.parents.length; parIdx++) {
-        var pattr = this.project.parents[parIdx];
-        if (pattr.title === title) {
-          return { id: pattr.id, title: title };
-        }
+      if (this.project.parent.title === title) {
+        return { id: this.project.parent.id, title: title };
       }
       return undefined;
     };
