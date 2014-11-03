@@ -204,21 +204,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     }
   }
 
-  test("Discard loop edges") {
-    run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
-      "header" -> "src,dst,color",
-      "delimiter" -> ",",
-      "src" -> "src",
-      "dst" -> "dst",
-      "filter" -> ""))
-    def colors =
-      project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
-    assert(colors == Seq("blue", "green", "red"))
-    run("Discard loop edges")
-    assert(colors == Seq("blue", "green")) // "red" was the loop edge.
-  }
-
   test("Fingerprinting between project and segmentation by attribute") {
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-2.csv").getFile,
@@ -260,5 +245,20 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       .runtimeSafeCast[Double].rdd.values.collect
     assert(similarity.size == 5)
     assert(similarity.filter(_ > 0).size == 2)
+  }
+
+  test("Discard loop edges") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
+      "header" -> "src,dst,color",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    def colors =
+      project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
+    assert(colors == Seq("blue", "green", "red"))
+    run("Discard loop edges")
+    assert(colors == Seq("blue", "green")) // "red" was the loop edge.
   }
 }
