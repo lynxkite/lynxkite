@@ -218,6 +218,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new EdgeOperation(_) {
+    val title = "Convert vertices into edges"
+    val description =
+      """Re-interprets the vertices as edges. You select two string-typed vertex attributes
+      which specify the source and destination of the edges. An example use-case is if your
+      vertices are calls. The converted graph will have subscribers as its vertices and the
+      calls as its edges."""
+    def parameters = List(
+      Param("src", "Source", options = vertexAttributes[String]),
+      Param("dst", "Destination", options = vertexAttributes[String]))
+    def enabled = hasNoEdgeBundle
+    def apply(params: Map[String, String]) = {
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Import vertex attributes"
     val description =
