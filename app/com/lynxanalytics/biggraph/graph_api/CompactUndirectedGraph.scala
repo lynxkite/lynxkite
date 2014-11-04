@@ -1,16 +1,20 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.apache.spark.SparkContext._
+import org.apache.spark
 import scala.collection.immutable
 import scala.collection.mutable
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.Sorting
 
 object CompactUndirectedGraph {
-  def apply(edges: EdgeBundleData, needsBothDirections: Boolean = true): CompactUndirectedGraph = {
+  def apply(rc: RuntimeContext,
+            edges: EdgeBundleData,
+            needsBothDirections: Boolean = true): CompactUndirectedGraph = {
     assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
+    val path = rc.broadcastDirectory / scala.util.Random.alphanumeric.take(10).mkString.toLowerCase
     val edgesRDD = edges.rdd
     val outEdges = edgesRDD.map {
       case (id, edge) => (edge.src, edge.dst)
@@ -19,76 +23,64 @@ object CompactUndirectedGraph {
       case (id, edge) => (edge.dst, edge.src)
     }.groupBySortedKey(edgesRDD.partitioner.get)
     val adjList = outEdges.fullOuterJoin(inEdges)
-      .map {
+      .mapValuesWithKeys {
         case (v, (outs, ins)) => {
           val outSet = outs.getOrElse(Seq()).toSet
           val inSet = ins.getOrElse(Seq()).toSet
           val combined = if (needsBothDirections) (outSet & inSet) else (outSet | inSet)
-          (v, (combined - v).toArray.sorted)
+          (combined - v).toArray.sorted
         }
       }
-    val compact = adjList.mapPartitions({
-      it: Iterator[(ID, Array[ID])] =>
-        {
-          val neighbors = mutable.ArrayBuffer[ID]()
-          val indices = mutable.ArrayBuffer[Int]()
-          val ids = mutable.ArrayBuffer[ID]()
-          var index = 0
-          it.foreach {
-            case (v, ns) => {
-              ids += v
-              indices += index
-              neighbors ++= ns
-              index += ns.size
-            }
-          }
-          Iterator(((ids.toArray, indices.toArray), neighbors.toArray))
+    log.info("CUG Writing...")
+    adjList.context.runJob(adjList, (task, it: Iterator[(ID, Array[ID])]) =>
+      {
+        val neighbors = mutable.ArrayBuffer[ID]()
+        val indices = mutable.ArrayBuffer[(ID, Int)]()
+        val starts = mutable.ArrayBuffer[Int]()
+        var index = 0
+        for ((v, ns) <- it) {
+          neighbors ++= ns
+          indices += v -> indices.size
+          starts += index
+          index += ns.size
         }
-    })
-
-    log.info("CUG Collecting")
-    val perPartitionData = compact.collect
-    val numVertices = perPartitionData
-      .map { case ((ids, indices), neighbors) => ids.size }
-      .sum
-    val numEdges = perPartitionData
-      .map { case ((ids, indices), neighbors) => neighbors.size }
-      .sum
-
-    log.info("CUG Allocating")
-    val fullNeighbors = Array.ofDim[ID](numEdges)
-    val vertexIndices = Array.ofDim[(ID, Int)](numVertices)
-    val starts = Array.ofDim[Int](numVertices + 1)
-    log.info("CUG Computing")
-
-    var offset = 0
-    var index = 0
-    perPartitionData.foreach({
-      case ((ids, indices), neighbors) => {
-        Array.copy(neighbors, 0, fullNeighbors, offset, neighbors.size)
-        for (i <- 0 until ids.size) {
-          starts(index + i) = indices(i) + offset
-          vertexIndices(index + i) = (ids(i), index + i)
-        }
-        offset += neighbors.size
-        index += ids.size
-      }
-    })
-    starts(index) = offset
-
-    log.info("CUG Sorting")
-    Sorting.quickSort(vertexIndices)
-
-    log.info("CUG successfully created!")
-    return new CompactUndirectedGraph(
-      fullNeighbors, vertexIndices, starts)
+        starts += index // Sentinel.
+        val indicesArray = indices.toArray
+        Sorting.quickSort(indicesArray)
+        val dir = path / task.partitionId.toString
+        (dir / "neighbors").createFromObjectKryo(neighbors.toArray)
+        (dir / "indices").createFromObjectKryo(indicesArray)
+        (dir / "starts").createFromObjectKryo(starts.toArray)
+      })
+    log.info("CUG Partitions written.")
+    return new CompactUndirectedGraph(path, adjList.partitioner.get)
   }
 }
 
-class CompactUndirectedGraph(
-    fullNeighbors: Array[ID],
+class CompactUndirectedGraph(path: Filename, partitioner: spark.Partitioner) extends Serializable {
+  @transient lazy val cache = Array.ofDim[CompactUndirectedGraphPartition](partitioner.numPartitions)
+
+  def getNeighbors(vid: ID): Seq[ID] = {
+    getPartition(vid).getNeighbors(vid)
+  }
+
+  def getPartition(vid: ID): CompactUndirectedGraphPartition = {
+    val pid = partitioner.getPartition(vid)
+    if (cache(pid) == null) {
+      val dir = path / pid.toString
+      val neighbors = (dir / "neighbors").loadObjectKryo.asInstanceOf[Array[ID]]
+      val indices = (dir / "indices").loadObjectKryo.asInstanceOf[Array[(ID, Int)]]
+      val starts = (dir / "starts").loadObjectKryo.asInstanceOf[Array[Int]]
+      cache(pid) = new CompactUndirectedGraphPartition(neighbors, indices, starts)
+    }
+    cache(pid)
+  }
+}
+
+class CompactUndirectedGraphPartition(
+    neighbors: Array[ID],
     indices: Array[(ID, Int)],
-    starts: Array[Int]) extends Serializable {
+    starts: Array[Int]) {
 
   def findId(id: ID): Int = {
     var lb = 0
@@ -113,7 +105,7 @@ class CompactUndirectedGraph(
     if (idx == -1) {
       Seq()
     } else {
-      fullNeighbors.view.slice(starts(idx), starts(idx + 1))
+      neighbors.view.slice(starts(idx), starts(idx + 1))
     }
   }
 }
