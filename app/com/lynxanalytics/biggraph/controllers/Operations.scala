@@ -1607,6 +1607,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       parent.vertexAttributes(s"$prefix $targetName train") = train
       parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
+      var timeOfDefinition = {
+        val op = graph_operations.DeriveJSDouble(
+          JavaScript("attr ? 0 : undefined"), Seq("attr"), Seq(), Seq())
+        op(op.numAttrs, Seq(train)).result.attr.entity
+      }
+
       // iterative prediction
       for (i <- 1 to params("iterations").toInt) {
         val segTargetAvg = {
@@ -1667,7 +1673,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         parent.scalars(s"$prefix $targetName coverage after iteration $i") = coverage
         parent.scalars(s"$prefix $targetName mean absolute prediction error after iteration $i") =
           error
+
+        timeOfDefinition = {
+          val op = graph_operations.DeriveJSDouble(
+            JavaScript(s"attr ? $i : undefined"), Seq("attr"), Seq(), Seq())
+          val newDefinitions = op(op.numAttrs, Seq(train)).result.attr
+          unifyAttributeT(timeOfDefinition, newDefinitions)
+        }
       }
+      parent.vertexAttributes(s"$prefix $targetName viral spread") = timeOfDefinition
       // TODO: in the end we should calculate with the fact that the real error where the
       // original attribute is defined is 0.0
     }
