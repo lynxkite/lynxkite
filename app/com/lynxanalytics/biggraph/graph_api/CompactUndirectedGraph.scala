@@ -35,21 +35,17 @@ object CompactUndirectedGraph {
     adjList.context.runJob(adjList, (task, it: Iterator[(ID, Array[ID])]) =>
       {
         val neighbors = mutable.ArrayBuffer[ID]()
-        val indices = mutable.ArrayBuffer[(ID, Int)]()
-        val starts = mutable.ArrayBuffer[Int]()
+        val starts = mutable.ArrayBuffer[(ID, Int)]()
         var index = 0
         for ((v, ns) <- it) {
           neighbors ++= ns
-          indices += v -> indices.size
-          starts += index
+          starts += v -> index
           index += ns.size
         }
-        starts += index // Sentinel.
-        val indicesArray = indices.toArray
-        Sorting.quickSort(indicesArray)
+        starts += 0L -> index // Sentinel.
         val dir = path / task.partitionId.toString
         (dir / "neighbors").createFromObjectKryo(neighbors.toArray)
-        (dir / "indices").createFromObjectKryo(indicesArray)
+        // "starts" is sorted because adjList is a SortedRDD.
         (dir / "starts").createFromObjectKryo(starts.toArray)
       })
     log.info("CUG Partitions written.")
@@ -69,9 +65,8 @@ class CompactUndirectedGraph(path: Filename, partitioner: spark.Partitioner) ext
     if (cache(pid) == null) {
       val dir = path / pid.toString
       val neighbors = (dir / "neighbors").loadObjectKryo.asInstanceOf[Array[ID]]
-      val indices = (dir / "indices").loadObjectKryo.asInstanceOf[Array[(ID, Int)]]
-      val starts = (dir / "starts").loadObjectKryo.asInstanceOf[Array[Int]]
-      cache(pid) = new CompactUndirectedGraphPartition(neighbors, indices, starts)
+      val starts = (dir / "starts").loadObjectKryo.asInstanceOf[Array[(ID, Int)]]
+      cache(pid) = new CompactUndirectedGraphPartition(neighbors, starts)
     }
     cache(pid)
   }
@@ -79,18 +74,17 @@ class CompactUndirectedGraph(path: Filename, partitioner: spark.Partitioner) ext
 
 class CompactUndirectedGraphPartition(
     neighbors: Array[ID],
-    indices: Array[(ID, Int)],
-    starts: Array[Int]) {
+    starts: Array[(ID, Int)]) {
 
   def findId(id: ID): Int = {
     var lb = 0
-    var ub = indices.size
+    var ub = starts.size - 1 // The last element is the sentinel.
 
     while (lb < ub) {
       val mid = (lb + ub) / 2
-      val (currId, currIndex) = indices(mid)
+      val (currId, currStart) = starts(mid)
       if (currId == id) {
-        return currIndex
+        return mid
       } else if (currId > id) {
         ub = mid
       } else {
@@ -105,7 +99,7 @@ class CompactUndirectedGraphPartition(
     if (idx == -1) {
       Seq()
     } else {
-      neighbors.view.slice(starts(idx), starts(idx + 1))
+      neighbors.view.slice(starts(idx)._2, starts(idx + 1)._2)
     }
   }
 }
