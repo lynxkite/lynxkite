@@ -5,5 +5,4 @@
   </property>
   <property><name>fs.gs.project.id</name><value>big-graph-gc1</value></property>
   <property><name>fs.gs.system.bucket</name><value>euspark</value></property>
-  <property><name>hadoop.tmp.dir</name><value>/mnt/hadoop-tmp</value></property>
 </configuration>

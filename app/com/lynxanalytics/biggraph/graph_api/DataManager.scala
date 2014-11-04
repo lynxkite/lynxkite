@@ -212,9 +212,8 @@ class DataManager(sc: spark.SparkContext,
 
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
-    assert(
-      !entityPath(entity).exists() || entityPath(entity).delete(),
-      s"Cannot delete directory of entity $entity")
+    val doesNotExist = !entityPath(entity).exists() || entityPath(entity).delete()
+    assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>
