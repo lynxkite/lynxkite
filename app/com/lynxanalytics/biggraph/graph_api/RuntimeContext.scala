@@ -25,7 +25,7 @@ case class Broadcast[T](filename: Filename) {
 
 case class RuntimeContext(sparkContext: spark.SparkContext,
                           broadcastDirectory: Filename,
-                          // The number of cores available for computaitons.
+                          // The number of cores available for computations.
                           numAvailableCores: Int,
                           // Total memory available for caching RDDs.
                           availableCacheMemoryGB: Double) {
