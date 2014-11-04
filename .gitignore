@@ -31,3 +31,4 @@ public
 
 # KDE specific
 *.directory
+*.kate-swp

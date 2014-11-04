@@ -215,11 +215,10 @@
       </li>
       <li class="sublist list-group-item" ng-repeat="attr in side.project.edgeAttributes" edge-attribute="attr" side="side"></li>
 
-      <li class="list-group-item">
+      <li class="list-group-item" ng-if="side.project.segmentations.length !== 0">
         <span class="lead de-emph">Segmentations</span>
       </li>
       <li class="sublist list-group-item" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
-
     </div>
   </div>
 </div>
