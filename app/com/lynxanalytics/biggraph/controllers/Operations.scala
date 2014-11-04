@@ -218,6 +218,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new EdgeOperation(_) {
+    val title = "Convert vertices into edges"
+    val description =
+      """Re-interprets the vertices as edges. You select two string-typed vertex attributes
+      which specify the source and destination of the edges. An example use-case is if your
+      vertices are calls. The converted graph will have subscribers as its vertices and the
+      calls as its edges."""
+    def parameters = List(
+      Param("src", "Source", options = vertexAttributes[String]),
+      Param("dst", "Destination", options = vertexAttributes[String]))
+    def enabled = hasNoEdgeBundle &&
+      FEStatus.assert(vertexAttributes[String].size > 2, "Two string attributes are needed.")
+    def apply(params: Map[String, String]) = {
+      val srcAttr = project.vertexAttributes(params("src")).runtimeSafeCast[String]
+      val dstAttr = project.vertexAttributes(params("dst")).runtimeSafeCast[String]
+      val newGraph = {
+        val op = graph_operations.VerticesToEdges()
+        op(op.srcAttr, srcAttr)(op.dstAttr, dstAttr).result
+      }
+      val oldAttrs = project.vertexAttributes.toMap
+      project.vertexSet = newGraph.vs
+      project.edgeBundle = newGraph.es
+      project.vertexAttributes("stringID") = newGraph.stringID
+      for ((name, attr) <- oldAttrs) {
+        project.edgeAttributes(name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, newGraph.embedding)
+      }
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Import vertex attributes"
     val description =

@@ -1,0 +1,54 @@
+package com.lynxanalytics.biggraph.graph_operations
+
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.Implicits._
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
+
+object VerticesToEdges {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val srcAttr = vertexAttribute[String](vs)
+    val dstAttr = vertexAttribute[String](vs)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    val (vs, es) = graph
+    val stringID = vertexAttribute[String](vs)
+    val embedding = edgeBundle(es.asVertexSet, inputs.vs.entity, EdgeBundleProperties.embedding)
+  }
+}
+import VerticesToEdges._
+case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val partitioner = inputs.vs.rdd.partitioner.get
+    val srcAttr = inputs.srcAttr.rdd
+    val dstAttr = inputs.dstAttr.rdd
+    val names = (srcAttr.values ++ dstAttr.values).distinct
+    val idToName = names.randomNumbered(partitioner.numPartitions)
+    val nameToId = idToName.map { case (id, name) => (name, id) }
+      .toSortedRDD(partitioner)
+    val edgeSrcDst = srcAttr.sortedJoin(dstAttr)
+    val bySrc = edgeSrcDst.map {
+      case (edgeId, (src, dst)) => src -> (edgeId, dst)
+    }.toSortedRDD(partitioner)
+    val byDst = bySrc.sortedJoin(nameToId).map {
+      case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
+    }.toSortedRDD(partitioner)
+    val edges = byDst.sortedJoin(nameToId).map {
+      case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
+    }.toSortedRDD(partitioner)
+    val embedding = inputs.vs.rdd.mapValuesWithKeys { case (id, _) => Edge(id, id) }
+    output(o.vs, idToName.mapValues(_ => ()))
+    output(o.es, edges)
+    output(o.stringID, idToName)
+    output(o.embedding, embedding)
+  }
+}
