@@ -1609,7 +1609,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       var timeOfDefinition = {
         val op = graph_operations.DeriveJSDouble(
-          JavaScript("attr ? 0 : undefined"), Seq("attr"), Seq(), Seq())
+          JavaScript("0"), Seq("attr"), Seq(), Seq())
         op(op.numAttrs, Seq(train)).result.attr.entity
       }
 
@@ -1676,7 +1676,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
         timeOfDefinition = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript(s"attr ? $i : undefined"), Seq("attr"), Seq(), Seq())
+            JavaScript(i.toString), Seq("attr"), Seq(), Seq())
           val newDefinitions = op(op.numAttrs, Seq(train)).result.attr
           unifyAttributeT(timeOfDefinition, newDefinitions)
         }
