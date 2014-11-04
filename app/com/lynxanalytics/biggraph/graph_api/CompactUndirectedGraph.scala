@@ -49,11 +49,11 @@ object CompactUndirectedGraph {
         (dir / "starts").createFromObjectKryo(starts.toArray)
       })
     log.info("CUG Partitions written.")
-    return new CompactUndirectedGraph(path, adjList.partitioner.get)
+    return CompactUndirectedGraph(path, adjList.partitioner.get)
   }
 }
 
-class CompactUndirectedGraph(path: Filename, partitioner: spark.Partitioner) extends Serializable {
+case class CompactUndirectedGraph(path: Filename, partitioner: spark.Partitioner) {
   @transient lazy val cache = Array.ofDim[CompactUndirectedGraphPartition](partitioner.numPartitions)
 
   def getNeighbors(vid: ID): Seq[ID] = {
