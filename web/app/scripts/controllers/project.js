@@ -119,20 +119,36 @@ angular.module('biggraph')
       vd.parentFilters = function() {
         return that.getParentSide().state.filters;
       };
-      vd.filterName = function() {
+      vd.parentFilterName = function() {
         return that.getParentSide().getSegmentationEntry(that).equivalentAttribute.title;
       };
-      vd.filterValue = function(segmentId) {
-        return 'exists(' + segmentId + ')';
+      vd.filterValue = function(id) {
+        return 'exists(' + id + ')';
       };
       vd.filterParentToSegment = function(segmentId) {
-        vd.parentFilters()[vd.filterName()] = vd.filterValue(segmentId);
+        vd.parentFilters()[vd.parentFilterName()] = vd.filterValue(segmentId);
       };
       vd.isParentFilteredToSegment = function(segmentId) {
-        return vd.parentFilters()[vd.filterName()] === vd.filterValue(segmentId);
+        return vd.parentFilters()[vd.parentFilterName()] === vd.filterValue(segmentId);
       };
       vd.deleteParentsSegmentFilter = function() {
-        delete vd.parentFilters()[vd.filterName()];
+        delete vd.parentFilters()[vd.parentFilterName()];
+      };
+
+      vd.hasSegmentation = function() {
+        return that.getSegmentationSide() !== undefined;
+      };
+      vd.segmentationFilters = function() {
+        return that.getSegmentationSide().state.filters;
+      };
+      vd.filterSegmentationToParent = function(parentId) {
+        vd.segmentationFilters().$members = vd.filterValue(parentId);
+      };
+      vd.isSegmentationFilteredToParent = function(parentId) {
+        return vd.segmentationFilters().$members === vd.filterValue(parentId);
+      };
+      vd.deleteSegmentationsParentFilter = function() {
+        delete vd.segmentationFilters().$members;
       };
 
       this.viewData = vd;
@@ -454,6 +470,16 @@ angular.module('biggraph')
         var side = $scope.sides[i];
         if (side === this) { continue; }
         if (side.getSegmentationEntry(this)) {
+          return side;
+        }
+      }
+      return undefined;
+    };
+    Side.prototype.getSegmentationSide = function() {
+      for (var i = 0; i < $scope.sides.length; ++i) {
+        var side = $scope.sides[i];
+        if (side === this) { continue; }
+        if (side.isSegmentationOf(this)) {
           return side;
         }
       }

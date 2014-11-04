@@ -444,6 +444,23 @@ angular.module('biggraph').directive('graphView', function(util) {
                 });
               }
             }
+            if (side.hasSegmentation()) {
+              if (side.isSegmentationFilteredToParent(id)) {
+                actions.push({
+                  title: 'Stop filtering segmentation to this vertex',
+                  callback: function() {
+                    side.deleteSegmentationsParentFilter();
+                  },
+                });
+              } else {
+                actions.push({
+                  title: 'Filter segmentation to this vertex',
+                  callback: function() {
+                    side.filterSegmentationToParent(id);
+                  },
+                });
+              }
+            }
             if (vertex.frozen) {
               actions.push({
                 title: 'Unfreeze',

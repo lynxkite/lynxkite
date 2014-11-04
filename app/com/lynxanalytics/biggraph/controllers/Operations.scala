@@ -903,6 +903,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new EdgeOperation(_) {
+    val title = "Discard loop edges"
+    val description = "Discards edges that connect a vertex to itself."
+    def parameters = List()
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val edgesAsAttr = {
+        val op = graph_operations.EdgeBundleAsVertexAttribute()
+        op(op.edges, project.edgeBundle).result.attr
+      }
+      val guid = edgesAsAttr.entity.gUID.toString
+      val embedding = FEFilters.embedFilteredVertices(
+        project.edgeBundle.asVertexSet,
+        Seq(FEVertexAttributeFilter(guid, "!=")))
+      project.pullBackEdgesWithInjection(embedding)
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Aggregate vertex attribute globally"
     val description = "The result is a single scalar value."
@@ -1589,6 +1607,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       parent.vertexAttributes(s"$prefix $targetName train") = train
       parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
+      var timeOfDefinition = {
+        val op = graph_operations.DeriveJSDouble(
+          JavaScript("attr ? 0 : undefined"), Seq("attr"), Seq(), Seq())
+        op(op.numAttrs, Seq(train)).result.attr.entity
+      }
+
       // iterative prediction
       for (i <- 1 to params("iterations").toInt) {
         val segTargetAvg = {
@@ -1649,7 +1673,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         parent.scalars(s"$prefix $targetName coverage after iteration $i") = coverage
         parent.scalars(s"$prefix $targetName mean absolute prediction error after iteration $i") =
           error
+
+        timeOfDefinition = {
+          val op = graph_operations.DeriveJSDouble(
+            JavaScript(s"attr ? $i : undefined"), Seq("attr"), Seq(), Seq())
+          val newDefinitions = op(op.numAttrs, Seq(train)).result.attr
+          unifyAttributeT(timeOfDefinition, newDefinitions)
+        }
       }
+      parent.vertexAttributes(s"$prefix $targetName viral spread") = timeOfDefinition
       // TODO: in the end we should calculate with the fact that the real error where the
       // original attribute is defined is 0.0
     }
