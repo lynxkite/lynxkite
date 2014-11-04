@@ -83,11 +83,11 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.mode == "sampled")
     assert(res.vertices.toSet == Set(
       FEVertex(0.0, 0, 0, id = 0, attrs = Map(
-        age -> DynamicValue(20.3, "20.3", true),
-        gender -> DynamicValue(0.0, "Male", true))),
+        age -> DynamicValue(20.3, "20.3"),
+        gender -> DynamicValue(0.0, "Male"))),
       FEVertex(0.0, 0, 0, id = 1, attrs = Map(
-        age -> DynamicValue(18.2, "18.2", true),
-        gender -> DynamicValue(0.0, "Female", true)))))
+        age -> DynamicValue(18.2, "18.2"),
+        gender -> DynamicValue(0.0, "Female")))))
   }
 
   //TODO: bucketed, histo, scalar, edgeDiagram tests
