@@ -18,15 +18,20 @@ class DataManager(sc: spark.SparkContext,
   private val instanceOutputCache = mutable.Map[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = mutable.Map[UUID, Future[EntityData]]()
 
+  private def instancePath(instance: MetaGraphOperationInstance) =
+    repositoryPath / "operations" / instance.gUID.toString
+
   private def entityPath(entity: MetaGraphEntity) =
-    repositoryPath / entity.gUID.toString
+    repositoryPath / "entities" / entity.gUID.toString
 
   private def successPath(basePath: Filename): Filename = basePath / "_SUCCESS"
 
   private def serializedScalarFileName(basePath: Filename): Filename = basePath / "serialized_data"
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
-    successPath(entityPath(entity)).exists
+    entity.source.operation.isHeavy &&
+      successPath(instancePath(entity.source)).exists &&
+      successPath(entityPath(entity)).exists
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
@@ -106,10 +111,9 @@ class DataManager(sc: spark.SparkContext,
       if (instance.operation.isHeavy) {
         blocking {
           outputDatas.values.foreach { entityData =>
-            if (!hasEntityOnDisk(entityData.entity)) {
-              saveToDisk(entityData)
-            }
+            saveToDisk(entityData)
           }
+          successPath(instancePath(instance)).createFromStrings("")
         }
       }
       instance.outputs.scalars.values
@@ -198,16 +202,18 @@ class DataManager(sc: spark.SparkContext,
     Await.result(getFuture(entity), duration.Duration.Inf)
   }
 
-  def loadToMemory(entity: MetaGraphEntity): Unit = {
+  def cache(entity: MetaGraphEntity): Unit = {
     val data = get(entity)
     data match {
-      case rddData: EntityRDDData => rddData.rdd.memorizeBackingArray(sc.getRDDStorageInfo)
+      case rddData: EntityRDDData => rddData.rdd.cacheBackingArray()
       case _ => ()
     }
   }
 
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
+    val doesNotExist = !entityPath(entity).exists() || entityPath(entity).delete()
+    assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>

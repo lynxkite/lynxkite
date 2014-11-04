@@ -98,7 +98,8 @@ trait ImportCommon {
     val p = rc.defaultPartitioner.numPartitions
     log.info(s"Reading input lines into ${p} partitions")
     val lines = csv.lines(rc.sparkContext)
-    val numbered = lines.randomNumbered(p).cache
+    val numbered = lines.randomNumbered(p)
+    numbered.cacheBackingArray()
     return csv.fields.zipWithIndex.map {
       case (field, idx) => field -> numbered.mapValues(line => line(idx))
     }.toMap
@@ -304,7 +305,7 @@ case class ImportAttributesForExistingVertexSet(csv: CSV, idField: String)
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
         .toSortedRDD(inputs.vs.rdd.partitioner.get)
-    linesByInternalId.memorizeBackingArray(rc.sparkContext.getRDDStorageInfo)
+    linesByInternalId.cacheBackingArray()
     csv.fields.zipWithIndex.foreach {
       case (field, idx) => if (idx != idFieldIdx) {
         output(o.attrs(field), linesByInternalId.mapValues(line => line(idx)))
