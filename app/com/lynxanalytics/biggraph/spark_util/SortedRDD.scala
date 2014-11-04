@@ -246,7 +246,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
   // The ids seq needs to be sorted.
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V]
 
-  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit
+  def cacheBackingArray(): Unit
 }
 
 // SortedRDD which was derived from one other sorted rdd without changing the id space.
@@ -265,8 +265,8 @@ private[spark_util] class DerivedSortedRDD[K: Ordering, VOld, VNew](
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, VNew] =
     new DerivedSortedRDD(source.restrictToIdSet(ids), derivation)
 
-  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
-    source.memorizeBackingArray(storageInfo)
+  def cacheBackingArray(): Unit =
+    source.cacheBackingArray()
 }
 
 // SortedRDD which was derived from two other sorted rdds without changing the id space.
@@ -284,9 +284,9 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
     new BiDerivedSortedRDD(
       source1.restrictToIdSet(ids), source2.restrictToIdSet(ids), derivation)
 
-  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit = {
-    source1.memorizeBackingArray(storageInfo)
-    source2.memorizeBackingArray(storageInfo)
+  def cacheBackingArray(): Unit = {
+    source1.cacheBackingArray()
+    source2.cacheBackingArray()
   }
 }
 
@@ -313,22 +313,6 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V] private[spark_util] (da
     Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
     Iterator((split.index, array))
   }
-
-  def memorize(storageInfo: Array[RDDInfo]): Unit = {
-    val fullyCached =
-      storageInfo
-        .find(_.id == id)
-        .map(rddInfo => rddInfo.isCached && rddInfo.numCachedPartitions == rddInfo.numPartitions)
-        .getOrElse(false)
-    if (!fullyCached) {
-      bGLog.info(s"PERF Loading to memory RDD: $this")
-      cache()
-      foreach(_ => ())
-      bGLog.info(s"PERF RDD load completed: $id")
-    } else {
-      bGLog.info(s"PERF RDD $this found in memory")
-    }
-  }
 }
 
 private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedArrayRDD[K, V])
@@ -339,8 +323,8 @@ private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedA
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
     new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
 
-  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
-    arrayRDD.memorize(storageInfo)
+  def cacheBackingArray(): Unit =
+    arrayRDD.cache()
 
   override def setName(newName: String): this.type = {
     name = newName
@@ -419,6 +403,6 @@ private[spark_util] class RestrictedArrayBackedSortedRDD[K: Ordering, V](
   def restrictToIdSet(newIds: IndexedSeq[K]): SortedRDD[K, V] =
     new RestrictedArrayBackedSortedRDD(arrayRDD, ids.intersect(newIds))
 
-  def memorizeBackingArray(storageInfo: Array[RDDInfo]): Unit =
-    arrayRDD.memorize(storageInfo)
+  def cacheBackingArray: Unit =
+    arrayRDD.cache()
 }
