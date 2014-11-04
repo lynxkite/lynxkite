@@ -1,12 +1,16 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
+import org.scalatest.Tag
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+
+//to run tests tagged as ViralTest only: sbt test-only *OperationsTest* -- -n ViralTest
+object ViralTest extends Tag("ViralTest")
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
@@ -260,5 +264,46 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       .runtimeSafeCast[Double].rdd.values.collect
     assert(similarity.size == 5)
     assert(similarity.filter(_ > 0).size == 2)
+  }
+
+  test("Viral modeling segment logic", ViralTest) {
+    run("Import vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-1.csv").getFile,
+      "header" -> "id,num",
+      "delimiter" -> ",",
+      "id-attr" -> "internalID",
+      "filter" -> ""))
+    run("Import edges for existing vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-1.csv").getFile,
+      "header" -> "src,dst",
+      "delimiter" -> ",",
+      "attr" -> "id",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    run("Maximal cliques", Map(
+      "name" -> "cliques",
+      "bothdir" -> "false",
+      "min" -> "3"))
+    run("Vertex attribute to double", Map(
+      "attr" -> "num"))
+    run("Viral modeling", Map(
+      "prefix" -> "viral",
+      "target" -> "num",
+      "test_set_ratio" -> "0",
+      "max_deviation" -> "0.75",
+      "seed" -> "0",
+      "iterations" -> "1"), on = project.segmentation("cliques").project)
+    val viral = project.vertexAttributes("viral num after iteration 1").runtimeSafeCast[Double]
+    val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
+    val result = viral.rdd.sortedJoin(stringID.rdd)
+      .map { case (id, (num, stringID)) => stringID -> num }
+    assert(result.collect.toMap == Map(
+      "0" -> 0.5,
+      "1" -> 0.0,
+      "2" -> 1.0,
+      "3" -> 2.0,
+      "4" -> 0.0,
+      "7" -> 3.0))
   }
 }
