@@ -24,7 +24,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
     }
     val members = if (isSegmentation) {
-      Some(feAttr(asSegmentation.membersAttribute, "$members", true))
+      Some(feAttr(asSegmentation.membersAttribute, "$members", isInternal = true))
     } else {
       None
     }
