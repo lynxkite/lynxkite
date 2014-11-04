@@ -318,7 +318,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
       Param(
         "communities_name", "Name for communities segmentation", defaultValue = "communities"),
-      Param("bothdir", "Edges required in cliques in both directions", defaultValue = "true"),
+      Param("bothdir", "Edges required in cliques in both directions", options = UIValue.list(List("true", "false"))),
       Param("min_cliques", "Minimum clique size", defaultValue = "3"),
       Param("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
