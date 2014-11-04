@@ -236,7 +236,9 @@ angular.module('biggraph').directive('graphView', function(util) {
   }
 
   function mapByAttr(vs, attr, type) {
-    return vs.map(function(v) {
+    return vs.filter(function(v) {
+      return v.attrs[attr].defined;
+    }).map(function(v) {
       return v.attrs[attr][type];
     });
   }
@@ -322,7 +324,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       if (sizeAttr) { size = vertex.attrs[sizeAttr].double / sizeMax; }
 
       var color = UNCOLORED;
-      if (colorAttr) {
+      if (colorAttr && vertex.attrs[colorAttr].defined) {
         // in case of doubles the keys are strings converted from the DynamicValue's double field
         // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
         color = (side.attrs.color.typeName === 'Double') ?
