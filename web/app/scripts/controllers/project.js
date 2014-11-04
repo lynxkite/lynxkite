@@ -92,6 +92,7 @@ angular.module('biggraph')
       vd.attrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
       vd.attrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
       vd.attrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
+      vd.attrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
 
@@ -258,7 +259,13 @@ angular.module('biggraph')
         if (setting === 'slider') {
           this.state.attributeTitles.color = undefined;
         } else if (setting === 'color') {
+          this.state.attributeTitles.image = undefined;
           this.state.attributeTitles.slider = undefined;
+        } else if (setting === 'icon') {
+          this.state.attributeTitles.image = undefined;
+        } else if (setting === 'image') {
+          this.state.attributeTitles.color = undefined;
+          this.state.attributeTitles.icon = undefined;
         }
       }
     };
