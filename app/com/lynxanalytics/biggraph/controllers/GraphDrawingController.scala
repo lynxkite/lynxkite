@@ -169,7 +169,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
     if (dynAttrs.size > 0) {
       val joined = {
-        val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue())
+        val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue(defined = false))
         op(op.vs, vertexSet)(op.attrs, dynAttrs).result.attr.entity
       }
       builder = builder(op.attr, joined)
