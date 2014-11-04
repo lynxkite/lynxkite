@@ -215,11 +215,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
     if (origEB != null) {
       val iop = graph_operations.InducedEdgeBundle()
-      val edgeInduction = iop(
+      val induction = iop(
         iop.srcMapping, graph_operations.ReverseEdges.run(injection))(
           iop.dstMapping, graph_operations.ReverseEdges.run(injection))(
             iop.edges, origEB).result
-      pullBackEdgesWithInjection(edgeInduction.embedding)
+      pullBackEdgesWithInjection(induction.induced, induction.embedding)
     }
 
     segmentations.foreach { seg =>
