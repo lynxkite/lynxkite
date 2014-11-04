@@ -16,17 +16,23 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     assert(manager.tagExists(path / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    def feAttr[T](e: TypedEntity[T], name: String) = {
+    def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
       val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
       val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
         .exists(e.typeTag.tpe <:< _)
       val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
-      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric)
+      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
     }
+    val members = if (isSegmentation) {
+      Some(feAttr(asSegmentation.membersAttribute, "$members", isInternal = true))
+    } else {
+      None
+    }
+
     FEProject(
       projectName, lastOperation, nextOperation, vs, eb, notes,
       scalars.map { case (name, scalar) => feAttr(scalar, name) }.toList,
-      vertexAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
+      vertexAttributes.map { case (name, attr) => feAttr(attr, name) }.toList ++ members,
       edgeAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
       segmentations.map(_.toFE).toList,
       opCategories = List())
@@ -166,6 +172,30 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
   }
 
+  def pullBackEdgesWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
+    val op = graph_operations.PulledOverEdges()
+    val newEB = op(op.originalEB, edgeBundle)(op.injection, injection).result.pulledEB
+    pullBackEdgesWithInjection(newEB, injection)
+  }
+  def pullBackEdgesWithInjection(newEdgeBundle: EdgeBundle, injection: EdgeBundle): Unit = manager.synchronized {
+    assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
+      s"Not an injection: $injection")
+    assert(injection.srcVertexSet.gUID == newEdgeBundle.asVertexSet.gUID,
+      s"Wrong source: $injection")
+    assert(injection.dstVertexSet.gUID == edgeBundle.asVertexSet.gUID,
+      s"Wrong destination: $injection")
+    val origEB = edgeBundle
+    val origEAttrs = edgeAttributes.toIndexedSeq
+
+    edgeBundle = newEdgeBundle
+
+    origEAttrs.foreach {
+      case (name, attr) =>
+        edgeAttributes(name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
+    }
+  }
+
   def pullBackWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
     assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
       s"Not an injection: $injection")
@@ -183,20 +213,13 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
     }
 
-    var edgeInduction: graph_operations.InducedEdgeBundle.Output = null
     if (origEB != null) {
       val iop = graph_operations.InducedEdgeBundle()
-      edgeInduction = iop(
+      val edgeInduction = iop(
         iop.srcMapping, graph_operations.ReverseEdges.run(injection))(
           iop.dstMapping, graph_operations.ReverseEdges.run(injection))(
             iop.edges, origEB).result
-      edgeBundle = edgeInduction.induced
-    }
-
-    origEAttrs.foreach {
-      case (name, attr) =>
-        edgeAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, edgeInduction.embedding)
+      pullBackEdgesWithInjection(edgeInduction.embedding)
     }
 
     segmentations.foreach { seg =>
@@ -388,6 +411,16 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     Project.withErrorLogging(s"Cannot get 'belongsToAttribute' for $this") {
       aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr: VertexAttribute[Vector[ID]]
+    }.getOrElse(null)
+  }
+  // In case the project is a segmentation
+  // a Vector[ID] vertex attribute, that contains for each vertex
+  // the vector of parent ids the segment contains.
+  def membersAttribute: VertexAttribute[Vector[ID]] = {
+    val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
+    val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
+    Project.withErrorLogging(s"Cannot get 'membersAttribute' for $this") {
+      aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr: VertexAttribute[Vector[ID]]
     }.getOrElse(null)
   }
   def project = Project(s"$parentName/segmentations/$name/project")
