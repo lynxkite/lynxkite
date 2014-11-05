@@ -58,9 +58,9 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     val res = controller.getSampledVertexDiagram(req)
     assert(res.mode == "sampled")
     assert(res.vertices.toSet == Set(
-      FEVertex(0.0, 0, 0, id = 0, attrs = Map()),
-      FEVertex(0.0, 0, 0, id = 1, attrs = Map()),
-      FEVertex(0.0, 0, 0, id = 2, attrs = Map())))
+      FEVertex(0.0, 0, 0, id = "0", attrs = Map()),
+      FEVertex(0.0, 0, 0, id = "1", attrs = Map()),
+      FEVertex(0.0, 0, 0, id = "2", attrs = Map())))
   }
 
   test("get sampled vertex diagram of ExampleGraph with filters and attrs") {
@@ -82,10 +82,10 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     val res = controller.getSampledVertexDiagram(req)
     assert(res.mode == "sampled")
     assert(res.vertices.toSet == Set(
-      FEVertex(0.0, 0, 0, id = 0, attrs = Map(
+      FEVertex(0.0, 0, 0, id = "0", attrs = Map(
         age -> DynamicValue(20.3, "20.3"),
         gender -> DynamicValue(0.0, "Male"))),
-      FEVertex(0.0, 0, 0, id = 1, attrs = Map(
+      FEVertex(0.0, 0, 0, id = "1", attrs = Map(
         age -> DynamicValue(18.2, "18.2"),
         gender -> DynamicValue(0.0, "Female")))))
   }
