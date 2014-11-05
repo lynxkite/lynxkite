@@ -9,7 +9,24 @@ import java.io.InputStreamReader
 import java.io.IOException
 
 import com.lynxanalytics.biggraph.bigGraphLogger
+import com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
+
+/* It is not clear why, but createFromObjectKryo seems to gravely spoils the kryo instance
+ * for any future deserialization operation. Basically trying to reuse a kryo instance for
+ * deserialization will be orders of magnitude slower than a normal one.
+ * We need to understand/fix this decently, but for now this a stop-gap for the demo.
+ */
+object MagicMagic {
+  val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
+    override def initialValue(): kryo.Kryo = {
+      val myKryo = new kryo.Kryo()
+      myKryo.setInstantiatorStrategy(new org.objenesis.strategy.StdInstantiatorStrategy());
+      new BigGraphKryoRegistrator().registerClasses(myKryo)
+      myKryo
+    }
+  }
+}
 
 case class Filename(
     val filename: String,
@@ -70,12 +87,15 @@ case class Filename(
 
   def createFromObjectKryo(obj: Any): Unit = {
     val output = new kryo.io.Output(create())
-    RDDUtils.threadLocalKryo.get.writeClassAndObject(output, obj)
+    MagicMagic.threadLocalKryo.get.writeClassAndObject(output, obj)
     output.close()
   }
 
   def loadObjectKryo: Any = {
-    RDDUtils.threadLocalKryo.get.readClassAndObject(new kryo.io.Input(open()))
+    val input = new kryo.io.Input(open())
+    val res = RDDUtils.threadLocalKryo.get.readClassAndObject(input)
+    input.close()
+    res
   }
 
   def mkdirs(): Unit = {
