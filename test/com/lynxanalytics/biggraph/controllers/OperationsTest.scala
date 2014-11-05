@@ -350,6 +350,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "min" -> "3"))
     run("Vertex attribute to double", Map(
       "attr" -> "num"))
+    val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
+    
     run("Viral modeling", Map(
       "prefix" -> "viral",
       "target" -> "num",
@@ -358,7 +360,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "seed" -> "0",
       "iterations" -> "3"), on = project.segmentation("cliques").project)
     val viral = project.vertexAttributes("viral num after iteration 3").runtimeSafeCast[Double]
-    val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
     assert(remapIDs(viral, stringID).collect.toMap == Map(
       "0" -> 0.0,
       "1" -> 0.0,
@@ -424,9 +425,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Viral modeling", Map(
       "prefix" -> "viral3",
       "target" -> "num",
-      "test_set_ratio" -> "0.2", // to check validation
+      "test_set_ratio" -> "0.05", // to check validation
       "max_deviation" -> "2",
-      "seed" -> "1",
+      "seed" -> "10",
       "iterations" -> "5"), on = project.segmentation("cliques").project)
     val roles3 = project.vertexAttributes("viral3 roles").runtimeSafeCast[String]
     assert(remapIDs(roles3, stringID).collect.toMap == Map(
