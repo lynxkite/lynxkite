@@ -333,6 +333,8 @@ angular.module('biggraph').directive('graphView', function(util) {
 
       var icon;
       if (side.attrs.icon) { icon = vertex.attrs[side.attrs.icon.id].string; }
+      var image;
+      if (side.attrs.image) { image = vertex.attrs[side.attrs.image.id].string; }
 
       var radius = 0.1 * Math.sqrt(size);
       var v = new Vertex(vertex,
@@ -342,7 +344,8 @@ angular.module('biggraph').directive('graphView', function(util) {
                          label,
                          vertex.id,
                          color,
-                         icon);
+                         icon,
+                         image);
       offsetter.rule(v);
       v.id = vertex.id.toString();
       svg.addClass(v.dom, 'sampled');
@@ -779,7 +782,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Vertex(data, x, y, r, text, subscript, color, icon) {
+  function Vertex(data, x, y, r, text, subscript, color, icon, image) {
     this.data = data;
     this.x = x;
     this.y = y;
@@ -787,8 +790,15 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.color = color || UNCOLORED;
     this.highlight = 'white';
     this.frozen = 0;  // Number of reasons why this vertex should not be animated.
-    this.icon = getIcon(icon);
-    this.icon.attr({ style: 'fill: ' + this.color, 'class': 'icon' });
+    if (image) {
+      this.icon = svg.create('image', { width: 1, height: 1 });
+      this.icon[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', image);
+      this.icon.center = { x: 0.5, y: 0.5 };
+      this.icon.scale = 2.0;
+    } else {
+      this.icon = getIcon(icon);
+      this.icon.attr({ style: 'fill: ' + this.color, 'class': 'icon' });
+    }
     this.minTouchRadius = 10;
     if (r < this.minTouchRadius) {
       this.touch = svg.create('circle', { 'class': 'touch' });
