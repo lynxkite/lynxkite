@@ -116,10 +116,15 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val barack = imported.attrs("barack").entity
 
     // Fake barack being on disk.
-    val entityPath = dataManager.repositoryPath / barack.gUID.toString
-    val successPath = entityPath / "_SUCCESS"
-    entityPath.mkdirs
-    successPath.createFromStrings("")
+    val entityPath = dataManager.repositoryPath / "entities" / barack.gUID.toString
+    val instancePath = dataManager.repositoryPath / "operations" / barack.source.gUID.toString
+    def fakeSuccess(path: Filename): Unit = {
+      val successPath = path / "_SUCCESS"
+      path.mkdirs
+      successPath.createFromStrings("")
+    }
+    fakeSuccess(entityPath)
+    fakeSuccess(instancePath)
 
     // Check that we managed to fake.
     assert(dataManager.isCalculated(barack))

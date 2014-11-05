@@ -175,17 +175,20 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def pullBackEdgesWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
     val op = graph_operations.PulledOverEdges()
     val newEB = op(op.originalEB, edgeBundle)(op.injection, injection).result.pulledEB
-    pullBackEdgesWithInjection(newEB, injection)
+    pullBackEdgesWithInjection(edgeBundle, edgeAttributes.toIndexedSeq, newEB, injection)
   }
-  def pullBackEdgesWithInjection(newEdgeBundle: EdgeBundle, injection: EdgeBundle): Unit = manager.synchronized {
+  def pullBackEdgesWithInjection(
+    origEdgeBundle: EdgeBundle,
+    origEAttrs: Seq[(String, VertexAttribute[_])],
+    newEdgeBundle: EdgeBundle,
+    injection: EdgeBundle): Unit = manager.synchronized {
+
     assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
       s"Not an injection: $injection")
     assert(injection.srcVertexSet.gUID == newEdgeBundle.asVertexSet.gUID,
       s"Wrong source: $injection")
-    assert(injection.dstVertexSet.gUID == edgeBundle.asVertexSet.gUID,
+    assert(injection.dstVertexSet.gUID == origEdgeBundle.asVertexSet.gUID,
       s"Wrong destination: $injection")
-    val origEB = edgeBundle
-    val origEAttrs = edgeAttributes.toIndexedSeq
 
     edgeBundle = newEdgeBundle
 
@@ -215,11 +218,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
     if (origEB != null) {
       val iop = graph_operations.InducedEdgeBundle()
-      val edgeInduction = iop(
+      val induction = iop(
         iop.srcMapping, graph_operations.ReverseEdges.run(injection))(
           iop.dstMapping, graph_operations.ReverseEdges.run(injection))(
             iop.edges, origEB).result
-      pullBackEdgesWithInjection(edgeInduction.embedding)
+      pullBackEdgesWithInjection(origEB, origEAttrs, induction.induced, induction.embedding)
     }
 
     segmentations.foreach { seg =>
