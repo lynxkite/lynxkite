@@ -4,8 +4,9 @@ import org.apache.spark
 import scala.collection.immutable
 import scala.collection.mutable
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.Sorting
 
@@ -64,8 +65,8 @@ case class CompactUndirectedGraph(path: Filename, partitioner: spark.Partitioner
     val pid = partitioner.getPartition(vid)
     if (cache(pid) == null) {
       val dir = path / pid.toString
-      val neighbors = (dir / "neighbors").loadObjectKryo.asInstanceOf[Array[ID]]
-      val starts = (dir / "starts").loadObjectKryo.asInstanceOf[Array[(ID, Int)]]
+      val neighbors = FileBasedObjectCache.get[Array[ID]](dir / "neighbors")
+      val starts = FileBasedObjectCache.get[Array[(ID, Int)]](dir / "starts")
       cache(pid) = new CompactUndirectedGraphPartition(neighbors, starts)
     }
     cache(pid)
