@@ -33,8 +33,8 @@ object CompactUndirectedGraph {
         }
       }
     log.info("CUG Writing...")
-    adjList.context.runJob(adjList, (task, it: Iterator[(ID, Array[ID])]) =>
-      {
+    adjList.mapPartitionsWithIndex {
+      case (pid, it) =>
         val neighbors = mutable.ArrayBuffer[ID]()
         val starts = mutable.ArrayBuffer[(ID, Int)]()
         var index = 0
@@ -44,11 +44,17 @@ object CompactUndirectedGraph {
           index += ns.size
         }
         starts += 0L -> index // Sentinel.
-        val dir = path / task.partitionId.toString
-        (dir / "neighbors").createFromObjectKryo(neighbors.toArray)
+        Iterator((pid, neighbors.toArray, starts.toArray))
+    }.foreach {
+      case (pid, neighborsArray, startsArray) =>
+        val dir = path / pid.toString
+        log.info(s"Creating neighbors partition $pid")
+        (dir / "neighbors").createFromObjectKryo(neighborsArray)
+        log.info(s"Creating starts partition $pid")
         // "starts" is sorted because adjList is a SortedRDD.
-        (dir / "starts").createFromObjectKryo(starts.toArray)
-      })
+        (dir / "starts").createFromObjectKryo(startsArray)
+        log.info(s"CUG partition $pid all done")
+    }
     log.info("CUG Partitions written.")
     return CompactUndirectedGraph(path, adjList.partitioner.get)
   }
