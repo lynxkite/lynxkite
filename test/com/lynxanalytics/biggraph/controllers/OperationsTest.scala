@@ -22,6 +22,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     ops.apply(
       ProjectOperationRequest(on.projectName, FEOperationSpec(op.replace(" ", "-"), params)))
 
+  def remapIDs[T](attr: VertexAttribute[T], origIDs: VertexAttribute[String]) =
+    attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
+
   test("Derived vertex attribute (Double)") {
     run("Example Graph")
     run("Derived vertex attribute",
@@ -296,14 +299,130 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "iterations" -> "1"), on = project.segmentation("cliques").project)
     val viral = project.vertexAttributes("viral num after iteration 1").runtimeSafeCast[Double]
     val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
-    val result = viral.rdd.sortedJoin(stringID.rdd)
-      .map { case (id, (num, stringID)) => stringID -> num }
-    assert(result.collect.toMap == Map(
+    assert(remapIDs(viral, stringID).collect.toMap == Map(
       "0" -> 0.5,
       "1" -> 0.0,
       "2" -> 1.0,
       "3" -> 2.0,
       "4" -> 0.0,
       "7" -> 3.0))
+    assert(project.scalars("viral num coverage initial").value == 5)
+    assert(project.scalars("viral num coverage after iteration 1").value == 6)
+  }
+
+  test("Viral modeling iteration logic", ViralTest) {
+    run("Import vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-2.csv").getFile,
+      "header" -> "id,num",
+      "delimiter" -> ",",
+      "id-attr" -> "internalID",
+      "filter" -> ""))
+    run("Import edges for existing vertices", Map(
+      "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-2.csv").getFile,
+      "header" -> "src,dst",
+      "delimiter" -> ",",
+      "attr" -> "id",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    run("Maximal cliques", Map(
+      "name" -> "cliques",
+      "bothdir" -> "false",
+      "min" -> "3"))
+    run("Vertex attribute to double", Map(
+      "attr" -> "num"))
+    run("Viral modeling", Map(
+      "prefix" -> "viral",
+      "target" -> "num",
+      "test_set_ratio" -> "0",
+      "max_deviation" -> "1.5", // more than square root of 2 to let 100-200 spread on 1000
+      "seed" -> "0",
+      "iterations" -> "3"), on = project.segmentation("cliques").project)
+    val viral = project.vertexAttributes("viral num after iteration 3").runtimeSafeCast[Double]
+    val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
+    assert(remapIDs(viral, stringID).collect.toMap == Map(
+      "0" -> 0.0,
+      "1" -> 0.0,
+      "2" -> 1.0,
+      "3" -> 1.0,
+      "4" -> 3.0,
+      "5" -> 3.0,
+      "10" -> 0.0,
+      "20" -> 1.0,
+      "30" -> 3.0,
+      "100" -> 0.5,
+      "200" -> 2.0,
+      "1000" -> 1.25))
+    val spread = project.vertexAttributes("viral num spread over iterations").runtimeSafeCast[Double]
+    assert(remapIDs(spread, stringID).collect.toMap == Map(
+      "0" -> 0.0,
+      "1" -> 0.0,
+      "2" -> 0.0,
+      "3" -> 0.0,
+      "4" -> 0.0,
+      "5" -> 0.0,
+      "10" -> 1.0,
+      "20" -> 1.0,
+      "30" -> 1.0,
+      "100" -> 2.0,
+      "200" -> 2.0,
+      "1000" -> 3.0))
+
+    run("Viral modeling", Map(
+      "prefix" -> "viral2",
+      "target" -> "num",
+      "test_set_ratio" -> "0",
+      "max_deviation" -> "0.75", // lower deviation changes viral spread to 200 from 30-100
+      "seed" -> "0",
+      "iterations" -> "3"), on = project.segmentation("cliques").project)
+    val viral2 = project.vertexAttributes("viral2 num after iteration 3").runtimeSafeCast[Double]
+    assert(remapIDs(viral2, stringID).collect.toMap == Map(
+      "0" -> 0.0,
+      "1" -> 0.0,
+      "2" -> 1.0,
+      "3" -> 1.0,
+      "4" -> 3.0,
+      "5" -> 3.0,
+      "10" -> 0.0,
+      "20" -> 1.0,
+      "30" -> 3.0,
+      "100" -> 0.5,
+      "200" -> 0.75))
+    val spread2 = project.vertexAttributes("viral2 num spread over iterations").runtimeSafeCast[Double]
+    assert(remapIDs(spread2, stringID).collect.toMap == Map(
+      "0" -> 0.0,
+      "1" -> 0.0,
+      "2" -> 0.0,
+      "3" -> 0.0,
+      "4" -> 0.0,
+      "5" -> 0.0,
+      "10" -> 1.0,
+      "20" -> 1.0,
+      "30" -> 1.0,
+      "100" -> 2.0,
+      "200" -> 3.0))
+
+    run("Viral modeling", Map(
+      "prefix" -> "viral3",
+      "target" -> "num",
+      "test_set_ratio" -> "0.2", // to check validation
+      "max_deviation" -> "2",
+      "seed" -> "1",
+      "iterations" -> "5"), on = project.segmentation("cliques").project)
+    val roles3 = project.vertexAttributes("viral3 roles").runtimeSafeCast[String]
+    assert(remapIDs(roles3, stringID).collect.toMap == Map(
+      "0" -> "train",
+      "1" -> "test",
+      "2" -> "train",
+      "3" -> "train",
+      "4" -> "train",
+      "5" -> "train",
+      "10" -> "train",
+      "20" -> "train",
+      "30" -> "train",
+      "100" -> "train",
+      "200" -> "train",
+      "1000" -> "train"))
+    assert(project.scalars("viral3 num mean absolute prediction error after iteration 5").value == 0.625)
   }
 }

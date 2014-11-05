@@ -1681,7 +1681,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           unifyAttributeT(timeOfDefinition, newDefinitions)
         }
       }
-      parent.vertexAttributes(s"$prefix $targetName viral spread") = timeOfDefinition
+      parent.vertexAttributes(s"$prefix $targetName spread over iterations") = timeOfDefinition
       // TODO: in the end we should calculate with the fact that the real error where the
       // original attribute is defined is 0.0
     }
