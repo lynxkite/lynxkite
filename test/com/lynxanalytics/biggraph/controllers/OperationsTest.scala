@@ -351,7 +351,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Vertex attribute to double", Map(
       "attr" -> "num"))
     val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
-    
+
     run("Viral modeling", Map(
       "prefix" -> "viral",
       "target" -> "num",
