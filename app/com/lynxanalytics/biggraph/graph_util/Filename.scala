@@ -12,10 +12,10 @@ import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-/* It is not clear why, but createFromObjectKryo seems to gravely spoils the kryo instance
+/* It is not clear why, but createFromObjectKryo seems to gravely spoil the kryo instance
  * for any future deserialization operation. Basically trying to reuse a kryo instance for
  * deserialization will be orders of magnitude slower than a normal one.
- * We need to understand/fix this decently, but for now this a stop-gap for the demo.
+ * We need to understand/fix this decently, but for now this is a stop-gap for the demo.
  */
 object MagicMagic {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
