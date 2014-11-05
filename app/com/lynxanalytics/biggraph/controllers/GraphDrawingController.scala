@@ -43,7 +43,7 @@ case class FEVertex(
   y: Int = 0,
 
   // For sampled view:
-  id: Long = 0,
+  id: String = "",
   attrs: Map[String, DynamicValue] = Map())
 
 case class VertexDiagramResponse(
@@ -182,7 +182,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices.map(v =>
         FEVertex(
-          id = v.id,
+          id = v.id.toString,
           attrs = request.attrs.zip(v.attrs).toMap)),
       mode = "sampled")
   }
