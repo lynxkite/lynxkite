@@ -10,13 +10,15 @@ import com.lynxanalytics.biggraph.graph_api._
 // The combined type helps us joining arbitrary number of different typed attributes.
 case class DynamicValue(
   double: Double = 0.0,
-  string: String = "")
+  string: String = "",
+  defined: Boolean = true)
 object DynamicValue {
   def converter[T: TypeTag]: (T => DynamicValue) = {
     if (typeOf[T] =:= typeOf[Double]) value =>
       DynamicValue(double = value.asInstanceOf[Double], string = value.toString)
     else if (typeOf[T] =:= typeOf[Long]) value =>
-      DynamicValue(double = value.asInstanceOf[Long].toDouble, string = value.toString)
+      DynamicValue(
+        double = value.asInstanceOf[Long].toDouble, string = value.toString)
     else if (typeOf[T] =:= typeOf[String]) value =>
       DynamicValue(string = value.asInstanceOf[String])
     else value =>

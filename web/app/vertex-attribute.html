@@ -43,6 +43,14 @@
       Icon
     </button>
     <button class="btn btn-default"
+            ng-if="attr.typeName === 'String'"
+            ng-class="{ active: side.state.attributeTitles.image === attr.title }"
+            ng-click="side.toggleAttributeTitle('image', attr.title)">
+      <div tooltip="The attribute must be the URL of an image." tooltip-append-to-body="true">
+        Image
+      </div>
+    </button>
+    <button class="btn btn-default"
             ng-if="attr.isNumeric"
             ng-class="{ active: side.state.attributeTitles.slider === attr.title }"
             ng-click="side.toggleAttributeTitle('slider', attr.title)">

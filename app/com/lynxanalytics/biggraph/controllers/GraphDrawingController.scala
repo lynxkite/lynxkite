@@ -142,12 +142,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    dataManager.loadToMemory(vertexSet)
+    dataManager.cache(vertexSet)
     val centers = request.centralVertexIds.map(_.toLong)
 
     val idSet = if (request.radius > 0) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
-      dataManager.loadToMemory(smearBundle)
+      dataManager.cache(smearBundle)
       val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
       val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
       nopres.neighborhood.value
@@ -169,7 +169,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
     if (dynAttrs.size > 0) {
       val joined = {
-        val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue())
+        val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue(defined = false))
         op(op.vs, vertexSet)(op.attrs, dynAttrs).result.attr.entity
       }
       builder = builder(op.attr, joined)
@@ -208,13 +208,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getBucketedVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    dataManager.loadToMemory(vertexSet)
+    dataManager.cache(vertexSet)
     loadGUIDsToMemory(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
 
     val xBucketedAttr = if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
-      dataManager.loadToMemory(attribute)
+      dataManager.cache(attribute)
       FEBucketers.bucketedAttribute(
         metaManager, dataManager, attribute, request.xNumBuckets, request.xAxisOptions)
     } else {
@@ -223,7 +223,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
     val yBucketedAttr = if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
-      dataManager.loadToMemory(attribute)
+      dataManager.cache(attribute)
       FEBucketers.bucketedAttribute(
         metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions)
     } else {
@@ -251,7 +251,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def loadGUIDsToMemory(gUIDs: Seq[String]): Unit = {
-    gUIDs.foreach(id => dataManager.loadToMemory(metaManager.entity(id.asUUID)))
+    gUIDs.foreach(id => dataManager.cache(metaManager.entity(id.asUUID)))
   }
 
   private def tripletMapping(
@@ -260,8 +260,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       if (sampled) graph_operations.TripletMapping(sampleSize = 500000)
       else graph_operations.TripletMapping()
     val res = op(op.edges, eb).result
-    dataManager.loadToMemory(res.srcEdges)
-    dataManager.loadToMemory(res.dstEdges)
+    dataManager.cache(res.srcEdges)
+    dataManager.cache(res.dstEdges)
     return res
   }
 
@@ -270,7 +270,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
                                  target: EdgeBundle): VertexAttribute[T] = {
     val op = new graph_operations.VertexToEdgeAttribute[T]()
     val res = op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
-    dataManager.loadToMemory(res)
+    dataManager.cache(res)
     res
   }
 
@@ -354,12 +354,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val dstView = graph_operations.VertexView.fromDiagram(
       metaManager.scalar(request.dstDiagramId.asUUID))
     val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
-    dataManager.loadToMemory(edgeBundle)
+    dataManager.cache(edgeBundle)
     val weights = if (request.edgeWeightId.isEmpty) {
       graph_operations.AddConstantAttribute.run(edgeBundle.asVertexSet, 1.0)
     } else {
       val w = metaManager.vertexAttributeOf[Double](request.edgeWeightId.asUUID)
-      dataManager.loadToMemory(w)
+      dataManager.cache(w)
       w
     }
     assert(
@@ -498,7 +498,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getCenter(request: CenterRequest): CenterResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    dataManager.loadToMemory(vertexSet)
+    dataManager.cache(vertexSet)
     loadGUIDsToMemory(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
     val sampled = {
@@ -510,8 +510,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getHistogram(request: HistogramSpec): HistogramResponse = {
     val vertexAttribute = metaManager.vertexAttribute(request.attributeId.asUUID)
-    dataManager.loadToMemory(vertexAttribute.vertexSet)
-    dataManager.loadToMemory(vertexAttribute)
+    dataManager.cache(vertexAttribute.vertexSet)
+    dataManager.cache(vertexAttribute)
     loadGUIDsToMemory(request.vertexFilters.map(_.attributeId))
     val bucketedAttr = FEBucketers.bucketedAttribute(
       metaManager, dataManager, vertexAttribute, request.numBuckets, request.axisOptions)

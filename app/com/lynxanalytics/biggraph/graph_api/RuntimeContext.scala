@@ -1,31 +1,19 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark
-import scala.collection.mutable.HashMap
-import scala.ref.WeakReference
 import scala.util.Random
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.Filename
-
-private object FileBasedBroadcastRepository {
-  private val cache = HashMap[Filename, WeakReference[AnyRef]]()
-  def getObjectFrom(filename: Filename): AnyRef = synchronized {
-    cache.get(filename).flatMap(_.get).getOrElse {
-      val value = filename.loadObjectKryo.asInstanceOf[AnyRef]
-      cache(filename) = WeakReference(value)
-      value
-    }
-  }
-}
+import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 
 case class Broadcast[T](filename: Filename) {
-  def get: T = FileBasedBroadcastRepository.getObjectFrom(filename).asInstanceOf[T]
+  def get: T = FileBasedObjectCache.get[T](filename)
 }
 
 case class RuntimeContext(sparkContext: spark.SparkContext,
                           broadcastDirectory: Filename,
-                          // The number of cores available for computaitons.
+                          // The number of cores available for computations.
                           numAvailableCores: Int,
                           // Total memory available for caching RDDs.
                           availableCacheMemoryGB: Double) {
