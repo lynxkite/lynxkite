@@ -80,6 +80,30 @@ object VertexToEdgeAttribute {
                   inputs: Input[T]) extends MagicOutput(instance) {
     val mappedAttribute = edgeAttribute[T](inputs.target.entity)(inputs.original.typeTag)
   }
+
+  def srcAttribute[T](
+    attr: VertexAttribute[T], edgeBundle: EdgeBundle)(
+      implicit manager: MetaGraphManager): VertexAttribute[T] = {
+    import Scripting._
+    val mapping = {
+      val op = TripletMapping()
+      op(op.edges, edgeBundle).result.srcEdges
+    }
+    val mop = VertexToEdgeAttribute[T]()
+    mop(mop.mapping, mapping)(mop.original, attr)(mop.target, edgeBundle).result.mappedAttribute
+  }
+
+  def dstAttribute[T](
+    attr: VertexAttribute[T], edgeBundle: EdgeBundle)(
+      implicit manager: MetaGraphManager): VertexAttribute[T] = {
+    import Scripting._
+    val mapping = {
+      val op = TripletMapping()
+      op(op.edges, edgeBundle).result.dstEdges
+    }
+    val mop = VertexToEdgeAttribute[T]()
+    mop(mop.mapping, mapping)(mop.original, attr)(mop.target, edgeBundle).result.mappedAttribute
+  }
 }
 case class VertexToEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
