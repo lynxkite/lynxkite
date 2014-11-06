@@ -1606,7 +1606,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
       Param("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
       Param("seed", "Seed", defaultValue = "0"),
-      Param("iterations", "Iterations", defaultValue = "3"))
+      Param("iterations", "Iterations", defaultValue = "3"),
+      Param("min_num_defined", "Minimum number of defined attributes in a segment", defaultValue = "6"),
+      Param("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.5"))
     def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
     def enabled = hasVertexSet &&
       FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
@@ -1668,7 +1670,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           // 50% should be defined in order to consider a segmentation, is that good enough?
           val op = graph_operations.DeriveJSDouble(
             JavaScript(s"""
-                deviation < $maxDeviation && defined / ids >= 0.5
+                deviation < $maxDeviation &&
+                defined / ids >= ${params("min_ratio_defined")} &&
+                defined >= ${params("min_num_defined")}
                 ? deviation
                 : undefined"""),
             Seq("deviation", "ids", "defined"), Seq(), Seq())

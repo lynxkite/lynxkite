@@ -294,7 +294,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
-      "filter" -> ""))
+      "filter" -> "",
+      "min_num_defined" -> "1",
+      "min_ratio_defined" -> "0.5"))
     run("Import edges for existing vertices", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-1.csv").getFile,
       "header" -> "src,dst",
@@ -309,13 +311,16 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "min" -> "3"))
     run("Vertex attribute to double", Map(
       "attr" -> "num"))
+
     run("Viral modeling", Map(
       "prefix" -> "viral",
       "target" -> "num",
       "test_set_ratio" -> "0",
       "max_deviation" -> "0.75",
       "seed" -> "0",
-      "iterations" -> "1"), on = project.segmentation("cliques").project)
+      "iterations" -> "1",
+      "min_num_defined" -> "1",
+      "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
     val viral = project.vertexAttributes("viral num after iteration 1").runtimeSafeCast[Double]
     val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
     assert(remapIDs(viral, stringID).collect.toMap == Map(
@@ -358,7 +363,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "test_set_ratio" -> "0",
       "max_deviation" -> "1.5", // more than square root of 2 to let 100-200 spread on 1000
       "seed" -> "0",
-      "iterations" -> "3"), on = project.segmentation("cliques").project)
+      "iterations" -> "3",
+      "min_num_defined" -> "1",
+      "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
     val viral = project.vertexAttributes("viral num after iteration 3").runtimeSafeCast[Double]
     assert(remapIDs(viral, stringID).collect.toMap == Map(
       "0" -> 0.0,
@@ -394,7 +401,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "test_set_ratio" -> "0",
       "max_deviation" -> "0.75", // lower deviation changes viral spread to 200 from 30-100
       "seed" -> "0",
-      "iterations" -> "3"), on = project.segmentation("cliques").project)
+      "iterations" -> "3",
+      "min_num_defined" -> "1",
+      "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
     val viral2 = project.vertexAttributes("viral2 num after iteration 3").runtimeSafeCast[Double]
     assert(remapIDs(viral2, stringID).collect.toMap == Map(
       "0" -> 0.0,
@@ -428,7 +437,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "test_set_ratio" -> "0.05", // to check validation
       "max_deviation" -> "2",
       "seed" -> "10",
-      "iterations" -> "5"), on = project.segmentation("cliques").project)
+      "iterations" -> "5",
+      "min_num_defined" -> "1",
+      "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
     val roles3 = project.vertexAttributes("viral3 roles").runtimeSafeCast[String]
     assert(remapIDs(roles3, stringID).collect.toMap == Map(
       "0" -> "train",
