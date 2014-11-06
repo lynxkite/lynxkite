@@ -90,6 +90,12 @@ class BigGraphKryoRegistratorWithDebug extends BigGraphKryoRegistrator {
 }
 
 object BigGraphSparkContext {
+  def createKryo(): Kryo = {
+    val myKryo = new Kryo()
+    myKryo.setInstantiatorStrategy(new org.objenesis.strategy.StdInstantiatorStrategy());
+    new BigGraphKryoRegistrator().registerClasses(myKryo)
+    myKryo
+  }
   def apply(
     appName: String,
     masterURL: String,
