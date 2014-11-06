@@ -1612,7 +1612,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       var timeOfDefinition = {
         val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"))
-        op(op.attrs, Seq(graph_operations.VertexAttributeToJSValue.run(train))).result.attr.entity
+        op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
       }
 
       // iterative prediction
@@ -1645,8 +1645,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             Seq("deviation", "ids", "defined"))
           op(
             op.attrs,
-            Seq(segStdDev, segSizes, segTargetCount)
-              .map(graph_operations.VertexAttributeToJSValue.run[Double])).result.attr
+            graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
+            .result.attr
         }
         project.vertexAttributes(s"$prefix $targetName standard deviation after iteration $i") =
           segStdDev
@@ -1668,8 +1668,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             JavaScript("Math.abs(test - train)"), Seq("test", "train"))
           val mae = op(
             op.attrs,
-            Seq(parted.test.entity, partedTrain.test.entity)
-              .map(graph_operations.VertexAttributeToJSValue.run[Double])).result.attr
+            graph_operations.VertexAttributeToJSValue.seq(
+              parted.test.entity, partedTrain.test.entity)).result.attr
           aggregate(attributeWithAggregator(mae, "average"))
         }
         val coverage = {
@@ -1686,7 +1686,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           val op = graph_operations.DeriveJSDouble(
             JavaScript(i.toString), Seq("attr"))
           val newDefinitions = op(
-            op.attrs, Seq(graph_operations.VertexAttributeToJSValue.run(train))).result.attr
+            op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
           unifyAttributeT(timeOfDefinition, newDefinitions)
         }
       }
