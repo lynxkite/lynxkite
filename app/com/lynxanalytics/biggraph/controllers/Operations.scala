@@ -650,7 +650,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         .toIndexedSeq
         .map { case (name, attr) => name -> graph_operations.VertexAttributeToJSValue.run(attr) }
       val js = JavaScript(expr)
-      // Figure out the return type.
       val op: graph_operations.DeriveJS[_] = params("type") match {
         case "string" =>
           graph_operations.DeriveJSString(js, namedAttributes.map(_._1))
@@ -671,7 +670,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       vertex of the edge using the format src$attribute and dst$attribute.
 
       For example you can write <tt>weight * Math.abs(src$age - dst$age)</tt> to generate a new
-      attribute that is the weighted age differnce of the two endpoints of the edge.
+      attribute that is the weighted age difference of the two endpoints of the edge.
       """
     def parameters = List(
       Param("output", "Save as"),
@@ -706,7 +705,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
 
       val js = JavaScript(expr)
-      // Figure out the return type.
       val op: graph_operations.DeriveJS[_] = params("type") match {
         case "string" =>
           graph_operations.DeriveJSString(js, namedAttributes.map(_._1))
