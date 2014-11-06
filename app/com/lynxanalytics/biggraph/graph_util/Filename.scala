@@ -9,24 +9,8 @@ import java.io.InputStreamReader
 import java.io.IOException
 
 import com.lynxanalytics.biggraph.bigGraphLogger
-import com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator
+import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
-
-/* It is not clear why, but createFromObjectKryo seems to gravely spoil the kryo instance
- * for any future deserialization operation. Basically trying to reuse a kryo instance for
- * deserialization will be orders of magnitude slower than a normal one.
- * We need to understand/fix this decently, but for now this is a stop-gap for the demo.
- */
-object MagicMagic {
-  val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
-    override def initialValue(): kryo.Kryo = {
-      val myKryo = new kryo.Kryo()
-      myKryo.setInstantiatorStrategy(new org.objenesis.strategy.StdInstantiatorStrategy());
-      new BigGraphKryoRegistrator().registerClasses(myKryo)
-      myKryo
-    }
-  }
-}
 
 case class Filename(
     val filename: String,
@@ -81,20 +65,36 @@ case class Filename(
 
   def createFromStrings(contents: String): Unit = {
     val stream = create()
-    stream.write(contents.getBytes("UTF-8"))
-    stream.close()
+    try {
+      stream.write(contents.getBytes("UTF-8"))
+    } finally {
+      stream.close()
+    }
   }
 
   def createFromObjectKryo(obj: Any): Unit = {
+    /* It is not clear why, but createFromObjectKryo seems to gravely spoil the kryo instance
+     * for any future deserialization operation. Basically trying to reuse a kryo instance for
+     * deserialization will be orders of magnitude slower than a normal one.
+     * We need to understand/fix this decently, but for now this is a stop-gap for the demo.
+     * Looks like this might be fixable with a kryo upgrade.
+     */
+    val myKryo = BigGraphSparkContext.createKryo()
     val output = new kryo.io.Output(create())
-    MagicMagic.threadLocalKryo.get.writeClassAndObject(output, obj)
-    output.close()
+    try {
+      myKryo.writeClassAndObject(output, obj)
+    } finally {
+      output.close()
+    }
   }
 
   def loadObjectKryo: Any = {
     val input = new kryo.io.Input(open())
-    val res = RDDUtils.threadLocalKryo.get.readClassAndObject(input)
-    input.close()
+    val res = try {
+      RDDUtils.threadLocalKryo.get.readClassAndObject(input)
+    } finally {
+      input.close()
+    }
     res
   }
 
