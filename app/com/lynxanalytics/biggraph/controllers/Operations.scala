@@ -1957,15 +1957,4 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val quoted = '"' + url + '"'
     newScalar(s"<a href=$quoted>download</a>")
   }
-
-  def isVector[T](attr: VertexAttribute[T]): Boolean = {
-    import scala.reflect.runtime.universe._
-    // Vector is covariant, so Vector[X] <:< Vector[Any].
-    return attr.typeTag.tpe <:< typeOf[Vector[Any]]
-  }
-  type VectorAttr[T] = VertexAttribute[Vector[T]]
-  def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
-    val op = graph_operations.AttributeVectorToAny[T]()
-    op(op.attr, attr).result.attr
-  }
 }
