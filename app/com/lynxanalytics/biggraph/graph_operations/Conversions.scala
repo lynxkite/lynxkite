@@ -193,6 +193,11 @@ object VertexAttributeToJSValue {
     val op = VertexAttributeToJSValue[T]()
     op(op.attr, attr).result.attr
   }
+  def seq(attrs: VertexAttribute[_]*)(
+    implicit manager: MetaGraphManager): Seq[VertexAttribute[JSValue]] = {
+
+    attrs.map(run(_))
+  }
 }
 case class VertexAttributeToJSValue[T]()
     extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToJSValue.Output[T]] {
