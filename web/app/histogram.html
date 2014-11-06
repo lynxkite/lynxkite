@@ -1,4 +1,4 @@
-<p class="alert alert-danger" ng-if="model.$error">{{model.error}}</p>
+<p class="alert alert-danger" ng-if="model.$error">{{model.$error}}</p>
 <table ng-if="!model.$error" class="histogram">
   <tr>
     <td ng-repeat="s in model.sizes track by $index" class="bar-container"
