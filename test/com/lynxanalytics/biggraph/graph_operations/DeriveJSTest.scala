@@ -13,10 +13,12 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSDouble(
       JavaScript(expr),
-      numAttrNames = Seq("age"),
-      strAttrNames = Seq("name"),
-      vecAttrNames = Seq())
-    val derived = op(op.numAttrs, Seq(g.age.entity))(op.strAttrs, Seq(g.name.entity)).result.attr
+      Seq("age", "name"))
+    val derived = op(
+      op.attrs,
+      Seq(
+        VertexAttributeToJSValue.run(g.age.entity),
+        VertexAttributeToJSValue.run(g.name.entity))).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> 60.3, 1 -> 48.2, 2 -> 80.3, 3 -> 122.0))
   }
 
@@ -25,10 +27,13 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = DeriveJSString(
       JavaScript(expr),
-      numAttrNames = Seq(),
-      strAttrNames = Seq("gender", "name"),
-      vecAttrNames = Seq())
-    val derived = op(op.numAttrs, Seq())(op.strAttrs, Seq(g.gender.entity, g.name.entity)).result.attr
-    assert(derived.rdd.collect.toSet == Set(0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob", 3 -> "Mr Isolated Joe"))
+      Seq("gender", "name"))
+    val derived = op(
+      op.attrs,
+      Seq(
+        VertexAttributeToJSValue.run(g.gender.entity),
+        VertexAttributeToJSValue.run(g.name.entity))).result.attr
+    assert(derived.rdd.collect.toSet == Set(
+      0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob", 3 -> "Mr Isolated Joe"))
   }
 }
