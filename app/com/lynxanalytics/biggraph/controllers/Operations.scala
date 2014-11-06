@@ -1630,7 +1630,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
       Param("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
       Param("seed", "Seed", defaultValue = "0"),
-      Param("iterations", "Iterations", defaultValue = "3"))
+      Param("iterations", "Iterations", defaultValue = "3"),
+      Param("min_num_defined", "Minimum number of defined attributes in a segment", defaultValue = "6"),
+      Param("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.5"))
     def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
     def enabled = hasVertexSet &&
       FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
@@ -1664,7 +1666,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       var timeOfDefinition = {
         val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"))
-        op(op.attrs, Seq(graph_operations.VertexAttributeToJSValue.run(train))).result.attr.entity
+        op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
       }
 
       // iterative prediction
@@ -1691,14 +1693,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           // 50% should be defined in order to consider a segmentation, is that good enough?
           val op = graph_operations.DeriveJSDouble(
             JavaScript(s"""
-                deviation < $maxDeviation && defined / ids >= 0.5
+                deviation < $maxDeviation &&
+                defined / ids >= ${params("min_ratio_defined")} &&
+                defined >= ${params("min_num_defined")}
                 ? deviation
                 : undefined"""),
             Seq("deviation", "ids", "defined"))
           op(
             op.attrs,
-            Seq(segStdDev, segSizes, segTargetCount)
-              .map(graph_operations.VertexAttributeToJSValue.run[Double])).result.attr
+            graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
+            .result.attr
         }
         project.vertexAttributes(s"$prefix $targetName standard deviation after iteration $i") =
           segStdDev
@@ -1720,8 +1724,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             JavaScript("Math.abs(test - train)"), Seq("test", "train"))
           val mae = op(
             op.attrs,
-            Seq(parted.test.entity, partedTrain.test.entity)
-              .map(graph_operations.VertexAttributeToJSValue.run[Double])).result.attr
+            graph_operations.VertexAttributeToJSValue.seq(
+              parted.test.entity, partedTrain.test.entity)).result.attr
           aggregate(attributeWithAggregator(mae, "average"))
         }
         val coverage = {
@@ -1738,7 +1742,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           val op = graph_operations.DeriveJSDouble(
             JavaScript(i.toString), Seq("attr"))
           val newDefinitions = op(
-            op.attrs, Seq(graph_operations.VertexAttributeToJSValue.run(train))).result.attr
+            op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
           unifyAttributeT(timeOfDefinition, newDefinitions)
         }
       }
