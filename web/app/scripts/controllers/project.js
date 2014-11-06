@@ -637,8 +637,7 @@ angular.module('biggraph')
           return;  // Navigating away. Leave the URL alone.
         }
         $location.search({ q: JSON.stringify(after) });
-        // TODO: Clean up old channels.
-        window.localStorage.setItem($scope.linkChannel, JSON.stringify(after));
+        localStorage.setItem($scope.linkChannel, JSON.stringify(after));
       });
 
     // Persist channel name across refreshes.
@@ -658,7 +657,7 @@ angular.module('biggraph')
             $scope.right.state = newState.right;
           });
         }
-      } else if (e.key === $scope.linkChannel + '-reload') {
+      } else if (e.key === 'reload:' + $scope.linkChannel) {
         // Unconditionally reload everything.
         for (var i = 0; i < $scope.sides.length; ++i) {
           var side = $scope.sides[i];
@@ -668,6 +667,10 @@ angular.module('biggraph')
             side.project = undefined;
           }
         }
+      } else if (e.key === 'ping') {
+        wiggleChannel('pong:' + $scope.linkChannel);
+      } else if (e.key.indexOf('pong:') === 0) {
+        pongs[e.key.substring('pong:'.length)] = true;
       }
     }
     // This listener is only triggered on localStorage changes from another window.
@@ -687,11 +690,35 @@ angular.module('biggraph')
       }
     };
 
-    function sendReloadNotification() {
-      var channel = $scope.linkChannel + '-reload';
+    function wiggleChannel(channel) {
       // Write a random string to almost certainly trigger a storage event.
-      localStorage.setItem(channel, Math.random().toString(36));
+      localStorage.setItem(channel, Date() + Math.random().toString(36));
     }
+
+    function sendReloadNotification() {
+      wiggleChannel('reload:' + $scope.linkChannel);
+    }
+
+    var pongs = {};
+    function cleanChannels() {
+      wiggleChannel('ping');
+      var deadlineSeconds = 10;
+      setTimeout(function() {
+        // Delete unresponsive channels.
+        for (var i = 0; i < localStorage.length; ++i) {
+          var key = localStorage.key(i);
+          var parts = key.split(':');
+          var channel = null;
+          if (key.indexOf('channel-') === 0) { channel = key; }
+          else if (parts[0] === 'reload') { channel = parts[1]; }
+          else if (parts[0] === 'pong') { channel = parts[1]; }
+          if (channel !== null && channel !== $scope.linkChannel && !pongs[channel]) {
+            localStorage.removeItem(key);
+          }
+        }
+      }, deadlineSeconds * 1000);
+    }
+    cleanChannels();
 
     function getState() {
       return {
