@@ -11,7 +11,7 @@ object FileBasedObjectCache {
       log.info(s"Loading object from $filename...")
       val value = filename.loadObjectKryo.asInstanceOf[AnyRef]
       log.info(s"Loaded object from $filename.")
-      cache(filename) = SoftReference(value)
+      cache(filename) = new SoftReference(value)
       value
     }.asInstanceOf[T]
   }
