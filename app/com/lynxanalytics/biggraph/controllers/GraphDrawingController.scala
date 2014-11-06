@@ -148,8 +148,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val idSet = if (request.radius > 0) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.cache(smearBundle)
-      val nop = graph_operations.ComputeVertexNeighborhood(centers, request.radius)
-      val nopres = nop(nop.vertices, vertexSet)(nop.edges, smearBundle).result
+      val triplets = tripletMapping(smearBundle, sampled = false)
+      val nop = graph_operations.ComputeVertexNeighborhoodFromTriplets(centers, request.radius)
+      val nopres = nop(
+        nop.vertices, vertexSet)(
+          nop.edges, smearBundle)(
+            nop.srcTripletMapping, triplets.srcEdges)(
+              nop.dstTripletMapping, triplets.dstEdges).result
       nopres.neighborhood.value
     } else {
       centers.toSet
