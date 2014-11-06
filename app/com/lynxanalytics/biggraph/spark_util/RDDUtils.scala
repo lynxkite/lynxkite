@@ -44,12 +44,7 @@ object IDBuckets {
 
 object RDDUtils {
   val threadLocalKryo = new ThreadLocal[kryo.Kryo] {
-    override def initialValue(): kryo.Kryo = {
-      val myKryo = new kryo.Kryo()
-      myKryo.setInstantiatorStrategy(new org.objenesis.strategy.StdInstantiatorStrategy());
-      new BigGraphKryoRegistrator().registerClasses(myKryo)
-      myKryo
-    }
+    override def initialValue() = BigGraphSparkContext.createKryo()
   }
 
   def serialize[T](obj: Any): Array[Byte] = {
