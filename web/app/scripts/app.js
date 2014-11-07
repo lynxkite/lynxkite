@@ -118,6 +118,23 @@ angular
     };
     return util;
   })
+  // selectFields adds a new $selection attribute to the objects, that is a newline-delimited
+  // concatenation of the selected fields. This can be used to filter by searching in multiple
+  // fields. For example to search in p.name and p.notes at the same time:
+  //   p in projects | selectFields:'name':'notes' | filter:{ $selection: searchString }
+  .filter('selectFields', function() {
+    return function(input) {
+      if (input === undefined) { return input; }
+      for (var i = 0; i < input.length; ++i) {
+        input[i].$selection = '';
+        for (var j = 1; j < arguments.length; ++j) {
+          input[i].$selection += input[i][arguments[j]];
+          input[i].$selection += '\n';
+        }
+      }
+      return input;
+    };
+  })
   .filter('trustAsHtml', function($sce) {
     return $sce.trustAsHtml;
   });
