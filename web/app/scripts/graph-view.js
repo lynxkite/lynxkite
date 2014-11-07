@@ -537,6 +537,8 @@ angular.module('biggraph').directive('graphView', function(util) {
       offsetter.zoom *= Math.exp(delta);
       offsetter.xOff = mx - mxOff * offsetter.zoom;
       offsetter.yOff = my - myOff * offsetter.zoom;
+      // Shift-scroll, or horizontal scroll is applied only to thickness.
+      delta += -0.005 * e.originalEvent.deltaX;
       // Thickness (vertex radius and edge width) changes by a square-root function.
       offsetter.thickness *= Math.exp(0.5 * delta);
       offsetter.reDraw();
