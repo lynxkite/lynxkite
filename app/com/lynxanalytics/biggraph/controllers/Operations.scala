@@ -1777,7 +1777,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def getExportFilename(param: String): Filename = {
       assert(param.nonEmpty, "No export path specified.")
       if (param == "<auto>") {
-        dataManager.repositoryPath / "exports" / Timestamp.toString
+        dataManager.repositoryPath / "exports" / graph_util.Timestamp.toString
       } else {
         Filename(param)
       }
