@@ -38,7 +38,7 @@ case class Filename(
   def delete() = fs.delete(path, true)
   def list = fs.globStatus(path).map(st => this.copy(filename = st.getPath.toString))
   def length = fs.getFileStatus(path).getLen
-  def globLength = fs.globStatus(path).map(_.getLen).reduce(_ + _)
+  def globLength = fs.globStatus(path).map(_.getLen).sum
 
   def loadTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
     val conf = hadoopConfiguration
