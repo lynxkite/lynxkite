@@ -149,6 +149,8 @@ object ProductionJsonServer extends JsonServer {
   implicit val wFEProject = json.Json.writes[FEProject]
   implicit val wSplash = json.Json.writes[Splash]
 
+  implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
+
   // File upload.
   def upload = {
     action(parse.multipartFormData) { request =>
@@ -214,6 +216,11 @@ object ProductionJsonServer extends JsonServer {
   def center = jsonGet(drawingController.getCenter)
   def histo = jsonGet(drawingController.getHistogram)
   def scalarValue = jsonGet(drawingController.getScalarValue)
+
+  val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
+  def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
+  def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
+  def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 }
 
 // Throw FlyingResult anywhere to generate non-200 HTTP responses.
