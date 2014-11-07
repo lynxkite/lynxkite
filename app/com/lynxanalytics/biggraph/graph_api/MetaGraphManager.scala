@@ -154,7 +154,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   initializeFromDisk()
 
-  private def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
+  protected def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
     operationInstances(operationInstance.gUID) = operationInstance
     operationInstance.outputs.all.values.foreach { entity =>
       val gUID = entity.gUID
