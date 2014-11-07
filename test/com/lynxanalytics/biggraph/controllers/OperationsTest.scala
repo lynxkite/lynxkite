@@ -135,6 +135,16 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(eAttrs("newcomment").rdd.count == 4)
   }
 
+  test("Project union on vertex sets") {
+    run("New vertex set", Map("size" -> "10"))
+    val other = Project("Copy")
+    project.copy(other)
+    run("Union with another project", Map("other" -> "Copy", "id-attr" -> "new_id"))
+
+    assert(project.vertexSet.rdd.count == 20)
+    assert(project.edgeBundle == null)
+  }
+
   test("Fingerprinting based on attributes") {
     run("Import vertices", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
