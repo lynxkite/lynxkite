@@ -645,24 +645,74 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       val expr = params("expr")
-      var attrNames = List[String]()
-      var attrs = List[VertexAttribute[Double]]()
       val namedAttributes = project.vertexAttributes
         .filter { case (name, attr) => expr.contains(name) }
         .toIndexedSeq
         .map { case (name, attr) => name -> graph_operations.VertexAttributeToJSValue.run(attr) }
       val js = JavaScript(expr)
-      // Figure out the return type.
       val op: graph_operations.DeriveJS[_] = params("type") match {
         case "string" =>
           graph_operations.DeriveJSString(js, namedAttributes.map(_._1))
         case "double" =>
           graph_operations.DeriveJSDouble(js, namedAttributes.map(_._1))
       }
-      val result = op(
-        op.vs, project.vertexSet)(
-          op.attrs, namedAttributes.map(_._2)).result
+      val result = op(op.attrs, namedAttributes.map(_._2)).result
       project.vertexAttributes(params("output")) = result.attr
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Derived edge attribute"
+    val description =
+      """Generates a new attribute based on existing attributes. The value expression can be
+      an arbitrary JavaScript expression, and it can refer to existing attributes on the edge as if
+      they were local variables. It can also refer to attributes of the source and destination
+      vertex of the edge using the format src$attribute and dst$attribute.
+
+      For example you can write <tt>weight * Math.abs(src$age - dst$age)</tt> to generate a new
+      attribute that is the weighted age difference of the two endpoints of the edge.
+      """
+    def parameters = List(
+      Param("output", "Save as"),
+      Param("type", "Result type", options = UIValue.list(List("double", "string"))),
+      Param("expr", "Value", defaultValue = "1"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val expr = params("expr")
+      val edgeBundle = project.edgeBundle
+      val namedEdgeAttributes = project.edgeAttributes
+        .filter { case (name, attr) => expr.contains(name) }
+        .toIndexedSeq
+        .map { case (name, attr) => name -> graph_operations.VertexAttributeToJSValue.run(attr) }
+      val namedSrcVertexAttributes = project.vertexAttributes
+        .filter { case (name, attr) => expr.contains("src$" + name) }
+        .toIndexedSeq
+        .map {
+          case (name, attr) =>
+            val mappedAttr = graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
+            "src$" + name -> graph_operations.VertexAttributeToJSValue.run(mappedAttr)
+        }
+      val namedDstVertexAttributes = project.vertexAttributes
+        .filter { case (name, attr) => expr.contains("dst$" + name) }
+        .toIndexedSeq
+        .map {
+          case (name, attr) =>
+            val mappedAttr = graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
+            "dst$" + name -> graph_operations.VertexAttributeToJSValue.run(mappedAttr)
+        }
+
+      val namedAttributes =
+        namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
+
+      val js = JavaScript(expr)
+      val op: graph_operations.DeriveJS[_] = params("type") match {
+        case "string" =>
+          graph_operations.DeriveJSString(js, namedAttributes.map(_._1))
+        case "double" =>
+          graph_operations.DeriveJSDouble(js, namedAttributes.map(_._1))
+      }
+      val result = op(op.attrs, namedAttributes.map(_._2)).result
+      project.edgeAttributes(params("output")) = result.attr
     }
   })
 
