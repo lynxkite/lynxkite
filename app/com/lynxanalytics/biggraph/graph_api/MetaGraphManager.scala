@@ -11,6 +11,7 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
@@ -252,18 +253,6 @@ class MetaGraphManager(val repositoryPath: String) {
 object MetaGraphManager {
   implicit class StringAsUUID(s: String) {
     def asUUID: UUID = UUID.fromString(s)
-  }
-}
-
-object Timestamp {
-  private var lastTime = 0L
-  // Returns a millisecond timestamp as a string. It is guaranteed to be unique
-  // for each call.
-  override def toString: String = this.synchronized {
-    val time = scala.compat.Platform.currentTime
-    val fixed = if (lastTime < time) time else lastTime + 1
-    lastTime = fixed
-    return "%013d".format(fixed)
   }
 }
 
