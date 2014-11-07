@@ -95,7 +95,7 @@ trait ImportCommon {
   }
 
   protected def readColumns(rc: RuntimeContext, csv: CSV): Columns = {
-    val minParts = csv.file.globLength / 2147483648L + 1 // max 2 GB per partition
+    val minParts = csv.file.globLength / 268435456L + 1 // max 256 MB per partition
     val partitioner =
       if (rc.defaultPartitioner.numPartitions > minParts)
         rc.defaultPartitioner
