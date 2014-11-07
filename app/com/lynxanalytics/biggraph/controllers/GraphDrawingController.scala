@@ -221,8 +221,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       FEBucketers.bucketedAttribute(
         metaManager, dataManager, attribute, request.xNumBuckets, request.xAxisOptions)
     } else {
-      graph_operations.BucketedAttribute[Nothing](
-        null, graph_util.EmptyBucketer())
+      graph_operations.BucketedAttribute.emptyBucketedAttribute
     }
     val yBucketedAttr = if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
@@ -230,8 +229,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       FEBucketers.bucketedAttribute(
         metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions)
     } else {
-      graph_operations.BucketedAttribute[Nothing](
-        null, graph_util.EmptyBucketer())
+      graph_operations.BucketedAttribute.emptyBucketedAttribute
     }
 
     val diagramMeta = getDiagramFromBucketedAttributes(

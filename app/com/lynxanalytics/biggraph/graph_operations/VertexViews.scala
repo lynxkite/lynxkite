@@ -32,6 +32,8 @@ class BucketedAttribute[T] private (
 object BucketedAttribute {
   def apply[T](attribute: VertexAttribute[T], bucketer: Bucketer[T]): BucketedAttribute[T] =
     new BucketedAttribute(attribute.gUID, bucketer)
+  def emptyBucketedAttribute: BucketedAttribute[Nothing] =
+    new BucketedAttribute[Nothing](null, EmptyBucketer())
 }
 
 class FilteredAttribute[T] private (
