@@ -22,9 +22,10 @@
         Loading...
       </progressbar>
 
-      <p class="alert alert-danger" ng-if="data.$error">{{data.error}}</p>
+      <p class="alert alert-danger" ng-if="data.$error">{{data.$error}}</p>
 
-      <a ng-repeat="project in data.projects | filter: searchString" href ng-click="setProject(project.name)">
+      <a ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
+        href ng-click="setProject(project.name)">
         <span class="pull-right" ng-click="discardProject(project.name, $event)">
           <i class="clicky glyphicon glyphicon-remove" tooltip="Discard project" tooltip-append-to-body="true"></i>
         </span>

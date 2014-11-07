@@ -16,16 +16,16 @@
     Loading...
   </progressbar>
 
-  <div class="panel panel-danger" ng-if="side.data.error">
+  <div class="panel panel-danger" ng-if="side.data.$error">
     <div class="panel-heading">
       Error
     </div>
     <div class="panel-body">
-      {{side.data.error}}
+      {{side.data.$error}}
     </div>
   </div>
 
-  <div class="panel panel-default" ng-if="side.data.$resolved && !side.data.error">
+  <div class="panel panel-default" ng-if="side.data.$resolved && !side.data.$error">
     <div class="panel-heading">
       <shortn text="{{side.data.title}}"></shortn>
       <span style="float: right">

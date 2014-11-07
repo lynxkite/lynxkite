@@ -1,8 +1,8 @@
-<p class="alert alert-danger" ng-if="model.$error">{{model.error}}</p>
+<p class="alert alert-danger" ng-if="model.$error">{{model.$error}}</p>
 <table ng-if="!model.$error" class="histogram">
   <tr>
     <td ng-repeat="s in model.sizes track by $index" class="bar-container"
-      tooltip="{{histoLabels[$index]}}: {{s}}" tooltip-append-to-body="true"
+      tooltip="{{tooltipFor($index)}}" tooltip-append-to-body="true"
       ng-click="zoom($index)">
       <i ng-if="zoomable(s)" class="glyphicon glyphicon-eye-open histogram-eye"
         tooltip="Zoom" tooltip-placement="left" tooltip-popup-delay="500"

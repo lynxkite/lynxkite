@@ -13,7 +13,7 @@
     Loading...
   </progressbar>
 
-  <div class="panel panel-danger" ng-if="side.project.error">
+  <div class="panel panel-danger" ng-if="side.project.$error">
     <div class="panel-heading project-name">
       {{side.state.projectName}}
 
@@ -26,11 +26,11 @@
       <div class="clearfix"></div>
     </div>
     <div class="panel-body">
-      {{side.project.error}}
+      {{side.project.$error}}
     </div>
   </div>
 
-  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.error">
+  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error">
 
     <div class="panel-heading project-name">
       <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
@@ -119,7 +119,11 @@
             </td>
           </tr>
           <tr>
-            <td ng-class="{ 'de-emph': !side.state.animate.enabled }">Label attraction:</td>
+            <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
+              tooltip-append-to-body="true" tooltip-placement="right"
+              tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
+              Label attraction:
+            </td>
             <td>
               <input ng-disabled="!side.state.animate.enabled"
                 tooltip="{{side.state.animate.labelAttraction * 100}}%"
@@ -148,10 +152,14 @@
               </div>
             </td>
           </tr>
-          <tr ng-if="side.project.edgeBundle !== ''">
-            <td>Show neighborhood:</td>
+          <tr>
+            <td ng-class="{ 'de-emph': side.project.edgeBundle === '' }"
+              tooltip-append-to-body="true" tooltip-placement="right"
+              tooltip="{{ side.project.edgeBundle === '' ? 'No edges.' : '' }}">
+              Show neighborhood:
+            </td>
             <td>
-              <input
+              <input ng-disabled="side.project.edgeBundle === ''"
                 tooltip="radius {{side.state.sampleRadius}}"
                 type="range" max="10" step="1" ng-model="side.state.sampleRadius">
             </td>

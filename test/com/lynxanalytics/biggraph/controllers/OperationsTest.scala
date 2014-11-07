@@ -46,6 +46,20 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(attr.rdd.collect.toMap == Map(0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob"))
   }
 
+  test("Derived edge attribute") {
+    run("Example Graph")
+    // Test dropping values.
+    run("Derived edge attribute",
+      Map("type" -> "string", "output" -> "tripletke",
+        "expr" -> "src$name + ':' + comment + ':' + dst$age + '#' + weight"))
+    val attr = project.edgeAttributes("tripletke").runtimeSafeCast[String]
+    assert(attr.rdd.collect.toSeq == Seq(
+      (0, "Adam:Adam loves Eve:18.2#1"),
+      (1, "Eve:Eve loves Adam:20.3#2"),
+      (2, "Bob:Bob envies Adam:20.3#3"),
+      (3, "Bob:Bob loves Eve:18.2#4")))
+  }
+
   test("Aggregate to segmentation") {
     run("Example Graph")
     run("Connected components", Map("name" -> "cc", "type" -> "strong"))

@@ -21,6 +21,7 @@ angular.module('biggraph').directive('brandBox', function() {
         'Open the same project on both sides to graph edges between different views of the graph.',
         'You can copy histogram and graph data to the clipboard with the' +
           ' <i class="glyphicon glyphicon-th"></i> buttons.',
+        'Shift-scroll to adjust vertex and edge sizes without zooming.',
       ];
       scope.tip = tips[Math.floor(Math.random() * tips.length)];
     },

@@ -78,6 +78,10 @@ angular.module('biggraph').directive('histogram', function($timeout) {
           scope.max = scope.model.sizes[index] * 2;
         }
       };
+      scope.tooltipFor = function(index) {
+        if (!scope.model || !scope.model.$resolved) { return ''; }
+        return scope.histoLabels[index] + ': ' + scope.model.sizes[index];
+      };
     },
   };
 });

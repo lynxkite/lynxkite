@@ -645,52 +645,74 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       val expr = params("expr")
-      var numAttrNames = List[String]()
-      var numAttrs = List[VertexAttribute[Double]]()
-      var strAttrNames = List[String]()
-      var strAttrs = List[VertexAttribute[String]]()
-      var vecAttrNames = List[String]()
-      var vecAttrs = List[VertexAttribute[Vector[_]]]()
-      project.vertexAttributes.foreach {
-        case (name, attr) if expr.contains(name) && attr.is[Double] =>
-          numAttrNames +:= name
-          numAttrs +:= attr.runtimeSafeCast[Double]
-        case (name, attr) if expr.contains(name) && attr.is[String] =>
-          strAttrNames +:= name
-          strAttrs +:= attr.runtimeSafeCast[String]
-        case (name, attr) if expr.contains(name) && isVector(attr) =>
-          implicit var tt = attr.typeTag
-          vecAttrNames +:= name
-          vecAttrs +:= vectorToAny(attr.asInstanceOf[VectorAttr[_]])
-        case (name, attr) if expr.contains(name) =>
-          log.warn(s"'$name' is of an unsupported type: ${attr.typeTag.tpe}")
-        case _ => ()
-      }
+      val namedAttributes = project.vertexAttributes
+        .filter { case (name, attr) => expr.contains(name) }
+        .toIndexedSeq
+        .map { case (name, attr) => name -> graph_operations.VertexAttributeToJSValue.run(attr) }
       val js = JavaScript(expr)
-      // Figure out the return type.
       val op: graph_operations.DeriveJS[_] = params("type") match {
         case "string" =>
-          graph_operations.DeriveJSString(js, numAttrNames, strAttrNames, vecAttrNames)
+          graph_operations.DeriveJSString(js, namedAttributes.map(_._1))
         case "double" =>
-          graph_operations.DeriveJSDouble(js, numAttrNames, strAttrNames, vecAttrNames)
+          graph_operations.DeriveJSDouble(js, namedAttributes.map(_._1))
       }
-      val result = op(
-        op.vs, project.vertexSet)(
-          op.numAttrs, numAttrs)(
-            op.strAttrs, strAttrs)(
-              op.vecAttrs, vecAttrs).result
+      val result = op(op.attrs, namedAttributes.map(_._2)).result
       project.vertexAttributes(params("output")) = result.attr
     }
+  })
 
-    def isVector[T](attr: VertexAttribute[T]): Boolean = {
-      import scala.reflect.runtime.universe._
-      // Vector is covariant, so Vector[X] <:< Vector[Any].
-      return attr.typeTag.tpe <:< typeOf[Vector[Any]]
-    }
-    type VectorAttr[T] = VertexAttribute[Vector[T]]
-    def vectorToAny[T](attr: VectorAttr[T]): VertexAttribute[Vector[Any]] = {
-      val op = graph_operations.AttributeVectorToAny[T]()
-      op(op.attr, attr).result.attr
+  register(new AttributeOperation(_) {
+    val title = "Derived edge attribute"
+    val description =
+      """Generates a new attribute based on existing attributes. The value expression can be
+      an arbitrary JavaScript expression, and it can refer to existing attributes on the edge as if
+      they were local variables. It can also refer to attributes of the source and destination
+      vertex of the edge using the format src$attribute and dst$attribute.
+
+      For example you can write <tt>weight * Math.abs(src$age - dst$age)</tt> to generate a new
+      attribute that is the weighted age difference of the two endpoints of the edge.
+      """
+    def parameters = List(
+      Param("output", "Save as"),
+      Param("type", "Result type", options = UIValue.list(List("double", "string"))),
+      Param("expr", "Value", defaultValue = "1"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val expr = params("expr")
+      val edgeBundle = project.edgeBundle
+      val namedEdgeAttributes = project.edgeAttributes
+        .filter { case (name, attr) => expr.contains(name) }
+        .toIndexedSeq
+        .map { case (name, attr) => name -> graph_operations.VertexAttributeToJSValue.run(attr) }
+      val namedSrcVertexAttributes = project.vertexAttributes
+        .filter { case (name, attr) => expr.contains("src$" + name) }
+        .toIndexedSeq
+        .map {
+          case (name, attr) =>
+            val mappedAttr = graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
+            "src$" + name -> graph_operations.VertexAttributeToJSValue.run(mappedAttr)
+        }
+      val namedDstVertexAttributes = project.vertexAttributes
+        .filter { case (name, attr) => expr.contains("dst$" + name) }
+        .toIndexedSeq
+        .map {
+          case (name, attr) =>
+            val mappedAttr = graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
+            "dst$" + name -> graph_operations.VertexAttributeToJSValue.run(mappedAttr)
+        }
+
+      val namedAttributes =
+        namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
+
+      val js = JavaScript(expr)
+      val op: graph_operations.DeriveJS[_] = params("type") match {
+        case "string" =>
+          graph_operations.DeriveJSString(js, namedAttributes.map(_._1))
+        case "double" =>
+          graph_operations.DeriveJSDouble(js, namedAttributes.map(_._1))
+      }
+      val result = op(op.attrs, namedAttributes.map(_._2)).result
+      project.edgeAttributes(params("output")) = result.attr
     }
   })
 
@@ -1642,9 +1664,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
       var timeOfDefinition = {
-        val op = graph_operations.DeriveJSDouble(
-          JavaScript("0"), Seq("attr"), Seq(), Seq())
-        op(op.numAttrs, Seq(train)).result.attr.entity
+        val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"))
+        op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
       }
 
       // iterative prediction
@@ -1676,8 +1697,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 defined >= ${params("min_num_defined")}
                 ? deviation
                 : undefined"""),
-            Seq("deviation", "ids", "defined"), Seq(), Seq())
-          op(op.numAttrs, Seq(segStdDev, segSizes, segTargetCount)).result.attr
+            Seq("deviation", "ids", "defined"))
+          op(
+            op.attrs,
+            graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
+            .result.attr
         }
         project.vertexAttributes(s"$prefix $targetName standard deviation after iteration $i") =
           segStdDev
@@ -1696,8 +1720,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
         val error = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript("Math.abs(test - train)"), Seq("test", "train"), Seq(), Seq())
-          val mae = op(op.numAttrs, Seq(parted.test.entity, partedTrain.test.entity)).result.attr
+            JavaScript("Math.abs(test - train)"), Seq("test", "train"))
+          val mae = op(
+            op.attrs,
+            graph_operations.VertexAttributeToJSValue.seq(
+              parted.test.entity, partedTrain.test.entity)).result.attr
           aggregate(attributeWithAggregator(mae, "average"))
         }
         val coverage = {
@@ -1712,8 +1739,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
         timeOfDefinition = {
           val op = graph_operations.DeriveJSDouble(
-            JavaScript(i.toString), Seq("attr"), Seq(), Seq())
-          val newDefinitions = op(op.numAttrs, Seq(train)).result.attr
+            JavaScript(i.toString), Seq("attr"))
+          val newDefinitions = op(
+            op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
           unifyAttributeT(timeOfDefinition, newDefinitions)
         }
       }
