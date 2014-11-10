@@ -90,6 +90,17 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       Seq(Edge(0, 0), Edge(0, 1), Edge(0, 1), Edge(1, 0)))
   }
 
+  test("Merge vertices by attribute, no edge bundle") {
+    run("Example Graph")
+    run("Discard edges")
+    assert(project.edgeBundle == null)
+    run("Merge vertices by attribute",
+      Map("key" -> "gender", "aggregate-age" -> "average"))
+    val age = project.vertexAttributes("age").runtimeSafeCast[Double]
+    assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
+    assert(project.edgeBundle == null)
+  }
+
   test("Aggregate edge attribute") {
     run("Example Graph")
     run("Aggregate edge attribute globally", Map("prefix" -> "", "aggregate-weight" -> "sum"))

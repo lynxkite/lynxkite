@@ -903,15 +903,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           attributeWithLocalAggregator(oldVAttrs(attr), choice))
         project.vertexAttributes(attr) = result
       }
-      val edgeInduction = {
-        val op = graph_operations.InducedEdgeBundle()
-        op(op.srcMapping, m.belongsTo)(op.dstMapping, m.belongsTo)(op.edges, oldEdges).result
-      }
-      project.edgeBundle = edgeInduction.induced
-      for ((name, eAttr) <- oldEAttrs) {
-        project.edgeAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            eAttr, edgeInduction.embedding)
+      if (oldEdges != null) {
+        val edgeInduction = {
+          val op = graph_operations.InducedEdgeBundle()
+          op(op.srcMapping, m.belongsTo)(op.dstMapping, m.belongsTo)(op.edges, oldEdges).result
+        }
+        project.edgeBundle = edgeInduction.induced
+        for ((name, eAttr) <- oldEAttrs) {
+          project.edgeAttributes(name) =
+            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+              eAttr, edgeInduction.embedding)
+        }
       }
     }
   })
