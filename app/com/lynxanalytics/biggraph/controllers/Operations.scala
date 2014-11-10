@@ -1403,8 +1403,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           (ebInduced.get.induced.entity, ebInduced.get.embedding, null)
         } else if (!ebInduced.isDefined && otherEbInduced.isDefined) {
           (otherEbInduced.get.induced.entity, null, otherEbInduced.get.embedding)
-        } else {
-          assert(ebInduced.isDefined && otherEbInduced.isDefined)
+        } else if (ebInduced.isDefined && otherEbInduced.isDefined) {
           val idUnion = {
             val op = graph_operations.VertexSetUnion(2)
             op(
@@ -1421,6 +1420,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           (ebUnion,
             concat(reverse(idUnion.injections(0).entity), ebInduced.get.embedding),
             concat(reverse(idUnion.injections(1).entity), otherEbInduced.get.embedding))
+        } else {
+          (null, null, null)
         }
       val newEdgeAttributes = unifyAttributes(
         project.edgeAttributes
