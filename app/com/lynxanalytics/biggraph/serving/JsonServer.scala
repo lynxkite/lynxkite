@@ -166,7 +166,12 @@ object ProductionJsonServer extends JsonServer {
       val digest = md.digest().map("%02x".format(_)).mkString
       val finalName = s"$baseName.$digest"
       val finalFile = dataRepo / "uploads" / finalName
-      tmpFile.renameTo(finalFile)
+      if (finalFile.exists) {
+        log.info(s"The uploaded file ($tmpFile) already exists (as $finalFile).")
+      } else {
+        val success = tmpFile.renameTo(finalFile)
+        assert(success, s"Failed to rename $tmpFile to $finalFile.")
+      }
       Ok(finalFile.fullString)
     }
   }
