@@ -10,9 +10,15 @@ import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class BucketedAttribute[T](
-    attribute: VertexAttribute[T],
-    bucketer: Bucketer[T]) {
+trait AttributeFromGUID[T] extends Serializable {
+  protected val attributeGUID: UUID
+  def attribute(implicit manager: MetaGraphManager) =
+    manager.vertexAttribute(attributeGUID).asInstanceOf[VertexAttribute[T]]
+}
+
+class BucketedAttribute[T] private (
+    protected val attributeGUID: UUID,
+    val bucketer: Bucketer[T]) extends AttributeFromGUID[T] {
 
   def toHistogram(
     filtered: VertexSet)(
@@ -23,10 +29,21 @@ case class BucketedAttribute[T](
     op(op.attr, attribute)(op.filtered, filtered)(op.originalCount, originalCount).result
   }
 }
+object BucketedAttribute {
+  def apply[T](attribute: VertexAttribute[T], bucketer: Bucketer[T]): BucketedAttribute[T] =
+    new BucketedAttribute(attribute.gUID, bucketer)
+  def emptyBucketedAttribute: BucketedAttribute[Nothing] =
+    new BucketedAttribute[Nothing](null, EmptyBucketer())
+}
 
-case class FilteredAttribute[T](
-  attribute: VertexAttribute[T],
-  filter: Filter[T])
+class FilteredAttribute[T] private (
+    protected val attributeGUID: UUID,
+    val filter: Filter[T]) extends AttributeFromGUID[T] {
+}
+object FilteredAttribute {
+  def apply[T](attribute: VertexAttribute[T], filter: Filter[T]): FilteredAttribute[T] =
+    new FilteredAttribute(attribute.gUID, filter)
+}
 
 /*
  * The VertexView class is used to define how a view of some vertices or vertex sets were created.
