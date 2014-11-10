@@ -168,7 +168,7 @@ object RDDUtils {
     } else {
       totalVertexCount * 1.0 / unfilteredCount
     }
-    valueWeights.toMap.mapValues(c => multiplier * c)
+    valueWeights.toMap.map { case (k, c) => k -> multiplier * c }
   }
 
   def incrementMap[K](map: mutable.Map[K, Int], key: K, increment: Int = 1): Unit = {
