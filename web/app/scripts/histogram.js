@@ -16,6 +16,14 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         return max;
       }
 
+      function total() {
+        var t = 0;
+        for (var i = 0; i < scope.model.sizes.length; ++i) {
+          t += scope.model.sizes[i];
+        }
+        return t;
+      }
+
       function startLoading() {
         if (!scope.loading) {
           loadingAnimation();
@@ -45,6 +53,7 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         }
         scope.highlighted = undefined;  // Index of highlighted bar.
         scope.max = maxSize();
+        scope.total = total();
         scope.origMax = scope.max;
         if (model.labelType === 'between') {
           var histoLabels = [];

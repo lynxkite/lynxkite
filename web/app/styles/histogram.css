@@ -52,3 +52,20 @@ table.histogram .bar-container:hover .histogram-eye {
   left: 0;
   right: 0;
 }
+
+histogram .histogram-total {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  text-align: center;
+  width: 100%;
+  pointer-events: none;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  font-weight: bold;
+  display: none;
+}
+
+histogram:hover .histogram-total {
+  display: block;
+}
