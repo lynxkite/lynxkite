@@ -116,7 +116,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       FEEdge(0, 1, 1.0), FEEdge(1, 0, 1.0)))
   }
 
-  test("bucketed view") {
+  test("small bucketed view") {
     val g = graph_operations.ExampleGraph()().result
     val req = FEGraphRequest(
       vertexSets = Seq(VertexDiagramSpec(
@@ -143,6 +143,31 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.edgeBundles(0).edges.size == 4)
     assert(res.edgeBundles(0).edges.toSet == Set(
       FEEdge(0, 1, 1.0), FEEdge(3, 0, 1.0), FEEdge(1, 0, 1.0), FEEdge(3, 1, 1.0)))
+  }
+
+  test("big bucketed view") {
+    val vs = graph_operations.CreateVertexSet(100)().result.vs
+    val eop = graph_operations.FastRandomEdgeBundle(0, 2)
+    val es = eop(eop.vs, vs).result.es
+    val req = FEGraphRequest(
+      vertexSets = Seq(VertexDiagramSpec(
+        vertexSetId = vs.gUID.toString,
+        filters = Seq(),
+        mode = "bucketed")),
+      edgeBundles = Seq(EdgeDiagramSpec(
+        srcDiagramId = "idx[0]",
+        dstDiagramId = "idx[0]",
+        srcIdx = 0,
+        dstIdx = 0,
+        edgeBundleId = es.gUID.toString)))
+    val res = controller.getComplexView(req)
+    assert(res.vertexSets.length == 1)
+    assert(res.edgeBundles.length == 1)
+    assert(res.vertexSets(0).mode == "bucketed")
+    assert(res.vertexSets(0).vertices.size == 1)
+    assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(100.0, 0, 0)))
+    assert(res.edgeBundles(0).edges.size == 1)
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 191.0)))
   }
 
   test("histogram for double") {
