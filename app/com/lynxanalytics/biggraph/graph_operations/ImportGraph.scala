@@ -95,7 +95,13 @@ trait ImportCommon {
   }
 
   protected def readColumns(rc: RuntimeContext, csv: CSV): Columns = {
-    val p = rc.defaultPartitioner.numPartitions
+    val minParts = csv.file.globLength / 268435456L + 1 // max 256 MB per partition
+    val partitioner =
+      if (rc.defaultPartitioner.numPartitions > minParts)
+        rc.defaultPartitioner
+      else
+        new org.apache.spark.HashPartitioner(minParts.toInt)
+    val p = partitioner.numPartitions
     log.info(s"Reading input lines into ${p} partitions")
     val lines = csv.lines(rc.sparkContext)
     val numbered = lines.randomNumbered(p)
