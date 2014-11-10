@@ -64,7 +64,7 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         return scope.max < s;
       };
       scope.zoomable = function(s) {
-        return 0 < s && s < scope.origMax * 0.5;
+        return !scope.loading && 0 < s && s < scope.origMax * 0.5;
       };
       scope.zoom = function(index) {
         if (!scope.zoomable(scope.model.sizes[index])) { return; }
@@ -79,7 +79,7 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         }
       };
       scope.tooltipFor = function(index) {
-        if (!scope.model || !scope.model.$resolved) { return ''; }
+        if (scope.loading) { return ''; }
         return scope.histoLabels[index] + ': ' + scope.model.sizes[index];
       };
     },
