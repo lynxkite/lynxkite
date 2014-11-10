@@ -18,11 +18,18 @@ class DataManager(sc: spark.SparkContext,
   private val instanceOutputCache = mutable.Map[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = mutable.Map[UUID, Future[EntityData]]()
 
+  // This can be switched to false to enter "demo mode" where no new calculations are allowed.
+  var computationAllowed = true
+
   private def instancePath(instance: MetaGraphOperationInstance) =
     repositoryPath / "operations" / instance.gUID.toString
 
   private def entityPath(entity: MetaGraphEntity) =
-    repositoryPath / "entities" / entity.gUID.toString
+    if (entity.isInstanceOf[Scalar[_]]) {
+      repositoryPath / "scalars" / entity.gUID.toString
+    } else {
+      repositoryPath / "entities" / entity.gUID.toString
+    }
 
   private def successPath(basePath: Filename): Filename = basePath / "_SUCCESS"
 
@@ -108,13 +115,18 @@ class DataManager(sc: spark.SparkContext,
       val outputDatas = blocking {
         instance.run(inputDatas, runtimeContext)
       }
-      if (instance.operation.isHeavy) {
-        blocking {
+      blocking {
+        if (instance.operation.isHeavy) {
           outputDatas.values.foreach { entityData =>
             saveToDisk(entityData)
           }
-          successPath(instancePath(instance)).createFromStrings("")
+        } else {
+          // We still save all scalars even for non-heavy operations.
+          outputDatas.values.foreach { entityData =>
+            if (entityData.isInstanceOf[ScalarData[_]]) saveToDisk(entityData)
+          }
         }
+        successPath(instancePath(instance)).createFromStrings("")
       }
       instance.outputs.scalars.values
         .foreach(scalar => log.info(s"PERF Computed scalar of GUID ${scalar.gUID}"))
@@ -140,6 +152,7 @@ class DataManager(sc: spark.SparkContext,
         // If on disk already, we just load it.
         set(entity, load(entity))
       } else {
+        assert(computationAllowed, "DEMO MODE, you cannot start new computations")
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
         val instanceFuture = getInstanceFuture(instance)

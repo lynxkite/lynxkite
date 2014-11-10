@@ -1,7 +1,5 @@
 package com.lynxanalytics.biggraph.controllers
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -223,8 +221,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       FEBucketers.bucketedAttribute(
         metaManager, dataManager, attribute, request.xNumBuckets, request.xAxisOptions)
     } else {
-      graph_operations.BucketedAttribute[Nothing](
-        null, graph_util.EmptyBucketer())
+      graph_operations.BucketedAttribute.emptyBucketedAttribute
     }
     val yBucketedAttr = if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
@@ -232,8 +229,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       FEBucketers.bucketedAttribute(
         metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions)
     } else {
-      graph_operations.BucketedAttribute[Nothing](
-        null, graph_util.EmptyBucketer())
+      graph_operations.BucketedAttribute.emptyBucketedAttribute
     }
 
     val diagramMeta = getDiagramFromBucketedAttributes(
@@ -472,7 +468,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val sampledTrips = tripletMapping(edgeBundle, sampled = true)
     val sampledEdges = getFilteredEdgeIds(sampledTrips, edgeBundle, srcFilters, dstFilters)
     // TODO: See if we can eliminate the extra stage from this "count".
-    if (sampledEdges.ids.rdd.count >= 50000) {
+    val count = {
+      val op = graph_operations.CountVertices()
+      op(op.vertices, sampledEdges.ids).result.count.value
+    }
+    if (count >= 50000) {
       sampledEdges
     } else {
       val fullTrips = tripletMapping(edgeBundle, sampled = false)
