@@ -46,7 +46,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(attr.rdd.collect.toMap == Map(0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob"))
   }
 
-  test("Derived edge attribute") {
+  // TODO: Re-enable this test. See #1037.
+  ignore("Derived edge attribute") {
     run("Example Graph")
     // Test dropping values.
     run("Derived edge attribute",
