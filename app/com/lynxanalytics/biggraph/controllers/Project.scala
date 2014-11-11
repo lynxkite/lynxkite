@@ -4,6 +4,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
