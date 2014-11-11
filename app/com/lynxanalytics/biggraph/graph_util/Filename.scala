@@ -36,7 +36,8 @@ case class Filename(
   def exists() = fs.exists(path)
   def reader() = new BufferedReader(new InputStreamReader(open))
   def delete() = fs.delete(path, true)
-  def renameTo(fn: Filename) = fs.rename(path, fn.path)
+  // TODO: Re-enable this when we don't mind a SerialVersionUID change.
+  // def renameTo(fn: Filename) = fs.rename(path, fn.path)
   def list = fs.globStatus(path).map(st => this.copy(filename = st.getPath.toString))
   def length = fs.getFileStatus(path).getLen
   def globLength = fs.globStatus(path).map(_.getLen).sum
