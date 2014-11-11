@@ -16,6 +16,14 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         return max;
       }
 
+      function total() {
+        var t = 0;
+        for (var i = 0; i < scope.model.sizes.length; ++i) {
+          t += scope.model.sizes[i];
+        }
+        return t;
+      }
+
       function startLoading() {
         if (!scope.loading) {
           loadingAnimation();
@@ -45,6 +53,7 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         }
         scope.highlighted = undefined;  // Index of highlighted bar.
         scope.max = maxSize();
+        scope.total = total();
         scope.origMax = scope.max;
         if (model.labelType === 'between') {
           var histoLabels = [];
@@ -64,7 +73,7 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         return scope.max < s;
       };
       scope.zoomable = function(s) {
-        return 0 < s && s < scope.origMax * 0.5;
+        return !scope.loading && 0 < s && s < scope.origMax * 0.5;
       };
       scope.zoom = function(index) {
         if (!scope.zoomable(scope.model.sizes[index])) { return; }
@@ -79,7 +88,7 @@ angular.module('biggraph').directive('histogram', function($timeout) {
         }
       };
       scope.tooltipFor = function(index) {
-        if (!scope.model || !scope.model.$resolved) { return ''; }
+        if (scope.loading) { return ''; }
         return scope.histoLabels[index] + ': ' + scope.model.sizes[index];
       };
     },

@@ -2,13 +2,14 @@
 <table ng-if="!model.$error" class="histogram">
   <tr>
     <td ng-repeat="s in model.sizes track by $index" class="bar-container"
+      ng-class="{ zoomable: zoomable(s) }"
       tooltip="{{tooltipFor($index)}}" tooltip-append-to-body="true"
       ng-click="zoom($index)">
-      <i ng-if="zoomable(s)" class="glyphicon glyphicon-eye-open histogram-eye"
-        tooltip="Zoom" tooltip-placement="left" tooltip-popup-delay="500"
-        tooltip-append-to-body="true"></i>
-      <div class="bar" ng-class="{ clipped: clipped(s), highlighted: highlighted === $index }"
+      <i ng-if="zoomable(s)" class="glyphicon glyphicon-eye-open histogram-eye"></i>
+      <div class="bar"
+        ng-class="{ clipped: clipped(s), highlighted: highlighted === $index, loading: loading }"
         style="height: {{height(s)}};"></div>
     </td>
   </tr>
 </table>
+<div class="histogram-total">total: {{total | decimal}}</div>

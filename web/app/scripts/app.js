@@ -141,4 +141,17 @@ angular
   })
   .filter('trustAsHtml', function($sce) {
     return $sce.trustAsHtml;
+  })
+  .filter('decimal', function() {
+    return function(x) {
+      if (x === undefined) { return x; }
+      var str = x.toString();
+      var l = str.length;
+      var result = '';
+      for (var i = 0; i < l - 3; i += 3) {
+        result = ',' + str.substr(l - i - 3, 3) + result;
+      }
+      result = str.substr(0, l - i) + result;
+      return result;
+    };
   });
