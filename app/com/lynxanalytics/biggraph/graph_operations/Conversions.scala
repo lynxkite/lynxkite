@@ -13,9 +13,10 @@ case class DynamicValue(
   string: String = "",
   defined: Boolean = true)
 object DynamicValue {
+  val df = new java.text.DecimalFormat("#.#####")
   def converter[T: TypeTag]: (T => DynamicValue) = {
     if (typeOf[T] =:= typeOf[Double]) value =>
-      DynamicValue(double = value.asInstanceOf[Double], string = value.toString)
+      DynamicValue(double = value.asInstanceOf[Double], string = df.format(value))
     else if (typeOf[T] =:= typeOf[Long]) value =>
       DynamicValue(
         double = value.asInstanceOf[Long].toDouble, string = value.toString)
