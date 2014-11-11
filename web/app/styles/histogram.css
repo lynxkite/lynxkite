@@ -22,6 +22,10 @@ table.histogram .bar.highlighted {
   background: rgba(128, 96, 0, 0.5);
 }
 
+table.histogram .bar.loading {
+  background: rgba(128, 192, 96, 0.5);
+}
+
 table.histogram .bar.clipped {
   border-top: 1px dashed #f5f5f5;
 }
@@ -29,6 +33,10 @@ table.histogram .bar.clipped {
 table.histogram .bar-container {
   position: relative;
   height: 100%;
+}
+
+table.histogram .bar-container.zoomable {
+  cursor: pointer;
 }
 
 table.histogram .bar-container .histogram-eye {
@@ -43,4 +51,21 @@ table.histogram .bar-container:hover .histogram-eye {
   margin: auto;
   left: 0;
   right: 0;
+}
+
+histogram .histogram-total {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  text-align: center;
+  width: 100%;
+  pointer-events: none;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  font-weight: bold;
+  display: none;
+}
+
+histogram:hover .histogram-total {
+  display: block;
 }
