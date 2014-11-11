@@ -1694,7 +1694,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           // 50% should be defined in order to consider a segmentation, is that good enough?
           val op = graph_operations.DeriveJSDouble(
             JavaScript(s"""
-                deviation < $maxDeviation &&
+                deviation <= $maxDeviation &&
                 defined / ids >= ${params("min_ratio_defined")} &&
                 defined >= ${params("min_num_defined")}
                 ? deviation
