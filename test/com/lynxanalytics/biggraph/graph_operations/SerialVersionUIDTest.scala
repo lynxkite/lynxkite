@@ -25,6 +25,7 @@ object SerialVersionUIDTest {
     classOf[EdgesFromBipartiteAttributeMatches[_]] -> 2354393111550889521L,
     classOf[Embeddedness] -> -4737043471723109201L,
     classOf[ExampleGraph] -> 4582815398126925303L,
+    classOf[FastRandomEdgeBundle] -> 5709373073785277167L,
     classOf[FindMaxCliques] -> -2730852947127951308L,
     classOf[FingerprintingCandidates] -> -6803153418047952554L,
     classOf[Fingerprinting] -> -4676710109227070240L,
