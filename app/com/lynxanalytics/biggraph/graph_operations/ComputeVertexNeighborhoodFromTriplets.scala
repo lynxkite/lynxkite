@@ -42,6 +42,6 @@ case class ComputeVertexNeighborhoodFromTriplets(
         .flatMap { case (id, edge) => Iterator(edge.src, edge.dst) }
         .collect
     }
-    output(o.neighborhood, neighborhood.toSet)
+    output(o.neighborhood, neighborhood.toSet ++ centers)
   }
 }
