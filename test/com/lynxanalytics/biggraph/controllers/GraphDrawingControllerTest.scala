@@ -52,7 +52,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         vertexSetId = g.vertices.gUID.toString,
         filters = Seq(),
         mode = "sampled",
-        centralVertexIds = Seq("0"),
+        centralVertexIds = Seq("0", "3"),
         sampleSmearEdgeBundleId = g.edges.gUID.toString,
         attrs = Seq(),
         radius = 1)),
@@ -66,11 +66,12 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
     assert(res.vertexSets(0).mode == "sampled")
-    assert(res.vertexSets(0).vertices.size == 3)
+    assert(res.vertexSets(0).vertices.size == 4)
     assert(res.vertexSets(0).vertices.toSet == Set(
       FEVertex(0.0, 0, 0, id = "0", attrs = Map()),
       FEVertex(0.0, 0, 0, id = "1", attrs = Map()),
-      FEVertex(0.0, 0, 0, id = "2", attrs = Map())))
+      FEVertex(0.0, 0, 0, id = "2", attrs = Map()),
+      FEVertex(0.0, 0, 0, id = "3", attrs = Map())))
     assert(res.edgeBundles(0).edges.size == 4)
     assert(res.edgeBundles(0).edges.toSet == Set(
       FEEdge(0, 1, 1.0), FEEdge(1, 0, 1.0), FEEdge(2, 0, 1.0), FEEdge(2, 1, 1.0)))
