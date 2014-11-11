@@ -388,10 +388,12 @@ angular.module('biggraph').directive('graphView', function(util) {
   GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex) {
     var scope = this.scope;
     var svgElement = this.svg;
+    var vertexGroup = this.vertexGroup;
     vertex.dom.on('mousedown touchstart', function(evStart) {
       evStart.stopPropagation();
       vertex.held = true;
       vertex.dragged = false;
+      vertexGroup.append(vertex.dom);  // Bring to top.
       angular.element(window).on('mouseup touchend', function() {
         angular.element(window).off('mousemove mouseup touchmove touchend');
         if (!vertex.held) {
