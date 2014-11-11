@@ -29,4 +29,12 @@ class ConversionsTest extends FunSuite with TestGraphOp {
     assert(double.rdd.collect.toMap
       == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
   }
+
+  test("Double formatting") {
+    assert(DynamicValue.convert(0.0).string == "0")
+    assert(DynamicValue.convert(1.0).string == "1")
+    assert(DynamicValue.convert(1.1).string == "1.1")
+    assert(DynamicValue.convert(1.0001).string == "1.0001")
+    assert(DynamicValue.convert(1.000100001).string == "1.0001")
+  }
 }
