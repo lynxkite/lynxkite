@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
@@ -157,11 +158,23 @@ object ProductionJsonServer extends JsonServer {
       val upload = request.body.file("file").get
       log.info(s"upload: ${upload.filename}")
       val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
-      val output = dataRepo / "uploads" / upload.filename.replace(" ", "_")
-      val stream = output.create()
+      val baseName = upload.filename.replace(" ", "_")
+      val tmpName = s"$baseName.$Timestamp"
+      val tmpFile = dataRepo / "tmp" / tmpName
+      val md = java.security.MessageDigest.getInstance("MD5");
+      val stream = new java.security.DigestOutputStream(tmpFile.create(), md)
       try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
       finally stream.close()
-      Ok(output.fullString)
+      val digest = md.digest().map("%02x".format(_)).mkString
+      val finalName = s"$baseName.$digest"
+      val finalFile = dataRepo / "uploads" / finalName
+      if (finalFile.exists) {
+        log.info(s"The uploaded file ($tmpFile) already exists (as $finalFile).")
+      } else {
+        val success = tmpFile.renameTo(finalFile)
+        assert(success, s"Failed to rename $tmpFile to $finalFile.")
+      }
+      Ok(finalFile.fullString)
     }
   }
 
