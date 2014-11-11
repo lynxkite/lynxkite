@@ -391,7 +391,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var vertexGroup = this.vertexGroup;
     vertex.dom.on('mousedown touchstart', function(evStart) {
       evStart.stopPropagation();
-      vertex.held = true;
+      vertex.hold();
       vertex.dragged = false;
       vertexGroup.append(vertex.dom);  // Bring to top.
       angular.element(window).on('mouseup touchend', function() {
@@ -399,7 +399,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         if (!vertex.held) {
           return;  // Duplicate event.
         }
-        vertex.held = false;
+        vertex.release();
         if (vertex.dragged) {  // It was a drag.
           vertex.dragged = false;
           vertices.animate();
@@ -831,6 +831,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       that.reDraw();
     });
     this.touch.mouseleave(function() {
+      if (that.held) { return; }
       svg.removeClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.color});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
@@ -849,6 +850,13 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.x = x;
     this.y = y;
     this.reDraw();
+  };
+  Vertex.prototype.hold = function() {
+    this.held = true;
+  };
+  Vertex.prototype.release = function() {
+    this.held = false;
+    this.touch.mouseleave();
   };
   function svgTranslate(x, y) { return ' translate(' + x + ' ' + y + ')'; }
   function svgScale(s) { return ' scale(' + s + ')'; }
