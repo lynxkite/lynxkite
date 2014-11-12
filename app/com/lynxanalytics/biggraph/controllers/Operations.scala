@@ -1757,19 +1757,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Correlate two attributes"
     val description = """Calculates Pearson correlation coefficient of two attributes."""
     def parameters = List(
-      Param("name", "New attribute name", defaultValue = "Correlation"),
       Param("attrA", "First attribute", options = vertexAttributes[Double]),
       Param("attrB", "Second attribute", options = vertexAttributes[Double]))
     def enabled = FEStatus.assert(
       vertexAttributes[Double].size >= 2, "Not enough double vertex attributes.")
     def apply(params: Map[String, String]) = {
-      val name = params("name")
-      assert(name.nonEmpty, "You must specify a name for the new attribute.")
       val attrA = project.vertexAttributes(params("attrA")).runtimeSafeCast[Double]
       val attrB = project.vertexAttributes(params("attrB")).runtimeSafeCast[Double]
       val op = graph_operations.CorrelateAttributes()
-      val res = op(op.vertices, project.vertexSet)(op.attrA, attrA)(op.attrB, attrB).result
-      project.scalars(name) = res.correlation
+      val res = op(op.attrA, attrA)(op.attrB, attrB).result
+      project.scalars(s"correlation of $attrA and $attrB") = res.correlation
     }
   })
 

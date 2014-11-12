@@ -1,6 +1,5 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-//import org.apache.spark.mllib.linalg._
 import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
