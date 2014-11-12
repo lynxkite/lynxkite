@@ -73,6 +73,10 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_operations.Stats])
     kryo.register(classOf[Array[graph_operations.Stats]])
     kryo.register((0L, 0).getClass)
+    kryo.register(classOf[Array[org.apache.spark.mllib.linalg.Vector]])
+    kryo.register(classOf[org.apache.spark.mllib.linalg.DenseVector])
+    //kryo.register(classOf[breeze.linalg.DenseVector[Double]])
+    kryo.register(classOf[breeze.linalg.DenseVector$mcD$sp])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
