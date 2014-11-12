@@ -22,6 +22,8 @@ angular.module('biggraph').directive('brandBox', function() {
         'You can copy histogram and graph data to the clipboard with the' +
           ' <i class="glyphicon glyphicon-th"></i> buttons.',
         'Shift-scroll to adjust vertex and edge sizes without zooming.',
+        'Drag the graph background to pan the view.',
+        'Click the handle on the left of the graph visualization for extra options.',
       ];
       scope.tip = tips[Math.floor(Math.random() * tips.length)];
     },
