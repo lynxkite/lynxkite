@@ -53,7 +53,9 @@ case class VertexDiagramResponse(
   val xLabelType: String = "",
   val yLabelType: String = "",
   val xLabels: Seq[String] = Seq(),
-  val yLabels: Seq[String] = Seq())
+  val yLabels: Seq[String] = Seq(),
+  val xFilters: Seq[String] = Seq(),
+  val yFilters: Seq[String] = Seq())
 
 case class EdgeDiagramSpec(
   // In the context of an FEGraphRequest "idx[4]" means the diagram requested by vertexSets(4).
@@ -248,7 +250,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       xLabelType = xBucketer.labelType,
       yLabelType = yBucketer.labelType,
       xLabels = xBucketer.bucketLabels,
-      yLabels = yBucketer.bucketLabels)
+      yLabels = yBucketer.bucketLabels,
+      xFilters = xBucketer.bucketFilters,
+      yFilters = yBucketer.bucketFilters)
   }
 
   private def loadGUIDsToMemory(gUIDs: Seq[String]): Unit = {

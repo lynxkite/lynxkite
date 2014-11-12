@@ -152,6 +152,10 @@ angular.module('biggraph')
         delete vd.segmentationFilters().$members;
       };
 
+      vd.setFilter = function(title, value) {
+        that.state.filters[title] = value;
+      };
+
       this.viewData = vd;
     };
 
