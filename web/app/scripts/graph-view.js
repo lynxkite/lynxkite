@@ -778,19 +778,17 @@ angular.module('biggraph').directive('graphView', function(util) {
       this.vertexGroup.append(v.dom);
       if (xLabels.length !== 0) {
         v.addHoverListener(xLabels[vertex.x]);
-        v.xFilter = xLabels[vertex.x].text;
-        if (data.xLabelType === 'between') {
-          v.addHoverListener(xLabels[vertex.x + 1]);
-          v.xFilter = '[' + xLabels[vertex.x].text + ',' + xLabels[vertex.x + 1].text + ')';
-        }
+        if (data.xLabelType === 'between') { v.addHoverListener(xLabels[vertex.x + 1]); }
+      }
+      if (data.xFilters.length > 0) {
+        v.xFilter = data.xFilters[vertex.x];
       }
       if (yLabels.length !== 0) {
         v.addHoverListener(yLabels[vertex.y]);
-        v.yFilter = yLabels[vertex.y].text;
-        if (data.yLabelType === 'between') {
-          v.addHoverListener(yLabels[vertex.y + 1]);
-          v.yFilter = '[' + yLabels[vertex.y].text + ',' + yLabels[vertex.y + 1].text + ')';
-        }
+        if (data.yLabelType === 'between') { v.addHoverListener(yLabels[vertex.y + 1]); }
+      }
+      if (data.yFilters.length > 0) {
+        v.yFilter = data.yFilters[vertex.y];
       }
     }
     return vertices;

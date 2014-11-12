@@ -10,6 +10,7 @@ trait Bucketer[T] extends Serializable {
   val numBuckets: Int
   def whichBucket(value: T): Int
   def bucketLabels: Seq[String]
+  def bucketFilters: Seq[String] = Seq() // Filter string equivalent of the bucket. (Optional.)
   def labelType: String
 }
 
@@ -61,6 +62,12 @@ abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
     extends EnumBucketer[String](options, hasOther) {
   val labelType = "bucket"
+  override def bucketFilters = {
+    if (hasOther) {
+      val otherFilter = "!" + optionLabels.mkString(",")
+      optionLabels :+ otherFilter
+    } else optionLabels
+  }
 }
 
 abstract class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
@@ -82,6 +89,22 @@ abstract class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
         fmt(labels, decimals).toSet.size == labels.size
       }
       fmt(labels, decimals.getOrElse(2))
+    }
+  }
+
+  override def bucketFilters = {
+    val ls = bucketLabels.drop(1).dropRight(1)
+    if (ls.size < 1) Seq() else {
+      val first = "<" + ls.head
+      val last = ">=" + ls.last
+      val middle = if (ls.size < 2) Seq() else {
+        ls.sliding(2).map { ab =>
+          val a = ab(0)
+          val b = ab(1)
+          s"[$a,$b)"
+        }.toSeq
+      }
+      first +: middle :+ last
     }
   }
 }
