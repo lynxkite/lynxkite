@@ -30,7 +30,8 @@ libraryDependencies ++= Seq(
   "ws.securesocial" %% "securesocial" % "2.1.4",
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.pegdown" % "pegdown" % "1.4.2" % "test",
-  "org.slf4j" % "log4j-over-slf4j" % "1.7.6")
+  "org.slf4j" % "log4j-over-slf4j" % "1.7.6",
+  "org.apache.spark" %% "spark-mllib" % "1.1.0")
 
 play.Project.playScalaSettings
 
