@@ -17,7 +17,7 @@ angular.module('biggraph').directive('brandBox', function() {
         'Click on a histogram bar to zoom in.',
         'Multiple monitors? Enable linked mode at the bottom of the page.',
         'Press / to quickly access operations by their name.',
-        'In concrete vertices mode you can click on a vertex for further options.',
+        'Click on a vertex to open the context menu.',
         'Open the same project on both sides to graph edges between different views of the graph.',
         'You can copy histogram and graph data to the clipboard with the' +
           ' <i class="glyphicon glyphicon-th"></i> buttons.',
