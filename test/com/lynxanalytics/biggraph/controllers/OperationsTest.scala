@@ -492,4 +492,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "1000" -> "train"))
     assert(project.scalars("viral3 num mean absolute prediction error after iteration 5").value == 0.625)
   }
+
+  test("Merge two attributes") {
+    run("Example Graph")
+    // The unification is used everywhere, I'm just worried about the type equality check.
+    intercept[java.lang.AssertionError] {
+      run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "age"))
+    }
+    run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "gender"))
+  }
 }

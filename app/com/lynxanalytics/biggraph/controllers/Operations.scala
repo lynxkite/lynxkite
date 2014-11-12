@@ -487,6 +487,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Merge two attributes"
+    val description =
+      """An attribute may not be defined on every vertex. This operation uses the secondary
+      attribute to fill in the values where the primary attribute is undefined. If both are
+      undefined on a vertex then the result is undefined too."""
+    def parameters = List(
+      Param("name", "New attribute name", defaultValue = ""),
+      Param("attr1", "Primary attribute", options = vertexAttributes),
+      Param("attr2", "Secondary attribute", options = vertexAttributes))
+    def enabled = FEStatus.assert(
+      vertexAttributes.size >= 2, "Not enough vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      assert(name.nonEmpty, "You must specify a name for the new attribute.")
+      val attr1 = project.vertexAttributes(params("attr1"))
+      val attr2 = project.vertexAttributes(params("attr2"))
+      assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
+        "The two attributes must have the same type.")
+      project.vertexAttributes(name) = unifyAttribute(attr1, attr2)
+    }
+  })
+
   register(new EdgeOperation(_) {
     val title = "Reverse edge direction"
     val description = ""
