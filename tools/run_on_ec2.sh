@@ -28,6 +28,7 @@ sh -c "( ( \
   SPARK_JAVA_OPTS=\"-Dhadoop.tmp.dir=/mnt/hadoop-tmp\" \
   SPARK_DIR=\"/mnt/\" \
   EXECUTOR_MEMORY=${EXECUTOR_MB}m \
+  LOGGER_HOME=${LOGGER_HOME:-/mnt} \
   nohup $ROOT/bin/biggraph \
     -mem $RAM_MB \
     -Dhttp.port=5080 \
