@@ -47,14 +47,14 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     } else {
       val xAttr = inputs.xAttribute.rdd
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
-      filtered.sortedJoin(xAttr).mapValues { case (_, value) => xBucketer.whichBucket(value) }
+      filtered.sortedJoin(xAttr).flatMapValues { case (_, value) => xBucketer.whichBucket(value) }
     })
     val yBuckets = (if (yBucketer.numBuckets == 1) {
       filtered.mapValues(_ => 0)
     } else {
       val yAttr = inputs.yAttribute.rdd
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
-      filtered.sortedJoin(yAttr).mapValues { case (_, value) => yBucketer.whichBucket(value) }
+      filtered.sortedJoin(yAttr).flatMapValues { case (_, value) => yBucketer.whichBucket(value) }
     })
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
