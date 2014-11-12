@@ -57,6 +57,7 @@ svg .edge.highlight-in .first {
 }
 svg .vertex .touch {
   fill: transparent;
+  cursor: pointer;
 }
 svg .vertex text {
   text-anchor: middle;
