@@ -52,10 +52,10 @@ var FORCE_LAYOUT = (function() {
         }
         var d2 = dx * dx + dy * dy;
         var repulsion = this.opts.repulsion;
-        if (a.text === b.text) {
+        if (a.text != undefined && b.text != undefined && a.text === b.text) {
           // Apply reduced repulsion between vertices that have the same label.
           // This causes the vertices to cluster a bit by label.
-          // Undefined and unlabeled vertices will cluster together as well.
+          // Undefined vertices will cluster together as well.
           repulsion *= 1.0 - this.opts.labelAttraction;
         }
         a.x += repulsion * dx / d2 / a.forceMass;
