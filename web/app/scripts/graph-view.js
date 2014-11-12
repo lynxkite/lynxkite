@@ -820,7 +820,6 @@ angular.module('biggraph').directive('graphView', function(util) {
     var classes = 'bucket ' + (opts.classes || '');
     this.x = x;
     this.y = y;
-    this.text = text;
     this.vertical = opts.vertical;
     this.dom = svg.create('text', { 'class': classes }).text(text);
     if (this.vertical) {
