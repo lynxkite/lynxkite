@@ -29,7 +29,7 @@ case class Filename(
     return conf
   }
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
-  @transient lazy val uri = new java.net.URI(filename)
+  @transient lazy val uri = path.toUri
   @transient lazy val path = new hadoop.fs.Path(filename)
   def open() = fs.open(path)
   def create() = fs.create(path)
