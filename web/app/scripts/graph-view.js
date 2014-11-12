@@ -511,7 +511,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         var side = vertices.side;
         var xAttr = vertices.xAttribute;
         var yAttr = vertices.yAttribute;
-        if (xAttr) {
+        if (xAttr && vertex.xFilter) {
           actions.push({
             title: 'Add filter for ' + xAttr.title,
             callback: function() {
@@ -519,7 +519,7 @@ angular.module('biggraph').directive('graphView', function(util) {
             },
           });
         }
-        if (yAttr) {
+        if (yAttr && vertex.yFilter) {
           actions.push({
             title: 'Add filter for ' + yAttr.title,
             callback: function() {
@@ -527,7 +527,7 @@ angular.module('biggraph').directive('graphView', function(util) {
             },
           });
         }
-        if (xAttr && yAttr) {
+        if (xAttr && yAttr && vertex.xFilter && vertex.yFilter) {
           actions.push({
             title: 'Add filter for ' + xAttr.title + ' & ' + yAttr.title,
             callback: function() {
@@ -536,7 +536,7 @@ angular.module('biggraph').directive('graphView', function(util) {
             },
           });
         }
-        if (xAttr || yAttr) {
+        if (actions.length > 0) {
           vertex.activateMenu({
             actions: actions,
           });
