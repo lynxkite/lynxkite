@@ -66,4 +66,22 @@ class VertexBucketerTest extends FunSuite {
     assert(StringBucketer(Seq("adam", "eve", "george"), hasOther = true).bucketLabels
       == Seq("adam", "eve", "george", "Other"))
   }
+
+  test("String bucket filters") {
+    assert(StringBucketer(Seq("adam", "eve"), hasOther = false).bucketFilters
+      == Seq("adam", "eve"))
+    assert(StringBucketer(Seq("adam", "eve"), hasOther = true).bucketFilters
+      == Seq("adam", "eve", "!adam,eve"))
+  }
+
+  test("Double bucket filters") {
+    assert(DoubleLinearBucketer(10, 20, 1).bucketFilters
+      == Seq())
+    assert(DoubleLinearBucketer(10, 30, 2).bucketFilters
+      == Seq("<20", ">=20"))
+    assert(DoubleLinearBucketer(10, 40, 3).bucketFilters
+      == Seq("<20", "[20,30)", ">=30"))
+    assert(DoubleLogBucketer(1, 10000, 4).bucketFilters
+      == Seq("<10", "[10,100)", "[100,1000)", ">=1000"))
+  }
 }
