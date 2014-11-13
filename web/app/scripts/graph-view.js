@@ -505,6 +505,48 @@ angular.module('biggraph').directive('graphView', function(util) {
     });
   };
 
+  GraphView.prototype.bucketedVertexMouseBindings = function(vertices, vertex) {
+    var scope = this.scope;
+    vertex.dom.click(function() {
+      scope.$apply(function() {
+        var actions = [];
+        var side = vertices.side;
+        var xAttr = vertices.xAttribute;
+        var yAttr = vertices.yAttribute;
+        if (xAttr && vertex.xFilter) {
+          actions.push({
+            title: 'Add filter for ' + xAttr.title,
+            callback: function() {
+              side.setFilter(xAttr.title, vertex.xFilter);
+            },
+          });
+        }
+        if (yAttr && vertex.yFilter) {
+          actions.push({
+            title: 'Add filter for ' + yAttr.title,
+            callback: function() {
+              side.setFilter(yAttr.title, vertex.yFilter);
+            },
+          });
+        }
+        if (xAttr && yAttr && vertex.xFilter && vertex.yFilter) {
+          actions.push({
+            title: 'Add filter for ' + xAttr.title + ' & ' + yAttr.title,
+            callback: function() {
+              side.setFilter(xAttr.title, vertex.xFilter);
+              side.setFilter(yAttr.title, vertex.yFilter);
+            },
+          });
+        }
+        if (actions.length > 0) {
+          vertex.activateMenu({
+            actions: actions,
+          });
+        }
+      });
+    });
+  };
+
   GraphView.prototype.sideMouseBindings = function(offsetter, xMin, xMax) {
     var svgElement = this.svg;
     this.svgMouseDownListeners.push(function(evStart) {
@@ -654,8 +696,11 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData) {
     var vertices = [];
+    vertices.side = viewData;
     vertices.mode = 'bucketed';
     vertices.offsetter = offsetter;
+    vertices.xAttribute = viewData.xAttribute;
+    vertices.yAttribute = viewData.yAttribute;
     var xLabels = [], yLabels = [];
     var i, x, y, l, side;
     var labelSpace = 0.05;
@@ -731,14 +776,21 @@ angular.module('biggraph').directive('graphView', function(util) {
       if (vertex.size === 0) {
         continue;
       }
+      this.bucketedVertexMouseBindings(vertices, v);
       this.vertexGroup.append(v.dom);
       if (xLabels.length !== 0) {
         v.addHoverListener(xLabels[vertex.x]);
         if (data.xLabelType === 'between') { v.addHoverListener(xLabels[vertex.x + 1]); }
       }
+      if (data.xFilters.length > 0) {
+        v.xFilter = data.xFilters[vertex.x];
+      }
       if (yLabels.length !== 0) {
         v.addHoverListener(yLabels[vertex.y]);
         if (data.yLabelType === 'between') { v.addHoverListener(yLabels[vertex.y + 1]); }
+      }
+      if (data.yFilters.length > 0) {
+        v.yFilter = data.yFilters[vertex.y];
       }
     }
     return vertices;

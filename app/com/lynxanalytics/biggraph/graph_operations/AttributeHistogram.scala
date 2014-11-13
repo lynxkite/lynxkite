@@ -36,7 +36,7 @@ case class AttributeHistogram[T](bucketer: Bucketer[T])
     implicit val ct = attrMeta.classTag
     val filteredAttr = inputs.attr.rdd.sortedJoin(inputs.filtered.rdd)
       .mapValues { case (value, _) => value }
-    val bucketedAttr = filteredAttr.mapValues(bucketer.whichBucket(_))
+    val bucketedAttr = filteredAttr.flatMapValues(bucketer.whichBucket(_))
 
     output(
       o.counts,

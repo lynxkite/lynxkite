@@ -3,7 +3,7 @@
      ng-style="{ top: model.y + 'px', left: model.x + 'px' }"
      tabindex="-1"
      ng-blur="model.enabled = false">
-  <div class="menu-title">{{model.data.header}}</div>
+  <div class="menu-title" ng-if="model.data.header">{{model.data.header}}</div>
   <div class="menu-item"
        ng-repeat="action in model.data.actions"
        ng-click="executeAction(action)">
