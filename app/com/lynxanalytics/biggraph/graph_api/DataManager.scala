@@ -99,6 +99,9 @@ class DataManager(sc: spark.SparkContext,
 
   private def set(entity: MetaGraphEntity, data: Future[EntityData]) = {
     entityCache(entity.gUID) = data
+    data.onFailure {
+      case _ => entityCache.remove(entity.gUID)
+    }
   }
 
   private def execute(instance: MetaGraphOperationInstance): Future[Map[UUID, EntityData]] = {
@@ -140,6 +143,9 @@ class DataManager(sc: spark.SparkContext,
     val gUID = instance.gUID
     if (!instanceOutputCache.contains(gUID)) {
       instanceOutputCache(gUID) = execute(instance)
+      instanceOutputCache(gUID).onFailure {
+        case _ => instanceOutputCache.remove(gUID)
+      }
     }
     instanceOutputCache(gUID)
   }
