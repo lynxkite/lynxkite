@@ -131,4 +131,20 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
          |Harry loves Voldemort
          |Voldemort loves Harry""".stripMargin)
   }
+
+  def assertAssertion(block: => Unit) = {
+    val e = intercept[java.util.concurrent.ExecutionException] {
+      block
+    }
+    assert(e.getCause.isInstanceOf[AssertionError])
+  }
+
+  test("import from non-existent file throws AssertionError") {
+    assertAssertion {
+      ImportEdgeList(CSV(Filename("non-existent"), ",", "src,dst"), "src", "dst").result.edges.rdd
+    }
+    assertAssertion {
+      ImportEdgeList(CSV(Filename("non-existent/*"), ",", "src,dst"), "src", "dst").result.edges.rdd
+    }
+  }
 }
