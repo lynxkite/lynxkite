@@ -97,10 +97,10 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def set(entity: MetaGraphEntity, data: Future[EntityData]) = {
+  private def set(entity: MetaGraphEntity, data: Future[EntityData]) = synchronized {
     entityCache(entity.gUID) = data
     data.onFailure {
-      case _ => entityCache.remove(entity.gUID)
+      case _ => synchronized { entityCache.remove(entity.gUID) }
     }
   }
 
@@ -144,7 +144,7 @@ class DataManager(sc: spark.SparkContext,
     if (!instanceOutputCache.contains(gUID)) {
       instanceOutputCache(gUID) = execute(instance)
       instanceOutputCache(gUID).onFailure {
-        case _ => instanceOutputCache.remove(gUID)
+        case _ => synchronized { instanceOutputCache.remove(gUID) }
       }
     }
     instanceOutputCache(gUID)
