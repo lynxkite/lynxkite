@@ -140,6 +140,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rDiscardProjectRequest = json.Json.reads[DiscardProjectRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
+  implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
   implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
   implicit val rForkProjectRequest = json.Json.reads[ForkProjectRequest]
   implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
