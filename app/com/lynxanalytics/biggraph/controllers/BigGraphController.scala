@@ -306,8 +306,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
       FEVertexAttributeFilter(attr.gUID.toString, f.valueSpec)
     }
     val embedding = FEFilters.embedFilteredVertices(vertexSet, resolved)
-    val filterNames = request.filters.map(_.attributeName)
-    project.checkpoint("Filter by " + filterNames.mkString(", ")) {
+    val filterStrings = request.filters.map {
+      f => s"${f.attributeName} ${f.valueSpec}"
+    }
+    project.checkpoint("Filter " + filterStrings.mkString(", ")) {
       project.pullBackWithInjection(embedding)
     }
   }
