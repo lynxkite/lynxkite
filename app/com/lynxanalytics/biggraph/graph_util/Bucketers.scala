@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 
 trait Bucketer[T] extends Serializable {
   val numBuckets: Int
-  def whichBucket(value: T): Int
+  def whichBucket(value: T): Option[Int]
   def bucketLabels: Seq[String]
   def bucketFilters: Seq[String] = Seq() // Filter string equivalent of the bucket. (Optional.)
   def labelType: String
@@ -24,7 +24,7 @@ case class EmptyBucketer() extends Bucketer[Nothing] {
 abstract class EnumBucketer[T](options: Seq[T], hasOther: Boolean) extends Bucketer[T] {
   val mapToIdx = options.zipWithIndex.toMap
   val numBuckets = if (hasOther) options.size + 1 else options.size
-  def whichBucket(value: T) = mapToIdx.getOrElse(value, if (hasOther) options.size else ???)
+  def whichBucket(value: T) = mapToIdx.get(value).orElse(if (hasOther) Some(options.size) else None)
   val optionLabels = options.map(_.toString)
   val bucketLabels = if (hasOther) optionLabels :+ "Other" else optionLabels
 }
@@ -38,9 +38,9 @@ abstract class NumericBucketer[T: Numeric](
 
   val bucketSize: T = num.fromInt(((max - min).toLong / nb + 1).toInt)
 
-  def whichBucket(value: T): Int = {
+  def whichBucket(value: T): Option[Int] = {
     val lessThan = bounds.indexWhere(value < _)
-    if (lessThan == -1) nb - 1 else lessThan
+    if (lessThan == -1) Some(nb - 1) else Some(lessThan)
   }
 
   @transient lazy val bounds: Seq[T] =
@@ -138,7 +138,7 @@ case class LongBucketer(min: Long, max: Long, numBuckets: Int)
 
 case class MapBucketer[T](toBucket: Map[T, Int]) extends Bucketer[T] {
   val numBuckets = if (toBucket.isEmpty) 0 else toBucket.values.max + 1
-  def whichBucket(value: T) = toBucket(value)
+  def whichBucket(value: T) = toBucket.get(value)
   def bucketLabels = ???
   def labelType = ???
 }
