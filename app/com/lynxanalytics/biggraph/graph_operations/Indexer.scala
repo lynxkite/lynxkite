@@ -42,7 +42,7 @@ case class Indexer[T](bucketer: Bucketer[T])
     val filtered = inputs.filtered.rdd
     val bucketAttribute = inputs.bucketAttribute.rdd
     val buckets =
-      filtered.sortedJoin(bucketAttribute).mapValues {
+      filtered.sortedJoin(bucketAttribute).flatMapValues {
         case (_, value) => bucketer.whichBucket(value)
       }
     val baseIndices = inputs.baseIndices.rdd
