@@ -32,9 +32,10 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
 
   test("filtering") {
     run("Example Graph")
-    val filter = FEVertexAttributeFilter(project.vertexAttributes("age").gUID.toString, "<40")
+    val filter = ProjectAttributeFilter("age", "<40")
     controller.filterProject(ProjectFilterRequest(project.projectName, List(filter)))
     assert(vattr[String]("name") == Seq("Adam", "Eve", "Isolated Joe"))
     assert(eattr[String]("comment") == Seq("Adam loves Eve", "Eve loves Adam"))
+    assert(project.toFE.undoOp == "Filter age <40")
   }
 }

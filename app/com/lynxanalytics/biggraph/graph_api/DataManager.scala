@@ -36,7 +36,7 @@ class DataManager(sc: spark.SparkContext,
   private def serializedScalarFileName(basePath: Filename): Filename = basePath / "serialized_data"
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
-    entity.source.operation.isHeavy &&
+    (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       successPath(instancePath(entity.source)).exists &&
       successPath(entityPath(entity)).exists
 
@@ -216,6 +216,8 @@ class DataManager(sc: spark.SparkContext,
   }
 
   def cache(entity: MetaGraphEntity): Unit = {
+    // We do not cache anything in demo mode.
+    if (!computationAllowed) return
     val data = get(entity)
     data match {
       case rddData: EntityRDDData => rddData.rdd.cacheBackingArray()
