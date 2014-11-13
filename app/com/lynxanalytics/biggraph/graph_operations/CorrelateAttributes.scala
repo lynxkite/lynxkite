@@ -32,7 +32,7 @@ case class CorrelateAttributes() extends TypedMetaGraphOp[Input, Output] {
     val joined = attrA.sortedJoin(attrB).values
     val a = joined.keys
     val b = joined.values
-    val correlation = Statistics.corr(a, b, "pearson")
+    val correlation = Statistics.corr(a, b, "pearson") // we could do "spearman" too
     output(o.correlation, correlation)
   }
 }
