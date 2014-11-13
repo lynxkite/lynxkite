@@ -95,7 +95,7 @@ trait ImportCommon {
   }
 
   protected def readColumns(rc: RuntimeContext, csv: CSV): Columns = {
-    assert(csv.file.exists, s"${csv.file} does not exist")
+    assert(csv.file.list.nonEmpty, s"${csv.file} does not exist")
     val globLength = csv.file.globLength
     log.info(s"Estimated total input file size: ${globLength}")
     val minParts = globLength / 268435456L + 1 // max 256 MB per partition
