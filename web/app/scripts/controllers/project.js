@@ -372,27 +372,39 @@ angular.module('biggraph')
       this.applyOp('Discard-' + kind, { name: name });
     };
 
-    // Returns resolved filters (i.e. keyed by UUID).
-    Side.prototype.nonEmptyFilters = function() {
+    // Returns unresolved filters (i.e. keyed by the attribute name).
+    Side.prototype.nonEmptyFilterNames = function() {
       var res = [];
       for (var attr in this.state.filters) {
         if (this.state.filters[attr] !== '') {
           res.push({
-            attributeId: this.resolveVertexAttribute(attr).id,
+            attributeName: attr,
             valueSpec: this.state.filters[attr] });
         }
       }
       return res;
     };
+
+    // Returns resolved filters (i.e. keyed by UUID).
+    Side.prototype.nonEmptyFilters = function() {
+      var that = this;
+      return this.nonEmptyFilterNames().map(function(f) {
+        return {
+          attributeId: that.resolveVertexAttribute(f.attributeName).id,
+          valueSpec: f.valueSpec,
+        };
+      });
+    };
+
     Side.prototype.hasFilters = function() {
-      return this.nonEmptyFilters().length !== 0;
+      return this.nonEmptyFilterNames().length !== 0;
     };
     Side.prototype.applyFilters = function() {
       var that = this;
       util.post('/ajax/filterProject',
         {
           project: this.state.projectName,
-          filters: this.nonEmptyFilters()
+          filters: this.nonEmptyFilterNames()
         },
         function() {
           that.state.filters = {};
