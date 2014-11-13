@@ -36,6 +36,6 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
     controller.filterProject(ProjectFilterRequest(project.projectName, List(filter)))
     assert(vattr[String]("name") == Seq("Adam", "Eve", "Isolated Joe"))
     assert(eattr[String]("comment") == Seq("Adam loves Eve", "Eve loves Adam"))
-    assert(project.toFE.undoOp == "Filter by age")
+    assert(project.toFE.undoOp == "Filter age <40")
   }
 }
