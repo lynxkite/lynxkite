@@ -39,4 +39,4 @@ POST /authenticate/:provider securesocial.controllers.ProviderController.authent
 GET  /not-authorized         securesocial.controllers.ProviderController.notAuthorized
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
-GET  /*file            controllers.Assets.at(path="/public", file)
+GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
