@@ -5,7 +5,7 @@ import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.rdd
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import scala.collection.mutable
+import scala.collection.concurrent.TrieMap
 import scala.concurrent._
 import ExecutionContext.Implicits.global
 
@@ -15,8 +15,8 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: Filename) {
-  private val instanceOutputCache = mutable.Map[UUID, Future[Map[UUID, EntityData]]]()
-  private val entityCache = mutable.Map[UUID, Future[EntityData]]()
+  private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
+  private val entityCache = TrieMap[UUID, Future[EntityData]]()
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -97,8 +97,11 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def set(entity: MetaGraphEntity, data: Future[EntityData]) = {
+  private def set(entity: MetaGraphEntity, data: Future[EntityData]) = synchronized {
     entityCache(entity.gUID) = data
+    data.onFailure {
+      case _ => synchronized { entityCache.remove(entity.gUID) }
+    }
   }
 
   private def execute(instance: MetaGraphOperationInstance): Future[Map[UUID, EntityData]] = {
@@ -140,6 +143,9 @@ class DataManager(sc: spark.SparkContext,
     val gUID = instance.gUID
     if (!instanceOutputCache.contains(gUID)) {
       instanceOutputCache(gUID) = execute(instance)
+      instanceOutputCache(gUID).onFailure {
+        case _ => synchronized { instanceOutputCache.remove(gUID) }
+      }
     }
     instanceOutputCache(gUID)
   }
