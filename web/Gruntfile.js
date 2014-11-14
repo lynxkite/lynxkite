@@ -402,7 +402,8 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test', [
     'clean:server',
-    'concurrent:test',
+    'bowerInstall',
+    'copy:styles',
     'autoprefixer',
     'connect:test',
     'protractor'
