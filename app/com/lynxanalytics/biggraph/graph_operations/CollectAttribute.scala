@@ -8,7 +8,7 @@ object CollectAttribute {
       implicit instance: MetaGraphOperationInstance,
       inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attr.typeTag
-    val attr = scalar[Map[ID, T]]
+    val idToAttr = scalar[Map[ID, T]]
   }
 }
 import CollectAttribute._
@@ -22,6 +22,6 @@ case class CollectAttribute[T](
     implicit val id = inputDatas
     val ids = idSet.take(maxCount).toIndexedSeq.sorted
     val restricted = inputs.attr.rdd.restrictToIdSet(ids)
-    output(o.attr, restricted.collect.toMap)
+    output(o.idToAttr, restricted.collect.toMap)
   }
 }
