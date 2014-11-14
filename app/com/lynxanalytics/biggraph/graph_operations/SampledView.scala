@@ -6,14 +6,13 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.MapBucketer
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class SampledViewVertex(id: Long, attrs: Array[DynamicValue])
+case class SampledViewVertex(id: Long)
 
 object SampledView {
-  class Input(hasAttr: Boolean) extends MagicInputSignature {
+  class Input extends MagicInputSignature {
     val vertices = vertexSet
     val ids = vertexAttribute[ID](vertices)
     val filtered = vertexSet
-    val attr = if (hasAttr) vertexAttribute[Array[DynamicValue]](vertices) else null
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val svVertices = scalar[Seq[SampledViewVertex]]
@@ -24,10 +23,9 @@ object SampledView {
 import SampledView._
 case class SampledView(
     idSet: Set[ID],
-    hasAttr: Boolean,
     maxCount: Int = 1000) extends TypedMetaGraphOp[Input, Output] {
 
-  @transient override lazy val inputs = new Input(hasAttr)
+  @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
@@ -36,15 +34,13 @@ case class SampledView(
     implicit val instance = output.instance
 
     val filtered = inputs.filtered.rdd
-    val joined = if (hasAttr) filtered.sortedJoin(inputs.attr.rdd) else filtered.mapValues(x => (x, Array[DynamicValue]()))
-
-    val idFiltered = joined.restrictToIdSet(idSet.toIndexedSeq.sorted)
-
+    val ids = idSet.toIndexedSeq.sorted.take(maxCount)
+    val idFiltered = filtered.restrictToIdSet(ids)
     val svVertices = idFiltered
-      .take(maxCount)
+      .collect
       .toSeq
       .map {
-        case (id, (_, arr)) => SampledViewVertex(id, arr)
+        case (id, _) => SampledViewVertex(id)
       }
 
     val idToIdx = svVertices.zipWithIndex.map { case (svv, idx) => (svv.id, idx) }.toMap
