@@ -54,16 +54,21 @@ case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {
         val commonNeighbors = sortedIntersection(srcNeighbors, dstNeighbors)
         commonNeighbors.combinations(2).map {
           case Seq(a, b) =>
+            println(a + "-" + b)
             val aNeighbors = fullGraph.getNeighbors(a)
             val bNeighbors = fullGraph.getNeighbors(b)
-            val neighborIntersection =
-              sortedIntersection(
-                sortedIntersection(aNeighbors, bNeighbors),
-                commonNeighbors) // or srcNeighbors in the original doc, but does that make sense?
-            if (neighborIntersection.size == 0) 1.0 else 0.0
+            if (aNeighbors.contains(b) || bNeighbors.contains(a)) {
+              0.0
+            } else {
+              val neighborIntersection =
+                sortedIntersection(
+                  sortedIntersection(aNeighbors, bNeighbors),
+                  commonNeighbors) // note that http://arxiv.org/pdf/1310.6753v1.pdf suggest srcNeighbors
+              if (neighborIntersection.size == 0) 1.0 else 0.0
+            }
+          case _ => 0.0
         }.sum
     }
-    // what about parallel edges or in/out edges of a vertex pair?
     output(o.dispersion, dispersion)
   }
 }
