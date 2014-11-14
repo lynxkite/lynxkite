@@ -187,8 +187,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices.map(v =>
         FEVertex(
-          id = v.id.toString,
-          attrs = attrs.mapValues(_.getOrElse(v.id, DynamicValue(defined = false))))),
+          id = v.toString,
+          attrs = attrs.mapValues(_.getOrElse(v, DynamicValue(defined = false))))),
       mode = "sampled")
   }
 

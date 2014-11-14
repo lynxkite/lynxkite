@@ -6,8 +6,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.MapBucketer
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class SampledViewVertex(id: Long)
-
 object SampledView {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
@@ -15,7 +13,7 @@ object SampledView {
     val filtered = vertexSet
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-    val svVertices = scalar[Seq[SampledViewVertex]]
+    val svVertices = scalar[Seq[ID]]
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
     val vertexIndices = scalar[Map[ID, Int]]
   }
@@ -36,14 +34,8 @@ case class SampledView(
     val filtered = inputs.filtered.rdd
     val ids = idSet.toIndexedSeq.sorted.take(maxCount)
     val idFiltered = filtered.restrictToIdSet(ids)
-    val svVertices = idFiltered
-      .collect
-      .toSeq
-      .map {
-        case (id, _) => SampledViewVertex(id)
-      }
-
-    val idToIdx = svVertices.zipWithIndex.map { case (svv, idx) => (svv.id, idx) }.toMap
+    val svVertices = idFiltered.keys.collect.toSeq
+    val idToIdx = svVertices.zipWithIndex.toMap
 
     output(o.svVertices, svVertices)
     output(o.indexingSeq, Seq(BucketedAttribute(inputs.ids, MapBucketer(idToIdx))))
