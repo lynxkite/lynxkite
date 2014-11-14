@@ -20,7 +20,7 @@ case class CollectAttribute[T](
 
   def execute(inputDatas: DataSet, o: Output[T], output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
-    val ids = idSet.take(maxCount).toIndexedSeq.sorted
+    val ids = idSet.toIndexedSeq.sorted.take(maxCount)
     val restricted = inputs.attr.rdd.restrictToIdSet(ids)
     output(o.idToAttr, restricted.collect.toMap)
   }
