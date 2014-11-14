@@ -179,7 +179,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val attr = metaManager.vertexAttribute(attrId.asUUID)
         val dyn = graph_operations.VertexAttributeToDynamicValue.run(attr)
         val op = graph_operations.CollectAttribute[DynamicValue](idSet)
-        op(op.attr, dyn).result.attr.value
+        op(op.attr, dyn).result.idToAttr.value
       }
     }.toMap
 

@@ -10,6 +10,6 @@ class CollectAttributeTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val op = CollectAttribute[String](Set(0L, 3L))
     val res = op(op.attr, g.name).result
-    assert(res.attr.value == Map(0L -> "Adam", 3L -> "Isolated Joe"))
+    assert(res.idToAttr.value == Map(0L -> "Adam", 3L -> "Isolated Joe"))
   }
 }
