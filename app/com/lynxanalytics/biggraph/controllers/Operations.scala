@@ -571,7 +571,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       // TODO: recursive dispersion
       project.edgeAttributes(params("name")) = dispersion
-      project.edgeAttributes("normalized " + params("name")) = normalizedDispersion
+      project.edgeAttributes("normalized_" + params("name")) = normalizedDispersion
     }
   })
 
