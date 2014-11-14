@@ -54,7 +54,6 @@ case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {
         val commonNeighbors = sortedIntersection(srcNeighbors, dstNeighbors)
         commonNeighbors.combinations(2).map {
           case Seq(a, b) =>
-            println(a + "-" + b)
             val aNeighbors = fullGraph.getNeighbors(a)
             val bNeighbors = fullGraph.getNeighbors(b)
             if (aNeighbors.contains(b) || bNeighbors.contains(a)) {

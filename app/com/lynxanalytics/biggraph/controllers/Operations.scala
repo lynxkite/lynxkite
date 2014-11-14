@@ -561,7 +561,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val op = graph_operations.Embeddedness()
         op(op.es, project.edgeBundle).result.embeddedness.entity
       }
-      //http://arxiv.org/pdf/1310.6753v1.pdf
+      // http://arxiv.org/pdf/1310.6753v1.pdf
       var normalizedDispersion = {
         val op = graph_operations.DeriveJSDouble(
           JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
@@ -571,7 +571,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       // TODO: recursive dispersion
       project.edgeAttributes(params("name")) = dispersion
-      project.edgeAttributes("normalized" + params("name")) = normalizedDispersion
+      project.edgeAttributes("normalized " + params("name")) = normalizedDispersion
     }
   })
 
