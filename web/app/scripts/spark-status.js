@@ -11,12 +11,11 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, $interval
       scope.status = { timestamp: 0 };
       load();
       function load() {
-        // There's no reason for using $interval here, other than to prevert the Protractor
-        // tests from waiting forever for this request to complete.
-        $interval(function() {
+        // Protractor would try to wait out this request.
+        if (!window.runningProtractorTests) {
           scope.update = util.nocache('/ajax/spark-status',
                                       { syncedUntil: scope.status.timestamp });
-        }, 1, 1);
+        }
       }
       scope.$watch('update', update);
       scope.$watch('update.$resolved', update);
