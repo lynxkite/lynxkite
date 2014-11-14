@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
+angular.module('biggraph').directive('sparkStatus', function($timeout, $interval, util) {
   return {
     restrict: 'E',
     scope: {},
@@ -11,7 +11,12 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
       scope.status = { timestamp: 0 };
       load();
       function load() {
-        scope.update = util.nocache('/ajax/spark-status', { syncedUntil: scope.status.timestamp });
+        // There's no reason for using $interval here, other than to prevert the Protractor
+        // tests from waiting forever for this request to complete.
+        $interval(function() {
+          scope.update = util.nocache('/ajax/spark-status',
+                                      { syncedUntil: scope.status.timestamp });
+        }, 1, 1);
       }
       scope.$watch('update', update);
       scope.$watch('update.$resolved', update);
