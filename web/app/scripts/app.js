@@ -37,6 +37,18 @@ angular
         redirectTo: '/',
       });
   })
+  .factory('$exceptionHandler', function($log, $injector) {
+    return function(error) {
+      // Log as usual.
+      $log.error.apply($log, arguments);
+      // Send to server.
+      // (The injector is used to avoid the circular dependency detection.)
+      $injector.get('util').post('/ajax/jsError', {
+        url: window.location.href,
+        stack: error.stack,
+      });
+    };
+  })
   .factory('util', function utilFactory($resource, $rootScope, $angularCacheFactory) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // A persistent cache. Requests made through util.get() will not be repeated

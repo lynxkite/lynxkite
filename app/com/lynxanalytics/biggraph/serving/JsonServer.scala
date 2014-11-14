@@ -199,6 +199,13 @@ object ProductionJsonServer extends JsonServer {
     )
   }
 
+  def jsError = mvc.Action(parse.json) { request =>
+    val url = (request.body \ "url").as[String]
+    val stack = (request.body \ "stack").as[String]
+    log.info(s"JS error at $url:\n$stack")
+    Ok("logged")
+  }
+
   // Methods called by the web framework
   //
   // Play! uses the routings in /conf/routes to execute actions
