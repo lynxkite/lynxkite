@@ -106,7 +106,7 @@ module.exports = function (grunt) {
           port: 9001,
           base: [
             '.tmp',
-            'test',
+            'testdata',
             '<%= yeoman.app %>'
           ]
         }
@@ -367,7 +367,16 @@ module.exports = function (grunt) {
         configFile: 'karma.conf.js',
         singleRun: true
       }
-    }
+    },
+
+    protractor: {
+      onGruntServe: {
+        options: {
+          configFile: 'test/protractor-on-grunt-serve.conf.js',
+        },
+      },
+    },
+
   });
 
 
@@ -396,7 +405,7 @@ module.exports = function (grunt) {
     'concurrent:test',
     'autoprefixer',
     'connect:test',
-    'karma'
+    'protractor'
   ]);
 
   grunt.registerTask('build', [
