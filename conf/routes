@@ -6,6 +6,7 @@ GET  /ajax/sparkStatus com.lynxanalytics.biggraph.serving.ProductionJsonServer.g
 GET  /ajax/setWorkers  com.lynxanalytics.biggraph.serving.ProductionJsonServer.setClusterNumInstances
 GET  /ajax/spark-status com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkStatus
 POST /ajax/spark-cancel-jobs com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkCancelJobs
+POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.jsError
 
 POST /ajax/createProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.createProject
 POST /ajax/discardProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardProject
@@ -39,4 +40,4 @@ POST /authenticate/:provider securesocial.controllers.ProviderController.authent
 GET  /not-authorized         securesocial.controllers.ProviderController.notAuthorized
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
-GET  /*file            controllers.Assets.at(path="/public", file)
+GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)

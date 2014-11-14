@@ -23,6 +23,8 @@ private object SparkStageJars {
     "You need to run this from a jar. Use 'sbt stage' to get one.")
 }
 
+class DeadClass1 // Placeholder for a deleted class.
+
 class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
     // Adding one more line? Do it at the bottom!
@@ -54,8 +56,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.util.BoundedPriorityQueue")) // SPARK-2306
     kryo.register(classOf[graph_operations.ComputeTopValues.PairOrdering[_]])
     kryo.register(classOf[collection.immutable.Range])
-    kryo.register(classOf[graph_operations.SampledViewVertex])
-    kryo.register(classOf[Array[graph_operations.SampledViewVertex]])
+    kryo.register(classOf[DeadClass1])
+    kryo.register(classOf[Array[DeadClass1]])
     kryo.register(classOf[mutable.WrappedArray$ofInt])
     kryo.register(('x', 'x').getClass)
     kryo.register(classOf[collection.mutable.Map[_, _]])

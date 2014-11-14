@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import org.scalatest.FunSuite
+import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_operations
@@ -131,5 +132,27 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
 
     // And now we get the future for it, this should not stack overflow or anything evil.
     dataManager.get(barack)
+  }
+
+  test("Failed operation can be retried") {
+    implicit val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+    import Scripting._
+
+    val testfile = Filename(myTempDir.toString) / "test.csv"
+    testfile.delete()
+    val imported = graph_operations.ImportEdgeList(
+      graph_operations.CSV(testfile, ",", "src,dst"), "src", "dst")().result
+
+    // The file does not exist, so the import fails.
+    val e = intercept[java.util.concurrent.ExecutionException] {
+      dataManager.get(imported.edges)
+    }
+    assert(e.getCause.isInstanceOf[AssertionError])
+    // Create the file.
+    testfile.createFromStrings("src,dst\n1,2\n")
+    // The result can be accessed now.
+    assert(TestUtils.RDDToSortedString(
+      dataManager.get(imported.stringID).rdd.values) == "1\n2")
   }
 }
