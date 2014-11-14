@@ -167,28 +167,28 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val filtered = FEFilters.filter(vertexSet, request.filters)
 
     loadGUIDsToMemory(request.attrs)
-    val attrs = request.attrs.map(x => metaManager.vertexAttribute(x.asUUID))
-    val dynAttrs = attrs.map(graph_operations.VertexAttributeToDynamicValue.run(_))
 
-    val op = graph_operations.SampledView(idSet, dynAttrs.size > 0)
-    var builder = op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered)
-    if (dynAttrs.size > 0) {
-      val joined = {
-        val op = graph_operations.JoinMoreAttributes(dynAttrs.size, DynamicValue(defined = false))
-        op(op.vs, vertexSet)(op.attrs, dynAttrs).result.attr.entity
-      }
-      builder = builder(op.attr, joined)
+    val diagramMeta = {
+      val op = graph_operations.SampledView(idSet)
+      op(op.vertices, vertexSet)(op.ids, idAttr)(op.filtered, filtered).result.svVertices
     }
-    val diagramMeta = builder.result.svVertices
-
     val vertices = diagramMeta.value
+
+    val attrs = request.attrs.map { attrId =>
+      attrId -> {
+        val attr = metaManager.vertexAttribute(attrId.asUUID)
+        val dyn = graph_operations.VertexAttributeToDynamicValue.run(attr)
+        val op = graph_operations.CollectAttribute[DynamicValue](idSet)
+        op(op.attr, dyn).result.attr.value
+      }
+    }.toMap
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices.map(v =>
         FEVertex(
           id = v.id.toString,
-          attrs = request.attrs.zip(v.attrs).toMap)),
+          attrs = attrs.mapValues(_.getOrElse(v.id, DynamicValue(defined = false))))),
       mode = "sampled")
   }
 
