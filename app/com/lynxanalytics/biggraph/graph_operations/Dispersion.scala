@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import scala.collection.SortedSet
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
