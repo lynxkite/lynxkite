@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('sparkStatus', function($timeout, $interval, util) {
+angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
   return {
     restrict: 'E',
     scope: {},
@@ -11,8 +11,7 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, $interval
       scope.status = { timestamp: 0 };
       load();
       function load() {
-        scope.update = util.nocache('/ajax/spark-status',
-                                    { syncedUntil: scope.status.timestamp });
+        scope.update = util.nocache('/ajax/spark-status', { syncedUntil: scope.status.timestamp });
       }
       scope.$watch('update', update);
       scope.$watch('update.$resolved', update);
