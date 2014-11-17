@@ -21,7 +21,12 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, util) {
             $timeout(load, 10000);  // Try again in a bit.
           } else {
             scope.status = scope.update;
-            load();
+            if (scope.status.timestamp === -1) {
+              // The long-polling is a problem for Protractor tests.
+              console.log('Disabling spark-status updates in test mode.');
+            } else {
+              load();
+            }
           }
         }
       }
