@@ -11,11 +11,8 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, $interval
       scope.status = { timestamp: 0 };
       load();
       function load() {
-        // Protractor would try to wait out this request.
-        if (!window.runningProtractorTests) {
-          scope.update = util.nocache('/ajax/spark-status',
-                                      { syncedUntil: scope.status.timestamp });
-        }
+        scope.update = util.nocache('/ajax/spark-status',
+                                    { syncedUntil: scope.status.timestamp });
       }
       scope.$watch('update', update);
       scope.$watch('update.$resolved', update);
@@ -25,7 +22,12 @@ angular.module('biggraph').directive('sparkStatus', function($timeout, $interval
             $timeout(load, 10000);  // Try again in a bit.
           } else {
             scope.status = scope.update;
-            load();
+            if (scope.status.timestamp === -1) {
+              // The long-polling is a problem for Protractor tests.
+              console.log('Disabling spark-status updates in test mode.');
+            } else {
+              load();
+            }
           }
         }
       }

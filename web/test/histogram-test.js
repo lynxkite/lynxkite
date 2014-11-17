@@ -1,18 +1,27 @@
 describe('a histogram', function() {
   beforeEach(function() {
     browser.get('/#/project/Project_Strawberry');
-    browser.executeScript('window.runningProtractorTests = true;');
+    this.attr = element.all(by.css('[vertex-attribute]')).first();
+    this.button = this.attr.element(by.css('[tooltip="Show histogram"]'));
+    this.histogram = this.attr.element(by.css('histogram'));
   });
 
   it('can be opened and closed', function() {
-    var attr = element.all(by.css('[vertex-attribute]')).first();
-    var button = attr.element(by.css('[tooltip="Show histogram"]'));
-    var histogram = attr.element(by.css('histogram'));
-    expect(attr.element(by.css('item-name-and-menu > span')).getText()).toBe('age');
-    expect(histogram.isDisplayed()).toBe(false);
-    button.click();
-    expect(histogram.isDisplayed()).toBe(true);
-    button.click();
-    expect(histogram.isDisplayed()).toBe(false);
+    expect(this.attr.element(by.css('item-name-and-menu > span')).getText()).toBe('age');
+    expect(this.histogram.isDisplayed()).toBe(false);
+    this.button.click();  // Open.
+    expect(this.histogram.isDisplayed()).toBe(true);
+    this.button.click();  // Close.
+    expect(this.histogram.isDisplayed()).toBe(false);
+  });
+
+  it('displays the total on hover', function() {
+    this.button.click();  // Open.
+    expect(this.histogram.isDisplayed()).toBe(true);
+    var total = this.attr.element(by.css('.histogram-total'));
+    expect(total.isDisplayed()).toBe(false);
+    browser.actions().mouseMove(this.histogram).perform();
+    expect(total.isDisplayed()).toBe(true);
+    expect(total.getText()).toBe('total: 3,330');
   });
 });

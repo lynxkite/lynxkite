@@ -1,7 +1,6 @@
 describe('splash page', function() {
   beforeEach(function() {
     browser.get('/');
-    browser.executeScript('window.runningProtractorTests = true;');
   });
 
   it('has a title', function() {
