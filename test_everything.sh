@@ -7,5 +7,5 @@ sbt test
 
 cd web
 bower install --silent --config.interactive=false
-npm install --offline
-grunt jshint
+npm install --silent
+npm test

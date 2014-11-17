@@ -82,8 +82,9 @@ module.exports = function (grunt) {
               res.end();
               return;
             }
+            var sparkStatusDelay = 0;  // Set higher when experimenting with spark-status.
             if (req.url.indexOf('/ajax/spark-status') === 0) {
-              setTimeout(next, 10000);  // Delayed response.
+              setTimeout(next, sparkStatusDelay);
               return;
             }
             next();
@@ -106,7 +107,7 @@ module.exports = function (grunt) {
           port: 9001,
           base: [
             '.tmp',
-            'test',
+            'testdata',
             '<%= yeoman.app %>'
           ]
         }
@@ -367,7 +368,16 @@ module.exports = function (grunt) {
         configFile: 'karma.conf.js',
         singleRun: true
       }
-    }
+    },
+
+    protractor: {
+      onGruntServe: {
+        options: {
+          configFile: 'test/protractor-on-grunt-serve.conf.js',
+        },
+      },
+    },
+
   });
 
 
@@ -393,10 +403,11 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test', [
     'clean:server',
-    'concurrent:test',
+    'bowerInstall',
+    'copy:styles',
     'autoprefixer',
     'connect:test',
-    'karma'
+    'protractor'
   ]);
 
   grunt.registerTask('build', [
