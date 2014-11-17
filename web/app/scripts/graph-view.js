@@ -624,17 +624,20 @@ angular.module('biggraph').directive('graphView', function(util) {
       if (!sliderAttr) { return; }
       var sb = common.minmax(
           vertices.map(function(v) { return v.data.attrs[sliderAttr.id].double; }));
-      var pos = sliderPos();
+      var pos = Number(sliderPos());
       for (var i = 0; i < vertices.length; ++i) {
         var v = vertices[i];
-        var x = v.data.attrs[sliderAttr.id].double;
+        var x =
+          v.data.attrs[sliderAttr.id].defined ? v.data.attrs[sliderAttr.id].double : undefined;
         var norm = Math.floor(100 * common.normalize(x, sb) + 50);  // Normalize to 0 - 100.
         if (norm < pos) {
-          v.color = 'hsl(100, 50%, 42%)';
+          v.color = 'hsl(120, 50%, 42%)';
         } else if (norm > pos) {
           v.color = 'hsl(0, 50%, 42%)';
+        } else if (norm === pos) {
+          v.color = 'hsl(60, 60%, 45%)';
         } else {
-          v.color = 'hsl(50, 50%, 42%)';
+          v.color = 'hsl(60, 0%, 42%)';
         }
         v.icon.attr({ style: 'fill: ' + v.color });
       }
