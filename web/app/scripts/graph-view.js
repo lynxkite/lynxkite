@@ -517,7 +517,7 @@ angular.module('biggraph').directive('graphView', function(util) {
           actions.push({
             title: 'Add filter for ' + xAttr.title,
             callback: function() {
-              side.setFilter(xAttr.title, vertex.xFilter);
+              side.setVertexFilter(xAttr.title, vertex.xFilter);
             },
           });
         }
@@ -525,7 +525,7 @@ angular.module('biggraph').directive('graphView', function(util) {
           actions.push({
             title: 'Add filter for ' + yAttr.title,
             callback: function() {
-              side.setFilter(yAttr.title, vertex.yFilter);
+              side.setVertexFilter(yAttr.title, vertex.yFilter);
             },
           });
         }
@@ -533,8 +533,8 @@ angular.module('biggraph').directive('graphView', function(util) {
           actions.push({
             title: 'Add filter for ' + xAttr.title + ' & ' + yAttr.title,
             callback: function() {
-              side.setFilter(xAttr.title, vertex.xFilter);
-              side.setFilter(yAttr.title, vertex.yFilter);
+              side.setVertexFilter(xAttr.title, vertex.xFilter);
+              side.setVertexFilter(yAttr.title, vertex.yFilter);
             },
           });
         }

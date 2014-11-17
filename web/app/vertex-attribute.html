@@ -62,7 +62,7 @@
   type="range" ng-model="side.state.sliderPos" min="-1" max="101" tooltip="Threshold">
 
 <form ng-if="attr.canFilter" style="display: inline;">
-  <input class="form-control filter" placeholder="filter" ng-model="side.state.filters[attr.title]"
+  <input class="form-control filter" placeholder="filter" ng-model="side.state.filters.vertex[attr.title]"
     ng-model-options="{ updateOn: 'blur' }">
 </form>
 <histogram-button ng-show="attr.canBucket" attr="attr" side="side"

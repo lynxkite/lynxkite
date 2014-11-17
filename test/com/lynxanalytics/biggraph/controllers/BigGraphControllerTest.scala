@@ -30,12 +30,21 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
     attr.rdd.values.collect.toSeq.sorted
   }
 
-  test("filtering") {
+  test("filtering by vertex attribute") {
     run("Example Graph")
     val filter = ProjectAttributeFilter("age", "<40")
-    controller.filterProject(ProjectFilterRequest(project.projectName, List(filter)))
+    controller.filterProject(ProjectFilterRequest(project.projectName, List(filter), List()))
     assert(vattr[String]("name") == Seq("Adam", "Eve", "Isolated Joe"))
     assert(eattr[String]("comment") == Seq("Adam loves Eve", "Eve loves Adam"))
     assert(project.toFE.undoOp == "Filter age <40")
+  }
+
+  test("filtering by edge attribute") {
+    run("Example Graph")
+    val filter = ProjectAttributeFilter("weight", ">2")
+    controller.filterProject(ProjectFilterRequest(project.projectName, List(), List(filter)))
+    assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+    assert(eattr[String]("comment") == Seq("Bob envies Adam", "Bob loves Eve"))
+    assert(project.toFE.undoOp == "Filter weight >2")
   }
 }
