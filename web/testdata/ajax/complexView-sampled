@@ -40,7 +40,7 @@
       },
       { "id": "5555555",
         "attrs": {
-          "5": { "double": 15, "string": "15", "defined": true },
+          "5": { "double": 0, "string": "", "defined": false },
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 40, "string": "40", "defined": true },
           "8": { "double": 0, "string": "violet", "defined": true },
