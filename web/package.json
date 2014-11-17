@@ -39,6 +39,7 @@
     "node": ">=0.10.0"
   },
   "scripts": {
+    "pretest": "node node_modules/protractor/bin/webdriver-manager update",
     "test": "grunt test"
   }
 }
