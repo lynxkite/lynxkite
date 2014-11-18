@@ -172,8 +172,7 @@ object ProductionJsonServer extends JsonServer {
       if (finalFile.exists) {
         log.info(s"The uploaded file ($tmpFile) already exists (as $finalFile).")
       } else {
-        // TODO: Put this in Filename. It's been temporarily removed to avoid a SerialVersionUID change.
-        val success = tmpFile.fs.rename(tmpFile.path, finalFile.path)
+        val success = tmpFile.renameTo(finalFile)
         assert(success, s"Failed to rename $tmpFile to $finalFile.")
       }
       Ok(finalFile.fullString)

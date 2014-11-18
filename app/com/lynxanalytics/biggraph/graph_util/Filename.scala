@@ -36,13 +36,12 @@ case class Filename(
   def exists() = fs.exists(path)
   def reader() = new BufferedReader(new InputStreamReader(open))
   def delete() = fs.delete(path, true)
-  // TODO: Re-enable these when we don't mind a SerialVersionUID change.
-  // def renameTo(fn: Filename) = fs.rename(path, fn.path)
+  def renameTo(fn: Filename) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
-  // private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
-  def list = Filename.globStatus(this).map(st => this.copy(filename = st.getPath.toString))
+  private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
+  def list = globStatus.map(st => this.copy(filename = st.getPath.toString))
   def length = fs.getFileStatus(path).getLen
-  def globLength = Filename.globStatus(this).map(_.getLen).sum
+  def globLength = globStatus.map(_.getLen).sum
 
   def loadTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
     val conf = hadoopConfiguration
@@ -155,7 +154,4 @@ object Filename {
       case _ => new Filename(str, "", "")
     }
   }
-  // TODO: Move this into Filename when we don't mind a SerialVersionUID change.
-  // globStatus() returns null instead of an empty array when there are no matches.
-  private def globStatus(fn: Filename) = Option(fn.fs.globStatus(fn.path)).getOrElse(Array())
 }
