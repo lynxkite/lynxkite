@@ -12,6 +12,11 @@
   </div>
 </span>
 
+<form ng-if="attr.canFilter" style="display: inline;">
+  <input class="form-control filter" placeholder="filter" ng-model="side.state.filters.edge[attr.title]"
+    ng-model-options="{ updateOn: 'blur' }">
+</form>
+
 <histogram-button ng-show="attr.canBucket" attr="attr" side="side"
   model="histogram" type="edge" tsv="histogramTSV">
 </histogram-button>

@@ -37,14 +37,9 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               srcIdx: i,
               dstIdx: i,
               edgeBundleId: viewData.edgeBundle.id,
+              filters: viewData.filters.edge,
               edgeWeightId: (viewData.edgeWidth || { id: '' }).id
             });
-          }
-          var filters = [];
-          for (var attr in viewData.filters) {
-            if (viewData.filters[attr] !== '') {
-              filters.push({ attributeId: attr, valueSpec: viewData.filters[attr] });
-            }
           }
           // we sort attributes by UUID to avoid recomputing the same combination
           var attrs = [];
@@ -59,7 +54,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
 
           q.vertexSets.push({
             vertexSetId: viewData.vertexSet.id,
-            filters: filters,
+            filters: viewData.filters.vertex,
             mode: viewData.graphMode,
             // Bucketed view parameters.
             xBucketingAttributeId: xAttr,

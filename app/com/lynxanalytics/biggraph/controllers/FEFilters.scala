@@ -31,6 +31,24 @@ object FEFilters {
     intersectionEmbedding(filters.map(applyFEFilter)).srcVertexSet
   }
 
+  def localFilter(
+    vertices: Set[ID], filters: Seq[FEVertexAttributeFilter])(
+      implicit metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
+    filters.foldLeft(vertices) { (vs, filter) =>
+      val attr = metaManager.vertexAttribute(filter.attributeId.asUUID)
+      localFilter(vs, attr, filter.valueSpec)
+    }
+  }
+
+  def localFilter[T](
+    vertices: Set[ID], attr: VertexAttribute[T], spec: String)(
+      implicit metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
+    implicit val tt = attr.typeTag
+    val filter = filterFromSpec[T](spec)
+    val values = RestrictAttributeToIds.run(attr, vertices).value
+    values.filter { case (id, value) => filter.matches(value) }.keySet
+  }
+
   def embedFilteredVertices(
     base: VertexSet, filters: Seq[FEVertexAttributeFilter])(
       implicit metaManager: MetaGraphManager): EdgeBundle = {

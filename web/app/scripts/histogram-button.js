@@ -19,7 +19,8 @@ angular.module('biggraph').directive('histogramButton', function(util) {
         }
         var q = {
           attributeId: scope.attr.id,
-          vertexFilters: scope.side.nonEmptyFilters(),
+          vertexFilters: scope.side.nonEmptyVertexFilters(),
+          edgeFilters: scope.side.nonEmptyEdgeFilters(),
           numBuckets: 20,
           axisOptions: scope.side.axisOptions(scope.type, scope.attr.title),
           edgeBundleId: scope.type === 'edge' ? scope.side.project.edgeBundle : '',

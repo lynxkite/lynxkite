@@ -122,7 +122,10 @@ case class CreateProjectRequest(name: String, notes: String)
 case class DiscardProjectRequest(name: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 case class ProjectAttributeFilter(attributeName: String, valueSpec: String)
-case class ProjectFilterRequest(project: String, filters: List[ProjectAttributeFilter])
+case class ProjectFilterRequest(
+  project: String,
+  vertexFilters: List[ProjectAttributeFilter],
+  edgeFilters: List[ProjectAttributeFilter])
 case class ForkProjectRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
@@ -300,17 +303,25 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val project = Project(request.project)
     val vertexSet = project.vertexSet
     assert(vertexSet != null, s"No vertex set for $project.")
-    assert(request.filters.nonEmpty, "No filters specified.")
-    val resolved = request.filters.map { f =>
+    assert(request.vertexFilters.nonEmpty || request.edgeFilters.nonEmpty,
+      "No filters specified.")
+    val vertexFilters = request.vertexFilters.map { f =>
       val attr = project.vertexAttributes(f.attributeName)
       FEVertexAttributeFilter(attr.gUID.toString, f.valueSpec)
     }
-    val embedding = FEFilters.embedFilteredVertices(vertexSet, resolved)
-    val filterStrings = request.filters.map {
+    val edgeFilters = request.edgeFilters.map { f =>
+      val attr = project.edgeAttributes(f.attributeName)
+      FEVertexAttributeFilter(attr.gUID.toString, f.valueSpec)
+    }
+    val vertexEmbedding = FEFilters.embedFilteredVertices(vertexSet, vertexFilters)
+    val filterStrings = (request.vertexFilters ++ request.edgeFilters).map {
       f => s"${f.attributeName} ${f.valueSpec}"
     }
     project.checkpoint("Filter " + filterStrings.mkString(", ")) {
-      project.pullBackWithInjection(embedding)
+      project.pullBackWithInjection(vertexEmbedding)
+      val edgeEmbedding =
+        FEFilters.embedFilteredVertices(project.edgeBundle.asVertexSet, edgeFilters)
+      project.pullBackEdgesWithInjection(edgeEmbedding)
     }
   }
 
