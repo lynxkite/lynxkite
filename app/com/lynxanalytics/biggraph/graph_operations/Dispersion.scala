@@ -61,7 +61,7 @@ case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {
               val neighborIntersection =
                 sortedIntersection(
                   sortedIntersection(aNeighbors, bNeighbors),
-                  commonNeighbors) // note that http://arxiv.org/pdf/1310.6753v1.pdf suggest srcNeighbors
+                  srcNeighbors)
               if (neighborIntersection.size == 0) 1.0 else 0.0
             }
           case _ => 0.0
