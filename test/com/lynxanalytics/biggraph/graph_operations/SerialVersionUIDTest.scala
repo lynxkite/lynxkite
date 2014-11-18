@@ -20,6 +20,7 @@ object SerialVersionUIDTest {
     classOf[CountVertices] -> -1136363790372327808L,
     classOf[DeriveJSDouble] -> -79825253073657730L,
     classOf[DeriveJSString] -> -57011667786078744L,
+    classOf[Dispersion] -> -1021086267370857747L,
     classOf[EdgeGraph] -> 2190722079771976554L,
     classOf[EdgesFromAttributeMatches[_]] -> 528502611584618653L,
     classOf[EdgesFromBipartiteAttributeMatches[_]] -> 2354393111550889521L,

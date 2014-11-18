@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class EmbeddednessTest extends FunSuite with TestGraphOp {
-  test("example graph") {
+  test("two triangles sharing a common edge") {
     val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(2, 3), 2 -> Seq(3), 3 -> Seq()))().result
     val op = Embeddedness()
     val out = op(op.es, g.es).result

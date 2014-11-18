@@ -545,6 +545,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new AttributeOperation(_) {
+    val title = "Dispersion"
+    val description = """Calculates in what extent a given edge acts as intermediary between the
+    the mutual neighbors of its vertices. Might be useful for locating romantic partnerships based
+    on network structure in a social network."""
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "dispersion"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val dispersion = {
+        val op = graph_operations.Dispersion()
+        op(op.es, project.edgeBundle).result.dispersion.entity
+      }
+      val embeddedness = {
+        val op = graph_operations.Embeddedness()
+        op(op.es, project.edgeBundle).result.embeddedness.entity
+      }
+      // http://arxiv.org/pdf/1310.6753v1.pdf
+      var normalizedDispersion = {
+        val op = graph_operations.DeriveJSDouble(
+          JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
+          Seq("disp", "emb"))
+        op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(
+          dispersion, embeddedness)).result.attr.entity
+      }
+      // TODO: recursive dispersion
+      project.edgeAttributes(params("name")) = dispersion
+      project.edgeAttributes("normalized_" + params("name")) = normalizedDispersion
+    }
+  })
+
+  register(new AttributeOperation(_) {
     val title = "Degree"
     val description = ""
     def parameters = List(
