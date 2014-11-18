@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_operations.ConcatenateBundles
 import com.lynxanalytics.biggraph.graph_operations.AddConstantAttribute
 
 class BundleChain(bundles: Seq[EdgeBundle],
-                  weightsParam: Option[Seq[VertexAttribute[Double]]] = None) {
+                  weightsParam: Option[Seq[Attribute[Double]]] = None) {
 
   assert(bundles.size > 0)
   weightsParam.foreach { weightsSeq =>
@@ -20,7 +20,7 @@ class BundleChain(bundles: Seq[EdgeBundle],
     .forall(i => bundles(i).dstVertexSet == bundles(i + 1).srcVertexSet))
   val vertexSets = bundles.head.srcVertexSet +: bundles.map(_.dstVertexSet)
 
-  def getCompositeEdgeBundle: (EdgeBundle, VertexAttribute[Double]) = {
+  def getCompositeEdgeBundle: (EdgeBundle, Attribute[Double]) = {
     implicit val metaManager = bundles.head.manager
     if (bundles.size == 1) {
       (bundles.head, weights.head)

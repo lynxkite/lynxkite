@@ -12,7 +12,7 @@ object RestrictAttributeToIds {
     implicit val tt = inputs.attr.typeTag
     val attrMap = scalar[Map[ID, T]]
   }
-  def run[T](attr: VertexAttribute[T], ids: Set[ID])(
+  def run[T](attr: Attribute[T], ids: Set[ID])(
     implicit manager: MetaGraphManager): Scalar[Map[ID, T]] = {
 
     import Scripting._

@@ -18,8 +18,8 @@ object PulledOverVertexAttribute {
     val pulledAttr = vertexAttribute[T](inputs.destinationVS.entity)
   }
   def pullAttributeVia[T](
-    originalAttr: VertexAttribute[T], function: EdgeBundle)(
-      implicit metaManager: MetaGraphManager): VertexAttribute[T] = {
+    originalAttr: Attribute[T], function: EdgeBundle)(
+      implicit metaManager: MetaGraphManager): Attribute[T] = {
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     val pop = PulledOverVertexAttribute[T]()
     pop(pop.originalAttr, originalAttr)(pop.function, function).result.pulledAttr

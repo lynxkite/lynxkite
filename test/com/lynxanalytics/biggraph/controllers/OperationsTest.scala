@@ -22,7 +22,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     ops.apply(
       ProjectOperationRequest(on.projectName, FEOperationSpec(op.replace(" ", "-"), params)))
 
-  def remapIDs[T](attr: VertexAttribute[T], origIDs: VertexAttribute[String]) =
+  def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
   test("Derived vertex attribute (Double)") {

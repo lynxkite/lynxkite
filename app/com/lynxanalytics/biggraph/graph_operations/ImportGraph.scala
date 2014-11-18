@@ -162,7 +162,7 @@ trait ImportEdges extends ImportCommon {
   mustHaveField(dst)
 
   def putEdgeAttributes(columns: Columns,
-                        oattr: Map[String, EntityContainer[VertexAttribute[String]]],
+                        oattr: Map[String, EntityContainer[Attribute[String]]],
                         output: OutputBuilder): Unit = {
     for ((field, rdd) <- columns) {
       output(oattr(field), rdd)
