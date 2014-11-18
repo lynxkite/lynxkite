@@ -41,3 +41,5 @@ GET  /not-authorized         securesocial.controllers.ProviderController.notAuth
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
+# A fake asset path for the benefit of SecureSocial. See #1089.
+GET  /xxx/*file        controllers.Assets.at(path="/public", file)
