@@ -37,8 +37,8 @@ object VertexAttributeToString {
       extends MagicOutput(instance) {
     val attr = vertexAttribute[String](inputs.vs.entity)
   }
-  def run[T](attr: VertexAttribute[T])(
-    implicit manager: MetaGraphManager): VertexAttribute[String] = {
+  def run[T](attr: Attribute[T])(
+    implicit manager: MetaGraphManager): Attribute[String] = {
 
     import Scripting._
     val op = VertexAttributeToString[T]()
@@ -67,8 +67,8 @@ object VertexAttributeToDouble {
       extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vs.entity)
   }
-  def run(attr: VertexAttribute[String])(
-    implicit manager: MetaGraphManager): VertexAttribute[Double] = {
+  def run(attr: Attribute[String])(
+    implicit manager: MetaGraphManager): Attribute[Double] = {
 
     import Scripting._
     val op = VertexAttributeToDouble()
@@ -97,8 +97,8 @@ object VertexAttributeToDynamicValue {
       extends MagicOutput(instance) {
     val attr = vertexAttribute[DynamicValue](inputs.vs.entity)
   }
-  def run[T](attr: VertexAttribute[T])(
-    implicit manager: MetaGraphManager): VertexAttribute[DynamicValue] = {
+  def run[T](attr: Attribute[T])(
+    implicit manager: MetaGraphManager): Attribute[DynamicValue] = {
 
     import Scripting._
     val op = VertexAttributeToDynamicValue[T]()
@@ -187,15 +187,15 @@ object VertexAttributeToJSValue {
       extends MagicOutput(instance) {
     val attr = vertexAttribute[JSValue](inputs.vs.entity)
   }
-  def run[T](attr: VertexAttribute[T])(
-    implicit manager: MetaGraphManager): VertexAttribute[JSValue] = {
+  def run[T](attr: Attribute[T])(
+    implicit manager: MetaGraphManager): Attribute[JSValue] = {
 
     import Scripting._
     val op = VertexAttributeToJSValue[T]()
     op(op.attr, attr).result.attr
   }
-  def seq(attrs: VertexAttribute[_]*)(
-    implicit manager: MetaGraphManager): Seq[VertexAttribute[JSValue]] = {
+  def seq(attrs: Attribute[_]*)(
+    implicit manager: MetaGraphManager): Seq[Attribute[JSValue]] = {
 
     attrs.map(run(_))
   }

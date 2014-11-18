@@ -82,8 +82,8 @@ object VertexToEdgeAttribute {
   }
 
   def srcAttribute[T](
-    attr: VertexAttribute[T], edgeBundle: EdgeBundle)(
-      implicit manager: MetaGraphManager): VertexAttribute[T] = {
+    attr: Attribute[T], edgeBundle: EdgeBundle)(
+      implicit manager: MetaGraphManager): Attribute[T] = {
     import Scripting._
     val mapping = {
       val op = TripletMapping()
@@ -94,8 +94,8 @@ object VertexToEdgeAttribute {
   }
 
   def dstAttribute[T](
-    attr: VertexAttribute[T], edgeBundle: EdgeBundle)(
-      implicit manager: MetaGraphManager): VertexAttribute[T] = {
+    attr: Attribute[T], edgeBundle: EdgeBundle)(
+      implicit manager: MetaGraphManager): Attribute[T] = {
     import Scripting._
     val mapping = {
       val op = TripletMapping()
