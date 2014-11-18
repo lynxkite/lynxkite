@@ -131,14 +131,10 @@ sealed trait TypedEntity[T] extends MetaGraphEntity {
   def is[S: TypeTag]: Boolean
 }
 
-sealed trait Attribute[T] extends TypedEntity[T] {
-  def runtimeSafeCast[S: TypeTag]: Attribute[S]
-}
-
 case class VertexAttribute[T: TypeTag](source: MetaGraphOperationInstance,
                                        name: Symbol,
                                        vertexSet: VertexSet)
-    extends Attribute[T] with RuntimeSafeCastable[T, VertexAttribute] {
+    extends TypedEntity[T] with RuntimeSafeCastable[T, VertexAttribute] {
   assert(name != null)
   val typeTag = implicitly[TypeTag[T]]
 }
