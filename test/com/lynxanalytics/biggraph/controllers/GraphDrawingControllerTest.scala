@@ -61,7 +61,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstDiagramId = "idx[0]",
         srcIdx = 0,
         dstIdx = 0,
-        edgeBundleId = g.edges.gUID.toString)))
+        edgeBundleId = g.edges.gUID.toString,
+        filters = Seq())))
     val res = controller.getComplexView(req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -82,13 +83,16 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     val age = g.age.gUID.toString
     val gender = g.gender.gUID.toString
 
-    val f = FEVertexAttributeFilter(
+    val vf = FEVertexAttributeFilter(
       attributeId = age,
       valueSpec = "<=25")
+    val ef = FEVertexAttributeFilter(
+      attributeId = g.comment.gUID.toString,
+      valueSpec = "Adam loves Eve")
     val req = FEGraphRequest(
       vertexSets = Seq(VertexDiagramSpec(
         vertexSetId = g.vertices.gUID.toString,
-        filters = Seq(f),
+        filters = Seq(vf),
         mode = "sampled",
         centralVertexIds = Seq("0"),
         sampleSmearEdgeBundleId = g.edges.gUID.toString,
@@ -99,7 +103,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstDiagramId = "idx[0]",
         srcIdx = 0,
         dstIdx = 0,
-        edgeBundleId = g.edges.gUID.toString)))
+        edgeBundleId = g.edges.gUID.toString,
+        filters = Seq(ef))))
     val res = controller.getComplexView(req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -112,9 +117,9 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       FEVertex(0.0, 0, 0, id = "1", attrs = Map(
         age -> DynamicValue(18.2, "18.2"),
         gender -> DynamicValue(0.0, "Female")))))
-    assert(res.edgeBundles(0).edges.size == 2)
+    assert(res.edgeBundles(0).edges.size == 1)
     assert(res.edgeBundles(0).edges.toSet == Set(
-      FEEdge(0, 1, 1.0), FEEdge(1, 0, 1.0)))
+      FEEdge(0, 1, 1.0)))
   }
 
   test("small bucketed view") {
@@ -133,7 +138,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstDiagramId = "idx[0]",
         srcIdx = 0,
         dstIdx = 0,
-        edgeBundleId = g.edges.gUID.toString)))
+        edgeBundleId = g.edges.gUID.toString,
+        filters = Seq())))
     val res = controller.getComplexView(req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -160,7 +166,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstDiagramId = "idx[0]",
         srcIdx = 0,
         dstIdx = 0,
-        edgeBundleId = es.gUID.toString)))
+        edgeBundleId = es.gUID.toString,
+        filters = Seq())))
     val res = controller.getComplexView(req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -169,6 +176,50 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(100.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
     assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 191.0)))
+  }
+
+  test("big bucketed view with filters") {
+    val vs = graph_operations.CreateVertexSet(100)().result.vs
+    val es = {
+      val op = graph_operations.FastRandomEdgeBundle(0, 2)
+      op(op.vs, vs).result.es
+    }
+    val rndVA = {
+      val op = graph_operations.AddGaussianVertexAttribute(1)
+      op(op.vertices, vs).result.attr
+    }
+    val rndEA = {
+      val op = graph_operations.AddGaussianVertexAttribute(2)
+      op(op.vertices, es.asVertexSet).result.attr
+    }
+    val vf = FEVertexAttributeFilter(
+      attributeId = rndVA.gUID.toString,
+      valueSpec = ">0")
+    val ef = FEVertexAttributeFilter(
+      attributeId = rndEA.gUID.toString,
+      valueSpec = ">0")
+    val req = FEGraphRequest(
+      vertexSets = Seq(VertexDiagramSpec(
+        vertexSetId = vs.gUID.toString,
+        filters = Seq(vf),
+        mode = "bucketed")),
+      edgeBundles = Seq(EdgeDiagramSpec(
+        srcDiagramId = "idx[0]",
+        dstDiagramId = "idx[0]",
+        srcIdx = 0,
+        dstIdx = 0,
+        edgeBundleId = es.gUID.toString,
+        filters = Seq(ef))))
+    val res = controller.getComplexView(req)
+    assert(res.vertexSets.length == 1)
+    assert(res.edgeBundles.length == 1)
+    assert(res.vertexSets(0).mode == "bucketed")
+    assert(res.vertexSets(0).vertices.size == 1)
+    // Should be about 50% of 100.
+    assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(49.0, 0, 0)))
+    assert(res.edgeBundles(0).edges.size == 1)
+    // Should be about 12.5% of 191. (50% src is removed, 50% dst is removed, 50% attribute is <0)
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 20.0)))
   }
 
   test("histogram for double") {
@@ -215,6 +266,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     val req = HistogramSpec(
       attributeId = g.weight.gUID.toString,
       vertexFilters = Seq(),
+      edgeFilters = Seq(),
       numBuckets = 4,
       axisOptions = AxisOptions(),
       edgeBundleId = g.edges.gUID.toString)
@@ -222,6 +274,24 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.0", "1.8", "2.5", "3.3", "4.0"))
     assert(res.sizes == Seq(1, 1, 1, 1))
+  }
+
+  test("histogram for edges with filter") {
+    val g = graph_operations.ExampleGraph()().result
+    val f = FEVertexAttributeFilter(
+      attributeId = g.weight.gUID.toString,
+      valueSpec = ">1")
+    val req = HistogramSpec(
+      attributeId = g.weight.gUID.toString,
+      vertexFilters = Seq(),
+      edgeFilters = Seq(f),
+      numBuckets = 4,
+      axisOptions = AxisOptions(),
+      edgeBundleId = g.edges.gUID.toString)
+    val res = controller.getHistogram(req)
+    assert(res.labelType == "between")
+    assert(res.labels == Seq("1.0", "1.8", "2.5", "3.3", "4.0"))
+    assert(res.sizes == Seq(0, 1, 1, 1))
   }
 
   test("scalar") {

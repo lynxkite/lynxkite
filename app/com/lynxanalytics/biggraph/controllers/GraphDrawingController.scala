@@ -66,6 +66,7 @@ case class EdgeDiagramSpec(
   val srcIdx: Int,
   val dstIdx: Int,
   val edgeBundleId: String,
+  val filters: Seq[FEVertexAttributeFilter],
   // If not set, we use constant 1 as weight.
   val edgeWeightId: String = "")
 
@@ -106,7 +107,8 @@ case class HistogramSpec(
   axisOptions: AxisOptions,
   // Set only if we ask for an edge attribute histogram and provided vertexFilters should be
   // applied on the end-vertices of edges.
-  edgeBundleId: String = "")
+  edgeBundleId: String = "",
+  edgeFilters: Seq[FEVertexAttributeFilter] = Seq())
 
 case class HistogramResponse(
     labelType: String,
@@ -382,20 +384,23 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val counts = smallEdgeSetOption match {
       case Some(smallEdgeSet) => {
         log.info("PERF Small edge set mode for request: " + request)
+        val smallEdgeSetMap = smallEdgeSet.toMap
+        val filteredEdgeSetIDs = FEFilters.localFilter(smallEdgeSetMap.keySet, request.filters)
+        val filteredEdgeSet = filteredEdgeSetIDs.map(id => id -> smallEdgeSetMap(id))
         val srcIdxMapping = srcView.vertexIndices.getOrElse {
           val indexAttr = indexFromIndexingSeq(srcView.vertexSet, srcView.indexingSeq)
-          val srcVertexIds = smallEdgeSet.map { case (id, edge) => edge.src }.toSet
+          val srcVertexIds = filteredEdgeSet.map { case (id, edge) => edge.src }.toSet
           graph_operations.RestrictAttributeToIds.run(indexAttr, srcVertexIds).value.toMap
         }
         val dstIdxMapping = dstView.vertexIndices.getOrElse {
           val indexAttr = indexFromIndexingSeq(dstView.vertexSet, dstView.indexingSeq)
-          val dstVertexIds = smallEdgeSet.map { case (id, edge) => edge.dst }.toSet
+          val dstVertexIds = filteredEdgeSet.map { case (id, edge) => edge.dst }.toSet
           graph_operations.RestrictAttributeToIds.run(indexAttr, dstVertexIds).value.toMap
         }
         val weightMap = graph_operations.RestrictAttributeToIds.run(
-          weights, smallEdgeSet.map(_._1).toSet).value.toMap
+          weights, filteredEdgeSet.map(_._1).toSet).value.toMap
         val counts = mutable.Map[(Int, Int), Double]().withDefaultValue(0.0)
-        smallEdgeSet.foreach {
+        filteredEdgeSet.foreach {
           case (id, edge) =>
             val src = edge.src
             val dst = edge.dst
@@ -407,12 +412,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       }
       case None => {
         log.info("PERF Huge edge set mode for request: " + request)
-        val filteredEdges = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters)
+        val vertexFiltered = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters)
+        val edgeFiltered = getFilteredVS(vertexFiltered.ids, request.filters)
 
         val srcIndices = edgeIndexFromIndexingSeq(
-          edgeBundle, filteredEdges.ids, filteredEdges.srcTripletMapping, srcView.indexingSeq)
+          edgeBundle, edgeFiltered, vertexFiltered.srcTripletMapping, srcView.indexingSeq)
         val dstIndices = edgeIndexFromIndexingSeq(
-          edgeBundle, filteredEdges.ids, filteredEdges.dstTripletMapping, dstView.indexingSeq)
+          edgeBundle, edgeFiltered, vertexFiltered.dstTripletMapping, dstView.indexingSeq)
 
         val cop = graph_operations.CountEdges()
         val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
@@ -529,7 +535,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     } else {
       val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
       val filters = request.vertexFilters.map(_.toFilteredAttribute)
-      getFilteredEdgeIds(edgeBundle, filters, filters).ids
+      val vertexFiltered = getFilteredEdgeIds(edgeBundle, filters, filters).ids
+      getFilteredVS(vertexFiltered, request.edgeFilters)
     }
     val histogram = bucketedAttr.toHistogram(filteredVS)
     val counts = histogram.counts.value

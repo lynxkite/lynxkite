@@ -33,7 +33,10 @@ angular.module('biggraph')
     function defaultSideState() {
       return {
         projectName: undefined,
-        filters: {},
+        filters: {
+          edge: {},
+          vertex: {},
+        },
         axisOptions: {
           edge: {},
           vertex: {},
@@ -96,10 +99,10 @@ angular.module('biggraph')
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
 
-      vd.filters = {};
-      for(var name in this.state.filters) {
-        vd.filters[this.resolveVertexAttribute(name).id] = this.state.filters[name];
-      }
+      vd.filters = {
+        edge: this.nonEmptyEdgeFilters(),
+        vertex: this.nonEmptyVertexFilters(),
+      };
 
       vd.centers = this.state.centers || [];
       var that = this;
@@ -118,7 +121,7 @@ angular.module('biggraph')
         return that.getParentSide() !== undefined;
       };
       vd.parentFilters = function() {
-        return that.getParentSide().state.filters;
+        return that.getParentSide().state.filters.vertex;
       };
       vd.parentFilterName = function() {
         return that.getParentSide().getSegmentationEntry(that).equivalentAttribute.title;
@@ -140,7 +143,7 @@ angular.module('biggraph')
         return that.getSegmentationSide() !== undefined;
       };
       vd.segmentationFilters = function() {
-        return that.getSegmentationSide().state.filters;
+        return that.getSegmentationSide().state.filters.vertex;
       };
       vd.filterSegmentationToParent = function(parentId) {
         vd.segmentationFilters().$members = vd.filterValue(parentId);
@@ -152,8 +155,8 @@ angular.module('biggraph')
         delete vd.segmentationFilters().$members;
       };
 
-      vd.setFilter = function(title, value) {
-        that.state.filters[title] = value;
+      vd.setVertexFilter = function(title, value) {
+        that.state.filters.vertex[title] = value;
       };
 
       this.viewData = vd;
@@ -182,7 +185,7 @@ angular.module('biggraph')
     Side.prototype.requestNewCenter = function(count) {
       var params = {
         vertexSetId: this.project.vertexSet,
-        filters: this.nonEmptyFilters() || '',
+        filters: this.nonEmptyVertexFilters() || '',
         count: count,
       };
       var that = this;
@@ -373,56 +376,74 @@ angular.module('biggraph')
     };
 
     // Returns unresolved filters (i.e. keyed by the attribute name).
-    Side.prototype.nonEmptyFilterNames = function() {
+    Side.prototype.nonEmptyVertexFilterNames = function() {
+      return this.nonEmptyFilterNames(this.state.filters.vertex);
+    };
+    Side.prototype.nonEmptyEdgeFilterNames = function() {
+      return this.nonEmptyFilterNames(this.state.filters.edge);
+    };
+    Side.prototype.nonEmptyFilterNames = function(filters) {
       var res = [];
-      for (var attr in this.state.filters) {
-        if (this.state.filters[attr] !== '') {
+      for (var attr in filters) {
+        if (filters[attr] !== '') {
           res.push({
             attributeName: attr,
-            valueSpec: this.state.filters[attr] });
+            valueSpec: filters[attr] });
         }
       }
       return res;
     };
 
     // Returns resolved filters (i.e. keyed by UUID).
-    Side.prototype.nonEmptyFilters = function() {
+    Side.prototype.nonEmptyVertexFilters = function() {
       var that = this;
-      return this.nonEmptyFilterNames().map(function(f) {
+      return this.nonEmptyVertexFilterNames().map(function(f) {
         return {
           attributeId: that.resolveVertexAttribute(f.attributeName).id,
           valueSpec: f.valueSpec,
         };
       });
     };
+    Side.prototype.nonEmptyEdgeFilters = function() {
+      var that = this;
+      return this.nonEmptyEdgeFilterNames().map(function(f) {
+        return {
+          attributeId: that.resolveEdgeAttribute(f.attributeName).id,
+          valueSpec: f.valueSpec,
+        };
+      });
+    };
 
     Side.prototype.hasFilters = function() {
-      return this.nonEmptyFilterNames().length !== 0;
+      return (this.nonEmptyEdgeFilterNames().length !== 0 ||
+              this.nonEmptyVertexFilterNames().length !== 0);
     };
     Side.prototype.applyFilters = function() {
       var that = this;
       util.post('/ajax/filterProject',
         {
           project: this.state.projectName,
-          filters: this.nonEmptyFilterNames()
+          edgeFilters: this.nonEmptyEdgeFilterNames(),
+          vertexFilters: this.nonEmptyVertexFilterNames(),
         },
         function() {
-          that.state.filters = {};
+          that.clearFilters();
           that.reload();
         });
     };
     Side.prototype.clearFilters = function() {
-      this.state.filters = {};
+      this.state.filters = { edge: {}, vertex: {} };
     };
     Side.prototype.filterSummary = function() {
       var res = [];
-      for (var attr in this.state.filters) {
-        var f = this.state.filters[attr];
-        if (f) {
+      function addNonEmpty(value, key) {
+        if (value) {
           var nbsp = '\u00a0';
-          res.push(' ' + attr + nbsp + f);
+          res.push(' ' + key + nbsp + value);
         }
       }
+      angular.forEach(this.state.filters.vertex, addNonEmpty);
+      angular.forEach(this.state.filters.edge, addNonEmpty);
       return res.join(', ');
     };
 
@@ -525,9 +546,14 @@ angular.module('biggraph')
       if (!this.loaded()) { return; }
       var vTitles = this.project.vertexAttributes.map(function(a) { return a.title; });
       var eTitles = this.project.edgeAttributes.map(function(a) { return a.title; });
-      for (var attr in this.state.filters) {
+      for (var attr in this.state.filters.edge) {
+        if (eTitles.indexOf(attr) === -1) {
+          delete this.state.filters.edge[attr];
+        }
+      }
+      for (attr in this.state.filters.vertex) {
         if (vTitles.indexOf(attr) === -1) {
-          delete this.state.filters[attr];
+          delete this.state.filters.vertex[attr];
         }
       }
       for (attr in this.state.axisOptions.vertex) {
