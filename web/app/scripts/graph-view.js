@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('biggraph').directive('graphView', function(util) {
-  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
+  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, THREE */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
   var directive = {
@@ -117,6 +117,10 @@ angular.module('biggraph').directive('graphView', function(util) {
   }
 
   GraphView.prototype.clear = function() {
+    this.svg.show();
+    if (this.three) {
+      this.three.destroy();
+    }
     svg.removeClass(this.svg, 'loading');
     this.root.empty();
     for (var i = 0; i < this.unregistration.length; ++i) {
@@ -147,6 +151,10 @@ angular.module('biggraph').directive('graphView', function(util) {
 
   GraphView.prototype.update = function(data, menu) {
     this.clear();
+    if (data.global) {
+      this.updateGlobal(data);
+      return;
+    }
     var zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.left, this.scope.right];
     this.edgeGroup = svg.create('g', {'class': 'edges'});
@@ -208,6 +216,86 @@ angular.module('biggraph').directive('graphView', function(util) {
         unfreezeAll(vs);
       }
     }
+  };
+
+  GraphView.prototype.updateGlobal = function(data, menu) {
+    this.svg.hide();
+    var three = THREE.Bootstrap({
+      element: this.svg.parent()[0],
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    this.three = three;
+    three.renderer.setClearColor(0x222222);
+
+    // Random generator
+    var sd = 12345;
+    function rnd() {
+      sd = (Math.abs(Math.sin(sd * 10000) * 1000)) % 1;
+      return sd * 2 - 1;
+    }
+
+    // Insert cubes
+    var colors = [
+      new THREE.Color(0x3090FF),
+      new THREE.Color(0x10A0FF),
+      new THREE.Color(0x60109F),
+    ];
+    var n = colors.length;
+    var N = 10;
+    var ps = new Float32Array(N * 4 * 3);
+    var ds = new Float32Array(N * 4 * 3);
+    var ss = new Float32Array(N * 4);
+    var is = new Uint32Array(N * 6);
+    for (var i = 0; i < 100; ++i) {
+      var sz = 1 + rnd() * 0.2;
+      var mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz),
+                                new THREE.MeshPhongMaterial({ color: colors[i % n] }));
+      mesh.position.set(rnd() * 10, rnd() * 10, rnd() * 10);
+      three.scene.add(mesh);
+      ps[4 * 3 * i + 0] = ps[4 * 3 * i + 3] = ds[4 * 3 * i + 6] = ds[4 * 3 * i + 9] = rnd() * 10;
+      ps[4 * 3 * i + 1] = ps[4 * 3 * i + 4] = ds[4 * 3 * i + 7] = ds[4 * 3 * i + 10] = rnd() * 10;
+      ps[4 * 3 * i + 2] = ps[4 * 3 * i + 5] = ds[4 * 3 * i + 8] = ds[4 * 3 * i + 11] = rnd() * 10;
+      ps[4 * 3 * i + 6] = ps[4 * 3 * i + 9] = ds[4 * 3 * i + 0] = ds[4 * 3 * i + 3] = rnd() * 10;
+      ps[4 * 3 * i + 7] = ps[4 * 3 * i + 10] = ds[4 * 3 * i + 1] = ds[4 * 3 * i + 4] = rnd() * 10;
+      ps[4 * 3 * i + 8] = ps[4 * 3 * i + 11] = ds[4 * 3 * i + 2] = ds[4 * 3 * i + 5] = rnd() * 10;
+      ss[4 * i + 0] = ss[4 * i + 3] = 1;
+      ss[4 * i + 1] = ss[4 * i + 2] = -1;
+      is[6 * i + 0] = 4 * i + 0;
+      is[6 * i + 1] = 4 * i + 1;
+      is[6 * i + 2] = 4 * i + 2;
+      is[6 * i + 3] = 4 * i + 2;
+      is[6 * i + 4] = 4 * i + 1;
+      is[6 * i + 5] = 4 * i + 3;
+    }
+
+    var geom = new THREE.BufferGeometry();
+    geom.addAttribute('index', new THREE.BufferAttribute(is, 1));
+    geom.addAttribute('side', new THREE.BufferAttribute(ss, 1));
+    geom.addAttribute('position', new THREE.BufferAttribute(ps, 3));
+    geom.addAttribute('direction', new THREE.BufferAttribute(ds, 3));
+    console.log(three.camera.aspect);
+    var mat = new THREE.ShaderMaterial({
+      uniforms: { aspect: { type: 'f', value: three.camera.aspect } },
+      attributes: { side: { type: 'f', value: ss }, direction: { type: 'f', value: ds } },
+      vertexShader: this.svg.parent().find('#vertexShader').html(),
+      fragmentShader: this.svg.parent().find('#fragmentShader').html(),
+    });
+    mat.side = THREE.DoubleSide;
+    three.scene.add(new THREE.Mesh(geom, mat));
+
+    // Lights.
+    var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+    hemiLight.position.set(0, 500, 0);
+    three.scene.add(hemiLight);
+    var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(-1, 1.75, 1);
+    three.scene.add(dirLight);
+
+    // Camera.
+    three.camera.position.set(10, 5, 12);
   };
 
   function copyLayoutAndFreezeOld(from, to) {

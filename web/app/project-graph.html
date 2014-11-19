@@ -25,3 +25,25 @@
   <div class="handle" ng-click="sidebarOpen = !sidebarOpen">
   </div>
 </div>
+<script type="x-shader/x-vertex" id="vertexShader">
+
+  uniform float aspect;
+  attribute float side;
+  attribute vec3 direction;
+  void main() {
+    vec4 pos = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vec4 dir = projectionMatrix * modelViewMatrix * vec4(direction, 1.0);
+    float w = pos.w;
+    vec4 d = pos / pos.w - dir / dir.w;
+    vec4 off = normalize(vec4(-d.y / aspect, d.x, 0, 0));
+    gl_Position = pos + 0.4 * side * off * vec4(1.0 / aspect, 1, 1, 1);
+  }
+
+</script>
+<script type="x-shader/x-vertex" id="fragmentShader">
+
+  void main() {
+    gl_FragColor = vec4(1, 1, 1, 1);
+  }
+
+</script>

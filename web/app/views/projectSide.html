@@ -73,6 +73,11 @@
           tooltip="Concrete&nbsp;vertices" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
         </label>
+        <label class="btn btn-default"
+          ng-model="side.state.graphMode" btn-radio="'global'" uncheckable
+          tooltip="Global&nbsp;view" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-globe"></i>
+        </label>
       </div>
 
       <div class="btn-group pull-right" ng-if="side.hasFilters()">

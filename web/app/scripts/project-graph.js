@@ -16,6 +16,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       };
 
       function updateRequest() {
+        scope.global = false;
         var sides = [];
         if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
           sides.push(scope.left);
@@ -30,6 +31,10 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         var q = { vertexSets: [], edgeBundles: [] };
         for (var i = 0; i < sides.length; ++i) {
           var viewData = sides[i];
+          if (viewData.graphMode === 'global') {
+            updateGlobal(viewData);
+            return;
+          }
           if (viewData.edgeBundle !== undefined) {
             q.edgeBundles.push({
               srcDiagramId: 'idx[' + i + ']',
@@ -84,9 +89,21 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         scope.request = q;
       }
 
+      function updateGlobal(vd) {
+        scope.global = true;
+        scope.request = {
+          vertexSet: vd.vertexSet.id,
+          edgeBundle: vd.edgeBundle.id,
+        };
+      }
+
       util.deepWatch(scope, 'request', function() {
         if (scope.request) {
-          scope.graphView = util.get('/ajax/complexView', scope.request);
+          if (scope.global) {
+            scope.graphView = util.get('/ajax/globalView', scope.request);
+          } else {
+            scope.graphView = util.get('/ajax/complexView', scope.request);
+          }
         }
       });
 
@@ -96,7 +113,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         // Generate the TSV representation.
         scope.tsv = '';
         var gv = scope.graphView;
-        if (!gv || !gv.$resolved) {
+        if (!gv || !gv.$resolved || gv.global) {
           return;
         }
         var sides = [scope.left, scope.right];
