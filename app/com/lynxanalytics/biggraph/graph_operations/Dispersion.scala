@@ -62,7 +62,7 @@ case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {
                 sortedIntersection(
                   sortedIntersection(aNeighbors, bNeighbors),
                   srcNeighbors)
-              if (neighborIntersection.isEmpty || neighborIntersection(0) == edge.dst) 1.0 else 0.0
+              if (neighborIntersection.count(_ != edge.dst) == 0) 1.0 else 0.0
             }
           case _ => 0.0
         }.sum
