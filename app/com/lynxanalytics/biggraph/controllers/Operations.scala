@@ -97,7 +97,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       (hasVertexSet && hasNoEdgeBundle
         && FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes."))
-    private def applyOn[T](attr: VertexAttribute[T]) = {
+    private def applyOn[T](attr: Attribute[T]) = {
       val op = graph_operations.EdgesFromAttributeMatches[T]()
       project.edgeBundle = op(op.attr, attr).result.edges
     }
@@ -597,7 +597,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexAttributes(params("name")) = deg
     }
 
-    private def applyOn(es: EdgeBundle): VertexAttribute[Double] = {
+    private def applyOn(es: EdgeBundle): Attribute[Double] = {
       val op = graph_operations.OutDegree()
       op(op.es, es).result.outDegree
     }
@@ -642,7 +642,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
-    private def applyOn[T](attr: VertexAttribute[T]) = {
+    private def applyOn[T](attr: Attribute[T]) = {
       val op = graph_operations.VertexAttributeToString[T]()
       op(op.attr, attr).result.attr
     }
@@ -939,7 +939,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
-    def merge[T](attr: VertexAttribute[T]): graph_operations.MergeVertices.Output = {
+    def merge[T](attr: Attribute[T]): graph_operations.MergeVertices.Output = {
       val op = graph_operations.MergeVertices[T]()
       op(op.attr, attr).result
     }
@@ -982,7 +982,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     def enabled = hasEdgeBundle
 
-    def merge[T](attr: VertexAttribute[T]): graph_operations.MergeVertices.Output = {
+    def merge[T](attr: Attribute[T]): graph_operations.MergeVertices.Output = {
       val op = graph_operations.MergeVertices[T]()
       op(op.attr, attr).result
     }
@@ -1897,17 +1897,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
   }
 
-  def joinAttr[A, B](a: VertexAttribute[A], b: VertexAttribute[B]): VertexAttribute[(A, B)] = {
+  def joinAttr[A, B](a: Attribute[A], b: Attribute[B]): Attribute[(A, B)] = {
     val op = graph_operations.JoinAttributes[A, B]()
     op(op.a, a)(op.b, b).result.attr
   }
 
-  def computeSegmentSizes(segmentation: Segmentation): VertexAttribute[Double] = {
+  def computeSegmentSizes(segmentation: Segmentation): Attribute[Double] = {
     val op = graph_operations.OutDegree()
     op(op.es, reverse(segmentation.belongsTo)).result.outDegree
   }
 
-  def toDouble(attr: VertexAttribute[String]): VertexAttribute[Double] = {
+  def toDouble(attr: Attribute[String]): Attribute[Double] = {
     val op = graph_operations.VertexAttributeToDouble()
     op(op.attr, attr).result.attr
   }
@@ -1919,7 +1919,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
   def aggregateParams(
-    attrs: Iterable[(String, VertexAttribute[_])],
+    attrs: Iterable[(String, Attribute[_])],
     needsGlobal: Boolean = false,
     weighted: Boolean = false): List[FEOperationParameterMeta] = {
     attrs.toList.map {
@@ -1954,12 +1954,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   trait AttributeWithLocalAggregator[From, To] {
-    val attr: VertexAttribute[From]
+    val attr: Attribute[From]
     val aggregator: graph_operations.LocalAggregator[From, To]
   }
   object AttributeWithLocalAggregator {
     def apply[From, To](
-      attrInp: VertexAttribute[From],
+      attrInp: Attribute[From],
       aggregatorInp: graph_operations.LocalAggregator[From, To]): AttributeWithLocalAggregator[From, To] = {
       new AttributeWithLocalAggregator[From, To] {
         val attr = attrInp
@@ -1969,12 +1969,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   case class AttributeWithAggregator[From, Intermediate, To](
-    val attr: VertexAttribute[From],
+    val attr: Attribute[From],
     val aggregator: graph_operations.Aggregator[From, Intermediate, To])
       extends AttributeWithLocalAggregator[From, To]
 
   private def attributeWithAggregator[T](
-    attr: VertexAttribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
+    attr: Attribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
     choice match {
       case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
@@ -1988,7 +1988,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
   private def attributeWithWeightedAggregator[T](
-    weight: VertexAttribute[Double], attr: VertexAttribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
+    weight: Attribute[Double], attr: Attribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
     choice match {
       case "by_max_weight" => AttributeWithAggregator(
         joinAttr(weight, attr), graph_operations.Aggregator.MaxBy[Double, T]())
@@ -2002,7 +2002,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   private def attributeWithLocalAggregator[T](
-    attr: VertexAttribute[T], choice: String): AttributeWithLocalAggregator[_, _] = {
+    attr: Attribute[T], choice: String): AttributeWithLocalAggregator[_, _] = {
     choice match {
       case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
       case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
@@ -2022,7 +2022,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   // Performs AggregateByEdgeBundle.
   def aggregateViaConnection[From, To](
     connection: EdgeBundle,
-    attributeWithAggregator: AttributeWithLocalAggregator[From, To]): VertexAttribute[To] = {
+    attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
     op(op.connection, connection)(op.attr, attributeWithAggregator.attr).result.attr
   }
@@ -2031,7 +2031,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   def aggregateFromEdges[From, To](
     edges: EdgeBundle,
     onSrc: Boolean,
-    attributeWithAggregator: AttributeWithLocalAggregator[From, To]): VertexAttribute[To] = {
+    attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateFromEdges(attributeWithAggregator.aggregator)
     val res = op(op.edges, edges)(op.eattr, attributeWithAggregator.attr).result
     if (onSrc) res.srcAttr else res.dstAttr
@@ -2047,17 +2047,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.edges, eb).result.count
   }
 
-  private def unifyAttributeT[T](a1: VertexAttribute[T], a2: VertexAttribute[_]): VertexAttribute[T] = {
+  private def unifyAttributeT[T](a1: Attribute[T], a2: Attribute[_]): Attribute[T] = {
     val op = graph_operations.AttributeFallback[T]()
     op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast(a1.typeTag)).result.defaultedAttr
   }
-  def unifyAttribute(a1: VertexAttribute[_], a2: VertexAttribute[_]): VertexAttribute[_] = {
+  def unifyAttribute(a1: Attribute[_], a2: Attribute[_]): Attribute[_] = {
     unifyAttributeT(a1, a2)
   }
 
   def unifyAttributes(
-    as1: Iterable[(String, VertexAttribute[_])],
-    as2: Iterable[(String, VertexAttribute[_])]): Map[String, VertexAttribute[_]] = {
+    as1: Iterable[(String, Attribute[_])],
+    as2: Iterable[(String, Attribute[_])]): Map[String, Attribute[_]] = {
 
     val m1 = as1.toMap
     val m2 = as2.toMap
@@ -2070,7 +2070,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     new graph_util.BundleChain(Seq(eb1, eb2)).getCompositeEdgeBundle._1
   }
 
-  def const(eb: EdgeBundle, value: Double = 1.0): VertexAttribute[Double] = {
+  def const(eb: EdgeBundle, value: Double = 1.0): Attribute[Double] = {
     graph_operations.AddConstantAttribute.run(eb.asVertexSet, value)
   }
 

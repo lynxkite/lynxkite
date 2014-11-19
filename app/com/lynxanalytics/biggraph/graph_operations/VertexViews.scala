@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 trait AttributeFromGUID[T] extends Serializable {
   protected val attributeGUID: UUID
   def attribute(implicit manager: MetaGraphManager) =
-    manager.vertexAttribute(attributeGUID).asInstanceOf[VertexAttribute[T]]
+    manager.vertexAttribute(attributeGUID).asInstanceOf[Attribute[T]]
 }
 
 class BucketedAttribute[T] private (
@@ -30,7 +30,7 @@ class BucketedAttribute[T] private (
   }
 }
 object BucketedAttribute {
-  def apply[T](attribute: VertexAttribute[T], bucketer: Bucketer[T]): BucketedAttribute[T] =
+  def apply[T](attribute: Attribute[T], bucketer: Bucketer[T]): BucketedAttribute[T] =
     new BucketedAttribute(attribute.gUID, bucketer)
   def emptyBucketedAttribute: BucketedAttribute[Nothing] =
     new BucketedAttribute[Nothing](null, EmptyBucketer())
@@ -41,7 +41,7 @@ class FilteredAttribute[T] private (
     val filter: Filter[T]) extends AttributeFromGUID[T] {
 }
 object FilteredAttribute {
-  def apply[T](attribute: VertexAttribute[T], filter: Filter[T]): FilteredAttribute[T] =
+  def apply[T](attribute: Attribute[T], filter: Filter[T]): FilteredAttribute[T] =
     new FilteredAttribute(attribute.gUID, filter)
 }
 

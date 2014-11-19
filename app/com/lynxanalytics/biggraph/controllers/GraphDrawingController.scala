@@ -272,9 +272,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return res
   }
 
-  private def mappedAttribute[T](mapping: VertexAttribute[Array[ID]],
-                                 attr: VertexAttribute[T],
-                                 target: EdgeBundle): VertexAttribute[T] = {
+  private def mappedAttribute[T](mapping: Attribute[Array[ID]],
+                                 attr: Attribute[T],
+                                 target: EdgeBundle): Attribute[T] = {
     val op = new graph_operations.VertexToEdgeAttribute[T]()
     val res = op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
     dataManager.cache(res)
@@ -283,7 +283,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def filteredEdgeIdsByAttribute[T](
     eb: EdgeBundle,
-    tripletMapping: VertexAttribute[Array[ID]],
+    tripletMapping: Attribute[Array[ID]],
     fa: graph_operations.FilteredAttribute[T]): VertexSet = {
 
     val mattr = mappedAttribute(tripletMapping, fa.attribute, eb)
@@ -292,8 +292,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   def indexFromBucketedAttribute[T](
-    base: VertexAttribute[Int],
-    ba: graph_operations.BucketedAttribute[T]): VertexAttribute[Int] = {
+    base: Attribute[Int],
+    ba: graph_operations.BucketedAttribute[T]): Attribute[Int] = {
 
     val iop = graph_operations.Indexer(ba.bucketer)
     iop(iop.baseIndices, base)(iop.bucketAttribute, ba.attribute).result.indices
@@ -301,17 +301,17 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def indexFromIndexingSeq(
     filtered: VertexSet,
-    seq: Seq[graph_operations.BucketedAttribute[_]]): VertexAttribute[Int] = {
+    seq: Seq[graph_operations.BucketedAttribute[_]]): Attribute[Int] = {
 
-    val startingBase: VertexAttribute[Int] = graph_operations.AddConstantAttribute.run(filtered, 0)
+    val startingBase: Attribute[Int] = graph_operations.AddConstantAttribute.run(filtered, 0)
     seq.foldLeft(startingBase) { case (b, ba) => indexFromBucketedAttribute(b, ba) }
   }
 
   def edgeIndexFromBucketedAttribute[T](
     original: EdgeBundle,
-    base: VertexAttribute[Int],
-    tripletMapping: VertexAttribute[Array[ID]],
-    ba: graph_operations.BucketedAttribute[T]): VertexAttribute[Int] = {
+    base: Attribute[Int],
+    tripletMapping: Attribute[Array[ID]],
+    ba: graph_operations.BucketedAttribute[T]): Attribute[Int] = {
 
     val mattr = mappedAttribute(tripletMapping, ba.attribute, original)
 
@@ -322,10 +322,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def edgeIndexFromIndexingSeq(
     original: EdgeBundle,
     filteredIds: VertexSet,
-    tripletMapping: VertexAttribute[Array[ID]],
-    seq: Seq[graph_operations.BucketedAttribute[_]]): VertexAttribute[Int] = {
+    tripletMapping: Attribute[Array[ID]],
+    seq: Seq[graph_operations.BucketedAttribute[_]]): Attribute[Int] = {
 
-    val startingBase: VertexAttribute[Int] =
+    val startingBase: Attribute[Int] =
       graph_operations.AddConstantAttribute.run(filteredIds, 0)
     seq.foldLeft(startingBase) {
       case (b, ba) => edgeIndexFromBucketedAttribute(original, b, tripletMapping, ba)
@@ -468,8 +468,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   private case class FilteredEdges(
     ids: VertexSet,
-    srcTripletMapping: VertexAttribute[Array[ID]],
-    dstTripletMapping: VertexAttribute[Array[ID]])
+    srcTripletMapping: Attribute[Array[ID]],
+    dstTripletMapping: Attribute[Array[ID]])
 
   private def getFilteredEdgeIds(
     edgeBundle: EdgeBundle,

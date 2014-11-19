@@ -133,8 +133,8 @@ case class RedoProjectRequest(project: String)
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: List[VertexSet] = List(),
                        edgeBundles: List[EdgeBundle] = List(),
-                       vertexAttributes: List[VertexAttribute[_]] = List(),
-                       edgeAttributes: List[VertexAttribute[_]] = List())
+                       vertexAttributes: List[Attribute[_]] = List(),
+                       edgeAttributes: List[Attribute[_]] = List())
 
 class FEOperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager

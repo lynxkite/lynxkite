@@ -11,7 +11,7 @@ object FEBucketers {
   def bucketedAttribute[T](
     metaManager: MetaGraphManager,
     dataManager: DataManager,
-    attr: VertexAttribute[T],
+    attr: Attribute[T],
     numBuckets: Int,
     axisOptions: AxisOptions): BucketedAttribute[T] = {
 
