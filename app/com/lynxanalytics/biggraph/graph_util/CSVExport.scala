@@ -32,7 +32,7 @@ object CSVData {
 }
 
 object CSVExport {
-  def exportVertexAttributes(attributes: Seq[VertexAttribute[_]],
+  def exportVertexAttributes(attributes: Seq[Attribute[_]],
                              attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
     assert(attributes.size > 0)
     assert(attributes.size == attributeLabels.size)
@@ -53,7 +53,7 @@ object CSVExport {
 
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
-    attributes: Seq[VertexAttribute[_]],
+    attributes: Seq[Attribute[_]],
     attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
 
     assert(attributes.size == attributeLabels.size)
@@ -73,7 +73,7 @@ object CSVExport {
 
   private def attachAttributeData(
     keyData: rdd.RDD[(ID, Seq[String])],
-    attributes: Seq[VertexAttribute[_]],
+    attributes: Seq[Attribute[_]],
     dataManager: DataManager): rdd.RDD[(ID, Seq[String])] = {
 
     var indexedData = keyData
@@ -92,7 +92,7 @@ object CSVExport {
   }
 
   private def stringRDDFromAttribute[T: ClassTag](
-    dataManager: DataManager, attribute: VertexAttribute[T]): rdd.RDD[(ID, String)] = {
+    dataManager: DataManager, attribute: Attribute[T]): rdd.RDD[(ID, String)] = {
     implicit val tagForT = attribute.typeTag
     val op = toCSVStringOperation[T]
     dataManager.get(attribute).rdd.mapValues(op)

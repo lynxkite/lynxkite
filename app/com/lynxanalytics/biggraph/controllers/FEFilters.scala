@@ -17,7 +17,7 @@ case class FEVertexAttributeFilter(
   }
 
   private def toFilteredAttributeFromAttribute[T](
-    attr: VertexAttribute[T]): FilteredAttribute[T] = {
+    attr: Attribute[T]): FilteredAttribute[T] = {
     implicit val tt = attr.typeTag
     return FilteredAttribute(attr, FEFilters.filterFromSpec(valueSpec))
   }
@@ -41,7 +41,7 @@ object FEFilters {
   }
 
   def localFilter[T](
-    vertices: Set[ID], attr: VertexAttribute[T], spec: String)(
+    vertices: Set[ID], attr: Attribute[T], spec: String)(
       implicit metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
     implicit val tt = attr.typeTag
     val filter = filterFromSpec[T](spec)
@@ -127,7 +127,7 @@ object FEFilters {
 
   private def filteredBaseSet[T](
     manager: MetaGraphManager,
-    attr: VertexAttribute[T],
+    attr: Attribute[T],
     spec: String): VertexSet = {
 
     implicit val tt = attr.typeTag

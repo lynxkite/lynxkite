@@ -25,17 +25,17 @@ object AddConstantAttribute {
   }
 
   import Scripting._
-  def run(vs: VertexSet, value: Double): VertexAttribute[Double] = {
+  def run(vs: VertexSet, value: Double): Attribute[Double] = {
     implicit val manager = vs.manager
     val op = AddConstantDoubleAttribute(value)
     op(op.vs, vs).result.attr
   }
-  def run(vs: VertexSet, value: Int): VertexAttribute[Int] = {
+  def run(vs: VertexSet, value: Int): Attribute[Int] = {
     implicit val manager = vs.manager
     val op = AddConstantIntAttribute(value)
     op(op.vs, vs).result.attr
   }
-  def run(vs: VertexSet, value: String): VertexAttribute[String] = {
+  def run(vs: VertexSet, value: String): Attribute[String] = {
     implicit val manager = vs.manager
     val op = AddConstantStringAttribute(value)
     op(op.vs, vs).result.attr

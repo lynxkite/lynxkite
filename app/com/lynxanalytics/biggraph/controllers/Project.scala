@@ -180,7 +180,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
   def pullBackEdgesWithInjection(
     origEdgeBundle: EdgeBundle,
-    origEAttrs: Seq[(String, VertexAttribute[_])],
+    origEAttrs: Seq[(String, Attribute[_])],
     newEdgeBundle: EdgeBundle,
     injection: EdgeBundle): Unit = manager.synchronized {
 
@@ -279,7 +279,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }.toSeq
 
   def vertexAttributes = new VertexAttributeHolder
-  def vertexAttributes_=(attrs: Map[String, VertexAttribute[_]]) = manager.synchronized {
+  def vertexAttributes_=(attrs: Map[String, Attribute[_]]) = manager.synchronized {
     existing(path / "vertexAttributes").foreach(manager.rmTag(_))
     assert(attrs.isEmpty || vertexSet != null, s"No vertex set for project $projectName")
     for ((name, attr) <- attrs) {
@@ -292,7 +292,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }.toSeq
 
   def edgeAttributes = new EdgeAttributeHolder
-  def edgeAttributes_=(attrs: Map[String, VertexAttribute[_]]) = manager.synchronized {
+  def edgeAttributes_=(attrs: Map[String, Attribute[_]]) = manager.synchronized {
     existing(path / "edgeAttributes").foreach(manager.rmTag(_))
     assert(attrs.isEmpty || edgeBundle != null, s"No edge bundle for project $projectName")
     for ((name, attr) <- attrs) {
@@ -364,12 +364,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   class ScalarHolder extends Holder[Scalar[_]]("scalars") {
     def validate(name: String, scalar: Scalar[_]) = {}
   }
-  class VertexAttributeHolder extends Holder[VertexAttribute[_]]("vertexAttributes") {
-    def validate(name: String, attr: VertexAttribute[_]) =
+  class VertexAttributeHolder extends Holder[Attribute[_]]("vertexAttributes") {
+    def validate(name: String, attr: Attribute[_]) =
       assert(attr.vertexSet == vertexSet, s"Vertex attribute $name does not match vertex set for project $projectName")
   }
-  class EdgeAttributeHolder extends Holder[VertexAttribute[_]]("edgeAttributes") {
-    def validate(name: String, attr: VertexAttribute[_]) =
+  class EdgeAttributeHolder extends Holder[Attribute[_]]("edgeAttributes") {
+    def validate(name: String, attr: Attribute[_]) =
       assert(attr.vertexSet == edgeBundle.asVertexSet, s"Edge attribute $name does not match edge bundle for project $projectName")
   }
 }
@@ -409,22 +409,22 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
   }
-  def belongsToAttribute: VertexAttribute[Vector[ID]] = {
+  def belongsToAttribute: Attribute[Vector[ID]] = {
     val segmentationIds = graph_operations.IdAsAttribute.run(project.vertexSet)
     val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     Project.withErrorLogging(s"Cannot get 'belongsToAttribute' for $this") {
-      aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr: VertexAttribute[Vector[ID]]
+      aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr: Attribute[Vector[ID]]
     }.getOrElse(null)
   }
   // In case the project is a segmentation
   // a Vector[ID] vertex attribute, that contains for each vertex
   // the vector of parent ids the segment contains.
-  def membersAttribute: VertexAttribute[Vector[ID]] = {
+  def membersAttribute: Attribute[Vector[ID]] = {
     val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     Project.withErrorLogging(s"Cannot get 'membersAttribute' for $this") {
-      aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr: VertexAttribute[Vector[ID]]
+      aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr: Attribute[Vector[ID]]
     }.getOrElse(null)
   }
   def project = Project(s"$parentName/segmentations/$name/project")

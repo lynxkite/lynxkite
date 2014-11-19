@@ -60,7 +60,7 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def load[T](vertexAttribute: VertexAttribute[T]): Future[VertexAttributeData[T]] = {
+  private def load[T](vertexAttribute: Attribute[T]): Future[VertexAttributeData[T]] = {
     implicit val ct = vertexAttribute.classTag
     getFuture(vertexAttribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
@@ -92,7 +92,7 @@ class DataManager(sc: spark.SparkContext,
     entity match {
       case vs: VertexSet => load(vs)
       case eb: EdgeBundle => load(eb)
-      case va: VertexAttribute[_] => load(va)
+      case va: Attribute[_] => load(va)
       case sc: Scalar[_] => load(sc)
     }
   }
@@ -184,7 +184,7 @@ class DataManager(sc: spark.SparkContext,
     entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
   }
 
-  def getFuture[T](vertexAttribute: VertexAttribute[T]): Future[VertexAttributeData[T]] = {
+  def getFuture[T](vertexAttribute: Attribute[T]): Future[VertexAttributeData[T]] = {
     loadOrExecuteIfNecessary(vertexAttribute)
     implicit val tagForT = vertexAttribute.typeTag
     entityCache(vertexAttribute.gUID).map(_.asInstanceOf[VertexAttributeData[_]].runtimeSafeCast[T])
@@ -200,7 +200,7 @@ class DataManager(sc: spark.SparkContext,
     entity match {
       case vs: VertexSet => getFuture(vs)
       case eb: EdgeBundle => getFuture(eb)
-      case va: VertexAttribute[_] => getFuture(va)
+      case va: Attribute[_] => getFuture(va)
       case sc: Scalar[_] => getFuture(sc)
     }
   }
@@ -211,7 +211,7 @@ class DataManager(sc: spark.SparkContext,
   def get(edgeBundle: EdgeBundle): EdgeBundleData = {
     Await.result(getFuture(edgeBundle), duration.Duration.Inf)
   }
-  def get[T](vertexAttribute: VertexAttribute[T]): VertexAttributeData[T] = {
+  def get[T](vertexAttribute: Attribute[T]): VertexAttributeData[T] = {
     Await.result(getFuture(vertexAttribute), duration.Duration.Inf)
   }
   def get[T](scalar: Scalar[T]): ScalarData[T] = {
