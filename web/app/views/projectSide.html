@@ -175,8 +175,10 @@
             <td>Buckets:</td>
             <td>
               <input
-                tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets" tooltip-placement="bottom"
-                type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
+                tooltip="{{bucketCount || side.state.bucketCount}}&times;{{bucketCount || side.state.bucketCount}} buckets"
+                tooltip-placement="bottom" type="range" min="1" max="10"
+                step="1" ng-model="bucketCount" ng-keypress="side.state.bucketCount = bucketCount"
+                ng-mouseup="side.state.bucketCount = bucketCount" ng-blur="side.state.bucketCount = bucketCount">
             </td>
           </tr>
         </table>
