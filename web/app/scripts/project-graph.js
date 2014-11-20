@@ -92,8 +92,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       function updateGlobal(vd) {
         scope.global = true;
         scope.request = {
-          vertexSet: vd.vertexSet.id,
-          edgeBundle: vd.edgeBundle.id,
+          vertexSetId: vd.vertexSet.id,
+          edgeBundleId: vd.edgeBundle.id,
         };
       }
 
@@ -113,7 +113,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         // Generate the TSV representation.
         scope.tsv = '';
         var gv = scope.graphView;
-        if (!gv || !gv.$resolved || gv.global) {
+        if (!gv || !gv.$resolved || scope.global) {
           return;
         }
         var sides = [scope.left, scope.right];
