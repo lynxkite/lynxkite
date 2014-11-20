@@ -117,10 +117,6 @@ angular.module('biggraph').directive('graphView', function(util) {
   }
 
   GraphView.prototype.clear = function() {
-    this.svg.show();
-    if (this.three) {
-      this.three.destroy();
-    }
     svg.removeClass(this.svg, 'loading');
     this.root.empty();
     for (var i = 0; i < this.unregistration.length; ++i) {
