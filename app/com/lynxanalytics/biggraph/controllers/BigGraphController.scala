@@ -298,7 +298,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     Project(request.name).remove()
   }
 
-  def renameProject(request: RenameProjectRequest): Unit = {
+  def renameProject(request: RenameProjectRequest): Unit = metaManager.synchronized {
     Project(request.from).copy(Project(request.to))
     Project(request.from).remove()
   }
