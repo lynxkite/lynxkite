@@ -127,6 +127,7 @@ case class ProjectFilterRequest(
   vertexFilters: List[ProjectAttributeFilter],
   edgeFilters: List[ProjectAttributeFilter])
 case class ForkProjectRequest(from: String, to: String)
+case class RenameProjectRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
 
@@ -295,6 +296,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def discardProject(request: DiscardProjectRequest): Unit = {
     Project(request.name).remove()
+  }
+
+  def renameProject(request: RenameProjectRequest): Unit = {
+    Project(request.from).copy(Project(request.to))
+    Project(request.from).remove()
   }
 
   def projectOp(request: ProjectOperationRequest): Unit = ops.apply(request)
