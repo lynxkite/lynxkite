@@ -221,6 +221,10 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     combineByKey(createCombiner, mergeValue)
   }
 
+  def reduceByKey(func: (V, V) => V): SortedRDD[K, V] = {
+    combineByKey(identity, func)
+  }
+
   def takeFirstNValuesOrSo(n: Int): SortedRDD[K, V] = {
     val numPartitions = partitions.size
     val div = n / numPartitions
