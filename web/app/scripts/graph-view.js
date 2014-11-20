@@ -218,7 +218,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  GraphView.prototype.updateGlobal = function(data, menu) {
+  GraphView.prototype.updateGlobal = function(data) {
     this.svg.hide();
     var three = THREE.Bootstrap({
       element: this.svg.parent()[0],
@@ -228,6 +228,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       },
     });
     this.three = three;
+    three.camera.fov = 90;
     three.renderer.setClearColor(0x222222);
 
     // Random generator
@@ -237,32 +238,21 @@ angular.module('biggraph').directive('graphView', function(util) {
       return sd * 2 - 1;
     }
 
-    // Insert cubes
-    var colors = [
-      new THREE.Color(0x3090FF),
-      new THREE.Color(0x10A0FF),
-      new THREE.Color(0x60109F),
-    ];
-    var n = colors.length;
-    var N = 10;
+    var N = 10000;
     var ps = new Float32Array(N * 4 * 3);
     var ds = new Float32Array(N * 4 * 3);
     var ss = new Float32Array(N * 4);
     var is = new Uint32Array(N * 6);
-    for (var i = 0; i < 100; ++i) {
-      var sz = 1 + rnd() * 0.2;
-      var mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz),
-                                new THREE.MeshPhongMaterial({ color: colors[i % n] }));
-      mesh.position.set(rnd() * 10, rnd() * 10, rnd() * 10);
-      three.scene.add(mesh);
+    for (var i = 0; i < N; ++i) {
       ps[4 * 3 * i + 0] = ps[4 * 3 * i + 3] = ds[4 * 3 * i + 6] = ds[4 * 3 * i + 9] = rnd() * 10;
       ps[4 * 3 * i + 1] = ps[4 * 3 * i + 4] = ds[4 * 3 * i + 7] = ds[4 * 3 * i + 10] = rnd() * 10;
       ps[4 * 3 * i + 2] = ps[4 * 3 * i + 5] = ds[4 * 3 * i + 8] = ds[4 * 3 * i + 11] = rnd() * 10;
       ps[4 * 3 * i + 6] = ps[4 * 3 * i + 9] = ds[4 * 3 * i + 0] = ds[4 * 3 * i + 3] = rnd() * 10;
       ps[4 * 3 * i + 7] = ps[4 * 3 * i + 10] = ds[4 * 3 * i + 1] = ds[4 * 3 * i + 4] = rnd() * 10;
       ps[4 * 3 * i + 8] = ps[4 * 3 * i + 11] = ds[4 * 3 * i + 2] = ds[4 * 3 * i + 5] = rnd() * 10;
-      ss[4 * i + 0] = ss[4 * i + 3] = 1;
-      ss[4 * i + 1] = ss[4 * i + 2] = -1;
+      var w = rnd();
+      ss[4 * i + 0] = ss[4 * i + 3] = w;
+      ss[4 * i + 1] = ss[4 * i + 2] = -w;
       is[6 * i + 0] = 4 * i + 0;
       is[6 * i + 1] = 4 * i + 1;
       is[6 * i + 2] = 4 * i + 2;
