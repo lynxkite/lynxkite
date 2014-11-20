@@ -6,7 +6,7 @@
   <input id="renameBox" class="form-control" style="display: inline; width: 200px;" ng-model="newName">
 </form>
 
-<div class="btn-group pull-right" dropdown>
+<div class="btn-group pull-right" ng-click="captureClick($event)" dropdown>
   <a href class="btn-dropdown dropdown-toggle"><span class="caret"></span></a>
   <ul class="dropdown-menu">
     <li><a href ng-click="toggleRenaming()">

@@ -56,15 +56,28 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
       scope.setProject = function(p) {
         scope.name = p;
       };
-      scope.discardProject = function(p, event) {
-        // avoid opening project or refreshing splash automatically
-        event.preventDefault();
-        event.stopPropagation();
-        if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
-          util.post('/ajax/discardProject', { name: p }, function() {
+
+      scope.menu = {
+        rename: function(kind, oldName, newName) {
+          if (oldName === newName) { return; }
+          util.post('/ajax/renameProject', { from: oldName, to: newName }, function() {
             // refresh splash manually
             scope.data = util.nocache('/ajax/splash');
           });
+        },
+        duplicate: function(kind, p) {
+          util.post('/ajax/forkProject', { from: p, to: 'Copy of ' + p }, function() {
+          // refresh splash manually
+          scope.data = util.nocache('/ajax/splash');
+          });
+        },
+        discard: function(kind, p) {
+          if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
+            util.post('/ajax/discardProject', { name: p }, function() {
+              // refresh splash manually
+              scope.data = util.nocache('/ajax/splash');
+            });
+          }
         }
       };
     },
