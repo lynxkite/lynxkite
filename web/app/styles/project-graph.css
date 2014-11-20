@@ -48,3 +48,8 @@
 .graph-sidebar button {
   margin-top: 5px;
 }
+
+global-view {
+  width: 100%;
+  height: 100%;
+}

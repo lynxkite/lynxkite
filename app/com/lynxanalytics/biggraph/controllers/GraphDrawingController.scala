@@ -131,6 +131,16 @@ case class CenterRequest(
 case class CenterResponse(
   val centers: Seq[String])
 
+case class FEGlobalViewRequest(
+  vertexSetId: String,
+  edgeBundleId: String)
+
+case class FEGlobalViewResponse(
+  vertices: List[FE3DPosition],
+  edges: List[FEEdge])
+
+case class FE3DPosition(x: Double, y: Double, z: Double)
+
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
@@ -456,6 +466,50 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(_))
     spark_util.Counters.printAll
     return FEGraphResponse(vertexDiagrams, edgeDiagrams)
+  }
+
+  def globalView(request: FEGlobalViewRequest): FEGlobalViewResponse = {
+    val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
+    val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
+    assert(vertexSet.gUID == edgeBundle.srcVertexSet.gUID, "Bad vertex set for edge bundle.")
+    assert(vertexSet.gUID == edgeBundle.dstVertexSet.gUID, "Bad vertex set for edge bundle.")
+    val maxSize: Int = 100000000 // Maximum number of vertices/edges to display.
+    def collectAll[T](attr: Attribute[T]): Map[ID, T] = {
+      val count = {
+        val op = graph_operations.CountVertices()
+        op(op.vertices, attr.vertexSet).result.count.value
+      }
+      assert(count <= maxSize, s"Too many items ($count > $maxSize).")
+      val idSet = {
+        val op = graph_operations.SampleVertices(count.toInt)
+        op(op.vs, attr.vertexSet).result.sample.value
+      }
+      val collected = {
+        val op = graph_operations.CollectAttribute[T](idSet.toSet)
+        op(op.attr, attr).result.idToAttr.value
+      }
+      collected
+    }
+    val positions = {
+      val op = graph_operations.ForceLayout3D()
+      op(op.es, edgeBundle).result.positions
+    }
+    val positionMap = collectAll(positions)
+    val edges = {
+      val op = graph_operations.EdgeToAttribute()
+      op(op.edges, edgeBundle).result.attr
+    }
+    val edgeMap = collectAll(edges)
+    val ids = positionMap.keys.toList
+    val idToIdx = ids.zipWithIndex.toMap
+    val feVertices = ids.map { i =>
+      val (x, y, z) = positionMap(i)
+      FE3DPosition(x, y, z)
+    }
+    val feEdges = edgeMap.values.map {
+      case (src, dst) => FEEdge(idToIdx(src), idToIdx(dst), 1.0)
+    }
+    return FEGlobalViewResponse(feVertices, feEdges.toList)
   }
 
   private def getFilteredVS(
