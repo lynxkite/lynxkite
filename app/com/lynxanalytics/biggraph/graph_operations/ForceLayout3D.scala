@@ -40,7 +40,7 @@ case class ForceLayout3D() extends TypedMetaGraphOp[Input, Output] {
     }.toSortedRDD(partitioner)
     weighted.cache
     println(s"weighted: ${weighted.collect.toSeq}")
-    val finalLayout = steps(initialLayout, weighted, 5)
+    val finalLayout = steps(initialLayout, weighted, 50)
     output(o.positions, finalLayout)
   }
 
@@ -67,22 +67,23 @@ case class ForceLayout3D() extends TypedMetaGraphOp[Input, Output] {
     (Math.sin(phase), Math.sin(phase * 2.0), Math.sin(phase * 3.0))
   }
 
-  val Gravity = 0.01
-  val IdealDistance = 1.0
+  final val Gravity = 0.01
+  final val IdealDistance = 1.0
+  final val Fraction = 0.001
   def improved(ps: PositionRDD, es: WeightedEdgeRDD): PositionRDD = {
     ps.cache
     println(s"ps ${ps.collect.toSeq}")
     val attraction = edgePositions(ps, es).mapValues {
       case (srcWeight, srcPos, dstPos) =>
         val d = dstPos - srcPos
-        d * d.len / IdealDistance / srcWeight
+        d * d.len * Fraction / IdealDistance / srcWeight
     }.reduceByKey(_ + _)
     // TODO: Do this without cartesian.
     val repulsion = ps.cartesian(ps).flatMap {
       case ((src, srcPos), (dst, dstPos)) => if (src == dst) None else {
         val d = srcPos - dstPos
         val l = d.len
-        val repu = if (l < 0.1) randomVector(src) else d * IdealDistance * IdealDistance / l / l
+        val repu = if (l < 0.1) randomVector(src) else d * Fraction * IdealDistance * IdealDistance / l / l
         Some(src -> repu)
       }
     }.toSortedRDD(ps.partitioner.get).reduceByKey(_ + _)
