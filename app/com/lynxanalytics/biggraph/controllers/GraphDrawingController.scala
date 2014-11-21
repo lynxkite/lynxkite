@@ -492,7 +492,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
     val positions = {
       val op = graph_operations.ForceLayout3D()
-      op(op.es, edgeBundle).result.positions
+      val degree = graph_operations.OutDegree.allDegree(edgeBundle)
+      op(op.es, edgeBundle)(op.degree, degree).result.positions
     }
     val positionMap = collectAll(positions)
     val edges = {

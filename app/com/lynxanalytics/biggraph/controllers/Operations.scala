@@ -588,18 +588,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val op = graph_operations.RemoveNonSymmetricEdges()
         op(op.es, es).result.symmetric
       }
-      val deg = params("inout") match {
-        case "in" => applyOn(reverse(es))
-        case "out" => applyOn(es)
-        case "symmetric" => applyOn(esSym)
-        case "all" => graph_operations.DeriveJS.add(applyOn(reverse(es)), applyOn(es))
+      val deg: Attribute[Double] = params("inout") match {
+        case "in" => graph_operations.OutDegree.inDegree(es)
+        case "out" => graph_operations.OutDegree.outDegree(es)
+        case "symmetric" => graph_operations.OutDegree.outDegree(esSym)
+        case "all" => graph_operations.OutDegree.allDegree(es)
       }
       project.vertexAttributes(params("name")) = deg
-    }
-
-    private def applyOn(es: EdgeBundle): Attribute[Double] = {
-      val op = graph_operations.OutDegree()
-      op(op.es, es).result.outDegree
     }
   })
 
@@ -2038,8 +2033,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def reverse(eb: EdgeBundle): EdgeBundle = {
-    val op = graph_operations.ReverseEdges()
-    op(op.esAB, eb).result.esBA
+    graph_operations.ReverseEdges.run(eb)
   }
 
   def count(eb: EdgeBundle): Scalar[Long] = {

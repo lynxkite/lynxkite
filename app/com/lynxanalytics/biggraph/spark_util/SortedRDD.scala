@@ -190,7 +190,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
         new Iterator[(K, V)] {
           def hasNext = bi.hasNext
           def next() = {
-            val n = bi.next
+            val n: (K, V) = bi.next
             while (bi.hasNext && bi.head == n) bi.next
             n
           }
