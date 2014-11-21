@@ -35,8 +35,8 @@ angular.module('biggraph').directive('globalView', function() {
             controls: {
               klass: THREE.OrbitControls
             },
+            camera: { fov: 90 },
           });
-          three.camera.fov = 90;
           three.renderer.setClearColor(0x222222);
         }
         three.scene = new THREE.Scene();
@@ -61,7 +61,7 @@ angular.module('biggraph').directive('globalView', function() {
           ps[4 * 3 * i + 7] = ps[4 * 3 * i + 10] = ds[4 * 3 * i + 1] = ds[4 * 3 * i + 4] = dst.y;
           ps[4 * 3 * i + 8] = ps[4 * 3 * i + 11] = ds[4 * 3 * i + 2] = ds[4 * 3 * i + 5] = dst.z;
           // The more edges we have, the thinner we make them.
-          var w = Math.max(0.4, data.edges[i].size * 100 / n);
+          var w = Math.min(0.4, data.edges[i].size * 100 / n);
           ss[4 * i + 0] = ss[4 * i + 3] = w;
           ss[4 * i + 1] = ss[4 * i + 2] = -w;
           is[6 * i + 0] = 4 * i + 0;
