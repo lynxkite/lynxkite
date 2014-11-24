@@ -83,7 +83,9 @@ case class ForceLayout3D() extends TypedMetaGraphOp[Input, Output] {
       case ((src, srcPos), (dst, dstPos)) => if (src == dst) None else {
         val d = srcPos - dstPos
         val l = d.len
-        val repu = if (l < 0.1) randomVector(src) else d * Fraction * IdealDistance * IdealDistance / l / l
+        val repu =
+          if (l < 0.1 * IdealDistance) randomVector(src)
+          else d * Fraction * IdealDistance * IdealDistance / l / l
         Some(src -> repu)
       }
     }.toSortedRDD(ps.partitioner.get).reduceByKey(_ + _)
