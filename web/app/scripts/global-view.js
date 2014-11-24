@@ -11,7 +11,8 @@ angular.module('biggraph').directive('globalView', function() {
         if (scope.graph === undefined || !scope.graph.$resolved) {
           loading();
         } else if (scope.graph.$error) {
-          error(scope.graph.$error);
+          scope.graph.$popupError();
+          error();
         } else {
           update(scope.graph);
         }
@@ -19,28 +20,73 @@ angular.module('biggraph').directive('globalView', function() {
       scope.$watch('graph', updateGraph);
       scope.$watch('graph.$resolved', updateGraph);
 
-      function loading() {}  // TODO
-      function error() {}  // TODO
-      var three;
+      var three = THREE.Bootstrap({
+        element: element.parent()[0],
+        plugins: ['core', 'controls', 'cursor'],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+        camera: { fov: 90 },
+      });
+      three.renderer.setClearColor(0x222222);
+      three.element.addEventListener('mousedown', function() {
+        three.controls.autoRotate = false;
+      });
+
       scope.$on('$destroy', function() {
         if (three) {
           three.destroy();
         }
       });
-      function update(data) {
-        if (!three) {
-          three = THREE.Bootstrap({
-            element: element.parent()[0],
-            plugins: ['core', 'controls', 'cursor'],
-            controls: {
-              klass: THREE.OrbitControls
-            },
-            camera: { fov: 90 },
-          });
-          three.renderer.setClearColor(0x222222);
-        }
-        three.scene = new THREE.Scene();
+      function clear() {
+        three.controls.autoRotate = true;
+        three.controls.autoRotateSpeed = 2.0;
 
+        three.scene = new THREE.Scene();
+        three.camera.position.set(10, 5, 12);
+
+        var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+        hemiLight.position.set(0, 500, 0);
+        three.scene.add(hemiLight);
+        var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(-1, 1.75, 1);
+        three.scene.add(dirLight);
+        var dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight2.position.set(-2, -1.75, -1);
+        three.scene.add(dirLight2);
+      }
+
+      function loading() {
+        clear();
+        three.controls.autoRotateSpeed = 5.0;
+        var geom = new THREE.DodecahedronGeometry(10, 1);
+        var mat = new THREE.MeshPhongMaterial({
+          color: 0x809080,
+          specular: 0xffffff,
+          shading: THREE.FlatShading,
+        });
+        three.scene.add(new THREE.Mesh(geom, mat));
+      }
+
+      function error() {
+        clear();
+        three.controls.autoRotateSpeed = 20.0;
+        var S = 5;
+        var dot = new THREE.BoxGeometry(S, S, S);
+        var geom = new THREE.BoxGeometry(S, 3 * S, S);
+        geom.merge(dot, new THREE.Matrix4().makeTranslation(0, -3 * S, 0), 0);
+        var mat = new THREE.MeshPhongMaterial({
+          color: 0x906060,
+          specular: 0x808080,
+          shading: THREE.FlatShading,
+        });
+        var mesh = new THREE.Mesh(geom, mat);
+        mesh.position.y = 0.5 * S;
+        three.scene.add(mesh);
+      }
+
+      function update(data) {
+        clear();
         // Geometry generation. 4 points and 2 triangles are generated for each edge.
         var n = data.edges.length;
         // Position of this point.
@@ -85,17 +131,6 @@ angular.module('biggraph').directive('globalView', function() {
         });
         mat.side = THREE.DoubleSide;
         three.scene.add(new THREE.Mesh(geom, mat));
-
-        // Lights.
-        var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
-        hemiLight.position.set(0, 500, 0);
-        three.scene.add(hemiLight);
-        var dirLight = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight.position.set(-1, 1.75, 1);
-        three.scene.add(dirLight);
-
-        // Camera.
-        three.camera.position.set(10, 5, 12);
       }
     },
   };
