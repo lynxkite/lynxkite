@@ -1,5 +1,7 @@
+var mocks = require('./mocks.js');
 describe('splash page', function() {
   beforeEach(function() {
+    mocks.add(browser);
     browser.get('/');
   });
 

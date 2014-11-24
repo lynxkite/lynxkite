@@ -82,9 +82,8 @@ module.exports = function (grunt) {
               res.end();
               return;
             }
-            var sparkStatusDelay = 0;  // Set higher when experimenting with spark-status.
             if (req.url.indexOf('/ajax/spark-status') === 0) {
-              setTimeout(next, sparkStatusDelay);
+              setTimeout(next, 10000);
               return;
             }
             next();
