@@ -68,6 +68,7 @@ angular
           window.location.href = 'https://' + window.location.hostname + '/authenticate/google';
         } else {
           req.$error = util.responseToErrorMessage(failure);
+          req.$popupError = function() { util.ajaxError(failure); };
         }
       });
       return req;
