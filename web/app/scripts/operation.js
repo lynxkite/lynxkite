@@ -26,7 +26,7 @@ angular.module('biggraph').directive('operation', function (util, hotkeys) {
         var reqParams = {};
         scope.op.parameters.forEach(function(p) {
           if (p.multipleChoice) {
-            reqParams[p.id] = scope.multiParams[p.id].join(',');
+            reqParams[p.id] = (scope.multiParams[p.id] || []).join(',');
           } else {
             reqParams[p.id] = scope.params[p.id];
           }
