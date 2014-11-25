@@ -325,9 +325,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
     project.checkpoint("Filter " + filterStrings.mkString(", ")) {
       project.pullBackWithInjection(vertexEmbedding)
-      val edgeEmbedding =
-        FEFilters.embedFilteredVertices(project.edgeBundle.asVertexSet, edgeFilters)
-      project.pullBackEdgesWithInjection(edgeEmbedding)
+      if (edgeFilters.nonEmpty) {
+        val edgeEmbedding =
+          FEFilters.embedFilteredVertices(project.edgeBundle.asVertexSet, edgeFilters)
+        project.pullBackEdgesWithInjection(edgeEmbedding)
+      }
     }
   }
 
