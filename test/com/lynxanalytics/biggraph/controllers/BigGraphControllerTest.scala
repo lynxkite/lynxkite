@@ -48,6 +48,13 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
     assert(project.toFE.undoOp == "Filter age <40")
   }
 
+  test("filtering by partially defined vertex attribute") {
+    run("Example Graph")
+    val filter = ProjectAttributeFilter("income", "<2000")
+    controller.filterProject(ProjectFilterRequest(project.projectName, List(filter), List()))
+    assert(vattr[String]("name") == Seq("Adam"))
+  }
+
   test("filtering by edge attribute") {
     run("Example Graph")
     val filter = ProjectAttributeFilter("weight", ">2")
