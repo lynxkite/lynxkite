@@ -14,6 +14,17 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   assert(!projectName.contains(separator), s"Invalid project name: $projectName")
   val path: SymbolPath = s"projects/$projectName"
   def toFE: FEProject = {
+    Try(unsafeToFE) match {
+      case Success(fe) => fe
+      case Failure(ex) => FEProject(
+        name = projectName,
+        error = ex.getMessage
+      )
+    }
+  }
+
+  // May raise an exception.
+  private def unsafeToFE: FEProject = {
     assert(manager.tagExists(path / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
@@ -24,6 +35,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
       FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
     }
+    def feArray(things: Iterable[(String, TypedEntity[_])]) = {
+      things.map { case (name, e) => feAttr(e, name) }.toList
+    }
     val members = if (isSegmentation) {
       Some(feAttr(asSegmentation.membersAttribute, "$members", isInternal = true))
     } else {
@@ -31,12 +45,16 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
 
     FEProject(
-      projectName, lastOperation, nextOperation, vs, eb, notes,
-      scalars.map { case (name, scalar) => feAttr(scalar, name) }.toList,
-      vertexAttributes.map { case (name, attr) => feAttr(attr, name) }.toList ++ members,
-      edgeAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
-      segmentations.map(_.toFE).toList,
-      opCategories = List())
+      name = projectName,
+      undoOp = lastOperation,
+      redoOp = nextOperation,
+      vertexSet = vs,
+      edgeBundle = eb,
+      notes = notes,
+      scalars = feArray(scalars),
+      vertexAttributes = feArray(vertexAttributes) ++ members,
+      edgeAttributes = feArray(edgeAttributes),
+      segmentations = segmentations.map(_.toFE).toList)
   }
 
   private def checkpoints: Seq[String] = get("checkpoints") match {

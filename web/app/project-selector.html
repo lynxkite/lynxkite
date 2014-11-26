@@ -25,11 +25,16 @@
       <p class="alert alert-danger" ng-if="data.$error">{{data.$error}}</p>
 
       <a ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
-        href ng-click="setProject(project.name)">
+        href ng-click="setProject(project)" ng-class="{ error: project.error }">
         <h1><item-name-and-menu menu="menu" name="{{util.spaced(project.name)}}" type="project"></item-name-and-menu></h1>
-        <value ref="vertexCounts[project.name]"></value> vertices,
-        <value ref="edgeCounts[project.name]"></value> edges.
-        {{project.notes}}
+        <span ng-if="project.error">
+          {{project.error}}
+        </span>
+        <span ng-if="!project.error">
+          <value ref="vertexCounts[project.name]"></value> vertices,
+          <value ref="edgeCounts[project.name]"></value> edges.
+          {{project.notes}}
+        </span>
       </a>
   </div>
 </div>

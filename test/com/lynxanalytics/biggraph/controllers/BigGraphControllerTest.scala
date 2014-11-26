@@ -47,4 +47,11 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
     assert(eattr[String]("comment") == Seq("Bob envies Adam", "Bob loves Eve"))
     assert(project.toFE.undoOp == "Filter weight >2")
   }
+
+  test("project list") {
+    run("Example Graph")
+    val splash = controller.splash(null)
+    assert(splash.projects.size == 1)
+    assert(splash.projects(0).name == "Test_Project")
+  }
 }
