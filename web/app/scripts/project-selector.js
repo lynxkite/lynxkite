@@ -54,7 +54,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
           });
       };
       scope.setProject = function(p) {
-        scope.name = p;
+        if (!p.error) {  // Ignore clicks on errored projects.
+          scope.name = p.name;
+        }
       };
 
       scope.menu = {

@@ -96,16 +96,17 @@ case class FEAttribute(
 
 case class FEProject(
   name: String,
-  undoOp: String, // Name of last operation. Empty if there is nothing to undo.
-  redoOp: String, // Name of next operation. Empty if there is nothing to redo.
-  vertexSet: String,
-  edgeBundle: String,
-  notes: String,
-  scalars: List[FEAttribute],
-  vertexAttributes: List[FEAttribute],
-  edgeAttributes: List[FEAttribute],
-  segmentations: List[FESegmentation],
-  opCategories: List[OperationCategory])
+  error: String = "", // If this is non-empty the project is broken and cannot be opened.
+  undoOp: String = "", // Name of last operation. Empty if there is nothing to undo.
+  redoOp: String = "", // Name of next operation. Empty if there is nothing to redo.
+  vertexSet: String = "",
+  edgeBundle: String = "",
+  notes: String = "",
+  scalars: List[FEAttribute] = List(),
+  vertexAttributes: List[FEAttribute] = List(),
+  edgeAttributes: List[FEAttribute] = List(),
+  segmentations: List[FESegmentation] = List(),
+  opCategories: List[OperationCategory] = List())
 
 case class FESegmentation(
   name: String,
@@ -271,15 +272,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def splash(request: serving.Empty): Splash = {
-    val projects = ops.projects.flatMap { p =>
-      Try(p.toFE) match {
-        case Success(fe) =>
-          Some(fe)
-        case Failure(ex) =>
-          log.error(s"Problem with project $p:", ex)
-          None
-      }
-    }
+    val projects = ops.projects.map(_.toFE)
     return Splash(version, projects.toList)
   }
 
