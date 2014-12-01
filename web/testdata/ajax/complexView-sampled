@@ -58,9 +58,82 @@
       }
     ],
     "center": 1
+  },
+  {
+    "mode": "sampled",
+    "vertices": [
+      { "id": "1111111",
+        "attrs": {
+          "5": { "double": 10, "string": "10", "defined": true },
+          "7": { "double": 0, "string": "Male", "defined": true },
+          "6": { "double": 0, "string": "0", "defined": true },
+          "8": { "double": 0, "string": "red", "defined": true },
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/zsolt.katona.790/picture", "defined": true }
+        }
+      },
+      { "id": "2222222",
+        "attrs": {
+          "5": { "double": 20, "string": "20", "defined": true },
+          "7": { "double": 0, "string": "Female", "defined": true },
+          "6": { "double": 10, "string": "10", "defined": true },
+          "8": { "double": 0, "string": "pink", "defined": true },
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.barjak/picture", "defined": true }
+        }
+      },
+      { "id": "3333333",
+        "attrs": {
+          "5": { "double": 10, "string": "10", "defined": true },
+          "7": { "double": 0, "string": "Female", "defined": true },
+          "6": { "double": 20, "string": "20", "defined": true },
+          "8": { "double": 0, "string": "green", "defined": true },
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.nemeth.5682/picture", "defined": true }
+        }
+      },
+      { "id": "4444444",
+        "attrs": {
+          "5": { "double": 20, "string": "20", "defined": true },
+          "7": { "double": 0, "string": "", "defined": true },
+          "6": { "double": 30, "string": "30", "defined": true },
+          "8": { "double": 0, "string": "black", "defined": true },
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/daniel.darabos/picture", "defined": true }
+        }
+      },
+      { "id": "5555555",
+        "attrs": {
+          "5": { "double": 15, "string": "15", "defined": true },
+          "7": { "double": 0, "string": "Female", "defined": true },
+          "6": { "double": 40, "string": "40", "defined": true },
+          "8": { "double": 0, "string": "violet", "defined": true },
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/pzubcsek/picture", "defined": true }
+        }
+      },
+      { "id": "6666666666666666666",
+        "attrs": {
+          "5": { "double": 5, "string": "5", "defined": true },
+          "7": { "double": 0, "string": "Female", "defined": true },
+          "6": { "double": 0, "string": "-50", "defined": true },
+          "8": { "double": 0, "string": "blue", "defined": true },
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/miklos.sarvary.1/picture", "defined": true }
+        }
+      }
+    ],
+    "center": 1
   }],
   "edgeBundles": [{
     "srcIdx": 0, "dstIdx": 0,
+    "edges": [
+      { "a": 1, "b": 2, "size": 230 },
+      { "a": 2, "b": 3, "size": 255 },
+      { "a": 3, "b": 4, "size": 2 },
+      { "a": 4, "b": 5, "size": 217 },
+      { "a": 4, "b": 0, "size": 664 },
+      { "a": 0, "b": 4, "size": 64 },
+      { "a": 1, "b": 3, "size": 168 },
+      { "a": 3, "b": 1, "size": 168 }
+    ]
+  },
+  {
+    "srcIdx": 1, "dstIdx": 1,
     "edges": [
       { "a": 1, "b": 2, "size": 230 },
       { "a": 2, "b": 3, "size": 255 },
