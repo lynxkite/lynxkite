@@ -204,10 +204,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val originalCount = cop(cop.vertices, original).result.count
     val op = graph_operations.VertexBucketGrid(xBucketedAttr.bucketer, yBucketedAttr.bucketer)
     var builder = op(op.filtered, filtered)(op.vertices, original)(op.originalCount, originalCount)
-    if (xBucketedAttr.bucketer.numBuckets > 1) {
+    if (xBucketedAttr.nonEmpty) {
       builder = builder(op.xAttribute, xBucketedAttr.attribute)
     }
-    if (yBucketedAttr.bucketer.numBuckets > 1) {
+    if (yBucketedAttr.nonEmpty) {
       builder = builder(op.yAttribute, yBucketedAttr.attribute)
     }
     builder.result.buckets
@@ -219,7 +219,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     loadGUIDsToMemory(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
 
-    val xBucketedAttr = if (request.xNumBuckets > 1 && request.xBucketingAttributeId.nonEmpty) {
+    val xBucketedAttr = if (request.xBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
       dataManager.cache(attribute)
       FEBucketers.bucketedAttribute(
@@ -227,7 +227,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     } else {
       graph_operations.BucketedAttribute.emptyBucketedAttribute
     }
-    val yBucketedAttr = if (request.yNumBuckets > 1 && request.yBucketingAttributeId.nonEmpty) {
+    val yBucketedAttr = if (request.yBucketingAttributeId.nonEmpty) {
       val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
       dataManager.cache(attribute)
       FEBucketers.bucketedAttribute(
