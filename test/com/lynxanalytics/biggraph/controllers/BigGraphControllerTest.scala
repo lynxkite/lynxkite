@@ -50,9 +50,9 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
 
   test("filtering by partially defined vertex attribute") {
     run("Example Graph")
-    val filter = ProjectAttributeFilter("income", "<2000")
+    val filter = ProjectAttributeFilter("income", ">1000")
     controller.filterProject(ProjectFilterRequest(project.projectName, List(filter), List()))
-    assert(vattr[String]("name") == Seq("Adam"))
+    assert(vattr[String]("name") == Seq("Bob"))
   }
 
   test("filtering by edge attribute") {

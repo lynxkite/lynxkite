@@ -71,7 +71,7 @@ case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (3l, "Male"))).toSortedRDD(partitioner))
     output(o.income, sc.parallelize(Seq(
       (0l, 1000.0),
-      (1l, 2000.0))).toSortedRDD(partitioner))
+      (2l, 2000.0))).toSortedRDD(partitioner))
     output(o.comment, sc.parallelize(Seq(
       (0l, "Adam loves Eve"),
       (1l, "Eve loves Adam"),
