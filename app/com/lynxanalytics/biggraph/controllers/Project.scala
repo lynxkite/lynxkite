@@ -35,7 +35,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
       FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
     }
-    def feArray(things: Iterable[(String, TypedEntity[_])]) = {
+    def feList(things: Iterable[(String, TypedEntity[_])]) = {
       things.map { case (name, e) => feAttr(e, name) }.toList
     }
     val members = if (isSegmentation) {
@@ -51,9 +51,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       vertexSet = vs,
       edgeBundle = eb,
       notes = notes,
-      scalars = feArray(scalars),
-      vertexAttributes = feArray(vertexAttributes) ++ members,
-      edgeAttributes = feArray(edgeAttributes),
+      scalars = feList(scalars),
+      vertexAttributes = feList(vertexAttributes) ++ members,
+      edgeAttributes = feList(edgeAttributes),
       segmentations = segmentations.map(_.toFE).toList)
   }
 
