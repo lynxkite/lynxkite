@@ -29,7 +29,7 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     extends TypedMetaGraphOp[Input[S, T], Output[S, T]] {
 
   @transient override lazy val inputs = new Input[S, T](
-    xBucketer.numBuckets > 1, yBucketer.numBuckets > 1)
+    xBucketer.nonEmpty, yBucketer.nonEmpty)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
@@ -42,20 +42,20 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     implicit val instance = output.instance
     val filtered = inputs.filtered.rdd
     var indexingSeq = Seq[BucketedAttribute[_]]()
-    val xBuckets = (if (xBucketer.numBuckets == 1) {
+    val xBuckets = if (xBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
     } else {
       val xAttr = inputs.xAttribute.rdd
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
       filtered.sortedJoin(xAttr).flatMapValues { case (_, value) => xBucketer.whichBucket(value) }
-    })
-    val yBuckets = (if (yBucketer.numBuckets == 1) {
+    }
+    val yBuckets = if (yBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
     } else {
       val yAttr = inputs.yAttribute.rdd
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
       filtered.sortedJoin(yAttr).flatMapValues { case (_, value) => yBucketer.whichBucket(value) }
-    })
+    }
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
     val xyBuckets = xBuckets.sortedJoin(yBuckets)
