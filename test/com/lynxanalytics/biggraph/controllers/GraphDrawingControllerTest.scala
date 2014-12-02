@@ -235,6 +235,19 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.sizes == Seq(1, 2, 0, 1))
   }
 
+  test("histogram for double (partially defined)") {
+    val g = graph_operations.ExampleGraph()().result
+    val req = HistogramSpec(
+      attributeId = g.income.gUID.toString,
+      vertexFilters = Seq(),
+      numBuckets = 4,
+      axisOptions = AxisOptions())
+    val res = controller.getHistogram(req)
+    assert(res.labelType == "between")
+    assert(res.labels == Seq("1000", "1250", "1500", "1750", "2000"))
+    assert(res.sizes == Seq(1, 0, 0, 1))
+  }
+
   test("histogram for double (logarithmic)") {
     val g = graph_operations.ExampleGraph()().result
     val req = HistogramSpec(
