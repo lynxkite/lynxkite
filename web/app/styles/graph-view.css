@@ -96,6 +96,7 @@ svg .vertex.center .icon {
 svg .bucket {
   font-size: 12px;
   fill: #888;
+  text-anchor: middle;
 }
 svg .bucket.highlight {
   fill: white;
