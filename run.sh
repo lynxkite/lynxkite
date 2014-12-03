@@ -11,6 +11,6 @@ cd ..
 ln -s web/.tmp public
 
 sbt stage
-stage/bin/biggraph "$@"
+stage/bin/biggraph -Dhttps.port=9001 -Dhttps.keyStore=test/localhost.self-signed.cert -Dhttps.keyStorePassword=asdasd "$@"
 
 rm public
