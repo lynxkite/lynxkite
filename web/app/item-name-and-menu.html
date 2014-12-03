@@ -1,5 +1,5 @@
 <span ng-hide="renaming">
-  {{name}}
+  {{ spaced ? util.spaced(name) : name }}
 </span>
 
 <form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming">

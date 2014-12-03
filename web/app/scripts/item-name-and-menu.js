@@ -1,11 +1,14 @@
 'use strict';
 
-angular.module('biggraph').directive('itemNameAndMenu', function($timeout) {
+angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util) {
   return {
     restrict: 'E',
     scope: { menu: '=', name: '@', type: '@' },
     templateUrl: 'item-name-and-menu.html',
-    link: function(scope, element) {
+    link: function(scope, element, attrs) {
+      scope.util = util;
+      scope.spaced = attrs.spaced !== undefined;
+
       scope.toggleRenaming = function() {
         scope.renaming = !scope.renaming;
         scope.newName = scope.name;
