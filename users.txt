@@ -1,0 +1,3 @@
+{
+  "darabos@lynx" : "$2a$10$oLOENpZ0P8GnJwiNDVyDaOWH1WUgvG6DL2NpIgMO5x.FhdAUCaFES"
+}
