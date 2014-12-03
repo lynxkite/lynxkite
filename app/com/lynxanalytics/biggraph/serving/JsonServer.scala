@@ -47,29 +47,29 @@ class JsonServer extends mvc.Controller with ss.SecureSocial {
     }
   }
 
-  def jsonPost[I: json.Reads, O: json.Writes](handler: I => O) = {
+  def jsonPost[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => O) = {
     action(parse.json) { request =>
       log.info(s"POST ${request.path} ${request.body}")
       val i = request.body.as[I]
-      Ok(json.Json.toJson(handler(i)))
+      Ok(json.Json.toJson(handler(request.user, i)))
     }
   }
 
-  def jsonQuery[I: json.Reads, R](request: mvc.Request[mvc.AnyContent])(handler: I => R): R = {
+  def jsonQuery[I: json.Reads, R](request: ss.SecuredRequest[mvc.AnyContent])(handler: (ss.Identity, I) => R): R = {
     val key = "q"
     val value = request.getQueryString(key)
     assert(value.nonEmpty, s"Missing query parameter $key.")
     val s = value.get
     log.info(s"GET ${request.path} $s")
     val i = json.Json.parse(s).as[I]
-    handler(i)
+    handler(request.user, i)
   }
 
-  def jsonGet[I: json.Reads, O: json.Writes](handler: I => O) = {
+  def jsonGet[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => O) = {
     action(parse.anyContent) { request =>
-      jsonQuery(request) { i: I =>
+      jsonQuery(request) { (user: ss.Identity, i: I) =>
         try {
-          Ok(json.Json.toJson(handler(i)))
+          Ok(json.Json.toJson(handler(user, i)))
         } catch {
           case flying: FlyingResult => flying.result
         }
@@ -77,10 +77,10 @@ class JsonServer extends mvc.Controller with ss.SecureSocial {
     }
   }
 
-  def jsonFuture[I: json.Reads, O: json.Writes](handler: I => concurrent.Future[O]) = {
+  def jsonFuture[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => concurrent.Future[O]) = {
     asyncAction(parse.anyContent) { request =>
-      jsonQuery(request) { i: I =>
-        handler(i).map(o => Ok(json.Json.toJson(o)))
+      jsonQuery(request) { (user: ss.Identity, i: I) =>
+        handler(user, i).map(o => Ok(json.Json.toJson(o)))
       }
     }
   }

@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.spark
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
+import securesocial.{ core => ss }
 
 case class SparkStatusRequest(
   syncedUntil: Long) // Client requests to be notified only of events after this time.
@@ -64,22 +65,22 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   val listener = new SparkListener
   sc.addSparkListener(listener)
 
-  def sparkStatus(req: SparkStatusRequest): concurrent.Future[SparkStatusResponse] = {
+  def sparkStatus(user: ss.Identity, req: SparkStatusRequest): concurrent.Future[SparkStatusResponse] = {
     listener.future(req.syncedUntil)
   }
 
-  def sparkCancelJobs(req: serving.Empty): Unit = {
+  def sparkCancelJobs(user: ss.Identity, req: serving.Empty): Unit = {
     sc.cancelAllJobs()
   }
 
-  def getClusterStatus(request: serving.Empty): SparkClusterStatusResponse = {
+  def getClusterStatus(user: ss.Identity, request: serving.Empty): SparkClusterStatusResponse = {
     SparkClusterStatusResponse(environment.sparkContext.master, environment.numInstances)
   }
 
-  def setClusterNumInstances(request: SetClusterNumInstanceRequest): SparkClusterStatusResponse = {
+  def setClusterNumInstances(user: ss.Identity, request: SetClusterNumInstanceRequest): SparkClusterStatusResponse = {
     if (request.password != "UCU8HB0d6fQJwyD8UAdDb")
       throw new IllegalArgumentException("Bad password!")
     environment.setNumInstances(request.workerInstances)
-    return getClusterStatus(serving.Empty())
+    return getClusterStatus(user, serving.Empty())
   }
 }

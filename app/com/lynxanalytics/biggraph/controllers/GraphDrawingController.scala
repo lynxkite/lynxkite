@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.serving.FlyingResult
 import com.lynxanalytics.biggraph.spark_util
 
 import scala.collection.mutable
+import securesocial.{ core => ss }
 
 case class VertexDiagramSpec(
   val vertexSetId: String,
@@ -135,7 +136,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
 
-  def getVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
+  def getVertexDiagram(user: ss.Identity, request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {
       case "bucketed" => getBucketedVertexDiagram(request)
       case "sampled" => getSampledVertexDiagram(request)
@@ -355,7 +356,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return None
   }
 
-  def getEdgeDiagram(request: EdgeDiagramSpec): EdgeDiagramResponse = {
+  def getEdgeDiagram(user: ss.Identity, request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcView = graph_operations.VertexView.fromDiagram(
       metaManager.scalar(request.srcDiagramId.asUUID))
     val dstView = graph_operations.VertexView.fromDiagram(
@@ -440,8 +441,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq)
   }
 
-  def getComplexView(request: FEGraphRequest): FEGraphResponse = {
-    val vertexDiagrams = request.vertexSets.map(getVertexDiagram(_))
+  def getComplexView(user: ss.Identity, request: FEGraphRequest): FEGraphResponse = {
+    val vertexDiagrams = request.vertexSets.map(getVertexDiagram(user, _))
     val idxPattern = "idx\\[(\\d+)\\]".r
     def resolveDiagramId(reference: String): String = {
       reference match {
@@ -453,7 +454,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       .map(eb => eb.copy(
         srcDiagramId = resolveDiagramId(eb.srcDiagramId),
         dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
-    val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(_))
+    val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(user, _))
     spark_util.Counters.printAll
     return FEGraphResponse(vertexDiagrams, edgeDiagrams)
   }
@@ -511,7 +512,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     FilteredEdges(ids, trips.srcEdges, trips.dstEdges)
   }
 
-  def getCenter(request: CenterRequest): CenterResponse = {
+  def getCenter(user: ss.Identity, request: CenterRequest): CenterResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     dataManager.cache(vertexSet)
     loadGUIDsToMemory(request.filters.map(_.attributeId))
@@ -523,7 +524,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     CenterResponse(sampled.map(_.toString))
   }
 
-  def getHistogram(request: HistogramSpec): HistogramResponse = {
+  def getHistogram(user: ss.Identity, request: HistogramSpec): HistogramResponse = {
     val vertexAttribute = metaManager.vertexAttribute(request.attributeId.asUUID)
     dataManager.cache(vertexAttribute.vertexSet)
     dataManager.cache(vertexAttribute)
@@ -547,7 +548,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       (0 until bucketedAttr.bucketer.numBuckets).map(counts.getOrElse(_, 0L)))
   }
 
-  def getScalarValue(request: ScalarValueRequest): DynamicValue = {
+  def getScalarValue(user: ss.Identity, request: ScalarValueRequest): DynamicValue = {
     val scalar = metaManager.scalar(request.scalarId.asUUID)
     if (!request.calculate && !dataManager.isCalculated(scalar)) {
       throw new FlyingResult(play.api.mvc.Results.NotFound("Value is not calculated yet"))
