@@ -273,34 +273,45 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def splash(user: ss.Identity, request: serving.Empty): Splash = {
-    val projects = ops.projects.map(_.toFE)
+    val projects = ops.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
     return Splash(version, projects.toList)
   }
 
   def project(user: ss.Identity, request: ProjectRequest): FEProject = {
     val p = Project(request.name)
+    p.assertReadAllowedFrom(user)
     return p.toFE.copy(opCategories = ops.categories(p))
   }
 
   def createProject(user: ss.Identity, request: CreateProjectRequest): Unit = {
     val p = Project(request.name)
+    setInitialACL(p, owner = user)
     p.notes = request.notes
     p.checkpointAfter("") // Initial checkpoint.
   }
 
   def discardProject(user: ss.Identity, request: DiscardProjectRequest): Unit = {
-    Project(request.name).remove()
+    val p = Project(request.name)
+    p.assertWriteAllowedFrom(user)
+    p.remove()
   }
 
   def renameProject(user: ss.Identity, request: RenameProjectRequest): Unit = metaManager.synchronized {
-    Project(request.from).copy(Project(request.to))
-    Project(request.from).remove()
+    val p = Project(request.from)
+    p.assertWriteAllowedFrom(user)
+    p.copy(Project(request.to))
+    p.remove()
   }
 
-  def projectOp(user: ss.Identity, request: ProjectOperationRequest): Unit = ops.apply(request)
+  def projectOp(user: ss.Identity, request: ProjectOperationRequest): Unit = {
+    val p = Project(request.project)
+    p.assertWriteAllowedFrom(user)
+    ops.apply(request)
+  }
 
   def filterProject(user: ss.Identity, request: ProjectFilterRequest): Unit = {
     val project = Project(request.project)
+    project.assertWriteAllowedFrom(user)
     val vertexSet = project.vertexSet
     assert(vertexSet != null, s"No vertex set for $project.")
     assert(request.vertexFilters.nonEmpty || request.edgeFilters.nonEmpty,
@@ -328,15 +339,27 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def forkProject(user: ss.Identity, request: ForkProjectRequest): Unit = {
-    Project(request.from).copy(Project(request.to))
+    val p = Project(request.to)
+    p.assertReadAllowedFrom(user)
+    Project(request.from).copy(p)
+    setInitialACL(p, owner = user)
+  }
+
+  private def setInitialACL(p: Project, owner: ss.Identity): Unit = {
+    p.readACL = "*"
+    p.writeACL = owner.email.get
   }
 
   def undoProject(user: ss.Identity, request: UndoProjectRequest): Unit = {
-    Project(request.project).undo()
+    val p = Project(request.project)
+    p.assertWriteAllowedFrom(user)
+    p.undo()
   }
 
   def redoProject(user: ss.Identity, request: RedoProjectRequest): Unit = {
-    Project(request.project).redo()
+    val p = Project(request.project)
+    p.assertWriteAllowedFrom(user)
+    p.redo()
   }
 }
 

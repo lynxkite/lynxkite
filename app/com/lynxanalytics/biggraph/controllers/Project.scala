@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
+import securesocial.{ core => ss }
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   override def toString = projectName
@@ -108,7 +109,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val c = checkpoints
     val i = checkpointIndex
     assert(i > 0, s"Already at checkpoint $i.")
-    cp(c(i - 1), path)
+    retaining("readACL", "writeACL") {
+      cp(c(i - 1), path)
+    }
     checkpointIndex = i - 1
     checkpoints = c
   }
@@ -117,7 +120,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val c = checkpoints
     val i = checkpointIndex
     assert(i < c.size - 1, s"Already at checkpoint $i of ${c.size}.")
-    cp(c(i + 1), path)
+    retaining("readACL", "writeACL") {
+      cp(c(i + 1), path)
+    }
     checkpointIndex = i + 1
     checkpoints = c
   }
@@ -130,9 +135,26 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val c = checkpoints
       val i = checkpointIndex
       assert(c.nonEmpty, "No checkpoints.")
-      cp(c(i), path)
+      retaining("readACL", "writeACL") {
+        cp(c(i), path)
+      }
       checkpointIndex = i
       checkpoints = c
+    }
+  }
+
+  // Saves the listed tags before running "op" and restores them after.
+  private def retaining(tags: String*)(op: => Unit) = manager.synchronized {
+    for (tag <- tags) {
+      cp(path / tag, s"tmp/$tag")
+    }
+    try {
+      op
+    } finally {
+      for (tag <- tags) {
+        cp(s"tmp/$tag", path / tag)
+        manager.rmTag(s"tmp/$tag")
+      }
     }
   }
 
@@ -140,6 +162,30 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     existing(path / "checkpoints").foreach(manager.rmTag(_))
     existing(path / "checkpointIndex").foreach(manager.rmTag(_))
     existing(path / "lastOperation").foreach(manager.rmTag(_))
+  }
+
+  def readACL = get("readACL")
+  def readACL_=(x: String): Unit = set("readACL", x)
+  def writeACL = get("writeACL")
+  def writeACL_=(x: String): Unit = set("writeACL", x)
+  def assertReadAllowedFrom(user: ss.Identity): Unit = {
+    assert(readAllowedFrom(user), s"User ${user.email} does not have read access to project $projectName.")
+  }
+  def assertWriteAllowedFrom(user: ss.Identity): Unit = {
+    assert(writeAllowedFrom(user), s"User ${user.email} does not have write access to project $projectName.")
+  }
+  def readAllowedFrom(user: ss.Identity): Boolean = {
+    aclContains(readACL, user)
+  }
+  def writeAllowedFrom(user: ss.Identity): Boolean = {
+    aclContains(writeACL, user)
+  }
+
+  private def aclContains(acl: String, user: ss.Identity): Boolean = {
+    // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
+    // We translate this to a regex for checking.
+    val regex = acl.replace(".", "\\.").replace(",", "|").replace("*", ".*")
+    user.email.get.matches(regex)
   }
 
   def isSegmentation = manager.synchronized {
