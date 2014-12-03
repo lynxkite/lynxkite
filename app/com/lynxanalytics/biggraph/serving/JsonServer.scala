@@ -11,32 +11,39 @@ import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import securesocial.{ core => ss }
 
-object LynxUser extends securesocial.core.Authorization {
-  def isAuthorized(user: securesocial.core.Identity) = user.email.get.endsWith("@lynxanalytics.com")
+object LynxUser extends ss.Authorization {
+  val pwProvider = ss.providers.UsernamePasswordProvider.UsernamePassword
+  def isAuthorized(user: ss.Identity) = {
+    user.identityId.providerId == pwProvider || user.email.get.endsWith("@lynxanalytics.com")
+  }
+  val fake = ss.SocialUser(
+    ss.IdentityId("fake", pwProvider),
+    "fake", "fake", "fake", Some("fake"), None, ss.AuthenticationMethod.UserPassword)
 }
 
-class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
+class JsonServer extends mvc.Controller with ss.SecureSocial {
   def testMode = play.api.Play.maybeApplication == None
-  def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
+  def productionMode = !testMode && play.api.Play.current.configuration.getString("https.port").nonEmpty
 
-  def action[A](parser: mvc.BodyParser[A])(block: mvc.Request[A] => mvc.Result): mvc.Action[A] = {
+  def action[A](parser: mvc.BodyParser[A])(block: ss.SecuredRequest[A] => mvc.Result): mvc.Action[A] = {
     // Turn off authentication in development mode.
     if (productionMode) {
       SecuredAction(authorize = LynxUser, ajaxCall = true)(parser)(block(_))
     } else {
-      mvc.Action(parser)(block(_))
+      mvc.Action(parser) { req => block(ss.SecuredRequest(LynxUser.fake, req)) }
     }
   }
 
   // It would be great to merge this with action[A], but the compiler crashes when I try.
   def asyncAction[A](parser: mvc.BodyParser[A])(
-    block: mvc.Request[A] => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
+    block: ss.SecuredRequest[A] => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
     // Turn off authentication in development mode.
     if (productionMode) {
       SecuredAction(authorize = LynxUser, ajaxCall = true).async(parser)(block(_))
     } else {
-      mvc.Action.async(parser)(block(_))
+      mvc.Action.async(parser) { req => block(ss.SecuredRequest(LynxUser.fake, req)) }
     }
   }
 
