@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
+import securesocial.{ core => ss }
 
 case class FEStatus(enabled: Boolean, disabledReason: String = "") {
   def ||(other: => FEStatus) = if (enabled) this else other
@@ -245,17 +246,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
       attributes = visibleAttributes.map(UIValue.fromEntity(_)).toList)
   }
 
-  def vertexSet(request: VertexSetRequest): FEVertexSet = {
+  def vertexSet(user: ss.Identity, request: VertexSetRequest): FEVertexSet = {
     toFE(metaManager.vertexSet(request.id.asUUID))
   }
 
-  def applyOp(request: FEOperationSpec): Unit =
+  def applyOp(user: ss.Identity, request: FEOperationSpec): Unit =
     operations.applyOp(request)
 
-  def startingOperations(request: serving.Empty): FEOperationMetas =
+  def startingOperations(user: ss.Identity, request: serving.Empty): FEOperationMetas =
     FEOperationMetas(operations.getStartingOperationMetas.sortBy(_.title).toList)
 
-  def startingVertexSets(request: serving.Empty): UIValues =
+  def startingVertexSets(user: ss.Identity, request: serving.Empty): UIValues =
     UIValues(metaManager.allVertexSets
       .filter(_.source.inputs.all.isEmpty)
       .filter(metaManager.isVisible(_))
@@ -271,34 +272,34 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   val ops = new Operations(env)
 
-  def splash(request: serving.Empty): Splash = {
+  def splash(user: ss.Identity, request: serving.Empty): Splash = {
     val projects = ops.projects.map(_.toFE)
     return Splash(version, projects.toList)
   }
 
-  def project(request: ProjectRequest): FEProject = {
+  def project(user: ss.Identity, request: ProjectRequest): FEProject = {
     val p = Project(request.name)
     return p.toFE.copy(opCategories = ops.categories(p))
   }
 
-  def createProject(request: CreateProjectRequest): Unit = {
+  def createProject(user: ss.Identity, request: CreateProjectRequest): Unit = {
     val p = Project(request.name)
     p.notes = request.notes
     p.checkpointAfter("") // Initial checkpoint.
   }
 
-  def discardProject(request: DiscardProjectRequest): Unit = {
+  def discardProject(user: ss.Identity, request: DiscardProjectRequest): Unit = {
     Project(request.name).remove()
   }
 
-  def renameProject(request: RenameProjectRequest): Unit = metaManager.synchronized {
+  def renameProject(user: ss.Identity, request: RenameProjectRequest): Unit = metaManager.synchronized {
     Project(request.from).copy(Project(request.to))
     Project(request.from).remove()
   }
 
-  def projectOp(request: ProjectOperationRequest): Unit = ops.apply(request)
+  def projectOp(user: ss.Identity, request: ProjectOperationRequest): Unit = ops.apply(request)
 
-  def filterProject(request: ProjectFilterRequest): Unit = {
+  def filterProject(user: ss.Identity, request: ProjectFilterRequest): Unit = {
     val project = Project(request.project)
     val vertexSet = project.vertexSet
     assert(vertexSet != null, s"No vertex set for $project.")
@@ -326,15 +327,15 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
-  def forkProject(request: ForkProjectRequest): Unit = {
+  def forkProject(user: ss.Identity, request: ForkProjectRequest): Unit = {
     Project(request.from).copy(Project(request.to))
   }
 
-  def undoProject(request: UndoProjectRequest): Unit = {
+  def undoProject(user: ss.Identity, request: UndoProjectRequest): Unit = {
     Project(request.project).undo()
   }
 
-  def redoProject(request: RedoProjectRequest): Unit = {
+  def redoProject(user: ss.Identity, request: RedoProjectRequest): Unit = {
     Project(request.project).redo()
   }
 }
