@@ -14,9 +14,14 @@ object ViralTest extends Tag("ViralTest")
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
-  val project = Project("Test_Project")
-  project.notes = "test project"
-  project.checkpointAfter("") // Initialize project.
+  def createProject(name: String) = {
+    val controller = new BigGraphController(this)
+    val user = com.lynxanalytics.biggraph.serving.LynxUser.fake
+    val request = CreateProjectRequest(name = name, notes = name, privacy = "private")
+    controller.createProject(user, request)
+    Project(name)
+  }
+  val project = createProject("Test_Project")
 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     ops.apply(
