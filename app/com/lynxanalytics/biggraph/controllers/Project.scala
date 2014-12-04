@@ -171,10 +171,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def writeACL = get("writeACL")
   def writeACL_=(x: String): Unit = set("writeACL", x)
   def assertReadAllowedFrom(user: ss.Identity): Unit = {
-    assert(readAllowedFrom(user), s"User ${user.email} does not have read access to project $projectName.")
+    assert(readAllowedFrom(user), s"User ${user.email.get} does not have read access to project $projectName.")
   }
   def assertWriteAllowedFrom(user: ss.Identity): Unit = {
-    assert(writeAllowedFrom(user), s"User ${user.email} does not have write access to project $projectName.")
+    assert(writeAllowedFrom(user), s"User ${user.email.get} does not have write access to project $projectName.")
   }
   def readAllowedFrom(user: ss.Identity): Boolean = {
     // Write access also implies read access.
