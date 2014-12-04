@@ -109,3 +109,7 @@ input.save-as {
 .split-screen > .project-sides {
   padding-top: 10px;  /* Get out from under the split-bar. */
 }
+
+.project-settings {
+  background-color: whitesmoke;
+}
