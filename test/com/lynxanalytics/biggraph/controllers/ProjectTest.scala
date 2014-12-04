@@ -7,9 +7,13 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
-  val project = Project("Test_Project")
-  project.notes = "test project" // Make sure project directory exists.
-  project.checkpointAfter("") // Initial checkpoint.
+  def createProject(name: String) = {
+    val controller = new BigGraphController(this)
+    val request = CreateProjectRequest(name = name, notes = name, privacy = "public-write")
+    controller.createProject(null, request)
+    Project(name)
+  }
+  val project = createProject("Test_Project")
 
   def undoRedo(p: Project) = (p.toFE.undoOp, p.toFE.redoOp)
 

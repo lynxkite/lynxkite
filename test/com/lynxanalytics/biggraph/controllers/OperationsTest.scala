@@ -16,9 +16,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   val ops = new Operations(this)
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
-    val user = com.lynxanalytics.biggraph.serving.LynxUser.fake
-    val request = CreateProjectRequest(name = name, notes = name, privacy = "private")
-    controller.createProject(user, request)
+    val request = CreateProjectRequest(name = name, notes = name, privacy = "public-write")
+    controller.createProject(null, request)
     Project(name)
   }
   val project = createProject("Test_Project")
