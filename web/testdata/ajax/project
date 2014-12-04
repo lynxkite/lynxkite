@@ -1,5 +1,7 @@
 {
   "name": "My_Little_Project",
+  "readACL": "*",
+  "writeACL": "*",
   "vertexSet": "1234-1234-1234-1234",
   "edgeBundle": "4321-4321-4321-4321",
   "notes": "Subscribers and calls.",
