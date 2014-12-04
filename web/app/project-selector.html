@@ -26,7 +26,7 @@
 
       <a ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
         href ng-click="setProject(project)" ng-class="{ error: project.error }">
-        <h1><item-name-and-menu menu="menu" name="{{util.spaced(project.name)}}" type="project"></item-name-and-menu></h1>
+        <h1><item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu></h1>
         <span ng-if="project.error">
           {{project.error}}
         </span>
