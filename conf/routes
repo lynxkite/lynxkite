@@ -18,6 +18,7 @@ POST /ajax/forkProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer
 POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoProject
 POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoProject
 POST /ajax/renameProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameProject
+POST /ajax/changeProjectSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeProjectSettings
 
 GET  /ajax/vertexDiag  com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexDiagram
 GET  /ajax/edgeDiag    com.lynxanalytics.biggraph.serving.ProductionJsonServer.edgeDiagram
