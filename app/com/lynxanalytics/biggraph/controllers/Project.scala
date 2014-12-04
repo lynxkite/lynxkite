@@ -49,6 +49,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       name = projectName,
       undoOp = lastOperation,
       redoOp = nextOperation,
+      readACL = readACL,
+      writeACL = writeACL,
       vertexSet = vs,
       edgeBundle = eb,
       notes = notes,
@@ -175,13 +177,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     assert(writeAllowedFrom(user), s"User ${user.email} does not have write access to project $projectName.")
   }
   def readAllowedFrom(user: ss.Identity): Boolean = {
-    aclContains(readACL, user)
+    // Write access also implies read access.
+    writeAllowedFrom(user) || aclContains(readACL, user)
   }
   def writeAllowedFrom(user: ss.Identity): Boolean = {
     aclContains(writeACL, user)
   }
 
-  private def aclContains(acl: String, user: ss.Identity): Boolean = {
+  def aclContains(acl: String, user: ss.Identity): Boolean = {
     // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
     // We translate this to a regex for checking.
     val regex = acl.replace(".", "\\.").replace(",", "|").replace("*", ".*")
