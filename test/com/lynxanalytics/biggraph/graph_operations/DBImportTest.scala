@@ -1,6 +1,5 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import anorm.SQL
 import java.sql
 import org.scalatest.FunSuite
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
