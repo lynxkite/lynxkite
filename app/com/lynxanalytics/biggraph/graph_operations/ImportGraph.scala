@@ -62,18 +62,32 @@ object ImportUtil {
   }
 }
 
+trait RowInput {
+  def fields: Seq[String]
+  def lines(rc: RuntimeContext): RDD[Seq[String]]
+}
+
 case class CSV(file: Filename,
                delimiter: String,
                header: String,
-               filter: JavaScript = JavaScript("")) {
+               filter: JavaScript = JavaScript("")) extends RowInput {
   val fields = ImportUtil.split(header, delimiter)
 
-  def lines(sc: SparkContext): RDD[Seq[String]] = {
-    val lines = file.loadTextFile(sc)
+  def lines(rc: RuntimeContext): RDD[Seq[String]] = {
+    assert(file.list.nonEmpty, s"$file does not exist.")
+    val globLength = file.globLength
+    val minParts = globLength / 250000000L + 1 // max 250 MB per partition
+    val lines = file.loadTextFile(rc.sparkContext)
+    val numPartitions = List(
+      lines.partitions.size,
+      rc.defaultPartitioner.numPartitions,
+      minParts.toInt).max
+    log.info(s"Reading $file into $numPartitions partitions.")
     return lines
       .filter(_ != header)
       .map(ImportUtil.split(_, delimiter))
       .filter(jsFilter(_))
+      .repartition(numPartitions)
   }
 
   def jsFilter(line: Seq[String]): Boolean = {
@@ -88,35 +102,23 @@ case class CSV(file: Filename,
 trait ImportCommon {
   type Columns = Map[String, SortedRDD[ID, String]]
 
-  val csv: CSV
+  val input: RowInput
 
   protected def mustHaveField(field: String) = {
-    assert(csv.fields.contains(field), s"No such field: $field in ${csv.fields}")
+    assert(input.fields.contains(field), s"No such field: $field in ${input.fields}")
   }
 
-  protected def readColumns(rc: RuntimeContext, csv: CSV): Columns = {
-    assert(csv.file.list.nonEmpty, s"${csv.file} does not exist")
-    val globLength = csv.file.globLength
-    log.info(s"Estimated total input file size: ${globLength}")
-    val minParts = globLength / 268435456L + 1 // max 256 MB per partition
-    log.info(s"Minimum number of partitions needed: ${minParts}")
-    val partitioner =
-      if (rc.defaultPartitioner.numPartitions > minParts)
-        rc.defaultPartitioner
-      else
-        new org.apache.spark.HashPartitioner(minParts.toInt)
-    val p = partitioner.numPartitions
-    log.info(s"Reading input lines into ${p} partitions")
-    val lines = csv.lines(rc.sparkContext)
-    val numbered = lines.randomNumbered(p)
+  protected def readColumns(rc: RuntimeContext, input: RowInput): Columns = {
+    val lines = input.lines(rc)
+    val numbered = lines.randomNumbered()
     numbered.cacheBackingArray()
-    return csv.fields.zipWithIndex.map {
+    return input.fields.zipWithIndex.map {
       case (field, idx) => field -> numbered.mapValues(line => line(idx))
     }.toMap
   }
 }
 object ImportCommon {
-  def toSymbol(field: String) = Symbol("csv_" + field)
+  def toSymbol(field: String) = Symbol("imported_field_" + field)
   def checkIdMapping(rdd: RDD[(String, ID)], partitioner: Partitioner): SortedRDD[String, ID] =
     rdd.groupBySortedKey(partitioner)
       .mapValuesWithKeys {
@@ -136,18 +138,18 @@ object ImportVertexList {
     }.toMap
   }
 }
-case class ImportVertexList(csv: CSV) extends ImportCommon
+case class ImportVertexList(input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
   import ImportVertexList._
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
 
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc, csv)
+    val columns = readColumns(rc, input)
     for ((field, rdd) <- columns) {
       output(o.attrs(field), rdd)
     }
@@ -200,20 +202,20 @@ object ImportEdgeList {
     val stringID = vertexAttribute[String](vertices)
   }
 }
-case class ImportEdgeList(csv: CSV, src: String, dst: String)
+case class ImportEdgeList(input: RowInput, src: String, dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] {
   import ImportEdgeList._
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, csv.fields)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
 
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val partitioner = rc.defaultPartitioner
-    val columns = readColumns(rc, csv)
+    val columns = readColumns(rc, input)
     putEdgeAttributes(columns, o.attrs, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
     val idToName = names.randomNumbered(partitioner.numPartitions)
@@ -242,13 +244,13 @@ object ImportEdgeListForExistingVertexSet {
     }.toMap
   }
 }
-case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String)
+case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst: String)
     extends ImportEdges
     with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output] {
   import ImportEdgeListForExistingVertexSet._
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, csv.fields)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, input.fields)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -256,7 +258,7 @@ case class ImportEdgeListForExistingVertexSet(csv: CSV, src: String, dst: String
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = rc.defaultPartitioner
-    val columns = readColumns(rc, csv)
+    val columns = readColumns(rc, input)
     putEdgeAttributes(columns, o.attrs, output)
     val srcToId =
       ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
@@ -285,7 +287,7 @@ object ImportAttributesForExistingVertexSet {
     }.toMap
   }
 }
-case class ImportAttributesForExistingVertexSet(csv: CSV, idField: String)
+case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String)
     extends ImportCommon
     with TypedMetaGraphOp[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output] {
   import ImportAttributesForExistingVertexSet._
@@ -295,7 +297,7 @@ case class ImportAttributesForExistingVertexSet(csv: CSV, idField: String)
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) =
-    new Output()(instance, inputs, csv.fields.toSet - idField)
+    new Output()(instance, inputs, input.fields.toSet - idField)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -303,8 +305,8 @@ case class ImportAttributesForExistingVertexSet(csv: CSV, idField: String)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = rc.defaultPartitioner
-    val lines = csv.lines(rc.sparkContext)
-    val idFieldIdx = csv.fields.indexOf(idField)
+    val lines = input.lines(rc)
+    val idFieldIdx = input.fields.indexOf(idField)
     val externalIdToInternalId = ImportCommon.checkIdMapping(
       inputs.idAttr.rdd.map { case (internal, external) => (external, internal) },
       partitioner)
@@ -316,7 +318,7 @@ case class ImportAttributesForExistingVertexSet(csv: CSV, idField: String)
         .map { case (external, (line, internal)) => (internal, line) }
         .toSortedRDD(inputs.vs.rdd.partitioner.get)
     linesByInternalId.cacheBackingArray()
-    csv.fields.zipWithIndex.foreach {
+    input.fields.zipWithIndex.foreach {
       case (field, idx) => if (idx != idFieldIdx) {
         output(o.attrs(field), linesByInternalId.mapValues(line => line(idx)))
       }

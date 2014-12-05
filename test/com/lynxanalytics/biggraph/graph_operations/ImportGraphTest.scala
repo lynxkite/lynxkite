@@ -125,7 +125,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
       "|",
       ImportUtil.header(path),
       JavaScript("comment.indexOf('loves') != -1"))
-    val comments = csv.lines(sparkContext).map(_(2))
+    val comments = csv.lines(dataManager.runtimeContext).map(_(2))
     assert(TestUtils.RDDToSortedString(comments) ==
       """|Bob loves Darth Vader
          |Harry loves Voldemort
