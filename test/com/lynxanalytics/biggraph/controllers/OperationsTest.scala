@@ -370,7 +370,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.scalars("viral num coverage after iteration 1").value == 6)
   }
 
-  test("Viral modeling iteration logic", ViralTest) {
+  ignore("Viral modeling iteration logic", ViralTest) {
     run("Import vertices", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-2.csv").getFile,
       "header" -> "id,num",
