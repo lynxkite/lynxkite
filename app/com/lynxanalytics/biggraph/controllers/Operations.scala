@@ -105,83 +105,143 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       applyOn(project.vertexAttributes(params("attr")))
   })
 
-  val importHelpText =
+  trait OperationSource {
+    def sourceParameters: List[FEOperationParameterMeta]
+    def source(params: Map[String, String]): graph_operations.RowInput
+  }
+
+  val csvImportHelpText =
     """ Wildcard (foo/*.csv) and glob (foo/{bar,baz}.csv) patterns are accepted. S3 paths must
       include the key name and secret key in the following format:
         <tt>s3n://key_name:secret_key@bucket/dir/file</tt>
       """
 
-  register(new VertexOperation(_) {
-    val title = "Import vertices"
-    val description =
-      """Imports vertices (no edges) from a CSV file, or files.
-      Each field in the CSV will be accessible as a vertex attribute.
-      An extra vertex attribute is generated to hold the internal vertex ID.
-      """ + importHelpText
-    def parameters = List(
+  trait CSVSource extends OperationSource {
+    def sourceParameters = List(
       Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("id-attr", "ID attribute name", defaultValue = "id"),
       Param("filter", "(optional) Filtering expression"))
-    def enabled = hasNoVertexSet
-    def apply(params: Map[String, String]) = {
+    def source(params: Map[String, String]) = {
       val files = Filename(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
+      graph_operations.CSV(
         files,
         params("delimiter"),
         header,
         JavaScript(params("filter")))
-      val imp = graph_operations.ImportVertexList(csv)().result
+    }
+  }
+
+  val sqlImportHelpText =
+    """ The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
+      (For example <tt>mysql://127.0.0.1/?user=batman&password=alfred</tt>.) An integer column
+      must be specified as the key, and you have to select a key range.
+      """
+
+  trait SQLSource extends OperationSource {
+    def sourceParameters = List(
+      Param("db", "Database"),
+      Param("table", "Table"),
+      Param("columns", "Columns (comma separated)"),
+      Param("key", "Key column"),
+      Param("min-key", "Key range start"),
+      Param("max-key", "Key range end"))
+    def source(params: Map[String, String]) = {
+      val columns = params("columns").split(",").map(_.trim)
+      graph_operations.DBTable(
+        params("db"),
+        params("table"),
+        (columns.toSet + params("key")).toSeq, // Always include "key".
+        params("key"),
+        params("min-key").toLong,
+        params("max-key").toLong)
+    }
+  }
+
+  abstract class ImportVerticesOperation(project: Project)
+      extends VertexOperation(project) with OperationSource {
+    def parameters = sourceParameters ++ List(
+      Param("id-attr", "ID attribute name", defaultValue = "id"))
+    def enabled = hasNoVertexSet
+    def apply(params: Map[String, String]) = {
+      val imp = graph_operations.ImportVertexList(source(params))().result
       project.vertexSet = imp.vertices
       project.vertexAttributes = imp.attrs.mapValues(_.entity)
       val idAttr = params("id-attr")
       assert(
         !project.vertexAttributes.contains(idAttr),
-        s"The CSV also contains a field called '$idAttr'. Please pick a different name.")
+        s"The input also contains a field called '$idAttr'. Please pick a different name.")
       project.vertexAttributes(idAttr) = idAsAttribute(project.vertexSet)
     }
+  }
+  register(new ImportVerticesOperation(_) with CSVSource {
+    val title = "Import vertices from CSV files"
+    val description =
+      """Imports vertices (no edges) from a CSV file, or files.
+      Each field in the CSV will be accessible as a vertex attribute.
+      An extra vertex attribute is generated to hold the internal vertex ID.
+      """ + csvImportHelpText
+  })
+  register(new ImportVerticesOperation(_) with SQLSource {
+    val title = "Import vertices from a database"
+    val description =
+      """Imports vertices (no edges) from a SQL database.
+      An extra vertex attribute is generated to hold the internal vertex ID.
+      """ + sqlImportHelpText
   })
 
-  register(new EdgeOperation(_) {
-    val title = "Import edges for existing vertices"
-    val description =
-      """Imports edges from a CSV file, or files. Your vertices must have a key attribute, by which
-      the edges can be attached to them.""" + importHelpText
-    def parameters = List(
-      Param("files", "Files", kind = "file"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
+  abstract class ImportEdgesForExistingVerticesOperation(project: Project)
+      extends VertexOperation(project) with OperationSource {
+    def parameters = sourceParameters ++ List(
       Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("src", "Source ID field"),
-      Param("dst", "Destination ID field"),
-      Param("filter", "(optional) Filtering expression"))
+      Param("dst", "Destination ID field"))
     def enabled =
       hasNoEdgeBundle &&
         hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
-      val files = Filename(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header,
-        JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
       val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
-      val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, src, dst)
+      val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), src, dst)
       val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
       project.edgeBundle = imp.edges
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
     }
+  }
+  register(new ImportEdgesForExistingVerticesOperation(_) with CSVSource {
+    val title = "Import edges for existing vertices from CSV files"
+    val description =
+      """Imports edges from a CSV file, or files. Your vertices must have a key attribute, by which
+      the edges can be attached to them.""" + csvImportHelpText
+  })
+  register(new ImportEdgesForExistingVerticesOperation(_) with SQLSource {
+    val title = "Import edges for existing vertices from a database"
+    val description =
+      """Imports edges from a SQL database. Your vertices must have a key attribute, by which
+      the edges can be attached to them.""" + sqlImportHelpText
   })
 
-  register(new EdgeOperation(_) {
+  abstract class ImportVerticesAndEdgesOperation(project: Project)
+      extends VertexOperation(project) with OperationSource {
+    def parameters = sourceParameters ++ List(
+      Param("src", "Source ID field"),
+      Param("dst", "Destination ID field"))
+    def enabled = hasNoVertexSet
+    def apply(params: Map[String, String]) = {
+      val src = params("src")
+      val dst = params("dst")
+      val imp = graph_operations.ImportEdgeList(source(params), src, dst)().result
+      project.setVertexSet(imp.vertices, idAttr = "id")
+      project.vertexAttributes("stringID") = imp.stringID
+      project.edgeBundle = imp.edges
+      project.edgeAttributes = imp.attrs.mapValues(_.entity)
+    }
+  }
+  register(new ImportVerticesAndEdgesOperation(_) with CSVSource {
     val title = "Import vertices and edges from single CSV fileset"
     val description =
       """Imports edges from a CSV file, or files.
@@ -190,32 +250,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Two vertex attributes will be generated.
       "stringID" will contain the ID string that was used in the CSV.
       "id" will contain the internal vertex ID.
-      """ + importHelpText
-    def parameters = List(
-      Param("files", "Files", kind = "file"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("src", "Source ID field"),
-      Param("dst", "Destination ID field"),
-      Param("filter", "(optional) Filtering expression"))
-    def enabled = hasNoVertexSet
-    def apply(params: Map[String, String]) = {
-      val files = Filename(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header,
-        JavaScript(params("filter")))
-      val src = params("src")
-      val dst = params("dst")
-      val imp = graph_operations.ImportEdgeList(csv, src, dst)().result
-      project.setVertexSet(imp.vertices, idAttr = "id")
-      project.vertexAttributes("stringID") = imp.stringID
-      project.edgeBundle = imp.edges
-      project.edgeAttributes = imp.attrs.mapValues(_.entity)
-    }
+      """ + csvImportHelpText
+  })
+  register(new ImportVerticesAndEdgesOperation(_) with SQLSource {
+    val title = "Import vertices and edges from single database table"
+    val description =
+      """Imports edges from a SQL database.
+      Each column in the table will be accessible as an edge attribute.
+      Vertices will be generated for the endpoints of the edges.
+      Two vertex attributes will be generated.
+      "stringID" will contain the ID string that was used in the database.
+      "id" will contain the internal vertex ID.
+      """ + sqlImportHelpText
   })
 
   register(new EdgeOperation(_) {
@@ -249,35 +295,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new AttributeOperation(_) {
-    val title = "Import vertex attributes"
-    val description =
-      """Imports vertex attributes for existing vertices from a CSV file.
-      """ + importHelpText
-    def parameters = List(
-      Param("files", "Files", kind = "file"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
+  abstract class ImportVertexAttributesOperation(project: Project)
+      extends VertexOperation(project) with OperationSource {
+    def parameters = sourceParameters ++ List(
       Param("id-attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("id-field", "ID field in the CSV file"),
       Param("prefix", "Name prefix for the imported vertex attributes", defaultValue = ""))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
-      val files = Filename(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header)
       val idAttr = project.vertexAttributes(params("id-attr")).runtimeSafeCast[String]
-      val op = graph_operations.ImportAttributesForExistingVertexSet(csv, params("id-field"))
+      val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-field"))
       val res = op(op.idAttr, idAttr).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- res.attrs) {
         project.vertexAttributes(prefix + name) = attr
       }
     }
+  }
+  register(new ImportVertexAttributesOperation(_) with CSVSource {
+    val title = "Import vertex attributes from CSV files"
+    val description =
+      """Imports vertex attributes for existing vertices from a CSV file.
+      """ + csvImportHelpText
+  })
+  register(new ImportVertexAttributesOperation(_) with SQLSource {
+    val title = "Import vertex attributes from a database"
+    val description =
+      """Imports vertex attributes for existing vertices from a SQL database.
+      """ + sqlImportHelpText
   })
 
   register(new CreateSegmentationOperation(_) {
@@ -1339,25 +1384,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
-    val title = "Load segmentation links from CSV"
-    val description =
-      "Import the connection between the main project and this segmentation from a CSV." +
-        importHelpText
-    def parameters = List(
-      Param("files", "CSV", kind = "file"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
+  abstract class LoadSegmentationLinksOperation(project: Project)
+      extends SegmentationOperation(project) with OperationSource {
+    def parameters = sourceParameters ++ List(
       Param(
         "base-id-attr",
         s"Identifying vertex attribute in $parent",
         options = UIValue.list(parent.vertexAttributeNames[String].toList)),
-      Param("base-id-field", s"Identifying CSV field for $parent"),
+      Param("base-id-field", s"Identifying field for $parent"),
       Param(
         "seg-id-attr",
         s"Identifying vertex attribute in $project",
         options = vertexAttributes[String]),
-      Param("seg-id-field", s"Identifying CSV field for $project"))
+      Param("seg-id-field", s"Identifying field for $project"))
     def enabled =
       FEStatus.assert(
         vertexAttributes[String].nonEmpty, "No string vertex attributes in this segmentation") &&
@@ -1366,17 +1405,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val baseIdAttr = parent.vertexAttributes(params("base-id-attr")).runtimeSafeCast[String]
       val segIdAttr = project.vertexAttributes(params("seg-id-attr")).runtimeSafeCast[String]
-      val files = Filename(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header)
       val op = graph_operations.ImportEdgeListForExistingVertexSet(
-        csv, params("base-id-field"), params("seg-id-field"))
+        source(params), params("base-id-field"), params("seg-id-field"))
       seg.belongsTo = op(op.srcVidAttr, baseIdAttr)(op.dstVidAttr, segIdAttr).result.edges
     }
+  }
+  register(new LoadSegmentationLinksOperation(_) with CSVSource {
+    val title = "Load segmentation links from CSV"
+    val description =
+      "Import the connection between the main project and this segmentation from a CSV." +
+        csvImportHelpText
+  })
+  register(new LoadSegmentationLinksOperation(_) with SQLSource {
+    val title = "Load segmentation links from a database"
+    val description =
+      "Import the connection between the main project and this segmentation from a SQL database." +
+        sqlImportHelpText
   })
 
   register(new SegmentationOperation(_) {

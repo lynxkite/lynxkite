@@ -172,13 +172,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   }
 
   test("Fingerprinting based on attributes") {
-    run("Import vertices", Map(
+    run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
       "header" -> "id,email,name",
       "delimiter" -> ",",
       "id-attr" -> "delete me",
       "filter" -> ""))
-    run("Import edges for existing vertices", Map(
+    run("Import edges for existing vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-edges.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
@@ -222,6 +222,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-example-connections.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
+      "filter" -> "",
       "base-id-attr" -> "name",
       "base-id-field" -> "src",
       "seg-id-attr" -> "name",
@@ -306,7 +307,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   }
 
   test("Convert vertices into edges") {
-    run("Import vertices", Map(
+    run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
       "header" -> "src,dst,color",
       "delimiter" -> ",",
@@ -325,7 +326,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   }
 
   test("Viral modeling segment logic", ViralTest) {
-    run("Import vertices", Map(
+    run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-1.csv").getFile,
       "header" -> "id,num",
       "delimiter" -> ",",
@@ -333,7 +334,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "filter" -> "",
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"))
-    run("Import edges for existing vertices", Map(
+    run("Import edges for existing vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-1.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
@@ -371,13 +372,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   }
 
   ignore("Viral modeling iteration logic", ViralTest) {
-    run("Import vertices", Map(
+    run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-2.csv").getFile,
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
       "filter" -> ""))
-    run("Import edges for existing vertices", Map(
+    run("Import edges for existing vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-2.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
