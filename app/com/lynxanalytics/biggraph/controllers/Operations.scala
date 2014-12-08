@@ -143,7 +143,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   trait SQLRowReader extends RowReader {
     def sourceParameters = List(
       Param("db", "Database"),
-      Param("table", "Table"),
+      Param("table", "Table or view"),
       Param("columns", "Columns (comma separated)"),
       Param("key", "Key column"))
     def source(params: Map[String, String]) = {
