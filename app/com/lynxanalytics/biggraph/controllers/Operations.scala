@@ -105,7 +105,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       applyOn(project.vertexAttributes(params("attr")))
   })
 
-  trait OperationSource {
+  trait RowReader {
     def sourceParameters: List[FEOperationParameterMeta]
     def source(params: Map[String, String]): graph_operations.RowInput
   }
@@ -116,7 +116,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         <tt>s3n://key_name:secret_key@bucket/dir/file</tt>
       """
 
-  trait CSVSource extends OperationSource {
+  trait CSVRowReader extends RowReader {
     def sourceParameters = List(
       Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
@@ -140,7 +140,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       must be specified as the key, and you have to select a key range.
       """
 
-  trait SQLSource extends OperationSource {
+  trait SQLRowReader extends RowReader {
     def sourceParameters = List(
       Param("db", "Database"),
       Param("table", "Table"),
@@ -161,7 +161,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   abstract class ImportVerticesOperation(project: Project)
-      extends VertexOperation(project) with OperationSource {
+      extends VertexOperation(project) with RowReader {
     def parameters = sourceParameters ++ List(
       Param("id-attr", "ID attribute name", defaultValue = "id"))
     def enabled = hasNoVertexSet
@@ -176,7 +176,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexAttributes(idAttr) = idAsAttribute(project.vertexSet)
     }
   }
-  register(new ImportVerticesOperation(_) with CSVSource {
+  register(new ImportVerticesOperation(_) with CSVRowReader {
     val title = "Import vertices from CSV files"
     val description =
       """Imports vertices (no edges) from a CSV file, or files.
@@ -184,7 +184,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       An extra vertex attribute is generated to hold the internal vertex ID.
       """ + csvImportHelpText
   })
-  register(new ImportVerticesOperation(_) with SQLSource {
+  register(new ImportVerticesOperation(_) with SQLRowReader {
     val title = "Import vertices from a database"
     val description =
       """Imports vertices (no edges) from a SQL database.
@@ -193,7 +193,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   abstract class ImportEdgesForExistingVerticesOperation(project: Project)
-      extends VertexOperation(project) with OperationSource {
+      extends VertexOperation(project) with RowReader {
     def parameters = sourceParameters ++ List(
       Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("src", "Source ID field"),
@@ -212,13 +212,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
     }
   }
-  register(new ImportEdgesForExistingVerticesOperation(_) with CSVSource {
+  register(new ImportEdgesForExistingVerticesOperation(_) with CSVRowReader {
     val title = "Import edges for existing vertices from CSV files"
     val description =
       """Imports edges from a CSV file, or files. Your vertices must have a key attribute, by which
       the edges can be attached to them.""" + csvImportHelpText
   })
-  register(new ImportEdgesForExistingVerticesOperation(_) with SQLSource {
+  register(new ImportEdgesForExistingVerticesOperation(_) with SQLRowReader {
     val title = "Import edges for existing vertices from a database"
     val description =
       """Imports edges from a SQL database. Your vertices must have a key attribute, by which
@@ -226,7 +226,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   abstract class ImportVerticesAndEdgesOperation(project: Project)
-      extends VertexOperation(project) with OperationSource {
+      extends VertexOperation(project) with RowReader {
     def parameters = sourceParameters ++ List(
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"))
@@ -241,7 +241,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
     }
   }
-  register(new ImportVerticesAndEdgesOperation(_) with CSVSource {
+  register(new ImportVerticesAndEdgesOperation(_) with CSVRowReader {
     val title = "Import vertices and edges from single CSV fileset"
     val description =
       """Imports edges from a CSV file, or files.
@@ -252,7 +252,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "id" will contain the internal vertex ID.
       """ + csvImportHelpText
   })
-  register(new ImportVerticesAndEdgesOperation(_) with SQLSource {
+  register(new ImportVerticesAndEdgesOperation(_) with SQLRowReader {
     val title = "Import vertices and edges from single database table"
     val description =
       """Imports edges from a SQL database.
@@ -296,7 +296,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   abstract class ImportVertexAttributesOperation(project: Project)
-      extends VertexOperation(project) with OperationSource {
+      extends VertexOperation(project) with RowReader {
     def parameters = sourceParameters ++ List(
       Param("id-attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("id-field", "ID field in the CSV file"),
@@ -312,13 +312,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     }
   }
-  register(new ImportVertexAttributesOperation(_) with CSVSource {
+  register(new ImportVertexAttributesOperation(_) with CSVRowReader {
     val title = "Import vertex attributes from CSV files"
     val description =
       """Imports vertex attributes for existing vertices from a CSV file.
       """ + csvImportHelpText
   })
-  register(new ImportVertexAttributesOperation(_) with SQLSource {
+  register(new ImportVertexAttributesOperation(_) with SQLRowReader {
     val title = "Import vertex attributes from a database"
     val description =
       """Imports vertex attributes for existing vertices from a SQL database.
@@ -1385,7 +1385,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   abstract class LoadSegmentationLinksOperation(project: Project)
-      extends SegmentationOperation(project) with OperationSource {
+      extends SegmentationOperation(project) with RowReader {
     def parameters = sourceParameters ++ List(
       Param(
         "base-id-attr",
@@ -1410,13 +1410,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       seg.belongsTo = op(op.srcVidAttr, baseIdAttr)(op.dstVidAttr, segIdAttr).result.edges
     }
   }
-  register(new LoadSegmentationLinksOperation(_) with CSVSource {
+  register(new LoadSegmentationLinksOperation(_) with CSVRowReader {
     val title = "Load segmentation links from CSV"
     val description =
       "Import the connection between the main project and this segmentation from a CSV." +
         csvImportHelpText
   })
-  register(new LoadSegmentationLinksOperation(_) with SQLSource {
+  register(new LoadSegmentationLinksOperation(_) with SQLRowReader {
     val title = "Load segmentation links from a database"
     val description =
       "Import the connection between the main project and this segmentation from a SQL database." +
