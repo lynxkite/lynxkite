@@ -25,7 +25,7 @@ class DBImportTest extends FunSuite with TestGraphOp {
     """)
     connection.close()
     val data = ImportVertexList(
-      DBTable(db, "subscribers", Seq("id", "name", "race"), "id", 0, 10)).result
+      DBTable(db, "subscribers", Seq("id", "name", "race"), "id")).result
     assert(data.attrs.keySet == Set("id", "name", "race"))
     assert(data.vertices.rdd.count == 3)
     val names = data.attrs("name").rdd

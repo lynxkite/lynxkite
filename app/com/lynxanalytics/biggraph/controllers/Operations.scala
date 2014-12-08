@@ -145,18 +145,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("db", "Database"),
       Param("table", "Table"),
       Param("columns", "Columns (comma separated)"),
-      Param("key", "Key column"),
-      Param("min-key", "Key range start"),
-      Param("max-key", "Key range end"))
+      Param("key", "Key column"))
     def source(params: Map[String, String]) = {
       val columns = params("columns").split(",").map(_.trim)
       graph_operations.DBTable(
         params("db"),
         params("table"),
         (columns.toSet + params("key")).toSeq, // Always include "key".
-        params("key"),
-        params("min-key").toLong,
-        params("max-key").toLong)
+        params("key"))
     }
   }
 
