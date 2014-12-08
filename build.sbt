@@ -33,6 +33,8 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "log4j-over-slf4j" % "1.7.6",
   "org.apache.spark" %% "spark-mllib" % "1.1.0",
   // JDBC drivers.
+  "mysql" % "mysql-connector-java" % "5.1.34",
+  "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "org.xerial" % "sqlite-jdbc" % "3.8.7")
 
 play.Project.playScalaSettings
