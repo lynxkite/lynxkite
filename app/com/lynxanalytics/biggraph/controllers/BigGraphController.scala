@@ -292,7 +292,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     request.privacy match {
       case "private" =>
         p.writeACL = user.email.get
-        p.readACL = ""
+        p.readACL = user.email.get
       case "public-read" =>
         p.writeACL = user.email.get
         p.readACL = "*"
