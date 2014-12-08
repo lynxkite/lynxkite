@@ -111,7 +111,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val c = checkpoints
     val i = checkpointIndex
     assert(i > 0, s"Already at checkpoint $i.")
-    retaining("readACL", "writeACL") {
+    retainingStatic {
       cp(c(i - 1), path)
     }
     checkpointIndex = i - 1
@@ -122,7 +122,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val c = checkpoints
     val i = checkpointIndex
     assert(i < c.size - 1, s"Already at checkpoint $i of ${c.size}.")
-    retaining("readACL", "writeACL") {
+    retainingStatic {
       cp(c(i + 1), path)
     }
     checkpointIndex = i + 1
@@ -137,7 +137,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val c = checkpoints
       val i = checkpointIndex
       assert(c.nonEmpty, "No checkpoints.")
-      retaining("readACL", "writeACL") {
+      retainingStatic {
         cp(c(i), path)
       }
       checkpointIndex = i
@@ -145,18 +145,15 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
   }
 
-  // Saves the listed tags before running "op" and restores them after.
-  private def retaining(tags: String*)(op: => Unit) = manager.synchronized {
-    for (tag <- tags) {
-      cp(path / tag, s"tmp/$tag")
-    }
+  // Saves the "static" tag directory before running "op" and restores it after.
+  // This directory contains data that should not respond to undo/redo.
+  private def retainingStatic(op: => Unit) = manager.synchronized {
+    cp(path / "static", "tmp/static")
     try {
       op
     } finally {
-      for (tag <- tags) {
-        cp(s"tmp/$tag", path / tag)
-        manager.rmTag(s"tmp/$tag")
-      }
+      cp("tmp/static", path / "static")
+      manager.rmTag("tmp/static")
     }
   }
 
@@ -166,10 +163,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     existing(path / "lastOperation").foreach(manager.rmTag(_))
   }
 
-  def readACL = get("readACL")
-  def readACL_=(x: String): Unit = set("readACL", x)
-  def writeACL = get("writeACL")
-  def writeACL_=(x: String): Unit = set("writeACL", x)
+  def readACL = get("static/readACL")
+  def readACL_=(x: String): Unit = set("static/readACL", x)
+  def writeACL = get("static/writeACL")
+  def writeACL_=(x: String): Unit = set("static/writeACL", x)
   def assertReadAllowedFrom(user: ss.Identity): Unit = {
     assert(readAllowedFrom(user), s"User ${user.email.get} does not have read access to project $projectName.")
   }
