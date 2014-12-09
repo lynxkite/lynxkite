@@ -13,9 +13,9 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 // A few methods are extracted to the companion object to avoid trying to
 // serialize the case class.
-private object SQLExport {
-  def quote(s: String) = '"' + StringEscapeUtils.escapeJava(s) + '"'
-  def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
+object SQLExport {
+  private def quote(s: String) = '"' + StringEscapeUtils.escapeJava(s) + '"'
+  private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
     rdds.foldLeft(base) { (seqs, rdd) =>
       seqs
         .sortedLeftOuterJoin(rdd)
@@ -23,18 +23,33 @@ private object SQLExport {
     }
   }
 
-  def makeInserts(table: String, rdd: RDD[Seq[String]]) = {
+  private def makeInserts(table: String, rdd: RDD[Seq[String]]) = {
     rdd.mapPartitions { it =>
       val lines = it.map(seq => " (" + seq.mkString(", ") + ")").mkString(",\n") + ";\n"
       Iterator(s"INSERT INTO $table VALUES\n" + lines)
     }
   }
 
-  def execute(db: String, update: String) = {
+  private def execute(db: String, update: String) = {
     val connection = sql.DriverManager.getConnection("jdbc:" + db)
     val statement = connection.createStatement()
     statement.executeUpdate(update);
     connection.close()
+  }
+
+  private val supportedTypes: Seq[(Type, String, AttributeRDD[_] => AttributeRDD[String])] = Seq(
+    (typeOf[Double], "DOUBLE PRECISION",
+      rdd => rdd.asInstanceOf[AttributeRDD[Double]].mapValues(_.toString)),
+    (typeOf[String], "TEXT",
+      rdd => rdd.asInstanceOf[AttributeRDD[String]].mapValues(quote(_))),
+    (typeOf[Long], "BIGINT",
+      rdd => rdd.asInstanceOf[AttributeRDD[Long]].mapValues(_.toString)))
+
+  case class SQLAttribute(name: String, attr: Attribute[_])(implicit dm: DataManager) {
+    val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
+    assert(opt.nonEmpty, s"Attribute '$name' is of an unsupported type: ${attr.typeTag}")
+    val (tpe, sqlType, toStringFn) = opt.get
+    val asString = toStringFn(attr.rdd)
   }
 }
 import SQLExport._
@@ -43,33 +58,19 @@ case class SQLExport(
     vertexSet: VertexSet,
     attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager) {
 
-  private def attrsAs[T: TypeTag] = {
-    attributes.filter { case (n, a) => a.is[T] }.mapValues(_.runtimeSafeCast[T])
-  }
-  private val doubles = attrsAs[Double]
-  private val strings = attrsAs[String]
-  for ((n, a) <- (attributes -- doubles.keys -- strings.keys)) {
-    assert(false, s"Attribute '$n' is of an unsupported type: ${a.typeTag}")
-  }
-  private val doubleNames = doubles.keys.toSeq.sorted
-  private val stringNames = strings.keys.toSeq.sorted
-  private val columns = (
-    doubleNames.map(_ + " DOUBLE PRECISION") ++
-    stringNames.map(_ + " TEXT")).mkString(", ")
-
-  private val doubleValues = addRDDs(
+  private val names = attributes.keys.toSeq.sorted
+  private val sqls = names.map(name => SQLAttribute(name, attributes(name)))
+  private val columns = sqls.map(attr => attr.name + " " + attr.sqlType).mkString(", ")
+  private val values = addRDDs(
     vertexSet.rdd.mapValues(_ => Seq[String]()),
-    doubleNames.map(n => doubles(n).rdd.mapValues(_.toString)))
-  private val allValues = addRDDs(
-    doubleValues,
-    stringNames.map(n => strings(n).rdd.mapValues(quote(_))))
+    sqls.map(_.asString)).values
 
   val creation = s"""
       DROP TABLE IF EXISTS $table;
       CREATE TABLE $table ($columns);
       """
 
-  val inserts = makeInserts(table, allValues.values)
+  val inserts = makeInserts(table, values)
 
   def insertInto(db: String) = {
     // Create the table from the driver.
