@@ -113,7 +113,7 @@ trait ImportCommon {
     val numbered = lines.randomNumbered()
     numbered.cacheBackingArray()
     return input.fields.zipWithIndex.map {
-      case (field, idx) => field -> numbered.mapValues(line => line(idx))
+      case (field, idx) => field -> numbered.flatMapValues(line => Option(line(idx)))
     }.toMap
   }
 }
