@@ -1940,6 +1940,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     })
 
+    register(new AttributeOperation(_) {
+      val title = "Export edge attributes to database"
+      val description = """
+        Creates a new table and writes the selected attributes into it.
+        If a table already exists, it will be discarded.""" + jdbcHelpText
+      def parameters = List(
+        Param("db", "Database"),
+        Param("table", "Table"),
+        Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
+      def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+      def apply(params: Map[String, String]) = {
+        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        val labels = params("attrs").split(",")
+        val attrs = labels.map {
+          label => label -> project.edgeAttributes(label).asInstanceOf[Attribute[_]]
+        }
+        val export = graph_util.SQLExport(params("table"), project.vertexSet, attrs.toMap)
+        export.insertInto(params("db"))
+      }
+    })
+
     register(new SegmentationOperation(_) {
       val title = "Export segmentation to CSV"
       val description = ""
