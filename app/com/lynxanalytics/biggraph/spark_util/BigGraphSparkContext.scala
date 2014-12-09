@@ -16,6 +16,8 @@ import com.lynxanalytics.biggraph.spark_util
 private object SparkStageJars {
   val classesToBundle: Seq[Class[_]] = Seq(
     getClass(),
+    classOf[com.mysql.jdbc.Driver],
+    classOf[org.postgresql.Driver],
     classOf[org.sqlite.JDBC],
     classOf[gcs.GoogleHadoopFileSystem])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
