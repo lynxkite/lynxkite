@@ -17,20 +17,24 @@ class DBImportTest extends FunSuite with TestGraphOp {
     val statement = connection.createStatement()
     statement.executeUpdate("""
     DROP TABLE IF EXISTS subscribers;
-    CREATE TABLE subscribers (id INTEGER, name TEXT, gender TEXT, race TEXT);
+    CREATE TABLE subscribers
+      (id INTEGER, name TEXT, gender TEXT, race TEXT, level DOUBLE PRECISION);
     INSERT INTO subscribers VALUES
-      (1, 'Daniel', 'Male', 'Halfling'),
-      (2, 'Beata', 'Female', 'Dwarf'),
-      (3, 'Felix', 'Male', 'Gnome');
+      (1, 'Daniel', 'Male', 'Halfling', 10.0),
+      (2, 'Beata', 'Female', 'Dwarf', 20.0),
+      (3, 'Felix', 'Male', 'Gnome', NULL);
     """)
     connection.close()
     val data = ImportVertexList(
-      DBTable(db, "subscribers", Seq("id", "name", "race"), "id")).result
-    assert(data.attrs.keySet == Set("id", "name", "race"))
+      DBTable(db, "subscribers", Seq("id", "name", "race", "level"), "id")).result
+    assert(data.attrs.keySet == Set("id", "name", "race", "level"))
     assert(data.vertices.rdd.count == 3)
     val names = data.attrs("name").rdd
-    val genders = data.attrs("race").rdd
-    val gendersByNames = names.sortedJoin(genders).values.collect.toSeq.sorted
-    assert(gendersByNames == Seq("Beata" -> "Dwarf", "Daniel" -> "Halfling", "Felix" -> "Gnome"))
+    val races = data.attrs("race").rdd
+    val levels = data.attrs("level").rdd
+    val racesByNames = names.sortedJoin(races).values.collect.toSeq.sorted
+    assert(racesByNames == Seq("Beata" -> "Dwarf", "Daniel" -> "Halfling", "Felix" -> "Gnome"))
+    val levelsByNames = names.sortedJoin(levels).values.collect.toSeq.sorted
+    assert(levelsByNames == Seq("Beata" -> "20.0", "Daniel" -> "10.0"))
   }
 }
