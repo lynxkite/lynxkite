@@ -21,17 +21,17 @@ class SQLExportTest extends FunSuite with TestGraphOp {
       g.vertexAttributes.mapValues(_.entity).map(identity))
     assert(linesOf(export.creation) == linesOf("""
       DROP TABLE IF EXISTS example_graph;
-      CREATE TABLE example_graph (age DOUBLE PRECISION, income DOUBLE PRECISION, gender TEXT, name TEXT);
+      CREATE TABLE example_graph (age DOUBLE PRECISION, gender TEXT, income DOUBLE PRECISION, name TEXT);
       """))
     assert(export.inserts.collect.toSeq.map(linesOf(_)).flatten == linesOf("""
       INSERT INTO example_graph VALUES
-        (20.3, 1000.0, "Male", "Adam");
+        (20.3, "Male", 1000.0, "Adam");
       INSERT INTO example_graph VALUES
-        (18.2, NULL, "Female", "Eve");
+        (18.2, "Female", NULL, "Eve");
       INSERT INTO example_graph VALUES
-        (50.3, 2000.0, "Male", "Bob");
+        (50.3, "Male", 2000.0, "Bob");
       INSERT INTO example_graph VALUES
-        (2.0, NULL, "Male", "Isolated Joe");
+        (2.0, "Male", NULL, "Isolated Joe");
       """))
   }
 
