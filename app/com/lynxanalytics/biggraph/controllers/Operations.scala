@@ -134,11 +134,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
 
-  val sqlImportHelpText =
-    """ The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
-      (For example <tt>mysql://127.0.0.1/?user=batman&password=alfred</tt>.) An integer column
-      must be specified as the key, and you have to select a key range.
-      """
+  val jdbcHelpText = """
+    The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
+    (For example <tt>mysql://127.0.0.1/?user=batman&password=alfred</tt>.)"""
+  val sqlImportHelpText = jdbcHelpText + """
+    An integer column must be specified as the key, and you have to select a key range."""
 
   trait SQLRowReader extends RowReader {
     def sourceParameters = List(
@@ -1886,6 +1886,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         csv.saveToDir(path)
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
+      }
+    })
+
+    register(new AttributeOperation(_) {
+      val title = "Export vertex attributes to database"
+      val description = """
+        Creates a new table and writes the selected attributes into it.
+        If a table already exists, it will be discarded.""" + jdbcHelpText
+      def parameters = List(
+        Param("db", "Database"),
+        Param("table", "Table"),
+        Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
+      def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+      def apply(params: Map[String, String]) = {
+        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        val labels = params("attrs").split(",")
+        val attrs = labels.map {
+          label => label -> project.vertexAttributes(label).asInstanceOf[Attribute[_]]
+        }
+        val export = graph_util.SQLExport(params("table"), project.vertexSet, attrs.toMap)
+        export.insertInto(params("db"))
       }
     })
 
