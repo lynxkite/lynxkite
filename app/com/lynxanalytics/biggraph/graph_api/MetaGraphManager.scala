@@ -101,6 +101,10 @@ class MetaGraphManager(val repositoryPath: String) {
     saveTags()
   }
 
+  def debugPrintTag(tag: SymbolPath): Unit = synchronized {
+    println((tagRoot / tag).lsRec())
+  }
+
   def tagExists(tag: SymbolPath): Boolean = synchronized {
     tagRoot.exists(tag)
   }
