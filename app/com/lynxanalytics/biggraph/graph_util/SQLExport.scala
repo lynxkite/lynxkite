@@ -56,6 +56,9 @@ object SQLExport {
     table: String,
     vertexSet: VertexSet,
     attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager): SQLExport = {
+    for ((name, attr) <- attributes) {
+      assert(attr.vertexSet == vertexSet, s"Attribute $name is not for vertex set $vertexSet")
+    }
     new SQLExport(table, vertexSet.rdd, attributes.toSeq.map {
       case (name, attr) => sqlAttribute(name, attr)
     })
@@ -65,6 +68,10 @@ object SQLExport {
     table: String,
     edgeBundle: EdgeBundle,
     attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager): SQLExport = {
+    for ((name, attr) <- attributes) {
+      assert(attr.vertexSet == edgeBundle.asVertexSet,
+        s"Attribute $name is not for edge bundle $edgeBundle")
+    }
     new SQLExport(table, edgeBundle.asVertexSet.rdd, Seq(
       SQLColumn("edgeId", "BIGINT", edgeBundle.rdd.mapValuesWithKeys(_._1.toString)),
       SQLColumn("srcVertexId", "BIGINT", edgeBundle.rdd.mapValues(_.src.toString)),
