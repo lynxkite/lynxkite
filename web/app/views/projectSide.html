@@ -56,6 +56,10 @@
           <!-- The floppy sends the request if something has been entered. -->
           <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? side.saveAs(saveAsName) : 0"></i>
         </label>
+        <label class="btn btn-default" ng-click="showSettings = !showSettings"
+          tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-cog"></i>
+        </label>
         <label class="btn btn-default" ng-click="side.close()"
           tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-remove"></i>
@@ -96,6 +100,11 @@
     </div>
 
     <div class="list-group">
+
+      <!-- Project settings. -->
+      <div class="list-group-item project-settings" ng-if="showSettings">
+        <project-settings project="side.project" visible="$parent.showSettings"></project-settings>
+      </div>
 
       <!-- Extra controls for the sampled view. -->
       <div class="list-group-item extra-controls"

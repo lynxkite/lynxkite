@@ -11,58 +11,65 @@ import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import securesocial.{ core => ss }
 
-object LynxUser extends securesocial.core.Authorization {
-  def isAuthorized(user: securesocial.core.Identity) = user.email.get.endsWith("@lynxanalytics.com")
+object LynxUser extends ss.Authorization {
+  val pwProvider = ss.providers.UsernamePasswordProvider.UsernamePassword
+  def isAuthorized(user: ss.Identity) = {
+    user.identityId.providerId == pwProvider || user.email.get.endsWith("@lynxanalytics.com")
+  }
+  val fake = ss.SocialUser(
+    ss.IdentityId("fake", pwProvider),
+    "fake", "fake", "fake", Some("fake"), None, ss.AuthenticationMethod.UserPassword)
 }
 
-class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
+class JsonServer extends mvc.Controller with ss.SecureSocial {
   def testMode = play.api.Play.maybeApplication == None
-  def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
+  def productionMode = !testMode && play.api.Play.current.configuration.getString("https.port").nonEmpty
 
-  def action[A](parser: mvc.BodyParser[A])(block: mvc.Request[A] => mvc.Result): mvc.Action[A] = {
+  def action[A](parser: mvc.BodyParser[A])(block: ss.SecuredRequest[A] => mvc.Result): mvc.Action[A] = {
     // Turn off authentication in development mode.
     if (productionMode) {
       SecuredAction(authorize = LynxUser, ajaxCall = true)(parser)(block(_))
     } else {
-      mvc.Action(parser)(block(_))
+      mvc.Action(parser) { req => block(ss.SecuredRequest(LynxUser.fake, req)) }
     }
   }
 
   // It would be great to merge this with action[A], but the compiler crashes when I try.
   def asyncAction[A](parser: mvc.BodyParser[A])(
-    block: mvc.Request[A] => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
+    block: ss.SecuredRequest[A] => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
     // Turn off authentication in development mode.
     if (productionMode) {
       SecuredAction(authorize = LynxUser, ajaxCall = true).async(parser)(block(_))
     } else {
-      mvc.Action.async(parser)(block(_))
+      mvc.Action.async(parser) { req => block(ss.SecuredRequest(LynxUser.fake, req)) }
     }
   }
 
-  def jsonPost[I: json.Reads, O: json.Writes](handler: I => O) = {
+  def jsonPost[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => O) = {
     action(parse.json) { request =>
       log.info(s"POST ${request.path} ${request.body}")
       val i = request.body.as[I]
-      Ok(json.Json.toJson(handler(i)))
+      Ok(json.Json.toJson(handler(request.user, i)))
     }
   }
 
-  def jsonQuery[I: json.Reads, R](request: mvc.Request[mvc.AnyContent])(handler: I => R): R = {
+  def jsonQuery[I: json.Reads, R](request: ss.SecuredRequest[mvc.AnyContent])(handler: (ss.Identity, I) => R): R = {
     val key = "q"
     val value = request.getQueryString(key)
     assert(value.nonEmpty, s"Missing query parameter $key.")
     val s = value.get
     log.info(s"GET ${request.path} $s")
     val i = json.Json.parse(s).as[I]
-    handler(i)
+    handler(request.user, i)
   }
 
-  def jsonGet[I: json.Reads, O: json.Writes](handler: I => O) = {
+  def jsonGet[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => O) = {
     action(parse.anyContent) { request =>
-      jsonQuery(request) { i: I =>
+      jsonQuery(request) { (user: ss.Identity, i: I) =>
         try {
-          Ok(json.Json.toJson(handler(i)))
+          Ok(json.Json.toJson(handler(user, i)))
         } catch {
           case flying: FlyingResult => flying.result
         }
@@ -70,10 +77,10 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
     }
   }
 
-  def jsonFuture[I: json.Reads, O: json.Writes](handler: I => concurrent.Future[O]) = {
+  def jsonFuture[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => concurrent.Future[O]) = {
     asyncAction(parse.anyContent) { request =>
-      jsonQuery(request) { i: I =>
-        handler(i).map(o => Ok(json.Json.toJson(o)))
+      jsonQuery(request) { (user: ss.Identity, i: I) =>
+        handler(user, i).map(o => Ok(json.Json.toJson(o)))
       }
     }
   }
@@ -146,6 +153,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rForkProjectRequest = json.Json.reads[ForkProjectRequest]
   implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
   implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
+  implicit val rProjectSettingsRequest = json.Json.reads[ProjectSettingsRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
@@ -225,6 +233,7 @@ object ProductionJsonServer extends JsonServer {
   def forkProject = jsonPost(bigGraphController.forkProject)
   def undoProject = jsonPost(bigGraphController.undoProject)
   def redoProject = jsonPost(bigGraphController.redoProject)
+  def changeProjectSettings = jsonPost(bigGraphController.changeProjectSettings)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
