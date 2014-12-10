@@ -11,8 +11,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-// A few methods are extracted to the companion object to avoid trying to
-// serialize the case class.
 object SQLExport {
   private def quote(s: String) = '"' + StringEscapeUtils.escapeJava(s) + '"'
   private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
@@ -45,42 +43,60 @@ object SQLExport {
     (typeOf[Long], "BIGINT",
       rdd => rdd.asInstanceOf[AttributeRDD[Long]].mapValues(_.toString)))
 
-  case class SQLAttribute[T](name: String, attr: Attribute[T])(implicit dm: DataManager) {
+  private case class SQLColumn(name: String, sqlType: String, stringRDD: SortedRDD[ID, String])
+
+  private def sqlAttribute[T](name: String, attr: Attribute[T])(implicit dm: DataManager) = {
     val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
     assert(opt.nonEmpty, s"Attribute '$name' is of an unsupported type: ${attr.typeTag}")
     val (tpe, sqlType, toStringFn) = opt.get
-    val asString = toStringFn(attr.rdd)
+    SQLColumn(name, sqlType, toStringFn(attr.rdd))
+  }
+
+  def apply(
+    table: String,
+    vertexSet: VertexSet,
+    attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager): SQLExport = {
+    new SQLExport(table, vertexSet.rdd, attributes.toSeq.map {
+      case (name, attr) => sqlAttribute(name, attr)
+    })
+  }
+
+  def apply(
+    table: String,
+    edgeBundle: EdgeBundle,
+    attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager): SQLExport = {
+    new SQLExport(table, edgeBundle.asVertexSet.rdd, Seq(
+      SQLColumn("edgeId", "BIGINT", edgeBundle.rdd.mapValuesWithKeys(_._1.toString)),
+      SQLColumn("srcVertexId", "BIGINT", edgeBundle.rdd.mapValues(_.src.toString)),
+      SQLColumn("dstVertexId", "BIGINT", edgeBundle.rdd.mapValues(_.dst.toString))
+    ) ++ attributes.toSeq.map { case (name, attr) => sqlAttribute(name, attr) })
   }
 }
 import SQLExport._
-case class SQLExport(
+class SQLExport private (
     table: String,
-    vertexSet: VertexSet,
-    attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager) {
+    vertexSet: VertexSetRDD,
+    sqls: Seq[SQLColumn]) {
 
-  private val names = attributes.keys.toSeq.sorted
-  private val sqls = names.map(name => SQLAttribute(name, attributes(name)))
-  private val columns = sqls.map(attr => attr.name + " " + attr.sqlType).mkString(", ")
+  private val columns = sqls.map(col => col.name + " " + col.sqlType).mkString(", ")
   private val values = addRDDs(
-    vertexSet.rdd.mapValues(_ => Seq[String]()),
-    sqls.map(_.asString)).values
+    vertexSet.mapValues(_ => Seq[String]()),
+    sqls.map(_.stringRDD)).values
 
-  val creation = s"""
-      DROP TABLE IF EXISTS $table;
-      CREATE TABLE $table ($columns);
-      """
-
+  val deletion = s"DROP TABLE IF EXISTS $table;\n"
+  val creation = s"CREATE TABLE $table ($columns);\n"
   val inserts = makeInserts(table, values)
 
-  def insertInto(db: String) = {
+  def insertInto(db: String, delete: Boolean) = {
     // Create the table from the driver.
-    execute(db, creation)
+    if (delete) execute(db, deletion + creation)
+    else execute(db, creation)
     // Running the data updates from parallel tasks.
     inserts.foreach(execute(db, _))
   }
 
   def saveAs(filename: Filename) = {
-    (filename / "schema").createFromStrings(creation)
+    (filename / "schema").createFromStrings(deletion + creation)
     (filename / "data").saveAsTextFile(inserts)
   }
 }
