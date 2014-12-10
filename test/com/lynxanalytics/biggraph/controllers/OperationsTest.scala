@@ -539,4 +539,24 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(weight.rdd.values.collect.toSeq.sorted == Seq("1.0", "2.0", "3.0", "4.0"))
     assert(comment.rdd.values.collect.toSeq.sorted == Seq("Adam loves Eve", "Bob envies Adam", "Bob loves Eve", "Eve loves Adam"))
   }
+
+  test("CSV import & export vertices") {
+    run("Example Graph")
+    val path = dataManager.repositoryPath.toString + "/csv-export-test"
+    run("Export vertex attributes to CSV", Map(
+      "path" -> path,
+      "link" -> "link",
+      "attrs" -> "id,name,age,income,gender"))
+    val header = scala.io.Source.fromFile(path + "/header").mkString
+    run("Import vertices from CSV files", Map(
+      "files" -> (path + "/data/*"),
+      "header" -> header,
+      "delimiter" -> ",",
+      "filter" -> "",
+      "id-attr" -> "x"))
+    val name = project.vertexAttributes("name").runtimeSafeCast[String]
+    val income = project.vertexAttributes("income").runtimeSafeCast[String]
+    assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+    assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
+  }
 }
