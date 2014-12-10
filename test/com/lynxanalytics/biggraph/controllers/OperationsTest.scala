@@ -498,12 +498,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "gender"))
   }
 
-  test("SQL import & export") {
+  test("SQL import & export vertices") {
     run("Example Graph")
     val db = s"sqlite:${dataManager.repositoryPath}/test-db"
     run("Export vertex attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
+      "delete" -> "no",
       "attrs" -> "id,name,age,income,gender"))
     run("Import vertices from a database", Map(
       "db" -> db,
@@ -515,5 +516,27 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val income = project.vertexAttributes("income").runtimeSafeCast[String]
     assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(income.rdd.values.collect.toSeq.sorted == Seq("1000.0", "2000.0"))
+  }
+
+  test("SQL import & export edges") {
+    run("Example Graph")
+    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    run("Export edge attributes to database", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "delete" -> "yes",
+      "attrs" -> "weight,comment"))
+    run("Import vertices and edges from single database table", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "columns" -> "srcVertexId,dstVertexId,weight,comment",
+      "key" -> "edgeId",
+      "src" -> "srcVertexId",
+      "dst" -> "dstVertexId"))
+    assert(project.vertexSet.rdd.count == 3) // Isolated Joe is lost.
+    val weight = project.edgeAttributes("weight").runtimeSafeCast[String]
+    val comment = project.edgeAttributes("comment").runtimeSafeCast[String]
+    assert(weight.rdd.values.collect.toSeq.sorted == Seq("1.0", "2.0", "3.0", "4.0"))
+    assert(comment.rdd.values.collect.toSeq.sorted == Seq("Adam loves Eve", "Bob envies Adam", "Bob loves Eve", "Eve loves Adam"))
   }
 }

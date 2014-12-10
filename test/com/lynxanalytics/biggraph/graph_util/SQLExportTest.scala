@@ -19,10 +19,12 @@ class SQLExportTest extends FunSuite with TestGraphOp {
       "example_graph",
       g.vertices,
       g.vertexAttributes.mapValues(_.entity).map(identity))
-    assert(linesOf(export.creation) == linesOf("""
+    assert(export.deletion.trim == """
       DROP TABLE IF EXISTS example_graph;
+      """.trim)
+    assert(export.creation.trim == """
       CREATE TABLE example_graph (age DOUBLE PRECISION, gender TEXT, income DOUBLE PRECISION, name TEXT);
-      """))
+      """.trim)
     assert(export.inserts.collect.toSeq.map(linesOf(_)).flatten == linesOf("""
       INSERT INTO example_graph VALUES
         (20.3, "Male", 1000.0, "Adam");
@@ -42,7 +44,7 @@ class SQLExportTest extends FunSuite with TestGraphOp {
       g.vertices,
       g.vertexAttributes.mapValues(_.entity).map(identity))
     val db = s"sqlite:${dataManager.repositoryPath}/test-db"
-    export.insertInto(db)
+    export.insertInto(db, delete = true)
     implicit val connection = sql.DriverManager.getConnection("jdbc:" + db)
     val q = SQL("SELECT name FROM example_graph WHERE age < 20")
     assert(q().map(row => row[String]("name")).sorted == Seq("Eve", "Isolated Joe"))
