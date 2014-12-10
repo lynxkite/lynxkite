@@ -41,7 +41,7 @@ sealed trait TagPath extends Serializable with Ordered[TagPath] {
   def allTags: Iterable[Tag]
 
   // A string snapshot of the full directory structure. Mostly for debugging.
-  def lsRec: String
+  def lsRec(indent: Int = 0): String
 }
 object TagPath {
   import scala.language.implicitConversions
@@ -54,7 +54,7 @@ final case class Tag(name: Symbol, parent: TagDir, content: String) extends TagP
   def followPath(names: Iterable[Symbol]): Option[TagPath] =
     if (names.nonEmpty) None else Some(this)
   def allTags = Seq(this)
-  def lsRec: String = fullName + " => " + content + "\n"
+  def lsRec(indent: Int = 0): String = " " * indent + fullName + " => " + content + "\n"
   def gUID: UUID = UUID.fromString(content)
 }
 
@@ -90,7 +90,7 @@ trait TagDir extends TagPath {
   }
 
   def mkDir(name: Symbol): TagSubDir = synchronized {
-    assert(!existsTag(name), s"'$name' already exists.")
+    assert(!existsTag(name), s"Tag '$name' already exists.")
     if (existsDir(name)) return (this / name).asInstanceOf[TagSubDir]
     val result = TagSubDir(name, this)
     children(name) = result
@@ -123,7 +123,8 @@ trait TagDir extends TagPath {
 
   def allTags = children.values.flatMap(_.allTags)
 
-  def lsRec: String = fullName + "\n" + children.values.map(_.lsRec).mkString
+  def lsRec(indent: Int = 0): String =
+    " " * indent + fullName + "\n" + children.values.map(_.lsRec(indent + 1)).mkString
 
   def clear(): Unit = children.clear()
 

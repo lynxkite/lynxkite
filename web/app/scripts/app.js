@@ -65,7 +65,7 @@ angular
         req.$status = failure.status;
         if (failure.status === 401) {  // Unauthorized.
           req.$error = 'Redirecting to login page.';
-          window.location.href = 'https://' + window.location.hostname + '/authenticate/google';
+          window.location.href = 'https://' + window.location.hostname + '/login';
         } else {
           req.$error = util.responseToErrorMessage(failure);
         }

@@ -17,7 +17,7 @@ case class TestRequest(attr: String)
 case class TestResponse(attr: String)
 
 class TestController {
-  def process(request: TestRequest): TestResponse = {
+  def process(user: securesocial.core.Identity, request: TestRequest): TestResponse = {
     TestResponse("test string: " + request.attr)
   }
 }
