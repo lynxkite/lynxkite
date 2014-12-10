@@ -45,7 +45,7 @@ object SQLExport {
     (typeOf[Long], "BIGINT",
       rdd => rdd.asInstanceOf[AttributeRDD[Long]].mapValues(_.toString)))
 
-  case class SQLAttribute(name: String, attr: Attribute[_])(implicit dm: DataManager) {
+  case class SQLAttribute[T](name: String, attr: Attribute[T])(implicit dm: DataManager) {
     val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
     assert(opt.nonEmpty, s"Attribute '$name' is of an unsupported type: ${attr.typeTag}")
     val (tpe, sqlType, toStringFn) = opt.get
