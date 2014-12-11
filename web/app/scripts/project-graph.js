@@ -18,8 +18,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       function updateRequest() {
         // This indirection makes it certain that graph-view does not see more recent data than
         // project-graph does.
-        scope.viewLeft = angular.copy(scope.left);
-        scope.viewRight = angular.copy(scope.right);
+        scope.viewLeft = angular.copy(scope.left, scope.viewLeft);
+        scope.viewRight = angular.copy(scope.right, scope.viewRight);
 
         var sides = [];
         if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
