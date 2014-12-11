@@ -73,7 +73,6 @@ object SQLExport {
         s"Attribute $name is not for edge bundle $edgeBundle")
     }
     new SQLExport(table, edgeBundle.asVertexSet.rdd, Seq(
-      SQLColumn("edgeId", "BIGINT", edgeBundle.rdd.mapValuesWithKeys(_._1.toString)),
       SQLColumn("srcVertexId", "BIGINT", edgeBundle.rdd.mapValues(_.src.toString)),
       SQLColumn("dstVertexId", "BIGINT", edgeBundle.rdd.mapValues(_.dst.toString))
     ) ++ attributes.toSeq.sortBy(_._1).map { case (name, attr) => sqlAttribute(name, attr) })

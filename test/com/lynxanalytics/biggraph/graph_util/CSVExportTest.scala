@@ -23,11 +23,11 @@ class CSVExportTest extends FunSuite with TestGraphOp {
       sampleOut.edges,
       Seq(sampleOut.comment),
       Seq("comment")).toSortedString ==
-      """|"edgeId","srcVertexId","dstVertexId","comment"
-         |0,0,1,"Adam loves Eve"
-         |1,1,0,"Eve loves Adam"
-         |2,2,0,"Bob envies Adam"
-         |3,2,1,"Bob loves Eve"
+      """|"srcVertexId","dstVertexId","comment"
+         |0,1,"Adam loves Eve"
+         |1,0,"Eve loves Adam"
+         |2,0,"Bob envies Adam"
+         |2,1,"Bob loves Eve"
          |""".stripMargin)
   }
 

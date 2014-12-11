@@ -530,7 +530,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "db" -> db,
       "table" -> "example_graph",
       "columns" -> "srcVertexId,dstVertexId,weight,comment",
-      "key" -> "edgeId",
+      "key" -> "srcVertexId",
       "src" -> "srcVertexId",
       "dst" -> "dstVertexId"))
     assert(project.vertexSet.rdd.count == 3) // Isolated Joe is lost.

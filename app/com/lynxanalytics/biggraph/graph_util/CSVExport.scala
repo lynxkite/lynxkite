@@ -53,12 +53,12 @@ object CSVExport {
 
     assert(attributes.size == attributeLabels.size)
     assert(attributes.forall(_.vertexSet == edgeBundle.asVertexSet))
-    val indexedEdges = edgeBundle.rdd.mapValuesWithKeys {
-      case (id, edge) => Seq(id.toString, edge.src.toString, edge.dst.toString)
+    val indexedEdges = edgeBundle.rdd.mapValues {
+      edge => Seq(edge.src.toString, edge.dst.toString)
     }
 
     CSVData(
-      ("edgeId" +: "srcVertexId" +: "dstVertexId" +: attributeLabels).map(quoteString),
+      ("srcVertexId" +: "dstVertexId" +: attributeLabels).map(quoteString),
       attachAttributeData(indexedEdges, attributes).values)
   }
 
