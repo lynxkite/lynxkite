@@ -106,12 +106,10 @@ object BigGraphSparkContext {
   }
   def apply(
     appName: String,
-    masterURL: String,
     useKryo: Boolean = true,
     debugKryo: Boolean = false,
     useJars: Boolean = true): SparkContext = {
     var sparkConf = new SparkConf()
-      .setMaster(masterURL)
       .setAppName(appName)
       .set("spark.executor.memory",
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
