@@ -134,11 +134,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
 
-  val sqlImportHelpText =
-    """ The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
-      (For example <tt>mysql://127.0.0.1/?user=batman&password=alfred</tt>.) An integer column
-      must be specified as the key, and you have to select a key range.
-      """
+  val jdbcHelpText = """
+    The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
+    (For example <tt>mysql://127.0.0.1/?user=batman&password=alfred</tt>.)"""
+  val sqlImportHelpText = jdbcHelpText + """
+    An integer column must be specified as the key, and you have to select a key range."""
 
   trait SQLRowReader extends RowReader {
     def sourceParameters = List(
@@ -1889,6 +1889,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     })
 
+    register(new AttributeOperation(_) {
+      val title = "Export vertex attributes to database"
+      val description = """
+        Creates a new table and writes the selected attributes into it.
+        """ + jdbcHelpText
+      def parameters = List(
+        Param("db", "Database"),
+        Param("table", "Table"),
+        Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
+        Param("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
+      def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+      def apply(params: Map[String, String]) = {
+        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        val labels = params("attrs").split(",")
+        val attrs: Seq[(String, Attribute[_])] = labels.map {
+          label => label -> project.vertexAttributes(label)
+        }
+        val export = graph_util.SQLExport(params("table"), project.vertexSet, attrs.toMap)
+        export.insertInto(params("db"), delete = params("delete") == "yes")
+      }
+    })
+
     def getExportFilename(param: String): Filename = {
       assert(param.nonEmpty, "No export path specified.")
       if (param == "<auto>") {
@@ -1919,6 +1941,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     })
 
+    register(new AttributeOperation(_) {
+      val title = "Export edge attributes to database"
+      val description = """
+        Creates a new table and writes the selected attributes into it.
+        """ + jdbcHelpText
+      def parameters = List(
+        Param("db", "Database"),
+        Param("table", "Table"),
+        Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
+        Param("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
+      def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+      def apply(params: Map[String, String]) = {
+        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        val labels = params("attrs").split(",")
+        val attrs: Seq[(String, Attribute[_])] = labels.map {
+          label => label -> project.edgeAttributes(label)
+        }
+        val export = graph_util.SQLExport(params("table"), project.edgeBundle, attrs.toMap)
+        export.insertInto(params("db"), delete = params("delete") == "yes")
+      }
+    })
+
     register(new SegmentationOperation(_) {
       val title = "Export segmentation to CSV"
       val description = ""
@@ -1933,6 +1977,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         csv.saveToDir(path)
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
+      }
+    })
+
+    register(new SegmentationOperation(_) {
+      val title = "Export segmentation to database"
+      val description = """
+        Creates a new table and writes the edges going from the parent graph to this
+        segmentation into it.""" + jdbcHelpText
+      def parameters = List(
+        Param("db", "Database"),
+        Param("table", "Table"),
+        Param("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
+      def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+      def apply(params: Map[String, String]) = {
+        val export = graph_util.SQLExport(params("table"), seg.belongsTo, Map[String, Attribute[_]]())
+        export.insertInto(params("db"), delete = params("delete") == "yes")
       }
     })
   }

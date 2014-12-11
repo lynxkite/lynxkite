@@ -8,6 +8,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 case class CSVData(val header: Seq[String],
                    val data: rdd.RDD[Seq[String]]) {
@@ -38,17 +39,11 @@ object CSVExport {
     assert(attributes.size == attributeLabels.size)
     val vertexSet = attributes.head.vertexSet
     assert(attributes.forall(_.vertexSet == vertexSet))
-    val indexedVertexIds: rdd.RDD[(ID, Seq[String])] =
-      dataManager.get(vertexSet).rdd.mapPartitions(it =>
-        it.map {
-          case (id, _) =>
-            (id, Vector(id.toString))
-        },
-        preservesPartitioning = true)
+    val indexedVertexIds = vertexSet.rdd.mapValues(_ => Seq[String]())
 
     CSVData(
-      ("vertexId" +: attributeLabels).map(quoteString),
-      attachAttributeData(indexedVertexIds, attributes, dataManager).values)
+      attributeLabels.map(quoteString),
+      attachAttributeData(indexedVertexIds, attributes).values)
   }
 
   def exportEdgeAttributes(
@@ -58,28 +53,23 @@ object CSVExport {
 
     assert(attributes.size == attributeLabels.size)
     assert(attributes.forall(_.vertexSet == edgeBundle.asVertexSet))
-    val indexedEdges: rdd.RDD[(ID, Seq[String])] =
-      dataManager.get(edgeBundle).rdd.mapPartitions(it =>
-        it.map {
-          case (id, edge) =>
-            (id, Vector(id.toString, edge.src.toString, edge.dst.toString))
-        },
-        preservesPartitioning = true)
+    val indexedEdges = edgeBundle.rdd.mapValues {
+      edge => Seq(edge.src.toString, edge.dst.toString)
+    }
 
     CSVData(
-      ("edgeId" +: "srcVertexId" +: "dstVertexId" +: attributeLabels).map(quoteString),
-      attachAttributeData(indexedEdges, attributes, dataManager).values)
+      ("srcVertexId" +: "dstVertexId" +: attributeLabels).map(quoteString),
+      attachAttributeData(indexedEdges, attributes).values)
   }
 
   private def attachAttributeData(
     keyData: rdd.RDD[(ID, Seq[String])],
-    attributes: Seq[Attribute[_]],
-    dataManager: DataManager): rdd.RDD[(ID, Seq[String])] = {
+    attributes: Seq[Attribute[_]])(implicit dataManager: DataManager): rdd.RDD[(ID, Seq[String])] = {
 
     var indexedData = keyData
     for (attribute <- attributes) {
       indexedData = indexedData
-        .leftOuterJoin(stringRDDFromAttribute(dataManager, attribute))
+        .leftOuterJoin(stringRDDFromAttribute(attribute))
         .mapValues {
           case (prev, current) =>
             current match {
@@ -92,10 +82,10 @@ object CSVExport {
   }
 
   private def stringRDDFromAttribute[T: ClassTag](
-    dataManager: DataManager, attribute: Attribute[T]): rdd.RDD[(ID, String)] = {
+    attribute: Attribute[T])(implicit dataManager: DataManager): rdd.RDD[(ID, String)] = {
     implicit val tagForT = attribute.typeTag
     val op = toCSVStringOperation[T]
-    dataManager.get(attribute).rdd.mapValues(op)
+    attribute.rdd.mapValues(op)
   }
 
   private def toCSVStringOperation[T: TypeTag]: T => String = {
