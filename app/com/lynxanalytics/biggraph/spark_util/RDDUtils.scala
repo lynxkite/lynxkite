@@ -236,6 +236,13 @@ object Implicits {
 
     // Cheap method to force an RDD calculation
     def calculate() = self.foreach(_ => ())
+
+    def printDetails(indent: Int = 0): Unit = {
+      println(" " * indent + s"- $self (${self.partitions.size} partitions)")
+      for (dep <- self.dependencies) {
+        dep.rdd.printDetails(indent + 1)
+      }
+    }
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {

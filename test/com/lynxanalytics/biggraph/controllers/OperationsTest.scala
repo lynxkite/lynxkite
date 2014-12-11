@@ -9,9 +9,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-//to run tests tagged as ViralTest only: sbt test-only *OperationsTest* -- -n ViralTest
-object ViralTest extends Tag("ViralTest")
-
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
   def createProject(name: String) = {
@@ -329,7 +326,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(stringIDs == Seq("0", "1", "2"))
   }
 
-  test("Viral modeling segment logic", ViralTest) {
+  test("Viral modeling segment logic") {
     run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-1.csv").getFile,
       "header" -> "id,num",
@@ -375,7 +372,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.scalars("viral num coverage after iteration 1").value == 6)
   }
 
-  test("Viral modeling iteration logic", ViralTest) {
+  test("Viral modeling iteration logic") {
     run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-2.csv").getFile,
       "header" -> "id,num",
@@ -503,5 +500,67 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "age"))
     }
     run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "gender"))
+  }
+
+  test("SQL import & export vertices") {
+    run("Example Graph")
+    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    run("Export vertex attributes to database", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "delete" -> "no",
+      "attrs" -> "id,name,age,income,gender"))
+    run("Import vertices from a database", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "columns" -> "name,age,income,gender",
+      "key" -> "id",
+      "id-attr" -> "x"))
+    val name = project.vertexAttributes("name").runtimeSafeCast[String]
+    val income = project.vertexAttributes("income").runtimeSafeCast[String]
+    assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+    assert(income.rdd.values.collect.toSeq.sorted == Seq("1000.0", "2000.0"))
+  }
+
+  test("SQL import & export edges") {
+    run("Example Graph")
+    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    run("Export edge attributes to database", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "delete" -> "yes",
+      "attrs" -> "weight,comment"))
+    run("Import vertices and edges from single database table", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "columns" -> "srcVertexId,dstVertexId,weight,comment",
+      "key" -> "srcVertexId",
+      "src" -> "srcVertexId",
+      "dst" -> "dstVertexId"))
+    assert(project.vertexSet.rdd.count == 3) // Isolated Joe is lost.
+    val weight = project.edgeAttributes("weight").runtimeSafeCast[String]
+    val comment = project.edgeAttributes("comment").runtimeSafeCast[String]
+    assert(weight.rdd.values.collect.toSeq.sorted == Seq("1.0", "2.0", "3.0", "4.0"))
+    assert(comment.rdd.values.collect.toSeq.sorted == Seq("Adam loves Eve", "Bob envies Adam", "Bob loves Eve", "Eve loves Adam"))
+  }
+
+  test("CSV import & export vertices") {
+    run("Example Graph")
+    val path = dataManager.repositoryPath.toString + "/csv-export-test"
+    run("Export vertex attributes to CSV", Map(
+      "path" -> path,
+      "link" -> "link",
+      "attrs" -> "id,name,age,income,gender"))
+    val header = scala.io.Source.fromFile(path + "/header").mkString
+    run("Import vertices from CSV files", Map(
+      "files" -> (path + "/data/*"),
+      "header" -> header,
+      "delimiter" -> ",",
+      "filter" -> "",
+      "id-attr" -> "x"))
+    val name = project.vertexAttributes("name").runtimeSafeCast[String]
+    val income = project.vertexAttributes("income").runtimeSafeCast[String]
+    assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+    assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
   }
 }
