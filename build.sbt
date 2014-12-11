@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.Keys.bashScriptExtraDefines
+
 name := "biggraph"
 
 javaOptions in Test := Seq(
@@ -14,8 +16,6 @@ publishArtifact in packageSrc := false  // Don't package source.
 
 scalaVersion := "2.10.4"
 
-ivyXML := <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="2.5.0.v201103041518"><artifact name="javax.servlet" type="orbit" ext="jar"/></dependency> // eclipse needs this
-
 libraryDependencies ++= Seq(
   jdbc,
   anorm,
@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
   "org.apache.commons" % "commons-lang3" % "3.3",
-  "org.apache.spark" %% "spark-core" % "1.1.0" excludeAll(
+  "org.apache.spark" %% "spark-core" % "1.1.0" % "provided" excludeAll(
     ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12"),
     ExclusionRule(organization = "log4j", name = "log4j"),
     ExclusionRule(organization = "com.fasterxml.jackson.core", name = "jackson-databind")),
@@ -31,7 +31,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.pegdown" % "pegdown" % "1.4.2" % "test",
   "org.slf4j" % "log4j-over-slf4j" % "1.7.6",
-  "org.apache.spark" %% "spark-mllib" % "1.1.0",
+  "org.apache.spark" %% "spark-mllib" % "1.1.0" % "provided",
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
@@ -74,3 +74,5 @@ inConfig(Benchmark)(Defaults.testTasks) ++ Seq(
 )
 
 lazy val root = project.in(file(".")).configs(Benchmark)
+
+bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "scripts" / "call_spark_submit.sh")
