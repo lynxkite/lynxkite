@@ -9,14 +9,12 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 case class CSVData(val header: Seq[String],
                    val data: rdd.RDD[Seq[String]]) {
   override def toString: String =
     CSVData.lineToString(header) + data.map(CSVData.lineToString(_)).collect.mkString
-
-  def toSortedString: String =
-    CSVData.lineToString(header) + data.map(CSVData.lineToString(_)).collect.sorted.mkString
 
   def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
 
@@ -33,56 +31,52 @@ object CSVData {
 }
 
 object CSVExport {
-  def exportVertexAttributes(attributes: Seq[Attribute[_]],
-                             attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
-    assert(attributes.size > 0)
-    assert(attributes.size == attributeLabels.size)
-    val vertexSet = attributes.head.vertexSet
-    assert(attributes.forall(_.vertexSet == vertexSet))
+  def exportVertexAttributes(
+    vertexSet: VertexSet,
+    attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager): CSVData = {
+    assert(attributes.size > 0, "At least one attribute must be selected for export.")
+    for ((name, attr) <- attributes) {
+      assert(attr.vertexSet == vertexSet, s"Incorrect vertex set for attribute $name.")
+    }
     val indexedVertexIds = vertexSet.rdd.mapValues(_ => Seq[String]())
-
+    val (names, attrs) = attributes.toSeq.sortBy(_._1).unzip
     CSVData(
-      attributeLabels.map(quoteString),
-      attachAttributeData(indexedVertexIds, attributes).values)
+      names.map(quoteString(_)),
+      attachAttributeData(indexedVertexIds, attrs).values)
   }
 
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
-    attributes: Seq[Attribute[_]],
-    attributeLabels: Seq[String])(implicit dataManager: DataManager): CSVData = {
-
-    assert(attributes.size == attributeLabels.size)
-    assert(attributes.forall(_.vertexSet == edgeBundle.asVertexSet))
+    attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager): CSVData = {
+    for ((name, attr) <- attributes) {
+      assert(attr.vertexSet == edgeBundle.asVertexSet,
+        s"Incorrect vertex set for attribute $name.")
+    }
     val indexedEdges = edgeBundle.rdd.mapValues {
       edge => Seq(edge.src.toString, edge.dst.toString)
     }
-
+    val (names, attrs) = attributes.toList.sortBy(_._1).unzip
     CSVData(
-      ("srcVertexId" +: "dstVertexId" +: attributeLabels).map(quoteString),
-      attachAttributeData(indexedEdges, attributes).values)
+      ("srcVertexId" :: "dstVertexId" :: names).map(quoteString),
+      attachAttributeData(indexedEdges, attrs).values)
+  }
+
+  private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
+    rdds.foldLeft(base) { (seqs, rdd) =>
+      seqs
+        .sortedLeftOuterJoin(rdd)
+        .mapValues { case (seq, opt) => seq :+ opt.getOrElse("") }
+    }
   }
 
   private def attachAttributeData(
-    keyData: rdd.RDD[(ID, Seq[String])],
-    attributes: Seq[Attribute[_]])(implicit dataManager: DataManager): rdd.RDD[(ID, Seq[String])] = {
-
-    var indexedData = keyData
-    for (attribute <- attributes) {
-      indexedData = indexedData
-        .leftOuterJoin(stringRDDFromAttribute(attribute))
-        .mapValues {
-          case (prev, current) =>
-            current match {
-              case Some(value) => prev :+ value
-              case None => prev :+ ""
-            }
-        }
-    }
-    indexedData
+    base: SortedRDD[ID, Seq[String]],
+    attributes: Seq[Attribute[_]])(implicit dataManager: DataManager) = {
+    addRDDs(base, attributes.map(stringRDDFromAttribute(_)))
   }
 
   private def stringRDDFromAttribute[T: ClassTag](
-    attribute: Attribute[T])(implicit dataManager: DataManager): rdd.RDD[(ID, String)] = {
+    attribute: Attribute[T])(implicit dataManager: DataManager): SortedRDD[ID, String] = {
     implicit val tagForT = attribute.typeTag
     val op = toCSVStringOperation[T]
     attribute.rdd.mapValues(op)
