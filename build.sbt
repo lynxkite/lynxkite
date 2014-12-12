@@ -75,4 +75,4 @@ inConfig(Benchmark)(Defaults.testTasks) ++ Seq(
 
 lazy val root = project.in(file(".")).configs(Benchmark)
 
-bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "scripts" / "call_spark_submit.sh")
+bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "tools" / "call_spark_submit.sh")
