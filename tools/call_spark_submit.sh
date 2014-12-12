@@ -9,7 +9,7 @@ rm ${conf_dir}/play.plugins || true
 process_args "$@"
 set -- "${residual_args[@]}"
 
-# This is done here (I believe) because get_mem_ops uses java_opts.
+# This is done here (I believe) because get_mem_opts uses java_opts.
 if [[ "$JAVA_OPTS" != "" ]]; then
   java_opts="${JAVA_OPTS}"
 fi
