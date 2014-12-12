@@ -11,13 +11,19 @@ shift 5
 EXTRA_ARGS="$@"
 
 # Stop the server in case it's already running.
-if [ -e ${ROOT}/RUNNING_PID ]; then
-  kill `cat ${ROOT}/RUNNING_PID` || true
-  sleep 2
-fi
-if [ -e ${ROOT}/RUNNING_PID ]; then
-  killall -9 `cat ${ROOT}/RUNNING_PID` || true
-  rm -f ${ROOT}/RUNNING_PID
+if [ -e biggraphstage/RUNNING_PID ]; then
+  PID=$(cat ${ROOT}/RUNNING_PID)
+  kill $PID || true
+  for i in $(seq 10); do
+    if [ ! -e /proc/$PID ]; then
+      break
+    fi
+    sleep 1
+  done
+  if [ -e /proc/$PID ]; then
+    kill -9 $PID || true
+    rm -f biggraphstage/RUNNING_PID
+  fi
 fi
 
 # Start the server.
@@ -29,6 +35,7 @@ sh -c "( ( \
   SPARK_DIR=\"/mnt/\" \
   EXECUTOR_MEMORY=${EXECUTOR_MB}m \
   LOGGER_HOME=${LOGGER_HOME:-/mnt} \
+  SPARK_HOME=${SPARK_HOME:-/home/ec2-user/spark-1.1.0-bin-hadoop1} \
   nohup $ROOT/bin/biggraph \
     -mem $RAM_MB \
     -Dhttp.port=5080 \

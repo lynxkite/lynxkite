@@ -1,17 +1,18 @@
 package com.lynxanalytics.biggraph.serving
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.mvc
+import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json
+import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import play.api.mvc
+import scala.concurrent.ExecutionContext.Implicits.global
+import securesocial.{ core => ss }
+
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import play.api.libs.functional.syntax.toContraFunctorOps
-import play.api.libs.json.Json.toJsFieldJsValueWrapper
-import securesocial.{ core => ss }
 
 object LynxUser extends ss.Authorization {
   val pwProvider = ss.providers.UsernamePasswordProvider.UsernamePassword
