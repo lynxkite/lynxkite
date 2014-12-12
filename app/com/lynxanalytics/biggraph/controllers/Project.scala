@@ -430,7 +430,9 @@ object Project {
 
 case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
   def parent = Project(parentName)
-  val path: SymbolPath = s"projects/$parentName/segmentations/$name"
+  val path: SymbolPath = s"projects/$parentName/checkpointed/segmentations/$name"
+  def project = Project(s"$parentName/checkpointed/segmentations/$name/project")
+
   def toFE = {
     val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
@@ -467,7 +469,6 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
       aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr: Attribute[Vector[ID]]
     }.getOrElse(null)
   }
-  def project = Project(s"$parentName/segmentations/$name/project")
 
   def rename(newName: String) = manager.synchronized {
     val to = new SymbolPath(path.init) / newName
