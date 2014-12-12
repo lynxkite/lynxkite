@@ -106,12 +106,11 @@ object BigGraphSparkContext {
   }
   def apply(
     appName: String,
-    masterURL: String,
     useKryo: Boolean = true,
     debugKryo: Boolean = false,
-    useJars: Boolean = true): SparkContext = {
+    useJars: Boolean = true,
+    master: String = ""): SparkContext = {
     var sparkConf = new SparkConf()
-      .setMaster(masterURL)
       .setAppName(appName)
       .set("spark.executor.memory",
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
@@ -142,6 +141,9 @@ object BigGraphSparkContext {
     }
     if (useJars) {
       sparkConf = sparkConf.setJars(SparkStageJars.jars)
+    }
+    if (master != "") {
+      sparkConf = sparkConf.setMaster(master)
     }
     return new SparkContext(sparkConf)
   }

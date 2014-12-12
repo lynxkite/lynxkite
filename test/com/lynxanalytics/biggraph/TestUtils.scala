@@ -34,9 +34,9 @@ trait TestTempDir {
 private object SparkContextContainer {
   lazy val sparkContext = BigGraphSparkContext(
     "BigGraphTests",
-    "local",
     useJars = false,
-    debugKryo = false) // Set this to true if you are debugging kryo issues.
+    debugKryo = false,
+    master = "local") // Set this to true if you are debugging kryo issues.
 }
 
 trait TestSparkContext {
