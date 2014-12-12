@@ -102,7 +102,7 @@ class SQLExport private (
   }
 
   def saveAs(filename: Filename) = {
-    (filename / "schema").createFromStrings(deletion + creation)
+    (filename / "header").createFromStrings(deletion + creation)
     (filename / "data").saveAsTextFile(inserts)
   }
 }
