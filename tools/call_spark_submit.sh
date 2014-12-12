@@ -4,12 +4,12 @@
 conf_dir="$(realpath "${app_home}/../conf")"
 rm ${conf_dir}/play.plugins || true
 
-# The folliwing inspired by the run() method of the original runner script. The point here is to
+# The following is inspired by the run() method of the original runner script. The point here is to
 # setup java opts and application opts from the parameters of the runner script.
 process_args "$@"
 set -- "${residual_args[@]}"
 
-# This is done here (I believe) because get_mem_ops uses java_opts.
+# This is done here (I believe) because get_mem_opts uses java_opts.
 if [[ "$JAVA_OPTS" != "" ]]; then
   java_opts="${JAVA_OPTS}"
 fi
