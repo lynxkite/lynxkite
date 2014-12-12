@@ -1,7 +1,7 @@
 #!/bin/sh -xue
 
 ROOT=$(dirname $0)
-SPARK_MASTER="spark://`curl http://169.254.169.254/latest/meta-data/public-hostname`:7077"
+export SPARK_MASTER="spark://`curl http://169.254.169.254/latest/meta-data/public-hostname`:7077"
 CREDENTIALS=$1
 CORES=$2
 RAM_MB=$3
@@ -31,14 +31,14 @@ sh -c "( ( \
   NUM_CORES_PER_EXECUTOR=${CORES} \
   REPOSITORY_MODE=\"static</home/ec2-user/metagraph,s3n://${CREDENTIALS}@${S3_DATAREPO}>\" \
   SPARK_CLUSTER_MODE=\"static<${SPARK_MASTER}>\" \
-  SPARK_JAVA_OPTS=\"-Dhadoop.tmp.dir=/mnt/hadoop-tmp\" \
   SPARK_DIR=\"/mnt/\" \
   EXECUTOR_MEMORY=${EXECUTOR_MB}m \
   LOGGER_HOME=${LOGGER_HOME:-/mnt} \
-  SPARK_HOME=${SPARK_HOME:-/home/ec2-user/spark-1.1.0-bin-hadoop1} \
+  SPARK_HOME=${SPARK_HOME:-/root/spark} \
   nohup $ROOT/bin/biggraph \
     -mem $RAM_MB \
     -Dhttp.port=5080 \
+    -Dhadoop.tmp.dir=/mnt/hadoop-tmp \
     $EXTRA_ARGS \
   &> run_on_ec2.sh.out \
 ) & ls > /dev/null )"
