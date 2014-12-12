@@ -11,6 +11,10 @@ import securesocial.{ core => ss }
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   override def toString = projectName
+  override def equals(p: Any) =
+    p.isInstanceOf[Project] && projectName == p.asInstanceOf[Project].projectName
+  override def hashCode = projectName.hashCode
+
   val separator = "|"
   assert(!projectName.contains(separator), s"Invalid project name: $projectName")
   val rootDir: SymbolPath = s"projects/$projectName"
