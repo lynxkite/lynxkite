@@ -137,10 +137,23 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     existing(checkpointedDir / "lastOperation").foreach(manager.rmTag(_))
   }
 
-  def readACL = get(rootDir / "readACL")
-  def readACL_=(x: String): Unit = set(rootDir / "readACL", x)
-  def writeACL = get(rootDir / "writeACL")
-  def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
+  def readACL: String = {
+    if (isSegmentation) asSegmentation.parent.readACL
+    else get(rootDir / "readACL")
+  }
+  def readACL_=(x: String): Unit = {
+    assert(!isSegmentation, s"$this is a segmentation.")
+    set(rootDir / "readACL", x)
+  }
+  def writeACL: String = {
+    if (isSegmentation) asSegmentation.parent.writeACL
+    else get(rootDir / "writeACL")
+  }
+  def writeACL_=(x: String): Unit = {
+    assert(!isSegmentation, s"$this is a segmentation.")
+    set(rootDir / "writeACL", x)
+  }
+
   def assertReadAllowedFrom(user: ss.Identity): Unit = {
     assert(readAllowedFrom(user), s"User ${user.email.get} does not have read access to project $projectName.")
   }
@@ -169,8 +182,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def asSegmentation = manager.synchronized {
     assert(isSegmentation, s"$projectName is not a segmentation")
     // If our parent is a top-level project, rootDir is like:
-    //   project/parentName/segmentations/segmentationName/project
-    val parentName = new SymbolPath(rootDir.drop(1).dropRight(3))
+    //   project/parentName/checkpointed/segmentations/segmentationName/project
+    val parentName = new SymbolPath(rootDir.drop(1).dropRight(4))
     val segmentationName = rootDir.dropRight(1).last.name
     Segmentation(parentName.toString, segmentationName)
   }
