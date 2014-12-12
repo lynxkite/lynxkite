@@ -108,7 +108,8 @@ object BigGraphSparkContext {
     appName: String,
     useKryo: Boolean = true,
     debugKryo: Boolean = false,
-    useJars: Boolean = true): SparkContext = {
+    useJars: Boolean = true,
+    master: String = ""): SparkContext = {
     var sparkConf = new SparkConf()
       .setAppName(appName)
       .set("spark.executor.memory",
@@ -140,6 +141,9 @@ object BigGraphSparkContext {
     }
     if (useJars) {
       sparkConf = sparkConf.setJars(SparkStageJars.jars)
+    }
+    if (master != "") {
+      sparkConf = sparkConf.setMaster(master)
     }
     return new SparkContext(sparkConf)
   }
