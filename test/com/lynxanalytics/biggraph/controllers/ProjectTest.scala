@@ -46,6 +46,20 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     assert(undoRedo(project) == ("D", ""))
   }
 
+  test("Segmentations") {
+    val p1 = Project("1")
+    val p2 = p1.segmentation("2").project
+    val p3 = p2.segmentation("3").project
+    p1.notes = "1"; p2.notes = "2"; p3.notes = "3"
+    assert(!p1.isSegmentation)
+    assert(p2.isSegmentation)
+    assert(p3.isSegmentation)
+    assert(p2.asSegmentation.parent == p1)
+    assert(p3.asSegmentation.parent == p2)
+    assert(p1.segmentations == Seq(p2.asSegmentation))
+    assert(p2.segmentations == Seq(p3.asSegmentation))
+  }
+
   def user(email: String) = {
     ss.SocialUser(
       ss.IdentityId(email, ss.providers.UsernamePasswordProvider.UsernamePassword),
