@@ -146,7 +146,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     else get(rootDir / "readACL")
   }
   def readACL_=(x: String): Unit = {
-    assert(!isSegmentation, s"$this is a segmentation.")
+    assert(!isSegmentation,
+      s"Access control has to be set on the parent project. $this is a segmentation.")
     set(rootDir / "readACL", x)
   }
   def writeACL: String = {
@@ -154,7 +155,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     else get(rootDir / "writeACL")
   }
   def writeACL_=(x: String): Unit = {
-    assert(!isSegmentation, s"$this is a segmentation.")
+    assert(!isSegmentation,
+      s"Access control has to be set on the parent project. $this is a segmentation.")
     set(rootDir / "writeACL", x)
   }
 
