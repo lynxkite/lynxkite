@@ -1870,20 +1870,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     implicit val dataManager = env.dataManager
 
     register(new AttributeOperation(_) {
-      val title = "Export vertex attributes to CSV"
+      val title = "Export vertex attributes to file"
       val description = ""
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
-        Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
+        Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
+        Param("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
-        val attrs = labels.map(label => project.vertexAttributes(label))
+        val attrs: Map[String, Attribute[_]] = labels.map {
+          label => label -> project.vertexAttributes(label)
+        }.toMap
         val path = getExportFilename(params("path"))
-        val csv = graph_util.CSVExport.exportVertexAttributes(attrs, labels)
-        csv.saveToDir(path)
+        params("format") match {
+          case "CSV" =>
+            val csv = graph_util.CSVExport.exportVertexAttributes(project.vertexSet, attrs)
+            csv.saveToDir(path)
+          case "SQL dump" =>
+            val export = graph_util.SQLExport(project.projectName, project.vertexSet, attrs)
+            export.saveAs(path)
+        }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
       }
@@ -1921,21 +1930,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     register(new AttributeOperation(_) {
-      val title = "Export edge attributes to CSV"
+      val title = "Export edge attributes to file"
       val description = ""
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
-        Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
+        Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
+        Param("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
-        val attrs = labels.map(label => project.edgeAttributes(label))
+        val attrs: Map[String, Attribute[_]] = labels.map {
+          label => label -> project.edgeAttributes(label)
+        }.toMap
         val path = getExportFilename(params("path"))
-        val csv = graph_util.CSVExport
-          .exportEdgeAttributes(project.edgeBundle, attrs, labels)
-        csv.saveToDir(path)
+        params("format") match {
+          case "CSV" =>
+            val csv = graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle, attrs)
+            csv.saveToDir(path)
+          case "SQL dump" =>
+            val export = graph_util.SQLExport(project.projectName, project.edgeBundle, attrs)
+            export.saveAs(path)
+        }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
       }
@@ -1955,26 +1972,32 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
-        val attrs: Seq[(String, Attribute[_])] = labels.map {
+        val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.edgeAttributes(label)
-        }
-        val export = graph_util.SQLExport(params("table"), project.edgeBundle, attrs.toMap)
+        }.toMap
+        val export = graph_util.SQLExport(params("table"), project.edgeBundle, attrs)
         export.insertInto(params("db"), delete = params("delete") == "yes")
       }
     })
 
     register(new SegmentationOperation(_) {
-      val title = "Export segmentation to CSV"
+      val title = "Export segmentation to file"
       val description = ""
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
-        Param("link", "Download link name", defaultValue = "segmentation_csv"))
+        Param("link", "Download link name", defaultValue = "segmentation_csv"),
+        Param("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val path = getExportFilename(params("path"))
-        val csv = graph_util.CSVExport
-          .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
-        csv.saveToDir(path)
+        params("format") match {
+          case "CSV" =>
+            val csv = graph_util.CSVExport.exportEdgeAttributes(seg.belongsTo, Map())
+            csv.saveToDir(path)
+          case "SQL dump" =>
+            val export = graph_util.SQLExport(project.projectName, seg.belongsTo, Map[String, Attribute[_]]())
+            export.saveAs(path)
+        }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
       }
