@@ -1,4 +1,0 @@
-{
-  "darabos@lynx" : "",
-  "xandrew@lynx" : ""
-}

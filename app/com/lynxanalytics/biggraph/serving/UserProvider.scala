@@ -2,13 +2,14 @@ package com.lynxanalytics.biggraph.serving
 
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import securesocial.{ core => ss }
+
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 class UserProvider(application: play.api.Application) extends ss.UserServicePlugin(application) {
   private val users = collection.mutable.Map[ss.IdentityId, ss.Identity]()
   private val tokens = collection.mutable.Map[String, ss.providers.Token]()
-  private val usersFile = new java.io.File("users.txt")
+  private val usersFile = new java.io.File(System.getProperty("user.dir") + "/conf/users.txt")
   private val pwProvider = ss.providers.UsernamePasswordProvider.UsernamePassword
 
   // Loads user+pass data from usersFile.
