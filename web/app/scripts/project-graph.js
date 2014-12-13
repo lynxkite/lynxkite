@@ -83,6 +83,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             srcIdx: 0,
             dstIdx: 1,
             edgeBundleId: scope.leftToRightBundle,
+            filters: [],
             edgeWeightId: '',
           });
         }
