@@ -683,13 +683,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
-    private def applyOn[T](attr: Attribute[T]) = {
-      val op = graph_operations.VertexAttributeToString[T]()
-      op(op.attr, attr).result.attr
-    }
     def apply(params: Map[String, String]) = {
       for (attr <- params("attr").split(",")) {
-        project.vertexAttributes(attr) = applyOn(project.vertexAttributes(attr))
+        project.vertexAttributes(attr) = attributeToString(project.vertexAttributes(attr))
+      }
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Edge attribute to string"
+    val description = ""
+    def parameters = List(
+      Param("attr", "Edge attribute", options = edgeAttributes, multipleChoice = true))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+    def apply(params: Map[String, String]) = {
+      for (attr <- params("attr").split(",")) {
+        project.edgeAttributes(attr) = attributeToString(project.edgeAttributes(attr))
       }
     }
   })
@@ -704,6 +713,20 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for (name <- params("attr").split(",")) {
         val attr = project.vertexAttributes(name).runtimeSafeCast[String]
         project.vertexAttributes(name) = toDouble(attr)
+      }
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Edge attribute to double"
+    val description = ""
+    def parameters = List(
+      Param("attr", "Edge attribute", options = edgeAttributes[String], multipleChoice = true))
+    def enabled = FEStatus.assert(edgeAttributes[String].nonEmpty, "No string edge attributes.")
+    def apply(params: Map[String, String]) = {
+      for (name <- params("attr").split(",")) {
+        val attr = project.edgeAttributes(name).runtimeSafeCast[String]
+        project.edgeAttributes(name) = toDouble(attr)
       }
     }
   })
@@ -2032,6 +2055,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def toDouble(attr: Attribute[String]): Attribute[Double] = {
     val op = graph_operations.VertexAttributeToDouble()
+    op(op.attr, attr).result.attr
+  }
+
+  private def attributeToString[T](attr: Attribute[T]): Attribute[String] = {
+    val op = graph_operations.VertexAttributeToString[T]()
     op(op.attr, attr).result.attr
   }
 
