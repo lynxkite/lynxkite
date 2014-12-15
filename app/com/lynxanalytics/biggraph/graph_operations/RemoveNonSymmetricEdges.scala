@@ -9,6 +9,8 @@ object RemoveNonSymmetricEdges {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
+    val injection = edgeBundle(
+      symmetric.asVertexSet, inputs.es.asVertexSet, EdgeBundleProperties.embedding)
   }
 }
 import RemoveNonSymmetricEdges._
@@ -37,7 +39,8 @@ case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output
         outEdges.collect {
           case (id, outEdge) if inEdgeSources.contains(outEdge.dst) => id -> outEdge
         }
-    }
-    output(o.symmetric, edges.toSortedRDD(es.partitioner.get))
+    }.toSortedRDD(es.partitioner.get)
+    output(o.symmetric, edges)
+    output(o.injection, edges.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
 }
