@@ -554,7 +554,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      project.edgeBundle = reverse(project.edgeBundle)
+      val op = graph_operations.ReverseEdges()
+      val res = op(op.esAB, project.edgeBundle).result
+      project.pullBackEdgesWithInjection(
+        project.edgeBundle,
+        project.edgeAttributes.toIndexedSeq,
+        res.esBA,
+        res.injection)
     }
   })
 
