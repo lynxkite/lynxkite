@@ -288,6 +288,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def createProject(user: ss.Identity, request: CreateProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.name)
+    assert(!ops.projects.contains(p), s"Project ${request.name} already exists.")
     p.notes = request.notes
     request.privacy match {
       case "private" =>
