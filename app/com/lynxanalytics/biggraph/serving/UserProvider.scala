@@ -2,11 +2,30 @@ package com.lynxanalytics.biggraph.serving
 
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
+import play.api.mvc
 import org.mindrot.jbcrypt.BCrypt
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-class UserProvider(application: play.api.Application) {
+object User {
+  val fake = User("fake")
+}
+case class User(email: String) {
+  override def toString = email
+}
+
+object UserProvider extends mvc.Controller {
+  def get(request: mvc.Request[_]): Option[User] = {
+    val cookie = request.cookies.find(_.name == "auth")
+    cookie.flatMap(auth => tokens.get(auth.value))
+  }
+
+  val login = mvc.Action { request =>
+    tokens("123") = User("test")
+    Ok("hello").withCookies(mvc.Cookie("auth", "123"))
+  }
+
+  private val tokens = collection.mutable.Map[String, User]()
   private val usersFile = new java.io.File(System.getProperty("user.dir") + "/conf/users.txt")
 
   // Loads user+pass data from usersFile.
@@ -18,7 +37,7 @@ class UserProvider(application: play.api.Application) {
     }
     for ((user, pass) <- passwords) {
       // The values in users.txt are hashes. An empty value means no password has been set.
-      val pwInfo =
+      val hash =
         if (pass.nonEmpty) pass
         // Use the default password when one is not defined until the user changes it.
         else defaultPassword
