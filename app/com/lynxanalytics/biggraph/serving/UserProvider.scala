@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.serving
 
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
+import play.api.libs.Crypto
 import play.api.mvc
 import org.mindrot.jbcrypt.BCrypt
 
@@ -14,33 +15,82 @@ case class User(email: String) {
   override def toString = email
 }
 
+class SignedToken private (signature: String, timestamp: Long, val token: String) {
+  override def toString = s"$signature $timestamp $token"
+}
+object SignedToken {
+  val maxAge = {
+    val config = play.api.Play.current.configuration
+    config.getInt("authentication.cookie.validDays").getOrElse(1) * 24 * 3600
+  }
+
+  def apply(): SignedToken = {
+    val token = Crypto.generateToken
+    val timestamp = time
+    new SignedToken(Crypto.sign(s"$timestamp $token"), timestamp, token)
+  }
+
+  private def time = java.lang.System.currentTimeMillis / 1000
+  private def split(s: String): Option[(String, String)] = {
+    val ss = s.split(" ", 2)
+    if (ss.size != 2) None
+    else Some((ss(0), ss(1)))
+  }
+
+  def unapply(s: String): Option[SignedToken] = {
+    split(s).flatMap {
+      case (signature, timedToken) =>
+        if (signature != Crypto.sign(timedToken)) None
+        else split(timedToken).flatMap {
+          case (timestamp, token) =>
+            val tsOpt = util.Try(timestamp.toLong).toOption
+            tsOpt.flatMap {
+              case ts if ts + maxAge < time => None // Token has expired.
+              case ts => Some(new SignedToken(signature, ts, token))
+            }
+        }
+    }
+  }
+}
+
 object UserProvider extends mvc.Controller {
   def get(request: mvc.Request[_]): Option[User] = {
     val cookie = request.cookies.find(_.name == "auth")
-    cookie.flatMap(auth => tokens.get(auth.value))
+    cookie.map(_.value).collect {
+      case SignedToken(signed) => signed
+    }.flatMap {
+      signed => tokens.get(signed.token)
+    }
   }
 
   val login = mvc.Action { request =>
-    tokens("123") = User("test")
-    Ok("hello").withCookies(mvc.Cookie("auth", "123"))
+    val username = request.getQueryString("username").get
+    val password = request.getQueryString("password").get
+    assertPassword(username, password)
+    val signed = SignedToken()
+    tokens(signed.token) = User(username)
+    Redirect("/").withCookies(mvc.Cookie(
+      "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+  }
+
+  private def assertPassword(username: String, password: String): Unit = {
+    assert(passwords.contains(username), "Invalid user name or password.")
+    val hash =
+      if (passwords(username).nonEmpty) passwords(username)
+      else BCrypt.hashpw("the lynx is a big cat", BCrypt.gensalt(10))
+    assert(BCrypt.checkpw(password, hash), "Invalid user name or password.")
   }
 
   private val tokens = collection.mutable.Map[String, User]()
+  private val passwords = collection.mutable.Map[String, String]()
   private val usersFile = new java.io.File(System.getProperty("user.dir") + "/conf/users.txt")
 
   // Loads user+pass data from usersFile.
   private def loadUsers() = {
-    val defaultPassword = BCrypt.hashpw("the lynx is a big cat", BCrypt.gensalt(10))
     val data = FileUtils.readFileToString(usersFile, "utf8")
-    val passwords = json.Json.parse(data).as[json.JsObject].fields.map {
+    passwords.clear()
+    passwords ++= json.Json.parse(data).as[json.JsObject].fields.map {
       case (name, value) => name -> value.as[String]
-    }
-    for ((user, pass) <- passwords) {
-      // The values in users.txt are hashes. An empty value means no password has been set.
-      val hash =
-        if (pass.nonEmpty) pass
-        // Use the default password when one is not defined until the user changes it.
-        else defaultPassword
     }
     log.info(s"User data loaded from $usersFile.")
   }

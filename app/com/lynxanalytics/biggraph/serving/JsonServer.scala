@@ -16,7 +16,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
-  def productionMode = !testMode && play.api.Play.current.configuration.getString("https.port").nonEmpty
+  def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
   def action[A](parser: mvc.BodyParser[A])(block: (User, mvc.Request[A]) => mvc.SimpleResult): mvc.Action[A] = {
     asyncAction(parser) { (user, request) =>
@@ -30,7 +30,7 @@ class JsonServer extends mvc.Controller {
       mvc.Action.async(parser) { request =>
         UserProvider.get(request) match {
           case Some(user) => block(user, request)
-          case None => Future.successful(Redirect("/login"))
+          case None => Future.successful(Unauthorized)
         }
       }
     } else {
