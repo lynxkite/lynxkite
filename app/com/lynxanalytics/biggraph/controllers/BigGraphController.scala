@@ -8,7 +8,6 @@ import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
-import securesocial.{ core => ss }
 
 case class FEStatus(enabled: Boolean, disabledReason: String = "") {
   def ||(other: => FEStatus) = if (enabled) this else other
@@ -249,17 +248,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
       attributes = visibleAttributes.map(UIValue.fromEntity(_)).toList)
   }
 
-  def vertexSet(user: ss.Identity, request: VertexSetRequest): FEVertexSet = {
+  def vertexSet(user: serving.User, request: VertexSetRequest): FEVertexSet = {
     toFE(metaManager.vertexSet(request.id.asUUID))
   }
 
-  def applyOp(user: ss.Identity, request: FEOperationSpec): Unit =
+  def applyOp(user: serving.User, request: FEOperationSpec): Unit =
     operations.applyOp(request)
 
-  def startingOperations(user: ss.Identity, request: serving.Empty): FEOperationMetas =
+  def startingOperations(user: serving.User, request: serving.Empty): FEOperationMetas =
     FEOperationMetas(operations.getStartingOperationMetas.sortBy(_.title).toList)
 
-  def startingVertexSets(user: ss.Identity, request: serving.Empty): UIValues =
+  def startingVertexSets(user: serving.User, request: serving.Empty): UIValues =
     UIValues(metaManager.allVertexSets
       .filter(_.source.inputs.all.isEmpty)
       .filter(metaManager.isVisible(_))
@@ -275,27 +274,27 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   val ops = new Operations(env)
 
-  def splash(user: ss.Identity, request: serving.Empty): Splash = metaManager.synchronized {
+  def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
     val projects = ops.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
     return Splash(version, projects.toList)
   }
 
-  def project(user: ss.Identity, request: ProjectRequest): FEProject = metaManager.synchronized {
+  def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
     val p = Project(request.name)
     p.assertReadAllowedFrom(user)
     return p.toFE.copy(opCategories = ops.categories(p))
   }
 
-  def createProject(user: ss.Identity, request: CreateProjectRequest): Unit = metaManager.synchronized {
+  def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.name)
     assert(!ops.projects.contains(p), s"Project ${request.name} already exists.")
     p.notes = request.notes
     request.privacy match {
       case "private" =>
-        p.writeACL = user.email.get
-        p.readACL = user.email.get
+        p.writeACL = user.email
+        p.readACL = user.email
       case "public-read" =>
-        p.writeACL = user.email.get
+        p.writeACL = user.email
         p.readACL = "*"
       case "public-write" =>
         p.writeACL = "*"
@@ -304,26 +303,26 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.checkpointAfter("") // Initial checkpoint.
   }
 
-  def discardProject(user: ss.Identity, request: DiscardProjectRequest): Unit = metaManager.synchronized {
+  def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.name)
     p.assertWriteAllowedFrom(user)
     p.remove()
   }
 
-  def renameProject(user: ss.Identity, request: RenameProjectRequest): Unit = metaManager.synchronized {
+  def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.from)
     p.assertWriteAllowedFrom(user)
     p.copy(Project(request.to))
     p.remove()
   }
 
-  def projectOp(user: ss.Identity, request: ProjectOperationRequest): Unit = metaManager.synchronized {
+  def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
     val p = Project(request.project)
     p.assertWriteAllowedFrom(user)
     ops.apply(request)
   }
 
-  def filterProject(user: ss.Identity, request: ProjectFilterRequest): Unit = metaManager.synchronized {
+  def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
     val project = Project(request.project)
     project.assertWriteAllowedFrom(user)
     val vertexSet = project.vertexSet
@@ -352,28 +351,28 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
-  def forkProject(user: ss.Identity, request: ForkProjectRequest): Unit = metaManager.synchronized {
+  def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.to)
     p.assertReadAllowedFrom(user)
     Project(request.from).copy(p)
     if (!p.writeAllowedFrom(user)) {
-      p.writeACL += "," + user.email.get
+      p.writeACL += "," + user.email
     }
   }
 
-  def undoProject(user: ss.Identity, request: UndoProjectRequest): Unit = metaManager.synchronized {
+  def undoProject(user: serving.User, request: UndoProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.project)
     p.assertWriteAllowedFrom(user)
     p.undo()
   }
 
-  def redoProject(user: ss.Identity, request: RedoProjectRequest): Unit = metaManager.synchronized {
+  def redoProject(user: serving.User, request: RedoProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.project)
     p.assertWriteAllowedFrom(user)
     p.redo()
   }
 
-  def changeProjectSettings(user: ss.Identity, request: ProjectSettingsRequest): Unit = metaManager.synchronized {
+  def changeProjectSettings(user: serving.User, request: ProjectSettingsRequest): Unit = metaManager.synchronized {
     val p = Project(request.project)
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.

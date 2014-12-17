@@ -1,9 +1,3 @@
-# This is to avoid this file being on CLASSPATH due to the $SPARK_CLASSPATH:... bug in
-# compute-classpath.sh. We don't need this once https://issues.apache.org/jira/browse/SPARK-4831
-# is resolved.
-conf_dir="$(realpath "${app_home}/../conf")"
-rm ${conf_dir}/play.plugins || true
-
 # The following is inspired by the run() method of the original runner script. The point here is to
 # setup java opts and application opts from the parameters of the runner script.
 process_args "$@"

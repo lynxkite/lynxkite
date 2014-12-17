@@ -6,7 +6,7 @@ import play.api.test.FakeHeaders
 import play.api.test.Helpers
 import play.api.test.Helpers._
 import play.api.libs.json.Json
-import com.lynxanalytics.biggraph.serving.JsonServer
+import com.lynxanalytics.biggraph.serving.{ JsonServer, User }
 
 /* play.api.test should be replaced with https://github.com/scalatest/scalatestplus-play
  * as soon as it is published with documentation. Should happen any day.
@@ -17,7 +17,7 @@ case class TestRequest(attr: String)
 case class TestResponse(attr: String)
 
 class TestController {
-  def process(user: securesocial.core.Identity, request: TestRequest): TestResponse = {
+  def process(user: User, request: TestRequest): TestResponse = {
     TestResponse("test string: " + request.attr)
   }
 }
