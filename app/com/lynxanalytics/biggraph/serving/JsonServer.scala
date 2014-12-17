@@ -5,6 +5,7 @@ import play.api.libs.json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.api.mvc
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -13,34 +14,28 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
-object User {
-  val fake = User("fake")
-}
-case class User(email: String) {
-  override def toString = email
-}
-
 class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("https.port").nonEmpty
 
-  def action[A](parser: mvc.BodyParser[A])(block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
-    // Turn off authentication in development mode.
-    if (productionMode) {
-      mvc.Action(parser) { req => block(User.fake, req) }
-    } else {
-      mvc.Action(parser) { req => block(User.fake, req) }
+  def action[A](parser: mvc.BodyParser[A])(block: (User, mvc.Request[A]) => mvc.SimpleResult): mvc.Action[A] = {
+    asyncAction(parser) { (user, request) =>
+      Future(block(user, request))
     }
   }
 
-  // It would be great to merge this with action[A], but the compiler crashes when I try.
   def asyncAction[A](parser: mvc.BodyParser[A])(
-    block: (User, mvc.Request[A]) => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
-    // Turn off authentication in development mode.
+    block: (User, mvc.Request[A]) => Future[mvc.SimpleResult]): mvc.Action[A] = {
     if (productionMode) {
-      mvc.Action.async(parser) { req => block(User.fake, req) }
+      mvc.Action.async(parser) { request =>
+        UserProvider.get(request) match {
+          case Some(user) => block(user, request)
+          case None => Future.successful(Redirect("/login"))
+        }
+      }
     } else {
-      mvc.Action.async(parser) { req => block(User.fake, req) }
+      // No authentication in development mode.
+      mvc.Action.async(parser) { request => block(User.fake, request) }
     }
   }
 
@@ -74,7 +69,7 @@ class JsonServer extends mvc.Controller {
     }
   }
 
-  def jsonFuture[I: json.Reads, O: json.Writes](handler: (User, I) => concurrent.Future[O]) = {
+  def jsonFuture[I: json.Reads, O: json.Writes](handler: (User, I) => Future[O]) = {
     asyncAction(parse.anyContent) { (user, request) =>
       jsonQuery(user, request) { (user: User, i: I) =>
         handler(user, i).map(o => Ok(json.Json.toJson(o)))
