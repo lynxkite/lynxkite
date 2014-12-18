@@ -14,7 +14,7 @@ object AddReversedEdges {
     val esPlus = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val injection = edgeBundle(
       esPlus.asVertexSet, inputs.es.asVertexSet,
-      EdgeBundleProperties.partialFunction)
+      EdgeBundleProperties.surjection)
   }
 }
 import AddReversedEdges._
