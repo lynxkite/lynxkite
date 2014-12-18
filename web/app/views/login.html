@@ -5,16 +5,15 @@
 
 <div class="col-sm-offset-4 col-sm-4">
   <div class="jumbotron">
-    <div ng-hide="passwordSignIn">
+    <div ng-hide="passwordSignIn || submitted">
       <!-- Sign in with Google. -->
       <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
       <div id="signinButton">
         <span class="g-signin"
-          data-scope="https://www.googleapis.com/auth/plus.login"
+          data-scope="profile email"
           data-clientid="249221604126-4jt7btiej000rogh7nualh4tqn445b7c.apps.googleusercontent.com"
           data-redirecturi="postmessage"
-          data-accesstype="offline"
-          data-cookiepolicy="single_host_origin"
+          data-cookiepolicy="https://pizzakite.lynxanalytics.com"
           data-callback="googleSignInCallback">
         </span>
       </div>

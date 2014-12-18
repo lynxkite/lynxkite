@@ -4,8 +4,11 @@ var loginScope;
 angular.module('biggraph')
   .controller('LoginCtrl', function ($scope, $location, util) {
     loginScope = $scope;
+    $scope.credentials = { username: '', password: '' };
+    // OAuth is only set up on pizzakite.lynxanalytics.com.
+    $scope.passwordSignIn = window.location.hostname !== 'pizzakite.lynxanalytics.com';
+
     $scope.login = function() {
-      $scope.credentials = { username: '', password: '' };
       util.post('/login', $scope.credentials).then(function(success) {
         $scope.submitted = false;
         if (success) {
@@ -14,8 +17,16 @@ angular.module('biggraph')
       });
       $scope.submitted = true;
     };
+
     $scope.googleSignIn = function(code) {
-      console.log('code', code);
+      if (!code) { return; }
+      util.post('/google', { code: code }).then(function(success) {
+        $scope.submitted = false;
+        if (success) {
+          $location.url('/');
+        }
+      });
+      $scope.submitted = true;
     };
   });
 
