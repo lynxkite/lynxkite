@@ -1141,7 +1141,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "For example it can calculate the average duration of calls for each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
-      Param("direction", "Aggregate on", options = Direction.options)) ++
+      Param("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
         project.edgeAttributes.map { case (name, ea) => (name, ea) })
     def enabled =
@@ -1167,7 +1167,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Param("weight", "Weight", options = edgeAttributes[Double]),
-      Param("direction", "Aggregate on", options = Direction.options)) ++
+      Param("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
         project.edgeAttributes.map { case (name, ea) => (name, ea) },
         weighted = true)
@@ -2154,12 +2154,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   object Direction {
-    val options = UIValue.list(List(
+    // Options suitable when edge attributes are involved.
+    val attrOptions = UIValue.list(List(
       "incoming edges",
       "outgoing edges",
-      "all edges",
-      "incoming symmetric edges",
-      "outgoing symmetric edges"))
+      "all edges"))
+    // Options suitable when edge attributes are not involved.
+    val options = attrOptions :+ UIValue("symmetric edges", "symmetric edges")
   }
   case class Direction(direction: String, origEB: EdgeBundle) {
     val (edgeBundle, injectionOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
@@ -2172,20 +2173,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val op = graph_operations.AddReversedEdges()
         val res = op(op.es, origEB).result
         (res.esPlus, Some(res.injection))
-      case "incoming symmetric edges" =>
-        val op = graph_operations.RemoveNonSymmetricEdges()
-        val res = op(op.es, origEB).result
-        (res.symmetric, Some(res.injection))
-      case "outgoing symmetric edges" =>
-        val reversed = {
-          val op = graph_operations.ReverseEdges()
-          op(op.esAB, origEB).result
-        }
-        val removed = {
-          val op = graph_operations.RemoveNonSymmetricEdges()
-          op(op.es, reversed.esBA).result
-        }
-        (removed.symmetric, Some(concat(removed.injection, reversed.injection)))
+      case "symmetric edges" =>
+        // Use "null" as the injection because it is an error to use
+        // "symmetric edges" with edge attributes.
+        (removeNonSymmetric(origEB), Some(null))
     }
 
     def pull[T](attribute: Attribute[T]): Attribute[T] = {
