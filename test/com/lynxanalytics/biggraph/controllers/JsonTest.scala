@@ -54,6 +54,10 @@ class JsonTest extends FunSuite {
       === "\"test string: Hello BigGraph!\"")
   }
 
+  def await[T](future: concurrent.Future[T]) = {
+    concurrent.Await.result(future, concurrent.duration.Duration.Inf)
+  }
+
   test("testPost should raise exception if JSON is incorrect") {
     val jsonString = """{"bad attr":"Hello BigGraph!"}"""
     val request = FakeRequest(
@@ -62,7 +66,7 @@ class JsonTest extends FunSuite {
       FakeHeaders(Seq("Content-Type" -> Seq("application/json"))),
       Json.parse(jsonString))
     intercept[Throwable] {
-      TestJsonServer.testPost(request)
+      await(TestJsonServer.testPost(request))
     }
   }
 
@@ -70,7 +74,7 @@ class JsonTest extends FunSuite {
     val jsonString = """{"bad attr":"Hello BigGraph!"}"""
     val request = FakeRequest(GET, "/api/test?q=" + jsonString)
     intercept[Throwable] {
-      TestJsonServer.testGet(request)
+      await(TestJsonServer.testGet(request))
     }
   }
 
@@ -78,7 +82,7 @@ class JsonTest extends FunSuite {
     val jsonString = """{"attr":"Hello BigGraph!"}"""
     val request = FakeRequest(GET, "/api/test?gugu=" + jsonString)
     intercept[Throwable] {
-      TestJsonServer.testGet(request)
+      await(TestJsonServer.testGet(request))
     }
   }
 }
