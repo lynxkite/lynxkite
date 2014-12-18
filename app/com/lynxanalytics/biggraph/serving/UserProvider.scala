@@ -63,15 +63,17 @@ object UserProvider extends mvc.Controller {
     }
   }
 
-  val login = mvc.Action { request =>
-    val username = request.getQueryString("username").get
-    val password = request.getQueryString("password").get
+  val login = mvc.Action(parse.json) { request =>
+    val username = (request.body \ "username").as[String]
+    val password = (request.body \ "password").as[String]
     assertPassword(username, password)
     val signed = SignedToken()
     tokens(signed.token) = User(username)
     Redirect("/").withCookies(mvc.Cookie(
       "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
   }
+
+  val google = mvc.Action(parse.json) { request => ??? }
 
   private def assertPassword(username: String, password: String): Unit = {
     assert(passwords.contains(username), "Invalid user name or password.")

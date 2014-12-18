@@ -27,6 +27,7 @@ class JsonServer extends mvc.Controller {
   def asyncAction[A](parser: mvc.BodyParser[A])(
     block: (User, mvc.Request[A]) => Future[mvc.SimpleResult]): mvc.Action[A] = {
     if (productionMode) {
+      // TODO: Redirect HTTP to HTTPS. (This will be easier in Play 2.3.)
       mvc.Action.async(parser) { request =>
         UserProvider.get(request) match {
           case Some(user) => block(user, request)
