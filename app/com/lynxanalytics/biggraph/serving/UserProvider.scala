@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.serving
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.Crypto
+import play.api.libs.ws.WS
 import play.api.mvc
 import org.mindrot.jbcrypt.BCrypt
 
@@ -73,14 +74,49 @@ object UserProvider extends mvc.Controller {
       "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
   }
 
-  val google = mvc.Action(parse.json) { request => ??? }
+  val google = mvc.Action.async(parse.json) { request =>
+    implicit val context = scala.concurrent.ExecutionContext.Implicits.global
+    val code = (request.body \ "code").as[String]
+    // Get access token for single-use code.
+    val token: concurrent.Future[String] =
+      WS.url("https://accounts.google.com/o/oauth2/token").post(Map(
+        "client_id" -> Seq(config("authentication.google.clientId")),
+        "client_secret" -> Seq(config("authentication.google.clientSecret")),
+        "grant_type" -> Seq("authorization_code"),
+        "code" -> Seq(code),
+        "redirect_uri" -> Seq("postmessage")))
+        .map { response =>
+          (response.json \ "access_token").as[String]
+        }
+    // Use access token to get email address.
+    val email = token.flatMap { token =>
+      WS.url("https://www.googleapis.com/plus/v1/people/me")
+        .withQueryString("fields" -> "id,name,displayName,image,emails", "access_token" -> token)
+        .get().map { response =>
+          ((response.json \ "emails")(0) \ "value").as[String]
+        }
+    }
+    // Create signed token for email address.
+    email.map { email =>
+      val signed = SignedToken()
+      assert(email.endsWith("@lynxanalytics.com"), s"Permission denied to $email.")
+      tokens(signed.token) = User(email)
+      Redirect("/").withCookies(mvc.Cookie(
+        "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+    }
+  }
 
   private def assertPassword(username: String, password: String): Unit = {
-    assert(passwords.contains(username), "Invalid user name or password.")
+    assert(passwords.contains(username), "Invalid username or password.")
     val hash =
       if (passwords(username).nonEmpty) passwords(username)
       else BCrypt.hashpw("the lynx is a big cat", BCrypt.gensalt(10))
-    assert(BCrypt.checkpw(password, hash), "Invalid user name or password.")
+    assert(BCrypt.checkpw(password, hash), "Invalid username or password.")
+  }
+
+  private def config(setting: String) = {
+    val config = play.api.Play.current.configuration
+    config.getString(setting).get
   }
 
   private val tokens = collection.mutable.Map[String, User]()

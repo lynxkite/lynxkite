@@ -53,7 +53,7 @@ export SPARK_HOME=/home/ec2-user/spark-1.1.0-bin-hadoop1
 biggraphstage/bin/biggraph \
   -mem $RAM_MB \
   -Dapplication.secret=$CREDENTIALS \
-  -Dsecuresocial.google.clientSecret=$GOOGLE_CLIENT_SECRET \
+  -Dauthentication.google.clientSecret=$GOOGLE_CLIENT_SECRET \
   -Dhadoop.tmp.dir=/media/ephemeral0/hadoop-tmp \
   $EXTRA_ARGS
 EOF
