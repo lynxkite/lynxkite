@@ -677,9 +677,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private val toStringHelpText = "Converts the selected %s attributes to string type."
   register(new AttributeOperation(_) {
     val title = "Vertex attribute to string"
-    val description = ""
+    val description = toStringHelpText.format("vertex")
     def parameters = List(
       Param("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
@@ -692,7 +693,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register(new AttributeOperation(_) {
     val title = "Edge attribute to string"
-    val description = ""
+    val description = toStringHelpText.format("edge")
     def parameters = List(
       Param("attr", "Edge attribute", options = edgeAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
@@ -703,9 +704,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private val toDoubleHelpText =
+    """Converts the selected string typed %s attributes to double (double precision floating point
+    number) type.
+    """
   register(new AttributeOperation(_) {
     val title = "Vertex attribute to double"
-    val description = ""
+    val description = toDoubleHelpText.format("vertex")
     def parameters = List(
       Param("attr", "Vertex attribute", options = vertexAttributes[String], multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes.")
@@ -719,7 +724,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register(new AttributeOperation(_) {
     val title = "Edge attribute to double"
-    val description = ""
+    val description = toDoubleHelpText.format("edge")
     def parameters = List(
       Param("attr", "Edge attribute", options = edgeAttributes[String], multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes[String].nonEmpty, "No string edge attributes.")
