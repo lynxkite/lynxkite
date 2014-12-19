@@ -2,45 +2,140 @@ package com.lynxanalytics.biggraph.serving
 
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
-import securesocial.{ core => ss }
+import play.api.libs.Crypto
+import play.api.libs.ws.WS
+import play.api.mvc
+import org.mindrot.jbcrypt.BCrypt
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-class UserProvider(application: play.api.Application) extends ss.UserServicePlugin(application) {
-  private val users = collection.mutable.Map[ss.IdentityId, ss.Identity]()
-  private val tokens = collection.mutable.Map[String, ss.providers.Token]()
+object User {
+  val fake = User("fake")
+}
+case class User(email: String) {
+  override def toString = email
+}
+
+class SignedToken private (signature: String, timestamp: Long, val token: String) {
+  override def toString = s"$signature $timestamp $token"
+}
+object SignedToken {
+  val maxAge = {
+    val config = play.api.Play.current.configuration
+    config.getInt("authentication.cookie.validDays").getOrElse(1) * 24 * 3600
+  }
+
+  def apply(): SignedToken = {
+    val token = Crypto.generateToken
+    val timestamp = time
+    new SignedToken(Crypto.sign(s"$timestamp $token"), timestamp, token)
+  }
+
+  private def time = java.lang.System.currentTimeMillis / 1000
+  private def split(s: String): Option[(String, String)] = {
+    val ss = s.split(" ", 2)
+    if (ss.size != 2) None
+    else Some((ss(0), ss(1)))
+  }
+
+  def unapply(s: String): Option[SignedToken] = {
+    split(s).flatMap {
+      case (signature, timedToken) =>
+        if (signature != Crypto.sign(timedToken)) None
+        else split(timedToken).flatMap {
+          case (timestamp, token) =>
+            val tsOpt = util.Try(timestamp.toLong).toOption
+            tsOpt.flatMap {
+              case ts if ts + maxAge < time => None // Token has expired.
+              case ts => Some(new SignedToken(signature, ts, token))
+            }
+        }
+    }
+  }
+}
+
+object UserProvider extends mvc.Controller {
+  def get(request: mvc.Request[_]): Option[User] = {
+    val cookie = request.cookies.find(_.name == "auth")
+    cookie.map(_.value).collect {
+      case SignedToken(signed) => signed
+    }.flatMap {
+      signed => tokens.get(signed.token)
+    }
+  }
+
+  val passwordLogin = mvc.Action(parse.json) { request =>
+    val username = (request.body \ "username").as[String]
+    val password = (request.body \ "password").as[String]
+    assertPassword(username, password)
+    val signed = SignedToken()
+    tokens(signed.token) = User(username)
+    Redirect("/").withCookies(mvc.Cookie(
+      "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+  }
+
+  val googleLogin = mvc.Action.async(parse.json) { request =>
+    implicit val context = scala.concurrent.ExecutionContext.Implicits.global
+    val code = (request.body \ "code").as[String]
+    // Get access token for single-use code.
+    val token: concurrent.Future[String] =
+      WS.url("https://accounts.google.com/o/oauth2/token").post(Map(
+        "client_id" -> Seq(config("authentication.google.clientId")),
+        "client_secret" -> Seq(config("authentication.google.clientSecret")),
+        "grant_type" -> Seq("authorization_code"),
+        "code" -> Seq(code),
+        "redirect_uri" -> Seq("postmessage")))
+        .map { response =>
+          (response.json \ "access_token").as[String]
+        }
+    // Use access token to get email address.
+    val email = token.flatMap { token =>
+      WS.url("https://www.googleapis.com/plus/v1/people/me")
+        .withQueryString("fields" -> "id,name,displayName,image,emails", "access_token" -> token)
+        .get().map { response =>
+          ((response.json \ "emails")(0) \ "value").as[String]
+        }
+    }
+    // Create signed token for email address.
+    email.map { email =>
+      val signed = SignedToken()
+      assert(email.endsWith("@lynxanalytics.com"), s"Permission denied to $email.")
+      tokens(signed.token) = User(email)
+      Redirect("/").withCookies(mvc.Cookie(
+        "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+    }
+  }
+
+  private def assertPassword(username: String, password: String): Unit = {
+    assert(passwords.contains(username), "Invalid username or password.")
+    val hash =
+      if (passwords(username).nonEmpty) passwords(username)
+      else BCrypt.hashpw("the lynx is a big cat", BCrypt.gensalt(10))
+    assert(BCrypt.checkpw(password, hash), "Invalid username or password.")
+  }
+
+  private def config(setting: String) = {
+    val config = play.api.Play.current.configuration
+    config.getString(setting).get
+  }
+
+  private val tokens = collection.mutable.Map[String, User]()
+  private val passwords = collection.mutable.Map[String, String]()
   private val usersFile = new java.io.File(System.getProperty("user.dir") + "/conf/users.txt")
-  private val pwProvider = ss.providers.UsernamePasswordProvider.UsernamePassword
 
   // Loads user+pass data from usersFile.
   private def loadUsers() = {
-    val hasher = new ss.providers.utils.BCryptPasswordHasher(application)
-    val defaultPassword = hasher.hash("the lynx is a big cat")
     val data = FileUtils.readFileToString(usersFile, "utf8")
-    val passwords = json.Json.parse(data).as[json.JsObject].fields.map {
+    passwords.clear()
+    passwords ++= json.Json.parse(data).as[json.JsObject].fields.map {
       case (name, value) => name -> value.as[String]
-    }
-    for ((user, pass) <- passwords) {
-      // The values in users.txt are hashes. An empty value means no password has been set.
-      val pwInfo = if (pass.isEmpty) {
-        defaultPassword // Use the default password in this case until the user changes it.
-      } else {
-        defaultPassword.copy(password = pass)
-      }
-      val id = ss.IdentityId(user, pwProvider)
-      users(id) = ss.SocialUser(
-        id, user, user, user, Some(user), None, ss.AuthenticationMethod.UserPassword,
-        passwordInfo = Some(pwInfo))
     }
     log.info(s"User data loaded from $usersFile.")
   }
 
   // Saves user+pass data to usersFile.
   private def saveUsers() = {
-    val passwords = users.flatMap {
-      case (id, identity) if id.providerId == pwProvider =>
-        Some(id.userId -> identity.passwordInfo.get.password)
-    }
+    val passwords = Map[String, String]()
     val data = json.Json.prettyPrint(json.JsObject(
       passwords.mapValues(json.JsString(_)).toSeq
     ))
@@ -50,42 +145,4 @@ class UserProvider(application: play.api.Application) extends ss.UserServicePlug
 
   // Load data on startup.
   loadUsers()
-
-  def find(id: ss.IdentityId): Option[ss.Identity] = {
-    users.get(id)
-  }
-
-  def findByEmailAndProvider(email: String, providerId: String): Option[ss.Identity] = {
-    users.values.find(u => u.email == Some(email) && u.identityId.providerId == providerId)
-  }
-
-  def save(user: ss.Identity): ss.Identity = {
-    log.info(s"Login from $user")
-    users(user.identityId) = user
-    if (user.identityId.providerId == pwProvider) {
-      // It is probably a password change. Write the usersFile.
-      saveUsers()
-    }
-    user
-  }
-
-  def save(token: ss.providers.Token) = {
-    tokens(token.uuid) = token
-  }
-
-  def findToken(uuid: String): Option[ss.providers.Token] = {
-    tokens.get(uuid)
-  }
-
-  def deleteToken(uuid: String) {
-    tokens -= uuid
-  }
-
-  def deleteTokens() = {
-    tokens.clear
-  }
-
-  def deleteExpiredTokens() = {
-    tokens.retain((_, token) => !token.isExpired)
-  }
 }

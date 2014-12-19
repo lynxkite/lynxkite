@@ -13,6 +13,7 @@ object ReverseEdges {
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
     val esBA = edgeBundle(inputs.vsB.entity, inputs.vsA.entity, inputs.esAB.properties.reversed)
+    val injection = edgeBundle(esBA.asVertexSet, inputs.esAB.asVertexSet, EdgeBundleProperties.identity)
   }
   def run(eb: EdgeBundle)(implicit manager: MetaGraphManager): EdgeBundle = {
     import Scripting._
@@ -33,5 +34,6 @@ case class ReverseEdges() extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
     val esBA = inputs.esAB.rdd.mapValues(e => Edge(e.dst, e.src))
     output(o.esBA, esBA)
+    output(o.injection, inputs.esAB.rdd.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
 }
