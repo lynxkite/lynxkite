@@ -103,7 +103,10 @@ object EdgeBundleProperties {
   val partialFunction = EdgeBundleProperties(isFunction = true)
   val matching = EdgeBundleProperties(isFunction = true, isReversedFunction = true)
   val injection = matching.copy(isEverywhereDefined = true)
+  val bijection = injection.copy(isReverseEverywhereDefined = true)
   val embedding = injection.copy(isIdentity = true)
+  val identity = bijection.copy(isIdentity = true)
+  val surjection = partialFunction.copy(isReverseEverywhereDefined = true)
 }
 
 case class EdgeBundle(source: MetaGraphOperationInstance,

@@ -366,12 +366,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         options = UIValue.list(List("weak", "strong"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val symmetric = if (params("type") == "weak") {
-        val areop = graph_operations.AddReversedEdges()
-        areop(areop.es, project.edgeBundle).result.esPlus.entity
-      } else {
-        val rnseop = graph_operations.RemoveNonSymmetricEdges()
-        rnseop(rnseop.es, project.edgeBundle).result.symmetric.entity
+      val symmetric = params("type") match {
+        case "weak" => addReversed(project.edgeBundle)
+        case "strong" => removeNonSymmetric(project.edgeBundle)
       }
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, symmetric).result
@@ -557,7 +554,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      project.edgeBundle = reverse(project.edgeBundle)
+      val op = graph_operations.ReverseEdges()
+      val res = op(op.esAB, project.edgeBundle).result
+      project.pullBackEdgesWithInjection(
+        project.edgeBundle,
+        project.edgeAttributes.toIndexedSeq,
+        res.esBA,
+        res.injection)
     }
   })
 
@@ -621,26 +624,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val description = ""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "degree"),
-      Param("inout", "Type", options = UIValue.list(List("in", "out", "all", "symmetric"))))
+      Param("direction", "Count", options = Direction.options))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val es = project.edgeBundle
-      val esSym = {
-        val op = graph_operations.RemoveNonSymmetricEdges()
-        op(op.es, es).result.symmetric
-      }
-      val deg = params("inout") match {
-        case "in" => applyOn(reverse(es))
-        case "out" => applyOn(es)
-        case "symmetric" => applyOn(esSym)
-        case "all" => graph_operations.DeriveJS.add(applyOn(reverse(es)), applyOn(es))
-      }
-      project.vertexAttributes(params("name")) = deg
-    }
-
-    private def applyOn(es: EdgeBundle): Attribute[Double] = {
+      val es = Direction(params("direction"), project.edgeBundle).edgeBundle
       val op = graph_operations.OutDegree()
-      op(op.es, es).result.outDegree
+      project.vertexAttributes(params("name")) = op(op.es, es).result.outDegree
     }
   })
 
@@ -947,17 +936,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "For example it can calculate the average age of the friends of each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
-      Param("direction", "Aggregate on",
-        options = UIValue.list(List("incoming edges", "outgoing edges")))) ++
+      Param("direction", "Aggregate on", options = Direction.options)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      val edges = params("direction") match {
-        case "incoming edges" => project.edgeBundle
-        case "outgoing edges" => reverse(project.edgeBundle)
-      }
+      val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           edges,
@@ -974,17 +959,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
       Param("weight", "Weight", options = vertexAttributes[Double]),
-      Param("direction", "Aggregate on",
-        options = UIValue.list(List("incoming edges", "outgoing edges")))) ++
+      Param("direction", "Aggregate on", options = Direction.options)) ++
       aggregateParams(project.vertexAttributes, weighted = true)
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      val edges = params("direction") match {
-        case "incoming edges" => project.edgeBundle
-        case "outgoing edges" => reverse(project.edgeBundle)
-      }
+      val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
       val weightName = params("weight")
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
       for ((name, choice) <- parseAggregateParams(params)) {
@@ -1188,20 +1169,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "For example it can calculate the average duration of calls for each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
-      Param("direction", "Aggregate on",
-        options = UIValue.list(List("incoming edges", "outgoing edges")))) ++
+      Param("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
         project.edgeAttributes.map { case (name, ea) => (name, ea) })
     def enabled =
       FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]) = {
+      val direction = Direction(params("direction"), project.edgeBundle)
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateFromEdges(
-          project.edgeBundle,
-          params("direction") == "outgoing edges",
+          direction.edgeBundle,
           attributeWithLocalAggregator(
-            project.edgeAttributes(attr),
+            direction.pull(project.edgeAttributes(attr)),
             choice))
         project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
       }
@@ -1215,24 +1195,23 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Param("weight", "Weight", options = edgeAttributes[Double]),
-      Param("direction", "Aggregate on",
-        options = UIValue.list(List("incoming edges", "outgoing edges")))) ++
+      Param("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
         project.edgeAttributes.map { case (name, ea) => (name, ea) },
         weighted = true)
     def enabled =
       FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes")
     def apply(params: Map[String, String]) = {
+      val direction = Direction(params("direction"), project.edgeBundle)
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val weightName = params("weight")
       val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateFromEdges(
-          project.edgeBundle,
-          params("direction") == "outgoing edges",
+          direction.edgeBundle,
           attributeWithWeightedAggregator(
-            weight,
-            project.edgeAttributes(attr),
+            direction.pull(weight),
+            direction.pull(project.edgeAttributes(attr)),
             choice))
         project.vertexAttributes(s"${prefix}${attr}_${choice}_by_${weightName}") = result
       }
@@ -2186,16 +2165,58 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   // Performs AggregateFromEdges.
   def aggregateFromEdges[From, To](
     edges: EdgeBundle,
-    onSrc: Boolean,
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateFromEdges(attributeWithAggregator.aggregator)
     val res = op(op.edges, edges)(op.eattr, attributeWithAggregator.attr).result
-    if (onSrc) res.srcAttr else res.dstAttr
+    res.dstAttr
   }
 
   def reverse(eb: EdgeBundle): EdgeBundle = {
     val op = graph_operations.ReverseEdges()
     op(op.esAB, eb).result.esBA
+  }
+
+  def removeNonSymmetric(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.RemoveNonSymmetricEdges()
+    op(op.es, eb).result.symmetric
+  }
+
+  def addReversed(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.AddReversedEdges()
+    op(op.es, eb).result.esPlus.entity
+  }
+
+  object Direction {
+    // Options suitable when edge attributes are involved.
+    val attrOptions = UIValue.list(List(
+      "incoming edges",
+      "outgoing edges",
+      "all edges"))
+    // Options suitable when edge attributes are not involved.
+    val options = attrOptions :+ UIValue("symmetric edges", "symmetric edges")
+  }
+  case class Direction(direction: String, origEB: EdgeBundle) {
+    val (edgeBundle, injectionOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
+      case "incoming edges" => (origEB, None)
+      case "outgoing edges" =>
+        val op = graph_operations.ReverseEdges()
+        val res = op(op.esAB, origEB).result
+        (res.esBA, Some(res.injection))
+      case "all edges" =>
+        val op = graph_operations.AddReversedEdges()
+        val res = op(op.es, origEB).result
+        (res.esPlus, Some(res.injection))
+      case "symmetric edges" =>
+        // Use "null" as the injection because it is an error to use
+        // "symmetric edges" with edge attributes.
+        (removeNonSymmetric(origEB), Some(null))
+    }
+
+    def pull[T](attribute: Attribute[T]): Attribute[T] = {
+      injectionOpt.map { injection =>
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attribute, injection)
+      }.getOrElse(attribute)
+    }
   }
 
   def count(eb: EdgeBundle): Scalar[Long] = {
