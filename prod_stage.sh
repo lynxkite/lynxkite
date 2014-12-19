@@ -3,8 +3,6 @@
 set -x
 set -e
 
-exit
-
 pushd web
 grunt
 popd
