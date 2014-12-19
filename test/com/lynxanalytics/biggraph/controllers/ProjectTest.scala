@@ -1,11 +1,11 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
-import securesocial.{ core => ss }
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.serving.User
 
 class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   def createProject(name: String) = {
@@ -60,27 +60,21 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     assert(p2.segmentations == Seq(p3.asSegmentation))
   }
 
-  def user(email: String) = {
-    ss.SocialUser(
-      ss.IdentityId(email, ss.providers.UsernamePasswordProvider.UsernamePassword),
-      email, email, email, Some(email), None, ss.AuthenticationMethod.UserPassword)
-  }
-
   def assertReaders(yes: String*)(no: String*) = {
     for (email <- yes) {
-      assert(project.readAllowedFrom(user(email)))
+      assert(project.readAllowedFrom(User(email)))
     }
     for (email <- no) {
-      assert(!project.readAllowedFrom(user(email)))
+      assert(!project.readAllowedFrom(User(email)))
     }
   }
 
   def assertWriters(yes: String*)(no: String*) = {
     for (email <- yes) {
-      assert(project.writeAllowedFrom(user(email)))
+      assert(project.writeAllowedFrom(User(email)))
     }
     for (email <- no) {
-      assert(!project.writeAllowedFrom(user(email)))
+      assert(!project.writeAllowedFrom(User(email)))
     }
   }
 
