@@ -27,7 +27,7 @@ libraryDependencies ++= Seq(
     ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12"),
     ExclusionRule(organization = "log4j", name = "log4j"),
     ExclusionRule(organization = "com.fasterxml.jackson.core", name = "jackson-databind")),
-  "ws.securesocial" %% "securesocial" % "2.1.4",
+  "org.mindrot" % "jbcrypt" % "0.3m",
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.pegdown" % "pegdown" % "1.4.2" % "test",
   "org.slf4j" % "log4j-over-slf4j" % "1.7.6",

@@ -5,7 +5,7 @@ import play.api.libs.json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.api.mvc
 import scala.concurrent.ExecutionContext.Implicits.global
-import securesocial.{ core => ss }
+import scala.concurrent.Future
 
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -14,61 +14,53 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
-object LynxUser extends ss.Authorization {
-  val pwProvider = ss.providers.UsernamePasswordProvider.UsernamePassword
-  def isAuthorized(user: ss.Identity) = {
-    user.identityId.providerId == pwProvider || user.email.get.endsWith("@lynxanalytics.com")
-  }
-  val fake = ss.SocialUser(
-    ss.IdentityId("fake", pwProvider),
-    "fake", "fake", "fake", Some("fake"), None, ss.AuthenticationMethod.UserPassword)
-}
-
-class JsonServer extends mvc.Controller with ss.SecureSocial {
+class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
-  def productionMode = !testMode && play.api.Play.current.configuration.getString("https.port").nonEmpty
+  def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
-  def action[A](parser: mvc.BodyParser[A])(block: ss.SecuredRequest[A] => mvc.Result): mvc.Action[A] = {
-    // Turn off authentication in development mode.
-    if (productionMode) {
-      SecuredAction(authorize = LynxUser, ajaxCall = true)(parser)(block(_))
-    } else {
-      mvc.Action(parser) { req => block(ss.SecuredRequest(LynxUser.fake, req)) }
+  def action[A](parser: mvc.BodyParser[A])(block: (User, mvc.Request[A]) => mvc.SimpleResult): mvc.Action[A] = {
+    asyncAction(parser) { (user, request) =>
+      Future(block(user, request))
     }
   }
 
-  // It would be great to merge this with action[A], but the compiler crashes when I try.
   def asyncAction[A](parser: mvc.BodyParser[A])(
-    block: ss.SecuredRequest[A] => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
-    // Turn off authentication in development mode.
+    block: (User, mvc.Request[A]) => Future[mvc.SimpleResult]): mvc.Action[A] = {
     if (productionMode) {
-      SecuredAction(authorize = LynxUser, ajaxCall = true).async(parser)(block(_))
+      // TODO: Redirect HTTP to HTTPS. (This will be easier in Play 2.3.)
+      mvc.Action.async(parser) { request =>
+        UserProvider.get(request) match {
+          case Some(user) => block(user, request)
+          case None => Future.successful(Unauthorized)
+        }
+      }
     } else {
-      mvc.Action.async(parser) { req => block(ss.SecuredRequest(LynxUser.fake, req)) }
+      // No authentication in development mode.
+      mvc.Action.async(parser) { request => block(User.fake, request) }
     }
   }
 
-  def jsonPost[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => O) = {
-    action(parse.json) { request =>
+  def jsonPost[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
+    action(parse.json) { (user, request) =>
       log.info(s"POST ${request.path} ${request.body}")
       val i = request.body.as[I]
-      Ok(json.Json.toJson(handler(request.user, i)))
+      Ok(json.Json.toJson(handler(user, i)))
     }
   }
 
-  def jsonQuery[I: json.Reads, R](request: ss.SecuredRequest[mvc.AnyContent])(handler: (ss.Identity, I) => R): R = {
+  def jsonQuery[I: json.Reads, R](user: User, request: mvc.Request[mvc.AnyContent])(handler: (User, I) => R): R = {
     val key = "q"
     val value = request.getQueryString(key)
     assert(value.nonEmpty, s"Missing query parameter $key.")
     val s = value.get
     log.info(s"GET ${request.path} $s")
     val i = json.Json.parse(s).as[I]
-    handler(request.user, i)
+    handler(user, i)
   }
 
-  def jsonGet[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => O) = {
-    action(parse.anyContent) { request =>
-      jsonQuery(request) { (user: ss.Identity, i: I) =>
+  def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
+    action(parse.anyContent) { (user, request) =>
+      jsonQuery(user, request) { (user: User, i: I) =>
         try {
           Ok(json.Json.toJson(handler(user, i)))
         } catch {
@@ -78,9 +70,9 @@ class JsonServer extends mvc.Controller with ss.SecureSocial {
     }
   }
 
-  def jsonFuture[I: json.Reads, O: json.Writes](handler: (ss.Identity, I) => concurrent.Future[O]) = {
-    asyncAction(parse.anyContent) { request =>
-      jsonQuery(request) { (user: ss.Identity, i: I) =>
+  def jsonFuture[I: json.Reads, O: json.Writes](handler: (User, I) => Future[O]) = {
+    asyncAction(parse.anyContent) { (user, request) =>
+      jsonQuery(user, request) { (user: User, i: I) =>
         handler(user, i).map(o => Ok(json.Json.toJson(o)))
       }
     }
@@ -165,7 +157,7 @@ object ProductionJsonServer extends JsonServer {
 
   // File upload.
   def upload = {
-    action(parse.multipartFormData) { request =>
+    action(parse.multipartFormData) { (user, request) =>
       val upload = request.body.file("file").get
       log.info(s"upload: ${upload.filename}")
       val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
@@ -189,7 +181,7 @@ object ProductionJsonServer extends JsonServer {
     }
   }
 
-  def download = action(parse.anyContent) { request =>
+  def download = action(parse.anyContent) { (user, request) =>
     import play.api.libs.concurrent.Execution.Implicits._
     import scala.collection.JavaConversions._
     log.info(s"download: ${request.path}")

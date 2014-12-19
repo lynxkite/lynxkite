@@ -33,6 +33,10 @@ angular
         templateUrl: 'views/demoMode.html',
         controller: 'DemoModeCtrl',
       })
+      .when('/login', {
+        templateUrl: 'views/login.html',
+        controller: 'LoginCtrl',
+      })
       .otherwise({
         redirectTo: '/',
       });
@@ -49,7 +53,7 @@ angular
       });
     };
   })
-  .factory('util', function utilFactory($resource, $rootScope, $angularCacheFactory) {
+  .factory('util', function utilFactory($location, $resource, $rootScope, $angularCacheFactory) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // A persistent cache. Requests made through util.get() will not be repeated
     // even if the browser is restarted.
@@ -65,7 +69,7 @@ angular
         req.$status = failure.status;
         if (failure.status === 401) {  // Unauthorized.
           req.$error = 'Redirecting to login page.';
-          window.location.href = 'https://' + window.location.hostname + '/login';
+          $location.url('/login');
         } else {
           req.$error = util.responseToErrorMessage(failure);
         }

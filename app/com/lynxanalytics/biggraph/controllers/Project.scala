@@ -5,9 +5,9 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.serving.User
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
-import securesocial.{ core => ss }
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   override def toString = projectName
@@ -160,25 +160,25 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     set(rootDir / "writeACL", x)
   }
 
-  def assertReadAllowedFrom(user: ss.Identity): Unit = {
-    assert(readAllowedFrom(user), s"User ${user.email.get} does not have read access to project $projectName.")
+  def assertReadAllowedFrom(user: User): Unit = {
+    assert(readAllowedFrom(user), s"User $user does not have read access to project $projectName.")
   }
-  def assertWriteAllowedFrom(user: ss.Identity): Unit = {
-    assert(writeAllowedFrom(user), s"User ${user.email.get} does not have write access to project $projectName.")
+  def assertWriteAllowedFrom(user: User): Unit = {
+    assert(writeAllowedFrom(user), s"User $user does not have write access to project $projectName.")
   }
-  def readAllowedFrom(user: ss.Identity): Boolean = {
+  def readAllowedFrom(user: User): Boolean = {
     // Write access also implies read access.
     writeAllowedFrom(user) || aclContains(readACL, user)
   }
-  def writeAllowedFrom(user: ss.Identity): Boolean = {
+  def writeAllowedFrom(user: User): Boolean = {
     aclContains(writeACL, user)
   }
 
-  def aclContains(acl: String, user: ss.Identity): Boolean = {
+  def aclContains(acl: String, user: User): Boolean = {
     // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
     // We translate this to a regex for checking.
     val regex = acl.replace(".", "\\.").replace(",", "|").replace("*", ".*")
-    user.email.get.matches(regex)
+    user.email.matches(regex)
   }
 
   def isSegmentation = manager.synchronized {

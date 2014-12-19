@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val controller = new BigGraphController(this)
   val project = Project("Test_Project")
-  val user = com.lynxanalytics.biggraph.serving.LynxUser.fake
+  val user = com.lynxanalytics.biggraph.serving.User.fake
   controller.createProject(
     user,
     CreateProjectRequest(name = project.projectName, notes = "test project", privacy = "private"))

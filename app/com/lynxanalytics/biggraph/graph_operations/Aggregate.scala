@@ -60,7 +60,6 @@ object AggregateFromEdges {
   }
   class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
                                   inputs: Input[From]) extends MagicOutput(instance) {
-    val srcAttr = vertexAttribute[To](inputs.src.entity)
     val dstAttr = vertexAttribute[To](inputs.dst.entity)
   }
 }
@@ -87,13 +86,9 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     val edges = inputs.edges.rdd
     val eattr = inputs.eattr.rdd
     val edgesWAttr = edges.sortedJoin(eattr)
-    val bySrc = edgesWAttr.map {
-      case (eid, (edge, value)) => edge.src -> value
-    }.groupBySortedKey(src.partitioner.get)
     val byDst = edgesWAttr.map {
       case (eid, (edge, value)) => edge.dst -> value
     }.groupBySortedKey(dst.partitioner.get)
-    output(o.srcAttr, bySrc.mapValues(aggregator.aggregate(_)))
     output(o.dstAttr, byDst.mapValues(aggregator.aggregate(_)))
   }
 }
