@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 
 class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val controller = new GraphDrawingController(this)
-  val user = com.lynxanalytics.biggraph.serving.LynxUser.fake
+  val user = com.lynxanalytics.biggraph.serving.User.fake
 
   test("get center of ExampleGraph with no filters") {
     val g = graph_operations.ExampleGraph()().result

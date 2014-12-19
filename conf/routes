@@ -34,24 +34,8 @@ GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
 
-# SecureSocial
-GET  /login                  securesocial.controllers.LoginPage.login
-GET  /logout                 securesocial.controllers.LoginPage.logout
-GET  /authenticate/:provider securesocial.controllers.ProviderController.authenticate(provider)
-POST /authenticate/:provider securesocial.controllers.ProviderController.authenticateByPost(provider)
-GET  /not-authorized         securesocial.controllers.ProviderController.notAuthorized
-GET  /signup                 securesocial.controllers.Registration.startSignUp
-POST /signup                 securesocial.controllers.Registration.handleStartSignUp
-GET  /signup/:token          securesocial.controllers.Registration.signUp(token)
-POST /signup/:token          securesocial.controllers.Registration.handleSignUp(token)
-GET  /reset                  securesocial.controllers.Registration.startResetPassword
-POST /reset                  securesocial.controllers.Registration.handleStartResetPassword
-GET  /reset/:token           securesocial.controllers.Registration.resetPassword(token)
-POST /reset/:token           securesocial.controllers.Registration.handleResetPassword(token)
-GET  /password               securesocial.controllers.PasswordChange.page
-POST /password               securesocial.controllers.PasswordChange.handlePasswordChange
+POST /passwordLogin    com.lynxanalytics.biggraph.serving.UserProvider.passwordLogin
+POST /googleLogin      com.lynxanalytics.biggraph.serving.UserProvider.googleLogin
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
-# A fake asset path for the benefit of SecureSocial. See #1089.
-GET  /*file            controllers.Assets.at(path="/public", file)
