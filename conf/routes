@@ -34,8 +34,8 @@ GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
 
-POST /login            com.lynxanalytics.biggraph.serving.UserProvider.login
-POST /google           com.lynxanalytics.biggraph.serving.UserProvider.google
+POST /passwordLogin    com.lynxanalytics.biggraph.serving.UserProvider.passwordLogin
+POST /googleLogin      com.lynxanalytics.biggraph.serving.UserProvider.googleLogin
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
