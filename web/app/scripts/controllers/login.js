@@ -8,29 +8,27 @@ angular.module('biggraph')
     // OAuth is only set up on pizzakite.lynxanalytics.com.
     $scope.passwordSignIn = window.location.hostname !== 'pizzakite.lynxanalytics.com';
 
-    $scope.login = function() {
-      util.post('/login', $scope.credentials).then(function(success) {
+    function tryLogin(url, credentials) {
+      util.post(url, credentials).then(function(success) {
         $scope.submitted = false;
         if (success) {
           $location.url('/');
         }
       });
       $scope.submitted = true;
+    }
+
+    $scope.passwordLogin = function() {
+      tryLogin('/passwordLogin', $scope.credentials);
     };
 
-    $scope.googleSignIn = function(code) {
+    $scope.googleLogin = function(code) {
       if (!code) { return; }
-      util.post('/google', { code: code }).then(function(success) {
-        $scope.submitted = false;
-        if (success) {
-          $location.url('/');
-        }
-      });
-      $scope.submitted = true;
+      tryLogin('/googleLogin', { code: code });
     };
   });
 
 /* exported googleSignInCallback */
 function googleSignInCallback(authResult) {
-  loginScope.googleSignIn(authResult.code);
+  loginScope.googleLogin(authResult.code);
 }

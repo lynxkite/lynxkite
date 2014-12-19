@@ -64,7 +64,7 @@ object UserProvider extends mvc.Controller {
     }
   }
 
-  val login = mvc.Action(parse.json) { request =>
+  val passwordLogin = mvc.Action(parse.json) { request =>
     val username = (request.body \ "username").as[String]
     val password = (request.body \ "password").as[String]
     assertPassword(username, password)
@@ -74,7 +74,7 @@ object UserProvider extends mvc.Controller {
       "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
   }
 
-  val google = mvc.Action.async(parse.json) { request =>
+  val googleLogin = mvc.Action.async(parse.json) { request =>
     implicit val context = scala.concurrent.ExecutionContext.Implicits.global
     val code = (request.body \ "code").as[String]
     // Get access token for single-use code.
