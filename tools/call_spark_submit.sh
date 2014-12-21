@@ -14,6 +14,19 @@ final_java_opts="$(get_mem_opts $final_app_mem) ${java_opts} ${java_args[@]}"
 
 fake_application_jar=${lib_dir}/empty.jar
 
+KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
+
+if [ -f ${KITE_SITE_CONFIG} ]; then
+  echo "Loading configuration from: ${KITE_SITE_CONFIG}"
+  source ${KITE_SITE_CONFIG}
+else
+  echo "Warning, no Kite Site Config found at: ${KITE_SITE_CONFIG}"
+  echo "Default location is $HOME/.kiterc, but you can override via the environment variable:"
+  echo "KITE_SITE_CONFIG"
+fi
+
+export REPOSITORY_MODE=${REPOSITORY_MODE:-"static<$KITE_META_DIR,$KITE_DATA_DIR>"}
+
 execRunner ${SPARK_HOME}/bin/spark-submit \
   --class play.core.server.NettyServer \
   --master ${SPARK_MASTER} \
