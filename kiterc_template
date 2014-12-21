@@ -1,0 +1,24 @@
+# Set to the directory containing your spark installation
+export SPARK_HOME=$HOME/spark-1.1.0
+
+# Specifies what cluster we use. Options are:
+#  local[x] - for single machine installs use this, with x replaced by the number of cores to be
+#             used
+#  yarn-client - for using yarn (hadoop  v2). Please also set YARN_CONF_DIR below.
+#  spark://master-name:master-port - for standalone spark clusters
+export SPARK_MASTER=local
+
+# The directory where Kite stores metadata about project. Should be on the local disk. 
+export KITE_META_DIR=$HOME/kite_meta
+
+# The data where graph data is stored. Should be on a distributed fs (hdsf, s3, etc) unless
+# this is a single machine install.
+export KITE_DATA_DIR=$HOME/kite_data
+
+# Needed if you want to run agains spark.
+# export YARN_CONF_DIR=/etc/hadoop/...
+
+# Specify how much memory is available for Kite on a single worker machine.
+export SPARK_EXECUTOR_MEMORY=1g
+
+# TODO: add env variable override option for driver memory
