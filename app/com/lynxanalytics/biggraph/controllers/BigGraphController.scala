@@ -352,11 +352,13 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
-    val p = Project(request.to)
-    p.assertReadAllowedFrom(user)
-    Project(request.from).copy(p)
-    if (!p.writeAllowedFrom(user)) {
-      p.writeACL += "," + user.email
+    val p1 = Project(request.from)
+    val p2 = Project(request.to)
+    p1.assertReadAllowedFrom(user)
+    assert(!ops.projects.contains(p2), s"Project $p2 already exists.")
+    p1.copy(p2)
+    if (!p2.writeAllowedFrom(user)) {
+      p2.writeACL += "," + user.email
     }
   }
 
