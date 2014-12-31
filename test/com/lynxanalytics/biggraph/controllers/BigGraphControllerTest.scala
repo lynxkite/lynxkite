@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.ClassTag
-import org.scalatest.FunSuite
+import org.scalatest.{ FunSuite, BeforeAndAfterEach }
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
@@ -10,13 +10,10 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
+class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment with BeforeAndAfterEach {
   val controller = new BigGraphController(this)
   val project = Project("Test_Project")
   val user = com.lynxanalytics.biggraph.serving.User.fake
-  controller.createProject(
-    user,
-    CreateProjectRequest(name = project.projectName, notes = "test project", privacy = "private"))
 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     controller.projectOp(
@@ -68,9 +65,26 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
   }
 
   test("project list") {
-    run("Example Graph")
     val splash = controller.splash(user, null)
     assert(splash.projects.size == 1)
     assert(splash.projects(0).name == "Test_Project")
+  }
+
+  test("fork project") {
+    run("Example Graph")
+    controller.forkProject(user, ForkProjectRequest(from = project.projectName, to = "forked"))
+    val splash = controller.splash(user, null)
+    assert(splash.projects.size == 2)
+  }
+
+  override def beforeEach() = {
+    if (metaGraphManager.tagExists("projects")) {
+      for (t <- metaGraphManager.lsTag("projects")) {
+        metaGraphManager.rmTag(t)
+      }
+    }
+    controller.createProject(
+      user,
+      CreateProjectRequest(name = project.projectName, notes = "test project", privacy = "private"))
   }
 }
