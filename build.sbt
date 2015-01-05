@@ -16,6 +16,10 @@ publishArtifact in packageSrc := false  // Don't package source.
 
 scalaVersion := "2.10.4"
 
+val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
+
+sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
+
 libraryDependencies ++= Seq(
   jdbc,
   anorm,
@@ -23,7 +27,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
   "org.apache.commons" % "commons-lang3" % "3.3",
-  "org.apache.spark" %% "spark-core" % "1.1.0" % "provided" excludeAll(
+  "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided" excludeAll(
     ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12"),
     ExclusionRule(organization = "log4j", name = "log4j"),
     ExclusionRule(organization = "com.fasterxml.jackson.core", name = "jackson-databind")),
@@ -31,7 +35,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.pegdown" % "pegdown" % "1.4.2" % "test",
   "org.slf4j" % "log4j-over-slf4j" % "1.7.6",
-  "org.apache.spark" %% "spark-mllib" % "1.1.0" % "provided",
+  "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
