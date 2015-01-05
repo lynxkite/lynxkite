@@ -53,7 +53,8 @@ angular
       });
     };
   })
-  .factory('util', function utilFactory($location, $resource, $rootScope, $angularCacheFactory) {
+  .factory('util', function utilFactory(
+        $location, $window, $resource, $rootScope, $angularCacheFactory) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // A persistent cache. Requests made through util.get() will not be repeated
     // even if the browser is restarted.
@@ -69,7 +70,11 @@ angular
         req.$status = failure.status;
         if (failure.status === 401) {  // Unauthorized.
           req.$error = 'Redirecting to login page.';
-          $location.url('/login');
+          if ($location.protocol() === 'https') {
+            $location.url('/login');
+          } else {
+            $window.location.href = 'https://' + $location.host() + '/login';
+          }
         } else {
           req.$error = util.responseToErrorMessage(failure);
         }
