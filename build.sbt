@@ -18,7 +18,7 @@ scalaVersion := "2.10.4"
 
 val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
 
-sparkVersion := IO.readLines(baseDirectory.value / "SPARK_VERSION")(0)
+sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 
 libraryDependencies ++= Seq(
   jdbc,

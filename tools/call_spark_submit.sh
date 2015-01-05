@@ -18,6 +18,7 @@ KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 
 if [ -f ${KITE_SITE_CONFIG} ]; then
   echo "Loading configuration from: ${KITE_SITE_CONFIG}"
+  export SPARK_VERSION=`cat ${lib_dir}/../conf/SPARK_VERSION`
   source ${KITE_SITE_CONFIG}
 else
   echo "Warning, no Kite Site Config found at: ${KITE_SITE_CONFIG}"
