@@ -24,9 +24,7 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-lang3" % "3.3",
   "org.apache.spark" %% "spark-core" % "1.2.0" % "provided" excludeAll(
     // Version disagreements with Play.
-    ExclusionRule(organization = "org.slf4j", name = "slf4j-api"),
-    ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12"),
-    ExclusionRule(organization = "log4j", name = "log4j")),
+    ExclusionRule(organization = "org.slf4j", name = "slf4j-api")),
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.apache.spark" %% "spark-mllib" % "1.2.0" % "provided",
