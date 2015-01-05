@@ -16,18 +16,22 @@ publishArtifact in packageSrc := false  // Don't package source.
 
 scalaVersion := "2.10.4"
 
+val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
+
+sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
+
 libraryDependencies ++= Seq(
   jdbc,
   anorm,
   cache,
   ws,
   "org.apache.commons" % "commons-lang3" % "3.3",
-  "org.apache.spark" %% "spark-core" % "1.2.0" % "provided" excludeAll(
+  "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided" excludeAll(
     // Version disagreements with Play.
     ExclusionRule(organization = "org.slf4j", name = "slf4j-api")),
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
-  "org.apache.spark" %% "spark-mllib" % "1.2.0" % "provided",
+  "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
