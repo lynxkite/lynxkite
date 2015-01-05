@@ -16,13 +16,19 @@ fake_application_jar=${lib_dir}/empty.jar
 
 KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 
+pushd ${lib_dir}/../conf
+conf_dir=`pwd`
+popd
+
 if [ -f ${KITE_SITE_CONFIG} ]; then
   echo "Loading configuration from: ${KITE_SITE_CONFIG}"
+  export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
   source ${KITE_SITE_CONFIG}
 else
   echo "Warning, no Kite Site Config found at: ${KITE_SITE_CONFIG}"
   echo "Default location is $HOME/.kiterc, but you can override via the environment variable:"
   echo "KITE_SITE_CONFIG"
+  echo "You can find an example config file at ${conf_dir}/kiterc_template"
 fi
 
 export REPOSITORY_MODE=${REPOSITORY_MODE:-"static<$KITE_META_DIR,$KITE_DATA_DIR>"}

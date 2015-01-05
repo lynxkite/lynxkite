@@ -1,5 +1,5 @@
 # Set to the directory containing your spark installation
-export SPARK_HOME=$HOME/spark-1.1.0
+export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 
 # Specifies what cluster we use. Options are:
 #  local[x] - for single machine installs use this, with x replaced by the number of cores to be
@@ -15,7 +15,7 @@ export KITE_META_DIR=$HOME/kite_meta
 # this is a single machine install.
 export KITE_DATA_DIR=$HOME/kite_data
 
-# Needed if you want to run agains spark.
+# Needed if you want to run against yarn.
 # export YARN_CONF_DIR=/etc/hadoop/...
 
 # Specify how much memory is available for Kite on a single worker machine.
