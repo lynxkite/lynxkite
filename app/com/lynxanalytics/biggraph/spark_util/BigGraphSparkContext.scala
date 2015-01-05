@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
-import com.google.cloud.hadoop.fs.gcs
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.serializer.KryoRegistrator
@@ -18,8 +17,7 @@ private object SparkStageJars {
     getClass(),
     classOf[com.mysql.jdbc.Driver],
     classOf[org.postgresql.Driver],
-    classOf[org.sqlite.JDBC],
-    classOf[gcs.GoogleHadoopFileSystem])
+    classOf[org.sqlite.JDBC])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
   require(
     jars.forall(_.endsWith(".jar")),
@@ -81,6 +79,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[org.apache.spark.mllib.linalg.Vector]])
     kryo.register(classOf[org.apache.spark.mllib.linalg.DenseVector])
     kryo.register(breeze.linalg.DenseVector(Array[Double](0)).getClass)
+    kryo.register(Class.forName("org.apache.spark.scheduler.CompressedMapStatus"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

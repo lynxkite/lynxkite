@@ -18,14 +18,14 @@ class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
-  def action[A](parser: mvc.BodyParser[A])(block: (User, mvc.Request[A]) => mvc.SimpleResult): mvc.Action[A] = {
+  def action[A](parser: mvc.BodyParser[A])(block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
     asyncAction(parser) { (user, request) =>
       Future(block(user, request))
     }
   }
 
   def asyncAction[A](parser: mvc.BodyParser[A])(
-    block: (User, mvc.Request[A]) => Future[mvc.SimpleResult]): mvc.Action[A] = {
+    block: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
     if (productionMode) {
       // TODO: Redirect HTTP to HTTPS. (This will be easier in Play 2.3.)
       mvc.Action.async(parser) { request =>
@@ -192,7 +192,7 @@ object ProductionJsonServer extends JsonServer {
     val length = files.map(_.length).sum
     log.info(s"downloading $length bytes: $files")
     val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
-    mvc.SimpleResult(
+    mvc.Result(
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
         CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
@@ -249,4 +249,4 @@ object ProductionJsonServer extends JsonServer {
 }
 
 // Throw FlyingResult anywhere to generate non-200 HTTP responses.
-class FlyingResult(val result: mvc.SimpleResult) extends Exception(result.toString)
+class FlyingResult(val result: mvc.Result) extends Exception(result.toString)
