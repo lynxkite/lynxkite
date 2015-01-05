@@ -76,6 +76,7 @@ object UserProvider extends mvc.Controller {
 
   val googleLogin = mvc.Action.async(parse.json) { request =>
     implicit val context = scala.concurrent.ExecutionContext.Implicits.global
+    implicit val app = play.api.Play.current
     val code = (request.body \ "code").as[String]
     // Get access token for single-use code.
     val token: concurrent.Future[String] =
