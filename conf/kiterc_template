@@ -43,12 +43,12 @@ export KITE_LOCAL_TMP=/tmp
 # ===========================================================
 # export KITE_APPLICATION_SECRET=${KITE_RANDOM_SECRET}
 #
-# Port for the Kite HTTP server to listen on. Must be >=1000.
+# Port for the Kite HTTPS server to listen on. Must be >=1000.
 # export KITE_HTTPS_PORT=9001
 #
 # Keystore file and passwd with the HTTPS keys. Just leave as is for fake HTTPS certificate.
 # export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
-# export KITE_HTTPS_KEYSTORE_PWD=pizzakite
+# export KITE_HTTPS_KEYSTORE_PWD=asdasd
 # ===========================================================
 
 # Only needed for Google Auth ask the R&D team for further instructions if you think you need this.
