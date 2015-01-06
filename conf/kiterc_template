@@ -19,6 +19,37 @@ export KITE_DATA_DIR=$HOME/kite_data
 # export YARN_CONF_DIR=/etc/hadoop/...
 
 # Specify how much memory is available for Kite on a single worker machine.
+# Ignored for single machine installs, see SPARK_DRIVER_MEMORY_MB for that case.
 export SPARK_EXECUTOR_MEMORY=1g
 
-# TODO: add env variable override option for driver memory
+# Specify how much memory is available for Kite on the master machine in megabytes.
+# For standalone single machine instances this also determines executor memory and 
+# SPARK_EXECUTOR_MEMORY is ignored in that case.
+export KITE_HEAD_MEMORY_MB=1024
+
+# Port for the Kite HTTP server to listen on. Must be >=1000.
+export KITE_HTTP_PORT=9000
+
+# A local path that exists on all workers and the master and will be used for storing
+# temporary spark/hadoop files. This can get big, so if you have a small root filesystem
+# and an extra large drive mounted somewhere then you need to point this to somewhere on
+# the large drive. On the other hand performance of this drive has big effect on overal speed,
+# so SSD is a nice option here.
+export KITE_LOCAL_TMP=/tmp
+
+# Options needed if you want to use authentication and https.
+
+# Just uncomment the lines between the ==== lines for simple, fake certificate setup.
+# ===========================================================
+# export KITE_APPLICATION_SECRET=${KITE_RANDOM_SECRET}
+#
+# Port for the Kite HTTP server to listen on. Must be >=1000.
+# export KITE_HTTPS_PORT=9001
+#
+# Keystore file and passwd with the HTTPS keys. Just leave as is for fake HTTPS certificate.
+# export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
+# export KITE_HTTPS_KEYSTORE_PWD=pizzakite
+# ===========================================================
+
+# Only needed for Google Auth ask the R&D team for further instructions if you think you need this.
+# export KITE_GOOGLE_CLIENT_SECRET='???'
