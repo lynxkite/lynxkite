@@ -79,6 +79,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[org.apache.spark.mllib.linalg.Vector]])
     kryo.register(classOf[org.apache.spark.mllib.linalg.DenseVector])
     kryo.register(breeze.linalg.DenseVector(Array[Double](0)).getClass)
+    // https://issues.apache.org/jira/browse/SPARK-5102
     kryo.register(Class.forName("org.apache.spark.scheduler.CompressedMapStatus"))
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
