@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
+import com.google.cloud.hadoop.fs.gcs
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.serializer.KryoRegistrator
@@ -17,7 +18,8 @@ private object SparkStageJars {
     getClass(),
     classOf[com.mysql.jdbc.Driver],
     classOf[org.postgresql.Driver],
-    classOf[org.sqlite.JDBC])
+    classOf[org.sqlite.JDBC],
+    classOf[gcs.GoogleHadoopFileSystem])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
   require(
     jars.forall(_.endsWith(".jar")),
