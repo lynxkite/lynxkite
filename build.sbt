@@ -21,10 +21,8 @@ val sparkVersion = SettingKey[String]("spark-version", "The version of Spark use
 sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 
 libraryDependencies ++= Seq(
-  jdbc,
-  anorm,
-  cache,
-  ws,
+  anorm, // Play library for making SQL queries.
+  ws, // Play library for making HTTP requests.
   "org.apache.commons" % "commons-lang3" % "3.3",
   "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided" excludeAll(
     // Version disagreements with Play.
