@@ -29,9 +29,6 @@ else
   echo "You can find an example config file at ${conf_dir}/kiterc_template"
 fi
 
-# -mem flag overrides KITE_HEAD_MEMORY_MB and we use 1024 if neither is set.
-final_app_mem=${app_mem:-${KITE_HEAD_MEMORY_MB:-1024}}
-
 addJPropIfNonEmpty () {
   if [ -n "$2" ]; then
     addJava "-D$1=$2"
@@ -45,11 +42,15 @@ addJPropIfNonEmpty https.keyStorePassword "${KITE_HTTPS_KEYSTORE_PWD}"
 addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
+
+
+# -mem flag overrides KITE_HEAD_MEMORY_MB and we use 1024 if neither is set.
+final_app_mem=${app_mem:-${KITE_HEAD_MEMORY_MB:-1024}}
+
 final_java_opts="$(get_mem_opts $final_app_mem) ${java_opts} ${java_args[@]}"
 
 export REPOSITORY_MODE=${REPOSITORY_MODE:-"static<$KITE_META_DIR,$KITE_DATA_DIR>"}
 
-set -x
 execRunner ${SPARK_HOME}/bin/spark-submit \
   --class play.core.server.NettyServer \
   --master ${SPARK_MASTER} \
