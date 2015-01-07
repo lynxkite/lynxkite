@@ -44,8 +44,8 @@ addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECR
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
 
 
-# -mem flag overrides KITE_HEAD_MEMORY_MB and we use 1024 if neither is set.
-final_app_mem=${app_mem:-${KITE_HEAD_MEMORY_MB:-1024}}
+# -mem flag overrides KITE_MASTER_MEMORY_MB and we use 1024 if neither is set.
+final_app_mem=${app_mem:-${KITE_MASTER_MEMORY_MB:-1024}}
 
 final_java_opts="$(get_mem_opts $final_app_mem) ${java_opts} ${java_args[@]}"
 

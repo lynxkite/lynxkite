@@ -25,7 +25,7 @@ export SPARK_EXECUTOR_MEMORY=1g
 # Specify how much memory is available for Kite on the master machine in megabytes.
 # For standalone single machine instances this also determines executor memory and 
 # SPARK_EXECUTOR_MEMORY is ignored in that case.
-export KITE_HEAD_MEMORY_MB=1024
+export KITE_MASTER_MEMORY_MB=1024
 
 # Port for the Kite HTTP server to listen on. Must be >=1000.
 export KITE_HTTP_PORT=9000
@@ -47,6 +47,7 @@ export KITE_LOCAL_TMP=/tmp
 # export KITE_HTTPS_PORT=9001
 #
 # Keystore file and passwd with the HTTPS keys. Just leave as is for fake HTTPS certificate.
+# For a real HTTPS setup, see https://github.com/biggraph/biggraph/issues/1178
 # export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
 # export KITE_HTTPS_KEYSTORE_PWD=asdasd
 # ===========================================================
