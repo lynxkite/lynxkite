@@ -29,9 +29,9 @@ describe('the graph view', function() {
     });
 
     function byText(text) {
-      return by.xpath('//*[contains(text(),\'' + text + '\')]');
+      return by.xpath('.//*[contains(text(),\'' + text + '\')]');
     }
-    it('keeps the layout for when adding attributes', function() {
+    it('keeps the layout when adding attributes', function() {
       browser.get('/#/project/Project_Strawberry');
       var sampledViewButton = element(by.css('.btn .glyphicon-eye-open'));
       sampledViewButton.click();
@@ -40,12 +40,14 @@ describe('the graph view', function() {
       var positions = element.all(by.css('.vertex.sampled circle')).map(getPos);
       expect(positions.then(getLength)).toBe(6);  // The demo graph.
       positions.then(function(original) {
-        asColor.click();
-        var positions = element.all(by.css('.vertex.sampled circle')).map(getPos);
-        expect(positions.then(getLength)).toBe(6);  // Same graph.
-        // The circles are still in the same place.
-        for (var i = 0; i < original.length; ++i) {
-          expect(positions).toContain(original[i]);
+        for (var n = 0; n < 2; ++n) {  // Turn color on and then off.
+          asColor.click();
+          var positions = element.all(by.css('.vertex.sampled circle')).map(getPos);
+          expect(positions.then(getLength)).toBe(6);  // Same graph.
+          // The circles are still in the same place.
+          for (var i = 0; i < original.length; ++i) {
+            expect(positions).toContain(original[i]);
+          }
         }
       });
     });
