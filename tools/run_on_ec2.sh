@@ -1,6 +1,6 @@
 #!/bin/sh -xue
 
-ROOT=$(dirname $0)
+ROOT=$(dirname $0)/..
 export SPARK_MASTER="spark://`curl http://169.254.169.254/latest/meta-data/public-hostname`:7077"
 CREDENTIALS=$1
 CORES=$2
