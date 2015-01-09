@@ -58,7 +58,7 @@ execRunner ${SPARK_HOME}/bin/spark-submit \
   --deploy-mode client \
   --driver-java-options "${final_java_opts}" \
   --driver-memory ${final_app_mem}m \
-  --executor-memory ${SPARK_EXECUTOR_MEMORY} \
+  --executor-memory ${EXECUTOR_MEMORY} \
   "${fake_application_jar}" \
   "${app_commands[@]}" \
   "${residual_args[@]}"

@@ -25,4 +25,4 @@ LOCAL_TMP_DIR=/mnt/tmp
 S3_DATAREPO=lynx-bnw-data
 
 # Spark installation to use for this cluster.
-SPARK_HOME=$HOME/spark-`cat ${KITE_INSTALLATION_BASE}/conf/SPARK_VERSION`
+SPARK_HOME=$HOME/spark-`cat ${KITE_BASE}/conf/SPARK_VERSION`
