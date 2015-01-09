@@ -63,20 +63,22 @@ start)
   # Prepare a config file.
   CONFIG_FILE=/tmp/${CLUSTER_NAME}.kiterc
 
-  echo "# !!!Warning!!! Some values are overriden at the end of the file." > ${CONFIG_FILE}
-  echo >> ${CONFIG_FILE}
-  cat ${KITE_BASE}/conf/kiterc_template >> ${CONFIG_FILE}
-  echo >> ${CONFIG_FILE}
-  echo >> ${CONFIG_FILE}
-  echo "# Override settings created by start_ec2_cluster.sh. " >> ${CONFIG_FILE}
-  echo "# These will reset some values above. Feel free to edit as necessary." >> ${CONFIG_FILE}
-  echo 'export SPARK_HOME=/root/spark' >> ${CONFIG_FILE}
-  echo 'export SPARK_MASTER="spark://`curl http://169.254.169.254/latest/meta-data/public-hostname`:7077"' >> ${CONFIG_FILE}
-  echo "export KITE_DATA_DIR=s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}" >> ${CONFIG_FILE}
-  echo "export EXECUTOR_MEMORY=$((RAM_GB - 2))g" >> ${CONFIG_FILE}
-  echo "export KITE_MASTER_MEMORY_MB=$((1024 * (RAM_GB - 4)))" >> ${CONFIG_FILE}
-  echo "export KITE_HTTP_PORT=5080" >> ${CONFIG_FILE}
-  echo "export KITE_LOCAL_TMP=${LOCAL_TMP_DIR}" >> ${CONFIG_FILE}
+  cat > ${CONFIG_FILE} <<EOF
+# !!!Warning!!! Some values are overriden at the end of the file.
+
+`cat ${KITE_BASE}/conf/kiterc_template`
+
+
+# Override settings created by start_ec2_cluster.sh. 
+# These will reset some values above. Feel free to edit as necessary.
+export SPARK_HOME=/root/spark
+export SPARK_MASTER="spark://\`curl http://169.254.169.254/latest/meta-data/public-hostname\`:7077"
+export KITE_DATA_DIR=s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}
+export EXECUTOR_MEMORY=$((RAM_GB - 2))g
+export KITE_MASTER_MEMORY_MB=$((1024 * (RAM_GB - 4)))
+export KITE_HTTP_PORT=5080
+export KITE_LOCAL_TMP=${LOCAL_TMP_DIR}
+EOF
 
   rsync -ave "$SSH" ${CONFIG_FILE} root@`GetMasterHostName`:.kiterc
   ;;

@@ -72,6 +72,7 @@ lazy val root = project.in(file("."))
 
 bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "tools" / "call_spark_submit.sh")
 
+// Includes all files in the tools directory for stage. Does not include files subdirectories!
 mappings in Universal ++= {
   val pathFinder = baseDirectory.value / "tools" * "*"
   pathFinder.get map {
