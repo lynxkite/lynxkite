@@ -1,0 +1,28 @@
+# Name of the cluster.
+CLUSTER_NAME=bela
+
+# Number of worker instances in the cluster.
+NUM_INSTANCES=3
+
+# The id of the ssh key that you want to use to connect to the cluster.
+SSH_ID=lynx-cli
+
+# The private key file for the ID above.
+SSH_KEY=lynx-cli.pem
+
+# Which region to run in.
+REGION=us-east-1
+
+# Which instance type to create.
+TYPE=m3.2xlarge
+
+# These are determined by the instance type above. You still need to fill these. Sorry. :)
+CORES=8
+RAM_GB=30
+LOCAL_TMP_DIR=/mnt/tmp
+
+# The s3 directory to store graph data in without the s3:// prefix.
+S3_DATAREPO=lynx-bnw-data
+
+# Spark installation to use for this cluster.
+SPARK_HOME=$HOME/spark-`cat ${KITE_INSTALLATION_BASE}/conf/SPARK_VERSION`
