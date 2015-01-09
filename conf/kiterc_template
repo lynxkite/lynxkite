@@ -20,11 +20,11 @@ export KITE_DATA_DIR=$HOME/kite_data
 
 # Specify how much memory is available for Kite on a single worker machine.
 # Ignored for single machine installs, see SPARK_DRIVER_MEMORY_MB for that case.
-export SPARK_EXECUTOR_MEMORY=1g
+export EXECUTOR_MEMORY=1g
 
 # Specify how much memory is available for Kite on the master machine in megabytes.
 # For standalone single machine instances this also determines executor memory and 
-# SPARK_EXECUTOR_MEMORY is ignored in that case.
+# EXECUTOR_MEMORY is ignored in that case.
 export KITE_MASTER_MEMORY_MB=1024
 
 # Port for the Kite HTTP server to listen on. Must be >=1000.
