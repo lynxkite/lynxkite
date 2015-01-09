@@ -15,11 +15,12 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         scope.$broadcast('#svg-icons is loaded');
       };
 
+      scope.graph = {};
       function updateRequest() {
         // This indirection makes it certain that graph-view does not see more recent data than
         // project-graph does.
-        scope.viewLeft = angular.copy(scope.left, scope.viewLeft);
-        scope.viewRight = angular.copy(scope.right, scope.viewRight);
+        scope.graph.left = angular.copy(scope.left, scope.graph.left);
+        scope.graph.right = angular.copy(scope.right, scope.graph.right);
 
         var sides = [];
         if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
@@ -87,21 +88,18 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             edgeWeightId: '',
           });
         }
-        scope.request = q;
+        if (!angular.equals(scope.request, q)) {
+          scope.request = q;
+          scope.graph.view = util.get('/ajax/complexView', scope.request);
+        }
       }
 
-      util.deepWatch(scope, 'request', function() {
-        if (scope.request) {
-          scope.graphView = util.get('/ajax/complexView', scope.request);
-        }
-      });
-
-      scope.$watch('graphView', updateTSV);
-      scope.$watch('graphView.$resolved', updateTSV);
+      scope.$watch('graph.view', updateTSV);
+      scope.$watch('graph.view.$resolved', updateTSV);
       function updateTSV() {
         // Generate the TSV representation.
         scope.tsv = '';
-        var gv = scope.graphView;
+        var gv = scope.graph.view;
         if (!gv || !gv.$resolved) {
           return;
         }
