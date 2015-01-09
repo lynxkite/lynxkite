@@ -11,20 +11,20 @@ angular.module('biggraph').directive('graphView', function(util) {
       link: function(scope, element) {
         scope.gv = new GraphView(scope, element);
         function updateGraph() {
-          if (scope.graph === undefined || !scope.graph.$resolved || !iconsLoaded()) {
+          if (scope.graph.view === undefined || !scope.graph.view.$resolved || !iconsLoaded()) {
             scope.gv.loading();
-          } else if (scope.graph.$error) {
-            scope.gv.error(scope.graph.$error);
+          } else if (scope.graph.view.$error) {
+            scope.gv.error(scope.graph.view.$error);
           } else {
-            scope.gv.update(scope.graph, scope.menu);
+            scope.gv.update(scope.graph.view, scope.menu);
           }
         }
-        scope.$watch('graph', updateGraph);
-        scope.$watch('graph.$resolved', updateGraph);
+        scope.$watch('graph.view', updateGraph);
+        scope.$watch('graph.view.$resolved', updateGraph);
         // An attribute change can happen without a graph data change. Watch them separately.
         // (When switching from "color" to "slider", for example.)
-        util.deepWatch(scope, 'left.attrs', updateGraph);
-        util.deepWatch(scope, 'right.attrs', updateGraph);
+        util.deepWatch(scope, 'graph.left.attrs', updateGraph);
+        util.deepWatch(scope, 'graph.right.attrs', updateGraph);
         // It is possible, especially in testing, that we get the graph data faster than the icons.
         // In this case we delay the drawing until the icons are loaded.
         scope.$on('#svg-icons is loaded', updateGraph);
@@ -148,7 +148,7 @@ angular.module('biggraph').directive('graphView', function(util) {
   GraphView.prototype.update = function(data, menu) {
     this.clear();
     var zoom = this.svg.height() * graphToSVGRatio;
-    var sides = [this.scope.left, this.scope.right];
+    var sides = [this.scope.graph.left, this.scope.graph.right];
     this.edgeGroup = svg.create('g', {'class': 'edges'});
     this.vertexGroup = svg.create('g', {'class': 'nodes'});
     this.legend = svg.create('g', {'class': 'legend'});
