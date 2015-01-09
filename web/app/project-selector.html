@@ -1,46 +1,46 @@
-<div class="row-fluid">
+<div class="row">
   <div class="col-xs-12 text-center top-search">
     <input autofocus placeholder="type to search" ng-model="searchString" type="search">
   </div>
 </div>
-<div class="row-fluid">
+<div class="row">
   <div class="col-xs-12 text-center project-list">
-      <a href ng-click="expandNewProject = true; newProject.privacy = 'private'">
-        <span class="lead" ng-hide="expandNewProject">A new project</span>
-        <form ng-show="expandNewProject" class="form-inline" role="form">
-          <div class="form-group"><input id="new-project-name" placeholder="Project name" ng-model="newProject.name" class="form-control"></div>
-          <div class="form-group">about</div>
-          <div class="form-group"><input placeholder="Description" ng-model="newProject.notes" class="form-control"></div>
-          <div class="form-group">that</div>
-          <div class="form-group"><select ng-model="newProject.privacy" class="form-control">
-            <option value="private">no one else can see</option>
-            <option value="public-read">everyone can see</option>
-            <option value="public-write">everyone can modify</option>
-          </select></div>
-          <button type="submit" class="btn btn-default" ng-click="createProject()"
-            ng-disabled="newProject.sending || !newProject.name">
-            {{newProject.sending && '...' || 'Create'}}
-          </button>
-        </form>
-      </a>
+    <a href ng-click="expandNewProject = true; newProject.privacy = 'private'">
+      <span class="lead" ng-hide="expandNewProject">A new project</span>
+      <form ng-show="expandNewProject" class="form-inline" role="form">
+        <div class="form-group"><input id="new-project-name" placeholder="Project name" ng-model="newProject.name" class="form-control"></div>
+        <div class="form-group">about</div>
+        <div class="form-group"><input placeholder="Description" ng-model="newProject.notes" class="form-control"></div>
+        <div class="form-group">that</div>
+        <div class="form-group"><select ng-model="newProject.privacy" class="form-control">
+          <option value="private">no one else can see</option>
+          <option value="public-read">everyone can see</option>
+          <option value="public-write">everyone can modify</option>
+        </select></div>
+        <button type="submit" class="btn btn-default" ng-click="createProject()"
+          ng-disabled="newProject.sending || !newProject.name">
+          {{newProject.sending && '...' || 'Create'}}
+        </button>
+      </form>
+    </a>
 
-      <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
-        Loading...
-      </progressbar>
+    <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
+      Loading...
+    </progressbar>
 
-      <p class="alert alert-danger" ng-if="data.$error">{{data.$error}}</p>
+    <p class="alert alert-danger" ng-if="data.$error">{{data.$error}}</p>
 
-      <a ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
-        href ng-click="setProject(project)" ng-class="{ error: project.error }">
-        <h1><item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu></h1>
-        <span ng-if="project.error">
-          {{project.error}}
-        </span>
-        <span ng-if="!project.error">
-          <value ref="vertexCounts[project.name]"></value> vertices,
-          <value ref="edgeCounts[project.name]"></value> edges.
-          {{project.notes}}
-        </span>
-      </a>
+    <a ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
+      href ng-click="setProject(project)" ng-class="{ error: project.error }">
+      <h1><item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu></h1>
+      <span ng-if="project.error">
+        {{project.error}}
+      </span>
+      <span ng-if="!project.error">
+        <value ref="vertexCounts[project.name]"></value> vertices,
+        <value ref="edgeCounts[project.name]"></value> edges.
+        {{project.notes}}
+      </span>
+    </a>
   </div>
 </div>
