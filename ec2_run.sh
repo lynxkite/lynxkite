@@ -1,16 +1,17 @@
-#!/bin/bash -xe
+#!/bin/bash
+set -eu
 
 DIR=$(dirname $0)
 
-pushd $DIR
+pushd $DIR > /dev/null
 
-if [ -z "$1" ]; then
+if [ "$#" -ne 1 ]; then
   echo "Usage: ec2_run.sh CLUSTER_SPECIFICATION_FILE"
-  echo "For a cluster specification file template, see $DIR/tools/ec2_spec_template"
+  echo "For a cluster specification file template, see `pwd`/tools/ec2_spec_template"
   exit 1
 fi
 
 ./prod_stage.sh
-./stage/tools/reload_kite_on_ec2_cluster.sh $1
+./stage/tools/ec2.sh kite $1
 
-popd
+popd > /dev/null
