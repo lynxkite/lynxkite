@@ -4,7 +4,7 @@ export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 # Specifies what cluster we use. Options are:
 #  local[x] - for single machine installs use this, with x replaced by the number of cores to be
 #             used
-#  yarn-client - for using yarn (hadoop  v2). Please also set YARN_CONF_DIR below.
+#  yarn-client - for using yarn (hadoop  v2). Please also set YARN_* settings below.
 #  spark://master-name:master-port - for standalone spark clusters
 export SPARK_MASTER=local
 
@@ -16,7 +16,10 @@ export KITE_META_DIR=$HOME/kite_meta
 export KITE_DATA_DIR=$HOME/kite_data
 
 # Needed if you want to run against yarn.
+# The directory with the YARN configuration.
 # export YARN_CONF_DIR=/etc/hadoop/...
+# Number of cores we should allocate per executor.
+# export YARN_CORES_PER_EXECUTOR=4
 
 # Specify how much memory is available for Kite on a single worker machine.
 # Ignored for single machine installs, see SPARK_DRIVER_MEMORY_MB for that case.

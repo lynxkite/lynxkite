@@ -51,6 +51,10 @@ final_java_opts="$(get_mem_opts $final_app_mem) ${java_opts} ${java_args[@]}"
 
 export REPOSITORY_MODE=${REPOSITORY_MODE:-"static<$KITE_META_DIR,$KITE_DATA_DIR>"}
 
+if [ -n "${YARN_CORES_PER_EXECUTOR}" ]; then
+  YARN_CORES_SETTING="--executor-cores ${YARN_CORES_PER_EXECUTOR}"
+fi
+
 execRunner ${SPARK_HOME}/bin/spark-submit \
   --class play.core.server.NettyServer \
   --master ${SPARK_MASTER} \
@@ -58,6 +62,7 @@ execRunner ${SPARK_HOME}/bin/spark-submit \
   --deploy-mode client \
   --driver-java-options "${final_java_opts}" \
   --driver-memory ${final_app_mem}m \
+  ${YARN_CORES_SETTING} \
   "${fake_application_jar}" \
   "${app_commands[@]}" \
   "${residual_args[@]}"
