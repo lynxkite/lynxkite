@@ -71,7 +71,7 @@ case class CSV(file: Filename,
                delimiter: String,
                header: String,
                filter: JavaScript = JavaScript("")) extends RowInput {
-  val fields = ImportUtil.split(header, delimiter)
+  val fields = ImportUtil.split(header, delimiter).map(_.trim)
 
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
     assert(file.list.nonEmpty, s"$file does not exist.")
