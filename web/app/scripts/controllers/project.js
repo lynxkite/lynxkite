@@ -534,6 +534,7 @@ angular.module('biggraph')
     Side.prototype.onProjectLoaded = function() {
       this.cleanState();
       $scope.leftToRightBundle = getLeftToRightBundle();
+      $scope.rightToLeftBundle = getRightToLeftBundle();
       this.loadScalars();
       this.updateViewData();
       if (!this.project.vertexSet) {
@@ -598,6 +599,17 @@ angular.module('biggraph')
       if (right.isSegmentationOf(left)) {
         return left.getBelongsTo(right).id;
       }
+      // If it is the same project on both sides, use its internal edges.
+      if (left.project.name === right.project.name) {
+        return left.project.edgeBundle;
+      }
+      return undefined;
+    }
+
+    function getRightToLeftBundle() {
+      var left = $scope.left;
+      var right = $scope.right;
+      if (!left.loaded() || !right.loaded()) { return undefined; }
       // If it is the same project on both sides, use its internal edges.
       if (left.project.name === right.project.name) {
         return left.project.edgeBundle;

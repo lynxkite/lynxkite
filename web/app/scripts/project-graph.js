@@ -3,13 +3,19 @@
 angular.module('biggraph').directive('projectGraph', function (util) {
   return {
     restrict: 'E',
-    scope: { left: '=', right: '=', leftToRightBundle: '=', contextMenu: '=' },
+    scope: {
+      left: '=',
+      right: '=',
+      leftToRightBundle: '=',
+      rightToLeftBundle: '=',
+      contextMenu: '=' },
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope, element) {
       util.deepWatch(scope, 'left', updateRequest);
       util.deepWatch(scope, 'right', updateRequest);
-      util.deepWatch(scope, 'leftToRightBundle', updateRequest);
+      util.deepWatch(scope, 'leftToRightBundle', updateRequest)
+      util.deepWatch(scope, 'rightToLeftBundle', updateRequest);
 
       scope.onIconsLoaded = function() {
         scope.$broadcast('#svg-icons is loaded');
@@ -84,6 +90,17 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             srcIdx: 0,
             dstIdx: 1,
             edgeBundleId: scope.leftToRightBundle,
+            filters: [],
+            edgeWeightId: '',
+          });
+        }
+        if (sides.length === 2 && scope.rightToLeftBundle !== undefined) {
+          q.edgeBundles.push({
+            srcDiagramId: 'idx[1]',
+            dstDiagramId: 'idx[0]',
+            srcIdx: 1,
+            dstIdx: 0,
+            edgeBundleId: scope.rightToLeftBundle,
             filters: [],
             edgeWeightId: '',
           });
