@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('projectSelector', function(util, hotkeys) {
+angular.module('biggraph').directive('projectSelector', function(util, hotkeys, $timeout) {
   return {
     restrict: 'E',
     scope: { name: '=', version: '=?' },
@@ -12,7 +12,14 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
           callback: function(e) { e.preventDefault(); scope.expandNewProject = true; },
         });
       scope.$watch('expandNewProject', function(ex) {
-        if (ex) { element.find('#new-project-name')[0].focus(); }
+        if (ex) {
+          $timeout(
+            function() {
+              element.find('#new-project-name')[0].focus();
+            },
+            0,
+            false); // Do not invoke apply as we don't change the scope.
+        }
       });
       scope.util = util;
       scope.data = util.nocache('/ajax/splash');
