@@ -170,7 +170,9 @@ object ProductionJsonServer extends JsonServer {
       finally stream.close()
       val digest = md.digest().map("%02x".format(_)).mkString
       val finalName = s"$baseName.$digest"
-      val finalFile = dataRepo / "uploads" / finalName
+      val uploadsDir = dataRepo / "uploads"
+      uploadsDir.mkdirs() // Create the directory if it does not already exist.
+      val finalFile = uploadsDir / finalName
       if (finalFile.exists) {
         log.info(s"The uploaded file ($tmpFile) already exists (as $finalFile).")
       } else {
