@@ -4,8 +4,6 @@ describe('the all filters button', function() {
     mocks.addTo(browser);
     browser.get('/#/project/Project_Strawberry');
     this.header = element(by.css('.project-name'))
-    //this.button = this.attr.element(by.css('[tooltip="Show histogram"]'));
-    //this.histogram = this.attr.element(by.css('histogram'));
   });
 
   it('is linked to the vertex attribute filter box', function() {
