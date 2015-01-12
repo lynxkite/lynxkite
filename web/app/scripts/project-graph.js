@@ -14,7 +14,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
     link: function(scope, element) {
       util.deepWatch(scope, 'left', updateRequest);
       util.deepWatch(scope, 'right', updateRequest);
-      util.deepWatch(scope, 'leftToRightBundle', updateRequest)
+      util.deepWatch(scope, 'leftToRightBundle', updateRequest);
       util.deepWatch(scope, 'rightToLeftBundle', updateRequest);
 
       scope.onIconsLoaded = function() {
