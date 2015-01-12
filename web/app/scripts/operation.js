@@ -9,6 +9,7 @@ angular.module('biggraph').directive('operation', function (util, hotkeys) {
     link: function(scope, element) {
       scope.params = {};
       scope.multiParams = {};
+      scope.fileUploads = {};
       util.deepWatch(scope, 'op', function() {
         scope.op.parameters.forEach(function(p) {
           if (p.options.length === 0) {
@@ -22,7 +23,9 @@ angular.module('biggraph').directive('operation', function (util, hotkeys) {
       });
 
       scope.apply = function() {
-        if (!scope.op.status.enabled) { return; }
+        if (!scope.op.status.enabled || scope.running || scope.fileUploads.count > 0) {
+          return;
+        }
         var reqParams = {};
         scope.op.parameters.forEach(function(p) {
           if (p.multipleChoice) {
