@@ -54,7 +54,7 @@ angular
     };
   })
   .factory('util', function utilFactory(
-        $location, $window, $resource, $rootScope, $angularCacheFactory) {
+        $location, $window, $resource, $rootScope, $angularCacheFactory, $modal) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // A persistent cache. Requests made through util.get() will not be repeated
     // even if the browser is restarted.
@@ -138,6 +138,13 @@ angular
         });
         scope.$on('$destroy', function() {
           angular.element('title').html('Lynx PizzaKite');
+        });
+      },
+      reportError: function(alert) {
+        $modal.open({
+          templateUrl: 'report-error.html',
+          controller: 'ReportErrorCtrl',
+          resolve: { alert: function() { return alert; } },
         });
       },
     };
