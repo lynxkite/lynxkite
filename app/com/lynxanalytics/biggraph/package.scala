@@ -4,9 +4,17 @@ import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.protection.Expiry
 
 package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
+
+  if (Expiry.isExpired()) {
+    val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
+    println(message)
+    bigGraphLogger.error(message)
+    System.exit(1)
+  }
 
   // Initialize reflection to avoid thread-safety issues
   // TODO: ditch this when we get to Scala 2.11
