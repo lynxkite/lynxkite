@@ -256,6 +256,11 @@ angular.module('biggraph')
       return this.project && this.project.$resolved && !this.project.$error;
     };
 
+    Side.prototype.reportLoadingError = function() {
+      return util.reportRequestError(
+          this.project, 'Could not load project: ' + this.state.projectName);
+    };
+
     Side.prototype.toggleAttributeTitle = function(setting, value) {
       if (this.state.attributeTitles[setting] === value) {
         // Clicking the same attribute setting again turns it off.
