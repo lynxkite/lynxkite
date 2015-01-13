@@ -14,7 +14,7 @@ angular.module('biggraph').directive('graphView', function(util) {
           if (scope.graph.view === undefined || !scope.graph.view.$resolved || !iconsLoaded()) {
             scope.gv.loading();
           } else if (scope.graph.view.$error) {
-            scope.gv.error(scope.graph.view.$error);
+            scope.gv.error(scope.graph.view);
           } else {
             scope.gv.update(scope.graph.view, scope.menu);
           }
@@ -131,14 +131,14 @@ angular.module('biggraph').directive('graphView', function(util) {
     svg.addClass(this.svg, 'loading');
   };
 
-  GraphView.prototype.error = function(msg) {
+  GraphView.prototype.error = function(view) {
     this.clear();
     var x = this.svg.width() / 2, y = this.svg.height() / 2;
-    var text = svg.create('text', {'class': 'error', x: x, y: y, 'text-anchor': 'middle'});
-    var maxLength = 100;  // The error message can be very long and SVG does not wrap text.
-    for (var i = 0; i < msg.length; i += maxLength) {
-      text.append(svg.create('tspan', {x: x, dy: 30}).text(msg.substring(i, i + maxLength)));
-    }
+    var text = svg.create('text', {'class': 'clicky error', x: x, y: y, 'text-anchor': 'middle'});
+    text.text('Failed to generate visualization. Click to report problem.');
+    text.click(function() {
+      util.reportRequestError(view, 'Graph visualization failed.');
+    });
     this.root.append(text);
   };
 

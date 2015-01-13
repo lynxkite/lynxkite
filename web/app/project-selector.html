@@ -28,7 +28,10 @@
       Loading...
     </progressbar>
 
-    <p class="alert alert-danger" ng-if="data.$error">{{data.$error}}</p>
+    <p class="alert alert-danger" ng-if="data.$error">
+      Could not load project list.
+      <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
+    </p>
 
     <a ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
       href ng-click="setProject(project)" ng-class="{ error: project.error }">

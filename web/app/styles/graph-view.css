@@ -27,6 +27,11 @@ svg text {
   pointer-events: none;
 }
 
+svg text.clicky {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 svg .edge {
   fill: none;
   stroke: #444;
@@ -123,6 +128,7 @@ svg .legend text {
 svg .loading {
   fill: #444;
 }
-svg .error {
+svg text.error {
   font-size: 20px;
+  fill: white;
 }

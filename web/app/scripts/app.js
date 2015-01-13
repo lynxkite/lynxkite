@@ -54,7 +54,7 @@ angular
     };
   })
   .factory('util', function utilFactory(
-        $location, $window, $resource, $rootScope, $angularCacheFactory) {
+        $location, $window, $resource, $rootScope, $angularCacheFactory, $modal) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // A persistent cache. Requests made through util.get() will not be repeated
     // even if the browser is restarted.
@@ -79,6 +79,9 @@ angular
           req.$error = util.responseToErrorMessage(failure);
         }
       });
+      // Helpful for debugging/error reporting.
+      req.$url = url;
+      req.$params = params;
       return req;
     }
     var util = {
@@ -95,6 +98,9 @@ angular
         var resource = $resource(url).save({}, params, onSuccess, function(failure) {
           util.ajaxError(failure);
         });
+        // Helpful for debugging/error reporting.
+        resource.$url = url;
+        resource.$params = params;
         // Returns a promise of the success state, for flexibility.
         return resource.$promise
           .then(function() { return true; }, function() { return false; });
@@ -138,6 +144,30 @@ angular
         });
         scope.$on('$destroy', function() {
           angular.element('title').html('Lynx PizzaKite');
+        });
+      },
+      reportRequestError: function(request, details) {
+        if (request) {
+          util.reportError({
+            message: request.$error,
+            details: {
+              url: request.$url,
+              params: request.$params,
+              details: details,
+            },
+          });
+        } else {
+          util.reportError({
+            message: 'undefined request',
+            details: details,
+          });
+        }
+      },
+      reportError: function(alert) {
+        $modal.open({
+          templateUrl: 'report-error.html',
+          controller: 'ReportErrorCtrl',
+          resolve: { alert: function() { return alert; } },
         });
       },
     };
