@@ -7,23 +7,7 @@ angular.module('biggraph').directive('value', function(util) {
     templateUrl: 'value.html',
     link: function(scope) {
       scope.reportError = function() {
-        console.log('ref', scope.ref, 'details', scope.details);
-        if (!scope.ref) {
-          util.reportError({
-            message: 'undefined reference',
-            details: scope.details,
-          });
-        } else {
-          var details = {
-            url: scope.ref.$url,
-            params: scope.ref.$params,
-            details: scope.ref.details,
-          };
-          util.reportError({
-            message: scope.ref.$error,
-            details: details,
-          });
-        }
+        util.reportRequestError(scope.ref, scope.ref.details);
       };
       scope.human = true;
       scope.humanized = function(ref) {

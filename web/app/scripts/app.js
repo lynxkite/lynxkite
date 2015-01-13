@@ -146,6 +146,23 @@ angular
           angular.element('title').html('Lynx PizzaKite');
         });
       },
+      reportRequestError: function(request, details) {
+        if (request) {
+          util.reportError({
+            message: request.$error,
+            details: {
+              url: request.$url,
+              params: request.$params,
+              details: details,
+            },
+          });
+        } else {
+          util.reportError({
+            message: 'undefined request',
+            details: details,
+          });
+        }
+      },
       reportError: function(alert) {
         $modal.open({
           templateUrl: 'report-error.html',
