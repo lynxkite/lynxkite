@@ -1,4 +1,5 @@
-.split-screen > project-graph {
+.split-screen > .ui-layout-container:first-child,
+.ui-splitbar {
   overflow: hidden;
 }
 
@@ -17,7 +18,8 @@ svg.graph-view.loading {
 
 #svg-icons {
   /* Used as a source of icons. Must be loaded and laid out, but not visible. */
-  height: 0;
+  visibility: hidden;
+  position: fixed;
 }
 
 svg text {
