@@ -27,9 +27,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       function getScalar(p, name) {
         for (var i = 0; i < p.scalars.length; ++i) {
           if (p.scalars[i].title === name) {
-            return util.get('/ajax/scalarValue', {
+            var res = util.get('/ajax/scalarValue', {
               scalarId: p.scalars[i].id, calculate: false
             });
+            res.details = { project: p.title, scalar: p.scalars[i] };
+            return res;
           }
         }
         return { error: 'Attribute not found: ' + name };
@@ -65,6 +67,10 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         if (!p.error) {  // Ignore clicks on errored projects.
           scope.name = p.name;
         }
+      };
+
+      scope.reportError = function() {
+        util.reportRequestError(scope.data, 'Project list could not be loaded.');
       };
 
       scope.menu = {

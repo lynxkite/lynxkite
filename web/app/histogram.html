@@ -1,4 +1,7 @@
-<p class="alert alert-danger" ng-if="model.$error">{{model.$error}}</p>
+<p class="alert alert-danger" ng-if="model.$error">
+  Failed to load histogram.
+  <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
+</p>
 <table ng-if="!model.$error" class="histogram">
   <tr>
     <td ng-repeat="s in model.sizes track by $index" class="bar-container"
@@ -12,4 +15,4 @@
     </td>
   </tr>
 </table>
-<div ng-hide="loading" class="histogram-total">total: {{total | decimal}}</div>
+<div ng-hide="loading || model.$error" class="histogram-total">total: {{total | decimal}}</div>

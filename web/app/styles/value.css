@@ -17,4 +17,5 @@
 .value-error {
   font-weight: bold;
   color: darkred;
+  cursor: pointer;
 }
