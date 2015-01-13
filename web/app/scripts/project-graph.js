@@ -117,7 +117,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         // Generate the TSV representation.
         scope.tsv = '';
         var gv = scope.graph.view;
-        if (!gv || !gv.$resolved) {
+        if (!gv || !gv.$resolved || gv.$error) {
           return;
         }
         var sides = [scope.left, scope.right];
