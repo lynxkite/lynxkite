@@ -93,9 +93,7 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
       };
 
       scope.reportError = function() {
-        var m = scope.model;
-        var details = { url: m.$url, params: m.$params };
-        util.reportError({ message: m.$error, details: details });
+        util.reportRequestError(scope.model, 'Histogram request failed.');
       };
     },
   };

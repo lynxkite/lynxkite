@@ -69,6 +69,10 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         }
       };
 
+      scope.reportError = function() {
+        util.reportRequestError(scope.data, 'Project list could not be loaded.');
+      };
+
       scope.menu = {
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
