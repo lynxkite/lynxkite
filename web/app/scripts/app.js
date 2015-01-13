@@ -79,6 +79,9 @@ angular
           req.$error = util.responseToErrorMessage(failure);
         }
       });
+      // Helpful for debugging/error reporting.
+      req.$url = url;
+      req.$params = params;
       return req;
     }
     var util = {
@@ -95,6 +98,9 @@ angular
         var resource = $resource(url).save({}, params, onSuccess, function(failure) {
           util.ajaxError(failure);
         });
+        // Helpful for debugging/error reporting.
+        resource.$url = url;
+        resource.$params = params;
         // Returns a promise of the success state, for flexibility.
         return resource.$promise
           .then(function() { return true; }, function() { return false; });
