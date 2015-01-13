@@ -129,30 +129,32 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
 
   def getComponentsLocal(
     graphRDD: SortedRDD[ID, Set[ID]]): SortedRDD[ID, ComponentID] = {
-    // Moves all the data to the driver and processes it there.
-    val p = graphRDD.collect
+    // Moves all the data to one worker and processes it there.
+    val p = graphRDD.coalesce(1)
 
-    val graph = p.toMap
-    val components = mutable.Map[ID, ComponentID]()
-    var idx = 0
-    // Breadth-first search.
-    for (node <- graph.keys) {
-      if (!components.contains(node)) {
-        components(node) = node
-        val todo = mutable.Queue(node)
-        while (todo.size > 0) {
-          val v = todo.dequeue()
-          for (u <- graph(v)) {
-            if (!components.contains(u)) {
-              components(u) = node
-              todo.enqueue(u)
+    p.mapPartitions(
+      { it =>
+        val graph = it.toMap
+        val components = mutable.Map[ID, ComponentID]()
+        var idx = 0
+        // Breadth-first search.
+        for (node <- graph.keys) {
+          if (!components.contains(node)) {
+            components(node) = node
+            val todo = mutable.Queue(node)
+            while (todo.size > 0) {
+              val v = todo.dequeue()
+              for (u <- graph(v)) {
+                if (!components.contains(u)) {
+                  components(u) = node
+                  todo.enqueue(u)
+                }
+              }
             }
           }
         }
-      }
-    }
-    assert(components.size == graph.size, s"${components.size} != ${graph.size}")
-
-    graphRDD.sparkContext.parallelize(components.toSeq).toSortedRDD(graphRDD.partitioner.get)
+        assert(components.size == graph.size, s"${components.size} != ${graph.size}")
+        components.iterator
+      }).toSortedRDD(graphRDD.partitioner.get)
   }
 }
