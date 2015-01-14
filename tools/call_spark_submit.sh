@@ -12,12 +12,13 @@ fake_application_jar=${lib_dir}/empty.jar
 
 KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 
-pushd ${lib_dir}/../conf
-conf_dir=`pwd`
+pushd ${lib_dir}/..
+conf_dir=`pwd`/conf
+log_dir=`pwd`/logs
+mkdir -p ${log_dir}
+tools_dir=`pwd`/tools
 popd
 
-log_dir=${lib_dir}/../logs
-mkdir -p ${log_dir}
 
 if [ -f ${KITE_SITE_CONFIG} ]; then
   echo "Loading configuration from: ${KITE_SITE_CONFIG}"
@@ -87,12 +88,15 @@ startKite () {
     echo "Kite is already running (or delete ${KITE_PID_FILE})"
     exit 1
   fi
-  nohup "${command[@]}" > ${log_dir}/stdout.$$ 2> ${log_dir}/stderr.$$ &
+  nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
   echo "Kite server successfully started."
 }
-stopKite () {
-  if [ -f "${KITE_PID_FILE}" ]; then
-    PID=$(cat "${KITE_PID_FILE}")
+
+stopByPIDFile () {
+  PID_FILE=$1
+  SERVICE_NAME=$2
+  if [ -f "${PID_FILE}" ]; then
+    PID=$(cat "${PID_FILE}")
     kill $PID || true
     for i in $(seq 10); do
       if [ ! -e /proc/$PID ]; then
@@ -108,10 +112,37 @@ stopKite () {
       echo "Process $PID seems totally unkillable. Giving up."
       exit 1
     else
-      rm -f "${KITE_PID_FILE}" || true
-      echo "Kite server successfully stopped."
+      rm -f "${PID_FILE}" || true
+      echo "${SERVICE_NAME} successfully stopped."
     fi
   fi
+}
+
+stopKite () {
+  stopByPIDFile ${KITE_PID_FILE} "Kite server"
+}
+
+WATCHDOG_PID_FILE="${KITE_PID_FILE}.watchdog"
+startWatchdog () {
+  if [ -n "${KITE_WATCHDOG_PORT}" ]; then
+      if [ -f "${WATCHDOG_PID_FILE}" ]; then
+          echo "Kite Watchdog is already running (or delete ${WATCHDOG_PID_FILE})"
+          exit 1
+      fi
+      nohup ${tools_dir}/watchdog.py \
+          --status_port=${KITE_WATCHDOG_PORT} \
+          --watched_url=http://localhost:${KITE_HTTP_PORT}/ \
+          --sleep_seconds=10 \
+          --max_failures=10 \
+          --script="$0 watchdog_restart" \
+          --pid_file ${WATCHDOG_PID_FILE} \
+          > ${log_dir}/watchdog.stdout.$$ 2> ${log_dir}/watchdog.stderr.$$ &
+      echo "Kite Watchdog successfully started."
+  fi
+}
+
+stopWatchdog () {
+  stopByPIDFile "${WATCHDOG_PID_FILE}" "Kite Watchdog"
 }
 
 case $mode in
@@ -120,11 +151,19 @@ case $mode in
   ;;
   start)
     startKite
+    startWatchdog
   ;;
   stop)
+    stopWatchdog
     stopKite
   ;;
   restart)
+    stopWatchdog
+    stopKite
+    startKite
+    startWatchdog
+  ;;
+  watchdog_restart)
     stopKite
     startKite
   ;;

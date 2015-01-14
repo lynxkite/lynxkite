@@ -36,6 +36,10 @@ export KITE_MASTER_MEMORY_MB=1024
 # Port for the Kite HTTP server to listen on. Must be >=1000.
 export KITE_HTTP_PORT=9000
 
+# HTTP port for the watchdog. If this is set, the startup script will start a watchdog as well
+# which will automatically restart the Kite server if it detects any problem.
+# export KITE_WATCHDOG_PORT=9999
+
 # A local path that exists on all workers and the master and will be used for storing
 # temporary spark/hadoop files. This can get big, so if you have a small root filesystem
 # and an extra large drive mounted somewhere then you need to point this to somewhere on
