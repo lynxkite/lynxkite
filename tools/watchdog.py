@@ -6,6 +6,9 @@ import subprocess
 import thread
 import time
 import urllib2
+import os
+import signal
+import sys
 
 flags = argparse.ArgumentParser(
   description='Runs a script if a URL is not responsive or when requested through a web UI.')
@@ -19,6 +22,8 @@ flags.add_argument('--max_failures', type=int,
     help='Number of failures before the script is run.', required=True)
 flags.add_argument('--script',
     help='Script to run when the port is unresponsive.', required=True)
+flags.add_argument('--pid_file',
+    help='Where to put the PID file for this watchdof.', required=True)
 flags = flags.parse_args()
 
 
@@ -81,7 +86,10 @@ class Server(BaseHTTPServer.HTTPServer):
 
   def restart(self):
     self.log.append('!')
-    subprocess.call(flags.script, shell=True)
+    subprocess.call(
+      flags.script,
+      shell=True,
+      preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
 
 
 def monitor_thread(server):
@@ -104,6 +112,13 @@ def health_check():
 
 
 if __name__ == '__main__':
+  pidfile = flags.pid_file
+  if os.path.isfile(pidfile):
+    print "%s already exists, exiting" % pidfile
+    sys.exit()
+  else:
+    file(pidfile, 'w').write(str(os.getpid()))
+  
   server = Server()
   thread.start_new_thread(monitor_thread, (server,))
   server.serve_forever()
