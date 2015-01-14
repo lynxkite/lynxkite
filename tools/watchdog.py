@@ -117,7 +117,8 @@ if __name__ == '__main__':
     print "%s already exists, exiting" % pidfile
     sys.exit()
   else:
-    file(pidfile, 'w').write(str(os.getpid()))
+    with file(pidfile, 'w') as f:
+      f.write(str(os.getpid()))
   
   server = Server()
   thread.start_new_thread(monitor_thread, (server,))
