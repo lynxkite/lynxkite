@@ -37,5 +37,7 @@ GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.d
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.UserProvider.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.UserProvider.googleLogin
 
+GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck
+
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)

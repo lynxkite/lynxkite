@@ -129,9 +129,11 @@ startWatchdog () {
           echo "Kite Watchdog is already running (or delete ${WATCHDOG_PID_FILE})"
           exit 1
       fi
+      MAIN_URL="http://localhost:${KITE_HTTP_PORT}/"
+      SPARK_CHECK_URL="${MAIN_URL}sparkHealthCheck"
       nohup ${tools_dir}/watchdog.py \
           --status_port=${KITE_WATCHDOG_PORT} \
-          --watched_url=http://localhost:${KITE_HTTP_PORT}/ \
+          --watched_urls="${MAIN_URL}@1,${SPARK_CHECK_URL}@10" \
           --sleep_seconds=10 \
           --max_failures=10 \
           --script="$0 watchdog_restart" \

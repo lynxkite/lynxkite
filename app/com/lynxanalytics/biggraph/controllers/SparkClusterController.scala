@@ -82,4 +82,8 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     environment.setNumInstances(request.workerInstances)
     return getClusterStatus(user, serving.Empty())
   }
+
+  def checkSparkOperational(): Unit = {
+    assert(environment.sparkContext.parallelize(Seq(1, 2, 3)).count == 3)
+  }
 }
