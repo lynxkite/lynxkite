@@ -104,8 +104,10 @@ kite)
     -o CheckHostIP=no \
     -o StrictHostKeyChecking=no \
     -t -t \
-    root@${HOST} \
-    'biggraphstage/tools/detached_run.sh biggraphstage/bin/biggraph'
+    root@${HOST} <<EOF
+biggraphstage/bin/biggraph restart
+exit
+EOF
 
   echo "Server started on http://${HOST}:5080"
   ;;

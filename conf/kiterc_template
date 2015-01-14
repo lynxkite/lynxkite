@@ -15,6 +15,9 @@ export KITE_META_DIR=$HOME/kite_meta
 # this is a single machine install.
 export KITE_DATA_DIR=$HOME/kite_data
 
+# The PID file for Kite servers.
+export KITE_PID_FILE=$HOME/kite.pid
+
 # Needed if you want to run against yarn.
 # The directory with the YARN configuration.
 # export YARN_CONF_DIR=/etc/hadoop/...
