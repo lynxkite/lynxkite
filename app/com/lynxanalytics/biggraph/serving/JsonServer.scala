@@ -77,6 +77,11 @@ class JsonServer extends mvc.Controller {
       }
     }
   }
+
+  def healthCheck(checkHealthy: () => Unit) = mvc.Action { request =>
+    checkHealthy()
+    Ok("Server healthy")
+  }
 }
 
 case class Empty(
@@ -235,6 +240,7 @@ object ProductionJsonServer extends JsonServer {
   def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
+  def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
