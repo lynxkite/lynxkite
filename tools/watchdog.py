@@ -106,7 +106,7 @@ def monitor_thread(server):
 
 
 def health_check():
-  '''Returns True if the URL returns HTTP status 200 within a second.'''
+  '''Returns True if all watched URLs returns HTTP status 200 within the specified timeout.'''
   try:
     for (url, timeout) in flags.watched_urls:
       urllib2.urlopen(url, timeout=timeout)
