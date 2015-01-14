@@ -16,6 +16,9 @@ pushd ${lib_dir}/../conf
 conf_dir=`pwd`
 popd
 
+log_dir=${lib_dir}/../logs
+mkdir -p ${log_dir}
+
 if [ -f ${KITE_SITE_CONFIG} ]; then
   echo "Loading configuration from: ${KITE_SITE_CONFIG}"
   export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
@@ -42,6 +45,7 @@ addJPropIfNonEmpty https.keyStorePassword "${KITE_HTTPS_KEYSTORE_PWD}"
 addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
+addJPropIfNonEmpty pidfile.path "${KITE_PID_FILE}"
 
 
 # -mem flag overrides KITE_MASTER_MEMORY_MB and we use 1024 if neither is set.
@@ -49,22 +53,81 @@ final_app_mem=${app_mem:-${KITE_MASTER_MEMORY_MB:-1024}}
 
 final_java_opts="$(get_mem_opts $final_app_mem) ${java_opts} ${java_args[@]}"
 
+# Cannot do this earlier, as the wrapping script is written in a -e hostile way. :(
+set -eo pipefail
+
 export REPOSITORY_MODE=${REPOSITORY_MODE:-"static<$KITE_META_DIR,$KITE_DATA_DIR>"}
 
 if [ -n "${YARN_CORES_PER_EXECUTOR}" ]; then
   YARN_CORES_SETTING="--executor-cores ${YARN_CORES_PER_EXECUTOR}"
 fi
 
-execRunner ${SPARK_HOME}/bin/spark-submit \
-  --class play.core.server.NettyServer \
-  --master ${SPARK_MASTER} \
-  --driver-class-path "${app_classpath}" \
-  --deploy-mode client \
-  --driver-java-options "${final_java_opts}" \
-  --driver-memory ${final_app_mem}m \
-  ${YARN_CORES_SETTING} \
-  "${fake_application_jar}" \
-  "${app_commands[@]}" \
-  "${residual_args[@]}"
+if [ "${#residual_args[@]}" -ne 1 ]; then
+  echo "Usage: $0 interactive|start|stop|restart"
+  exit 1
+fi
+
+mode=${residual_args[0]}
+
+command=(
+    ${SPARK_HOME}/bin/spark-submit \
+    --class play.core.server.NettyServer \
+    --master ${SPARK_MASTER} \
+    --driver-class-path "${app_classpath}" \
+    --deploy-mode client \
+    --driver-java-options "${final_java_opts}" \
+    --driver-memory ${final_app_mem}m \
+    ${YARN_CORES_SETTING} \
+    "${fake_application_jar}" \
+    "${app_commands[@]}"
+)
+
+startKite () {
+  if [ -f "${KITE_PID_FILE}" ]; then
+    echo "Kite is already running (or delete ${KITE_PID_FILE})"
+    exit 1
+  fi
+  nohup "${command[@]}" > ${log_dir}/stdout.$$ 2> ${log_dir}/stderr.$$ &
+  echo "Kite server successfully started."
+}
+stopKite () {
+  if [ -f "${KITE_PID_FILE}" ]; then
+    PID=$(cat "${KITE_PID_FILE}")
+    kill $PID || true
+    for i in $(seq 10); do
+      if [ ! -e /proc/$PID ]; then
+        break
+      fi
+      sleep 1
+    done
+    if [ -e /proc/$PID ]; then
+      kill -9 $PID || true
+      sleep 1
+    fi
+    if [ -e /proc/$PID ]; then
+      echo "Process $PID seems totally unkillable. Giving up."
+      exit 1
+    else
+      rm -f "${KITE_PID_FILE}" || true
+      echo "Kite server successfully stopped."
+    fi
+  fi
+}
+
+case $mode in
+  interactive)
+    exec "${command[@]}"
+  ;;
+  start)
+    startKite
+  ;;
+  stop)
+    stopKite
+  ;;
+  restart)
+    stopKite
+    startKite
+  ;;
+esac
 
 exit
