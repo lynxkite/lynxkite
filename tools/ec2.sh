@@ -34,6 +34,11 @@ if [ -z "${AWS_ACCESS_KEY_ID:-}" -o -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
   exit 1
 fi
 
+if [ ! -f "${SSH_KEY}" ]; then
+  echo "${SSH_KEY} does not exist."
+  exit 1
+fi
+
 # ==== Reading config and defining common vars/functions. ===
 source $2
 
@@ -44,7 +49,7 @@ GetMasterHostName() {
     | grep PublicDnsName | grep ec2 | cut -d'"' -f 4 | head -1
 }
 
-SSH="ssh -i $HOME/.ssh/${SSH_KEY} -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no"
+SSH="ssh -i '${SSH_KEY}' -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no"
 
 
 # ==== Handling the cases ===
@@ -55,7 +60,7 @@ start)
   # Launch the cluster.
   ${SPARK_HOME}/ec2/spark-ec2 \
     -k ${SSH_ID} \
-    -i ~/.ssh/${SSH_KEY} \
+    -i "${SSH_KEY}" \
     -s ${NUM_INSTANCES} \
     --instance-type ${TYPE} \
     --region=${REGION} launch ${CLUSTER_NAME}
@@ -99,7 +104,7 @@ kite)
 
   echo "Starting..."
   ssh \
-    -i ~/.ssh/${SSH_KEY} \
+    -i "${SSH_KEY}" \
     -o UserKnownHostsFile=/dev/null \
     -o CheckHostIP=no \
     -o StrictHostKeyChecking=no \
@@ -116,7 +121,7 @@ EOF
 stop)
   ${SPARK_HOME}/ec2/./spark-ec2 \
     -k ${SSH_ID} \
-    -i ~/.ssh/${SSH_KEY} \
+    -i "${SSH_KEY}" \
     --region=${REGION} \
     stop \
     ${CLUSTER_NAME}
@@ -126,7 +131,7 @@ stop)
 resume)
   ${SPARK_HOME}/ec2/./spark-ec2 \
     -k ${SSH_ID} \
-    -i ~/.ssh/${SSH_KEY} \
+    -i "${SSH_KEY}" \
     --instance-type ${TYPE} \
     --region=${REGION} \
     start \

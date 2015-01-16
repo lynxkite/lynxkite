@@ -8,7 +8,7 @@ NUM_INSTANCES=3
 SSH_ID=lynx-cli
 
 # The private key file for the ID above.
-SSH_KEY=lynx-cli.pem
+SSH_KEY=~/.ssh/lynx-cli.pem
 
 # Which region to run in.
 REGION=us-east-1
