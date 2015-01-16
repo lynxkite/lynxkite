@@ -49,7 +49,7 @@ GetMasterHostName() {
     | grep PublicDnsName | grep ec2 | cut -d'"' -f 4 | head -1
 }
 
-SSH="ssh -i \"${SSH_KEY}\" -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no"
+SSH="ssh -i '${SSH_KEY}' -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no"
 
 
 # ==== Handling the cases ===
