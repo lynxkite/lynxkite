@@ -42,7 +42,7 @@ class JsonServer extends mvc.Controller {
 
   def jsonPost[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
     action(parse.json) { (user, request) =>
-      log.info(s"POST ${request.path} ${request.body}")
+      log.info(s"$user POST ${request.path} ${request.body}")
       val i = request.body.as[I]
       Ok(json.Json.toJson(handler(user, i)))
     }
@@ -53,7 +53,7 @@ class JsonServer extends mvc.Controller {
     val value = request.getQueryString(key)
     assert(value.nonEmpty, s"Missing query parameter $key.")
     val s = value.get
-    log.info(s"GET ${request.path} $s")
+    log.info(s"$user GET ${request.path} $s")
     val i = json.Json.parse(s).as[I]
     handler(user, i)
   }
@@ -164,7 +164,7 @@ object ProductionJsonServer extends JsonServer {
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
       val upload = request.body.file("file").get
-      log.info(s"upload: ${upload.filename}")
+      log.info(s"upload: $user ${upload.filename}")
       val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
       val baseName = upload.filename.replace(" ", "_")
       val tmpName = s"$baseName.$Timestamp"
@@ -191,7 +191,7 @@ object ProductionJsonServer extends JsonServer {
   def download = action(parse.anyContent) { (user, request) =>
     import play.api.libs.concurrent.Execution.Implicits._
     import scala.collection.JavaConversions._
-    log.info(s"download: ${request.path}")
+    log.info(s"download: $user ${request.path}")
     val path = Filename(request.getQueryString("path").get)
     val name = Filename(request.getQueryString("name").get)
     // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
