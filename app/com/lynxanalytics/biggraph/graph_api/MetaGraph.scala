@@ -361,6 +361,10 @@ trait MetaGraphOp extends Serializable {
   val isHeavy: Boolean = false
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
+  def toJson: play.api.libs.json.JsValue = {
+    import play.api.libs.json.Json
+    Json.obj() // A blank object. Operations that take parameters should override this.
+  }
 
   val gUID: UUID = {
     val buffer = new ByteArrayOutputStream

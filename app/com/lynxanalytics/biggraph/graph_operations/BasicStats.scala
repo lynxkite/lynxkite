@@ -6,13 +6,14 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-object CountVertices {
+object CountVertices extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = CountVertices()
 }
 case class CountVertices()
     extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
@@ -31,7 +32,7 @@ case class CountVertices()
   }
 }
 
-object CountEdges {
+object CountEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val srcVS = vertexSet
     val dstVS = vertexSet
@@ -40,6 +41,7 @@ object CountEdges {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = CountEdges()
 }
 case class CountEdges()
     extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] {
@@ -59,7 +61,7 @@ case class CountEdges()
   }
 }
 
-object CountAttributes {
+object CountAttributes extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
@@ -67,6 +69,7 @@ object CountAttributes {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = CountAttributes[Any]()
 }
 case class CountAttributes[T]()
     extends TypedMetaGraphOp[CountAttributes.Input[T], CountAttributes.Output] {
@@ -85,7 +88,7 @@ case class CountAttributes[T]()
   }
 }
 
-object ComputeMinMax {
+object ComputeMinMax extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
@@ -96,10 +99,17 @@ object ComputeMinMax {
     val min = scalar[T]
     val max = scalar[T]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = (j \ "numeric").as[String] match {
+    case "scala.math.Numeric$DoubleIsFractional$" => ComputeMinMax[Double]()
+  }
 }
 case class ComputeMinMax[T: Numeric]()
     extends TypedMetaGraphOp[ComputeMinMax.Input[T], ComputeMinMax.Output[T]] {
   override val isHeavy = true
+  override def toJson: play.api.libs.json.JsValue = {
+    val num = implicitly[Numeric[T]]
+    play.api.libs.json.Json.obj("numeric" -> num.getClass.getName)
+  }
   @transient override lazy val inputs = new ComputeMinMax.Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -135,7 +145,7 @@ case class ComputeMinMax[T: Numeric]()
   }
 }
 
-object ComputeTopValues {
+object ComputeTopValues extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
@@ -151,10 +161,14 @@ object ComputeTopValues {
       else a._2 compare b._2
     }
   }
+  def fromJson(j: play.api.libs.json.JsValue) =
+    ComputeTopValues[Any]((j \ "numTopValues").as[Int], (j \ "sampleSize").as[Int])
 }
 case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
     extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
   override val isHeavy = true
+  override def toJson: play.api.libs.json.JsValue =
+    play.api.libs.json.Json.obj("numTopValues" -> numTopValues, "sampleSize" -> sampleSize)
   @transient override lazy val inputs = new ComputeTopValues.Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
