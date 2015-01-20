@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 // A small graph with all sorts of attributes. Used for testing.
-object ExampleGraph {
+object ExampleGraph extends OpFromJson {
   class Input extends MagicInputSignature {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
@@ -23,6 +23,7 @@ object ExampleGraph {
     val edgeAttributes = Map("comment" -> comment, "weight" -> weight)
     val vertexAttributes = Map("name" -> name, "age" -> age, "gender" -> gender, "income" -> income)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = ExampleGraph()
 }
 import ExampleGraph._
 case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {

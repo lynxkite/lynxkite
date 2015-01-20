@@ -103,7 +103,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   }
 }
 
-private object CreateSomeGraph {
+private object CreateSomeGraph extends OpFromJson {
   class Input extends MagicInputSignature {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
@@ -112,6 +112,7 @@ private object CreateSomeGraph {
     val vattr = vertexAttribute[Long](vertices)
     val eattr = edgeAttribute[String](edges)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = CreateSomeGraph()
 }
 private case class CreateSomeGraph()
     extends TypedMetaGraphOp[CreateSomeGraph.Input, CreateSomeGraph.Output] {
@@ -128,7 +129,7 @@ private case class CreateSomeGraph()
               rc: RuntimeContext): Unit = ???
 }
 
-private object FromVertexAttr {
+private object FromVertexAttr extends OpFromJson {
   class Input extends MagicInputSignature {
     val inputVertices = vertexSet
     val inputAttr = vertexAttribute[Long](inputVertices)
@@ -138,6 +139,7 @@ private object FromVertexAttr {
     val attrValues = vertexSet
     val links = edgeBundle(attrValues, inputs.inputVertices.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = FromVertexAttr()
 }
 private case class FromVertexAttr()
     extends TypedMetaGraphOp[FromVertexAttr.Input, FromVertexAttr.Output] {

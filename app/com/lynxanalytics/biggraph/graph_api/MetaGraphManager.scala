@@ -7,11 +7,13 @@ import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.util.UUID
+import play.api.libs.json
+import play.api.libs.json.Json
 import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.{ Filename, Timestamp }
 
 class MetaGraphManager(val repositoryPath: String) {
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
@@ -181,12 +183,22 @@ class MetaGraphManager(val repositoryPath: String) {
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
     log.info(s"Saving $inst to disk.")
     val time = Timestamp.toString
-    val dumpFile = new File(s"$repositoryPath/dump-$time")
-    val finalFile = new File(s"$repositoryPath/save-$time")
-    val stream = new ObjectOutputStream(new FileOutputStream(dumpFile))
-    stream.writeObject(SerializedOperation(inst))
-    stream.close()
+    val repo = Filename(repositoryPath)
+    val dumpFile = repo / s"dump-$time"
+    val finalFile = repo / s"save-$time"
+    dumpFile.createFromStrings(serializeOperation(inst))
+    // Make sure it can be loaded.
+    println("reloading", dumpFile)
+    loadInstanceFromDisk(new File(dumpFile.toString)).get
     dumpFile.renameTo(finalFile)
+  }
+
+  private def loadInstanceFromDisk(file: File): util.Try[MetaGraphOperationInstance] = {
+    log.info(s"Loading operation from ${file.getName}")
+    util.Try {
+      val data = scala.io.Source.fromFile(file).mkString
+      deserializeOperation(data)
+    }
   }
 
   private def saveVisibles(): Unit = {
@@ -206,20 +218,11 @@ class MetaGraphManager(val repositoryPath: String) {
   private def initializeFromDisk(): Unit = {
     val repo = new File(repositoryPath)
     if (!repo.exists) repo.mkdirs
-    val operationFileNames = repo.list.filter(_.startsWith("save-")).sorted
-    operationFileNames.foreach { fileName =>
-      log.info(s"Loading operation from: $fileName")
-      try {
-        val file = new File(repo, fileName)
-        val stream = new ObjectInputStream(new FileInputStream(file))
-        try {
-          val instance = stream.readObject().asInstanceOf[SerializedOperation].toInstance(this)
-          internalApply(instance)
-        } finally { stream.close() }
-      } catch {
-        // TODO(xandrew): Be more selective here...
-        case e: Throwable =>
-          log.error(s"Error loading operation from file: $fileName", e)
+    val operationFiles = repo.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
+    for (file <- operationFiles) {
+      loadInstanceFromDisk(file) match {
+        case util.Success(instance) => internalApply(instance)
+        case util.Failure(e) => log.error(s"Error loading operation from ${file.getName}", e)
       }
     }
     visibles.clear
@@ -251,6 +254,47 @@ class MetaGraphManager(val repositoryPath: String) {
       }
     }
   }
+
+  def serializeOperation(inst: MetaGraphOperationInstance): String = {
+    val j = Json.obj(
+      "class" -> inst.operation.getClass.getName,
+      "operation" -> inst.operation.toJson,
+      "inputs" -> new json.JsObject(
+        inst.inputs.all.toSeq.map { case (name, entity) => name.name -> json.JsString(entity.gUID.toString) })
+    )
+    try {
+      Json.prettyPrint(j)
+    } catch {
+      case e: Throwable =>
+        // The error message would not indicate what operation it was otherwise.
+        log.error(s"Error while serializing $inst:", e)
+        throw e
+    }
+  }
+
+  private def deserializeOperation(input: String): MetaGraphOperationInstance = {
+    val j = Json.parse(input)
+    val cls = (j \ "class").as[String]
+    val sym = reflect.runtime.currentMirror.staticModule(cls)
+    val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
+    val des = obj.asInstanceOf[OpFromJson]
+    val op = des.fromJson(j \ "operation")
+    val inputs = (j \ "inputs").as[Map[String, String]].map {
+      case (name, guid) => Symbol(name) -> UUID.fromString(guid)
+    }
+    TypedOperationInstance(
+      this,
+      op,
+      MetaDataSet(
+        op.inputSig.vertexSets
+          .map(n => n -> vertexSet(inputs(n))).toMap,
+        op.inputSig.edgeBundles.keys
+          .map(n => n -> edgeBundle(inputs(n))).toMap,
+        op.inputSig.vertexAttributes.keys
+          .map(n => n -> vertexAttribute(inputs(n))).toMap,
+        op.inputSig.scalars
+          .map(n => n -> scalar(inputs(n))).toMap))
+  }
 }
 object MetaGraphManager {
   implicit class StringAsUUID(s: String) {
@@ -258,27 +302,6 @@ object MetaGraphManager {
   }
 }
 
-private case class SerializedOperation(operation: MetaGraphOp,
-                                       inputs: Map[Symbol, UUID]) extends Serializable {
-  def toInstance(manager: MetaGraphManager): MetaGraphOperationInstance = {
-    TypedOperationInstance(
-      manager,
-      operation.asInstanceOf[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]],
-      MetaDataSet(
-        operation.inputSig.vertexSets
-          .map(n => n -> manager.vertexSet(inputs(n))).toMap,
-        operation.inputSig.edgeBundles.keys
-          .map(n => n -> manager.edgeBundle(inputs(n))).toMap,
-        operation.inputSig.vertexAttributes.keys
-          .map(n => n -> manager.vertexAttribute(inputs(n))).toMap,
-        operation.inputSig.scalars
-          .map(n => n -> manager.scalar(inputs(n))).toMap))
-  }
-}
-private object SerializedOperation {
-  def apply(inst: MetaGraphOperationInstance): SerializedOperation = {
-    SerializedOperation(
-      inst.operation,
-      inst.inputs.all.map { case (name, entity) => name -> entity.gUID })
-  }
+trait OpFromJson {
+  def fromJson(j: json.JsValue): TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]
 }
