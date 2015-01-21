@@ -17,13 +17,14 @@ object CreateRole extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val role = vertexAttribute[String](inputs.vertices.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CreateRole(0, 0)
+  def fromJson(j: play.api.libs.json.JsValue) = CreateRole((j \ "ratio").as[Double], (j \ "seed").as[Int])
 }
 import CreateRole._
 case class CreateRole(ratio: Double, seed: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("ratio" -> ratio, "seed" -> seed)
 
   def execute(inputDatas: DataSet,
               o: Output,

@@ -26,6 +26,7 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("seed" -> seed, "averageDegree" -> averageDegree)
 
   def execute(inputDatas: DataSet,
               o: Output,

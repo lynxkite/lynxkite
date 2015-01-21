@@ -20,6 +20,7 @@ case class AddGaussianVertexAttribute(seed: Int) extends TypedMetaGraphOp[Input,
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("seed" -> seed)
 
   def execute(inputDatas: DataSet,
               o: Output,

@@ -25,6 +25,7 @@ case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends TypedMetaGr
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("seed" -> seed, "density" -> density)
 
   def execute(inputDatas: DataSet,
               o: Output,

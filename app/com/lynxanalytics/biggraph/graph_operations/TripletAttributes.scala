@@ -33,6 +33,7 @@ case class TripletMapping(sampleSize: Int = -1)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("sampleSize" -> sampleSize)
 
   def execute(inputDatas: DataSet,
               o: Output,

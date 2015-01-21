@@ -35,6 +35,7 @@ case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("minOverlap" -> minOverlap)
 
   def execute(inputDatas: DataSet,
               o: Output,

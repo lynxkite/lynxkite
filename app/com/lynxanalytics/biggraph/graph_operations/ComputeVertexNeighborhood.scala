@@ -11,7 +11,8 @@ object ComputeVertexNeighborhood extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val neighborhood = scalar[Set[ID]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = ComputeVertexNeighborhood(Seq(), 0)
+  def fromJson(j: play.api.libs.json.JsValue) =
+    ComputeVertexNeighborhood((j \ "centers").as[Seq[ID]], (j \ "radius").as[Int])
 }
 import ComputeVertexNeighborhood._
 case class ComputeVertexNeighborhood(
@@ -21,6 +22,7 @@ case class ComputeVertexNeighborhood(
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  override def toJson = play.api.libs.json.Json.obj("centers" -> centers, "radius" -> radius)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas

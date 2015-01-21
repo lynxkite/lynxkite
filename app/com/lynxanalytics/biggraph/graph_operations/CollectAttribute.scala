@@ -10,7 +10,7 @@ object CollectAttribute extends OpFromJson {
     implicit val tt = inputs.attr.typeTag
     val idToAttr = scalar[Map[ID, T]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CollectAttribute(Set())
+  def fromJson(j: play.api.libs.json.JsValue) = CollectAttribute((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
 }
 import CollectAttribute._
 case class CollectAttribute[T](
@@ -18,6 +18,7 @@ case class CollectAttribute[T](
     maxCount: Int = 1000) extends TypedMetaGraphOp[VertexAttributeInput[T], Output[T]] {
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("idSet" -> idSet, "maxCount" -> maxCount)
 
   def execute(inputDatas: DataSet, o: Output[T], output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
