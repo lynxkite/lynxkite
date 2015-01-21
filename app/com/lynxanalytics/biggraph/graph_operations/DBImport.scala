@@ -10,6 +10,13 @@ case class DBTable(
     key: String) extends RowInput {
   assert(fields.contains(key), s"$key not found in $fields")
 
+  def toJson = play.api.libs.json.Json.obj(
+    "class" -> "DBTable",
+    "db" -> db,
+    "table" -> table,
+    "fields" -> fields,
+    "key" -> key)
+
   case class Stats(table: String)(implicit val connection: sql.Connection) {
     val (minKey, maxKey) = {
       val q = SQL(s"SELECT MIN($key) AS min, MAX($key) AS max FROM $table")
