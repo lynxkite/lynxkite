@@ -94,6 +94,7 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output(numEdgeBundles)(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("numEdgeBundles" -> numEdgeBundles)
 
   def execute(inputDatas: DataSet,
               o: Output,
