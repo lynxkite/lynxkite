@@ -63,36 +63,25 @@ object ImportUtil {
   }
 }
 
-object RowInput {
-  def fromJson(j: play.api.libs.json.JsValue): RowInput = {
-    (j \ "class").as[String] match {
-      case "CSV" => CSV(
-        Filename((j \ "file").as[String]),
-        (j \ "delimiter").as[String],
-        (j \ "header").as[String],
-        JavaScript((j \ "filter").as[String]))
-      case "DBTable" => DBTable(
-        (j \ "db").as[String],
-        (j \ "table").as[String],
-        (j \ "fields").as[Seq[String]],
-        (j \ "key").as[String])
-    }
-  }
-}
-trait RowInput {
+trait RowInput extends ToJson {
   def fields: Seq[String]
   def lines(rc: RuntimeContext): RDD[Seq[String]]
-  def toJson: play.api.libs.json.JsValue
 }
 
+object CSV extends FromJson[CSV] {
+  def fromJson(j: play.api.libs.json.JsValue) = CSV(
+    Filename((j \ "file").as[String]),
+    (j \ "delimiter").as[String],
+    (j \ "header").as[String],
+    JavaScript((j \ "filter").as[String]))
+}
 case class CSV(file: Filename,
                delimiter: String,
                header: String,
                filter: JavaScript = JavaScript("")) extends RowInput {
   val fields = ImportUtil.split(header, delimiter).map(_.trim)
 
-  def toJson = play.api.libs.json.Json.obj(
-    "class" -> "CSV",
+  override def toJson = play.api.libs.json.Json.obj(
     "file" -> file.fullString,
     "delimiter" -> delimiter,
     "header" -> header,
@@ -170,7 +159,7 @@ object ImportVertexList extends OpFromJson {
       f => f -> vertexAttribute[String](vertices, ImportCommon.toSymbol(f))
     }.toMap
   }
-  def fromJson(j: play.api.libs.json.JsValue) = ImportVertexList(RowInput.fromJson(j \ "input"))
+  def fromJson(j: play.api.libs.json.JsValue) = ImportVertexList(TypedJson.read[RowInput](j \ "input"))
 }
 case class ImportVertexList(input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
@@ -178,7 +167,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
-  override def toJson = play.api.libs.json.Json.obj("input" -> input.toJson)
+  override def toJson = play.api.libs.json.Json.obj("input" -> input.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -237,7 +226,7 @@ object ImportEdgeList extends OpFromJson {
     val stringID = vertexAttribute[String](vertices)
   }
   def fromJson(j: play.api.libs.json.JsValue) =
-    ImportEdgeList(RowInput.fromJson(j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
+    ImportEdgeList(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
 }
 case class ImportEdgeList(input: RowInput, src: String, dst: String)
     extends ImportEdges
@@ -246,7 +235,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
-  override def toJson = play.api.libs.json.Json.obj("input" -> input.toJson, "src" -> src, "dst" -> dst)
+  override def toJson = play.api.libs.json.Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -282,7 +271,7 @@ object ImportEdgeListForExistingVertexSet extends OpFromJson {
     }.toMap
   }
   def fromJson(j: play.api.libs.json.JsValue) =
-    ImportEdgeListForExistingVertexSet(RowInput.fromJson(j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
+    ImportEdgeListForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
 }
 case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst: String)
     extends ImportEdges
@@ -291,7 +280,7 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, input.fields)
-  override def toJson = play.api.libs.json.Json.obj("input" -> input.toJson, "src" -> src, "dst" -> dst)
+  override def toJson = play.api.libs.json.Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -328,7 +317,7 @@ object ImportAttributesForExistingVertexSet extends OpFromJson {
     }.toMap
   }
   def fromJson(j: play.api.libs.json.JsValue) =
-    ImportAttributesForExistingVertexSet(RowInput.fromJson(j \ "input"), (j \ "idField").as[String])
+    ImportAttributesForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "idField").as[String])
 }
 case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String)
     extends ImportCommon
@@ -341,7 +330,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs, input.fields.toSet - idField)
-  override def toJson = play.api.libs.json.Json.obj("input" -> input.toJson, "idField" -> idField)
+  override def toJson = play.api.libs.json.Json.obj("input" -> input.toTypedJson, "idField" -> idField)
 
   def execute(inputDatas: DataSet,
               o: Output,
