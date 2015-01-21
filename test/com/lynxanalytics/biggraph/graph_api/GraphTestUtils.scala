@@ -44,15 +44,7 @@ trait TestMetaGraphManager extends TestTempDir {
     val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("metaGraphManager." + dirName)
     managerDir.mkdir
-    new MetaGraphManager(managerDir.toString) {
-      override protected def internalApply(
-        inst: MetaGraphOperationInstance): Unit = {
-        if (inst.operation.isHeavy) {
-          SerialVersionUIDTest.assertContains(inst.operation)
-        }
-        super.internalApply(inst)
-      }
-    }
+    new MetaGraphManager(managerDir.toString)
   }
 }
 
