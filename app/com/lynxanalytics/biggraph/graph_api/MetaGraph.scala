@@ -357,14 +357,10 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   lazy val metaDataSet = MetaDataSet(placeholders.map(_.entity).map(e => (e.name, e)).toMap)
 }
 
-trait MetaGraphOp extends Serializable {
+trait MetaGraphOp extends Serializable with ToJson {
   val isHeavy: Boolean = false
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
-  def toJson: play.api.libs.json.JsValue = {
-    import play.api.libs.json.Json
-    Json.obj() // A blank object. Operations that take parameters should override this.
-  }
 
   val gUID: UUID = {
     val buffer = new ByteArrayOutputStream

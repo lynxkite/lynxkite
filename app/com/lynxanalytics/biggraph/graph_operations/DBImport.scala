@@ -5,13 +5,19 @@ import anorm.SQL
 import java.sql
 import org.apache.spark.rdd.RDD
 
+object DBTable extends FromJson[DBTable] {
+  def fromJson(j: play.api.libs.json.JsValue) = DBTable(
+    (j \ "db").as[String],
+    (j \ "table").as[String],
+    (j \ "fields").as[Seq[String]],
+    (j \ "key").as[String])
+}
 case class DBTable(
     db: String, table: String, fields: Seq[String],
     key: String) extends RowInput {
   assert(fields.contains(key), s"$key not found in $fields")
 
-  def toJson = play.api.libs.json.Json.obj(
-    "class" -> "DBTable",
+  override def toJson = play.api.libs.json.Json.obj(
     "db" -> db,
     "table" -> table,
     "fields" -> fields,

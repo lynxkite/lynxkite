@@ -257,8 +257,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def serializeOperation(inst: MetaGraphOperationInstance): String = {
     val j = Json.obj(
-      "class" -> inst.operation.getClass.getName,
-      "operation" -> inst.operation.toJson,
+      "operation" -> inst.operation.toTypedJson,
       "inputs" -> new json.JsObject(
         inst.inputs.all.toSeq.map { case (name, entity) => name.name -> json.JsString(entity.gUID.toString) })
     )
@@ -274,11 +273,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def deserializeOperation(input: String): MetaGraphOperationInstance = {
     val j = Json.parse(input)
-    val cls = (j \ "class").as[String]
-    val sym = reflect.runtime.currentMirror.staticModule(cls)
-    val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
-    val des = obj.asInstanceOf[OpFromJson]
-    val op = des.fromJson(j \ "operation")
+    val op = TypedJson.read[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]](j \ "operation")
     val inputs = (j \ "inputs").as[Map[String, String]].map {
       case (name, guid) => Symbol(name) -> UUID.fromString(guid)
     }
@@ -302,6 +297,27 @@ object MetaGraphManager {
   }
 }
 
-trait OpFromJson {
-  def fromJson(j: json.JsValue): TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]
+object TypedJson {
+  def read[T <: ToJson](j: json.JsValue): T = {
+    val cls = (j \ "class").as[String]
+    val sym = reflect.runtime.currentMirror.staticModule(cls)
+    val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
+    val des = obj.asInstanceOf[FromJson[T]]
+    des.fromJson(j \ "data")
+  }
+  def write[T <: ToJson](o: T): json.JsValue = {
+    Json.obj(
+      "class" -> o.getClass.getName,
+      "data" -> o.toJson)
+  }
 }
+
+trait ToJson {
+  // Export blanks object by default.
+  def toJson: json.JsValue = Json.obj()
+  def toTypedJson = TypedJson.write(this)
+}
+trait FromJson[T] {
+  def fromJson(j: json.JsValue): T
+}
+trait OpFromJson extends FromJson[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]]
