@@ -62,17 +62,26 @@ abstract class AddConstantAttribute[T]
   }
 }
 
-case class AddConstantDoubleAttribute(val value: Double)
+object AddConstantDoubleAttribute extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) = AddConstantDoubleAttribute((j \ "value").as[Double])
+}
+case class AddConstantDoubleAttribute(value: Double)
     extends AddConstantAttribute[Double] {
   @transient lazy val tt = typeTag[Double]
 }
 
-case class AddConstantIntAttribute(val value: Int)
+object AddConstantIntAttribute extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) = AddConstantIntAttribute((j \ "value").as[Int])
+}
+case class AddConstantIntAttribute(value: Int)
     extends AddConstantAttribute[Int] {
   @transient lazy val tt = typeTag[Int]
 }
 
-case class AddConstantStringAttribute(val value: String)
+object AddConstantStringAttribute extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) = AddConstantStringAttribute((j \ "value").as[String])
+}
+case class AddConstantStringAttribute(value: String)
     extends AddConstantAttribute[String] {
   @transient lazy val tt = typeTag[String]
 }

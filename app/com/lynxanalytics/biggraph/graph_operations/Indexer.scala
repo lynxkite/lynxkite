@@ -14,7 +14,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
  * based on the previous bucketed attributes (baseIndices), it computes the index based on the
  * previous and the current bucketed attribute.
  */
-object Indexer {
+object Indexer extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vs = vertexSet
     val filtered = vertexSet
@@ -25,6 +25,7 @@ object Indexer {
                   inputs: Input[T]) extends MagicOutput(instance) {
     val indices = vertexAttribute[Int](inputs.filtered.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = Indexer[Any](null)
 }
 import Indexer._
 case class Indexer[T](bucketer: Bucketer[T])

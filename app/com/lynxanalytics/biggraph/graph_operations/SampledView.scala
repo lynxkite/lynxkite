@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.MapBucketer
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object SampledView {
+object SampledView extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     val ids = vertexAttribute[ID](vertices)
@@ -17,6 +17,7 @@ object SampledView {
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
     val vertexIndices = scalar[Map[ID, Int]]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = SampledView(Set(), 1)
 }
 import SampledView._
 case class SampledView(

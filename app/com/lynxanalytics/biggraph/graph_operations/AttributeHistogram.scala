@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-object AttributeHistogram {
+object AttributeHistogram extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val original = vertexSet
     val filtered = vertexSet
@@ -18,6 +18,7 @@ object AttributeHistogram {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val counts = scalar[Map[Int, Long]]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = AttributeHistogram(DoubleLinearBucketer(1, 2, 3))
 }
 import AttributeHistogram._
 case class AttributeHistogram[T](bucketer: Bucketer[T])

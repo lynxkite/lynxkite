@@ -7,7 +7,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object SimpleRandomEdgeBundle {
+object SimpleRandomEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {
     val vsSrc = vertexSet
     val vsDst = vertexSet
@@ -16,6 +16,7 @@ object SimpleRandomEdgeBundle {
       extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vsSrc.entity, inputs.vsDst.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = SimpleRandomEdgeBundle((j \ "seed").as[Int], (j \ "density").as[Float])
 }
 import SimpleRandomEdgeBundle._
 case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends TypedMetaGraphOp[Input, Output] {

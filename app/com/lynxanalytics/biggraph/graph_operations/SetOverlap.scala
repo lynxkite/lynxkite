@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 // Generates edges between vertices by the amount of overlap in an attribute.
-object SetOverlap {
+object SetOverlap extends OpFromJson {
   // Maximum number of sets to be O(n^2) compared.
   val SetListBruteForceLimit = 70
   class Input extends MagicInputSignature {
@@ -21,6 +21,7 @@ object SetOverlap {
     val overlaps = edgeBundle(inputs.segments.entity, inputs.segments.entity)
     val overlapSize = edgeAttribute[Int](overlaps)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = SetOverlap((j \ "minOverlap").as[Int])
 }
 import SetOverlap._
 case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {

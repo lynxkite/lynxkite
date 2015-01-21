@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-object AggregateByEdgeBundle {
+object AggregateByEdgeBundle extends OpFromJson {
   class Input[From] extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -17,6 +17,10 @@ object AggregateByEdgeBundle {
   class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
                                   inputs: Input[From]) extends MagicOutput(instance) {
     val attr = vertexAttribute[To](inputs.dst.entity)
+  }
+  def fromJson(j: play.api.libs.json.JsValue) = {
+    implicit val f = Aggregator.fAggregator
+    AggregateByEdgeBundle[Any, Any]((j \ "aggregator").as[Aggregator[Any, Any, Any]])
   }
 }
 case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To])
@@ -50,7 +54,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
   }
 }
 
-object AggregateFromEdges {
+object AggregateFromEdges extends OpFromJson {
   class Input[From] extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -61,6 +65,10 @@ object AggregateFromEdges {
   class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
                                   inputs: Input[From]) extends MagicOutput(instance) {
     val dstAttr = vertexAttribute[To](inputs.dst.entity)
+  }
+  def fromJson(j: play.api.libs.json.JsValue) = {
+    import Aggregator.fAggregator
+    AggregateFromEdges[Any, Any]((j \ "aggregator").as[Aggregator[Any, Any, Any]])
   }
 }
 case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
@@ -93,14 +101,17 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
   }
 }
 
-object AggregateAttributeToScalar {
+object AggregateAttributeToScalar extends OpFromJson {
   class Output[To: TypeTag](
       implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
 
     val aggregated = scalar[To]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = {
+    import Aggregator.fAggregator
+    AggregateAttributeToScalar[Any, Any, Any]((j \ "aggregator").as[Aggregator[Any, Any, Any]])
+  }
 }
-
 case class AggregateAttributeToScalar[From, Intermediate, To](
   aggregator: Aggregator[From, Intermediate, To])
     extends TypedMetaGraphOp[VertexAttributeInput[From], AggregateAttributeToScalar.Output[To]] {
@@ -341,6 +352,15 @@ object Aggregator {
     // TODO: I leave the class name as variance as later we intend to output all 4 possible outputs
     // TODO: for global aggregation (not on samples) we should do Math.sqrt(a.sigma / a.n)
     def finalize(a: Stats) = if (a.n < 2) 0 else Math.sqrt(a.sigma / (a.n - 1))
+  }
+
+  import play.api.libs.json
+  import play.api.libs.json.Json
+  implicit val fAggregator = new json.Format[Aggregator[Any, Any, Any]] {
+    def writes(a: Aggregator[Any, Any, Any]) = Json.obj()
+    def reads(js: json.JsValue): json.JsResult[Aggregator[Any, Any, Any]] = {
+      json.JsSuccess(Aggregator.Sum().asInstanceOf[Aggregator[Any, Any, Any]])
+    }
   }
 }
 

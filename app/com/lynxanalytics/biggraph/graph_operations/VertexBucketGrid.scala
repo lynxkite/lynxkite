@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util._
 
-object VertexBucketGrid {
+object VertexBucketGrid extends OpFromJson {
   class Input[S, T](xBucketed: Boolean, yBucketed: Boolean) extends MagicInputSignature {
     val vertices = vertexSet
     val xAttribute = if (xBucketed) vertexAttribute[S](vertices) else null
@@ -22,6 +22,7 @@ object VertexBucketGrid {
     val yBuckets = vertexAttribute[Int](inputs.filtered.entity)
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = VertexBucketGrid[Any, Any](null, null)
 }
 import VertexBucketGrid._
 case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],

@@ -6,7 +6,7 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object Dispersion {
+object Dispersion extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val dispersion = edgeAttribute[Double](inputs.es.entity)
@@ -29,6 +29,7 @@ object Dispersion {
     }
     builder.result()
   }
+  def fromJson(j: play.api.libs.json.JsValue) = Dispersion()
 }
 import Dispersion._
 case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {

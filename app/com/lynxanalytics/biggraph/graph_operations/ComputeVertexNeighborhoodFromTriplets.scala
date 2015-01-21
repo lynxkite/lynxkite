@@ -4,7 +4,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import scala.util.Sorting
 
-object ComputeVertexNeighborhoodFromTriplets {
+object ComputeVertexNeighborhoodFromTriplets extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     val edges = edgeBundle(vertices, vertices)
@@ -16,6 +16,7 @@ object ComputeVertexNeighborhoodFromTriplets {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val neighborhood = scalar[Set[ID]]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = ComputeVertexNeighborhoodFromTriplets(Seq(), 0)
 }
 import ComputeVertexNeighborhoodFromTriplets._
 case class ComputeVertexNeighborhoodFromTriplets(

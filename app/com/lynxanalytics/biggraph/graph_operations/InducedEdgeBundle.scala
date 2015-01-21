@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-object InducedEdgeBundle {
+object InducedEdgeBundle extends OpFromJson {
   class Input(induceSrc: Boolean, induceDst: Boolean) extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -29,6 +29,7 @@ object InducedEdgeBundle {
     val embedding = edgeBundle(
       induced.asVertexSet, inputs.edges.asVertexSet, EdgeBundleProperties.embedding)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = InducedEdgeBundle((j \ "induceSrc").as[Boolean], (j \ "induceDst").as[Boolean])
 }
 import InducedEdgeBundle._
 case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = true)

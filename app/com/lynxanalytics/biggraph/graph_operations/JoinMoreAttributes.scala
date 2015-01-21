@@ -5,7 +5,7 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object JoinMoreAttributes {
+object JoinMoreAttributes extends OpFromJson {
   class Input[T](attrCount: Int)
       extends MagicInputSignature {
     val vs = vertexSet
@@ -16,6 +16,7 @@ object JoinMoreAttributes {
     implicit val tt = inputs.attrs(0).typeTag
     val attr = vertexAttribute[Array[T]](inputs.vs.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = JoinMoreAttributes[Int](1, 2)
 }
 import JoinMoreAttributes._
 case class JoinMoreAttributes[T](attrCount: Int, defaultValue: T) extends TypedMetaGraphOp[Input[T], Output[T]] {

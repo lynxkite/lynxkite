@@ -8,7 +8,7 @@ import org.apache.spark.rdd
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object FastRandomEdgeBundle {
+object FastRandomEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
   }
@@ -16,6 +16,7 @@ object FastRandomEdgeBundle {
       extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = FastRandomEdgeBundle((j \ "seed").as[Int], (j \ "averageDegree").as[Int])
 }
 import FastRandomEdgeBundle._
 case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)

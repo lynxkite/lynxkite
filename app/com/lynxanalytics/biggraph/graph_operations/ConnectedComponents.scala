@@ -13,6 +13,9 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
+object ConnectedComponents extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) = ConnectedComponents()
+}
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     extends TypedMetaGraphOp[GraphInput, Segmentation] {
   override val isHeavy = true

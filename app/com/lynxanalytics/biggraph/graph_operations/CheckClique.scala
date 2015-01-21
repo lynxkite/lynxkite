@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object CheckClique {
+object CheckClique extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val cliques = vertexSet
@@ -19,6 +19,7 @@ object CheckClique {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val invalid = scalar[List[ID]] // first 100 invalid clique IDs
   }
+  def fromJson(j: play.api.libs.json.JsValue) = CheckClique()
 }
 import CheckClique._
 case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirections: Boolean = false)

@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-object ClusteringCoefficient {
+object ClusteringCoefficient extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput) extends MagicOutput(instance) {
     val clustering = vertexAttribute[Double](inputs.vs.entity)
   }
@@ -71,6 +71,7 @@ object ClusteringCoefficient {
         case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
       }
   }
+  def fromJson(j: play.api.libs.json.JsValue) = ClusteringCoefficient()
 }
 import ClusteringCoefficient._
 case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] {

@@ -7,11 +7,12 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object Embeddedness {
+object Embeddedness extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val embeddedness = edgeAttribute[Double](inputs.es.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = Embeddedness()
 }
 import Embeddedness._
 case class Embeddedness() extends TypedMetaGraphOp[GraphInput, Output] {

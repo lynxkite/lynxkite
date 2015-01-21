@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-object VertexSetIntersection {
+object VertexSetIntersection extends OpFromJson {
   class Input(numVertexSets: Int) extends MagicInputSignature {
     val vss = Range(0, numVertexSets).map {
       i => vertexSet(Symbol("vs" + i))
@@ -21,6 +21,7 @@ object VertexSetIntersection {
     val firstEmbedding = edgeBundle(
       intersection, input.vss(0).entity, EdgeBundleProperties.embedding)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = VertexSetIntersection((j \ "numVertexSets").as[Int])
 }
 case class VertexSetIntersection(numVertexSets: Int)
     extends TypedMetaGraphOp[VertexSetIntersection.Input, VertexSetIntersection.Output] {

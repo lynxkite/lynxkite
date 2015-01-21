@@ -3,13 +3,14 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 
 // Collects the attribute values into a scalar Map for a small ID set.
-object CollectAttribute {
+object CollectAttribute extends OpFromJson {
   class Output[T](
       implicit instance: MetaGraphOperationInstance,
       inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attr.typeTag
     val idToAttr = scalar[Map[ID, T]]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = CollectAttribute(Set())
 }
 import CollectAttribute._
 case class CollectAttribute[T](

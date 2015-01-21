@@ -6,7 +6,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object OutDegree {
+object OutDegree extends OpFromJson {
   class Input() extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -17,6 +17,7 @@ object OutDegree {
       extends MagicOutput(instance) {
     val outDegree = vertexAttribute[Double](inputs.src.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = OutDegree()
 }
 import OutDegree._
 case class OutDegree() extends TypedMetaGraphOp[Input, Output] {
