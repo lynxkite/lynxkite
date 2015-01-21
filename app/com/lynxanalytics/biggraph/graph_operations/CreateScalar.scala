@@ -22,6 +22,9 @@ abstract class CreateScalar[T] extends TypedMetaGraphOp[NoInput, Output[T]] {
   }
 }
 
+object CreateStringScalar extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) = CreateStringScalar((j \ "value").as[String])
+}
 case class CreateStringScalar(value: String) extends CreateScalar[String] {
   @transient lazy val tt = typeTag[String]
 }

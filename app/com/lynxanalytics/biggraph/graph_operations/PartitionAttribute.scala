@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
  * two separate vertexAttributes. The new vertexAttributes will be undefined
  * on those vertices where their respective role is not set. 
  */
-object PartitionAttribute {
+object PartitionAttribute extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vs = vertexSet
     val attr = vertexAttribute[T](vs)
@@ -21,6 +21,7 @@ object PartitionAttribute {
     val test = vertexAttribute[T](inputs.vs.entity)
     val train = vertexAttribute[T](inputs.vs.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = PartitionAttribute[Any]()
 }
 import PartitionAttribute._
 case class PartitionAttribute[T]() extends TypedMetaGraphOp[Input[T], Output[T]] {

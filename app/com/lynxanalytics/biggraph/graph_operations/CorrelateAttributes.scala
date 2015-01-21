@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-object CorrelateAttributes {
+object CorrelateAttributes extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     val attrA = vertexAttribute[Double](vertices)
@@ -14,6 +14,7 @@ object CorrelateAttributes {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val correlation = scalar[Double]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = CorrelateAttributes()
 }
 import CorrelateAttributes._
 case class CorrelateAttributes() extends TypedMetaGraphOp[Input, Output] {

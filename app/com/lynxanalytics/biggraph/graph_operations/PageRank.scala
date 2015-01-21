@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object PageRank {
+object PageRank extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val edgeIds = vertexSet
@@ -16,6 +16,7 @@ object PageRank {
                inputs: Input) extends MagicOutput(instance) {
     val pagerank = vertexAttribute[Double](inputs.vs.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = PageRank((j \ "dampingFactor").as[Double], (j \ "iterations").as[Int])
 }
 import PageRank._
 case class PageRank(dampingFactor: Double,

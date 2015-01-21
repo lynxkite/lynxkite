@@ -129,10 +129,16 @@ abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
   }
 }
 
+object UniformOverlapForCC extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) = UniformOverlapForCC((j \ "overlapSize").as[Int])
+}
 case class UniformOverlapForCC(overlapSize: Int) extends SetOverlapForCC {
   def minOverlapFn(a: Int, b: Int): Int = overlapSize
 }
 
+object InfocomOverlapForCC extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) = InfocomOverlapForCC((j \ "adjacencyThreshold").as[Double])
+}
 case class InfocomOverlapForCC(adjacencyThreshold: Double)
     extends SetOverlapForCC {
   def minOverlapFn(a: Int, b: Int): Int =

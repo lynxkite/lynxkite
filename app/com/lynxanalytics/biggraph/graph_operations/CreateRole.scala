@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
  * Creates a 'role' vertexAttribute with its value randomly set to "test" or "train"
  * based on ratio.
  */
-object CreateRole {
+object CreateRole extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
   }
@@ -17,6 +17,7 @@ object CreateRole {
                inputs: Input) extends MagicOutput(instance) {
     val role = vertexAttribute[String](inputs.vertices.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = CreateRole(0, 0)
 }
 import CreateRole._
 case class CreateRole(ratio: Double, seed: Int) extends TypedMetaGraphOp[Input, Output] {

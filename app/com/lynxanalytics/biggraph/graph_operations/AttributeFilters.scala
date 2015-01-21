@@ -7,17 +7,31 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Counters
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-abstract class Filter[T] extends Serializable {
+abstract class Filter[-T] extends Serializable {
   def matches(value: T): Boolean
 }
+object Filter {
+  import play.api.libs.json
+  import play.api.libs.json.Json
+  implicit val fFilter = new json.Format[Filter[Any]] {
+    def writes(f: Filter[Any]) = Json.obj()
+    def reads(js: json.JsValue): json.JsResult[Filter[Any]] = {
+      json.JsSuccess(DoubleEQ(111).asInstanceOf[Filter[Any]])
+    }
+  }
+}
 
-object VertexAttributeFilter {
+object VertexAttributeFilter extends OpFromJson {
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
     val fvs = vertexSet
     val identity = edgeBundle(fvs, inputs.vs.entity, EdgeBundleProperties.embedding)
     implicit val tt = inputs.attr.typeTag
     val filteredAttribute = scalar[FilteredAttribute[T]]
+  }
+  def fromJson(j: play.api.libs.json.JsValue) = {
+    import Filter.fFilter
+    VertexAttributeFilter[Any]((j \ "filter").as[Filter[Any]])
   }
 }
 case class VertexAttributeFilter[T](filter: Filter[T])

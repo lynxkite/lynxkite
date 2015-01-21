@@ -67,6 +67,10 @@ abstract class DeriveJS[T](
   }
 }
 
+object DeriveJSString extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) =
+    DeriveJSString(JavaScript((j \ "expr").as[String]), (j \ "attrNames").as[Seq[String]])
+}
 case class DeriveJSString(
   expr: JavaScript,
   attrNames: Seq[String])
@@ -74,6 +78,10 @@ case class DeriveJSString(
   @transient lazy val tt = typeTag[String]
 }
 
+object DeriveJSDouble extends OpFromJson {
+  def fromJson(j: play.api.libs.json.JsValue) =
+    DeriveJSDouble(JavaScript((j \ "expr").as[String]), (j \ "attrNames").as[Seq[String]])
+}
 case class DeriveJSDouble(
   expr: JavaScript,
   attrNames: Seq[String])

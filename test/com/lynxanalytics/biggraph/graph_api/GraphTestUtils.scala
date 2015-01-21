@@ -70,9 +70,14 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
   implicit val dataManager = cleanDataManager
 }
 
-object SmallTestGraph {
+object SmallTestGraph extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val (vs, es) = graph
+  }
+  def fromJson(j: play.api.libs.json.JsValue) = {
+    SmallTestGraph(
+      (j \ "edgeLists").as[Map[String, Array[Int]]].map { case (k, v) => k.toInt -> v.toSeq },
+      (j \ "numPartitions").as[Int])
   }
 }
 case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
@@ -80,6 +85,12 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
   import SmallTestGraph._
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  override def toJson = {
+    import play.api.libs.json
+    json.Json.obj(
+      "edgeLists" -> json.JsObject(edgeLists.toSeq.map { case (k, v) => k.toString -> json.JsArray(v.map(json.JsNumber(_))) }),
+      "numPartitions" -> numPartitions)
+  }
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
@@ -103,7 +114,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
   }
 }
 
-object AddEdgeBundle {
+object AddEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {
     val vsA = vertexSet
     val vsB = vertexSet
@@ -111,12 +122,18 @@ object AddEdgeBundle {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = AddEdgeBundle((j \ "edgeLists").as[Seq[Seq[Int]]].map(ab => ab(0) -> ab(1)))
 }
 case class AddEdgeBundle(edgeLists: Seq[(Int, Int)])
     extends TypedMetaGraphOp[AddEdgeBundle.Input, AddEdgeBundle.Output] {
   import AddEdgeBundle._
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = {
+    import play.api.libs.json
+    json.Json.obj(
+      "edgeLists" -> edgeLists.map { case (a, b) => Seq(a, b) })
+  }
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext

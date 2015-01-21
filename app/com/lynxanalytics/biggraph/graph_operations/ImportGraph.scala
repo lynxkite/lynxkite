@@ -138,7 +138,7 @@ object ImportCommon {
       }
 }
 
-object ImportVertexList {
+object ImportVertexList extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance,
                fields: Seq[String]) extends MagicOutput(instance) {
     val vertices = vertexSet
@@ -146,6 +146,7 @@ object ImportVertexList {
       f => f -> vertexAttribute[String](vertices, ImportCommon.toSymbol(f))
     }.toMap
   }
+  def fromJson(j: play.api.libs.json.JsValue) = ImportVertexList(null)
 }
 case class ImportVertexList(input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
@@ -200,7 +201,7 @@ trait ImportEdges extends ImportCommon {
   }
 }
 
-object ImportEdgeList {
+object ImportEdgeList extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance,
                fields: Seq[String])
       extends MagicOutput(instance) {
@@ -210,6 +211,7 @@ object ImportEdgeList {
     }.toMap
     val stringID = vertexAttribute[String](vertices)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = ImportEdgeList(null, null, null)
 }
 case class ImportEdgeList(input: RowInput, src: String, dst: String)
     extends ImportEdges
@@ -236,7 +238,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
   }
 }
 
-object ImportEdgeListForExistingVertexSet {
+object ImportEdgeListForExistingVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val sources = vertexSet
     val destinations = vertexSet
@@ -252,6 +254,7 @@ object ImportEdgeListForExistingVertexSet {
       f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
     }.toMap
   }
+  def fromJson(j: play.api.libs.json.JsValue) = ImportEdgeListForExistingVertexSet(null, null, null)
 }
 case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst: String)
     extends ImportEdges
@@ -282,7 +285,7 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
   }
 }
 
-object ImportAttributesForExistingVertexSet {
+object ImportAttributesForExistingVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val idAttr = vertexAttribute[String](vs)
@@ -295,6 +298,7 @@ object ImportAttributesForExistingVertexSet {
       f => f -> vertexAttribute[String](inputs.vs.entity, ImportCommon.toSymbol(f))
     }.toMap
   }
+  def fromJson(j: play.api.libs.json.JsValue) = ImportAttributesForExistingVertexSet(null, null)
 }
 case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String)
     extends ImportCommon

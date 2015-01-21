@@ -5,13 +5,14 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object RemoveNonSymmetricEdges {
+object RemoveNonSymmetricEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val injection = edgeBundle(
       symmetric.asVertexSet, inputs.es.asVertexSet, EdgeBundleProperties.embedding)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = RemoveNonSymmetricEdges()
 }
 import RemoveNonSymmetricEdges._
 case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output] {

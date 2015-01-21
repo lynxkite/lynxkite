@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-object TripletMapping {
+object TripletMapping extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -22,6 +22,7 @@ object TripletMapping {
     // The list of incoming edges.
     val dstEdges = vertexAttribute[Array[ID]](inputs.dst.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = TripletMapping((j \ "sampleSize").as[Int])
 }
 // A negative sampleSize means no sampling.
 case class TripletMapping(sampleSize: Int = -1)
@@ -67,7 +68,7 @@ case class TripletMapping(sampleSize: Int = -1)
   }
 }
 
-object VertexToEdgeAttribute {
+object VertexToEdgeAttribute extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
     val ignoredSrc = vertexSet
@@ -104,6 +105,7 @@ object VertexToEdgeAttribute {
     val mop = VertexToEdgeAttribute[T]()
     mop(mop.mapping, mapping)(mop.original, attr)(mop.target, edgeBundle).result.mappedAttribute
   }
+  def fromJson(j: play.api.libs.json.JsValue) = VertexToEdgeAttribute[Any]()
 }
 case class VertexToEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
@@ -135,7 +137,7 @@ case class VertexToEdgeAttribute[T]()
   }
 }
 
-object EdgesForVertices {
+object EdgesForVertices extends OpFromJson {
   class Input(bySource: Boolean) extends MagicInputSignature {
     val vs = vertexSet
     val otherVs = vertexSet
@@ -146,6 +148,7 @@ object EdgesForVertices {
       extends MagicOutput(instance) {
     val edges = scalar[Option[Seq[(ID, Edge)]]]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = EdgesForVertices(Set(), 1, true)
 }
 case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
     extends TypedMetaGraphOp[EdgesForVertices.Input, EdgesForVertices.Output] {

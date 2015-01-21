@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 
-object ComputeVertexNeighborhood {
+object ComputeVertexNeighborhood extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     val edges = edgeBundle(vertices, vertices)
@@ -11,6 +11,7 @@ object ComputeVertexNeighborhood {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val neighborhood = scalar[Set[ID]]
   }
+  def fromJson(j: play.api.libs.json.JsValue) = ComputeVertexNeighborhood(Seq(), 0)
 }
 import ComputeVertexNeighborhood._
 case class ComputeVertexNeighborhood(
