@@ -76,6 +76,7 @@ case class DeriveJSString(
   attrNames: Seq[String])
     extends DeriveJS[String](expr, attrNames) {
   @transient lazy val tt = typeTag[String]
+  override def toJson = play.api.libs.json.Json.obj("expr" -> expr.toString, "attrNames" -> attrNames)
 }
 
 object DeriveJSDouble extends OpFromJson {
@@ -87,4 +88,5 @@ case class DeriveJSDouble(
   attrNames: Seq[String])
     extends DeriveJS[Double](expr, attrNames) {
   @transient lazy val tt = typeTag[Double]
+  override def toJson = play.api.libs.json.Json.obj("expr" -> expr.toString, "attrNames" -> attrNames)
 }

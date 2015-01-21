@@ -16,10 +16,10 @@ object JoinMoreAttributes extends OpFromJson {
     implicit val tt = inputs.attrs(0).typeTag
     val attr = vertexAttribute[Array[T]](inputs.vs.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = JoinMoreAttributes[Int](1, 2)
+  def fromJson(j: play.api.libs.json.JsValue) = ??? // TODO: Delete this file.
 }
 import JoinMoreAttributes._
-case class JoinMoreAttributes[T](attrCount: Int, defaultValue: T) extends TypedMetaGraphOp[Input[T], Output[T]] {
+case class JoinMoreAttributes[T: play.api.libs.json.Reads](attrCount: Int, defaultValue: T) extends TypedMetaGraphOp[Input[T], Output[T]] {
   @transient override lazy val inputs = new Input[T](attrCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 

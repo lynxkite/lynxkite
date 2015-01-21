@@ -32,7 +32,8 @@ object Fingerprinting extends OpFromJson {
     val leftSimilarities = vertexAttribute[Double](inputs.left.entity)
     val rightSimilarities = vertexAttribute[Double](inputs.right.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = Fingerprinting((j \ "minimumOverlap").as[Int], (j \ "minimumSimilarity").as[Double])
+  def fromJson(j: play.api.libs.json.JsValue) =
+    Fingerprinting((j \ "minimumOverlap").as[Int], (j \ "minimumSimilarity").as[Double])
 }
 case class Fingerprinting(
   minimumOverlap: Int,
@@ -42,6 +43,7 @@ case class Fingerprinting(
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("minimumOverlap" -> minimumOverlap, "minimumSimilarity" -> minimumSimilarity)
 
   def execute(inputDatas: DataSet,
               o: Output,

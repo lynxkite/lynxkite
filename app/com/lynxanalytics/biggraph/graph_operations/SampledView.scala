@@ -17,7 +17,7 @@ object SampledView extends OpFromJson {
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
     val vertexIndices = scalar[Map[ID, Int]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = SampledView(Set(), 1)
+  def fromJson(j: play.api.libs.json.JsValue) = SampledView((j \ "maxCount").as[Set[ID]], (j \ "maxCount").as[Int])
 }
 import SampledView._
 case class SampledView(
@@ -27,6 +27,7 @@ case class SampledView(
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  override def toJson = play.api.libs.json.Json.obj("idSet" -> idSet, "maxCount" -> maxCount)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas

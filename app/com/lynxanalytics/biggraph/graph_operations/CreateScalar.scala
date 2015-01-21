@@ -27,4 +27,5 @@ object CreateStringScalar extends OpFromJson {
 }
 case class CreateStringScalar(value: String) extends CreateScalar[String] {
   @transient lazy val tt = typeTag[String]
+  override def toJson = play.api.libs.json.Json.obj("value" -> value)
 }

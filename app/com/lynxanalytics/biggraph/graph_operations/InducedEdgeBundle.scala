@@ -39,6 +39,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output(induceSrc, induceDst)(instance, inputs)
+  override def toJson = play.api.libs.json.Json.obj("induceSrc" -> induceSrc, "induceDst" -> induceDst)
 
   def execute(inputDatas: DataSet,
               o: Output,
