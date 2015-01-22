@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.MapBucketer
+import com.lynxanalytics.biggraph.graph_util.IDMapBucketer
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SampledView extends OpFromJson {
@@ -17,7 +17,7 @@ object SampledView extends OpFromJson {
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
     val vertexIndices = scalar[Map[ID, Int]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = SampledView((j \ "maxCount").as[Set[ID]], (j \ "maxCount").as[Int])
+  def fromJson(j: play.api.libs.json.JsValue) = SampledView((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
 }
 import SampledView._
 case class SampledView(
@@ -40,7 +40,7 @@ case class SampledView(
     val idToIdx = svVertices.zipWithIndex.toMap
 
     output(o.svVertices, svVertices)
-    output(o.indexingSeq, Seq(BucketedAttribute(inputs.ids, MapBucketer(idToIdx))))
+    output(o.indexingSeq, Seq(BucketedAttribute(inputs.ids, IDMapBucketer(idToIdx))))
     output(o.vertexIndices, idToIdx)
   }
 }
