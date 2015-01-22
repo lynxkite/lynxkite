@@ -187,9 +187,11 @@ class MetaGraphManager(val repositoryPath: String) {
     val dumpFile = repo / s"dump-$time"
     val finalFile = repo / s"save-$time"
     dumpFile.createFromStrings(serializeOperation(inst))
-    // Make sure it can be loaded.
-    println("reloading", dumpFile)
-    loadInstanceFromDisk(new File(dumpFile.toString)).get
+    // Validate the saved operation by trying to reload it.
+    loadInstanceFromDisk(new File(dumpFile.toString)) match {
+      case util.Success(i) => assert(inst == i, s"Bad save. File: $dumpFile Operation: $inst")
+      case util.Failure(e) => throw new Exception(s"Failed to reload $dumpFile", e)
+    }
     dumpFile.renameTo(finalFile)
   }
 
