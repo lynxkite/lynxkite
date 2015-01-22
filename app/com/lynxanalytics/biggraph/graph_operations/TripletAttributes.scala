@@ -149,7 +149,8 @@ object EdgesForVertices extends OpFromJson {
       extends MagicOutput(instance) {
     val edges = scalar[Option[Seq[(ID, Edge)]]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = EdgesForVertices(Set(), 1, true)
+  def fromJson(j: play.api.libs.json.JsValue) =
+    EdgesForVertices((j \ "vertexIdSet").as[Set[ID]], (j \ "maxNumEdges").as[Int], (j \ "bySource").as[Boolean])
 }
 case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
     extends TypedMetaGraphOp[EdgesForVertices.Input, EdgesForVertices.Output] {
@@ -165,6 +166,11 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
     assert(tripletMappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity)
     new Output()(instance, inputs)
   }
+
+  override def toJson = play.api.libs.json.Json.obj(
+    "vertexIdSet" -> vertexIdSet,
+    "maxNumEdges" -> maxNumEdges,
+    "bySource" -> bySource)
 
   def execute(inputDatas: DataSet,
               o: Output,
