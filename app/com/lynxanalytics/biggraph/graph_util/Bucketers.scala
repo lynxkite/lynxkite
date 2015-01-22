@@ -6,7 +6,7 @@ import scala.math.Numeric
 
 import com.lynxanalytics.biggraph.graph_api._
 
-trait Bucketer[T] extends Serializable {
+trait Bucketer[-T] extends Serializable with ToJson {
   val numBuckets: Int
   def whichBucket(value: T): Option[Int]
   def bucketLabels: Seq[String]
@@ -16,6 +16,9 @@ trait Bucketer[T] extends Serializable {
   final def nonEmpty = !isEmpty
 }
 
+object EmptyBucketer extends FromJson[Bucketer[Nothing]] {
+  def fromJson(j: play.api.libs.json.JsValue) = EmptyBucketer()
+}
 case class EmptyBucketer() extends Bucketer[Nothing] {
   val numBuckets = 1
   def whichBucket(value: Nothing) = ???
@@ -62,9 +65,14 @@ abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
   override val bucketSize: T = (max - min) / num.fromInt(nb)
 }
 
+object StringBucketer extends FromJson[Bucketer[Nothing]] {
+  def fromJson(j: play.api.libs.json.JsValue) =
+    StringBucketer((j \ "options").as[Seq[String]], (j \ "hasOther").as[Boolean])
+}
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
     extends EnumBucketer[String](options, hasOther) {
   val labelType = "bucket"
+  override def toJson = play.api.libs.json.Json.obj("options" -> options, "hasOther" -> hasOther)
   override def bucketFilters = {
     if (hasOther) {
       val otherFilter = "!" + optionLabels.mkString(",")
@@ -112,13 +120,25 @@ abstract class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
   }
 }
 
+object DoubleLinearBucketer extends FromJson[Bucketer[Nothing]] {
+  def fromJson(j: play.api.libs.json.JsValue) =
+    DoubleLinearBucketer((j \ "min").as[Double], (j \ "max").as[Double], (j \ "numBuckets").as[Int])
+}
 case class DoubleLinearBucketer(min: Double, max: Double, numBuckets: Int)
     extends DoubleBucketer(min, max, numBuckets) {
+  override def toJson = play.api.libs.json.Json.obj(
+    "min" -> min, "max" -> max, "numBuckets" -> numBuckets)
 }
 
+object DoubleLogBucketer extends FromJson[Bucketer[Nothing]] {
+  def fromJson(j: play.api.libs.json.JsValue) =
+    DoubleLogBucketer((j \ "min").as[Double], (j \ "max").as[Double], (j \ "numBuckets").as[Int])
+}
 case class DoubleLogBucketer(min: Double, max: Double, numBuckets: Int)
     extends DoubleBucketer(min, max, numBuckets) {
   assert(min > 0, s"Cannot take the logarithm of $min.")
+  override def toJson = play.api.libs.json.Json.obj(
+    "min" -> min, "max" -> max, "numBuckets" -> numBuckets)
   @transient override lazy val bounds: Seq[Double] = {
     val logMin = math.log(min)
     val logMax = math.log(max)
@@ -128,8 +148,14 @@ case class DoubleLogBucketer(min: Double, max: Double, numBuckets: Int)
   }
 }
 
+object LongBucketer extends FromJson[Bucketer[Nothing]] {
+  def fromJson(j: play.api.libs.json.JsValue) =
+    LongBucketer((j \ "min").as[Long], (j \ "max").as[Long], (j \ "numBuckets").as[Int])
+}
 case class LongBucketer(min: Long, max: Long, numBuckets: Int)
     extends NumericBucketer[Long](min, max, numBuckets) {
+  override def toJson = play.api.libs.json.Json.obj(
+    "min" -> min, "max" -> max, "numBuckets" -> numBuckets)
   val labelType = if ((max - min) / numBuckets == 0) "bucket" else "between"
   override def bucketLabels: Seq[String] = {
     if ((max - min) / numBuckets == 0)
@@ -139,9 +165,18 @@ case class LongBucketer(min: Long, max: Long, numBuckets: Int)
   }
 }
 
-case class MapBucketer[T](toBucket: Map[T, Int]) extends Bucketer[T] {
+abstract class MapBucketer[T](toBucket: Map[T, Int]) extends Bucketer[T] {
   val numBuckets = if (toBucket.isEmpty) 0 else toBucket.values.max + 1
   def whichBucket(value: T) = toBucket.get(value)
   def bucketLabels = ???
   def labelType = ???
+}
+
+object IDMapBucketer extends FromJson[Bucketer[Nothing]] {
+  def fromJson(j: play.api.libs.json.JsValue) =
+    IDMapBucketer((j \ "toBucket").as[Map[String, String]].map { case (k, v) => k.toLong -> v.toInt })
+}
+case class IDMapBucketer(toBucket: Map[ID, Int]) extends MapBucketer[ID](toBucket) {
+  override def toJson = play.api.libs.json.Json.obj(
+    "toBucket" -> toBucket.map { case (k, v) => k.toString -> v.toString })
 }
