@@ -298,28 +298,3 @@ object MetaGraphManager {
     def asUUID: UUID = UUID.fromString(s)
   }
 }
-
-object TypedJson {
-  def read[T <: ToJson](j: json.JsValue): T = {
-    val cls = (j \ "class").as[String]
-    val sym = reflect.runtime.currentMirror.staticModule(cls)
-    val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
-    val des = obj.asInstanceOf[FromJson[T]]
-    des.fromJson(j \ "data")
-  }
-  def write[T <: ToJson](o: T): json.JsValue = {
-    Json.obj(
-      "class" -> o.getClass.getName,
-      "data" -> o.toJson)
-  }
-}
-
-trait ToJson {
-  // Export blanks object by default.
-  def toJson: json.JsValue = Json.obj()
-  def toTypedJson = TypedJson.write(this)
-}
-trait FromJson[T] {
-  def fromJson(j: json.JsValue): T
-}
-trait OpFromJson extends FromJson[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]]
