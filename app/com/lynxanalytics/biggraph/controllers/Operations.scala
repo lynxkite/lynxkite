@@ -2019,7 +2019,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("db", "Database"),
         Param("table", "Table"),
         Param("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
-      def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+      def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val export = graph_util.SQLExport(params("table"), seg.belongsTo, Map[String, Attribute[_]]())
         export.insertInto(params("db"), delete = params("delete") == "yes")
