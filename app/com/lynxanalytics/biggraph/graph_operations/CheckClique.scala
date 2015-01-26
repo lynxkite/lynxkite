@@ -32,7 +32,7 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "cliquesToCheck" -> cliquesToCheck.getOrElse(Set()).toSeq,
     "needsBothDirections" -> needsBothDirections)
 

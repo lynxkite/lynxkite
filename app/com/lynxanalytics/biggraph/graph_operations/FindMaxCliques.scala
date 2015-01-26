@@ -22,7 +22,7 @@ case class FindMaxCliques(minCliqueSize: Int, needsBothDirections: Boolean = fal
   }
 
   override def toJson = {
-    play.api.libs.json.Json.obj(
+    Json.obj(
       "minCliqueSize" -> minCliqueSize,
       "needsBothDirections" -> needsBothDirections)
   }

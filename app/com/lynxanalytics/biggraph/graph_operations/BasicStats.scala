@@ -106,9 +106,9 @@ object ComputeMinMax extends OpFromJson {
 case class ComputeMinMax[T: Numeric]()
     extends TypedMetaGraphOp[ComputeMinMax.Input[T], ComputeMinMax.Output[T]] {
   override val isHeavy = true
-  override def toJson: play.api.libs.json.JsValue = {
+  override def toJson = {
     val num = implicitly[Numeric[T]]
-    play.api.libs.json.Json.obj("numeric" -> num.getClass.getName)
+    Json.obj("numeric" -> num.getClass.getName)
   }
   @transient override lazy val inputs = new ComputeMinMax.Input[T]
 
@@ -167,8 +167,8 @@ object ComputeTopValues extends OpFromJson {
 case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
     extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
   override val isHeavy = true
-  override def toJson: play.api.libs.json.JsValue =
-    play.api.libs.json.Json.obj("numTopValues" -> numTopValues, "sampleSize" -> sampleSize)
+  override def toJson =
+    Json.obj("numTopValues" -> numTopValues, "sampleSize" -> sampleSize)
   @transient override lazy val inputs = new ComputeTopValues.Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =

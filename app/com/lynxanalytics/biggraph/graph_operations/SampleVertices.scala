@@ -19,7 +19,7 @@ case class SampleVertices(n: Int) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = play.api.libs.json.Json.obj("n" -> n)
+  override def toJson = Json.obj("n" -> n)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas

@@ -33,7 +33,7 @@ case class TripletMapping(sampleSize: Int = -1)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("sampleSize" -> sampleSize)
+  override def toJson = Json.obj("sampleSize" -> sampleSize)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -167,7 +167,7 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
     new Output()(instance, inputs)
   }
 
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "vertexIdSet" -> vertexIdSet,
     "maxNumEdges" -> maxNumEdges,
     "bySource" -> bySource)

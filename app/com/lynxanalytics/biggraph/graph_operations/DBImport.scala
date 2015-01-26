@@ -17,7 +17,7 @@ case class DBTable(
     key: String) extends RowInput {
   assert(fields.contains(key), s"$key not found in $fields")
 
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "db" -> db,
     "table" -> table,
     "fields" -> fields,

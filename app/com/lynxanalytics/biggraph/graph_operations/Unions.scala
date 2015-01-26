@@ -34,7 +34,7 @@ case class VertexSetUnion(numVertexSets: Int)
   @transient override lazy val inputs = new Input(numVertexSets)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(numVertexSets)(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("numVertexSets" -> numVertexSets)
+  override def toJson = Json.obj("numVertexSets" -> numVertexSets)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -94,7 +94,7 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output(numEdgeBundles)(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("numEdgeBundles" -> numEdgeBundles)
+  override def toJson = Json.obj("numEdgeBundles" -> numEdgeBundles)
 
   def execute(inputDatas: DataSet,
               o: Output,

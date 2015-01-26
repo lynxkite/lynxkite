@@ -26,7 +26,7 @@ case class AttributeHistogram[T](bucketer: Bucketer[T])
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = play.api.libs.json.Json.obj("bucketer" -> bucketer.toTypedJson)
+  override def toJson = Json.obj("bucketer" -> bucketer.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output,

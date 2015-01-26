@@ -68,7 +68,7 @@ object AddConstantDoubleAttribute extends OpFromJson {
 case class AddConstantDoubleAttribute(value: Double)
     extends AddConstantAttribute[Double] {
   @transient lazy val tt = typeTag[Double]
-  override def toJson = play.api.libs.json.Json.obj("value" -> value)
+  override def toJson = Json.obj("value" -> value)
 }
 
 object AddConstantIntAttribute extends OpFromJson {
@@ -77,7 +77,7 @@ object AddConstantIntAttribute extends OpFromJson {
 case class AddConstantIntAttribute(value: Int)
     extends AddConstantAttribute[Int] {
   @transient lazy val tt = typeTag[Int]
-  override def toJson = play.api.libs.json.Json.obj("value" -> value)
+  override def toJson = Json.obj("value" -> value)
 }
 
 object AddConstantStringAttribute extends OpFromJson {
@@ -86,5 +86,5 @@ object AddConstantStringAttribute extends OpFromJson {
 case class AddConstantStringAttribute(value: String)
     extends AddConstantAttribute[String] {
   @transient lazy val tt = typeTag[String]
-  override def toJson = play.api.libs.json.Json.obj("value" -> value)
+  override def toJson = Json.obj("value" -> value)
 }

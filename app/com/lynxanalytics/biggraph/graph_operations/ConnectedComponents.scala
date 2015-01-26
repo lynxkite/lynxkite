@@ -25,7 +25,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     implicit val inst = instance
     new Segmentation(inputs.vs.entity)
   }
-  override def toJson = play.api.libs.json.Json.obj("maxEdgesProcessedLocally" -> maxEdgesProcessedLocally)
+  override def toJson = Json.obj("maxEdgesProcessedLocally" -> maxEdgesProcessedLocally)
 
   def execute(inputDatas: DataSet,
               o: Segmentation,

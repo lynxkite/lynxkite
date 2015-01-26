@@ -31,7 +31,7 @@ case class VertexAttributeFilter[T](filter: Filter[T])
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("filter" -> filter.toTypedJson)
+  override def toJson = Json.obj("filter" -> filter.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[T],
@@ -72,7 +72,7 @@ object NotFilter extends FromJson[Filter[Nothing]] {
 }
 case class NotFilter[T](filter: Filter[T]) extends Filter[T] {
   def matches(value: T) = !filter.matches(value)
-  override def toJson = play.api.libs.json.Json.obj("filter" -> filter.toTypedJson)
+  override def toJson = Json.obj("filter" -> filter.toTypedJson)
 }
 
 object AndFilter extends FromJson[Filter[Nothing]] {
@@ -85,8 +85,7 @@ case class AndFilter[T](filters: Filter[T]*) extends Filter[T] {
   assert(filters.size > 0)
   def matches(value: T) = filters.forall(_.matches(value))
   override def toJson = {
-    import play.api.libs.json._
-    Json.obj("filters" -> JsArray(filters.map(_.toTypedJson)))
+    Json.obj("filters" -> play.api.libs.json.JsArray(filters.map(_.toTypedJson)))
   }
 }
 
@@ -95,7 +94,7 @@ object DoubleEQ extends FromJson[Filter[Nothing]] {
 }
 case class DoubleEQ(exact: Double) extends Filter[Double] {
   def matches(value: Double) = value == exact
-  override def toJson = play.api.libs.json.Json.obj("exact" -> exact)
+  override def toJson = Json.obj("exact" -> exact)
 }
 
 object DoubleLT extends FromJson[Filter[Nothing]] {
@@ -103,7 +102,7 @@ object DoubleLT extends FromJson[Filter[Nothing]] {
 }
 case class DoubleLT(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value < bound
-  override def toJson = play.api.libs.json.Json.obj("bound" -> bound)
+  override def toJson = Json.obj("bound" -> bound)
 }
 
 object DoubleLE extends FromJson[Filter[Nothing]] {
@@ -111,7 +110,7 @@ object DoubleLE extends FromJson[Filter[Nothing]] {
 }
 case class DoubleLE(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value <= bound
-  override def toJson = play.api.libs.json.Json.obj("bound" -> bound)
+  override def toJson = Json.obj("bound" -> bound)
 }
 
 object DoubleGT extends FromJson[Filter[Nothing]] {
@@ -119,7 +118,7 @@ object DoubleGT extends FromJson[Filter[Nothing]] {
 }
 case class DoubleGT(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value > bound
-  override def toJson = play.api.libs.json.Json.obj("bound" -> bound)
+  override def toJson = Json.obj("bound" -> bound)
 }
 
 object DoubleGE extends FromJson[Filter[Nothing]] {
@@ -127,7 +126,7 @@ object DoubleGE extends FromJson[Filter[Nothing]] {
 }
 case class DoubleGE(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value >= bound
-  override def toJson = play.api.libs.json.Json.obj("bound" -> bound)
+  override def toJson = Json.obj("bound" -> bound)
 }
 
 object OneOf extends FromJson[Filter[Nothing]] {
@@ -141,7 +140,6 @@ object OneOf extends FromJson[Filter[Nothing]] {
 case class OneOf[T: reflect.ClassTag](options: Set[T]) extends Filter[T] {
   def matches(value: T) = options.contains(value)
   override def toJson = {
-    import play.api.libs.json.Json
     val LongTag = reflect.classTag[Long]
     val StringTag = reflect.classTag[String]
     reflect.classTag[T] match {
@@ -157,7 +155,7 @@ object Exists extends FromJson[Filter[Nothing]] {
 }
 case class Exists[T](filter: Filter[T]) extends Filter[Vector[T]] {
   def matches(value: Vector[T]) = value.exists(filter.matches(_))
-  override def toJson = play.api.libs.json.Json.obj("filter" -> filter.toTypedJson)
+  override def toJson = Json.obj("filter" -> filter.toTypedJson)
 }
 
 object ForAll extends FromJson[Filter[Nothing]] {
@@ -166,7 +164,7 @@ object ForAll extends FromJson[Filter[Nothing]] {
 }
 case class ForAll[T](filter: Filter[T]) extends Filter[Vector[T]] {
   def matches(value: Vector[T]) = value.forall(filter.matches(_))
-  override def toJson = play.api.libs.json.Json.obj("filter" -> filter.toTypedJson)
+  override def toJson = Json.obj("filter" -> filter.toTypedJson)
 }
 
 object PairEquals extends FromJson[Filter[Nothing]] {

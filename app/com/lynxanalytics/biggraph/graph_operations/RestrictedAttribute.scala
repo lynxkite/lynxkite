@@ -28,7 +28,7 @@ case class RestrictAttributeToIds[T](vertexIdSet: Set[ID])
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("vertexIdSet" -> vertexIdSet)
+  override def toJson = Json.obj("vertexIdSet" -> vertexIdSet)
 
   def execute(inputDatas: DataSet,
               o: Output[T],

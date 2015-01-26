@@ -17,7 +17,7 @@ case class CreateVertexSet(size: Long) extends TypedMetaGraphOp[NoInput, Output]
   @transient override lazy val inputs = new NoInput
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = play.api.libs.json.Json.obj("size" -> size)
+  override def toJson = Json.obj("size" -> size)
 
   def execute(inputDatas: DataSet,
               o: Output,

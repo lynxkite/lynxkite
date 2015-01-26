@@ -43,7 +43,7 @@ case class Fingerprinting(
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("minimumOverlap" -> minimumOverlap, "minimumSimilarity" -> minimumSimilarity)
+  override def toJson = Json.obj("minimumOverlap" -> minimumOverlap, "minimumSimilarity" -> minimumSimilarity)
 
   def execute(inputDatas: DataSet,
               o: Output,
