@@ -2126,9 +2126,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     weight: Attribute[Double], attr: Attribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
     choice match {
       case "by_max_weight" => AttributeWithAggregator(
-        joinAttr(weight, attr), graph_operations.Aggregator.MaxBy[Double, T]())
+        joinAttr(weight, attr), graph_operations.Aggregator.MaxByDouble[T]())
       case "by_min_weight" => AttributeWithAggregator(
-        joinAttr(graph_operations.DeriveJS.negative(weight), attr), graph_operations.Aggregator.MaxBy[Double, T]())
+        joinAttr(graph_operations.DeriveJS.negative(weight), attr), graph_operations.Aggregator.MaxByDouble[T]())
       case "weighted_sum" => AttributeWithAggregator(
         joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedSum())
       case "weighted_average" => AttributeWithAggregator(
