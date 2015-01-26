@@ -202,7 +202,7 @@ object Aggregator {
   type AggregatorFromJson = FromJson[AnyAggregator]
   type LocalAggregatorFromJson = FromJson[AnyLocalAggregator]
 
-  object Count extends AggregatorFromJson { def fromJson(j: JsValue) = Count[Any]() }
+  object Count extends AggregatorFromJson { def fromJson(j: JsValue) = Count() }
   case class Count[T]() extends SimpleAggregator[T, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
     def zero = 0
@@ -268,7 +268,7 @@ object Aggregator {
     }
     def finalize(opt: Option[(Weight, Value)]) = opt.get._2
   }
-  object MaxByDouble extends AggregatorFromJson { def fromJson(j: JsValue) = MaxByDouble[Any]() }
+  object MaxByDouble extends AggregatorFromJson { def fromJson(j: JsValue) = MaxByDouble() }
   case class MaxByDouble[T]() extends MaxBy[Double, T]()
 
   object Average extends AggregatorFromJson { def fromJson(j: JsValue) = Average() }
@@ -281,7 +281,7 @@ object Aggregator {
     }
   }
 
-  object SumOfWeights extends AggregatorFromJson { def fromJson(j: JsValue) = SumOfWeights[Any]() }
+  object SumOfWeights extends AggregatorFromJson { def fromJson(j: JsValue) = SumOfWeights() }
   case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
     def outputTypeTag(inputTypeTag: TypeTag[(Double, T)]) = typeTag[Double]
     def zero = 0
@@ -299,7 +299,7 @@ object Aggregator {
     }
   }
 
-  object MostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = MostCommon[Any]() }
+  object MostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = MostCommon() }
   case class MostCommon[T]() extends LocalAggregator[T, T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def aggregate(values: Iterable[T]) = {
@@ -320,7 +320,7 @@ object Aggregator {
     }
   }
 
-  object First extends AggregatorFromJson { def fromJson(j: JsValue) = First[Any]() }
+  object First extends AggregatorFromJson { def fromJson(j: JsValue) = First() }
   case class First[T]() extends Aggregator[T, Option[T], T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[T]): TypeTag[Option[T]] = {
@@ -336,7 +336,7 @@ object Aggregator {
     }
   }
 
-  object AsVector extends LocalAggregatorFromJson { def fromJson(j: JsValue) = AsVector[Any]() }
+  object AsVector extends LocalAggregatorFromJson { def fromJson(j: JsValue) = AsVector() }
   case class AsVector[T]() extends LocalAggregator[T, Vector[T]] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = {
       implicit val tt = inputTypeTag
