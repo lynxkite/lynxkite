@@ -269,10 +269,8 @@ class MetaGraphManager(val repositoryPath: String) {
     try {
       Json.prettyPrint(j)
     } catch {
-      case e: Throwable =>
-        // The error message would not indicate what operation it was otherwise.
-        log.error(s"Error while serializing $inst:", e)
-        throw e
+      // Put details of "inst" in the exception.
+      case e: Throwable => throw new Exception(s"Error while serializing $inst:", e)
     }
   }
 
