@@ -381,6 +381,10 @@ trait MetaGraphOp extends Serializable with ToJson {
   }
 }
 
+object TypedMetaGraphOp {
+  // A little "hint" for the type inference.
+  type Type = TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]
+}
 trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
     extends MetaGraphOp {
   def inputs: IS = ???

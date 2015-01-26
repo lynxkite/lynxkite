@@ -41,4 +41,4 @@ trait FromJson[+T] {
 }
 
 // Operation companion objects should extend OpFromJson.
-trait OpFromJson extends FromJson[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]]
+trait OpFromJson extends FromJson[TypedMetaGraphOp.Type]
