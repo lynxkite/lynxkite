@@ -379,15 +379,6 @@ object Aggregator {
     // TODO: for global aggregation (not on samples) we should do Math.sqrt(a.sigma / a.n)
     def finalize(a: Stats) = if (a.n < 2) 0 else Math.sqrt(a.sigma / (a.n - 1))
   }
-
-  import play.api.libs.json
-  import play.api.libs.json.Json
-  implicit val fAggregator = new json.Format[Aggregator[Any, Any, Any]] {
-    def writes(a: Aggregator[Any, Any, Any]) = Json.obj()
-    def reads(js: json.JsValue): json.JsResult[Aggregator[Any, Any, Any]] = {
-      json.JsSuccess(Aggregator.Sum().asInstanceOf[Aggregator[Any, Any, Any]])
-    }
-  }
 }
 
 // sigma: sum of squares of differences from the mean
