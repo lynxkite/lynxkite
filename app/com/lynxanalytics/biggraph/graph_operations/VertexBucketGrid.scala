@@ -37,7 +37,7 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  override def toJson = play.api.libs.json.Json.obj("xBucketer" -> xBucketer.toTypedJson, "yBucketer" -> yBucketer.toTypedJson)
+  override def toJson = Json.obj("xBucketer" -> xBucketer.toTypedJson, "yBucketer" -> yBucketer.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[S, T],

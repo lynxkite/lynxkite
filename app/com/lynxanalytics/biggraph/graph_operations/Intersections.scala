@@ -31,7 +31,7 @@ case class VertexSetIntersection(numVertexSets: Int)
   @transient override lazy val inputs = new Input(numVertexSets)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("numVertexSets" -> numVertexSets)
+  override def toJson = Json.obj("numVertexSets" -> numVertexSets)
 
   def execute(inputDatas: DataSet,
               o: Output,

@@ -31,7 +31,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
     val tt = aggregator.outputTypeTag(inputs.attr.typeTag)
     new Output[From, To]()(tt, instance, inputs)
   }
-  override def toJson = play.api.libs.json.Json.obj("aggregator" -> aggregator.toTypedJson)
+  override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[From, To],
@@ -78,7 +78,7 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     val tt = aggregator.outputTypeTag(inputs.eattr.typeTag)
     new Output[From, To]()(tt, instance, inputs)
   }
-  override def toJson = play.api.libs.json.Json.obj("aggregator" -> aggregator.toTypedJson)
+  override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[From, To],
@@ -119,7 +119,7 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
     val tt = aggregator.outputTypeTag(inputs.attr.typeTag)
     new Output[To]()(tt, instance)
   }
-  override def toJson = play.api.libs.json.Json.obj("aggregator" -> aggregator.toTypedJson)
+  override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[To],
@@ -249,7 +249,7 @@ object Aggregator {
     }
   }
   case class MaxBy[Weight: Ordering, Value]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
-    override def toJson = play.api.libs.json.Json.obj("weightOrderingType" -> implicitly[Ordering[Weight]].getClass.getName)
+    override def toJson = Json.obj("weightOrderingType" -> implicitly[Ordering[Weight]].getClass.getName)
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
@@ -316,7 +316,7 @@ object Aggregator {
     def fromJson(j: play.api.libs.json.JsValue) = Majority((j \ "fraction").as[Double]).asInstanceOf[AnyLocalAggregator]
   }
   case class Majority(fraction: Double) extends LocalAggregator[String, String] {
-    override def toJson = play.api.libs.json.Json.obj("fraction" -> fraction)
+    override def toJson = Json.obj("fraction" -> fraction)
     def outputTypeTag(inputTypeTag: TypeTag[String]) = typeTag[String]
     def aggregate(values: Iterable[String]) = {
       val (mode, count) = values.groupBy(identity).mapValues(_.size).maxBy(_._2)

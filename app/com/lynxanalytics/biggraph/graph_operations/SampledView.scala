@@ -27,7 +27,7 @@ case class SampledView(
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = play.api.libs.json.Json.obj("idSet" -> idSet, "maxCount" -> maxCount)
+  override def toJson = Json.obj("idSet" -> idSet, "maxCount" -> maxCount)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas

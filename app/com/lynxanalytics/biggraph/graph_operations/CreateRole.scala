@@ -24,7 +24,7 @@ case class CreateRole(ratio: Double, seed: Int) extends TypedMetaGraphOp[Input, 
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("ratio" -> ratio, "seed" -> seed)
+  override def toJson = Json.obj("ratio" -> ratio, "seed" -> seed)
 
   def execute(inputDatas: DataSet,
               o: Output,

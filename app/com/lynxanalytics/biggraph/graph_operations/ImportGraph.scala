@@ -81,7 +81,7 @@ case class CSV(file: Filename,
                filter: JavaScript = JavaScript("")) extends RowInput {
   val fields = ImportUtil.split(header, delimiter).map(_.trim)
 
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "file" -> file.fullString,
     "delimiter" -> delimiter,
     "header" -> header,
@@ -167,7 +167,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
-  override def toJson = play.api.libs.json.Json.obj("input" -> input.toTypedJson)
+  override def toJson = Json.obj("input" -> input.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -235,7 +235,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
-  override def toJson = play.api.libs.json.Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
+  override def toJson = Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -280,7 +280,7 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, input.fields)
-  override def toJson = play.api.libs.json.Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
+  override def toJson = Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -330,7 +330,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs, input.fields.toSet - idField)
-  override def toJson = play.api.libs.json.Json.obj("input" -> input.toTypedJson, "idField" -> idField)
+  override def toJson = Json.obj("input" -> input.toTypedJson, "idField" -> idField)
 
   def execute(inputDatas: DataSet,
               o: Output,

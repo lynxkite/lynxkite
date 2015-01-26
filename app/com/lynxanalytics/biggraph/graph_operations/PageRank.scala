@@ -26,7 +26,7 @@ case class PageRank(dampingFactor: Double,
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj("dampingFactor" -> dampingFactor, "iterations" -> iterations)
+  override def toJson = Json.obj("dampingFactor" -> dampingFactor, "iterations" -> iterations)
 
   def execute(inputDatas: DataSet,
               o: Output,

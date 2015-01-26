@@ -27,7 +27,7 @@ case class ComputeVertexNeighborhoodFromTriplets(
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = play.api.libs.json.Json.obj("centers" -> centers, "radius" -> radius)
+  override def toJson = Json.obj("centers" -> centers, "radius" -> radius)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas

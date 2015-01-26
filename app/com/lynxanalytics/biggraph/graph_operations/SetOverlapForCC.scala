@@ -133,7 +133,7 @@ object UniformOverlapForCC extends OpFromJson {
   def fromJson(j: play.api.libs.json.JsValue) = UniformOverlapForCC((j \ "overlapSize").as[Int])
 }
 case class UniformOverlapForCC(overlapSize: Int) extends SetOverlapForCC {
-  override def toJson = play.api.libs.json.Json.obj("overlapSize" -> overlapSize)
+  override def toJson = Json.obj("overlapSize" -> overlapSize)
   def minOverlapFn(a: Int, b: Int): Int = overlapSize
 }
 
@@ -142,7 +142,7 @@ object InfocomOverlapForCC extends OpFromJson {
 }
 case class InfocomOverlapForCC(adjacencyThreshold: Double)
     extends SetOverlapForCC {
-  override def toJson = play.api.libs.json.Json.obj("adjacencyThreshold" -> adjacencyThreshold)
+  override def toJson = Json.obj("adjacencyThreshold" -> adjacencyThreshold)
   def minOverlapFn(a: Int, b: Int): Int =
     math.ceil(adjacencyThreshold * (a + b) * (a * a + b * b) / (4 * a * b)).toInt
 }
