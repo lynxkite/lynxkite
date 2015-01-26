@@ -14,7 +14,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object ConnectedComponents extends OpFromJson {
-  def fromJson(j: play.api.libs.json.JsValue) = ConnectedComponents((j \ "maxEdgesProcessedLocally").as[Int])
+  def fromJson(j: JsValue) = ConnectedComponents((j \ "maxEdgesProcessedLocally").as[Int])
 }
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     extends TypedMetaGraphOp[GraphInput, Segmentation] {

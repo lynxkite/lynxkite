@@ -22,7 +22,7 @@ object VertexBucketGrid extends OpFromJson {
     val yBuckets = vertexAttribute[Int](inputs.filtered.entity)
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VertexBucketGrid[Nothing, Nothing](
+  def fromJson(j: JsValue) = VertexBucketGrid[Nothing, Nothing](
     TypedJson.read[Bucketer[Nothing]](j \ "xBucketer"),
     TypedJson.read[Bucketer[Nothing]](j \ "yBucketer"))
 }

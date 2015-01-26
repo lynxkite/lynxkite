@@ -32,7 +32,7 @@ object Fingerprinting extends OpFromJson {
     val leftSimilarities = vertexAttribute[Double](inputs.left.entity)
     val rightSimilarities = vertexAttribute[Double](inputs.right.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     Fingerprinting((j \ "minimumOverlap").as[Int], (j \ "minimumSimilarity").as[Double])
 }
 case class Fingerprinting(
@@ -206,7 +206,7 @@ object FingerprintingCandidates extends OpFromJson {
       extends MagicOutput(instance) {
     val candidates = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = FingerprintingCandidates()
+  def fromJson(j: JsValue) = FingerprintingCandidates()
 }
 case class FingerprintingCandidates()
     extends TypedMetaGraphOp[FingerprintingCandidates.Input, FingerprintingCandidates.Output] {

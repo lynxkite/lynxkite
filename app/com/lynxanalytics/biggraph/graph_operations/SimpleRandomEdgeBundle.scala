@@ -16,7 +16,7 @@ object SimpleRandomEdgeBundle extends OpFromJson {
       extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vsSrc.entity, inputs.vsDst.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = SimpleRandomEdgeBundle((j \ "seed").as[Int], (j \ "density").as[Float])
+  def fromJson(j: JsValue) = SimpleRandomEdgeBundle((j \ "seed").as[Int], (j \ "density").as[Float])
 }
 import SimpleRandomEdgeBundle._
 case class SimpleRandomEdgeBundle(seed: Int, density: Float) extends TypedMetaGraphOp[Input, Output] {

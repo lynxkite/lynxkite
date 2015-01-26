@@ -63,7 +63,7 @@ abstract class AddConstantAttribute[T]
 }
 
 object AddConstantDoubleAttribute extends OpFromJson {
-  def fromJson(j: play.api.libs.json.JsValue) = AddConstantDoubleAttribute((j \ "value").as[Double])
+  def fromJson(j: JsValue) = AddConstantDoubleAttribute((j \ "value").as[Double])
 }
 case class AddConstantDoubleAttribute(value: Double)
     extends AddConstantAttribute[Double] {
@@ -72,7 +72,7 @@ case class AddConstantDoubleAttribute(value: Double)
 }
 
 object AddConstantIntAttribute extends OpFromJson {
-  def fromJson(j: play.api.libs.json.JsValue) = AddConstantIntAttribute((j \ "value").as[Int])
+  def fromJson(j: JsValue) = AddConstantIntAttribute((j \ "value").as[Int])
 }
 case class AddConstantIntAttribute(value: Int)
     extends AddConstantAttribute[Int] {
@@ -81,7 +81,7 @@ case class AddConstantIntAttribute(value: Int)
 }
 
 object AddConstantStringAttribute extends OpFromJson {
-  def fromJson(j: play.api.libs.json.JsValue) = AddConstantStringAttribute((j \ "value").as[String])
+  def fromJson(j: JsValue) = AddConstantStringAttribute((j \ "value").as[String])
 }
 case class AddConstantStringAttribute(value: String)
     extends AddConstantAttribute[String] {

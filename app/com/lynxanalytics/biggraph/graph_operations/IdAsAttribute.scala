@@ -15,7 +15,7 @@ object IdAsAttribute extends OpFromJson {
     import Scripting._
     op(op.vertices, vs).result.vertexIds
   }
-  def fromJson(j: play.api.libs.json.JsValue) = IdAsAttribute()
+  def fromJson(j: JsValue) = IdAsAttribute()
 }
 import IdAsAttribute._
 case class IdAsAttribute() extends TypedMetaGraphOp[Input, Output] {

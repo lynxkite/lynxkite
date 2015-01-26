@@ -21,7 +21,7 @@ object PartitionAttribute extends OpFromJson {
     val test = vertexAttribute[T](inputs.vs.entity)
     val train = vertexAttribute[T](inputs.vs.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = PartitionAttribute[Any]()
+  def fromJson(j: JsValue) = PartitionAttribute[Any]()
 }
 import PartitionAttribute._
 case class PartitionAttribute[T]() extends TypedMetaGraphOp[Input[T], Output[T]] {

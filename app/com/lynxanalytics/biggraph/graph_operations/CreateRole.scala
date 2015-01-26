@@ -17,7 +17,7 @@ object CreateRole extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val role = vertexAttribute[String](inputs.vertices.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CreateRole((j \ "ratio").as[Double], (j \ "seed").as[Int])
+  def fromJson(j: JsValue) = CreateRole((j \ "ratio").as[Double], (j \ "seed").as[Int])
 }
 import CreateRole._
 case class CreateRole(ratio: Double, seed: Int) extends TypedMetaGraphOp[Input, Output] {

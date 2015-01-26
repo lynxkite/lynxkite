@@ -44,7 +44,7 @@ object VertexAttributeToString extends OpFromJson {
     val op = VertexAttributeToString[T]()
     op(op.attr, attr).result.attr
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VertexAttributeToString[Any]()
+  def fromJson(j: JsValue) = VertexAttributeToString[Any]()
 }
 case class VertexAttributeToString[T]()
     extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToString.Output[T]] {
@@ -75,7 +75,7 @@ object VertexAttributeToDouble extends OpFromJson {
     val op = VertexAttributeToDouble()
     op(op.attr, attr).result.attr
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VertexAttributeToDouble()
+  def fromJson(j: JsValue) = VertexAttributeToDouble()
 }
 case class VertexAttributeToDouble()
     extends TypedMetaGraphOp[VertexAttributeInput[String], VertexAttributeToDouble.Output] {
@@ -106,7 +106,7 @@ object VertexAttributeToDynamicValue extends OpFromJson {
     val op = VertexAttributeToDynamicValue[T]()
     op(op.attr, attr).result.attr
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VertexAttributeToDynamicValue[Any]()
+  def fromJson(j: JsValue) = VertexAttributeToDynamicValue[Any]()
 }
 case class VertexAttributeToDynamicValue[T]()
     extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
@@ -152,7 +152,7 @@ abstract class AttributeCast[From, To]()
 }
 
 object AttributeVectorToAny extends OpFromJson {
-  def fromJson(j: play.api.libs.json.JsValue) = AttributeVectorToAny[Any]()
+  def fromJson(j: JsValue) = AttributeVectorToAny[Any]()
 }
 case class AttributeVectorToAny[From]() extends AttributeCast[Vector[From], Vector[Any]] {
   @transient lazy val tt = typeTag[Vector[Any]]
@@ -205,7 +205,7 @@ object VertexAttributeToJSValue extends OpFromJson {
 
     attrs.map(run(_))
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VertexAttributeToJSValue[Any]()
+  def fromJson(j: JsValue) = VertexAttributeToJSValue[Any]()
 }
 case class VertexAttributeToJSValue[T]()
     extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToJSValue.Output[T]] {

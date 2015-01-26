@@ -21,7 +21,7 @@ object SetOverlap extends OpFromJson {
     val overlaps = edgeBundle(inputs.segments.entity, inputs.segments.entity)
     val overlapSize = edgeAttribute[Int](overlaps)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = SetOverlap((j \ "minOverlap").as[Int])
+  def fromJson(j: JsValue) = SetOverlap((j \ "minOverlap").as[Int])
 }
 import SetOverlap._
 case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {

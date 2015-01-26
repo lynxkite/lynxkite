@@ -18,7 +18,7 @@ object AggregateByEdgeBundle extends OpFromJson {
                                   inputs: Input[From]) extends MagicOutput(instance) {
     val attr = vertexAttribute[To](inputs.dst.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     AggregateByEdgeBundle[Any, Any](TypedJson.read[LocalAggregator[Any, Any]](j \ "aggregator"))
 }
 case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To])
@@ -65,7 +65,7 @@ object AggregateFromEdges extends OpFromJson {
                                   inputs: Input[From]) extends MagicOutput(instance) {
     val dstAttr = vertexAttribute[To](inputs.dst.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     AggregateFromEdges[Any, Any](TypedJson.read[LocalAggregator[Any, Any]](j \ "aggregator"))
 }
 case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
@@ -105,7 +105,7 @@ object AggregateAttributeToScalar extends OpFromJson {
 
     val aggregated = scalar[To]
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     AggregateAttributeToScalar[Any, Any, Any](TypedJson.read[Aggregator[Any, Any, Any]](j \ "aggregator"))
 }
 case class AggregateAttributeToScalar[From, Intermediate, To](
@@ -203,7 +203,7 @@ object Aggregator {
   type AggregatorFromJson = FromJson[AnyAggregator]
   type LocalAggregatorFromJson = FromJson[AnyLocalAggregator]
 
-  object Count extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = Count[Any]().asInstanceOf[AnyAggregator] }
+  object Count extends AggregatorFromJson { def fromJson(j: JsValue) = Count[Any]().asInstanceOf[AnyAggregator] }
   case class Count[T]() extends SimpleAggregator[T, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
     def zero = 0
@@ -211,7 +211,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
-  object Sum extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = Sum().asInstanceOf[AnyAggregator] }
+  object Sum extends AggregatorFromJson { def fromJson(j: JsValue) = Sum().asInstanceOf[AnyAggregator] }
   case class Sum() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def zero = 0
@@ -219,7 +219,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
-  object WeightedSum extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = WeightedSum().asInstanceOf[AnyAggregator] }
+  object WeightedSum extends AggregatorFromJson { def fromJson(j: JsValue) = WeightedSum().asInstanceOf[AnyAggregator] }
   case class WeightedSum() extends SimpleAggregator[(Double, Double), Double] {
     def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
     def zero = 0
@@ -227,7 +227,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
-  object Max extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = Max().asInstanceOf[AnyAggregator] }
+  object Max extends AggregatorFromJson { def fromJson(j: JsValue) = Max().asInstanceOf[AnyAggregator] }
   case class Max() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def zero = Double.NegativeInfinity
@@ -235,7 +235,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.max(a, b)
   }
 
-  object Min extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = Min().asInstanceOf[AnyAggregator] }
+  object Min extends AggregatorFromJson { def fromJson(j: JsValue) = Min().asInstanceOf[AnyAggregator] }
   case class Min() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def zero = Double.PositiveInfinity
@@ -244,7 +244,7 @@ object Aggregator {
   }
 
   object MaxBy extends AggregatorFromJson {
-    def fromJson(j: play.api.libs.json.JsValue) = (j \ "weightOrderingType").as[String] match {
+    def fromJson(j: JsValue) = (j \ "weightOrderingType").as[String] match {
       case "scala.math.Ordering$Double$" => MaxBy[Double, Any]().asInstanceOf[AnyAggregator]
     }
   }
@@ -275,7 +275,7 @@ object Aggregator {
     def finalize(opt: Option[(Weight, Value)]) = opt.get._2
   }
 
-  object Average extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = Average().asInstanceOf[AnyAggregator] }
+  object Average extends AggregatorFromJson { def fromJson(j: JsValue) = Average().asInstanceOf[AnyAggregator] }
   case class Average() extends CompoundDoubleAggregator[Double] {
     val agg1 = Count[Double]()
     val agg2 = Sum()
@@ -285,7 +285,7 @@ object Aggregator {
     }
   }
 
-  object SumOfWeights extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = SumOfWeights[Any]().asInstanceOf[AnyAggregator] }
+  object SumOfWeights extends AggregatorFromJson { def fromJson(j: JsValue) = SumOfWeights[Any]().asInstanceOf[AnyAggregator] }
   case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
     def outputTypeTag(inputTypeTag: TypeTag[(Double, T)]) = typeTag[Double]
     def zero = 0
@@ -293,7 +293,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
-  object WeightedAverage extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = WeightedAverage().asInstanceOf[AnyAggregator] }
+  object WeightedAverage extends AggregatorFromJson { def fromJson(j: JsValue) = WeightedAverage().asInstanceOf[AnyAggregator] }
   case class WeightedAverage() extends CompoundDoubleAggregator[(Double, Double)] {
     val agg1 = SumOfWeights[Double]()
     val agg2 = WeightedSum()
@@ -303,7 +303,7 @@ object Aggregator {
     }
   }
 
-  object MostCommon extends LocalAggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = MostCommon[Any]().asInstanceOf[AnyLocalAggregator] }
+  object MostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = MostCommon[Any]().asInstanceOf[AnyLocalAggregator] }
   case class MostCommon[T]() extends LocalAggregator[T, T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def aggregate(values: Iterable[T]) = {
@@ -313,7 +313,7 @@ object Aggregator {
 
   // Majority is like MostCommon, but returns "" if the mode is < fraction of the values.
   object Majority extends LocalAggregatorFromJson {
-    def fromJson(j: play.api.libs.json.JsValue) = Majority((j \ "fraction").as[Double]).asInstanceOf[AnyLocalAggregator]
+    def fromJson(j: JsValue) = Majority((j \ "fraction").as[Double]).asInstanceOf[AnyLocalAggregator]
   }
   case class Majority(fraction: Double) extends LocalAggregator[String, String] {
     override def toJson = Json.obj("fraction" -> fraction)
@@ -324,7 +324,7 @@ object Aggregator {
     }
   }
 
-  object First extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = First[Any]().asInstanceOf[AnyAggregator] }
+  object First extends AggregatorFromJson { def fromJson(j: JsValue) = First[Any]().asInstanceOf[AnyAggregator] }
   case class First[T]() extends Aggregator[T, Option[T], T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[T]): TypeTag[Option[T]] = {
@@ -340,7 +340,7 @@ object Aggregator {
     }
   }
 
-  object AsVector extends LocalAggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = AsVector[Any]().asInstanceOf[AnyLocalAggregator] }
+  object AsVector extends LocalAggregatorFromJson { def fromJson(j: JsValue) = AsVector[Any]().asInstanceOf[AnyLocalAggregator] }
   case class AsVector[T]() extends LocalAggregator[T, Vector[T]] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = {
       implicit val tt = inputTypeTag
@@ -349,7 +349,7 @@ object Aggregator {
     def aggregate(values: Iterable[T]): Vector[T] = values.toVector
   }
 
-  object StdDev extends AggregatorFromJson { def fromJson(j: play.api.libs.json.JsValue) = StdDev().asInstanceOf[AnyAggregator] }
+  object StdDev extends AggregatorFromJson { def fromJson(j: JsValue) = StdDev().asInstanceOf[AnyAggregator] }
   case class StdDev() extends Aggregator[Double, Stats, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Stats] = {

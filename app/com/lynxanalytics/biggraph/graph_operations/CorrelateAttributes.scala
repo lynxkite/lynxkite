@@ -14,7 +14,7 @@ object CorrelateAttributes extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val correlation = scalar[Double]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CorrelateAttributes()
+  def fromJson(j: JsValue) = CorrelateAttributes()
 }
 import CorrelateAttributes._
 case class CorrelateAttributes() extends TypedMetaGraphOp[Input, Output] {

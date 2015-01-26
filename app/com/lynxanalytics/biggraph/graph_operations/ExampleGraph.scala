@@ -23,7 +23,7 @@ object ExampleGraph extends OpFromJson {
     val edgeAttributes = Map("comment" -> comment, "weight" -> weight)
     val vertexAttributes = Map("name" -> name, "age" -> age, "gender" -> gender, "income" -> income)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = ExampleGraph()
+  def fromJson(j: JsValue) = ExampleGraph()
 }
 import ExampleGraph._
 case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {

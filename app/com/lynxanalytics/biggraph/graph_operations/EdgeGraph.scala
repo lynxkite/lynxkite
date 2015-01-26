@@ -12,7 +12,7 @@ object EdgeGraph extends OpFromJson {
     val newES = edgeBundle(newVS, newVS)
     val link = edgeBundle(inputs.vs.entity, newVS)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = EdgeGraph()
+  def fromJson(j: JsValue) = EdgeGraph()
 }
 import EdgeGraph._
 case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {

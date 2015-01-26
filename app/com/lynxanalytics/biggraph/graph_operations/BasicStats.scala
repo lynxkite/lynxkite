@@ -13,7 +13,7 @@ object CountVertices extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CountVertices()
+  def fromJson(j: JsValue) = CountVertices()
 }
 case class CountVertices()
     extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
@@ -41,7 +41,7 @@ object CountEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CountEdges()
+  def fromJson(j: JsValue) = CountEdges()
 }
 case class CountEdges()
     extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] {
@@ -69,7 +69,7 @@ object CountAttributes extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CountAttributes[Any]()
+  def fromJson(j: JsValue) = CountAttributes[Any]()
 }
 case class CountAttributes[T]()
     extends TypedMetaGraphOp[CountAttributes.Input[T], CountAttributes.Output] {
@@ -99,7 +99,7 @@ object ComputeMinMax extends OpFromJson {
     val min = scalar[T]
     val max = scalar[T]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = (j \ "numeric").as[String] match {
+  def fromJson(j: JsValue) = (j \ "numeric").as[String] match {
     case "scala.math.Numeric$DoubleIsFractional$" => ComputeMinMax[Double]()
   }
 }
@@ -161,7 +161,7 @@ object ComputeTopValues extends OpFromJson {
       else a._2 compare b._2
     }
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     ComputeTopValues[Any]((j \ "numTopValues").as[Int], (j \ "sampleSize").as[Int])
 }
 case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)

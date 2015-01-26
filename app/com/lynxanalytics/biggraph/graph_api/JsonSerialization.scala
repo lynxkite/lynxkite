@@ -20,6 +20,7 @@ trait ToJson {
 }
 
 trait FromJson[+T] {
+  protected type JsValue = json.JsValue
   def fromJson(j: json.JsValue): T
 }
 

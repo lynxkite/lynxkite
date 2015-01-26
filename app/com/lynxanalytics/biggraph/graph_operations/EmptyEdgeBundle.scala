@@ -12,7 +12,7 @@ object EmptyEdgeBundle extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val eb = edgeBundle(inputs.src.entity, inputs.dst.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = EmptyEdgeBundle()
+  def fromJson(j: JsValue) = EmptyEdgeBundle()
 }
 import EmptyEdgeBundle._
 case class EmptyEdgeBundle() extends TypedMetaGraphOp[Input, Output] {

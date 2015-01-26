@@ -22,7 +22,7 @@ object TripletMapping extends OpFromJson {
     // The list of incoming edges.
     val dstEdges = vertexAttribute[Array[ID]](inputs.dst.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = TripletMapping((j \ "sampleSize").as[Int])
+  def fromJson(j: JsValue) = TripletMapping((j \ "sampleSize").as[Int])
 }
 // A negative sampleSize means no sampling.
 case class TripletMapping(sampleSize: Int = -1)
@@ -106,7 +106,7 @@ object VertexToEdgeAttribute extends OpFromJson {
     val mop = VertexToEdgeAttribute[T]()
     mop(mop.mapping, mapping)(mop.original, attr)(mop.target, edgeBundle).result.mappedAttribute
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VertexToEdgeAttribute[Any]()
+  def fromJson(j: JsValue) = VertexToEdgeAttribute[Any]()
 }
 case class VertexToEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
@@ -149,7 +149,7 @@ object EdgesForVertices extends OpFromJson {
       extends MagicOutput(instance) {
     val edges = scalar[Option[Seq[(ID, Edge)]]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     EdgesForVertices((j \ "vertexIdSet").as[Set[ID]], (j \ "maxNumEdges").as[Int], (j \ "bySource").as[Boolean])
 }
 case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)

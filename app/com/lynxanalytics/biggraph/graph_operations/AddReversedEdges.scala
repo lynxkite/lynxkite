@@ -16,7 +16,7 @@ object AddReversedEdges extends OpFromJson {
       esPlus.asVertexSet, inputs.es.asVertexSet,
       EdgeBundleProperties.surjection)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = AddReversedEdges()
+  def fromJson(j: JsValue) = AddReversedEdges()
 }
 import AddReversedEdges._
 case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {

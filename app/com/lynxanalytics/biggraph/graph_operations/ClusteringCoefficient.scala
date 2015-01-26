@@ -71,7 +71,7 @@ object ClusteringCoefficient extends OpFromJson {
         case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
       }
   }
-  def fromJson(j: play.api.libs.json.JsValue) = ClusteringCoefficient()
+  def fromJson(j: JsValue) = ClusteringCoefficient()
 }
 import ClusteringCoefficient._
 case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] {
