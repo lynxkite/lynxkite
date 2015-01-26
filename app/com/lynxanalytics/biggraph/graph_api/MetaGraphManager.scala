@@ -276,7 +276,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def deserializeOperation(input: String): MetaGraphOperationInstance = {
     val j = Json.parse(input)
-    val op = TypedJson.read[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]](j \ "operation")
+    val op = TypedJson.read[TypedMetaGraphOp.Type](j \ "operation")
     val inputs = (j \ "inputs").as[Map[String, String]].map {
       case (name, guid) => Symbol(name) -> UUID.fromString(guid)
     }
