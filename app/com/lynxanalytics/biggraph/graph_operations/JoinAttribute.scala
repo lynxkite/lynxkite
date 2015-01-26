@@ -18,7 +18,7 @@ object JoinAttributes extends OpFromJson {
     implicit val ttb = inputs.b.typeTag
     val attr = vertexAttribute[(A, B)](inputs.vs.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = JoinAttributes[Any, Any]()
+  def fromJson(j: JsValue) = JoinAttributes[Any, Any]()
 }
 import JoinAttributes._
 case class JoinAttributes[A, B]()

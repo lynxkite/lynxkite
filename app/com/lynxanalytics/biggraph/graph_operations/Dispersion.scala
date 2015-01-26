@@ -29,7 +29,7 @@ object Dispersion extends OpFromJson {
     }
     builder.result()
   }
-  def fromJson(j: play.api.libs.json.JsValue) = Dispersion()
+  def fromJson(j: JsValue) = Dispersion()
 }
 import Dispersion._
 case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {

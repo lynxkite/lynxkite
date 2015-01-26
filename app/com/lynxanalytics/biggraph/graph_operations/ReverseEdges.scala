@@ -20,7 +20,7 @@ object ReverseEdges extends OpFromJson {
     val op = ReverseEdges()
     op(op.esAB, eb).result.esBA
   }
-  def fromJson(j: play.api.libs.json.JsValue) = ReverseEdges()
+  def fromJson(j: JsValue) = ReverseEdges()
 }
 import ReverseEdges._
 case class ReverseEdges() extends TypedMetaGraphOp[Input, Output] {

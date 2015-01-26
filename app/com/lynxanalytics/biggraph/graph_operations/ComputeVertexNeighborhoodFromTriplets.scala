@@ -16,7 +16,7 @@ object ComputeVertexNeighborhoodFromTriplets extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val neighborhood = scalar[Set[ID]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     ComputeVertexNeighborhoodFromTriplets((j \ "centers").as[Seq[ID]], (j \ "radius").as[Int])
 }
 import ComputeVertexNeighborhoodFromTriplets._

@@ -29,7 +29,7 @@ object ConcatenateBundles extends OpFromJson {
       EdgeBundleProperties(isFunction = isFunction, isReversedFunction = isReversedFunction))
     val weightsAC = vertexAttribute[Double](edgesAC.asVertexSet)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = ConcatenateBundles()
+  def fromJson(j: JsValue) = ConcatenateBundles()
 }
 import ConcatenateBundles._
 case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {

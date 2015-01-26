@@ -29,7 +29,7 @@ object InducedEdgeBundle extends OpFromJson {
     val embedding = edgeBundle(
       induced.asVertexSet, inputs.edges.asVertexSet, EdgeBundleProperties.embedding)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = InducedEdgeBundle((j \ "induceSrc").as[Boolean], (j \ "induceDst").as[Boolean])
+  def fromJson(j: JsValue) = InducedEdgeBundle((j \ "induceSrc").as[Boolean], (j \ "induceDst").as[Boolean])
 }
 import InducedEdgeBundle._
 case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = true)

@@ -11,7 +11,7 @@ object EdgeBundleAsVertexSet extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val equivalentVS = vertexSet
   }
-  def fromJson(j: play.api.libs.json.JsValue) = EdgeBundleAsVertexSet()
+  def fromJson(j: JsValue) = EdgeBundleAsVertexSet()
 }
 case class EdgeBundleAsVertexSet()
     extends TypedMetaGraphOp[EdgeBundleAsVertexSet.Input, EdgeBundleAsVertexSet.Output] {
@@ -42,7 +42,7 @@ object EdgeBundleAsVertexAttribute extends OpFromJson {
       inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[(ID, ID)](inputs.idSet.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = EdgeBundleAsVertexAttribute()
+  def fromJson(j: JsValue) = EdgeBundleAsVertexAttribute()
 }
 case class EdgeBundleAsVertexAttribute()
     extends TypedMetaGraphOp[EdgeBundleAsVertexAttribute.Input, EdgeBundleAsVertexAttribute.Output] {

@@ -24,7 +24,7 @@ object VertexSetUnion extends OpFromJson {
       .map(i => edgeBundle(
         input.vss(i).entity, union, EdgeBundleProperties.injection, name = Symbol("injection" + i)))
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VertexSetUnion((j \ "numVertexSets").as[Int])
+  def fromJson(j: JsValue) = VertexSetUnion((j \ "numVertexSets").as[Int])
 }
 case class VertexSetUnion(numVertexSets: Int)
     extends TypedMetaGraphOp[VertexSetUnion.Input, VertexSetUnion.Output] {
@@ -83,7 +83,7 @@ object EdgeBundleUnion extends OpFromJson {
       input: Input) extends MagicOutput(instance) {
     val union = edgeBundle(input.src.entity, input.dst.entity, idSet = input.idSetUnion.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = EdgeBundleUnion((j \ "numEdgeBundles").as[Int])
+  def fromJson(j: JsValue) = EdgeBundleUnion((j \ "numEdgeBundles").as[Int])
 }
 case class EdgeBundleUnion(numEdgeBundles: Int)
     extends TypedMetaGraphOp[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {

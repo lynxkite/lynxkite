@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object FindMaxCliques extends OpFromJson {
-  def fromJson(j: play.api.libs.json.JsValue) = FindMaxCliques((j \ "minCliqueSize").as[Int], (j \ "needsBothDirections").as[Boolean])
+  def fromJson(j: JsValue) = FindMaxCliques((j \ "minCliqueSize").as[Int], (j \ "needsBothDirections").as[Boolean])
 }
 case class FindMaxCliques(minCliqueSize: Int, needsBothDirections: Boolean = false) extends TypedMetaGraphOp[GraphInput, Segmentation] {
   override val isHeavy = true

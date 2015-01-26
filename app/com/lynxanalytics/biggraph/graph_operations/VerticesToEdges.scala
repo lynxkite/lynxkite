@@ -16,7 +16,7 @@ object VerticesToEdges extends OpFromJson {
     val stringID = vertexAttribute[String](vs)
     val embedding = edgeBundle(es.asVertexSet, inputs.vs.entity, EdgeBundleProperties.embedding)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VerticesToEdges()
+  def fromJson(j: JsValue) = VerticesToEdges()
 }
 import VerticesToEdges._
 case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {

@@ -69,7 +69,7 @@ trait RowInput extends ToJson {
 }
 
 object CSV extends FromJson[CSV] {
-  def fromJson(j: play.api.libs.json.JsValue) = CSV(
+  def fromJson(j: JsValue) = CSV(
     Filename((j \ "file").as[String]),
     (j \ "delimiter").as[String],
     (j \ "header").as[String],
@@ -159,7 +159,7 @@ object ImportVertexList extends OpFromJson {
       f => f -> vertexAttribute[String](vertices, ImportCommon.toSymbol(f))
     }.toMap
   }
-  def fromJson(j: play.api.libs.json.JsValue) = ImportVertexList(TypedJson.read[RowInput](j \ "input"))
+  def fromJson(j: JsValue) = ImportVertexList(TypedJson.read[RowInput](j \ "input"))
 }
 case class ImportVertexList(input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
@@ -225,7 +225,7 @@ object ImportEdgeList extends OpFromJson {
     }.toMap
     val stringID = vertexAttribute[String](vertices)
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     ImportEdgeList(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
 }
 case class ImportEdgeList(input: RowInput, src: String, dst: String)
@@ -270,7 +270,7 @@ object ImportEdgeListForExistingVertexSet extends OpFromJson {
       f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
     }.toMap
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     ImportEdgeListForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
 }
 case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst: String)
@@ -316,7 +316,7 @@ object ImportAttributesForExistingVertexSet extends OpFromJson {
       f => f -> vertexAttribute[String](inputs.vs.entity, ImportCommon.toSymbol(f))
     }.toMap
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     ImportAttributesForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "idField").as[String])
 }
 case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String)

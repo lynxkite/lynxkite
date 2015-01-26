@@ -19,7 +19,7 @@ object CheckClique extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val invalid = scalar[List[ID]] // first 100 invalid clique IDs
   }
-  def fromJson(j: play.api.libs.json.JsValue) = {
+  def fromJson(j: JsValue) = {
     val set = (j \ "cliquesToCheck").as[Seq[ID]].toSet
     CheckClique(if (set.nonEmpty) Some(set) else None, (j \ "needsBothDirections").as[Boolean])
   }

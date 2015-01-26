@@ -17,7 +17,7 @@ object SampledView extends OpFromJson {
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
     val vertexIndices = scalar[Map[ID, Int]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = SampledView((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
+  def fromJson(j: JsValue) = SampledView((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
 }
 import SampledView._
 case class SampledView(

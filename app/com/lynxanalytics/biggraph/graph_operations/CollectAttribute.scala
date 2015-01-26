@@ -10,7 +10,7 @@ object CollectAttribute extends OpFromJson {
     implicit val tt = inputs.attr.typeTag
     val idToAttr = scalar[Map[ID, T]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CollectAttribute((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
+  def fromJson(j: JsValue) = CollectAttribute((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
 }
 import CollectAttribute._
 case class CollectAttribute[T](

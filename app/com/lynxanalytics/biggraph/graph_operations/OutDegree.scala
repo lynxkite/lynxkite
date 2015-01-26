@@ -17,7 +17,7 @@ object OutDegree extends OpFromJson {
       extends MagicOutput(instance) {
     val outDegree = vertexAttribute[Double](inputs.src.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = OutDegree()
+  def fromJson(j: JsValue) = OutDegree()
 }
 import OutDegree._
 case class OutDegree() extends TypedMetaGraphOp[Input, Output] {

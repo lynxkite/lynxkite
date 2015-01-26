@@ -16,7 +16,7 @@ object FastRandomEdgeBundle extends OpFromJson {
       extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = FastRandomEdgeBundle((j \ "seed").as[Int], (j \ "averageDegree").as[Int])
+  def fromJson(j: JsValue) = FastRandomEdgeBundle((j \ "seed").as[Int], (j \ "averageDegree").as[Int])
 }
 import FastRandomEdgeBundle._
 case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)

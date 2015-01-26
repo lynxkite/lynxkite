@@ -10,7 +10,7 @@ object CreateVertexSet extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val vs = vertexSet
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CreateVertexSet((j \ "size").as[Long])
+  def fromJson(j: JsValue) = CreateVertexSet((j \ "size").as[Long])
 }
 import CreateVertexSet._
 case class CreateVertexSet(size: Long) extends TypedMetaGraphOp[NoInput, Output] {

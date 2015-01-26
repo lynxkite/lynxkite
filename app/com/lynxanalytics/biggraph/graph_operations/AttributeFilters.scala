@@ -19,7 +19,7 @@ object VertexAttributeFilter extends OpFromJson {
     implicit val tt = inputs.attr.typeTag
     val filteredAttribute = scalar[FilteredAttribute[T]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = {
+  def fromJson(j: JsValue) = {
     VertexAttributeFilter[Nothing](TypedJson.read[Filter[Nothing]](j \ "filter"))
   }
 }
@@ -67,7 +67,7 @@ case class VertexAttributeFilter[T](filter: Filter[T])
 }
 
 object NotFilter extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     NotFilter[Nothing](TypedJson.read[Filter[Nothing]](j \ "filter"))
 }
 case class NotFilter[T](filter: Filter[T]) extends Filter[T] {
@@ -76,8 +76,8 @@ case class NotFilter[T](filter: Filter[T]) extends Filter[T] {
 }
 
 object AndFilter extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = {
-    val filters = (j \ "filters").as[Seq[play.api.libs.json.JsValue]].map(j => TypedJson.read[Filter[Nothing]](j))
+  def fromJson(j: JsValue) = {
+    val filters = (j \ "filters").as[Seq[JsValue]].map(j => TypedJson.read[Filter[Nothing]](j))
     AndFilter[Nothing](filters: _*)
   }
 }
@@ -90,7 +90,7 @@ case class AndFilter[T](filters: Filter[T]*) extends Filter[T] {
 }
 
 object DoubleEQ extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = DoubleEQ((j \ "exact").as[Double])
+  def fromJson(j: JsValue) = DoubleEQ((j \ "exact").as[Double])
 }
 case class DoubleEQ(exact: Double) extends Filter[Double] {
   def matches(value: Double) = value == exact
@@ -98,7 +98,7 @@ case class DoubleEQ(exact: Double) extends Filter[Double] {
 }
 
 object DoubleLT extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = DoubleLT((j \ "bound").as[Double])
+  def fromJson(j: JsValue) = DoubleLT((j \ "bound").as[Double])
 }
 case class DoubleLT(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value < bound
@@ -106,7 +106,7 @@ case class DoubleLT(bound: Double) extends Filter[Double] {
 }
 
 object DoubleLE extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = DoubleLE((j \ "bound").as[Double])
+  def fromJson(j: JsValue) = DoubleLE((j \ "bound").as[Double])
 }
 case class DoubleLE(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value <= bound
@@ -114,7 +114,7 @@ case class DoubleLE(bound: Double) extends Filter[Double] {
 }
 
 object DoubleGT extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = DoubleGT((j \ "bound").as[Double])
+  def fromJson(j: JsValue) = DoubleGT((j \ "bound").as[Double])
 }
 case class DoubleGT(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value > bound
@@ -122,7 +122,7 @@ case class DoubleGT(bound: Double) extends Filter[Double] {
 }
 
 object DoubleGE extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = DoubleGE((j \ "bound").as[Double])
+  def fromJson(j: JsValue) = DoubleGE((j \ "bound").as[Double])
 }
 case class DoubleGE(bound: Double) extends Filter[Double] {
   def matches(value: Double) = value >= bound
@@ -130,7 +130,7 @@ case class DoubleGE(bound: Double) extends Filter[Double] {
 }
 
 object OneOf extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = {
+  def fromJson(j: JsValue) = {
     (j \ "type").as[String] match {
       case "Long" => OneOf((j \ "options").as[Set[Long]])
       case "String" => OneOf((j \ "options").as[Set[String]])
@@ -150,7 +150,7 @@ case class OneOf[T: reflect.ClassTag](options: Set[T]) extends Filter[T] {
 }
 
 object Exists extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     Exists[Nothing](TypedJson.read[Filter[Nothing]](j \ "filter"))
 }
 case class Exists[T](filter: Filter[T]) extends Filter[Vector[T]] {
@@ -159,7 +159,7 @@ case class Exists[T](filter: Filter[T]) extends Filter[Vector[T]] {
 }
 
 object ForAll extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     ForAll[Nothing](TypedJson.read[Filter[Nothing]](j \ "filter"))
 }
 case class ForAll[T](filter: Filter[T]) extends Filter[Vector[T]] {
@@ -168,7 +168,7 @@ case class ForAll[T](filter: Filter[T]) extends Filter[Vector[T]] {
 }
 
 object PairEquals extends FromJson[Filter[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = PairEquals[Nothing]()
+  def fromJson(j: JsValue) = PairEquals[Nothing]()
 }
 case class PairEquals[T]() extends Filter[(T, T)] {
   def matches(value: (T, T)) = value._1 == value._2

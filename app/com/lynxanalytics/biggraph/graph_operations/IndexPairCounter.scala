@@ -29,7 +29,7 @@ object IndexPairCounter extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val counts = scalar[Map[(Int, Int), Double]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = IndexPairCounter()
+  def fromJson(j: JsValue) = IndexPairCounter()
 }
 import IndexPairCounter._
 case class IndexPairCounter() extends TypedMetaGraphOp[Input, Output] {

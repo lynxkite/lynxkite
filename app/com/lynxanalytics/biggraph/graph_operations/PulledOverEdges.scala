@@ -31,7 +31,7 @@ object PulledOverEdges extends OpFromJson {
       inputs.originalDst.entity,
       idSet = inputs.destinationVS.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = PulledOverEdges()
+  def fromJson(j: JsValue) = PulledOverEdges()
 }
 import PulledOverEdges._
 case class PulledOverEdges()

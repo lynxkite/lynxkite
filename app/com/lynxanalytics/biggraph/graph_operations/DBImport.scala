@@ -6,7 +6,7 @@ import java.sql
 import org.apache.spark.rdd.RDD
 
 object DBTable extends FromJson[DBTable] {
-  def fromJson(j: play.api.libs.json.JsValue) = DBTable(
+  def fromJson(j: JsValue) = DBTable(
     (j \ "db").as[String],
     (j \ "table").as[String],
     (j \ "fields").as[Seq[String]],

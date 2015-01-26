@@ -13,7 +13,7 @@ object AddGaussianVertexAttribute extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vertices.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = AddGaussianVertexAttribute((j \ "seed").as[Int])
+  def fromJson(j: JsValue) = AddGaussianVertexAttribute((j \ "seed").as[Int])
 }
 import AddGaussianVertexAttribute._
 case class AddGaussianVertexAttribute(seed: Int) extends TypedMetaGraphOp[Input, Output] {

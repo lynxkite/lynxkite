@@ -21,7 +21,7 @@ object VertexSetIntersection extends OpFromJson {
     val firstEmbedding = edgeBundle(
       intersection, input.vss(0).entity, EdgeBundleProperties.embedding)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = VertexSetIntersection((j \ "numVertexSets").as[Int])
+  def fromJson(j: JsValue) = VertexSetIntersection((j \ "numVertexSets").as[Int])
 }
 case class VertexSetIntersection(numVertexSets: Int)
     extends TypedMetaGraphOp[VertexSetIntersection.Input, VertexSetIntersection.Output] {

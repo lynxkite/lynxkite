@@ -68,7 +68,7 @@ abstract class DeriveJS[T](
 }
 
 object DeriveJSString extends OpFromJson {
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     DeriveJSString(JavaScript((j \ "expr").as[String]), (j \ "attrNames").as[Seq[String]])
 }
 case class DeriveJSString(
@@ -80,7 +80,7 @@ case class DeriveJSString(
 }
 
 object DeriveJSDouble extends OpFromJson {
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     DeriveJSDouble(JavaScript((j \ "expr").as[String]), (j \ "attrNames").as[Seq[String]])
 }
 case class DeriveJSDouble(

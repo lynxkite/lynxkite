@@ -12,7 +12,7 @@ object Embeddedness extends OpFromJson {
       extends MagicOutput(instance) {
     val embeddedness = edgeAttribute[Double](inputs.es.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = Embeddedness()
+  def fromJson(j: JsValue) = Embeddedness()
 }
 import Embeddedness._
 case class Embeddedness() extends TypedMetaGraphOp[GraphInput, Output] {

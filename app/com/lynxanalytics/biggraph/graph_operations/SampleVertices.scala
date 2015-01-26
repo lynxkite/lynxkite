@@ -12,7 +12,7 @@ object SampleVertices extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val sample = scalar[Seq[ID]]
   }
-  def fromJson(j: play.api.libs.json.JsValue) = SampleVertices((j \ "n").as[Int])
+  def fromJson(j: JsValue) = SampleVertices((j \ "n").as[Int])
 }
 import SampleVertices._
 case class SampleVertices(n: Int) extends TypedMetaGraphOp[Input, Output] {

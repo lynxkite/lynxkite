@@ -12,7 +12,7 @@ object RemoveNonSymmetricEdges extends OpFromJson {
     val injection = edgeBundle(
       symmetric.asVertexSet, inputs.es.asVertexSet, EdgeBundleProperties.embedding)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = RemoveNonSymmetricEdges()
+  def fromJson(j: JsValue) = RemoveNonSymmetricEdges()
 }
 import RemoveNonSymmetricEdges._
 case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output] {
