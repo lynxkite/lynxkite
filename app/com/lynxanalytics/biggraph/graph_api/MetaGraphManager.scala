@@ -189,7 +189,10 @@ class MetaGraphManager(val repositoryPath: String) {
     dumpFile.createFromStrings(serializeOperation(inst))
     // Validate the saved operation by trying to reload it.
     loadInstanceFromDisk(new File(dumpFile.toString)) match {
-      case util.Success(i) => assert(inst == i, s"Bad save. File: $dumpFile Operation: $inst")
+      case util.Success(i) => assert(
+        inst == i,
+        "Operation could not be reloaded after serialization." +
+          s" File: $dumpFile Operation: $inst")
       case util.Failure(e) => throw new Exception(s"Failed to reload $dumpFile", e)
     }
     dumpFile.renameTo(finalFile)
