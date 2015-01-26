@@ -13,7 +13,7 @@ object TypedJson {
 }
 
 trait ToJson {
-  def Json = json.Json
+  protected def Json = json.Json
   // Export blanks object by default.
   def toJson: json.JsValue = Json.obj()
   def toTypedJson: json.JsValue = Json.obj("class" -> getClass.getName, "data" -> toJson)
