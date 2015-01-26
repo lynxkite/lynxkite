@@ -18,7 +18,9 @@ trait ToJson {
   def toJson: json.JsValue = Json.obj()
   def toTypedJson: json.JsValue = Json.obj("class" -> getClass.getName, "data" -> toJson)
 }
-trait FromJson[T] {
+
+trait FromJson[+T] {
   def fromJson(j: json.JsValue): T
 }
+
 trait OpFromJson extends FromJson[TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]]
