@@ -131,22 +131,13 @@ case class DoubleGE(bound: Double) extends Filter[Double] {
 
 object OneOf extends FromJson[OneOf[_]] {
   def fromJson(j: JsValue) = {
-    (j \ "type").as[String] match {
-      case "Long" => OneOf((j \ "options").as[Set[Long]])
-      case "String" => OneOf((j \ "options").as[Set[String]])
-    }
+    val set = (j \ "options").as[Set[JsValue]].map(TypedJson.read[Any](_))
+    OneOf(set)
   }
 }
-case class OneOf[T: reflect.ClassTag](options: Set[T]) extends Filter[T] {
+case class OneOf[T](options: Set[T]) extends Filter[T] {
   def matches(value: T) = options.contains(value)
-  override def toJson = {
-    val LongTag = reflect.classTag[Long]
-    val StringTag = reflect.classTag[String]
-    reflect.classTag[T] match {
-      case LongTag => Json.obj("type" -> "Long", "options" -> options.toSeq.asInstanceOf[Seq[Long]])
-      case StringTag => Json.obj("type" -> "String", "options" -> options.toSeq.asInstanceOf[Seq[String]])
-    }
-  }
+  override def toJson = Json.obj("options" -> options.toSeq.map(TypedJson(_)))
 }
 
 object Exists extends FromJson[Exists[_]] {
