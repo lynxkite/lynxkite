@@ -183,7 +183,7 @@ class MetaGraphManager(val repositoryPath: String) {
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
     log.info(s"Saving $inst to disk.")
     val time = Timestamp.toString
-    val repo = Filename(repositoryPath)
+    val repo = Filename(repositoryPath) / "operations"
     val dumpFile = repo / s"dump-$time"
     val finalFile = repo / s"save-$time"
     dumpFile.createFromStrings(serializeOperation(inst))
@@ -223,7 +223,9 @@ class MetaGraphManager(val repositoryPath: String) {
   private def initializeFromDisk(): Unit = {
     val repo = new File(repositoryPath)
     if (!repo.exists) repo.mkdirs
-    val operationFiles = repo.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
+    val oprepo = new File(repo, "operations")
+    if (!oprepo.exists) oprepo.mkdirs
+    val operationFiles = oprepo.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
     for (file <- operationFiles) {
       loadInstanceFromDisk(file) match {
         case util.Success(instance) => internalApply(instance)
