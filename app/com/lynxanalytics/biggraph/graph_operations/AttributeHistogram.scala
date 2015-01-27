@@ -18,7 +18,8 @@ object AttributeHistogram extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val counts = scalar[Map[Int, Long]]
   }
-  def fromJson(j: JsValue) = AttributeHistogram(TypedJson.read[Bucketer[_]](j \ "bucketer"))
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type =
+    AttributeHistogram(TypedJson.read[Bucketer[_]](j \ "bucketer"))
 }
 import AttributeHistogram._
 case class AttributeHistogram[T](bucketer: Bucketer[T])
