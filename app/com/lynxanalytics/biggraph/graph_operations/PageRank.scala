@@ -16,7 +16,9 @@ object PageRank extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val pagerank = vertexAttribute[Double](inputs.vs.entity)
   }
-  def fromJson(j: JsValue) = PageRank((j \ "dampingFactor").as[Double], (j \ "iterations").as[Int])
+  def fromJson(j: JsValue) = PageRank(
+    (j \ "dampingFactor").as[Double],
+    (j \ "iterations").as[Int])
 }
 import PageRank._
 case class PageRank(dampingFactor: Double,
