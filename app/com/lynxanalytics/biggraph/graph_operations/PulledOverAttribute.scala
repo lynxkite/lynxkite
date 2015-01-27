@@ -24,7 +24,7 @@ object PulledOverVertexAttribute extends OpFromJson {
     val pop = PulledOverVertexAttribute[T]()
     pop(pop.originalAttr, originalAttr)(pop.function, function).result.pulledAttr
   }
-  def fromJson(j: JsValue) = PulledOverVertexAttribute[Any]()
+  def fromJson(j: JsValue) = PulledOverVertexAttribute()
 }
 case class PulledOverVertexAttribute[T]()
     extends TypedMetaGraphOp[PulledOverVertexAttribute.Input[T], PulledOverVertexAttribute.Output[T]] {

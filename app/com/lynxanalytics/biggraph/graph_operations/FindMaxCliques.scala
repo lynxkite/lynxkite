@@ -15,8 +15,8 @@ object FindMaxCliques extends OpFromJson {
     (j \ "needsBothDirections").as[Boolean])
 }
 case class FindMaxCliques(
-  minCliqueSize: Int,
-  needsBothDirections: Boolean = false) extends TypedMetaGraphOp[GraphInput, Segmentation] {
+    minCliqueSize: Int,
+    needsBothDirections: Boolean = false) extends TypedMetaGraphOp[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

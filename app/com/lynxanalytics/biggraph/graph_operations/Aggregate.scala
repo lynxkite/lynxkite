@@ -242,7 +242,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
-  abstract class MaxBy[Weight: Ordering, Value]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
+  abstract class MaxBy[Weight: Ordering, Value] extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
     override def toJson = Json.obj("weightOrderingType" -> implicitly[Ordering[Weight]].getClass.getName)
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
@@ -269,7 +269,7 @@ object Aggregator {
     def finalize(opt: Option[(Weight, Value)]) = opt.get._2
   }
   object MaxByDouble extends AggregatorFromJson { def fromJson(j: JsValue) = MaxByDouble() }
-  case class MaxByDouble[T]() extends MaxBy[Double, T]()
+  case class MaxByDouble[T]() extends MaxBy[Double, T]
 
   object Average extends AggregatorFromJson { def fromJson(j: JsValue) = Average() }
   case class Average() extends CompoundDoubleAggregator[Double] {
