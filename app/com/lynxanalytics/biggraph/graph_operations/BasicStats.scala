@@ -69,7 +69,7 @@ object CountAttributes extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val count = scalar[Long]
   }
-  def fromJson(j: JsValue) = CountAttributes[Any]()
+  def fromJson(j: JsValue) = CountAttributes()
 }
 case class CountAttributes[T]()
     extends TypedMetaGraphOp[CountAttributes.Input[T], CountAttributes.Output] {
@@ -88,7 +88,7 @@ case class CountAttributes[T]()
   }
 }
 
-object ComputeMinMax extends OpFromJson {
+object ComputeMinMax {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
@@ -99,17 +99,10 @@ object ComputeMinMax extends OpFromJson {
     val min = scalar[T]
     val max = scalar[T]
   }
-  def fromJson(j: JsValue) = (j \ "numeric").as[String] match {
-    case "scala.math.Numeric$DoubleIsFractional$" => ComputeMinMax[Double]()
-  }
 }
-case class ComputeMinMax[T: Numeric]()
+abstract class ComputeMinMax[T: Numeric]
     extends TypedMetaGraphOp[ComputeMinMax.Input[T], ComputeMinMax.Output[T]] {
   override val isHeavy = true
-  override def toJson = {
-    val num = implicitly[Numeric[T]]
-    Json.obj("numeric" -> num.getClass.getName)
-  }
   @transient override lazy val inputs = new ComputeMinMax.Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -144,6 +137,11 @@ case class ComputeMinMax[T: Numeric]()
     output(o.max, res._2)
   }
 }
+
+object ComputeMinMaxDouble extends OpFromJson {
+  def fromJson(j: JsValue) = ComputeMinMaxDouble()
+}
+case class ComputeMinMaxDouble() extends ComputeMinMax[Double]
 
 object ComputeTopValues extends OpFromJson {
   class Input[T] extends MagicInputSignature {

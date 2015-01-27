@@ -27,7 +27,7 @@ object FEBucketers {
       else StringBucketer(topVals, false))
         .asInstanceOf[Bucketer[T]]
     } else if (typeOf[T] =:= typeOf[Double]) {
-      val op = ComputeMinMax[Double]
+      val op = ComputeMinMaxDouble()
       val res = op(op.attribute, attr.runtimeSafeCast[Double]).result
       val min = res.min.value
       val max = res.max.value
