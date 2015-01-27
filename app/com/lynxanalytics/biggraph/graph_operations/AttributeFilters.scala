@@ -66,7 +66,7 @@ case class VertexAttributeFilter[T](filter: Filter[T])
   }
 }
 
-object NotFilter extends FromJson[Filter[_]] {
+object NotFilter extends FromJson[NotFilter[_]] {
   def fromJson(j: JsValue) =
     NotFilter(TypedJson.read[Filter[_]](j \ "filter"))
 }
@@ -75,7 +75,7 @@ case class NotFilter[T](filter: Filter[T]) extends Filter[T] {
   override def toJson = Json.obj("filter" -> filter.toTypedJson)
 }
 
-object AndFilter extends FromJson[Filter[_]] {
+object AndFilter extends FromJson[AndFilter[_]] {
   def fromJson(j: JsValue) = {
     val filters = (j \ "filters").as[Seq[JsValue]].map(j => TypedJson.read[Filter[_]](j))
     AndFilter(filters: _*)
@@ -89,7 +89,7 @@ case class AndFilter[T](filters: Filter[T]*) extends Filter[T] {
   }
 }
 
-object DoubleEQ extends FromJson[Filter[_]] {
+object DoubleEQ extends FromJson[DoubleEQ] {
   def fromJson(j: JsValue) = DoubleEQ((j \ "exact").as[Double])
 }
 case class DoubleEQ(exact: Double) extends Filter[Double] {
@@ -97,7 +97,7 @@ case class DoubleEQ(exact: Double) extends Filter[Double] {
   override def toJson = Json.obj("exact" -> exact)
 }
 
-object DoubleLT extends FromJson[Filter[_]] {
+object DoubleLT extends FromJson[DoubleLT] {
   def fromJson(j: JsValue) = DoubleLT((j \ "bound").as[Double])
 }
 case class DoubleLT(bound: Double) extends Filter[Double] {
@@ -105,7 +105,7 @@ case class DoubleLT(bound: Double) extends Filter[Double] {
   override def toJson = Json.obj("bound" -> bound)
 }
 
-object DoubleLE extends FromJson[Filter[_]] {
+object DoubleLE extends FromJson[DoubleLE] {
   def fromJson(j: JsValue) = DoubleLE((j \ "bound").as[Double])
 }
 case class DoubleLE(bound: Double) extends Filter[Double] {
@@ -113,7 +113,7 @@ case class DoubleLE(bound: Double) extends Filter[Double] {
   override def toJson = Json.obj("bound" -> bound)
 }
 
-object DoubleGT extends FromJson[Filter[_]] {
+object DoubleGT extends FromJson[DoubleGT] {
   def fromJson(j: JsValue) = DoubleGT((j \ "bound").as[Double])
 }
 case class DoubleGT(bound: Double) extends Filter[Double] {
@@ -121,7 +121,7 @@ case class DoubleGT(bound: Double) extends Filter[Double] {
   override def toJson = Json.obj("bound" -> bound)
 }
 
-object DoubleGE extends FromJson[Filter[_]] {
+object DoubleGE extends FromJson[DoubleGE] {
   def fromJson(j: JsValue) = DoubleGE((j \ "bound").as[Double])
 }
 case class DoubleGE(bound: Double) extends Filter[Double] {
@@ -129,7 +129,7 @@ case class DoubleGE(bound: Double) extends Filter[Double] {
   override def toJson = Json.obj("bound" -> bound)
 }
 
-object OneOf extends FromJson[Filter[_]] {
+object OneOf extends FromJson[OneOf[_]] {
   def fromJson(j: JsValue) = {
     (j \ "type").as[String] match {
       case "Long" => OneOf((j \ "options").as[Set[Long]])
@@ -149,7 +149,7 @@ case class OneOf[T: reflect.ClassTag](options: Set[T]) extends Filter[T] {
   }
 }
 
-object Exists extends FromJson[Filter[_]] {
+object Exists extends FromJson[Exists[_]] {
   def fromJson(j: JsValue) =
     Exists(TypedJson.read[Filter[_]](j \ "filter"))
 }
@@ -158,7 +158,7 @@ case class Exists[T](filter: Filter[T]) extends Filter[Vector[T]] {
   override def toJson = Json.obj("filter" -> filter.toTypedJson)
 }
 
-object ForAll extends FromJson[Filter[_]] {
+object ForAll extends FromJson[ForAll[_]] {
   def fromJson(j: JsValue) =
     ForAll(TypedJson.read[Filter[_]](j \ "filter"))
 }
@@ -167,7 +167,7 @@ case class ForAll[T](filter: Filter[T]) extends Filter[Vector[T]] {
   override def toJson = Json.obj("filter" -> filter.toTypedJson)
 }
 
-object PairEquals extends FromJson[Filter[_]] {
+object PairEquals extends FromJson[PairEquals[_]] {
   def fromJson(j: JsValue) = PairEquals()
 }
 case class PairEquals[T]() extends Filter[(T, T)] {
