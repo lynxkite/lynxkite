@@ -149,8 +149,10 @@ object EdgesForVertices extends OpFromJson {
       extends MagicOutput(instance) {
     val edges = scalar[Option[Seq[(ID, Edge)]]]
   }
-  def fromJson(j: JsValue) =
-    EdgesForVertices((j \ "vertexIdSet").as[Set[ID]], (j \ "maxNumEdges").as[Int], (j \ "bySource").as[Boolean])
+  def fromJson(j: JsValue) = EdgesForVertices(
+    (j \ "vertexIdSet").as[Set[ID]],
+    (j \ "maxNumEdges").as[Int],
+    (j \ "bySource").as[Boolean])
 }
 case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
     extends TypedMetaGraphOp[EdgesForVertices.Input, EdgesForVertices.Output] {

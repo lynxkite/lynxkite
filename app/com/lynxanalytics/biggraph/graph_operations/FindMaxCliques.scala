@@ -10,9 +10,13 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object FindMaxCliques extends OpFromJson {
-  def fromJson(j: JsValue) = FindMaxCliques((j \ "minCliqueSize").as[Int], (j \ "needsBothDirections").as[Boolean])
+  def fromJson(j: JsValue) = FindMaxCliques(
+    (j \ "minCliqueSize").as[Int],
+    (j \ "needsBothDirections").as[Boolean])
 }
-case class FindMaxCliques(minCliqueSize: Int, needsBothDirections: Boolean = false) extends TypedMetaGraphOp[GraphInput, Segmentation] {
+case class FindMaxCliques(
+  minCliqueSize: Int,
+  needsBothDirections: Boolean = false) extends TypedMetaGraphOp[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
@@ -21,11 +25,9 @@ case class FindMaxCliques(minCliqueSize: Int, needsBothDirections: Boolean = fal
     new Segmentation(inputs.vs.entity)
   }
 
-  override def toJson = {
-    Json.obj(
-      "minCliqueSize" -> minCliqueSize,
-      "needsBothDirections" -> needsBothDirections)
-  }
+  override def toJson = Json.obj(
+    "minCliqueSize" -> minCliqueSize,
+    "needsBothDirections" -> needsBothDirections)
 
   def execute(inputDatas: DataSet,
               o: Segmentation,
