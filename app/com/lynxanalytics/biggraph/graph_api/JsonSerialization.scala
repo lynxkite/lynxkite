@@ -17,12 +17,17 @@ object TypedJson {
       case "Double" => (j \ "data").as[Double].asInstanceOf[T]
       case "String" => (j \ "data").as[String].asInstanceOf[T]
       case cls =>
-        // Find the companion object.
-        val sym = reflect.runtime.currentMirror.staticModule(cls)
-        val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
-        val des = obj.asInstanceOf[FromJson[T]]
-        // Ask the companion object to parse the data.
-        des.fromJson(j \ "data")
+        try {
+          // Find the companion object.
+          val sym = reflect.runtime.currentMirror.staticModule(cls)
+          val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
+          val des = obj.asInstanceOf[FromJson[T]]
+          // Ask the companion object to parse the data.
+          des.fromJson(j \ "data")
+        } catch {
+          // Include more details in the exception.
+          case e: Throwable => throw new Exception(s"Failed to read $j", e)
+        }
     }
   }
 
