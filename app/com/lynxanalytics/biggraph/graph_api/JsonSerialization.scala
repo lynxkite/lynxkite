@@ -11,14 +11,28 @@ import play.api.libs.json
 // must have a companion object that extends FromJson[T].
 object TypedJson {
   // Re-creates the object from a TypedJson format.
-  def read[T <: ToJson](j: json.JsValue): T = {
-    // Find the companion object.
-    val cls = (j \ "class").as[String]
-    val sym = reflect.runtime.currentMirror.staticModule(cls)
-    val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
-    val des = obj.asInstanceOf[FromJson[T]]
-    // Ask the companion object to parse the data.
-    des.fromJson(j \ "data")
+  def read[T](j: json.JsValue): T = {
+    (j \ "class").as[String] match {
+      case "Long" => (j \ "data").as[Long].asInstanceOf[T]
+      case "Double" => (j \ "data").as[Double].asInstanceOf[T]
+      case "String" => (j \ "data").as[String].asInstanceOf[T]
+      case cls =>
+        // Find the companion object.
+        val sym = reflect.runtime.currentMirror.staticModule(cls)
+        val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
+        val des = obj.asInstanceOf[FromJson[T]]
+        // Ask the companion object to parse the data.
+        des.fromJson(j \ "data")
+    }
+  }
+
+  // Creates TypedJson for primitive values.
+  def apply(p: Any): json.JsValue = {
+    p match {
+      case p: Long => json.Json.obj("class" -> "Long", "data" -> p)
+      case p: Double => json.Json.obj("class" -> "Double", "data" -> p)
+      case p: String => json.Json.obj("class" -> "String", "data" -> p)
+    }
   }
 }
 
