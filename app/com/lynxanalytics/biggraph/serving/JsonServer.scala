@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.protection.Limitations
 
 class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -88,6 +89,14 @@ case class Empty(
   fake: Int = 0) // Needs fake field as JSON inception doesn't work otherwise.
 
 object ProductionJsonServer extends JsonServer {
+  // We check if licence is still valid.
+  if (Limitations.isExpired()) {
+    val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
+    println(message)
+    log.error(message)
+    System.exit(1)
+  }
+
   /**
    * Implicit JSON inception
    *
