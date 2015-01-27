@@ -13,7 +13,7 @@ object EdgesFromAttributeMatches extends OpFromJson {
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
-  def fromJson(j: JsValue) = EdgesFromAttributeMatches[Any]()
+  def fromJson(j: JsValue) = EdgesFromAttributeMatches()
 }
 case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], EdgesFromAttributeMatches.Output[T]] {
   import EdgesFromAttributeMatches._
@@ -49,7 +49,7 @@ object EdgesFromBipartiteAttributeMatches extends OpFromJson {
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.from.entity, inputs.to.entity)
   }
-  def fromJson(j: JsValue) = EdgesFromBipartiteAttributeMatches[Any]()
+  def fromJson(j: JsValue) = EdgesFromBipartiteAttributeMatches()
 }
 case class EdgesFromBipartiteAttributeMatches[T]() extends TypedMetaGraphOp[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
   import EdgesFromBipartiteAttributeMatches._

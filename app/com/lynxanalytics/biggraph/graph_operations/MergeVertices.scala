@@ -17,7 +17,7 @@ object MergeVertices extends OpFromJson {
     val belongsTo = edgeBundle(inputs.vs.entity, segments, EdgeBundleProperties.partialFunction)
     val representative = edgeBundle(segments, inputs.vs.entity, EdgeBundleProperties.embedding)
   }
-  def fromJson(j: JsValue) = MergeVertices[Any]()
+  def fromJson(j: JsValue) = MergeVertices()
 }
 import MergeVertices._
 // Merges vertices that match on an attribute.

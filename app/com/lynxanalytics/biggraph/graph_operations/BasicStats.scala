@@ -160,7 +160,7 @@ object ComputeTopValues extends OpFromJson {
     }
   }
   def fromJson(j: JsValue) =
-    ComputeTopValues[Any]((j \ "numTopValues").as[Int], (j \ "sampleSize").as[Int])
+    ComputeTopValues((j \ "numTopValues").as[Int], (j \ "sampleSize").as[Int])
 }
 case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
     extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {

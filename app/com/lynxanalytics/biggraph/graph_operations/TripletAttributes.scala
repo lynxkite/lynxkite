@@ -106,7 +106,7 @@ object VertexToEdgeAttribute extends OpFromJson {
     val mop = VertexToEdgeAttribute[T]()
     mop(mop.mapping, mapping)(mop.original, attr)(mop.target, edgeBundle).result.mappedAttribute
   }
-  def fromJson(j: JsValue) = VertexToEdgeAttribute[Any]()
+  def fromJson(j: JsValue) = VertexToEdgeAttribute()
 }
 case class VertexToEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {

@@ -20,7 +20,7 @@ object AttributeFallback extends OpFromJson {
     implicit val tt = inputs.originalAttr.typeTag
     val defaultedAttr = vertexAttribute[T](inputs.vs.entity)
   }
-  def fromJson(j: JsValue) = AttributeFallback[Any]()
+  def fromJson(j: JsValue) = AttributeFallback()
 }
 import AttributeFallback._
 case class AttributeFallback[T]() extends TypedMetaGraphOp[Input[T], Output[T]] {
