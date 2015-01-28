@@ -118,9 +118,9 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         if (!angular.equals(scope.request, q)) {
           scope.request = q;
           if (scope.global) {
-            scope.graphView = util.get('/ajax/globalView', scope.request);
+            scope.graph.view = util.get('/ajax/globalView', scope.request);
           } else {
-            scope.graphView = util.get('/ajax/complexView', scope.request);
+            scope.graph.view = util.get('/ajax/complexView', scope.request);
           }
         }
       }
