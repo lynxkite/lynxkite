@@ -362,13 +362,7 @@ trait MetaGraphOp extends Serializable with ToJson {
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
-  val gUID: UUID = {
-    val buffer = new ByteArrayOutputStream
-    val objectStream = new ObjectOutputStream(buffer)
-    objectStream.writeObject(this)
-    objectStream.close()
-    UUID.nameUUIDFromBytes(buffer.toByteArray)
-  }
+  val gUID = UUID.nameUUIDFromBytes(this.toTypedJson.toString.getBytes)
 
   override def toString = toStringStruct.toString
   def toStringStruct = ReflectionMutex.synchronized {
@@ -516,13 +510,21 @@ class ScalarData[T](val entity: Scalar[T],
 case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
                        vertexAttributes: Map[Symbol, Attribute[_]] = Map(),
-                       scalars: Map[Symbol, Scalar[_]] = Map()) {
+                       scalars: Map[Symbol, Scalar[_]] = Map())
+    extends ToJson {
   val all: Map[Symbol, MetaGraphEntity] =
     vertexSets ++ edgeBundles ++ vertexAttributes ++ scalars
   assert(all.size ==
     vertexSets.size + edgeBundles.size + vertexAttributes.size + scalars.size,
     "Cross type collision %s %s %s".format(
       vertexSets, edgeBundles, vertexAttributes))
+
+  override def toJson = {
+    import play.api.libs.json.{ JsObject, JsString }
+    new JsObject(all.toSeq.sortBy(_._1.name).map {
+      case (name, entity) => name.name -> JsString(entity.gUID.toString)
+    })
+  }
 
   def apply(name: Symbol) = all(name)
 
