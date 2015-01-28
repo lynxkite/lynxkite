@@ -468,7 +468,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return FEGraphResponse(vertexDiagrams, edgeDiagrams)
   }
 
-  def globalView(request: FEGlobalViewRequest): FEGlobalViewResponse = {
+  def globalView(user: User, request: FEGlobalViewRequest): FEGlobalViewResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
     assert(vertexSet.gUID == edgeBundle.srcVertexSet.gUID, "Bad vertex set for edge bundle.")
