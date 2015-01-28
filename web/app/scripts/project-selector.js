@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('projectSelector', function(util, hotkeys) {
+angular.module('biggraph').directive('projectSelector', function(util, hotkeys, $timeout) {
   return {
     restrict: 'E',
     scope: { name: '=', version: '=?' },
@@ -12,7 +12,14 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
           callback: function(e) { e.preventDefault(); scope.expandNewProject = true; },
         });
       scope.$watch('expandNewProject', function(ex) {
-        if (ex) { element.find('#new-project-name')[0].focus(); }
+        if (ex) {
+          $timeout(
+            function() {
+              element.find('#new-project-name')[0].focus();
+            },
+            0,
+            false); // Do not invoke apply as we don't change the scope.
+        }
       });
       scope.util = util;
       scope.data = util.nocache('/ajax/splash');
@@ -20,9 +27,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
       function getScalar(p, name) {
         for (var i = 0; i < p.scalars.length; ++i) {
           if (p.scalars[i].title === name) {
-            return util.get('/ajax/scalarValue', {
+            var res = util.get('/ajax/scalarValue', {
               scalarId: p.scalars[i].id, calculate: false
             });
+            res.details = { project: p.title, scalar: p.scalars[i] };
+            return res;
           }
         }
         return { error: 'Attribute not found: ' + name };
@@ -46,7 +55,8 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
         util.post('/ajax/createProject',
           {
             name: name,
-            notes: notes || ''
+            notes: notes || '',
+            privacy: scope.newProject.privacy,
           }, function() {
             scope.name = name;
           }).then(function() {
@@ -54,17 +64,36 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys) 
           });
       };
       scope.setProject = function(p) {
-        scope.name = p;
+        if (!p.error) {  // Ignore clicks on errored projects.
+          scope.name = p.name;
+        }
       };
-      scope.discardProject = function(p, event) {
-        // avoid opening project or refreshing splash automatically
-        event.preventDefault();
-        event.stopPropagation();
-        if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
-          util.post('/ajax/discardProject', { name: p }, function() {
+
+      scope.reportError = function() {
+        util.reportRequestError(scope.data, 'Project list could not be loaded.');
+      };
+
+      scope.menu = {
+        rename: function(kind, oldName, newName) {
+          if (oldName === newName) { return; }
+          util.post('/ajax/renameProject', { from: oldName, to: newName }, function() {
             // refresh splash manually
             scope.data = util.nocache('/ajax/splash');
           });
+        },
+        duplicate: function(kind, p) {
+          util.post('/ajax/forkProject', { from: p, to: 'Copy of ' + p }, function() {
+          // refresh splash manually
+          scope.data = util.nocache('/ajax/splash');
+          });
+        },
+        discard: function(kind, p) {
+          if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
+            util.post('/ajax/discardProject', { name: p }, function() {
+              // refresh splash manually
+              scope.data = util.nocache('/ajax/splash');
+            });
+          }
         }
       };
     },

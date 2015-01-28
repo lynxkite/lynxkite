@@ -8,7 +8,7 @@
     <!-- bower:css -->
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
     <link rel="stylesheet" href="bower_components/angular-hotkeys/build/hotkeys.min.css" />
-    <link rel="stylesheet" href="bower_components/angular-ui-layout/src/ui-layout.css" />
+    <link rel="stylesheet" href="bower_components/angular-ui-layout/ui-layout.css" />
     <link rel="stylesheet" href="bower_components/bootstrap-tokenfield/dist/css/bootstrap-tokenfield.css" />
     <!-- endbower -->
     <!-- endbuild -->
@@ -30,10 +30,11 @@
     <link rel="stylesheet" href="styles/brand-box.css">
     <link rel="stylesheet" href="styles/splash.css">
     <link rel="stylesheet" href="styles/project-graph.css">
+    <link rel="stylesheet" href="styles/report-error.css">
     <!-- endbuild -->
   </head>
   <body>
-    <div class="container-fluid" ng-view></div>
+    <div ng-view></div>
     <top-alerts></top-alerts>
 
     <!-- build:js scripts/vendor.js -->
@@ -50,7 +51,7 @@
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
     <script src="bower_components/angular-hotkeys/build/hotkeys.min.js"></script>
     <script src="bower_components/raf/index.js"></script>
-    <script src="bower_components/angular-ui-layout/src/ui-layout.js"></script>
+    <script src="bower_components/angular-ui-layout/ui-layout.js"></script>
     <script src="bower_components/bootstrap-tokenfield/dist/bootstrap-tokenfield.js"></script>
     <script src="bower_components/zeroclipboard/dist/ZeroClipboard.js"></script>
     <script src="bower_components/angular-cache/dist/angular-cache.min.js"></script>
@@ -88,6 +89,8 @@
     <script src="scripts/spark-status.js"></script>
     <script src="scripts/brand-box.js"></script>
     <script src="scripts/axis-options.js"></script>
+    <script src="scripts/project-settings.js"></script>
+    <script src="scripts/controllers/login.js"></script>
     <script src="scripts/global-view.js"></script>
     <script src="scripts/controllers/splash.js"></script>
     <script src="scripts/controllers/project.js"></script>
@@ -95,6 +98,8 @@
     <script src="scripts/controllers/operationParameters.js"></script>
     <script src="scripts/controllers/clusterManager.js"></script>
     <script src="scripts/controllers/demoMode.js"></script>
+    <script src="scripts/controllers/report-error.js"></script>
+    <script src="scripts/lazy-slider.js"></script>
     <!-- endbuild -->
   </body>
 </html>

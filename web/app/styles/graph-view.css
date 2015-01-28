@@ -1,4 +1,5 @@
-.split-screen > project-graph {
+.split-screen > .ui-layout-container:first-child,
+.ui-splitbar {
   overflow: hidden;
 }
 
@@ -17,12 +18,18 @@ svg.graph-view.loading {
 
 #svg-icons {
   /* Used as a source of icons. Must be loaded and laid out, but not visible. */
-  height: 0;
+  visibility: hidden;
+  position: fixed;
 }
 
 svg text {
   dominant-baseline: middle;
   pointer-events: none;
+}
+
+svg text.clicky {
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 svg .edge {
@@ -96,6 +103,7 @@ svg .vertex.center .icon {
 svg .bucket {
   font-size: 12px;
   fill: #888;
+  text-anchor: middle;
 }
 svg .bucket.highlight {
   fill: white;
@@ -120,6 +128,7 @@ svg .legend text {
 svg .loading {
   fill: #444;
 }
-svg .error {
+svg text.error {
   font-size: 20px;
+  fill: white;
 }

@@ -9,14 +9,15 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-//to run tests tagged as ViralTest only: sbt test-only *OperationsTest* -- -n ViralTest
-object ViralTest extends Tag("ViralTest")
-
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
-  val project = Project("Test_Project")
-  project.notes = "test project"
-  project.checkpointAfter("") // Initialize project.
+  def createProject(name: String) = {
+    val controller = new BigGraphController(this)
+    val request = CreateProjectRequest(name = name, notes = name, privacy = "public-write")
+    controller.createProject(null, request)
+    Project(name)
+  }
+  val project = createProject("Test_Project")
 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     ops.apply(
@@ -142,8 +143,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.edgeBundle.rdd.count == 8)
 
     val vAttrs = project.vertexAttributes.toMap
-    // 4 original +1 renamed +1 new_id
-    assert(vAttrs.size == 6)
+    // 5 original +1 renamed +1 new_id
+    assert(vAttrs.size == 7)
     val eAttrs = project.edgeAttributes.toMap
     // 2 original +1 renamed
     assert(eAttrs.size == 3)
@@ -172,13 +173,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   }
 
   test("Fingerprinting based on attributes") {
-    run("Import vertices", Map(
+    run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
       "header" -> "id,email,name",
       "delimiter" -> ",",
       "id-attr" -> "delete me",
       "filter" -> ""))
-    run("Import edges for existing vertices", Map(
+    run("Import edges for existing vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-edges.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
@@ -222,6 +223,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-example-connections.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
+      "filter" -> "",
       "base-id-attr" -> "name",
       "base-id-field" -> "src",
       "seg-id-attr" -> "name",
@@ -306,7 +308,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   }
 
   test("Convert vertices into edges") {
-    run("Import vertices", Map(
+    run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
       "header" -> "src,dst,color",
       "delimiter" -> ",",
@@ -324,8 +326,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(stringIDs == Seq("0", "1", "2"))
   }
 
-  test("Viral modeling segment logic", ViralTest) {
-    run("Import vertices", Map(
+  test("Viral modeling segment logic") {
+    run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-1.csv").getFile,
       "header" -> "id,num",
       "delimiter" -> ",",
@@ -333,7 +335,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "filter" -> "",
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"))
-    run("Import edges for existing vertices", Map(
+    run("Import edges for existing vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-1.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
@@ -370,14 +372,14 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.scalars("viral num coverage after iteration 1").value == 6)
   }
 
-  test("Viral modeling iteration logic", ViralTest) {
-    run("Import vertices", Map(
+  test("Viral modeling iteration logic") {
+    run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-2.csv").getFile,
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
       "filter" -> ""))
-    run("Import edges for existing vertices", Map(
+    run("Import edges for existing vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-2.csv").getFile,
       "header" -> "src,dst",
       "delimiter" -> ",",
@@ -403,33 +405,31 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
     val viral = project.vertexAttributes("viral num after iteration 3").runtimeSafeCast[Double]
-    assert(remapIDs(viral, stringID).collect.toMap == Map(
+    assert(remapIDs(viral, stringID).collect.toSeq.sorted == Seq(
       "0" -> 0.0,
       "1" -> 0.0,
-      "2" -> 1.0,
-      "3" -> 1.0,
-      "4" -> 3.0,
-      "5" -> 3.0,
       "10" -> 0.0,
-      "20" -> 1.0,
-      "30" -> 3.0,
       "100" -> 0.5,
-      "200" -> 2.0,
-      "1000" -> 1.25))
+      "2" -> 1.0,
+      "20" -> 1.0,
+      "200" -> 0.75,
+      "3" -> 1.0,
+      "30" -> 3.5,
+      "4" -> 3.0,
+      "5" -> 4.0))
     val spread = project.vertexAttributes("viral num spread over iterations").runtimeSafeCast[Double]
-    assert(remapIDs(spread, stringID).collect.toMap == Map(
+    assert(remapIDs(spread, stringID).collect.toSeq.sorted == Seq(
       "0" -> 0.0,
       "1" -> 0.0,
-      "2" -> 0.0,
-      "3" -> 0.0,
-      "4" -> 0.0,
-      "5" -> 0.0,
       "10" -> 1.0,
-      "20" -> 1.0,
-      "30" -> 1.0,
       "100" -> 2.0,
-      "200" -> 2.0,
-      "1000" -> 3.0))
+      "2" -> 0.0,
+      "20" -> 1.0,
+      "200" -> 3.0,
+      "3" -> 0.0,
+      "30" -> 1.0,
+      "4" -> 0.0,
+      "5" -> 0.0))
 
     run("Viral modeling", Map(
       "prefix" -> "viral2",
@@ -441,56 +441,56 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
     val viral2 = project.vertexAttributes("viral2 num after iteration 3").runtimeSafeCast[Double]
-    assert(remapIDs(viral2, stringID).collect.toMap == Map(
+    assert(remapIDs(viral2, stringID).collect.toSeq.sorted == Seq(
       "0" -> 0.0,
       "1" -> 0.0,
-      "2" -> 1.0,
-      "3" -> 1.0,
-      "4" -> 3.0,
-      "5" -> 3.0,
       "10" -> 0.0,
-      "20" -> 1.0,
-      "30" -> 3.0,
       "100" -> 0.5,
-      "200" -> 0.75))
+      "2" -> 1.0,
+      "20" -> 1.0,
+      "200" -> 0.75,
+      "3" -> 1.0,
+      "30" -> 3.5,
+      "4" -> 3.0,
+      "5" -> 4.0))
     val spread2 = project.vertexAttributes("viral2 num spread over iterations").runtimeSafeCast[Double]
-    assert(remapIDs(spread2, stringID).collect.toMap == Map(
+    assert(remapIDs(spread2, stringID).collect.toSeq.sorted == Seq(
       "0" -> 0.0,
       "1" -> 0.0,
-      "2" -> 0.0,
-      "3" -> 0.0,
-      "4" -> 0.0,
-      "5" -> 0.0,
       "10" -> 1.0,
-      "20" -> 1.0,
-      "30" -> 1.0,
       "100" -> 2.0,
-      "200" -> 3.0))
+      "2" -> 0.0,
+      "20" -> 1.0,
+      "200" -> 3.0,
+      "3" -> 0.0,
+      "30" -> 1.0,
+      "4" -> 0.0,
+      "5" -> 0.0))
 
     run("Viral modeling", Map(
       "prefix" -> "viral3",
       "target" -> "num",
-      "test_set_ratio" -> "0.05", // to check validation
-      "max_deviation" -> "2",
-      "seed" -> "10",
-      "iterations" -> "5",
+      "test_set_ratio" -> "0.4", // to check validation
+      "max_deviation" -> "10",
+      "seed" -> "0",
+      "iterations" -> "2",
       "min_num_defined" -> "1",
-      "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
+      "min_ratio_defined" -> "0.0"), on = project.segmentation("cliques").project)
     val roles3 = project.vertexAttributes("viral3 roles").runtimeSafeCast[String]
-    assert(remapIDs(roles3, stringID).collect.toMap == Map(
+    assert(remapIDs(roles3, stringID).collect.toSeq.sorted == Seq(
       "0" -> "train",
-      "1" -> "test",
-      "2" -> "train",
-      "3" -> "train",
-      "4" -> "train",
-      "5" -> "train",
+      "1" -> "train",
       "10" -> "train",
-      "20" -> "train",
-      "30" -> "train",
       "100" -> "train",
-      "200" -> "train",
-      "1000" -> "train"))
-    assert(project.scalars("viral3 num mean absolute prediction error after iteration 5").value == 0.625)
+      "1000" -> "train",
+      "2" -> "train",
+      "20" -> "test",
+      "200" -> "test",
+      "3" -> "test",
+      "30" -> "train",
+      "4" -> "train",
+      "5" -> "test"))
+    assert(project.scalars("viral3 num mean absolute prediction error after iteration 1").value == 0.5)
   }
 
   test("Merge two attributes") {
@@ -500,5 +500,91 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "age"))
     }
     run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "gender"))
+  }
+
+  test("Aggregate edge attribute to vertices, all directions") {
+    run("Example Graph")
+    run("Aggregate edge attribute to vertices", Map(
+      "prefix" -> "incoming",
+      "direction" -> "incoming edges",
+      "aggregate-weight" -> "sum"))
+    run("Aggregate edge attribute to vertices", Map(
+      "prefix" -> "outgoing",
+      "direction" -> "outgoing edges",
+      "aggregate-weight" -> "sum"))
+    run("Aggregate edge attribute to vertices", Map(
+      "prefix" -> "all",
+      "direction" -> "all edges",
+      "aggregate-weight" -> "sum"))
+    def value(direction: String) = {
+      val attr = project.vertexAttributes(s"${direction}_weight_sum").runtimeSafeCast[Double]
+      attr.rdd.collect.toSeq.sorted
+    }
+    assert(value("incoming") == Seq(0L -> 5.0, 1L -> 5.0))
+    assert(value("outgoing") == Seq(0L -> 1.0, 1L -> 2.0, 2L -> 7.0))
+    assert(value("all") == Seq(0L -> 6.0, 1L -> 7.0, 2L -> 7.0))
+  }
+
+  test("SQL import & export vertices") {
+    run("Example Graph")
+    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    run("Export vertex attributes to database", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "delete" -> "no",
+      "attrs" -> "id,name,age,income,gender"))
+    run("Import vertices from a database", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "columns" -> "name,age,income,gender",
+      "key" -> "id",
+      "id-attr" -> "x"))
+    val name = project.vertexAttributes("name").runtimeSafeCast[String]
+    val income = project.vertexAttributes("income").runtimeSafeCast[String]
+    assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+    assert(income.rdd.values.collect.toSeq.sorted == Seq("1000.0", "2000.0"))
+  }
+
+  test("SQL import & export edges") {
+    run("Example Graph")
+    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    run("Export edge attributes to database", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "delete" -> "yes",
+      "attrs" -> "weight,comment"))
+    run("Import vertices and edges from single database table", Map(
+      "db" -> db,
+      "table" -> "example_graph",
+      "columns" -> "srcVertexId,dstVertexId,weight,comment",
+      "key" -> "srcVertexId",
+      "src" -> "srcVertexId",
+      "dst" -> "dstVertexId"))
+    assert(project.vertexSet.rdd.count == 3) // Isolated Joe is lost.
+    val weight = project.edgeAttributes("weight").runtimeSafeCast[String]
+    val comment = project.edgeAttributes("comment").runtimeSafeCast[String]
+    assert(weight.rdd.values.collect.toSeq.sorted == Seq("1.0", "2.0", "3.0", "4.0"))
+    assert(comment.rdd.values.collect.toSeq.sorted == Seq("Adam loves Eve", "Bob envies Adam", "Bob loves Eve", "Eve loves Adam"))
+  }
+
+  test("CSV import & export vertices") {
+    run("Example Graph")
+    val path = dataManager.repositoryPath.toString + "/csv-export-test"
+    run("Export vertex attributes to file", Map(
+      "path" -> path,
+      "link" -> "link",
+      "attrs" -> "id,name,age,income,gender",
+      "format" -> "CSV"))
+    val header = scala.io.Source.fromFile(path + "/header").mkString
+    run("Import vertices from CSV files", Map(
+      "files" -> (path + "/data/*"),
+      "header" -> header,
+      "delimiter" -> ",",
+      "filter" -> "",
+      "id-attr" -> "x"))
+    val name = project.vertexAttributes("name").runtimeSafeCast[String]
+    val income = project.vertexAttributes("income").runtimeSafeCast[String]
+    assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+    assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
   }
 }

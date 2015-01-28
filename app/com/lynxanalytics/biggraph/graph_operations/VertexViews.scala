@@ -14,6 +14,8 @@ trait AttributeFromGUID[T] extends Serializable {
   protected val attributeGUID: UUID
   def attribute(implicit manager: MetaGraphManager) =
     manager.vertexAttribute(attributeGUID).asInstanceOf[Attribute[T]]
+  def isEmpty = attributeGUID == null
+  def nonEmpty = !isEmpty
 }
 
 class BucketedAttribute[T] private (

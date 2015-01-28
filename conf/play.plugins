@@ -1,6 +1,0 @@
-9994:securesocial.core.DefaultAuthenticatorStore
-9995:securesocial.core.DefaultIdGenerator
-9997:securesocial.controllers.DefaultTemplatesPlugin
-9998:com.lynxanalytics.biggraph.serving.UserProvider
-10002:securesocial.core.providers.GoogleProvider
-10004:securesocial.core.providers.UsernamePasswordProvider

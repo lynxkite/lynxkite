@@ -33,7 +33,7 @@ case class GCEManagedCluster(clusterName: String,
 
   waitUp
 
-  val sparkContext: SparkContext = BigGraphSparkContext(applicationName, clusterURL)
+  val sparkContext: SparkContext = BigGraphSparkContext(applicationName)
 
   override def allowsClusterResize: Boolean = true
 

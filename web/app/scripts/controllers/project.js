@@ -256,6 +256,11 @@ angular.module('biggraph')
       return this.project && this.project.$resolved && !this.project.$error;
     };
 
+    Side.prototype.reportLoadingError = function() {
+      return util.reportRequestError(
+          this.project, 'Could not load project: ' + this.state.projectName);
+    };
+
     Side.prototype.toggleAttributeTitle = function(setting, value) {
       if (this.state.attributeTitles[setting] === value) {
         // Clicking the same attribute setting again turns it off.
@@ -484,7 +489,9 @@ angular.module('biggraph')
       this.scalars = {};
       for (var i = 0; i < scalars.length; ++i) {
         var s = scalars[i];
-        this.scalars[s.title] = util.get('/ajax/scalarValue', { scalarId: s.id, calculate: true });
+        var res = util.get('/ajax/scalarValue', { scalarId: s.id, calculate: true });
+        res.details = { project: this.state.projectName, scalar: s };
+        this.scalars[s.title] = res;
       }
     };
 
@@ -534,6 +541,7 @@ angular.module('biggraph')
     Side.prototype.onProjectLoaded = function() {
       this.cleanState();
       $scope.leftToRightBundle = getLeftToRightBundle();
+      $scope.rightToLeftBundle = getRightToLeftBundle();
       this.loadScalars();
       this.updateViewData();
       if (!this.project.vertexSet) {
@@ -598,6 +606,17 @@ angular.module('biggraph')
       if (right.isSegmentationOf(left)) {
         return left.getBelongsTo(right).id;
       }
+      // If it is the same project on both sides, use its internal edges.
+      if (left.project.name === right.project.name) {
+        return left.project.edgeBundle;
+      }
+      return undefined;
+    }
+
+    function getRightToLeftBundle() {
+      var left = $scope.left;
+      var right = $scope.right;
+      if (!left.loaded() || !right.loaded()) { return undefined; }
       // If it is the same project on both sides, use its internal edges.
       if (left.project.name === right.project.name) {
         return left.project.edgeBundle;

@@ -6,19 +6,27 @@ import subprocess
 import thread
 import time
 import urllib2
+import os
+import signal
+import sys
 
 flags = argparse.ArgumentParser(
   description='Runs a script if a URL is not responsive or when requested through a web UI.')
 flags.add_argument('--status_port', type=int,
     help='Port for the web UI.', required=True)
-flags.add_argument('--watched_url',
-    help='URL to watch.', required=True)
+def splitURLRecord(record):
+  url, timeout = record.split('@')
+  return (url, int(timeout))
+flags.add_argument('--watched_urls', type=lambda s: [splitURLRecord(r) for r in s.split(',')],
+    help='URLs to watch. A comma separated list of URL@timeout pairs.', required=True)
 flags.add_argument('--sleep_seconds', type=int,
     help='Time between health checks.', required=True)
 flags.add_argument('--max_failures', type=int,
     help='Number of failures before the script is run.', required=True)
 flags.add_argument('--script',
     help='Script to run when the port is unresponsive.', required=True)
+flags.add_argument('--pid_file',
+    help='Where to put the PID file for this watchdof.', required=True)
 flags = flags.parse_args()
 
 
@@ -81,7 +89,10 @@ class Server(BaseHTTPServer.HTTPServer):
 
   def restart(self):
     self.log.append('!')
-    subprocess.call(flags.script, shell=True)
+    subprocess.call(
+      flags.script,
+      shell=True,
+      preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
 
 
 def monitor_thread(server):
@@ -95,15 +106,24 @@ def monitor_thread(server):
 
 
 def health_check():
-  '''Returns True if the URL returns HTTP status 200 within a second.'''
+  '''Returns True if all watched URLs returns HTTP status 200 within the specified timeout.'''
   try:
-    urllib2.urlopen(flags.watched_url, timeout=1)
+    for (url, timeout) in flags.watched_urls:
+      urllib2.urlopen(url, timeout=timeout)
   except urllib2.URLError:
     return False
   return True
 
 
 if __name__ == '__main__':
+  pidfile = flags.pid_file
+  if os.path.isfile(pidfile):
+    print "%s already exists, exiting" % pidfile
+    sys.exit()
+  else:
+    with file(pidfile, 'w') as f:
+      f.write(str(os.getpid()))
+  
   server = Server()
   thread.start_new_thread(monitor_thread, (server,))
   server.serve_forever()

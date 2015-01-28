@@ -3,19 +3,31 @@
 angular.module('biggraph').directive('projectGraph', function (util) {
   return {
     restrict: 'E',
-    scope: { left: '=', right: '=', leftToRightBundle: '=', contextMenu: '=' },
+    scope: {
+      left: '=',
+      right: '=',
+      leftToRightBundle: '=',
+      rightToLeftBundle: '=',
+      contextMenu: '=' },
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope, element) {
       util.deepWatch(scope, 'left', updateRequest);
       util.deepWatch(scope, 'right', updateRequest);
       util.deepWatch(scope, 'leftToRightBundle', updateRequest);
+      util.deepWatch(scope, 'rightToLeftBundle', updateRequest);
 
       scope.onIconsLoaded = function() {
         scope.$broadcast('#svg-icons is loaded');
       };
 
+      scope.graph = {};
       function updateRequest() {
+        // This indirection makes it certain that graph-view does not see more recent data than
+        // project-graph does.
+        scope.graph.left = angular.copy(scope.left, scope.graph.left);
+        scope.graph.right = angular.copy(scope.right, scope.graph.right);
+
         scope.global = false;
         var sides = [];
         if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
@@ -32,8 +44,13 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         for (var i = 0; i < sides.length; ++i) {
           var viewData = sides[i];
           if (viewData.graphMode === 'global') {
-            updateGlobal(viewData);
-            return;
+            // TODO: Make this a per-side setting.
+            scope.global = true;
+            q = {
+              vertexSetId: viewData.vertexSet.id,
+              edgeBundleId: viewData.edgeBundle.id,
+            };
+            break;
           }
           if (viewData.edgeBundle !== undefined) {
             q.edgeBundles.push({
@@ -83,37 +100,38 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             srcIdx: 0,
             dstIdx: 1,
             edgeBundleId: scope.leftToRightBundle,
+            filters: [],
             edgeWeightId: '',
           });
         }
-        scope.request = q;
-      }
-
-      function updateGlobal(vd) {
-        scope.global = true;
-        scope.request = {
-          vertexSetId: vd.vertexSet.id,
-          edgeBundleId: vd.edgeBundle.id,
-        };
-      }
-
-      util.deepWatch(scope, 'request', function() {
-        if (scope.request) {
+        if (sides.length === 2 && scope.rightToLeftBundle !== undefined) {
+          q.edgeBundles.push({
+            srcDiagramId: 'idx[1]',
+            dstDiagramId: 'idx[0]',
+            srcIdx: 1,
+            dstIdx: 0,
+            edgeBundleId: scope.rightToLeftBundle,
+            filters: [],
+            edgeWeightId: '',
+          });
+        }
+        if (!angular.equals(scope.request, q)) {
+          scope.request = q;
           if (scope.global) {
             scope.graphView = util.get('/ajax/globalView', scope.request);
           } else {
             scope.graphView = util.get('/ajax/complexView', scope.request);
           }
         }
-      });
+      }
 
-      scope.$watch('graphView', updateTSV);
-      scope.$watch('graphView.$resolved', updateTSV);
+      scope.$watch('graph.view', updateTSV);
+      scope.$watch('graph.view.$resolved', updateTSV);
       function updateTSV() {
         // Generate the TSV representation.
         scope.tsv = '';
-        var gv = scope.graphView;
-        if (!gv || !gv.$resolved || scope.global) {
+        var gv = scope.graph.view;
+        if (!gv || !gv.$resolved || gv.$error || scope.global) {
           return;
         }
         var sides = [scope.left, scope.right];

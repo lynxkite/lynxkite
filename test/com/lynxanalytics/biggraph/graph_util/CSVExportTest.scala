@@ -5,39 +5,44 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
+import com.lynxanalytics.biggraph.graph_operations.{ ExampleGraph, IdAsAttribute }
 
 class CSVExportTest extends FunSuite with TestGraphOp {
   test("We can export attributes") {
     val sampleOut = ExampleGraph()().result
     assert(CSVExport.exportVertexAttributes(
-      Seq(sampleOut.name, sampleOut.age),
-      Seq("name", "age")).toSortedString ==
-      """|"vertexId","name","age"
-         |0,"Adam",20.3
-         |1,"Eve",18.2
-         |2,"Bob",50.3
-         |3,"Isolated Joe",2.0
+      sampleOut.vertices,
+      Map(
+        "vertexId" -> IdAsAttribute.run(sampleOut.vertices),
+        "name" -> sampleOut.name,
+        "age" -> sampleOut.age)).toString ==
+      """|"age","name","vertexId"
+         |20.3,"Adam",0
+         |18.2,"Eve",1
+         |50.3,"Bob",2
+         |2.0,"Isolated Joe",3
          |""".stripMargin)
     assert(CSVExport.exportEdgeAttributes(
       sampleOut.edges,
-      Seq(sampleOut.comment),
-      Seq("comment")).toSortedString ==
-      """|"edgeId","srcVertexId","dstVertexId","comment"
-         |0,0,1,"Adam loves Eve"
-         |1,1,0,"Eve loves Adam"
-         |2,2,0,"Bob envies Adam"
-         |3,2,1,"Bob loves Eve"
+      Map("comment" -> sampleOut.comment)).toString ==
+      """|"srcVertexId","dstVertexId","comment"
+         |0,1,"Adam loves Eve"
+         |1,0,"Eve loves Adam"
+         |2,0,"Bob envies Adam"
+         |2,1,"Bob loves Eve"
          |""".stripMargin)
   }
 
   test("We can save a CSV to a dir") {
     val sampleOut = ExampleGraph()().result
-    val cSVData = CSVExport.exportVertexAttributes(
-      Seq(sampleOut.name, sampleOut.age),
-      Seq("name", "age"))
+    val csvData = CSVExport.exportVertexAttributes(
+      sampleOut.vertices,
+      Map(
+        "vertexId" -> IdAsAttribute.run(sampleOut.vertices),
+        "name" -> sampleOut.name,
+        "age" -> sampleOut.age))
     val targetDir = tempDir("csv_save_target_dir")
-    cSVData.saveToDir(Filename(targetDir.toString))
+    csvData.saveToDir(Filename(targetDir.toString))
 
     val dirSnapshot = TestUtils.runShellCommand(
       """|cd %s
@@ -53,23 +58,23 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |********
          |./data/part-00000
          |========
-         |0,"Adam",20.3
+         |20.3,"Adam",0
          |********
          |./data/part-00001
          |========
-         |1,"Eve",18.2
+         |18.2,"Eve",1
          |********
          |./data/part-00002
          |========
-         |2,"Bob",50.3
+         |50.3,"Bob",2
          |********
          |./data/part-00003
          |========
-         |3,"Isolated Joe",2.0
+         |2.0,"Isolated Joe",3
          |********
          |./header
          |========
-         |"vertexId","name","age"
+         |"age","name","vertexId"
          |********
          |""".stripMargin)
   }

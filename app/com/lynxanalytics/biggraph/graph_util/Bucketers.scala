@@ -12,6 +12,8 @@ trait Bucketer[T] extends Serializable {
   def bucketLabels: Seq[String]
   def bucketFilters: Seq[String] = Seq() // Filter string equivalent of the bucket. (Optional.)
   def labelType: String
+  def isEmpty = false
+  final def nonEmpty = !isEmpty
 }
 
 case class EmptyBucketer() extends Bucketer[Nothing] {
@@ -19,6 +21,7 @@ case class EmptyBucketer() extends Bucketer[Nothing] {
   def whichBucket(value: Nothing) = ???
   def bucketLabels: Seq[String] = Seq("")
   def labelType = ""
+  override def isEmpty = true
 }
 
 abstract class EnumBucketer[T](options: Seq[T], hasOther: Boolean) extends Bucketer[T] {

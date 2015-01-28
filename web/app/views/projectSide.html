@@ -26,7 +26,8 @@
       <div class="clearfix"></div>
     </div>
     <div class="panel-body">
-      {{side.project.$error}}
+      Could not load project.
+      <i class="pull-right"><a href ng-click="side.reportLoadingError()">report problem</a></i>
     </div>
   </div>
 
@@ -55,6 +56,10 @@
           </form>
           <!-- The floppy sends the request if something has been entered. -->
           <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? side.saveAs(saveAsName) : 0"></i>
+        </label>
+        <label class="btn btn-default" ng-click="showSettings = !showSettings"
+          tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-cog"></i>
         </label>
         <label class="btn btn-default" ng-click="side.close()"
           tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
@@ -102,6 +107,11 @@
 
     <div class="list-group">
 
+      <!-- Project settings. -->
+      <div class="list-group-item project-settings" ng-if="showSettings">
+        <project-settings project="side.project" visible="$parent.showSettings"></project-settings>
+      </div>
+
       <!-- Extra controls for the sampled view. -->
       <div class="list-group-item extra-controls"
         ng-if="side.state.graphMode === 'sampled'">
@@ -144,7 +154,7 @@
                 <div class="input-group-btn">
                   <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
                     Pick
-                  </button><button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                  </button><button class="btn btn-default dropdown-toggle" dropdown-toggle data-toggle="dropdown">
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu">
@@ -179,9 +189,7 @@
           <tr>
             <td>Buckets:</td>
             <td>
-              <input
-                tooltip="{{side.state.bucketCount}}&times;{{side.state.bucketCount}} buckets" tooltip-placement="bottom"
-                type="range" min="1" max="10" step="1" ng-model="side.state.bucketCount">
+              <lazy-slider value="side.state.bucketCount"></lazy-slider>
             </td>
           </tr>
         </table>

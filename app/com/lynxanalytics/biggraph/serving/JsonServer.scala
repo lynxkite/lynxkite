@@ -1,68 +1,69 @@
 package com.lynxanalytics.biggraph.serving
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.mvc
+import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json
+import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import play.api.mvc
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import play.api.libs.functional.syntax.toContraFunctorOps
-import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import com.lynxanalytics.biggraph.protection.Limitations
 
-object LynxUser extends securesocial.core.Authorization {
-  def isAuthorized(user: securesocial.core.Identity) = user.email.get.endsWith("@lynxanalytics.com")
-}
-
-class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
+class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
-  def action[A](parser: mvc.BodyParser[A])(block: mvc.Request[A] => mvc.Result): mvc.Action[A] = {
-    // Turn off authentication in development mode.
-    if (productionMode) {
-      SecuredAction(authorize = LynxUser, ajaxCall = true)(parser)(block(_))
-    } else {
-      mvc.Action(parser)(block(_))
+  def action[A](parser: mvc.BodyParser[A])(block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
+    asyncAction(parser) { (user, request) =>
+      Future(block(user, request))
     }
   }
 
-  // It would be great to merge this with action[A], but the compiler crashes when I try.
   def asyncAction[A](parser: mvc.BodyParser[A])(
-    block: mvc.Request[A] => concurrent.Future[mvc.SimpleResult]): mvc.Action[A] = {
-    // Turn off authentication in development mode.
+    block: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
     if (productionMode) {
-      SecuredAction(authorize = LynxUser, ajaxCall = true).async(parser)(block(_))
+      // TODO: Redirect HTTP to HTTPS. (This will be easier in Play 2.3.)
+      mvc.Action.async(parser) { request =>
+        UserProvider.get(request) match {
+          case Some(user) => block(user, request)
+          case None => Future.successful(Unauthorized)
+        }
+      }
     } else {
-      mvc.Action.async(parser)(block(_))
+      // No authentication in development mode.
+      mvc.Action.async(parser) { request => block(User.fake, request) }
     }
   }
 
-  def jsonPost[I: json.Reads, O: json.Writes](handler: I => O) = {
-    action(parse.json) { request =>
-      log.info(s"POST ${request.path} ${request.body}")
+  def jsonPost[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
+    action(parse.json) { (user, request) =>
+      log.info(s"$user POST ${request.path} ${request.body}")
       val i = request.body.as[I]
-      Ok(json.Json.toJson(handler(i)))
+      Ok(json.Json.toJson(handler(user, i)))
     }
   }
 
-  def jsonQuery[I: json.Reads, R](request: mvc.Request[mvc.AnyContent])(handler: I => R): R = {
+  def jsonQuery[I: json.Reads, R](user: User, request: mvc.Request[mvc.AnyContent])(handler: (User, I) => R): R = {
     val key = "q"
     val value = request.getQueryString(key)
     assert(value.nonEmpty, s"Missing query parameter $key.")
     val s = value.get
-    log.info(s"GET ${request.path} $s")
+    log.info(s"$user GET ${request.path} $s")
     val i = json.Json.parse(s).as[I]
-    handler(i)
+    handler(user, i)
   }
 
-  def jsonGet[I: json.Reads, O: json.Writes](handler: I => O) = {
-    action(parse.anyContent) { request =>
-      jsonQuery(request) { i: I =>
+  def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
+    action(parse.anyContent) { (user, request) =>
+      jsonQuery(user, request) { (user: User, i: I) =>
         try {
-          Ok(json.Json.toJson(handler(i)))
+          Ok(json.Json.toJson(handler(user, i)))
         } catch {
           case flying: FlyingResult => flying.result
         }
@@ -70,12 +71,17 @@ class JsonServer extends mvc.Controller with securesocial.core.SecureSocial {
     }
   }
 
-  def jsonFuture[I: json.Reads, O: json.Writes](handler: I => concurrent.Future[O]) = {
-    asyncAction(parse.anyContent) { request =>
-      jsonQuery(request) { i: I =>
-        handler(i).map(o => Ok(json.Json.toJson(o)))
+  def jsonFuture[I: json.Reads, O: json.Writes](handler: (User, I) => Future[O]) = {
+    asyncAction(parse.anyContent) { (user, request) =>
+      jsonQuery(user, request) { (user: User, i: I) =>
+        handler(user, i).map(o => Ok(json.Json.toJson(o)))
       }
     }
+  }
+
+  def healthCheck(checkHealthy: () => Unit) = mvc.Action { request =>
+    checkHealthy()
+    Ok("Server healthy")
   }
 }
 
@@ -83,6 +89,14 @@ case class Empty(
   fake: Int = 0) // Needs fake field as JSON inception doesn't work otherwise.
 
 object ProductionJsonServer extends JsonServer {
+  // We check if licence is still valid.
+  if (Limitations.isExpired()) {
+    val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
+    println(message)
+    log.error(message)
+    System.exit(1)
+  }
+
   /**
    * Implicit JSON inception
    *
@@ -142,6 +156,7 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rDiscardProjectRequest = json.Json.reads[DiscardProjectRequest]
+  implicit val rRenameProjectRequest = json.Json.reads[RenameProjectRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
@@ -149,6 +164,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rForkProjectRequest = json.Json.reads[ForkProjectRequest]
   implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
   implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
+  implicit val rProjectSettingsRequest = json.Json.reads[ProjectSettingsRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
@@ -159,9 +175,9 @@ object ProductionJsonServer extends JsonServer {
 
   // File upload.
   def upload = {
-    action(parse.multipartFormData) { request =>
+    action(parse.multipartFormData) { (user, request) =>
       val upload = request.body.file("file").get
-      log.info(s"upload: ${upload.filename}")
+      log.info(s"upload: $user ${upload.filename}")
       val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
       val baseName = upload.filename.replace(" ", "_")
       val tmpName = s"$baseName.$Timestamp"
@@ -172,7 +188,9 @@ object ProductionJsonServer extends JsonServer {
       finally stream.close()
       val digest = md.digest().map("%02x".format(_)).mkString
       val finalName = s"$baseName.$digest"
-      val finalFile = dataRepo / "uploads" / finalName
+      val uploadsDir = dataRepo / "uploads"
+      uploadsDir.mkdirs() // Create the directory if it does not already exist.
+      val finalFile = uploadsDir / finalName
       if (finalFile.exists) {
         log.info(s"The uploaded file ($tmpFile) already exists (as $finalFile).")
       } else {
@@ -183,10 +201,10 @@ object ProductionJsonServer extends JsonServer {
     }
   }
 
-  def download = action(parse.anyContent) { request =>
+  def download = action(parse.anyContent) { (user, request) =>
     import play.api.libs.concurrent.Execution.Implicits._
     import scala.collection.JavaConversions._
-    log.info(s"download: ${request.path}")
+    log.info(s"download: $user ${request.path}")
     val path = Filename(request.getQueryString("path").get)
     val name = Filename(request.getQueryString("name").get)
     // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
@@ -194,7 +212,7 @@ object ProductionJsonServer extends JsonServer {
     val length = files.map(_.length).sum
     log.info(s"downloading $length bytes: $files")
     val stream = new java.io.SequenceInputStream(files.view.map(_.open).iterator)
-    mvc.SimpleResult(
+    mvc.Result(
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
         CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
@@ -220,6 +238,7 @@ object ProductionJsonServer extends JsonServer {
   def startingVertexSetsGet = jsonGet(bigGraphController.startingVertexSets)
   def createProject = jsonPost(bigGraphController.createProject)
   def discardProject = jsonPost(bigGraphController.discardProject)
+  def renameProject = jsonPost(bigGraphController.renameProject)
   def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
   def splash = jsonGet(bigGraphController.splash)
@@ -227,12 +246,14 @@ object ProductionJsonServer extends JsonServer {
   def forkProject = jsonPost(bigGraphController.forkProject)
   def undoProject = jsonPost(bigGraphController.undoProject)
   def redoProject = jsonPost(bigGraphController.redoProject)
+  def changeProjectSettings = jsonPost(bigGraphController.changeProjectSettings)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
   def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
+  def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
@@ -250,4 +271,4 @@ object ProductionJsonServer extends JsonServer {
 }
 
 // Throw FlyingResult anywhere to generate non-200 HTTP responses.
-class FlyingResult(val result: mvc.SimpleResult) extends Exception(result.toString)
+class FlyingResult(val result: mvc.Result) extends Exception(result.toString)

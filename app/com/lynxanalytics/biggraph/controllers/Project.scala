@@ -5,16 +5,34 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.serving.User
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
 class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   override def toString = projectName
+  override def equals(p: Any) =
+    p.isInstanceOf[Project] && projectName == p.asInstanceOf[Project].projectName
+  override def hashCode = projectName.hashCode
+
   val separator = "|"
   assert(!projectName.contains(separator), s"Invalid project name: $projectName")
-  val path: SymbolPath = s"projects/$projectName"
+  val rootDir: SymbolPath = s"projects/$projectName"
+  // Part of the state that needs to be checkpointed.
+  val checkpointedDir: SymbolPath = rootDir / "checkpointed"
   def toFE: FEProject = {
-    assert(manager.tagExists(path / "notes"), s"No such project: $projectName")
+    Try(unsafeToFE) match {
+      case Success(fe) => fe
+      case Failure(ex) => FEProject(
+        name = projectName,
+        error = ex.getMessage
+      )
+    }
+  }
+
+  // May raise an exception.
+  private def unsafeToFE: FEProject = {
+    assert(manager.tagExists(checkpointedDir / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
@@ -24,6 +42,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
       FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
     }
+    def feList(things: Iterable[(String, TypedEntity[_])]) = {
+      things.map { case (name, e) => feAttr(e, name) }.toList
+    }
     val members = if (isSegmentation) {
       Some(feAttr(asSegmentation.membersAttribute, "$members", isInternal = true))
     } else {
@@ -31,27 +52,35 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
 
     FEProject(
-      projectName, lastOperation, nextOperation, vs, eb, notes,
-      scalars.map { case (name, scalar) => feAttr(scalar, name) }.toList,
-      vertexAttributes.map { case (name, attr) => feAttr(attr, name) }.toList ++ members,
-      edgeAttributes.map { case (name, attr) => feAttr(attr, name) }.toList,
-      segmentations.map(_.toFE).toList,
-      opCategories = List())
+      name = projectName,
+      undoOp = lastOperation,
+      redoOp = nextOperation,
+      readACL = readACL,
+      writeACL = writeACL,
+      vertexSet = vs,
+      edgeBundle = eb,
+      notes = notes,
+      scalars = feList(scalars),
+      vertexAttributes = feList(vertexAttributes) ++ members,
+      edgeAttributes = feList(edgeAttributes),
+      segmentations = segmentations.map(_.toFE).toList)
   }
 
-  private def checkpoints: Seq[String] = get("checkpoints") match {
+  private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
     case "" => Seq()
     case x => x.split(java.util.regex.Pattern.quote(separator), -1)
   }
-  private def checkpoints_=(cs: Seq[String]): Unit = set("checkpoints", cs.mkString(separator))
-  private def checkpointIndex = get("checkpointIndex") match {
+  private def checkpoints_=(cs: Seq[String]): Unit =
+    set(rootDir / "checkpoints", cs.mkString(separator))
+  private def checkpointIndex = get(rootDir / "checkpointIndex") match {
     case "" => 0
     case x => x.toInt
   }
-  private def checkpointIndex_=(x: Int): Unit = set("checkpointIndex", x.toString)
+  private def checkpointIndex_=(x: Int): Unit =
+    set(rootDir / "checkpointIndex", x.toString)
 
-  private def lastOperation = get("lastOperation")
-  private def lastOperation_=(x: String): Unit = set("lastOperation", x)
+  private def lastOperation = get(checkpointedDir / "lastOperation")
+  private def lastOperation_=(x: String): Unit = set(checkpointedDir / "lastOperation", x)
   private def nextOperation = manager.synchronized {
     val i = checkpointIndex + 1
     if (checkpoints.size <= i) ""
@@ -66,10 +95,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       lastOperation = op
       val nextIndex = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
       val timestamp = Timestamp.toString
-      val checkpoint = s"checkpoints/$path/$timestamp"
-      checkpoints = checkpoints.take(nextIndex) :+ checkpoint
+      val checkpoint = rootDir / "checkpoint" / timestamp
+      checkpoints = checkpoints.take(nextIndex) :+ checkpoint.toString
       checkpointIndex = nextIndex
-      cp(path, checkpoint)
+      cp(checkpointedDir, checkpoint)
     }
   }
 
@@ -86,62 +115,90 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
 
   def undo(): Unit = manager.synchronized {
-    // checkpoints and checkpointIndex are not restored, but copied over from the current state.
-    val c = checkpoints
-    val i = checkpointIndex
-    assert(i > 0, s"Already at checkpoint $i.")
-    cp(c(i - 1), path)
-    checkpointIndex = i - 1
-    checkpoints = c
+    assert(checkpointIndex > 0, s"Already at checkpoint $checkpointIndex.")
+    checkpointIndex -= 1
+    cp(checkpoints(checkpointIndex), checkpointedDir)
   }
   def redo(): Unit = manager.synchronized {
-    // checkpoints and checkpointIndex are not restored, but copied over from the current state.
-    val c = checkpoints
-    val i = checkpointIndex
-    assert(i < c.size - 1, s"Already at checkpoint $i of ${c.size}.")
-    cp(c(i + 1), path)
-    checkpointIndex = i + 1
-    checkpoints = c
+    assert(checkpointIndex < checkpoints.size - 1,
+      s"Already at checkpoint $checkpointIndex of ${checkpoints.size}.")
+    checkpointIndex += 1
+    cp(checkpoints(checkpointIndex), checkpointedDir)
   }
   def reloadCurrentCheckpoint(): Unit = manager.synchronized {
     if (isSegmentation) {
       val name = asSegmentation.name
       asSegmentation.parent.reloadCurrentCheckpoint()
     } else {
-      // checkpoints and checkpointIndex are not restored, but copied over from the current state.
-      val c = checkpoints
-      val i = checkpointIndex
-      assert(c.nonEmpty, "No checkpoints.")
-      cp(c(i), path)
-      checkpointIndex = i
-      checkpoints = c
+      assert(checkpointIndex < checkpoints.size, s"No checkpoint $checkpointIndex.")
+      cp(checkpoints(checkpointIndex), checkpointedDir)
     }
   }
 
   def discardCheckpoints(): Unit = manager.synchronized {
-    existing(path / "checkpoints").foreach(manager.rmTag(_))
-    existing(path / "checkpointIndex").foreach(manager.rmTag(_))
-    existing(path / "lastOperation").foreach(manager.rmTag(_))
+    existing(rootDir / "checkpoints").foreach(manager.rmTag(_))
+    existing(rootDir / "checkpointIndex").foreach(manager.rmTag(_))
+    existing(checkpointedDir / "lastOperation").foreach(manager.rmTag(_))
+  }
+
+  def readACL: String = {
+    if (isSegmentation) asSegmentation.parent.readACL
+    else get(rootDir / "readACL")
+  }
+  def readACL_=(x: String): Unit = {
+    assert(!isSegmentation,
+      s"Access control has to be set on the parent project. $this is a segmentation.")
+    set(rootDir / "readACL", x)
+  }
+  def writeACL: String = {
+    if (isSegmentation) asSegmentation.parent.writeACL
+    else get(rootDir / "writeACL")
+  }
+  def writeACL_=(x: String): Unit = {
+    assert(!isSegmentation,
+      s"Access control has to be set on the parent project. $this is a segmentation.")
+    set(rootDir / "writeACL", x)
+  }
+
+  def assertReadAllowedFrom(user: User): Unit = {
+    assert(readAllowedFrom(user), s"User $user does not have read access to project $projectName.")
+  }
+  def assertWriteAllowedFrom(user: User): Unit = {
+    assert(writeAllowedFrom(user), s"User $user does not have write access to project $projectName.")
+  }
+  def readAllowedFrom(user: User): Boolean = {
+    // Write access also implies read access.
+    writeAllowedFrom(user) || aclContains(readACL, user)
+  }
+  def writeAllowedFrom(user: User): Boolean = {
+    aclContains(writeACL, user)
+  }
+
+  def aclContains(acl: String, user: User): Boolean = {
+    // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
+    // We translate this to a regex for checking.
+    val regex = acl.replace(".", "\\.").replace(",", "|").replace("*", ".*")
+    user.email.matches(regex)
   }
 
   def isSegmentation = manager.synchronized {
-    val grandFather = path.parent.parent
+    val grandFather = rootDir.parent.parent
     grandFather.nonEmpty && (grandFather.name == 'segmentations)
   }
   def asSegmentation = manager.synchronized {
     assert(isSegmentation, s"$projectName is not a segmentation")
-    // If our parent is a top-level project, path is like:
-    //   project/parentName/segmentations/segmentationName/project
-    val parentName = new SymbolPath(path.drop(1).dropRight(3))
-    val segmentationName = path.dropRight(1).last.name
+    // If our parent is a top-level project, rootDir is like:
+    //   project/parentName/checkpointed/segmentations/segmentationName/project
+    val parentName = new SymbolPath(rootDir.drop(1).dropRight(4))
+    val segmentationName = rootDir.dropRight(1).last.name
     Segmentation(parentName.toString, segmentationName)
   }
 
-  def notes = get("notes")
-  def notes_=(n: String) = set("notes", n)
+  def notes = get(checkpointedDir / "notes")
+  def notes_=(n: String) = set(checkpointedDir / "notes", n)
 
   def vertexSet = manager.synchronized {
-    existing(path / "vertexSet")
+    existing(checkpointedDir / "vertexSet")
       .flatMap(vsPath =>
         Project.withErrorLogging(s"Couldn't resolve vertex set of project $this") {
           manager.vertexSet(vsPath)
@@ -164,7 +221,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       vertexAttributes = Map()
       if (killSegmentations) segmentations.foreach(_.remove())
     }
-    set("vertexSet", e)
+    set(checkpointedDir / "vertexSet", e)
     if (e != null) {
       val op = graph_operations.CountVertices()
       scalars("vertex_count") = op(op.vertices, e).result.count
@@ -243,7 +300,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
 
   def edgeBundle = manager.synchronized {
-    existing(path / "edgeBundle")
+    existing(checkpointedDir / "edgeBundle")
       .flatMap(ebPath =>
         Project.withErrorLogging(s"Couldn't resolve edge bundle of project $this") {
           manager.edgeBundle(ebPath)
@@ -258,7 +315,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       // TODO: "Induce" the attributes to the new edge bundle.
       edgeAttributes = Map()
     }
-    set("edgeBundle", e)
+    set(checkpointedDir / "edgeBundle", e)
     if (e != null) {
       val op = graph_operations.CountEdges()
       scalars("edge_count") = op(op.edges, e).result.count
@@ -269,9 +326,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def scalars = new ScalarHolder
   def scalars_=(scalars: Map[String, Scalar[_]]) = manager.synchronized {
-    existing(path / "scalars").foreach(manager.rmTag(_))
+    existing(checkpointedDir / "scalars").foreach(manager.rmTag(_))
     for ((name, scalar) <- scalars) {
-      manager.setTag(path / "scalars" / name, scalar)
+      manager.setTag(checkpointedDir / "scalars" / name, scalar)
     }
   }
   def scalarNames[T: TypeTag] = scalars.collect {
@@ -280,11 +337,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def vertexAttributes = new VertexAttributeHolder
   def vertexAttributes_=(attrs: Map[String, Attribute[_]]) = manager.synchronized {
-    existing(path / "vertexAttributes").foreach(manager.rmTag(_))
+    existing(checkpointedDir / "vertexAttributes").foreach(manager.rmTag(_))
     assert(attrs.isEmpty || vertexSet != null, s"No vertex set for project $projectName")
     for ((name, attr) <- attrs) {
       assert(attr.vertexSet == vertexSet, s"Vertex attribute $name does not match vertex set for project $projectName")
-      manager.setTag(path / "vertexAttributes" / name, attr)
+      manager.setTag(checkpointedDir / "vertexAttributes" / name, attr)
     }
   }
   def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
@@ -293,11 +350,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def edgeAttributes = new EdgeAttributeHolder
   def edgeAttributes_=(attrs: Map[String, Attribute[_]]) = manager.synchronized {
-    existing(path / "edgeAttributes").foreach(manager.rmTag(_))
+    existing(checkpointedDir / "edgeAttributes").foreach(manager.rmTag(_))
     assert(attrs.isEmpty || edgeBundle != null, s"No edge bundle for project $projectName")
     for ((name, attr) <- attrs) {
       assert(attr.vertexSet == edgeBundle.asVertexSet, s"Edge attribute $name does not match edge bundle for project $projectName")
-      manager.setTag(path / "edgeAttributes" / name, attr)
+      manager.setTag(checkpointedDir / "edgeAttributes" / name, attr)
     }
   }
   def edgeAttributeNames[T: TypeTag] = edgeAttributes.collect {
@@ -306,12 +363,12 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = Segmentation(projectName, name)
-  def segmentationNames = ls("segmentations").map(_.last.name)
+  def segmentationNames = ls(checkpointedDir / "segmentations").map(_.last.name)
 
-  def copy(to: Project): Unit = cp(path, to.path)
+  def copy(to: Project): Unit = cp(rootDir, to.rootDir)
   def remove(): Unit = manager.synchronized {
-    manager.rmTag(path)
-    log.info(s"A project has been discarded: $path")
+    manager.rmTag(rootDir)
+    log.info(s"A project has been discarded: $rootDir")
   }
 
   private def cp(from: SymbolPath, to: SymbolPath) = manager.synchronized {
@@ -321,33 +378,35 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
-  private def set(tag: String, entity: MetaGraphEntity): Unit = manager.synchronized {
+  private def set(tag: SymbolPath, entity: MetaGraphEntity): Unit = manager.synchronized {
     if (entity == null) {
-      existing(path / tag).foreach(manager.rmTag(_))
+      existing(tag).foreach(manager.rmTag(_))
     } else {
-      manager.setTag(path / tag, entity)
+      manager.setTag(tag, entity)
     }
   }
-  private def set(tag: String, content: String): Unit = manager.setTag(path / tag, content)
-  private def get(tag: String): String = manager.synchronized {
-    existing(path / tag).map(manager.getTag(_)).getOrElse("")
+  private def set(tag: SymbolPath, content: String): Unit = manager.setTag(tag, content)
+  private def get(tag: SymbolPath): String = manager.synchronized {
+    existing(tag).map(manager.getTag(_)).getOrElse("")
   }
-  private def ls(dir: String) = manager.synchronized {
-    if (manager.tagExists(path / dir)) manager.lsTag(path / dir) else Nil
+  private def ls(dir: SymbolPath) = manager.synchronized {
+    existing(dir).map(manager.lsTag(_)).getOrElse(Nil)
   }
 
-  abstract class Holder[T <: MetaGraphEntity](dir: String) extends Iterable[(String, T)] {
+  def debugPrint() = manager.debugPrintTag(rootDir)
+
+  abstract class Holder[T <: MetaGraphEntity](dir: SymbolPath) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit
     def update(name: String, entity: T) = manager.synchronized {
       if (entity == null) {
-        existing(path / dir / name).foreach(manager.rmTag(_))
+        existing(dir / name).foreach(manager.rmTag(_))
       } else {
         validate(name, entity)
-        manager.setTag(path / dir / name, entity)
+        manager.setTag(dir / name, entity)
       }
     }
     def apply(name: String): T =
-      manager.entity(path / dir / name).asInstanceOf[T]
+      manager.entity(dir / name).asInstanceOf[T]
 
     def iterator = manager.synchronized {
       ls(dir)
@@ -361,14 +420,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
     def contains(x: String) = iterator.exists(_._1 == x)
   }
-  class ScalarHolder extends Holder[Scalar[_]]("scalars") {
+  class ScalarHolder extends Holder[Scalar[_]](checkpointedDir / "scalars") {
     def validate(name: String, scalar: Scalar[_]) = {}
   }
-  class VertexAttributeHolder extends Holder[Attribute[_]]("vertexAttributes") {
+  class VertexAttributeHolder extends Holder[Attribute[_]](checkpointedDir / "vertexAttributes") {
     def validate(name: String, attr: Attribute[_]) =
       assert(attr.vertexSet == vertexSet, s"Vertex attribute $name does not match vertex set for project $projectName")
   }
-  class EdgeAttributeHolder extends Holder[Attribute[_]]("edgeAttributes") {
+  class EdgeAttributeHolder extends Holder[Attribute[_]](checkpointedDir / "edgeAttributes") {
     def validate(name: String, attr: Attribute[_]) =
       assert(attr.vertexSet == edgeBundle.asVertexSet, s"Edge attribute $name does not match edge bundle for project $projectName")
   }
@@ -390,7 +449,9 @@ object Project {
 
 case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
   def parent = Project(parentName)
-  val path: SymbolPath = s"projects/$parentName/segmentations/$name"
+  val path: SymbolPath = s"projects/$parentName/checkpointed/segmentations/$name"
+  def project = Project(s"$parentName/checkpointed/segmentations/$name/project")
+
   def toFE = {
     val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
@@ -427,7 +488,6 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
       aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr: Attribute[Vector[ID]]
     }.getOrElse(null)
   }
-  def project = Project(s"$parentName/segmentations/$name/project")
 
   def rename(newName: String) = manager.synchronized {
     val to = new SymbolPath(path.init) / newName
