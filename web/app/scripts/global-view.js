@@ -8,20 +8,20 @@ angular.module('biggraph').directive('globalView', function() {
     templateUrl: 'global-view.html',
     link: function(scope, element) {
       function updateGraph() {
-        if (scope.graph === undefined || !scope.graph.$resolved) {
+        if (scope.graph.view === undefined || !scope.graph.view.$resolved) {
           loading();
-        } else if (scope.graph.$error) {
-          scope.graph.$popupError();
+        } else if (scope.graph.view.$error) {
+          scope.graph.view.$popupError();
           error();
         } else {
-          update(scope.graph);
+          update(scope.graph.view);
         }
       }
-      scope.$watch('graph', updateGraph);
-      scope.$watch('graph.$resolved', updateGraph);
+      scope.$watch('graph.view', updateGraph);
+      scope.$watch('graph.view.$resolved', updateGraph);
 
       var three = THREE.Bootstrap({
-        element: element.parent()[0],
+        element: element[0],
         plugins: ['core', 'controls', 'cursor'],
         controls: {
           klass: THREE.OrbitControls,

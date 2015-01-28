@@ -6,7 +6,7 @@ angular.module('biggraph').directive('graphView', function(util) {
   var common = COMMON_UTIL;
   var directive = {
       template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
-      scope: { graph: '=', left: '=', right: '=', menu: '=' },
+      scope: { graph: '=', menu: '=' },
       replace: true,
       link: function(scope, element) {
         scope.gv = new GraphView(scope, element);
@@ -161,6 +161,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     var i, vs;
     for (i = 0; i < sides.length; ++i) {
       if (sides[i] && sides[i].graphMode) {
+        if (sides[i].graphMode === 'global') { return; } // TODO: Temporary hack.
         var xMin = (i * 2) * halfColumnWidth;
         var xOff = (i * 2 + 1) * halfColumnWidth;
         var xMax = (i * 2 + 2) * halfColumnWidth;
