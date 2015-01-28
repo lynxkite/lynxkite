@@ -5,7 +5,7 @@
 </div>
 <div class="row">
   <div class="col-xs-12 text-center project-list">
-    <a href ng-click="expandNewProject = true; newProject.privacy = 'private'">
+    <div ng-click="expandNewProject = true; newProject.privacy = 'private'">
       <span class="lead" ng-hide="expandNewProject">A new project</span>
       <form ng-show="expandNewProject" class="form-inline" role="form">
         <div class="form-group"><input id="new-project-name" placeholder="Project name" ng-model="newProject.name" class="form-control"></div>
@@ -22,7 +22,7 @@
           {{newProject.sending && '...' || 'Create'}}
         </button>
       </form>
-    </a>
+    </div>
 
     <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
       Loading...
@@ -33,17 +33,18 @@
       <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
     </p>
 
-    <a ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
+    <div ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
       href ng-click="setProject(project)" ng-class="{ error: project.error }">
       <h1><item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu></h1>
       <span ng-if="project.error">
         {{project.error}}
+        <i class="pull-right"><a ng-click="reportError(project)">report problem</a></i>
       </span>
       <span ng-if="!project.error">
         <value ref="vertexCounts[project.name]"></value> vertices,
         <value ref="edgeCounts[project.name]"></value> edges.
         {{project.notes}}
       </span>
-    </a>
+    </div>
   </div>
 </div>
