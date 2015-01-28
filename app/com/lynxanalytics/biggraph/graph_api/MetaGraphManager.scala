@@ -191,7 +191,7 @@ class MetaGraphManager(val repositoryPath: String) {
     loadInstanceFromDisk(new File(dumpFile.toString)) match {
       case util.Success(i) => assert(
         inst == i,
-        "Operation could not be reloaded after serialization." +
+        "Operation reloaded after serialization was not identical." +
           s" File: $dumpFile Operation: $inst")
       case util.Failure(e) => throw new Exception(s"Failed to reload $dumpFile", e)
     }
