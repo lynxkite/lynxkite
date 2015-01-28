@@ -265,9 +265,8 @@ class MetaGraphManager(val repositoryPath: String) {
   def serializeOperation(inst: MetaGraphOperationInstance): String = {
     val j = Json.obj(
       "operation" -> inst.operation.toTypedJson,
-      "inputs" -> new json.JsObject(
-        inst.inputs.all.toSeq.map { case (name, entity) => name.name -> json.JsString(entity.gUID.toString) })
-    )
+      "inputs" -> inst.inputs.toJson,
+      "outputs" -> inst.outputs.toJson)
     try {
       Json.prettyPrint(j)
     } catch {
@@ -282,7 +281,7 @@ class MetaGraphManager(val repositoryPath: String) {
     val inputs = (j \ "inputs").as[Map[String, String]].map {
       case (name, guid) => Symbol(name) -> UUID.fromString(guid)
     }
-    TypedOperationInstance(
+    val inst = TypedOperationInstance(
       this,
       op,
       MetaDataSet(
@@ -294,6 +293,11 @@ class MetaGraphManager(val repositoryPath: String) {
           .map(n => n -> vertexAttribute(inputs(n))).toMap,
         op.inputSig.scalars
           .map(n => n -> scalar(inputs(n))).toMap))
+    // Verify outputs.
+    assert((j \ "outputs") == inst.outputs.toJson,
+      s"Output mismatch in operation read from $input." +
+        s" Expected: ${j \ "outputs"}, found: ${inst.outputs.toJson}")
+    inst
   }
 }
 object MetaGraphManager {
