@@ -1,4 +1,5 @@
 exports.config = {
-  baseUrl: 'http://localhost:9001/',
+  directConnect: true,
+  baseUrl: 'http://localhost:9002/',
   specs: ['*-test.js'],
 };

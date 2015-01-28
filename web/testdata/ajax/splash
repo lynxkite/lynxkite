@@ -3,6 +3,7 @@
   "projects": [
     { "name": "Project_Strawberry", "notes": "Subscribers and calls.", "vertexSet": "x", "edgeBundle": "x", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] },
     { "name": "Project_Melon", "notes": "Phone numbers and texts.", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] },
-    { "name": "Project_Avocado", "notes": "Pets and owners.\nBipartite.", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] }
+    { "name": "Project_Avocado", "notes": "Pets and owners.\nBipartite.", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] },
+    { "name": "Project_Tofu", "error": "I'm not sure what tofu is." }
   ]
 }

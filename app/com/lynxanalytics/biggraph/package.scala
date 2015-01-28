@@ -47,7 +47,7 @@ package object biggraph {
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment =
     scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
       case staticPattern(master) =>
-        new StaticSparkContextProvider(master) with StaticDirEnvironment {
+        new StaticSparkContextProvider() with StaticDirEnvironment {
           val repositoryDirs = repoDirs
         }
       case standingGCEPattern(clusterName) =>

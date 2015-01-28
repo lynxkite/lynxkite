@@ -18,3 +18,8 @@
   background: #428BCA;
   color: white;
 }
+.project-list > a.error {
+  color: maroon;
+  background: white;
+  cursor: not-allowed;
+}

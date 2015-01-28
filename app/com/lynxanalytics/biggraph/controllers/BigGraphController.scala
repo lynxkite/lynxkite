@@ -96,16 +96,19 @@ case class FEAttribute(
 
 case class FEProject(
   name: String,
-  undoOp: String, // Name of last operation. Empty if there is nothing to undo.
-  redoOp: String, // Name of next operation. Empty if there is nothing to redo.
-  vertexSet: String,
-  edgeBundle: String,
-  notes: String,
-  scalars: List[FEAttribute],
-  vertexAttributes: List[FEAttribute],
-  edgeAttributes: List[FEAttribute],
-  segmentations: List[FESegmentation],
-  opCategories: List[OperationCategory])
+  error: String = "", // If this is non-empty the project is broken and cannot be opened.
+  undoOp: String = "", // Name of last operation. Empty if there is nothing to undo.
+  redoOp: String = "", // Name of next operation. Empty if there is nothing to redo.
+  readACL: String = "",
+  writeACL: String = "",
+  vertexSet: String = "",
+  edgeBundle: String = "",
+  notes: String = "",
+  scalars: List[FEAttribute] = List(),
+  vertexAttributes: List[FEAttribute] = List(),
+  edgeAttributes: List[FEAttribute] = List(),
+  segmentations: List[FESegmentation] = List(),
+  opCategories: List[OperationCategory] = List())
 
 case class FESegmentation(
   name: String,
@@ -118,7 +121,7 @@ case class FESegmentation(
 case class ProjectRequest(name: String)
 case class Splash(version: String, projects: List[FEProject])
 case class OperationCategory(title: String, icon: String, color: String, ops: List[FEOperationMeta])
-case class CreateProjectRequest(name: String, notes: String)
+case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class DiscardProjectRequest(name: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 case class ProjectAttributeFilter(attributeName: String, valueSpec: String)
@@ -127,8 +130,10 @@ case class ProjectFilterRequest(
   vertexFilters: List[ProjectAttributeFilter],
   edgeFilters: List[ProjectAttributeFilter])
 case class ForkProjectRequest(from: String, to: String)
+case class RenameProjectRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
+case class ProjectSettingsRequest(project: String, readACL: String, writeACL: String)
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: List[VertexSet] = List(),
@@ -243,17 +248,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
       attributes = visibleAttributes.map(UIValue.fromEntity(_)).toList)
   }
 
-  def vertexSet(request: VertexSetRequest): FEVertexSet = {
+  def vertexSet(user: serving.User, request: VertexSetRequest): FEVertexSet = {
     toFE(metaManager.vertexSet(request.id.asUUID))
   }
 
-  def applyOp(request: FEOperationSpec): Unit =
+  def applyOp(user: serving.User, request: FEOperationSpec): Unit =
     operations.applyOp(request)
 
-  def startingOperations(request: serving.Empty): FEOperationMetas =
+  def startingOperations(user: serving.User, request: serving.Empty): FEOperationMetas =
     FEOperationMetas(operations.getStartingOperationMetas.sortBy(_.title).toList)
 
-  def startingVertexSets(request: serving.Empty): UIValues =
+  def startingVertexSets(user: serving.User, request: serving.Empty): UIValues =
     UIValues(metaManager.allVertexSets
       .filter(_.source.inputs.all.isEmpty)
       .filter(metaManager.isVisible(_))
@@ -269,38 +274,57 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   val ops = new Operations(env)
 
-  def splash(request: serving.Empty): Splash = {
-    val projects = ops.projects.flatMap { p =>
-      Try(p.toFE) match {
-        case Success(fe) =>
-          Some(fe)
-        case Failure(ex) =>
-          log.error(s"Problem with project $p:", ex)
-          None
-      }
-    }
+  def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
+    val projects = ops.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
     return Splash(version, projects.toList)
   }
 
-  def project(request: ProjectRequest): FEProject = {
+  def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
     val p = Project(request.name)
+    p.assertReadAllowedFrom(user)
     return p.toFE.copy(opCategories = ops.categories(p))
   }
 
-  def createProject(request: CreateProjectRequest): Unit = {
+  def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.name)
+    assert(!ops.projects.contains(p), s"Project ${request.name} already exists.")
     p.notes = request.notes
+    request.privacy match {
+      case "private" =>
+        p.writeACL = user.email
+        p.readACL = user.email
+      case "public-read" =>
+        p.writeACL = user.email
+        p.readACL = "*"
+      case "public-write" =>
+        p.writeACL = "*"
+        p.readACL = "*"
+    }
     p.checkpointAfter("") // Initial checkpoint.
   }
 
-  def discardProject(request: DiscardProjectRequest): Unit = {
-    Project(request.name).remove()
+  def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
+    val p = Project(request.name)
+    p.assertWriteAllowedFrom(user)
+    p.remove()
   }
 
-  def projectOp(request: ProjectOperationRequest): Unit = ops.apply(request)
+  def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
+    val p = Project(request.from)
+    p.assertWriteAllowedFrom(user)
+    p.copy(Project(request.to))
+    p.remove()
+  }
 
-  def filterProject(request: ProjectFilterRequest): Unit = {
+  def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
+    val p = Project(request.project)
+    p.assertWriteAllowedFrom(user)
+    ops.apply(request)
+  }
+
+  def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
     val project = Project(request.project)
+    project.assertWriteAllowedFrom(user)
     val vertexSet = project.vertexSet
     assert(vertexSet != null, s"No vertex set for $project.")
     assert(request.vertexFilters.nonEmpty || request.edgeFilters.nonEmpty,
@@ -319,22 +343,45 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
     project.checkpoint("Filter " + filterStrings.mkString(", ")) {
       project.pullBackWithInjection(vertexEmbedding)
-      val edgeEmbedding =
-        FEFilters.embedFilteredVertices(project.edgeBundle.asVertexSet, edgeFilters)
-      project.pullBackEdgesWithInjection(edgeEmbedding)
+      if (edgeFilters.nonEmpty) {
+        val edgeEmbedding =
+          FEFilters.embedFilteredVertices(project.edgeBundle.asVertexSet, edgeFilters)
+        project.pullBackEdgesWithInjection(edgeEmbedding)
+      }
     }
   }
 
-  def forkProject(request: ForkProjectRequest): Unit = {
-    Project(request.from).copy(Project(request.to))
+  def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
+    val p1 = Project(request.from)
+    val p2 = Project(request.to)
+    p1.assertReadAllowedFrom(user)
+    assert(!ops.projects.contains(p2), s"Project $p2 already exists.")
+    p1.copy(p2)
+    if (!p2.writeAllowedFrom(user)) {
+      p2.writeACL += "," + user.email
+    }
   }
 
-  def undoProject(request: UndoProjectRequest): Unit = {
-    Project(request.project).undo()
+  def undoProject(user: serving.User, request: UndoProjectRequest): Unit = metaManager.synchronized {
+    val p = Project(request.project)
+    p.assertWriteAllowedFrom(user)
+    p.undo()
   }
 
-  def redoProject(request: RedoProjectRequest): Unit = {
-    Project(request.project).redo()
+  def redoProject(user: serving.User, request: RedoProjectRequest): Unit = metaManager.synchronized {
+    val p = Project(request.project)
+    p.assertWriteAllowedFrom(user)
+    p.redo()
+  }
+
+  def changeProjectSettings(user: serving.User, request: ProjectSettingsRequest): Unit = metaManager.synchronized {
+    val p = Project(request.project)
+    p.assertWriteAllowedFrom(user)
+    // To avoid accidents, a user cannot remove themselves from the write ACL.
+    assert(p.aclContains(request.writeACL, user),
+      s"You cannot forfeit your write access to project $p.")
+    p.readACL = request.readACL
+    p.writeACL = request.writeACL
   }
 }
 

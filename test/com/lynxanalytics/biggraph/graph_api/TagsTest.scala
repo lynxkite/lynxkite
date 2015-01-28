@@ -34,7 +34,7 @@ class TagsTest extends FunSuite {
     val root2 = TagRoot()
     root2.loadFromString(root.saveToString)
     assert((root2 / "brave_new_world/batoralma/korte/barack").content == "hello")
-    assert(root2.lsRec == root.lsRec)
+    assert(root2.lsRec() == root.lsRec())
   }
 
   test("Can read tag as UUID") {

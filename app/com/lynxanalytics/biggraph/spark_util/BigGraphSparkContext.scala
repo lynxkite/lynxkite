@@ -16,6 +16,9 @@ import com.lynxanalytics.biggraph.spark_util
 private object SparkStageJars {
   val classesToBundle: Seq[Class[_]] = Seq(
     getClass(),
+    classOf[com.mysql.jdbc.Driver],
+    classOf[org.postgresql.Driver],
+    classOf[org.sqlite.JDBC],
     classOf[gcs.GoogleHadoopFileSystem])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
   require(
@@ -78,6 +81,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[org.apache.spark.mllib.linalg.Vector]])
     kryo.register(classOf[org.apache.spark.mllib.linalg.DenseVector])
     kryo.register(breeze.linalg.DenseVector(Array[Double](0)).getClass)
+    // https://issues.apache.org/jira/browse/SPARK-5102
+    kryo.register(Class.forName("org.apache.spark.scheduler.CompressedMapStatus"))
     kryo.register(classOf[scala.Tuple3[_, _, _]])
     kryo.register((0L, 0L).getClass)
     // Add new stuff just above this line! Thanks.
@@ -105,12 +110,11 @@ object BigGraphSparkContext {
   }
   def apply(
     appName: String,
-    masterURL: String,
     useKryo: Boolean = true,
     debugKryo: Boolean = false,
-    useJars: Boolean = true): SparkContext = {
+    useJars: Boolean = true,
+    master: String = ""): SparkContext = {
     var sparkConf = new SparkConf()
-      .setMaster(masterURL)
       .setAppName(appName)
       .set("spark.executor.memory",
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
@@ -141,6 +145,9 @@ object BigGraphSparkContext {
     }
     if (useJars) {
       sparkConf = sparkConf.setJars(SparkStageJars.jars)
+    }
+    if (master != "") {
+      sparkConf = sparkConf.setMaster(master)
     }
     return new SparkContext(sparkConf)
   }

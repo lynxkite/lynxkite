@@ -7,15 +7,15 @@ case class DemoModeStatusResponse(
   demoMode: Boolean)
 
 class DemoModeController(environment: BigGraphEnvironment) {
-  def demoModeStatus(req: serving.Empty): DemoModeStatusResponse = {
+  def demoModeStatus(user: serving.User, req: serving.Empty): DemoModeStatusResponse = {
     DemoModeStatusResponse(!environment.dataManager.computationAllowed)
   }
 
-  def enterDemoMode(req: serving.Empty): Unit = {
+  def enterDemoMode(user: serving.User, req: serving.Empty): Unit = {
     environment.dataManager.computationAllowed = false
   }
 
-  def exitDemoMode(req: serving.Empty): Unit = {
+  def exitDemoMode(user: serving.User, req: serving.Empty): Unit = {
     environment.dataManager.computationAllowed = true
   }
 }

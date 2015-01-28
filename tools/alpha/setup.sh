@@ -47,14 +47,14 @@ fi
 # Start it up.
 export NUM_CORES_PER_EXECUTOR=${CORES}
 export REPOSITORY_MODE="static</home/ec2-user/metagraph,s3n://${CREDENTIALS}@lynx-bnw-data>"
-export SPARK_CLUSTER_MODE="static<local[${CORES}]>"
-export SPARK_JAVA_OPTS="-Dhadoop.tmp.dir=/media/ephemeral0/hadoop-tmp"
+export SPARK_MASTER="local[${CORES}]"
 export SPARK_DIR="/media/ephemeral0/"
-export EXECUTOR_MEMORY=${RAM_MB}m
+export SPARK_HOME=/home/ec2-user/spark-1.1.0-bin-hadoop1
 biggraphstage/bin/biggraph \
   -mem $RAM_MB \
   -Dapplication.secret=$CREDENTIALS \
-  -Dsecuresocial.google.clientSecret=$GOOGLE_CLIENT_SECRET \
+  -Dauthentication.google.clientSecret=$GOOGLE_CLIENT_SECRET \
+  -Dhadoop.tmp.dir=/media/ephemeral0/hadoop-tmp \
   $EXTRA_ARGS
 EOF
 chmod +x run.sh

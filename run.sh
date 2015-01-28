@@ -3,14 +3,7 @@
 set -x
 set -e
 
-rm public || true
-cd web
-grunt quick
-cp -Rn app/* .tmp/ || true
-cd ..
-ln -s web/.tmp public
+./dev_stage.sh
 
-sbt stage
-stage/bin/biggraph "$@"
-
-rm public
+export SPARK_MASTER=${SPARK_MASTER:-local}
+stage/bin/biggraph "$@" interactive

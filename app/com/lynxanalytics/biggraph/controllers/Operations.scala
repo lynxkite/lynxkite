@@ -105,83 +105,139 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       applyOn(project.vertexAttributes(params("attr")))
   })
 
-  val importHelpText =
+  trait RowReader {
+    def sourceParameters: List[FEOperationParameterMeta]
+    def source(params: Map[String, String]): graph_operations.RowInput
+  }
+
+  val csvImportHelpText =
     """ Wildcard (foo/*.csv) and glob (foo/{bar,baz}.csv) patterns are accepted. S3 paths must
       include the key name and secret key in the following format:
         <tt>s3n://key_name:secret_key@bucket/dir/file</tt>
       """
 
-  register(new VertexOperation(_) {
-    val title = "Import vertices"
-    val description =
-      """Imports vertices (no edges) from a CSV file, or files.
-      Each field in the CSV will be accessible as a vertex attribute.
-      An extra vertex attribute is generated to hold the internal vertex ID.
-      """ + importHelpText
-    def parameters = List(
+  trait CSVRowReader extends RowReader {
+    def sourceParameters = List(
       Param("files", "Files", kind = "file"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("id-attr", "ID attribute name", defaultValue = "id"),
       Param("filter", "(optional) Filtering expression"))
-    def enabled = hasNoVertexSet
-    def apply(params: Map[String, String]) = {
+    def source(params: Map[String, String]) = {
       val files = Filename(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
+      graph_operations.CSV(
         files,
         params("delimiter"),
         header,
         JavaScript(params("filter")))
-      val imp = graph_operations.ImportVertexList(csv)().result
+    }
+  }
+
+  val jdbcHelpText = """
+    The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
+    (For example <tt>mysql://127.0.0.1/?user=batman&password=alfred</tt>.)"""
+  val sqlImportHelpText = jdbcHelpText + """
+    An integer column must be specified as the key, and you have to select a key range."""
+
+  trait SQLRowReader extends RowReader {
+    def sourceParameters = List(
+      Param("db", "Database"),
+      Param("table", "Table or view"),
+      Param("columns", "Columns (comma separated)"),
+      Param("key", "Key column"))
+    def source(params: Map[String, String]) = {
+      val columns = params("columns").split(",").map(_.trim)
+      graph_operations.DBTable(
+        params("db"),
+        params("table"),
+        (columns.toSet + params("key")).toSeq, // Always include "key".
+        params("key"))
+    }
+  }
+
+  abstract class ImportVerticesOperation(project: Project)
+      extends VertexOperation(project) with RowReader {
+    def parameters = sourceParameters ++ List(
+      Param("id-attr", "ID attribute name", defaultValue = "id"))
+    def enabled = hasNoVertexSet
+    def apply(params: Map[String, String]) = {
+      val imp = graph_operations.ImportVertexList(source(params))().result
       project.vertexSet = imp.vertices
       project.vertexAttributes = imp.attrs.mapValues(_.entity)
       val idAttr = params("id-attr")
       assert(
         !project.vertexAttributes.contains(idAttr),
-        s"The CSV also contains a field called '$idAttr'. Please pick a different name.")
+        s"The input also contains a field called '$idAttr'. Please pick a different name.")
       project.vertexAttributes(idAttr) = idAsAttribute(project.vertexSet)
     }
+  }
+  register(new ImportVerticesOperation(_) with CSVRowReader {
+    val title = "Import vertices from CSV files"
+    val description =
+      """Imports vertices (no edges) from a CSV file, or files.
+      Each field in the CSV will be accessible as a vertex attribute.
+      An extra vertex attribute is generated to hold the internal vertex ID.
+      """ + csvImportHelpText
+  })
+  register(new ImportVerticesOperation(_) with SQLRowReader {
+    val title = "Import vertices from a database"
+    val description =
+      """Imports vertices (no edges) from a SQL database.
+      An extra vertex attribute is generated to hold the internal vertex ID.
+      """ + sqlImportHelpText
   })
 
-  register(new EdgeOperation(_) {
-    val title = "Import edges for existing vertices"
-    val description =
-      """Imports edges from a CSV file, or files. Your vertices must have a key attribute, by which
-      the edges can be attached to them.""" + importHelpText
-    def parameters = List(
-      Param("files", "Files", kind = "file"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
+  abstract class ImportEdgesForExistingVerticesOperation(project: Project)
+      extends VertexOperation(project) with RowReader {
+    def parameters = sourceParameters ++ List(
       Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("src", "Source ID field"),
-      Param("dst", "Destination ID field"),
-      Param("filter", "(optional) Filtering expression"))
+      Param("dst", "Destination ID field"))
     def enabled =
       hasNoEdgeBundle &&
         hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
-      val files = Filename(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header,
-        JavaScript(params("filter")))
       val src = params("src")
       val dst = params("dst")
       val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
-      val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, src, dst)
+      val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), src, dst)
       val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
       project.edgeBundle = imp.edges
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
     }
+  }
+  register(new ImportEdgesForExistingVerticesOperation(_) with CSVRowReader {
+    val title = "Import edges for existing vertices from CSV files"
+    val description =
+      """Imports edges from a CSV file, or files. Your vertices must have a key attribute, by which
+      the edges can be attached to them.""" + csvImportHelpText
+  })
+  register(new ImportEdgesForExistingVerticesOperation(_) with SQLRowReader {
+    val title = "Import edges for existing vertices from a database"
+    val description =
+      """Imports edges from a SQL database. Your vertices must have a key attribute, by which
+      the edges can be attached to them.""" + sqlImportHelpText
   })
 
-  register(new EdgeOperation(_) {
+  abstract class ImportVerticesAndEdgesOperation(project: Project)
+      extends VertexOperation(project) with RowReader {
+    def parameters = sourceParameters ++ List(
+      Param("src", "Source ID field"),
+      Param("dst", "Destination ID field"))
+    def enabled = hasNoVertexSet
+    def apply(params: Map[String, String]) = {
+      val src = params("src")
+      val dst = params("dst")
+      val imp = graph_operations.ImportEdgeList(source(params), src, dst)().result
+      project.setVertexSet(imp.vertices, idAttr = "id")
+      project.vertexAttributes("stringID") = imp.stringID
+      project.edgeBundle = imp.edges
+      project.edgeAttributes = imp.attrs.mapValues(_.entity)
+    }
+  }
+  register(new ImportVerticesAndEdgesOperation(_) with CSVRowReader {
     val title = "Import vertices and edges from single CSV fileset"
     val description =
       """Imports edges from a CSV file, or files.
@@ -190,32 +246,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Two vertex attributes will be generated.
       "stringID" will contain the ID string that was used in the CSV.
       "id" will contain the internal vertex ID.
-      """ + importHelpText
-    def parameters = List(
-      Param("files", "Files", kind = "file"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("src", "Source ID field"),
-      Param("dst", "Destination ID field"),
-      Param("filter", "(optional) Filtering expression"))
-    def enabled = hasNoVertexSet
-    def apply(params: Map[String, String]) = {
-      val files = Filename(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header,
-        JavaScript(params("filter")))
-      val src = params("src")
-      val dst = params("dst")
-      val imp = graph_operations.ImportEdgeList(csv, src, dst)().result
-      project.setVertexSet(imp.vertices, idAttr = "id")
-      project.vertexAttributes("stringID") = imp.stringID
-      project.edgeBundle = imp.edges
-      project.edgeAttributes = imp.attrs.mapValues(_.entity)
-    }
+      """ + csvImportHelpText
+  })
+  register(new ImportVerticesAndEdgesOperation(_) with SQLRowReader {
+    val title = "Import vertices and edges from single database table"
+    val description =
+      """Imports edges from a SQL database.
+      Each column in the table will be accessible as an edge attribute.
+      Vertices will be generated for the endpoints of the edges.
+      Two vertex attributes will be generated.
+      "stringID" will contain the ID string that was used in the database.
+      "id" will contain the internal vertex ID.
+      """ + sqlImportHelpText
   })
 
   register(new EdgeOperation(_) {
@@ -249,35 +291,34 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new AttributeOperation(_) {
-    val title = "Import vertex attributes"
-    val description =
-      """Imports vertex attributes for existing vertices from a CSV file.
-      """ + importHelpText
-    def parameters = List(
-      Param("files", "Files", kind = "file"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
+  abstract class ImportVertexAttributesOperation(project: Project)
+      extends VertexOperation(project) with RowReader {
+    def parameters = sourceParameters ++ List(
       Param("id-attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("id-field", "ID field in the CSV file"),
       Param("prefix", "Name prefix for the imported vertex attributes", defaultValue = ""))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
-      val files = Filename(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header)
       val idAttr = project.vertexAttributes(params("id-attr")).runtimeSafeCast[String]
-      val op = graph_operations.ImportAttributesForExistingVertexSet(csv, params("id-field"))
+      val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-field"))
       val res = op(op.idAttr, idAttr).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- res.attrs) {
         project.vertexAttributes(prefix + name) = attr
       }
     }
+  }
+  register(new ImportVertexAttributesOperation(_) with CSVRowReader {
+    val title = "Import vertex attributes from CSV files"
+    val description =
+      """Imports vertex attributes for existing vertices from a CSV file.
+      """ + csvImportHelpText
+  })
+  register(new ImportVertexAttributesOperation(_) with SQLRowReader {
+    val title = "Import vertex attributes from a database"
+    val description =
+      """Imports vertex attributes for existing vertices from a SQL database.
+      """ + sqlImportHelpText
   })
 
   register(new CreateSegmentationOperation(_) {
@@ -325,12 +366,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         options = UIValue.list(List("weak", "strong"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val symmetric = if (params("type") == "weak") {
-        val areop = graph_operations.AddReversedEdges()
-        areop(areop.es, project.edgeBundle).result.esPlus.entity
-      } else {
-        val rnseop = graph_operations.RemoveNonSymmetricEdges()
-        rnseop(rnseop.es, project.edgeBundle).result.symmetric.entity
+      val symmetric = params("type") match {
+        case "weak" => addReversed(project.edgeBundle)
+        case "strong" => removeNonSymmetric(project.edgeBundle)
       }
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, symmetric).result
@@ -516,7 +554,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      project.edgeBundle = reverse(project.edgeBundle)
+      val op = graph_operations.ReverseEdges()
+      val res = op(op.esAB, project.edgeBundle).result
+      project.pullBackEdgesWithInjection(
+        project.edgeBundle,
+        project.edgeAttributes.toIndexedSeq,
+        res.esBA,
+        res.injection)
     }
   })
 
@@ -580,21 +624,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val description = ""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "degree"),
-      Param("inout", "Type", options = UIValue.list(List("in", "out", "all", "symmetric"))))
+      Param("direction", "Count", options = Direction.options))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val es = project.edgeBundle
-      val esSym = {
-        val op = graph_operations.RemoveNonSymmetricEdges()
-        op(op.es, es).result.symmetric
-      }
-      val deg: Attribute[Double] = params("inout") match {
-        case "in" => graph_operations.OutDegree.inDegree(es)
-        case "out" => graph_operations.OutDegree.outDegree(es)
-        case "symmetric" => graph_operations.OutDegree.outDegree(esSym)
-        case "all" => graph_operations.OutDegree.allDegree(es)
-      }
-      project.vertexAttributes(params("name")) = deg
+      val es = Direction(params("direction"), project.edgeBundle).edgeBundle
+      val op = graph_operations.OutDegree()
+      project.vertexAttributes(params("name")) = op(op.es, es).result.outDegree
     }
   })
 
@@ -631,26 +666,40 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private val toStringHelpText = "Converts the selected %s attributes to string type."
   register(new AttributeOperation(_) {
     val title = "Vertex attribute to string"
-    val description = ""
+    val description = toStringHelpText.format("vertex")
     def parameters = List(
       Param("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
-    private def applyOn[T](attr: Attribute[T]) = {
-      val op = graph_operations.VertexAttributeToString[T]()
-      op(op.attr, attr).result.attr
-    }
     def apply(params: Map[String, String]) = {
       for (attr <- params("attr").split(",")) {
-        project.vertexAttributes(attr) = applyOn(project.vertexAttributes(attr))
+        project.vertexAttributes(attr) = attributeToString(project.vertexAttributes(attr))
       }
     }
   })
 
   register(new AttributeOperation(_) {
+    val title = "Edge attribute to string"
+    val description = toStringHelpText.format("edge")
+    def parameters = List(
+      Param("attr", "Edge attribute", options = edgeAttributes, multipleChoice = true))
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+    def apply(params: Map[String, String]) = {
+      for (attr <- params("attr").split(",")) {
+        project.edgeAttributes(attr) = attributeToString(project.edgeAttributes(attr))
+      }
+    }
+  })
+
+  private val toDoubleHelpText =
+    """Converts the selected string typed %s attributes to double (double precision floating point
+    number) type.
+    """
+  register(new AttributeOperation(_) {
     val title = "Vertex attribute to double"
-    val description = ""
+    val description = toDoubleHelpText.format("vertex")
     def parameters = List(
       Param("attr", "Vertex attribute", options = vertexAttributes[String], multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes.")
@@ -658,6 +707,20 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for (name <- params("attr").split(",")) {
         val attr = project.vertexAttributes(name).runtimeSafeCast[String]
         project.vertexAttributes(name) = toDouble(attr)
+      }
+    }
+  })
+
+  register(new AttributeOperation(_) {
+    val title = "Edge attribute to double"
+    val description = toDoubleHelpText.format("edge")
+    def parameters = List(
+      Param("attr", "Edge attribute", options = edgeAttributes[String], multipleChoice = true))
+    def enabled = FEStatus.assert(edgeAttributes[String].nonEmpty, "No string edge attributes.")
+    def apply(params: Map[String, String]) = {
+      for (name <- params("attr").split(",")) {
+        val attr = project.edgeAttributes(name).runtimeSafeCast[String]
+        project.edgeAttributes(name) = toDouble(attr)
       }
     }
   })
@@ -873,17 +936,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "For example it can calculate the average age of the friends of each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
-      Param("direction", "Aggregate on",
-        options = UIValue.list(List("incoming edges", "outgoing edges")))) ++
+      Param("direction", "Aggregate on", options = Direction.options)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      val edges = params("direction") match {
-        case "incoming edges" => project.edgeBundle
-        case "outgoing edges" => reverse(project.edgeBundle)
-      }
+      val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           edges,
@@ -900,17 +959,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
       Param("weight", "Weight", options = vertexAttributes[Double]),
-      Param("direction", "Aggregate on",
-        options = UIValue.list(List("incoming edges", "outgoing edges")))) ++
+      Param("direction", "Aggregate on", options = Direction.options)) ++
       aggregateParams(project.vertexAttributes, weighted = true)
     def enabled =
       FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes") && hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      val edges = params("direction") match {
-        case "incoming edges" => project.edgeBundle
-        case "outgoing edges" => reverse(project.edgeBundle)
-      }
+      val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
       val weightName = params("weight")
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
       for ((name, choice) <- parseAggregateParams(params)) {
@@ -1114,20 +1169,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "For example it can calculate the average duration of calls for each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
-      Param("direction", "Aggregate on",
-        options = UIValue.list(List("incoming edges", "outgoing edges")))) ++
+      Param("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
         project.edgeAttributes.map { case (name, ea) => (name, ea) })
     def enabled =
       FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]) = {
+      val direction = Direction(params("direction"), project.edgeBundle)
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateFromEdges(
-          project.edgeBundle,
-          params("direction") == "outgoing edges",
+          direction.edgeBundle,
           attributeWithLocalAggregator(
-            project.edgeAttributes(attr),
+            direction.pull(project.edgeAttributes(attr)),
             choice))
         project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
       }
@@ -1141,24 +1195,23 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Param("weight", "Weight", options = edgeAttributes[Double]),
-      Param("direction", "Aggregate on",
-        options = UIValue.list(List("incoming edges", "outgoing edges")))) ++
+      Param("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
         project.edgeAttributes.map { case (name, ea) => (name, ea) },
         weighted = true)
     def enabled =
       FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes")
     def apply(params: Map[String, String]) = {
+      val direction = Direction(params("direction"), project.edgeBundle)
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val weightName = params("weight")
       val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateFromEdges(
-          project.edgeBundle,
-          params("direction") == "outgoing edges",
+          direction.edgeBundle,
           attributeWithWeightedAggregator(
-            weight,
-            project.edgeAttributes(attr),
+            direction.pull(weight),
+            direction.pull(project.edgeAttributes(attr)),
             choice))
         project.vertexAttributes(s"${prefix}${attr}_${choice}_by_${weightName}") = result
       }
@@ -1334,25 +1387,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new SegmentationOperation(_) {
-    val title = "Load segmentation links from CSV"
-    val description =
-      "Import the connection between the main project and this segmentation from a CSV." +
-        importHelpText
-    def parameters = List(
-      Param("files", "CSV", kind = "file"),
-      Param("header", "Header", defaultValue = "<read first line>"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
+  abstract class LoadSegmentationLinksOperation(project: Project)
+      extends SegmentationOperation(project) with RowReader {
+    def parameters = sourceParameters ++ List(
       Param(
         "base-id-attr",
         s"Identifying vertex attribute in $parent",
         options = UIValue.list(parent.vertexAttributeNames[String].toList)),
-      Param("base-id-field", s"Identifying CSV field for $parent"),
+      Param("base-id-field", s"Identifying field for $parent"),
       Param(
         "seg-id-attr",
         s"Identifying vertex attribute in $project",
         options = vertexAttributes[String]),
-      Param("seg-id-field", s"Identifying CSV field for $project"))
+      Param("seg-id-field", s"Identifying field for $project"))
     def enabled =
       FEStatus.assert(
         vertexAttributes[String].nonEmpty, "No string vertex attributes in this segmentation") &&
@@ -1361,23 +1408,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val baseIdAttr = parent.vertexAttributes(params("base-id-attr")).runtimeSafeCast[String]
       val segIdAttr = project.vertexAttributes(params("seg-id-attr")).runtimeSafeCast[String]
-      val files = Filename(params("files"))
-      val header = if (params("header") == "<read first line>")
-        graph_operations.ImportUtil.header(files) else params("header")
-      val csv = graph_operations.CSV(
-        files,
-        params("delimiter"),
-        header)
       val op = graph_operations.ImportEdgeListForExistingVertexSet(
-        csv, params("base-id-field"), params("seg-id-field"))
+        source(params), params("base-id-field"), params("seg-id-field"))
       seg.belongsTo = op(op.srcVidAttr, baseIdAttr)(op.dstVidAttr, segIdAttr).result.edges
     }
+  }
+  register(new LoadSegmentationLinksOperation(_) with CSVRowReader {
+    val title = "Load segmentation links from CSV"
+    val description =
+      "Import the connection between the main project and this segmentation from a CSV." +
+        csvImportHelpText
+  })
+  register(new LoadSegmentationLinksOperation(_) with SQLRowReader {
+    val title = "Load segmentation links from a database"
+    val description =
+      "Import the connection between the main project and this segmentation from a SQL database." +
+        sqlImportHelpText
   })
 
   register(new SegmentationOperation(_) {
     val title = "Define segmentation links from matching attributes"
     val description =
-      "Connection vertices in the main project with segmentations based on matching attributes."
+      "Connect vertices in the main project with segmentations based on matching attributes."
     def parameters = List(
       Param(
         "base-id-attr",
@@ -1825,22 +1877,53 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     implicit val dataManager = env.dataManager
 
     register(new AttributeOperation(_) {
-      val title = "Export vertex attributes to CSV"
+      val title = "Export vertex attributes to file"
       val description = ""
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
-        Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true))
+        Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
+        Param("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
-        val attrs = labels.map(label => project.vertexAttributes(label))
+        val attrs: Map[String, Attribute[_]] = labels.map {
+          label => label -> project.vertexAttributes(label)
+        }.toMap
         val path = getExportFilename(params("path"))
-        val csv = graph_util.CSVExport.exportVertexAttributes(attrs, labels)
-        csv.saveToDir(path)
+        params("format") match {
+          case "CSV" =>
+            val csv = graph_util.CSVExport.exportVertexAttributes(project.vertexSet, attrs)
+            csv.saveToDir(path)
+          case "SQL dump" =>
+            val export = graph_util.SQLExport(project.projectName, project.vertexSet, attrs)
+            export.saveAs(path)
+        }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
+      }
+    })
+
+    register(new AttributeOperation(_) {
+      val title = "Export vertex attributes to database"
+      val description = """
+        Creates a new table and writes the selected attributes into it.
+        """ + jdbcHelpText
+      def parameters = List(
+        Param("db", "Database"),
+        Param("table", "Table"),
+        Param("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
+        Param("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
+      def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
+      def apply(params: Map[String, String]) = {
+        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        val labels = params("attrs").split(",")
+        val attrs: Seq[(String, Attribute[_])] = labels.map {
+          label => label -> project.vertexAttributes(label)
+        }
+        val export = graph_util.SQLExport(params("table"), project.vertexSet, attrs.toMap)
+        export.insertInto(params("db"), delete = params("delete") == "yes")
       }
     })
 
@@ -1854,40 +1937,92 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     register(new AttributeOperation(_) {
-      val title = "Export edge attributes to CSV"
+      val title = "Export edge attributes to file"
       val description = ""
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
-        Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true))
+        Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
+        Param("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
         val labels = params("attrs").split(",")
-        val attrs = labels.map(label => project.edgeAttributes(label))
+        val attrs: Map[String, Attribute[_]] = labels.map {
+          label => label -> project.edgeAttributes(label)
+        }.toMap
         val path = getExportFilename(params("path"))
-        val csv = graph_util.CSVExport
-          .exportEdgeAttributes(project.edgeBundle, attrs, labels)
-        csv.saveToDir(path)
+        params("format") match {
+          case "CSV" =>
+            val csv = graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle, attrs)
+            csv.saveToDir(path)
+          case "SQL dump" =>
+            val export = graph_util.SQLExport(project.projectName, project.edgeBundle, attrs)
+            export.saveAs(path)
+        }
+        project.scalars(params("link")) =
+          downloadLink(path, project.projectName + "_" + params("link"))
+      }
+    })
+
+    register(new AttributeOperation(_) {
+      val title = "Export edge attributes to database"
+      val description = """
+        Creates a new table and writes the selected attributes into it.
+        """ + jdbcHelpText
+      def parameters = List(
+        Param("db", "Database"),
+        Param("table", "Table"),
+        Param("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
+        Param("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
+      def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
+      def apply(params: Map[String, String]) = {
+        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        val labels = params("attrs").split(",")
+        val attrs: Map[String, Attribute[_]] = labels.map {
+          label => label -> project.edgeAttributes(label)
+        }.toMap
+        val export = graph_util.SQLExport(params("table"), project.edgeBundle, attrs)
+        export.insertInto(params("db"), delete = params("delete") == "yes")
+      }
+    })
+
+    register(new SegmentationOperation(_) {
+      val title = "Export segmentation to file"
+      val description = ""
+      def parameters = List(
+        Param("path", "Destination path", defaultValue = "<auto>"),
+        Param("link", "Download link name", defaultValue = "segmentation_csv"),
+        Param("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
+      def enabled = FEStatus.enabled
+      def apply(params: Map[String, String]) = {
+        val path = getExportFilename(params("path"))
+        params("format") match {
+          case "CSV" =>
+            val csv = graph_util.CSVExport.exportEdgeAttributes(seg.belongsTo, Map())
+            csv.saveToDir(path)
+          case "SQL dump" =>
+            val export = graph_util.SQLExport(project.projectName, seg.belongsTo, Map[String, Attribute[_]]())
+            export.saveAs(path)
+        }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
       }
     })
 
     register(new SegmentationOperation(_) {
-      val title = "Export segmentation to CSV"
-      val description = ""
+      val title = "Export segmentation to database"
+      val description = """
+        Creates a new table and writes the edges going from the parent graph to this
+        segmentation into it.""" + jdbcHelpText
       def parameters = List(
-        Param("path", "Destination path", defaultValue = "<auto>"),
-        Param("link", "Download link name", defaultValue = "segmentation_csv"))
+        Param("db", "Database"),
+        Param("table", "Table"),
+        Param("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
       def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
-        val path = getExportFilename(params("path"))
-        val csv = graph_util.CSVExport
-          .exportEdgeAttributes(seg.belongsTo, Seq(), Seq())
-        csv.saveToDir(path)
-        project.scalars(params("link")) =
-          downloadLink(path, project.projectName + "_" + params("link"))
+        val export = graph_util.SQLExport(params("table"), seg.belongsTo, Map[String, Attribute[_]]())
+        export.insertInto(params("db"), delete = params("delete") == "yes")
       }
     })
   }
@@ -1904,6 +2039,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def toDouble(attr: Attribute[String]): Attribute[Double] = {
     val op = graph_operations.VertexAttributeToDouble()
+    op(op.attr, attr).result.attr
+  }
+
+  private def attributeToString[T](attr: Attribute[T]): Attribute[String] = {
+    val op = graph_operations.VertexAttributeToString[T]()
     op(op.attr, attr).result.attr
   }
 
@@ -2025,15 +2165,57 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   // Performs AggregateFromEdges.
   def aggregateFromEdges[From, To](
     edges: EdgeBundle,
-    onSrc: Boolean,
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateFromEdges(attributeWithAggregator.aggregator)
     val res = op(op.edges, edges)(op.eattr, attributeWithAggregator.attr).result
-    if (onSrc) res.srcAttr else res.dstAttr
+    res.dstAttr
   }
 
   def reverse(eb: EdgeBundle): EdgeBundle = {
     graph_operations.ReverseEdges.run(eb)
+  }
+
+  def removeNonSymmetric(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.RemoveNonSymmetricEdges()
+    op(op.es, eb).result.symmetric
+  }
+
+  def addReversed(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.AddReversedEdges()
+    op(op.es, eb).result.esPlus.entity
+  }
+
+  object Direction {
+    // Options suitable when edge attributes are involved.
+    val attrOptions = UIValue.list(List(
+      "incoming edges",
+      "outgoing edges",
+      "all edges"))
+    // Options suitable when edge attributes are not involved.
+    val options = attrOptions :+ UIValue("symmetric edges", "symmetric edges")
+  }
+  case class Direction(direction: String, origEB: EdgeBundle) {
+    val (edgeBundle, injectionOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
+      case "incoming edges" => (origEB, None)
+      case "outgoing edges" =>
+        val op = graph_operations.ReverseEdges()
+        val res = op(op.esAB, origEB).result
+        (res.esBA, Some(res.injection))
+      case "all edges" =>
+        val op = graph_operations.AddReversedEdges()
+        val res = op(op.es, origEB).result
+        (res.esPlus, Some(res.injection))
+      case "symmetric edges" =>
+        // Use "null" as the injection because it is an error to use
+        // "symmetric edges" with edge attributes.
+        (removeNonSymmetric(origEB), Some(null))
+    }
+
+    def pull[T](attribute: Attribute[T]): Attribute[T] = {
+      injectionOpt.map { injection =>
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attribute, injection)
+      }.getOrElse(attribute)
+    }
   }
 
   def count(eb: EdgeBundle): Scalar[Long] = {

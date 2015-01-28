@@ -10,7 +10,7 @@
       <input ng-if="param.options.length === 0 && param.kind !== 'file'"
         class="form-control" ng-model="params[param.id]">
       <file-parameter ng-if="param.kind === 'file'"
-        model="params[param.id]" file-uploads="fileUploads">
+        model="params[param.id]" file-uploads="fileUploads.count">
       </file-parameter>
       <select
         ng-if="param.options.length > 0 && !param.multipleChoice"
@@ -27,5 +27,5 @@
   </div>
 </form>
 <div tabindex="0" ng-click="apply()" class="list-group-item ok-button text-center">
-  {{running || fileUploads ? '...' : 'OK'}}
+  {{running || fileUploads.count ? '...' : 'OK'}}
 </div>

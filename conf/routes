@@ -17,6 +17,8 @@ POST /ajax/filterProject com.lynxanalytics.biggraph.serving.ProductionJsonServer
 POST /ajax/forkProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkProject
 POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoProject
 POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoProject
+POST /ajax/renameProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameProject
+POST /ajax/changeProjectSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeProjectSettings
 
 GET  /ajax/vertexDiag  com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexDiagram
 GET  /ajax/edgeDiag    com.lynxanalytics.biggraph.serving.ProductionJsonServer.edgeDiagram
@@ -33,14 +35,10 @@ GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
 
-# SecureSocial
-GET  /login                  securesocial.controllers.LoginPage.login
-GET  /logout                 securesocial.controllers.LoginPage.logout
-GET  /authenticate/:provider securesocial.controllers.ProviderController.authenticate(provider)
-POST /authenticate/:provider securesocial.controllers.ProviderController.authenticateByPost(provider)
-GET  /not-authorized         securesocial.controllers.ProviderController.notAuthorized
+POST /passwordLogin    com.lynxanalytics.biggraph.serving.UserProvider.passwordLogin
+POST /googleLogin      com.lynxanalytics.biggraph.serving.UserProvider.googleLogin
+
+GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
-# A fake asset path for the benefit of SecureSocial. See #1089.
-GET  /xxx/*file        controllers.Assets.at(path="/public", file)

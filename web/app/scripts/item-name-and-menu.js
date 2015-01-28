@@ -1,11 +1,14 @@
 'use strict';
 
-angular.module('biggraph').directive('itemNameAndMenu', function($timeout) {
+angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util) {
   return {
     restrict: 'E',
-    scope: { side: '=', name: '@', type: '@' },
+    scope: { menu: '=', name: '@', type: '@' },
     templateUrl: 'item-name-and-menu.html',
-    link: function(scope, element) {
+    link: function(scope, element, attrs) {
+      scope.util = util;
+      scope.spaced = attrs.spaced !== undefined;
+
       scope.toggleRenaming = function() {
         scope.renaming = !scope.renaming;
         scope.newName = scope.name;
@@ -13,17 +16,24 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout) {
         $timeout(function() { element.find('#renameBox').focus(); });
       };
 
+      scope.captureClick = function(event) {
+        if (event) {
+          event.stopPropagation();
+          event.preventDefault();
+        }
+      };
+
       scope.applyRenaming = function() {
         scope.renaming = false;
-        scope.side.rename(scope.type, scope.name, scope.newName);
+        scope.menu.rename(scope.type, scope.name, scope.newName);
       };
 
       scope.discard = function() {
-        scope.side.discard(scope.type, scope.name);
+        scope.menu.discard(scope.type, scope.name);
       };
 
       scope.duplicate = function() {
-        scope.side.duplicate(scope.type, scope.name);
+        scope.menu.duplicate(scope.type, scope.name);
       };
     },
   };

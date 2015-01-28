@@ -64,22 +64,26 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   val listener = new SparkListener
   sc.addSparkListener(listener)
 
-  def sparkStatus(req: SparkStatusRequest): concurrent.Future[SparkStatusResponse] = {
+  def sparkStatus(user: serving.User, req: SparkStatusRequest): concurrent.Future[SparkStatusResponse] = {
     listener.future(req.syncedUntil)
   }
 
-  def sparkCancelJobs(req: serving.Empty): Unit = {
+  def sparkCancelJobs(user: serving.User, req: serving.Empty): Unit = {
     sc.cancelAllJobs()
   }
 
-  def getClusterStatus(request: serving.Empty): SparkClusterStatusResponse = {
+  def getClusterStatus(user: serving.User, request: serving.Empty): SparkClusterStatusResponse = {
     SparkClusterStatusResponse(environment.sparkContext.master, environment.numInstances)
   }
 
-  def setClusterNumInstances(request: SetClusterNumInstanceRequest): SparkClusterStatusResponse = {
+  def setClusterNumInstances(user: serving.User, request: SetClusterNumInstanceRequest): SparkClusterStatusResponse = {
     if (request.password != "UCU8HB0d6fQJwyD8UAdDb")
       throw new IllegalArgumentException("Bad password!")
     environment.setNumInstances(request.workerInstances)
-    return getClusterStatus(serving.Empty())
+    return getClusterStatus(user, serving.Empty())
+  }
+
+  def checkSparkOperational(): Unit = {
+    assert(environment.sparkContext.parallelize(Seq(1, 2, 3)).count == 3)
   }
 }

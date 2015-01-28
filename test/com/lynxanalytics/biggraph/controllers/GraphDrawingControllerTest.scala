@@ -11,6 +11,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 
 class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val controller = new GraphDrawingController(this)
+  val user = com.lynxanalytics.biggraph.serving.User.fake
 
   test("get center of ExampleGraph with no filters") {
     val g = graph_operations.ExampleGraph()().result
@@ -18,7 +19,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       vertexSetId = g.vertices.gUID.toString,
       count = 1,
       filters = Seq())
-    val res = controller.getCenter(req)
+    val res = controller.getCenter(user, req)
     assert(res.centers.toSet == Set("0"))
   }
 
@@ -28,7 +29,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       vertexSetId = g.vertices.gUID.toString,
       count = 5,
       filters = Seq())
-    val res = controller.getCenter(req)
+    val res = controller.getCenter(user, req)
     assert(res.centers.toSet == Set("0", "1", "2", "3"))
   }
 
@@ -41,7 +42,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       vertexSetId = g.vertices.gUID.toString,
       count = 1,
       filters = Seq(f))
-    val res = controller.getCenter(req)
+    val res = controller.getCenter(user, req)
     assert(res.centers.toSet == Set("3"))
   }
 
@@ -63,7 +64,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq())))
-    val res = controller.getComplexView(req)
+    val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
     assert(res.vertexSets(0).mode == "sampled")
@@ -105,7 +106,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq(ef))))
-    val res = controller.getComplexView(req)
+    val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
     assert(res.vertexSets(0).mode == "sampled")
@@ -140,7 +141,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq())))
-    val res = controller.getComplexView(req)
+    val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
     assert(res.vertexSets(0).mode == "bucketed")
@@ -168,7 +169,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstIdx = 0,
         edgeBundleId = es.gUID.toString,
         filters = Seq())))
-    val res = controller.getComplexView(req)
+    val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
     assert(res.vertexSets(0).mode == "bucketed")
@@ -210,7 +211,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstIdx = 0,
         edgeBundleId = es.gUID.toString,
         filters = Seq(ef))))
-    val res = controller.getComplexView(req)
+    val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
     assert(res.vertexSets(0).mode == "bucketed")
@@ -229,10 +230,23 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       vertexFilters = Seq(),
       numBuckets = 4,
       axisOptions = AxisOptions())
-    val res = controller.getHistogram(req)
+    val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("2", "14", "26", "38", "50"))
     assert(res.sizes == Seq(1, 2, 0, 1))
+  }
+
+  test("histogram for double (partially defined)") {
+    val g = graph_operations.ExampleGraph()().result
+    val req = HistogramSpec(
+      attributeId = g.income.gUID.toString,
+      vertexFilters = Seq(),
+      numBuckets = 4,
+      axisOptions = AxisOptions())
+    val res = controller.getHistogram(user, req)
+    assert(res.labelType == "between")
+    assert(res.labels == Seq("1000", "1250", "1500", "1750", "2000"))
+    assert(res.sizes == Seq(1, 0, 0, 1))
   }
 
   test("histogram for double (logarithmic)") {
@@ -242,7 +256,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       vertexFilters = Seq(),
       numBuckets = 4,
       axisOptions = AxisOptions(logarithmic = true))
-    val res = controller.getHistogram(req)
+    val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("2", "4", "10", "22", "50"))
     assert(res.sizes == Seq(1, 0, 2, 1))
@@ -255,7 +269,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       vertexFilters = Seq(),
       numBuckets = 4,
       axisOptions = AxisOptions())
-    val res = controller.getHistogram(req)
+    val res = controller.getHistogram(user, req)
     assert(res.labelType == "bucket")
     assert(res.labels == Seq("Female", "Male"))
     assert(res.sizes == Seq(1, 3))
@@ -270,7 +284,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       numBuckets = 4,
       axisOptions = AxisOptions(),
       edgeBundleId = g.edges.gUID.toString)
-    val res = controller.getHistogram(req)
+    val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.0", "1.8", "2.5", "3.3", "4.0"))
     assert(res.sizes == Seq(1, 1, 1, 1))
@@ -288,7 +302,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       numBuckets = 4,
       axisOptions = AxisOptions(),
       edgeBundleId = g.edges.gUID.toString)
-    val res = controller.getHistogram(req)
+    val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.0", "1.8", "2.5", "3.3", "4.0"))
     assert(res.sizes == Seq(0, 1, 1, 1))
@@ -301,7 +315,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     val req = ScalarValueRequest(
       scalarId = scalar.gUID.toString,
       calculate = true)
-    val res = controller.getScalarValue(req)
+    val res = controller.getScalarValue(user, req)
     assert(res.defined == true)
     assert(res.double == 4)
     assert(res.string == "4")

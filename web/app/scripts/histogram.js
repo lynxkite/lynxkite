@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('histogram', function($timeout) {
+angular.module('biggraph').directive('histogram', function($timeout, util) {
   return {
     restrict: 'E',
     scope: { model: '=' },
@@ -90,6 +90,10 @@ angular.module('biggraph').directive('histogram', function($timeout) {
       scope.tooltipFor = function(index) {
         if (scope.loading) { return ''; }
         return scope.histoLabels[index] + ': ' + scope.model.sizes[index];
+      };
+
+      scope.reportError = function() {
+        util.reportRequestError(scope.model, 'Histogram request failed.');
       };
     },
   };
