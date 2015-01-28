@@ -179,7 +179,43 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 191.0)))
   }
 
+  test("big bucketed view with buckets") {
+    val vs = graph_operations.CreateVertexSet(100)().result.vs
+    val eop = graph_operations.FastRandomEdgeBundle(0, 2)
+    val rnd = {
+      val op = graph_operations.AddGaussianVertexAttribute(1)
+      op(op.vertices, vs).result.attr
+    }
+    val es = eop(eop.vs, vs).result.es
+    val req = FEGraphRequest(
+      vertexSets = Seq(VertexDiagramSpec(
+        vertexSetId = vs.gUID.toString,
+        filters = Seq(),
+        mode = "bucketed",
+        xBucketingAttributeId = rnd.gUID.toString,
+        xNumBuckets = 2)),
+      edgeBundles = Seq(EdgeDiagramSpec(
+        srcDiagramId = "idx[0]",
+        dstDiagramId = "idx[0]",
+        srcIdx = 0,
+        dstIdx = 0,
+        edgeBundleId = es.gUID.toString,
+        filters = Seq())))
+    val res = controller.getComplexView(user, req)
+    assert(res.vertexSets.length == 1)
+    assert(res.edgeBundles.length == 1)
+    assert(res.vertexSets(0).mode == "bucketed")
+    assert(res.vertexSets(0).vertices.size == 2)
+    // Roughly 50, 50.
+    assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(60.0, 0, 0), FEVertex(40.0, 1, 0)))
+    assert(res.edgeBundles(0).edges.size == 4)
+    // Roughly 25% each of 191 edges (=48). Bigger buckets should have more edges in them.
+    assert(res.edgeBundles(0).edges.toSet ==
+      Set(FEEdge(0, 0, 68.0), FEEdge(0, 1, 47.0), FEEdge(1, 0, 43.0), FEEdge(1, 1, 33.0)))
+  }
+
   test("big bucketed view with filters") {
+    // TODO: This test uses the "small" code path by mistake. See #1238.
     val vs = graph_operations.CreateVertexSet(100)().result.vs
     val es = {
       val op = graph_operations.FastRandomEdgeBundle(0, 2)
