@@ -12,22 +12,22 @@ import play.api.libs.json
 object TypedJson {
   // Re-creates the object from a TypedJson format.
   def read[T](j: json.JsValue): T = {
-    (j \ "class").as[String] match {
-      case "Long" => (j \ "data").as[Long].asInstanceOf[T]
-      case "Double" => (j \ "data").as[Double].asInstanceOf[T]
-      case "String" => (j \ "data").as[String].asInstanceOf[T]
-      case cls =>
-        try {
+    try {
+      (j \ "class").as[String] match {
+        case "Long" => (j \ "data").as[Long].asInstanceOf[T]
+        case "Double" => (j \ "data").as[Double].asInstanceOf[T]
+        case "String" => (j \ "data").as[String].asInstanceOf[T]
+        case cls =>
           // Find the companion object.
           val sym = reflect.runtime.currentMirror.staticModule(cls)
           val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
           val des = obj.asInstanceOf[FromJson[T]]
           // Ask the companion object to parse the data.
           des.fromJson(j \ "data")
-        } catch {
-          // Include more details in the exception.
-          case e: Throwable => throw new Exception(s"Failed to read $j", e)
-        }
+      }
+    } catch {
+      // Include more details in the exception.
+      case e: Throwable => throw new Exception(s"Failed to read $j", e)
     }
   }
 
