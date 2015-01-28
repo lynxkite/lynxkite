@@ -242,8 +242,8 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
-  abstract class MaxBy[Weight, Value] extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
-    implicit val ordering: Ordering[Weight]
+  abstract class MaxBy[Weight: Ordering, Value]
+      extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
@@ -269,9 +269,7 @@ object Aggregator {
     def finalize(opt: Option[(Weight, Value)]) = opt.get._2
   }
   object MaxByDouble extends AggregatorFromJson { def fromJson(j: JsValue) = MaxByDouble() }
-  case class MaxByDouble[T]() extends MaxBy[Double, T] {
-    implicit val ordering = Ordering[Double]
-  }
+  case class MaxByDouble[T]() extends MaxBy[Double, T]
 
   object Average extends AggregatorFromJson { def fromJson(j: JsValue) = Average() }
   case class Average() extends CompoundDoubleAggregator[Double] {
