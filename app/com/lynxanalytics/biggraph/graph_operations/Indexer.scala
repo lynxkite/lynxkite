@@ -25,16 +25,17 @@ object Indexer extends OpFromJson {
                   inputs: Input[T]) extends MagicOutput(instance) {
     val indices = vertexAttribute[Int](inputs.filtered.entity)
   }
-  def fromJson(j: JsValue) = Indexer(null)
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = Indexer(TypedJson.read[Bucketer[_]](j \ "bucketer"))
 }
 import Indexer._
 case class Indexer[T](bucketer: Bucketer[T])
     extends TypedMetaGraphOp[Input[T], Output[T]] {
-  assert(bucketer != null)
 
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  override def toJson = Json.obj("bucketer" -> bucketer.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[T],
