@@ -16,8 +16,8 @@ trait Bucketer[-T] extends Serializable with ToJson {
   final def nonEmpty = !isEmpty
 }
 
-object EmptyBucketer extends FromJson[Bucketer[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) = EmptyBucketer()
+object EmptyBucketer extends FromJson[EmptyBucketer] {
+  def fromJson(j: JsValue) = EmptyBucketer()
 }
 case class EmptyBucketer() extends Bucketer[Nothing] {
   val numBuckets = 1
@@ -65,14 +65,14 @@ abstract class FractionalBucketer[T: Fractional](min: T, max: T, nb: Int)
   override val bucketSize: T = (max - min) / num.fromInt(nb)
 }
 
-object StringBucketer extends FromJson[Bucketer[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) =
+object StringBucketer extends FromJson[StringBucketer] {
+  def fromJson(j: JsValue) =
     StringBucketer((j \ "options").as[Seq[String]], (j \ "hasOther").as[Boolean])
 }
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
     extends EnumBucketer[String](options, hasOther) {
   val labelType = "bucket"
-  override def toJson = play.api.libs.json.Json.obj("options" -> options, "hasOther" -> hasOther)
+  override def toJson = Json.obj("options" -> options, "hasOther" -> hasOther)
   override def bucketFilters = {
     if (hasOther) {
       val otherFilter = "!" + optionLabels.mkString(",")
@@ -120,24 +120,24 @@ abstract class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
   }
 }
 
-object DoubleLinearBucketer extends FromJson[Bucketer[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) =
+object DoubleLinearBucketer extends FromJson[DoubleLinearBucketer] {
+  def fromJson(j: JsValue) =
     DoubleLinearBucketer((j \ "min").as[Double], (j \ "max").as[Double], (j \ "numBuckets").as[Int])
 }
 case class DoubleLinearBucketer(min: Double, max: Double, numBuckets: Int)
     extends DoubleBucketer(min, max, numBuckets) {
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "min" -> min, "max" -> max, "numBuckets" -> numBuckets)
 }
 
-object DoubleLogBucketer extends FromJson[Bucketer[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) =
+object DoubleLogBucketer extends FromJson[DoubleLogBucketer] {
+  def fromJson(j: JsValue) =
     DoubleLogBucketer((j \ "min").as[Double], (j \ "max").as[Double], (j \ "numBuckets").as[Int])
 }
 case class DoubleLogBucketer(min: Double, max: Double, numBuckets: Int)
     extends DoubleBucketer(min, max, numBuckets) {
   assert(min > 0, s"Cannot take the logarithm of $min.")
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "min" -> min, "max" -> max, "numBuckets" -> numBuckets)
   @transient override lazy val bounds: Seq[Double] = {
     val logMin = math.log(min)
@@ -148,13 +148,13 @@ case class DoubleLogBucketer(min: Double, max: Double, numBuckets: Int)
   }
 }
 
-object LongBucketer extends FromJson[Bucketer[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) =
+object LongBucketer extends FromJson[LongBucketer] {
+  def fromJson(j: JsValue) =
     LongBucketer((j \ "min").as[Long], (j \ "max").as[Long], (j \ "numBuckets").as[Int])
 }
 case class LongBucketer(min: Long, max: Long, numBuckets: Int)
     extends NumericBucketer[Long](min, max, numBuckets) {
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "min" -> min, "max" -> max, "numBuckets" -> numBuckets)
   val labelType = if ((max - min) / numBuckets == 0) "bucket" else "between"
   override def bucketLabels: Seq[String] = {
@@ -172,11 +172,11 @@ abstract class MapBucketer[T](toBucket: Map[T, Int]) extends Bucketer[T] {
   def labelType = ???
 }
 
-object IDMapBucketer extends FromJson[Bucketer[Nothing]] {
-  def fromJson(j: play.api.libs.json.JsValue) =
+object IDMapBucketer extends FromJson[IDMapBucketer] {
+  def fromJson(j: JsValue) =
     IDMapBucketer((j \ "toBucket").as[Map[String, String]].map { case (k, v) => k.toLong -> v.toInt })
 }
 case class IDMapBucketer(toBucket: Map[ID, Int]) extends MapBucketer[ID](toBucket) {
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "toBucket" -> toBucket.map { case (k, v) => k.toString -> v.toString })
 }
