@@ -726,10 +726,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new VertexOperation(_) {
-    val title = "Edge Graph"
+    val title = "Edge graph"
     val description =
-      """Creates the dual graph, where each vertex corresponds to an edge in the current graph.
-      The vertices will be connected, if one corresponding edge is the continuation of the other.
+      """Creates the edge graph (aka line graph), where each vertex corresponds to an edge in the
+      current graph. The vertices will be connected, if one corresponding edge is the continuation
+      of the other.
       """
     def parameters = List()
     def enabled = hasEdgeBundle
