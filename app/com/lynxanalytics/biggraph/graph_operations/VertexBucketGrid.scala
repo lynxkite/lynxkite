@@ -22,9 +22,9 @@ object VertexBucketGrid extends OpFromJson {
     val yBuckets = vertexAttribute[Int](inputs.filtered.entity)
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
   }
-  def fromJson(j: JsValue) = VertexBucketGrid[Nothing, Nothing](
-    TypedJson.read[Bucketer[Nothing]](j \ "xBucketer"),
-    TypedJson.read[Bucketer[Nothing]](j \ "yBucketer"))
+  def fromJson(j: JsValue) = VertexBucketGrid(
+    TypedJson.read[Bucketer[_]](j \ "xBucketer"),
+    TypedJson.read[Bucketer[_]](j \ "yBucketer"))
 }
 import VertexBucketGrid._
 case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
