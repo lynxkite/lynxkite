@@ -23,7 +23,7 @@ describe('splash page', function() {
     });
 
     it('opens a project when clicked', function() {
-      var melon = element(by.partialLinkText('Project Melon'));
+      var melon = element.all(by.css('.project-list > div')).get(2);
       melon.click();
       expect(browser.getCurrentUrl()).toContain('/#/project/Project_Melon');
     });
