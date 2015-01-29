@@ -111,27 +111,38 @@ object AddEdgeBundle extends OpFromJson {
     val vsA = vertexSet
     val vsB = vertexSet
   }
-  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
-    val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity)
+  class Output(
+      implicit instance: MetaGraphOperationInstance,
+      inputs: Input,
+      properties: EdgeBundleProperties) extends MagicOutput(instance) {
+    val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity, properties = properties)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = AddEdgeBundle((j \ "edgeLists").as[Seq[Seq[Int]]].map(ab => ab(0) -> ab(1)))
+  def fromJson(j: play.api.libs.json.JsValue) = AddEdgeBundle((j \ "edgeList").as[Seq[Seq[Int]]].map(ab => ab(0) -> ab(1)))
+  def getFunctionProperties(edgeList: Seq[(Int, Int)]): EdgeBundleProperties = {
+    val srcSet = edgeList.map(_._1).toSet
+    val dstSet = edgeList.map(_._2).toSet
+    EdgeBundleProperties(
+      isFunction = (srcSet.size == edgeList.size),
+      isReversedFunction = (dstSet.size == edgeList.size))
+  }
 }
-case class AddEdgeBundle(edgeLists: Seq[(Int, Int)])
+case class AddEdgeBundle(edgeList: Seq[(Int, Int)])
     extends TypedMetaGraphOp[AddEdgeBundle.Input, AddEdgeBundle.Output] {
   import AddEdgeBundle._
   @transient override lazy val inputs = new Input
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs, AddEdgeBundle.getFunctionProperties(edgeList))
   override def toJson = {
     import play.api.libs.json
     json.Json.obj(
-      "edgeLists" -> edgeLists.map { case (a, b) => Seq(a, b) })
+      "edgeList" -> edgeList.map { case (a, b) => Seq(a, b) })
   }
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    val (srcs, dsts) = edgeLists.unzip
+    val (srcs, dsts) = edgeList.unzip
     val es = sc.parallelize(
-      edgeLists.map {
+      edgeList.map {
         case (a, b) => Edge(a.toLong, b.toLong)
       }).randomNumbered(rc.onePartitionPartitioner)
     output(o.esAB, es)
