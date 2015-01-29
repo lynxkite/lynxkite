@@ -7,19 +7,23 @@
 .project-list {
   padding: 0;
 }
-.project-list > a {
-  display: block;
+.project-list > div {
   padding: 20px;
   border-bottom: 1px solid whitesmoke;
+  color: #428BCA;
+  cursor: pointer;
 }
-.project-list > a:hover,
-.project-list > a:focus {
+.project-list > div:hover,
+.project-list > div:focus {
   text-decoration: none;
   background: #428BCA;
   color: white;
 }
-.project-list > a.error {
+.project-list > div.error {
   color: maroon;
   background: white;
   cursor: not-allowed;
+}
+.project-list > div.error a {
+  cursor: pointer;
 }

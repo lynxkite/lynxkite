@@ -34,11 +34,6 @@ if [ -z "${AWS_ACCESS_KEY_ID:-}" -o -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
   exit 1
 fi
 
-if [ ! -f "${SSH_KEY}" ]; then
-  echo "${SSH_KEY} does not exist."
-  exit 1
-fi
-
 # ==== Reading config and defining common vars/functions. ===
 source $2
 
@@ -48,6 +43,11 @@ GetMasterHostName() {
     --filters "Name=instance.group-name,Values=${CLUSTER_NAME}-master" \
     | grep PublicDnsName | grep ec2 | cut -d'"' -f 4 | head -1
 }
+
+if [ ! -f "${SSH_KEY}" ]; then
+  echo "${SSH_KEY} does not exist."
+  exit 1
+fi
 
 SSH="ssh -i '${SSH_KEY}' -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no"
 
