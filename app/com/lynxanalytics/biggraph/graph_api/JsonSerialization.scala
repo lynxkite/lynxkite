@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import play.api.libs.json
 
-// TypedJson if a JSON object with a string "class" and an object "data" field:
+// TypedJson is a JSON object with a string "class" and an object "data" field:
 //   { "class": "my.little.ClassName", "data": { ... } }
 // This format allows reading objects whose exact type is not known in advance.
 // For example Operations are stored like this.
