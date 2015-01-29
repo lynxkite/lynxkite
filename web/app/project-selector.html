@@ -30,7 +30,7 @@
 
     <p class="alert alert-danger" ng-if="data.$error">
       Could not load project list.
-      <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
+      <i class="pull-right"><a href ng-click="reportListError()">report problem</a></i>
     </p>
 
     <div ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
@@ -38,7 +38,7 @@
       <h1><item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu></h1>
       <span ng-if="project.error">
         {{project.error}}
-        <i class="pull-right"><a ng-click="reportError(project)">report problem</a></i>
+        <i class="pull-right"><a ng-click="reportProjectError(project)">report problem</a></i>
       </span>
       <span ng-if="!project.error">
         <value ref="vertexCounts[project.name]"></value> vertices,
