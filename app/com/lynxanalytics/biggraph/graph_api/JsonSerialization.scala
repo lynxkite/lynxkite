@@ -31,12 +31,13 @@ object TypedJson {
     }
   }
 
-  // Creates TypedJson for primitive values.
+  // Creates TypedJson for supported types.
   def apply(p: Any): json.JsValue = {
     p match {
       case p: Long => json.Json.obj("class" -> "Long", "data" -> p)
       case p: Double => json.Json.obj("class" -> "Double", "data" -> p)
       case p: String => json.Json.obj("class" -> "String", "data" -> p)
+      case p: ToJson => p.toTypedJson
     }
   }
 }
