@@ -69,12 +69,13 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
   }
 
   test("We can compute a graph whose meta was loaded from disk") {
-    val metaManager = cleanMetaManager
+    val mmDir = cleanMetaManagerDir
+    val metaManager = VersioningMetaGraphManager(mmDir)
     val dataManager = cleanDataManager
     val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
     val ageGUID = instance.outputs.vertexAttributes('age).gUID
-    val reloadedMetaManager = new MetaGraphManager(metaManager.repositoryPath)
+    val reloadedMetaManager = VersioningMetaGraphManager(mmDir)
     val reloadedAge = reloadedMetaManager.vertexAttribute(ageGUID).runtimeSafeCast[Double]
     assert(TestUtils.RDDToSortedString(dataManager.get(reloadedAge).rdd) ==
       "(0,20.3)\n" +

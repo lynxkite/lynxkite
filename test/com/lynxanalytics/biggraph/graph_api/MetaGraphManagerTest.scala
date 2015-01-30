@@ -63,7 +63,8 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   }
 
   test("Save and load works") {
-    val m1o = cleanMetaManager
+    val m1Dir = cleanMetaManagerDir
+    val m1o = VersioningMetaGraphManager(m1Dir)
     val m2o = cleanMetaManager
 
     val firstInstance = m1o.apply(new CreateSomeGraph())
@@ -77,7 +78,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
     m1o.setTag("my/favorite/vertices/first", firstVertices)
 
-    val m1c = new MetaGraphManager(m1o.repositoryPath)
+    val m1c = VersioningMetaGraphManager(m1Dir)
 
     (firstInstance.entities.all.values ++ secondInstance.entities.all.values).foreach { entity =>
       // We have an entity of the GUID of all entities.

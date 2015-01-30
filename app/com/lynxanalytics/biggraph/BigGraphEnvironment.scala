@@ -29,7 +29,7 @@ trait BigGraphEnvironment extends SparkContextProvider {
 trait StaticDirEnvironment extends BigGraphEnvironment {
   val repositoryDirs: RepositoryDirs
 
-  override lazy val metaGraphManager = new graph_api.MetaGraphManager(repositoryDirs.graphDir)
+  override lazy val metaGraphManager = graph_api.VersioningMetaGraphManager(repositoryDirs.graphDir)
   override lazy val dataManager = new graph_api.DataManager(
     sparkContext, repositoryDirs.dataDir)
 }

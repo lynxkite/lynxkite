@@ -15,7 +15,12 @@ import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.{ Filename, Timestamp }
 
-class MetaGraphManager(val repositoryPath: String) {
+object MetaGraphManager {
+  implicit class StringAsUUID(s: String) {
+    def asUUID: UUID = UUID.fromString(s)
+  }
+}
+class MetaGraphManager {
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
@@ -39,6 +44,11 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
   }
 
+  // Override these to store the data.
+  protected def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {}
+  protected def saveTags(): Unit = {}
+  protected def saveVisibles(): Unit = {}
+
   // Marks a set of entities for frontend visibility.
   def show[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
@@ -57,14 +67,14 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def allVertexSets: Set[VertexSet] = entities.values.collect { case e: VertexSet => e }.toSet
 
-  def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
-  def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
+  def vertexSet(gUID: UUID): VertexSet = entity(gUID).asInstanceOf[VertexSet]
+  def edgeBundle(gUID: UUID): EdgeBundle = entity(gUID).asInstanceOf[EdgeBundle]
   def vertexAttribute(gUID: UUID): Attribute[_] =
-    entities(gUID).asInstanceOf[Attribute[_]]
+    entity(gUID).asInstanceOf[Attribute[_]]
   def vertexAttributeOf[T: TypeTag](gUID: UUID): Attribute[T] =
     vertexAttribute(gUID).runtimeSafeCast[T]
   def scalar(gUID: UUID): Scalar[_] =
-    entities(gUID).asInstanceOf[Scalar[_]]
+    entity(gUID).asInstanceOf[Scalar[_]]
   def scalarOf[T: TypeTag](gUID: UUID): Scalar[T] =
     scalar(gUID).runtimeSafeCast[T]
   def entity(gUID: UUID): MetaGraphEntity = entities(gUID)
@@ -139,13 +149,13 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
-  private val entities = mutable.Map[UUID, MetaGraphEntity]()
-  private val visibles = mutable.Set[UUID]()
+  protected val entities = mutable.Map[UUID, MetaGraphEntity]()
+  protected val visibles = mutable.Set[UUID]()
 
   // All tagRoot access must be synchronized on this MetaGraphManager object.
   // This allows users of MetaGraphManager to safely conduct transactions over
   // multiple tags.
-  private val tagRoot = TagRoot()
+  protected val tagRoot = TagRoot()
 
   private val outgoingBundlesMap =
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
@@ -157,9 +167,7 @@ class MetaGraphManager(val repositoryPath: String) {
   private val dependentOperationsMap =
     mutable.Map[UUID, List[MetaGraphOperationInstance]]().withDefaultValue(List())
 
-  initializeFromDisk()
-
-  private def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
+  protected def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
     operationInstances(operationInstance.gUID) = operationInstance
     operationInstance.outputs.all.values.foreach { entity =>
       val gUID = entity.gUID
@@ -179,34 +187,38 @@ class MetaGraphManager(val repositoryPath: String) {
       dependentOperationsMap(entity.gUID) ::= operationInstance
     }
   }
+}
 
-  private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
+class PersistentMetaGraphManager(val repositoryPath: String) extends MetaGraphManager {
+  initializeFromDisk()
+
+  override def saveInstanceToDisk(inst: MetaGraphOperationInstance) =
+    saveInstanceToDisk(inst, repositoryPath)
+
+  protected def saveInstanceToDisk(inst: MetaGraphOperationInstance, repo: String): Unit = {
     log.info(s"Saving $inst to disk.")
     val time = Timestamp.toString
-    val repo = Filename(repositoryPath) / "operations"
-    val dumpFile = repo / s"dump-$time"
-    val finalFile = repo / s"save-$time"
+    val dir = Filename(repo) / "operations"
+    val dumpFile = dir / s"dump-$time"
+    val finalFile = dir / s"save-$time"
     dumpFile.createFromStrings(serializeOperation(inst))
     // Validate the saved operation by trying to reload it.
-    loadInstanceFromDisk(new File(dumpFile.toString)) match {
-      case util.Success(i) => assert(
-        inst == i,
-        "Operation reloaded after serialization was not identical." +
-          s" File: $dumpFile Operation: $inst")
-      case util.Failure(e) => throw new Exception(s"Failed to reload $dumpFile", e)
-    }
+    val i = loadInstanceFromDisk(new File(dumpFile.toString))
+    assert(inst == i, s"Operation reloaded after serialization was not identical: $inst")
     dumpFile.renameTo(finalFile)
   }
 
-  private def loadInstanceFromDisk(file: File): util.Try[MetaGraphOperationInstance] = {
+  protected def loadInstanceFromDisk(file: File): MetaGraphOperationInstance = {
     log.info(s"Loading operation from ${file.getName}")
-    util.Try {
+    try {
       val data = scala.io.Source.fromFile(file).mkString
       deserializeOperation(data)
+    } catch {
+      case e: Throwable => throw new Exception(s"Error loading operation from ${file.getName}", e)
     }
   }
 
-  private def saveVisibles(): Unit = {
+  override def saveVisibles(): Unit = {
     val dumpFile = new File(s"$repositoryPath/dump-visibles")
     val stream = new ObjectOutputStream(new FileOutputStream(dumpFile))
     stream.writeObject(visibles)
@@ -214,20 +226,20 @@ class MetaGraphManager(val repositoryPath: String) {
     dumpFile.renameTo(new File(s"$repositoryPath/visibles"))
   }
 
-  private def saveTags(): Unit = synchronized {
+  override def saveTags(): Unit = synchronized {
     val dumpFile = new File(s"$repositoryPath/dump-tags")
     FileUtils.writeStringToFile(dumpFile, tagRoot.saveToString, "utf8")
     dumpFile.renameTo(new File(s"$repositoryPath/tags"))
   }
 
-  private def initializeFromDisk(): Unit = {
+  protected def initializeFromDisk(): Unit = {
     val repo = new File(repositoryPath)
     if (!repo.exists) repo.mkdirs
     val oprepo = new File(repo, "operations")
     if (!oprepo.exists) oprepo.mkdirs
     val operationFiles = oprepo.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
     for (file <- operationFiles) {
-      loadInstanceFromDisk(file) match {
+      util.Try(loadInstanceFromDisk(file)) match {
         case util.Success(instance) => internalApply(instance)
         case util.Failure(e) => log.error(s"Error loading operation from ${file.getName}", e)
       }
@@ -237,14 +249,13 @@ class MetaGraphManager(val repositoryPath: String) {
     if (visiblesFile.exists) {
       log.info(s"Loading visible set.")
       try {
-        val stream = new ObjectInputStream(new FileInputStream(s"$repositoryPath/visibles"))
+        val stream = new ObjectInputStream(new FileInputStream(visiblesFile))
         visibles ++= stream.readObject().asInstanceOf[mutable.Set[UUID]]
         stream.close()
       } catch {
         case e: Throwable => log.error("Error loading visible set:", e)
       }
     }
-
     val tagsFile = new File(repo, "tags")
     if (tagsFile.exists) {
       log.info(s"Loading tags.")
@@ -262,7 +273,7 @@ class MetaGraphManager(val repositoryPath: String) {
     }
   }
 
-  def serializeOperation(inst: MetaGraphOperationInstance): String = {
+  protected def serializeOperation(inst: MetaGraphOperationInstance): String = {
     val j = Json.obj(
       "operation" -> inst.operation.toTypedJson,
       "inputs" -> inst.inputs.toJson,
@@ -275,13 +286,17 @@ class MetaGraphManager(val repositoryPath: String) {
     }
   }
 
-  private def deserializeOperation(input: String): MetaGraphOperationInstance = {
+  protected def deserializeOperation(input: String): MetaGraphOperationInstance = {
     val j = Json.parse(input)
+    deserializeOperation(j)
+  }
+
+  protected def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
     val op = TypedJson.read[TypedMetaGraphOp.Type](j \ "operation")
     val inputs = (j \ "inputs").as[Map[String, String]].map {
       case (name, guid) => Symbol(name) -> UUID.fromString(guid)
     }
-    val inst = TypedOperationInstance(
+    TypedOperationInstance(
       this,
       op,
       MetaDataSet(
@@ -293,15 +308,110 @@ class MetaGraphManager(val repositoryPath: String) {
           .map(n => n -> vertexAttribute(inputs(n))).toMap,
         op.inputSig.scalars
           .map(n => n -> scalar(inputs(n))).toMap))
+  }
+}
+
+// Used for loading repository data from the current version.
+class ValidatingMetaGraphManager(repo: String) extends PersistentMetaGraphManager(repo) {
+  override def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
+    val inst = super.deserializeOperation(j)
     // Verify outputs.
     assert((j \ "outputs") == inst.outputs.toJson,
-      s"Output mismatch in operation read from $input." +
+      s"Output mismatch in operation read from $j." +
         s" Expected: ${j \ "outputs"}, found: ${inst.outputs.toJson}")
     inst
   }
 }
-object MetaGraphManager {
-  implicit class StringAsUUID(s: String) {
-    def asUUID: UUID = UUID.fromString(s)
+
+// Used for loading reposity data from an old version.
+private class MigrationalMetaGraphManager(src: String, dst: String) extends PersistentMetaGraphManager(src) {
+  val guidMapping = collection.mutable.Map[UUID, UUID]()
+
+  override def entity(gUID: UUID): MetaGraphEntity =
+    entities.getOrElse(gUID, entity(guidMapping(gUID)))
+
+  override def internalApply(inst: MetaGraphOperationInstance) = {
+    saveInstanceToDisk(inst, dst)
+    super.internalApply(inst)
+  }
+
+  override def initializeFromDisk(): Unit = {
+    super.initializeFromDisk()
+    // TODO: Fix visibles and tags, then write them back.
+  }
+
+  override def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
+    // TODO: Migrate j.
+    val inst = super.deserializeOperation(j)
+    // Add outputs to the GUID mapping.
+    for ((name, guid) <- (j \ "outputs").as[Map[String, String]]) {
+      guidMapping(UUID.fromString(guid)) = inst.outputs.all(Symbol(name)).gUID
+    }
+    inst
+  }
+}
+
+object VersioningMetaGraphManager {
+  def apply(rootPath: String): PersistentMetaGraphManager = {
+    val current = findCurrentRepository(new File(rootPath)).toString
+    println(s"current: $current")
+    new ValidatingMetaGraphManager(current)
+  }
+
+  // Returns the path to the repo belonging to the current version.
+  // If the newest repo belongs to an older version, it performs migration.
+  // If the newest repo belongs to a newer version, an exception is raised.
+  private def findCurrentRepository(repo: File): File = {
+    val dirs = repo.listFiles
+    import Migration.versionOrdering
+    import Migration.versionOrdering.mkOrderingOps
+    case class DV(dir: File, version: Migration.VersionMap)
+    val versions =
+      dirs
+        .flatMap(dir => readVersion(dir).map(v => DV(dir, v)))
+        .sortBy(_.version).reverse
+    if (versions.isEmpty) {
+      val current = new File(repo, "1")
+      writeVersion(current)
+      current
+    } else {
+      val newest = versions.head
+      if (newest.version == Migration.version) newest.dir
+      else {
+        val supported = versions.find(_.version <= Migration.version)
+        assert(newest.version < Migration.version,
+          supported match {
+            case Some(supported) =>
+              s"The repository data in ${newest.dir} is newer than the current version." +
+                s" The first supported version is in ${supported.dir}."
+            case None =>
+              s"All repository data in $repo has a newer version than the current version."
+          })
+        val last = newest.dir.getName.toInt
+        val current = new File(repo, (last + 1).toString)
+        // Migrate from "newest" to "current".
+        new MigrationalMetaGraphManager(newest.dir.toString, current.toString)
+        writeVersion(current)
+        current
+      }
+    }
+  }
+
+  def readVersion(dir: File) = {
+    val versionFile = new File(dir, "version")
+    if (versionFile.exists) {
+      val data = scala.io.Source.fromFile(versionFile).mkString
+      val j = Json.parse(data)
+      val versions = j.as[Migration.VersionMap]
+      Some(versions)
+    } else None
+  }
+
+  def writeVersion(dir: File): Unit = {
+    dir.mkdirs
+    val versionFile = new File(dir, "version")
+    val data = json.JsObject(Migration.version.mapValues(json.JsNumber(_)).toSeq)
+    val fn = Filename(versionFile.toString)
+    fn.createFromStrings(json.Json.prettyPrint(data))
   }
 }
