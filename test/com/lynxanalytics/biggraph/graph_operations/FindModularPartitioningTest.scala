@@ -16,6 +16,6 @@ class FindModularPartitioningTest extends FunSuite with TestGraphOp {
       val op = FindModularPartitioning()
       op(op.edges, eg.edges)(op.weights, eg.weight).result
     }
-    assert(partitions.containedIn.toPairSeq == Seq())
+    assert(partitions.belongsTo.toPairSeq == Seq())
   }
 }

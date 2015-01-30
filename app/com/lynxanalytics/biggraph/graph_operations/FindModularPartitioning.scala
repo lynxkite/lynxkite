@@ -19,7 +19,7 @@ object FindModularPartitioning extends OpFromJson {
                inputs: Input)
       extends MagicOutput(instance) {
     val partitions = vertexSet
-    val containedIn = edgeBundle(
+    val belongsTo = edgeBundle(
       inputs.vs.entity, partitions, properties = EdgeBundleProperties.partialFunction)
   }
   def fromJson(j: JsValue) = FindModularPartitioning()
@@ -164,7 +164,7 @@ case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
     val partitions = members.groupByKey.randomNumbered(vPart).mapValues(_._2)
     output(o.partitions, partitions.mapValues(_ => ()))
     output(
-      o.containedIn,
+      o.belongsTo,
       partitions
         .flatMap { case (p, members) => members.map(m => Edge(m, p)) }
         .randomNumbered(vPart))

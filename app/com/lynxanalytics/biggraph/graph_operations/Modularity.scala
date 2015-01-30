@@ -13,7 +13,7 @@ object Modularity extends OpFromJson {
     val edgeIds = vertexSet
     val edges = edgeBundle(vs, vs, idSet = edgeIds)
     val weights = vertexAttribute[Double](edgeIds)
-    val containedIn = edgeBundle(
+    val belongsTo = edgeBundle(
       vs, segments, requiredProperties = EdgeBundleProperties.partialFunction)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
@@ -34,7 +34,7 @@ case class Modularity() extends TypedMetaGraphOp[Input, Output] {
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vPart = inputs.vs.rdd.partitioner.get
-    val vToS = inputs.containedIn.rdd.map { case (eid, e) => (e.src, e.dst) }.toSortedRDD(vPart)
+    val vToS = inputs.belongsTo.rdd.map { case (eid, e) => (e.src, e.dst) }.toSortedRDD(vPart)
     val bySrc = inputs.edges.rdd.sortedJoin(inputs.weights.rdd)
       .map { case (eid, (e, w)) => (e.src, (e.dst, w)) }
       .toSortedRDD(vPart)
