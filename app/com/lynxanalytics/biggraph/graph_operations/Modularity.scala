@@ -44,6 +44,7 @@ case class Modularity() extends TypedMetaGraphOp[Input, Output] {
     val segmentEdges = byDst.sortedJoin(vToS)
       .map { case (dst, ((srcS, w), dstS)) => ((srcS, dstS), w) }
       .reduceBySortedKey(vPart, _ + _)
+    segmentEdges.cache()
     val outDegSum = segmentEdges
       .map { case ((srcS, dstS), w) => (srcS, w) }
       .reduceBySortedKey(vPart, _ + _)
@@ -60,11 +61,10 @@ case class Modularity() extends TypedMetaGraphOp[Input, Output] {
       o.modularity,
       outDegSum.sortedJoin(inDegSum).fullOuterJoin(fullEdges)
         .map {
-          case (s, (outsinsopt, fullsopt)) =>
-            val (outs, ins) = outsinsopt.getOrElse((0.0, 0.0))
-            val fulls = fullsopt.getOrElse(0.0)
-            println(s"Processing $s. Ins: $ins outs: $outs fulls: $fulls")
-            fulls / numEdges - ins / numEdges * outs / numEdges
+          case (s, (outsInsOpt, fullsOpt)) =>
+            val (outs, ins) = outsInsOpt.getOrElse((0.0, 0.0))
+            val fulls = fullsOpt.getOrElse(0.0)
+            fulls / numEdges - (ins / numEdges) * (outs / numEdges)
         }
         .reduce(_ + _))
   }
