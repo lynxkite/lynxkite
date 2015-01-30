@@ -66,7 +66,7 @@ object SmallTestGraph extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val (vs, es) = graph
   }
-  def fromJson(j: play.api.libs.json.JsValue) = {
+  def fromJson(j: JsValue) = {
     SmallTestGraph(
       (j \ "edgeLists").as[Map[String, Array[Int]]].map { case (k, v) => k.toInt -> v.toSeq },
       (j \ "numPartitions").as[Int])
@@ -79,7 +79,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   override def toJson = {
     import play.api.libs.json
-    json.Json.obj(
+    Json.obj(
       "edgeLists" -> json.JsObject(edgeLists.toSeq.map { case (k, v) => k.toString -> json.JsArray(v.map(json.JsNumber(_))) }),
       "numPartitions" -> numPartitions)
   }
@@ -117,7 +117,7 @@ object AddEdgeBundle extends OpFromJson {
       properties: EdgeBundleProperties) extends MagicOutput(instance) {
     val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity, properties = properties)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = AddEdgeBundle((j \ "edgeList").as[Seq[Seq[Int]]].map(ab => ab(0) -> ab(1)))
+  def fromJson(j: JsValue) = AddEdgeBundle((j \ "edgeList").as[Seq[Seq[Int]]].map(ab => ab(0) -> ab(1)))
   def getFunctionProperties(edgeList: Seq[(Int, Int)]): EdgeBundleProperties = {
     val srcSet = edgeList.map(_._1).toSet
     val dstSet = edgeList.map(_._2).toSet
@@ -133,14 +133,12 @@ case class AddEdgeBundle(edgeList: Seq[(Int, Int)])
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs, AddEdgeBundle.getFunctionProperties(edgeList))
   override def toJson = {
-    import play.api.libs.json
-    json.Json.obj(
+    Json.obj(
       "edgeList" -> edgeList.map { case (a, b) => Seq(a, b) })
   }
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    val (srcs, dsts) = edgeList.unzip
     val es = sc.parallelize(
       edgeList.map {
         case (a, b) => Edge(a.toLong, b.toLong)
@@ -155,7 +153,7 @@ object SegmentedTestGraph extends OpFromJson {
     val segments = vertexSet
     val belongsTo = edgeBundle(vs, segments)
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     SegmentedTestGraph((j \ "edgeLists").as[Seq[Seq[Int]]].map(s => s.tail -> s.head))
 }
 case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
@@ -164,7 +162,7 @@ case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
   @transient override lazy val inputs = new NoInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   override def toJson =
-    play.api.libs.json.Json.obj("edgeLists" -> edgeLists.map { case (s, d) => d +: s })
+    Json.obj("edgeLists" -> edgeLists.map { case (s, d) => d +: s })
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
@@ -194,7 +192,7 @@ object AddWeightedEdges extends OpFromJson {
     val es = edgeBundle(inputs.src.entity, inputs.dst.entity)
     val weight = edgeAttribute[Double](es)
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     AddWeightedEdges((j \ "edges").as[Seq[Seq[ID]]].map(ab => ab(0) -> ab(1)), (j \ "weight").as[Double])
 }
 case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
@@ -202,7 +200,7 @@ case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
   import AddWeightedEdges._
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = play.api.libs.json.Json.obj(
+  override def toJson = Json.obj(
     "edges" -> edges.map { case (a, b) => Seq(a, b) },
     "weight" -> weight)
 
@@ -222,7 +220,7 @@ object AddVertexAttribute extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[String](inputs.vs.entity)
   }
-  def fromJson(j: play.api.libs.json.JsValue) =
+  def fromJson(j: JsValue) =
     AddVertexAttribute((j \ "values").as[Map[String, String]].map { case (k, v) => k.toInt -> v })
 }
 case class AddVertexAttribute(values: Map[Int, String])
@@ -231,7 +229,7 @@ case class AddVertexAttribute(values: Map[Int, String])
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson =
-    play.api.libs.json.Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
+    Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
     val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
