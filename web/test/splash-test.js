@@ -6,7 +6,7 @@ describe('splash page', function() {
   });
 
   it('has a title', function() {
-    expect(browser.getTitle()).toEqual('Lynx PizzaKite');
+    expect(browser.getTitle()).toEqual('LynxKite');
   });
 
   it('has a version string', function() {

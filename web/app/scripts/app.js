@@ -143,7 +143,7 @@ angular
           angular.element('title').html(title);
         });
         scope.$on('$destroy', function() {
-          angular.element('title').html('Lynx PizzaKite');
+          angular.element('title').html('LynxKite');
         });
       },
       reportRequestError: function(request, details) {
