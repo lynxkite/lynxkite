@@ -323,9 +323,10 @@ private class ValidatingMetaGraphManager(repo: String) extends PersistentMetaGra
   override def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
     val inst = super.deserializeOperation(j)
     // Verify outputs.
-    assert((j \ "outputs") == inst.outputs.toJson,
+    val outputs = j \ "outputs"
+    assert(outputs == inst.outputs.toJson,
       s"Output mismatch in operation read from $j." +
-        s" Expected: ${j \ "outputs"}, found: ${inst.outputs.toJson}")
+        s" Expected: $outputs, found: ${inst.outputs.toJson}")
     inst
   }
 }
