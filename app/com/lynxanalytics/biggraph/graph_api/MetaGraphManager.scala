@@ -331,16 +331,19 @@ private class ValidatingMetaGraphManager(repo: String) extends PersistentMetaGra
   }
 }
 
-// Used for loading reposity data from an old version.
+// Used for loading reposity data from an old version and writing it out as the new version.
 private class MigrationalMetaGraphManager(
-    src: String,
-    dst: String,
-    srcVersion: JsonMigration.VersionMap,
-    migration: JsonMigration) extends PersistentMetaGraphManager(src) {
+    src: String, // Directory to read from.
+    dst: String, // Directory to write to.
+    srcVersion: JsonMigration.VersionMap, // Source version map.
+    migration: JsonMigration // JsonMigration for the current version.
+    ) extends PersistentMetaGraphManager(src) {
+  // A mapping for entity GUIDs (from old to new) that have changed in the new version.
   val guidMapping = collection.mutable.Map[UUID, UUID]()
   initializeFromDisk()
 
   override def entity(gUID: UUID): MetaGraphEntity =
+    // Look up missing entities by their new GUIDs.
     entities.getOrElse(gUID, entity(guidMapping(gUID)))
 
   override def loadAndApplyInstanceFromDisk(file: File) = {
@@ -351,11 +354,13 @@ private class MigrationalMetaGraphManager(
   }
 
   override def initializeFromDisk(): Unit = {
+    // The superclass call loads everything and writes out the updated operations.
     super.initializeFromDisk()
+    // Update GUIDs for "visibles".
     visibles.map(v => guidMapping.getOrElse(v, v))
     saveVisibles(dst)
+    // Update GUIDs in tags.
     val mapping = guidMapping.map { case (k, v) => k.toString -> v.toString }
-    // Change all tags that are in guidMapping.
     for (t <- tagRoot.allTags) {
       for (newGuid <- mapping.get(t.content)) {
         val p = t.parent
@@ -375,7 +380,7 @@ private class MigrationalMetaGraphManager(
   }
 
   override def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
-    // Call upgraders if necessary.
+    // Call upgraders.
     val op = (j \ "operation").as[json.JsObject]
     val cls = (op \ "class").as[String]
     val v1 = srcVersion(cls)
