@@ -111,19 +111,25 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(new File(dir, "1").exists)
     assert(!new File(dir, "2").exists)
     import play.api.libs.json
+    // Load the test data using a fake JsonMigration class.
     val m = VersioningMetaGraphManager(dir, new JsonMigration {
       override val version = Map(
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0)
       override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+        // From version 1 to version 2 we added the "arg" argument.
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
           j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
         },
+        // From version 2 to version 3 we removed the "unnecessary" argument.
+        // (Unused data in JSON is fine, we only add an upgrader for this for the sake of testing.)
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2 -> {
           j => json.JsObject(j.fields.filter(_._1 != "unnecessary"))
         })
     })
+    // The new directory exists.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
+    // The old tags point to the successfully migrated entities.
     assert(m.vertexSet("one").toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
     assert(m.edgeBundle("two").toString ==
