@@ -112,6 +112,8 @@ object BigGraphSparkContext {
     debugKryo: Boolean = false,
     useJars: Boolean = true,
     master: String = ""): SparkContext = {
+    assert(org.apache.spark.SPARK_VERSION.startsWith("1.2."),
+      s"Needs Apache Spark version 1.2.x. Found ${org.apache.spark.SPARK_VERSION}.")
     var sparkConf = new SparkConf()
       .setAppName(appName)
       .set("spark.executor.memory",
