@@ -351,7 +351,7 @@ private class MigrationalMetaGraphManager(
 
   override def initializeFromDisk(): Unit = {
     super.initializeFromDisk()
-    // TODO: Fix visibles.
+    visibles.map(v => guidMapping.getOrElse(v, v))
     saveVisibles(dst)
     val mapping = guidMapping.map { case (k, v) => k.toString -> v.toString }
     // Change all tags that are in guidMapping.
