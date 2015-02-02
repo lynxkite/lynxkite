@@ -189,7 +189,7 @@ class MetaGraphManager {
   }
 }
 
-class PersistentMetaGraphManager(val repositoryPath: String) extends MetaGraphManager {
+private class PersistentMetaGraphManager(val repositoryPath: String) extends MetaGraphManager {
 
   override def saveInstanceToDisk(inst: MetaGraphOperationInstance) =
     saveInstanceToDisk(inst, repositoryPath)
@@ -317,7 +317,7 @@ class PersistentMetaGraphManager(val repositoryPath: String) extends MetaGraphMa
 }
 
 // Used for loading repository data from the current version.
-class ValidatingMetaGraphManager(repo: String) extends PersistentMetaGraphManager(repo) {
+private class ValidatingMetaGraphManager(repo: String) extends PersistentMetaGraphManager(repo) {
   initializeFromDisk()
 
   override def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
@@ -396,11 +396,11 @@ private class MigrationalMetaGraphManager(
 
 object VersioningMetaGraphManager {
   // Load repository as current version.
-  def apply(rootPath: String): PersistentMetaGraphManager =
+  def apply(rootPath: String): MetaGraphManager =
     apply(rootPath, JsonMigration.current)
 
   // Load repository as a custom version. This is for testing only.
-  def apply(rootPath: String, mig: JsonMigration): PersistentMetaGraphManager = {
+  def apply(rootPath: String, mig: JsonMigration): MetaGraphManager = {
     val current = findCurrentRepository(new File(rootPath), mig).toString
     new ValidatingMetaGraphManager(current)
   }
