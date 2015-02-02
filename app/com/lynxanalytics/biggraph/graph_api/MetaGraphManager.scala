@@ -190,7 +190,6 @@ class MetaGraphManager {
 }
 
 class PersistentMetaGraphManager(val repositoryPath: String) extends MetaGraphManager {
-  initializeFromDisk()
 
   override def saveInstanceToDisk(inst: MetaGraphOperationInstance) =
     saveInstanceToDisk(inst, repositoryPath)
@@ -218,18 +217,27 @@ class PersistentMetaGraphManager(val repositoryPath: String) extends MetaGraphMa
     }
   }
 
-  override def saveVisibles(): Unit = {
-    val dumpFile = new File(s"$repositoryPath/dump-visibles")
+  override def saveVisibles(): Unit = saveVisibles(repositoryPath)
+
+  protected def saveVisibles(repo: String): Unit = {
+    val dumpFile = new File(s"$repo/dump-visibles")
     val stream = new ObjectOutputStream(new FileOutputStream(dumpFile))
     stream.writeObject(visibles)
     stream.close()
-    dumpFile.renameTo(new File(s"$repositoryPath/visibles"))
+    dumpFile.renameTo(new File(s"$repo/visibles"))
   }
 
-  override def saveTags(): Unit = synchronized {
-    val dumpFile = new File(s"$repositoryPath/dump-tags")
+  override def saveTags(): Unit = saveTags(repositoryPath)
+
+  protected def saveTags(repo: String): Unit = synchronized {
+    val dumpFile = new File(s"$repo/dump-tags")
     FileUtils.writeStringToFile(dumpFile, tagRoot.saveToString, "utf8")
-    dumpFile.renameTo(new File(s"$repositoryPath/tags"))
+    dumpFile.renameTo(new File(s"$repo/tags"))
+  }
+
+  protected def loadAndApplyInstanceFromDisk(file: File): Unit = {
+    val instance = loadInstanceFromDisk(file)
+    internalApply(instance)
   }
 
   protected def initializeFromDisk(): Unit = {
@@ -239,10 +247,7 @@ class PersistentMetaGraphManager(val repositoryPath: String) extends MetaGraphMa
     if (!oprepo.exists) oprepo.mkdirs
     val operationFiles = oprepo.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
     for (file <- operationFiles) {
-      util.Try(loadInstanceFromDisk(file)) match {
-        case util.Success(instance) => internalApply(instance)
-        case util.Failure(e) => log.error(s"Error loading operation from ${file.getName}", e)
-      }
+      loadAndApplyInstanceFromDisk(file)
     }
     visibles.clear
     val visiblesFile = new File(repo, "visibles")
@@ -313,6 +318,8 @@ class PersistentMetaGraphManager(val repositoryPath: String) extends MetaGraphMa
 
 // Used for loading repository data from the current version.
 class ValidatingMetaGraphManager(repo: String) extends PersistentMetaGraphManager(repo) {
+  initializeFromDisk()
+
   override def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
     val inst = super.deserializeOperation(j)
     // Verify outputs.
@@ -324,25 +331,61 @@ class ValidatingMetaGraphManager(repo: String) extends PersistentMetaGraphManage
 }
 
 // Used for loading reposity data from an old version.
-private class MigrationalMetaGraphManager(src: String, dst: String) extends PersistentMetaGraphManager(src) {
+private class MigrationalMetaGraphManager(
+    src: String,
+    dst: String,
+    srcVersion: JsonMigration.VersionMap,
+    migration: JsonMigration) extends PersistentMetaGraphManager(src) {
   val guidMapping = collection.mutable.Map[UUID, UUID]()
+  initializeFromDisk()
 
   override def entity(gUID: UUID): MetaGraphEntity =
     entities.getOrElse(gUID, entity(guidMapping(gUID)))
 
-  override def internalApply(inst: MetaGraphOperationInstance) = {
+  override def loadAndApplyInstanceFromDisk(file: File) = {
+    // Save operations as they are loaded.
+    val inst = loadInstanceFromDisk(file)
     saveInstanceToDisk(inst, dst)
     super.internalApply(inst)
   }
 
   override def initializeFromDisk(): Unit = {
     super.initializeFromDisk()
-    // TODO: Fix visibles and tags, then write them back.
+    // TODO: Fix visibles.
+    saveVisibles(dst)
+    val mapping = guidMapping.map { case (k, v) => k.toString -> v.toString }
+    // Change all tags that are in guidMapping.
+    for (t <- tagRoot.allTags) {
+      for (newGuid <- mapping.get(t.content)) {
+        val p = t.parent
+        t.rm
+        p.addTag(t.name, newGuid)
+      }
+    }
+    saveTags(dst)
+  }
+
+  // Replaces a field in a JsObject.
+  private def replaceJson(j: json.JsObject, Field: String, newValue: json.JsValue): json.JsObject = {
+    new json.JsObject(j.fields.map {
+      case (Field, _) => Field -> newValue
+      case x => x
+    })
   }
 
   override def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
-    // TODO: Migrate j.
-    val inst = super.deserializeOperation(j)
+    // Call upgraders if necessary.
+    val op = (j \ "operation").as[json.JsObject]
+    val cls = (op \ "class").as[String]
+    val v1 = srcVersion(cls)
+    val v2 = migration.version(cls)
+    val newData = (v1 until v2).foldLeft((op \ "data").as[json.JsObject]) {
+      (j, v) => migration.upgraders(cls -> v)(j)
+    }
+    val newOp = replaceJson(op, "data", newData)
+    val newJson = replaceJson(j.as[json.JsObject], "operation", newOp)
+    // Deserialize the upgraded JSON.
+    val inst = super.deserializeOperation(newJson)
     // Add outputs to the GUID mapping.
     for ((name, guid) <- (j \ "outputs").as[Map[String, String]]) {
       guidMapping(UUID.fromString(guid)) = inst.outputs.all(Symbol(name)).gUID
@@ -352,34 +395,38 @@ private class MigrationalMetaGraphManager(src: String, dst: String) extends Pers
 }
 
 object VersioningMetaGraphManager {
-  def apply(rootPath: String): PersistentMetaGraphManager = {
-    val current = findCurrentRepository(new File(rootPath)).toString
-    println(s"current: $current")
+  // Load repository as current version.
+  def apply(rootPath: String): PersistentMetaGraphManager =
+    apply(rootPath, JsonMigration.current)
+
+  // Load repository as a custom version. This is for testing only.
+  def apply(rootPath: String, mig: JsonMigration): PersistentMetaGraphManager = {
+    val current = findCurrentRepository(new File(rootPath), mig).toString
     new ValidatingMetaGraphManager(current)
   }
 
   // Returns the path to the repo belonging to the current version.
   // If the newest repo belongs to an older version, it performs migration.
   // If the newest repo belongs to a newer version, an exception is raised.
-  private def findCurrentRepository(repo: File): File = {
+  private def findCurrentRepository(repo: File, current: JsonMigration): File = {
     val dirs = repo.listFiles
-    import Migration.versionOrdering
-    import Migration.versionOrdering.mkOrderingOps
-    case class DV(dir: File, version: Migration.VersionMap)
+    import JsonMigration.versionOrdering
+    import JsonMigration.versionOrdering.mkOrderingOps
+    case class DV(dir: File, version: JsonMigration.VersionMap)
     val versions =
       dirs
         .flatMap(dir => readVersion(dir).map(v => DV(dir, v)))
         .sortBy(_.version).reverse
     if (versions.isEmpty) {
-      val current = new File(repo, "1")
-      writeVersion(current)
-      current
+      val currentDir = new File(repo, "1")
+      writeVersion(currentDir, current.version)
+      currentDir
     } else {
       val newest = versions.head
-      if (newest.version == Migration.version) newest.dir
+      if (newest.version == current.version) newest.dir
       else {
-        val supported = versions.find(_.version <= Migration.version)
-        assert(newest.version < Migration.version,
+        val supported = versions.find(_.version <= current.version)
+        assert(newest.version < current.version,
           supported match {
             case Some(supported) =>
               s"The repository data in ${newest.dir} is newer than the current version." +
@@ -388,11 +435,11 @@ object VersioningMetaGraphManager {
               s"All repository data in $repo has a newer version than the current version."
           })
         val last = newest.dir.getName.toInt
-        val current = new File(repo, (last + 1).toString)
-        // Migrate from "newest" to "current".
-        new MigrationalMetaGraphManager(newest.dir.toString, current.toString)
-        writeVersion(current)
-        current
+        val currentDir = new File(repo, (last + 1).toString)
+        log.warn(s"Migrating from ${newest.dir} to $currentDir.")
+        new MigrationalMetaGraphManager(newest.dir.toString, currentDir.toString, newest.version, current)
+        writeVersion(currentDir, current.version)
+        currentDir
       }
     }
   }
@@ -402,15 +449,15 @@ object VersioningMetaGraphManager {
     if (versionFile.exists) {
       val data = scala.io.Source.fromFile(versionFile).mkString
       val j = Json.parse(data)
-      val versions = j.as[Migration.VersionMap]
+      val versions = j.as[JsonMigration.VersionMap].withDefaultValue(0)
       Some(versions)
     } else None
   }
 
-  def writeVersion(dir: File): Unit = {
+  def writeVersion(dir: File, version: JsonMigration.VersionMap): Unit = {
     dir.mkdirs
     val versionFile = new File(dir, "version")
-    val data = json.JsObject(Migration.version.mapValues(json.JsNumber(_)).toSeq)
+    val data = json.JsObject(version.mapValues(json.JsNumber(_)).toSeq)
     val fn = Filename(versionFile.toString)
     fn.createFromStrings(json.Json.prettyPrint(data))
   }

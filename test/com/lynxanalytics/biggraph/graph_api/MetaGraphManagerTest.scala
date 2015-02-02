@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
 import java.util.UUID
+import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
@@ -102,6 +103,32 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val instance2 = manager.apply(new CreateSomeGraph())
     assert(instance1 eq instance2)
   }
+
+  test("JSON version migration") {
+    val dir = cleanMetaManagerDir
+    val template = new File(getClass.getResource("/graph_api/MetaGraphManagerTest/migration-test").toURI)
+    FileUtils.copyDirectory(template, new File(dir))
+    assert(new File(dir, "1").exists)
+    assert(!new File(dir, "2").exists)
+    import play.api.libs.json
+    val m = VersioningMetaGraphManager(dir, new JsonMigration {
+      override val version = Map(
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0)
+      override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
+          j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
+        },
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2 -> {
+          j => json.JsObject(j.fields.filter(_._1 != "unnecessary"))
+        })
+    })
+    assert(new File(dir, "2").exists)
+    assert(new File(dir, "2/version").exists)
+    assert(m.vertexSet("one").toString ==
+      "vertices of (CreateSomeGraph of arg=migrated)")
+    assert(m.edgeBundle("two").toString ==
+      "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
+  }
 }
 
 private object CreateSomeGraph extends OpFromJson {
@@ -113,9 +140,12 @@ private object CreateSomeGraph extends OpFromJson {
     val vattr = vertexAttribute[Long](vertices)
     val eattr = edgeAttribute[String](edges)
   }
-  def fromJson(j: play.api.libs.json.JsValue) = CreateSomeGraph()
+  def fromJson(j: JsValue) = {
+    assert(!j.as[play.api.libs.json.JsObject].fields.contains("unnecessary")) // For version migration testing.
+    CreateSomeGraph((j \ "arg").as[String])
+  }
 }
-private case class CreateSomeGraph()
+private case class CreateSomeGraph(arg: String = "not set")
     extends TypedMetaGraphOp[CreateSomeGraph.Input, CreateSomeGraph.Output] {
   import CreateSomeGraph._
 
@@ -123,6 +153,8 @@ private case class CreateSomeGraph()
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
+
+  override def toJson = Json.obj("arg" -> arg)
 
   def execute(inputDatas: DataSet,
               o: Output,
