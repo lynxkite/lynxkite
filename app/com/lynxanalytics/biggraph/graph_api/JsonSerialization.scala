@@ -51,7 +51,6 @@ trait ToJson {
   // Create TypedJson representation.
   def toTypedJson: json.JsValue = Json.obj(
     "class" -> getClass.getName,
-    "version" -> Migration.version(getClass.getName),
     "data" -> toJson)
 }
 
@@ -65,24 +64,3 @@ trait FromJson[+T] {
 
 // Operation companion objects should extend OpFromJson.
 trait OpFromJson extends FromJson[TypedMetaGraphOp.Type]
-
-object Migration {
-  type VersionMap = Map[String, Int]
-  val version: VersionMap = Map(
-    // TODO: Real versions.
-    "com.lynxanalytics.biggraph.graph_operations.EdgeGraph" -> 2)
-    .withDefaultValue(0)
-
-  implicit val versionOrdering = new math.Ordering[VersionMap] {
-    override def compare(a: VersionMap, b: VersionMap): Int = {
-      val cmp = (a.keySet ++ b.keySet).map { k => a(k) compare b(k) }
-      if (cmp.forall(_ == 0)) 0
-      else if (cmp.forall(_ < 0)) -1
-      else if (cmp.forall(_ > 0)) 1
-      else {
-        assert(false, s"Incomparable versions: $a, $b")
-        ???
-      }
-    }
-  }
-}
