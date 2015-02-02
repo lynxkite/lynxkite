@@ -2,6 +2,10 @@ package com.lynxanalytics.biggraph.graph_api
 
 import play.api.libs.json
 
+// This file is responsible for the metadata compatibility between versions.
+//
+// If there is an incompatible change, please increase the version number of the affected class in
+// JsonMigration.version and add an "upgrader" function that turns the old format into the new.
 object JsonMigration {
   type VersionMap = Map[String, Int]
 
