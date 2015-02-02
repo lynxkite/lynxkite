@@ -49,9 +49,7 @@ trait ToJson {
   // Convenient shorthand to access Json.
   protected def Json = json.Json
   // Create TypedJson representation.
-  def toTypedJson: json.JsValue = Json.obj(
-    "class" -> getClass.getName,
-    "data" -> toJson)
+  def toTypedJson: json.JsValue = Json.obj("class" -> getClass.getName, "data" -> toJson)
 }
 
 // Extend FromJson[T] in T's companion object.
