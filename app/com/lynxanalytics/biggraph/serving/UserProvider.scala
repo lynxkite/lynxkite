@@ -57,7 +57,7 @@ object SignedToken {
 }
 
 object UserProvider extends mvc.Controller {
-  def get(request: mvc.Request[_]): Option[User] = {
+  def get(request: mvc.Request[_]): Option[User] = synchronized {
     val cookie = request.cookies.find(_.name == "auth")
     cookie.map(_.value).collect {
       case SignedToken(signed) => signed
@@ -69,9 +69,11 @@ object UserProvider extends mvc.Controller {
   val passwordLogin = mvc.Action(parse.json) { request =>
     val username = (request.body \ "username").as[String]
     val password = (request.body \ "password").as[String]
-    assertPassword(username, password)
     val signed = SignedToken()
-    tokens(signed.token) = User(username)
+    synchronized {
+      assertPassword(username, password)
+      tokens(signed.token) = User(username)
+    }
     Redirect("/").withCookies(mvc.Cookie(
       "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
   }
@@ -103,13 +105,15 @@ object UserProvider extends mvc.Controller {
     email.map { email =>
       val signed = SignedToken()
       assert(email.endsWith("@lynxanalytics.com"), s"Permission denied to $email.")
-      tokens(signed.token) = User(email)
+      synchronized {
+        tokens(signed.token) = User(email)
+      }
       Redirect("/").withCookies(mvc.Cookie(
         "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
     }
   }
 
-  private def assertPassword(username: String, password: String): Unit = {
+  private def assertPassword(username: String, password: String): Unit = synchronized {
     assert(passwords.contains(username), "Invalid username or password.")
     val h =
       if (passwords(username).nonEmpty) passwords(username)
@@ -126,12 +130,13 @@ object UserProvider extends mvc.Controller {
     config.getString(setting).get
   }
 
+  private val usersFile = new java.io.File(System.getProperty("user.dir") + "/conf/users.txt")
+  // Access to these mutable collections must be synchronized.
   private val tokens = collection.mutable.Map[String, User]()
   private val passwords = collection.mutable.Map[String, String]()
-  private val usersFile = new java.io.File(System.getProperty("user.dir") + "/conf/users.txt")
 
   // Loads user+pass data from usersFile.
-  private def loadUsers() = {
+  private def loadUsers() = synchronized {
     val data = FileUtils.readFileToString(usersFile, "utf8")
     passwords.clear()
     passwords ++= json.Json.parse(data).as[json.JsObject].fields.map {
@@ -141,7 +146,7 @@ object UserProvider extends mvc.Controller {
   }
 
   // Saves user+pass data to usersFile.
-  private def saveUsers() = {
+  private def saveUsers() = synchronized {
     val data = json.Json.prettyPrint(json.JsObject(
       passwords.mapValues(json.JsString(_)).toSeq
     ))
@@ -150,11 +155,12 @@ object UserProvider extends mvc.Controller {
   }
 
   // List user names.
-  def getUsers(user: User, req: Empty): UserList =
+  def getUsers(user: User, req: Empty): UserList = synchronized {
     UserList(passwords.keys.toList.sorted.map(e => User(e)))
+  }
 
   // Add new user.
-  def createUser(user: User, req: CreateUserRequest): Unit = {
+  def createUser(user: User, req: CreateUserRequest): Unit = synchronized {
     assert(req.email.nonEmpty, "User name missing")
     assert(req.password.nonEmpty, "Password missing")
     assert(!passwords.contains(req.email), s"User name ${req.email} is already taken.")
