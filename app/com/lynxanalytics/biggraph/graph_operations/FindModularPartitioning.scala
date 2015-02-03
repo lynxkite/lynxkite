@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 /* Tries to find a partitioning of the graph with high modularity.
  *
- * Iteratively merges vertices as long a it finds vertex pairs whose merge makes the
+ * Iteratively merges vertices as long as it finds vertex pairs whose merge makes the
  * modularity higher.
  */
 object FindModularPartitioning extends OpFromJson {
