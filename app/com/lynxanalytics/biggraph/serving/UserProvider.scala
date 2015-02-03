@@ -15,6 +15,8 @@ object User {
 case class User(email: String) {
   override def toString = email
 }
+case class UserList(users: List[User])
+case class CreateUserRequest(email: String, password: String)
 
 class SignedToken private (signature: String, timestamp: Long, val token: String) {
   override def toString = s"$signature $timestamp $token"
@@ -109,10 +111,14 @@ object UserProvider extends mvc.Controller {
 
   private def assertPassword(username: String, password: String): Unit = {
     assert(passwords.contains(username), "Invalid username or password.")
-    val hash =
+    val h =
       if (passwords(username).nonEmpty) passwords(username)
-      else BCrypt.hashpw("the lynx is a big cat", BCrypt.gensalt(10))
-    assert(BCrypt.checkpw(password, hash), "Invalid username or password.")
+      else hash("the lynx is a big cat")
+    assert(BCrypt.checkpw(password, h), "Invalid username or password.")
+  }
+
+  private def hash(pwd: String): String = {
+    BCrypt.hashpw(pwd, BCrypt.gensalt(10))
   }
 
   private def config(setting: String) = {
@@ -136,12 +142,24 @@ object UserProvider extends mvc.Controller {
 
   // Saves user+pass data to usersFile.
   private def saveUsers() = {
-    val passwords = Map[String, String]()
     val data = json.Json.prettyPrint(json.JsObject(
       passwords.mapValues(json.JsString(_)).toSeq
     ))
     FileUtils.writeStringToFile(usersFile, data, "utf8")
     log.info(s"User data saved to $usersFile.")
+  }
+
+  // List user names.
+  def getUsers(user: User, req: Empty): UserList =
+    UserList(passwords.keys.toList.sorted.map(e => User(e)))
+
+  // Add new user.
+  def createUser(user: User, req: CreateUserRequest): Unit = {
+    assert(req.email.nonEmpty, "User name missing")
+    assert(req.password.nonEmpty, "Password missing")
+    assert(!passwords.contains(req.email), s"User name ${req.email} is already taken.")
+    passwords(req.email) = hash(req.password)
+    saveUsers()
   }
 
   // Load data on startup.
