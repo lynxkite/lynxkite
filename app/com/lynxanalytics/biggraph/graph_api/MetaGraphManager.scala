@@ -183,12 +183,12 @@ class MetaGraphManager(val repositoryPath: String) {
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
     log.info(s"Saving $inst to disk.")
     val time = Timestamp.toString
-    val repo = Filename(repositoryPath) / "operations"
-    val dumpFile = repo / s"dump-$time"
-    val finalFile = repo / s"save-$time"
-    dumpFile.createFromStrings(serializeOperation(inst))
+    val repo = new File(new File(repositoryPath), "operations")
+    val dumpFile = new File(repo, s"dump-$time")
+    val finalFile = new File(repo, s"save-$time")
+    FileUtils.writeStringToFile(dumpFile, serializeOperation(inst), "utf8")
     // Validate the saved operation by trying to reload it.
-    loadInstanceFromDisk(new File(dumpFile.toString)) match {
+    loadInstanceFromDisk(dumpFile) match {
       case util.Success(i) => assert(
         inst == i,
         "Operation reloaded after serialization was not identical." +

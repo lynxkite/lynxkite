@@ -19,7 +19,8 @@ private object SparkStageJars {
     classOf[com.mysql.jdbc.Driver],
     classOf[org.postgresql.Driver],
     classOf[org.sqlite.JDBC],
-    classOf[gcs.GoogleHadoopFileSystem])
+    classOf[gcs.GoogleHadoopFileSystem],
+    classOf[play.api.libs.json.JsValue])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
   require(
     jars.forall(_.endsWith(".jar")),
