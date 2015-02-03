@@ -493,7 +493,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Add constant vertex attribute"
     val description = ""
     def parameters = List(
-      Param("name", "Attribute name", defaultValue = "weight"),
+      Param("name", "Attribute name"),
       Param("value", "Value", defaultValue = "1"),
       Param("type", "Type", options = UIValue.list(List("Double", "String"))))
     def enabled = hasVertexSet
