@@ -19,7 +19,7 @@ class ModularityTest extends FunSuite with TestGraphOp {
     }
     val modularity = {
       val op = Modularity()
-      op(op.edges, eg.edges)(op.weights, eg.weight)(op.containedIn, belongsTo).result.modularity
+      op(op.edges, eg.edges)(op.weights, eg.weight)(op.belongsTo, belongsTo).result.modularity
     }
     assert(modularity.value == 0.0)
   }
@@ -32,7 +32,7 @@ class ModularityTest extends FunSuite with TestGraphOp {
     }
     val modularity = {
       val op = Modularity()
-      op(op.edges, eg.edges)(op.weights, eg.weight)(op.containedIn, belongsTo).result.modularity
+      op(op.edges, eg.edges)(op.weights, eg.weight)(op.belongsTo, belongsTo).result.modularity
     }
     assert(math.abs(modularity.value - (-5 * 1 / 100.0 + 4 / 10.0 - 9 * 5 / 100.0)) < 0.0000001)
   }
