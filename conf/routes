@@ -23,7 +23,6 @@ POST /ajax/changeProjectSettings com.lynxanalytics.biggraph.serving.ProductionJs
 GET  /ajax/vertexDiag  com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexDiagram
 GET  /ajax/edgeDiag    com.lynxanalytics.biggraph.serving.ProductionJsonServer.edgeDiagram
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
-GET  /ajax/globalView  com.lynxanalytics.biggraph.serving.ProductionJsonServer.globalView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
 GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.scalarValue
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
