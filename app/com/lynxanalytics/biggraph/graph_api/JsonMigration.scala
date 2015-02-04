@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 // If there is an incompatible change, please increase the version number of the affected class in
 // JsonMigration.version and add an "upgrader" function that turns the old format into the new.
 object JsonMigration {
+  // VersionMap will always have a default value (0) for classes that are not mentioned.
   type VersionMap = Map[String, Int]
 
   implicit val versionOrdering = new math.Ordering[VersionMap] {
@@ -59,7 +60,7 @@ object VersioningMetaGraphManager {
     val versions =
       dirs
         .flatMap(dir => readVersion(dir).map(v => DV(dir, v)))
-        .sortBy(_.dir.getName).reverse
+        .sortBy(_.dir.getName.toInt).reverse
     if (versions.isEmpty) {
       val currentDir = new File(repo, "1")
       writeVersion(currentDir, current.version)

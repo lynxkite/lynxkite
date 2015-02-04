@@ -39,6 +39,14 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
   }
 
+  // Applies an operation instance from its JSON form.
+  def applyJson(j: json.JsValue): MetaGraphOperationInstance = {
+    val inst = deserializeOperation(j)
+    saveInstanceToDisk(inst)
+    internalApply(inst)
+    inst
+  }
+
   // Marks a set of entities for frontend visibility.
   def show[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
@@ -189,20 +197,12 @@ class MetaGraphManager(val repositoryPath: String) {
     }
   }
 
-  // Applies an operation instance from its JSON form.
-  def applyJson(j: json.JsValue): MetaGraphOperationInstance = {
-    val inst = deserializeOperation(j)
-    saveInstanceToDisk(inst)
-    internalApply(inst)
-    inst
-  }
-
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
     log.info(s"Saving $inst to disk.")
     val j = serializeOperation(inst)
     // Validate the serialized operation by trying to reload it.
     val i = deserializeOperation(j)
-    assert(inst == i, "Operation reloaded after serialization was not identical: $inst")
+    assert(inst == i, "Operation reloaded after serialization was not identical: $inst vs $i")
     try {
       saveOperation(j)
     } catch {
