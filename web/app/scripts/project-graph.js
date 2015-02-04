@@ -93,6 +93,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             edgeBundleId: scope.leftToRightBundle,
             filters: [],
             edgeWeightId: '',
+            layout3D: false,
           });
         }
         if (sides.length === 2 && scope.rightToLeftBundle !== undefined) {
@@ -104,6 +105,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             edgeBundleId: scope.rightToLeftBundle,
             filters: [],
             edgeWeightId: '',
+            layout3D: false,
           });
         }
         if (!angular.equals(scope.request, q)) {
