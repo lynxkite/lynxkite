@@ -60,15 +60,17 @@ case class VertexDiagramResponse(
 case class EdgeDiagramSpec(
   // In the context of an FEGraphRequest "idx[4]" means the diagram requested by vertexSets(4).
   // Otherwise a UUID obtained by a previous vertex diagram request.
-  val srcDiagramId: String,
-  val dstDiagramId: String,
+  srcDiagramId: String,
+  dstDiagramId: String,
   // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
-  val srcIdx: Int,
-  val dstIdx: Int,
-  val edgeBundleId: String,
-  val filters: Seq[FEVertexAttributeFilter],
+  srcIdx: Int,
+  dstIdx: Int,
+  edgeBundleId: String,
+  filters: Seq[FEVertexAttributeFilter],
   // If not set, we use constant 1 as weight.
-  val edgeWeightId: String = "")
+  edgeWeightId: String = "",
+  // Whether to generate 3D coordinates for the vertices.
+  layout3D: Boolean)
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
@@ -77,17 +79,23 @@ case class FEEdge(
   a: Int,
   // idx of destination vertex in the vertices Seq in the corresponding VertexDiagramResponse.
   b: Int,
-  size: Double)
+  size: Double,
+  // The 3D layout requested with "layout3D".
+  aPos: Option[FE3DPosition] = None,
+  bPos: Option[FE3DPosition] = None)
+
+case class FE3DPosition(x: Double, y: Double, z: Double)
 
 case class EdgeDiagramResponse(
-  val srcDiagramId: String,
-  val dstDiagramId: String,
+  srcDiagramId: String,
+  dstDiagramId: String,
 
   // Copied from the request.
-  val srcIdx: Int,
-  val dstIdx: Int,
+  srcIdx: Int,
+  dstIdx: Int,
+  layout3D: Boolean,
 
-  val edges: Seq[FEEdge])
+  edges: Seq[FEEdge])
 
 case class FEGraphRequest(
   vertexSets: Seq[VertexDiagramSpec],
@@ -131,16 +139,6 @@ case class CenterRequest(
 case class CenterResponse(
   val centers: Seq[String])
 
-case class FEGlobalViewRequest(
-  vertexSetId: String,
-  edgeBundleId: String)
-
-case class FEGlobalViewResponse(
-  vertices: List[FE3DPosition],
-  edges: List[FEEdge])
-
-case class FE3DPosition(x: Double, y: Double, z: Double)
-
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
@@ -155,7 +153,20 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   def getSampledVertexDiagram(request: VertexDiagramSpec): VertexDiagramResponse = {
     val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
     dataManager.cache(vertexSet)
-    val centers = request.centralVertexIds.map(_.toLong)
+
+    val iaaop = graph_operations.IdAsAttribute()
+    val idAttr = iaaop(iaaop.vertices, vertexSet).result.vertexIds
+    loadGUIDsToMemory(request.filters.map(_.attributeId))
+    val filtered = FEFilters.filter(vertexSet, request.filters)
+    loadGUIDsToMemory(request.attrs)
+
+    val centers = if (request.centralVertexIds == Seq("*")) {
+      // Try to show the whole graph.
+      val op = graph_operations.SampleVertices(10000)
+      op(op.vs, filtered).result.sample.value
+    } else {
+      request.centralVertexIds.map(_.toLong)
+    }
 
     val idSet = if (request.radius > 0) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
@@ -171,14 +182,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     } else {
       centers.toSet
     }
-
-    val iaaop = graph_operations.IdAsAttribute()
-    val idAttr = iaaop(iaaop.vertices, vertexSet).result.vertexIds
-
-    loadGUIDsToMemory(request.filters.map(_.attributeId))
-    val filtered = FEFilters.filter(vertexSet, request.filters)
-
-    loadGUIDsToMemory(request.attrs)
 
     val diagramMeta = {
       val op = graph_operations.SampledView(idSet)
@@ -442,12 +445,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       }
     }
     log.info("PERF edge counts computed")
+    val feEdges = counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,
       request.srcIdx,
       request.dstIdx,
-      counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq)
+      request.layout3D,
+      if (request.layout3D) ForceLayout3D(feEdges) else feEdges)
   }
 
   def getComplexView(user: User, request: FEGraphRequest): FEGraphResponse = {
@@ -466,51 +471,6 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(user, _))
     spark_util.Counters.printAll
     return FEGraphResponse(vertexDiagrams, edgeDiagrams)
-  }
-
-  def globalView(user: User, request: FEGlobalViewRequest): FEGlobalViewResponse = {
-    val vertexSet = metaManager.vertexSet(request.vertexSetId.asUUID)
-    val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
-    assert(vertexSet.gUID == edgeBundle.srcVertexSet.gUID, "Bad vertex set for edge bundle.")
-    assert(vertexSet.gUID == edgeBundle.dstVertexSet.gUID, "Bad vertex set for edge bundle.")
-    val maxSize: Int = 100000000 // Maximum number of vertices/edges to display.
-    def collectAll[T](attr: Attribute[T]): Map[ID, T] = {
-      val count = {
-        val op = graph_operations.CountVertices()
-        op(op.vertices, attr.vertexSet).result.count.value
-      }
-      assert(count <= maxSize, s"Too many items ($count > $maxSize).")
-      val idSet = {
-        val op = graph_operations.SampleVertices(count.toInt)
-        op(op.vs, attr.vertexSet).result.sample.value
-      }
-      val collected = {
-        val op = graph_operations.CollectAttribute[T](idSet.toSet)
-        op(op.attr, attr).result.idToAttr.value
-      }
-      collected
-    }
-    val positions = {
-      val op = graph_operations.ForceLayout3D()
-      val degree = graph_operations.OutDegree.allDegree(edgeBundle)
-      op(op.es, edgeBundle)(op.degree, degree).result.positions
-    }
-    val positionMap = collectAll(positions)
-    val edges = {
-      val op = graph_operations.EdgeToAttribute()
-      op(op.edges, edgeBundle).result.attr
-    }
-    val edgeMap = collectAll(edges)
-    val ids = positionMap.keys.toList
-    val idToIdx = ids.zipWithIndex.toMap
-    val feVertices = ids.map { i =>
-      val (x, y, z) = positionMap(i)
-      FE3DPosition(x, y, z)
-    }
-    val feEdges = edgeMap.values.map {
-      case (src, dst) => FEEdge(idToIdx(src), idToIdx(dst), 1.0)
-    }
-    return FEGlobalViewResponse(feVertices, feEdges.toList)
   }
 
   private def getFilteredVS(

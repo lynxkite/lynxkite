@@ -28,7 +28,6 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         scope.graph.left = angular.copy(scope.left, scope.graph.left);
         scope.graph.right = angular.copy(scope.right, scope.graph.right);
 
-        scope.global = false;
         var sides = [];
         if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
           sides.push(scope.left);
@@ -43,15 +42,6 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         var q = { vertexSets: [], edgeBundles: [] };
         for (var i = 0; i < sides.length; ++i) {
           var viewData = sides[i];
-          if (viewData.graphMode === 'global') {
-            // TODO: Make this a per-side setting.
-            scope.global = true;
-            q = {
-              vertexSetId: viewData.vertexSet.id,
-              edgeBundleId: viewData.edgeBundle.id,
-            };
-            break;
-          }
           if (viewData.edgeBundle !== undefined) {
             q.edgeBundles.push({
               srcDiagramId: 'idx[' + i + ']',
@@ -60,7 +50,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               dstIdx: i,
               edgeBundleId: viewData.edgeBundle.id,
               filters: viewData.filters.edge,
-              edgeWeightId: (viewData.edgeWidth || { id: '' }).id
+              edgeWeightId: (viewData.edgeWidth || { id: '' }).id,
+              layout3D: viewData.display === '3d',
             });
           }
           // we sort attributes by UUID to avoid recomputing the same combination
@@ -117,11 +108,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         }
         if (!angular.equals(scope.request, q)) {
           scope.request = q;
-          if (scope.global) {
-            scope.graph.view = util.get('/ajax/globalView', scope.request);
-          } else {
-            scope.graph.view = util.get('/ajax/complexView', scope.request);
-          }
+          scope.graph.view = util.get('/ajax/complexView', scope.request);
         }
       }
 
@@ -131,7 +118,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         // Generate the TSV representation.
         scope.tsv = '';
         var gv = scope.graph.view;
-        if (!gv || !gv.$resolved || gv.$error || scope.global) {
+        if (!gv || !gv.$resolved || gv.$error) {
           return;
         }
         var sides = [scope.left, scope.right];

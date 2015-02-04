@@ -63,7 +63,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         srcIdx = 0,
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
-        filters = Seq())))
+        filters = Seq(),
+        layout3D = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -105,7 +106,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         srcIdx = 0,
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
-        filters = Seq(ef))))
+        filters = Seq(ef),
+        layout3D = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -140,7 +142,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         srcIdx = 0,
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
-        filters = Seq())))
+        filters = Seq(),
+        layout3D = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -168,7 +171,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         srcIdx = 0,
         dstIdx = 0,
         edgeBundleId = es.gUID.toString,
-        filters = Seq())))
+        filters = Seq(),
+        layout3D = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -210,7 +214,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         srcIdx = 0,
         dstIdx = 0,
         edgeBundleId = es.gUID.toString,
-        filters = Seq(ef))))
+        filters = Seq(ef),
+        layout3D = false)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
