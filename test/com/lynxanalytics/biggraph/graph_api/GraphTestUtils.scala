@@ -40,12 +40,13 @@ object GraphTestUtils {
 }
 
 trait TestMetaGraphManager extends TestTempDir {
-  def cleanMetaManager: MetaGraphManager = {
+  def cleanMetaManagerDir = {
     val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("metaGraphManager." + dirName)
     managerDir.mkdir
-    new MetaGraphManager(managerDir.toString)
+    managerDir.toString
   }
+  def cleanMetaManager: MetaGraphManager = MetaRepositoryManager(cleanMetaManagerDir)
 }
 
 trait TestDataManager extends TestTempDir with TestSparkContext {

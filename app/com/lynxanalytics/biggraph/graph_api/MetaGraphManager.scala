@@ -39,6 +39,14 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
   }
 
+  // Applies an operation instance from its JSON form.
+  def applyJson(j: json.JsValue): MetaGraphOperationInstance = {
+    val inst = deserializeOperation(j)
+    saveInstanceToDisk(inst)
+    internalApply(inst)
+    inst
+  }
+
   // Marks a set of entities for frontend visibility.
   def show[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
@@ -85,10 +93,19 @@ class MetaGraphManager(val repositoryPath: String) {
     setTag(tag, entity.gUID.toString)
     show(Seq(entity))
   }
+
   def setTag(tag: SymbolPath, content: String): Unit = synchronized {
     tagRoot.setTag(tag, content)
     saveTags()
   }
+
+  def setTags(tags: Map[SymbolPath, String]): Unit = synchronized {
+    for ((tag, content) <- tags) {
+      tagRoot.setTag(tag, content)
+    }
+    saveTags()
+  }
+
   def getTag(tag: SymbolPath): String = synchronized {
     (tagRoot / tag).content
   }
@@ -182,106 +199,81 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
     log.info(s"Saving $inst to disk.")
-    val time = Timestamp.toString
-    val repo = Filename(repositoryPath) / "operations"
-    val dumpFile = repo / s"dump-$time"
-    val finalFile = repo / s"save-$time"
-    dumpFile.createFromStrings(serializeOperation(inst))
-    // Validate the saved operation by trying to reload it.
-    loadInstanceFromDisk(new File(dumpFile.toString)) match {
-      case util.Success(i) => assert(
-        inst == i,
-        "Operation reloaded after serialization was not identical." +
-          s" File: $dumpFile Operation: $inst")
-      case util.Failure(e) => throw new Exception(s"Failed to reload $dumpFile", e)
+    val j = serializeOperation(inst)
+    // Validate the serialized operation by trying to reload it.
+    val i = deserializeOperation(j)
+    assert(inst == i, "Operation reloaded after serialization was not identical: $inst vs $i")
+    try {
+      saveOperation(j)
+    } catch {
+      case e: Throwable => throw new Exception(s"Failed to write $inst.", e)
     }
+  }
+
+  private def saveOperation(j: json.JsValue): Unit = {
+    val time = Timestamp.toString
+    val repo = new File(repositoryPath, "operations")
+    val dumpFile = new File(repo, s"dump-$time")
+    val finalFile = new File(repo, s"save-$time")
+    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
     dumpFile.renameTo(finalFile)
   }
 
-  private def loadInstanceFromDisk(file: File): util.Try[MetaGraphOperationInstance] = {
-    log.info(s"Loading operation from ${file.getName}")
-    util.Try {
-      val data = scala.io.Source.fromFile(file).mkString
-      deserializeOperation(data)
-    }
-  }
-
   private def saveVisibles(): Unit = {
-    val dumpFile = new File(s"$repositoryPath/dump-visibles")
-    val stream = new ObjectOutputStream(new FileOutputStream(dumpFile))
-    stream.writeObject(visibles)
-    stream.close()
-    dumpFile.renameTo(new File(s"$repositoryPath/visibles"))
+    val dumpFile = new File(repositoryPath, "dump-visibles")
+    val j = Json.toJson(visibles.map(_.toString))
+    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
+    dumpFile.renameTo(new File(repositoryPath, "visibles"))
   }
 
   private def saveTags(): Unit = synchronized {
-    val dumpFile = new File(s"$repositoryPath/dump-tags")
-    FileUtils.writeStringToFile(dumpFile, tagRoot.saveToString, "utf8")
-    dumpFile.renameTo(new File(s"$repositoryPath/tags"))
+    val dumpFile = new File(repositoryPath, "dump-tags")
+    val j = json.JsObject(tagRoot.allTags.map {
+      tag => tag.fullName.toString -> json.JsString(tag.content)
+    }.toSeq)
+    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
+    dumpFile.renameTo(new File(repositoryPath, "tags"))
   }
 
-  private def initializeFromDisk(): Unit = {
-    val repo = new File(repositoryPath)
-    if (!repo.exists) repo.mkdirs
-    val oprepo = new File(repo, "operations")
-    if (!oprepo.exists) oprepo.mkdirs
-    val operationFiles = oprepo.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
-    for (file <- operationFiles) {
-      loadInstanceFromDisk(file) match {
-        case util.Success(instance) => internalApply(instance)
-        case util.Failure(e) => log.error(s"Error loading operation from ${file.getName}", e)
+  private def initializeFromDisk(): Unit = synchronized {
+    for ((file, j) <- MetaGraphManager.loadOperations(repositoryPath)) {
+      try {
+        val inst = deserializeOperation(j)
+        // Verify outputs.
+        val outputs = j \ "outputs"
+        assert(outputs == inst.outputs.toJson,
+          s"Output mismatch in $inst." +
+            s" Expected: $outputs, found: ${inst.outputs.toJson}")
+        internalApply(inst)
+      } catch {
+        case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
     }
+
     visibles.clear
-    val visiblesFile = new File(repo, "visibles")
-    if (visiblesFile.exists) {
-      log.info(s"Loading visible set.")
-      try {
-        val stream = new ObjectInputStream(new FileInputStream(s"$repositoryPath/visibles"))
-        visibles ++= stream.readObject().asInstanceOf[mutable.Set[UUID]]
-        stream.close()
-      } catch {
-        case e: Throwable => log.error("Error loading visible set:", e)
-      }
-    }
+    visibles ++= MetaGraphManager.loadVisibles(repositoryPath)
 
-    val tagsFile = new File(repo, "tags")
-    if (tagsFile.exists) {
-      log.info(s"Loading tags.")
-      try {
-        synchronized {
-          tagRoot.loadFromString(FileUtils.readFileToString(tagsFile, "utf8"))
-        }
-      } catch {
-        case e: Throwable => log.error("Error loading tags set:", e)
-      }
-    } else {
-      synchronized {
-        tagRoot.clear()
-      }
-    }
+    setTags(MetaGraphManager.loadTags(repositoryPath))
   }
 
-  def serializeOperation(inst: MetaGraphOperationInstance): String = {
-    val j = Json.obj(
-      "operation" -> inst.operation.toTypedJson,
-      "inputs" -> inst.inputs.toJson,
-      "outputs" -> inst.outputs.toJson)
+  def serializeOperation(inst: MetaGraphOperationInstance): json.JsObject = {
     try {
-      Json.prettyPrint(j)
+      Json.obj(
+        "operation" -> inst.operation.toTypedJson,
+        "inputs" -> inst.inputs.toJson,
+        "outputs" -> inst.outputs.toJson)
     } catch {
       // Put details of "inst" in the exception.
       case e: Throwable => throw new Exception(s"Error while serializing $inst:", e)
     }
   }
 
-  private def deserializeOperation(input: String): MetaGraphOperationInstance = {
-    val j = Json.parse(input)
+  private def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
     val op = TypedJson.read[TypedMetaGraphOp.Type](j \ "operation")
     val inputs = (j \ "inputs").as[Map[String, String]].map {
       case (name, guid) => Symbol(name) -> UUID.fromString(guid)
     }
-    val inst = TypedOperationInstance(
+    TypedOperationInstance(
       this,
       op,
       MetaDataSet(
@@ -293,15 +285,38 @@ class MetaGraphManager(val repositoryPath: String) {
           .map(n => n -> vertexAttribute(inputs(n))).toMap,
         op.inputSig.scalars
           .map(n => n -> scalar(inputs(n))).toMap))
-    // Verify outputs.
-    assert((j \ "outputs") == inst.outputs.toJson,
-      s"Output mismatch in operation read from $input." +
-        s" Expected: ${j \ "outputs"}, found: ${inst.outputs.toJson}")
-    inst
   }
 }
 object MetaGraphManager {
   implicit class StringAsUUID(s: String) {
     def asUUID: UUID = UUID.fromString(s)
+  }
+
+  // Read operations as file -> JSON from a repo.
+  def loadOperations(repo: String): Seq[(File, json.JsValue)] = {
+    val opdir = new File(repo, "operations")
+    if (!opdir.exists) opdir.mkdirs
+    val files = opdir.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
+    files.map { f =>
+      f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+    }
+  }
+
+  def loadVisibles(repo: String): Set[UUID] = {
+    val visiblesFile = new File(repo, "visibles")
+    if (visiblesFile.exists) {
+      val j = Json.parse(FileUtils.readFileToString(visiblesFile, "utf8"))
+      j.as[Seq[String]].map(UUID.fromString(_)).toSet
+    } else Set()
+  }
+
+  def loadTags(repo: String): Map[SymbolPath, String] = {
+    val tagsFile = new File(repo, "tags")
+    if (tagsFile.exists) {
+      val j = Json.parse(FileUtils.readFileToString(tagsFile, "utf8"))
+      j.as[Map[String, String]].map { case (k, v) => SymbolPath.fromString(k) -> v }
+    } else {
+      Map()
+    }
   }
 }
