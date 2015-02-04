@@ -442,13 +442,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val description = "Tries to find a partitioning of the graph with high modularity."
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_partitions"),
-      Param("weights", "Weight attribute", options = edgeAttributes[Double]))
-    def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
+      Param("weights", "Weight attribute", options =
+        UIValue("", "no weight") +: edgeAttributes[Double]))
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val weights = project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
+      val edgeBundle = project.edgeBundle
+      val weightsName = params("weights")
+      val weights =
+        if (weightsName == "") const(edgeBundle)
+        else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
         val op = graph_operations.FindModularPartitioning()
-        op(op.edges, project.edgeBundle)(op.weights, weights).result
+        op(op.edges, edgeBundle)(op.weights, weights).result
       }
       val segmentation = project.segmentation(params("name"))
       segmentation.project.setVertexSet(result.partitions, idAttr = "id")
@@ -458,7 +463,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         computeSegmentSizes(segmentation)
       val modularity = {
         val op = graph_operations.Modularity()
-        op(op.edges, project.edgeBundle)(op.weights, weights)(op.belongsTo, result.belongsTo)
+        op(op.edges, edgeBundle)(op.weights, weights)(op.belongsTo, result.belongsTo)
           .result.modularity
       }
       segmentation.project.scalars("modularity") = modularity
@@ -521,7 +526,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Add constant vertex attribute"
     val description = ""
     def parameters = List(
-      Param("name", "Attribute name", defaultValue = "weight"),
+      Param("name", "Attribute name"),
       Param("value", "Value", defaultValue = "1"),
       Param("type", "Type", options = UIValue.list(List("Double", "String"))))
     def enabled = hasVertexSet

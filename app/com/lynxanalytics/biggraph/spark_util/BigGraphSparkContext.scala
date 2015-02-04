@@ -113,6 +113,10 @@ object BigGraphSparkContext {
     debugKryo: Boolean = false,
     useJars: Boolean = true,
     master: String = ""): SparkContext = {
+    val versionFound = org.apache.spark.SPARK_VERSION
+    val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
+    assert(versionFound == versionRequired,
+      s"Needs Apache Spark version $versionRequired. Found $versionFound.")
     var sparkConf = new SparkConf()
       .setAppName(appName)
       .set("spark.executor.memory",
