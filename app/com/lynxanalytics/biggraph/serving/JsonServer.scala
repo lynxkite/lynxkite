@@ -169,6 +169,10 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
+  implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
+  implicit val wUser = json.Json.writes[User]
+  implicit val wUserList = json.Json.writes[UserList]
+
   // File upload.
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
@@ -263,6 +267,9 @@ object ProductionJsonServer extends JsonServer {
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
   def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
+
+  def getUsers = jsonGet(UserProvider.getUsers)
+  def createUser = jsonPost(UserProvider.createUser)
 }
 
 // Throw FlyingResult anywhere to generate non-200 HTTP responses.
