@@ -118,12 +118,11 @@ object MetaRepositoryManager {
     // We will read from "src", convert, and feed into the manager.
 
     // Operations.
-    for (j <- MetaGraphManager.loadOperations(src)) {
-      val filename = j \ "filename"
+    for ((file, j) <- MetaGraphManager.loadOperations(src)) {
       try {
         applyOperation(mm, j, guidMapping, srcVersion, migration)
       } catch {
-        case e: Throwable => throw new Exception(s"Failed to load $filename.", e)
+        case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
     }
 

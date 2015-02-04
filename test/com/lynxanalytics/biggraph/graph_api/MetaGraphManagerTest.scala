@@ -135,6 +135,21 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(m.edgeBundle("two").toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
+
+  test("JSON read errors are correctly reported") {
+    val dir = cleanMetaManagerDir
+    val template = new File(getClass.getResource("/graph_api/MetaGraphManagerTest/json-error-test").toURI)
+    FileUtils.copyDirectory(template, new File(dir))
+    val e = intercept[Exception] {
+      MetaRepositoryManager(dir, new JsonMigration)
+    }
+    // Top exception reports the file name.
+    assert(e.getMessage.startsWith("Failed to load /"))
+    // Its cause reports the JSON.
+    assert(e.getCause.getMessage.startsWith("Failed to read {"))
+    // Its cause is the JsResultException from CreateSomeGraph.fromJson.
+    assert(e.getCause.getCause.isInstanceOf[play.api.libs.json.JsResultException])
+  }
 }
 
 private object CreateSomeGraph extends OpFromJson {

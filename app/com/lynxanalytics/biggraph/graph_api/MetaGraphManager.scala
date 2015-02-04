@@ -236,18 +236,17 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def initializeFromDisk(): Unit = synchronized {
-    for (j <- MetaGraphManager.loadOperations(repositoryPath)) {
-      val filename = j \ "filename"
+    for ((file, j) <- MetaGraphManager.loadOperations(repositoryPath)) {
       try {
         val inst = deserializeOperation(j)
         // Verify outputs.
         val outputs = j \ "outputs"
         assert(outputs == inst.outputs.toJson,
-          s"Output mismatch in operation read from $filename." +
+          s"Output mismatch in $inst." +
             s" Expected: $outputs, found: ${inst.outputs.toJson}")
         internalApply(inst)
       } catch {
-        case e: Throwable => throw new Exception(s"Failed to load $filename.", e)
+        case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
     }
 
@@ -293,13 +292,13 @@ object MetaGraphManager {
     def asUUID: UUID = UUID.fromString(s)
   }
 
-  // Read operations as JSON from a repo.
-  def loadOperations(repo: String): Seq[json.JsValue] = {
+  // Read operations as file -> JSON from a repo.
+  def loadOperations(repo: String): Seq[(File, json.JsValue)] = {
     val opdir = new File(repo, "operations")
     if (!opdir.exists) opdir.mkdirs
     val files = opdir.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
     files.map { f =>
-      Json.parse(FileUtils.readFileToString(f, "utf8"))
+      f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
     }
   }
 
