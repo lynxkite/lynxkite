@@ -46,7 +46,7 @@ trait TestMetaGraphManager extends TestTempDir {
     managerDir.mkdir
     managerDir.toString
   }
-  def cleanMetaManager: MetaGraphManager = VersioningMetaGraphManager(cleanMetaManagerDir)
+  def cleanMetaManager: MetaGraphManager = MetaRepositoryManager(cleanMetaManagerDir)
 }
 
 trait TestDataManager extends TestTempDir with TestSparkContext {

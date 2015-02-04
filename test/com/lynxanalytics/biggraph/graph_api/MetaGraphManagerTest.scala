@@ -65,7 +65,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
   test("Save and load works") {
     val m1Dir = cleanMetaManagerDir
-    val m1o = VersioningMetaGraphManager(m1Dir)
+    val m1o = MetaRepositoryManager(m1Dir)
     val m2o = cleanMetaManager
 
     val firstInstance = m1o.apply(new CreateSomeGraph())
@@ -79,7 +79,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
     m1o.setTag("my/favorite/vertices/first", firstVertices)
 
-    val m1c = VersioningMetaGraphManager(m1Dir)
+    val m1c = MetaRepositoryManager(m1Dir)
 
     (firstInstance.entities.all.values ++ secondInstance.entities.all.values).foreach { entity =>
       // We have an entity of the GUID of all entities.
@@ -112,7 +112,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(!new File(dir, "2").exists)
     import play.api.libs.json
     // Load the test data using a fake JsonMigration class.
-    val m = VersioningMetaGraphManager(dir, new JsonMigration {
+    val m = MetaRepositoryManager(dir, new JsonMigration {
       override val version = Map(
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0)
       override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](

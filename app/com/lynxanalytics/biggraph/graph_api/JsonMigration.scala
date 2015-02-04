@@ -38,7 +38,7 @@ class JsonMigration {
   val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]]()
 }
 
-object VersioningMetaGraphManager {
+object MetaRepositoryManager {
   // Load repository as current version.
   def apply(rootPath: String): MetaGraphManager =
     apply(rootPath, JsonMigration.current)
