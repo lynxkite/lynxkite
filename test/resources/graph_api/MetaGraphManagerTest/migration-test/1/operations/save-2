@@ -1,0 +1,14 @@
+{
+  "operation" : {
+    "class" : "com.lynxanalytics.biggraph.graph_api.FromVertexAttr",
+    "data" : { }
+  },
+  "inputs" : {
+    "inputAttr" : "11111111-1111-1111-1111-111111111111",
+    "inputVertices" : "00000000-0000-0000-0000-000000000000"
+  },
+  "outputs" : {
+    "attrValues" : "44444444-4444-4444-4444-444444444444",
+    "links" : "55555555-5555-5555-5555-555555555555"
+  }
+}
