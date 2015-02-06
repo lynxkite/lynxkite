@@ -18,7 +18,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           controls: {
             klass: THREE.OrbitControls,
           },
-          camera: { fov: 90 },
+          camera: { fov: 50 },
           renderer: {
             parameters: {
               alpha: true,
@@ -61,29 +61,19 @@ angular.module('biggraph').directive('renderer', function($timeout) {
         // Build the scene from the given edges.
         function plot(edges) {
           clear();
-          // Geometry generation. 4 points and 2 triangles are generated for each edge.
+          // Geometry generation. 8 points and 12 triangles are generated for each edge.
           var n = edges.length;
           // Position of this point.
-          var ps = new Float32Array(n * 4 * 3);
+          var ps = new Float32Array(n * 8 * 3 * 3);
           // Index array.
-          var is = new Uint32Array(n * 6);
+          var is = new Uint32Array(n * 12 * 3);
           for (var i = 0; i < n; ++i) {
+            if (edges[i].a === edges[i].b) { continue; }  // TODO: Display loop edges?
             var src = edges[i].aPos;
             var dst = edges[i].bPos;
             // The more edges we have, the thinner we make them.
             var w = Math.min(0.4, edges[i].size * 100 / n);
-            ps[4 * 3 * i + 0] = src.x - w; ps[4 * 3 * i + 3] = src.x + w;
-            ps[4 * 3 * i + 1] = ps[4 * 3 * i + 4] = src.y;
-            ps[4 * 3 * i + 2] = ps[4 * 3 * i + 5] = src.z;
-            ps[4 * 3 * i + 6] = dst.x - w; ps[4 * 3 * i + 9] = dst.x + w;
-            ps[4 * 3 * i + 7] = ps[4 * 3 * i + 10] = dst.y;
-            ps[4 * 3 * i + 8] = ps[4 * 3 * i + 11] = dst.z;
-            is[6 * i + 0] = 4 * i + 0;
-            is[6 * i + 1] = 4 * i + 1;
-            is[6 * i + 2] = 4 * i + 2;
-            is[6 * i + 3] = 4 * i + 2;
-            is[6 * i + 4] = 4 * i + 1;
-            is[6 * i + 5] = 4 * i + 3;
+            addRod(ps, is, i, src, dst, w);
           }
 
           var geom = new THREE.BufferGeometry();
@@ -96,6 +86,62 @@ angular.module('biggraph').directive('renderer', function($timeout) {
             shading: THREE.FlatShading,
           });
           three.scene.add(new THREE.Mesh(geom, mat));
+        }
+
+        function addRod(ps, is, i, a, b, w) {
+          var j = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+          var ortho = orthogonals(j);
+          var h = ortho[0], v = ortho[1];
+          h.x *= w; h.y *= w; h.z *= w;
+          v.x *= w; v.y *= w; v.z *= w;
+          var pp = i * 8 * 3;
+          // Create three copies of each vertex, so that per-vertex normals can be calculated.
+          for (var d = 0; d < 3; ++d) {
+            var r = pp + 8 * d;
+            addPoint(ps, r + 0, { x: a.x + h.x, y: a.y + h.y, z: a.z + h.z });
+            addPoint(ps, r + 1, { x: a.x - h.x, y: a.y - h.y, z: a.z - h.z });
+            addPoint(ps, r + 2, { x: a.x + v.x, y: a.y + v.y, z: a.z + v.z });
+            addPoint(ps, r + 3, { x: a.x - v.x, y: a.y - v.y, z: a.z - v.z });
+            addPoint(ps, r + 4, { x: b.x + h.x, y: b.y + h.y, z: b.z + h.z });
+            addPoint(ps, r + 5, { x: b.x - h.x, y: b.y - h.y, z: b.z - h.z });
+            addPoint(ps, r + 6, { x: b.x + v.x, y: b.y + v.y, z: b.z + v.z });
+            addPoint(ps, r + 7, { x: b.x - v.x, y: b.y - v.y, z: b.z - v.z });
+          }
+          var ii = i * 6, r1 = pp, r2 = pp + 8, r3 = pp + 16;
+          addQuad(is, ii + 0, r1 + 0, r1 + 3, r1 + 1, r1 + 2);
+          addQuad(is, ii + 1, r2 + 0, r2 + 2, r1 + 6, r1 + 4);
+          addQuad(is, ii + 2, r3 + 0, r2 + 4, r1 + 7, r2 + 3);
+          addQuad(is, ii + 3, r1 + 5, r2 + 7, r3 + 4, r2 + 6);
+          addQuad(is, ii + 4, r2 + 5, r3 + 6, r3 + 2, r2 + 1);
+          addQuad(is, ii + 5, r3 + 5, r3 + 1, r3 + 3, r3 + 7);
+        }
+
+        function orthogonals(j) {
+          var h = { x: j.y * j.z, y: -0.5 * j.x * j.z, z: -0.5 * j.x * j.y };
+          var v = { x: j.y * h.z - j.z * h.y,
+                    y: j.z * h.x - j.x * h.z,
+                    z: j.x * h.y - j.y * h.x };
+          return [normalized(h), normalized(v)];
+        }
+
+        function normalized(j) {
+          var d = Math.sqrt(j.x * j.x + j.y * j.y + j.z * j.z);
+          return { x: j.x / d, y: j.y / d, z: j.z / d };
+        }
+
+        function addPoint(ps, i, p) {
+          ps[3 * i + 0] = p.x;
+          ps[3 * i + 1] = p.y;
+          ps[3 * i + 2] = p.z;
+        }
+
+        function addQuad(is, i, p1, p2, p3, p4) {
+          is[6 * i + 0] = p1;
+          is[6 * i + 1] = p2;
+          is[6 * i + 2] = p3;
+          is[6 * i + 3] = p1;
+          is[6 * i + 4] = p3;
+          is[6 * i + 5] = p4;
         }
 
         plot(scope.edges);
