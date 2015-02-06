@@ -8,7 +8,7 @@ import scala.util.Random
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object MergeVertices {
+object MergeVertices extends OpFromJson {
   class Output(
       implicit instance: MetaGraphOperationInstance,
       inputs: VertexAttributeInput[_]) extends MagicOutput(instance) {
@@ -17,7 +17,7 @@ object MergeVertices {
     val belongsTo = edgeBundle(inputs.vs.entity, segments, EdgeBundleProperties.partialFunction)
     val representative = edgeBundle(segments, inputs.vs.entity, EdgeBundleProperties.embedding)
   }
-
+  def fromJson(j: JsValue) = MergeVertices()
 }
 import MergeVertices._
 // Merges vertices that match on an attribute.

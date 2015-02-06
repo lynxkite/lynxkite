@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 
-object RestrictAttributeToIds {
+object RestrictAttributeToIds extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vs = vertexSet
     val attr = vertexAttribute[T](vs)
@@ -19,6 +19,7 @@ object RestrictAttributeToIds {
     val op = RestrictAttributeToIds[T](ids)
     op(op.attr, attr).result.attrMap
   }
+  def fromJson(j: JsValue) = RestrictAttributeToIds((j \ "vertexIdSet").as[Set[ID]])
 }
 import RestrictAttributeToIds._
 case class RestrictAttributeToIds[T](vertexIdSet: Set[ID])
@@ -27,6 +28,7 @@ case class RestrictAttributeToIds[T](vertexIdSet: Set[ID])
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
+  override def toJson = Json.obj("vertexIdSet" -> vertexIdSet)
 
   def execute(inputDatas: DataSet,
               o: Output[T],

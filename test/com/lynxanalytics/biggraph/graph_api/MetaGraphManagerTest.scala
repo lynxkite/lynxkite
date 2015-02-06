@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
 import java.util.UUID
+import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
@@ -63,7 +64,8 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   }
 
   test("Save and load works") {
-    val m1o = cleanMetaManager
+    val m1Dir = cleanMetaManagerDir
+    val m1o = MetaRepositoryManager(m1Dir)
     val m2o = cleanMetaManager
 
     val firstInstance = m1o.apply(new CreateSomeGraph())
@@ -77,7 +79,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
     m1o.setTag("my/favorite/vertices/first", firstVertices)
 
-    val m1c = new MetaGraphManager(m1o.repositoryPath)
+    val m1c = MetaRepositoryManager(m1Dir)
 
     (firstInstance.entities.all.values ++ secondInstance.entities.all.values).foreach { entity =>
       // We have an entity of the GUID of all entities.
@@ -101,9 +103,56 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val instance2 = manager.apply(new CreateSomeGraph())
     assert(instance1 eq instance2)
   }
+
+  test("JSON version migration") {
+    val dir = cleanMetaManagerDir
+    val template = new File(getClass.getResource("/graph_api/MetaGraphManagerTest/migration-test").toURI)
+    FileUtils.copyDirectory(template, new File(dir))
+    assert(new File(dir, "1").exists)
+    assert(!new File(dir, "2").exists)
+    import play.api.libs.json
+    // Load the test data using a fake JsonMigration class.
+    val m = MetaRepositoryManager(dir, new JsonMigration {
+      override val version = Map(
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0)
+      override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+        // From version 1 to version 2 we added the "arg" argument.
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
+          j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
+        },
+        // From version 2 to version 3 we removed the "unnecessary" argument.
+        // (Unused data in JSON is fine, we only add an upgrader for this for the sake of testing.)
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2 -> {
+          j => json.JsObject(j.fields.filter(_._1 != "unnecessary"))
+        })
+    })
+    // The new directory exists.
+    assert(new File(dir, "2").exists)
+    assert(new File(dir, "2/version").exists)
+    // The old tags point to the successfully migrated entities.
+    assert(m.vertexSet("one").toString ==
+      "vertices of (CreateSomeGraph of arg=migrated)")
+    assert(m.edgeBundle("two").toString ==
+      "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
+  }
+
+  test("JSON read errors are correctly reported") {
+    val dir = cleanMetaManagerDir
+    val template = new File(getClass.getResource("/graph_api/MetaGraphManagerTest/json-error-test").toURI)
+    FileUtils.copyDirectory(template, new File(dir))
+    val e = intercept[Exception] {
+      MetaRepositoryManager(dir, new JsonMigration)
+    }
+    // Top exception reports the file name.
+    assert(e.getMessage.startsWith("Failed to load /"))
+    // Its cause reports the JSON.
+    assert(e.getCause.getMessage.startsWith("Failed to read {"))
+    // Its cause is the JsResultException from CreateSomeGraph.fromJson.
+    assert(e.getCause.getCause.isInstanceOf[play.api.libs.json.JsResultException])
+  }
 }
 
-private object CreateSomeGraph {
+private object CreateSomeGraph extends OpFromJson {
   class Input extends MagicInputSignature {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
@@ -112,8 +161,12 @@ private object CreateSomeGraph {
     val vattr = vertexAttribute[Long](vertices)
     val eattr = edgeAttribute[String](edges)
   }
+  def fromJson(j: JsValue) = {
+    assert(!j.as[play.api.libs.json.JsObject].fields.contains("unnecessary")) // For version migration testing.
+    CreateSomeGraph((j \ "arg").as[String])
+  }
 }
-private case class CreateSomeGraph()
+private case class CreateSomeGraph(arg: String = "not set")
     extends TypedMetaGraphOp[CreateSomeGraph.Input, CreateSomeGraph.Output] {
   import CreateSomeGraph._
 
@@ -122,13 +175,15 @@ private case class CreateSomeGraph()
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
+  override def toJson = Json.obj("arg" -> arg)
+
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = ???
 }
 
-private object FromVertexAttr {
+private object FromVertexAttr extends OpFromJson {
   class Input extends MagicInputSignature {
     val inputVertices = vertexSet
     val inputAttr = vertexAttribute[Long](inputVertices)
@@ -138,6 +193,7 @@ private object FromVertexAttr {
     val attrValues = vertexSet
     val links = edgeBundle(attrValues, inputs.inputVertices.entity)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = FromVertexAttr()
 }
 private case class FromVertexAttr()
     extends TypedMetaGraphOp[FromVertexAttr.Input, FromVertexAttr.Output] {

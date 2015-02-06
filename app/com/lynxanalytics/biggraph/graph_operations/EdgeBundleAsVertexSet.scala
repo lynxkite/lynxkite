@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 
-object EdgeBundleAsVertexSet {
+object EdgeBundleAsVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val ignoredSrc = vertexSet
     val ignoredDst = vertexSet
@@ -11,6 +11,7 @@ object EdgeBundleAsVertexSet {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val equivalentVS = vertexSet
   }
+  def fromJson(j: JsValue) = EdgeBundleAsVertexSet()
 }
 case class EdgeBundleAsVertexSet()
     extends TypedMetaGraphOp[EdgeBundleAsVertexSet.Input, EdgeBundleAsVertexSet.Output] {
@@ -29,7 +30,7 @@ case class EdgeBundleAsVertexSet()
   }
 }
 
-object EdgeBundleAsVertexAttribute {
+object EdgeBundleAsVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -41,6 +42,7 @@ object EdgeBundleAsVertexAttribute {
       inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[(ID, ID)](inputs.idSet.entity)
   }
+  def fromJson(j: JsValue) = EdgeBundleAsVertexAttribute()
 }
 case class EdgeBundleAsVertexAttribute()
     extends TypedMetaGraphOp[EdgeBundleAsVertexAttribute.Input, EdgeBundleAsVertexAttribute.Output] {

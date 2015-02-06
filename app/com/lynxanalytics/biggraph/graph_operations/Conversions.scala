@@ -31,7 +31,7 @@ object DynamicValue {
   }
 }
 
-object VertexAttributeToString {
+object VertexAttributeToString extends OpFromJson {
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: VertexAttributeInput[T])
       extends MagicOutput(instance) {
@@ -44,6 +44,7 @@ object VertexAttributeToString {
     val op = VertexAttributeToString[T]()
     op(op.attr, attr).result.attr
   }
+  def fromJson(j: JsValue) = VertexAttributeToString()
 }
 case class VertexAttributeToString[T]()
     extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToString.Output[T]] {
@@ -61,7 +62,7 @@ case class VertexAttributeToString[T]()
   }
 }
 
-object VertexAttributeToDouble {
+object VertexAttributeToDouble extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: VertexAttributeInput[String])
       extends MagicOutput(instance) {
@@ -74,6 +75,7 @@ object VertexAttributeToDouble {
     val op = VertexAttributeToDouble()
     op(op.attr, attr).result.attr
   }
+  def fromJson(j: JsValue) = VertexAttributeToDouble()
 }
 case class VertexAttributeToDouble()
     extends TypedMetaGraphOp[VertexAttributeInput[String], VertexAttributeToDouble.Output] {
@@ -91,7 +93,7 @@ case class VertexAttributeToDouble()
   }
 }
 
-object VertexAttributeToDynamicValue {
+object VertexAttributeToDynamicValue extends OpFromJson {
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: VertexAttributeInput[T])
       extends MagicOutput(instance) {
@@ -104,6 +106,7 @@ object VertexAttributeToDynamicValue {
     val op = VertexAttributeToDynamicValue[T]()
     op(op.attr, attr).result.attr
   }
+  def fromJson(j: JsValue) = VertexAttributeToDynamicValue()
 }
 case class VertexAttributeToDynamicValue[T]()
     extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
@@ -148,6 +151,9 @@ abstract class AttributeCast[From, To]()
   }
 }
 
+object AttributeVectorToAny extends OpFromJson {
+  def fromJson(j: JsValue) = AttributeVectorToAny()
+}
 case class AttributeVectorToAny[From]() extends AttributeCast[Vector[From], Vector[Any]] {
   @transient lazy val tt = typeTag[Vector[Any]]
 }
@@ -181,7 +187,7 @@ object JSValue {
   }
 }
 
-object VertexAttributeToJSValue {
+object VertexAttributeToJSValue extends OpFromJson {
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: VertexAttributeInput[T])
       extends MagicOutput(instance) {
@@ -199,6 +205,7 @@ object VertexAttributeToJSValue {
 
     attrs.map(run(_))
   }
+  def fromJson(j: JsValue) = VertexAttributeToJSValue()
 }
 case class VertexAttributeToJSValue[T]()
     extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToJSValue.Output[T]] {

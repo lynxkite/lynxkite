@@ -37,6 +37,10 @@ angular
         templateUrl: 'views/login.html',
         controller: 'LoginCtrl',
       })
+      .when('/users', {
+        templateUrl: 'views/users.html',
+        controller: 'UsersCtrl',
+      })
       .otherwise({
         redirectTo: '/',
       });
@@ -144,7 +148,7 @@ angular
           angular.element('title').html(title);
         });
         scope.$on('$destroy', function() {
-          angular.element('title').html('Lynx PizzaKite');
+          angular.element('title').html('LynxKite');
         });
       },
       reportRequestError: function(request, details) {

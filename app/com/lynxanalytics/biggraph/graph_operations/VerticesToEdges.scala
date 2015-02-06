@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
-object VerticesToEdges {
+object VerticesToEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val srcAttr = vertexAttribute[String](vs)
@@ -16,6 +16,7 @@ object VerticesToEdges {
     val stringID = vertexAttribute[String](vs)
     val embedding = edgeBundle(es.asVertexSet, inputs.vs.entity, EdgeBundleProperties.embedding)
   }
+  def fromJson(j: JsValue) = VerticesToEdges()
 }
 import VerticesToEdges._
 case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {

@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object EmptyEdgeBundle {
+object EmptyEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -12,6 +12,7 @@ object EmptyEdgeBundle {
                inputs: Input) extends MagicOutput(instance) {
     val eb = edgeBundle(inputs.src.entity, inputs.dst.entity)
   }
+  def fromJson(j: JsValue) = EmptyEdgeBundle()
 }
 import EmptyEdgeBundle._
 case class EmptyEdgeBundle() extends TypedMetaGraphOp[Input, Output] {

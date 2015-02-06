@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-object InducedEdgeBundle {
+object InducedEdgeBundle extends OpFromJson {
   class Input(induceSrc: Boolean, induceDst: Boolean) extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -29,6 +29,7 @@ object InducedEdgeBundle {
     val embedding = edgeBundle(
       induced.asVertexSet, inputs.edges.asVertexSet, EdgeBundleProperties.embedding)
   }
+  def fromJson(j: JsValue) = InducedEdgeBundle((j \ "induceSrc").as[Boolean], (j \ "induceDst").as[Boolean])
 }
 import InducedEdgeBundle._
 case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = true)
@@ -38,6 +39,7 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output(induceSrc, induceDst)(instance, inputs)
+  override def toJson = Json.obj("induceSrc" -> induceSrc, "induceDst" -> induceDst)
 
   def execute(inputDatas: DataSet,
               o: Output,

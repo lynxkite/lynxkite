@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-object JoinAttributes {
+object JoinAttributes extends OpFromJson {
   class Input[A, B] extends MagicInputSignature {
     val vs = vertexSet
     val a = vertexAttribute[A](vs)
@@ -18,6 +18,7 @@ object JoinAttributes {
     implicit val ttb = inputs.b.typeTag
     val attr = vertexAttribute[(A, B)](inputs.vs.entity)
   }
+  def fromJson(j: JsValue) = JoinAttributes()
 }
 import JoinAttributes._
 case class JoinAttributes[A, B]()

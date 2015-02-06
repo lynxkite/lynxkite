@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 // For vertices on the two ends of "candidates" Fingerprinting will find the most likely match
 // based on the network structure.
-object Fingerprinting {
+object Fingerprinting extends OpFromJson {
   class Input extends MagicInputSignature {
     val left = vertexSet
     val right = vertexSet
@@ -32,6 +32,8 @@ object Fingerprinting {
     val leftSimilarities = vertexAttribute[Double](inputs.left.entity)
     val rightSimilarities = vertexAttribute[Double](inputs.right.entity)
   }
+  def fromJson(j: JsValue) =
+    Fingerprinting((j \ "minimumOverlap").as[Int], (j \ "minimumSimilarity").as[Double])
 }
 case class Fingerprinting(
   minimumOverlap: Int,
@@ -41,6 +43,7 @@ case class Fingerprinting(
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = Json.obj("minimumOverlap" -> minimumOverlap, "minimumSimilarity" -> minimumSimilarity)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -192,7 +195,7 @@ case class Fingerprinting(
 // Generates the list of candidate matches for Fingerprinting. The vertices where "leftName" is
 // defined but "rightName" is not are candidates for matching against vertices where "rightName" is
 // defined but "leftName" is not, if the two vertices share at least one out-neighbor.
-object FingerprintingCandidates {
+object FingerprintingCandidates extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val es = edgeBundle(vs, vs)
@@ -203,6 +206,7 @@ object FingerprintingCandidates {
       extends MagicOutput(instance) {
     val candidates = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
+  def fromJson(j: JsValue) = FingerprintingCandidates()
 }
 case class FingerprintingCandidates()
     extends TypedMetaGraphOp[FingerprintingCandidates.Input, FingerprintingCandidates.Output] {

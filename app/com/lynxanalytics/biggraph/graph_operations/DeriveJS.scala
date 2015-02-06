@@ -67,16 +67,26 @@ abstract class DeriveJS[T](
   }
 }
 
+object DeriveJSString extends OpFromJson {
+  def fromJson(j: JsValue) =
+    DeriveJSString(JavaScript((j \ "expr").as[String]), (j \ "attrNames").as[Seq[String]])
+}
 case class DeriveJSString(
   expr: JavaScript,
   attrNames: Seq[String])
     extends DeriveJS[String](expr, attrNames) {
   @transient lazy val tt = typeTag[String]
+  override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
 }
 
+object DeriveJSDouble extends OpFromJson {
+  def fromJson(j: JsValue) =
+    DeriveJSDouble(JavaScript((j \ "expr").as[String]), (j \ "attrNames").as[Seq[String]])
+}
 case class DeriveJSDouble(
   expr: JavaScript,
   attrNames: Seq[String])
     extends DeriveJS[Double](expr, attrNames) {
   @transient lazy val tt = typeTag[Double]
+  override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
 }

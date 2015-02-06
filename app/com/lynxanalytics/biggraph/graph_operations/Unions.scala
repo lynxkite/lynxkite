@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-object VertexSetUnion {
+object VertexSetUnion extends OpFromJson {
   class Input(numVertexSets: Int) extends MagicInputSignature {
     val vss = Range(0, numVertexSets).map {
       i => vertexSet(Symbol("vs" + i))
@@ -24,6 +24,7 @@ object VertexSetUnion {
       .map(i => edgeBundle(
         input.vss(i).entity, union, EdgeBundleProperties.injection, name = Symbol("injection" + i)))
   }
+  def fromJson(j: JsValue) = VertexSetUnion((j \ "numVertexSets").as[Int])
 }
 case class VertexSetUnion(numVertexSets: Int)
     extends TypedMetaGraphOp[VertexSetUnion.Input, VertexSetUnion.Output] {
@@ -33,6 +34,7 @@ case class VertexSetUnion(numVertexSets: Int)
   @transient override lazy val inputs = new Input(numVertexSets)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(numVertexSets)(instance, inputs)
+  override def toJson = Json.obj("numVertexSets" -> numVertexSets)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -56,7 +58,7 @@ case class VertexSetUnion(numVertexSets: Int)
   }
 }
 
-object EdgeBundleUnion {
+object EdgeBundleUnion extends OpFromJson {
   class Input(numEdgeBundles: Int) extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -81,6 +83,7 @@ object EdgeBundleUnion {
       input: Input) extends MagicOutput(instance) {
     val union = edgeBundle(input.src.entity, input.dst.entity, idSet = input.idSetUnion.entity)
   }
+  def fromJson(j: JsValue) = EdgeBundleUnion((j \ "numEdgeBundles").as[Int])
 }
 case class EdgeBundleUnion(numEdgeBundles: Int)
     extends TypedMetaGraphOp[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
@@ -91,6 +94,7 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output(numEdgeBundles)(instance, inputs)
+  override def toJson = Json.obj("numEdgeBundles" -> numEdgeBundles)
 
   def execute(inputDatas: DataSet,
               o: Output,

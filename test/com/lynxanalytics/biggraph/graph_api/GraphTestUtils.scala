@@ -40,20 +40,13 @@ object GraphTestUtils {
 }
 
 trait TestMetaGraphManager extends TestTempDir {
-  def cleanMetaManager: MetaGraphManager = {
+  def cleanMetaManagerDir = {
     val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("metaGraphManager." + dirName)
     managerDir.mkdir
-    new MetaGraphManager(managerDir.toString) {
-      override protected def internalApply(
-        inst: MetaGraphOperationInstance): Unit = {
-        if (inst.operation.isHeavy) {
-          SerialVersionUIDTest.assertContains(inst.operation)
-        }
-        super.internalApply(inst)
-      }
-    }
+    managerDir.toString
   }
+  def cleanMetaManager: MetaGraphManager = MetaRepositoryManager(cleanMetaManagerDir)
 }
 
 trait TestDataManager extends TestTempDir with TestSparkContext {
@@ -70,9 +63,14 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
   implicit val dataManager = cleanDataManager
 }
 
-object SmallTestGraph {
+object SmallTestGraph extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val (vs, es) = graph
+  }
+  def fromJson(j: JsValue) = {
+    SmallTestGraph(
+      (j \ "edgeLists").as[Map[String, Array[Int]]].map { case (k, v) => k.toInt -> v.toSeq },
+      (j \ "numPartitions").as[Int])
   }
 }
 case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
@@ -80,6 +78,12 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
   import SmallTestGraph._
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  override def toJson = {
+    import play.api.libs.json
+    Json.obj(
+      "edgeLists" -> json.JsObject(edgeLists.toSeq.map { case (k, v) => k.toString -> json.JsArray(v.map(json.JsNumber(_))) }),
+      "numPartitions" -> numPartitions)
+  }
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
@@ -103,44 +107,63 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
   }
 }
 
-object AddEdgeBundle {
+object AddEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {
     val vsA = vertexSet
     val vsB = vertexSet
   }
-  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
-    val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity)
+  class Output(
+      implicit instance: MetaGraphOperationInstance,
+      inputs: Input,
+      properties: EdgeBundleProperties) extends MagicOutput(instance) {
+    val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity, properties = properties)
+  }
+  def fromJson(j: JsValue) = AddEdgeBundle((j \ "edgeList").as[Seq[Seq[Int]]].map(ab => ab(0) -> ab(1)))
+  def getFunctionProperties(edgeList: Seq[(Int, Int)]): EdgeBundleProperties = {
+    val srcSet = edgeList.map(_._1).toSet
+    val dstSet = edgeList.map(_._2).toSet
+    EdgeBundleProperties(
+      isFunction = (srcSet.size == edgeList.size),
+      isReversedFunction = (dstSet.size == edgeList.size))
   }
 }
-case class AddEdgeBundle(edgeLists: Seq[(Int, Int)])
+case class AddEdgeBundle(edgeList: Seq[(Int, Int)])
     extends TypedMetaGraphOp[AddEdgeBundle.Input, AddEdgeBundle.Output] {
   import AddEdgeBundle._
   @transient override lazy val inputs = new Input
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(instance, inputs, AddEdgeBundle.getFunctionProperties(edgeList))
+  override def toJson = {
+    Json.obj(
+      "edgeList" -> edgeList.map { case (a, b) => Seq(a, b) })
+  }
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    val (srcs, dsts) = edgeLists.unzip
     val es = sc.parallelize(
-      edgeLists.map {
+      edgeList.map {
         case (a, b) => Edge(a.toLong, b.toLong)
       }).randomNumbered(rc.onePartitionPartitioner)
     output(o.esAB, es)
   }
 }
 
-object SegmentedTestGraph {
+object SegmentedTestGraph extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val vs = vertexSet
     val segments = vertexSet
     val belongsTo = edgeBundle(vs, segments)
   }
+  def fromJson(j: JsValue) =
+    SegmentedTestGraph((j \ "edgeLists").as[Seq[Seq[Int]]].map(s => s.tail -> s.head))
 }
 case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
     extends TypedMetaGraphOp[NoInput, SegmentedTestGraph.Output] {
   import SegmentedTestGraph._
   @transient override lazy val inputs = new NoInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  override def toJson =
+    Json.obj("edgeLists" -> edgeLists.map { case (s, d) => d +: s })
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
@@ -161,7 +184,7 @@ case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
   }
 }
 
-object AddWeightedEdges {
+object AddWeightedEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -170,12 +193,17 @@ object AddWeightedEdges {
     val es = edgeBundle(inputs.src.entity, inputs.dst.entity)
     val weight = edgeAttribute[Double](es)
   }
+  def fromJson(j: JsValue) =
+    AddWeightedEdges((j \ "edges").as[Seq[Seq[ID]]].map(ab => ab(0) -> ab(1)), (j \ "weight").as[Double])
 }
 case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
     extends TypedMetaGraphOp[AddWeightedEdges.Input, AddWeightedEdges.Output] {
   import AddWeightedEdges._
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = Json.obj(
+    "edges" -> edges.map { case (a, b) => Seq(a, b) },
+    "weight" -> weight)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val es = rc.sparkContext.parallelize(edges.map {
@@ -186,19 +214,23 @@ case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
   }
 }
 
-object AddVertexAttribute {
+object AddVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[String](inputs.vs.entity)
   }
+  def fromJson(j: JsValue) =
+    AddVertexAttribute((j \ "values").as[Map[String, String]].map { case (k, v) => k.toInt -> v })
 }
 case class AddVertexAttribute(values: Map[Int, String])
     extends TypedMetaGraphOp[AddVertexAttribute.Input, AddVertexAttribute.Output] {
   import AddVertexAttribute._
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson =
+    Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
     val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }

@@ -19,7 +19,8 @@ private object SparkStageJars {
     classOf[com.mysql.jdbc.Driver],
     classOf[org.postgresql.Driver],
     classOf[org.sqlite.JDBC],
-    classOf[gcs.GoogleHadoopFileSystem])
+    classOf[gcs.GoogleHadoopFileSystem],
+    classOf[play.api.libs.json.JsValue])
   val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
   require(
     jars.forall(_.endsWith(".jar")),
@@ -114,6 +115,10 @@ object BigGraphSparkContext {
     debugKryo: Boolean = false,
     useJars: Boolean = true,
     master: String = ""): SparkContext = {
+    val versionFound = org.apache.spark.SPARK_VERSION
+    val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
+    assert(versionFound == versionRequired,
+      s"Needs Apache Spark version $versionRequired. Found $versionFound.")
     var sparkConf = new SparkConf()
       .setAppName(appName)
       .set("spark.executor.memory",
