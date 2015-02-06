@@ -6,7 +6,7 @@ describe('splash page', function() {
   });
 
   it('has a title', function() {
-    expect(browser.getTitle()).toEqual('Lynx PizzaKite');
+    expect(browser.getTitle()).toEqual('LynxKite');
   });
 
   it('has a version string', function() {
@@ -23,7 +23,7 @@ describe('splash page', function() {
     });
 
     it('opens a project when clicked', function() {
-      var melon = element(by.partialLinkText('Project Melon'));
+      var melon = element.all(by.css('.project-list > div')).get(2);
       melon.click();
       expect(browser.getCurrentUrl()).toContain('/#/project/Project_Melon');
     });

@@ -3,10 +3,10 @@ package com.lynxanalytics.biggraph.graph_operations
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.MapBucketer
+import com.lynxanalytics.biggraph.graph_util.IDMapBucketer
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object SampledView {
+object SampledView extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     val ids = vertexAttribute[ID](vertices)
@@ -17,6 +17,7 @@ object SampledView {
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
     val vertexIndices = scalar[Map[ID, Int]]
   }
+  def fromJson(j: JsValue) = SampledView((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
 }
 import SampledView._
 case class SampledView(
@@ -26,6 +27,7 @@ case class SampledView(
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  override def toJson = Json.obj("idSet" -> idSet, "maxCount" -> maxCount)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
@@ -38,7 +40,7 @@ case class SampledView(
     val idToIdx = svVertices.zipWithIndex.toMap
 
     output(o.svVertices, svVertices)
-    output(o.indexingSeq, Seq(BucketedAttribute(inputs.ids, MapBucketer(idToIdx))))
+    output(o.indexingSeq, Seq(BucketedAttribute(inputs.ids, IDMapBucketer(idToIdx))))
     output(o.vertexIndices, idToIdx)
   }
 }

@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 
-object IdAsAttribute {
+object IdAsAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
   }
@@ -15,6 +15,7 @@ object IdAsAttribute {
     import Scripting._
     op(op.vertices, vs).result.vertexIds
   }
+  def fromJson(j: JsValue) = IdAsAttribute()
 }
 import IdAsAttribute._
 case class IdAsAttribute() extends TypedMetaGraphOp[Input, Output] {

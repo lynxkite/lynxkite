@@ -16,7 +16,7 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
  * vertex diagram. So in this case this operation in effect computes how many edges go between two
  * nodes in two vertex diagrams.
  */
-object IndexPairCounter {
+object IndexPairCounter extends OpFromJson {
   class Input extends MagicInputSignature {
     val original = vertexSet
     val filtered = vertexSet
@@ -29,6 +29,7 @@ object IndexPairCounter {
                inputs: Input) extends MagicOutput(instance) {
     val counts = scalar[Map[(Int, Int), Double]]
   }
+  def fromJson(j: JsValue) = IndexPairCounter()
 }
 import IndexPairCounter._
 case class IndexPairCounter() extends TypedMetaGraphOp[Input, Output] {

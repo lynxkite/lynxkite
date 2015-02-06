@@ -129,12 +129,20 @@ abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
   }
 }
 
+object UniformOverlapForCC extends OpFromJson {
+  def fromJson(j: JsValue) = UniformOverlapForCC((j \ "overlapSize").as[Int])
+}
 case class UniformOverlapForCC(overlapSize: Int) extends SetOverlapForCC {
+  override def toJson = Json.obj("overlapSize" -> overlapSize)
   def minOverlapFn(a: Int, b: Int): Int = overlapSize
 }
 
+object InfocomOverlapForCC extends OpFromJson {
+  def fromJson(j: JsValue) = InfocomOverlapForCC((j \ "adjacencyThreshold").as[Double])
+}
 case class InfocomOverlapForCC(adjacencyThreshold: Double)
     extends SetOverlapForCC {
+  override def toJson = Json.obj("adjacencyThreshold" -> adjacencyThreshold)
   def minOverlapFn(a: Int, b: Int): Int =
     math.ceil(adjacencyThreshold * (a + b) * (a * a + b * b) / (4 * a * b)).toInt
 }

@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.graph_api._
 
-object AddReversedEdges {
+object AddReversedEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
@@ -16,6 +16,7 @@ object AddReversedEdges {
       esPlus.asVertexSet, inputs.es.asVertexSet,
       EdgeBundleProperties.surjection)
   }
+  def fromJson(j: JsValue) = AddReversedEdges()
 }
 import AddReversedEdges._
 case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {

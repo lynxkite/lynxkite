@@ -8,11 +8,12 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 // Generates edges between vertices that match on an attribute.
-object EdgesFromAttributeMatches {
+object EdgesFromAttributeMatches extends OpFromJson {
   class Output[T](implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[T])
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
+  def fromJson(j: JsValue) = EdgesFromAttributeMatches()
 }
 case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], EdgesFromAttributeMatches.Output[T]] {
   import EdgesFromAttributeMatches._
@@ -37,7 +38,7 @@ case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttribu
 }
 
 // Generates edges between vertices that match on an attribute.
-object EdgesFromBipartiteAttributeMatches {
+object EdgesFromBipartiteAttributeMatches extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val from = vertexSet
     val to = vertexSet
@@ -48,6 +49,7 @@ object EdgesFromBipartiteAttributeMatches {
       extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.from.entity, inputs.to.entity)
   }
+  def fromJson(j: JsValue) = EdgesFromBipartiteAttributeMatches()
 }
 case class EdgesFromBipartiteAttributeMatches[T]() extends TypedMetaGraphOp[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
   import EdgesFromBipartiteAttributeMatches._

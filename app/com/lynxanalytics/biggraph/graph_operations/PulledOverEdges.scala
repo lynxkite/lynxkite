@@ -15,7 +15,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
  * injection. This will create an edge bundle that can be seen as if you were transfered to original
  * edge bundle with the transformative operation.
  */
-object PulledOverEdges {
+object PulledOverEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val originalSrc = vertexSet
     val originalDst = vertexSet
@@ -31,6 +31,7 @@ object PulledOverEdges {
       inputs.originalDst.entity,
       idSet = inputs.destinationVS.entity)
   }
+  def fromJson(j: JsValue) = PulledOverEdges()
 }
 import PulledOverEdges._
 case class PulledOverEdges()

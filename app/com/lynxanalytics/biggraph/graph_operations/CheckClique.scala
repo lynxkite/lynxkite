@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object CheckClique {
+object CheckClique extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val cliques = vertexSet
@@ -19,6 +19,10 @@ object CheckClique {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val invalid = scalar[List[ID]] // first 100 invalid clique IDs
   }
+  def fromJson(j: JsValue) = {
+    val set = (j \ "cliquesToCheck").as[Seq[ID]].toSet
+    CheckClique(if (set.nonEmpty) Some(set) else None, (j \ "needsBothDirections").as[Boolean])
+  }
 }
 import CheckClique._
 case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirections: Boolean = false)
@@ -27,6 +31,10 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
+
+  override def toJson = Json.obj(
+    "cliquesToCheck" -> cliquesToCheck.getOrElse(Set()).toSeq,
+    "needsBothDirections" -> needsBothDirections)
 
   def execute(inputDatas: DataSet,
               o: Output,

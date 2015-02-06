@@ -63,16 +63,29 @@ object ImportUtil {
   }
 }
 
-trait RowInput {
+trait RowInput extends ToJson {
   def fields: Seq[String]
   def lines(rc: RuntimeContext): RDD[Seq[String]]
 }
 
+object CSV extends FromJson[CSV] {
+  def fromJson(j: JsValue) = CSV(
+    Filename((j \ "file").as[String]),
+    (j \ "delimiter").as[String],
+    (j \ "header").as[String],
+    JavaScript((j \ "filter").as[String]))
+}
 case class CSV(file: Filename,
                delimiter: String,
                header: String,
                filter: JavaScript = JavaScript("")) extends RowInput {
   val fields = ImportUtil.split(header, delimiter).map(_.trim)
+
+  override def toJson = Json.obj(
+    "file" -> file.fullString,
+    "delimiter" -> delimiter,
+    "header" -> header,
+    "filter" -> filter.expression)
 
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
     assert(file.list.nonEmpty, s"$file does not exist.")
@@ -138,7 +151,7 @@ object ImportCommon {
       }
 }
 
-object ImportVertexList {
+object ImportVertexList extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance,
                fields: Seq[String]) extends MagicOutput(instance) {
     val vertices = vertexSet
@@ -146,6 +159,7 @@ object ImportVertexList {
       f => f -> vertexAttribute[String](vertices, ImportCommon.toSymbol(f))
     }.toMap
   }
+  def fromJson(j: JsValue) = ImportVertexList(TypedJson.read[RowInput](j \ "input"))
 }
 case class ImportVertexList(input: RowInput) extends ImportCommon
     with TypedMetaGraphOp[NoInput, ImportVertexList.Output] {
@@ -153,6 +167,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
+  override def toJson = Json.obj("input" -> input.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -200,7 +215,7 @@ trait ImportEdges extends ImportCommon {
   }
 }
 
-object ImportEdgeList {
+object ImportEdgeList extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance,
                fields: Seq[String])
       extends MagicOutput(instance) {
@@ -210,6 +225,8 @@ object ImportEdgeList {
     }.toMap
     val stringID = vertexAttribute[String](vertices)
   }
+  def fromJson(j: JsValue) =
+    ImportEdgeList(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
 }
 case class ImportEdgeList(input: RowInput, src: String, dst: String)
     extends ImportEdges
@@ -218,6 +235,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
+  override def toJson = Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -236,7 +254,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
   }
 }
 
-object ImportEdgeListForExistingVertexSet {
+object ImportEdgeListForExistingVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val sources = vertexSet
     val destinations = vertexSet
@@ -252,6 +270,8 @@ object ImportEdgeListForExistingVertexSet {
       f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
     }.toMap
   }
+  def fromJson(j: JsValue) =
+    ImportEdgeListForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
 }
 case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst: String)
     extends ImportEdges
@@ -260,6 +280,7 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, input.fields)
+  override def toJson = Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -282,7 +303,7 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
   }
 }
 
-object ImportAttributesForExistingVertexSet {
+object ImportAttributesForExistingVertexSet extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val idAttr = vertexAttribute[String](vs)
@@ -295,6 +316,8 @@ object ImportAttributesForExistingVertexSet {
       f => f -> vertexAttribute[String](inputs.vs.entity, ImportCommon.toSymbol(f))
     }.toMap
   }
+  def fromJson(j: JsValue) =
+    ImportAttributesForExistingVertexSet(TypedJson.read[RowInput](j \ "input"), (j \ "idField").as[String])
 }
 case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String)
     extends ImportCommon
@@ -307,6 +330,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs, input.fields.toSet - idField)
+  override def toJson = Json.obj("input" -> input.toTypedJson, "idField" -> idField)
 
   def execute(inputDatas: DataSet,
               o: Output,

@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object FakePull {
+object FakePull extends OpFromJson {
   class Input extends MagicInputSignature {
     // Assumed to be ExampleGraph
     val vs = vertexSet
@@ -16,6 +16,7 @@ object FakePull {
                inputs: Input) extends MagicOutput(instance) {
     val pull = edgeBundle(inputs.vs.entity, inputs.vs.entity, EdgeBundleProperties.partialFunction)
   }
+  def fromJson(j: play.api.libs.json.JsValue) = FakePull()
 }
 case class FakePull() extends TypedMetaGraphOp[FakePull.Input, FakePull.Output] {
   import FakePull._

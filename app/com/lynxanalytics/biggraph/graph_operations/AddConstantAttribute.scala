@@ -62,17 +62,29 @@ abstract class AddConstantAttribute[T]
   }
 }
 
-case class AddConstantDoubleAttribute(val value: Double)
+object AddConstantDoubleAttribute extends OpFromJson {
+  def fromJson(j: JsValue) = AddConstantDoubleAttribute((j \ "value").as[Double])
+}
+case class AddConstantDoubleAttribute(value: Double)
     extends AddConstantAttribute[Double] {
   @transient lazy val tt = typeTag[Double]
+  override def toJson = Json.obj("value" -> value)
 }
 
-case class AddConstantIntAttribute(val value: Int)
+object AddConstantIntAttribute extends OpFromJson {
+  def fromJson(j: JsValue) = AddConstantIntAttribute((j \ "value").as[Int])
+}
+case class AddConstantIntAttribute(value: Int)
     extends AddConstantAttribute[Int] {
   @transient lazy val tt = typeTag[Int]
+  override def toJson = Json.obj("value" -> value)
 }
 
-case class AddConstantStringAttribute(val value: String)
+object AddConstantStringAttribute extends OpFromJson {
+  def fromJson(j: JsValue) = AddConstantStringAttribute((j \ "value").as[String])
+}
+case class AddConstantStringAttribute(value: String)
     extends AddConstantAttribute[String] {
   @transient lazy val tt = typeTag[String]
+  override def toJson = Json.obj("value" -> value)
 }

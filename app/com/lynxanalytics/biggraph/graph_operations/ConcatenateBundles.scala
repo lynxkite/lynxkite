@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object ConcatenateBundles {
+object ConcatenateBundles extends OpFromJson {
   class Input extends MagicInputSignature {
     val vsA = vertexSet
     val vsB = vertexSet
@@ -29,6 +29,7 @@ object ConcatenateBundles {
       EdgeBundleProperties(isFunction = isFunction, isReversedFunction = isReversedFunction))
     val weightsAC = vertexAttribute[Double](edgesAC.asVertexSet)
   }
+  def fromJson(j: JsValue) = ConcatenateBundles()
 }
 import ConcatenateBundles._
 case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {

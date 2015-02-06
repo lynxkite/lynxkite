@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-object TripletMapping {
+object TripletMapping extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -22,6 +22,7 @@ object TripletMapping {
     // The list of incoming edges.
     val dstEdges = vertexAttribute[Array[ID]](inputs.dst.entity)
   }
+  def fromJson(j: JsValue) = TripletMapping((j \ "sampleSize").as[Int])
 }
 // A negative sampleSize means no sampling.
 case class TripletMapping(sampleSize: Int = -1)
@@ -32,6 +33,7 @@ case class TripletMapping(sampleSize: Int = -1)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
+  override def toJson = Json.obj("sampleSize" -> sampleSize)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -67,7 +69,7 @@ case class TripletMapping(sampleSize: Int = -1)
   }
 }
 
-object VertexToEdgeAttribute {
+object VertexToEdgeAttribute extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
     val ignoredSrc = vertexSet
@@ -104,6 +106,7 @@ object VertexToEdgeAttribute {
     val mop = VertexToEdgeAttribute[T]()
     mop(mop.mapping, mapping)(mop.original, attr)(mop.target, edgeBundle).result.mappedAttribute
   }
+  def fromJson(j: JsValue) = VertexToEdgeAttribute()
 }
 case class VertexToEdgeAttribute[T]()
     extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
@@ -135,7 +138,7 @@ case class VertexToEdgeAttribute[T]()
   }
 }
 
-object EdgesForVertices {
+object EdgesForVertices extends OpFromJson {
   class Input(bySource: Boolean) extends MagicInputSignature {
     val vs = vertexSet
     val otherVs = vertexSet
@@ -146,6 +149,10 @@ object EdgesForVertices {
       extends MagicOutput(instance) {
     val edges = scalar[Option[Seq[(ID, Edge)]]]
   }
+  def fromJson(j: JsValue) = EdgesForVertices(
+    (j \ "vertexIdSet").as[Set[ID]],
+    (j \ "maxNumEdges").as[Int],
+    (j \ "bySource").as[Boolean])
 }
 case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Boolean)
     extends TypedMetaGraphOp[EdgesForVertices.Input, EdgesForVertices.Output] {
@@ -161,6 +168,11 @@ case class EdgesForVertices(vertexIdSet: Set[ID], maxNumEdges: Int, bySource: Bo
     assert(tripletMappingInstance.inputs.edgeBundles('edges) == inputs.edges.entity)
     new Output()(instance, inputs)
   }
+
+  override def toJson = Json.obj(
+    "vertexIdSet" -> vertexIdSet,
+    "maxNumEdges" -> maxNumEdges,
+    "bySource" -> bySource)
 
   def execute(inputDatas: DataSet,
               o: Output,

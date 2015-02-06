@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-object AggregateByEdgeBundle {
+object AggregateByEdgeBundle extends OpFromJson {
   class Input[From] extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -18,6 +18,8 @@ object AggregateByEdgeBundle {
                                   inputs: Input[From]) extends MagicOutput(instance) {
     val attr = vertexAttribute[To](inputs.dst.entity)
   }
+  def fromJson(j: JsValue) =
+    AggregateByEdgeBundle(TypedJson.read[LocalAggregator[_, _]](j \ "aggregator"))
 }
 case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To])
     extends TypedMetaGraphOp[AggregateByEdgeBundle.Input[From], AggregateByEdgeBundle.Output[From, To]] {
@@ -29,6 +31,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
     val tt = aggregator.outputTypeTag(inputs.attr.typeTag)
     new Output[From, To]()(tt, instance, inputs)
   }
+  override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[From, To],
@@ -50,7 +53,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
   }
 }
 
-object AggregateFromEdges {
+object AggregateFromEdges extends OpFromJson {
   class Input[From] extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
@@ -62,6 +65,8 @@ object AggregateFromEdges {
                                   inputs: Input[From]) extends MagicOutput(instance) {
     val dstAttr = vertexAttribute[To](inputs.dst.entity)
   }
+  def fromJson(j: JsValue) =
+    AggregateFromEdges(TypedJson.read[LocalAggregator[_, _]](j \ "aggregator"))
 }
 case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     extends TypedMetaGraphOp[AggregateFromEdges.Input[From], AggregateFromEdges.Output[From, To]] {
@@ -73,6 +78,7 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
     val tt = aggregator.outputTypeTag(inputs.eattr.typeTag)
     new Output[From, To]()(tt, instance, inputs)
   }
+  override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[From, To],
@@ -93,14 +99,15 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
   }
 }
 
-object AggregateAttributeToScalar {
+object AggregateAttributeToScalar extends OpFromJson {
   class Output[To: TypeTag](
       implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
 
     val aggregated = scalar[To]
   }
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type =
+    AggregateAttributeToScalar(TypedJson.read[Aggregator[_, _, _]](j \ "aggregator"))
 }
-
 case class AggregateAttributeToScalar[From, Intermediate, To](
   aggregator: Aggregator[From, Intermediate, To])
     extends TypedMetaGraphOp[VertexAttributeInput[From], AggregateAttributeToScalar.Output[To]] {
@@ -112,6 +119,7 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
     val tt = aggregator.outputTypeTag(inputs.attr.typeTag)
     new Output[To]()(tt, instance)
   }
+  override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output[To],
@@ -134,7 +142,7 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
 }
 
 // A simple interface that does not cover distributed use.
-trait LocalAggregator[From, To] {
+trait LocalAggregator[From, To] extends ToJson {
   def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
   // aggregate() can assume that values is non-empty.
   def aggregate(values: Iterable[From]): To
@@ -188,6 +196,13 @@ trait CompoundDoubleAggregator[From]
 }
 
 object Aggregator {
+  // Type aliases for the JSON serialization.
+  type AnyAggregator = Aggregator[_, _, _]
+  type AnyLocalAggregator = LocalAggregator[_, _]
+  type AggregatorFromJson = FromJson[AnyAggregator]
+  type LocalAggregatorFromJson = FromJson[AnyLocalAggregator]
+
+  object Count extends AggregatorFromJson { def fromJson(j: JsValue) = Count() }
   case class Count[T]() extends SimpleAggregator[T, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
     def zero = 0
@@ -195,6 +210,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
+  object Sum extends AggregatorFromJson { def fromJson(j: JsValue) = Sum() }
   case class Sum() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def zero = 0
@@ -202,6 +218,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
+  object WeightedSum extends AggregatorFromJson { def fromJson(j: JsValue) = WeightedSum() }
   case class WeightedSum() extends SimpleAggregator[(Double, Double), Double] {
     def outputTypeTag(inputTypeTag: TypeTag[(Double, Double)]) = typeTag[Double]
     def zero = 0
@@ -209,6 +226,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
+  object Max extends AggregatorFromJson { def fromJson(j: JsValue) = Max() }
   case class Max() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def zero = Double.NegativeInfinity
@@ -216,6 +234,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.max(a, b)
   }
 
+  object Min extends AggregatorFromJson { def fromJson(j: JsValue) = Min() }
   case class Min() extends SimpleAggregator[Double, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = typeTag[Double]
     def zero = Double.PositiveInfinity
@@ -223,7 +242,8 @@ object Aggregator {
     def combine(a: Double, b: Double) = math.min(a, b)
   }
 
-  case class MaxBy[Weight: Ordering, Value]() extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] {
+  abstract class MaxBy[Weight: Ordering, Value]
+      extends Aggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag
@@ -248,7 +268,10 @@ object Aggregator {
     }
     def finalize(opt: Option[(Weight, Value)]) = opt.get._2
   }
+  object MaxByDouble extends AggregatorFromJson { def fromJson(j: JsValue) = MaxByDouble() }
+  case class MaxByDouble[T]() extends MaxBy[Double, T]
 
+  object Average extends AggregatorFromJson { def fromJson(j: JsValue) = Average() }
   case class Average() extends CompoundDoubleAggregator[Double] {
     val agg1 = Count[Double]()
     val agg2 = Sum()
@@ -258,6 +281,7 @@ object Aggregator {
     }
   }
 
+  object SumOfWeights extends AggregatorFromJson { def fromJson(j: JsValue) = SumOfWeights() }
   case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
     def outputTypeTag(inputTypeTag: TypeTag[(Double, T)]) = typeTag[Double]
     def zero = 0
@@ -265,6 +289,7 @@ object Aggregator {
     def combine(a: Double, b: Double) = a + b
   }
 
+  object WeightedAverage extends AggregatorFromJson { def fromJson(j: JsValue) = WeightedAverage() }
   case class WeightedAverage() extends CompoundDoubleAggregator[(Double, Double)] {
     val agg1 = SumOfWeights[Double]()
     val agg2 = WeightedSum()
@@ -274,6 +299,7 @@ object Aggregator {
     }
   }
 
+  object MostCommon extends LocalAggregatorFromJson { def fromJson(j: JsValue) = MostCommon() }
   case class MostCommon[T]() extends LocalAggregator[T, T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def aggregate(values: Iterable[T]) = {
@@ -282,7 +308,11 @@ object Aggregator {
   }
 
   // Majority is like MostCommon, but returns "" if the mode is < fraction of the values.
+  object Majority extends LocalAggregatorFromJson {
+    def fromJson(j: JsValue) = Majority((j \ "fraction").as[Double])
+  }
   case class Majority(fraction: Double) extends LocalAggregator[String, String] {
+    override def toJson = Json.obj("fraction" -> fraction)
     def outputTypeTag(inputTypeTag: TypeTag[String]) = typeTag[String]
     def aggregate(values: Iterable[String]) = {
       val (mode, count) = values.groupBy(identity).mapValues(_.size).maxBy(_._2)
@@ -290,6 +320,7 @@ object Aggregator {
     }
   }
 
+  object First extends AggregatorFromJson { def fromJson(j: JsValue) = First() }
   case class First[T]() extends Aggregator[T, Option[T], T] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[T]): TypeTag[Option[T]] = {
@@ -305,6 +336,7 @@ object Aggregator {
     }
   }
 
+  object AsVector extends LocalAggregatorFromJson { def fromJson(j: JsValue) = AsVector() }
   case class AsVector[T]() extends LocalAggregator[T, Vector[T]] {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = {
       implicit val tt = inputTypeTag
@@ -313,6 +345,7 @@ object Aggregator {
     def aggregate(values: Iterable[T]): Vector[T] = values.toVector
   }
 
+  object StdDev extends AggregatorFromJson { def fromJson(j: JsValue) = StdDev() }
   case class StdDev() extends Aggregator[Double, Stats, Double] {
     def outputTypeTag(inputTypeTag: TypeTag[Double]) = inputTypeTag
     def intermediateTypeTag(inputTypeTag: TypeTag[Double]): TypeTag[Stats] = {

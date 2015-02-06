@@ -9,9 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
   val example = ExampleGraph()().result
   val adamless = {
-    val op = VertexAttributeFilter(new Filter[String] {
-      def matches(name: String) = name != "Adam"
-    })
+    val op = VertexAttributeFilter(NotFilter(OneOf(Set("Adam"))))
     op(op.attr, example.name).result
   }
 

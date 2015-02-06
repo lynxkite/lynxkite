@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-object AttributeHistogram {
+object AttributeHistogram extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val original = vertexSet
     val filtered = vertexSet
@@ -18,6 +18,8 @@ object AttributeHistogram {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val counts = scalar[Map[Int, Long]]
   }
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type =
+    AttributeHistogram(TypedJson.read[Bucketer[_]](j \ "bucketer"))
 }
 import AttributeHistogram._
 case class AttributeHistogram[T](bucketer: Bucketer[T])
@@ -25,6 +27,7 @@ case class AttributeHistogram[T](bucketer: Bucketer[T])
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  override def toJson = Json.obj("bucketer" -> bucketer.toTypedJson)
 
   def execute(inputDatas: DataSet,
               o: Output,

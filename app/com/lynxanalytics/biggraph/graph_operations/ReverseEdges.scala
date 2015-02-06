@@ -4,7 +4,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
-object ReverseEdges {
+object ReverseEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val vsA = vertexSet
     val vsB = vertexSet
@@ -20,6 +20,7 @@ object ReverseEdges {
     val op = ReverseEdges()
     op(op.esAB, eb).result.esBA
   }
+  def fromJson(j: JsValue) = ReverseEdges()
 }
 import ReverseEdges._
 case class ReverseEdges() extends TypedMetaGraphOp[Input, Output] {

@@ -437,6 +437,39 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new CreateSegmentationOperation(_) {
+    val title = "Modular partitioning"
+    val description = "Tries to find a partitioning of the graph with high modularity."
+    def parameters = List(
+      Param("name", "Segmentation name", defaultValue = "modular_partitions"),
+      Param("weights", "Weight attribute", options =
+        UIValue("", "no weight") +: edgeAttributes[Double]))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val edgeBundle = project.edgeBundle
+      val weightsName = params("weights")
+      val weights =
+        if (weightsName == "") const(edgeBundle)
+        else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
+      val result = {
+        val op = graph_operations.FindModularPartitioning()
+        op(op.edges, edgeBundle)(op.weights, weights).result
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.project.setVertexSet(result.partitions, idAttr = "id")
+      segmentation.project.notes = title
+      segmentation.belongsTo = result.belongsTo
+      segmentation.project.vertexAttributes("size") =
+        computeSegmentSizes(segmentation)
+      val modularity = {
+        val op = graph_operations.Modularity()
+        op(op.edges, edgeBundle)(op.weights, weights)(op.belongsTo, result.belongsTo)
+          .result.modularity
+      }
+      segmentation.project.scalars("modularity") = modularity
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Internal vertex ID as attribute"
     val description =
@@ -493,7 +526,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Add constant vertex attribute"
     val description = ""
     def parameters = List(
-      Param("name", "Attribute name", defaultValue = "weight"),
+      Param("name", "Attribute name"),
       Param("value", "Value", defaultValue = "1"),
       Param("type", "Type", options = UIValue.list(List("Double", "String"))))
     def enabled = hasVertexSet
@@ -726,10 +759,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new VertexOperation(_) {
-    val title = "Edge Graph"
+    val title = "Edge graph"
     val description =
-      """Creates the dual graph, where each vertex corresponds to an edge in the current graph.
-      The vertices will be connected, if one corresponding edge is the continuation of the other.
+      """Creates the edge graph (aka line graph), where each vertex corresponds to an edge in the
+      current graph. The vertices will be connected, if one corresponding edge is the continuation
+      of the other.
       """
     def parameters = List()
     def enabled = hasEdgeBundle
@@ -2126,9 +2160,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     weight: Attribute[Double], attr: Attribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
     choice match {
       case "by_max_weight" => AttributeWithAggregator(
-        joinAttr(weight, attr), graph_operations.Aggregator.MaxBy[Double, T]())
+        joinAttr(weight, attr), graph_operations.Aggregator.MaxByDouble[T]())
       case "by_min_weight" => AttributeWithAggregator(
-        joinAttr(graph_operations.DeriveJS.negative(weight), attr), graph_operations.Aggregator.MaxBy[Double, T]())
+        joinAttr(graph_operations.DeriveJS.negative(weight), attr), graph_operations.Aggregator.MaxByDouble[T]())
       case "weighted_sum" => AttributeWithAggregator(
         joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedSum())
       case "weighted_average" => AttributeWithAggregator(

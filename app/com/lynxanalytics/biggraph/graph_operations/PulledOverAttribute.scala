@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object PulledOverVertexAttribute {
+object PulledOverVertexAttribute extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val originalVS = vertexSet
     val destinationVS = vertexSet
@@ -24,6 +24,7 @@ object PulledOverVertexAttribute {
     val pop = PulledOverVertexAttribute[T]()
     pop(pop.originalAttr, originalAttr)(pop.function, function).result.pulledAttr
   }
+  def fromJson(j: JsValue) = PulledOverVertexAttribute()
 }
 case class PulledOverVertexAttribute[T]()
     extends TypedMetaGraphOp[PulledOverVertexAttribute.Input[T], PulledOverVertexAttribute.Output[T]] {

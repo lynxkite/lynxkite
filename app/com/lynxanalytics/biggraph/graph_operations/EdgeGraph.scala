@@ -6,12 +6,13 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object EdgeGraph {
+object EdgeGraph extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput) extends MagicOutput(instance) {
     val newVS = vertexSet
     val newES = edgeBundle(newVS, newVS)
     val link = edgeBundle(inputs.vs.entity, newVS)
   }
+  def fromJson(j: JsValue) = EdgeGraph()
 }
 import EdgeGraph._
 case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
