@@ -7,15 +7,16 @@ object ForceLayout3D {
   case class Vertex(id: Int, mass: Double, var pos: FE3DPosition = FE3DPosition(0.0, 0.0, 0.0))
 
   final val Gravity = 0.01
-  final val IdealDistance = 1.0
-  final val Fraction = 0.001
+  final val IdealDistance = 10.0
+  final val Fraction = 0.01
+  final val Iterations = 50
 
   def apply(edges: Seq[FEEdge]): Seq[FEEdge] = {
     val edgeWeights = edges.map(e => e.a -> e.size) ++ edges.map(e => e.b -> e.size)
     val vertices = edgeWeights.groupBy(_._1).mapValues(_.unzip._2.sum).map {
       case (vid, degree) => vid -> Vertex(vid, degree)
     }.toMap
-    for (_ <- 0 to 50) {
+    for (_ <- 0 to Iterations) {
       for (e <- edges) {
         val a = vertices(e.a)
         val b = vertices(e.b)
@@ -28,7 +29,7 @@ object ForceLayout3D {
         val d = b.pos - a.pos
         val l = d.len
         val repulsion =
-          if (l < 0.1 * IdealDistance) randomVector(a.id + b.id)
+          if (l < 0.01 * IdealDistance) randomVector(a.id + b.id)
           else d * Fraction * IdealDistance * IdealDistance / l / l
         a.pos -= repulsion / a.mass
         b.pos += repulsion / b.mass
