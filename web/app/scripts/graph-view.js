@@ -127,8 +127,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
     for (i = 0; i < this.renderers.length; ++i) {
+      this.renderers[i].scope().$destroy();
       this.renderers[i].remove();
     }
+    this.renderers = [];
   };
 
   GraphView.prototype.loading = function() {
