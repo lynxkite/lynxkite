@@ -342,7 +342,6 @@ angular.module('biggraph').directive('graphView', function(util) {
                          Math.random() * 400 - 200,
                          radius,
                          label,
-                         vertex.id,
                          color,
                          icon,
                          image);
@@ -841,7 +840,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Vertex(data, x, y, r, text, subscript, color, icon, image) {
+  function Vertex(data, x, y, r, text, color, icon, image) {
     this.data = data;
     this.x = x;
     this.y = y;
@@ -866,11 +865,10 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
     this.text = text;
     this.label = svg.create('text').text(text || '');
-    this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript);
     this.labelBackground = svg.create(
         'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
     this.dom = svg.group(
-        [this.icon, this.touch, this.labelBackground, this.label, this.subscript],
+        [this.icon, this.touch, this.labelBackground, this.label],
         {'class': 'vertex' });
     this.moveListeners = [];
     this.hoverListeners = [];
@@ -928,7 +926,6 @@ angular.module('biggraph').directive('graphView', function(util) {
     var backgroundWidth = this.labelBackground.attr('width');
     var backgroundHeight = this.labelBackground.attr('height');
     this.labelBackground.attr({ x: sx - backgroundWidth / 2, y: sy - backgroundHeight / 2 });
-    this.subscript.attr({ x: sx, y: sy - 12 });
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }
