@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Vertex ID is no longer displayed in the visualization by default.
+   It is still accessible by setting the ID attribute as the label.
  - User management page at `/#/users`.
  - Added a check for Apache Spark version at startup. Must be 1.2.0.
  - Changed project data format to JSON. Projects from earlier versions are lost.
