@@ -51,5 +51,19 @@ describe('the graph view', function() {
         }
       });
     });
+
+    it('can open and close the context menu', function() {
+      browser.get('/#/project/Project_Strawberry');
+      var sampledViewButton = element(by.css('.btn .glyphicon-eye-open'));
+      sampledViewButton.click();
+      var menu = element(by.css('div.context-menu'));
+      expect(menu.isDisplayed()).toBe(false);
+      var circle = element.all(by.css('g.vertex > circle')).first();
+      circle.click();
+      expect(menu.isDisplayed()).toBe(true);
+      var background = element.all(by.css('svg.graph-view')).first();
+      background.click();
+      expect(menu.isDisplayed()).toBe(false);
+    });
   });
 });
