@@ -186,6 +186,7 @@ object ProductionJsonServer extends JsonServer {
       val stream = new java.security.DigestOutputStream(tmpFile.create(), md)
       try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
       finally stream.close()
+      upload.ref.clean() // Delete temporary file.
       val digest = md.digest().map("%02x".format(_)).mkString
       val finalName = s"$baseName.$digest"
       val uploadsDir = dataRepo / "uploads"
