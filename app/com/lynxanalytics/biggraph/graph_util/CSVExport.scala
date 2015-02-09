@@ -85,9 +85,17 @@ object CSVExport {
   private def toCSVStringOperation[T: TypeTag]: T => String = {
     if (typeOf[T] =:= typeOf[String]) {
       stringValue => quoteString(stringValue.asInstanceOf[String])
+    } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
+      val insideTT = TypeTagUtil.typeArgs(typeTag[T]).head
+      vectorQuoter(insideTT).asInstanceOf[T => String]
     } else {
       objectValue => objectValue.toString
     }
+  }
+
+  private def vectorQuoter[T: TypeTag]: Vector[T] => String = {
+    val insideFunc = toCSVStringOperation[T]
+    vector: Vector[T] => vector.map(insideFunc).mkString(";")
   }
 
   private def quoteString(s: String) = "\"" + StringEscapeUtils.escapeJava(s) + "\""
