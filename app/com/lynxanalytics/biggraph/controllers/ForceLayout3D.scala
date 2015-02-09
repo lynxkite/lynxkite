@@ -6,7 +6,6 @@ import scala.collection.mutable
 object ForceLayout3D {
   case class Vertex(id: Int, mass: Double, var pos: FE3DPosition = FE3DPosition(0.0, 0.0, 0.0))
 
-  final val Gravity = 0.01
   final val IdealDistance = 10.0
   final val Fraction = 0.01
   final val Iterations = 50
