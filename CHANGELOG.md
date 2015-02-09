@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Export `Vector` type attributes as a semicolon-separated list.
  - User management page at `/#/users`.
  - Added a check for Apache Spark version at startup. Must be 1.2.0.
  - Changed project data format to JSON. Projects from earlier versions are lost.
