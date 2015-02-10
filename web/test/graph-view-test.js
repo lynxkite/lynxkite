@@ -43,7 +43,6 @@ describe('the graph view', function() {
       positions.then(function(original) {
         for (var n = 0; n < 2; ++n) {  // Turn color on and then off.
           dropDownToggle.click();
-          //browser.pause();
           asColor.click();
           var positions = element.all(by.css('.vertex.sampled circle')).map(getPos);
           expect(positions.then(getLength)).toBe(6);  // Same graph.
