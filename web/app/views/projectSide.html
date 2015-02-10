@@ -112,6 +112,23 @@
         ng-if="side.state.graphMode === 'sampled'">
         <table>
           <tr>
+            <td>Display:</td>
+            <td>
+              <div class="btn-group">
+                <label class="btn btn-default"
+                  ng-model="side.state.display"
+                  btn-radio="'svg'">
+                  2D
+                </label>
+                <label class="btn btn-default"
+                  ng-model="side.state.display"
+                  btn-radio="'3d'">
+                  3D
+                </label>
+              </div>
+            </td>
+          </tr>
+          <tr ng-if="side.state.display === 'svg'">
             <td>Layout animation:</td>
             <td>
               <div class="btn-group">
@@ -128,7 +145,7 @@
               </div>
             </td>
           </tr>
-          <tr>
+          <tr ng-if="side.state.display === 'svg'">
             <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
               tooltip-append-to-body="true" tooltip-placement="right"
               tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">

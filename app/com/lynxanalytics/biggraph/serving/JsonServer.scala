@@ -136,6 +136,7 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rBundleSequenceStep = json.Json.reads[BundleSequenceStep]
   implicit val rEdgeDiagramSpec = json.Json.reads[EdgeDiagramSpec]
+  implicit val wFE3DPosition = json.Json.writes[FE3DPosition]
   implicit val wFEEdge = json.Json.writes[FEEdge]
   implicit val wEdgeDiagramResponse = json.Json.writes[EdgeDiagramResponse]
 

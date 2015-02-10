@@ -1,12 +1,12 @@
 'use strict';
 
-angular.module('biggraph').directive('graphView', function(util) {
+angular.module('biggraph').directive('graphView', function(util, $compile) {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
   var directive = {
       template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
-      scope: { graph: '=', left: '=', right: '=', menu: '=' },
+      scope: { graph: '=', menu: '=' },
       replace: true,
       link: function(scope, element) {
         scope.gv = new GraphView(scope, element);
@@ -114,6 +114,7 @@ angular.module('biggraph').directive('graphView', function(util) {
         that.svgMouseWheelListeners[i](e);
       }
     });
+    this.renderers = [];  // 3D renderers.
   }
 
   GraphView.prototype.clear = function() {
@@ -125,6 +126,11 @@ angular.module('biggraph').directive('graphView', function(util) {
     this.unregistration = [];
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
+    for (i = 0; i < this.renderers.length; ++i) {
+      this.renderers[i].scope().$destroy();
+      this.renderers[i].remove();
+    }
+    this.renderers = [];
   };
 
   GraphView.prototype.loading = function() {
@@ -167,6 +173,8 @@ angular.module('biggraph').directive('graphView', function(util) {
         var yOff = this.svg.height() / 2;
         var dataVs = data.vertexSets[vsIndex];
         vsIndex += 1;
+        vsIndices.push(i);
+        if (sides[i].display === '3d') { continue; }
         var offsetter;
         if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
           offsetter = oldVertices[i].offsetter;
@@ -180,7 +188,6 @@ angular.module('biggraph').directive('graphView', function(util) {
           vs = this.addBucketedVertices(dataVs, offsetter, sides[i]);
         }
         vs.offsetter = offsetter;
-        vsIndices.push(i);
         this.vertices[i] = vs;
         this.sideMouseBindings(offsetter, xMin, xMax);
       }
@@ -190,6 +197,20 @@ angular.module('biggraph').directive('graphView', function(util) {
       // Avoid an error with the Grunt test data, which has edges going to the other side
       // even if we only have one side.
       if (e.srcIdx >= vsIndex || e.dstIdx >= vsIndex) { continue; }
+      if (e.srcIdx === e.dstIdx) {
+        var side = sides[vsIndices[e.srcIdx]];
+        if (side.display === '3d') {
+          var scope = this.scope.$new();
+          scope.edges = e.edges;
+          scope.layout3D = e.layout3D;
+          scope.width = 2 * halfColumnWidth;
+          scope.left = vsIndices[e.srcIdx] * 2 * halfColumnWidth;
+          var r = $compile('<renderer></renderer>')(scope);
+          this.svg.after(r);
+          this.renderers.push(r);
+          continue;
+        }
+      }
       var src = this.vertices[vsIndices[e.srcIdx]];
       var dst = this.vertices[vsIndices[e.dstIdx]];
       var edges = this.addEdges(e.edges, src, dst);
@@ -718,10 +739,10 @@ angular.module('biggraph').directive('graphView', function(util) {
     var i, x, y, l, side;
     var labelSpace = 0.05;
     y = 0.5 + labelSpace;
-    
+
     var xb = common.minmax(data.vertices.map(function(n) { return n.x; }));
     var yb = common.minmax(data.vertices.map(function(n) { return n.y; }));
-    
+
     var xNumBuckets = xb.span + 1;
     var yNumBuckets = yb.span + 1;
 
@@ -773,7 +794,7 @@ angular.module('biggraph').directive('graphView', function(util) {
       yLabels.push(l);
       this.vertexGroup.append(l.dom);
     }
-     
+
     var sizes = data.vertices.map(function(n) { return n.size; });
     var vertexScale = 1 / common.minmax(sizes).max;
     for (i = 0; i < data.vertices.length; ++i) {
