@@ -136,14 +136,8 @@ selected-visualization {
   margin-left: 10px;
   padding: 2px 10px;
   box-shadow: inset 1px 1px 1px #B0B0B0;
+  vertical-align: middle;
 }
 selected-visualization .visualization-name {
   color: #333;
-}
-.visualization-remover {
-  cursor: pointer;
-  font-family: Arial;
-  display: inline-block;
-  font-size: 1.1em;
-  line-height: 1.49em;
 }
