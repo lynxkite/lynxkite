@@ -95,7 +95,9 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           h.x *= w; h.y *= w; h.z *= w;
           v.x *= w; v.y *= w; v.z *= w;
           var pp = i * 8 * 3;
-          // Create three copies of each vertex, so that per-vertex normals can be calculated.
+          // Normals are stored per-vertex. Because each vertex is used in 3 faces, they would need
+          // to have 3 different normals. So we create 3 copies of each vertex, and use different
+          // copies for each face.
           for (var d = 0; d < 3; ++d) {
             var r = pp + 8 * d;
             addPoint(ps, r + 0, { x: a.x + h.x, y: a.y + h.y, z: a.z + h.z });
@@ -107,6 +109,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
             addPoint(ps, r + 6, { x: b.x + v.x, y: b.y + v.y, z: b.z + v.z });
             addPoint(ps, r + 7, { x: b.x - v.x, y: b.y - v.y, z: b.z - v.z });
           }
+          // r1, r2, r3 are the 3 copies of the vertices. Each index is used once from each copy.
           var ii = i * 6, r1 = pp, r2 = pp + 8, r3 = pp + 16;
           addQuad(is, ii + 0, r1 + 0, r1 + 3, r1 + 1, r1 + 2);
           addQuad(is, ii + 1, r2 + 0, r2 + 2, r1 + 6, r1 + 4);
