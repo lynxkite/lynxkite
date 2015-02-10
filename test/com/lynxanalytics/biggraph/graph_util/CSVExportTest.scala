@@ -24,8 +24,10 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |""".stripMargin)
     assert(CSVExport.exportEdgeAttributes(
       sampleOut.edges,
-      Map("comment" -> sampleOut.comment)).toString ==
-      """|"srcVertexId","dstVertexId","comment"
+      Map("comment" -> sampleOut.comment),
+      srcColumnName = "who",
+      dstColumnName = "whom").toString ==
+      """|"who","whom","comment"
          |0,1,"Adam loves Eve"
          |1,0,"Eve loves Adam"
          |2,0,"Bob envies Adam"
