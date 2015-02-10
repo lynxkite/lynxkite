@@ -81,7 +81,6 @@ angular
           }
         } else {
           req.$error = util.responseToErrorMessage(failure);
-          req.$popupError = function() { util.ajaxError(failure); };
         }
       });
       // Helpful for debugging/error reporting.
