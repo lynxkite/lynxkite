@@ -4,16 +4,17 @@ import scala.collection.mutable
 
 // Generates 3D positions for FEEdge endpoints.
 object ForceLayout3D {
-  case class Vertex(id: Int, mass: Double, var pos: FE3DPosition = FE3DPosition(0.0, 0.0, 0.0))
+  case class Vertex(id: Int, mass: Double, var pos: FE3DPosition)
 
   final val IdealDistance = 10.0
-  final val Fraction = 0.01
+  final val Fraction = 0.1
   final val Iterations = 50
+  final val Gravity = 0.1
 
   def apply(edges: Seq[FEEdge]): Map[String, FE3DPosition] = {
     val edgeWeights = edges.map(e => e.a -> e.size) ++ edges.map(e => e.b -> e.size)
     val vertices = edgeWeights.groupBy(_._1).mapValues(_.unzip._2.sum).map {
-      case (vid, degree) => vid -> Vertex(vid, degree)
+      case (vid, degree) => vid -> Vertex(vid, degree, randomVector(vid))
     }.toMap
     for (_ <- 0 to Iterations) {
       for (e <- edges) {
@@ -32,6 +33,10 @@ object ForceLayout3D {
           else d * Fraction * IdealDistance * IdealDistance / l / l
         a.pos -= repulsion / a.mass
         b.pos += repulsion / b.mass
+      }
+      for (a <- vertices.values) {
+        val l = a.pos.len
+        a.pos -= a.pos * Gravity / l
       }
     }
     vertices.map { case (k, v) => k.toString -> v.pos }
