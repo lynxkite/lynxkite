@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Adds label size as a new visualization option.
+ - UI for selecting vertex attribute visualizations has changed as a preparation for adding more
+   visualization options.
  - Export `Vector` type attributes as a semicolon-separated list.
  - Vertex ID is no longer displayed in the visualization by default.
    It is still accessible by setting the ID attribute as the label.
