@@ -5,7 +5,7 @@
 </div>
 <div class="row">
   <div class="col-xs-12 text-center project-list">
-    <div ng-click="expandNewProject = true; newProject.privacy = 'private'">
+    <div class="entry" ng-click="expandNewProject = true; newProject.privacy = 'private'">
       <span class="lead" ng-hide="expandNewProject">A new project</span>
       <form ng-show="expandNewProject" class="form-inline" role="form">
         <div class="form-group"><input id="new-project-name" placeholder="Project name" ng-model="newProject.name" class="form-control"></div>
@@ -34,7 +34,7 @@
     </p>
 
     <div ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
-      href ng-click="setProject(project)" ng-class="{ error: project.error }">
+      class="entry" href ng-click="setProject(project)" ng-class="{ error: project.error }">
       <h1><item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu></h1>
       <span ng-if="project.error">
         {{project.error}}
