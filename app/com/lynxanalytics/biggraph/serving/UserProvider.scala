@@ -115,9 +115,7 @@ object UserProvider extends mvc.Controller {
 
   private def assertPassword(username: String, password: String): Unit = synchronized {
     assert(passwords.contains(username), "Invalid username or password.")
-    val h =
-      if (passwords(username).nonEmpty) passwords(username)
-      else hash("the lynx is a big cat")
+    val h = passwords(username)
     assert(BCrypt.checkpw(password, h), "Invalid username or password.")
   }
 
