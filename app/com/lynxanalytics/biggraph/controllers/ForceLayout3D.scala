@@ -10,7 +10,7 @@ object ForceLayout3D {
   final val Fraction = 0.01
   final val Iterations = 50
 
-  def apply(edges: Seq[FEEdge]): Seq[FEEdge] = {
+  def apply(edges: Seq[FEEdge]): Map[String, FE3DPosition] = {
     val edgeWeights = edges.map(e => e.a -> e.size) ++ edges.map(e => e.b -> e.size)
     val vertices = edgeWeights.groupBy(_._1).mapValues(_.unzip._2.sum).map {
       case (vid, degree) => vid -> Vertex(vid, degree)
@@ -34,9 +34,7 @@ object ForceLayout3D {
         b.pos += repulsion / b.mass
       }
     }
-    edges.map {
-      e => e.copy(aPos = Some(vertices(e.a).pos), bPos = Some(vertices(e.b).pos))
-    }
+    vertices.map { case (k, v) => k.toString -> v.pos }
   }
 
   implicit class VectorOps(v: FE3DPosition) {

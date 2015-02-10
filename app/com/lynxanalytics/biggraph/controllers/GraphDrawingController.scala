@@ -79,10 +79,7 @@ case class FEEdge(
   a: Int,
   // idx of destination vertex in the vertices Seq in the corresponding VertexDiagramResponse.
   b: Int,
-  size: Double,
-  // The 3D layout requested with "layout3D".
-  aPos: Option[FE3DPosition] = None,
-  bPos: Option[FE3DPosition] = None)
+  size: Double)
 
 case class FE3DPosition(x: Double, y: Double, z: Double)
 
@@ -93,9 +90,11 @@ case class EdgeDiagramResponse(
   // Copied from the request.
   srcIdx: Int,
   dstIdx: Int,
-  layout3D: Boolean,
 
-  edges: Seq[FEEdge])
+  edges: Seq[FEEdge],
+
+  // The vertex coordinates, if "layout3D" was true in the request.
+  layout3D: Map[String, FE3DPosition])
 
 case class FEGraphRequest(
   vertexSets: Seq[VertexDiagramSpec],
@@ -451,8 +450,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       request.dstDiagramId,
       request.srcIdx,
       request.dstIdx,
-      request.layout3D,
-      if (request.layout3D) ForceLayout3D(feEdges) else feEdges)
+      feEdges,
+      if (request.layout3D) ForceLayout3D(feEdges) else Map())
   }
 
   def getComplexView(user: User, request: FEGraphRequest): FEGraphResponse = {

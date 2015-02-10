@@ -202,9 +202,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
         if (side.display === '3d') {
           var scope = this.scope.$new();
           scope.edges = e.edges;
+          scope.layout3D = e.layout3D;
           scope.width = 2 * halfColumnWidth;
           scope.left = vsIndices[e.srcIdx] * 2 * halfColumnWidth;
-          var r = $compile('<renderer edges="edges"></renderer>')(scope);
+          var r = $compile('<renderer></renderer>')(scope);
           this.svg.after(r);
           this.renderers.push(r);
           continue;
