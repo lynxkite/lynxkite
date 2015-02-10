@@ -94,6 +94,7 @@ angular.module('biggraph')
       vd.attrs = {};
       vd.attrs.size = this.resolveVertexAttribute(this.state.attributeTitles.size);
       vd.attrs.label = this.resolveVertexAttribute(this.state.attributeTitles.label);
+      vd.attrs.labelSize = this.resolveVertexAttribute(this.state.attributeTitles['label size']);
       vd.attrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
       vd.attrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
       vd.attrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
@@ -282,6 +283,14 @@ angular.module('biggraph')
           this.state.attributeTitles.icon = undefined;
         }
       }
+    };
+
+    Side.prototype.filterApplied = function(settings, value) {
+      var that = this;
+      return settings.filter(
+        function(setting) {
+          return that.state.attributeTitles[setting] === value;
+        });
     };
 
     Side.prototype.close = function() {

@@ -8,6 +8,12 @@ Please add changes at the top. When releasing a version add a new header for tha
 
  - Select all vertices (up to 10,000) as center by setting "*" as the center.
  - 3D graph visualization in concrete vertices view.
+
+### 1.0.0
+
+ - Adds label size as a new visualization option.
+ - UI for selecting vertex attribute visualizations has changed as a preparation for adding more
+   visualization options.
  - Export `Vector` type attributes as a semicolon-separated list.
  - Vertex ID is no longer displayed in the visualization by default.
    It is still accessible by setting the ID attribute as the label.

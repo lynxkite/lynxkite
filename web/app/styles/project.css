@@ -113,3 +113,31 @@ input.save-as {
 .project-settings {
   background-color: whitesmoke;
 }
+
+.sampled-visualizations {
+  position: relative;
+}
+.visualizations::before {
+  content: "Visualized as";
+}
+.visualizations:empty::before {
+  content: "";
+}
+.visualizations:not(:empty) ~ .dropdown-toggle .glyphicon::before {
+  color: red;
+}
+selected-visualization {
+  min-width: 60px;
+  display: inline-block;
+  text-align: center;
+  background: lightgrey;
+  border-radius: 3px;
+  border: 1px solid darkgrey;
+  margin-left: 10px;
+  padding: 2px 10px;
+  box-shadow: inset 1px 1px 1px #B0B0B0;
+  vertical-align: middle;
+}
+selected-visualization .visualization-name {
+  color: #333;
+}
