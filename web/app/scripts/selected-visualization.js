@@ -10,8 +10,5 @@ angular.module('biggraph').directive('selectedVisualization', function() {
     },
     replace: true,
     templateUrl: 'selected-visualization.html',
-    link: function(scope) {
-      console.log(scope);
-    },
   };
 });
