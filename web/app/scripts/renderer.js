@@ -45,7 +45,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           three.controls.autoRotateSpeed = 2.0;
 
           three.scene = new THREE.Scene();
-          three.camera.position.set(10, 5, 12);
+          three.camera.position.set(10, 5, 120);
 
           var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
           hemiLight.position.set(0, 500, 0);
