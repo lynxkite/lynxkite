@@ -8,7 +8,6 @@ angular.module('biggraph').directive('selectedVisualization', function() {
       visualization: '=',
       title: '=',
     },
-    replace: true,
     templateUrl: 'selected-visualization.html',
   };
 });
