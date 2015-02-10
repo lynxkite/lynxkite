@@ -72,13 +72,6 @@ svg .vertex text {
   fill: white;
 }
 
-svg .vertex .subscript {
-  text-anchor: middle;
-  font-size: 9px;
-  opacity: 0.5;
-  fill: white;
-}
-
 svg .vertex .label-background {
   fill: transparent;
   pointer-events: none;

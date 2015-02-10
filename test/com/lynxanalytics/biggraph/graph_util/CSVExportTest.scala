@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations.{ ExampleGraph, IdAsAttribute }
+import com.lynxanalytics.biggraph.graph_operations._
 
 class CSVExportTest extends FunSuite with TestGraphOp {
   test("We can export attributes") {
@@ -76,6 +76,30 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |========
          |"age","name","vertexId"
          |********
+         |""".stripMargin)
+  }
+
+  test("Export Vector") {
+    val g = ExampleGraph()().result
+    val neighbors = {
+      val op = AggregateByEdgeBundle(Aggregator.AsVector[String])
+      op(op.connection, g.edges)(op.attr, g.name).result.attr
+    }
+    val neighborAges = {
+      val op = AggregateByEdgeBundle(Aggregator.AsVector[Double])
+      op(op.connection, g.edges)(op.attr, g.age).result.attr
+    }
+    assert(CSVExport.exportVertexAttributes(
+      g.vertices,
+      Map(
+        "name" -> g.name,
+        "neighbors" -> neighbors,
+        "neighborAges" -> neighborAges)).toString ==
+      """|"name","neighborAges","neighbors"
+         |"Adam",18.2;50.3,"Eve";"Bob"
+         |"Eve",20.3;50.3,"Adam";"Bob"
+         |"Bob",,
+         |"Isolated Joe",,
          |""".stripMargin)
   }
 }
