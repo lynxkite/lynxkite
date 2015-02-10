@@ -39,6 +39,7 @@
 
 .graph-sidebar input[type=range] {
   width: 70px;
+  display: inline-block;
 }
 
 .graph-sidebar .filters {
