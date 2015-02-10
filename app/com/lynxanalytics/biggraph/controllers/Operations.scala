@@ -2031,12 +2031,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val path = getExportFilename(params("path"))
+        val name = project.asSegmentation.name
         params("format") match {
           case "CSV" =>
-            val csv = graph_util.CSVExport.exportEdgeAttributes(seg.belongsTo, Map())
+            val csv = graph_util.CSVExport.exportEdgeAttributes(
+              seg.belongsTo, attributes = Map(),
+              srcColumnName = "vertex_id", dstColumnName = s"${name}_id")
             csv.saveToDir(path)
           case "SQL dump" =>
-            val export = graph_util.SQLExport(project.projectName, seg.belongsTo, Map[String, Attribute[_]]())
+            val export = graph_util.SQLExport(
+              name, seg.belongsTo, attributes = Map[String, Attribute[_]](),
+              srcColumnName = "vertex_id", dstColumnName = s"${name}_id")
             export.saveAs(path)
         }
         project.scalars(params("link")) =

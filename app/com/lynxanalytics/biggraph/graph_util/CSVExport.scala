@@ -47,7 +47,9 @@ object CSVExport {
 
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
-    attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager): CSVData = {
+    attributes: Map[String, Attribute[_]],
+    srcColumnName: String = "srcVertexId",
+    dstColumnName: String = "dstVertexId")(implicit dataManager: DataManager): CSVData = {
     for ((name, attr) <- attributes) {
       assert(attr.vertexSet == edgeBundle.asVertexSet,
         s"Incorrect vertex set for attribute $name.")
@@ -57,7 +59,7 @@ object CSVExport {
     }
     val (names, attrs) = attributes.toList.sortBy(_._1).unzip
     CSVData(
-      ("srcVertexId" :: "dstVertexId" :: names).map(quoteString),
+      (srcColumnName :: dstColumnName :: names).map(quoteString),
       attachAttributeData(indexedEdges, attrs).values)
   }
 
