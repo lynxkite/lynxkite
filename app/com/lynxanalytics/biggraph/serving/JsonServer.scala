@@ -177,27 +177,29 @@ object ProductionJsonServer extends JsonServer {
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
       val upload = request.body.file("file").get
-      log.info(s"upload: $user ${upload.filename}")
-      val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
-      val baseName = upload.filename.replace(" ", "_")
-      val tmpName = s"$baseName.$Timestamp"
-      val tmpFile = dataRepo / "tmp" / tmpName
-      val md = java.security.MessageDigest.getInstance("MD5");
-      val stream = new java.security.DigestOutputStream(tmpFile.create(), md)
-      try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
-      finally stream.close()
-      val digest = md.digest().map("%02x".format(_)).mkString
-      val finalName = s"$baseName.$digest"
-      val uploadsDir = dataRepo / "uploads"
-      uploadsDir.mkdirs() // Create the directory if it does not already exist.
-      val finalFile = uploadsDir / finalName
-      if (finalFile.exists) {
-        log.info(s"The uploaded file ($tmpFile) already exists (as $finalFile).")
-      } else {
-        val success = tmpFile.renameTo(finalFile)
-        assert(success, s"Failed to rename $tmpFile to $finalFile.")
-      }
-      Ok(finalFile.fullString)
+      try {
+        log.info(s"upload: $user ${upload.filename}")
+        val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
+        val baseName = upload.filename.replace(" ", "_")
+        val tmpName = s"$baseName.$Timestamp"
+        val tmpFile = dataRepo / "tmp" / tmpName
+        val md = java.security.MessageDigest.getInstance("MD5");
+        val stream = new java.security.DigestOutputStream(tmpFile.create(), md)
+        try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
+        finally stream.close()
+        val digest = md.digest().map("%02x".format(_)).mkString
+        val finalName = s"$baseName.$digest"
+        val uploadsDir = dataRepo / "uploads"
+        uploadsDir.mkdirs() // Create the directory if it does not already exist.
+        val finalFile = uploadsDir / finalName
+        if (finalFile.exists) {
+          log.info(s"The uploaded file ($tmpFile) already exists (as $finalFile).")
+        } else {
+          val success = tmpFile.renameTo(finalFile)
+          assert(success, s"Failed to rename $tmpFile to $finalFile.")
+        }
+        Ok(finalFile.fullString)
+      } finally upload.ref.clean() // Delete temporary file.
     }
   }
 
