@@ -59,7 +59,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
         }
 
         // Build the scene from the given edges.
-        function plot(edges) {
+        function plot(edges, layout3D) {
           clear();
           // Geometry generation. 8 points and 12 triangles are generated for each edge.
           var n = edges.length;
@@ -69,8 +69,8 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           var is = new Uint32Array(n * 12 * 3);
           for (var i = 0; i < n; ++i) {
             if (edges[i].a === edges[i].b) { continue; }  // TODO: Display loop edges?
-            var src = edges[i].aPos;
-            var dst = edges[i].bPos;
+            var src = layout3D[edges[i].a];
+            var dst = layout3D[edges[i].b];
             // The more edges we have, the thinner we make them.
             var w = Math.min(0.4, edges[i].size * 100 / n);
             addRod(ps, is, i, src, dst, w);
@@ -144,7 +144,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           is[6 * i + 5] = p4;
         }
 
-        plot(scope.edges);
+        plot(scope.edges, scope.layout3D);
       });
     },
   };
