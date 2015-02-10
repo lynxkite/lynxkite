@@ -2206,7 +2206,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def reverse(eb: EdgeBundle): EdgeBundle = {
-    graph_operations.ReverseEdges.run(eb)
+    val op = graph_operations.ReverseEdges()
+    op(op.esAB, eb).result.esBA
   }
 
   def removeNonSymmetric(eb: EdgeBundle): EdgeBundle = {

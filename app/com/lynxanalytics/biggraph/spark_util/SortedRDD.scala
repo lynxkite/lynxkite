@@ -190,7 +190,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
         new Iterator[(K, V)] {
           def hasNext = bi.hasNext
           def next() = {
-            val n: (K, V) = bi.next
+            val n = bi.next
             while (bi.hasNext && bi.head == n) bi.next
             n
           }
@@ -219,10 +219,6 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     val createCombiner = (v: V) => ArrayBuffer(v)
     val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
     combineByKey(createCombiner, mergeValue)
-  }
-
-  def reduceByKey(func: (V, V) => V): SortedRDD[K, V] = {
-    combineByKey(identity, func)
   }
 
   def takeFirstNValuesOrSo(n: Int): SortedRDD[K, V] = {

@@ -18,18 +18,6 @@ object OutDegree extends OpFromJson {
     val outDegree = vertexAttribute[Double](inputs.src.entity)
   }
   def fromJson(j: JsValue) = OutDegree()
-
-  def outDegree(es: EdgeBundle)(implicit manager: MetaGraphManager) = {
-    import Scripting._
-    val op = OutDegree()
-    op(op.es, es).result.outDegree
-  }
-  def inDegree(es: EdgeBundle)(implicit manager: MetaGraphManager) = {
-    outDegree(ReverseEdges.run(es))
-  }
-  def allDegree(es: EdgeBundle)(implicit manager: MetaGraphManager) = {
-    DeriveJS.add(inDegree(es), outDegree(es))
-  }
 }
 import OutDegree._
 case class OutDegree() extends TypedMetaGraphOp[Input, Output] {
