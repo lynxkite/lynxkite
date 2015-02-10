@@ -25,7 +25,7 @@
 </form>
 <span ng-if="side.state.graphMode === 'sampled'" class="de-emph sampled-visualizations">
   <span class="visualizations"><selected-visualization
-    ng-repeat="visualization in side.filterApplied(['size', 'label', 'color', 'icon', 'image', 'slider'], attr.title)"
+    ng-repeat="visualization in side.filterApplied(['size', 'label', 'label size', 'color', 'icon', 'image', 'slider'], attr.title)"
     side="side"
     title="attr.title"
     visualization="visualization"></selected-visualization></span>
@@ -39,6 +39,9 @@
     </li>
     <li ng-if="attr.typeName === 'Double'">
       <a ng-click="side.toggleAttributeTitle('size', attr.title)" href>Visualize as Size</a>
+    </li>
+    <li ng-if="attr.typeName === 'Double'">
+      <a ng-click="side.toggleAttributeTitle('label size', attr.title)" href>Visualize as Label Size</a>
     </li>
     <li ng-if="attr.typeName === 'Double' || attr.typeName === 'String'">
       <a ng-click="side.toggleAttributeTitle('color', attr.title)" href>Visualize as Color</a>

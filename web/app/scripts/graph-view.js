@@ -292,6 +292,13 @@ angular.module('biggraph').directive('graphView', function(util) {
       sizeMax = vertexSizeBounds.max;
     }
 
+    var labelSizeAttr = (side.attrs.labelSize) ? side.attrs.labelSize.id : undefined;
+    var labelSizeMax = 1;
+    if (labelSizeAttr) {
+      var labelSizeBounds = common.minmax(mapByAttr(data.vertices, labelSizeAttr, 'double'));
+      labelSizeMax = labelSizeBounds.max;
+    }
+
     var colorAttr = (side.attrs.color) ? side.attrs.color.id : undefined;
     var colorMap;
     if (colorAttr) {
@@ -323,6 +330,9 @@ angular.module('biggraph').directive('graphView', function(util) {
       var size = 0.5;
       if (sizeAttr) { size = vertex.attrs[sizeAttr].double / sizeMax; }
 
+      var labelSize = 0.5;
+      if (labelSizeAttr) { labelSize = vertex.attrs[labelSizeAttr].double / labelSizeMax; }
+
       var color = UNCOLORED;
       if (colorAttr && vertex.attrs[colorAttr].defined) {
         // in case of doubles the keys are strings converted from the DynamicValue's double field
@@ -342,6 +352,7 @@ angular.module('biggraph').directive('graphView', function(util) {
                          Math.random() * 400 - 200,
                          radius,
                          label,
+                         labelSize,
                          vertex.id,
                          color,
                          icon,
@@ -841,7 +852,7 @@ angular.module('biggraph').directive('graphView', function(util) {
     }
   };
 
-  function Vertex(data, x, y, r, text, subscript, color, icon, image) {
+  function Vertex(data, x, y, r, text, textSize, subscript, color, icon, image) {
     this.data = data;
     this.x = x;
     this.y = y;
@@ -865,7 +876,8 @@ angular.module('biggraph').directive('graphView', function(util) {
       this.touch = this.icon;
     }
     this.text = text;
-    this.label = svg.create('text').text(text || '');
+    var fontSize = 30 * textSize;
+    this.label = svg.create('text', { 'font-size': fontSize + 'px' }).text(text || '');
     this.subscript = svg.create('text', { 'class': 'subscript' }).text(subscript);
     this.labelBackground = svg.create(
         'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
