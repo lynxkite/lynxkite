@@ -50,7 +50,8 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               dstIdx: i,
               edgeBundleId: viewData.edgeBundle.id,
               filters: viewData.filters.edge,
-              edgeWeightId: (viewData.edgeWidth || { id: '' }).id
+              edgeWeightId: (viewData.edgeWidth || { id: '' }).id,
+              layout3D: viewData.display === '3d',
             });
           }
           // we sort attributes by UUID to avoid recomputing the same combination
@@ -83,28 +84,34 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             attrs: attrs,
           });
         }
-        if (sides.length === 2 && scope.leftToRightBundle !== undefined) {
-          q.edgeBundles.push({
-            srcDiagramId: 'idx[0]',
-            dstDiagramId: 'idx[1]',
-            srcIdx: 0,
-            dstIdx: 1,
-            edgeBundleId: scope.leftToRightBundle,
-            filters: [],
-            edgeWeightId: '',
-          });
+
+        if (sides.length === 2 && sides[0].display === 'svg' && sides[1].display === 'svg') {
+          if (scope.leftToRightBundle !== undefined) {
+            q.edgeBundles.push({
+              srcDiagramId: 'idx[0]',
+              dstDiagramId: 'idx[1]',
+              srcIdx: 0,
+              dstIdx: 1,
+              edgeBundleId: scope.leftToRightBundle,
+              filters: [],
+              edgeWeightId: '',
+              layout3D: false,
+            });
+          }
+          if (scope.rightToLeftBundle !== undefined) {
+            q.edgeBundles.push({
+              srcDiagramId: 'idx[1]',
+              dstDiagramId: 'idx[0]',
+              srcIdx: 1,
+              dstIdx: 0,
+              edgeBundleId: scope.rightToLeftBundle,
+              filters: [],
+              edgeWeightId: '',
+              layout3D: false,
+            });
+          }
         }
-        if (sides.length === 2 && scope.rightToLeftBundle !== undefined) {
-          q.edgeBundles.push({
-            srcDiagramId: 'idx[1]',
-            dstDiagramId: 'idx[0]',
-            srcIdx: 1,
-            dstIdx: 0,
-            edgeBundleId: scope.rightToLeftBundle,
-            filters: [],
-            edgeWeightId: '',
-          });
-        }
+
         if (!angular.equals(scope.request, q)) {
           scope.request = q;
           scope.graph.view = util.get('/ajax/complexView', scope.request);

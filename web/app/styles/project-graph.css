@@ -49,3 +49,8 @@
 .graph-sidebar button {
   margin-top: 5px;
 }
+
+renderer {
+  position: absolute;
+  height: 100%;
+}

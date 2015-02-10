@@ -44,6 +44,7 @@ angular.module('biggraph')
         graphMode: undefined,
         bucketCount: 4,
         sampleRadius: 1,
+        display: 'svg',
         animate: {
           enabled: false,
           labelAttraction: 0,
@@ -81,6 +82,7 @@ angular.module('biggraph')
         vd.edgeBundle = undefined;
       }
       vd.graphMode = this.state.graphMode;
+      vd.display = this.state.display;
 
       vd.bucketCount = this.state.bucketCount;
 
