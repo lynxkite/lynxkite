@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.0.0
+
  - Adds label size as a new visualization option.
  - UI for selecting vertex attribute visualizations has changed as a preparation for adding more
    visualization options.
