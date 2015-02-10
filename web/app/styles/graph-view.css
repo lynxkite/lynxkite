@@ -69,7 +69,6 @@ svg .vertex .touch {
 svg .vertex text {
   text-anchor: middle;
   font-family: 'Arial Black', sans-serif;
-  font-size: 15px;
   fill: white;
 }
 
