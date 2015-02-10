@@ -282,6 +282,14 @@ angular.module('biggraph')
       }
     };
 
+    Side.prototype.filterApplied = function(settings, value) {
+      var that = this;
+      return settings.filter(
+        function(setting) {
+          return that.state.attributeTitles[setting] === value;
+        });
+    };
+
     Side.prototype.close = function() {
       this.state.projectName = undefined;
       for (var i = 0; i < $scope.sides.length; ++i) {

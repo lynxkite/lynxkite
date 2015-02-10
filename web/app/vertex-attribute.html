@@ -16,48 +16,6 @@
     </button>
   </div>
 </span>
-<span ng-if="side.state.graphMode === 'sampled'" class="de-emph">
-  Graph as
-  <div class="btn-group">
-    <button class="btn btn-default"
-            ng-if="attr.typeName === 'Double'"
-            ng-class="{ active: side.state.attributeTitles.size === attr.title }"
-            ng-click="side.toggleAttributeTitle('size', attr.title)">
-      Size
-    </button>
-    <button class="btn btn-default"
-            ng-class="{ active: side.state.attributeTitles.label === attr.title }"
-            ng-click="side.toggleAttributeTitle('label', attr.title)">
-      Label
-    </button>
-    <button class="btn btn-default"
-            ng-if="attr.typeName === 'Double' || attr.typeName === 'String'"
-            ng-class="{ active: side.state.attributeTitles.color === attr.title }"
-            ng-click="side.toggleAttributeTitle('color', attr.title)">
-      Color
-    </button>
-    <button class="btn btn-default"
-            ng-if="attr.typeName === 'String'"
-            ng-class="{ active: side.state.attributeTitles.icon === attr.title }"
-            ng-click="side.toggleAttributeTitle('icon', attr.title)">
-      Icon
-    </button>
-    <button class="btn btn-default"
-            ng-if="attr.typeName === 'String'"
-            ng-class="{ active: side.state.attributeTitles.image === attr.title }"
-            ng-click="side.toggleAttributeTitle('image', attr.title)">
-      <div tooltip="The attribute must be the URL of an image." tooltip-append-to-body="true">
-        Image
-      </div>
-    </button>
-    <button class="btn btn-default"
-            ng-if="attr.isNumeric"
-            ng-class="{ active: side.state.attributeTitles.slider === attr.title }"
-            ng-click="side.toggleAttributeTitle('slider', attr.title)">
-      Slider
-    </button>
-  </div>
-</span>
 <input ng-if="side.state.attributeTitles.slider === attr.title"
   type="range" ng-model="side.state.sliderPos" min="-1" max="101" tooltip="Threshold">
 
@@ -65,6 +23,37 @@
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters.vertex[attr.title]"
     ng-model-options="{ updateOn: 'blur' }">
 </form>
+<span ng-if="side.state.graphMode === 'sampled'" class="de-emph sampled-visualizations">
+  <span class="visualizations"><selected-visualization
+    ng-repeat="visualization in side.filterApplied(['size', 'label', 'color', 'icon', 'image', 'slider'], attr.title)"
+    side="side"
+    title="attr.title"
+    visualization="visualization"></selected-visualization></span>
+
+  <span class="dropdown-toggle" dropdown-toggle data-toggle="dropdown">
+    <span class="clicky glyphicon glyphicon-eye-open" tooltip="Visualize attribute"></span>
+  </span>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a ng-click="side.toggleAttributeTitle('label', attr.title)" href>Visualize as Label</a>
+    </li>
+    <li ng-if="attr.typeName === 'Double'">
+      <a ng-click="side.toggleAttributeTitle('size', attr.title)" href>Visualize as Size</a>
+    </li>
+    <li ng-if="attr.typeName === 'Double' || attr.typeName === 'String'">
+      <a ng-click="side.toggleAttributeTitle('color', attr.title)" href>Visualize as Color</a>
+    </li>
+    <li ng-if="attr.typeName === 'String'">
+      <a ng-click="side.toggleAttributeTitle('icon', attr.title)" href>Visualize as Icon</a>
+    </li>
+    <li ng-if="attr.typeName === 'String'">
+      <a ng-click="side.toggleAttributeTitle('image', attr.title)" href>Visualize as Image</a>
+    </li>
+    <li ng-if="attr.isNumeric">
+      <a ng-click="side.toggleAttributeTitle('slider', attr.title)" href>Visualize as Slider</a>
+    </li>
+  </ul>
+</span>
 <histogram-button ng-show="attr.canBucket" attr="attr" side="side"
   model="histogram" type="vertex" tsv="histogramTSV">
 </histogram-button>
