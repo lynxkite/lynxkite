@@ -13,6 +13,8 @@ if [ "${GOOGLE_CLIENT_SECRET:-}" = "" ]; then
 fi
 
 echo "Staging..."
+SSH="ssh -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no -i $SSH_KEY"
+rsync -ave "$SSH" -r --copy-dirlinks tools/ ec2-user@$ELASTIC_IP:biggraphstage
 REMOTE_HOST=ec2-user@$ELASTIC_IP $DIR/../../remote_stage.sh -i "$SSH_KEY"
 
 echo "Starting..."
