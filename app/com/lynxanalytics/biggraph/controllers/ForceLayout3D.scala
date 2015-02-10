@@ -40,8 +40,8 @@ object ForceLayout3D {
   }
 
   implicit class VectorOps(v: FE3DPosition) {
-    def *(x: Double): FE3DPosition = FE3DPosition(v.x * x, v.y * x, v.z * x)
-    def /(x: Double): FE3DPosition = v * (1.0 / x)
+    def *(c: Double): FE3DPosition = FE3DPosition(v.x * c, v.y * c, v.z * c)
+    def /(c: Double): FE3DPosition = v * (1.0 / c)
     def +(v2: FE3DPosition): FE3DPosition = FE3DPosition(v.x + v2.x, v.y + v2.y, v.z + v2.z)
     def -(v2: FE3DPosition): FE3DPosition = FE3DPosition(v.x - v2.x, v.y - v2.y, v.z - v2.z)
     def len: Double = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
