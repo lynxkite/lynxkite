@@ -59,6 +59,9 @@ set -eo pipefail
 
 export REPOSITORY_MODE=${REPOSITORY_MODE:-"static<$KITE_META_DIR,$KITE_DATA_DIR>"}
 
+if [ -n "${YARN_NUM_EXECUTORS}" ]; then
+  YARN_EXECUTORS_SETTING="--num-executors ${YARN_NUM_EXECUTORS}"
+fi
 if [ -n "${YARN_CORES_PER_EXECUTOR}" ]; then
   YARN_CORES_SETTING="--executor-cores ${YARN_CORES_PER_EXECUTOR}"
 fi
@@ -78,6 +81,7 @@ command=(
     --deploy-mode client \
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \
+    ${YARN_EXECUTORS_SETTING} \
     ${YARN_CORES_SETTING} \
     "${fake_application_jar}" \
     "${app_commands[@]}"

@@ -21,6 +21,8 @@ export KITE_PID_FILE=$HOME/kite.pid
 # Needed if you want to run against yarn.
 # The directory with the YARN configuration.
 # export YARN_CONF_DIR=/etc/hadoop/...
+# Number of executors.
+# export YARN_NUM_EXECUTORS=2
 # Number of cores we should allocate per executor.
 # export YARN_CORES_PER_EXECUTOR=4
 
