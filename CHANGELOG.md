@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - New setting in `.kiterc`: `YARN_NUM_EXECUTORS` can be used to specify the number of
+   workers.
  - Select all vertices (up to 10,000) as center by setting `*` (star) as the center.
  - 3D graph visualization in concrete vertices view.
 
