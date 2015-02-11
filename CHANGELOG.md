@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.0.1
+
  - New setting in `.kiterc`: `YARN_NUM_EXECUTORS` can be used to specify the number of
    workers.
  - Added (better) workaround for https://issues.apache.org/jira/browse/SPARK-5102.
