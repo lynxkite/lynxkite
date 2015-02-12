@@ -63,8 +63,8 @@ describe('the graph view', function() {
       var circle = element.all(by.css('g.vertex > circle')).first();
       circle.click();
       expect(menu.isDisplayed()).toBe(true);
-      var background = element.all(by.css('svg.graph-view')).first();
-      background.click();
+      var something = element.all(by.css('div.project-name')).first();
+      something.click();
       expect(menu.isDisplayed()).toBe(false);
     });
   });
