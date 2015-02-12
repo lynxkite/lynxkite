@@ -293,14 +293,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     res
   }
 
-  def filteredEdgeIdsByAttribute[T](
-    eb: EdgeBundle,
-    tripletMapping: Attribute[Array[ID]],
-    fa: graph_operations.FilteredAttribute[T]): VertexSet = {
-
-    val mattr = mappedAttribute(tripletMapping, fa.attribute, eb)
-    val fop = graph_operations.VertexAttributeFilter[T](fa.filter)
-    fop(fop.attr, mattr).result.fvs
+  private def mappedFilter[T](
+    mapping: Attribute[Array[ID]],
+    fa: graph_operations.FilteredAttribute[T],
+    target: EdgeBundle): graph_operations.FilteredAttribute[T] = {
+    val mattr = mappedAttribute(mapping, fa.attribute, target)
+    graph_operations.FilteredAttribute(mattr, fa.filter)
   }
 
   def indexFromBucketedAttribute[T](
@@ -424,13 +422,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       }
       case None => {
         log.info("PERF Huge edge set mode for request: " + request)
-        val vertexFiltered = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters)
-        val edgeFiltered = getFilteredVS(vertexFiltered.ids, request.filters)
+        val edgeFilters = request.filters.map(_.toFilteredAttribute)
+        val filtered = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters, edgeFilters)
 
         val srcIndices = edgeIndexFromIndexingSeq(
-          edgeBundle, edgeFiltered, vertexFiltered.srcTripletMapping, srcView.indexingSeq)
+          edgeBundle, filtered.ids, filtered.srcTripletMapping, srcView.indexingSeq)
         val dstIndices = edgeIndexFromIndexingSeq(
-          edgeBundle, edgeFiltered, vertexFiltered.dstTripletMapping, dstView.indexingSeq)
+          edgeBundle, filtered.ids, filtered.dstTripletMapping, dstView.indexingSeq)
 
         val cop = graph_operations.CountEdges()
         val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
@@ -472,10 +470,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return FEGraphResponse(vertexDiagrams, edgeDiagrams)
   }
 
+  private def getFilteredVSByFA(
+    vertexSet: VertexSet,
+    vertexFilters: Seq[graph_operations.FilteredAttribute[_]]): VertexSet = {
+    loadGUIDsToMemory(vertexFilters.map(_.attribute.gUID.toString))
+    FEFilters.filterFA(vertexSet, vertexFilters)
+  }
+
   private def getFilteredVS(
     vertexSet: VertexSet,
     vertexFilters: Seq[FEVertexAttributeFilter]): VertexSet = {
-
     loadGUIDsToMemory(vertexFilters.map(_.attributeId))
     FEFilters.filter(vertexSet, vertexFilters)
   }
@@ -488,9 +492,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   private def getFilteredEdgeIds(
     edgeBundle: EdgeBundle,
     srcFilters: Seq[graph_operations.FilteredAttribute[_]],
-    dstFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
+    dstFilters: Seq[graph_operations.FilteredAttribute[_]],
+    edgeFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
     val sampledTrips = tripletMapping(edgeBundle, sampled = true)
-    val sampledEdges = getFilteredEdgeIds(sampledTrips, edgeBundle, srcFilters, dstFilters)
+    val sampledEdges = getFilteredEdgeIds(sampledTrips, edgeBundle, srcFilters, dstFilters, edgeFilters)
     // TODO: See if we can eliminate the extra stage from this "count".
     val count = {
       val op = graph_operations.CountVertices()
@@ -500,7 +505,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       sampledEdges
     } else {
       val fullTrips = tripletMapping(edgeBundle, sampled = false)
-      getFilteredEdgeIds(fullTrips, edgeBundle, srcFilters, dstFilters)
+      getFilteredEdgeIds(fullTrips, edgeBundle, srcFilters, dstFilters, edgeFilters)
     }
   }
 
@@ -508,20 +513,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     trips: graph_operations.TripletMapping.Output,
     edgeBundle: EdgeBundle,
     srcFilters: Seq[graph_operations.FilteredAttribute[_]],
-    dstFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
-    val srcFilteredIds = srcFilters
-      .map(filteredAttribute =>
-        filteredEdgeIdsByAttribute(edgeBundle, trips.srcEdges, filteredAttribute))
-    val dstFilteredIds = dstFilters
-      .map(filteredAttribute =>
-        filteredEdgeIdsByAttribute(edgeBundle, trips.dstEdges, filteredAttribute))
-    val allFilteredIds = srcFilteredIds ++ dstFilteredIds
-    val ids = if (allFilteredIds.size > 0) {
-      val iop = graph_operations.VertexSetIntersection(allFilteredIds.size)
-      iop(iop.vss, allFilteredIds).result.intersection.entity
-    } else {
-      edgeBundle.asVertexSet
-    }
+    dstFilters: Seq[graph_operations.FilteredAttribute[_]],
+    edgeFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
+    val srcMapped = srcFilters.map(mappedFilter(trips.srcEdges, _, edgeBundle))
+    val dstMapped = dstFilters.map(mappedFilter(trips.dstEdges, _, edgeBundle))
+    val ids = getFilteredVSByFA(edgeBundle.asVertexSet, srcMapped ++ dstMapped ++ edgeFilters)
     FilteredEdges(ids, trips.srcEdges, trips.dstEdges)
   }
 
@@ -548,9 +544,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       getFilteredVS(vertexAttribute.vertexSet, request.vertexFilters)
     } else {
       val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
-      val filters = request.vertexFilters.map(_.toFilteredAttribute)
-      val vertexFiltered = getFilteredEdgeIds(edgeBundle, filters, filters).ids
-      getFilteredVS(vertexFiltered, request.edgeFilters)
+      val vertexFilters = request.vertexFilters.map(_.toFilteredAttribute)
+      val edgeFilters = request.edgeFilters.map(_.toFilteredAttribute)
+      getFilteredEdgeIds(edgeBundle, vertexFilters, vertexFilters, edgeFilters).ids
     }
     val histogram = bucketedAttr.toHistogram(filteredVS)
     val counts = histogram.counts.value
