@@ -320,26 +320,44 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
       labelSizeMax = labelSizeBounds.max;
     }
 
-    var colorAttr = (side.attrs.color) ? side.attrs.color.id : undefined;
-    var colorMap;
-    if (colorAttr) {
-      var s = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
-      if (side.attrs.color.typeName === 'Double') {
-        var values = mapByAttr(data.vertices, colorAttr, 'double');
-        colorMap = doubleColorMap(values);
-        var bounds = common.minmax(values);
-        var legendMap = {};
-        legendMap['min: ' + bounds.min] = colorMap[bounds.min];
-        legendMap['max: ' + bounds.max] = colorMap[bounds.max];
-        this.createLegend(legendMap, s); // only shows the min max values
-      } else if (side.attrs.color.typeName === 'String') {
-        colorMap = stringColorMap(mapByAttr(data.vertices, colorAttr, 'string'));
-        this.createLegend(colorMap, s);
-      } else {
-        console.error('The type of ' +
-          side.attrs.color + ' (' + side.attrs.color.typeName +
-          ') is not supported for vertex color visualization!');
+    var legendNextLine = 0;
+    var s = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
+    var that = this;
+    function setupColorMap(colorMeta, legendTitle) {
+      var resultMap;
+      if (colorMeta) {
+        if (colorMeta.typeName === 'Double') {
+          var values = mapByAttr(data.vertices, colorMeta.id, 'double');
+          resultMap = doubleColorMap(values);
+          var bounds = common.minmax(values);
+          var legendMap = {};
+          legendMap['min: ' + bounds.min] = resultMap[bounds.min];
+          legendMap['max: ' + bounds.max] = resultMap[bounds.max];
+          // only shows the min max values
+          legendNextLine = that.addColorLegend(legendMap, s, legendTitle, legendNextLine) + 1;
+        } else if (colorMeta.typeName === 'String') {
+          resultMap = stringColorMap(mapByAttr(data.vertices, colorMeta.id, 'string'));
+          legendNextLine = that.addColorLegend(resultMap, s, legendTitle, legendNextLine) + 1;
+        } else {
+          console.error('The type of ' +
+                        colorMeta + ' (' + colorMeta.typeName +
+                        ') is not supported for color visualization!');
+        }
       }
+      return resultMap;
+    }
+
+    var colorAttr = (side.attrs.color) ? side.attrs.color.id : undefined;
+    var colorMap = setupColorMap(side.attrs.color, 'Vertex Color');
+
+    var labelColorAttr = (side.attrs.labelColor) ? side.attrs.labelColor.id : undefined;
+    var labelColorMap = setupColorMap(side.attrs.labelColor, 'Label Color');
+
+    var opacityAttr = (side.attrs.opacity) ? side.attrs.opacity.id : undefined;
+    var opacityMax = 1;
+    if (opacityAttr) {
+      var opacityBounds = common.minmax(mapByAttr(data.vertices, opacityAttr, 'double'));
+      opacityMax = opacityBounds.max;
     }
 
     for (var i = 0; i < data.vertices.length; ++i) {
@@ -362,6 +380,18 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
           colorMap[vertex.attrs[colorAttr].double] : colorMap[vertex.attrs[colorAttr].string];
       }
 
+      var labelColor;
+      if (labelColorAttr && vertex.attrs[labelColorAttr].defined) {
+        // in case of doubles the keys are strings converted from the DynamicValue's double field
+        // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
+        labelColor = (side.attrs.labelColor.typeName === 'Double') ?
+          labelColorMap[vertex.attrs[labelColorAttr].double] :
+          labelColorMap[vertex.attrs[labelColorAttr].string];
+      }
+
+      var opacity = 1;
+      if (opacityAttr) { opacity = vertex.attrs[opacityAttr].double / opacityMax; }
+
       var icon;
       if (side.attrs.icon) { icon = vertex.attrs[side.attrs.icon.id].string; }
       var image;
@@ -375,6 +405,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
                          label,
                          labelSize,
                          color,
+                         opacity,
+                         labelColor,
                          icon,
                          image);
       offsetter.rule(v);
@@ -392,11 +424,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
     return vertices;
   };
 
-  GraphView.prototype.createLegend = function (colorMap, side) {
+  GraphView.prototype.addColorLegend = function (colorMap, side, title, startingLine) {
     var margin = 50;
     var x = side === 'left' ? margin : this.svg.width() - margin;
     var anchor = side === 'left' ? 'start' : 'end';
-    var i = 0;
+    var i = startingLine;
+    var titleSvg = svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin }) .text(title);
+    this.legend.append(titleSvg);
+    i++;
     for (var attr in colorMap) {
       var l = svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin })
         .text(attr || 'undefined');
@@ -405,6 +440,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
       this.legend.append(l);
       i++;
     }
+    return i;
   };
 
   function translateTouchToMouseEvent(ev) {
@@ -872,7 +908,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
     }
   };
 
-  function Vertex(data, x, y, r, text, textSize, color, icon, image) {
+  function Vertex(data, x, y, r, text, textSize, color, opacity, labelColor, icon, image) {
     this.data = data;
     this.x = x;
     this.y = y;
@@ -898,11 +934,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
     this.text = text;
     var fontSize = 30 * textSize;
     this.label = svg.create('text', { 'font-size': fontSize + 'px' }).text(text || '');
+    if (labelColor !== undefined) {
+      this.label.attr({ style: 'fill: ' + labelColor });
+    }
     this.labelBackground = svg.create(
         'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
     this.dom = svg.group(
         [this.icon, this.touch, this.labelBackground, this.label],
         {'class': 'vertex' });
+    this.dom.attr({ opacity: opacity });
     this.moveListeners = [];
     this.hoverListeners = [];
     var that = this;
