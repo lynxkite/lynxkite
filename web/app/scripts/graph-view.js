@@ -502,6 +502,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
                 title: 'Unfreeze',
                 callback: function() {
                   vertex.frozen -= 1;
+                  vertices.animate();
                 },
               });
             } else {
@@ -676,9 +677,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
   };
 
   GraphView.prototype.initLayout = function(vertices) {
+    var positionAttr = (vertices.side.attrs.position) ? vertices.side.attrs.position.id : undefined;
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
       v.forceMass = 1;
+      if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
+        var pos = v.data.attrs[positionAttr];
+        v.x = pos.x;
+        v.y = pos.y;
+        v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
+      }
       v.forceOX = v.x;
       v.forceOY = v.y;
     }
