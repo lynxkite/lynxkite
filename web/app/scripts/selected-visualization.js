@@ -6,7 +6,7 @@ angular.module('biggraph').directive('selectedVisualization', function() {
     scope: {
       side: '=',
       visualization: '=',
-      title: '=',
+      attr: '=',
     },
     templateUrl: 'selected-visualization.html',
   };
