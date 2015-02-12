@@ -8,7 +8,8 @@
           "7": { "double": 0, "string": "Male", "defined": true },
           "6": { "double": 0, "string": "0", "defined": true },
           "8": { "double": 0, "string": "red", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/zsolt.katona.790/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/zsolt.katona.790/picture", "defined": true },
+          "location": { "string": "(10, 20)", "x": 10, "y": 20, "defined": true }
         }
       },
       { "id": "2222222",
@@ -17,7 +18,8 @@
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 10, "string": "10", "defined": true },
           "8": { "double": 0, "string": "pink", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.barjak/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.barjak/picture", "defined": true },
+          "location": { "string": "(20, 30)", "x": 20, "y": 30, "defined": true }
         }
       },
       { "id": "3333333",
@@ -26,7 +28,8 @@
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 20, "string": "20", "defined": true },
           "8": { "double": 0, "string": "green", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.nemeth.5682/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.nemeth.5682/picture", "defined": true },
+          "location": { "string": "(30, 20)", "x": 30, "y": 20, "defined": true }
         }
       },
       { "id": "4444444",
@@ -35,7 +38,8 @@
           "7": { "double": 0, "string": "", "defined": true },
           "6": { "double": 30, "string": "30", "defined": true },
           "8": { "double": 0, "string": "black", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/daniel.darabos/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/daniel.darabos/picture", "defined": true },
+          "location": { "string": "(40, 40)", "x": 40, "y": 40, "defined": true }
         }
       },
       { "id": "5555555",
@@ -44,7 +48,8 @@
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 40, "string": "40", "defined": true },
           "8": { "double": 0, "string": "violet", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/pzubcsek/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/pzubcsek/picture", "defined": true },
+          "location": { "string": "(50, 10)", "x": 50, "y": 10, "defined": true }
         }
       },
       { "id": "6666666666666666666",
@@ -53,7 +58,8 @@
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 0, "string": "-50", "defined": true },
           "8": { "double": 0, "string": "blue", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/miklos.sarvary.1/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/miklos.sarvary.1/picture", "defined": true },
+          "location": { "string": "(50, 20)", "x": 50, "y": 20, "defined": true }
         }
       }
     ],
@@ -68,7 +74,8 @@
           "7": { "double": 0, "string": "Male", "defined": true },
           "6": { "double": 0, "string": "0", "defined": true },
           "8": { "double": 0, "string": "red", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/zsolt.katona.790/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/zsolt.katona.790/picture", "defined": true },
+          "location": { "string": "(10, 20)", "x": 10, "y": 20, "defined": true }
         }
       },
       { "id": "2222222",
@@ -77,7 +84,8 @@
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 10, "string": "10", "defined": true },
           "8": { "double": 0, "string": "pink", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.barjak/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.barjak/picture", "defined": true },
+          "location": { "string": "(20, 30)", "x": 20, "y": 30, "defined": true }
         }
       },
       { "id": "3333333",
@@ -86,7 +94,8 @@
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 20, "string": "20", "defined": true },
           "8": { "double": 0, "string": "green", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.nemeth.5682/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.nemeth.5682/picture", "defined": true },
+          "location": { "string": "(30, 20)", "x": 30, "y": 20, "defined": true }
         }
       },
       { "id": "4444444",
@@ -95,7 +104,8 @@
           "7": { "double": 0, "string": "", "defined": true },
           "6": { "double": 30, "string": "30", "defined": true },
           "8": { "double": 0, "string": "black", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/daniel.darabos/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/daniel.darabos/picture", "defined": true },
+          "location": { "string": "(40, 40)", "x": 40, "y": 40, "defined": true }
         }
       },
       { "id": "5555555",
@@ -104,7 +114,8 @@
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 40, "string": "40", "defined": true },
           "8": { "double": 0, "string": "violet", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/pzubcsek/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/pzubcsek/picture", "defined": true },
+          "location": { "string": "(50, 10)", "x": 50, "y": 10, "defined": true }
         }
       },
       { "id": "6666666666666666666",
@@ -113,7 +124,8 @@
           "7": { "double": 0, "string": "Female", "defined": true },
           "6": { "double": 0, "string": "-50", "defined": true },
           "8": { "double": 0, "string": "blue", "defined": true },
-          "profile_url": { "double": 0, "string": "https://graph.facebook.com/miklos.sarvary.1/picture", "defined": true }
+          "profile_url": { "double": 0, "string": "https://graph.facebook.com/miklos.sarvary.1/picture", "defined": true },
+          "location": { "string": "(50, 20)", "x": 50, "y": 20, "defined": true }
         }
       }
     ],

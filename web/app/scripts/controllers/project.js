@@ -99,6 +99,7 @@ angular.module('biggraph')
       vd.attrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
       vd.attrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
       vd.attrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
+      vd.attrs.position = this.resolveVertexAttribute(this.state.attributeTitles.position);
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
 
