@@ -93,9 +93,11 @@ angular.module('biggraph')
       vd.yAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.y);
       vd.attrs = {};
       vd.attrs.size = this.resolveVertexAttribute(this.state.attributeTitles.size);
+      vd.attrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
+      vd.attrs.opacity = this.resolveVertexAttribute(this.state.attributeTitles.opacity);
       vd.attrs.label = this.resolveVertexAttribute(this.state.attributeTitles.label);
       vd.attrs.labelSize = this.resolveVertexAttribute(this.state.attributeTitles['label size']);
-      vd.attrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
+      vd.attrs.labelColor = this.resolveVertexAttribute(this.state.attributeTitles['label color']);
       vd.attrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
       vd.attrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
       vd.attrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
@@ -268,7 +270,12 @@ angular.module('biggraph')
     Side.prototype.toggleAttributeTitle = function(setting, value) {
       if (this.state.attributeTitles[setting] === value) {
         // Clicking the same attribute setting again turns it off.
-        delete this.state.attributeTitles[setting];
+        this.state.attributeTitles[setting] = undefined;
+        // Apply dependencies.
+        if (setting === 'label') {
+          this.state.attributeTitles['label size'] = undefined;
+          this.state.attributeTitles['label color'] = undefined;
+        }
       } else {
         this.state.attributeTitles[setting] = value;
         // Apply mutual exclusions.

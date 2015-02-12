@@ -219,8 +219,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       Set(FEEdge(0, 0, 68.0), FEEdge(0, 1, 47.0), FEEdge(1, 0, 43.0), FEEdge(1, 1, 33.0)))
   }
 
-  test("big bucketed view with filters") {
-    // TODO: This test uses the "small" code path by mistake. See #1238.
+  test("small bucketed view with filters") {
     val vs = graph_operations.CreateVertexSet(100)().result.vs
     val es = {
       val op = graph_operations.FastRandomEdgeBundle(0, 2)
@@ -263,6 +262,51 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.edgeBundles(0).edges.size == 1)
     // Should be about 12.5% of 191. (50% src is removed, 50% dst is removed, 50% attribute is <0)
     assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 20.0)))
+  }
+
+  test("big bucketed view with filters") {
+    val vs = graph_operations.CreateVertexSet(500)().result.vs
+    val es = {
+      val op = graph_operations.FastRandomEdgeBundle(0, 2)
+      op(op.vs, vs).result.es
+    }
+    val rndVA = {
+      val op = graph_operations.AddGaussianVertexAttribute(1)
+      op(op.vertices, vs).result.attr
+    }
+    val rndEA = {
+      val op = graph_operations.AddGaussianVertexAttribute(2)
+      op(op.vertices, es.asVertexSet).result.attr
+    }
+    val vf = FEVertexAttributeFilter(
+      attributeId = rndVA.gUID.toString,
+      valueSpec = ">0")
+    val ef = FEVertexAttributeFilter(
+      attributeId = rndEA.gUID.toString,
+      valueSpec = ">0")
+    val req = FEGraphRequest(
+      vertexSets = Seq(VertexDiagramSpec(
+        vertexSetId = vs.gUID.toString,
+        filters = Seq(vf),
+        mode = "bucketed")),
+      edgeBundles = Seq(EdgeDiagramSpec(
+        srcDiagramId = "idx[0]",
+        dstDiagramId = "idx[0]",
+        srcIdx = 0,
+        dstIdx = 0,
+        edgeBundleId = es.gUID.toString,
+        filters = Seq(ef),
+        layout3D = false)))
+    val res = controller.getComplexView(user, req)
+    assert(res.vertexSets.length == 1)
+    assert(res.edgeBundles.length == 1)
+    assert(res.vertexSets(0).mode == "bucketed")
+    assert(res.vertexSets(0).vertices.size == 1)
+    // Should be about 50% of 500.
+    assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(244.0, 0, 0)))
+    assert(res.edgeBundles(0).edges.size == 1)
+    // Should be about 12.5% of 990. (50% src is removed, 50% dst is removed, 50% attribute is <0)
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 110.0)))
   }
 
   test("histogram for double") {

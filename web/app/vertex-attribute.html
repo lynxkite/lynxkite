@@ -25,7 +25,7 @@
 </form>
 <span ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'" class="de-emph sampled-visualizations">
   <span class="visualizations"><selected-visualization
-    ng-repeat="visualization in side.filterApplied(['size', 'label', 'label size', 'color', 'icon', 'image', 'slider', 'position'], attr.title)"
+    ng-repeat="visualization in side.filterApplied(['size', 'label', 'label size', 'color', 'opacity', 'label color', 'icon', 'image', 'slider', 'position'], attr.title)"
     side="side"
     attr="attr.title"
     visualization="visualization"></selected-visualization></span>
@@ -43,11 +43,25 @@
     <li ng-if="attr.typeName === 'Double'">
       <a ng-click="side.toggleAttributeTitle('size', attr.title)" href>Size</a>
     </li>
+<<<<<<< HEAD
     <li ng-if="attr.typeName === 'Double'">
       <a ng-click="side.toggleAttributeTitle('label size', attr.title)" href>Label Size</a>
     </li>
+=======
+>>>>>>> origin/master
     <li ng-if="attr.typeName === 'Double' || attr.typeName === 'String'">
       <a ng-click="side.toggleAttributeTitle('color', attr.title)" href>Color</a>
+    </li>
+    <li ng-if="attr.typeName === 'Double'">
+      <a ng-click="side.toggleAttributeTitle('opacity', attr.title)" href>Visualize as Opacity</a>
+    </li>
+    <li ng-if="attr.typeName === 'Double' && side.state.attributeTitles['label'] !== undefined">
+      <a ng-click="side.toggleAttributeTitle('label size', attr.title)" href>
+        Visualize as Label Size
+      </a>
+    </li>
+    <li ng-if="(attr.typeName === 'Double' || attr.typeName === 'String') && side.state.attributeTitles['label'] !== undefined">
+      <a ng-click="side.toggleAttributeTitle('label color', attr.title)" href>Visualize as Label Color</a>
     </li>
     <li ng-if="attr.typeName === 'String'">
       <a ng-click="side.toggleAttributeTitle('icon', attr.title)" href>Icon</a>
