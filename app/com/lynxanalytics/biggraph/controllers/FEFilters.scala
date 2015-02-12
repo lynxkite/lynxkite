@@ -11,9 +11,14 @@ case class FEVertexAttributeFilter(
     val attributeId: String,
     val valueSpec: String) {
 
+  def attribute(
+    implicit manager: MetaGraphManager): Attribute[_] = {
+    manager.vertexAttribute(attributeId.asUUID)
+  }
+
   def toFilteredAttribute(
     implicit manager: MetaGraphManager): FilteredAttribute[_] = {
-    toFilteredAttributeFromAttribute(manager.vertexAttribute(attributeId.asUUID))
+    toFilteredAttributeFromAttribute(attribute)
   }
 
   private def toFilteredAttributeFromAttribute[T](
@@ -27,16 +32,25 @@ object FEFilters {
   def filter(
     vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
       implicit metaManager: MetaGraphManager): VertexSet = {
+    filterFA(vertexSet, filters.map(_.toFilteredAttribute))
+  }
+
+  def filterFA(
+    vertexSet: VertexSet, filters: Seq[FilteredAttribute[_]])(
+      implicit metaManager: MetaGraphManager): VertexSet = {
+    for (f <- filters) {
+      assert(f.attribute.vertexSet == vertexSet,
+        s"Filter $f does not match vertex set $vertexSet")
+    }
     if (filters.isEmpty) return vertexSet
-    intersectionEmbedding(filters.map(applyFEFilter)).srcVertexSet
+    intersectionEmbedding(filters.map(applyFEFilter(_))).srcVertexSet
   }
 
   def localFilter(
     vertices: Set[ID], filters: Seq[FEVertexAttributeFilter])(
       implicit metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
     filters.foldLeft(vertices) { (vs, filter) =>
-      val attr = metaManager.vertexAttribute(filter.attributeId.asUUID)
-      localFilter(vs, attr, filter.valueSpec)
+      localFilter(vs, filter.attribute, filter.valueSpec)
     }
   }
 
@@ -52,7 +66,13 @@ object FEFilters {
   def embedFilteredVertices(
     base: VertexSet, filters: Seq[FEVertexAttributeFilter])(
       implicit metaManager: MetaGraphManager): EdgeBundle = {
-    intersectionEmbedding(base +: filters.map(applyFEFilter))
+    embedFilteredVerticesFA(base, filters.map(_.toFilteredAttribute))
+  }
+
+  def embedFilteredVerticesFA(
+    base: VertexSet, filters: Seq[FilteredAttribute[_]])(
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
+    intersectionEmbedding(base +: filters.map(applyFEFilter(_)))
   }
 
   def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
@@ -60,15 +80,12 @@ object FEFilters {
     embedFilteredVertices(filtered, moreFilters).srcVertexSet
   }
 
-  private def applyFEFilter(
-    filterSpec: FEVertexAttributeFilter)(
+  private def applyFEFilter[T](
+    fa: FilteredAttribute[T])(
       implicit metaManager: MetaGraphManager): VertexSet = {
-
-    val attr = metaManager.vertexAttribute(filterSpec.attributeId.asUUID)
-    FEFilters.filteredBaseSet(
-      metaManager,
-      attr,
-      filterSpec.valueSpec)
+    import Scripting._
+    val op = VertexAttributeFilter(fa.filter)
+    return op(op.attr, fa.attribute).result.fvs
   }
 
   private def intersectionEmbedding(
@@ -123,19 +140,6 @@ object FEFilters {
         }
       } else ???
     if (negated) NotFilter(innerFilter) else innerFilter
-  }
-
-  private def filteredBaseSet[T](
-    manager: MetaGraphManager,
-    attr: Attribute[T],
-    spec: String): VertexSet = {
-
-    implicit val tt = attr.typeTag
-    val filter = filterFromSpec[T](spec)
-    import Scripting._
-    implicit val mm = manager
-    val op = VertexAttributeFilter(filter)
-    return op(op.attr, attr).result.fvs
   }
 
   private val numberPattern = "\\s*(-?\\d*(?:\\.\\d*)?)\\s*"
