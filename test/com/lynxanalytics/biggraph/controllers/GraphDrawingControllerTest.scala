@@ -115,11 +115,11 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.size == 2)
     assert(res.vertexSets(0).vertices.toSet == Set(
       FEVertex(0.0, 0, 0, id = "0", attrs = Map(
-        age -> DynamicValue(20.3, "20.3"),
-        gender -> DynamicValue(0.0, "Male"))),
+        age -> DynamicValue("20.3", double = Some(20.3)),
+        gender -> DynamicValue("Male"))),
       FEVertex(0.0, 0, 0, id = "1", attrs = Map(
-        age -> DynamicValue(18.2, "18.2"),
-        gender -> DynamicValue(0.0, "Female")))))
+        age -> DynamicValue("18.2", double = Some(18.2)),
+        gender -> DynamicValue("Female")))))
     assert(res.edgeBundles(0).edges.size == 1)
     assert(res.edgeBundles(0).edges.toSet == Set(
       FEEdge(0, 1, 1.0)))
@@ -403,7 +403,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       calculate = true)
     val res = controller.getScalarValue(user, req)
     assert(res.defined == true)
-    assert(res.double == 4)
     assert(res.string == "4")
+    assert(res.double == Some(4))
   }
 }
