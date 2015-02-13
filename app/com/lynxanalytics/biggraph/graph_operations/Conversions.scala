@@ -9,19 +9,25 @@ import com.lynxanalytics.biggraph.graph_api._
 // Dynamic values wrap various types into a combined type that we unwrap on FE side
 // The combined type helps us joining arbitrary number of different typed attributes.
 case class DynamicValue(
-  double: Double = 0.0,
   string: String = "",
-  defined: Boolean = true)
+  defined: Boolean = true,
+  double: Option[Double] = None,
+  x: Option[Double] = None,
+  y: Option[Double] = None)
 object DynamicValue {
   val df = new java.text.DecimalFormat("#.#####")
   def converter[T: TypeTag]: (T => DynamicValue) = {
     if (typeOf[T] =:= typeOf[Double]) value =>
-      DynamicValue(double = value.asInstanceOf[Double], string = df.format(value))
+      DynamicValue(double = Some(value.asInstanceOf[Double]), string = df.format(value))
     else if (typeOf[T] =:= typeOf[Long]) value =>
       DynamicValue(
-        double = value.asInstanceOf[Long].toDouble, string = value.toString)
+        double = Some(value.asInstanceOf[Long].toDouble), string = value.toString)
     else if (typeOf[T] =:= typeOf[String]) value =>
       DynamicValue(string = value.asInstanceOf[String])
+    else if (typeOf[T] =:= typeOf[(Double, Double)]) value => {
+      val tuple = value.asInstanceOf[(Double, Double)]
+      DynamicValue(string = value.toString, x = Some(tuple._1), y = Some(tuple._2))
+    }
     else value =>
       DynamicValue(string = value.toString)
   }

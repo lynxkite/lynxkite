@@ -16,12 +16,18 @@ object ExampleGraph extends OpFromJson {
     val age = vertexAttribute[Double](vertices)
     val gender = vertexAttribute[String](vertices)
     val income = vertexAttribute[Double](vertices) // Partially defined.
+    val location = vertexAttribute[(Double, Double)](vertices)
     val comment = edgeAttribute[String](edges)
     val weight = edgeAttribute[Double](edges)
     val greeting = scalar[String]
     // For wholesale attribute access.
     val edgeAttributes = Map("comment" -> comment, "weight" -> weight)
-    val vertexAttributes = Map("name" -> name, "age" -> age, "gender" -> gender, "income" -> income)
+    val vertexAttributes = Map(
+      "name" -> name,
+      "age" -> age,
+      "gender" -> gender,
+      "income" -> income,
+      "location" -> location)
   }
   def fromJson(j: JsValue) = ExampleGraph()
 }
@@ -73,6 +79,12 @@ case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
     output(o.income, sc.parallelize(Seq(
       (0l, 1000.0),
       (2l, 2000.0))).toSortedRDD(partitioner))
+    output(o.location, sc.parallelize(Seq(
+      (0l, (40.71448, -74.00598)), // New York
+      (1l, (47.5269674, 19.0323968)), // Budapest
+      (2l, (1.352083, 103.819836)), // Singapore
+      (3l, (-33.8674869, 151.2069902)) // Sydney
+    )).toSortedRDD(partitioner))
     output(o.comment, sc.parallelize(Seq(
       (0l, "Adam loves Eve"),
       (1l, "Eve loves Adam"),
