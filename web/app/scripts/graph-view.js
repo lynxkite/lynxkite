@@ -730,7 +730,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
       if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
         var pos = v.data.attrs[positionAttr];
         v.x = pos.x;
-        v.y = pos.y;
+        v.y = -pos.y;  // Flip Y axis to look more mathematical.
         v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
       }
       v.forceOX = v.x;
