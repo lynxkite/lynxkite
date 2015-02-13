@@ -129,6 +129,9 @@ class DataManager(sc: spark.SparkContext,
             if (entityData.isInstanceOf[ScalarData[_]]) saveToDisk(entityData)
           }
         }
+        // Mark the operation as complete. Entities may not be loaded from incomplete operations.
+        // The reason for this is that an operation may give different results if the number of
+        // partitions is different. So for consistency, all outputs must be from the same run.
         successPath(instancePath(instance)).createFromStrings("")
       }
       instance.outputs.scalars.values
