@@ -25,15 +25,12 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
-    inputs: MetaDataSet = MetaDataSet(),
-    transient: Boolean = false): TypedOperationInstance[IS, OMDS] = synchronized {
+    inputs: MetaDataSet = MetaDataSet()): TypedOperationInstance[IS, OMDS] = synchronized {
 
     val operationInstance = TypedOperationInstance(this, operation, inputs)
     val gUID = operationInstance.gUID
     if (!operationInstances.contains(gUID)) {
-      if (!transient) {
-        saveInstanceToDisk(operationInstance)
-      }
+      saveInstanceToDisk(operationInstance)
       internalApply(operationInstance)
     }
     operationInstances(gUID).asInstanceOf[TypedOperationInstance[IS, OMDS]]
