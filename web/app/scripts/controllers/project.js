@@ -91,16 +91,37 @@ angular.module('biggraph')
       vd.yAttribute = this.resolveVertexAttribute(this.state.attributeTitles.y);
       vd.xAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.x);
       vd.yAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.y);
-      vd.attrs = {};
-      vd.attrs.size = this.resolveVertexAttribute(this.state.attributeTitles.size);
-      vd.attrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
-      vd.attrs.opacity = this.resolveVertexAttribute(this.state.attributeTitles.opacity);
-      vd.attrs.label = this.resolveVertexAttribute(this.state.attributeTitles.label);
-      vd.attrs.labelSize = this.resolveVertexAttribute(this.state.attributeTitles['label size']);
-      vd.attrs.labelColor = this.resolveVertexAttribute(this.state.attributeTitles['label color']);
-      vd.attrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
-      vd.attrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
-      vd.attrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
+      vd.vertexAttrs = {};
+      vd.vertexAttrs.size = this.resolveVertexAttribute(this.state.attributeTitles.size);
+      vd.vertexAttrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
+      vd.vertexAttrs.opacity = this.resolveVertexAttribute(this.state.attributeTitles.opacity);
+      vd.vertexAttrs.label = this.resolveVertexAttribute(this.state.attributeTitles.label);
+      vd.vertexAttrs.labelSize =
+        this.resolveVertexAttribute(this.state.attributeTitles['label size']);
+      vd.vertexAttrs.labelColor =
+        this.resolveVertexAttribute(this.state.attributeTitles['label color']);
+      vd.vertexAttrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
+      vd.vertexAttrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
+      vd.vertexAttrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
+
+      vd.edgeAttrs = {};
+      var aggregated = function(attr, aggregator) {
+        if (attr) {
+          var aggrAttr = angular.copy(attr);
+          aggrAttr.aggregator = aggregator;
+          return aggrAttr;
+        }
+        return undefined;
+      };
+      vd.edgeAttrs.width = aggregated(
+        this.resolveEdgeAttribute(this.state.attributeTitles.width),
+        'sum');
+      vd.edgeAttrs.edgeLabel = aggregated(
+        this.resolveEdgeAttribute(this.state.attributeTitles['edge label']),
+        'vector');
+      vd.edgeAttrs.edgeColor = aggregated(
+        this.resolveEdgeAttribute(this.state.attributeTitles['edge color']),
+        'sum');
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
 
@@ -592,15 +613,10 @@ angular.module('biggraph')
           delete this.state.axisOptions.edge[attr];
         }
       }
+      var allTitles = eTitles.concat(vTitles);
       for (attr in this.state.attributeTitles) {
-        if (attr === 'width') {
-          if (eTitles.indexOf(this.state.attributeTitles[attr]) === -1) {
-            delete this.state.attributeTitles[attr];
-          }
-        } else {
-          if (vTitles.indexOf(this.state.attributeTitles[attr]) === -1) {
-            delete this.state.attributeTitles[attr];
-          }
+        if (allTitles.indexOf(this.state.attributeTitles[attr]) === -1) {
+          delete this.state.attributeTitles[attr];
         }
       }
     };

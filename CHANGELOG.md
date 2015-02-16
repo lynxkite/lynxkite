@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Implements colors and labels for sampled mode edges.
+
 ### 1.0.1
 
  - New setting in `.kiterc`: `YARN_NUM_EXECUTORS` can be used to specify the number of
