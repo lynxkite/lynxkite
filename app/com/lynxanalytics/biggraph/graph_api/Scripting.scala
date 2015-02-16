@@ -31,9 +31,8 @@ object Scripting {
 
     def apply() = this
 
-    def toInstance(
-      manager: MetaGraphManager, transient: Boolean = false): TypedOperationInstance[IS, OMDS] = {
-      manager.apply(op, currentInput, transient)
+    def toInstance(manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] = {
+      manager.apply(op, currentInput)
     }
   }
 
