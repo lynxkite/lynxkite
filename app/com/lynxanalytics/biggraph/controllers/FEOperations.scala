@@ -199,7 +199,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       val edges = manager.edgeBundle(params("eb").asUUID)
       import Scripting._
       val op = graph_operations.AddConstantDoubleAttribute(params("v").toDouble)
-      val vertexAttr = op(op.vs, edges.asVertexSet).result.attr
+      val vertexAttr = op(op.vs, edges.idSet).result.attr
       manager.show(Seq(vertexAttr.entity))
     }
   }

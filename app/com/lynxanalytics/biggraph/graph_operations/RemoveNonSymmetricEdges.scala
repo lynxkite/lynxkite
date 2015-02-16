@@ -10,7 +10,7 @@ object RemoveNonSymmetricEdges extends OpFromJson {
       extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val injection = edgeBundle(
-      symmetric.asVertexSet, inputs.es.asVertexSet, EdgeBundleProperties.embedding)
+      symmetric.idSet, inputs.es.idSet, EdgeBundleProperties.embedding)
   }
   def fromJson(j: JsValue) = RemoveNonSymmetricEdges()
 }

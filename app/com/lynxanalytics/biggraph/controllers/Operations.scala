@@ -515,7 +515,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         if (params("type") == "Double") {
           const(project.edgeBundle, params("value").toDouble)
         } else {
-          graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, params("value"))
+          graph_operations.AddConstantAttribute.run(project.edgeBundle.idSet, params("value"))
         }
       }
       project.edgeAttributes(params("name")) = res
@@ -1108,7 +1108,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       val guid = edgesAsAttr.entity.gUID.toString
       val embedding = FEFilters.embedFilteredVertices(
-        project.edgeBundle.asVertexSet,
+        project.edgeBundle.idSet,
         Seq(FEVertexAttributeFilter(guid, "!=")))
       project.pullBackEdgesWithInjection(embedding)
     }
@@ -1543,7 +1543,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             val op = graph_operations.VertexSetUnion(2)
             op(
               op.vss,
-              Seq(ebInduced.get.induced.asVertexSet, otherEbInduced.get.induced.asVertexSet))
+              Seq(ebInduced.get.induced.idSet, otherEbInduced.get.induced.idSet))
               .result
           }
           val ebUnion = {
@@ -2287,7 +2287,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def const(eb: EdgeBundle, value: Double = 1.0): Attribute[Double] = {
-    graph_operations.AddConstantAttribute.run(eb.asVertexSet, value)
+    graph_operations.AddConstantAttribute.run(eb.idSet, value)
   }
 
   def newScalar(data: String): Scalar[String] = {

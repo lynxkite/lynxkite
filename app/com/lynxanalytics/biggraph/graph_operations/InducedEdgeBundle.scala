@@ -27,7 +27,7 @@ object InducedEdgeBundle extends OpFromJson {
       edgeBundle(src.entity, dst.entity)
     }
     val embedding = edgeBundle(
-      induced.asVertexSet, inputs.edges.asVertexSet, EdgeBundleProperties.embedding)
+      induced.idSet, inputs.edges.idSet, EdgeBundleProperties.embedding)
   }
   def fromJson(j: JsValue) = InducedEdgeBundle((j \ "induceSrc").as[Boolean], (j \ "induceDst").as[Boolean])
 }

@@ -373,14 +373,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
     dataManager.cache(edgeBundle)
     val weights = if (request.edgeWeightId.isEmpty) {
-      graph_operations.AddConstantAttribute.run(edgeBundle.asVertexSet, 1.0)
+      graph_operations.AddConstantAttribute.run(edgeBundle.idSet, 1.0)
     } else {
       val w = metaManager.vertexAttributeOf[Double](request.edgeWeightId.asUUID)
       dataManager.cache(w)
       w
     }
     assert(
-      weights.vertexSet == edgeBundle.asVertexSet,
+      weights.vertexSet == edgeBundle.idSet,
       "The requested edge weight attribute does not belong to the requested edge bundle.\n" +
         "Edge bundle: $edgeBundle\nWeight attribute: $weights")
     assert(srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
@@ -436,7 +436,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         countOp(
           countOp.xIndices, srcIndices)(
             countOp.yIndices, dstIndices)(
-              countOp.original, edgeBundle.asVertexSet)(
+              countOp.original, edgeBundle.idSet)(
                 countOp.weights, weights)(
                   countOp.originalCount, originalEdgeCount).result.counts.value
       }
@@ -517,7 +517,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     edgeFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
     val srcMapped = srcFilters.map(mappedFilter(trips.srcEdges, _, edgeBundle))
     val dstMapped = dstFilters.map(mappedFilter(trips.dstEdges, _, edgeBundle))
-    val ids = getFilteredVSByFA(edgeBundle.asVertexSet, srcMapped ++ dstMapped ++ edgeFilters)
+    val ids = getFilteredVSByFA(edgeBundle.idSet, srcMapped ++ dstMapped ++ edgeFilters)
     FilteredEdges(ids, trips.srcEdges, trips.dstEdges)
   }
 

@@ -231,7 +231,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     }
     val rndEA = {
       val op = graph_operations.AddGaussianVertexAttribute(2)
-      op(op.vertices, es.asVertexSet).result.attr
+      op(op.vertices, es.idSet).result.attr
     }
     val vf = FEVertexAttributeFilter(
       attributeId = rndVA.gUID.toString,
@@ -276,7 +276,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     }
     val rndEA = {
       val op = graph_operations.AddGaussianVertexAttribute(2)
-      op(op.vertices, es.asVertexSet).result.attr
+      op(op.vertices, es.idSet).result.attr
     }
     val vf = FEVertexAttributeFilter(
       attributeId = rndVA.gUID.toString,

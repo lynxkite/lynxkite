@@ -46,7 +46,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
     // Properties are linked as expected.
     assert(firstVattr.vertexSet == firstVertices)
-    assert(firstEattr.vertexSet == firstEdges.asVertexSet)
+    assert(firstEattr.vertexSet == firstEdges.idSet)
     assert(manager.attributes(firstVertices).toSet == Set(firstVattr))
     assert(manager.attributes(firstEdges).toSet == Set(firstEattr))
 

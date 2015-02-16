@@ -84,7 +84,7 @@ class MetaGraphManager(val repositoryPath: String) {
   def attributes(vertexSet: VertexSet): Seq[Attribute[_]] =
     vertexAttributesMap(vertexSet.gUID)
   def attributes(edgeBundle: EdgeBundle): Seq[Attribute[_]] =
-    vertexAttributesMap(edgeBundle.asVertexSet.gUID)
+    vertexAttributesMap(edgeBundle.idSet.gUID)
 
   def dependentOperations(entity: MetaGraphEntity): Seq[MetaGraphOperationInstance] =
     dependentOperationsMap.getOrElse(entity.gUID, Seq())
