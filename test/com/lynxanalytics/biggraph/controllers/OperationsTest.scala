@@ -143,8 +143,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.edgeBundle.rdd.count == 8)
 
     val vAttrs = project.vertexAttributes.toMap
-    // 5 original +1 renamed +1 new_id
-    assert(vAttrs.size == 7)
+    // 6 original +1 renamed +1 new_id
+    assert(vAttrs.size == 8)
     val eAttrs = project.edgeAttributes.toMap
     // 2 original +1 renamed
     assert(eAttrs.size == 3)

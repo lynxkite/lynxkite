@@ -37,7 +37,7 @@ describe('the graph view', function() {
       sampledViewButton.click();
       var attr = element.all(by.css('[vertex-attribute]')).first();
       var dropDownToggle = attr.element(by.css('.sampled-visualizations .dropdown-toggle'))
-      var asColor = attr.element(byText('Visualize as Color'));
+      var asColor = attr.element(byText('Color'));
       var positions = element.all(by.css('.vertex.sampled circle')).map(getPos);
       expect(positions.then(getLength)).toBe(6);  // The demo graph.
       positions.then(function(original) {

@@ -191,6 +191,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
           vs = this.addBucketedVertices(dataVs, offsetter, sides[i]);
         }
         vs.offsetter = offsetter;
+        vs.halfColumnWidth = halfColumnWidth;
         this.vertices[i] = vs;
         this.sideMouseBindings(offsetter, xMin, xMax);
       }
@@ -545,6 +546,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
                 title: 'Unfreeze',
                 callback: function() {
                   vertex.frozen -= 1;
+                  vertices.animate();
                 },
               });
             } else {
@@ -673,19 +675,28 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
     // Initial zoom to fit the layout on the SVG.
     var xb = common.minmax(vertices.map(function(v) { return v.x; }));
     var yb = common.minmax(vertices.map(function(v) { return v.y; }));
-    var xFit = 0.25 * this.svg.width() / Math.max(Math.abs(xb.min), Math.abs(xb.max));
-    var yFit = 0.5 * this.svg.height() / Math.max(Math.abs(yb.min), Math.abs(yb.max));
+    var xCenter = (xb.min + xb.max) / 2;
+    var yCenter = (yb.min + yb.max) / 2;
+    var xFit = vertices.halfColumnWidth / (xb.max - xCenter);
+    var yFit = 0.5 * this.svg.height() / (yb.max - yCenter);
     // Avoid infinite zoom for 1-vertex graphs.
-    if (!isFinite(xFit) && !isFinite(yFit)) { return; }
-    var newZoom = graphToSVGRatio * Math.min(xFit, yFit);
+    if (isFinite(xFit) || isFinite(yFit)) {
+      var newZoom = graphToSVGRatio * Math.min(xFit, yFit);
 
-    // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
-    var ratio = newZoom / vertices.offsetter.zoom;
-    if (!vertices.offsetter.inherited || ratio < 0.1 || ratio > 10) {
-      vertices.offsetter.zoom = newZoom;
-      // "Thickness" is scaled to the SVG size. We leave it unchanged.
-      vertices.offsetter.reDraw();
+      // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
+      var ratio = newZoom / vertices.offsetter.zoom;
+      if (!vertices.offsetter.inherited || ratio < 0.1 || ratio > 10) {
+        vertices.offsetter.zoom = newZoom;
+        // "Thickness" is scaled to the SVG size. We leave it unchanged.
+      }
     }
+    if (!vertices.offsetter.inherited) {
+      // Pan to center the graph.
+      var z = vertices.offsetter.zoom;
+      vertices.offsetter.xOff -= xCenter * z;
+      vertices.offsetter.yOff -= yCenter * z;
+    }
+    vertices.offsetter.reDraw();
   };
 
   GraphView.prototype.initSlider = function(vertices) {
@@ -719,9 +730,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
   };
 
   GraphView.prototype.initLayout = function(vertices) {
+    var positionAttr = (vertices.side.attrs.position) ? vertices.side.attrs.position.id : undefined;
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
       v.forceMass = 1;
+      if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
+        var pos = v.data.attrs[positionAttr];
+        v.x = pos.x;
+        v.y = -pos.y;  // Flip Y axis to look more mathematical.
+        v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
+      }
       v.forceOX = v.x;
       v.forceOY = v.y;
     }

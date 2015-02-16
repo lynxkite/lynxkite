@@ -91,6 +91,7 @@ angular.module('biggraph')
       vd.yAttribute = this.resolveVertexAttribute(this.state.attributeTitles.y);
       vd.xAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.x);
       vd.yAxisOptions = this.axisOptions('vertex', this.state.attributeTitles.y);
+
       vd.vertexAttrs = {};
       vd.vertexAttrs.size = this.resolveVertexAttribute(this.state.attributeTitles.size);
       vd.vertexAttrs.color = this.resolveVertexAttribute(this.state.attributeTitles.color);
@@ -103,6 +104,7 @@ angular.module('biggraph')
       vd.vertexAttrs.slider = this.resolveVertexAttribute(this.state.attributeTitles.slider);
       vd.vertexAttrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
       vd.vertexAttrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
+      vd.vertexAttrs.position = this.resolveVertexAttribute(this.state.attributeTitles.position);
 
       vd.edgeAttrs = {};
       var aggregated = function(attr, aggregator) {

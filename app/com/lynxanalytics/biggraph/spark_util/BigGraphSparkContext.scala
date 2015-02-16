@@ -85,6 +85,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // https://issues.apache.org/jira/browse/SPARK-5102
     kryo.register(Class.forName("org.apache.spark.scheduler.CompressedMapStatus"))
     kryo.register(Class.forName("org.apache.spark.scheduler.HighlyCompressedMapStatus"))
+    kryo.register((0.0, 0.0).getClass)
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
