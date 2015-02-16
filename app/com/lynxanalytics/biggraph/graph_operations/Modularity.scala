@@ -8,11 +8,9 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object Modularity extends OpFromJson {
   class Input() extends MagicInputSignature {
-    val vs = vertexSet
+    val (vs, edges) = graph
     val segments = vertexSet
-    val edgeIds = vertexSet
-    val edges = edgeBundle(vs, vs, idSet = edgeIds)
-    val weights = vertexAttribute[Double](edgeIds)
+    val weights = edgeAttribute[Double](edges)
     val belongsTo = edgeBundle(
       vs, segments, requiredProperties = EdgeBundleProperties.partialFunction)
   }

@@ -1535,9 +1535,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val (newEdgeBundle, myEbInjection, otherEbInjection): (EdgeBundle, EdgeBundle, EdgeBundle) =
         if (ebInduced.isDefined && !otherEbInduced.isDefined) {
-          (ebInduced.get.induced.entity, ebInduced.get.embedding, null)
+          (ebInduced.get.induced, ebInduced.get.embedding, null)
         } else if (!ebInduced.isDefined && otherEbInduced.isDefined) {
-          (otherEbInduced.get.induced.entity, null, otherEbInduced.get.embedding)
+          (otherEbInduced.get.induced, null, otherEbInduced.get.embedding)
         } else if (ebInduced.isDefined && otherEbInduced.isDefined) {
           val idUnion = {
             val op = graph_operations.VertexSetUnion(2)
@@ -2222,7 +2222,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def addReversed(eb: EdgeBundle): EdgeBundle = {
     val op = graph_operations.AddReversedEdges()
-    op(op.es, eb).result.esPlus.entity
+    op(op.es, eb).result.esPlus
   }
 
   object Direction {

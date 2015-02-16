@@ -202,7 +202,8 @@ class MetaGraphManager(val repositoryPath: String) {
     val j = serializeOperation(inst)
     // Validate the serialized operation by trying to reload it.
     val i = deserializeOperation(j)
-    assert(inst == i, "Operation reloaded after serialization was not identical: $inst vs $i")
+    assert(inst == i,
+      s"Operation reloaded after serialization was not identical: $inst vs $i\n\n$j")
     try {
       saveOperation(j)
     } catch {
@@ -284,8 +285,11 @@ class MetaGraphManager(val repositoryPath: String) {
           .map(n => n -> vertexSet(inputs(n))).toMap,
         op.inputSig.edgeBundles.keys
           .map(n => n -> edgeBundle(inputs(n))).toMap,
-        op.inputSig.vertexAttributes.keys
-          .map(n => n -> vertexAttribute(inputs(n))).toMap,
+        (op.inputSig.vertexAttributes.keys
+          .map(n => n -> vertexAttribute(inputs(n))) ++
+          op.inputSig.edgeAttributes.keys
+          .map(n => n -> vertexAttribute(inputs(n))))
+          .toMap,
         op.inputSig.scalars
           .map(n => n -> scalar(inputs(n))).toMap))
   }

@@ -34,13 +34,12 @@ object EdgeBundleAsVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
-    val idSet = vertexSet
-    val edges = edgeBundle(src, dst, idSet = idSet)
+    val edges = edgeBundle(src, dst)
   }
   class Output(
       implicit instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    val attr = vertexAttribute[(ID, ID)](inputs.idSet.entity)
+    val attr = edgeAttribute[(ID, ID)](inputs.edges.entity)
   }
   def fromJson(j: JsValue) = EdgeBundleAsVertexAttribute()
 }
