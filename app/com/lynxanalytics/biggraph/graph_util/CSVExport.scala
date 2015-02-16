@@ -51,7 +51,7 @@ object CSVExport {
     srcColumnName: String = "srcVertexId",
     dstColumnName: String = "dstVertexId")(implicit dataManager: DataManager): CSVData = {
     for ((name, attr) <- attributes) {
-      assert(attr.vertexSet == edgeBundle.asVertexSet,
+      assert(attr.vertexSet == edgeBundle.idSet,
         s"Incorrect vertex set for attribute $name.")
     }
     val indexedEdges = edgeBundle.rdd.mapValues {

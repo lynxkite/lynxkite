@@ -9,8 +9,8 @@ import com.lynxanalytics.biggraph.graph_api.SmallTestGraph._
 class ValidateOperationsTest extends FunSuite with TestGraphOp {
   val g1 = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2))).result
   val g2 = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))).result
-  val gw1 = AddConstantAttribute.run(g1.es.asVertexSet, 1.0)
-  val gw2 = AddConstantAttribute.run(g2.es.asVertexSet, 1.0)
+  val gw1 = AddConstantAttribute.run(g1.es.idSet, 1.0)
+  val gw2 = AddConstantAttribute.run(g2.es.idSet, 1.0)
   val op = ConcatenateBundles()
 
   test("validate input structure - missing input") {

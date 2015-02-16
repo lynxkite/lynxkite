@@ -9,9 +9,9 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
  * This operation is useful when one wants to apply on an edge bundle a tranformative operation
  *  (e.g. filter) that was defined on vertex sets.
  *
- * The way to go is to first apply the operation on edgeBundle.asVertexSet, say it creates a new
+ * The way to go is to first apply the operation on edgeBundle.idSet, say it creates a new
  * vertex set destinationVS and also provides an injection from destinationVS to
- * edgeBundle.asVertexSet. Then apply PullOverEdges with the original edge bundle and the above
+ * edgeBundle.idSet. Then apply PullOverEdges with the original edge bundle and the above
  * injection. This will create an edge bundle that can be seen as if you were transfered to original
  * edge bundle with the transformative operation.
  */

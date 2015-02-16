@@ -13,7 +13,7 @@ object AddReversedEdges extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val esPlus = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val injection = edgeBundle(
-      esPlus.asVertexSet, inputs.es.asVertexSet,
+      esPlus.idSet, inputs.es.idSet,
       EdgeBundleProperties.surjection)
   }
   def fromJson(j: JsValue) = AddReversedEdges()

@@ -119,7 +119,6 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
     extends MetaGraphEntity {
   assert(name != null)
   val isLocal = srcVertexSet == dstVertexSet
-  val asVertexSet = idSet // A synonym, for historical reasons.
 }
 
 sealed trait TypedEntity[T] extends MetaGraphEntity {
@@ -224,7 +223,6 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       extends ET[EdgeBundle](nameOpt) {
     lazy val src = srcF
     lazy val dst = dstF
-    lazy val idSet = idSetF
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
       assert(
         eb.properties.compliesWith(requiredProperties),
@@ -233,9 +231,9 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
       val withSrcDst =
         templatesByName(dst).asInstanceOf[VertexSetTemplate].set(withSrc, eb.dstVertexSet)
-      val withSrcDstIdSet = idSet match {
+      val withSrcDstIdSet = idSetF match {
         case Some(vsName) => templatesByName(vsName).asInstanceOf[VertexSetTemplate]
-          .set(withSrcDst, eb.asVertexSet)
+          .set(withSrcDst, eb.idSet)
         case None => withSrcDst
       }
       super.set(withSrcDstIdSet, eb)
@@ -374,7 +372,7 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   def vertexAttribute[T: TypeTag](vs: => EntityContainer[VertexSet], name: Symbol = null) =
     new P(Attribute[T](instance, _, vs), Option(name))
   def edgeAttribute[T: TypeTag](eb: => EntityContainer[EdgeBundle], name: Symbol = null) =
-    new P(Attribute[T](instance, _, eb.asVertexSet), Option(name))
+    new P(Attribute[T](instance, _, eb.idSet), Option(name))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _), None)
   def scalar[T: TypeTag](name: Symbol) = new P(Scalar[T](instance, _), Some(name))
 
