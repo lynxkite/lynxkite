@@ -88,7 +88,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     // In a previous implementation we've seen an infinite recursion in the data manager
     // due to a kind of circular dependency between the operations ImportEdgeList and the
     // implicitly created EdgeBundleAsVertexSet operation. This is how the circular dependency
-    // goeas:
+    // goes:
     //  - EdgeBundleAsVertexSet takes as input the edge bundle output of ImportEdgeList
     //  - ImportEdgeList outputs edge attributes. When loading those, we depend on the id set
     //    of those attributes, which in this case is the output of EdgeBundleAsVertexSet

@@ -1072,7 +1072,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val edgesAsAttr = {
-        val op = graph_operations.EdgeBundleAsVertexAttribute()
+        val op = graph_operations.EdgeBundleAsAttribute()
         op(op.edges, project.edgeBundle).result.attr
       }
       val mergedResult = {
@@ -1103,7 +1103,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val edgesAsAttr = {
-        val op = graph_operations.EdgeBundleAsVertexAttribute()
+        val op = graph_operations.EdgeBundleAsAttribute()
         op(op.edges, project.edgeBundle).result.attr
       }
       val guid = edgesAsAttr.entity.gUID.toString
