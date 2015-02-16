@@ -15,10 +15,8 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
  */
 object FindModularPartitioning extends OpFromJson {
   class Input extends MagicInputSignature {
-    val vs = vertexSet
-    val edgeIds = vertexSet
-    val edges = edgeBundle(vs, vs, idSet = edgeIds)
-    val weights = vertexAttribute[Double](edgeIds)
+    val (vs, edges) = graph
+    val weights = edgeAttribute[Double](edges)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input)

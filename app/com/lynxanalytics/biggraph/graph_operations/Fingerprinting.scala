@@ -16,12 +16,10 @@ object Fingerprinting extends OpFromJson {
     val right = vertexSet
     val candidates = edgeBundle(left, right)
     val target = vertexSet
-    val leftEdgeIDs = vertexSet
-    val rightEdgeIDs = vertexSet
-    val leftEdges = edgeBundle(left, target, idSet = leftEdgeIDs)
-    val rightEdges = edgeBundle(right, target, idSet = rightEdgeIDs)
-    val leftEdgeWeights = vertexAttribute[Double](leftEdgeIDs)
-    val rightEdgeWeights = vertexAttribute[Double](rightEdgeIDs)
+    val leftEdges = edgeBundle(left, target)
+    val rightEdges = edgeBundle(right, target)
+    val leftEdgeWeights = edgeAttribute[Double](leftEdges)
+    val rightEdgeWeights = edgeAttribute[Double](rightEdges)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
       extends MagicOutput(instance) {
