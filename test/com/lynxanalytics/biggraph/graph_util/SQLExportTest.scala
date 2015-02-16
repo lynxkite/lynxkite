@@ -18,7 +18,9 @@ class SQLExportTest extends FunSuite with TestGraphOp {
     val export = SQLExport(
       "example_graph",
       g.vertices,
-      g.vertexAttributes.mapValues(_.entity).map(identity))
+      Map[String, Attribute[_]](
+        "age" -> g.age, "gender" -> g.gender,
+        "income" -> g.income, "name" -> g.name))
     assert(export.deletion.trim == """
       DROP TABLE IF EXISTS example_graph;
       """.trim)
@@ -42,7 +44,9 @@ class SQLExportTest extends FunSuite with TestGraphOp {
     val export = SQLExport(
       "example_graph",
       g.vertices,
-      g.vertexAttributes.mapValues(_.entity).map(identity))
+      Map[String, Attribute[_]](
+        "age" -> g.age, "gender" -> g.gender,
+        "income" -> g.income, "name" -> g.name))
     val db = s"sqlite:${dataManager.repositoryPath}/test-db"
     export.insertInto(db, delete = true)
     implicit val connection = sql.DriverManager.getConnection("jdbc:" + db)

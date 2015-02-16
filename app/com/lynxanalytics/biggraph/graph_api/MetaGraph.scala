@@ -362,7 +362,11 @@ trait MetaGraphOp extends Serializable with ToJson {
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
-  val gUID = UUID.nameUUIDFromBytes(this.toTypedJson.toString.getBytes)
+  val gUID = {
+    val contents = this.toTypedJson.toString
+    val version = JsonMigration.current.version(getClass.getName)
+    UUID.nameUUIDFromBytes((contents + version).getBytes)
+  }
 
   override def toString = toStringStruct.toString
   def toStringStruct = ReflectionMutex.synchronized {
