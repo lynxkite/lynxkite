@@ -57,6 +57,12 @@ case class VertexDiagramResponse(
   val xFilters: Seq[String] = Seq(),
   val yFilters: Seq[String] = Seq())
 
+case class AggregatedAttribute(
+  // The GUID of the attribute.
+  attributeId: String,
+  // The aggregation we want to apply on it.
+  aggregator: String)
+
 case class EdgeDiagramSpec(
   // In the context of an FEGraphRequest "idx[4]" means the diagram requested by vertexSets(4).
   // Otherwise a UUID obtained by a previous vertex diagram request.
@@ -65,12 +71,18 @@ case class EdgeDiagramSpec(
   // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
   srcIdx: Int,
   dstIdx: Int,
+  // The GUID of the edge bundle to plot.
   edgeBundleId: String,
+  // Specification of filters that should be applied to attributes of the edge bundle.
   filters: Seq[FEVertexAttributeFilter],
   // If not set, we use constant 1 as weight.
   edgeWeightId: String = "",
   // Whether to generate 3D coordinates for the vertices.
-  layout3D: Boolean)
+  layout3D: Boolean,
+  // Attributes to be returned together with the edges. As one visualized edge can correspond to
+  // many actual edges, clients always have to specify an aggregator as well. For now, this only
+  // works for small edge set visualizations (i.e. sampled mode).
+  attrs: Seq[AggregatedAttribute] = Seq())
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
@@ -79,7 +91,9 @@ case class FEEdge(
   a: Int,
   // idx of destination vertex in the vertices Seq in the corresponding VertexDiagramResponse.
   b: Int,
-  size: Double)
+  size: Double,
+  // Keys are composed as attributeId:aggregator.
+  attrs: Map[String, DynamicValue] = Map())
 
 case class FE3DPosition(x: Double, y: Double, z: Double)
 
@@ -365,6 +379,20 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return None
   }
 
+  def getAggregatedAttributeByCoord[From, To](
+    ids: Set[ID],
+    attributeWihtAggregator: AttributeWithLocalAggregator[From, To],
+    idToCoordMapping: Map[ID, (Int, Int)]): Map[(Int, Int), DynamicValue] = {
+
+    val attrMap = graph_operations.RestrictAttributeToIds.run(
+      attributeWihtAggregator.attr, ids).value.toMap
+    val byCoordMap = attributeWihtAggregator.aggregator.aggregateByKey(
+      attrMap.toSeq.map { case (id, value) => idToCoordMapping(id) -> value })
+    implicit val ttT = attributeWihtAggregator.aggregator.outputTypeTag(
+      attributeWihtAggregator.attr.typeTag)
+    byCoordMap.mapValues(DynamicValue.convert[To](_))
+  }
+
   def getEdgeDiagram(user: User, request: EdgeDiagramSpec): EdgeDiagramResponse = {
     val srcView = graph_operations.VertexView.fromDiagram(
       metaManager.scalar(request.srcDiagramId.asUUID))
@@ -391,7 +419,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         s"\nSource: ${dstView.vertexSet}\nEdge bundle destination: ${edgeBundle.dstVertexSet}")
 
     val smallEdgeSetOption = getSmallEdgeSet(edgeBundle, srcView, dstView)
-    val counts = smallEdgeSetOption match {
+    val feEdges = smallEdgeSetOption match {
       case Some(smallEdgeSet) => {
         log.info("PERF Small edge set mode for request: " + request)
         val smallEdgeSetMap = smallEdgeSet.toMap
@@ -400,25 +428,48 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val srcIdxMapping = srcView.vertexIndices.getOrElse {
           val indexAttr = indexFromIndexingSeq(srcView.vertexSet, srcView.indexingSeq)
           val srcVertexIds = filteredEdgeSet.map { case (id, edge) => edge.src }.toSet
-          graph_operations.RestrictAttributeToIds.run(indexAttr, srcVertexIds).value.toMap
+          graph_operations.RestrictAttributeToIds.run(indexAttr, srcVertexIds).value
         }
         val dstIdxMapping = dstView.vertexIndices.getOrElse {
           val indexAttr = indexFromIndexingSeq(dstView.vertexSet, dstView.indexingSeq)
           val dstVertexIds = filteredEdgeSet.map { case (id, edge) => edge.dst }.toSet
-          graph_operations.RestrictAttributeToIds.run(indexAttr, dstVertexIds).value.toMap
+          graph_operations.RestrictAttributeToIds.run(indexAttr, dstVertexIds).value
         }
+        val idToCoordMapping =
+          filteredEdgeSet.flatMap {
+            case (id, edge) =>
+              val src = edge.src
+              val dst = edge.dst
+              if (srcIdxMapping.contains(src) && dstIdxMapping.contains(dst)) {
+                Some(id -> (srcIdxMapping(src), dstIdxMapping(dst)))
+              } else {
+                None
+              }
+          }.toMap
+        val attributesWithAggregators: Map[String, AttributeWithLocalAggregator[_, _]] =
+          request.attrs.map(
+            attr => (attr.attributeId + ":" + attr.aggregator) -> AttributeWithLocalAggregator(
+              metaManager.vertexAttribute(attr.attributeId.asUUID),
+              attr.aggregator)).toMap
+        val attributeValues = attributesWithAggregators.mapValues(
+          getAggregatedAttributeByCoord(filteredEdgeSetIDs, _, idToCoordMapping))
         val weightMap = graph_operations.RestrictAttributeToIds.run(
-          weights, filteredEdgeSet.map(_._1).toSet).value.toMap
+          weights, filteredEdgeSetIDs).value.toMap
         val counts = mutable.Map[(Int, Int), Double]().withDefaultValue(0.0)
-        filteredEdgeSet.foreach {
-          case (id, edge) =>
-            val src = edge.src
-            val dst = edge.dst
-            if (srcIdxMapping.contains(src) && dstIdxMapping.contains(dst)) {
-              counts((srcIdxMapping(src), dstIdxMapping(dst))) += weightMap(id)
-            }
+        idToCoordMapping.foreach {
+          case (id, coord) =>
+            counts(coord) += weightMap(id)
         }
-        counts.toMap
+        counts
+          .toMap
+          .map {
+            case ((s, d), c) =>
+              FEEdge(
+                s, d, c,
+                attrs = attributeValues.mapValues(
+                  _.getOrElse((s, d), DynamicValue(defined = false))))
+          }
+          .toSeq
       }
       case None => {
         log.info("PERF Huge edge set mode for request: " + request)
@@ -433,16 +484,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val cop = graph_operations.CountEdges()
         val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
         val countOp = graph_operations.IndexPairCounter()
-        countOp(
+        val counts = countOp(
           countOp.xIndices, srcIndices)(
             countOp.yIndices, dstIndices)(
               countOp.original, edgeBundle.asVertexSet)(
                 countOp.weights, weights)(
                   countOp.originalCount, originalEdgeCount).result.counts.value
+        counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq
       }
     }
     log.info("PERF edge counts computed")
-    val feEdges = counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq
     EdgeDiagramResponse(
       request.srcDiagramId,
       request.dstDiagramId,

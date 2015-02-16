@@ -43,6 +43,18 @@ angular.module('biggraph').directive('projectGraph', function (util) {
         for (var i = 0; i < sides.length; ++i) {
           var viewData = sides[i];
           if (viewData.edgeBundle !== undefined) {
+            var edgeAttrs = [];
+            for (var eIndex in viewData.edgeAttrs) {
+              if (viewData.edgeAttrs[eIndex]) {
+                edgeAttrs.push({
+                  attributeId: viewData.edgeAttrs[eIndex].id,
+                  aggregator: viewData.edgeAttrs[eIndex].aggregator,
+                });
+              }
+            }
+            console.log('BEFOREAFTER');
+            console.log(viewData.edgeAttrs);
+            console.log(edgeAttrs);
             q.edgeBundles.push({
               srcDiagramId: 'idx[' + i + ']',
               dstDiagramId: 'idx[' + i + ']',
@@ -52,16 +64,15 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               filters: viewData.filters.edge,
               edgeWeightId: (viewData.edgeWidth || { id: '' }).id,
               layout3D: viewData.display === '3d',
+              attrs: edgeAttrs,
             });
           }
-          // we sort attributes by UUID to avoid recomputing the same combination
-          var attrs = [];
-          for (var index in viewData.attrs) {
-            if (viewData.attrs[index]) {
-              attrs.push(viewData.attrs[index].id);
+          var vertexAttrs = [];
+          for (var index in viewData.vertexAttrs) {
+            if (viewData.vertexAttrs[index]) {
+              vertexAttrs.push(viewData.vertexAttrs[index].id);
             }
           }
-          attrs.sort();
           var xAttr = (viewData.xAttribute) ? viewData.xAttribute.id : '';
           var yAttr = (viewData.yAttribute) ? viewData.yAttribute.id : '';
 
@@ -81,7 +92,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
             radius: viewData.edgeBundle ? parseInt(viewData.sampleRadius) : 0,
             centralVertexIds: viewData.centers,
             sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
-            attrs: attrs,
+            attrs: vertexAttrs,
           });
         }
 
@@ -96,6 +107,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               filters: [],
               edgeWeightId: '',
               layout3D: false,
+              attrs: [],
             });
           }
           if (scope.rightToLeftBundle !== undefined) {
@@ -108,6 +120,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               filters: [],
               edgeWeightId: '',
               layout3D: false,
+              attrs: [],
             });
           }
         }
