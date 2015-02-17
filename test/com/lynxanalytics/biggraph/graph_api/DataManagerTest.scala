@@ -21,13 +21,13 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       "(2,())\n" +
       "(3,())")
     assert(TestUtils.RDDToSortedString(
-      dataManager.get(instance.outputs.vertexAttributes('name)).rdd) ==
+      dataManager.get(instance.outputs.attributes('name)).rdd) ==
       "(0,Adam)\n" +
       "(1,Eve)\n" +
       "(2,Bob)\n" +
       "(3,Isolated Joe)")
     assert(TestUtils.RDDToSortedString(
-      dataManager.get(instance.outputs.vertexAttributes('age)).rdd) ==
+      dataManager.get(instance.outputs.attributes('age)).rdd) ==
       "(0,20.3)\n" +
       "(1,18.2)\n" +
       "(2,50.3)\n" +
@@ -40,7 +40,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       "(2,Edge(2,0))\n" +
       "(3,Edge(2,1))")
     assert(TestUtils.RDDToSortedString(
-      dataManager.get(instance.outputs.vertexAttributes('comment)).rdd) ==
+      dataManager.get(instance.outputs.attributes('comment)).rdd) ==
       "(0,Adam loves Eve)\n" +
       "(1,Eve loves Adam)\n" +
       "(2,Bob envies Adam)\n" +
@@ -54,9 +54,9 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
     val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
-    val names = instance.outputs.vertexAttributes('name).runtimeSafeCast[String]
+    val names = instance.outputs.attributes('name).runtimeSafeCast[String]
     val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
-    val data1: VertexAttributeData[String] = dataManager1.get(names)
+    val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
     val data2 = dataManager2.get(names)
     val scalarData2 = dataManager2.get(greeting)
@@ -74,9 +74,9 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager = cleanDataManager
     val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
-    val ageGUID = instance.outputs.vertexAttributes('age).gUID
+    val ageGUID = instance.outputs.attributes('age).gUID
     val reloadedMetaManager = MetaRepositoryManager(mmDir)
-    val reloadedAge = reloadedMetaManager.vertexAttribute(ageGUID).runtimeSafeCast[Double]
+    val reloadedAge = reloadedMetaManager.attribute(ageGUID).runtimeSafeCast[Double]
     assert(TestUtils.RDDToSortedString(dataManager.get(reloadedAge).rdd) ==
       "(0,20.3)\n" +
       "(1,18.2)\n" +

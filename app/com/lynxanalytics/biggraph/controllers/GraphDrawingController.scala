@@ -190,7 +190,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val attrs = request.attrs.map { attrId =>
       attrId -> {
-        val attr = metaManager.vertexAttribute(attrId.asUUID)
+        val attr = metaManager.attribute(attrId.asUUID)
         val dyn = graph_operations.VertexAttributeToDynamicValue.run(attr)
         val op = graph_operations.CollectAttribute[DynamicValue](idSet)
         op(op.attr, dyn).result.idToAttr.value
@@ -232,7 +232,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val filtered = FEFilters.filter(vertexSet, request.filters)
 
     val xBucketedAttr = if (request.xBucketingAttributeId.nonEmpty) {
-      val attribute = metaManager.vertexAttribute(request.xBucketingAttributeId.asUUID)
+      val attribute = metaManager.attribute(request.xBucketingAttributeId.asUUID)
       dataManager.cache(attribute)
       FEBucketers.bucketedAttribute(
         metaManager, dataManager, attribute, request.xNumBuckets, request.xAxisOptions)
@@ -240,7 +240,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       graph_operations.BucketedAttribute.emptyBucketedAttribute
     }
     val yBucketedAttr = if (request.yBucketingAttributeId.nonEmpty) {
-      val attribute = metaManager.vertexAttribute(request.yBucketingAttributeId.asUUID)
+      val attribute = metaManager.attribute(request.yBucketingAttributeId.asUUID)
       dataManager.cache(attribute)
       FEBucketers.bucketedAttribute(
         metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions)
@@ -375,7 +375,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val weights = if (request.edgeWeightId.isEmpty) {
       graph_operations.AddConstantAttribute.run(edgeBundle.idSet, 1.0)
     } else {
-      val w = metaManager.vertexAttributeOf[Double](request.edgeWeightId.asUUID)
+      val w = metaManager.attributeOf[Double](request.edgeWeightId.asUUID)
       dataManager.cache(w)
       w
     }
@@ -534,14 +534,14 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   def getHistogram(user: User, request: HistogramSpec): HistogramResponse = {
-    val vertexAttribute = metaManager.vertexAttribute(request.attributeId.asUUID)
-    dataManager.cache(vertexAttribute.vertexSet)
-    dataManager.cache(vertexAttribute)
+    val attribute = metaManager.attribute(request.attributeId.asUUID)
+    dataManager.cache(attribute.vertexSet)
+    dataManager.cache(attribute)
     loadGUIDsToMemory(request.vertexFilters.map(_.attributeId))
     val bucketedAttr = FEBucketers.bucketedAttribute(
-      metaManager, dataManager, vertexAttribute, request.numBuckets, request.axisOptions)
+      metaManager, dataManager, attribute, request.numBuckets, request.axisOptions)
     val filteredVS = if (request.edgeBundleId.isEmpty) {
-      getFilteredVS(vertexAttribute.vertexSet, request.vertexFilters)
+      getFilteredVS(attribute.vertexSet, request.vertexFilters)
     } else {
       val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
       val vertexFilters = request.vertexFilters.map(_.toFilteredAttribute)

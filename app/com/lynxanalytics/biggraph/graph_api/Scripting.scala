@@ -48,7 +48,7 @@ object Scripting {
     implicit dataManager: DataManager): EdgeBundleData =
     dataManager.get(entity.entity)
   implicit def getData[T](entity: EntityContainer[Attribute[T]])(
-    implicit dataManager: DataManager): VertexAttributeData[T] =
+    implicit dataManager: DataManager): AttributeData[T] =
     dataManager.get(entity.entity)
   implicit def getData[T](entity: EntityContainer[Scalar[T]])(
     implicit dataManager: DataManager): ScalarData[T] =
@@ -61,7 +61,7 @@ object Scripting {
     implicit dataManager: DataManager): EdgeBundleData =
     dataManager.get(entity)
   implicit def getData[T](entity: Attribute[T])(
-    implicit dataManager: DataManager): VertexAttributeData[T] =
+    implicit dataManager: DataManager): AttributeData[T] =
     dataManager.get(entity)
   implicit def getData[T](entity: Scalar[T])(
     implicit dataManager: DataManager): ScalarData[T] =

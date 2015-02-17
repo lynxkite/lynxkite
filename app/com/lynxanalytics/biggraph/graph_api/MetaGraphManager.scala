@@ -64,10 +64,10 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
   def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
-  def vertexAttribute(gUID: UUID): Attribute[_] =
+  def attribute(gUID: UUID): Attribute[_] =
     entities(gUID).asInstanceOf[Attribute[_]]
-  def vertexAttributeOf[T: TypeTag](gUID: UUID): Attribute[T] =
-    vertexAttribute(gUID).runtimeSafeCast[T]
+  def attributeOf[T: TypeTag](gUID: UUID): Attribute[T] =
+    attribute(gUID).runtimeSafeCast[T]
   def scalar(gUID: UUID): Scalar[_] =
     entities(gUID).asInstanceOf[Scalar[_]]
   def scalarOf[T: TypeTag](gUID: UUID): Scalar[T] =
@@ -79,9 +79,9 @@ class MetaGraphManager(val repositoryPath: String) {
   def outgoingBundles(vertexSet: VertexSet): Seq[EdgeBundle] =
     outgoingBundlesMap(vertexSet.gUID)
   def attributes(vertexSet: VertexSet): Seq[Attribute[_]] =
-    vertexAttributesMap(vertexSet.gUID)
+    attributesMap(vertexSet.gUID)
   def attributes(edgeBundle: EdgeBundle): Seq[Attribute[_]] =
-    vertexAttributesMap(edgeBundle.idSet.gUID)
+    attributesMap(edgeBundle.idSet.gUID)
 
   def dependentOperations(entity: MetaGraphEntity): Seq[MetaGraphOperationInstance] =
     dependentOperationsMap.getOrElse(entity.gUID, Seq())
@@ -135,14 +135,14 @@ class MetaGraphManager(val repositoryPath: String) {
   def edgeBundle(tag: SymbolPath): EdgeBundle = synchronized {
     edgeBundle((tagRoot / tag).gUID)
   }
-  def vertexAttribute(tag: SymbolPath): Attribute[_] = synchronized {
-    vertexAttribute((tagRoot / tag).gUID)
+  def attribute(tag: SymbolPath): Attribute[_] = synchronized {
+    attribute((tagRoot / tag).gUID)
   }
   def scalar(tag: SymbolPath): Scalar[_] = synchronized {
     scalar((tagRoot / tag).gUID)
   }
-  def vertexAttributeOf[T: TypeTag](tag: SymbolPath): Attribute[T] = synchronized {
-    vertexAttributeOf[T]((tagRoot / tag).gUID)
+  def attributeOf[T: TypeTag](tag: SymbolPath): Attribute[T] = synchronized {
+    attributeOf[T]((tagRoot / tag).gUID)
   }
   def scalarOf[T: TypeTag](tag: SymbolPath): Scalar[T] = synchronized {
     scalarOf[T]((tagRoot / tag).gUID)
@@ -165,7 +165,7 @@ class MetaGraphManager(val repositoryPath: String) {
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
   private val incomingBundlesMap =
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
-  private val vertexAttributesMap =
+  private val attributesMap =
     mutable.Map[UUID, List[Attribute[_]]]().withDefaultValue(List())
 
   private val dependentOperationsMap =
@@ -186,8 +186,8 @@ class MetaGraphManager(val repositoryPath: String) {
       outgoingBundlesMap(eb.srcVertexSet.gUID) ::= eb
       incomingBundlesMap(eb.dstVertexSet.gUID) ::= eb
     }
-    operationInstance.outputs.vertexAttributes.values.foreach { va =>
-      vertexAttributesMap(va.vertexSet.gUID) ::= va
+    operationInstance.outputs.attributes.values.foreach { va =>
+      attributesMap(va.vertexSet.gUID) ::= va
     }
     operationInstance.inputs.all.values.foreach { entity =>
       dependentOperationsMap(entity.gUID) ::= operationInstance
@@ -283,7 +283,7 @@ class MetaGraphManager(val repositoryPath: String) {
         op.inputSig.edgeBundles
           .map(n => n -> edgeBundle(inputs(n))).toMap,
         op.inputSig.attributes
-          .map(n => n -> vertexAttribute(inputs(n))).toMap,
+          .map(n => n -> attribute(inputs(n))).toMap,
         op.inputSig.scalars
           .map(n => n -> scalar(inputs(n))).toMap))
   }
