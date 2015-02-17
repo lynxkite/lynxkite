@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('graphView', function(util, $compile) {
+angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
@@ -723,26 +723,56 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
   };
 
   GraphView.prototype.initLayout = function(vertices) {
+    function lon2x(lon) {
+      return zoomMultiplier * mapSize * lon / 360;
+    }
+    function lat2y(lat) {
+      return -zoomMultiplier * mapSize * Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI / 2;
+    }
+    function x2lon(x) {
+      return x * 360 / zoomMultiplier / mapSize;
+    }
+    function y2lat(y) {
+      return Math.atan(Math.sinh(y * Math.PI * 2 / zoomMultiplier / mapSize)) * 180 / Math.PI;
+    }
     var positionAttr = (vertices.side.attrs.position) ? vertices.side.attrs.position.id : undefined;
     var geoAttr = (vertices.side.attrs.geo) ? vertices.side.attrs.geo.id : undefined;
     if (geoAttr !== undefined) {
-      var hw = 1280;
-      var background = svg.create('image', { width: hw, height: hw });
-      //var root = 'https://maps.googleapis.com/maps/api/staticmap?';
-      var root = '/staticmap.png?';
+      var mapSize = 640;
+      var zoomLevel = 3;
+      var zoomMultiplier = Math.pow(2, zoomLevel) * 0.403;  // Magic constant to match Google Maps.
+      var background = svg.create('image');
+      var root = 'https://maps.googleapis.com/maps/api/staticmap?';
+      //var root = '/staticmap.png?';
       var style = 'feature:all|gamma:0.1';
-      var zoom = 1;
-      var center = '0,0';
-      var href = root + 'center=' + center + '&zoom=' + zoom + '&size=640x640&scale=2&style=' + style;
+      var clat = 47.497912, clon = 19.040235;
+      var href = root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel + '&size=640x640&scale=2&style=' + style;
       background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
-      background.x = 0;
-      background.y = 0;
+      background.x = -mapSize / 2;
+      background.y = -mapSize / 2;
+      background.x += lon2x(clon);
+      background.y += lat2y(clat);
+      var refresh;
+      var that = this;
       background.reDraw = function() {
         var zoom = this.offsetter.zoom;
         background.attr({
           x: this.screenX(), y: this.screenY(),
-          width: zoom * hw, height: zoom * hw,
+          width: zoom * mapSize, height: zoom * mapSize,
         });
+        $timeout.cancel(refresh);
+        refresh = $timeout(function() {
+          var zoom = background.offsetter.zoom;
+          var x = (background.offsetter.xOff - vertices.halfColumnWidth) / zoom;
+          var y = (background.offsetter.yOff - that.svg.height() / 2) / zoom;
+          var clat = y2lat(y);
+          var clon = -x2lon(x);
+          var href = root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel + '&size=640x640&scale=2&style=' + style;
+          background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
+          background.x = -x - mapSize / 2;
+          background.y = -y - mapSize / 2;
+          background.reDraw();
+        }, 1000);
       };
       vertices.offsetter.rule(background);
       this.root.prepend(background);
@@ -758,14 +788,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
       }
       if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {
         var pos = v.data.attrs[geoAttr];
-        var lat = pos.x;
-        var lng = pos.y;
-        var w = 640;
-        var h = 640;
-        var z = Math.pow(2, 1);
-        v.x = z * w * (lng + 180) / 360;
-        v.y = z * h * (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2;
-        console.log('v', v.x, v.y);
+        v.x = lon2x(pos.y);
+        v.y = lat2y(pos.x);
         v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
       }
       v.forceOX = v.x;
