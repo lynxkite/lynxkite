@@ -52,6 +52,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
                 });
               }
             }
+            edgeAttrs.sort();
             q.edgeBundles.push({
               srcDiagramId: 'idx[' + i + ']',
               dstDiagramId: 'idx[' + i + ']',
@@ -70,6 +71,7 @@ angular.module('biggraph').directive('projectGraph', function (util) {
               vertexAttrs.push(viewData.vertexAttrs[index].id);
             }
           }
+          vertexAttrs.sort();
           var xAttr = (viewData.xAttribute) ? viewData.xAttribute.id : '';
           var yAttr = (viewData.yAttribute) ? viewData.yAttribute.id : '';
 
