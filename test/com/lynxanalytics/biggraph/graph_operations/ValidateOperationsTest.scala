@@ -13,14 +13,22 @@ class ValidateOperationsTest extends FunSuite with TestGraphOp {
   val gw2 = AddConstantAttribute.run(g2.es.idSet, 1.0)
   val op = ConcatenateBundles()
 
-  test("validate input structure - missing input") {
-    intercept[java.util.NoSuchElementException] {
-      op(op.weightsAB, gw1)(op.edgesBC, g1.es).result
-    }
+  test("all good") {
+    op(op.edgesAB, g1.es)(op.edgesBC, g1.es)(
+      op.weightsAB, gw1)(op.weightsBC, gw1).result
   }
-  test("validate input structure - collision") {
-    intercept[java.lang.AssertionError] {
-      op(op.edgesAB, g1.es)(op.edgesBC, g2.es).result
+  test("missing input") {
+    val e = intercept[java.util.NoSuchElementException] {
+      op(op.edgesAB, g1.es)(op.edgesBC, g1.es)(
+        op.weightsAB, gw1).result
     }
+    assert(e.getMessage.contains("weightsBC"))
+  }
+  test("collision") {
+    val e = intercept[java.lang.AssertionError] {
+      op(op.edgesAB, g1.es)(op.edgesBC, g2.es)(
+        op.weightsAB, gw1)(op.weightsBC, gw2).result
+    }
+    assert(e.getMessage.contains("Collision"))
   }
 }
