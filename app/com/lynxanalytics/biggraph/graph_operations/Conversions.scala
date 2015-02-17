@@ -28,6 +28,10 @@ object DynamicValue {
       val tuple = value.asInstanceOf[(Double, Double)]
       DynamicValue(string = value.toString, x = Some(tuple._1), y = Some(tuple._2))
     }
+    else if (typeOf[T] <:< typeOf[Seq[Any]]) value => {
+      val seq = value.asInstanceOf[Seq[Any]]
+      DynamicValue(string = seq.mkString(", "))
+    }
     else value =>
       DynamicValue(string = value.toString)
   }
