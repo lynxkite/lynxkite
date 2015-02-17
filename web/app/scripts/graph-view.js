@@ -727,7 +727,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       return zoomMultiplier * mapSize * lon / 360;
     }
     function lat2y(lat) {
-      return -zoomMultiplier * mapSize * Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI / 2;
+      return -zoomMultiplier * mapSize * Math.log(
+                 Math.tan(lat * Math.PI / 180) +
+                 1 / Math.cos(lat * Math.PI / 180)
+              ) / Math.PI / 2;
     }
     function x2lon(x) {
       return x * 360 / zoomMultiplier / mapSize;
@@ -746,7 +749,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       //var root = '/staticmap.png?';
       var style = 'feature:all|gamma:0.1';
       var clat = 47.497912, clon = 19.040235;
-      var href = root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel + '&size=640x640&scale=2&style=' + style;
+      var href = (
+          root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
+          '&size=640x640&scale=2&style=' + style);
       background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
       background.x = -mapSize / 2;
       background.y = -mapSize / 2;
@@ -754,25 +759,38 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       background.y += lat2y(clat);
       var refresh;
       var that = this;
+      var lastZoom, lastXOff, lastYOff;
       background.reDraw = function() {
-        var zoom = this.offsetter.zoom;
+        var offsetter = background.offsetter;
         background.attr({
-          x: this.screenX(), y: this.screenY(),
-          width: zoom * mapSize, height: zoom * mapSize,
+          x: background.screenX(), y: background.screenY(),
+          width: offsetter.zoom * mapSize, height: offsetter.zoom * mapSize,
         });
-        $timeout.cancel(refresh);
-        refresh = $timeout(function() {
-          var zoom = background.offsetter.zoom;
-          var x = (background.offsetter.xOff - vertices.halfColumnWidth) / zoom;
-          var y = (background.offsetter.yOff - that.svg.height() / 2) / zoom;
-          var clat = y2lat(y);
-          var clon = -x2lon(x);
-          var href = root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel + '&size=640x640&scale=2&style=' + style;
-          background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
-          background.x = -x - mapSize / 2;
-          background.y = -y - mapSize / 2;
-          background.reDraw();
-        }, 1000);
+        if (lastZoom !== offsetter.zoom ||
+            lastXOff !== offsetter.xOff ||
+            lastYOff !== offsetter.yOff) {
+          lastZoom = offsetter.zoom;
+          lastXOff = offsetter.xOff;
+          lastYOff = offsetter.yOff;
+          $timeout.cancel(refresh);
+          refresh = $timeout(function() {
+            console.log('timeout');
+            var x = (offsetter.xOff - vertices.halfColumnWidth) / offsetter.zoom;
+            var y = (offsetter.yOff - that.svg.height() / 2) / offsetter.zoom;
+            var clat = y2lat(y);
+            var clon = -x2lon(x);
+            var href = (
+                root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
+                '&size=640x640&scale=2&style=' + style);
+            background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
+            background.imagesLoaded(function() {
+              console.log('imagesLoaded');
+              background.x = -x - mapSize / 2;
+              background.y = -y - mapSize / 2;
+              background.reDraw();
+            });
+          }, 1000);
+        }
       };
       vertices.offsetter.rule(background);
       this.root.prepend(background);
@@ -780,14 +798,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
       v.forceMass = 1;
+      var pos;
       if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
-        var pos = v.data.attrs[positionAttr];
+        pos = v.data.attrs[positionAttr];
         v.x = pos.x;
         v.y = -pos.y;  // Flip Y axis to look more mathematical.
         v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
       }
       if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {
-        var pos = v.data.attrs[geoAttr];
+        pos = v.data.attrs[geoAttr];
         v.x = lon2x(pos.y);
         v.y = lat2y(pos.x);
         v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
