@@ -1,6 +1,6 @@
 <item-name-and-menu menu="side" name="{{attr.title}}" type="edge-attribute"></item-name-and-menu>
 
-<span ng-if="side.state.graphMode && attr.typeName === 'Double' && side.state.display === 'svg'" class="de-emph">
+<span ng-if="side.state.graphMode === 'bucketed' && attr.typeName === 'Double'" class="de-emph">
   Graph as
   <div class="btn-group">
     <button class="btn btn-default"
@@ -16,6 +16,35 @@
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters.edge[attr.title]"
     ng-model-options="{ updateOn: 'blur' }">
 </form>
+
+<span
+  ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'"
+  class="de-emph sampled-visualizations">
+  <span class="visualizations"><selected-visualization
+    ng-repeat="visualization in side.filterApplied(['width', 'edge label', 'edge color'], attr.title)"
+    side="side"
+    title="attr.title"
+    visualization="visualization"></selected-visualization></span>
+
+  <span class="dropdown-toggle" dropdown-toggle data-toggle="dropdown">
+    <span class="clicky glyphicon glyphicon-eye-open" tooltip="Visualize attribute"></span>
+  </span>
+  <ul class="dropdown-menu" role="menu">
+    <li class="text-center">
+      Visualize as...
+    </li>
+    <li ng-if="attr.typeName === 'Double'">
+      <a ng-click="side.toggleAttributeTitle('width', attr.title)" href>Width</a>
+    </li>
+    <li>
+      <a ng-click="side.toggleAttributeTitle('edge label', attr.title)" href>Edge Label</a>
+    </li>
+    <li ng-if="attr.typeName === 'Double'">
+      <a ng-click="side.toggleAttributeTitle('edge color', attr.title)" href>Edge Color</a>
+    </li>
+  </ul>
+</span>
+
 
 <histogram-button ng-show="attr.canBucket" attr="attr" side="side"
   model="histogram" type="edge" tsv="histogramTSV">
