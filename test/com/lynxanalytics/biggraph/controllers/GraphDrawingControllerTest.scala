@@ -125,7 +125,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         gender -> DynamicValue("Female")))))
     assert(res.edgeBundles(0).edges.size == 1)
     assert(res.edgeBundles(0).edges.toSet == Set(
-      FEEdge(0, 1, 1.0, Map(weight -> DynamicValue(1.0, "1")))))
+      FEEdge(0, 1, 1.0, Map(weight + ":sum" -> DynamicValue("1", double = Some(1.0))))))
   }
 
   test("small bucketed view") {

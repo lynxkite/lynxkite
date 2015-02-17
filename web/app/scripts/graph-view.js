@@ -730,7 +730,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
   };
 
   GraphView.prototype.initLayout = function(vertices) {
-    var positionAttr = (vertices.side.attrs.position) ? vertices.side.attrs.position.id : undefined;
+    var positionAttr =
+      (vertices.side.vertexAttrs.position) ? vertices.side.vertexAttrs.position.id : undefined;
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
       v.forceMass = 1;
@@ -895,6 +896,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
     var widthKey;
     var colorKey;
     var colorMap;
+    var labelKey;
     if (side) {
       var attrKey = function(aggrAttr) {
         if (aggrAttr) {
@@ -907,6 +909,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
       colorKey = attrKey(side.edgeAttrs.edgeColor);
       colorMap = this.setupColorMap(
         edges, side.edgeAttrs.edgeColor, sideString, 'Edge Color', colorKey);
+      labelKey = attrKey(side.edgeAttrs.edgeLabel);
     }
 
     var edgeObjects = [];
@@ -930,12 +933,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
       var a = srcs[edge.a];
       var b = dsts[edge.b];
 
-      var color = UNCOLORED;
+      var color;
       if (colorKey && edge.attrs[colorKey].defined) {
         color = colorMap[edge.attrs[colorKey].double];
       }
-
-      var e = new Edge(a, b, edgeScale * width, color);
+      var label;
+      if (labelKey) {
+        label = edge.attrs[labelKey].string;
+      }
+      var e = new Edge(a, b, edgeScale * width, color, label);
       edgeObjects.push(e);
       this.edgeGroup.append(e.dom);
     }
@@ -1059,14 +1065,19 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
     }
   };
 
-  function Edge(src, dst, w, color) {
+  function Edge(src, dst, w, color, label) {
     this.src = src;
     this.dst = dst;
     this.w = w;
     this.first = svg.create('path', { 'class': 'first' });
     this.second = svg.create('path', { 'class': 'second' });
-    this.dom = svg.group([this.first, this.second], {'class': 'edge'});
-    this.dom.attr({ style: 'fill: ' + color });
+    if (color) {
+      this.first.attr({ style: 'stroke: ' + color });
+      this.second.attr({ style: 'stroke: ' + color });
+    }
+    var fontSize = 15;
+    this.label = svg.create('text', { 'font-size': fontSize + 'px' }).text(label || '');
+    this.dom = svg.group([this.second, this.first, this.label], {'class': 'edge'});
     var that = this;
     src.addMoveListener(function() { that.reposition(); });
     dst.addMoveListener(function() { that.reposition(); });
@@ -1097,6 +1108,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
       d: svg.arrow2(
         src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom),
       'stroke-width': avgZoom * this.w,
+    });
+    var arcParams = svg.arcParams(
+      src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
+    this.label.attr({
+      x: arcParams.x,
+      y: arcParams.y,
     });
   };
 

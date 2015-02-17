@@ -52,9 +52,6 @@ angular.module('biggraph').directive('projectGraph', function (util) {
                 });
               }
             }
-            console.log('BEFOREAFTER');
-            console.log(viewData.edgeAttrs);
-            console.log(edgeAttrs);
             q.edgeBundles.push({
               srcDiagramId: 'idx[' + i + ']',
               dstDiagramId: 'idx[' + i + ']',
