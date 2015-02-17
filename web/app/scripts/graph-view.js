@@ -724,6 +724,29 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
 
   GraphView.prototype.initLayout = function(vertices) {
     var positionAttr = (vertices.side.attrs.position) ? vertices.side.attrs.position.id : undefined;
+    var geoAttr = (vertices.side.attrs.geo) ? vertices.side.attrs.geo.id : undefined;
+    if (geoAttr !== undefined) {
+      var hw = 1280;
+      var background = svg.create('image', { width: hw, height: hw });
+      //var root = 'https://maps.googleapis.com/maps/api/staticmap?';
+      var root = '/staticmap.png?';
+      var style = 'feature:all|gamma:0.1';
+      var zoom = 1;
+      var center = '0,0';
+      var href = root + 'center=' + center + '&zoom=' + zoom + '&size=640x640&scale=2&style=' + style;
+      background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
+      background.x = 0;
+      background.y = 0;
+      background.reDraw = function() {
+        var zoom = this.offsetter.zoom;
+        background.attr({
+          x: this.screenX(), y: this.screenY(),
+          width: zoom * hw, height: zoom * hw,
+        });
+      };
+      vertices.offsetter.rule(background);
+      this.root.prepend(background);
+    }
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
       v.forceMass = 1;
@@ -731,6 +754,18 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
         var pos = v.data.attrs[positionAttr];
         v.x = pos.x;
         v.y = -pos.y;  // Flip Y axis to look more mathematical.
+        v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
+      }
+      if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {
+        var pos = v.data.attrs[geoAttr];
+        var lat = pos.x;
+        var lng = pos.y;
+        var w = 640;
+        var h = 640;
+        var z = Math.pow(2, 1);
+        v.x = z * w * (lng + 180) / 360;
+        v.y = z * h * (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2;
+        console.log('v', v.x, v.y);
         v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
       }
       v.forceOX = v.x;
