@@ -213,8 +213,9 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     requiredProperties: EdgeBundleProperties,
     nameOpt: Option[Symbol])
       extends ET[EdgeBundle](nameOpt) {
-    lazy val src = srcF
-    lazy val dst = dstF
+    private lazy val src = srcF
+    private lazy val dst = dstF
+    private lazy val idSet = idSetF
     override def set(target: MetaDataSet, eb: EdgeBundle): MetaDataSet = {
       assert(
         eb.properties.compliesWith(requiredProperties),
@@ -223,7 +224,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         templatesByName(src).asInstanceOf[VertexSetTemplate].set(target, eb.srcVertexSet)
       val withSrcDst =
         templatesByName(dst).asInstanceOf[VertexSetTemplate].set(withSrc, eb.dstVertexSet)
-      val withSrcDstIdSet = idSetF match {
+      val withSrcDstIdSet = idSet match {
         case Some(vsName) => templatesByName(vsName).asInstanceOf[VertexSetTemplate]
           .set(withSrcDst, eb.idSet)
         case None => withSrcDst
@@ -319,7 +320,13 @@ object EntityContainer {
 abstract class MagicOutput(instance: MetaGraphOperationInstance)
     extends MetaDataSetProvider with FieldNaming {
   class P[T <: MetaGraphEntity](entityConstructor: Symbol => T, nameOpt: Option[Symbol]) extends EntityContainer[T] {
-    lazy val name: Symbol = nameOpt.getOrElse(nameOf(this))
+    lazy val name: Symbol = {
+      val name = nameOpt.getOrElse(nameOf(this))
+      assert(!name.name.endsWith("-idSet"),
+        "Output names ending with '-idSet' are reserved for automatically" +
+          s" generated edge bundle id sets. Rejecting $name.")
+      name
+    }
     lazy val entity = entityConstructor(name)
 
     override def toString: String = {
@@ -335,7 +342,7 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
     src: => EntityContainer[VertexSet],
     dst: => EntityContainer[VertexSet],
     properties: EdgeBundleProperties = EdgeBundleProperties.default,
-    idSet: => EntityContainer[VertexSet] = null,
+    idSet: EntityContainer[VertexSet] = null,
     name: Symbol = null) = {
     // A "var" is used because the edge bundle and its idSet need each other's references.
     var eb: P[EdgeBundle] = null
