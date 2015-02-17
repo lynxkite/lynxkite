@@ -142,22 +142,14 @@ case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
   val typeTag = implicitly[TypeTag[T]]
 }
 
-trait InputSignature {
-  val vertexSets: Set[Symbol]
-  val edgeBundles: Map[Symbol, (Symbol, Symbol)]
-  val vertexAttributes: Map[Symbol, Symbol]
-  val edgeAttributes: Map[Symbol, Symbol]
-  val scalars: Set[Symbol]
-}
+case class InputSignature(
+  vertexSets: Set[Symbol],
+  edgeBundles: Set[Symbol],
+  attributes: Set[Symbol],
+  scalars: Set[Symbol])
 trait InputSignatureProvider {
   def inputSignature: InputSignature
 }
-case class SimpleInputSignature(
-  vertexSets: Set[Symbol] = Set(),
-  edgeBundles: Map[Symbol, (Symbol, Symbol)] = Map(),
-  vertexAttributes: Map[Symbol, Symbol] = Map(),
-  edgeAttributes: Map[Symbol, Symbol] = Map(),
-  scalars: Set[Symbol] = Set()) extends InputSignature
 
 object ReflectionMutex
 
@@ -294,18 +286,13 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   }
 
   lazy val inputSignature: InputSignature =
-    SimpleInputSignature(
+    InputSignature(
       vertexSets = templates.collect { case vs: VertexSetTemplate => vs.name }.toSet,
-      edgeBundles = templates.collect {
-        case eb: EdgeBundleTemplate =>
-          eb.name -> (eb.src, eb.dst)
-      }.toMap,
-      vertexAttributes = templates.collect {
-        case va: VertexAttributeTemplate[_] => va.name -> va.vs
-      }.toMap,
-      edgeAttributes = templates.collect {
-        case ea: EdgeAttributeTemplate[_] => ea.name -> ea.es
-      }.toMap,
+      edgeBundles = templates.collect { case eb: EdgeBundleTemplate => eb.name }.toSet,
+      attributes = templates.collect {
+        case a: VertexAttributeTemplate[_] => a.name
+        case a: EdgeAttributeTemplate[_] => a.name
+      }.toSet,
       scalars = templates.collect { case sc: ScalarTemplate[_] => sc.name }.toSet)
 
   private val templates = mutable.Buffer[ET[_ <: MetaGraphEntity]]()
@@ -452,11 +439,11 @@ trait MetaGraphOperationInstance {
   override def toString = toStringStruct.toString
   lazy val toStringStruct: StringStruct = {
     val op = operation.toStringStruct
-    val fixed = mutable.Set[Symbol]()
+    val fixed = mutable.Set[UUID]()
     val mentioned = mutable.Map[UUID, Symbol]()
     val span = mutable.Map[String, StringStruct]()
     def put(k: Symbol, v: MetaGraphEntity): Unit = {
-      if (!fixed.contains(k)) {
+      if (!fixed.contains(v.gUID)) {
         mentioned.get(v.gUID) match {
           case Some(k0) =>
             span(k.name) = StringStruct(k0.name)
@@ -469,15 +456,13 @@ trait MetaGraphOperationInstance {
     val inputSig: InputSignature = operation.inputSig
     for ((k, v) <- inputs.edgeBundles) {
       put(k, v)
-      fixed += inputSig.edgeBundles(k)._1
-      fixed += inputSig.edgeBundles(k)._2
+      fixed += v.srcVertexSet.gUID
+      fixed += v.dstVertexSet.gUID
+      fixed += v.idSet.gUID
     }
     for ((k, v) <- inputs.vertexAttributes) {
       put(k, v)
-      inputSig.vertexAttributes.get(k) match {
-        case Some(vsName) => fixed += vsName
-        case None => fixed += inputSig.edgeAttributes(k)
-      }
+      fixed += v.vertexSet.gUID
     }
     for ((k, v) <- inputs.vertexSets) {
       put(k, v)
@@ -586,49 +571,6 @@ object MetaDataSet {
       edgeBundles = all.collect { case (k, v: EdgeBundle) => (k, v) },
       vertexAttributes = all.collect { case (k, v: Attribute[_]) => (k, v) }.toMap,
       scalars = all.collect { case (k, v: Scalar[_]) => (k, v) }.toMap)
-  }
-  def applyWithSignature(signature: InputSignature,
-                         all: (Symbol, MetaGraphEntity)*): MetaDataSet = {
-    var res = MetaDataSet()
-    def addVS(name: Symbol, vs: VertexSet) {
-      assert(signature.vertexSets.contains(name), s"No such input vertex set: $name")
-      res ++= MetaDataSet(vertexSets = Map(name -> vs))
-    }
-    def addEB(name: Symbol, eb: EdgeBundle) {
-      val (srcName, dstName) = signature.edgeBundles(name)
-      res ++= MetaDataSet(edgeBundles = Map(name -> eb))
-      addVS(srcName, eb.srcVertexSet)
-      addVS(dstName, eb.dstVertexSet)
-    }
-    def addAttr(name: Symbol, attr: Attribute[_]) {
-      assert(
-        signature.vertexAttributes.contains(name) ||
-          signature.edgeAttributes.contains(name),
-        s"No such input attribute: $name")
-      res ++= MetaDataSet(vertexAttributes = Map(name -> attr))
-      signature.vertexAttributes.get(name) match {
-        case Some(vsName) =>
-          addVS(vsName, attr.vertexSet)
-        case None =>
-        // Edge bundles cannot be auto-added, because the attribute is for the idSet.
-      }
-    }
-    def addSC(name: Symbol, sc: Scalar[_]) {
-      assert(signature.scalars.contains(name), s"No such input scalar: $name")
-      res ++= MetaDataSet(scalars = Map(name -> sc))
-    }
-
-    all.foreach {
-      case (name, entity) =>
-        entity match {
-          case vs: VertexSet => addVS(name, vs)
-          case eb: EdgeBundle => addEB(name, eb)
-          case attr: Attribute[_] => addAttr(name, attr)
-          case sc: Scalar[_] => addSC(name, sc)
-        }
-    }
-
-    res
   }
 }
 

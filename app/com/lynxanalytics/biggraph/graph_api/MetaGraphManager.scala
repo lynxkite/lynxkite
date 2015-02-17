@@ -20,7 +20,7 @@ class MetaGraphManager(val repositoryPath: String) {
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
 
-    apply(operation, MetaDataSet.applyWithSignature(operation.inputSig, inputs: _*))
+    apply(operation, MetaDataSet(inputs.toMap))
   }
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
@@ -280,13 +280,10 @@ class MetaGraphManager(val repositoryPath: String) {
       MetaDataSet(
         op.inputSig.vertexSets
           .map(n => n -> vertexSet(inputs(n))).toMap,
-        op.inputSig.edgeBundles.keys
+        op.inputSig.edgeBundles
           .map(n => n -> edgeBundle(inputs(n))).toMap,
-        (op.inputSig.vertexAttributes.keys
-          .map(n => n -> vertexAttribute(inputs(n))) ++
-          op.inputSig.edgeAttributes.keys
-          .map(n => n -> vertexAttribute(inputs(n))))
-          .toMap,
+        op.inputSig.attributes
+          .map(n => n -> vertexAttribute(inputs(n))).toMap,
         op.inputSig.scalars
           .map(n => n -> scalar(inputs(n))).toMap))
   }
