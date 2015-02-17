@@ -6,7 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
- - Edge attributes can be visualizaed as colors and labels in sampled mode.
+ - Edge attributes can be visualized as colors and labels in sampled mode.
  - Discovered an issue that prevents compatibility from 1.0.0 and 1.0.1. Fortunately they were
    never marked as `stable`, so we are not making a heroic effort to maintain compatibility.
  - Visualize attributes of the type `(Double, Double)` as vertex positions.

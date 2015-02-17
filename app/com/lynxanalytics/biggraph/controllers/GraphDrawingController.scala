@@ -381,15 +381,15 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getAggregatedAttributeByCoord[From, To](
     ids: Set[ID],
-    attributeWihtAggregator: AttributeWithLocalAggregator[From, To],
+    attributeWithAggregator: AttributeWithLocalAggregator[From, To],
     idToCoordMapping: Map[ID, (Int, Int)]): Map[(Int, Int), DynamicValue] = {
 
     val attrMap = graph_operations.RestrictAttributeToIds.run(
-      attributeWihtAggregator.attr, ids).value.toMap
-    val byCoordMap = attributeWihtAggregator.aggregator.aggregateByKey(
+      attributeWithAggregator.attr, ids).value.toMap
+    val byCoordMap = attributeWithAggregator.aggregator.aggregateByKey(
       attrMap.toSeq.map { case (id, value) => idToCoordMapping(id) -> value })
-    implicit val ttT = attributeWihtAggregator.aggregator.outputTypeTag(
-      attributeWihtAggregator.attr.typeTag)
+    implicit val ttT = attributeWithAggregator.aggregator.outputTypeTag(
+      attributeWithAggregator.attr.typeTag)
     byCoordMap.mapValues(DynamicValue.convert[To](_))
   }
 
