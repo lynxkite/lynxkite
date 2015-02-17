@@ -134,14 +134,78 @@
   "edgeBundles": [{
     "srcIdx": 0, "dstIdx": 0,
     "edges": [
-      { "a": 1, "b": 2, "size": 230 },
-      { "a": 2, "b": 3, "size": 255 },
-      { "a": 3, "b": 4, "size": 2 },
-      { "a": 4, "b": 5, "size": 217 },
-      { "a": 4, "b": 0, "size": 664 },
-      { "a": 0, "b": 4, "size": 64 },
-      { "a": 1, "b": 3, "size": 168 },
-      { "a": 3, "b": 1, "size": 168 }
+      { "a": 1,
+        "b": 2,
+        "size": 230,
+        "attrs": {
+          "22:sum": { "double": 230, "string": "230", "defined": true },
+          "22:vector": { "double": 0, "string": "210,20", "defined": true },
+          "29:vector": { "double": 0, "string": "1st Jan, 31st Dec", "defined": true }
+        }
+      },
+      { "a": 2,
+        "b": 3,
+        "size": 255,
+        "attrs": {
+          "22:sum": { "double": 255, "string": "255", "defined": true },
+          "22:vector": { "double": 0, "string": "255", "defined": true },
+          "29:vector": { "double": 0, "string": "2st Feb", "defined": true }
+        }
+      },
+      { "a": 3,
+        "b": 4,
+        "size": 2,
+        "attrs": {
+          "22:sum": { "double": 2, "string": "2", "defined": true },
+          "22:vector": { "double": 0, "string": "1,1", "defined": true },
+          "29:vector": { "double": 0, "string": "15th Mar, 16th Apr", "defined": true }
+        }
+      },
+      { "a": 4,
+        "b": 5,
+        "size": 217,
+        "attrs": {
+          "22:sum": { "double": 217, "string": "217", "defined": true },
+          "22:vector": { "double": 0, "string": "100,107,10", "defined": true },
+          "29:vector": { "double": 0, "string": "", "defined": false }
+        }
+      },
+      { "a": 4,
+        "b": 0,
+        "size": 664,
+        "attrs": {
+          "22:sum": { "double": 664, "string": "664", "defined": true },
+          "22:vector": { "double": 0, "string": "664", "defined": true },
+          "29:vector": { "double": 0, "string": "15th Jun", "defined": true }
+        }
+      },
+      { "a": 0,
+        "b": 4,
+        "size": 64,
+        "attrs": {
+          "22:sum": { "double": 64, "string": "64", "defined": true },
+          "22:vector": { "double": 0, "string": "32,16,8,4,2,1,1", "defined": true },
+          "29:vector": { "double": 0, "string": "", "defined": false }
+        }
+      },
+      { "a": 1,
+        "b": 3,
+        "size": 168,
+        "attrs": {
+          "22:sum": { "double": 168, "string": "168", "defined": true },
+          "22:vector": { "double": 0, "string": "168", "defined": true },
+          "29:vector": { "double": 0, "string": "3rd May", "defined": true }
+        }
+      },
+      { "a": 3,
+        "b": 1,
+        "size": 168,
+        "attrs": {
+          "22:sum": { "double": 168, "string": "168", "defined": true },
+          "22:vector": { "double": 0, "string": "84,84", "defined": true },
+          "29:vector": { "double": 0, "string": "", "defined": false }
+        }
+      }
     ]
   },
   {
