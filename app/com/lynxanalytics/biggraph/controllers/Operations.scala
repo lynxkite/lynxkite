@@ -758,6 +758,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Vertex attributes to position"
+    val description =
+      """Creates an attribute of type <tt>(Double, Double)</tt> from two <tt>Double</tt> attributes.
+      The created attribute can be used as an X-Y or latitude-longitude location."""
+    def parameters = List(
+      Param("output", "Save as", defaultValue = "position"),
+      Param("x", "X or latitude", options = vertexAttributes[Double]),
+      Param("y", "Y or longitude", options = vertexAttributes[Double]))
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      val pos = {
+        val op = graph_operations.JoinAttributes[Double, Double]()
+        val x = project.vertexAttributes(params("x")).runtimeSafeCast[Double]
+        val y = project.vertexAttributes(params("y")).runtimeSafeCast[Double]
+        op(op.a, x)(op.b, y).result.attr
+      }
+      project.vertexAttributes(params("output")) = pos
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Edge graph"
     val description =
