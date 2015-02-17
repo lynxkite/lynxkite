@@ -102,6 +102,7 @@ angular.module('biggraph')
       vd.attrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
       vd.attrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
       vd.attrs.position = this.resolveVertexAttribute(this.state.attributeTitles.position);
+      vd.attrs.geo = this.resolveVertexAttribute(this.state.attributeTitles.geo);
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
 
@@ -289,6 +290,10 @@ angular.module('biggraph')
         } else if (setting === 'image') {
           this.state.attributeTitles.color = undefined;
           this.state.attributeTitles.icon = undefined;
+        } else if (setting === 'position') {
+          this.state.attributeTitles.geo = undefined;
+        } else if (setting === 'geo') {
+          this.state.attributeTitles.position = undefined;
         }
       }
     };
