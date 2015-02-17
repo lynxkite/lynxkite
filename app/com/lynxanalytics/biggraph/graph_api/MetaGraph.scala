@@ -243,7 +243,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         templatesByName(vs).asInstanceOf[VertexSetTemplate].set(target, va.vertexSet)
       super.set(withVs, va)
     }
-    def data(implicit dataSet: DataSet) = dataSet.vertexAttributes(name).asInstanceOf[VertexAttributeData[T]]
+    def data(implicit dataSet: DataSet) = dataSet.attributes(name).asInstanceOf[AttributeData[T]]
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
@@ -256,7 +256,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         s"$va is for ${va.vertexSet}, not for ${eb.idSet}")
       super.set(target, va)
     }
-    def data(implicit dataSet: DataSet) = dataSet.vertexAttributes(name).asInstanceOf[VertexAttributeData[T]]
+    def data(implicit dataSet: DataSet) = dataSet.attributes(name).asInstanceOf[AttributeData[T]]
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
@@ -460,14 +460,13 @@ trait MetaGraphOperationInstance {
         }
       }
     }
-    val inputSig: InputSignature = operation.inputSig
     for ((k, v) <- inputs.edgeBundles) {
       put(k, v)
       fixed += v.srcVertexSet.gUID
       fixed += v.dstVertexSet.gUID
       fixed += v.idSet.gUID
     }
-    for ((k, v) <- inputs.vertexAttributes) {
+    for ((k, v) <- inputs.attributes) {
       put(k, v)
       fixed += v.vertexSet.gUID
     }
@@ -509,17 +508,11 @@ class EdgeBundleData(val entity: EdgeBundle,
   val edgeBundle = entity
 }
 
-sealed trait AttributeData[T] extends EntityRDDData {
-  val typeTag: TypeTag[T]
-  def runtimeSafeCast[S: TypeTag]: AttributeData[S]
-  val rdd: AttributeRDD[T]
-}
-
-class VertexAttributeData[T](val entity: Attribute[T],
-                             val rdd: AttributeRDD[T])
-    extends AttributeData[T] with RuntimeSafeCastable[T, VertexAttributeData] {
-  val vertexAttribute = entity
-  val typeTag = vertexAttribute.typeTag
+class AttributeData[T](val entity: Attribute[T],
+                       val rdd: AttributeRDD[T])
+    extends EntityRDDData with RuntimeSafeCastable[T, AttributeData] {
+  val attribute = entity
+  val typeTag = attribute.typeTag
 }
 
 class ScalarData[T](val entity: Scalar[T],
@@ -532,15 +525,15 @@ class ScalarData[T](val entity: Scalar[T],
 // A bundle of metadata types.
 case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
-                       vertexAttributes: Map[Symbol, Attribute[_]] = Map(),
+                       attributes: Map[Symbol, Attribute[_]] = Map(),
                        scalars: Map[Symbol, Scalar[_]] = Map())
     extends ToJson {
   val all: Map[Symbol, MetaGraphEntity] =
-    vertexSets ++ edgeBundles ++ vertexAttributes ++ scalars
+    vertexSets ++ edgeBundles ++ attributes ++ scalars
   assert(all.size ==
-    vertexSets.size + edgeBundles.size + vertexAttributes.size + scalars.size,
+    vertexSets.size + edgeBundles.size + attributes.size + scalars.size,
     "Cross type collision %s %s %s".format(
-      vertexSets, edgeBundles, vertexAttributes))
+      vertexSets, edgeBundles, attributes))
 
   override def toJson = {
     import play.api.libs.json.{ JsObject, JsString }
@@ -559,7 +552,7 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
     return MetaDataSet(
       vertexSets ++ mds.vertexSets,
       edgeBundles ++ mds.edgeBundles,
-      vertexAttributes ++ mds.vertexAttributes,
+      attributes ++ mds.attributes,
       scalars ++ mds.scalars)
   }
 
@@ -576,7 +569,7 @@ object MetaDataSet {
     MetaDataSet(
       vertexSets = all.collect { case (k, v: VertexSet) => (k, v) },
       edgeBundles = all.collect { case (k, v: EdgeBundle) => (k, v) },
-      vertexAttributes = all.collect { case (k, v: Attribute[_]) => (k, v) }.toMap,
+      attributes = all.collect { case (k, v: Attribute[_]) => (k, v) }.toMap,
       scalars = all.collect { case (k, v: Scalar[_]) => (k, v) }.toMap)
   }
 }
@@ -584,16 +577,16 @@ object MetaDataSet {
 // A bundle of data types.
 case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
                    edgeBundles: Map[Symbol, EdgeBundleData] = Map(),
-                   vertexAttributes: Map[Symbol, VertexAttributeData[_]] = Map(),
+                   attributes: Map[Symbol, AttributeData[_]] = Map(),
                    scalars: Map[Symbol, ScalarData[_]] = Map()) {
   def metaDataSet = MetaDataSet(
     vertexSets.mapValues(_.vertexSet),
     edgeBundles.mapValues(_.edgeBundle),
-    vertexAttributes.mapValues(_.vertexAttribute),
+    attributes.mapValues(_.attribute),
     scalars.mapValues(_.scalar))
 
   def all: Map[Symbol, EntityData] =
-    vertexSets ++ edgeBundles ++ vertexAttributes ++ scalars
+    vertexSets ++ edgeBundles ++ attributes ++ scalars
 }
 
 object DataSet {
@@ -601,7 +594,7 @@ object DataSet {
     DataSet(
       vertexSets = all.collect { case (k, v: VertexSetData) => (k, v) },
       edgeBundles = all.collect { case (k, v: EdgeBundleData) => (k, v) },
-      vertexAttributes = all.collect { case (k, v: VertexAttributeData[_]) => (k, v) }.toMap,
+      attributes = all.collect { case (k, v: AttributeData[_]) => (k, v) }.toMap,
       scalars = all.collect { case (k, v: ScalarData[_]) => (k, v) }.toMap)
   }
 }
@@ -628,8 +621,8 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
     }
   }
 
-  def apply[T](vertexAttribute: Attribute[T], rdd: AttributeRDD[T]): Unit = {
-    addData(new VertexAttributeData(vertexAttribute, rdd))
+  def apply[T](attribute: Attribute[T], rdd: AttributeRDD[T]): Unit = {
+    addData(new AttributeData(attribute, rdd))
   }
 
   def apply[T](scalar: Scalar[T], value: T): Unit = {
