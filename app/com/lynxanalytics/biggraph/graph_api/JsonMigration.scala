@@ -53,7 +53,7 @@ object MetaRepositoryManager {
   // If the newest repo belongs to an older version, it performs migration.
   // If the newest repo belongs to a newer version, an exception is raised.
   private def findCurrentRepository(repo: File, current: JsonMigration): File = {
-    val dirs = repo.listFiles
+    val dirs = Option(repo.listFiles).getOrElse(Array())
     import JsonMigration.versionOrdering
     import JsonMigration.versionOrdering.mkOrderingOps
     case class DV(dir: File, version: JsonMigration.VersionMap)

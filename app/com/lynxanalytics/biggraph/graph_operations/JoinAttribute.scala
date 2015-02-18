@@ -19,6 +19,13 @@ object JoinAttributes extends OpFromJson {
     val attr = vertexAttribute[(A, B)](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = JoinAttributes()
+  def run[A, B](a: Attribute[A], b: Attribute[B])(
+    implicit manager: MetaGraphManager): Attribute[(A, B)] = {
+
+    import Scripting._
+    val op = JoinAttributes[A, B]()
+    op(op.a, a)(op.b, b).result.attr
+  }
 }
 import JoinAttributes._
 case class JoinAttributes[A, B]()
