@@ -36,7 +36,7 @@ var SVG_UTIL = {
     return ' ' + Array.prototype.slice.call(arguments).join(' ') + ' ';
   },
 
-  arc: function(r, x, y) { return SVG_UTIL.draw('A', r, r, 0, 0, 0, x, y); },
+  arc: function(r, x, y, dir) { return SVG_UTIL.draw('A', r, r, 0, 0, dir, x, y); },
 
   arcParams: function(ax, ay, bx, by, zoom) {
     if (ax === bx && ay === by) {
@@ -57,12 +57,12 @@ var SVG_UTIL = {
 
   arrow1: function(ax, ay, bx, by, zoom) {
     var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
-    return SVG_UTIL.draw('M', ax, ay) + SVG_UTIL.arc(a.r, a.x, a.y);
+    return SVG_UTIL.draw('M', ax, ay) + SVG_UTIL.arc(a.r, a.x, a.y, 0);
   },
 
   arrow2: function(ax, ay, bx, by, zoom) {
     var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
-    return SVG_UTIL.draw('M', a.x, a.y) + SVG_UTIL.arc(a.r, bx, by);
+    return SVG_UTIL.draw('M', bx, by) + SVG_UTIL.arc(a.r, a.x, a.y, 1);
   },
 
   group: function(l, attrs) {
