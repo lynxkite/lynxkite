@@ -449,7 +449,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val attributesWithAggregators: Map[String, AttributeWithLocalAggregator[_, _]] =
           request.attrs.map(
             attr => (attr.attributeId + ":" + attr.aggregator) -> AttributeWithLocalAggregator(
-              metaManager.vertexAttribute(attr.attributeId.asUUID),
+              metaManager.attribute(attr.attributeId.asUUID),
               attr.aggregator)).toMap
         val attributeValues = attributesWithAggregators.mapValues(
           getAggregatedAttributeByCoord(filteredEdgeSetIDs, _, idToCoordMapping))
