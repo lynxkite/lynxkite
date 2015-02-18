@@ -73,7 +73,16 @@ class ValidateOperationsTest extends FunSuite with TestGraphOp {
     val e = intercept[java.lang.AssertionError] {
       op(op.es1, s1.es1)(op.edgeAttr, s2.edgeAttr)
     }
-    assert(e.getMessage.contains("edgeAttr of (Source of seed=2) is for es1-idSet of (Source of seed=2), not for es1-idSet of (Source of seed=1)"), e)
+    assert(e.getMessage.contains(
+      "'edgeAttr = edgeAttr of (Source of seed=2) is for" +
+        " es1-idSet of (Source of seed=2), not for es1-idSet of (Source of seed=1)"), e)
+  }
+  test("edge attribute set before edge bundle") {
+    val e = intercept[java.lang.AssertionError] {
+      op(op.edgeAttr, s2.edgeAttr)(op.es1, s1.es1)
+    }
+    assert(e.getMessage.contains(
+      "The edge bundle input ('es1) has to be provided before the attribute ('edgeAttr)"), e)
   }
   test("src & dst are good, idSet is bad") {
     op(op.es1, s1.es2) // No idSet requirement, substitute is accepted.

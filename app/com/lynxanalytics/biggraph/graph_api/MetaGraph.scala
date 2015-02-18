@@ -250,11 +250,13 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   class EdgeAttributeTemplate[T](esF: => Symbol, nameOpt: Option[Symbol])
       extends ET[Attribute[T]](nameOpt) {
     lazy val es = esF
-    override def set(target: MetaDataSet, va: Attribute[T]): MetaDataSet = {
+    override def set(target: MetaDataSet, ea: Attribute[T]): MetaDataSet = {
+      assert(target.all.contains(es),
+        s"The edge bundle input ($es) has to be provided before the attribute ($name).")
       val eb = templatesByName(es).asInstanceOf[EdgeBundleTemplate].get(target)
-      assert(eb.idSet == va.vertexSet,
-        s"$va is for ${va.vertexSet}, not for ${eb.idSet}")
-      super.set(target, va)
+      assert(eb.idSet == ea.vertexSet,
+        s"$name = $ea is for ${ea.vertexSet}, not for ${eb.idSet}")
+      super.set(target, ea)
     }
     def data(implicit dataSet: DataSet) = dataSet.attributes(name).asInstanceOf[AttributeData[T]]
     def rdd(implicit dataSet: DataSet) = data.rdd
