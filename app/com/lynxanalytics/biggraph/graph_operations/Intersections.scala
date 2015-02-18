@@ -21,7 +21,9 @@ object VertexSetIntersection extends OpFromJson {
     val firstEmbedding = edgeBundle(
       intersection, input.vss(0).entity, EdgeBundleProperties.embedding)
   }
-  def fromJson(j: JsValue) = VertexSetIntersection((j \ "numVertexSets").as[Int])
+  def fromJson(j: JsValue) = VertexSetIntersection(
+    (j \ "numVertexSets").as[Int],
+    (j \ "heavy").as[Boolean])
 }
 case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
     extends TypedMetaGraphOp[VertexSetIntersection.Input, VertexSetIntersection.Output] {
@@ -34,7 +36,7 @@ case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
   @transient override lazy val inputs = new Input(numVertexSets)
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("numVertexSets" -> numVertexSets)
+  override def toJson = Json.obj("numVertexSets" -> numVertexSets, "heavy" -> heavy)
 
   def execute(inputDatas: DataSet,
               o: Output,
