@@ -722,41 +722,35 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   };
 
+  // The size of the Earth in lat/long view. It doesn't make much difference,
+  // just has to be a reasonable value to avoid too small/too large numbers.
+  var GLOBE_SIZE = 500;
+  // Constant to match Google Maps projection.
+  var GM_MULT = 0.403;
+
   GraphView.prototype.initLayout = function(vertices) {
     function lon2x(lon) {
-      return zoomMultiplier * mapSize * lon / 360;
+      return GLOBE_SIZE * lon / 360;
     }
     function lat2y(lat) {
-      return -zoomMultiplier * mapSize * Math.log(
+      return -GLOBE_SIZE * Math.log(
                  Math.tan(lat * Math.PI / 180) +
                  1 / Math.cos(lat * Math.PI / 180)
               ) / Math.PI / 2;
     }
     function x2lon(x) {
-      return x * 360 / zoomMultiplier / mapSize;
+      return x * 360 / GLOBE_SIZE;
     }
     function y2lat(y) {
-      return Math.atan(Math.sinh(y * Math.PI * 2 / zoomMultiplier / mapSize)) * 180 / Math.PI;
+      return Math.atan(Math.sinh(y * Math.PI * 2 / GLOBE_SIZE)) * 180 / Math.PI;
     }
     var positionAttr = (vertices.side.attrs.position) ? vertices.side.attrs.position.id : undefined;
     var geoAttr = (vertices.side.attrs.geo) ? vertices.side.attrs.geo.id : undefined;
     if (geoAttr !== undefined) {
-      var mapSize = 640;
-      var zoomLevel = 12;
-      var zoomMultiplier = Math.pow(2, zoomLevel) * 0.403;  // Magic constant to match Google Maps.
-      var background = svg.create('image');
+      var background = svg.create('image', { x: 0, y: 0, width: 0, height: 0 });
       var root = 'https://maps.googleapis.com/maps/api/staticmap?';
       //var root = '/staticmap.png?';
-      var style = 'feature:all|gamma:0.1';
-      var clat = 47.497912, clon = 19.040235;
-      var href = (
-          root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
-          '&size=640x640&scale=2&style=' + style);
-      background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
-      background.x = -mapSize / 2;
-      background.y = -mapSize / 2;
-      background.x += lon2x(clon);
-      background.y += lat2y(clat);
+      var style = 'feature:all|gamma:0.1|saturation:-80';
       var refresh;
       var that = this;
       var lastZoom, lastXOff, lastYOff;
@@ -764,7 +758,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         var offsetter = background.offsetter;
         background.attr({
           x: background.screenX(), y: background.screenY(),
-          width: offsetter.zoom * mapSize, height: offsetter.zoom * mapSize,
+          width: offsetter.zoom * background.size, height: offsetter.zoom * background.size,
         });
         if (lastZoom !== offsetter.zoom ||
             lastXOff !== offsetter.xOff ||
@@ -775,8 +769,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           $timeout.cancel(refresh);
           refresh = $timeout(function() {
             console.log('timeout');
-            var x = (offsetter.xOff - vertices.halfColumnWidth) / offsetter.zoom;
-            var y = (offsetter.yOff - that.svg.height() / 2) / offsetter.zoom;
+            var w = vertices.halfColumnWidth * 2;
+            var h = that.svg.height();
+            var x = (offsetter.xOff - w / 2) / offsetter.zoom;
+            var y = (offsetter.yOff - h / 2) / offsetter.zoom;
+            var zoomLevel = Math.log2(GLOBE_SIZE * offsetter.zoom / Math.max(w, h) / GM_MULT);
+            zoomLevel = Math.max(0, Math.floor(zoomLevel));
             var clat = y2lat(y);
             var clon = -x2lon(x);
             var href = (
@@ -785,8 +783,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
             background.imagesLoaded(function() {
               console.log('imagesLoaded');
-              background.x = -x - mapSize / 2;
-              background.y = -y - mapSize / 2;
+              background.size = GLOBE_SIZE * Math.pow(2, -zoomLevel) / GM_MULT;
+              background.x = -x - background.size / 2;
+              background.y = -y - background.size / 2;
               background.reDraw();
             });
           }, 1000);
