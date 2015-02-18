@@ -23,10 +23,13 @@ object VertexSetIntersection extends OpFromJson {
   }
   def fromJson(j: JsValue) = VertexSetIntersection((j \ "numVertexSets").as[Int])
 }
-case class VertexSetIntersection(numVertexSets: Int)
+case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
     extends TypedMetaGraphOp[VertexSetIntersection.Input, VertexSetIntersection.Output] {
 
   import VertexSetIntersection._
+
+  override val isHeavy = heavy
+
   assert(numVertexSets >= 1)
   @transient override lazy val inputs = new Input(numVertexSets)
 
