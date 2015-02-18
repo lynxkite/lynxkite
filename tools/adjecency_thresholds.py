@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+'''Outputs a matrix with minimal intersection sizes for cliques to be in the same community'''
+
 import math
 
 adjacencyThreshold = 0.6
