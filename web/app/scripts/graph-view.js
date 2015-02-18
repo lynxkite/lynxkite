@@ -722,77 +722,94 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   };
 
-  // The size of the Earth in lat/long view. It doesn't make much difference,
-  // just has to be a reasonable value to avoid too small/too large numbers.
-  var GLOBE_SIZE = 500;
-  // Constant to match Google Maps projection.
-  var GM_MULT = 0.403;
+  function Map(gv, vertices) {
+    this.gv = gv;
+    this.vertices = vertices;
+    this.group = svg.create('g', {'class': 'map'});
+    this.gv.root.prepend(this.group);
+    // The size of the Earth in lat/long view. It doesn't make much difference,
+    // just has to be a reasonable value to avoid too small/too large numbers.
+    this.GLOBE_SIZE = 500;
+    // Constant to match Google Maps projection.
+    this.GM_MULT = 0.403;
+    this.root = 'https://maps.googleapis.com/maps/api/staticmap?';
+    this.style = 'feature:all|gamma:0.1|saturation:-80';
+    this.images = [];
+    this.vertices.offsetter.rule(this);
+  }
+  Map.prototype.lon2x = function(lon) {
+    return this.GLOBE_SIZE * lon / 360;
+  };
+  Map.prototype.lat2y = function(lat) {
+    return -this.GLOBE_SIZE * Math.log(
+        Math.tan(lat * Math.PI / 180) +
+        1 / Math.cos(lat * Math.PI / 180)
+        ) / Math.PI / 2;
+  };
+  Map.prototype.x2lon = function(x) {
+    return x * 360 / this.GLOBE_SIZE;
+  };
+  Map.prototype.y2lat = function(y) {
+    return Math.atan(Math.sinh(y * Math.PI * 2 / this.GLOBE_SIZE)) * 180 / Math.PI;
+  };
+  Map.prototype.reDraw = function() {
+    var offsetter = this.offsetter;
+    for (var i = 0; i < this.images.length; ++i) {
+      var image = this.images[i];
+      image.attr({
+        x: image.x * offsetter.zoom + offsetter.xOff,
+        y: image.y * offsetter.zoom + offsetter.yOff,
+        width: offsetter.zoom * image.size,
+        height: offsetter.zoom * image.size,
+      });
+    }
+    if (this.lastZoom !== offsetter.zoom ||
+        this.lastXOff !== offsetter.xOff ||
+        this.lastYOff !== offsetter.yOff) {
+      this.lastZoom = offsetter.zoom;
+      this.lastXOff = offsetter.xOff;
+      this.lastYOff = offsetter.yOff;
+      $timeout.cancel(this.refresh);
+      var that = this;
+      this.refresh = $timeout(function() { that.update(); }, 1000);
+    }
+  };
+  Map.prototype.update = function() {
+    console.log('timeout');
+    var w = this.vertices.halfColumnWidth * 2;
+    var h = this.gv.svg.height();
+    var offsetter = this.offsetter;
+    var x = (offsetter.xOff - w / 2) / offsetter.zoom;
+    var y = (offsetter.yOff - h / 2) / offsetter.zoom;
+    var zoomLevel = Math.log2(this.GLOBE_SIZE * offsetter.zoom / Math.max(w, h) / this.GM_MULT);
+    zoomLevel = Math.max(0, Math.floor(zoomLevel));
+    var clat = this.y2lat(y);
+    var clon = -this.x2lon(x);
+    var image = svg.create('image');
+    var href = (
+      this.root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
+      '&size=640x640&scale=2&style=' + this.style);
+    image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
+    image.size = this.GLOBE_SIZE * Math.pow(2, -zoomLevel) / this.GM_MULT;
+    image.x = -x - image.size / 2;
+    image.y = -y - image.size / 2;
+    this.group.append(image);
+    var images = this.images;
+    images.push(image);
+    // Discard old images, keeping the two most recent.
+    for (var i = 0; i < images.length - 2; ++i) {
+      images[i].remove();
+    }
+    images.splice(0, images.length - 2);
+    this.reDraw();
+  };
 
   GraphView.prototype.initLayout = function(vertices) {
-    function lon2x(lon) {
-      return GLOBE_SIZE * lon / 360;
-    }
-    function lat2y(lat) {
-      return -GLOBE_SIZE * Math.log(
-                 Math.tan(lat * Math.PI / 180) +
-                 1 / Math.cos(lat * Math.PI / 180)
-              ) / Math.PI / 2;
-    }
-    function x2lon(x) {
-      return x * 360 / GLOBE_SIZE;
-    }
-    function y2lat(y) {
-      return Math.atan(Math.sinh(y * Math.PI * 2 / GLOBE_SIZE)) * 180 / Math.PI;
-    }
     var positionAttr = (vertices.side.attrs.position) ? vertices.side.attrs.position.id : undefined;
     var geoAttr = (vertices.side.attrs.geo) ? vertices.side.attrs.geo.id : undefined;
+    var map;
     if (geoAttr !== undefined) {
-      var background = svg.create('image', { x: 0, y: 0, width: 0, height: 0 });
-      var root = 'https://maps.googleapis.com/maps/api/staticmap?';
-      //var root = '/staticmap.png?';
-      var style = 'feature:all|gamma:0.1|saturation:-80';
-      var refresh;
-      var that = this;
-      var lastZoom, lastXOff, lastYOff;
-      background.reDraw = function() {
-        var offsetter = background.offsetter;
-        background.attr({
-          x: background.screenX(), y: background.screenY(),
-          width: offsetter.zoom * background.size, height: offsetter.zoom * background.size,
-        });
-        if (lastZoom !== offsetter.zoom ||
-            lastXOff !== offsetter.xOff ||
-            lastYOff !== offsetter.yOff) {
-          lastZoom = offsetter.zoom;
-          lastXOff = offsetter.xOff;
-          lastYOff = offsetter.yOff;
-          $timeout.cancel(refresh);
-          refresh = $timeout(function() {
-            console.log('timeout');
-            var w = vertices.halfColumnWidth * 2;
-            var h = that.svg.height();
-            var x = (offsetter.xOff - w / 2) / offsetter.zoom;
-            var y = (offsetter.yOff - h / 2) / offsetter.zoom;
-            var zoomLevel = Math.log2(GLOBE_SIZE * offsetter.zoom / Math.max(w, h) / GM_MULT);
-            zoomLevel = Math.max(0, Math.floor(zoomLevel));
-            var clat = y2lat(y);
-            var clon = -x2lon(x);
-            var href = (
-                root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
-                '&size=640x640&scale=2&style=' + style);
-            background[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
-            background.imagesLoaded(function() {
-              console.log('imagesLoaded');
-              background.size = GLOBE_SIZE * Math.pow(2, -zoomLevel) / GM_MULT;
-              background.x = -x - background.size / 2;
-              background.y = -y - background.size / 2;
-              background.reDraw();
-            });
-          }, 1000);
-        }
-      };
-      vertices.offsetter.rule(background);
-      this.root.prepend(background);
+      map = new Map(this, vertices);
     }
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
@@ -806,8 +823,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {
         pos = v.data.attrs[geoAttr];
-        v.x = lon2x(pos.y);
-        v.y = lat2y(pos.x);
+        v.x = map.lon2x(pos.y);
+        v.y = map.lat2y(pos.x);
         v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
       }
       v.forceOX = v.x;
