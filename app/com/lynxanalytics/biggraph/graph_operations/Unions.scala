@@ -28,8 +28,10 @@ object VertexSetUnion extends OpFromJson {
 }
 case class VertexSetUnion(numVertexSets: Int)
     extends TypedMetaGraphOp[VertexSetUnion.Input, VertexSetUnion.Output] {
-
   import VertexSetUnion._
+
+  override val isHeavy = true
+
   assert(numVertexSets >= 1)
   @transient override lazy val inputs = new Input(numVertexSets)
 
@@ -87,8 +89,10 @@ object EdgeBundleUnion extends OpFromJson {
 }
 case class EdgeBundleUnion(numEdgeBundles: Int)
     extends TypedMetaGraphOp[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
-
   import EdgeBundleUnion._
+
+  override val isHeavy = true
+
   assert(numEdgeBundles >= 1)
   @transient override lazy val inputs = new Input(numEdgeBundles)
 
