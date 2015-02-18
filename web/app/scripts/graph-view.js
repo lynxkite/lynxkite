@@ -742,7 +742,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var geoAttr = (vertices.side.attrs.geo) ? vertices.side.attrs.geo.id : undefined;
     if (geoAttr !== undefined) {
       var mapSize = 640;
-      var zoomLevel = 3;
+      var zoomLevel = 12;
       var zoomMultiplier = Math.pow(2, zoomLevel) * 0.403;  // Magic constant to match Google Maps.
       var background = svg.create('image');
       var root = 'https://maps.googleapis.com/maps/api/staticmap?';
