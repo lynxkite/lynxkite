@@ -12,7 +12,7 @@ object AddReversedEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
     val esPlus = edgeBundle(inputs.vs.entity, inputs.vs.entity)
-    val injection = edgeBundle(
+    val newToOriginal = edgeBundle(
       esPlus.idSet, inputs.es.idSet,
       EdgeBundleProperties.surjection)
   }
@@ -33,6 +33,8 @@ case class AddReversedEdges() extends TypedMetaGraphOp[Input, Output] {
     val reverseAdded: SortedRDD[ID, Edge] = es.flatMapValues(e => Iterator(e, Edge(e.dst, e.src)))
     val renumbered: SortedRDD[ID, (ID, Edge)] = reverseAdded.randomNumbered(es.partitioner.get)
     output(o.esPlus, renumbered.mapValues { case (oldID, e) => e })
-    output(o.injection, renumbered.mapValuesWithKeys { case (newID, (oldID, e)) => Edge(newID, oldID) })
+    output(
+      o.newToOriginal,
+      renumbered.mapValuesWithKeys { case (newID, (oldID, e)) => Edge(newID, oldID) })
   }
 }

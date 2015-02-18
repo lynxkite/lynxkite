@@ -342,11 +342,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
       f => s"${f.attributeName} ${f.valueSpec}"
     }
     project.checkpoint("Filter " + filterStrings.mkString(", ")) {
-      project.pullBackWithInjection(vertexEmbedding)
+      project.pullBack(vertexEmbedding)
       if (edgeFilters.nonEmpty) {
         val edgeEmbedding =
           FEFilters.embedFilteredVertices(project.edgeBundle.idSet, edgeFilters)
-        project.pullBackEdgesWithInjection(edgeEmbedding)
+        project.pullBackEdges(edgeEmbedding)
       }
     }
   }

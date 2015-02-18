@@ -230,63 +230,63 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
   }
 
-  def pullBackEdgesWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
+  def pullBackEdges(injection: EdgeBundle): Unit = manager.synchronized {
     val op = graph_operations.PulledOverEdges()
     val newEB = op(op.originalEB, edgeBundle)(op.injection, injection).result.pulledEB
-    pullBackEdgesWithInjection(edgeBundle, edgeAttributes.toIndexedSeq, newEB, injection)
+    pullBackEdges(edgeBundle, edgeAttributes.toIndexedSeq, newEB, injection)
   }
-  def pullBackEdgesWithInjection(
+  def pullBackEdges(
     origEdgeBundle: EdgeBundle,
     origEAttrs: Seq[(String, Attribute[_])],
     newEdgeBundle: EdgeBundle,
-    injection: EdgeBundle): Unit = manager.synchronized {
+    pullBundle: EdgeBundle): Unit = manager.synchronized {
 
-    assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
-      s"Not an injection: $injection")
-    assert(injection.srcVertexSet.gUID == newEdgeBundle.idSet.gUID,
-      s"Wrong source: $injection")
-    assert(injection.dstVertexSet.gUID == origEdgeBundle.idSet.gUID,
-      s"Wrong destination: $injection")
+    assert(pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
+      s"Not a partial function: $pullBundle")
+    assert(pullBundle.srcVertexSet.gUID == newEdgeBundle.idSet.gUID,
+      s"Wrong source: $pullBundle")
+    assert(pullBundle.dstVertexSet.gUID == origEdgeBundle.idSet.gUID,
+      s"Wrong destination: $pullBundle")
 
     edgeBundle = newEdgeBundle
 
     origEAttrs.foreach {
       case (name, attr) =>
         edgeAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
     }
   }
 
-  def pullBackWithInjection(injection: EdgeBundle): Unit = manager.synchronized {
-    assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
-      s"Not an injection: $injection")
-    assert(injection.dstVertexSet.gUID == vertexSet.gUID,
-      s"Wrong destination: $injection")
+  def pullBack(pullBundle: EdgeBundle): Unit = manager.synchronized {
+    assert(pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
+      s"Not a partial function: $pullBundle")
+    assert(pullBundle.dstVertexSet.gUID == vertexSet.gUID,
+      s"Wrong destination: $pullBundle")
     val origVS = vertexSet
     val origVAttrs = vertexAttributes.toIndexedSeq
     val origEB = edgeBundle
     val origEAttrs = edgeAttributes.toIndexedSeq
 
-    updateVertexSet(injection.srcVertexSet, killSegmentations = false)
+    updateVertexSet(pullBundle.srcVertexSet, killSegmentations = false)
     origVAttrs.foreach {
       case (name, attr) =>
         vertexAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, injection)
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
     }
 
     if (origEB != null) {
       val iop = graph_operations.InducedEdgeBundle()
       val induction = iop(
-        iop.srcMapping, graph_operations.ReverseEdges.run(injection))(
-          iop.dstMapping, graph_operations.ReverseEdges.run(injection))(
+        iop.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
+          iop.dstMapping, graph_operations.ReverseEdges.run(pullBundle))(
             iop.edges, origEB).result
-      pullBackEdgesWithInjection(origEB, origEAttrs, induction.induced, induction.embedding)
+      pullBackEdges(origEB, origEAttrs, induction.induced, induction.embedding)
     }
 
     segmentations.foreach { seg =>
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(
-        op.srcMapping, graph_operations.ReverseEdges.run(injection))(
+        op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
           op.edges, seg.belongsTo).result.induced
     }
 
@@ -294,7 +294,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val seg = asSegmentation
       val op = graph_operations.InducedEdgeBundle(induceSrc = false)
       seg.belongsTo = op(
-        op.dstMapping, graph_operations.ReverseEdges.run(injection))(
+        op.dstMapping, graph_operations.ReverseEdges.run(pullBundle))(
           op.edges, seg.belongsTo).result.induced
     }
   }
