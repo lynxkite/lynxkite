@@ -739,6 +739,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.GLOBE_SIZE = 500;
     // Constant to match Google Maps projection.
     this.GM_MULT = 0.403;
+    // How much to wait after pan/zoom events before requesting a new map.
+    this.NAVIGATION_DELAY = 1000;  // Milliseconds.
     this.root = 'https://maps.googleapis.com/maps/api/staticmap?';
     this.style = 'feature:all|gamma:0.1|saturation:-80';
     this.images = [];
@@ -778,11 +780,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.lastYOff = offsetter.yOff;
       $timeout.cancel(this.refresh);
       var that = this;
-      this.refresh = $timeout(function() { that.update(); }, 1000);
+      this.refresh = $timeout(function() { that.update(); }, this.NAVIGATION_DELAY);
     }
   };
   Map.prototype.update = function() {
-    console.log('timeout');
     var w = this.vertices.halfColumnWidth * 2;
     var h = this.gv.svg.height();
     var offsetter = this.offsetter;
