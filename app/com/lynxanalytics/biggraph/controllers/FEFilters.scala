@@ -13,7 +13,7 @@ case class FEVertexAttributeFilter(
 
   def attribute(
     implicit manager: MetaGraphManager): Attribute[_] = {
-    manager.vertexAttribute(attributeId.asUUID)
+    manager.attribute(attributeId.asUUID)
   }
 
   def toFilteredAttribute(
