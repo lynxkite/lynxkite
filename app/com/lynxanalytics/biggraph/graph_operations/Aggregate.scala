@@ -145,6 +145,12 @@ trait LocalAggregator[From, To] extends ToJson {
   def outputTypeTag(inputTypeTag: TypeTag[From]): TypeTag[To]
   // aggregate() can assume that values is non-empty.
   def aggregate(values: Iterable[From]): To
+
+  // Aggregates all values belonging to the same key using this aggregator.
+  def aggregateByKey[K](input: Seq[(K, From)]): Map[K, To] = {
+    val groupped = input.groupBy(_._1)
+    groupped.mapValues(group => aggregate(group.map(_._2)))
+  }
 }
 // Aggregates from From to Intermediate and at the end calls finalize() to turn
 // Intermediate into To. So Intermediate can contain extra data over what is
