@@ -11,10 +11,10 @@ class BundleChain(bundles: Seq[EdgeBundle],
   weightsParam.foreach { weightsSeq =>
     assert(weightsSeq.size == bundles.size)
     bundles.zip(weightsSeq)
-      .foreach { case (bundle, weight) => assert(bundle.asVertexSet == weight.vertexSet) }
+      .foreach { case (bundle, weight) => assert(bundle.idSet == weight.vertexSet) }
   }
   val weights = weightsParam
-    .getOrElse(bundles.map(bundle => AddConstantAttribute.run(bundle.asVertexSet, 1.0)))
+    .getOrElse(bundles.map(bundle => AddConstantAttribute.run(bundle.idSet, 1.0)))
 
   assert((0 until (bundles.size - 1))
     .forall(i => bundles(i).dstVertexSet == bundles(i + 1).srcVertexSet))

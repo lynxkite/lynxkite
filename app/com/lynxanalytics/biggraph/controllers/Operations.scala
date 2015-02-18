@@ -515,7 +515,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         if (params("type") == "Double") {
           const(project.edgeBundle, params("value").toDouble)
         } else {
-          graph_operations.AddConstantAttribute.run(project.edgeBundle.asVertexSet, params("value"))
+          graph_operations.AddConstantAttribute.run(project.edgeBundle.idSet, params("value"))
         }
       }
       project.edgeAttributes(params("name")) = res
@@ -589,11 +589,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ReverseEdges()
       val res = op(op.esAB, project.edgeBundle).result
-      project.pullBackEdgesWithInjection(
+      project.pullBackEdges(
         project.edgeBundle,
         project.edgeAttributes.toIndexedSeq,
         res.esBA,
         res.injection)
+    }
+  })
+
+  register(new EdgeOperation(_) {
+    val title = "Add reversed edges"
+    val description =
+      """Using this operation you end up with a graph with symmetric edges: if there is an
+      edge from A->B then there is a corresponding edge from B->A. This is the closest you
+      can get to an "undirected" graph."""
+    def parameters = List()
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val dir = Direction("all edges", project.edgeBundle)
+      project.pullBackEdges(
+        project.edgeBundle,
+        project.edgeAttributes.toIndexedSeq,
+        dir.edgeBundle,
+        dir.pullBundleOpt.get)
     }
   })
 
@@ -758,6 +776,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Vertex attributes to position"
+    val description =
+      """Creates an attribute of type <tt>(Double, Double)</tt> from two <tt>Double</tt> attributes.
+      The created attribute can be used as an X-Y or latitude-longitude location."""
+    def parameters = List(
+      Param("output", "Save as", defaultValue = "position"),
+      Param("x", "X or latitude", options = vertexAttributes[Double]),
+      Param("y", "Y or longitude", options = vertexAttributes[Double]))
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      val pos = {
+        val op = graph_operations.JoinAttributes[Double, Double]()
+        val x = project.vertexAttributes(params("x")).runtimeSafeCast[Double]
+        val y = project.vertexAttributes(params("y")).runtimeSafeCast[Double]
+        op(op.a, x)(op.b, y).result.attr
+      }
+      project.vertexAttributes(params("output")) = pos
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Edge graph"
     val description =
@@ -873,7 +912,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           seg.belongsTo,
-          attributeWithLocalAggregator(parent.vertexAttributes(attr), choice))
+          AttributeWithLocalAggregator(parent.vertexAttributes(attr), choice))
         project.vertexAttributes(s"${attr}_${choice}") = result
       }
     }
@@ -895,7 +934,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           seg.belongsTo,
-          attributeWithWeightedAggregator(weight, parent.vertexAttributes(attr), choice))
+          AttributeWithWeightedAggregator(weight, parent.vertexAttributes(attr), choice))
         project.vertexAttributes(s"${attr}_${choice}_by_${weightName}") = result
       }
     }
@@ -916,7 +955,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           reverse(seg.belongsTo),
-          attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
+          AttributeWithLocalAggregator(project.vertexAttributes(attr), choice))
         seg.parent.vertexAttributes(s"${prefix}${attr}_${choice}") = result
       }
     }
@@ -941,7 +980,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           reverse(seg.belongsTo),
-          attributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
+          AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
         seg.parent.vertexAttributes(s"${prefix}${attr}_${choice}_by_${weightName}") = result
       }
     }
@@ -980,7 +1019,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           edges,
-          attributeWithLocalAggregator(project.vertexAttributes(attr), choice))
+          AttributeWithLocalAggregator(project.vertexAttributes(attr), choice))
         project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
       }
     }
@@ -1006,7 +1045,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val attr = project.vertexAttributes(name)
         val result = aggregateViaConnection(
           edges,
-          attributeWithWeightedAggregator(weight, attr, choice))
+          AttributeWithWeightedAggregator(weight, attr, choice))
         project.vertexAttributes(s"${prefix}${name}_${choice}_by_${weightName}") = result
       }
     }
@@ -1038,7 +1077,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params + hack)) {
         val result = aggregateViaConnection(
           m.belongsTo,
-          attributeWithLocalAggregator(oldVAttrs(attr), choice))
+          AttributeWithLocalAggregator(oldVAttrs(attr), choice))
         project.vertexAttributes(attr) = result
       }
       if (oldEdges != null) {
@@ -1072,7 +1111,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val edgesAsAttr = {
-        val op = graph_operations.EdgeBundleAsVertexAttribute()
+        val op = graph_operations.EdgeBundleAsAttribute()
         op(op.edges, project.edgeBundle).result.attr
       }
       val mergedResult = {
@@ -1091,7 +1130,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.edgeAttributes(attrName) =
           aggregateViaConnection(
             mergedResult.belongsTo,
-            attributeWithLocalAggregator(oldAttrs(attrName), choice))
+            AttributeWithLocalAggregator(oldAttrs(attrName), choice))
       }
     }
   })
@@ -1103,14 +1142,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val edgesAsAttr = {
-        val op = graph_operations.EdgeBundleAsVertexAttribute()
+        val op = graph_operations.EdgeBundleAsAttribute()
         op(op.edges, project.edgeBundle).result.attr
       }
       val guid = edgesAsAttr.entity.gUID.toString
       val embedding = FEFilters.embedFilteredVertices(
-        project.edgeBundle.asVertexSet,
+        project.edgeBundle.idSet,
         Seq(FEVertexAttributeFilter(guid, "!=")))
-      project.pullBackEdgesWithInjection(embedding)
+      project.pullBackEdges(embedding)
     }
   })
 
@@ -1124,7 +1163,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
-        val result = aggregate(attributeWithAggregator(project.vertexAttributes(attr), choice))
+        val result = aggregate(AttributeWithAggregator(project.vertexAttributes(attr), choice))
         val name = s"${prefix}${attr}_${choice}"
         project.scalars(name) = result
       }
@@ -1146,7 +1185,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(
-          attributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
+          AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
         val name = s"${prefix}${attr}_${choice}_by_${weightName}"
         project.scalars(name) = result
       }
@@ -1166,7 +1205,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(
-          attributeWithAggregator(project.edgeAttributes(attr), choice))
+          AttributeWithAggregator(project.edgeAttributes(attr), choice))
         val name = s"${prefix}${attr}_${choice}"
         project.scalars(name) = result
       }
@@ -1190,7 +1229,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregate(
-          attributeWithWeightedAggregator(weight, project.edgeAttributes(attr), choice))
+          AttributeWithWeightedAggregator(weight, project.edgeAttributes(attr), choice))
         val name = s"${prefix}${attr}_${choice}_by_${weightName}"
         project.scalars(name) = result
       }
@@ -1214,7 +1253,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateFromEdges(
           direction.edgeBundle,
-          attributeWithLocalAggregator(
+          AttributeWithLocalAggregator(
             direction.pull(project.edgeAttributes(attr)),
             choice))
         project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
@@ -1243,7 +1282,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateFromEdges(
           direction.edgeBundle,
-          attributeWithWeightedAggregator(
+          AttributeWithWeightedAggregator(
             direction.pull(weight),
             direction.pull(project.edgeAttributes(attr)),
             choice))
@@ -1535,15 +1574,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val (newEdgeBundle, myEbInjection, otherEbInjection): (EdgeBundle, EdgeBundle, EdgeBundle) =
         if (ebInduced.isDefined && !otherEbInduced.isDefined) {
-          (ebInduced.get.induced.entity, ebInduced.get.embedding, null)
+          (ebInduced.get.induced, ebInduced.get.embedding, null)
         } else if (!ebInduced.isDefined && otherEbInduced.isDefined) {
-          (otherEbInduced.get.induced.entity, null, otherEbInduced.get.embedding)
+          (otherEbInduced.get.induced, null, otherEbInduced.get.embedding)
         } else if (ebInduced.isDefined && otherEbInduced.isDefined) {
           val idUnion = {
             val op = graph_operations.VertexSetUnion(2)
             op(
               op.vss,
-              Seq(ebInduced.get.induced.asVertexSet, otherEbInduced.get.induced.asVertexSet))
+              Seq(ebInduced.get.induced.idSet, otherEbInduced.get.induced.idSet))
               .result
           }
           val ebUnion = {
@@ -1810,19 +1849,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val segTargetAvg = {
           aggregateViaConnection(
             seg.belongsTo,
-            attributeWithLocalAggregator(train, "average"))
+            AttributeWithLocalAggregator(train, "average"))
             .runtimeSafeCast[Double]
         }
         val segStdDev = {
           aggregateViaConnection(
             seg.belongsTo,
-            attributeWithLocalAggregator(train, "std_deviation"))
+            AttributeWithLocalAggregator(train, "std_deviation"))
             .runtimeSafeCast[Double]
         }
         val segTargetCount = {
           aggregateViaConnection(
             seg.belongsTo,
-            attributeWithLocalAggregator(train, "count"))
+            AttributeWithLocalAggregator(train, "count"))
             .runtimeSafeCast[Double]
         }
         val segStdDevDefined = {
@@ -1847,7 +1886,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val predicted = {
           aggregateViaConnection(
             reverse(seg.belongsTo),
-            attributeWithWeightedAggregator(segStdDevDefined, segTargetAvg, "by_min_weight"))
+            AttributeWithWeightedAggregator(segStdDevDefined, segTargetAvg, "by_min_weight"))
             .runtimeSafeCast[Double]
         }
         train = unifyAttributeT(train, predicted)
@@ -1862,7 +1901,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             op.attrs,
             graph_operations.VertexAttributeToJSValue.seq(
               parted.test.entity, partedTrain.test.entity)).result.attr
-          aggregate(attributeWithAggregator(mae, "average"))
+          aggregate(AttributeWithAggregator(mae, "average"))
         }
         val coverage = {
           val op = graph_operations.CountAttributes[Double]()
@@ -2067,8 +2106,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def joinAttr[A, B](a: Attribute[A], b: Attribute[B]): Attribute[(A, B)] = {
-    val op = graph_operations.JoinAttributes[A, B]()
-    op(op.a, a)(op.b, b).result.attr
+    graph_operations.JoinAttributes.run(a, b)
   }
 
   def computeSegmentSizes(segmentation: Segmentation): Attribute[Double] = {
@@ -2127,65 +2165,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
 
-  trait AttributeWithLocalAggregator[From, To] {
-    val attr: Attribute[From]
-    val aggregator: graph_operations.LocalAggregator[From, To]
-  }
-  object AttributeWithLocalAggregator {
-    def apply[From, To](
-      attrInp: Attribute[From],
-      aggregatorInp: graph_operations.LocalAggregator[From, To]): AttributeWithLocalAggregator[From, To] = {
-      new AttributeWithLocalAggregator[From, To] {
-        val attr = attrInp
-        val aggregator = aggregatorInp
-      }
-    }
-  }
-
-  case class AttributeWithAggregator[From, Intermediate, To](
-    val attr: Attribute[From],
-    val aggregator: graph_operations.Aggregator[From, Intermediate, To])
-      extends AttributeWithLocalAggregator[From, To]
-
-  private def attributeWithAggregator[T](
-    attr: Attribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
-    choice match {
-      case "sum" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
-      case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
-      case "min" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Min())
-      case "max" => AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Max())
-      case "average" => AttributeWithAggregator(
-        attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
-      case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
-      case "std_deviation" => AttributeWithAggregator(
-        attr.runtimeSafeCast[Double], graph_operations.Aggregator.StdDev())
-    }
-  }
-  private def attributeWithWeightedAggregator[T](
-    weight: Attribute[Double], attr: Attribute[T], choice: String): AttributeWithAggregator[_, _, _] = {
-    choice match {
-      case "by_max_weight" => AttributeWithAggregator(
-        joinAttr(weight, attr), graph_operations.Aggregator.MaxByDouble[T]())
-      case "by_min_weight" => AttributeWithAggregator(
-        joinAttr(graph_operations.DeriveJS.negative(weight), attr), graph_operations.Aggregator.MaxByDouble[T]())
-      case "weighted_sum" => AttributeWithAggregator(
-        joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedSum())
-      case "weighted_average" => AttributeWithAggregator(
-        joinAttr(weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedAverage())
-    }
-  }
-
-  private def attributeWithLocalAggregator[T](
-    attr: Attribute[T], choice: String): AttributeWithLocalAggregator[_, _] = {
-    choice match {
-      case "most_common" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
-      case "majority_50" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
-      case "majority_100" => AttributeWithLocalAggregator(attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
-      case "vector" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.AsVector[T]())
-      case _ => attributeWithAggregator(attr, choice)
-    }
-  }
-
   // Performs AggregateAttributeToScalar.
   private def aggregate[From, Intermediate, To](
     attributeWithAggregator: AttributeWithAggregator[From, Intermediate, To]): Scalar[To] = {
@@ -2194,7 +2173,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   // Performs AggregateByEdgeBundle.
-  def aggregateViaConnection[From, To](
+  private def aggregateViaConnection[From, To](
     connection: EdgeBundle,
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
@@ -2202,7 +2181,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   // Performs AggregateFromEdges.
-  def aggregateFromEdges[From, To](
+  private def aggregateFromEdges[From, To](
     edges: EdgeBundle,
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateFromEdges(attributeWithAggregator.aggregator)
@@ -2222,7 +2201,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def addReversed(eb: EdgeBundle): EdgeBundle = {
     val op = graph_operations.AddReversedEdges()
-    op(op.es, eb).result.esPlus.entity
+    op(op.es, eb).result.esPlus
   }
 
   object Direction {
@@ -2235,7 +2214,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val options = attrOptions :+ UIValue("symmetric edges", "symmetric edges")
   }
   case class Direction(direction: String, origEB: EdgeBundle) {
-    val (edgeBundle, injectionOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
+    val (edgeBundle, pullBundleOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
       case "incoming edges" => (origEB, None)
       case "outgoing edges" =>
         val op = graph_operations.ReverseEdges()
@@ -2244,7 +2223,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "all edges" =>
         val op = graph_operations.AddReversedEdges()
         val res = op(op.es, origEB).result
-        (res.esPlus, Some(res.injection))
+        (res.esPlus, Some(res.newToOriginal))
       case "symmetric edges" =>
         // Use "null" as the injection because it is an error to use
         // "symmetric edges" with edge attributes.
@@ -2252,8 +2231,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     def pull[T](attribute: Attribute[T]): Attribute[T] = {
-      injectionOpt.map { injection =>
-        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attribute, injection)
+      pullBundleOpt.map { pullBundle =>
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attribute, pullBundle)
       }.getOrElse(attribute)
     }
   }
@@ -2287,7 +2266,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def const(eb: EdgeBundle, value: Double = 1.0): Attribute[Double] = {
-    graph_operations.AddConstantAttribute.run(eb.asVertexSet, value)
+    graph_operations.AddConstantAttribute.run(eb.idSet, value)
   }
 
   def newScalar(data: String): Scalar[String] = {
