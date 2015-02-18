@@ -15,14 +15,14 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val firstInstance = manager.apply(new CreateSomeGraph())
     val firstVertices = firstInstance.outputs.vertexSets('vertices)
     val firstEdges = firstInstance.outputs.edgeBundles('edges)
-    val firstVattr = firstInstance.outputs.vertexAttributes('vattr)
-    val firstEattr = firstInstance.outputs.vertexAttributes('eattr)
+    val firstVattr = firstInstance.outputs.attributes('vattr)
+    val firstEattr = firstInstance.outputs.attributes('eattr)
 
     val secondInstance = manager.apply(
       new FromVertexAttr(),
       MetaDataSet(
         vertexSets = Map('inputVertices -> firstVertices),
-        vertexAttributes = Map('inputAttr -> firstVattr)))
+        attributes = Map('inputAttr -> firstVattr)))
     val secondAttrValues = secondInstance.outputs.vertexSets('attrValues)
     val secondLinks = secondInstance.outputs.edgeBundles('links)
 
@@ -46,7 +46,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
     // Properties are linked as expected.
     assert(firstVattr.vertexSet == firstVertices)
-    assert(firstEattr.vertexSet == firstEdges.asVertexSet)
+    assert(firstEattr.vertexSet == firstEdges.idSet)
     assert(manager.attributes(firstVertices).toSet == Set(firstVattr))
     assert(manager.attributes(firstEdges).toSet == Set(firstEattr))
 
@@ -70,12 +70,12 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
     val firstInstance = m1o.apply(new CreateSomeGraph())
     val firstVertices = firstInstance.outputs.vertexSets('vertices)
-    val firstVattr = firstInstance.outputs.vertexAttributes('vattr)
+    val firstVattr = firstInstance.outputs.attributes('vattr)
     val secondInstance = m1o.apply(
       new FromVertexAttr(),
       MetaDataSet(
         vertexSets = Map('inputVertices -> firstVertices),
-        vertexAttributes = Map('inputAttr -> firstVattr)))
+        attributes = Map('inputAttr -> firstVattr)))
 
     m1o.setTag("my/favorite/vertices/first", firstVertices)
 

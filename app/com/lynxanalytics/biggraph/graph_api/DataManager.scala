@@ -60,15 +60,15 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def load[T](vertexAttribute: Attribute[T]): Future[VertexAttributeData[T]] = {
-    implicit val ct = vertexAttribute.classTag
-    getFuture(vertexAttribute.vertexSet).map { vs =>
+  private def load[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
+    implicit val ct = attribute.classTag
+    getFuture(attribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val vsRDD = vs.rdd.cache
-      val rawRDD = SortedRDD.fromUnsorted(entityPath(vertexAttribute).loadObjectFile[(ID, T)](sc)
+      val rawRDD = SortedRDD.fromUnsorted(entityPath(attribute).loadObjectFile[(ID, T)](sc)
         .partitionBy(vsRDD.partitioner.get))
-      new VertexAttributeData[T](
-        vertexAttribute,
+      new AttributeData[T](
+        attribute,
         // This join does nothing except enforcing colocation.
         vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
     }
@@ -187,10 +187,10 @@ class DataManager(sc: spark.SparkContext,
     entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
   }
 
-  def getFuture[T](vertexAttribute: Attribute[T]): Future[VertexAttributeData[T]] = {
-    loadOrExecuteIfNecessary(vertexAttribute)
-    implicit val tagForT = vertexAttribute.typeTag
-    entityCache(vertexAttribute.gUID).map(_.asInstanceOf[VertexAttributeData[_]].runtimeSafeCast[T])
+  def getFuture[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
+    loadOrExecuteIfNecessary(attribute)
+    implicit val tagForT = attribute.typeTag
+    entityCache(attribute.gUID).map(_.asInstanceOf[AttributeData[_]].runtimeSafeCast[T])
   }
 
   def getFuture[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
@@ -214,8 +214,8 @@ class DataManager(sc: spark.SparkContext,
   def get(edgeBundle: EdgeBundle): EdgeBundleData = {
     Await.result(getFuture(edgeBundle), duration.Duration.Inf)
   }
-  def get[T](vertexAttribute: Attribute[T]): VertexAttributeData[T] = {
-    Await.result(getFuture(vertexAttribute), duration.Duration.Inf)
+  def get[T](attribute: Attribute[T]): AttributeData[T] = {
+    Await.result(getFuture(attribute), duration.Duration.Inf)
   }
   def get[T](scalar: Scalar[T]): ScalarData[T] = {
     Await.result(getFuture(scalar), duration.Duration.Inf)

@@ -13,7 +13,7 @@ case class FEVertexAttributeFilter(
 
   def attribute(
     implicit manager: MetaGraphManager): Attribute[_] = {
-    manager.vertexAttribute(attributeId.asUUID)
+    manager.attribute(attributeId.asUUID)
   }
 
   def toFilteredAttribute(
@@ -64,15 +64,15 @@ object FEFilters {
   }
 
   def embedFilteredVertices(
-    base: VertexSet, filters: Seq[FEVertexAttributeFilter])(
+    base: VertexSet, filters: Seq[FEVertexAttributeFilter], heavy: Boolean = false)(
       implicit metaManager: MetaGraphManager): EdgeBundle = {
-    embedFilteredVerticesFA(base, filters.map(_.toFilteredAttribute))
+    embedFilteredVerticesFA(base, filters.map(_.toFilteredAttribute), heavy)
   }
 
   def embedFilteredVerticesFA(
-    base: VertexSet, filters: Seq[FilteredAttribute[_]])(
+    base: VertexSet, filters: Seq[FilteredAttribute[_]], heavy: Boolean = false)(
       implicit metaManager: MetaGraphManager): EdgeBundle = {
-    intersectionEmbedding(base +: filters.map(applyFilter(_)))
+    intersectionEmbedding(base +: filters.map(applyFilter(_)), heavy)
   }
 
   def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
@@ -89,10 +89,10 @@ object FEFilters {
   }
 
   private def intersectionEmbedding(
-    filteredVss: Seq[VertexSet])(
+    filteredVss: Seq[VertexSet], heavy: Boolean = false)(
       implicit metaManager: MetaGraphManager): EdgeBundle = {
 
-    val op = VertexSetIntersection(filteredVss.size)
+    val op = VertexSetIntersection(filteredVss.size, heavy)
     op(op.vss, filteredVss).result.firstEmbedding
   }
 

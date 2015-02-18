@@ -6,10 +6,15 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - New edge operation "Add reversed edges" which creates a symmetric graph.
+ - When a project is hard filtered results are now saved to disk. Previously they behaved
+   identically to soft filters that - correctly - only compute their results on the fly.
+ - Edge attributes can be visualized as colors and labels in sampled mode.
  - Discovered an issue that prevents compatibility from 1.0.0 and 1.0.1. Fortunately they were
    never marked as `stable`, so we are not making a heroic effort to maintain compatibility.
  - Visualize attributes of the type `(Double, Double)` as vertex positions.
-   (No way to create such attributes yet, except for using the Example Graph.)
+   Such attributes can be created from two `Double` attributes with the new
+   _"Vertex attributes to position"_ operation.
 
 ### 1.0.1
 

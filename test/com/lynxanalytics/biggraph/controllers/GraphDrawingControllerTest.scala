@@ -84,13 +84,15 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     val g = graph_operations.ExampleGraph()().result
     val age = g.age.gUID.toString
     val gender = g.gender.gUID.toString
+    val weight = g.weight.gUID.toString
 
     val vf = FEVertexAttributeFilter(
       attributeId = age,
       valueSpec = "<=25")
     val ef = FEVertexAttributeFilter(
       attributeId = g.comment.gUID.toString,
-      valueSpec = "Adam loves Eve")
+      // Second option should be dropped due to connected vertices being filtered.
+      valueSpec = "Adam loves Eve,Bob envies Adam")
     val req = FEGraphRequest(
       vertexSets = Seq(VertexDiagramSpec(
         vertexSetId = g.vertices.gUID.toString,
@@ -107,7 +109,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         dstIdx = 0,
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq(ef),
-        layout3D = false)))
+        layout3D = false,
+        attrs = Seq(AggregatedAttribute(weight, "sum")))))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -122,7 +125,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
         gender -> DynamicValue("Female")))))
     assert(res.edgeBundles(0).edges.size == 1)
     assert(res.edgeBundles(0).edges.toSet == Set(
-      FEEdge(0, 1, 1.0)))
+      FEEdge(0, 1, 1.0, Map(weight + ":sum" -> DynamicValue("1", double = Some(1.0))))))
   }
 
   test("small bucketed view") {
@@ -231,7 +234,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     }
     val rndEA = {
       val op = graph_operations.AddGaussianVertexAttribute(2)
-      op(op.vertices, es.asVertexSet).result.attr
+      op(op.vertices, es.idSet).result.attr
     }
     val vf = FEVertexAttributeFilter(
       attributeId = rndVA.gUID.toString,
@@ -276,7 +279,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     }
     val rndEA = {
       val op = graph_operations.AddGaussianVertexAttribute(2)
-      op(op.vertices, es.asVertexSet).result.attr
+      op(op.vertices, es.idSet).result.attr
     }
     val vf = FEVertexAttributeFilter(
       attributeId = rndVA.gUID.toString,
