@@ -589,11 +589,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ReverseEdges()
       val res = op(op.esAB, project.edgeBundle).result
-      project.pullBackEdgesWithInjection(
+      project.pullBackEdges(
         project.edgeBundle,
         project.edgeAttributes.toIndexedSeq,
         res.esBA,
         res.injection)
+    }
+  })
+
+  register(new EdgeOperation(_) {
+    val title = "Add reversed edges"
+    val description =
+      """Using this operation you end up with a graph with symmetric edges: if there is an
+      edge from A->B then there is a corresponding edge from B->A. This is the closest you
+      can get to an "undirected" graph."""
+    def parameters = List()
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val dir = Direction("all edges", project.edgeBundle)
+      project.pullBackEdges(
+        project.edgeBundle,
+        project.edgeAttributes.toIndexedSeq,
+        dir.edgeBundle,
+        dir.pullBundleOpt.get)
     }
   })
 
@@ -1131,7 +1149,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val embedding = FEFilters.embedFilteredVertices(
         project.edgeBundle.idSet,
         Seq(FEVertexAttributeFilter(guid, "!=")))
-      project.pullBackEdgesWithInjection(embedding)
+      project.pullBackEdges(embedding)
     }
   })
 
@@ -2196,7 +2214,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val options = attrOptions :+ UIValue("symmetric edges", "symmetric edges")
   }
   case class Direction(direction: String, origEB: EdgeBundle) {
-    val (edgeBundle, injectionOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
+    val (edgeBundle, pullBundleOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
       case "incoming edges" => (origEB, None)
       case "outgoing edges" =>
         val op = graph_operations.ReverseEdges()
@@ -2205,7 +2223,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "all edges" =>
         val op = graph_operations.AddReversedEdges()
         val res = op(op.es, origEB).result
-        (res.esPlus, Some(res.injection))
+        (res.esPlus, Some(res.newToOriginal))
       case "symmetric edges" =>
         // Use "null" as the injection because it is an error to use
         // "symmetric edges" with edge attributes.
@@ -2213,8 +2231,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     def pull[T](attribute: Attribute[T]): Attribute[T] = {
-      injectionOpt.map { injection =>
-        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attribute, injection)
+      pullBundleOpt.map { pullBundle =>
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attribute, pullBundle)
       }.getOrElse(attribute)
     }
   }
