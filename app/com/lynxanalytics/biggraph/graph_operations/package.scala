@@ -3,14 +3,6 @@ package com.lynxanalytics.biggraph
 import com.lynxanalytics.biggraph.graph_api._
 
 package object graph_operations {
-  class EdgeAttributeInput[T] extends MagicInputSignature {
-    val src = vertexSet
-    val dst = vertexSet
-    val edgeIds = vertexSet
-    val es = edgeBundle(src, dst, idSet = edgeIds)
-    val attr = vertexAttribute[T](edgeIds)
-  }
-
   class VertexAttributeInput[T] extends MagicInputSignature {
     val vs = vertexSet
     val attr = vertexAttribute[T](vs)

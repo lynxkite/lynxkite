@@ -243,9 +243,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
     assert(injection.properties.compliesWith(EdgeBundleProperties.injection),
       s"Not an injection: $injection")
-    assert(injection.srcVertexSet.gUID == newEdgeBundle.asVertexSet.gUID,
+    assert(injection.srcVertexSet.gUID == newEdgeBundle.idSet.gUID,
       s"Wrong source: $injection")
-    assert(injection.dstVertexSet.gUID == origEdgeBundle.asVertexSet.gUID,
+    assert(injection.dstVertexSet.gUID == origEdgeBundle.idSet.gUID,
       s"Wrong destination: $injection")
 
     edgeBundle = newEdgeBundle
@@ -353,7 +353,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     existing(checkpointedDir / "edgeAttributes").foreach(manager.rmTag(_))
     assert(attrs.isEmpty || edgeBundle != null, s"No edge bundle for project $projectName")
     for ((name, attr) <- attrs) {
-      assert(attr.vertexSet == edgeBundle.asVertexSet, s"Edge attribute $name does not match edge bundle for project $projectName")
+      assert(attr.vertexSet == edgeBundle.idSet, s"Edge attribute $name does not match edge bundle for project $projectName")
       manager.setTag(checkpointedDir / "edgeAttributes" / name, attr)
     }
   }
@@ -429,7 +429,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
   class EdgeAttributeHolder extends Holder[Attribute[_]](checkpointedDir / "edgeAttributes") {
     def validate(name: String, attr: Attribute[_]) =
-      assert(attr.vertexSet == edgeBundle.asVertexSet, s"Edge attribute $name does not match edge bundle for project $projectName")
+      assert(attr.vertexSet == edgeBundle.idSet, s"Edge attribute $name does not match edge bundle for project $projectName")
   }
 }
 

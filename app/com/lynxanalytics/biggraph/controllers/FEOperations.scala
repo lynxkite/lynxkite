@@ -105,8 +105,8 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       val dstField = params("dstField")
       manager.show(
         graph_operations.ImportEdgeListForExistingVertexSet(csv, srcField, dstField),
-        'srcVidAttr -> manager.vertexAttribute(params("vsSrc").asUUID),
-        'dstVidAttr -> manager.vertexAttribute(params("vsDst").asUUID))
+        'srcVidAttr -> manager.attribute(params("vsSrc").asUUID),
+        'dstVidAttr -> manager.attribute(params("vsDst").asUUID))
     }
   }
 
@@ -183,8 +183,8 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("wBC", "Edge weight B->C", kind = "edge-attribute"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.ConcatenateBundles(),
-        'weightsAB -> manager.vertexAttribute(params("wAB").asUUID),
-        'weightsBC -> manager.vertexAttribute(params("wBC").asUUID))
+        'weightsAB -> manager.attribute(params("wAB").asUUID),
+        'weightsBC -> manager.attribute(params("wBC").asUUID))
     }
   }
 
@@ -199,7 +199,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       val edges = manager.edgeBundle(params("eb").asUUID)
       import Scripting._
       val op = graph_operations.AddConstantDoubleAttribute(params("v").toDouble)
-      val vertexAttr = op(op.vs, edges.asVertexSet).result.attr
+      val vertexAttr = op(op.vs, edges.idSet).result.attr
       manager.show(Seq(vertexAttr.entity))
     }
   }
@@ -281,7 +281,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       val vAttrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")
       val eAttrs: Seq[String] = if (params("eattrs").isEmpty) Nil else params("eattrs").split(",")
       val attrs = vAttrs ++ eAttrs
-      val as = attrs.map(s => manager.vertexAttribute(s.asUUID))
+      val as = attrs.map(s => manager.attribute(s.asUUID))
       val typ = params("type")
       if (typ == "string") {
         val okAs = as.filter(!_.is[String])
@@ -329,7 +329,7 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("iter", "Iterations"))
     def apply(params: Map[String, String]) = {
       manager.show(graph_operations.PageRank(params("df").toDouble, params("iter").toInt),
-        'weights -> manager.vertexAttribute(params("ws").asUUID))
+        'weights -> manager.attribute(params("ws").asUUID))
     }
   }
 

@@ -14,7 +14,7 @@ object VerticesToEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val (vs, es) = graph
     val stringID = vertexAttribute[String](vs)
-    val embedding = edgeBundle(es.asVertexSet, inputs.vs.entity, EdgeBundleProperties.embedding)
+    val embedding = edgeBundle(es.idSet, inputs.vs.entity, EdgeBundleProperties.embedding)
   }
   def fromJson(j: JsValue) = VerticesToEdges()
 }

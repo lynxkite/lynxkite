@@ -345,7 +345,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       project.pullBackWithInjection(vertexEmbedding)
       if (edgeFilters.nonEmpty) {
         val edgeEmbedding =
-          FEFilters.embedFilteredVertices(project.edgeBundle.asVertexSet, edgeFilters, heavy = true)
+          FEFilters.embedFilteredVertices(project.edgeBundle.idSet, edgeFilters, heavy = true)
         project.pullBackEdgesWithInjection(edgeEmbedding)
       }
     }

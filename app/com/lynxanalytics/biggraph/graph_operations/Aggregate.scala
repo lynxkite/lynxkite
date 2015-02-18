@@ -57,9 +57,8 @@ object AggregateFromEdges extends OpFromJson {
   class Input[From] extends MagicInputSignature {
     val src = vertexSet
     val dst = vertexSet
-    val ids = vertexSet
-    val edges = edgeBundle(src, dst, idSet = ids)
-    val eattr = vertexAttribute[From](ids)
+    val edges = edgeBundle(src, dst)
+    val eattr = edgeAttribute[From](edges)
   }
   class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
                                   inputs: Input[From]) extends MagicOutput(instance) {
