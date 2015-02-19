@@ -191,6 +191,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           vs = this.addBucketedVertices(dataVs, offsetter, sides[i]);
         }
         vs.offsetter = offsetter;
+        vs.xMin = xMin;
         vs.halfColumnWidth = halfColumnWidth;
         this.vertices[i] = vs;
         this.sideMouseBindings(offsetter, xMin, xMax);
@@ -215,7 +216,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           this.renderers.push(r);
           continue;
         }
-        
       }
       var src = this.vertices[vsIndices[e.srcIdx]];
       var dst = this.vertices[vsIndices[e.dstIdx]];
@@ -729,10 +729,27 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   };
 
+  function Clipper(bounds) {
+    var rnd = Math.random().toString(36);
+    var defs = svg.create('defs');
+    var clip = svg.create('clipPath', { id: 'clip-' + rnd });
+    var rect = svg.create('rect', bounds);
+    clip.append(rect);
+    defs.append(clip);
+    this.dom = defs;
+    this.url = 'url(#clip-' + rnd + ')';
+  }
+
   function Map(gv, vertices) {
     this.gv = gv;
     this.vertices = vertices;
-    this.group = svg.create('g', {'class': 'map'});
+    var clipper = new Clipper({
+      x: vertices.xMin,
+      y: 0,
+      width: vertices.halfColumnWidth * 2,
+      height: gv.svg.height() });
+    this.gv.root.prepend(clipper.dom);
+    this.group = svg.create('g', { 'class': 'map', 'clip-path': clipper.url });
     this.gv.root.prepend(this.group);
     // The size of the Earth in lat/long view. It doesn't make much difference,
     // just has to be a reasonable value to avoid too small/too large numbers.
