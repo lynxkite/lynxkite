@@ -760,6 +760,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.NAVIGATION_DELAY = 100;  // Milliseconds.
     this.root = 'https://maps.googleapis.com/maps/api/staticmap?';
     this.style = 'feature:all|gamma:0.1|saturation:-80';
+    this.key = 'AIzaSyBcML5zQetjkRFuqpSSG6EmhS2vSWRssZ4';  // big-graph-gc1 API key.
     this.images = [];
     this.vertices.offsetter.rule(this);
   }
@@ -776,7 +777,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return x * 360 / this.GLOBE_SIZE;
   };
   Map.prototype.y2lat = function(y) {
-    return Math.atan(Math.sinh(y * Math.PI * 2 / this.GLOBE_SIZE)) * 180 / Math.PI;
+    return -Math.atan(Math.sinh(y * Math.PI * 2 / this.GLOBE_SIZE)) * 180 / Math.PI;
   };
   Map.prototype.reDraw = function() {
     var offsetter = this.offsetter;
@@ -804,20 +805,21 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var w = this.vertices.halfColumnWidth * 2;
     var h = this.gv.svg.height();
     var offsetter = this.offsetter;
-    var x = (offsetter.xOff - w / 2) / offsetter.zoom;
-    var y = (offsetter.yOff - h / 2) / offsetter.zoom;
+    var x = (w / 2 - offsetter.xOff) / offsetter.zoom;
+    var y = (h / 2 - offsetter.yOff) / offsetter.zoom;
     var zoomLevel = Math.log2(this.GLOBE_SIZE * offsetter.zoom / Math.max(w, h) / this.GM_MULT);
     zoomLevel = Math.max(0, Math.floor(zoomLevel));
     var clat = this.y2lat(y);
-    var clon = -this.x2lon(x);
+    var clon = this.x2lon(x);
     var image = svg.create('image');
     var href = (
       this.root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
+      '&key=' + this.key +
       '&size=640x640&scale=2&style=' + this.style);
     image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
     image.size = this.GLOBE_SIZE * Math.pow(2, -zoomLevel) / this.GM_MULT;
-    image.x = -x - image.size / 2;
-    image.y = -y - image.size / 2;
+    image.x = x - image.size / 2;
+    image.y = y - image.size / 2;
     this.group.append(image);
     var images = this.images;
     images.push(image);
