@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Fixes a bug in edge visualizations (manifested as
+   "java.util.NoSuchElementException: key not found: ...")
+
 ### 1.1.0
 
  - Authentication related UI is hidden when authentication is disabled.
