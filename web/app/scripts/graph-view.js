@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('graphView', function(util, $compile) {
+angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
@@ -191,6 +191,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
           vs = this.addBucketedVertices(dataVs, offsetter, sides[i]);
         }
         vs.offsetter = offsetter;
+        vs.xMin = xMin;
         vs.halfColumnWidth = halfColumnWidth;
         this.vertices[i] = vs;
         this.sideMouseBindings(offsetter, xMin, xMax);
@@ -215,7 +216,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
           this.renderers.push(r);
           continue;
         }
-        
       }
       var src = this.vertices[vsIndices[e.srcIdx]];
       var dst = this.vertices[vsIndices[e.dstIdx]];
@@ -729,16 +729,131 @@ angular.module('biggraph').directive('graphView', function(util, $compile) {
     }
   };
 
+  function Clipper(bounds) {
+    var rnd = Math.random().toString(36);
+    var defs = svg.create('defs');
+    var clip = svg.create('clipPath', { id: 'clip-' + rnd });
+    var rect = svg.create('rect', bounds);
+    clip.append(rect);
+    defs.append(clip);
+    this.dom = defs;
+    this.url = 'url(#clip-' + rnd + ')';
+  }
+
+  function Map(gv, vertices) {
+    this.gv = gv;
+    this.vertices = vertices;
+    var clipper = new Clipper({
+      x: vertices.xMin,
+      y: 0,
+      width: vertices.halfColumnWidth * 2,
+      height: gv.svg.height() });
+    this.gv.root.prepend(clipper.dom);
+    this.group = svg.create('g', { 'class': 'map', 'clip-path': clipper.url });
+    this.gv.root.prepend(this.group);
+    // The size of the Earth in lat/long view. It doesn't make much difference,
+    // just has to be a reasonable value to avoid too small/too large numbers.
+    this.GLOBE_SIZE = 500;
+    // Constant to match Google Maps projection.
+    this.GM_MULT = 0.403;
+    // How much to wait after pan/zoom events before requesting a new map.
+    this.NAVIGATION_DELAY = 100;  // Milliseconds.
+    this.root = 'https://maps.googleapis.com/maps/api/staticmap?';
+    this.style = 'feature:all|gamma:0.1|saturation:-80';
+    this.key = 'AIzaSyBcML5zQetjkRFuqpSSG6EmhS2vSWRssZ4';  // big-graph-gc1 API key.
+    this.images = [];
+    this.vertices.offsetter.rule(this);
+  }
+  Map.prototype.lon2x = function(lon) {
+    return this.GLOBE_SIZE * lon / 360;
+  };
+  Map.prototype.lat2y = function(lat) {
+    return -this.GLOBE_SIZE * Math.log(
+        Math.tan(lat * Math.PI / 180) +
+        1 / Math.cos(lat * Math.PI / 180)
+        ) / Math.PI / 2;
+  };
+  Map.prototype.x2lon = function(x) {
+    return x * 360 / this.GLOBE_SIZE;
+  };
+  Map.prototype.y2lat = function(y) {
+    return -Math.atan(Math.sinh(y * Math.PI * 2 / this.GLOBE_SIZE)) * 180 / Math.PI;
+  };
+  Map.prototype.reDraw = function() {
+    var offsetter = this.offsetter;
+    for (var i = 0; i < this.images.length; ++i) {
+      var image = this.images[i];
+      image.attr({
+        x: image.x * offsetter.zoom + offsetter.xOff,
+        y: image.y * offsetter.zoom + offsetter.yOff,
+        width: offsetter.zoom * image.size,
+        height: offsetter.zoom * image.size,
+      });
+    }
+    if (this.lastZoom !== offsetter.zoom ||
+        this.lastXOff !== offsetter.xOff ||
+        this.lastYOff !== offsetter.yOff) {
+      this.lastZoom = offsetter.zoom;
+      this.lastXOff = offsetter.xOff;
+      this.lastYOff = offsetter.yOff;
+      $timeout.cancel(this.refresh);
+      var that = this;
+      this.refresh = $timeout(function() { that.update(); }, this.NAVIGATION_DELAY);
+    }
+  };
+  Map.prototype.update = function() {
+    var w = this.vertices.halfColumnWidth * 2;
+    var h = this.gv.svg.height();
+    var offsetter = this.offsetter;
+    var x = (w / 2 - offsetter.xOff + this.vertices.xMin) / offsetter.zoom;
+    var y = (h / 2 - offsetter.yOff) / offsetter.zoom;
+    var zoomLevel = Math.log2(this.GLOBE_SIZE * offsetter.zoom / Math.max(w, h) / this.GM_MULT);
+    zoomLevel = Math.max(0, Math.floor(zoomLevel));
+    var clat = this.y2lat(y);
+    var clon = this.x2lon(x);
+    var image = svg.create('image');
+    var href = (
+      this.root + 'center=' + clat + ',' + clon + '&zoom=' + zoomLevel +
+      '&key=' + this.key +
+      '&size=640x640&scale=2&style=' + this.style);
+    image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
+    image.size = this.GLOBE_SIZE * Math.pow(2, -zoomLevel) / this.GM_MULT;
+    image.x = x - image.size / 2;
+    image.y = y - image.size / 2;
+    this.group.append(image);
+    var images = this.images;
+    images.push(image);
+    // Discard old images, keeping the two most recent.
+    for (var i = 0; i < images.length - 2; ++i) {
+      images[i].remove();
+    }
+    images.splice(0, images.length - 2);
+    this.reDraw();
+  };
+
   GraphView.prototype.initLayout = function(vertices) {
     var positionAttr =
       (vertices.side.vertexAttrs.position) ? vertices.side.vertexAttrs.position.id : undefined;
+    var geoAttr =
+      (vertices.side.vertexAttrs.geo) ? vertices.side.vertexAttrs.geo.id : undefined;
+    var map;
+    if (geoAttr !== undefined) {
+      map = new Map(this, vertices);
+    }
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
       v.forceMass = 1;
+      var pos;
       if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
-        var pos = v.data.attrs[positionAttr];
+        pos = v.data.attrs[positionAttr];
         v.x = pos.x;
         v.y = -pos.y;  // Flip Y axis to look more mathematical.
+        v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
+      }
+      if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {
+        pos = v.data.attrs[geoAttr];
+        v.x = map.lon2x(pos.y);
+        v.y = map.lat2y(pos.x);
         v.frozen = 2;  // 1 will be subtracted by unfreezeAll().
       }
       v.forceOX = v.x;
