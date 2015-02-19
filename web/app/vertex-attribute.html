@@ -25,7 +25,7 @@
 </form>
 <span ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'" class="de-emph sampled-visualizations">
   <span class="visualizations"><selected-visualization
-    ng-repeat="visualization in side.filterApplied(['size', 'label', 'label size', 'color', 'opacity', 'label color', 'icon', 'image', 'slider', 'position'], attr.title)"
+    ng-repeat="visualization in side.filterApplied(sampledVisualizations, attr.title)"
     side="side"
     attr="attr.title"
     visualization="visualization"></selected-visualization></span>
@@ -66,6 +66,9 @@
     </li>
     <li ng-if="attr.typeName === '(Double, Double)'">
       <a ng-click="side.toggleAttributeTitle('position', attr.title)" href>Position</a>
+    </li>
+    <li ng-if="attr.typeName === '(Double, Double)'">
+      <a ng-click="side.toggleAttributeTitle('geo', attr.title)" href>Geo coordinates</a>
     </li>
   </ul>
 </span>

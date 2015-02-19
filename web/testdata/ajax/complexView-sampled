@@ -9,7 +9,7 @@
           "6": { "double": 0, "string": "0", "defined": true },
           "8": { "double": 0, "string": "red", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/zsolt.katona.790/picture", "defined": true },
-          "location": { "string": "(10, 20)", "x": 10, "y": 20, "defined": true }
+          "location": { "string": "Budapest", "x": 47.497912, "y": 19.040235, "defined": true }
         }
       },
       { "id": "2222222",
@@ -19,7 +19,7 @@
           "6": { "double": 10, "string": "10", "defined": true },
           "8": { "double": 0, "string": "pink", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.barjak/picture", "defined": true },
-          "location": { "string": "(20, 30)", "x": 20, "y": 30, "defined": true }
+          "location": { "string": "New York", "x": 40.712784, "y": -74.005941, "defined": true }
         }
       },
       { "id": "3333333",
@@ -29,7 +29,7 @@
           "6": { "double": 20, "string": "20", "defined": true },
           "8": { "double": 0, "string": "green", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.nemeth.5682/picture", "defined": true },
-          "location": { "string": "(30, 20)", "x": 30, "y": 20, "defined": true }
+          "location": { "string": "San Francisco", "x": 37.774929, "y": -122.419416, "defined": true }
         }
       },
       { "id": "4444444",
@@ -39,7 +39,7 @@
           "6": { "double": 30, "string": "30", "defined": true },
           "8": { "double": 0, "string": "black", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/daniel.darabos/picture", "defined": true },
-          "location": { "string": "(40, 40)", "x": 40, "y": 40, "defined": true }
+          "location": { "string": "Rio de Janeiro", "x": -22.906847, "y": -43.172896, "defined": true }
         }
       },
       { "id": "5555555",
@@ -49,7 +49,7 @@
           "6": { "double": 40, "string": "40", "defined": true },
           "8": { "double": 0, "string": "violet", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/pzubcsek/picture", "defined": true },
-          "location": { "string": "(50, 10)", "x": 50, "y": 10, "defined": true }
+          "location": { "string": "Singapore", "x": 1.352083, "y": 103.819836, "defined": true }
         }
       },
       { "id": "6666666666666666666",
@@ -59,7 +59,7 @@
           "6": { "double": 0, "string": "-50", "defined": true },
           "8": { "double": 0, "string": "blue", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/miklos.sarvary.1/picture", "defined": true },
-          "location": { "string": "(50, 20)", "x": 50, "y": 20, "defined": true }
+          "location": { "string": "Sidney", "x": -33.867487, "y": 151.206990, "defined": true }
         }
       }
     ],
@@ -75,7 +75,7 @@
           "6": { "double": 0, "string": "0", "defined": true },
           "8": { "double": 0, "string": "red", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/zsolt.katona.790/picture", "defined": true },
-          "location": { "string": "(10, 20)", "x": 10, "y": 20, "defined": true }
+          "location": { "string": "Budapest", "x": 47.497912, "y": 19.040235, "defined": true }
         }
       },
       { "id": "2222222",
@@ -85,7 +85,7 @@
           "6": { "double": 10, "string": "10", "defined": true },
           "8": { "double": 0, "string": "pink", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.barjak/picture", "defined": true },
-          "location": { "string": "(20, 30)", "x": 20, "y": 30, "defined": true }
+          "location": { "string": "New York", "x": 40.712784, "y": -74.005941, "defined": true }
         }
       },
       { "id": "3333333",
@@ -95,7 +95,7 @@
           "6": { "double": 20, "string": "20", "defined": true },
           "8": { "double": 0, "string": "green", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/andras.nemeth.5682/picture", "defined": true },
-          "location": { "string": "(30, 20)", "x": 30, "y": 20, "defined": true }
+          "location": { "string": "San Francisco", "x": 37.774929, "y": -122.419416, "defined": true }
         }
       },
       { "id": "4444444",
@@ -105,7 +105,7 @@
           "6": { "double": 30, "string": "30", "defined": true },
           "8": { "double": 0, "string": "black", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/daniel.darabos/picture", "defined": true },
-          "location": { "string": "(40, 40)", "x": 40, "y": 40, "defined": true }
+          "location": { "string": "Rio de Janeiro", "x": -22.906847, "y": -43.172896, "defined": true }
         }
       },
       { "id": "5555555",
@@ -115,7 +115,7 @@
           "6": { "double": 40, "string": "40", "defined": true },
           "8": { "double": 0, "string": "violet", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/pzubcsek/picture", "defined": true },
-          "location": { "string": "(50, 10)", "x": 50, "y": 10, "defined": true }
+          "location": { "string": "Singapore", "x": 1.352083, "y": 103.819836, "defined": true }
         }
       },
       { "id": "6666666666666666666",
@@ -125,7 +125,7 @@
           "6": { "double": 0, "string": "-50", "defined": true },
           "8": { "double": 0, "string": "blue", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/miklos.sarvary.1/picture", "defined": true },
-          "location": { "string": "(50, 20)", "x": 50, "y": 20, "defined": true }
+          "location": { "string": "Sidney", "x": -33.867487, "y": 151.206990, "defined": true }
         }
       }
     ],

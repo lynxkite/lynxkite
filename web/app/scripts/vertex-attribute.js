@@ -6,6 +6,11 @@ angular.module('biggraph').directive('vertexAttribute', function(axisOptions) {
     templateUrl: 'vertex-attribute.html',
     link: function(scope) {
       axisOptions.bind(scope, scope.side, 'vertex', scope.attr.title, 'axisOptions');
+      scope.sampledVisualizations = [
+        'size', 'label', 'label size',
+        'color', 'opacity', 'label color',
+        'icon', 'image', 'slider', 'position',
+        'geo'];
       scope.showLogCheckbox = function() {
         if (!scope.attr.isNumeric) { return false; }
         if (scope.histogram) { return true; }

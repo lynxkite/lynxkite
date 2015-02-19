@@ -105,6 +105,7 @@ angular.module('biggraph')
       vd.vertexAttrs.icon = this.resolveVertexAttribute(this.state.attributeTitles.icon);
       vd.vertexAttrs.image = this.resolveVertexAttribute(this.state.attributeTitles.image);
       vd.vertexAttrs.position = this.resolveVertexAttribute(this.state.attributeTitles.position);
+      vd.vertexAttrs.geo = this.resolveVertexAttribute(this.state.attributeTitles.geo);
 
       vd.edgeAttrs = {};
       var aggregated = function(attr, aggregator) {
@@ -311,6 +312,10 @@ angular.module('biggraph')
         } else if (setting === 'image') {
           this.state.attributeTitles.color = undefined;
           this.state.attributeTitles.icon = undefined;
+        } else if (setting === 'position') {
+          this.state.attributeTitles.geo = undefined;
+        } else if (setting === 'geo') {
+          this.state.attributeTitles.position = undefined;
         }
       }
     };
