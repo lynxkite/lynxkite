@@ -740,7 +740,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     // Constant to match Google Maps projection.
     this.GM_MULT = 0.403;
     // How much to wait after pan/zoom events before requesting a new map.
-    this.NAVIGATION_DELAY = 1000;  // Milliseconds.
+    this.NAVIGATION_DELAY = 100;  // Milliseconds.
     this.root = 'https://maps.googleapis.com/maps/api/staticmap?';
     this.style = 'feature:all|gamma:0.1|saturation:-80';
     this.images = [];
