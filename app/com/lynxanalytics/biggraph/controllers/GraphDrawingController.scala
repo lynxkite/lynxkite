@@ -387,7 +387,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val attrMap = graph_operations.RestrictAttributeToIds.run(
       attributeWithAggregator.attr, ids).value.toMap
     val byCoordMap = attributeWithAggregator.aggregator.aggregateByKey(
-      attrMap.toSeq.map { case (id, value) => idToCoordMapping(id) -> value })
+      attrMap.toSeq.flatMap { case (id, value) => idToCoordMapping.get(id).map(_ -> value) })
     implicit val ttT = attributeWithAggregator.aggregator.outputTypeTag(
       attributeWithAggregator.attr.typeTag)
     byCoordMap.mapValues(DynamicValue.convert[To](_))
