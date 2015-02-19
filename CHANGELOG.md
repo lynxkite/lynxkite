@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Authentication related UI is hidden when authentication is disabled.
  - New edge operation "Add reversed edges" which creates a symmetric graph.
  - When a project is hard filtered results are now saved to disk. Previously they behaved
    identically to soft filters that - correctly - only compute their results on the fly.
