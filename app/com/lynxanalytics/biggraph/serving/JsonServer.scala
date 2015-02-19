@@ -74,7 +74,7 @@ class JsonServer extends mvc.Controller {
   }
 
   // An non-authenticated, no input GET request that returns JSon.
-  def jsonInfoGet[O: json.Writes](handler: => O) = {
+  def jsonPublicGet[O: json.Writes](handler: => O) = {
     action(parse.anyContent, withAuth = false) { (user, request) =>
       try {
         Ok(json.Json.toJson(handler))
@@ -293,7 +293,7 @@ object ProductionJsonServer extends JsonServer {
   def getUsers = jsonGet(UserProvider.getUsers)
   def createUser = jsonPost(UserProvider.createUser)
 
-  def getGlobalSettings = jsonInfoGet(GlobalSettings(hasAuth = productionMode))
+  def getGlobalSettings = jsonPublicGet(GlobalSettings(hasAuth = productionMode))
 }
 
 // Throw FlyingResult anywhere to generate non-200 HTTP responses.
