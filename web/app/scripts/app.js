@@ -175,6 +175,7 @@ angular
         });
       },
     };
+    util.globals = util.get('/ajax/getGlobalSettings');
     return util;
   })
   // selectFields adds a new $selection attribute to the objects, that is a newline-delimited

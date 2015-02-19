@@ -19,15 +19,17 @@ class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
-  def action[A](parser: mvc.BodyParser[A])(block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
-    asyncAction(parser) { (user, request) =>
+  def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
+    block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
+
+    asyncAction(parser, withAuth) { (user, request) =>
       Future(block(user, request))
     }
   }
 
-  def asyncAction[A](parser: mvc.BodyParser[A])(
+  def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     block: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
-    if (productionMode) {
+    if (withAuth) {
       // TODO: Redirect HTTP to HTTPS. (This will be easier in Play 2.3.)
       mvc.Action.async(parser) { request =>
         UserProvider.get(request) match {
@@ -71,6 +73,17 @@ class JsonServer extends mvc.Controller {
     }
   }
 
+  // An non-authenticated, no input GET request that returns JSon.
+  def jsonInfoGet[O: json.Writes](handler: => O) = {
+    action(parse.anyContent, withAuth = false) { (user, request) =>
+      try {
+        Ok(json.Json.toJson(handler))
+      } catch {
+        case flying: FlyingResult => flying.result
+      }
+    }
+  }
+
   def jsonFuture[I: json.Reads, O: json.Writes](handler: (User, I) => Future[O]) = {
     asyncAction(parse.anyContent) { (user, request) =>
       jsonQuery(user, request) { (user: User, i: I) =>
@@ -87,6 +100,9 @@ class JsonServer extends mvc.Controller {
 
 case class Empty(
   fake: Int = 0) // Needs fake field as JSON inception doesn't work otherwise.
+
+case class GlobalSettings(
+  hasAuth: Boolean)
 
 object ProductionJsonServer extends JsonServer {
   // We check if licence is still valid.
@@ -174,6 +190,8 @@ object ProductionJsonServer extends JsonServer {
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
   implicit val wUser = json.Json.writes[User]
   implicit val wUserList = json.Json.writes[UserList]
+
+  implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
   // File upload.
   def upload = {
@@ -274,6 +292,8 @@ object ProductionJsonServer extends JsonServer {
 
   def getUsers = jsonGet(UserProvider.getUsers)
   def createUser = jsonPost(UserProvider.createUser)
+
+  def getGlobalSettings = jsonInfoGet(GlobalSettings(hasAuth = productionMode))
 }
 
 // Throw FlyingResult anywhere to generate non-200 HTTP responses.

@@ -11,15 +11,17 @@
         <div class="form-group"><input id="new-project-name" placeholder="Project name" ng-model="newProject.name" class="form-control"></div>
         <div class="form-group">about</div>
         <div class="form-group"><input placeholder="Description" ng-model="newProject.notes" class="form-control"></div>
-        <div class="form-group">that</div>
-        <div class="form-group"><select
-            ng-model="newProject.privacy"
-            ng-init="newProject.privacy = 'private'"
-            class="form-control">
-          <option value="private">no one else can see</option>
-          <option value="public-read">everyone can see</option>
-          <option value="public-write">everyone can modify</option>
-        </select></div>
+        <div ng-show="util.globals.hasAuth">
+          <div class="form-group">that</div>
+          <div class="form-group"><select
+                                     ng-model="newProject.privacy"
+                                     ng-init="newProject.privacy = 'private'"
+                                     class="form-control">
+              <option value="private">no one else can see</option>
+              <option value="public-read">everyone can see</option>
+              <option value="public-write">everyone can modify</option>
+          </select></div>
+        </div>
         <button type="submit" class="btn btn-default" ng-click="createProject()"
           ng-disabled="newProject.sending || !newProject.name">
           {{newProject.sending && '...' || 'Create'}}
