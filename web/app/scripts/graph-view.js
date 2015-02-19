@@ -805,7 +805,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var w = this.vertices.halfColumnWidth * 2;
     var h = this.gv.svg.height();
     var offsetter = this.offsetter;
-    var x = (w / 2 - offsetter.xOff) / offsetter.zoom;
+    var x = (w / 2 - offsetter.xOff + this.vertices.xMin) / offsetter.zoom;
     var y = (h / 2 - offsetter.yOff) / offsetter.zoom;
     var zoomLevel = Math.log2(this.GLOBE_SIZE * offsetter.zoom / Math.max(w, h) / this.GM_MULT);
     zoomLevel = Math.max(0, Math.floor(zoomLevel));
