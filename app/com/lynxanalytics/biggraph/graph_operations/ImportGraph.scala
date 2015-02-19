@@ -15,9 +15,11 @@ import org.apache.spark.SparkContext
 // Functions for looking at CSV files. The frontend can use these when
 // constructing the import operation.
 object ImportUtil {
-  def header(file: Filename): String =
+  def header(file: Filename): String = {
+    assert(file.exists, s"$file does not exist.")
     // Read from first file if there is a glob.
     file.list.head.reader.readLine
+  }
 
   private[graph_operations] def splitter(delimiter: String): String => Seq[String] = {
     val delim = java.util.regex.Pattern.quote(delimiter)
