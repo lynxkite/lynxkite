@@ -58,7 +58,8 @@
           <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? side.saveAs(saveAsName) : 0"></i>
         </label>
         <label class="btn btn-default" ng-click="showSettings = !showSettings"
-          tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom">
+          tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom"
+          ng-show="util.globals.hasAuth">
           <i class="glyphicon glyphicon-cog"></i>
         </label>
         <label class="btn btn-default" ng-click="side.close()"
