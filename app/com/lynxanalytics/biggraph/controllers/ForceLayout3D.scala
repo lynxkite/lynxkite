@@ -9,19 +9,24 @@ object ForceLayout3D {
   final val IdealDistance = 10.0
   final val Fraction = 0.1
   final val Iterations = 50
-  final val Gravity = 0.1
+  final val Gravity = 0.01
 
+  // The basic formula is:
+  //   attraction = distance ^ 2 / ideal_distance
+  //   repulsion = ideal_distance ^ 2 / distance
+  // The idea is that these two cancel out at the ideal distance.
   def apply(edges: Seq[FEEdge]): Map[String, FE3DPosition] = {
     val edgeWeights = edges.map(e => e.a -> e.size) ++ edges.map(e => e.b -> e.size)
     val vertices = edgeWeights.groupBy(_._1).mapValues(_.unzip._2.sum).map {
-      case (vid, degree) => vid -> Vertex(vid, degree, randomVector(vid))
+      case (vid, degree) => vid -> Vertex(vid, degree + 1, randomVector(vid))
     }.toMap
-    for (_ <- 0 to Iterations) {
+    for (i <- 0 to Iterations) {
       for (e <- edges) {
         val a = vertices(e.a)
         val b = vertices(e.b)
         val d = b.pos - a.pos
-        val attraction = d * d.len * Fraction / IdealDistance
+        // Avoid overshooting and divergent oscillations.
+        val attraction = d * math.min(0.4, d.len * Fraction / IdealDistance)
         a.pos += attraction / a.mass
         b.pos -= attraction / b.mass
       }
@@ -35,8 +40,7 @@ object ForceLayout3D {
         b.pos += repulsion / b.mass
       }
       for (a <- vertices.values) {
-        val l = a.pos.len
-        a.pos -= a.pos * Gravity / l
+        a.pos -= a.pos * Gravity
       }
     }
     vertices.map { case (k, v) => k.toString -> v.pos }
