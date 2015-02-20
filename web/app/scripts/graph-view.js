@@ -667,12 +667,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.initSampled = function(vertices) {
     this.initLayout(vertices);
-    this.initZoom(vertices);
+    this.initView(vertices);
     this.initSlider(vertices);
   };
 
-  GraphView.prototype.initZoom = function(vertices) {
-    // Initial zoom to fit the layout on the SVG.
+  // Pan/zoom the view (the offsetter) to fit the graph, if necessary.
+  GraphView.prototype.initView = function(vertices) {
+    var offsetter = vertices.offsetter;
+    // Figure out zoom.
     var xb = common.minmax(vertices.map(function(v) { return v.x; }));
     var yb = common.minmax(vertices.map(function(v) { return v.y; }));
     var xCenter = (xb.min + xb.max) / 2;
@@ -684,19 +686,24 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var newZoom = graphToSVGRatio * Math.min(xFit, yFit);
 
       // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
-      var ratio = newZoom / vertices.offsetter.zoom;
-      if (!vertices.offsetter.inherited || ratio < 0.1 || ratio > 10) {
-        vertices.offsetter.zoom = newZoom;
+      var ratio = newZoom / offsetter.zoom;
+      if (!offsetter.inherited || ratio < 0.1 || ratio > 10) {
+        offsetter.zoom = newZoom;
         // "Thickness" is scaled to the SVG size. We leave it unchanged.
       }
     }
-    if (!vertices.offsetter.inherited) {
-      // Pan to center the graph.
-      var z = vertices.offsetter.zoom;
-      vertices.offsetter.xOff -= xCenter * z;
-      vertices.offsetter.yOff -= yCenter * z;
+    // Figure out panning.
+    var xOff = vertices.xMin + vertices.halfColumnWidth - xCenter * offsetter.zoom;
+    var yOff = this.svg.height() / 2 - yCenter * offsetter.zoom;
+    // Apply the new offset if it is a new offsetter, or if the inherited offset is way off.
+    var dx = Math.abs(xOff - offsetter.xOff);
+    var dy = Math.abs(yOff - offsetter.yOff);
+    if (!offsetter.inherited ||
+        dx > vertices.halfColumnWidth || dy > this.svg.height() / 2) {
+      offsetter.xOff = xOff;
+      offsetter.yOff = yOff;
     }
-    vertices.offsetter.reDraw();
+    offsetter.reDraw();
   };
 
   GraphView.prototype.initSlider = function(vertices) {
