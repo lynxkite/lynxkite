@@ -205,7 +205,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "ms" -> "0.5"))
     assert(project.scalars("fingerprinting matches found").value == 9)
     run("Discard edges")
-    run("Connect vertices on attribute", Map("attr" -> "email"))
+    run("Connect vertices on attribute", Map("fromAttr" -> "email", "toAttr" -> "email"))
     assert(project.scalars("edge_count").value == 18)
     assert(project.scalars("vertex_count").value == 109)
     run("Merge vertices by attribute", Map("key" -> "name"))
