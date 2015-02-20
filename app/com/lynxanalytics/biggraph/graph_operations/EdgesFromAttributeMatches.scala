@@ -38,6 +38,7 @@ case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttribu
 }
 
 // Generates edges between vertices that match on an attribute.
+// If fromAttr on A matches toAttr on B, an A -> B edge is generated.
 object EdgesFromBipartiteAttributeMatches extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val from = vertexSet
@@ -51,7 +52,8 @@ object EdgesFromBipartiteAttributeMatches extends OpFromJson {
   }
   def fromJson(j: JsValue) = EdgesFromBipartiteAttributeMatches()
 }
-case class EdgesFromBipartiteAttributeMatches[T]() extends TypedMetaGraphOp[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
+case class EdgesFromBipartiteAttributeMatches[T]()
+    extends TypedMetaGraphOp[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
   import EdgesFromBipartiteAttributeMatches._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]
