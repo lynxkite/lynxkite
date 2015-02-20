@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.1.1
+
  - _"Connect vertices on attribute"_ now takes two attributes as parameters and will
    connect A to B if the "source" attribute of A matches the "destination" attribute
    of B. Set the same attribute for both parameters to get the previous behavior.
