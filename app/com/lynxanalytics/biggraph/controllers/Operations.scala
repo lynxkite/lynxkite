@@ -91,18 +91,38 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new EdgeOperation(_) {
     val title = "Connect vertices on attribute"
     val description =
-      "Creates edges between vertices that are equal in a chosen attribute."
+      """Creates edges between vertices that are equal in a chosen attribute. If the source
+      attribute of A equals the destination attribute of B, an A&nbsp;&rarr;&nbsp;B edge will
+      be generated.
+      """
     def parameters = List(
-      Param("attr", "Attribute", options = vertexAttributes[String]))
+      Param("fromAttr", "Source attribute", options = vertexAttributes),
+      Param("toAttr", "Destination attribute", options = vertexAttributes))
     def enabled =
       (hasVertexSet && hasNoEdgeBundle
-        && FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes."))
-    private def applyOn[T](attr: Attribute[T]) = {
-      val op = graph_operations.EdgesFromAttributeMatches[T]()
-      project.edgeBundle = op(op.attr, attr).result.edges
+        && FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes."))
+    private def applyAA[A](fromAttr: Attribute[A], toAttr: Attribute[A]) = {
+      if (fromAttr == toAttr) {
+        // Use the slightly faster operation.
+        val op = graph_operations.EdgesFromAttributeMatches[A]()
+        project.edgeBundle = op(op.attr, fromAttr).result.edges
+      } else {
+        val op = graph_operations.EdgesFromBipartiteAttributeMatches[A]()
+        project.edgeBundle = op(op.fromAttr, fromAttr)(op.toAttr, toAttr).result.edges
+      }
     }
-    def apply(params: Map[String, String]) =
-      applyOn(project.vertexAttributes(params("attr")))
+    private def applyAB[A, B](fromAttr: Attribute[A], toAttr: Attribute[B]) = {
+      applyAA(fromAttr, toAttr.asInstanceOf[Attribute[A]])
+    }
+    def apply(params: Map[String, String]) = {
+      val fromAttrName = params("fromAttr")
+      val toAttrName = params("toAttr")
+      val fromAttr = project.vertexAttributes(fromAttrName)
+      val toAttr = project.vertexAttributes(toAttrName)
+      assert(fromAttr.typeTag.tpe =:= toAttr.typeTag.tpe,
+        s"$fromAttrName and $toAttrName are not of the same type.")
+      applyAB(fromAttr, toAttr)
+    }
   })
 
   trait RowReader {
