@@ -678,7 +678,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("direction", "Count", options = Direction.options))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val es = Direction(params("direction"), project.edgeBundle).edgeBundle
+      val es = Direction(params("direction"), project.edgeBundle, reversed = true).edgeBundle
       val op = graph_operations.OutDegree()
       project.vertexAttributes(params("name")) = op(op.es, es).result.outDegree
     }
@@ -2213,13 +2213,16 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     // Options suitable when edge attributes are not involved.
     val options = attrOptions :+ UIValue("symmetric edges", "symmetric edges")
   }
-  case class Direction(direction: String, origEB: EdgeBundle) {
+  case class Direction(direction: String, origEB: EdgeBundle, reversed: Boolean = false) {
+    val unchangedOut: (EdgeBundle, Option[EdgeBundle]) = (origEB, None)
+    val reversedOut: (EdgeBundle, Option[EdgeBundle]) = {
+      val op = graph_operations.ReverseEdges()
+      val res = op(op.esAB, origEB).result
+      (res.esBA, Some(res.injection))
+    }
     val (edgeBundle, pullBundleOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
-      case "incoming edges" => (origEB, None)
-      case "outgoing edges" =>
-        val op = graph_operations.ReverseEdges()
-        val res = op(op.esAB, origEB).result
-        (res.esBA, Some(res.injection))
+      case "incoming edges" => if (reversed) reversedOut else unchangedOut
+      case "outgoing edges" => if (reversed) unchangedOut else reversedOut
       case "all edges" =>
         val op = graph_operations.AddReversedEdges()
         val res = op(op.es, origEB).result
