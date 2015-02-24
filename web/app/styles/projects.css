@@ -1,0 +1,7 @@
+.bottom-links {
+  float: right;
+}
+
+.bottom-links > * {
+  margin-right: 10px;
+}

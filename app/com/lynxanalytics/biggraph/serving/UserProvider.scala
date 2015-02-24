@@ -66,6 +66,21 @@ object UserProvider extends mvc.Controller {
     }
   }
 
+  val logout = mvc.Action { request =>
+    synchronized {
+      val cookie = request.cookies.find(_.name == "auth")
+      cookie.map(_.value).collect {
+        case SignedToken(signed) => signed
+      }.foreach { signed =>
+        // Forget token.
+        tokens -= signed.token
+      }
+      // Clear cookie.
+      Redirect("/").withCookies(mvc.Cookie(
+        "auth", "", secure = true, maxAge = Some(SignedToken.maxAge)))
+    }
+  }
+
   val passwordLogin = mvc.Action(parse.json) { request =>
     val username = (request.body \ "username").as[String]
     val password = (request.body \ "password").as[String]
