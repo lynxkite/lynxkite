@@ -39,6 +39,7 @@ GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.d
 
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.UserProvider.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.UserProvider.googleLogin
+POST /logout           com.lynxanalytics.biggraph.serving.UserProvider.logout
 
 GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck
 
