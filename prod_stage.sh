@@ -4,6 +4,7 @@ set -x
 set -e
 
 pushd web
+npm install
 grunt
 popd
 
