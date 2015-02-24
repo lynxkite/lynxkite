@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Add logout link at the bottom when authentication is enabled.
+
 ### 1.1.1
 
  - _"Connect vertices on attribute"_ now takes two attributes as parameters and will
