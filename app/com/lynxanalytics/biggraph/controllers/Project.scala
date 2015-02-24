@@ -168,10 +168,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
   def readAllowedFrom(user: User): Boolean = {
     // Write access also implies read access.
-    writeAllowedFrom(user) || aclContains(readACL, user)
+    user.isAdmin || writeAllowedFrom(user) || aclContains(readACL, user)
   }
   def writeAllowedFrom(user: User): Boolean = {
-    aclContains(writeACL, user)
+    user.isAdmin || aclContains(writeACL, user)
   }
 
   def aclContains(acl: String, user: User): Boolean = {

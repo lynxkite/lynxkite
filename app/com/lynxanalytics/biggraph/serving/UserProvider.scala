@@ -10,13 +10,14 @@ import org.mindrot.jbcrypt.BCrypt
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object User {
-  val fake = User("fake")
+  val fake = User("fake", isAdmin = true)
 }
-case class User(email: String) {
+case class User(email: String, isAdmin: Boolean) {
   override def toString = email
 }
 case class UserList(users: List[User])
-case class CreateUserRequest(email: String, password: String)
+case class UserOnDisk(email: String, hash: String, isAdmin: Boolean)
+case class CreateUserRequest(email: String, password: String, isAdmin: Boolean)
 
 class SignedToken private (signature: String, timestamp: Long, val token: String) {
   override def toString = s"$signature $timestamp $token"
@@ -57,6 +58,8 @@ object SignedToken {
 }
 
 object UserProvider extends mvc.Controller {
+  implicit val fUserOnDisk = json.Json.format[UserOnDisk]
+
   def get(request: mvc.Request[_]): Option[User] = synchronized {
     val cookie = request.cookies.find(_.name == "auth")
     cookie.map(_.value).collect {
@@ -86,8 +89,8 @@ object UserProvider extends mvc.Controller {
     val password = (request.body \ "password").as[String]
     val signed = SignedToken()
     synchronized {
-      assertPassword(username, password)
-      tokens(signed.token) = User(username)
+      val user = getUser(username, password)
+      tokens(signed.token) = user
     }
     Redirect("/").withCookies(mvc.Cookie(
       "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
@@ -121,17 +124,18 @@ object UserProvider extends mvc.Controller {
       val signed = SignedToken()
       assert(email.endsWith("@lynxanalytics.com"), s"Permission denied to $email.")
       synchronized {
-        tokens(signed.token) = User(email)
+        tokens(signed.token) = User(email, isAdmin = false)
       }
       Redirect("/").withCookies(mvc.Cookie(
         "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
     }
   }
 
-  private def assertPassword(username: String, password: String): Unit = synchronized {
-    assert(passwords.contains(username), "Invalid username or password.")
-    val h = passwords(username)
-    assert(BCrypt.checkpw(password, h), "Invalid username or password.")
+  private def getUser(username: String, password: String): User = synchronized {
+    assert(users.contains(username), "Invalid username or password.")
+    val user = users(username)
+    assert(BCrypt.checkpw(password, user.hash), "Invalid username or password.")
+    User(user.email, user.isAdmin)
   }
 
   private def hash(pwd: String): String = {
@@ -146,38 +150,38 @@ object UserProvider extends mvc.Controller {
   private val usersFile = new java.io.File(System.getProperty("user.dir") + "/conf/users.txt")
   // Access to these mutable collections must be synchronized.
   private val tokens = collection.mutable.Map[String, User]()
-  private val passwords = collection.mutable.Map[String, String]()
+  private val users = collection.mutable.Map[String, UserOnDisk]()
 
-  // Loads user+pass data from usersFile.
+  // Loads user data from usersFile.
   private def loadUsers() = synchronized {
     val data = FileUtils.readFileToString(usersFile, "utf8")
-    passwords.clear()
-    passwords ++= json.Json.parse(data).as[json.JsObject].fields.map {
-      case (name, value) => name -> value.as[String]
+    users.clear()
+    users ++= json.Json.parse(data).as[Seq[UserOnDisk]].map {
+      u => u.email -> u
     }
     log.info(s"User data loaded from $usersFile.")
   }
 
-  // Saves user+pass data to usersFile.
+  // Saves user data to usersFile.
   private def saveUsers() = synchronized {
-    val data = json.Json.prettyPrint(json.JsObject(
-      passwords.mapValues(json.JsString(_)).toSeq
-    ))
+    val data = json.Json.prettyPrint(json.Json.toJson(users.values))
     FileUtils.writeStringToFile(usersFile, data, "utf8")
     log.info(s"User data saved to $usersFile.")
   }
 
   // List user names.
   def getUsers(user: User, req: Empty): UserList = synchronized {
-    UserList(passwords.keys.toList.sorted.map(e => User(e)))
+    UserList(users.values.toList.sortBy(_.email).map(u => User(u.email, u.isAdmin)))
   }
 
   // Add new user.
   def createUser(user: User, req: CreateUserRequest): Unit = synchronized {
+    assert(user.isAdmin,
+      s"Only administrators can create new users. $user is not an administrator.")
     assert(req.email.nonEmpty, "User name missing")
     assert(req.password.nonEmpty, "Password missing")
-    assert(!passwords.contains(req.email), s"User name ${req.email} is already taken.")
-    passwords(req.email) = hash(req.password)
+    assert(!users.contains(req.email), s"User name ${req.email} is already taken.")
+    users(req.email) = UserOnDisk(req.email, hash(req.password), req.isAdmin)
     saveUsers()
   }
 

@@ -60,21 +60,23 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     assert(p2.segmentations == Seq(p3.asSegmentation))
   }
 
+  def user(email: String) = User(email, isAdmin = false)
+
   def assertReaders(yes: String*)(no: String*) = {
     for (email <- yes) {
-      assert(project.readAllowedFrom(User(email)))
+      assert(project.readAllowedFrom(user(email)))
     }
     for (email <- no) {
-      assert(!project.readAllowedFrom(User(email)))
+      assert(!project.readAllowedFrom(user(email)))
     }
   }
 
   def assertWriters(yes: String*)(no: String*) = {
     for (email <- yes) {
-      assert(project.writeAllowedFrom(User(email)))
+      assert(project.writeAllowedFrom(user(email)))
     }
     for (email <- no) {
-      assert(!project.writeAllowedFrom(User(email)))
+      assert(!project.writeAllowedFrom(user(email)))
     }
   }
 
