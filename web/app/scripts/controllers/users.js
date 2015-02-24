@@ -9,7 +9,7 @@ angular.module('biggraph')
         .post('/ajax/createUser', {
           email: $scope.newUserName,
           password: $scope.newPassword,
-          isAdmin: $scope.newUserIsAdmin,
+          isAdmin: $scope.newUserIsAdmin || false,
         }).then(function() {
           $scope.list = util.nocache('/ajax/getUsers');
         });
