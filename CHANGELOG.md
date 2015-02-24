@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.1.3
+
  - Fixed a bug with user creation.
 
 ### 1.1.2
