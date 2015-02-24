@@ -828,10 +828,4 @@ angular.module('biggraph')
         right: $scope.right.state,
       };
     }
-
-    $scope.logout = function() {
-      util.post('/logout', {}, function() {
-        $location.url('/');
-      });
-    };
   });

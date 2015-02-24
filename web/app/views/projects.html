@@ -14,15 +14,7 @@
 
 <div class="clearfix"></div>
 
-<div class="bottom-links">
-  <a href
-    ng-click="util.reportError({ message: 'Click &quot;report&quot; to send an email about this page.', details: sides })">
-    <i class="glyphicon glyphicon-exclamation-sign"></i> send feedback
-  </a>
-  <a href ng-if="util.globals.hasAuth" ng-click="logout()">
-    <i class="glyphicon glyphicon-log-out"></i> log out
-  </a>
-</div>
+<bottom-links info="sides"></bottom-links>
 
 <div class="text-center">
   <a target="_blank" href="{{linkedURL()}}" tooltip="Open linked window">
