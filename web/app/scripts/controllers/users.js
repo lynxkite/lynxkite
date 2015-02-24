@@ -6,8 +6,13 @@ angular.module('biggraph')
 
     $scope.createUser = function() {
       util
-        .post('/ajax/createUser', { email: $scope.newUserName, password: $scope.newPassword })
-        .then(function() { $scope.list = util.nocache('/ajax/getUsers'); });
+        .post('/ajax/createUser', {
+          email: $scope.newUserName,
+          password: $scope.newPassword,
+          isAdmin: $scope.newUserIsAdmin,
+        }).then(function() {
+          $scope.list = util.nocache('/ajax/getUsers');
+        });
     };
 
     $scope.reportListError = function() {
