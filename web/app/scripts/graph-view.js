@@ -649,7 +649,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         return;
       }
       e.preventDefault();
-      var delta = -0.001 * e.originalEvent.deltaY;
+      var oe = e.originalEvent;
+      var plainScroll = oe.shiftKey ? 0 : oe.deltaY;
+      var shiftScroll = oe.deltaX + oe.shiftKey ? oe.deltaY : 0;
+      var delta = -0.001 * plainScroll;
       // Graph-space point under the mouse should remain unchanged.
       // mxOff * zoom + xOff = mx
       var mxOff = (mx - offsetter.xOff) / offsetter.zoom;
@@ -658,7 +661,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       offsetter.xOff = mx - mxOff * offsetter.zoom;
       offsetter.yOff = my - myOff * offsetter.zoom;
       // Shift-scroll, or horizontal scroll is applied only to thickness.
-      delta += -0.005 * e.originalEvent.deltaX;
+      delta += -0.005 * shiftScroll;
       // Thickness (vertex radius and edge width) changes by a square-root function.
       offsetter.thickness *= Math.exp(0.5 * delta);
       offsetter.reDraw();
