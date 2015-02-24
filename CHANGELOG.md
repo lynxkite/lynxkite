@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Fixed a bug with user creation.
+
 ### 1.1.2
 
  - Administrator users can now be created. Only administrators can create new users, and
