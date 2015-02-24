@@ -10,7 +10,7 @@ angular.module('biggraph').directive('bottomLinks', function($location, util) {
 
       scope.sendFeedback = function() {
         util.reportError({
-          message: 'Click &quot;report&quot; to send an email about this page.',
+          message: 'Click "report" to send an email about this page.',
           details: scope.info });
       };
 
