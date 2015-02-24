@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Administrator users can now be created. Only administrators can create new users, and
+   they have full access to all projects. Old user configuration files are incompatible with
+   this change. If this is a problem, we can manually convert old user configuration files.
  - Add logout link at the bottom when authentication is enabled.
 
 ### 1.1.1
