@@ -116,6 +116,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         that.svgMouseWheelListeners[i](e);
       }
     });
+    this.svgDoubleClickListeners = [];
+    this.svg.on('dblclick', function(e) {
+      for (var i = 0; i < that.svgDoubleClickListeners.length; ++i) {
+        that.svgDoubleClickListeners[i](e);
+      }
+    });
     this.renderers = [];  // 3D renderers.
   }
 
@@ -128,6 +134,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.unregistration = [];
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
+    this.svgDoubleClickListeners = [];
     for (i = 0; i < this.renderers.length; ++i) {
       this.renderers[i].scope().$destroy();
       this.renderers[i].remove();
@@ -641,6 +648,21 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         angular.element(window).off('mousemove mouseup touchmove touchend');
       });
     });
+    function zoom(position, deltaZoom, deltaThickness) {
+      var delta = -0.001 * deltaZoom;
+      // Graph-space point under the mouse should remain unchanged.
+      // mxOff * zoom + xOff = position.x
+      var mxOff = (position.x - offsetter.xOff) / offsetter.zoom;
+      var myOff = (position.y - offsetter.yOff) / offsetter.zoom;
+      offsetter.zoom *= Math.exp(delta);
+      offsetter.xOff = position.x - mxOff * offsetter.zoom;
+      offsetter.yOff = position.y - myOff * offsetter.zoom;
+      // Shift-scroll, or horizontal scroll is applied only to thickness.
+      delta += -0.005 * deltaThickness;
+      // Thickness (vertex radius and edge width) changes by a square-root function.
+      offsetter.thickness *= Math.exp(0.5 * delta);
+      offsetter.reDraw();
+    }
     this.svgMouseWheelListeners.push(function(e) {
       var mx = e.originalEvent.pageX;
       var my = e.originalEvent.pageY;
@@ -651,20 +673,20 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       e.preventDefault();
       var oe = e.originalEvent;
       var plainScroll = oe.shiftKey ? 0 : oe.deltaY;
-      var shiftScroll = oe.deltaX + oe.shiftKey ? oe.deltaY : 0;
-      var delta = -0.001 * plainScroll;
-      // Graph-space point under the mouse should remain unchanged.
-      // mxOff * zoom + xOff = mx
-      var mxOff = (mx - offsetter.xOff) / offsetter.zoom;
-      var myOff = (my - offsetter.yOff) / offsetter.zoom;
-      offsetter.zoom *= Math.exp(delta);
-      offsetter.xOff = mx - mxOff * offsetter.zoom;
-      offsetter.yOff = my - myOff * offsetter.zoom;
-      // Shift-scroll, or horizontal scroll is applied only to thickness.
-      delta += -0.005 * shiftScroll;
-      // Thickness (vertex radius and edge width) changes by a square-root function.
-      offsetter.thickness *= Math.exp(0.5 * delta);
-      offsetter.reDraw();
+      var shiftScroll = oe.deltaX + (oe.shiftKey ? oe.deltaY : 0);
+      console.log(oe.deltaX, oe.shiftKey, oe.deltaY);
+      zoom({ x: mx, y: my }, plainScroll, shiftScroll);
+    });
+    this.svgDoubleClickListeners.push(function(e) {
+      var mx = e.originalEvent.pageX;
+      var my = e.originalEvent.pageY;
+      var svgX = mx - svgElement.offset().left;
+      if ((svgX < xMin) || (svgX >= xMax)) {
+        return;
+      }
+      e.preventDefault();
+      var oe = e.originalEvent;
+      zoom({ x: mx, y: my }, oe.shiftKey ? 500 : -500, 0);
     });
   };
 
