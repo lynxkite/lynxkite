@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Upgraded to Apache Spark 1.2.1. Users need to download this and update `SPARK_HOME`
+   in their `.kiterc`.
  - Fixed logout behavior on the splash page (`/`).
 
 ### 1.1.3
