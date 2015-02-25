@@ -6,7 +6,7 @@ angular.module('biggraph').directive('brandBox', function() {
     templateUrl: 'brand-box.html',
     link: function(scope) {
       var tips = [
-        'You can zoom the graph visualization with the mouse wheel.',
+        'You can zoom the graph visualization with the mouse wheel or by double-clicking.',
         'Press ? for a list of keyboard shortcuts.',
         'The system is busy when you see the gears turning in the bottom right corner.' +
           ' Hover over the gears for the option to abort the calculation.',
