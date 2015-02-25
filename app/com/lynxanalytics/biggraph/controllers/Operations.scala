@@ -14,32 +14,37 @@ import scala.reflect.runtime.universe.typeOf
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   val Param = FEOperationParameterMeta // Short alias.
 
-  // Categories.
   import Operation.Category
-  abstract class VertexOperation(p: Project)
-    extends Operation(p, Category("Vertex operations", "blue"))
-  abstract class EdgeOperation(p: Project)
-    extends Operation(p, Category("Edge operations", "orange"))
-  abstract class AttributeOperation(p: Project)
-    extends Operation(p, Category("Attribute operations", "yellow"))
-  abstract class CreateSegmentationOperation(p: Project)
-    extends Operation(p, Category("Create segmentation", "green"))
-  abstract class HiddenOperation(p: Project)
-      extends Operation(p, Category("Hidden", "", visible = false)) {
+  import Operation.Context
+  // Categories.
+  abstract class VertexOperation(c: Context)
+    extends Operation(c, Category("Vertex operations", "blue"))
+  abstract class EdgeOperation(c: Context)
+    extends Operation(c, Category("Edge operations", "orange"))
+  abstract class AttributeOperation(c: Context)
+    extends Operation(c, Category("Attribute operations", "yellow"))
+  abstract class CreateSegmentationOperation(c: Context)
+    extends Operation(c, Category("Create segmentation", "green"))
+  abstract class HiddenOperation(c: Context)
+      extends Operation(c, Category("Hidden", "", visible = false)) {
     val description = ""
   }
   trait SegOp extends Operation {
     protected def seg = project.asSegmentation
     protected def parent = seg.parent
   }
-  abstract class HiddenSegmentationOperation(p: Project)
-    extends HiddenOperation(p) with SegOp
-  abstract class SegmentationOperation(p: Project)
-    extends Operation(
-      p, Category("Segmentation operations", "yellow", visible = p.isSegmentation)) with SegOp
-  abstract class SegmentationWorkflowOperation(p: Project)
-    extends Operation(
-      p, Category("Workflows on segmentation", "magenta", visible = p.isSegmentation)) with SegOp
+  abstract class HiddenSegmentationOperation(c: Context)
+    extends HiddenOperation(c) with SegOp
+  abstract class SegmentationOperation(c: Context)
+    extends Operation(c, Category(
+      "Segmentation operations",
+      "yellow",
+      visible = c.project.isSegmentation)) with SegOp
+  abstract class SegmentationWorkflowOperation(c: Context)
+    extends Operation(c, Category(
+      "Workflows on segmentation",
+      "magenta",
+      visible = c.project.isSegmentation)) with SegOp
 
   register(new VertexOperation(_) {
     val title = "Discard vertices"
@@ -176,8 +181,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
 
-  abstract class ImportVerticesOperation(project: Project)
-      extends VertexOperation(project) with RowReader {
+  abstract class ImportVerticesOperation(c: Context)
+      extends VertexOperation(c) with RowReader {
     def parameters = sourceParameters ++ List(
       Param("id-attr", "ID attribute name", defaultValue = "id"))
     def enabled = hasNoVertexSet
@@ -208,8 +213,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       """ + sqlImportHelpText
   })
 
-  abstract class ImportEdgesForExistingVerticesOperation(project: Project)
-      extends VertexOperation(project) with RowReader {
+  abstract class ImportEdgesForExistingVerticesOperation(c: Context)
+      extends VertexOperation(c) with RowReader {
     def parameters = sourceParameters ++ List(
       Param("attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("src", "Source ID field"),
@@ -241,8 +246,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       the edges can be attached to them.""" + sqlImportHelpText
   })
 
-  abstract class ImportVerticesAndEdgesOperation(project: Project)
-      extends VertexOperation(project) with RowReader {
+  abstract class ImportVerticesAndEdgesOperation(c: Context)
+      extends VertexOperation(c) with RowReader {
     def parameters = sourceParameters ++ List(
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"))
@@ -311,8 +316,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  abstract class ImportVertexAttributesOperation(project: Project)
-      extends VertexOperation(project) with RowReader {
+  abstract class ImportVertexAttributesOperation(c: Context)
+      extends VertexOperation(c) with RowReader {
     def parameters = sourceParameters ++ List(
       Param("id-attr", "Vertex id attribute", options = vertexAttributes[String]),
       Param("id-field", "ID field in the CSV file"),
@@ -1465,7 +1470,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       a new operation."""
     def parameters = List(
       Param("them", "Other project's name", options = otherProjects))
-    private def otherProjects = uIProjects.filter(_.id != project.projectName)
+    private def otherProjects = uiProjects.filter(_.id != project.projectName)
     def enabled =
       hasVertexSet &&
         FEStatus.assert(otherProjects.size > 0, "This is the only project")
@@ -1480,8 +1485,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  abstract class LoadSegmentationLinksOperation(project: Project)
-      extends SegmentationOperation(project) with RowReader {
+  abstract class LoadSegmentationLinksOperation(c: Context)
+      extends SegmentationOperation(c) with RowReader {
     def parameters = sourceParameters ++ List(
       Param(
         "base-id-attr",
@@ -1553,7 +1558,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       exists in both projects, it must have the same data type in both.
       """
     def parameters = List(
-      Param("other", "Other project's name", options = uIProjects),
+      Param("other", "Other project's name", options = uiProjects),
       Param("id-attr", "ID attribute name", defaultValue = "new_id"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]): Unit = {
