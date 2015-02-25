@@ -1470,12 +1470,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       a new operation."""
     def parameters = List(
       Param("them", "Other project's name", options = otherProjects))
-    private def otherProjects = uiProjects.filter(_.id != project.projectName)
+    private def otherProjects = readableProjects.filter(_.id != project.projectName)
     def enabled =
       hasVertexSet &&
         FEStatus.assert(otherProjects.size > 0, "This is the only project")
     def apply(params: Map[String, String]) = {
-      val them = Project(params("them"))
+      val themName = params("them")
+      assert(otherProjects.map(_.id).contains(themName), s"Unknown project: $themName")
+      val them = Project(themName)
       assert(them.vertexSet != null, s"No vertex set in $them")
       val segmentation = project.segmentation(params("them"))
       them.copy(segmentation.project)
@@ -1558,11 +1560,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       exists in both projects, it must have the same data type in both.
       """
     def parameters = List(
-      Param("other", "Other project's name", options = uiProjects),
+      Param("other", "Other project's name", options = readableProjects),
       Param("id-attr", "ID attribute name", defaultValue = "new_id"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]): Unit = {
-      val other = Project(params("other"))
+      val otherName = params("other")
+      assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
+      val other = Project(otherName)
       if (other.vertexSet == null) {
         // Nothing to do
         return
