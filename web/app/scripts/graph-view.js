@@ -443,7 +443,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     for (var attr in colorMap) {
       var l = svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin })
         .text(attr || 'undefined');
-      l.attr('fill', colorMap[attr] || UNCOLORED);
+      l.attr('style', 'fill: ' + colorMap[attr] || UNCOLORED);
       l.attr('text-anchor', anchor);
       this.legend.append(l);
       i++;
