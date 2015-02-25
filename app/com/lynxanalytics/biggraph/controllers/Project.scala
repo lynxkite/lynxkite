@@ -46,7 +46,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       things.map { case (name, e) => feAttr(e, name) }.toList
     }
     val members = if (isSegmentation) {
-      Some(feAttr(asSegmentation.membersAttribute, "$members", isInternal = true))
+      Some(feAttr(asSegmentation.membersAttribute, "#members", isInternal = true))
     } else {
       None
     }
