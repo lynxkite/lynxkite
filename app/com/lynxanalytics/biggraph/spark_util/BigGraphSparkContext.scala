@@ -27,7 +27,10 @@ private object SparkStageJars {
     "You need to run this from a jar. Use 'sbt stage' to get one.")
 }
 
-class DeadClass1 // Placeholder for a deleted class.
+// Placeholders for deleted classes.
+class DeadClass1
+class DeadClass2
+class DeadClass3
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo) {
@@ -82,9 +85,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[org.apache.spark.mllib.linalg.Vector]])
     kryo.register(classOf[org.apache.spark.mllib.linalg.DenseVector])
     kryo.register(breeze.linalg.DenseVector(Array[Double](0)).getClass)
-    // https://issues.apache.org/jira/browse/SPARK-5102
-    kryo.register(Class.forName("org.apache.spark.scheduler.CompressedMapStatus"))
-    kryo.register(Class.forName("org.apache.spark.scheduler.HighlyCompressedMapStatus"))
+    kryo.register(classOf[DeadClass2])
+    kryo.register(classOf[DeadClass3])
     kryo.register((0.0, 0.0).getClass)
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
