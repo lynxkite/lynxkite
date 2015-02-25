@@ -175,13 +175,13 @@ angular.module('biggraph')
         return that.getSegmentationSide().state.filters.vertex;
       };
       vd.filterSegmentationToParent = function(parentId) {
-        vd.segmentationFilters().$members = vd.filterValue(parentId);
+        vd.segmentationFilters()['#members'] = vd.filterValue(parentId);
       };
       vd.isSegmentationFilteredToParent = function(parentId) {
-        return vd.segmentationFilters().$members === vd.filterValue(parentId);
+        return vd.segmentationFilters()['#members'] === vd.filterValue(parentId);
       };
       vd.deleteSegmentationsParentFilter = function() {
-        delete vd.segmentationFilters().$members;
+        delete vd.segmentationFilters()['#members'];
       };
 
       vd.setVertexFilter = function(title, value) {
