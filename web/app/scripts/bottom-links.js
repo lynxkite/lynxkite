@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').directive('bottomLinks', function($location, util) {
+angular.module('biggraph').directive('bottomLinks', function($window, util) {
   return {
     restrict: 'E',
     scope: { info: '=' },  // Debug data to post with "send feedback".
@@ -16,7 +16,7 @@ angular.module('biggraph').directive('bottomLinks', function($location, util) {
 
       scope.logout = function() {
         util.post('/logout', {}, function() {
-          $location.url('/');
+          $window.location.href = '/';
         });
       };
     },
