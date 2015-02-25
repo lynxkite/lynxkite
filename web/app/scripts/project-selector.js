@@ -37,7 +37,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         return { error: 'Attribute not found: ' + name };
       }
       scope.$watch('data.$resolved', function(resolved) {
-        if (!resolved) { return; }
+        if (!resolved || scope.data.$error) { return; }
         scope.vertexCounts = {};
         scope.edgeCounts = {};
         for (var i = 0; i < scope.data.projects.length; ++i) {
