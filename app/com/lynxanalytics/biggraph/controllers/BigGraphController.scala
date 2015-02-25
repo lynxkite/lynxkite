@@ -407,7 +407,8 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   protected def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
   protected def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
   protected def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
-  protected def uiProjects(implicit manager: MetaGraphManager): List[UIValue] = {
+  // All projects that the user has read access to.
+  protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
     UIValue.list(Operation.projects
       .filter(_.readAllowedFrom(user))
       .map(_.projectName)
