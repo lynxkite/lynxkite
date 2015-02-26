@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.serving
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val ops = new Operations(this)
@@ -21,6 +22,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     ops.apply(
+      serving.User.fake,
       ProjectOperationRequest(on.projectName, FEOperationSpec(op.replace(" ", "-"), params)))
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
