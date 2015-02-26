@@ -66,7 +66,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
 
       scope.projectClick = function(event, p) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
-        if (event.originalEvent.cause === 'item-name-and-menu') { return; }
+        if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
         if (p.error) { return; }
         scope.name = p.name;
