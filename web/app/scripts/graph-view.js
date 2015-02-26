@@ -116,6 +116,25 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         that.svgMouseWheelListeners[i](e);
       }
     });
+    this.svgDoubleClickListeners = [];
+    function doubleClick(e) {
+      for (var i = 0; i < that.svgDoubleClickListeners.length; ++i) {
+        that.svgDoubleClickListeners[i](e);
+      }
+    }
+    this.svg.on('dblclick', doubleClick);
+    // Handle right double-clicks too. This disables the default context
+    // menu, which is actually a good thing too.
+    var lastRightClickTime = 0;
+    this.svg.on('contextmenu', function(e) {
+      e.preventDefault();
+      var now = Date.now();
+      if (now - lastRightClickTime < 300) {  // milliseconds
+        doubleClick(e);
+        now = 0;
+      }
+      lastRightClickTime = now;
+    });
     this.renderers = [];  // 3D renderers.
   }
 
@@ -128,6 +147,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.unregistration = [];
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
+    this.svgDoubleClickListeners = [];
     for (i = 0; i < this.renderers.length; ++i) {
       this.renderers[i].scope().$destroy();
       this.renderers[i].remove();
@@ -641,6 +661,21 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         angular.element(window).off('mousemove mouseup touchmove touchend');
       });
     });
+    function zoom(position, deltaZoom, deltaThickness) {
+      var delta = -0.001 * deltaZoom;
+      // Graph-space point under the mouse should remain unchanged.
+      // mxOff * zoom + xOff = position.x
+      var mxOff = (position.x - offsetter.xOff) / offsetter.zoom;
+      var myOff = (position.y - offsetter.yOff) / offsetter.zoom;
+      offsetter.zoom *= Math.exp(delta);
+      offsetter.xOff = position.x - mxOff * offsetter.zoom;
+      offsetter.yOff = position.y - myOff * offsetter.zoom;
+      // Shift-scroll, or horizontal scroll is applied only to thickness.
+      delta += -0.005 * deltaThickness;
+      // Thickness (vertex radius and edge width) changes by a square-root function.
+      offsetter.thickness *= Math.exp(0.5 * delta);
+      offsetter.reDraw();
+    }
     this.svgMouseWheelListeners.push(function(e) {
       var mx = e.originalEvent.pageX;
       var my = e.originalEvent.pageY;
@@ -651,20 +686,25 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       e.preventDefault();
       var oe = e.originalEvent;
       var plainScroll = oe.shiftKey ? 0 : oe.deltaY;
-      var shiftScroll = oe.deltaX + oe.shiftKey ? oe.deltaY : 0;
-      var delta = -0.001 * plainScroll;
-      // Graph-space point under the mouse should remain unchanged.
-      // mxOff * zoom + xOff = mx
-      var mxOff = (mx - offsetter.xOff) / offsetter.zoom;
-      var myOff = (my - offsetter.yOff) / offsetter.zoom;
-      offsetter.zoom *= Math.exp(delta);
-      offsetter.xOff = mx - mxOff * offsetter.zoom;
-      offsetter.yOff = my - myOff * offsetter.zoom;
-      // Shift-scroll, or horizontal scroll is applied only to thickness.
-      delta += -0.005 * shiftScroll;
-      // Thickness (vertex radius and edge width) changes by a square-root function.
-      offsetter.thickness *= Math.exp(0.5 * delta);
-      offsetter.reDraw();
+      var shiftScroll = oe.deltaX + (oe.shiftKey ? oe.deltaY : 0);
+      zoom({ x: mx, y: my }, plainScroll, shiftScroll);
+    });
+    this.svgDoubleClickListeners.push(function(e) {
+      var mx = e.originalEvent.pageX;
+      var my = e.originalEvent.pageY;
+      var svgX = mx - svgElement.offset().left;
+      if ((svgX < xMin) || (svgX >= xMax)) {
+        return;
+      }
+      e.preventDefault();
+      // Left/right is in/out.
+      var scroll = e.which === 1 ? -500 : 500;
+      // Shift affects thickness.
+      var shift = e.originalEvent.shiftKey;
+      zoom(
+        { x: mx, y: my },
+        shift ? 0 : scroll,
+        shift ? 0.5 * scroll : 0);
     });
   };
 
