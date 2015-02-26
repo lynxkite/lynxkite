@@ -275,19 +275,19 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
-    val projects = ops.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
+    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
     return Splash(version, projects.toList)
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
     val p = Project(request.name)
     p.assertReadAllowedFrom(user)
-    return p.toFE.copy(opCategories = ops.categories(p))
+    return p.toFE.copy(opCategories = ops.categories(user, p))
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     val p = Project(request.name)
-    assert(!ops.projects.contains(p), s"Project ${request.name} already exists.")
+    assert(!Operation.projects.contains(p), s"Project ${request.name} already exists.")
     p.notes = request.notes
     request.privacy match {
       case "private" =>
@@ -319,7 +319,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
     val p = Project(request.project)
     p.assertWriteAllowedFrom(user)
-    ops.apply(request)
+    ops.apply(user, request)
   }
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
@@ -355,7 +355,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val p1 = Project(request.from)
     val p2 = Project(request.to)
     p1.assertReadAllowedFrom(user)
-    assert(!ops.projects.contains(p2), s"Project $p2 already exists.")
+    assert(!Operation.projects.contains(p2), s"Project $p2 already exists.")
     p1.copy(p2)
     if (!p2.writeAllowedFrom(user)) {
       p2.writeACL += "," + user.email
@@ -385,7 +385,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 }
 
-abstract class Operation(val project: Project, val category: Operation.Category) {
+abstract class Operation(context: Operation.Context, val category: Operation.Category) {
+  val project = context.project
+  val user = context.user
   def id = title.replace(" ", "-")
   def title: String
   def description: String
@@ -405,27 +407,37 @@ abstract class Operation(val project: Project, val category: Operation.Category)
   protected def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
   protected def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
   protected def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
+  // All projects that the user has read access to.
+  protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
+    UIValue.list(Operation.projects
+      .filter(_.readAllowedFrom(user))
+      .map(_.projectName)
+      .toList)
+  }
 }
 object Operation {
   case class Category(title: String, color: String, visible: Boolean = true) {
     val icon = title.take(1) // The "icon" in the operation toolbox.
+  }
+
+  case class Context(user: serving.User, project: Project)
+
+  def projects(implicit manager: MetaGraphManager): Seq[Project] = {
+    val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
+    dirs.map(p => Project(p.path.last.name))
   }
 }
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
 
-  def projects: Seq[Project] = {
-    val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
-    dirs.map(p => Project(p.path.last.name))
-  }
+  private val operations = mutable.Buffer[Operation.Context => Operation]()
+  def register(factory: Operation.Context => Operation): Unit = operations += factory
+  private def forContext(context: Operation.Context) = operations.map(_(context))
 
-  private val operations = mutable.Buffer[Project => Operation]()
-  def register(factory: Project => Operation): Unit = operations += factory
-  private def forProject(project: Project) = operations.map(_(project))
-
-  def categories(project: Project): List[OperationCategory] = {
-    val cats = forProject(project).groupBy(_.category).toList
+  def categories(user: serving.User, project: Project): List[OperationCategory] = {
+    val context = Operation.Context(user, project)
+    val cats = forContext(context).groupBy(_.category).toList
     cats.filter(_._1.visible).sortBy(_._1.title).map {
       case (cat, ops) =>
         val feOps = ops.map(_.toFE).sortBy(_.title).toList
@@ -433,11 +445,10 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  def uIProjects: List[UIValue] = UIValue.list(projects.map(_.projectName).toList)
-
-  def apply(req: ProjectOperationRequest): Unit = manager.synchronized {
+  def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.synchronized {
     val p = Project(req.project)
-    val ops = forProject(p).filter(_.id == req.op.id)
+    val context = Operation.Context(user, p)
+    val ops = forContext(context).filter(_.id == req.op.id)
     assert(ops.nonEmpty, s"Cannot find operation: ${req.op.id}")
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
     p.checkpoint(ops.head.title) {
