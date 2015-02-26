@@ -117,10 +117,23 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
     });
     this.svgDoubleClickListeners = [];
-    this.svg.on('dblclick', function(e) {
+    function doubleClick(e) {
       for (var i = 0; i < that.svgDoubleClickListeners.length; ++i) {
         that.svgDoubleClickListeners[i](e);
       }
+    }
+    this.svg.on('dblclick', doubleClick);
+    // Handle right double-clicks too. This disables the default context
+    // menu, which is actually a good thing too.
+    var lastRightClickTime = 0;
+    this.svg.on('contextmenu', function(e) {
+      e.preventDefault();
+      var now = Date.now();
+      if (now - lastRightClickTime < 300) {  // milliseconds
+        doubleClick(e);
+        now = 0;
+      }
+      lastRightClickTime = now;
     });
     this.renderers = [];  // 3D renderers.
   }
@@ -685,7 +698,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       e.preventDefault();
       var oe = e.originalEvent;
-      zoom({ x: mx, y: my }, oe.shiftKey ? 500 : -500, 0);
+      // Left/right is in/out.
+      var scroll = oe.button === 0 ? -500 : 500;
+      // Shift affects thickness.
+      zoom(
+        { x: mx, y: my },
+        oe.shiftKey ? 0 : scroll,
+        oe.shiftKey ? 0.5 * scroll : 0);
     });
   };
 
