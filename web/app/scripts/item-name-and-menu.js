@@ -18,8 +18,7 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
 
       scope.captureClick = function(event) {
         if (event) {
-          event.stopPropagation();
-          event.preventDefault();
+          event.originalEvent.alreadyHandled = true;
         }
       };
 
