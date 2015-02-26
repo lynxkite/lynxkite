@@ -674,7 +674,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var oe = e.originalEvent;
       var plainScroll = oe.shiftKey ? 0 : oe.deltaY;
       var shiftScroll = oe.deltaX + (oe.shiftKey ? oe.deltaY : 0);
-      console.log(oe.deltaX, oe.shiftKey, oe.deltaY);
       zoom({ x: mx, y: my }, plainScroll, shiftScroll);
     });
     this.svgDoubleClickListeners.push(function(e) {
