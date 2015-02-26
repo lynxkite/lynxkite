@@ -697,14 +697,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         return;
       }
       e.preventDefault();
-      var oe = e.originalEvent;
       // Left/right is in/out.
-      var scroll = oe.button === 0 ? -500 : 500;
+      var scroll = e.which === 1 ? -500 : 500;
       // Shift affects thickness.
+      var shift = e.originalEvent.shiftKey;
       zoom(
         { x: mx, y: my },
-        oe.shiftKey ? 0 : scroll,
-        oe.shiftKey ? 0.5 * scroll : 0);
+        shift ? 0 : scroll,
+        shift ? 0.5 * scroll : 0);
     });
   };
 
