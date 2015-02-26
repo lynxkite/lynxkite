@@ -44,7 +44,6 @@ svg #arrow-highlight-out {
 }
 svg .edge.highlight-out {
   stroke: white;
-  opacity: 0.67;
 }
 svg .edge.highlight-out text {
   fill: white;
@@ -54,7 +53,6 @@ svg #arrow-highlight-in {
 }
 svg .edge.highlight-in {
   stroke: #888;
-  opacity: 0.67;
 }
 svg .edge.highlight-in text {
   fill: #888;
@@ -102,6 +100,16 @@ svg .vertex.sampled .icon {
 svg .vertex.center .icon {
   stroke: #ddd;
   stroke-width: 3;
+}
+
+/* On hover the non-neighboring vertices and their edges are faded out. */
+svg.fade-non-neighbors .edge,
+svg.fade-non-neighbors .vertex {
+  opacity: 0.2;
+}
+svg.fade-non-neighbors .edge.neighbor,
+svg.fade-non-neighbors .vertex.neighbor {
+  opacity: 1;
 }
 
 svg .bucket {

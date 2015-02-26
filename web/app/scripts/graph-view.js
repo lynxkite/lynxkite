@@ -1171,8 +1171,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.dom.attr({ opacity: opacity });
     this.moveListeners = [];
     this.hoverListeners = [];
+    // Notified when this vertex becomes a neighbor of the hovered vertex.
+    this.neighborListeners = [];
+    this.isNeighbor = false;
     var that = this;
     this.touch.mouseenter(function() {
+      svg.addClass(that.dom.closest('svg'), 'fade-non-neighbors');
       svg.addClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.highlight});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
@@ -1184,6 +1188,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     });
     this.touch.mouseleave(function() {
       if (that.held) { return; }
+      svg.removeClass(that.dom.closest('svg'), 'fade-non-neighbors');
       svg.removeClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.color});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
@@ -1195,6 +1200,27 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertex.prototype.addHoverListener = function(hl) {
     this.hoverListeners.push(hl);
   };
+
+  // Neighbor listeners must have an `on()` and an `off()` method.
+  Vertex.prototype.addNeighborListener = function(nl) {
+    this.neighborListeners.push(nl);
+  };
+  Vertex.prototype.setNeighbor = function(on) {
+    this.isNeighbor = on;
+    if (on) {
+      svg.addClass(this.dom, 'neighbor');
+    } else {
+      svg.removeClass(this.dom, 'neighbor');
+    }
+    for (var i = 0; i < this.neighborListeners.length; ++i) {
+      if (on) {
+        this.neighborListeners[i].on(this);
+      } else {
+        this.neighborListeners[i].off(this);
+      }
+    }
+  };
+
   Vertex.prototype.addMoveListener = function(ml) {
     this.moveListeners.push(ml);
   };
@@ -1247,16 +1273,39 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     src.addMoveListener(function() { that.reposition(); });
     dst.addMoveListener(function() { that.reposition(); });
     this.reposition();
-    src.addHoverListener({
-      on: function() { svg.addClass(that.dom, 'highlight-out'); that.toFront(); },
-      off: function() { svg.removeClass(that.dom, 'highlight-out'); }
-    });
-    if (src !== dst) {
-      dst.addHoverListener({
-        on: function() { svg.addClass(that.dom, 'highlight-in'); that.toFront(); },
-        off: function() { svg.removeClass(that.dom, 'highlight-in'); }
-      });
+    function hoverListener(cls) {
+      return {
+        on: function() {
+          svg.addClass(that.dom, cls);
+          that.toFront();
+          src.setNeighbor(true);
+          dst.setNeighbor(true);
+        },
+        off: function() {
+          svg.removeClass(that.dom, cls);
+          src.setNeighbor(false);
+          dst.setNeighbor(false);
+        },
+      };
     }
+    src.addHoverListener(hoverListener('highlight-out'));
+    if (src !== dst) {
+      dst.addHoverListener(hoverListener('highlight-in'));
+    }
+    var neighborListener = {
+      on: function() {
+        if (src.isNeighbor && dst.isNeighbor) {
+          svg.addClass(that.dom, 'neighbor');
+        }
+      },
+      off: function() {
+        if (!src.isNeighbor || !dst.isNeighbor) {
+          svg.removeClass(that.dom, 'neighbor');
+        }
+      },
+    };
+    src.addNeighborListener(neighborListener);
+    dst.addNeighborListener(neighborListener);
   }
   Edge.prototype.toFront = function() {
     this.dom.parent().append(this.dom);
