@@ -31,7 +31,8 @@
     </div>
   </div>
 
-  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error">
+  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error"
+    ng-class="{ history: showHistory }">
 
     <div class="panel-heading project-name">
       <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
@@ -40,11 +41,16 @@
       {{side.shortName()}}
 
       <div class="btn-group pull-right">
-        <label class="btn btn-default" ng-if="side.project.undoOp" ng-click="side.undo()"
+        <label class="btn btn-default" ng-disabled="!side.project.undoOp" ng-click="side.undo()"
           tooltip="Undo {{side.project.undoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-backward"></i>
         </label>
-        <label class="btn btn-default" ng-if="side.project.redoOp" ng-click="side.redo()"
+        <label class="btn btn-default" ng-click="showHistory = !showHistory"
+          ng-class="{ active: showHistory, 'btn-info': showHistory }"
+          tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-time"></i>
+        </label>
+        <label class="btn btn-default" ng-disabled="!side.project.redoOp" ng-click="side.redo()"
           tooltip="Redo {{side.project.redoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-forward"></i>
         </label>
@@ -82,7 +88,7 @@
       </div>
 
       <div class="btn-group pull-right" ng-if="side.hasFilters()">
-         <label class="btn btn-default"
+        <label class="btn btn-default"
                ng-click="side.applyFilters()"
                tooltip="Apply&nbsp;current&nbsp;filters: {{side.filterSummary()}}"
                tooltip-append-to-body="true"
@@ -101,6 +107,7 @@
       <div class="clearfix"></div>
     </div>
 
+    <!-- Common controls. -->
     <div class="list-group">
 
       <!-- Project settings. -->
@@ -207,7 +214,13 @@
           </tr>
         </table>
       </div>
+    </div>
 
+    <!-- History view. -->
+    <project-history side="side" show="showHistory"></project-history>
+
+    <!-- Normal graph view. -->
+    <div class="list-group" ng-if="!showHistory">
       <!-- Summary. -->
       <li class="list-group-item">
         <span class="lead">

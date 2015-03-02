@@ -1,0 +1,8 @@
+<div class="list-group" ng-if="show">
+  <li class="list-group-item" ng-repeat="h in history.steps">
+    <h2>{{h.op.title}}</h2>
+    <form class="form-horizontal">
+      <operation-parameters input="h.op.parameters" output="h.parameters"></operation-parameters>
+    </form>
+  </li>
+</div>
