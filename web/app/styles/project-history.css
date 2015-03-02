@@ -1,0 +1,26 @@
+/* Set a distinct (blue) look for the history view. */
+.history .list-group-item {
+  background-color: hsl(200, 60%, 98%);
+}
+.history .project-name {
+  background-color: hsl(200, 60%, 90%);
+}
+
+project-history .list-group {
+  margin: 0;
+}
+
+project-history .list-group-item {
+  border-width: 0;
+  border-top-width: 1px;
+}
+project-history .list-group-item:first-child {
+  border-top-width: 0;
+}
+
+project-history h2 {
+  font-size: 20px;
+  margin: 0;
+  margin-bottom: 10px;
+  text-align: center;
+}

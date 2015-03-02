@@ -5,7 +5,7 @@ angular.module('biggraph').directive('fileParameter', function(util) {
     restrict: 'E',
     scope: {
       // The filename is exported through "model".
-      model: '=',
+      filename: '=model',
       // The number of ongoing uploads. It is incremented by 1 while an upload is in progress.
       fileUploads: '=',
     },
@@ -15,11 +15,6 @@ angular.module('biggraph').directive('fileParameter', function(util) {
       scope.dialog = function() {
         input.click();
       };
-      // Copy the internal "filename" to the external "model".
-      // (Using "model" internally should probably work too, but it did not.)
-      scope.$watch('filename', function(fn) {
-        scope.model = fn;
-      });
       scope.uploading = false;
       scope.progress = 0;
       input.bind('change', function() {

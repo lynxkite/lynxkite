@@ -1,0 +1,54 @@
+{
+  "steps": [{
+    "op": {
+      "id": "import",
+      "description": "Imports vertices from a CSV file, or files. Wildcard (foo/*.csv) and glob (foo/{bar,baz}.csv) patterns are accepted. S3 paths must include the key name and secret key in the following format: <tt>s3n://key name:secret key@bucket/dir/file</tt>",
+      "title": "Import vertices",
+      "parameters": [
+        { "id": "files", "title": "Files", "defaultValue": "", "options": [], "kind": "file" },
+        { "id": "header", "title": "Header", "defaultValue": "<read from file>", "options": [], "kind": "" }
+      ],
+      "status": { "enabled": true, "disabledReason": "" }
+    },
+    "parameters": {
+      "files": ".../2015/january/*",
+      "header": "<read from file>"
+    }
+  }, {
+    "op": {
+      "id": "pagerank",
+      "description": "Ranks pages.",
+      "title": "PageRank",
+      "parameters": [
+        {
+          "id": "weight",
+          "title": "Weight",
+          "defaultValue": "",
+          "options": [
+            {
+              "id": "1",
+              "title": "weight"
+            },
+            {
+              "id": "2",
+              "title": "count"
+            }
+          ],
+          "kind": ""
+        },
+        {
+          "id": "iter",
+          "title": "Iterations",
+          "defaultValue": "",
+          "options": [],
+          "kind": ""
+        }
+      ],
+      "status": { "enabled": true, "disabledReason": "" }
+    },
+    "parameters": {
+      "weight": "2",
+      "iter": "10"
+    }
+  }]
+}

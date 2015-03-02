@@ -110,6 +110,11 @@ input.save-as {
   padding-top: 10px;  /* Get out from under the split-bar. */
 }
 
+/* Allow multiple .list-groups inside a panel without double borders. */
+.project .list-group .list-group-item:first-child {
+  border-top-width: 0;
+}
+
 .project-settings {
   background-color: whitesmoke;
 }

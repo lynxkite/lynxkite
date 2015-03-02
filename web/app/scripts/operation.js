@@ -1,35 +1,34 @@
 'use strict';
 
-angular.module('biggraph').directive('operation', function (util, hotkeys) {
+angular.module('biggraph').directive('operation', function(util, hotkeys) {
   return {
     restrict: 'E',
     scope: { op: '=', side: '=' },
-    replace: false,
     templateUrl: 'operation.html',
     link: function(scope, element) {
       scope.params = {};
-      scope.multiParams = {};
       scope.fileUploads = {};
-      util.deepWatch(scope, 'op', function() {
-        scope.op.parameters.forEach(function(p) {
+      scope.$watch('op.parameters', function() {
+        for (var i = 0; i < scope.op.parameters.length; ++i) {
+          var p = scope.op.parameters[i];
           if (p.options.length === 0) {
             scope.params[p.id] = p.defaultValue;
+          } else if (p.multipleChoice) {
+            scope.params[p.id] = [];
           } else {
-            if (!p.multipleChoice) {
-              scope.params[p.id] = p.options[0].id;
-            }
+            scope.params[p.id] = p.options[0].id;
           }
-        });
+        }
       });
 
       scope.apply = function() {
-        if (!scope.op.status.enabled || scope.running || scope.fileUploads.count > 0) {
+        if (!scope.op.status.enabled || scope.running || scope.busy) {
           return;
         }
         var reqParams = {};
         scope.op.parameters.forEach(function(p) {
           if (p.multipleChoice) {
-            reqParams[p.id] = (scope.multiParams[p.id] || []).join(',');
+            reqParams[p.id] = (scope.params[p.id] || []).join(',');
           } else {
             reqParams[p.id] = scope.params[p.id];
           }
@@ -46,7 +45,7 @@ angular.module('biggraph').directive('operation', function (util, hotkeys) {
       // Focus the first input box when the operation is opened.
       scope.$watch(function() {
         // Have to watch for the parameters to finish rendering.
-        return element.find('input')[0];
+        return element.find('input, select')[0];
       }, function(firstInput) {
         if (firstInput) {
           firstInput.select();

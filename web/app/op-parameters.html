@@ -1,0 +1,31 @@
+<p ng-if="op.description" class="list-group-item description"
+  ng-bind-html="op.description | trustAsHtml"></p>
+<p ng-if="op.parameters.length === 0" class="list-group-item text-center">
+  No parameters
+</p>
+<form ng-if="op.parameters" class="form-horizontal list-group-item" ng-submit="apply()">
+  <div class="form-group" ng-repeat="param in op.parameters">
+    <label for="{{param.id}}" class="col-sm-4 control-label">{{param.title}}</label>
+    <div class="col-sm-8">
+      <input ng-if="param.options.length === 0 && param.kind !== 'file'"
+        class="form-control" ng-model="params[param.id]">
+      <file-parameter ng-if="param.kind === 'file'"
+        model="params[param.id]" file-uploads="fileUploads.count">
+      </file-parameter>
+      <select
+        ng-if="param.options.length > 0 && !param.multipleChoice"
+        class="form-control"
+        ng-model="params[param.id]"
+        ng-options="option.id as option.title for option in param.options"></select>
+      <select
+        ng-if="param.options.length > 0 && param.multipleChoice"
+        multiple
+        class="form-control"
+        ng-model="multiParams[param.id]"
+        ng-options="option.id as option.title for option in param.options"></select>
+    </div>
+  </div>
+</form>
+<div tabindex="0" ng-click="apply()" class="list-group-item ok-button text-center">
+  {{running || fileUploads.count ? '...' : 'OK'}}
+</div>
