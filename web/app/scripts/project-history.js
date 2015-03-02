@@ -25,6 +25,9 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       scope.unsaved = function(step) {
         return !angular.equals(step.parameters, step.originalParameters);
       };
+      scope.discardChanges = function(step) {
+        angular.copy(step.originalParameters, step.parameters);
+      };
     },
   };
 });

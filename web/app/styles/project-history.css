@@ -28,7 +28,8 @@ project-history h2 {
 project-history .list-group-item.unsaved {
   background-color: hsl(20, 60%, 98%);
 }
-project-history .unsaved-button {
+project-history .unsaved-buttons {
   position: absolute;
   margin-left: 10px;
+  display: inline;
 }

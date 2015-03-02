@@ -2,9 +2,14 @@
   <li class="list-group-item" ng-repeat="step in history.steps" ng-class="{ unsaved: unsaved(step) }">
     <h2>
       {{step.op.title}}
-      <button ng-if="unsaved(step)" class="btn btn-xs btn-warning unsaved-button">
-        <i class="glyphicon glyphicon-ok"></i> save changes
-      </button>
+      <div ng-if="unsaved(step)" class="unsaved-buttons">
+        <button class="btn btn-xs btn-warning">
+          <i class="glyphicon glyphicon-ok"></i> save changes
+        </button>
+        <button class="btn btn-xs btn-info" ng-click="discardChanges(step)">
+          <i class="glyphicon glyphicon-remove"></i> discard changes
+        </button>
+      </div>
     </h2>
     <form class="form-horizontal">
       <operation-parameters input="step.op.parameters" output="step.parameters"></operation-parameters>
