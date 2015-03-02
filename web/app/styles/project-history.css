@@ -24,3 +24,11 @@ project-history h2 {
   margin-bottom: 10px;
   text-align: center;
 }
+
+project-history .list-group-item.unsaved {
+  background-color: hsl(20, 60%, 98%);
+}
+project-history .unsaved-button {
+  position: absolute;
+  margin-left: 10px;
+}
