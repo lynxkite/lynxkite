@@ -1,18 +1,41 @@
-<div class="list-group" ng-if="show">
-  <li class="list-group-item" ng-repeat="step in history.steps" ng-class="{ unsaved: unsaved(step) }">
-    <h2>
-      {{step.op.title}}
-      <div ng-if="unsaved(step)" class="unsaved-buttons">
-        <button class="btn btn-xs btn-warning">
-          <i class="glyphicon glyphicon-ok"></i> save changes
-        </button>
-        <button class="btn btn-xs btn-info" ng-click="discardChanges(step)">
-          <i class="glyphicon glyphicon-remove"></i> discard changes
-        </button>
-      </div>
-    </h2>
-    <form class="form-horizontal">
-      <operation-parameters input="step.op.parameters" output="step.parameters"></operation-parameters>
-    </form>
-  </li>
+<div class="panel panel-default project history" ng-if="show">
+
+  <div class="panel-heading project-name">
+    <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
+      {{parent}} &raquo;
+    </span>
+    {{side.shortName()}}
+
+    <div class="btn-group pull-right">
+      <label class="btn btn-info active" ng-click="side.showHistory = !side.showHistory"
+        tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-time"></i>
+      </label>
+      <label class="btn btn-default" ng-click="side.close()"
+        tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-remove"></i>
+      </label>
+    </div>
+
+    <div class="clearfix"></div>
+  </div>
+
+  <div class="list-group">
+    <li class="list-group-item" ng-repeat="step in history.steps" ng-class="{ unsaved: unsaved(step) }">
+      <h2>
+        {{step.op.title}}
+        <div ng-if="unsaved(step)" class="unsaved-buttons">
+          <button class="btn btn-xs btn-warning">
+            <i class="glyphicon glyphicon-ok"></i> save changes
+          </button>
+          <button class="btn btn-xs btn-info" ng-click="discardChanges(step)">
+            <i class="glyphicon glyphicon-remove"></i> discard changes
+          </button>
+        </div>
+      </h2>
+      <form class="form-horizontal">
+        <operation-parameters input="step.op.parameters" output="step.parameters"></operation-parameters>
+      </form>
+    </li>
+  </div>
 </div>
