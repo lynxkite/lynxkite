@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving.User
+import play.api.libs.json.Json
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
@@ -66,7 +67,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       segmentations = segmentations.map(_.toFE).toList)
   }
 
-  private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
+  protected def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
     case "" => Seq()
     case x => x.split(java.util.regex.Pattern.quote(separator), -1)
   }
@@ -78,6 +79,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
   private def checkpointIndex_=(x: Int): Unit =
     set(rootDir / "checkpointIndex", x.toString)
+  private def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
+
+  def projectCheckpoints = (0 until checkpointCount).map(new ProjectCheckpoint(projectName, _))
 
   private def lastOperation = get(checkpointedDir / "lastOperation")
   private def lastOperation_=(x: String): Unit = set(checkpointedDir / "lastOperation", x)
@@ -87,13 +91,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     else manager.getTag(s"${checkpoints(i)}/lastOperation")
   }
 
-  def checkpointAfter(op: String): Unit = manager.synchronized {
+  def checkpointAfter(op: String, req: ProjectOperationRequest = null): Unit = manager.synchronized {
     if (isSegmentation) {
       val name = asSegmentation.name
-      asSegmentation.parent.checkpointAfter(s"$op on $name")
+      asSegmentation.parent.checkpointAfter(s"$op on $name", req)
     } else {
       lastOperation = op
-      val nextIndex = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
+      lastOperationSpec = Option(req)
+      val nextIndex = checkpointCount
       val timestamp = Timestamp.toString
       val checkpoint = rootDir / "checkpoint" / timestamp
       checkpoints = checkpoints.take(nextIndex) :+ checkpoint.toString
@@ -102,11 +107,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
   }
 
-  def checkpoint(title: String)(op: => Unit): Unit = {
+  def checkpoint(title: String, req: ProjectOperationRequest = null)(op: => Unit): Unit = {
     Try(op) match {
       case Success(_) =>
         // Save changes.
-        checkpointAfter(title)
+        checkpointAfter(title, req)
       case Failure(e) =>
         // Discard potentially corrupt changes.
         reloadCurrentCheckpoint()
@@ -139,6 +144,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     existing(rootDir / "checkpoints").foreach(manager.rmTag(_))
     existing(rootDir / "checkpointIndex").foreach(manager.rmTag(_))
     existing(checkpointedDir / "lastOperation").foreach(manager.rmTag(_))
+    existing(checkpointedDir / "lastOperationSpec").foreach(manager.rmTag(_))
   }
 
   def readACL: String = {
@@ -196,6 +202,23 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def notes = get(checkpointedDir / "notes")
   def notes_=(n: String) = set(checkpointedDir / "notes", n)
+
+  implicit val fFEOperationSpec = Json.format[FEOperationSpec]
+  implicit val fProjectOperationRequest = Json.format[ProjectOperationRequest]
+  def lastOperationSpec = manager.synchronized {
+    existing(checkpointedDir / "lastOperationSpec").map {
+      tag => Json.parse(get(tag)).as[ProjectOperationRequest]
+    }
+  }
+  def lastOperationSpec_=(spec: Option[ProjectOperationRequest]) = manager.synchronized {
+    spec match {
+      case Some(spec) =>
+        val json = Json.prettyPrint(Json.toJson(spec))
+        set(checkpointedDir / "lastOperationSpec", json)
+      case None =>
+        existing(checkpointedDir / "lastOperationSpec").foreach(manager.rmTag(_))
+    }
+  }
 
   def vertexSet = manager.synchronized {
     existing(checkpointedDir / "vertexSet")
@@ -497,4 +520,9 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   def remove(): Unit = manager.synchronized {
     manager.rmTag(path)
   }
+}
+
+class ProjectCheckpoint(name: String, checkpoint: Int)(implicit manager: MetaGraphManager)
+    extends Project(name) {
+  override val checkpointedDir: SymbolPath = checkpoints(checkpoint)
 }

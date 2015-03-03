@@ -23,7 +23,7 @@
   <div class="list-group">
     <li class="list-group-item" ng-repeat="step in history.steps" ng-class="{ unsaved: unsaved(step) }">
       <h2>
-        {{step.op.title}}
+        {{step.op.title}} on {{step.request.project}}
         <div ng-if="unsaved(step)" class="unsaved-buttons">
           <button class="btn btn-xs btn-warning">
             <i class="glyphicon glyphicon-ok"></i> save changes
@@ -33,8 +33,11 @@
           </button>
         </div>
       </h2>
+      <div ng-hide="step.status.enabled" class="bg-danger">
+        {{step.status.disabledReason}}
+      </div>
       <form class="form-horizontal">
-        <operation-parameters input="step.op.parameters" output="step.parameters"></operation-parameters>
+        <operation-parameters input="step.op.parameters" output="step.request.op.parameters"></operation-parameters>
       </form>
     </li>
   </div>

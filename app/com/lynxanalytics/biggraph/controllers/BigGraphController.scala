@@ -135,6 +135,15 @@ case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
 case class ProjectSettingsRequest(project: String, readACL: String, writeACL: String)
 
+case class HistoryRequest(project: String)
+case class ProjectHistory(
+  project: String,
+  steps: List[ProjectHistoryStep])
+case class ProjectHistoryStep(
+  op: FEOperationMeta,
+  request: ProjectOperationRequest,
+  status: FEStatus)
+
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: List[VertexSet] = List(),
                        edgeBundles: List[EdgeBundle] = List(),
@@ -383,6 +392,23 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.readACL = request.readACL
     p.writeACL = request.writeACL
   }
+
+  def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = metaManager.synchronized {
+    val p = Project(request.project)
+    p.assertReadAllowedFrom(user)
+    val checkpoints = p.projectCheckpoints
+    val beforeAfter = checkpoints.zip(checkpoints.tail)
+    ProjectHistory(
+      p.projectName,
+      beforeAfter.reverse.takeWhile(_._2.lastOperationSpec.nonEmpty).reverse
+        .map {
+          case (before, after) =>
+            val req = after.lastOperationSpec.get
+            val ctx = Operation.Context(user, before)
+            val op = ops.opById(ctx, req.op.id)
+            ProjectHistoryStep(op.toFE, req, status = op.enabled)
+        }.toList)
+  }
 }
 
 abstract class Operation(context: Operation.Context, val category: Operation.Category) {
@@ -445,14 +471,20 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     }
   }
 
+  def opById(context: Operation.Context, id: String): Operation = {
+    // TODO: Do this without instantiating all operations.
+    val ops = forContext(context).filter(_.id == id)
+    assert(ops.nonEmpty, s"Cannot find operation: ${id}")
+    assert(ops.size == 1, s"Operation not unique: ${id}")
+    ops.head
+  }
+
   def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.synchronized {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
-    val ops = forContext(context).filter(_.id == req.op.id)
-    assert(ops.nonEmpty, s"Cannot find operation: ${req.op.id}")
-    assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
-    p.checkpoint(ops.head.title) {
-      ops.head.apply(req.op.parameters)
+    val op = opById(context, req.op.id)
+    p.checkpoint(op.toString, req) {
+      op.apply(req.op.parameters)
     }
   }
 }

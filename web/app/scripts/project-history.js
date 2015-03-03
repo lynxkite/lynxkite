@@ -6,16 +6,20 @@ angular.module('biggraph').directive('projectHistory', function(util) {
     scope: { show: '=', side: '=' },
     templateUrl: 'project-history.html',
     link: function(scope) {
-      scope.history = util.get('/ajax/getHistory', {});
+      scope.$watch('show', function(show) {
+        if (show) {
+          scope.history = util.nocache('/ajax/getHistory', {
+            project: scope.side.state.projectName,
+          });
+        }
+      });
 
       function update() {
         var history = scope.history;
-        console.log('history', history);
-        if (history.$resolved && !history.$error) {
-          console.log('history loaded');
+        if (history && history.$resolved && !history.$error) {
           for (var i = 0; i < history.steps.length; ++i) {
             var step = history.steps[i];
-            step.originalParameters = angular.copy(step.parameters);
+            step.originalRequest = angular.copy(step.request);
           }
         }
       }
@@ -23,10 +27,10 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       scope.$watch('history.$resolved', update);
 
       scope.unsaved = function(step) {
-        return !angular.equals(step.parameters, step.originalParameters);
+        return !angular.equals(step.request, step.originalRequest);
       };
       scope.discardChanges = function(step) {
-        angular.copy(step.originalParameters, step.parameters);
+        angular.copy(step.originalRequest, step.request);
       };
     },
   };
