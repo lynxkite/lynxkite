@@ -4,6 +4,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
@@ -136,9 +137,16 @@ case class RedoProjectRequest(project: String)
 case class ProjectSettingsRequest(project: String, readACL: String, writeACL: String)
 
 case class HistoryRequest(project: String)
-case class ProjectHistory(
+case class HistoryValidationRequest(
   project: String,
-  steps: List[ProjectHistoryStep])
+  skips: Int, // Number of checkpoints to skip.
+  requests: List[ProjectOperationRequest])
+case class ProjectHistory(
+    project: String,
+    skips: Int, // Number of checkpoints skipped.
+    steps: List[ProjectHistoryStep]) {
+  def valid = steps.forall(_.status.enabled)
+}
 case class ProjectHistoryStep(
   op: FEOperationMeta,
   request: ProjectOperationRequest,
@@ -396,18 +404,62 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = metaManager.synchronized {
     val p = Project(request.project)
     p.assertReadAllowedFrom(user)
-    val checkpoints = p.projectCheckpoints
-    val beforeAfter = checkpoints.zip(checkpoints.tail)
-    ProjectHistory(
-      p.projectName,
-      beforeAfter.reverse.takeWhile(_._2.lastOperationSpec.nonEmpty).reverse
-        .map {
-          case (before, after) =>
-            val req = after.lastOperationSpec.get
-            val ctx = Operation.Context(user, before)
-            val op = ops.opById(ctx, req.op.id)
-            ProjectHistoryStep(op.toFE, req, status = op.enabled)
-        }.toList)
+    withCheckpoints(p) { ps =>
+      // Find the lowest number of skips to get a valid history.
+      (0 to p.checkpointCount - 1).view.map { skips =>
+        val remaining = ps.drop(skips + 1)
+        if (remaining.forall(_.lastOperationRequest.nonEmpty)) {
+          val requests = remaining.map(_.lastOperationRequest.get)
+          val h = validateHistory(user, HistoryValidationRequest(request.project, skips, requests.toList))
+          if (h.valid) Some(h) else None
+        } else None
+      }.find(_.nonEmpty).get.get
+    }
+  }
+
+  // Expand each checkpoint of a project to a separate project, run the code, then clean up.
+  private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.synchronized {
+    val tmpDir = s"!tmp-$Timestamp"
+    val ps = (1 to p.checkpointCount).map { i =>
+      val tmp = Project(s"$tmpDir/$i")
+      assert(!Operation.projects.contains(tmp), s"Project $tmp already exists.")
+      p.copyCheckpoint(i, tmp)
+      tmp
+    }
+    try {
+      code(ps)
+    } finally {
+      Project(tmpDir).remove
+    }
+  }
+
+  def validateHistory(user: serving.User, request: HistoryValidationRequest): ProjectHistory = metaManager.synchronized {
+    val p = Project(request.project)
+    p.assertReadAllowedFrom(user)
+    val steps = withCheckpoints(p) { ps =>
+      val state = ps(request.skips)
+      request.requests.foldLeft(List[ProjectHistoryStep]()) { (steps, request) =>
+        // The request may refer to a segmentation. Figure out the recipient project.
+        val relativeProject = new SymbolPath(SymbolPath.fromString(request.project).tail)
+        val recipient = Project(state.projectName + "/" + relativeProject)
+        val ctx = Operation.Context(user, recipient)
+        val op = ops.opById(ctx, request.op.id)
+        if (op.enabled.enabled) {
+          try {
+            recipient.checkpoint(op.toString, request) {
+              op.apply(request.op.parameters)
+            }
+            steps :+ ProjectHistoryStep(op.toFE, request, FEStatus.enabled)
+          } catch {
+            case t: Throwable =>
+              steps :+ ProjectHistoryStep(op.toFE, request, FEStatus.disabled(t.getMessage))
+          }
+        } else {
+          steps :+ ProjectHistoryStep(op.toFE, request, op.enabled)
+        }
+      }
+    }
+    ProjectHistory(p.projectName, request.skips, steps)
   }
 }
 
@@ -483,7 +535,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
-    p.checkpoint(op.toString, req) {
+    p.checkpoint(op.title, req) {
       op.apply(req.op.parameters)
     }
   }

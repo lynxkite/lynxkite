@@ -79,11 +79,17 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }
   private def checkpointIndex_=(x: Int): Unit =
     set(rootDir / "checkpointIndex", x.toString)
-  private def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
+  def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
 
-  def projectCheckpoints = (0 until checkpointCount).map(new ProjectCheckpoint(projectName, _))
+  def copyCheckpoint(i: Int, destination: Project): Unit = manager.synchronized {
+    assert(0 < i && i <= checkpointCount, s"Requested checkpoint $i out of $checkpointCount.")
+    copy(destination)
+    while (destination.checkpointCount > i) {
+      destination.undo
+    }
+  }
 
-  private def lastOperation = get(checkpointedDir / "lastOperation")
+  def lastOperation = get(checkpointedDir / "lastOperation")
   private def lastOperation_=(x: String): Unit = set(checkpointedDir / "lastOperation", x)
   private def nextOperation = manager.synchronized {
     val i = checkpointIndex + 1
@@ -97,7 +103,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       asSegmentation.parent.checkpointAfter(s"$op on $name", req)
     } else {
       lastOperation = op
-      lastOperationSpec = Option(req)
+      lastOperationRequest = Option(req)
       val nextIndex = checkpointCount
       val timestamp = Timestamp.toString
       val checkpoint = rootDir / "checkpoint" / timestamp
@@ -144,7 +150,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     existing(rootDir / "checkpoints").foreach(manager.rmTag(_))
     existing(rootDir / "checkpointIndex").foreach(manager.rmTag(_))
     existing(checkpointedDir / "lastOperation").foreach(manager.rmTag(_))
-    existing(checkpointedDir / "lastOperationSpec").foreach(manager.rmTag(_))
+    existing(checkpointedDir / "lastOperationRequest").foreach(manager.rmTag(_))
   }
 
   def readACL: String = {
@@ -205,18 +211,18 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   implicit val fFEOperationSpec = Json.format[FEOperationSpec]
   implicit val fProjectOperationRequest = Json.format[ProjectOperationRequest]
-  def lastOperationSpec = manager.synchronized {
-    existing(checkpointedDir / "lastOperationSpec").map {
+  def lastOperationRequest = manager.synchronized {
+    existing(checkpointedDir / "lastOperationRequest").map {
       tag => Json.parse(get(tag)).as[ProjectOperationRequest]
     }
   }
-  def lastOperationSpec_=(spec: Option[ProjectOperationRequest]) = manager.synchronized {
+  def lastOperationRequest_=(spec: Option[ProjectOperationRequest]) = manager.synchronized {
     spec match {
       case Some(spec) =>
         val json = Json.prettyPrint(Json.toJson(spec))
-        set(checkpointedDir / "lastOperationSpec", json)
+        set(checkpointedDir / "lastOperationRequest", json)
       case None =>
-        existing(checkpointedDir / "lastOperationSpec").foreach(manager.rmTag(_))
+        existing(checkpointedDir / "lastOperationRequest").foreach(manager.rmTag(_))
     }
   }
 
@@ -390,7 +396,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def copy(to: Project): Unit = cp(rootDir, to.rootDir)
   def remove(): Unit = manager.synchronized {
-    manager.rmTag(rootDir)
+    existing(rootDir).foreach(manager.rmTag(_))
     log.info(s"A project has been discarded: $rootDir")
   }
 
@@ -520,9 +526,4 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   def remove(): Unit = manager.synchronized {
     manager.rmTag(path)
   }
-}
-
-class ProjectCheckpoint(name: String, checkpoint: Int)(implicit manager: MetaGraphManager)
-    extends Project(name) {
-  override val checkpointedDir: SymbolPath = checkpoints(checkpoint)
 }
