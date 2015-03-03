@@ -31,8 +31,10 @@
     </div>
   </div>
 
-  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error"
-    ng-class="{ history: showHistory }">
+  <project-history side="side" show="side.project.$resolved && !side.project.$error && side.showHistory">
+  </project-history>
+
+  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory">
 
     <div class="panel-heading project-name">
       <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
@@ -45,8 +47,7 @@
           tooltip="Undo {{side.project.undoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-backward"></i>
         </label>
-        <label class="btn btn-default" ng-click="showHistory = !showHistory"
-          ng-class="{ active: showHistory, 'btn-info': showHistory }"
+        <label class="btn btn-default" ng-click="side.showHistory = !side.showHistory"
           tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-time"></i>
         </label>
@@ -107,7 +108,6 @@
       <div class="clearfix"></div>
     </div>
 
-    <!-- Common controls. -->
     <div class="list-group">
 
       <!-- Project settings. -->
@@ -214,13 +214,7 @@
           </tr>
         </table>
       </div>
-    </div>
 
-    <!-- History view. -->
-    <project-history side="side" show="showHistory"></project-history>
-
-    <!-- Normal graph view. -->
-    <div class="list-group" ng-if="!showHistory">
       <!-- Summary. -->
       <li class="list-group-item">
         <span class="lead">

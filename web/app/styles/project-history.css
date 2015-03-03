@@ -4,6 +4,7 @@
 }
 .history .project-name {
   background-color: hsl(200, 60%, 90%);
+  color: hsl(200, 60%, 20%);
 }
 
 project-history .list-group {
