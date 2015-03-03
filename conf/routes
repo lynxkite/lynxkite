@@ -12,6 +12,7 @@ POST /ajax/createProject com.lynxanalytics.biggraph.serving.ProductionJsonServer
 POST /ajax/discardProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardProject
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
 GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project
+GET  /ajax/getHistory    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getHistory
 GET  /ajax/splash        com.lynxanalytics.biggraph.serving.ProductionJsonServer.splash
 POST /ajax/filterProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.filterProject
 POST /ajax/forkProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkProject

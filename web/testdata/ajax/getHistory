@@ -10,9 +10,15 @@
       ],
       "status": { "enabled": true, "disabledReason": "" }
     },
-    "parameters": {
-      "files": ".../2015/january/*",
-      "header": "<read from file>"
+    "request": {
+      "project": "Project Strawberry",
+      "op": {
+        "id": "import",
+        "parameters": {
+          "files": ".../2015/january/*",
+          "header": "<read from file>"
+        }
+      }
     }
   }, {
     "op": {
@@ -46,9 +52,15 @@
       ],
       "status": { "enabled": true, "disabledReason": "" }
     },
-    "parameters": {
-      "weight": "2",
-      "iter": "10"
+    "request": {
+      "project": "Project Strawberry",
+      "op": {
+        "id": "pagerank",
+        "parameters": {
+          "weight": "2",
+          "iter": "10"
+        }
+      }
     }
   }]
 }
