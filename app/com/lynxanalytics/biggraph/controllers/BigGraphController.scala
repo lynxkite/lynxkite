@@ -137,10 +137,13 @@ case class RedoProjectRequest(project: String)
 case class ProjectSettingsRequest(project: String, readACL: String, writeACL: String)
 
 case class HistoryRequest(project: String)
-case class HistoryValidationRequest(
+case class AlternateHistory(
   project: String,
   skips: Int, // Number of checkpoints to skip.
   requests: List[ProjectOperationRequest])
+case class SaveHistoryRequest(
+  project: String, // New project name.
+  history: AlternateHistory)
 case class ProjectHistory(
     project: String,
     skips: Int, // Number of checkpoints skipped.
@@ -410,7 +413,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         val remaining = ps.drop(skips + 1)
         if (remaining.forall(_.lastOperationRequest.nonEmpty)) {
           val requests = remaining.map(_.lastOperationRequest.get)
-          val h = validateHistory(user, HistoryValidationRequest(request.project, skips, requests.toList))
+          val h = validateHistory(user, AlternateHistory(request.project, skips, requests.toList))
           if (h.valid) Some(h) else None
         } else None
       }.find(_.nonEmpty).get.get
@@ -433,12 +436,13 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
-  def validateHistory(user: serving.User, request: HistoryValidationRequest): ProjectHistory = metaManager.synchronized {
+  // Returns the evaluated alternate history, and optionally copies the resulting state into a new project.
+  private def alternateHistory(user: serving.User, request: AlternateHistory, copyTo: Option[Project]): ProjectHistory = metaManager.synchronized {
     val p = Project(request.project)
     p.assertReadAllowedFrom(user)
-    val steps = withCheckpoints(p) { ps =>
+    withCheckpoints(p) { ps =>
       val state = ps(request.skips)
-      request.requests.foldLeft(List[ProjectHistoryStep]()) { (steps, request) =>
+      val steps = request.requests.foldLeft(List[ProjectHistoryStep]()) { (steps, request) =>
         // The request may refer to a segmentation. Figure out the recipient project.
         val relativeProject = new SymbolPath(SymbolPath.fromString(request.project).tail)
         val recipient = Project(state.projectName + "/" + relativeProject)
@@ -458,8 +462,26 @@ class BigGraphController(val env: BigGraphEnvironment) {
           steps :+ ProjectHistoryStep(op.toFE, request, op.enabled)
         }
       }
+      val history = ProjectHistory(p.projectName, request.skips, steps)
+      if (copyTo.nonEmpty) {
+        assert(history.valid, s"Tried to copy invalid history for project $p.")
+        state.copy(copyTo.get)
+      }
+      history
     }
-    ProjectHistory(p.projectName, request.skips, steps)
+  }
+
+  def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = metaManager.synchronized {
+    alternateHistory(user, request, None)
+  }
+
+  def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
+    val p2 = Project(request.project)
+    assert(!Operation.projects.contains(p2), s"Project $p2 already exists.")
+    alternateHistory(user, request.history, Some(p2))
+    if (!p2.writeAllowedFrom(user)) {
+      p2.writeACL += "," + user.email
+    }
   }
 }
 
