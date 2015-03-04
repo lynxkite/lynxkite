@@ -180,6 +180,8 @@ object ProductionJsonServer extends JsonServer {
   implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
   implicit val rProjectSettingsRequest = json.Json.reads[ProjectSettingsRequest]
   implicit val rHistoryRequest = json.Json.reads[HistoryRequest]
+  implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
+  implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
@@ -275,6 +277,8 @@ object ProductionJsonServer extends JsonServer {
   def redoProject = jsonPost(bigGraphController.redoProject)
   def changeProjectSettings = jsonPost(bigGraphController.changeProjectSettings)
   def getHistory = jsonGet(bigGraphController.getHistory)
+  def validateHistory = jsonGet(bigGraphController.validateHistory)
+  def saveHistory = jsonPost(bigGraphController.saveHistory)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
