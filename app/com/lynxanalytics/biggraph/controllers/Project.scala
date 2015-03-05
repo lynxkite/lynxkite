@@ -80,6 +80,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   private def checkpointIndex_=(x: Int): Unit =
     set(rootDir / "checkpointIndex", x.toString)
   def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
+  def checkpointDir(i: Int): SymbolPath = rootDir / "checkpoint" / checkpoints(i)
 
   def copyCheckpoint(i: Int, destination: Project): Unit = manager.synchronized {
     assert(0 < i && i <= checkpointCount, s"Requested checkpoint $i out of $checkpointCount.")
@@ -94,7 +95,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   private def nextOperation = manager.synchronized {
     val i = checkpointIndex + 1
     if (checkpoints.size <= i) ""
-    else manager.getTag(s"${checkpoints(i)}/lastOperation")
+    else get(checkpointDir(i) / "lastOperation")
   }
 
   def checkpointAfter(op: String, req: ProjectOperationRequest = null): Unit = manager.synchronized {
@@ -107,7 +108,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val nextIndex = checkpointCount
       val timestamp = Timestamp.toString
       val checkpoint = rootDir / "checkpoint" / timestamp
-      checkpoints = checkpoints.take(nextIndex) :+ checkpoint.toString
+      checkpoints = checkpoints.take(nextIndex) :+ timestamp
       checkpointIndex = nextIndex
       cp(checkpointedDir, checkpoint)
     }
@@ -128,13 +129,13 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def undo(): Unit = manager.synchronized {
     assert(checkpointIndex > 0, s"Already at checkpoint $checkpointIndex.")
     checkpointIndex -= 1
-    cp(checkpoints(checkpointIndex), checkpointedDir)
+    cp(checkpointDir(checkpointIndex), checkpointedDir)
   }
   def redo(): Unit = manager.synchronized {
     assert(checkpointIndex < checkpoints.size - 1,
       s"Already at checkpoint $checkpointIndex of ${checkpoints.size}.")
     checkpointIndex += 1
-    cp(checkpoints(checkpointIndex), checkpointedDir)
+    cp(checkpointDir(checkpointIndex), checkpointedDir)
   }
   def reloadCurrentCheckpoint(): Unit = manager.synchronized {
     if (isSegmentation) {
@@ -142,7 +143,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       asSegmentation.parent.reloadCurrentCheckpoint()
     } else {
       assert(checkpointIndex < checkpoints.size, s"No checkpoint $checkpointIndex.")
-      cp(checkpoints(checkpointIndex), checkpointedDir)
+      cp(checkpointDir(checkpointIndex), checkpointedDir)
     }
   }
 
@@ -394,10 +395,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def segmentation(name: String) = Segmentation(projectName, name)
   def segmentationNames = ls(checkpointedDir / "segmentations").map(_.last.name)
 
-  def copy(to: Project): Unit = manager.synchronized {
-    cp(rootDir, to.rootDir)
-    to.checkpoints = checkpoints.map(_.replaceFirst(rootDir.toString, to.rootDir.toString))
-  }
+  def copy(to: Project): Unit = cp(rootDir, to.rootDir)
   def remove(): Unit = manager.synchronized {
     existing(rootDir).foreach(manager.rmTag(_))
     log.info(s"A project has been discarded: $rootDir")
