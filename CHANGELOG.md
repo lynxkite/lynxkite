@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Regex filters can now be applied to string attributes. The syntax is `regex(R)` for
+   example for finding strings that contain `R`. Or `regex(^Ab)` for strings that start
+   with `Ab`. Or `regex((.)\1)` for strings with double letters. Etc.
  - In addition to scrolling, double-clicking and right double-clicking can be used now
    to zoom in and out. With Shift they adjust the thickness.
  - Upgraded to Apache Spark 1.2.1. Users need to download this and update `SPARK_HOME`
