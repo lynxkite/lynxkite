@@ -16,10 +16,12 @@ angular.module('biggraph').directive('projectHistory', function(util) {
 
       function update() {
         scope.unsaved = false;
+        scope.valid = true;
         var history = scope.history;
         if (history && history.$resolved && !history.$error) {
           for (var i = 0; i < history.steps.length; ++i) {
             var step = history.steps[i];
+            if (!step.status.enabled) { scope.valid = false; }
             watchStep(step);
           }
         }

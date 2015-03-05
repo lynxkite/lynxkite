@@ -26,6 +26,13 @@ project-history h2 {
   text-align: center;
 }
 
+project-history .list-group-item.invalid {
+  background-color: hsl(20, 60%, 90%);
+}
 project-history .list-group-item.unsaved {
   background-color: hsl(20, 60%, 98%);
+}
+
+project-history .error {
+  color: hsl(20, 60%, 50%);
 }
