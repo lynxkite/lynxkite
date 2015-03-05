@@ -39,7 +39,7 @@
     </p>
 
     <div ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
-      class="entry" href ng-click="setProject(project)" ng-class="{ error: project.error }">
+      class="entry" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
       <h1><item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu></h1>
       <span ng-if="project.error">
         {{project.error}}

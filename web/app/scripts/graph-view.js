@@ -54,11 +54,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return clone;
   }
 
-  function Offsetter(xOff, yOff, zoom, menu) {
+  function Offsetter(xOff, yOff, zoom, thickness, menu) {
     this.xOff = xOff;
     this.yOff = yOff;
     this.zoom = zoom;  // Zoom for positions.
-    this.thickness = zoom;  // Zoom for radius/width.
+    this.thickness = thickness;  // Zoom for radius/width.
     this.menu = menu;
     this.elements = [];
   }
@@ -89,6 +89,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     for (var i = 0; i < this.elements.length; ++i) {
       this.elements[i].reDraw();
     }
+  };
+  Offsetter.prototype.inherit = function() {
+    var offsetter = new Offsetter(this.xOff, this.yOff, this.zoom, this.thickness, this.menu);
+    offsetter.inherited = true;
+    return offsetter;
   };
 
   function GraphView(scope, element) {
@@ -201,10 +206,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         if (sides[i].display === '3d') { continue; }
         var offsetter;
         if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
-          offsetter = oldVertices[i].offsetter;
-          offsetter.inherited = true;
+          offsetter = oldVertices[i].offsetter.inherit();
         } else {
-          offsetter = new Offsetter(xOff, yOff, zoom, menu);
+          offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu);
         }
         if (dataVs.mode === 'sampled') {
           vs = this.addSampledVertices(dataVs, offsetter, sides[i]);
