@@ -7,12 +7,16 @@ angular.module('biggraph').directive('projectHistory', function(util) {
     templateUrl: 'project-history.html',
     link: function(scope) {
       scope.$watch('show', function(show) {
-        if (show) {
-          scope.history = util.nocache('/ajax/getHistory', {
-            project: scope.side.state.projectName,
-          });
-        }
+        if (show) { getHistory(); }
       });
+      scope.$watch('side.state.projectName', getHistory);
+
+      function getHistory() {
+        scope.modified = false;
+        scope.history = util.nocache('/ajax/getHistory', {
+          project: scope.side.state.projectName,
+        });
+      }
 
       function update() {
         scope.unsaved = false;
@@ -21,7 +25,9 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         if (history && history.$resolved && !history.$error) {
           for (var i = 0; i < history.steps.length; ++i) {
             var step = history.steps[i];
-            if (!step.status.enabled) { scope.valid = false; }
+            if (!step.status.enabled) {
+              scope.valid = false;
+            }
             watchStep(step);
           }
         }
@@ -62,9 +68,28 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         util.post('/ajax/saveHistory', {
           project: newName,
           history: alternateHistory(),
-        }).then(function() {
-          scope.side.reload();
+        }, function() {
+          scope.side.state.projectName = newName;
         });
+      };
+
+      // Confirm leaving the history page if changes have been made.
+      scope.$watch('show && (unsaved || modified)', function(changed) {
+        scope.changed = changed;
+        window.onbeforeunload = !changed ? null : function(e) {
+          e.returnValue = 'Your history changes are unsaved.';
+          return e.returnValue;
+        };
+      });
+      scope.closeHistory = function() {
+        if (!scope.changed || window.confirm('Discard history changes?')) {
+          scope.side.showHistory = false;
+        }
+      };
+      scope.closeProject = function() {
+        if (!scope.changed || window.confirm('Discard history changes?')) {
+          scope.side.close();
+        }
       };
     },
   };

@@ -7,11 +7,11 @@
     {{side.shortName()}}
 
     <div class="btn-group pull-right">
-      <label class="btn btn-info active" ng-click="side.showHistory = !side.showHistory"
+      <label class="btn btn-info active" ng-click="closeHistory()"
         tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-time"></i>
       </label>
-      <label class="btn btn-default" ng-click="side.close()"
+      <label class="btn btn-default" ng-click="closeProject()"
         tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-remove"></i>
       </label>
