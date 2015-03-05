@@ -164,3 +164,12 @@ object PairEquals extends FromJson[PairEquals[_]] {
 case class PairEquals[T]() extends Filter[(T, T)] {
   def matches(value: (T, T)) = value._1 == value._2
 }
+
+object RegexFilter extends FromJson[RegexFilter] {
+  def fromJson(j: JsValue) = RegexFilter((j \ "pattern").as[String])
+}
+case class RegexFilter(pattern: String) extends Filter[String] {
+  val regex = new util.matching.Regex(pattern)
+  def matches(value: String) = regex.findFirstIn(value).nonEmpty
+  override def toJson = Json.obj("pattern" -> pattern)
+}
