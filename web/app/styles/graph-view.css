@@ -103,12 +103,12 @@ svg .vertex.center .icon {
 }
 
 /* On hover the non-neighboring vertices and their edges are faded out. */
-svg.fade-non-neighbors .edge,
-svg.fade-non-neighbors .vertex {
+svg.fade-non-opaque .edge,
+svg.fade-non-opaque .vertex {
   opacity: 0.2;
 }
-svg.fade-non-neighbors .edge.opaque,
-svg.fade-non-neighbors .vertex.opaque {
+svg.fade-non-opaque .edge.opaque,
+svg.fade-non-opaque .vertex.opaque {
   opacity: 1;
 }
 

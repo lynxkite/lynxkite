@@ -140,7 +140,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.clear = function() {
     svg.removeClass(this.svg, 'loading');
-    svg.removeClass(this.svg, 'fade-non-neighbors');
+    svg.removeClass(this.svg, 'fade-non-opaque');
     this.root.empty();
     for (var i = 0; i < this.unregistration.length; ++i) {
       this.unregistration[i]();
@@ -1177,8 +1177,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.isOpaque = false;
     var that = this;
     this.touch.mouseenter(function() {
-      // Put the "fade-non-neighbors" class on the whole SVG.
-      svg.addClass(that.dom.closest('svg'), 'fade-non-neighbors');
+      // Put the "fade-non-opaque" class on the whole SVG.
+      svg.addClass(that.dom.closest('svg'), 'fade-non-opaque');
       svg.addClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.highlight});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
@@ -1190,8 +1190,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     });
     this.touch.mouseleave(function() {
       if (that.held) { return; }
-      // Remove the "fade-non-neighbors" class from the whole SVG.
-      svg.removeClass(that.dom.closest('svg'), 'fade-non-neighbors');
+      // Remove the "fade-non-opaque" class from the whole SVG.
+      svg.removeClass(that.dom.closest('svg'), 'fade-non-opaque');
       svg.removeClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.color});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
@@ -1294,7 +1294,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       if (src.isOpaque && dst.isOpaque) {
         svg.addClass(that.dom, 'opaque');
       } else {
-        svg.removeClass(that.dom, 'neighbor');
+        svg.removeClass(that.dom, 'opaque');
       }
     };
     src.addOpaqueListener(opaqueListener);
