@@ -140,6 +140,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.clear = function() {
     svg.removeClass(this.svg, 'loading');
+    svg.removeClass(this.svg, 'fade-non-neighbors');
     this.root.empty();
     for (var i = 0; i < this.unregistration.length; ++i) {
       this.unregistration[i]();
@@ -1171,11 +1172,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.dom.attr({ opacity: opacity });
     this.moveListeners = [];
     this.hoverListeners = [];
-    // Notified when this vertex becomes a neighbor of the hovered vertex.
-    this.neighborListeners = [];
-    this.isNeighbor = false;
+    // Notified when this vertex becomes opaque.
+    this.opaqueListeners = [];
+    this.isOpaque = false;
     var that = this;
     this.touch.mouseenter(function() {
+      // Put the "fade-non-neighbors" class on the whole SVG.
       svg.addClass(that.dom.closest('svg'), 'fade-non-neighbors');
       svg.addClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.highlight});
@@ -1188,6 +1190,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     });
     this.touch.mouseleave(function() {
       if (that.held) { return; }
+      // Remove the "fade-non-neighbors" class from the whole SVG.
       svg.removeClass(that.dom.closest('svg'), 'fade-non-neighbors');
       svg.removeClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.color});
@@ -1201,23 +1204,18 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.hoverListeners.push(hl);
   };
 
-  // Neighbor listeners must have an `on()` and an `off()` method.
-  Vertex.prototype.addNeighborListener = function(nl) {
-    this.neighborListeners.push(nl);
+  Vertex.prototype.addOpaqueListener = function(ol) {
+    this.opaqueListeners.push(ol);
   };
-  Vertex.prototype.setNeighbor = function(on) {
-    this.isNeighbor = on;
+  Vertex.prototype.setOpaque = function(on) {
+    this.isOpaque = on;
     if (on) {
-      svg.addClass(this.dom, 'neighbor');
+      svg.addClass(this.dom, 'opaque');
     } else {
-      svg.removeClass(this.dom, 'neighbor');
+      svg.removeClass(this.dom, 'opaque');
     }
-    for (var i = 0; i < this.neighborListeners.length; ++i) {
-      if (on) {
-        this.neighborListeners[i].on(this);
-      } else {
-        this.neighborListeners[i].off(this);
-      }
+    for (var i = 0; i < this.opaqueListeners.length; ++i) {
+      this.opaqueListeners[i]();
     }
   };
 
@@ -1278,13 +1276,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         on: function() {
           svg.addClass(that.dom, cls);
           that.toFront();
-          src.setNeighbor(true);
-          dst.setNeighbor(true);
+          src.setOpaque(true);
+          dst.setOpaque(true);
         },
         off: function() {
           svg.removeClass(that.dom, cls);
-          src.setNeighbor(false);
-          dst.setNeighbor(false);
+          src.setOpaque(false);
+          dst.setOpaque(false);
         },
       };
     }
@@ -1292,20 +1290,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     if (src !== dst) {
       dst.addHoverListener(hoverListener('highlight-in'));
     }
-    var neighborListener = {
-      on: function() {
-        if (src.isNeighbor && dst.isNeighbor) {
-          svg.addClass(that.dom, 'neighbor');
-        }
-      },
-      off: function() {
-        if (!src.isNeighbor || !dst.isNeighbor) {
-          svg.removeClass(that.dom, 'neighbor');
-        }
-      },
+    var opaqueListener = function() {
+      if (src.isOpaque && dst.isOpaque) {
+        svg.addClass(that.dom, 'opaque');
+      } else {
+        svg.removeClass(that.dom, 'neighbor');
+      }
     };
-    src.addNeighborListener(neighborListener);
-    dst.addNeighborListener(neighborListener);
+    src.addOpaqueListener(opaqueListener);
+    dst.addOpaqueListener(opaqueListener);
   }
   Edge.prototype.toFront = function() {
     this.dom.parent().append(this.dom);

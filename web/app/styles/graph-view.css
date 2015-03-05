@@ -107,8 +107,8 @@ svg.fade-non-neighbors .edge,
 svg.fade-non-neighbors .vertex {
   opacity: 0.2;
 }
-svg.fade-non-neighbors .edge.neighbor,
-svg.fade-non-neighbors .vertex.neighbor {
+svg.fade-non-neighbors .edge.opaque,
+svg.fade-non-neighbors .vertex.opaque {
   opacity: 1;
 }
 
