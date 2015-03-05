@@ -6,12 +6,10 @@ angular.module('biggraph').directive('projectHistory', function(util) {
     scope: { show: '=', side: '=' },
     templateUrl: 'project-history.html',
     link: function(scope) {
-      scope.$watch('show', function(show) {
-        if (show) { getHistory(); }
-      });
+      scope.$watch('show', getHistory);
       scope.$watch('side.state.projectName', getHistory);
-
       function getHistory() {
+        if (!scope.show) { return; }
         scope.modified = false;
         scope.history = util.nocache('/ajax/getHistory', {
           project: scope.side.state.projectName,
