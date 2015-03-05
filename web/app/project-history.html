@@ -22,26 +22,32 @@
         tooltip="Validate&nbsp;history" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-ok"></i>
       </label>
-      <label class="btn btn-default" ng-if="!unsaved && modified" ng-click="showSaveAs = true"
-          tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
-          <form ng-submit="saveAs(saveAsName)" style="display: inline;" ng-show="showSaveAs">
-            <!-- The input box closes if it loses focus while empty. -->
-            <input class="form-control save-as" ng-model="saveAsName" ng-blur="showSaveAs = saveAsName">
-          </form>
-          <!-- The floppy sends the request if something has been entered. -->
-          <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? saveAs(saveAsName) : 0"></i>
-        </label>
+      <label class="btn btn-warning" ng-if="!unsaved && !valid"
+        tooltip="History is inconsitent" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+      </label>
+      <label class="btn btn-default" ng-if="!unsaved && modified && valid" ng-click="showSaveAs = true"
+        tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
+        <form ng-submit="saveAs(saveAsName)" style="display: inline;" ng-show="showSaveAs">
+          <!-- The input box closes if it loses focus while empty. -->
+          <input class="form-control save-as" ng-model="saveAsName" ng-blur="showSaveAs = saveAsName">
+        </form>
+        <!-- The floppy sends the request if something has been entered. -->
+        <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? saveAs(saveAsName) : 0"></i>
+      </label>
     </div>
 
     <div class="clearfix"></div>
   </div>
 
   <div class="list-group">
-    <li class="list-group-item" ng-repeat="step in history.steps" ng-class="{ unsaved: step.unsaved }">
+    <li class="list-group-item" ng-repeat="step in history.steps"
+    ng-class="{ unsaved: step.unsaved, invalid: !step.status.enabled }">
       <h2>
         {{step.op.title}} on {{step.request.project}}
       </h2>
-      <div ng-hide="step.status.enabled" class="bg-danger">
+      <div ng-hide="step.status.enabled" class="error">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
         {{step.status.disabledReason}}
       </div>
       <form class="form-horizontal">

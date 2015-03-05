@@ -9,8 +9,8 @@
         "parameters":[
         ],
         "status":{
-          "enabled":false,
-          "disabledReason":"Vertices already exist."
+          "enabled":true,
+          "disabledReason":""
         },
         "description":"Creates small test graph with 4 people and 4 edges between them."
       },
@@ -81,7 +81,7 @@
           "parameters":{
             "output":"w2",
             "type":"double",
-            "expr":"weight * 2"
+            "expr":"weight * 3"
           }
         }
       },
@@ -151,7 +151,7 @@
         "op":{
           "id":"PageRank",
           "parameters":{
-            "name":"page_rank",
+            "name":"page_ranx",
             "weights":"w2",
             "iterations":"5",
             "damping":"0.85"
@@ -183,8 +183,8 @@
                 "title":"income"
               },
               {
-                "id":"page_rank",
-                "title":"page_rank"
+                "id":"page_ranx",
+                "title":"page_ranx"
               }
             ],
             "multipleChoice":false
@@ -204,8 +204,8 @@
                 "title":"income"
               },
               {
-                "id":"page_rank",
-                "title":"page_rank"
+                "id":"page_ranx",
+                "title":"page_ranx"
               }
             ],
             "multipleChoice":false
@@ -223,7 +223,7 @@
           "id":"Correlate-two-attributes",
           "parameters":{
             "attrA":"age",
-            "attrB":"page_rank"
+            "attrB":"page_ranx"
           }
         }
       },
