@@ -398,7 +398,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val p = Project(request.project)
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
-    assert(p.aclContains(request.writeACL, user),
+    assert(user.isAdmin || p.aclContains(request.writeACL, user),
       s"You cannot forfeit your write access to project $p.")
     p.readACL = request.readACL
     p.writeACL = request.writeACL
