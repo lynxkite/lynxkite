@@ -407,12 +407,13 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = metaManager.synchronized {
     val p = Project(request.project)
     p.assertReadAllowedFrom(user)
-    withCheckpoints(p) { ps =>
+    withCheckpoints(p) { checkpoints =>
+      val ops = checkpoints.tail // The first checkpoint is the empty project.
       // lastIndexWhere returns -1 when there is no such element.
-      val loggedFrom = ps.lastIndexWhere(_.lastOperationRequest.isEmpty) + 1
+      val loggedFrom = ops.lastIndexWhere(_.lastOperationRequest.isEmpty) + 1
       // Find the lowest number of skips to get a valid history.
-      (loggedFrom to p.checkpointCount - 1).view.flatMap { skips =>
-        val remaining = ps.drop(skips + 1)
+      (loggedFrom to ops.size).view.flatMap { skips =>
+        val remaining = ops.drop(skips)
         val requests = remaining.map(_.lastOperationRequest.get)
         val h = validateHistory(user, AlternateHistory(request.project, skips, requests.toList))
         if (h.valid) Some(h) else None
@@ -423,7 +424,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   // Expand each checkpoint of a project to a separate project, run the code, then clean up.
   private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.synchronized {
     val tmpDir = s"!tmp-$Timestamp"
-    val ps = (1 to p.checkpointCount).map { i =>
+    val ps = (0 until p.checkpointCount).map { i =>
       val tmp = Project(s"$tmpDir/$i")
       assert(!Operation.projects.contains(tmp), s"Project $tmp already exists.")
       p.copyCheckpoint(i, tmp)
@@ -442,8 +443,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
   private def alternateHistory(user: serving.User, request: AlternateHistory, copyTo: Option[Project]): ProjectHistory = metaManager.synchronized {
     val p = Project(request.project)
     p.assertReadAllowedFrom(user)
-    withCheckpoints(p) { ps =>
-      val state = ps(request.skips)
+    withCheckpoints(p) { checkpoints =>
+      val state = checkpoints(request.skips) // State before the first operation.
       val steps = request.requests.foldLeft(List[ProjectHistoryStep]()) { (steps, request) =>
         // The request may refer to a segmentation. Figure out the recipient project.
         val relativeProject = new SymbolPath(SymbolPath.fromString(request.project).tail)
