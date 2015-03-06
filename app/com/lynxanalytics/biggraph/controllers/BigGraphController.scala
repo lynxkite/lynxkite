@@ -323,32 +323,18 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
-    val project = Project(request.project)
-    project.assertWriteAllowedFrom(user)
-    val vertexSet = project.vertexSet
-    assert(vertexSet != null, s"No vertex set for $project.")
-    assert(request.vertexFilters.nonEmpty || request.edgeFilters.nonEmpty,
-      "No filters specified.")
-    val vertexFilters = request.vertexFilters.map { f =>
-      val attr = project.vertexAttributes(f.attributeName)
-      FEVertexAttributeFilter(attr.gUID.toString, f.valueSpec)
+    // Historical bridge.
+    val vertexParams = request.vertexFilters.map {
+      f => s"filterva-${f.attributeName}" -> f.valueSpec
     }
-    val edgeFilters = request.edgeFilters.map { f =>
-      val attr = project.edgeAttributes(f.attributeName)
-      FEVertexAttributeFilter(attr.gUID.toString, f.valueSpec)
+    val edgeParams = request.edgeFilters.map {
+      f => s"filterea-${f.attributeName}" -> f.valueSpec
     }
-    val vertexEmbedding = FEFilters.embedFilteredVertices(vertexSet, vertexFilters, heavy = true)
-    val filterStrings = (request.vertexFilters ++ request.edgeFilters).map {
-      f => s"${f.attributeName} ${f.valueSpec}"
-    }
-    project.checkpoint("Filter " + filterStrings.mkString(", ")) {
-      project.pullBack(vertexEmbedding)
-      if (edgeFilters.nonEmpty) {
-        val edgeEmbedding =
-          FEFilters.embedFilteredVertices(project.edgeBundle.idSet, edgeFilters, heavy = true)
-        project.pullBackEdges(edgeEmbedding)
-      }
-    }
+    projectOp(user, ProjectOperationRequest(
+      project = request.project,
+      op = FEOperationSpec(
+        id = "Filter-by-attributes",
+        parameters = (vertexParams ++ edgeParams).toMap)))
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
@@ -393,6 +379,8 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   def description: String
   def parameters: List[FEOperationParameterMeta]
   def enabled: FEStatus
+  // A summary of the operation, to be displayed on the UI.
+  def summary(params: Map[String, String]): String = title
   def apply(params: Map[String, String]): Unit
   def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled, description)
   protected def scalars[T: TypeTag] =
@@ -451,7 +439,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val ops = forContext(context).filter(_.id == req.op.id)
     assert(ops.nonEmpty, s"Cannot find operation: ${req.op.id}")
     assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
-    p.checkpoint(ops.head.title) {
+    p.checkpoint(ops.head.summary(req.op.parameters)) {
       ops.head.apply(req.op.parameters)
     }
   }
