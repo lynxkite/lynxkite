@@ -408,6 +408,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val p = Project(request.project)
     p.assertReadAllowedFrom(user)
     withCheckpoints(p) { checkpoints =>
+      assert(checkpoints.nonEmpty, s"No history for $p. Try the parent project.")
       val ops = checkpoints.tail // The first checkpoint is the empty project.
       // lastIndexWhere returns -1 when there is no such element.
       val loggedFrom = ops.lastIndexWhere(_.lastOperationRequest.isEmpty) + 1
