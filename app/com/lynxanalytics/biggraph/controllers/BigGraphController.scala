@@ -447,8 +447,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
       val state = checkpoints(request.skips) // State before the first operation.
       val steps = request.requests.foldLeft(List[ProjectHistoryStep]()) { (steps, request) =>
         // The request may refer to a segmentation. Figure out the recipient project.
-        val relativeProject = new SymbolPath(SymbolPath.fromString(request.project).tail)
-        val recipient = Project(state.projectName + "/" + relativeProject)
+        val relativePath = SymbolPath.fromString(request.project).tail
+        val fullPath = Symbol(state.projectName) :: relativePath.toList
+        val recipient = Project(new SymbolPath(fullPath).toString)
         val ctx = Operation.Context(user, recipient)
         val op = ops.opById(ctx, request.op.id)
         if (op.enabled.enabled) {
