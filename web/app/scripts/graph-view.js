@@ -54,11 +54,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return clone;
   }
 
-  function Offsetter(xOff, yOff, zoom, menu) {
+  function Offsetter(xOff, yOff, zoom, thickness, menu) {
     this.xOff = xOff;
     this.yOff = yOff;
     this.zoom = zoom;  // Zoom for positions.
-    this.thickness = zoom;  // Zoom for radius/width.
+    this.thickness = thickness;  // Zoom for radius/width.
     this.menu = menu;
     this.elements = [];
   }
@@ -89,6 +89,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     for (var i = 0; i < this.elements.length; ++i) {
       this.elements[i].reDraw();
     }
+  };
+  Offsetter.prototype.inherit = function() {
+    var offsetter = new Offsetter(this.xOff, this.yOff, this.zoom, this.thickness, this.menu);
+    offsetter.inherited = true;
+    return offsetter;
   };
 
   function GraphView(scope, element) {
@@ -140,6 +145,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.clear = function() {
     svg.removeClass(this.svg, 'loading');
+    svg.removeClass(this.svg, 'fade-non-opaque');
     this.root.empty();
     for (var i = 0; i < this.unregistration.length; ++i) {
       this.unregistration[i]();
@@ -200,10 +206,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         if (sides[i].display === '3d') { continue; }
         var offsetter;
         if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
-          offsetter = oldVertices[i].offsetter;
-          offsetter.inherited = true;
+          offsetter = oldVertices[i].offsetter.inherit();
         } else {
-          offsetter = new Offsetter(xOff, yOff, zoom, menu);
+          offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu);
         }
         if (dataVs.mode === 'sampled') {
           vs = this.addSampledVertices(dataVs, offsetter, sides[i]);
@@ -1171,8 +1176,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.dom.attr({ opacity: opacity });
     this.moveListeners = [];
     this.hoverListeners = [];
+    // Notified when this vertex becomes opaque.
+    this.opaqueListeners = [];
+    this.isOpaque = false;
     var that = this;
     this.touch.mouseenter(function() {
+      // Put the "fade-non-opaque" class on the whole SVG.
+      svg.addClass(that.dom.closest('svg'), 'fade-non-opaque');
       svg.addClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.highlight});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
@@ -1184,6 +1194,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     });
     this.touch.mouseleave(function() {
       if (that.held) { return; }
+      // Remove the "fade-non-opaque" class from the whole SVG.
+      svg.removeClass(that.dom.closest('svg'), 'fade-non-opaque');
       svg.removeClass(that.dom, 'highlight');
       that.icon.attr({style: 'fill: ' + that.color});
       for (var i = 0; i < that.hoverListeners.length; ++i) {
@@ -1195,6 +1207,22 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertex.prototype.addHoverListener = function(hl) {
     this.hoverListeners.push(hl);
   };
+
+  Vertex.prototype.addOpaqueListener = function(ol) {
+    this.opaqueListeners.push(ol);
+  };
+  Vertex.prototype.setOpaque = function(on) {
+    this.isOpaque = on;
+    if (on) {
+      svg.addClass(this.dom, 'opaque');
+    } else {
+      svg.removeClass(this.dom, 'opaque');
+    }
+    for (var i = 0; i < this.opaqueListeners.length; ++i) {
+      this.opaqueListeners[i]();
+    }
+  };
+
   Vertex.prototype.addMoveListener = function(ml) {
     this.moveListeners.push(ml);
   };
@@ -1247,16 +1275,34 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     src.addMoveListener(function() { that.reposition(); });
     dst.addMoveListener(function() { that.reposition(); });
     this.reposition();
-    src.addHoverListener({
-      on: function() { svg.addClass(that.dom, 'highlight-out'); that.toFront(); },
-      off: function() { svg.removeClass(that.dom, 'highlight-out'); }
-    });
-    if (src !== dst) {
-      dst.addHoverListener({
-        on: function() { svg.addClass(that.dom, 'highlight-in'); that.toFront(); },
-        off: function() { svg.removeClass(that.dom, 'highlight-in'); }
-      });
+    function hoverListener(cls) {
+      return {
+        on: function() {
+          svg.addClass(that.dom, cls);
+          that.toFront();
+          src.setOpaque(true);
+          dst.setOpaque(true);
+        },
+        off: function() {
+          svg.removeClass(that.dom, cls);
+          src.setOpaque(false);
+          dst.setOpaque(false);
+        },
+      };
     }
+    src.addHoverListener(hoverListener('highlight-out'));
+    if (src !== dst) {
+      dst.addHoverListener(hoverListener('highlight-in'));
+    }
+    var opaqueListener = function() {
+      if (src.isOpaque && dst.isOpaque) {
+        svg.addClass(that.dom, 'opaque');
+      } else {
+        svg.removeClass(that.dom, 'opaque');
+      }
+    };
+    src.addOpaqueListener(opaqueListener);
+    dst.addOpaqueListener(opaqueListener);
   }
   Edge.prototype.toFront = function() {
     this.dom.parent().append(this.dom);
