@@ -408,15 +408,15 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val p = Project(request.project)
     p.assertReadAllowedFrom(user)
     withCheckpoints(p) { ps =>
+      // lastIndexWhere returns -1 when there is no such element.
+      val loggedFrom = ps.lastIndexWhere(_.lastOperationRequest.isEmpty) + 1
       // Find the lowest number of skips to get a valid history.
-      (0 to p.checkpointCount - 1).view.map { skips =>
+      (loggedFrom to p.checkpointCount - 1).view.flatMap { skips =>
         val remaining = ps.drop(skips + 1)
-        if (remaining.forall(_.lastOperationRequest.nonEmpty)) {
-          val requests = remaining.map(_.lastOperationRequest.get)
-          val h = validateHistory(user, AlternateHistory(request.project, skips, requests.toList))
-          if (h.valid) Some(h) else None
-        } else None
-      }.find(_.nonEmpty).get.get
+        val requests = remaining.map(_.lastOperationRequest.get)
+        val h = validateHistory(user, AlternateHistory(request.project, skips, requests.toList))
+        if (h.valid) Some(h) else None
+      }.head
     }
   }
 
