@@ -83,9 +83,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def checkpointDir(i: Int): SymbolPath = rootDir / "checkpoint" / checkpoints(i)
 
   def copyCheckpoint(i: Int, destination: Project): Unit = manager.synchronized {
-    assert(0 < i && i <= checkpointCount, s"Requested checkpoint $i out of $checkpointCount.")
+    assert(0 <= i && i < checkpointCount, s"Requested checkpoint $i out of $checkpointCount.")
     copy(destination)
-    while (destination.checkpointCount > i) {
+    while (destination.checkpointCount > i + 1) {
       destination.undo
     }
   }
