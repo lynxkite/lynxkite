@@ -67,7 +67,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       segmentations = segmentations.map(_.toFE).toList)
   }
 
-  protected def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
+  private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
     case "" => Seq()
     case x => x.split(java.util.regex.Pattern.quote(separator), -1)
   }
