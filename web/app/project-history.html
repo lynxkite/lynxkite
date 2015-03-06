@@ -46,7 +46,7 @@
       {{history.skips}} earlier {{history.skips === 1 ? 'step' : 'steps'}} cannot be edited.
     </li>
     <li class="list-group-item" ng-repeat="step in history.steps"
-    ng-class="{ local-changes: step.localChanges, invalid: !step.status.enabled }">
+    ng-class="{ 'local-changes': step.localChanges, invalid: !step.status.enabled }">
       <h2>
         {{step.op.title}} {{onProject(step.request.project)}}
       </h2>
