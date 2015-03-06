@@ -142,7 +142,7 @@ case class AlternateHistory(
   skips: Int, // Number of checkpoints to skip.
   requests: List[ProjectOperationRequest])
 case class SaveHistoryRequest(
-  project: String, // New project name.
+  newProject: String,
   history: AlternateHistory)
 case class ProjectHistory(
     project: String,
@@ -478,11 +478,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
-    val p2 = Project(request.project)
-    assert(!Operation.projects.contains(p2), s"Project $p2 already exists.")
-    alternateHistory(user, request.history, Some(p2))
-    if (!p2.writeAllowedFrom(user)) {
-      p2.writeACL += "," + user.email
+    val p = Project(request.newProject)
+    assert(!Operation.projects.contains(p), s"Project $p already exists.")
+    alternateHistory(user, request.history, Some(p))
+    if (!p.writeAllowedFrom(user)) {
+      p.writeACL += "," + user.email
     }
   }
 }
