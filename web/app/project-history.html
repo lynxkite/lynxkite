@@ -1,7 +1,7 @@
 <div class="panel panel-default project history" ng-if="show">
 
   <div class="panel-heading project-name">
-    <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
+    <span class="de-emph" ng-repeat="parent in side.parentProjects()">
       {{parent}} &raquo;
     </span>
     {{side.shortName()}}
@@ -48,7 +48,7 @@
     <li class="list-group-item" ng-repeat="step in history.steps"
     ng-class="{ local-changes: step.localChanges, invalid: !step.status.enabled }">
       <h2>
-        {{step.op.title}} on {{step.request.project}}
+        {{step.op.title}} {{onProject(step.request.project)}}
       </h2>
       <div ng-hide="step.status.enabled" class="error">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
