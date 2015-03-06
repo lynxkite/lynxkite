@@ -10,14 +10,14 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       scope.$watch('side.state.projectName', getHistory);
       function getHistory() {
         if (!scope.show) { return; }
-        scope.modified = false;
+        scope.remoteChanges = false;
         scope.history = util.nocache('/ajax/getHistory', {
           project: scope.side.state.projectName,
         });
       }
 
       function update() {
-        scope.unsaved = false;
+        scope.localChanges = false;
         scope.valid = true;
         var history = scope.history;
         if (history && history.$resolved && !history.$error) {
@@ -39,8 +39,8 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           function() { return step; },
           function(after, before) {
             if (after === before) { return; }
-            step.unsaved = true;
-            scope.unsaved = true;
+            step.localChanges = true;
+            scope.localChanges = true;
           });
       }
 
@@ -58,7 +58,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       }
 
       scope.validate = function() {
-        scope.modified = true;
+        scope.remoteChanges = true;
         scope.history = util.get('/ajax/validateHistory', alternateHistory());
       };
 
@@ -72,7 +72,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       };
 
       // Confirm leaving the history page if changes have been made.
-      scope.$watch('show && (unsaved || modified)', function(changed) {
+      scope.$watch('show && (localChanges || remoteChanges)', function(changed) {
         scope.changed = changed;
         window.onbeforeunload = !changed ? null : function(e) {
           e.returnValue = 'Your history changes are unsaved.';

@@ -29,7 +29,7 @@ project-history h2 {
 project-history .list-group-item.invalid {
   background-color: hsl(20, 60%, 90%);
 }
-project-history .list-group-item.unsaved {
+project-history .list-group-item.local-changes {
   background-color: hsl(20, 60%, 98%);
 }
 project-history .list-group-item.uneditable {

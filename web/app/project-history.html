@@ -17,16 +17,16 @@
       </label>
     </div>
 
-    <div class="btn-group pull-right" ng-if="unsaved || modified">
-      <label class="btn btn-default" ng-if="unsaved" ng-click="validate()"
+    <div class="btn-group pull-right" ng-if="localChanges || remoteChanges">
+      <label class="btn btn-default" ng-if="localChanges" ng-click="validate()"
         tooltip="Validate&nbsp;history" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-ok"></i>
       </label>
-      <label class="btn btn-warning" ng-if="!unsaved && !valid"
+      <label class="btn btn-warning" ng-if="!localChanges && !valid"
         tooltip="History is inconsitent" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
       </label>
-      <label class="btn btn-default" ng-if="!unsaved && modified && valid" ng-click="showSaveAs = true"
+      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid" ng-click="showSaveAs = true"
         tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
         <form ng-submit="saveAs(saveAsName)" style="display: inline;" ng-show="showSaveAs">
           <!-- The input box closes if it loses focus while empty. -->
@@ -46,7 +46,7 @@
       {{history.skips}} earlier {{history.skips === 1 ? 'step' : 'steps'}} cannot be edited.
     </li>
     <li class="list-group-item" ng-repeat="step in history.steps"
-    ng-class="{ unsaved: step.unsaved, invalid: !step.status.enabled }">
+    ng-class="{ local-changes: step.localChanges, invalid: !step.status.enabled }">
       <h2>
         {{step.op.title}} on {{step.request.project}}
       </h2>
