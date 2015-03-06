@@ -432,7 +432,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
     try {
       code(ps)
     } finally {
-      Project(tmpDir).remove
+      for (p <- ps) {
+        p.remove
+      }
     }
   }
 
