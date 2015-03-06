@@ -71,6 +71,14 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         });
       };
 
+      // Returns "on <segmentation name>" if the project is a segmentation.
+      scope.onProject = function(name) {
+        var path = util.projectPath(name);
+        // The project name is already at the top.
+        path.shift();
+        return path.length === 0 ? '' : 'on ' + path.join('&raquo;');
+      };
+
       // Confirm leaving the history page if changes have been made.
       scope.$watch('show && (localChanges || remoteChanges)', function(changed) {
         scope.changed = changed;

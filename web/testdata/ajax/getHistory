@@ -147,7 +147,7 @@
         "description":""
       },
       "request":{
-        "project":"Project Strawberry",
+        "project":"Project Strawberry/checkpointed/segmentations/connected_components/project",
         "op":{
           "id":"PageRank",
           "parameters":{
