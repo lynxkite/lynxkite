@@ -425,7 +425,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.synchronized {
     val tmpDir = s"!tmp-$Timestamp"
     val ps = (0 until p.checkpointCount).map { i =>
-      val tmp = Project(s"$tmpDir/$i")
+      val tmp = Project(s"$tmpDir-$i")
       assert(!Operation.projects.contains(tmp), s"Project $tmp already exists.")
       p.copyCheckpoint(i, tmp)
       tmp
