@@ -666,7 +666,9 @@ angular.module('biggraph')
     }
 
     $scope.showGraph = function() {
-      return $scope.left.viewData || $scope.right.viewData;
+      var history = $scope.left.showHistory || $scope.right.showHistory;
+      var graph = $scope.left.viewData || $scope.right.viewData;
+      return !history && graph;
     };
 
     $scope.$watch('left.project.$resolved', function(loaded) {
