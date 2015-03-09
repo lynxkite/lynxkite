@@ -6,6 +6,18 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Project history (the list of operations that have been applied) can now be viewed and
+   also edited. This is an experimental feature. Operations cannot be deleted or inserted
+   yet. Operations from earlier versions cannot be viewed or edited.
+ - Fixed an issue with undo. The fix introduces an undo incompatibility. Operations
+   from earlier versions cannot be undone after the upgrade.
+ - Added a "Filter by attributes" operation. This is identical to filtering the usual way.
+ - Regex filters can now be applied to string attributes. The syntax is `regex(R)` for
+   example for finding strings that contain `R`. Or `regex(^Ab)` for strings that start
+   with `Ab`. Or `regex((.)\1)` for strings with double letters. Etc.
+ - Non-neighboring vertices are partially faded out when hovering over a vertex.
+ - Fixed a leak in visualization that would gradually degrade performance in the sampled
+   view.
  - In addition to scrolling, double-clicking and right double-clicking can be used now
    to zoom in and out. With Shift they adjust the thickness.
  - Upgraded to Apache Spark 1.2.1. Users need to download this and update `SPARK_HOME`

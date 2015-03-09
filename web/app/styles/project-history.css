@@ -1,0 +1,43 @@
+/* Set a distinct (blue) look for the history view. */
+.history .list-group-item {
+  background-color: hsl(200, 60%, 98%);
+}
+.history .project-name {
+  background-color: hsl(200, 60%, 90%);
+  color: hsl(200, 60%, 20%);
+}
+
+project-history .list-group {
+  margin: 0;
+}
+
+project-history .list-group-item {
+  border-width: 0;
+  border-top-width: 1px;
+}
+project-history .list-group-item:first-child {
+  border-top-width: 0;
+}
+
+project-history h2 {
+  font-size: 20px;
+  margin: 0;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+project-history .list-group-item.invalid {
+  background-color: hsl(20, 60%, 90%);
+}
+project-history .list-group-item.local-changes {
+  background-color: hsl(20, 60%, 98%);
+}
+project-history .list-group-item.uneditable {
+  background-color: white;
+  color: rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+project-history .error {
+  color: hsl(20, 60%, 50%);
+}
