@@ -478,73 +478,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         if (weightsName == "") const(edgeBundle)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
-        val op = graph_operations.FindModularPartitioning()
-        op(op.edges, edgeBundle)(op.weights, weights).result
-      }
-      val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(result.partitions, idAttr = "id")
-      segmentation.project.notes = title
-      segmentation.belongsTo = result.belongsTo
-      segmentation.project.vertexAttributes("size") =
-        computeSegmentSizes(segmentation)
-      val modularity = {
-        val op = graph_operations.Modularity()
-        op(op.edges, edgeBundle)(op.weights, weights)(op.belongsTo, result.belongsTo)
-          .result.modularity
-      }
-      segmentation.project.scalars("modularity") = modularity
-    }
-  })
-
-  register(new CreateSegmentationOperation(_) {
-    val title = "Modular partitioning V4"
-    val description = "Tries to find a partitioning of the graph with high modularity."
-    def parameters = List(
-      Param("name", "Segmentation name", defaultValue = "modular_partitions_v4"),
-      Param("weights", "Weight attribute", options =
-        UIValue("", "no weight") +: edgeAttributes[Double]))
-    def enabled = hasEdgeBundle
-    def apply(params: Map[String, String]) = {
-      val edgeBundle = project.edgeBundle
-      val weightsName = params("weights")
-      val weights =
-        if (weightsName == "") const(edgeBundle)
-        else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
-      val result = {
-        val op = graph_operations.FindModularPartitioningV4()
-        op(op.edges, edgeBundle)(op.weights, weights).result
-      }
-      val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(result.partitions, idAttr = "id")
-      segmentation.project.notes = title
-      segmentation.belongsTo = result.belongsTo
-      segmentation.project.vertexAttributes("size") =
-        computeSegmentSizes(segmentation)
-      val modularity = {
-        val op = graph_operations.Modularity()
-        op(op.edges, edgeBundle)(op.weights, weights)(op.belongsTo, result.belongsTo)
-          .result.modularity
-      }
-      segmentation.project.scalars("modularity") = modularity
-    }
-  })
-
-  register(new CreateSegmentationOperation(_) {
-    val title = "Modular partitioning V2"
-    val description = "Tries to find a partitioning of the graph with high modularity."
-    def parameters = List(
-      Param("name", "Segmentation name", defaultValue = "modular_partitions_v2"),
-      Param("weights", "Weight attribute", options =
-        UIValue("", "no weight") +: edgeAttributes[Double]))
-    def enabled = hasEdgeBundle
-    def apply(params: Map[String, String]) = {
-      val edgeBundle = project.edgeBundle
-      val weightsName = params("weights")
-      val weights =
-        if (weightsName == "") const(edgeBundle)
-        else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
-      val result = {
-        val op = graph_operations.FindModularPartitioningV2()
+        val op = graph_operations.FindModularPartitioningByTweaks()
         op(op.edges, edgeBundle)(op.weights, weights).result
       }
       val segmentation = project.segmentation(params("name"))
