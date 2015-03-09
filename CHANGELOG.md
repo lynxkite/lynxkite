@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Delimiters in load CSV operations now support standard java escapes. (Most importantly,
+   you can import from a tab delimited file using `\t` as the value of the delimiter parameter.)
  - Project history (the list of operations that have been applied) can now be viewed and
    also edited. This is an experimental feature. Operations cannot be deleted or inserted
    yet. Operations from earlier versions cannot be viewed or edited.
