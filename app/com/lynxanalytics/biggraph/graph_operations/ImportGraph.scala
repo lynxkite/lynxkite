@@ -7,6 +7,8 @@ import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+
+import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Partitioner
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -34,6 +36,7 @@ object ImportUtil {
     val anyString = ".*?"
     val r = oneOf(oneField(quotedString), oneField(anyString)).r
     val splitter = { line: String =>
+      val esLine = StringEscapeUtils.escapeJava(line)
       val matches = r.findAllMatchIn(line)
       // Find the top-level group that has matched in each field.
       val fields = matches.map(_.subgroups.find(_ != null).get).toList
@@ -81,7 +84,8 @@ case class CSV(file: Filename,
                delimiter: String,
                header: String,
                filter: JavaScript = JavaScript("")) extends RowInput {
-  val fields = ImportUtil.split(header, delimiter).map(_.trim)
+  val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
+  val fields = ImportUtil.split(header, unescapedDelimiter).map(_.trim)
 
   override def toJson = Json.obj(
     "file" -> file.fullString,
@@ -101,7 +105,7 @@ case class CSV(file: Filename,
     log.info(s"Reading $file into $numPartitions partitions.")
     return lines
       .filter(_ != header)
-      .map(ImportUtil.split(_, delimiter))
+      .map(ImportUtil.split(_, unescapedDelimiter))
       .filter(jsFilter(_))
       .repartition(numPartitions)
   }
