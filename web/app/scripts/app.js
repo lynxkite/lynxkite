@@ -179,7 +179,7 @@ angular
         //   <parent>/checkpointed/segmentations/<segmentation>/project
         if (!projectName) { return []; }
         var parts = projectName.split('/');
-        var path = [util.spaced(parts.shift())];
+        var path = [util.spaced(parts.shift())];  // Root project name.
         while (parts.length > 0) {
           if (parts[0] !== 'checkpointed') { console.error('Cannot parse', projectName); }
           parts.shift();  // "checkpointed"
