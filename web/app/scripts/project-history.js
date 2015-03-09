@@ -79,6 +79,10 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         return path.length === 0 ? '' : 'on ' + path.join('&raquo;');
       };
 
+      scope.reportError = function() {
+        util.reportRequestError(scope.history);
+      };
+
       // Confirm leaving the history page if changes have been made.
       scope.$watch('show && (localChanges || remoteChanges)', function(changed) {
         scope.changed = changed;
