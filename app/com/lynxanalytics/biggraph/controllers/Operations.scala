@@ -464,10 +464,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new CreateSegmentationOperation(_) {
-    val title = "Modular partitioning"
-    val description = "Tries to find a partitioning of the graph with high modularity."
+    val title = "Modular clustering"
+    val description = "Tries to find a clustering of the graph with high modularity."
     def parameters = List(
-      Param("name", "Segmentation name", defaultValue = "modular_partitions"),
+      Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Param("weights", "Weight attribute", options =
         UIValue("", "no weight") +: edgeAttributes[Double]))
     def enabled = hasEdgeBundle
@@ -478,11 +478,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         if (weightsName == "") const(edgeBundle)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
-        val op = graph_operations.FindModularPartitioningByTweaks()
+        val op = graph_operations.FindModularClusteringByTweaks()
         op(op.edges, edgeBundle)(op.weights, weights).result
       }
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(result.partitions, idAttr = "id")
+      segmentation.project.setVertexSet(result.clusters, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
       segmentation.project.vertexAttributes("size") =
