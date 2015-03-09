@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Added a "Filter by attributes" operation. This is identical to filtering the usual way.
  - Regex filters can now be applied to string attributes. The syntax is `regex(R)` for
    example for finding strings that contain `R`. Or `regex(^Ab)` for strings that start
    with `Ab`. Or `regex((.)\1)` for strings with double letters. Etc.
