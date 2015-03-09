@@ -7,10 +7,11 @@ Please add changes at the top. When releasing a version add a new header for tha
 ### master
 
  - Project history (the list of operations that have been applied) can now be viewed and
-   also edited. This is an experimental feature. Filters are not yet supported. Operations
-   cannot be deleted or inserted yet.
+   also edited. This is an experimental feature. Operations cannot be deleted or inserted
+   yet. Operations from earlier versions cannot be viewed or edited.
  - Fixed an issue with undo. The fix introduces an undo incompatibility. Operations
    from earlier versions cannot be undone after the upgrade.
+ - Added a "Filter by attributes" operation. This is identical to filtering the usual way.
  - Regex filters can now be applied to string attributes. The syntax is `regex(R)` for
    example for finding strings that contain `R`. Or `regex(^Ab)` for strings that start
    with `Ab`. Or `regex((.)\1)` for strings with double letters. Etc.
