@@ -31,7 +31,10 @@
     </div>
   </div>
 
-  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error">
+  <project-history side="side" show="side.project.$resolved && !side.project.$error && side.showHistory">
+  </project-history>
+
+  <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory">
 
     <div class="panel-heading project-name">
       <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
@@ -40,11 +43,15 @@
       {{side.shortName()}}
 
       <div class="btn-group pull-right">
-        <label class="btn btn-default" ng-if="side.project.undoOp" ng-click="side.undo()"
+        <label class="btn btn-default" ng-disabled="!side.project.undoOp" ng-click="side.undo()"
           tooltip="Undo {{side.project.undoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-backward"></i>
         </label>
-        <label class="btn btn-default" ng-if="side.project.redoOp" ng-click="side.redo()"
+        <label class="btn btn-default" ng-click="side.showHistory = !side.showHistory"
+          tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
+          <i class="glyphicon glyphicon-time"></i>
+        </label>
+        <label class="btn btn-default" ng-disabled="!side.project.redoOp" ng-click="side.redo()"
           tooltip="Redo {{side.project.redoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-forward"></i>
         </label>
@@ -82,7 +89,7 @@
       </div>
 
       <div class="btn-group pull-right" ng-if="side.hasFilters()">
-         <label class="btn btn-default"
+        <label class="btn btn-default"
                ng-click="side.applyFilters()"
                tooltip="Apply&nbsp;current&nbsp;filters: {{side.filterSummary()}}"
                tooltip-append-to-body="true"

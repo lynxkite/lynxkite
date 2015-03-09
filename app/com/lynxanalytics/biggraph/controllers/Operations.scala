@@ -1975,6 +1975,54 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Filter by attributes"
+    val description =
+      """Keeps only vertices and edges that match the filters. The filter syntax is documented in the
+    <a href="http://rnd.lynxanalytics.com/lynxkite-user-guide">LynxKite User Guide</a>.
+    """
+    def parameters =
+      vertexAttributes.toList.map { attr => Param(s"filterva-${attr.id}", attr.id) } ++
+        edgeAttributes.toList.map { attr => Param(s"filterea-${attr.id}", attr.id) }
+    def enabled =
+      FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") ||
+        FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    val vaFilter = "filterva-(.*)".r
+    val eaFilter = "filterea-(.*)".r
+
+    override def summary(params: Map[String, String]) = {
+      val filterStrings = params.collect {
+        case (vaFilter(name), filter) if filter.nonEmpty => s"$name $filter"
+        case (eaFilter(name), filter) if filter.nonEmpty => s"$name $filter"
+      }
+      "Filter " + filterStrings.mkString(", ")
+    }
+    def apply(params: Map[String, String]) = {
+      val vertexFilters = params.collect {
+        case (vaFilter(name), filter) if filter.nonEmpty =>
+          val attr = project.vertexAttributes(name)
+          FEVertexAttributeFilter(attr.gUID.toString, filter)
+      }.toSeq
+      val edgeFilters = params.collect {
+        case (eaFilter(name), filter) if filter.nonEmpty =>
+          val attr = project.edgeAttributes(name)
+          FEVertexAttributeFilter(attr.gUID.toString, filter)
+      }.toSeq
+      assert(vertexFilters.nonEmpty || edgeFilters.nonEmpty, "No filters specified.")
+
+      if (vertexFilters.nonEmpty) {
+        val vertexEmbedding = FEFilters.embedFilteredVertices(
+          project.vertexSet, vertexFilters, heavy = true)
+        project.pullBack(vertexEmbedding)
+      }
+      if (edgeFilters.nonEmpty) {
+        val edgeEmbedding = FEFilters.embedFilteredVertices(
+          project.edgeBundle.idSet, edgeFilters, heavy = true)
+        project.pullBackEdges(edgeEmbedding)
+      }
+    }
+  })
+
   { // "Dirty operations", that is operations that use a data manager. Think twice if you really
     // need this before putting an operation here.
     implicit val dataManager = env.dataManager

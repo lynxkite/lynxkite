@@ -101,8 +101,11 @@ object FEFilters {
     val innerSpec = if (negated) spec.drop(1) else spec
     val innerFilter: Filter[T] =
       if (typeOf[T] =:= typeOf[String]) {
-        OneOf(innerSpec.split(",").map(_.trim).toSet)
-          .asInstanceOf[Filter[T]]
+        val stringFilter = innerSpec match {
+          case regexRE(re) => RegexFilter(re)
+          case csv => OneOf(csv.split(",").map(_.trim).toSet)
+        }
+        stringFilter.asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[Long]) {
         OneOf(innerSpec.split(",").map(_.trim.toLong).toSet)
           .asInstanceOf[Filter[T]]
@@ -152,4 +155,5 @@ object FEFilters {
   private val boundRE = s"$comparatorPattern$numberPattern".r
   private val forallRE = s"\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r
   private val existsRE = s"\\s*(?:exists|any|some|∃)\\((.*)\\)\\s*".r
+  private val regexRE = s"\\s*regexp?\\((.*)\\)\\s*".r
 }

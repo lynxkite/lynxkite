@@ -4,6 +4,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
@@ -134,6 +135,25 @@ case class RenameProjectRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
 case class ProjectSettingsRequest(project: String, readACL: String, writeACL: String)
+
+case class HistoryRequest(project: String)
+case class AlternateHistory(
+  project: String,
+  skips: Int, // Number of checkpoints to skip.
+  requests: List[ProjectOperationRequest])
+case class SaveHistoryRequest(
+  newProject: String,
+  history: AlternateHistory)
+case class ProjectHistory(
+    project: String,
+    skips: Int, // Number of checkpoints skipped.
+    steps: List[ProjectHistoryStep]) {
+  def valid = steps.forall(_.status.enabled)
+}
+case class ProjectHistoryStep(
+  op: FEOperationMeta,
+  request: ProjectOperationRequest,
+  status: FEStatus)
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: List[VertexSet] = List(),
@@ -323,32 +343,18 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
-    val project = Project(request.project)
-    project.assertWriteAllowedFrom(user)
-    val vertexSet = project.vertexSet
-    assert(vertexSet != null, s"No vertex set for $project.")
-    assert(request.vertexFilters.nonEmpty || request.edgeFilters.nonEmpty,
-      "No filters specified.")
-    val vertexFilters = request.vertexFilters.map { f =>
-      val attr = project.vertexAttributes(f.attributeName)
-      FEVertexAttributeFilter(attr.gUID.toString, f.valueSpec)
+    // Historical bridge.
+    val vertexParams = request.vertexFilters.map {
+      f => s"filterva-${f.attributeName}" -> f.valueSpec
     }
-    val edgeFilters = request.edgeFilters.map { f =>
-      val attr = project.edgeAttributes(f.attributeName)
-      FEVertexAttributeFilter(attr.gUID.toString, f.valueSpec)
+    val edgeParams = request.edgeFilters.map {
+      f => s"filterea-${f.attributeName}" -> f.valueSpec
     }
-    val vertexEmbedding = FEFilters.embedFilteredVertices(vertexSet, vertexFilters, heavy = true)
-    val filterStrings = (request.vertexFilters ++ request.edgeFilters).map {
-      f => s"${f.attributeName} ${f.valueSpec}"
-    }
-    project.checkpoint("Filter " + filterStrings.mkString(", ")) {
-      project.pullBack(vertexEmbedding)
-      if (edgeFilters.nonEmpty) {
-        val edgeEmbedding =
-          FEFilters.embedFilteredVertices(project.edgeBundle.idSet, edgeFilters, heavy = true)
-        project.pullBackEdges(edgeEmbedding)
-      }
-    }
+    projectOp(user, ProjectOperationRequest(
+      project = request.project,
+      op = FEOperationSpec(
+        id = "Filter-by-attributes",
+        parameters = (vertexParams ++ edgeParams).toMap)))
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
@@ -378,10 +384,95 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val p = Project(request.project)
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
-    assert(p.aclContains(request.writeACL, user),
+    assert(user.isAdmin || p.aclContains(request.writeACL, user),
       s"You cannot forfeit your write access to project $p.")
     p.readACL = request.readACL
     p.writeACL = request.writeACL
+  }
+
+  def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = metaManager.synchronized {
+    val p = Project(request.project)
+    p.assertReadAllowedFrom(user)
+    withCheckpoints(p) { checkpoints =>
+      assert(checkpoints.nonEmpty, s"No history for $p. Try the parent project.")
+      val ops = checkpoints.tail // The first checkpoint is the empty project.
+      // lastIndexWhere returns -1 when there is no such element.
+      val loggedFrom = ops.lastIndexWhere(_.lastOperationRequest.isEmpty) + 1
+      // Find the lowest number of skips to get a valid history.
+      (loggedFrom to ops.size).view.flatMap { skips =>
+        val remaining = ops.drop(skips)
+        val requests = remaining.map(_.lastOperationRequest.get)
+        val h = validateHistory(user, AlternateHistory(request.project, skips, requests.toList))
+        if (h.valid) Some(h) else None
+      }.head
+    }
+  }
+
+  // Expand each checkpoint of a project to a separate project, run the code, then clean up.
+  private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.synchronized {
+    val tmpDir = s"!tmp-$Timestamp"
+    val ps = (0 until p.checkpointCount).map { i =>
+      val tmp = Project(s"$tmpDir-$i")
+      assert(!Operation.projects.contains(tmp), s"Project $tmp already exists.")
+      p.copyCheckpoint(i, tmp)
+      tmp
+    }
+    try {
+      code(ps)
+    } finally {
+      for (p <- ps) {
+        p.remove
+      }
+    }
+  }
+
+  // Returns the evaluated alternate history, and optionally copies the resulting state into a new project.
+  private def alternateHistory(user: serving.User, request: AlternateHistory, copyTo: Option[Project]): ProjectHistory = metaManager.synchronized {
+    val p = Project(request.project)
+    p.assertReadAllowedFrom(user)
+    withCheckpoints(p) { checkpoints =>
+      val state = checkpoints(request.skips) // State before the first operation.
+      val steps = request.requests.foldLeft(List[ProjectHistoryStep]()) { (steps, request) =>
+        // The request may refer to a segmentation. Figure out the recipient project.
+        val relativePath = SymbolPath.fromString(request.project).tail
+        val fullPath = Symbol(state.projectName) :: relativePath.toList
+        val recipient = Project(new SymbolPath(fullPath).toString)
+        val ctx = Operation.Context(user, recipient)
+        val op = ops.opById(ctx, request.op.id)
+        if (op.enabled.enabled) {
+          try {
+            recipient.checkpoint(op.toString, request) {
+              op.apply(request.op.parameters)
+            }
+            steps :+ ProjectHistoryStep(op.toFE, request, FEStatus.enabled)
+          } catch {
+            case t: Throwable =>
+              steps :+ ProjectHistoryStep(op.toFE, request, FEStatus.disabled(t.getMessage))
+          }
+        } else {
+          steps :+ ProjectHistoryStep(op.toFE, request, op.enabled)
+        }
+      }
+      val history = ProjectHistory(p.projectName, request.skips, steps)
+      if (copyTo.nonEmpty) {
+        assert(history.valid, s"Tried to copy invalid history for project $p.")
+        state.copy(copyTo.get)
+      }
+      history
+    }
+  }
+
+  def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = metaManager.synchronized {
+    alternateHistory(user, request, None)
+  }
+
+  def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
+    val p = Project(request.newProject)
+    assert(!Operation.projects.contains(p), s"Project $p already exists.")
+    alternateHistory(user, request.history, Some(p))
+    if (!p.writeAllowedFrom(user)) {
+      p.writeACL += "," + user.email
+    }
   }
 }
 
@@ -393,6 +484,8 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   def description: String
   def parameters: List[FEOperationParameterMeta]
   def enabled: FEStatus
+  // A summary of the operation, to be displayed on the UI.
+  def summary(params: Map[String, String]): String = title
   def apply(params: Map[String, String]): Unit
   def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled, description)
   protected def scalars[T: TypeTag] =
@@ -445,14 +538,20 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     }
   }
 
+  def opById(context: Operation.Context, id: String): Operation = {
+    // TODO: Do this without instantiating all operations.
+    val ops = forContext(context).filter(_.id == id)
+    assert(ops.nonEmpty, s"Cannot find operation: ${id}")
+    assert(ops.size == 1, s"Operation not unique: ${id}")
+    ops.head
+  }
+
   def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.synchronized {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
-    val ops = forContext(context).filter(_.id == req.op.id)
-    assert(ops.nonEmpty, s"Cannot find operation: ${req.op.id}")
-    assert(ops.size == 1, s"Operation not unique: ${req.op.id}")
-    p.checkpoint(ops.head.title) {
-      ops.head.apply(req.op.parameters)
+    val op = opById(context, req.op.id)
+    p.checkpoint(op.summary(req.op.parameters), req) {
+      op.apply(req.op.parameters)
     }
   }
 }

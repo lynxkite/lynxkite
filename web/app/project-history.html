@@ -1,0 +1,71 @@
+<div class="panel panel-default project history" ng-if="show">
+
+  <div class="panel-heading project-name">
+    <span class="de-emph" ng-repeat="parent in side.parentProjects()">
+      {{parent}} &raquo;
+    </span>
+    {{side.shortName()}}
+
+    <div class="btn-group pull-right">
+      <label class="btn btn-info active" ng-click="closeHistory()"
+        tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-time"></i>
+      </label>
+      <label class="btn btn-default" ng-click="closeProject()"
+        tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-remove"></i>
+      </label>
+    </div>
+
+    <div class="btn-group pull-right" ng-if="localChanges || remoteChanges">
+      <label class="btn btn-default" ng-if="localChanges" ng-click="validate()"
+        tooltip="Validate&nbsp;history" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-ok"></i>
+      </label>
+      <label class="btn btn-warning" ng-if="!localChanges && !valid"
+        tooltip="History is inconsitent" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+      </label>
+      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid" ng-click="showSaveAs = true"
+        tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
+        <form ng-submit="saveAs(saveAsName)" style="display: inline;" ng-show="showSaveAs">
+          <!-- The input box closes if it loses focus while empty. -->
+          <input class="form-control save-as" ng-model="saveAsName" ng-blur="showSaveAs = saveAsName">
+        </form>
+        <!-- The floppy sends the request if something has been entered. -->
+        <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? saveAs(saveAsName) : 0"></i>
+      </label>
+    </div>
+
+    <div class="clearfix"></div>
+  </div>
+
+  <div class="list-group">
+    <li class="list-group-item uneditable" ng-if="!history.$resolved">
+      <progressbar value="100" class="progress-striped active">
+        Loading...
+      </progressbar>
+    </li>
+    <li class="list-group-item invalid" ng-if="history.$error">
+      Error loading history.
+      <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
+    </li>
+    <li class="list-group-item uneditable" ng-if="history.skips">
+      <div style="font-size: 30px">&hellip;</div>
+      {{history.skips}} earlier {{history.skips === 1 ? 'step' : 'steps'}} cannot be edited.
+    </li>
+    <li class="list-group-item" ng-repeat="step in history.steps"
+    ng-class="{ 'local-changes': step.localChanges, invalid: !step.status.enabled }">
+      <h2>
+        {{step.op.title}} {{onProject(step.request.project)}}
+      </h2>
+      <div ng-hide="step.status.enabled" class="error">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+        {{step.status.disabledReason}}
+      </div>
+      <form class="form-horizontal">
+        <operation-parameters input="step.op.parameters" output="step.request.op.parameters"></operation-parameters>
+      </form>
+    </li>
+  </div>
+</div>

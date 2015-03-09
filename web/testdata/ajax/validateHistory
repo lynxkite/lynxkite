@@ -1,0 +1,236 @@
+{
+  "project":"Project Strawberry",
+  "skips":0,
+  "steps":[
+    {
+      "op":{
+        "id":"Example-Graph",
+        "title":"Example Graph",
+        "parameters":[
+        ],
+        "status":{
+          "enabled":true,
+          "disabledReason":""
+        },
+        "description":"Creates small test graph with 4 people and 4 edges between them."
+      },
+      "request":{
+        "project":"Project Strawberry",
+        "op":{
+          "id":"Example-Graph",
+          "parameters":{
+          }
+        }
+      },
+      "status":{
+        "enabled":true,
+        "disabledReason":""
+      }
+    },
+    {
+      "op":{
+        "id":"Derived-edge-attribute",
+        "title":"Derived edge attribute",
+        "parameters":[
+          {
+            "id":"output",
+            "title":"Save as",
+            "kind":"scalar",
+            "defaultValue":"",
+            "options":[
+            ],
+            "multipleChoice":false
+          },
+          {
+            "id":"type",
+            "title":"Result type",
+            "kind":"scalar",
+            "defaultValue":"",
+            "options":[
+              {
+                "id":"double",
+                "title":"double"
+              },
+              {
+                "id":"string",
+                "title":"string"
+              }
+            ],
+            "multipleChoice":false
+          },
+          {
+            "id":"expr",
+            "title":"Value",
+            "kind":"scalar",
+            "defaultValue":"1",
+            "options":[
+            ],
+            "multipleChoice":false
+          }
+        ],
+        "status":{
+          "enabled":true,
+          "disabledReason":""
+        },
+        "description":"Generates a new attribute based on existing attributes. The value expression can be\n      an arbitrary JavaScript expression, and it can refer to existing attributes on the edge as if\n      they were local variables. It can also refer to attributes of the source and destination\n      vertex of the edge using the format src$attribute and dst$attribute.\n\n      For example you can write <tt>weight * Math.abs(src$age - dst$age)</tt> to generate a new\n      attribute that is the weighted age difference of the two endpoints of the edge.\n      "
+      },
+      "request":{
+        "project":"Project Strawberry",
+        "op":{
+          "id":"Derived-edge-attribute",
+          "parameters":{
+            "output":"w2",
+            "type":"double",
+            "expr":"weight * 3"
+          }
+        }
+      },
+      "status":{
+        "enabled":true,
+        "disabledReason":""
+      }
+    },
+    {
+      "op":{
+        "id":"PageRank",
+        "title":"PageRank",
+        "parameters":[
+          {
+            "id":"name",
+            "title":"Attribute name",
+            "kind":"scalar",
+            "defaultValue":"page_rank",
+            "options":[
+            ],
+            "multipleChoice":false
+          },
+          {
+            "id":"weights",
+            "title":"Weight attribute",
+            "kind":"scalar",
+            "defaultValue":"",
+            "options":[
+              {
+                "id":"w2",
+                "title":"w2"
+              },
+              {
+                "id":"weight",
+                "title":"weight"
+              }
+            ],
+            "multipleChoice":false
+          },
+          {
+            "id":"iterations",
+            "title":"Number of iterations",
+            "kind":"scalar",
+            "defaultValue":"5",
+            "options":[
+            ],
+            "multipleChoice":false
+          },
+          {
+            "id":"damping",
+            "title":"Damping factor",
+            "kind":"scalar",
+            "defaultValue":"0.85",
+            "options":[
+            ],
+            "multipleChoice":false
+          }
+        ],
+        "status":{
+          "enabled":true,
+          "disabledReason":""
+        },
+        "description":""
+      },
+      "request":{
+        "project":"Project Strawberry",
+        "op":{
+          "id":"PageRank",
+          "parameters":{
+            "name":"page_ranx",
+            "weights":"w2",
+            "iterations":"5",
+            "damping":"0.85"
+          }
+        }
+      },
+      "status":{
+        "enabled":true,
+        "disabledReason":""
+      }
+    },
+    {
+      "op":{
+        "id":"Correlate-two-attributes",
+        "title":"Correlate two attributes",
+        "parameters":[
+          {
+            "id":"attrA",
+            "title":"First attribute",
+            "kind":"scalar",
+            "defaultValue":"",
+            "options":[
+              {
+                "id":"age",
+                "title":"age"
+              },
+              {
+                "id":"income",
+                "title":"income"
+              },
+              {
+                "id":"page_ranx",
+                "title":"page_ranx"
+              }
+            ],
+            "multipleChoice":false
+          },
+          {
+            "id":"attrB",
+            "title":"Second attribute",
+            "kind":"scalar",
+            "defaultValue":"",
+            "options":[
+              {
+                "id":"age",
+                "title":"age"
+              },
+              {
+                "id":"income",
+                "title":"income"
+              },
+              {
+                "id":"page_ranx",
+                "title":"page_ranx"
+              }
+            ],
+            "multipleChoice":false
+          }
+        ],
+        "status":{
+          "enabled":true,
+          "disabledReason":""
+        },
+        "description":"Calculates correlation coefficient of two attributes."
+      },
+      "request":{
+        "project":"Project Strawberry",
+        "op":{
+          "id":"Correlate-two-attributes",
+          "parameters":{
+            "attrA":"age",
+            "attrB":"page_ranx"
+          }
+        }
+      },
+      "status":{
+        "enabled":true,
+        "disabledReason":""
+      }
+    }
+  ]
+}
