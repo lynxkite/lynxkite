@@ -36,7 +36,6 @@ object ImportUtil {
     val anyString = ".*?"
     val r = oneOf(oneField(quotedString), oneField(anyString)).r
     val splitter = { line: String =>
-      val esLine = StringEscapeUtils.escapeJava(line)
       val matches = r.findAllMatchIn(line)
       // Find the top-level group that has matched in each field.
       val fields = matches.map(_.subgroups.find(_ != null).get).toList
