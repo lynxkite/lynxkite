@@ -47,7 +47,8 @@
       </progressbar>
     </li>
     <li class="list-group-item invalid" ng-if="history.$error">
-      {{history.$error}}
+      Error loading history.
+      <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
     </li>
     <li class="list-group-item uneditable" ng-if="history.skips">
       <div style="font-size: 30px">&hellip;</div>
