@@ -1,0 +1,34 @@
+<div ng-show="shown">
+  <div class="form-group">
+    <div>Center count</div>
+    <input class="form-control" ng-model="count">
+  </div>
+  <div ng-if="filters.length !== 0">Attribute restrictions</div>
+  <table>
+    <tr ng-repeat="filter in filters">
+      <td>
+        <select
+           class="form-control"
+           ng-model="filter.attributeName"
+           ng-options="attr.title as attr.title for attr in side.project.vertexAttributes">
+        </select>
+      </td>
+      <td>
+        <input
+           class="form-control filter"
+           ng-model="filter.valueSpec">
+      </td>
+      <td>
+        <button class="btn btn-default" ng-click="removeFilter($index)">
+          -
+        </button>
+      </td>
+    </tr>
+  </table>
+  <button class="btn btn-default" ng-click="addFilter()">
+    Add Attribute Restriction
+  </button>
+  <button class="btn btn-default pick-buttons" ng-click="requestNewCenters()">
+    Pick
+  </button>
+</div>
