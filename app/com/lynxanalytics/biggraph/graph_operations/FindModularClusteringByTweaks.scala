@@ -353,7 +353,12 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
       // arguments which this comment is too narrow to contain.
     } while ((lastIncrements.size < 5) || (lastIncrements.sum > 0.005))
 
-    val clusters = members.randomNumbered(vPart).mapValues(_._2)
+    val belongsToFromEdges = members
+      .flatMap { case (cid, vids) => vids.map(_ -> cid) }
+      .toSortedRDD(vPart)
+    val fullMembers = vs.sortedLeftOuterJoin(belongsToFromEdges)
+      .map { case (vid, (_, cidOpt)) => cidOpt.getOrElse(vid) -> vid }.groupByKey()
+    val clusters = fullMembers.randomNumbered(vPart).mapValues(_._2)
     output(o.clusters, clusters.mapValues(_ => ()))
     output(
       o.belongsTo,
