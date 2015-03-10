@@ -42,12 +42,17 @@ class DataManager(sc: spark.SparkContext,
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
+  // How much bigger the in-memory representation is, compared to the serialized file size.
+  private lazy val kryoExplosion =
+    System.getProperty("biggraph.kryo.explosion", "7").toInt
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
-      new VertexSetData(
-        vertexSet,
-        SortedRDD.fromUnsorted(entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)
-          .partitionBy(runtimeContext.defaultPartitioner)))
+      val fn = entityPath(vertexSet)
+      val bytes = (fn / "*").globLength
+      // Repartition for optimal processing performance.
+      val partitioner = runtimeContext.partitionerForNBytes(bytes * kryoExplosion)
+      val rdd = fn.loadObjectFile[(ID, Unit)](sc).partitionBy(partitioner)
+      new VertexSetData(vertexSet, SortedRDD.fromUnsorted(rdd))
     }
   }
 
