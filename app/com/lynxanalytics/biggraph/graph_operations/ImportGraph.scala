@@ -95,12 +95,12 @@ case class CSV(file: Filename,
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
     assert(file.list.nonEmpty, s"$file does not exist.")
     val globLength = file.globLength
-    val minParts = globLength / 250000000L + 1 // max 250 MB per partition
+    // Estimate how much bigger the in-memory representation is, compared to the CSV file size.
+    val explosion = System.getProperty("biggraph.csv.explosion", "20").toLong
+    val partitioner = rc.partitionerForNBytes(globLength * explosion)
     val lines = file.loadTextFile(rc.sparkContext)
-    val numPartitions = List(
-      lines.partitions.size,
-      rc.defaultPartitioner.numPartitions,
-      minParts.toInt).max
+    // Only repartition if we need more partitions.
+    val numPartitions = lines.partitions.size max partitioner.numPartitions
     log.info(s"Reading $file into $numPartitions partitions.")
     return lines
       .filter(_ != header)
