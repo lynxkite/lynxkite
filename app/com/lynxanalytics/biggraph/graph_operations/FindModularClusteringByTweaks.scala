@@ -340,6 +340,8 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
       }
       // TODO: We know all clusters are contained in the same partition, so this could be optimized.
       members = refinedContainedIn.map { case (vid, cid) => (cid, vid) }.groupByKey().cache()
+      // We explicitly evaluate members to get the value of the accumulators that we need for
+      // the termination decision.
       members.foreach(_ => ())
       log.info(
         s"Modularity in iteration $i increased by ${increase.value} " +
