@@ -32,39 +32,44 @@ object FindModularClusteringByTweaks extends OpFromJson {
   def fromJson(j: JsValue) = FindModularClusteringByTweaks()
 
   case class ClusterData(
-      // Edges fully within the cluster are counted twice in both touchingEdgeWeight and
-      // insideEdgeWeight.
-      touchingEdgeWeight: Double,
-      insideEdgeWeight: Double,
+      // The sum of degrees of all nodes in this cluster. Note, if an edge goes within the cluster
+      // then its weight is counted twice in this sum - once for both its endpoints.
+      degreeSum: Double,
+      // The sum of degrees of all nodes in this cluster in the subgraph induced by the nodes of
+      // this cluster. In other words, this is two times the sum of weights of edges that go
+      // within this cluster.
+      insideDegreeSum: Double,
       size: Int) {
 
     def add(connection: Double, other: ClusterData): ClusterData = {
       ClusterData(
-        touchingEdgeWeight + other.touchingEdgeWeight,
-        insideEdgeWeight + other.insideEdgeWeight + 2 * connection,
+        degreeSum + other.degreeSum,
+        insideDegreeSum + other.insideDegreeSum + 2 * connection,
         size + other.size)
     }
     def remove(connection: Double, other: ClusterData): ClusterData = {
       ClusterData(
-        touchingEdgeWeight - other.touchingEdgeWeight,
-        insideEdgeWeight - other.insideEdgeWeight - 2 * connection,
+        degreeSum - other.degreeSum,
+        insideDegreeSum - other.insideDegreeSum - 2 * connection,
         size - other.size)
     }
     def addNode(degree: Double, inClusterEdges: Double): ClusterData = {
       ClusterData(
-        touchingEdgeWeight + degree,
+        degreeSum + degree,
         // We add inClusterEdges only once here as it will be also added when processing the
         // other end of the edge.
-        insideEdgeWeight + inClusterEdges,
+        insideDegreeSum + inClusterEdges,
         size + 1)
     }
 
     def value(totalDegreeSum: Double) =
-      insideEdgeWeight / totalDegreeSum -
-        touchingEdgeWeight * touchingEdgeWeight / totalDegreeSum / totalDegreeSum
+      insideDegreeSum / totalDegreeSum -
+        degreeSum * degreeSum / totalDegreeSum / totalDegreeSum
   }
 
-  def mergeValue(
+  // Returns the change in the modularity value if the two given clusters were to be merged.
+  // In other words, returns (cluster1.add(cluster2).value - cluter1.value - cluster2.value).
+  def mergeValueChange(
     totalDegreeSum: Double,
     cluster1: ClusterData,
     cluster2: ClusterData,
@@ -72,7 +77,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
 
     val totalDegreeSumSquare = totalDegreeSum * totalDegreeSum
     2 * connection / totalDegreeSum -
-      2 * cluster1.touchingEdgeWeight * cluster2.touchingEdgeWeight / totalDegreeSumSquare
+      2 * cluster1.degreeSum * cluster2.degreeSum / totalDegreeSumSquare
   }
   def toContains(containedIn: scala.collection.Map[ID, ID]): mutable.Map[ID, Set[ID]] = {
     val res = mutable.Map[ID, Set[ID]]()
@@ -97,6 +102,9 @@ object FindModularClusteringByTweaks extends OpFromJson {
   }
 
   // Computes merge values for all clusters connected to a given partion.
+  // It returns a map where keys are ids of merge canidate clusters and values are
+  // (mergeValueChange, connection) pairs. mergeValueChange is the potential value of merging
+  // the input cluster with the candidate and connection is the connection weight between the two.
   def getMergeCandidates(
     totalDegreeSum: Double,
     clusters: scala.collection.Map[ID, ClusterData],
@@ -107,26 +115,25 @@ object FindModularClusteringByTweaks extends OpFromJson {
 
     val clusterConnections = mutable.Map[ID, Double]().withDefaultValue(0.0)
     members.foreach {
-      case vertex =>
+      vertex =>
         edgeLists(vertex)
           .filter { case (otherId, _) => !members.contains(otherId) }
           .foreach {
             case (otherId, weight) =>
-              val otherClusterIdOpt = containedIn.get(otherId)
-              otherClusterIdOpt.foreach(
-                otherClusterId => clusterConnections(otherClusterId) += weight)
+              for (otherClusterId <- containedIn.get(otherId)) {
+                clusterConnections(otherClusterId) += weight
+              }
           }
     }
     clusterConnections
       .map {
         case (id, connection) =>
-          (id, (mergeValue(totalDegreeSum, cluster, clusters(id), connection), connection))
+          (id, (mergeValueChange(totalDegreeSum, cluster, clusters(id), connection), connection))
       }
       .toMap
   }
 
   def refineClusters(
-    iteration: Int,
     totalDegreeSum: Double,
     edgeLists: Map[ID, Iterable[(ID, Double)]],
     containedIn: mutable.Map[ID, ID],
@@ -151,11 +158,11 @@ object FindModularClusteringByTweaks extends OpFromJson {
               .map(_._2)
               .sum)
     }
-    start += clusters.map(_._2.value(totalDegreeSum)).sum
+    start += clusters.values.map(_.value(totalDegreeSum)).sum
     var changed = false
     var i = 0
     do {
-      log.info(s"Doing modularity iteration $iteration tweaking nodes subiteration $i")
+      log.info(s"Doing tweaking nodes subiteration $i")
       i += 1
       changed = false
       edgeLists.foreach {
@@ -163,7 +170,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
           val degree = degrees(id)
           val loop = loops(id)
           val homeClusterId = containedIn(id)
-          val homeCluster = clusters(containedIn(id))
+          val homeCluster = clusters(homeClusterId)
           if (homeCluster.size == 1) {
             val candidates = getMergeCandidates(
               totalDegreeSum,
@@ -206,13 +213,13 @@ object FindModularClusteringByTweaks extends OpFromJson {
               // contain the score of staying in our own cluster. Let's add that.
               candidates.updated(
                 homeClusterId,
-                (mergeValue(totalDegreeSum, singletonCluster, homeClusterWithoutMe, 0), 0.0))
+                (mergeValueChange(totalDegreeSum, singletonCluster, homeClusterWithoutMe, 0), 0.0))
             else candidates
             val (bestClusterId, (bestClusterValue, bestClusterConnection)) =
               finalCandidates.maxBy { case (id, (value, connection)) => value }
             val currentValue = finalCandidates(homeClusterId)._1
             if (bestClusterValue > currentValue) {
-              // If we are strictly better then in the original cluster we move ...
+              // If we are strictly better than in the original cluster we move ...
               changed = true
               localIncrease += bestClusterValue - currentValue
               containedIn(id) = bestClusterId
@@ -230,40 +237,39 @@ object FindModularClusteringByTweaks extends OpFromJson {
     i = 0
     val contains = toContains(containedIn)
     do {
-      log.info(s"Doing modularity iteration $iteration merging clusters subiteration $i")
+      log.info(s"Doing merging clusters subiteration $i")
       changed = false
       i += 1
-      val clusterIds = clusters.keys
-      clusterIds.foreach { clusterId =>
-        val cluster = clusters(clusterId)
-        val members = contains(clusterId)
-        val candidates = getMergeCandidates(
-          totalDegreeSum,
-          clusters,
-          cluster,
-          members,
-          edgeLists,
-          containedIn)
-        if (candidates.size > 0) {
-          val (bestClusterId, (bestClusterValue, bestClusterConnection)) =
-            candidates.maxBy { case (id, (value, connection)) => value }
-          if (bestClusterValue > 0) {
-            changed = true
-            localIncrease += bestClusterValue
-            members.foreach { id =>
-              containedIn(id) = bestClusterId
+      clusters.foreach {
+        case (clusterId, cluster) =>
+          val members = contains(clusterId)
+          val candidates = getMergeCandidates(
+            totalDegreeSum,
+            clusters,
+            cluster,
+            members,
+            edgeLists,
+            containedIn)
+          if (candidates.size > 0) {
+            val (bestClusterId, (bestClusterValue, bestClusterConnection)) =
+              candidates.maxBy { case (id, (value, connection)) => value }
+            if (bestClusterValue > 0) {
+              changed = true
+              localIncrease += bestClusterValue
+              members.foreach { id =>
+                containedIn(id) = bestClusterId
+              }
+              contains(bestClusterId) = contains(bestClusterId) ++ members
+              clusters(bestClusterId) =
+                clusters(bestClusterId).add(bestClusterConnection, cluster)
+              clusters.remove(clusterId)
             }
-            contains(bestClusterId) = contains(bestClusterId) ++ members
-            clusters(bestClusterId) =
-              clusters(bestClusterId).add(bestClusterConnection, cluster)
-            clusters.remove(clusterId)
           }
-        }
       }
     } while (changed)
 
     increase += localIncrease
-    end += clusters.map(_._2.value(totalDegreeSum)).sum
+    end += clusters.values.map(_.value(totalDegreeSum)).sum
   }
 }
 
@@ -296,7 +302,9 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
     var members: RDD[(ID, Iterable[ID])] = edgeLists.mapValuesWithKeys(p => Seq(p._1))
 
     var i = 0
-    var lastFive = List[Double]()
+    // We keep the last few modularity increment values to decide whether we want to
+    // continue with the iterations or not.
+    var lastIncrements = List[Double]()
     do {
       val start = rc.sparkContext.accumulator(0.0)
       val end = rc.sparkContext.accumulator(0.0)
@@ -318,25 +326,32 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
         .map { case (vid, ((cid, pid), edges)) => pid -> (vid, cid, edges) }
         .toSortedRDD(vPart)
 
-      val refinedContainedIn = perPartitionData.mapPartitions { vertexIt =>
-        val asSeq = vertexIt.toSeq
-        var containedIn = mutable.Map(
-          asSeq.map { case (pid, (vid, cid, edges)) => vid -> cid }: _*)
-        val edgeLists = asSeq
-          .map { case (pid, (vid, cid, edges)) => vid -> edges }
-          .toMap
-        refineClusters(i, totalDegreeSum, edgeLists, containedIn, start, end, increase)
-        containedIn.iterator
+      val refinedContainedIn = perPartitionData.mapPartitionsWithIndex {
+        case (pid, vertexIt) =>
+          val asSeq = vertexIt.toSeq
+          val containedIn = mutable.Map(
+            asSeq.map { case (_, (vid, cid, edges)) => vid -> cid }: _*)
+          val edgeLists = asSeq
+            .map { case (_, (vid, cid, edges)) => vid -> edges }
+            .toMap
+          log.info(s"Starting cluster refinement iteration $i for partition $pid")
+          refineClusters(totalDegreeSum, edgeLists, containedIn, start, end, increase)
+          containedIn.iterator
       }
-      // TODO: We know all clusters are contained in the same partition, so this couldbe optimized.
+      // TODO: We know all clusters are contained in the same partition, so this could be optimized.
       members = refinedContainedIn.map { case (vid, cid) => (cid, vid) }.groupByKey().cache()
       members.foreach(_ => ())
       log.info(
         s"Modularity in iteration $i increased by ${increase.value} " +
           s"from ${start.value} to ${end.value}")
-      lastFive = (increase.value +: lastFive).take(5)
+      lastIncrements = (increase.value +: lastIncrements).take(5)
       i += 1
-    } while ((lastFive.size < 5) || (lastFive.sum > 0.005))
+      // We do at least 5 iterations and then we exit if the total modularity increase in the last
+      // five iterations were small. We don't use only one iteration's score as due to the
+      // randomness of the algorithm it's possible to have significant improvements after some
+      // non-fruitful iterations. The actual number 5 is a result of some very deep theoretical
+      // arguments which this comment is too narrow to contain.
+    } while ((lastIncrements.size < 5) || (lastIncrements.sum > 0.005))
 
     val clusters = members.randomNumbered(vPart).mapValues(_._2)
     output(o.clusters, clusters.mapValues(_ => ()))
