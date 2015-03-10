@@ -47,6 +47,7 @@ addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
 addJPropIfNonEmpty pidfile.path "${KITE_PID_FILE}"
+addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
 
 
 # -mem flag overrides KITE_MASTER_MEMORY_MB and we use 1024 if neither is set.
