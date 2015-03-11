@@ -157,4 +157,5 @@ selected-visualization .visualization-name {
 }
 .pick-attr-restrict button {
   width: 10%;
+  padding: 6px 0px;
 }
