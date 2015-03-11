@@ -13,16 +13,16 @@
     <input
        class="btn btn-default"
        ng-model="filter.valueSpec">
-    <button class="btn btn-default" ng-click="removeFilter($index)">
-      -
+    <button class="btn btn-default" ng-click="removeFilter($index)" tooltip="Remove restriction">
+      <span class="glyphicon glyphicon-remove"></span>
     </button>
   </div>
   <button class="btn btn-default" ng-click="addFilter()">
-    Add Restriction
+    <span class="glyphicon glyphicon-plus"></span>&nbsp;Add Restriction
   </button>
   <div class="btn-group pull-right">
     <button class="btn btn-default" ng-click="shown = false">
-      Cancel
+      Close
     </button>
     <button class="btn btn-default" ng-click="requestNewCenters()">
       Pick
