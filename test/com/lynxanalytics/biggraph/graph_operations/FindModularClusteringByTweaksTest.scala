@@ -21,4 +21,27 @@ class FindModularClusteringByTweaksTest extends FunSuite with TestGraphOp {
     assert(clusterMap(0) == clusterMap(1))
     assert(clusterMap(0) == clusterMap(2))
   }
+  test("random graph") {
+    val vs = CreateVertexSet(100)().result.vs
+    val es = {
+      val op = FastRandomEdgeBundle(0, 2.3)
+      op(op.vs, vs).result.es
+    }
+    val weights = AddConstantAttribute.run(es.idSet, 1.0)
+    val symmetricEs = {
+      val op = AddReversedEdges()
+      op(op.es, es).result.esPlus
+    }
+    val symmetricWeights = AddConstantAttribute.run(symmetricEs.idSet, 1.0)
+    val clusters = {
+      val op = FindModularClusteringByTweaks()
+      op(op.edges, es)(op.weights, weights).result
+    }
+    val modularity = {
+      val op = Modularity()
+      op(op.edges, symmetricEs)(op.weights, symmetricWeights)(op.belongsTo, clusters.belongsTo)
+        .result.modularity.value
+    }
+    assert(modularity > 0.45)
+  }
 }
