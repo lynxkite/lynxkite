@@ -263,14 +263,22 @@ class DataManager(sc: spark.SparkContext,
     log.info(s"Entity $entity saved.")
   }
 
-  // This is pretty sad, but I haven't find an automatic way to get the number of cores.
   private val numCoresPerExecutor = scala.util.Properties.envOrElse(
     "NUM_CORES_PER_EXECUTOR", "4").toInt
-  private val bytesInGb = scala.math.pow(2, 30)
-  def runtimeContext =
+  def runtimeContext = {
+    val numExecutors = (sc.getExecutorStorageStatus.size - 1) max 1
+    val totalCores = numExecutors * numCoresPerExecutor
+    val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
+    val conf = sc.getConf
+    // Unfortunately the defaults are hard-coded in Spark and not available.
+    val cacheFraction = conf.getDouble("spark.storage.memoryFraction", 0.6)
+    val shuffleFraction = conf.getDouble("spark.shuffle.memoryFraction", 0.2)
+    val workFraction = 1.0 - cacheFraction - shuffleFraction
+    val workMemory = workFraction * cacheMemory / cacheFraction
     RuntimeContext(
       sparkContext = sc,
       broadcastDirectory = repositoryPath / "broadcasts",
-      numAvailableCores = ((sc.getExecutorStorageStatus.size - 1) max 1) * numCoresPerExecutor,
-      availableCacheMemoryGB = sc.getExecutorMemoryStatus.values.map(_._2).sum.toDouble / bytesInGb)
+      numAvailableCores = totalCores,
+      workMemoryPerCore = (workMemory / totalCores).toLong)
+  }
 }
