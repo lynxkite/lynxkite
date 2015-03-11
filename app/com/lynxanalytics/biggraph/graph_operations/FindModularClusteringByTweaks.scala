@@ -79,27 +79,6 @@ object FindModularClusteringByTweaks extends OpFromJson {
     2 * connection / totalDegreeSum -
       2 * cluster1.degreeSum * cluster2.degreeSum / totalDegreeSumSquare
   }
-  def toContains(containedIn: scala.collection.Map[ID, ID]): mutable.Map[ID, Set[ID]] = {
-    val res = mutable.Map[ID, Set[ID]]()
-    val asSeq = containedIn.toSeq.map { case (vId, cId) => (cId, vId) }.sorted
-    val vIds = asSeq.map(_._2)
-    var lastCId: ID = 0
-    var lastStartIdx: Int = -1
-    for (idx <- 0 until asSeq.size) {
-      val cId = asSeq(idx)._1
-      if ((lastCId != cId) || lastStartIdx < 0) {
-        if (lastStartIdx >= 0) {
-          res(lastCId) = vIds.slice(lastStartIdx, idx).toSet
-        }
-        lastCId = cId
-        lastStartIdx = idx
-      }
-    }
-    if (lastStartIdx >= 0) {
-      res(lastCId) = vIds.slice(lastStartIdx, asSeq.size).toSet
-    }
-    res
-  }
 
   // Computes merge values for all clusters connected to a given partion.
   // It returns a map where keys are ids of merge canidate clusters and values are
@@ -109,7 +88,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
     totalDegreeSum: Double,
     clusters: scala.collection.Map[ID, ClusterData],
     cluster: ClusterData,
-    members: Set[ID],
+    members: scala.collection.Set[ID],
     edgeLists: Map[ID, Iterable[(ID, Double)]],
     containedIn: mutable.Map[ID, ID]): Map[ID, (Double, Double)] = {
 
@@ -235,7 +214,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
       }
     } while (changed)
     i = 0
-    val contains = toContains(containedIn)
+    val contains = mutable.Map(containedIn.groupBy(_._2).mapValues(_.keySet).toSeq: _*)
     do {
       log.info(s"Doing merging clusters subiteration $i")
       changed = false
