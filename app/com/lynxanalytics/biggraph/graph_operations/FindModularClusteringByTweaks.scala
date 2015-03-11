@@ -93,16 +93,14 @@ object FindModularClusteringByTweaks extends OpFromJson {
     containedIn: mutable.Map[ID, ID]): Map[ID, (Double, Double)] = {
 
     val clusterConnections = mutable.Map[ID, Double]().withDefaultValue(0.0)
-    members.foreach {
-      vertex =>
-        edgeLists(vertex)
-          .filter { case (otherId, _) => !members.contains(otherId) }
-          .foreach {
-            case (otherId, weight) =>
-              for (otherClusterId <- containedIn.get(otherId)) {
-                clusterConnections(otherClusterId) += weight
-              }
+    for (vertex <- members) {
+      for ((otherId, weight) <- edgeLists(vertex)) {
+        if (!members.contains(otherId)) {
+          for (otherClusterId <- containedIn.get(otherId)) {
+            clusterConnections(otherClusterId) += weight
           }
+        }
+      }
     }
     clusterConnections
       .map {
@@ -127,17 +125,16 @@ object FindModularClusteringByTweaks extends OpFromJson {
     val degrees = edgeLists.mapValues(edges => edges.map(_._2).sum)
     val loops = edgeLists
       .map { case (id, edges) => id -> edges.find(_._1 == id).map(_._2).getOrElse(0.0) }
-    edgeLists.foreach {
-      case (id, edges) =>
-        val clusterId = containedIn(id)
-        clusters(clusterId) = clusters
-          .getOrElse(clusterId, ClusterData(0, 0, 0))
-          .addNode(
-            degrees(id),
-            edges
-              .filter { case (otherId, weight) => containedIn.get(otherId) == Some(clusterId) }
-              .map(_._2)
-              .sum)
+    for ((id, edges) <- edgeLists) {
+      val clusterId = containedIn(id)
+      clusters(clusterId) = clusters
+        .getOrElse(clusterId, ClusterData(0, 0, 0))
+        .addNode(
+          degrees(id),
+          edges
+            .filter { case (otherId, weight) => containedIn.get(otherId) == Some(clusterId) }
+            .map(_._2)
+            .sum)
     }
     start += clusters.values.map(_.modularity(totalDegreeSum)).sum
     var changed = false
@@ -146,74 +143,73 @@ object FindModularClusteringByTweaks extends OpFromJson {
       log.info(s"Doing tweaking nodes subiteration $i")
       i += 1
       changed = false
-      edgeLists.foreach {
-        case (id, edges) =>
-          val degree = degrees(id)
-          val loop = loops(id)
-          val homeClusterId = containedIn(id)
-          val homeCluster = clusters(homeClusterId)
-          if (homeCluster.size == 1) {
-            val candidates = getMergeCandidates(
-              totalDegreeSum,
-              clusters,
-              homeCluster,
-              Set(id),
-              edgeLists,
-              containedIn)
-            if (candidates.size > 0) {
-              val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
-                candidates.maxBy { case (id, (value, connection)) => value }
-              if (bestModularityChange > 0) {
-                changed = true
-                localIncrease += bestModularityChange
-                containedIn(id) = bestClusterId
-                clusters(bestClusterId) =
-                  clusters(bestClusterId).add(bestClusterConnection, homeCluster)
-                clusters.remove(homeClusterId)
-              }
-            }
-          } else {
-            val singletonCluster = ClusterData(degree, loop, 1)
-            val homeConnection = edges
-              .filter(_._1 != id)
-              .filter { case (otherId, _) => containedIn.get(otherId) == Some(homeClusterId) }
-              .map(_._2)
-              .sum
-            // We temporarily remove the vertex from his own cluster.
-            val homeClusterWithoutMe = homeCluster.remove(homeConnection, singletonCluster)
-            clusters(homeClusterId) = homeClusterWithoutMe
-            val candidates = getMergeCandidates(
-              totalDegreeSum,
-              clusters,
-              singletonCluster,
-              Set(id),
-              edgeLists,
-              containedIn)
-            val finalCandidates = if (homeConnection == 0)
-              // We don't have ANY connection to our own home. In this case candidates won't
-              // contain the score of staying in our own cluster. Let's add that.
-              candidates.updated(
-                homeClusterId,
-                (mergeModularityChange(totalDegreeSum, singletonCluster, homeClusterWithoutMe, 0),
-                  0.0))
-            else candidates
+      for ((id, edges) <- edgeLists) {
+        val degree = degrees(id)
+        val loop = loops(id)
+        val homeClusterId = containedIn(id)
+        val homeCluster = clusters(homeClusterId)
+        if (homeCluster.size == 1) {
+          val candidates = getMergeCandidates(
+            totalDegreeSum,
+            clusters,
+            homeCluster,
+            Set(id),
+            edgeLists,
+            containedIn)
+          if (candidates.size > 0) {
             val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
-              finalCandidates.maxBy { case (id, (change, connection)) => change }
-            val currentValue = finalCandidates(homeClusterId)._1
-            if (bestModularityChange > currentValue) {
-              // If we are strictly better than in the original cluster we move ...
+              candidates.maxBy { case (id, (value, connection)) => value }
+            if (bestModularityChange > 0) {
               changed = true
-              localIncrease += bestModularityChange - currentValue
+              localIncrease += bestModularityChange
               containedIn(id) = bestClusterId
               clusters(bestClusterId) =
-                clusters(bestClusterId).add(bestClusterConnection, singletonCluster)
-              // We've already removed the node from its original cluster, so nothing else to do
-              // here.
-            } else {
-              // otherwise we restore our home cluster.
-              clusters(homeClusterId) = homeCluster
+                clusters(bestClusterId).add(bestClusterConnection, homeCluster)
+              clusters.remove(homeClusterId)
             }
           }
+        } else {
+          val singletonCluster = ClusterData(degree, loop, 1)
+          val homeConnection = edges
+            .filter(_._1 != id)
+            .filter { case (otherId, _) => containedIn.get(otherId) == Some(homeClusterId) }
+            .map(_._2)
+            .sum
+          // We temporarily remove the vertex from his own cluster.
+          val homeClusterWithoutMe = homeCluster.remove(homeConnection, singletonCluster)
+          clusters(homeClusterId) = homeClusterWithoutMe
+          val candidates = getMergeCandidates(
+            totalDegreeSum,
+            clusters,
+            singletonCluster,
+            Set(id),
+            edgeLists,
+            containedIn)
+          val finalCandidates = if (homeConnection == 0)
+            // We don't have ANY connection to our own home. In this case candidates won't
+            // contain the score of staying in our own cluster. Let's add that.
+            candidates.updated(
+              homeClusterId,
+              (mergeModularityChange(totalDegreeSum, singletonCluster, homeClusterWithoutMe, 0),
+                0.0))
+          else candidates
+          val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
+            finalCandidates.maxBy { case (id, (change, connection)) => change }
+          val currentValue = finalCandidates(homeClusterId)._1
+          if (bestModularityChange > currentValue) {
+            // If we are strictly better than in the original cluster we move ...
+            changed = true
+            localIncrease += bestModularityChange - currentValue
+            containedIn(id) = bestClusterId
+            clusters(bestClusterId) =
+              clusters(bestClusterId).add(bestClusterConnection, singletonCluster)
+            // We've already removed the node from its original cluster, so nothing else to do
+            // here.
+          } else {
+            // otherwise we restore our home cluster.
+            clusters(homeClusterId) = homeCluster
+          }
+        }
       }
     } while (changed)
     i = 0
@@ -222,31 +218,30 @@ object FindModularClusteringByTweaks extends OpFromJson {
       log.info(s"Doing merging clusters subiteration $i")
       changed = false
       i += 1
-      clusters.foreach {
-        case (clusterId, cluster) =>
-          val members = contains(clusterId)
-          val candidates = getMergeCandidates(
-            totalDegreeSum,
-            clusters,
-            cluster,
-            members,
-            edgeLists,
-            containedIn)
-          if (candidates.size > 0) {
-            val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
-              candidates.maxBy { case (id, (change, connection)) => change }
-            if (bestModularityChange > 0) {
-              changed = true
-              localIncrease += bestModularityChange
-              members.foreach { id =>
-                containedIn(id) = bestClusterId
-              }
-              contains(bestClusterId) = contains(bestClusterId) ++ members
-              clusters(bestClusterId) =
-                clusters(bestClusterId).add(bestClusterConnection, cluster)
-              clusters.remove(clusterId)
+      for ((clusterId, cluster) <- clusters) {
+        val members = contains(clusterId)
+        val candidates = getMergeCandidates(
+          totalDegreeSum,
+          clusters,
+          cluster,
+          members,
+          edgeLists,
+          containedIn)
+        if (candidates.size > 0) {
+          val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
+            candidates.maxBy { case (id, (change, connection)) => change }
+          if (bestModularityChange > 0) {
+            changed = true
+            localIncrease += bestModularityChange
+            for (id <- members) {
+              containedIn(id) = bestClusterId
             }
+            contains(bestClusterId) = contains(bestClusterId) ++ members
+            clusters(bestClusterId) =
+              clusters(bestClusterId).add(bestClusterConnection, cluster)
+            clusters.remove(clusterId)
           }
+        }
       }
     } while (changed)
 
