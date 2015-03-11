@@ -62,14 +62,15 @@ object FindModularClusteringByTweaks extends OpFromJson {
         size + 1)
     }
 
-    def value(totalDegreeSum: Double) =
+    def modularity(totalDegreeSum: Double) =
       insideDegreeSum / totalDegreeSum -
         degreeSum * degreeSum / totalDegreeSum / totalDegreeSum
   }
 
-  // Returns the change in the modularity value if the two given clusters were to be merged.
-  // In other words, returns (cluster1.add(cluster2).value - cluter1.value - cluster2.value).
-  def mergeValueChange(
+  // Returns the change in modularity if the two given clusters were to be merged.
+  // In other words, returns:
+  //   (cluster1.add(cluster2).modularity - cluter1.modularity - cluster2.modularity)
+  def mergeModularityChange(
     totalDegreeSum: Double,
     cluster1: ClusterData,
     cluster2: ClusterData,
@@ -80,10 +81,9 @@ object FindModularClusteringByTweaks extends OpFromJson {
       2 * cluster1.degreeSum * cluster2.degreeSum / totalDegreeSumSquare
   }
 
-  // Computes merge values for all clusters connected to a given partion.
+  // Computes merge modularity changes for all clusters connected to a given partion.
   // It returns a map where keys are ids of merge canidate clusters and values are
-  // (mergeValueChange, connection) pairs. mergeValueChange is the potential value of merging
-  // the input cluster with the candidate and connection is the connection weight between the two.
+  // (mergeModularityChange, connection) pairs.
   def getMergeCandidates(
     totalDegreeSum: Double,
     clusters: scala.collection.Map[ID, ClusterData],
@@ -107,7 +107,9 @@ object FindModularClusteringByTweaks extends OpFromJson {
     clusterConnections
       .map {
         case (id, connection) =>
-          (id, (mergeValueChange(totalDegreeSum, cluster, clusters(id), connection), connection))
+          (id,
+            (mergeModularityChange(totalDegreeSum, cluster, clusters(id), connection),
+              connection))
       }
       .toMap
   }
@@ -137,7 +139,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
               .map(_._2)
               .sum)
     }
-    start += clusters.values.map(_.value(totalDegreeSum)).sum
+    start += clusters.values.map(_.modularity(totalDegreeSum)).sum
     var changed = false
     var i = 0
     do {
@@ -159,11 +161,11 @@ object FindModularClusteringByTweaks extends OpFromJson {
               edgeLists,
               containedIn)
             if (candidates.size > 0) {
-              val (bestClusterId, (bestClusterValue, bestClusterConnection)) =
+              val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
                 candidates.maxBy { case (id, (value, connection)) => value }
-              if (bestClusterValue > 0) {
+              if (bestModularityChange > 0) {
                 changed = true
-                localIncrease += bestClusterValue
+                localIncrease += bestModularityChange
                 containedIn(id) = bestClusterId
                 clusters(bestClusterId) =
                   clusters(bestClusterId).add(bestClusterConnection, homeCluster)
@@ -192,15 +194,16 @@ object FindModularClusteringByTweaks extends OpFromJson {
               // contain the score of staying in our own cluster. Let's add that.
               candidates.updated(
                 homeClusterId,
-                (mergeValueChange(totalDegreeSum, singletonCluster, homeClusterWithoutMe, 0), 0.0))
+                (mergeModularityChange(totalDegreeSum, singletonCluster, homeClusterWithoutMe, 0),
+                  0.0))
             else candidates
-            val (bestClusterId, (bestClusterValue, bestClusterConnection)) =
-              finalCandidates.maxBy { case (id, (value, connection)) => value }
+            val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
+              finalCandidates.maxBy { case (id, (change, connection)) => change }
             val currentValue = finalCandidates(homeClusterId)._1
-            if (bestClusterValue > currentValue) {
+            if (bestModularityChange > currentValue) {
               // If we are strictly better than in the original cluster we move ...
               changed = true
-              localIncrease += bestClusterValue - currentValue
+              localIncrease += bestModularityChange - currentValue
               containedIn(id) = bestClusterId
               clusters(bestClusterId) =
                 clusters(bestClusterId).add(bestClusterConnection, singletonCluster)
@@ -230,11 +233,11 @@ object FindModularClusteringByTweaks extends OpFromJson {
             edgeLists,
             containedIn)
           if (candidates.size > 0) {
-            val (bestClusterId, (bestClusterValue, bestClusterConnection)) =
-              candidates.maxBy { case (id, (value, connection)) => value }
-            if (bestClusterValue > 0) {
+            val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
+              candidates.maxBy { case (id, (change, connection)) => change }
+            if (bestModularityChange > 0) {
               changed = true
-              localIncrease += bestClusterValue
+              localIncrease += bestModularityChange
               members.foreach { id =>
                 containedIn(id) = bestClusterId
               }
@@ -248,7 +251,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
     } while (changed)
 
     increase += localIncrease
-    end += clusters.values.map(_.value(totalDegreeSum)).sum
+    end += clusters.values.map(_.modularity(totalDegreeSum)).sum
   }
 }
 
