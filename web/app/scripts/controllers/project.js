@@ -211,10 +211,10 @@ angular.module('biggraph')
         that.state.centers = [centers[i]];
       });
     };
-    Side.prototype.requestNewCenter = function(count) {
+    Side.prototype.sendCenterRequest = function(count, filters) {
       var params = {
         vertexSetId: this.project.vertexSet,
-        filters: this.nonEmptyVertexFilters() || '',
+        filters: filters,
         count: count,
       };
       var that = this;
@@ -223,6 +223,9 @@ angular.module('biggraph')
         function(result) { that.state.centers = result.centers; },
         function(response) { util.ajaxError(response); }
       );
+    };
+    Side.prototype.requestNewCenter = function(count) {
+      this.sendCenterRequest(count, this.nonEmptyVertexFilters())
     };
 
     Side.prototype.shortName = function() {
@@ -428,24 +431,29 @@ angular.module('biggraph')
       return res;
     };
 
-    // Returns resolved filters (i.e. keyed by UUID).
-    Side.prototype.nonEmptyVertexFilters = function() {
+    Side.prototype.resolveVertexFilters = function(filters) {
       var that = this;
-      return this.nonEmptyVertexFilterNames().map(function(f) {
+      return filters.map(function(f) {
         return {
           attributeId: that.resolveVertexAttribute(f.attributeName).id,
           valueSpec: f.valueSpec,
         };
       });
     };
-    Side.prototype.nonEmptyEdgeFilters = function() {
+    Side.prototype.nonEmptyVertexFilters = function() {
+      return this.resolveVertexFilters(this.nonEmptyVertexFilterNames());
+    };
+    Side.prototype.resolveEdgeFilters = function(filters) {
       var that = this;
-      return this.nonEmptyEdgeFilterNames().map(function(f) {
+      return filters.map(function(f) {
         return {
           attributeId: that.resolveEdgeAttribute(f.attributeName).id,
           valueSpec: f.valueSpec,
         };
       });
+    };
+    Side.prototype.nonEmptyEdgeFilters = function() {
+      return this.resolveEdgeFilters(this.nonEmptyEdgeFilterNames());
     };
 
     Side.prototype.hasFilters = function() {
