@@ -44,12 +44,13 @@ case class PulledOverVertexAttribute[T]()
     val originalAttr = inputs.originalAttr.rdd
     val pulledAttr =
       if (functionEntity.properties.isIdentity) {
-        originalAttr.sortedJoin(function).mapValues { case (value, edge) => value }
+        val byOriginalId = function.toSortedRDD(originalAttr.partitioner.get)
+        originalAttr.sortedJoin(byOriginalId).mapValues { case (value, edge) => value }
       } else {
         val destinationVS = inputs.destinationVS.rdd
         val originalToDestinationID = function
           .map { case (id, edge) => (edge.dst, edge.src) }
-          .toSortedRDD(destinationVS.partitioner.get)
+          .toSortedRDD(originalAttr.partitioner.get)
         implicit val ct = inputs.originalAttr.meta.classTag
         originalToDestinationID.sortedJoin(originalAttr)
           .values
