@@ -20,10 +20,8 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
   val bytesPerPartition = workMemoryPerCore
   val defaultPartitions = numAvailableCores
   // A suitable partitioner for N bytes.
-  def partitionerForNBytes(n: Long): spark.Partitioner = {
-    println(s"for $n bytes, bpp: $bytesPerPartition def: $defaultPartitions")
+  def partitionerForNBytes(n: Long): spark.Partitioner =
     new spark.HashPartitioner((n / bytesPerPartition).toInt max defaultPartitions)
-  }
   lazy val defaultPartitioner: spark.Partitioner =
     new spark.HashPartitioner(defaultPartitions)
   lazy val onePartitionPartitioner: spark.Partitioner =
