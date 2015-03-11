@@ -141,3 +141,21 @@ selected-visualization {
 selected-visualization .visualization-name {
   color: #333;
 }
+.pick-buttons {
+  float: right;
+}
+.pick-attr-restrict {
+  padding: 4px 0px;
+  width: 100%;
+}
+.pick-attr-restrict select {
+  width: 30%;
+  height: 34px;
+}
+.pick-attr-restrict input {
+  width: 60%;
+}
+.pick-attr-restrict button {
+  width: 10%;
+  padding: 6px 0px;
+}
