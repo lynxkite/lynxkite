@@ -11,9 +11,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ho
         var hk = hotkeys.bindTo(scope);
         hk.add({ combo: '/', description: 'Find operation', callback: function(e) {
           e.preventDefault();  // Do not type "/".
-          scope.op = undefined;
-          scope.active = undefined;
-          scope.searching = true;
+          startSearch();
         }});
         hk.add({ combo: 'esc', allowIn: ['INPUT'], callback: function() {
           if (scope.op) {
@@ -97,6 +95,19 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ho
           scope.op = op;
         }
       };
+      scope.searchClicked = function() {
+        if (scope.searching) {
+          scope.searching = undefined;
+          scope.op = undefined;
+        } else {
+          startSearch();
+        }
+      };
+      function startSearch() {
+        scope.op = undefined;
+        scope.active = undefined;
+        scope.searching = true;
+      }
     },
   };
 });
