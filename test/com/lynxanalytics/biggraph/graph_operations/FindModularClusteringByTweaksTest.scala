@@ -38,7 +38,7 @@ class FindModularClusteringByTweaksTest extends FunSuite with ShouldMatchers wit
       val changeFromCall = mergeModularityChange(total, c1, c2, connection)
       val realChange =
         c1.add(connection, c2).modularity(total) - c1.modularity(total) - c2.modularity(total)
-      changeFromCall should be (realChange +- 1e-5)
+      changeFromCall should be(realChange +- 1e-5)
     }
   }
   test("random graph") {

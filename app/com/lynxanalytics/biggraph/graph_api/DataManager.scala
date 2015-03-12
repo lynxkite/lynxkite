@@ -11,6 +11,7 @@ import ExecutionContext.Implicits.global
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 class DataManager(sc: spark.SparkContext,
@@ -52,11 +53,15 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def load(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
-    future {
+    getFuture(edgeBundle.idSet).map { idSet =>
+      // We do our best to colocate partitions to corresponding vertex set partitions.
+      val idsRDD = idSet.rdd.cache
+      val rawRDD = entityPath(edgeBundle)
+        .loadObjectFile[(ID, Edge)](sc)
+        .toSortedRDD(idsRDD.partitioner.get)
       new EdgeBundleData(
         edgeBundle,
-        SortedRDD.fromUnsorted(entityPath(edgeBundle).loadObjectFile[(ID, Edge)](sc)
-          .partitionBy(runtimeContext.defaultPartitioner)))
+        idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
     }
   }
 
