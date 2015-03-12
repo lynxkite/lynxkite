@@ -515,8 +515,9 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   }
 }
 object Operation {
-  case class Category(title: String, color: String, visible: Boolean = true) {
-    val icon = title.take(1) // The "icon" in the operation toolbox.
+  case class Category(title: String, color: String, visible: Boolean = true, icon: String = "") {
+    def toFE(ops: List[FEOperationMeta]): OperationCategory =
+      OperationCategory(title, icon, color, ops)
   }
 
   case class Context(user: serving.User, project: Project)
@@ -540,7 +541,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     cats.filter(_._1.visible).sortBy(_._1.title).map {
       case (cat, ops) =>
         val feOps = ops.map(_.toFE).sortBy(_.title).toList
-        OperationCategory(cat.title, cat.icon, cat.color, feOps)
+        cat.toFE(feOps)
     }
   }
 

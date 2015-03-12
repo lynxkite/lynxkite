@@ -9,7 +9,8 @@
       class="category {{cat.color}}" ng-class="{ active: active === cat }"
       tooltip-append-to-body="true" tooltip-placement="left" tooltip="{{cat.title}}"
       ng-click="clickedCat(cat)">
-      {{cat.icon}}
+      <span ng-if="cat.icon" class="glyphicon glyphicon-{{cat.icon}}"></span>
+      <span ng-if="!cat.icon">{{cat.title[0]}}</span>
     </div>
   </div>
   <div ng-if="active && !op" class="panel box col-sm-11 {{active.color}}">
