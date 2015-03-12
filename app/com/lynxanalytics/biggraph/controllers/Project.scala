@@ -434,8 +434,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
         manager.setTag(dir / name, entity)
       }
     }
-    def apply(name: String): T =
+    def apply(name: String): T = {
+      assert(manager.tagExists(dir / name), s"$name does not exist in $dir.")
       manager.entity(dir / name).asInstanceOf[T]
+    }
 
     def iterator = manager.synchronized {
       ls(dir)
