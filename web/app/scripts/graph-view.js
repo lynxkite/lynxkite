@@ -222,12 +222,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         this.sideMouseBindings(offsetter, xMin, xMax);
       }
     }
+    var side;
     for (i = 0; i < data.edgeBundles.length; ++i) {
       var e = data.edgeBundles[i];
       // Avoid an error with the Grunt test data, which has edges going to the other side
       // even if we only have one side.
       if (e.srcIdx >= vsIndex || e.dstIdx >= vsIndex) { continue; }
-      var side;
+      side = undefined;
       if (e.srcIdx === e.dstIdx) {
         side = sides[vsIndices[e.srcIdx]];
         if (side.display === '3d') {
