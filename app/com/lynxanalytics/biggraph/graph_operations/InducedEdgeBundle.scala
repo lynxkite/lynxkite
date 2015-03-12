@@ -55,9 +55,9 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
                    partitioner: Partitioner): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
       val mappingEdges = mappingInput.rdd
-      if (mappingEntity.properties.isIdentity) {
-        // We save a shuffle in this case.
-        mappingEdges.mapValuesWithKeys { case (id, _) => id }
+      if (mappingEntity.properties.isIdPreserving) {
+        // We might save a shuffle in this case.
+        mappingEdges.mapValuesWithKeys { case (id, _) => id }.sortedRepartition(partitioner)
       } else {
         mappingEdges
           .map { case (id, edge) => (edge.src, edge.dst) }
