@@ -16,10 +16,12 @@ object FastRandomEdgeBundle extends OpFromJson {
       extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
-  def fromJson(j: JsValue) = FastRandomEdgeBundle((j \ "seed").as[Int], (j \ "averageDegree").as[Int])
+  def fromJson(j: JsValue) = FastRandomEdgeBundle(
+    (j \ "seed").as[Int],
+    (j \ "averageDegree").as[Double])
 }
 import FastRandomEdgeBundle._
-case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
+case class FastRandomEdgeBundle(seed: Int, averageDegree: Double)
     extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -44,7 +46,7 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
   }
 
   private def randomCopies(
-    vs: VertexSetRDD, averageCopies: Int, seed: Int, rc: RuntimeContext): rdd.RDD[ID] = {
+    vs: VertexSetRDD, averageCopies: Double, seed: Int, rc: RuntimeContext): rdd.RDD[ID] = {
 
     val partitioner = rc.defaultPartitioner
     val numPartitions = partitioner.numPartitions
@@ -54,7 +56,7 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Int)
           val rand = new Random((pidx << 16) + seed)
           it.flatMap {
             case (id, _) =>
-              val copies = math.round(rand.nextFloat() * 2 * averageCopies)
+              val copies = math.round(rand.nextFloat() * 2 * averageCopies).toInt
               Iterator
                 .continually(id)
                 .take(copies)
