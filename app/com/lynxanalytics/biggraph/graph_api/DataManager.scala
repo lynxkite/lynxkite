@@ -52,8 +52,10 @@ class DataManager(sc: spark.SparkContext,
       val bytes = (fn / "*").globLength
       // Repartition for optimal processing performance.
       val partitioner = runtimeContext.partitionerForNBytes(bytes * kryoExplosion)
-      val rdd = fn.loadObjectFile[(ID, Unit)](sc).partitionBy(partitioner)
-      new VertexSetData(vertexSet, SortedRDD.fromUnsorted(rdd))
+      val rdd = fn
+        .loadObjectFile[(ID, Unit)](sc)
+        .toSortedRDD(partitioner)
+      new VertexSetData(vertexSet, rdd)
     }
   }
 
@@ -75,8 +77,9 @@ class DataManager(sc: spark.SparkContext,
     getFuture(attribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val vsRDD = vs.rdd.cache
-      val rawRDD = SortedRDD.fromUnsorted(entityPath(attribute).loadObjectFile[(ID, T)](sc)
-        .partitionBy(vsRDD.partitioner.get))
+      val rawRDD = entityPath(attribute)
+        .loadObjectFile[(ID, T)](sc)
+        .toSortedRDD(vsRDD.partitioner.get)
       new AttributeData[T](
         attribute,
         // This join does nothing except enforcing colocation.
