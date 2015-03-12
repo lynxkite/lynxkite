@@ -225,7 +225,7 @@ angular.module('biggraph')
       );
     };
     Side.prototype.requestNewCenter = function(count) {
-      this.sendCenterRequest(count, this.nonEmptyVertexFilters())
+      this.sendCenterRequest(count, this.nonEmptyVertexFilters());
     };
 
     Side.prototype.shortName = function() {

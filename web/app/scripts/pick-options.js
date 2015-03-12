@@ -13,7 +13,7 @@ angular.module('biggraph').directive('pickOptions', function() {
         scope.side.sendCenterRequest(
           parseInt(scope.count),
           scope.side.resolveVertexFilters(
-            scope.filters.filter(function (filter) { return filter.attributeName !== '' })));
+            scope.filters.filter(function (filter) { return filter.attributeName !== ''; })));
       };
       scope.addFilter = function() {
         scope.filters.push({
