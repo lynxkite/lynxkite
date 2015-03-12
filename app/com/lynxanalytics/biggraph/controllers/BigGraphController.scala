@@ -307,6 +307,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
+    Project.validateName(request.name)
     val p = Project(request.name)
     assert(!Operation.projects.contains(p), s"Project ${request.name} already exists.")
     p.notes = request.notes
@@ -331,6 +332,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
+    Project.validateName(request.to)
     val p = Project(request.from)
     p.assertWriteAllowedFrom(user)
     p.copy(Project(request.to))
@@ -359,6 +361,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
+    Project.validateName(request.to)
     val p1 = Project(request.from)
     val p2 = Project(request.to)
     p1.assertReadAllowedFrom(user)
@@ -468,6 +471,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
+    Project.validateName(request.newProject)
     val p = Project(request.newProject)
     assert(!Operation.projects.contains(p), s"Project $p already exists.")
     alternateHistory(user, request.history, Some(p))
@@ -519,7 +523,7 @@ object Operation {
 
   def projects(implicit manager: MetaGraphManager): Seq[Project] = {
     val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
-    dirs.map(p => Project(p.path.last.name))
+    dirs.map(p => Project(p.path.last.name)).filterNot(_.projectName.startsWith("!tmp-"))
   }
 }
 
