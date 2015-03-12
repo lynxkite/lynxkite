@@ -271,6 +271,7 @@ class DataManager(sc: spark.SparkContext,
     log.info(s"Entity $entity saved.")
   }
 
+  // No way to find cores per executor programmatically. SPARK-2095
   private val numCoresPerExecutor = scala.util.Properties.envOrElse(
     "NUM_CORES_PER_EXECUTOR", "4").toInt
   def runtimeContext = {
