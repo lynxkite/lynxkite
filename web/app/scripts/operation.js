@@ -3,15 +3,21 @@
 angular.module('biggraph').directive('operation', function(util, hotkeys) {
   return {
     restrict: 'E',
-    scope: { op: '=', side: '=' },
+    scope: {
+      op: '=',  // (Input.)
+      color: '=',  // (Input.)
+      params: '=',  // (Input/output.)
+      applying: '=?',  // (Input.) Whether an operation is being applied currently.
+    },
     templateUrl: 'operation.html',
     link: function(scope, element) {
-      scope.params = {};
       scope.fileUploads = {};
       scope.$watch('op.parameters', function() {
         for (var i = 0; i < scope.op.parameters.length; ++i) {
           var p = scope.op.parameters[i];
-          if (p.options.length === 0) {
+          if (scope.params[p.id] !== undefined) {
+            // Parameter is set externally.
+          } else if (p.options.length === 0) {
             scope.params[p.id] = p.defaultValue;
           } else if (p.multipleChoice) {
             scope.params[p.id] = [];
@@ -22,20 +28,10 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
       });
 
       scope.apply = function() {
-        if (!scope.op.status.enabled || scope.running || scope.busy) {
+        if (!scope.op.status.enabled || scope.applying || scope.busy) {
           return;
         }
-        var reqParams = {};
-        scope.op.parameters.forEach(function(p) {
-          if (p.multipleChoice) {
-            reqParams[p.id] = (scope.params[p.id] || []).join(',');
-          } else {
-            reqParams[p.id] = scope.params[p.id];
-          }
-        });
-        scope.running = true;
-        scope.side.applyOp(scope.op.id, reqParams)
-          .then(function() { scope.running = false; });
+        scope.$emit('apply operation');
       };
       hotkeys.bindTo(scope).add({
         combo: 'enter',

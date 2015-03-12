@@ -152,9 +152,10 @@ case class ProjectHistory(
   def valid = steps.forall(_.status.enabled)
 }
 case class ProjectHistoryStep(
-  op: FEOperationMeta,
   request: ProjectOperationRequest,
-  status: FEStatus)
+  status: FEStatus,
+  segmentations: List[FESegmentation],
+  opCategories: List[OperationCategory])
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: List[VertexSet] = List(),
@@ -443,18 +444,20 @@ class BigGraphController(val env: BigGraphEnvironment) {
         val recipient = Project(new SymbolPath(fullPath).toString)
         val ctx = Operation.Context(user, recipient)
         val op = ops.opById(ctx, request.op.id)
+        def newStep(status: FEStatus) =
+          ProjectHistoryStep(request, status, state.toFE.segmentations, ops.categories(user, recipient))
         if (op.enabled.enabled) {
           try {
             recipient.checkpoint(op.toString, request) {
               op.apply(request.op.parameters)
             }
-            steps :+ ProjectHistoryStep(op.toFE, request, FEStatus.enabled)
+            steps :+ newStep(FEStatus.enabled)
           } catch {
             case t: Throwable =>
-              steps :+ ProjectHistoryStep(op.toFE, request, FEStatus.disabled(t.getMessage))
+              steps :+ newStep(FEStatus.disabled(t.getMessage))
           }
         } else {
-          steps :+ ProjectHistoryStep(op.toFE, request, op.enabled)
+          steps :+ newStep(op.enabled)
         }
       }
       val history = ProjectHistory(p.projectName, request.skips, steps)
