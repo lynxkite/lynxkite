@@ -38,6 +38,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: List[FEOperationParameterMeta],
+  category: String = "",
   status: FEStatus = FEStatus.enabled,
   description: String = "")
 
@@ -487,7 +488,8 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
   def apply(params: Map[String, String]): Unit
-  def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled, description)
+  def toFE: FEOperationMeta =
+    FEOperationMeta(id, title, parameters, category.title, enabled, description)
   protected def scalars[T: TypeTag] =
     UIValue.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
