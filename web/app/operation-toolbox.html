@@ -1,5 +1,10 @@
 <div class="operation-toolbox row" ng-class="{ open: active || searching }">
   <div class="col-sm-1 categories">
+    <div class="category yellow" ng-class="{ active: searching }"
+      tooltip-append-to-body="true" tooltip-placement="left" tooltip="Search"
+      ng-click="searchClicked()">
+      <i class="glyphicon glyphicon-search"></i>
+    </div>
     <div ng-repeat="cat in side.project.opCategories"
       class="category {{cat.color}}" ng-class="{ active: active === cat }"
       tooltip-append-to-body="true" tooltip-placement="left" tooltip="{{cat.title}}"
