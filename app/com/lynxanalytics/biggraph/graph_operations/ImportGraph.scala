@@ -101,7 +101,7 @@ case class CSV(file: Filename,
       lines.partitions.size,
       rc.defaultPartitioner.numPartitions,
       minParts.toInt).max
-    log.info(s"Reading $file into $numPartitions partitions.")
+    log.info(s"Reading $file ($globLength bytes) into $numPartitions partitions.")
     return lines
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
