@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - New icons: `triangle`, `pentagon`, `star`, `sim`, `radio`.
  - File sizes are logged for import and upload. (This will be useful for troubleshooting.)
  - Operation search button. (This is the same as pressing `/`.)
  - Delimiters in load CSV operations now support standard java escapes. (Most importantly,
