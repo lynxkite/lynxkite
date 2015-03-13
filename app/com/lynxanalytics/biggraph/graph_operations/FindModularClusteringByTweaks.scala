@@ -67,6 +67,33 @@ object FindModularClusteringByTweaks extends OpFromJson {
         degreeSum * degreeSum / totalDegreeSum / totalDegreeSum
   }
 
+  class ClusterSpectrum(
+      totalDegreeSum: Double,
+      data: ClusterData,
+      members: Set[ID],
+      degrees: Map[ID, Double],
+      edgeLists: Map[ID, Iterable[(ID, Double)]]) {
+
+    // Keep only edges within the cluster.
+    val restrictedEdgeLists = edgeLists
+      .filterKeys(id => members.contains(id))
+      .mapValues(edges => edges.filter { case (otherId, weight) => members.contains(otherId) })
+
+    val internalDegrees = restrictedEdgeLists.mapValues(_.map(_._2).sum)
+
+    val degreeArray: Array[Double] = null
+    val sparseMatrix: Array[Array[(Int, Double)]] = null
+
+    def iterate(v: Array[Double]): Array[Double] = {
+      val degreeDot = degreeArray.zip(v).map { case (a, b) => a * b }.sum
+      val degreeContribution =
+        degreeArray.map(-_ * degreeDot / totalDegreeSum)
+      val matrixContribution =
+        sparseMatrix.map(line => line.map { case (idx, weight) => v(idx) * weight }.sum)
+      degreeContribution.zip(matrixContribution).map { case (a, b) => a + b }
+    }
+  }
+
   // Returns the change in modularity if the two given clusters were to be merged.
   // In other words, returns:
   //   (cluster1.add(cluster2).modularity - cluter1.modularity - cluster2.modularity)
