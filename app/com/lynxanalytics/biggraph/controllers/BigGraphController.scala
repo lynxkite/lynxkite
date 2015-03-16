@@ -518,7 +518,15 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   }
 }
 object Operation {
-  case class Category(title: String, color: String, visible: Boolean = true, icon: String = "") {
+  case class Category(
+      title: String,
+      color: String, // A color class from web/app/styles/operation-toolbox.css.
+      visible: Boolean = true,
+      icon: String = "", // Glyphicon name, or empty for first letter of title.
+      sortKey: String = null // Categories are ordered by this. The title is used by default.
+      ) extends Ordered[Category] {
+    private val safeSortKey = Option(sortKey).getOrElse(title)
+    def compare(that: Category) = this.safeSortKey compare that.safeSortKey
     def toFE(ops: List[FEOperationMeta]): OperationCategory =
       OperationCategory(title, icon, color, ops)
   }
@@ -541,7 +549,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def categories(user: serving.User, project: Project): List[OperationCategory] = {
     val context = Operation.Context(user, project)
     val cats = forContext(context).groupBy(_.category).toList
-    cats.filter(_._1.visible).sortBy(_._1.title).map {
+    cats.filter(_._1.visible).sortBy(_._1).map {
       case (cat, ops) =>
         val feOps = ops.map(_.toFE).sortBy(_.title).toList
         cat.toFE(feOps)
