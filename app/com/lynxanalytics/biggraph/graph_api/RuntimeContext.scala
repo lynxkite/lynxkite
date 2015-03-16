@@ -17,7 +17,7 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.
                           workMemoryPerCore: Long) {
-  val bytesPerPartition = workMemoryPerCore
+  val bytesPerPartition = workMemoryPerCore / 2 // Make sure we fit 2 copies.
   val defaultPartitions = numAvailableCores
   // A suitable partitioner for N bytes.
   def partitionerForNBytes(n: Long): spark.Partitioner =
