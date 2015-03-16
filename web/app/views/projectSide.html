@@ -168,23 +168,27 @@
           <tr>
             <td>Show vertices:</td>
             <td>
-              <div class="input-group" id="sample-center"
-                ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
+              <div id="sample-center"
+                   ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
                 <input class="form-control" ng-model="side.state.centers" tokenfield>
-                <div class="input-group-btn">
-                  <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
-                    Pick
-                  </button><button class="btn btn-default dropdown-toggle" dropdown-toggle data-toggle="dropdown">
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu">
-                    <li><a ng-click="side.requestRandomCenter()" href>Pick random center</a></li>
-                    <li class="divider"></li>
-                    <li><a ng-repeat="n in [3, 10, 30, 100]"
-                      ng-click="side.requestNewCenter(n)" href>Pick {{n}} centers</a></li>
-                  </ul>
-                </div>
               </div>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>
+              <div class="btn-group pick-buttons" ng-show="!side.showPickOptions">
+                <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
+                  Pick
+                </button>
+                <button
+                  class="btn btn-default"
+                  ng-click="side.showPickOptions = !side.showPickOptions"
+                  tooltip="Advanced pick options">
+                  ...
+                </button>
+              </div>
+              <pick-options shown="side.showPickOptions" side="side"></pick-options>
             </td>
           </tr>
           <tr>

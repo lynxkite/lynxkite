@@ -29,6 +29,7 @@ object FindModularPartitioning extends OpFromJson {
 }
 import FindModularPartitioning._
 case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 

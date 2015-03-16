@@ -50,16 +50,18 @@ case class PulledOverEdges()
     val injection = inputs.injection.rdd
     val originalEB = inputs.originalEB.rdd
     val destinationVS = inputs.destinationVS.rdd
+    val destinationPartitioner = destinationVS.partitioner.get
     val pulledEB =
-      if (injectionEntity.properties.isIdentity) {
-        originalEB.sortedJoin(destinationVS).mapValues { case (edge, _) => edge }
+      if (injectionEntity.properties.isIdPreserving) {
+        val joinableOriginalEB = originalEB.sortedRepartition(destinationPartitioner)
+        joinableOriginalEB.sortedJoin(destinationVS).mapValues { case (edge, _) => edge }
       } else {
         val originalToDestinationID = injection
           .map { case (id, edge) => (edge.dst, edge.src) }
-          .toSortedRDD(destinationVS.partitioner.get)
+          .toSortedRDD(originalEB.partitioner.get)
         originalEB.sortedJoin(originalToDestinationID)
           .map { case (originalID, (edge, destinationID)) => (destinationID, edge) }
-          .toSortedRDD(destinationVS.partitioner.get)
+          .toSortedRDD(destinationPartitioner)
       }
     output(o.pulledEB, pulledEB)
   }

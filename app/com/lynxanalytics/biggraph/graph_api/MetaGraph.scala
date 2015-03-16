@@ -74,16 +74,15 @@ case class EdgeBundleProperties(
     // All destination vertices have at least one incoming edge.
     isReverseEverywhereDefined: Boolean = false,
     // The source id and destination id are the same for all edges in this bundle.
-    // In this case edge ids are also chosen to match the source and destination ids and
-    // the bundle is partitioned the same way as its source vertex set.
-    isIdentity: Boolean = false) {
+    // In this case edge ids are also chosen to match the source and destination ids.
+    isIdPreserving: Boolean = false) {
 
   override def toString: String = {
     ((if (isFunction) Some("function") else None) ::
       (if (isReversedFunction) Some("reversed-function") else None) ::
       (if (isEverywhereDefined) Some("everywhere-defined") else None) ::
       (if (isReverseEverywhereDefined) Some("reverse-everywhere-defined") else None) ::
-      (if (isIdentity) Some("identity") else None) ::
+      (if (isIdPreserving) Some("id-preserving") else None) ::
       Nil).flatten.mkString(" ")
   }
 
@@ -92,11 +91,15 @@ case class EdgeBundleProperties(
       (isReversedFunction || !requirements.isReversedFunction) &&
       (isEverywhereDefined || !requirements.isEverywhereDefined) &&
       (isReverseEverywhereDefined || !requirements.isReverseEverywhereDefined) &&
-      (isIdentity || !requirements.isIdentity)
+      (isIdPreserving || !requirements.isIdPreserving)
 
   lazy val reversed: EdgeBundleProperties =
     EdgeBundleProperties(
-      isReversedFunction, isFunction, isReverseEverywhereDefined, isEverywhereDefined, isIdentity)
+      isReversedFunction,
+      isFunction,
+      isReverseEverywhereDefined,
+      isEverywhereDefined,
+      isIdPreserving)
 }
 object EdgeBundleProperties {
   val default = EdgeBundleProperties()
@@ -104,8 +107,8 @@ object EdgeBundleProperties {
   val matching = EdgeBundleProperties(isFunction = true, isReversedFunction = true)
   val injection = matching.copy(isEverywhereDefined = true)
   val bijection = injection.copy(isReverseEverywhereDefined = true)
-  val embedding = injection.copy(isIdentity = true)
-  val identity = bijection.copy(isIdentity = true)
+  val embedding = injection.copy(isIdPreserving = true)
+  val identity = bijection.copy(isIdPreserving = true)
   val surjection = partialFunction.copy(isReverseEverywhereDefined = true)
 }
 

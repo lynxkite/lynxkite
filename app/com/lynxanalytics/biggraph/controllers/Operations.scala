@@ -87,11 +87,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       """Creates edges randomly, so that each vertex will have a degree uniformly
       chosen between 0 and 2 × the provided parameter."""
     def parameters = List(
-      Param("degree", "Average degree", defaultValue = "10"),
+      Param("degree", "Average degree", defaultValue = "10.0"),
       Param("seed", "Seed", defaultValue = "0"))
     def enabled = hasVertexSet && hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
-      val op = graph_operations.FastRandomEdgeBundle(params("seed").toInt, params("degree").toInt)
+      val op = graph_operations.FastRandomEdgeBundle(
+        params("seed").toInt, params("degree").toDouble)
       project.edgeBundle = op(op.vs, project.vertexSet).result.es
     }
   })
@@ -467,10 +468,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register(new CreateSegmentationOperation(_) {
-    val title = "Modular partitioning"
-    val description = "Tries to find a partitioning of the graph with high modularity."
+    val title = "Modular clustering"
+    val description = "Tries to find a clustering of the graph with high modularity."
     def parameters = List(
-      Param("name", "Segmentation name", defaultValue = "modular_partitions"),
+      Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Param("weights", "Weight attribute", options =
         UIValue("", "no weight") +: edgeAttributes[Double]))
     def enabled = hasEdgeBundle
@@ -481,11 +482,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         if (weightsName == "") const(edgeBundle)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
-        val op = graph_operations.FindModularPartitioning()
+        val op = graph_operations.FindModularClusteringByTweaks()
         op(op.edges, edgeBundle)(op.weights, weights).result
       }
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(result.partitions, idAttr = "id")
+      segmentation.project.setVertexSet(result.clusters, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
       segmentation.project.vertexAttributes("size") =
