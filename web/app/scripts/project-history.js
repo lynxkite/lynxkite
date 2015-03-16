@@ -113,9 +113,9 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         var names = [];
         for (var i = 0; i < steps.length; ++i) {
           var step = steps[i];
-          var op = findOp(step.opCategories, step.request.op.id);
+          var op = findOp(step.opCategoriesBefore, step.request.op.id);
           if (op) {
-            names.push(findOp(step.opCategories, step.request.op.id).title);
+            names.push(findOp(step.opCategoriesBefore, step.request.op.id).title);
           }
         }
         return names;
@@ -189,8 +189,9 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             enabled: false,
             disabledReason: 'Fetching valid operations...',
           },
-          segmentations: [],
-          opCategories: [],
+          segmentationsBefore: [],
+          segmentationsAfter: [],
+          opCategoriesBefore: [],
         };
       }
     },

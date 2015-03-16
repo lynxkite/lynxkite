@@ -56,13 +56,13 @@
     </li>
     <li class="list-group-item" ng-repeat="step in history.steps"
       ng-class="{ 'local-changes': step.localChanges, invalid: !step.status.enabled }"
-      ng-init="cat = findCategory(step.opCategories, step.request)">
+      ng-init="cat = findCategory(step.opCategoriesBefore, step.request)">
       <div ng-hide="step.status.enabled" class="error">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
         {{step.status.disabledReason}}
       </div>
       <operation-toolbox
-        categories="step.opCategories"
+        categories="step.opCategoriesBefore"
         op="step.request.op.id"
         category="cat"
         params="step.request.op.parameters">
@@ -76,13 +76,13 @@
           <li><a href ng-click="insertBefore(step)">
             <i class="glyphicon glyphicon-chevron-up"></i> Insert operation above
           </a></li>
-          <li ng-repeat="seg in step.segmentations"><a href ng-click="insertBefore(step, seg)">
+          <li ng-repeat="seg in step.segmentationsBefore"><a href ng-click="insertBefore(step, seg)">
             <i class="glyphicon glyphicon-chevron-up"></i> Insert operation for {{seg.name}} above
           </a></li>
           <li><a href ng-click="insertAfter(step)">
             <i class="glyphicon glyphicon-chevron-down"></i> Insert operation below
           </a></li>
-          <li ng-repeat="seg in step.segmentations"><a href ng-click="insertAfter(step, seg)">
+          <li ng-repeat="seg in step.segmentationsAfter"><a href ng-click="insertAfter(step, seg)">
             <i class="glyphicon glyphicon-chevron-down"></i> Insert operation for {{seg.name}} below
           </a></li>
         </ul>
