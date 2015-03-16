@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import org.apache.spark.{ HashPartitioner, Partition, TaskContext }
+import org.apache.spark.{ HashPartitioner, Partition, Partitioner, TaskContext }
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd._
 import org.apache.spark.storage.RDDInfo
@@ -111,6 +111,12 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
+
+  def sortedRepartition(newPartitioner: Partitioner)(
+    implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+    if (partitioner == newPartitioner) this
+    else this.toSortedRDD(newPartitioner)
+  }
 
   // See comments at DerivedSortedRDD before blindly using this method!
   private def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =

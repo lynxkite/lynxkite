@@ -15,13 +15,15 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           broadcastDirectory: Filename,
                           // The number of cores available for computations.
                           numAvailableCores: Int,
-                          // Total memory available for caching RDDs.
-                          availableCacheMemoryGB: Double) {
-  // This is set to 1 in tests to improve their performance on small data.
-  private lazy val defaultPartitionsPerCore =
-    System.getProperty("biggraph.default.partitions.per.core", "1").toInt
+                          // Memory per core that can be used for RDD work.
+                          workMemoryPerCore: Long) {
+  val bytesPerPartition = workMemoryPerCore / 2 // Make sure we fit 2 copies.
+  val defaultPartitions = numAvailableCores
+  // A suitable partitioner for N bytes.
+  def partitionerForNBytes(n: Long): spark.Partitioner =
+    new spark.HashPartitioner((n / bytesPerPartition).toInt max defaultPartitions)
   lazy val defaultPartitioner: spark.Partitioner =
-    new spark.HashPartitioner(numAvailableCores * defaultPartitionsPerCore)
+    new spark.HashPartitioner(defaultPartitions)
   lazy val onePartitionPartitioner: spark.Partitioner =
     new spark.HashPartitioner(1)
 
