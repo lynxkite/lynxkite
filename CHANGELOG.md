@@ -8,6 +8,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
  - Import and simple operations should now work even if there is insufficient memory to
    hold the entire graph.
+ - New icons: `triangle`, `pentagon`, `star`, `sim`, `radio`.
+ - File sizes are logged for import and upload. (This will be useful for troubleshooting.)
  - Operation search button. (This is the same as pressing `/`.)
  - Delimiters in load CSV operations now support standard java escapes. (Most importantly,
    you can import from a tab delimited file using `\t` as the value of the delimiter
