@@ -154,8 +154,9 @@ case class ProjectHistory(
 case class ProjectHistoryStep(
   request: ProjectOperationRequest,
   status: FEStatus,
-  segmentations: List[FESegmentation],
-  opCategories: List[OperationCategory])
+  segmentationsBefore: List[FESegmentation],
+  segmentationsAfter: List[FESegmentation],
+  opCategoriesBefore: List[OperationCategory])
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: List[VertexSet] = List(),
@@ -444,8 +445,12 @@ class BigGraphController(val env: BigGraphEnvironment) {
         val recipient = Project(new SymbolPath(fullPath).toString)
         val ctx = Operation.Context(user, recipient)
         val op = ops.opById(ctx, request.op.id)
-        def newStep(status: FEStatus) =
-          ProjectHistoryStep(request, status, state.toFE.segmentations, ops.categories(user, recipient))
+        val segmentationsBefore = state.toFE.segmentations
+        val opCategoriesBefore = ops.categories(user, recipient)
+        def newStep(status: FEStatus) = {
+          val segmentationsAfter = state.toFE.segmentations
+          ProjectHistoryStep(request, status, segmentationsBefore, segmentationsAfter, opCategoriesBefore)
+        }
         if (op.enabled.enabled) {
           try {
             recipient.checkpoint(op.toString, request) {
