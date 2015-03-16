@@ -101,7 +101,7 @@ case class CSV(file: Filename,
     val lines = file.loadTextFile(rc.sparkContext)
     // Only repartition if we need more partitions.
     val numPartitions = lines.partitions.size max partitioner.numPartitions
-    log.info(s"Reading $file into $numPartitions partitions.")
+    log.info(s"Reading $file ($globLength bytes) into $numPartitions partitions.")
     return lines
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
