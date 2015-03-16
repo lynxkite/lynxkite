@@ -26,7 +26,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class CreateSegmentationOperation(c: Context)
     extends Operation(c, Category("Create segmentation", "green"))
   abstract class UtilityOperation(c: Context)
-    extends Operation(c, Category("Utility operations", "green", icon = "wrench"))
+    extends Operation(c, Category("Utility operations", "green", icon = "wrench", sortKey = "zz"))
   trait SegOp extends Operation {
     protected def seg = project.asSegmentation
     protected def parent = seg.parent
@@ -36,7 +36,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "Segmentation utility operations",
       "green",
       visible = c.project.isSegmentation,
-      icon = "wrench")) with SegOp
+      icon = "wrench",
+      sortKey = "zz")) with SegOp
   abstract class SegmentationOperation(c: Context)
     extends Operation(c, Category(
       "Segmentation operations",
