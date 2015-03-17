@@ -48,9 +48,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         var requests = [];
         var steps = scope.history.steps;
         for (var i = 0; i < steps.length; ++i) {
-          if (steps[i].request.op.id !== undefined) {
-            requests.push(steps[i].request);
-          }
+          requests.push(steps[i].request);
         }
         return {
           project: scope.side.state.projectName,
