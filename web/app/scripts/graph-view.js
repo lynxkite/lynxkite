@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
-  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT */
+  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
   var directive = {
@@ -1146,7 +1146,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.y = y;
     this.r = r;
     this.color = color || UNCOLORED;
-    this.highlight = 'white';
+    if (this.color === UNCOLORED) {
+      this.highlight = 'white';
+    } else {
+      this.highlight = tinycolor(this.color).lighten(20).toString();
+    }
     this.frozen = 0;  // Number of reasons why this vertex should not be animated.
     if (image) {
       this.icon = svg.create('image', { width: 1, height: 1 });
@@ -1170,7 +1174,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.label.attr({ style: 'fill: ' + labelColor });
     }
     this.labelBackground = svg.create(
-        'rect', { 'class': 'label-background', width: 0, height: 0, rx: 2, ry: 2 });
+        'rect', {
+          'class': 'label-background',
+          style: 'fill: ' + this.highlight,
+          width: 0, height: 0, rx: 2, ry: 2,
+        });
     this.dom = svg.group(
         [this.icon, this.touch, this.labelBackground, this.label],
         {'class': 'vertex' });
