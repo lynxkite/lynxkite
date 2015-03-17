@@ -18,7 +18,11 @@
     </div>
 
     <div class="btn-group pull-right" ng-if="localChanges || remoteChanges">
-      <label class="btn btn-default" ng-if="localChanges" ng-click="validate()"
+      <label class="btn btn-warning" ng-if="localChanges && localValidationResult() !== 'ok'"
+        tooltip="Not ready for validation: {{localValidationResult()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+      </label>
+      <label class="btn btn-default" ng-if="localChanges && localValidationResult() === 'ok'" ng-click="validate()"
         tooltip="Validate&nbsp;history {{listLocalChanges()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-ok"></i>
       </label>

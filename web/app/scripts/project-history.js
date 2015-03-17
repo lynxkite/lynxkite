@@ -59,6 +59,18 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         };
       }
 
+      // Performs a light validation in the browser, returning "ok" if it passes,
+      // otherwise an error string.
+      scope.localValidationResult = function() {
+        var steps = scope.history.steps;
+        for (var i = 0; i < steps.length; ++i) {
+          if (steps[i].request.op.id === undefined) {
+            return 'an operation is unset';
+          }
+        }
+        return 'ok';
+      };
+
       scope.validate = function() {
         scope.remoteChanges = true;
         scope.history = util.nocache('/ajax/validateHistory', alternateHistory());
