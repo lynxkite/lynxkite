@@ -1186,6 +1186,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         {'class': 'vertex' });
     this.dom.attr({ opacity: opacity });
     this.moveListeners = [];
+    this.highlightListeners = [];
     this.hoverListeners = [];
     // Notified when this vertex becomes opaque.
     this.opaqueListeners = [];
@@ -1194,29 +1195,53 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.touch.mouseenter(function() {
       // Put the "fade-non-opaque" class on the whole SVG.
       svg.addClass(that.dom.closest('svg'), 'fade-non-opaque');
-      svg.addClass(that.dom, 'highlight');
-      that.icon.attr({style: 'fill: ' + that.highlight});
+      if (!that.positioned) {
+        that.setHighlight(true);
+      }
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
-      // Size labelBackground here, because we may not know the label size earlier.
-      that.labelBackground.attr({ width: that.label.width() + 4, height: that.label.height() });
-      that.reDraw();
     });
     this.touch.mouseleave(function() {
-      if (that.held) { return; }
       // Remove the "fade-non-opaque" class from the whole SVG.
       svg.removeClass(that.dom.closest('svg'), 'fade-non-opaque');
-      svg.removeClass(that.dom, 'highlight');
-      that.icon.attr({style: 'fill: ' + that.color});
+      if (!that.held && !that.positioned) {
+        that.setHighlight(false);
+      }
       for (var i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].off(that);
       }
     });
   }
-  // Hover listeners must have an `on()` and an `off()` method.
+
+  Vertex.prototype.setHighlight = function(on) {
+    var i;
+    if (on) {
+      svg.addClass(this.dom, 'highlight');
+      this.icon.attr({style: 'fill: ' + this.highlight});
+      for (i = 0; i < this.highlightListeners.length; ++i) {
+        this.highlightListeners[i].on(this);
+      }
+      // Size labelBackground here, because we may not know the label size earlier.
+      this.labelBackground.attr({ width: this.label.width() + 4, height: this.label.height() });
+      this.reDraw();
+    } else {
+      svg.removeClass(this.dom, 'highlight');
+      this.icon.attr({style: 'fill: ' + this.color});
+      for (i = 0; i < this.highlightListeners.length; ++i) {
+        this.highlightListeners[i].off(this);
+      }
+    }
+  };
+
+  // Hover and highlight listeners must have an `on()` and an `off()` method.
+  // "Hover" is used for the one vertex under the cursor.
+  // "Highlight" is used for any vertices that we want to render more visible.
   Vertex.prototype.addHoverListener = function(hl) {
     this.hoverListeners.push(hl);
+  };
+  Vertex.prototype.addHighlightListener = function(hl) {
+    this.highlightListeners.push(hl);
   };
 
   Vertex.prototype.addOpaqueListener = function(ol) {
@@ -1238,6 +1263,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertex.prototype.setPositioned = function() {
     if (this.positioned) { return; }
     this.positioned = true;
+    // Positioned vertices are highlighted to increase the contrast against the map,
+    // and to distinguish them.
+    this.setHighlight(true);
   };
 
   Vertex.prototype.addMoveListener = function(ml) {
@@ -1292,24 +1320,32 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     src.addMoveListener(function() { that.reposition(); });
     dst.addMoveListener(function() { that.reposition(); });
     this.reposition();
-    function hoverListener(cls) {
+    function highlightListener(cls) {
       return {
         on: function() {
           svg.addClass(that.dom, cls);
           that.toFront();
-          src.setOpaque(true);
-          dst.setOpaque(true);
         },
         off: function() {
           svg.removeClass(that.dom, cls);
-          src.setOpaque(false);
-          dst.setOpaque(false);
         },
       };
     }
-    src.addHoverListener(hoverListener('highlight-out'));
+    var hoverListener = {
+      on: function() {
+        src.setOpaque(true);
+        dst.setOpaque(true);
+      },
+      off: function() {
+        src.setOpaque(false);
+        dst.setOpaque(false);
+      },
+    };
+    src.addHighlightListener(highlightListener('highlight-out'));
+    src.addHoverListener(hoverListener);
     if (src !== dst) {
-      dst.addHoverListener(hoverListener('highlight-in'));
+      dst.addHighlightListener(highlightListener('highlight-in'));
+      dst.addHoverListener(hoverListener);
     }
     var opaqueListener = function() {
       if (src.isOpaque && dst.isOpaque) {
