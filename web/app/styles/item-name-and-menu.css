@@ -1,4 +1,4 @@
-item-name-and-menu .btn-dropdown {
+.btn-dropdown {
   display: inline-block;
   color: rgba(0, 0, 0, 0.3);
   width: 20px;
@@ -6,11 +6,11 @@ item-name-and-menu .btn-dropdown {
   text-align: center;
   box-shadow: none !important;
 }
-item-name-and-menu .btn-dropdown .caret {
+.btn-dropdown .caret {
   border-width: 5px;
 }
 
-item-name-and-menu .btn-group.open .btn-dropdown,
-item-name-and-menu .btn-dropdown:hover {
+.btn-group.open .btn-dropdown,
+.btn-dropdown:hover {
   color: black;
 }

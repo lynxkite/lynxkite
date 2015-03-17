@@ -16,8 +16,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     p.isInstanceOf[Project] && projectName == p.asInstanceOf[Project].projectName
   override def hashCode = projectName.hashCode
 
-  val separator = "|"
-  assert(!projectName.contains(separator), s"Invalid project name: $projectName")
+  assert(!projectName.contains(Project.separator), s"Invalid project name: $projectName")
   val rootDir: SymbolPath = s"projects/$projectName"
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
@@ -69,10 +68,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
     case "" => Seq()
-    case x => x.split(java.util.regex.Pattern.quote(separator), -1)
+    case x => x.split(java.util.regex.Pattern.quote(Project.separator), -1)
   }
   private def checkpoints_=(cs: Seq[String]): Unit =
-    set(rootDir / "checkpoints", cs.mkString(separator))
+    set(rootDir / "checkpoints", cs.mkString(Project.separator))
   private def checkpointIndex = get(rootDir / "checkpointIndex") match {
     case "" => 0
     case x => x.toInt
@@ -435,8 +434,10 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
         manager.setTag(dir / name, entity)
       }
     }
-    def apply(name: String): T =
+    def apply(name: String): T = {
+      assert(manager.tagExists(dir / name), s"$name does not exist in $dir.")
       manager.entity(dir / name).asInstanceOf[T]
+    }
 
     def iterator = manager.synchronized {
       ls(dir)
@@ -464,9 +465,11 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 }
 
 object Project {
+  val separator = "|"
+
   def apply(projectName: String)(implicit metaManager: MetaGraphManager): Project = new Project(projectName)
 
-  def withErrorLogging[T](message: String)(op: => T): Option[T] =
+  def withErrorLogging[T](message: String)(op: => T): Option[T] = {
     try {
       Some(op)
     } catch {
@@ -475,6 +478,15 @@ object Project {
         None
       }
     }
+  }
+
+  // Makes assertions on a user-provided project name.
+  def validateName(name: String): Unit = {
+    assert(name.nonEmpty, "Project name cannot be empty.")
+    assert(!name.startsWith("!"), "Project name cannot start with '!'.")
+    assert(!name.contains(separator), s"Project name cannot contain '$separator'.")
+    assert(!name.contains("/"), "Project name cannot contain '/'.")
+  }
 }
 
 case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {

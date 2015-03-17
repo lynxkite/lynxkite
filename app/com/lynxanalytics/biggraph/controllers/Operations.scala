@@ -25,16 +25,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     extends Operation(c, Category("Attribute operations", "yellow"))
   abstract class CreateSegmentationOperation(c: Context)
     extends Operation(c, Category("Create segmentation", "green"))
-  abstract class HiddenOperation(c: Context)
-      extends Operation(c, Category("Hidden", "", visible = false)) {
-    val description = ""
-  }
+  abstract class UtilityOperation(c: Context)
+    extends Operation(c, Category("Utility operations", "green", icon = "wrench", sortKey = "zz"))
   trait SegOp extends Operation {
     protected def seg = project.asSegmentation
     protected def parent = seg.parent
   }
-  abstract class HiddenSegmentationOperation(c: Context)
-    extends HiddenOperation(c) with SegOp
+  abstract class SegmentationUtilityOperation(c: Context)
+    extends Operation(c, Category(
+      "Segmentation utility operations",
+      "green",
+      visible = c.project.isSegmentation,
+      icon = "wrench",
+      sortKey = "zz")) with SegOp
   abstract class SegmentationOperation(c: Context)
     extends Operation(c, Category(
       "Segmentation operations",
@@ -365,8 +368,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenSegmentationOperation(_) {
+  register(new SegmentationUtilityOperation(_) {
     val title = "Check cliques"
+    val description = "Validates that the given segmentations are in fact cliques."
     def parameters = List(
       Param("selected", "Clique ids to check", defaultValue = "<All>"),
       Param("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))))
@@ -1317,8 +1321,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
+    val title = "No operation"
+    val description = "Placeholder when creating new operations."
+    def parameters = List()
+    def enabled = FEStatus.enabled
+    def apply(params: Map[String, String]) = {}
+  })
+
+  register(new UtilityOperation(_) {
     val title = "Discard edge attribute"
+    val description = ""
     def parameters = List(
       Param("name", "Name", options = edgeAttributes))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
@@ -1327,8 +1340,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Discard vertex attribute"
+    val description = ""
     def parameters = List(
       Param("name", "Name", options = vertexAttributes))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
@@ -1337,8 +1351,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Discard segmentation"
+    val description = ""
     def parameters = List(
       Param("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
@@ -1347,8 +1362,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Discard scalar"
+    val description = ""
     def parameters = List(
       Param("name", "Name", options = scalars))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
@@ -1357,8 +1373,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Rename edge attribute"
+    val description = ""
     def parameters = List(
       Param("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
@@ -1372,8 +1389,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Rename vertex attribute"
+    val description = ""
     def parameters = List(
       Param("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
@@ -1387,8 +1405,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Rename segmentation"
+    val description = ""
     def parameters = List(
       Param("from", "Old name", options = segmentations),
       Param("to", "New name"))
@@ -1401,8 +1420,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Rename scalar"
+    val description = ""
     def parameters = List(
       Param("from", "Old name", options = scalars),
       Param("to", "New name"))
@@ -1416,8 +1436,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Copy edge attribute"
+    val description = ""
     def parameters = List(
       Param("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
@@ -1427,8 +1448,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Copy vertex attribute"
+    val description = ""
     def parameters = List(
       Param("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
@@ -1438,8 +1460,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Copy segmentation"
+    val description = ""
     def parameters = List(
       Param("from", "Old name", options = segmentations),
       Param("to", "New name"))
@@ -1452,8 +1475,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Copy scalar"
+    val description = ""
     def parameters = List(
       Param("from", "Old name", options = scalars),
       Param("to", "New name"))
@@ -1814,8 +1838,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register(new HiddenOperation(_) {
+  register(new UtilityOperation(_) {
     val title = "Change project notes"
+    val description = ""
     def parameters = List(
       Param("notes", "New contents"))
     def enabled = FEStatus.enabled

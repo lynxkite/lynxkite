@@ -18,12 +18,16 @@
     </div>
 
     <div class="btn-group pull-right" ng-if="localChanges || remoteChanges">
-      <label class="btn btn-default" ng-if="localChanges" ng-click="validate()"
-        tooltip="Validate&nbsp;history" tooltip-append-to-body="true" tooltip-placement="bottom">
+      <label class="btn btn-warning" ng-if="localChanges && localValidationResult() !== 'ok'"
+        tooltip="Not ready for validation: {{localValidationResult()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+      </label>
+      <label class="btn btn-default" ng-if="localChanges && localValidationResult() === 'ok'" ng-click="validate()"
+        tooltip="Validate&nbsp;history {{listLocalChanges()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-ok"></i>
       </label>
       <label class="btn btn-warning" ng-if="!localChanges && !valid"
-        tooltip="History is inconsitent" tooltip-append-to-body="true" tooltip-placement="bottom">
+        tooltip="History is inconsitent {{listInvalidSteps()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
       </label>
       <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid" ng-click="showSaveAs = true"
@@ -55,17 +59,39 @@
       {{history.skips}} earlier {{history.skips === 1 ? 'step' : 'steps'}} cannot be edited.
     </li>
     <li class="list-group-item" ng-repeat="step in history.steps"
-    ng-class="{ 'local-changes': step.localChanges, invalid: !step.status.enabled }">
-      <h2>
-        {{step.op.title}} {{onProject(step.request.project)}}
-      </h2>
+      ng-class="{ 'local-changes': step.localChanges, invalid: !step.status.enabled }"
+      ng-init="cat = findCategory(step.opCategoriesBefore, step.request)">
       <div ng-hide="step.status.enabled" class="error">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
         {{step.status.disabledReason}}
       </div>
-      <form class="form-horizontal">
-        <operation-parameters input="step.op.parameters" output="step.request.op.parameters"></operation-parameters>
-      </form>
+      <operation-toolbox
+        categories="step.opCategoriesBefore"
+        op="step.request.op.id"
+        category="cat"
+        params="step.request.op.parameters">
+      </operation-toolbox>
+      <div class="btn-group history-options pull-right" dropdown>
+        <a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href ng-click="discard(step)">
+            <i class="glyphicon glyphicon-trash"></i> Discard operation
+          </a></li>
+          <li><a href ng-click="insertBefore(step)">
+            <i class="glyphicon glyphicon-chevron-up"></i> Insert operation above
+          </a></li>
+          <li ng-repeat="seg in step.segmentationsBefore"><a href ng-click="insertBefore(step, seg)">
+            <i class="glyphicon glyphicon-chevron-up"></i> Insert operation for {{seg.name}} above
+          </a></li>
+          <li><a href ng-click="insertAfter(step)">
+            <i class="glyphicon glyphicon-chevron-down"></i> Insert operation below
+          </a></li>
+          <li ng-repeat="seg in step.segmentationsAfter"><a href ng-click="insertAfter(step, seg)">
+            <i class="glyphicon glyphicon-chevron-down"></i> Insert operation for {{seg.name}} below
+          </a></li>
+        </ul>
+      </div>
+
     </li>
   </div>
 </div>

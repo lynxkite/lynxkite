@@ -36,7 +36,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       function watchStep(step) {
         util.deepWatch(
           scope,
-          function() { return step; },
+          function() { return step.request; },
           function(after, before) {
             if (after === before) { return; }
             step.localChanges = true;
@@ -57,9 +57,21 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         };
       }
 
+      // Performs a light validation in the browser, returning "ok" if it passes,
+      // otherwise an error string.
+      scope.localValidationResult = function() {
+        var steps = scope.history.steps;
+        for (var i = 0; i < steps.length; ++i) {
+          if (steps[i].request.op.id === undefined) {
+            return 'an operation is unset';
+          }
+        }
+        return 'ok';
+      };
+
       scope.validate = function() {
         scope.remoteChanges = true;
-        scope.history = util.get('/ajax/validateHistory', alternateHistory());
+        scope.history = util.nocache('/ajax/validateHistory', alternateHistory());
       };
 
       scope.saveAs = function(newName) {
@@ -83,6 +95,62 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         util.reportRequestError(scope.history);
       };
 
+      scope.findCategory = function(cats, req) {
+        for (var i = 0; i < cats.length; ++i) {
+          for (var j = 0; j < cats[i].ops.length; ++j) {
+            var op = cats[i].ops[j];
+            if (req.op.id === op.id) {
+              return cats[i];
+            }
+          }
+        }
+        return undefined;
+      };
+
+      function findOp(cats, opId) {
+        for (var i = 0; i < cats.length; ++i) {
+          for (var j = 0; j < cats[i].ops.length; ++j) {
+            var op = cats[i].ops[j];
+            if (opId === op.id) {
+              return op;
+            }
+          }
+        }
+        return undefined;
+      }
+
+      function opNamesForSteps(steps) {
+        var names = [];
+        for (var i = 0; i < steps.length; ++i) {
+          var step = steps[i];
+          var op = findOp(step.opCategoriesBefore, step.request.op.id);
+          if (op) {
+            names.push(findOp(step.opCategoriesBefore, step.request.op.id).title);
+          }
+        }
+        return names;
+      }
+
+      scope.listLocalChanges = function() {
+        var changed = opNamesForSteps(scope.history.steps.filter(
+              function(step) { return step.localChanges; }));
+        if (changed.length === 0) {
+          return '';  // No name for the changed step.
+        }
+        var has = changed.length === 1 ? 'has' : 'have';
+        return '(' + changed.join(', ') + ' ' + has + ' changed)';
+      };
+
+      scope.listInvalidSteps = function() {
+        var invalids = opNamesForSteps(scope.history.steps.filter(
+              function(step) { return !step.status.enabled; }));
+        if (invalids.length === 0) {
+          return '';  // No name for the invalid step.
+        }
+        var is = invalids.length === 1 ? 'is' : 'are';
+        return '(' + invalids.join(', ') + ' ' + is + ' invalid)';
+      };
+
       // Confirm leaving the history page if changes have been made.
       scope.$watch('show && (localChanges || remoteChanges)', function(changed) {
         scope.changed = changed;
@@ -101,6 +169,41 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           scope.side.close();
         }
       };
+
+      // Insert new operation.
+      scope.insertBefore = function(step, seg) {
+        var pos = scope.history.steps.indexOf(step);
+        scope.history.steps.splice(pos, 0, blankStep(seg));
+        scope.validate();
+      };
+      scope.insertAfter = function(step, seg) {
+        var pos = scope.history.steps.indexOf(step);
+        scope.history.steps.splice(pos + 1, 0, blankStep(seg));
+        scope.validate();
+      };
+
+      function blankStep(seg) {
+        var project = scope.side.state.projectName;
+        if (seg !== undefined) {
+          project = seg.fullName;
+        }
+        return {
+          request: {
+            project: project,
+            op: {
+              id: 'No-operation',
+              parameters: {},
+            },
+          },
+          status: {
+            enabled: false,
+            disabledReason: 'Fetching valid operations...',
+          },
+          segmentationsBefore: [],
+          segmentationsAfter: [],
+          opCategoriesBefore: [],
+        };
+      }
     },
   };
 });
