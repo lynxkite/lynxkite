@@ -540,7 +540,8 @@ object Operation {
 
   def projects(implicit manager: MetaGraphManager): Seq[Project] = {
     val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
-    dirs.map(p => Project(p.path.last.name)).filterNot(_.projectName.startsWith("!tmp-"))
+    // Do not list internal project names (starting with "!").
+    dirs.map(p => Project(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
   }
 }
 
