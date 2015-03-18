@@ -19,8 +19,8 @@ object JsonMigration {
     override def compare(a: VersionMap, b: VersionMap): Int = {
       val cmp = (a.keySet ++ b.keySet).map { k => a(k) compare b(k) }
       if (cmp.forall(_ == 0)) 0
-      else if (cmp.forall(_ < 0)) -1
-      else if (cmp.forall(_ > 0)) 1
+      else if (cmp.forall(_ <= 0)) -1
+      else if (cmp.forall(_ >= 0)) 1
       else {
         assert(false, s"Incomparable versions: $a, $b")
         ???
@@ -33,12 +33,14 @@ object JsonMigration {
 import JsonMigration._
 class JsonMigration {
   val version: VersionMap = Map(
-    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1)
+    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.SetOverlap" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
   val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
-    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity)
+    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_operations.SetOverlap", 0) -> identity)
 }
 
 object MetaRepositoryManager {
