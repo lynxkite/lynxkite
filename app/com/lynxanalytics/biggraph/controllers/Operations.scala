@@ -1135,10 +1135,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     def enabled = hasEdgeBundle
 
-    def merge[T](attr: Attribute[T]): graph_operations.MergeVertices.Output = {
-      val op = graph_operations.MergeVertices[T]()
-      op(op.attr, attr).result
-    }
     def apply(params: Map[String, String]) = {
       val edgesAsAttr = {
         val op = graph_operations.EdgeBundleAsAttribute()
