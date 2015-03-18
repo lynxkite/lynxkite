@@ -76,8 +76,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("size", "Vertex set size"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
-      val vs = graph_operations.CreateVertexSet(params("size").toInt)().result.vs
-      project.setVertexSet(vs, idAttr = "id")
+      val result = graph_operations.CreateVertexSet(params("size").toLong)().result
+      project.setVertexSet(result.vs, idAttr = "id")
+      project.vertexAttributes("ordinal") = result.ordinal
     }
   })
 

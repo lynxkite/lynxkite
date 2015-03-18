@@ -33,12 +33,14 @@ object JsonMigration {
 import JsonMigration._
 class JsonMigration {
   val version: VersionMap = Map(
-    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1)
+    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
   val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
-    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity)
+    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity)
 }
 
 object MetaRepositoryManager {
