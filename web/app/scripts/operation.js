@@ -20,7 +20,7 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
           } else if (p.options.length === 0) {
             scope.params[p.id] = p.defaultValue;
           } else if (p.multipleChoice) {
-            scope.params[p.id] = [];
+            scope.params[p.id] = '';
           } else {
             scope.params[p.id] = p.options[0].id;
           }
