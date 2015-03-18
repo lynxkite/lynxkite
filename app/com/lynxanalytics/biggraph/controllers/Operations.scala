@@ -2222,7 +2222,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     else if (attr.is[Long])
       graph_operations.LongAttributeToDouble.run(attr.runtimeSafeCast[Long])
     else
-      assert(false, s"Unexpected type (${attr.typeTag}) on $attr")
+      throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
   }
 
   private def attributeToString[T](attr: Attribute[T]): Attribute[String] = {
