@@ -781,12 +781,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Vertex attribute to double"
     val description = toDoubleHelpText.format("vertex")
+    val eligible = vertexAttributes[String] ++ vertexAttributes[Long]
     def parameters = List(
-      Param("attr", "Vertex attribute", options = vertexAttributes[String], multipleChoice = true))
-    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes.")
+      Param("attr", "Vertex attribute", options = eligible, multipleChoice = true))
+    def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible vertex attributes.")
     def apply(params: Map[String, String]) = {
       for (name <- params("attr").split(",")) {
-        val attr = project.vertexAttributes(name).runtimeSafeCast[String]
+        val attr = project.vertexAttributes(name)
         project.vertexAttributes(name) = toDouble(attr)
       }
     }
@@ -795,12 +796,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new AttributeOperation(_) {
     val title = "Edge attribute to double"
     val description = toDoubleHelpText.format("edge")
+    val eligible = edgeAttributes[String] ++ edgeAttributes[Long]
     def parameters = List(
-      Param("attr", "Edge attribute", options = edgeAttributes[String], multipleChoice = true))
-    def enabled = FEStatus.assert(edgeAttributes[String].nonEmpty, "No string edge attributes.")
+      Param("attr", "Edge attribute", options = eligible, multipleChoice = true))
+    def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible edge attributes.")
     def apply(params: Map[String, String]) = {
       for (name <- params("attr").split(",")) {
-        val attr = project.edgeAttributes(name).runtimeSafeCast[String]
+        val attr = project.edgeAttributes(name)
         project.edgeAttributes(name) = toDouble(attr)
       }
     }
@@ -2217,9 +2219,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.es, reverse(segmentation.belongsTo)).result.outDegree
   }
 
-  def toDouble(attr: Attribute[String]): Attribute[Double] = {
-    val op = graph_operations.VertexAttributeToDouble()
-    op(op.attr, attr).result.attr
+  def toDouble(attr: Attribute[_]): Attribute[Double] = {
+    if (attr.is[String])
+      graph_operations.VertexAttributeToDouble.run(attr.runtimeSafeCast[String])
+    else if (attr.is[Long])
+      graph_operations.LongAttributeToDouble.run(attr.runtimeSafeCast[Long])
+    else
+      assert(false, s"Unexpected type (${attr.typeTag}) on $attr")
   }
 
   private def attributeToString[T](attr: Attribute[T]): Attribute[String] = {
