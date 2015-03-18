@@ -1028,10 +1028,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.SetOverlap(params("minOverlap").toInt)
       val res = op(op.belongsTo, seg.belongsTo).result
       project.edgeBundle = res.overlaps
-      // We convert to Double as our stupid FE cannot deal with Ints too well. :)
-      project.edgeAttributes("Overlap size") =
-        graph_operations.VertexAttributeToDouble.run(
-          graph_operations.VertexAttributeToString.run(res.overlapSize))
+      project.edgeAttributes("Overlap size") = res.overlapSize
     }
   })
 
