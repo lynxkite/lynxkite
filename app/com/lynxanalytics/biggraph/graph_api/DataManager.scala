@@ -43,12 +43,19 @@ class DataManager(sc: spark.SparkContext,
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
+  // How much bigger the in-memory representation is, compared to the serialized file size.
+  private lazy val kryoExplosion =
+    System.getProperty("biggraph.kryo.explosion", "7").toInt
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
-      new VertexSetData(
-        vertexSet,
-        SortedRDD.fromUnsorted(entityPath(vertexSet).loadObjectFile[(ID, Unit)](sc)
-          .partitionBy(runtimeContext.defaultPartitioner)))
+      val fn = entityPath(vertexSet)
+      val bytes = (fn / "*").globLength
+      // Repartition for optimal processing performance.
+      val partitioner = runtimeContext.partitionerForNBytes(bytes * kryoExplosion)
+      val rdd = fn
+        .loadObjectFile[(ID, Unit)](sc)
+        .toSortedRDD(partitioner)
+      new VertexSetData(vertexSet, rdd)
     }
   }
 
@@ -70,8 +77,9 @@ class DataManager(sc: spark.SparkContext,
     getFuture(attribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val vsRDD = vs.rdd.cache
-      val rawRDD = SortedRDD.fromUnsorted(entityPath(attribute).loadObjectFile[(ID, T)](sc)
-        .partitionBy(vsRDD.partitioner.get))
+      val rawRDD = entityPath(attribute)
+        .loadObjectFile[(ID, T)](sc)
+        .toSortedRDD(vsRDD.partitioner.get)
       new AttributeData[T](
         attribute,
         // This join does nothing except enforcing colocation.
@@ -263,14 +271,23 @@ class DataManager(sc: spark.SparkContext,
     log.info(s"Entity $entity saved.")
   }
 
-  // This is pretty sad, but I haven't find an automatic way to get the number of cores.
+  // No way to find cores per executor programmatically. SPARK-2095
   private val numCoresPerExecutor = scala.util.Properties.envOrElse(
     "NUM_CORES_PER_EXECUTOR", "4").toInt
-  private val bytesInGb = scala.math.pow(2, 30)
-  def runtimeContext =
+  def runtimeContext = {
+    val numExecutors = (sc.getExecutorStorageStatus.size - 1) max 1
+    val totalCores = numExecutors * numCoresPerExecutor
+    val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
+    val conf = sc.getConf
+    // Unfortunately the defaults are hard-coded in Spark and not available.
+    val cacheFraction = conf.getDouble("spark.storage.memoryFraction", 0.6)
+    val shuffleFraction = conf.getDouble("spark.shuffle.memoryFraction", 0.2)
+    val workFraction = 1.0 - cacheFraction - shuffleFraction
+    val workMemory = workFraction * cacheMemory / cacheFraction
     RuntimeContext(
       sparkContext = sc,
       broadcastDirectory = repositoryPath / "broadcasts",
-      numAvailableCores = ((sc.getExecutorStorageStatus.size - 1) max 1) * numCoresPerExecutor,
-      availableCacheMemoryGB = sc.getExecutorMemoryStatus.values.map(_._2).sum.toDouble / bytesInGb)
+      numAvailableCores = totalCores,
+      workMemoryPerCore = (workMemory / totalCores).toLong)
+  }
 }

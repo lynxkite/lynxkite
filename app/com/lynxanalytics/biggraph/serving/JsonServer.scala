@@ -203,9 +203,11 @@ object ProductionJsonServer extends JsonServer {
   // File upload.
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
-      val upload = request.body.file("file").get
+      val upload: mvc.MultipartFormData.FilePart[play.api.libs.Files.TemporaryFile] =
+        request.body.file("file").get
       try {
-        log.info(s"upload: $user ${upload.filename}")
+        val size = upload.ref.file.length
+        log.info(s"upload: $user ${upload.filename} ($size bytes)")
         val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
         val baseName = upload.filename.replace(" ", "_")
         val tmpName = s"$baseName.$Timestamp"

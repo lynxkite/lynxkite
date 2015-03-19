@@ -45,7 +45,7 @@
   "opCategories": [
     {
       "title": "Vertex operations",
-      "color": "blue", "icon": "V",
+      "color": "blue", "icon": "",
       "ops": [
         { "id": "import", "description": "Imports vertices from a CSV file, or files. Wildcard (foo/*.csv) and glob (foo/{bar,baz}.csv) patterns are accepted. S3 paths must include the key name and secret key in the following format: <tt>s3n://key name:secret key@bucket/dir/file</tt>",
           "title": "Import vertices", "parameters": [
@@ -61,7 +61,7 @@
 
     {
       "title": "Edge operations",
-      "color": "orange", "icon": "E",
+      "color": "orange", "icon": "",
       "ops": [
         { "id": "2", "title": "Discard all edges", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "3", "title": "Reverse edges", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
@@ -74,7 +74,7 @@
 
     {
       "title": "Attribute operations",
-      "color": "yellow", "icon": "A",
+      "color": "yellow", "icon": "",
       "ops": [
         { "id": "13", "title": "Add constant edge attribute", "parameters": [
           { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant", "options": [] },
@@ -119,7 +119,7 @@
 
     {
       "title": "Segmentation operations",
-      "color": "green", "icon": "C",
+      "color": "green", "icon": "",
       "ops": [
         { "id": "34", "title": "Find maximal cliques", "parameters": [
           { "id": "34a", "title": "Name of new segmentation", "defaultValue": "cliques", "options": [] },
