@@ -1,30 +1,21 @@
 'use strict';
 
-angular.module('biggraph').directive('operationToolbox', function($rootScope, hotkeys) {
+angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
   return {
     restrict: 'E',
-    scope: { side: '=' },
-    replace: true,
+    // A lot of internals are exposed, because this directive is used both in
+    // side-operation-toolbox and in project-history.
+    scope: {
+      categories: '=',  // (Input.) List of operation categories.
+      op: '=?',  // (Input/output.) Currently selected operation's id (if any).
+      params: '=?',  // (Input/output.) Currently set operation parameters.
+      category: '=?',  // (Input/output.) Currently selected category (if any).
+      searching: '=?',  // (Input/output.) Whether operation search is active.
+      applying: '=',  // (Input.) Whether an operation is just being submitted.
+    },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {
-      if (scope.side.primary) {  // Set up hotkeys on the primary project only.
-        var hk = hotkeys.bindTo(scope);
-        hk.add({ combo: '/', description: 'Find operation', callback: function(e) {
-          e.preventDefault();  // Do not type "/".
-          startSearch();
-        }});
-        hk.add({ combo: 'esc', allowIn: ['INPUT'], callback: function() {
-          if (scope.op) {
-            scope.op = undefined;
-          } else if (scope.searching) {
-            scope.searching = undefined;
-          } else if (scope.active) {
-            scope.active = undefined;
-          }
-        }});
-      }
-
-      scope.$watch('side.project.opCategories', function(cats) {
+      scope.$watch('categories', function(cats) {
         // The complete list, for searching.
         scope.allOps = [];
         for (var i = 0; i < cats.length; ++i) {
@@ -69,31 +60,43 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ho
         }
       });
 
-      scope.$watch('active || searching', function(open) {
-        if (open) {
-          $rootScope.$broadcast('close all the other operation-toolboxes', scope);
+      scope.findColor = function(opId) {
+        var op = scope.findOp(opId);
+        for (var i = 0; i < scope.categories.length; ++i) {
+          var cat = scope.categories[i];
+          if (op.category === cat.title) {
+            return cat.color;
+          }
         }
-      });
-      scope.$on('close all the other operation-toolboxes', function(e, source) {
-        if (scope !== source) {
-          scope.op = undefined;
-          scope.active = undefined;
-          scope.searching = undefined;
+        console.error('Could not find category for', opId);
+        return 'yellow';
+      };
+
+      scope.findOp = function(opId) {
+        for (var i = 0; i < scope.categories.length; ++i) {
+          for (var j = 0; j < scope.categories[i].ops.length; ++j) {
+            var op = scope.categories[i].ops[j];
+            if (opId === op.id) {
+              return op;
+            }
+          }
         }
-      });
+        return undefined;
+      };
 
       scope.clickedCat = function(cat) {
-        if (scope.active === cat && !scope.op) {
-          scope.active = undefined;
+        if (scope.category === cat && !scope.op) {
+          scope.category = undefined;
         } else {
-          scope.active = cat;
+          scope.category = cat;
         }
         scope.searching = undefined;
         scope.op = undefined;
       };
       scope.clickedOp = function(op) {
         if (op.status.enabled) {
-          scope.op = op;
+          scope.op = op.id;
+          scope.params = {};
         }
       };
       scope.searchClicked = function() {
@@ -104,9 +107,10 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope, ho
           startSearch();
         }
       };
+      scope.$on('open operation search', startSearch);
       function startSearch() {
         scope.op = undefined;
-        scope.active = undefined;
+        scope.category = undefined;
         scope.searching = true;
       }
     },
