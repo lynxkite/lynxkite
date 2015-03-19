@@ -4,6 +4,7 @@ import java.io.File
 import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
+import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
@@ -29,16 +30,28 @@ object JsonMigration {
   }
 
   val current = new JsonMigration
+
+  // Replaces fields in a JsObject.
+  def replaceJson(j: json.JsObject, replacements: (String, json.JsValue)*): json.JsObject = {
+    val newValues = replacements.toMap
+    new json.JsObject(j.fields.map {
+      case (field, oldValue) => field -> newValues.getOrElse(field, oldValue)
+    })
+  }
 }
 import JsonMigration._
 class JsonMigration {
   val version: VersionMap = Map(
-    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1)
+    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
   val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
-    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity)
+    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets", 0) -> {
+      j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
+    })
 }
 
 object MetaRepositoryManager {
@@ -95,7 +108,7 @@ object MetaRepositoryManager {
     val versionFile = new File(dir, "version")
     if (versionFile.exists) {
       val data = FileUtils.readFileToString(versionFile, "utf-8")
-      val j = json.Json.parse(data)
+      val j = Json.parse(data)
       val versions = j.as[VersionMap].withDefaultValue(0)
       Some(versions)
     } else None
@@ -105,7 +118,7 @@ object MetaRepositoryManager {
     dir.mkdirs
     val versionFile = new File(dir, "version")
     val data = json.JsObject(version.mapValues(json.JsNumber(_)).toSeq)
-    FileUtils.writeStringToFile(versionFile, json.Json.prettyPrint(data), "utf-8")
+    FileUtils.writeStringToFile(versionFile, Json.prettyPrint(data), "utf-8")
   }
 
   def migrate(
@@ -140,12 +153,6 @@ object MetaRepositoryManager {
     mm.setTags(newTags)
   }
 
-  // Replaces fields in a JsObject.
-  private def replaceJson(j: json.JsObject, replacements: (String, json.JsValue)*): json.JsObject = {
-    val rm = replacements.toMap
-    new json.JsObject(j.fields.map { case (field, value) => field -> rm.getOrElse(field, value) })
-  }
-
   // Applies the operation from JSON, performing the required migrations.
   private def applyOperation(
     mm: MetaGraphManager,
@@ -161,11 +168,11 @@ object MetaRepositoryManager {
     val newData = (v1 until v2).foldLeft((op \ "data").as[json.JsObject]) {
       (j, v) => migration.upgraders(cls -> v)(j)
     }
-    val newOp = replaceJson(op, "data" -> newData)
+    val newOp = JsonMigration.replaceJson(op, "data" -> newData)
     // Map inputs.
     val inputs = (j \ "inputs").as[Map[String, String]]
-    val newInputs = json.Json.toJson(inputs.map { case (name, g) => name -> guidMapping.getOrElse(g, g) })
-    val newJson = replaceJson(j.as[json.JsObject], "operation" -> newOp, "inputs" -> newInputs)
+    val newInputs = Json.toJson(inputs.map { case (name, g) => name -> guidMapping.getOrElse(g, g) })
+    val newJson = JsonMigration.replaceJson(j.as[json.JsObject], "operation" -> newOp, "inputs" -> newInputs)
     // Deserialize the upgraded JSON.
     val inst = mm.applyJson(newJson)
     // Add outputs to the GUID mapping.
