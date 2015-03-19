@@ -17,17 +17,18 @@ object ComputeVertexNeighborhoodFromTriplets extends OpFromJson {
     val neighborhood = scalar[Set[ID]]
   }
   def fromJson(j: JsValue) =
-    ComputeVertexNeighborhoodFromTriplets((j \ "centers").as[Seq[ID]], (j \ "radius").as[Int])
+    ComputeVertexNeighborhoodFromTriplets((j \ "centers").as[Seq[ID]], (j \ "radius").as[Int], (j \ "maxCount").as[Int])
 }
 import ComputeVertexNeighborhoodFromTriplets._
 case class ComputeVertexNeighborhoodFromTriplets(
     centers: Seq[ID],
-    radius: Int) extends TypedMetaGraphOp[Input, Output] {
+    radius: Int,
+    maxCount: Int) extends TypedMetaGraphOp[Input, Output] {
 
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = Json.obj("centers" -> centers, "radius" -> radius)
+  override def toJson = Json.obj("centers" -> centers, "radius" -> radius, "maxCount" -> maxCount)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
@@ -37,14 +38,18 @@ case class ComputeVertexNeighborhoodFromTriplets(
     for (i <- 0 until radius) {
       Sorting.quickSort(neighborhood)
       val neighborEdges = all
-        .restrictToIdSet(neighborhood.distinct)
+        .restrictToIdSet(neighborhood)
         .flatMap { case (id, (srcEdge, dstEdge)) => (srcEdge ++ dstEdge).flatten }
-        .collect
+        .distinct.collect
       Sorting.quickSort(neighborEdges)
-      neighborhood = edges.restrictToIdSet(neighborEdges.distinct)
+      neighborhood = edges.restrictToIdSet(neighborEdges)
         .flatMap { case (id, edge) => Iterator(edge.src, edge.dst) }
-        .collect
+        .distinct
+        .take(maxCount)
     }
-    output(o.neighborhood, neighborhood.toSet ++ centers)
+    // Isolated points are lost in the above loop. Add back centers to make sure they are present.
+    val nonCenters = neighborhood.toSet -- centers
+    val trimmed = nonCenters.take(maxCount - centers.size)
+    output(o.neighborhood, trimmed ++ centers)
   }
 }
