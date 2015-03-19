@@ -155,6 +155,7 @@ case class CenterResponse(
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
+  val SampleSizeMax = System.getProperty("biggraph.sample.size.max", "10000").toInt
 
   def getVertexDiagram(user: User, request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {
@@ -175,7 +176,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val centers = if (request.centralVertexIds == Seq("*")) {
       // Try to show the whole graph.
-      val op = graph_operations.SampleVertices(10000)
+      val op = graph_operations.SampleVertices(SampleSizeMax)
       op(op.vs, filtered).result.sample.value
     } else {
       request.centralVertexIds.map(_.toLong)
@@ -185,7 +186,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.cache(smearBundle)
       val triplets = tripletMapping(smearBundle, sampled = false)
-      val nop = graph_operations.ComputeVertexNeighborhoodFromTriplets(centers, request.radius)
+      val nop = graph_operations.ComputeVertexNeighborhoodFromTriplets(centers, request.radius, SampleSizeMax)
       val nopres = nop(
         nop.vertices, vertexSet)(
           nop.edges, smearBundle)(
@@ -555,6 +556,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     if (count >= 50000) {
       sampledEdges
     } else {
+      // Too little remains of the sample after filtering. Let's filter the full data.
       val fullTrips = tripletMapping(edgeBundle, sampled = false)
       getFilteredEdgeIds(fullTrips, edgeBundle, srcFilters, dstFilters, edgeFilters)
     }
