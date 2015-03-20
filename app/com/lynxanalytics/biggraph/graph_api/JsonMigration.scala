@@ -20,8 +20,8 @@ object JsonMigration {
     override def compare(a: VersionMap, b: VersionMap): Int = {
       val cmp = (a.keySet ++ b.keySet).map { k => a(k) compare b(k) }
       if (cmp.forall(_ == 0)) 0
-      else if (cmp.forall(_ < 0)) -1
-      else if (cmp.forall(_ > 0)) 1
+      else if (cmp.forall(_ <= 0)) -1
+      else if (cmp.forall(_ >= 0)) 1
       else {
         assert(false, s"Incomparable versions: $a, $b")
         ???
