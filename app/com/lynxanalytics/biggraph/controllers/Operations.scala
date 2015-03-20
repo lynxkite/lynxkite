@@ -511,6 +511,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("name", "Attribute name", defaultValue = "id"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
       project.vertexAttributes(params("name")) = idAsAttribute(project.vertexSet)
     }
   })
@@ -528,6 +529,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("seed", "Seed", defaultValue = "0"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
       project.vertexAttributes(params("name")) = op(op.vertices, project.vertexSet).result.attr
     }
@@ -562,6 +564,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("type", "Type", options = UIValue.list(List("Double", "String"))))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
           isDouble = (params("type") == "Double"), params("value"))
@@ -653,6 +656,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.ClusteringCoefficient()
       project.vertexAttributes(params("name")) = op(op.es, project.edgeBundle).result.clustering
     }
@@ -709,6 +713,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("direction", "Count", options = Direction.options))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
       val es = Direction(params("direction"), project.edgeBundle, reversed = true).edgeBundle
       val op = graph_operations.OutDegree()
       project.vertexAttributes(params("name")) = op(op.es, es).result.outDegree
@@ -725,6 +730,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("damping", "Damping factor", defaultValue = "0.85"))
     def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
     def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
       val weights = project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       project.vertexAttributes(params("name")) =
@@ -818,6 +824,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("y", "Y or longitude", options = vertexAttributes[Double]))
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
+      assert(params("output").nonEmpty, "Please set an attribute name.")
       val pos = {
         val op = graph_operations.JoinAttributes[Double, Double]()
         val x = project.vertexAttributes(params("x")).runtimeSafeCast[Double]
@@ -860,6 +867,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("expr", "Value", defaultValue = "1"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
+      assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val namedAttributes = project.vertexAttributes
         .filter { case (name, attr) => expr.contains(name) }
@@ -1397,6 +1405,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(!project.vertexAttributes.contains(params("to")),
         s"""A vertex-attribute named '${params("to")}' already exists,
             please discard it or choose another name""")
+      assert(params("to").nonEmpty, "Please set the new attribute name.")
       project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
       project.vertexAttributes(params("from")) = null
     }
@@ -1453,6 +1462,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("to", "New name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
     def apply(params: Map[String, String]) = {
+      assert(params("to").nonEmpty, "Please set the new attribute name.")
       project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
     }
   })
