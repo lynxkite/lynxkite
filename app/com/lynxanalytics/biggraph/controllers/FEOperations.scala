@@ -278,8 +278,8 @@ class FEOperations(env: BigGraphEnvironment) extends FEOperationRepository(env) 
       Param("type", "Convert into", options = UIValue.list(List("string", "double"))))
 
     def apply(params: Map[String, String]) = {
-      val vAttrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",")
-      val eAttrs: Seq[String] = if (params("eattrs").isEmpty) Nil else params("eattrs").split(",")
+      val vAttrs: Seq[String] = if (params("vattrs").isEmpty) Nil else params("vattrs").split(",", -1)
+      val eAttrs: Seq[String] = if (params("eattrs").isEmpty) Nil else params("eattrs").split(",", -1)
       val attrs = vAttrs ++ eAttrs
       val as = attrs.map(s => manager.attribute(s.asUUID))
       val typ = params("type")
