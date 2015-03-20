@@ -97,7 +97,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
    * This shows that to achive the largest value for v^T M v, we have to choose an eigenvector
    * with the largest possible eigenvalue.
    * Unfortunately, that normally won't be a -1/+1 vector. So to actually get a split candidate,
-   * we take this maximally positive eigenvector, and <0 numbers with -1 and >=0 numbers with 1.
+   * we take this maximally positive eigenvector, and replace <0 numbers with -1 and >=0 numbers
+   * with 1.
    *
    * For details, see: http://www.pnas.org/content/103/23/8577.long
    */
@@ -162,8 +163,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
     // (and a corresponding eigenvector) with the largest possible _absolute_ value.
     // In our case it's very often going to be negative, as you can screw up modularity
     // a lot with a suitable cut... So if we end up with an eigenvalue dominantEV < 0, then
-    // we do another power iteration for the matrix M - dominantEV*I. This matrix has the
-    // exact same eigenvectors but all eigenvalue are increased by -(2/3)*dominantEV. Now the
+    // we do another power iteration for the matrix M -(2/3)*dominantEV*I. This matrix has the
+    // exact same eigenvectors but all eigenvalues are increased by -(2/3)*dominantEV. Now the
     // eigenvalue with the biggest absolute value is going to be positive, and it will correspond
     // to the largest positive eigenvalue of the original matrix M.
     // This modification to the power iteration is not explained in the original article nor did
@@ -286,17 +287,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
             .map(_._2)
             .sum)
     }
-    val localStart = clusters.values.map(_.modularity(totalDegreeSum)).sum
-    start += localStart
-
-    {
-      val contains = mutable.Map(containedIn.groupBy(_._2).mapValues(_.keySet).toSeq: _*)
-      assert(clusters.size == contains.size)
-      for ((id, members) <- contains) {
-        assert(clusters.contains(id))
-        val data = clusters(id)
-      }
-    }
+    start += clusters.values.map(_.modularity(totalDegreeSum)).sum
 
     var changed = false
     var i = 0
@@ -499,14 +490,13 @@ object FindModularClusteringByTweaks extends OpFromJson {
     }
 
     increase += localIncrease
-    val localEnd = clusters.values.map(_.modularity(totalDegreeSum)).sum
-    end += localEnd
+    end += clusters.values.map(_.modularity(totalDegreeSum)).sum
   }
 }
 
 import FindModularClusteringByTweaks._
 case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Output] {
-  override val isHeavy = false
+  override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
@@ -533,8 +523,6 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
     val totalDegreeSum = edgeLists.map { case (id, edges) => edges.map(_._2).sum }.sum
 
     val numParts = vPart.numPartitions
-    //val oneId = edgeLists.keys.first
-    //var members: RDD[(ID, Iterable[ID])] = edgeLists.keys.map(x => (oneId, x)).groupByKey()
     var members: RDD[(ID, Iterable[ID])] = edgeLists.mapValuesWithKeys(p => Seq(p._1))
 
     var i = 0
@@ -582,9 +570,6 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
       // the termination decision.
       members.foreach(_ => ())
       log.info(
-        s"Modularity in iteration $i increased by ${increase.value} " +
-          s"from ${start.value} to ${end.value}")
-      println(
         s"Modularity in iteration $i increased by ${increase.value} " +
           s"from ${start.value} to ${end.value}")
       assert(Math.abs(start.value + increase.value - end.value) < 0.0000001, "Increase mismatch")
