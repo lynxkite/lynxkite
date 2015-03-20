@@ -16,6 +16,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     p.isInstanceOf[Project] && projectName == p.asInstanceOf[Project].projectName
   override def hashCode = projectName.hashCode
 
+  assert(projectName.nonEmpty, s"Invalid project name: <empty string>")
   assert(!projectName.contains(Project.separator), s"Invalid project name: $projectName")
   val rootDir: SymbolPath = s"projects/$projectName"
   // Part of the state that needs to be checkpointed.
@@ -427,6 +428,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   abstract class Holder[T <: MetaGraphEntity](dir: SymbolPath) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit
     def update(name: String, entity: T) = manager.synchronized {
+      assert(name.nonEmpty, s"Invalid name: <empty string>")
       if (entity == null) {
         existing(dir / name).foreach(manager.rmTag(_))
       } else {
