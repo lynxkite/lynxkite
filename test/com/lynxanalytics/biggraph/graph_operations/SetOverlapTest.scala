@@ -18,7 +18,7 @@ class SetOverlapTest extends FunSuite with TestGraphOp {
     so.overlaps.rdd.join(so.overlapSize.rdd).map {
       case (id, (edge, value)) =>
         (edge.src.toInt, edge.dst.toInt) -> value
-    }.collect.toMap.mapValues(_.toInt)
+    }.collect.toMap
   }
 
   test("triangle") {
