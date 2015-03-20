@@ -183,7 +183,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.size == 1)
     assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(100.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
-    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 191.0)))
+    // Approximately two edges per vertex.
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 201.0)))
   }
 
   test("big bucketed view with buckets") {
@@ -215,11 +216,11 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).mode == "bucketed")
     assert(res.vertexSets(0).vertices.size == 2)
     // Roughly 50, 50.
-    assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(60.0, 0, 0), FEVertex(40.0, 1, 0)))
+    assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(61.0, 0, 0), FEVertex(39.0, 1, 0)))
     assert(res.edgeBundles(0).edges.size == 4)
-    // Roughly 25% each of 191 edges (=48). Bigger buckets should have more edges in them.
+    // Roughly 25% each of 201 edges (=48). Bigger buckets should have more edges in them.
     assert(res.edgeBundles(0).edges.toSet ==
-      Set(FEEdge(0, 0, 68.0), FEEdge(0, 1, 47.0), FEEdge(1, 0, 43.0), FEEdge(1, 1, 33.0)))
+      Set(FEEdge(0, 0, 74.0), FEEdge(0, 1, 50.0), FEEdge(1, 0, 50.0), FEEdge(1, 1, 27.0)))
   }
 
   test("small bucketed view with filters") {
@@ -261,10 +262,10 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).mode == "bucketed")
     assert(res.vertexSets(0).vertices.size == 1)
     // Should be about 50% of 100.
-    assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(49.0, 0, 0)))
+    assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(47.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
-    // Should be about 12.5% of 191. (50% src is removed, 50% dst is removed, 50% attribute is <0)
-    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 20.0)))
+    // Should be about 12.5% of 201. (50% src is removed, 50% dst is removed, 50% attribute is <0)
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 27.0)))
   }
 
   test("big bucketed view with filters") {
@@ -309,7 +310,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(244.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
     // Should be about 12.5% of 990. (50% src is removed, 50% dst is removed, 50% attribute is <0)
-    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 110.0)))
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 122.0)))
   }
 
   test("histogram for double") {

@@ -76,8 +76,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("size", "Vertex set size"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
-      val vs = graph_operations.CreateVertexSet(params("size").toInt)().result.vs
-      project.setVertexSet(vs, idAttr = "id")
+      val result = graph_operations.CreateVertexSet(params("size").toLong)().result
+      project.setVertexSet(result.vs, idAttr = "id")
+      project.vertexAttributes("ordinal") = result.ordinal
     }
   })
 
@@ -176,7 +177,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("columns", "Columns (comma separated)"),
       Param("key", "Key column"))
     def source(params: Map[String, String]) = {
-      val columns = params("columns").split(",").map(_.trim)
+      val columns = params("columns").split(",", -1).map(_.trim)
       graph_operations.DBTable(
         params("db"),
         params("table"),
@@ -378,7 +379,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val selected =
         if (params("selected") == "<All>") None
-        else Some(params("selected").split(",").map(_.toLong).toSet)
+        else Some(params("selected").split(",", -1).map(_.toLong).toSet)
       val op = graph_operations.CheckClique(selected, params("bothdir").toBoolean)
       val result = op(op.es, parent.edgeBundle)(op.belongsTo, seg.belongsTo).result
       parent.scalars("invalid_cliques") = result.invalid
@@ -755,7 +756,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
     def apply(params: Map[String, String]) = {
-      for (attr <- params("attr").split(",")) {
+      for (attr <- params("attr").split(",", -1)) {
         project.vertexAttributes(attr) = attributeToString(project.vertexAttributes(attr))
       }
     }
@@ -768,7 +769,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("attr", "Edge attribute", options = edgeAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
     def apply(params: Map[String, String]) = {
-      for (attr <- params("attr").split(",")) {
+      for (attr <- params("attr").split(",", -1)) {
         project.edgeAttributes(attr) = attributeToString(project.edgeAttributes(attr))
       }
     }
@@ -786,7 +787,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("attr", "Vertex attribute", options = eligible, multipleChoice = true))
     def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible vertex attributes.")
     def apply(params: Map[String, String]) = {
-      for (name <- params("attr").split(",")) {
+      for (name <- params("attr").split(",", -1)) {
         val attr = project.vertexAttributes(name)
         project.vertexAttributes(name) = toDouble(attr)
       }
@@ -801,7 +802,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("attr", "Edge attribute", options = eligible, multipleChoice = true))
     def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible edge attributes.")
     def apply(params: Map[String, String]) = {
-      for (name <- params("attr").split(",")) {
+      for (name <- params("attr").split(",", -1)) {
         val attr = project.edgeAttributes(name)
         project.edgeAttributes(name) = toDouble(attr)
       }
@@ -1136,10 +1137,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     def enabled = hasEdgeBundle
 
-    def merge[T](attr: Attribute[T]): graph_operations.MergeVertices.Output = {
-      val op = graph_operations.MergeVertices[T]()
-      op(op.attr, attr).result
-    }
     def apply(params: Map[String, String]) = {
       val edgesAsAttr = {
         val op = graph_operations.EdgeBundleAsAttribute()
@@ -2064,7 +2061,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
-        val labels = params("attrs").split(",")
+        val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.vertexAttributes(label)
         }.toMap
@@ -2095,7 +2092,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
-        val labels = params("attrs").split(",")
+        val labels = params("attrs").split(",", -1)
         val attrs: Seq[(String, Attribute[_])] = labels.map {
           label => label -> project.vertexAttributes(label)
         }
@@ -2124,7 +2121,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
-        val labels = params("attrs").split(",")
+        val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.edgeAttributes(label)
         }.toMap
@@ -2155,7 +2152,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "Nothing selected for export.")
-        val labels = params("attrs").split(",")
+        val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.edgeAttributes(label)
         }.toMap
