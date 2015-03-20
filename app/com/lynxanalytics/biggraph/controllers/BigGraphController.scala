@@ -28,7 +28,7 @@ case class UIValue(
   id: String,
   title: String)
 object UIValue {
-  def fromEntity(e: MetaGraphEntity): UIValue = UIValue(e.gUID.toString, e.toString)
+  def fromEntity(e: MetaGraphEntity): UIValue = UIValue(e.gUID.toString, e.toStringStruct.toString)
   def list(list: List[String]) = list.map(id => UIValue(id, id))
 }
 
@@ -253,7 +253,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     FEVertexSet(
       id = vs.gUID.toString,
-      title = vs.toString,
+      title = vs.toStringStruct.toString,
       inEdges = (in -- local).toList.map(toFE(_)),
       outEdges = (out -- local).toList.map(toFE(_)),
       localEdges = local.toList.map(toFE(_)),
@@ -265,7 +265,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val visibleAttributes = metaManager.attributes(eb).filter(metaManager.isVisible(_))
     FEEdgeBundle(
       id = eb.gUID.toString,
-      title = eb.toString,
+      title = eb.toStringStruct.toString,
       source = UIValue.fromEntity(eb.srcVertexSet),
       destination = UIValue.fromEntity(eb.dstVertexSet),
       attributes = visibleAttributes.map(UIValue.fromEntity(_)).toList)
