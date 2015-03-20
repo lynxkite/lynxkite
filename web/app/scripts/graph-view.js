@@ -1320,6 +1320,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     src.addMoveListener(function() { that.reposition(); });
     dst.addMoveListener(function() { that.reposition(); });
     this.reposition();
+    // To highlight the neighborhood of a hovered/highlighted vertex, the
+    // following rules are implemented below:
+    //  - On either end's hover the edge sets both of its endpoints opaque.
+    //  - On both ends becoming opaque the edge makes itself opaque.
+    //  - On either end's highlight the edge highlights itself.
     function highlightListener(cls) {
       return {
         on: function() {
