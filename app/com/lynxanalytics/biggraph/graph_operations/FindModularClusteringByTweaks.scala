@@ -82,6 +82,25 @@ object FindModularClusteringByTweaks extends OpFromJson {
     }
   }
 
+  /* Spectral representation for a cluster within a larger graph.
+   *
+   * In essence, this class represents an indexing of the members of the cluster
+   * v_0, v_1, ..., v_{size-1} and a matrix M. M has the following property. Assume we partition
+   * the cluster in two partitions, A and B. Prepare a vector s, such that s_i = 1 if v_i \in A and
+   * s_i = -1 if v_i \in B. Then the modularity change if we split the cluster into the two clusters
+   * A-B is:
+   * s^T M s
+   *
+   * For a normalized eigenvector w with eigenvalue \lambda we have w^T M w = \lambda. Any vector v
+   * can be expressed as a linear combination of orhonormal eigenvectors, v = \sum a_i w_i. Then:
+   * v^T M v = \sum a_i^2 \lambda_i
+   * This shows that to achive the largest value for v^T M v, we have to choose an eigenvector
+   * with the largest possible eigenvalue.
+   * Unfortunately, that normally won't be a -1/+1 vector. So to actually get a split candidate,
+   * we take this maximally positive eigenvector, and <0 numbers with -1 and >=0 numbers with 1.
+   *
+   * For details, see: http://www.pnas.org/content/103/23/8577.long
+   */
   class ClusterSpectrum(
       totalDegreeSum: Double,
       data: ClusterData,
@@ -94,12 +113,18 @@ object FindModularClusteringByTweaks extends OpFromJson {
       .filterKeys(id => members.contains(id))
       .mapValues(edges => edges.filter { case (otherId, weight) => members.contains(otherId) })
 
-    val internalDegrees = restrictedEdgeLists.mapValues(_.map(_._2).sum)
-
+    // Indexing and reverse indexing.
     val indexedIds = members.toArray
     val idToIndex = indexedIds.zipWithIndex.toMap
 
+    // Matrix M as explained above will be represented as
+    // degreeArray * degreeArray^T + sparseMatrix
+    // for more efficient matrix multiplication.
     val degreeArray = indexedIds.map(id => degrees(id))
+
+    // See the above article for details, but sparseMatrix is basically the weighted adjecency
+    // matrix of the graph restricted to the cluster. There is an additional correction
+    // applied to the diagonal elements that makes sure all raws (and columns) sum up to 0.
     val sparseMatrix: Array[Array[(Int, Double)]] = indexedIds.map { id =>
       val insideConnections = restrictedEdgeLists
         .getOrElse(id, List())
@@ -112,14 +137,14 @@ object FindModularClusteringByTweaks extends OpFromJson {
     def dot(v1: Array[Double], v2: Array[Double]): Double = {
       v1.zip(v2).map { case (a, b) => a * b }.sum
     }
+
+    // Computes Mv.
     def multiply(v: Array[Double]): Array[Double] = {
       val degreeDot = dot(degreeArray, v)
       val degreeContribution =
         degreeArray.map(-_ * degreeDot / totalDegreeSum)
       val matrixContribution =
         sparseMatrix.map(line => line.map { case (idx, weight) => v(idx) * weight }.sum)
-      //println("dc:", degreeContribution.toSeq)
-      //println("mc:", matrixContribution.toSeq)
       degreeContribution.zip(matrixContribution).map { case (a, b) => a + b }
     }
 
@@ -130,6 +155,19 @@ object FindModularClusteringByTweaks extends OpFromJson {
       }
     }
 
+    // Tries to find an eigenvector with maximal eigenvalue. In essence, we use the power
+    // iteration method as explained here:
+    // http://en.wikipedia.org/wiki/Power_iteration
+    // The slight issue with that is that it will find the eigenvalue
+    // (and a corresponding eigenvector) with the largest possible _absolute_ value.
+    // In our case it's very often going to be negative, as you can screw up modularity
+    // a lot with a suitable cut... So if we end up with an eigenvalue dominantEV < 0, then
+    // we do another power iteration for the matrix M - dominantEV*I. This matrix has the
+    // exact same eigenvectors but all eigenvalue are increased by -(2/3)*dominantEV. Now the
+    // eigenvalue with the biggest absolute value is going to be positive, and it will correspond
+    // to the largest positive eigenvalue of the original matrix M.
+    // This modification to the power iteration is not explained in the original article nor did
+    // I find this in any official source, so there may be a better way to do this.
     def findBestEigenVector(rnd: Random): Array[Double] = {
       val start = indexedIds.map(_ => rnd.nextDouble() * 2 - 1)
       normalize(start)
@@ -145,27 +183,21 @@ object FindModularClusteringByTweaks extends OpFromJson {
         currentValue = dot(current, prev)
         normalize(current)
         it += 1
-        //println(s"In iteration $it value $currentValue change ${currentValue - prevValue}")
       } while ((it < 100) && (Math.abs(currentValue - prevValue) > 0.001))
       val dominantEV = dot(current, multiply(current))
-      //println("Dominant EV: ", dominantEV)
       if (dominantEV < 0) {
         // The dominant eigenvalue is negative. Let's reiterate with the matrix:
-        // B - dominantEV / 2 * I
-        // If there are positive eigenvalues of B, then the dominant ev of the above matrix
-        // will be the most positive ev.
+        // M - (2/3) * dominantEV * I.
         current = start
         var currentValue = Double.MinValue
         do {
           prev = current
           prevValue = currentValue
-          current = multiply(current).zip(prev).map { case (cv, pv) => cv - pv * dominantEV * 2.0 / 3.0 }
+          current = multiply(current).zip(current)
+            .map { case (cv, pv) => cv - pv * dominantEV * 2.0 / 3.0 }
           normalize(current)
           currentValue = dot(current, multiply(current))
           it += 1
-          //println("prev", prev.toSeq)
-          //println("current", current.toSeq)
-          //println(s"In iteration $it value $currentValue change ${currentValue - prevValue}")
         } while ((it < 200) && (Math.abs(currentValue - prevValue) > 0.001))
       }
       current
@@ -180,7 +212,6 @@ object FindModularClusteringByTweaks extends OpFromJson {
         withGroupLabels.filter(_._2 < 0).map(_._1).toSet,
         modularityDelta)
     }
-
   }
 
   // Returns the change in modularity if the two given clusters were to be merged.
@@ -234,10 +265,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
     containedIn: mutable.Map[ID, ID],
     start: spark.Accumulator[Double],
     end: spark.Accumulator[Double],
-    increase: spark.Accumulator[Double]): Unit = {
-
-    // TODO: make this deterministic via seed.
-    val rnd = new Random()
+    increase: spark.Accumulator[Double],
+    rnd: Random): Unit = {
 
     var localIncrease = 0.0
     val clusters = mutable.Map[ID, ClusterData]()
@@ -257,7 +286,18 @@ object FindModularClusteringByTweaks extends OpFromJson {
             .map(_._2)
             .sum)
     }
-    start += clusters.values.map(_.modularity(totalDegreeSum)).sum
+    val localStart = clusters.values.map(_.modularity(totalDegreeSum)).sum
+    start += localStart
+
+    {
+      val contains = mutable.Map(containedIn.groupBy(_._2).mapValues(_.keySet).toSeq: _*)
+      assert(clusters.size == contains.size)
+      for ((id, members) <- contains) {
+        assert(clusters.contains(id))
+        val data = clusters(id)
+      }
+    }
+
     var changed = false
     var i = 0
     do {
@@ -339,6 +379,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
     } while (changed)
     i = 0
     val contains = mutable.Map(containedIn.groupBy(_._2).mapValues(_.keySet).toSeq: _*)
+    assert(clusters.size == contains.size)
     do {
       log.info(s"Doing merging clusters subiteration $i")
       changed = false
@@ -373,9 +414,9 @@ object FindModularClusteringByTweaks extends OpFromJson {
       }
     } while (changed)
 
-    /*// Make sure for all clusters the id of the cluster is the id of one of its members. This
+    // Make sure for all clusters the id of the cluster is the id of one of its members. This
     // can be screwed up in the node tweaking subiteration. It can (accidentally) be fixed in
-    // cluster merging, thus we do it here only.
+    // cluster merging, thus we do this check here only.
     // The invariant is required when we start splitting clusters, as on a split we
     // need to come up with a new unique cluster id.
     val clusterIds = changedClusters.toIndexedSeq // Make sure this is not a view.
@@ -432,7 +473,6 @@ object FindModularClusteringByTweaks extends OpFromJson {
         degrees,
         edgeLists)
       val bs = spectrum.bestSplit(rnd)
-      //println("Best split: ", bs)
       val (clust1Prelim, clust2Prelim, modularityDelta) = bs
       if (clust1Prelim.nonEmpty && clust2Prelim.nonEmpty) {
         // Makes sure clusterId is a member of clust1.
@@ -440,34 +480,27 @@ object FindModularClusteringByTweaks extends OpFromJson {
           if (clust1Prelim.contains(clusterId)) (clust1Prelim, clust2Prelim)
           else (clust2Prelim, clust1Prelim)
         assert(clust1.contains(clusterId))
-        val clust1Data = ClusterData.fromMembers(clust1, edgeLists)
-        val clust2Data = ClusterData.fromMembers(clust2, edgeLists)
-        /*val connection = clust1.iterator
-          .flatMap(member => edgeLists(member))
-          .filter { case (other, weight) => clust2.contains(other) }
-          .map(_._2)
-          .sum
-        val md = mergeModularityChange(totalDegreeSum, clust1Data, clust2Data, connection)
-        println("Merge delta: ", md, md / modularityDelta)*/
         if (modularityDelta > 0) {
+          val clust1Data = ClusterData.fromMembers(clust1, edgeLists)
+          val clust2Data = ClusterData.fromMembers(clust2, edgeLists)
           val clust2Id = clust2.head
           clusters(clusterId) = clust1Data
           clusters(clust2Id) = clust2Data
           contains(clusterId) = clust1
           contains(clust2Id) = clust2
           for (member <- clust2) {
-            containedIn(member) + clust2Id
+            containedIn(member) = clust2Id
           }
           localIncrease += modularityDelta
           splitQueue += clusterId
           splitQueue += clust2Id
-          println("Split cluster! ", clust1, clust2, modularityDelta)
         }
       }
-    }*/
+    }
 
     increase += localIncrease
-    end += clusters.values.map(_.modularity(totalDegreeSum)).sum
+    val localEnd = clusters.values.map(_.modularity(totalDegreeSum)).sum
+    end += localEnd
   }
 }
 
@@ -491,7 +524,10 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
           else ((e.dst, e.src), w)
       }
       .reduceBySortedKey(vPart, _ + _)
-      .flatMap { case ((v1, v2), w) => Iterator((v1, (v2, w)), (v2, (v1, w))) }
+      .flatMap {
+        case ((v1, v2), w) =>
+          if (v1 == v2) Iterator((v1, (v1, 2 * w))) else Iterator((v1, (v2, w)), (v2, (v1, w)))
+      }
       .groupBySortedKey(vPart)
 
     val totalDegreeSum = edgeLists.map { case (id, edges) => edges.map(_._2).sum }.sum
@@ -528,6 +564,8 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
 
       val refinedContainedIn = perPartitionData.mapPartitionsWithIndex {
         case (pid, vertexIt) =>
+          val seed = new Random((pid << 16) + i).nextLong
+          val rnd = new Random(seed)
           val asSeq = vertexIt.toSeq
           val containedIn = mutable.Map(
             asSeq.map { case (_, (vid, cid, edges)) => vid -> cid }: _*)
@@ -535,7 +573,7 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
             .map { case (_, (vid, cid, edges)) => vid -> edges }
             .toMap
           log.info(s"Starting cluster refinement iteration $i for partition $pid")
-          refineClusters(totalDegreeSum, edgeLists, containedIn, start, end, increase)
+          refineClusters(totalDegreeSum, edgeLists, containedIn, start, end, increase, rnd)
           containedIn.iterator
       }
       // TODO: We know all clusters are contained in the same partition, so this could be optimized.
@@ -549,6 +587,7 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
       println(
         s"Modularity in iteration $i increased by ${increase.value} " +
           s"from ${start.value} to ${end.value}")
+      assert(Math.abs(start.value + increase.value - end.value) < 0.0000001, "Increase mismatch")
       lastIncrements = (increase.value +: lastIncrements).take(5)
       i += 1
       // We do at least 5 iterations and then we exit if the total modularity increase in the last
