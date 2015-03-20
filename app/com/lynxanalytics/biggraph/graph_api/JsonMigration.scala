@@ -33,10 +33,9 @@ object JsonMigration {
 
   // Replaces fields in a JsObject.
   def replaceJson(j: json.JsObject, replacements: (String, json.JsValue)*): json.JsObject = {
+    val oldValues = j.fields.toMap
     val newValues = replacements.toMap
-    new json.JsObject(j.fields.map {
-      case (field, oldValue) => field -> newValues.getOrElse(field, oldValue)
-    })
+    new json.JsObject((oldValues ++ newValues).toSeq.sortBy(_._1))
   }
 }
 import JsonMigration._
