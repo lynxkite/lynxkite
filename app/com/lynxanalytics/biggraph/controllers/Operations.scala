@@ -1028,7 +1028,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.SetOverlap(params("minOverlap").toInt)
       val res = op(op.belongsTo, seg.belongsTo).result
       project.edgeBundle = res.overlaps
-      project.edgeAttributes("Overlap size") = res.overlapSize
+      project.edgeAttributes("Overlap size") =
+        // Long is better supported on the frontend.
+        graph_operations.IntAttributeToLong.run(res.overlapSize)
     }
   })
 
