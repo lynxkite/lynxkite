@@ -101,14 +101,14 @@ class FindModularClusteringByTweaksTest extends FunSuite with ShouldMatchers wit
   test("cluster spectrum cuts two connected triangles") {
     import FindModularClusteringByTweaks._
     val edgeLists = Map(
-      // Two triangels connected by a single edge.
+      // Two triangles connected by a single edge.
       0L -> Seq((1L, 1.0), (2L, 1.0)),
       1L -> Seq((0L, 1.0), (2L, 1.0)),
       2L -> Seq((0L, 1.0), (1L, 1.0), (3L, 1.0)),
       3L -> Seq((2L, 1.0), (4L, 1.0), (5L, 1.0)),
       4L -> Seq((3L, 1.0), (5L, 1.0)),
       5L -> Seq((3L, 1.0), (4L, 1.0)),
-      // PLus one more dummy point.
+      // Plus one more dummy point.
       6L -> Seq((1L, 1.0), (3L, 1.0)))
 
     val degrees = edgeLists.mapValues(edges => edges.map(_._2).sum)
