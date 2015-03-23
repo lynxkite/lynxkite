@@ -492,9 +492,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.belongsTo = result.belongsTo
       segmentation.project.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
+
+      val symmetricDirection = Direction("all edges", project.edgeBundle)
+      val symmetricEdges = symmetricDirection.edgeBundle
+      val symmetricWeights = symmetricDirection.pull(weights)
       val modularity = {
         val op = graph_operations.Modularity()
-        op(op.edges, edgeBundle)(op.weights, weights)(op.belongsTo, result.belongsTo)
+        op(op.edges, symmetricEdges)(op.weights, symmetricWeights)(op.belongsTo, result.belongsTo)
           .result.modularity
       }
       segmentation.project.scalars("modularity") = modularity
