@@ -75,11 +75,15 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       };
 
       scope.saveAs = function(newName) {
+        scope.saving = true;
         util.post('/ajax/saveHistory', {
           newProject: newName,
           history: alternateHistory(),
         }, function() {
           scope.side.state.projectName = newName;
+          scope.side.showHistory = false;
+        }).then(function() {
+          scope.saving = false;
         });
       };
 
