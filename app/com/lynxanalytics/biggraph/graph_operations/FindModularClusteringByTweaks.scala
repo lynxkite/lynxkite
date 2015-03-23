@@ -156,6 +156,11 @@ object FindModularClusteringByTweaks extends OpFromJson {
       }
     }
 
+    // Represents the split (part1, members \ part1) as a +1/-1 vector.
+    def toPlusMinus(part1: Set[ID]): Array[Double] = {
+      indexedIds.map(id => if (part1.contains(id)) 1.0 else -1.0)
+    }
+
     // Tries to find an eigenvector with maximal eigenvalue. In essence, we use the power
     // iteration method as explained here:
     // http://en.wikipedia.org/wiki/Power_iteration

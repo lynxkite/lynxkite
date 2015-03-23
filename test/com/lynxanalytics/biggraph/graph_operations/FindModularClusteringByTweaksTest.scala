@@ -64,4 +64,66 @@ class FindModularClusteringByTweaksTest extends FunSuite with ShouldMatchers wit
     }
     assert(modularity > 0.45)
   }
+
+  test("cluster spectrum computes modularity change correctly") {
+    import FindModularClusteringByTweaks._
+    val rnd = new Random(0)
+    val edgeLists = (0 until 20)
+      .map(_ => (rnd.nextInt(10).toLong, rnd.nextInt(10).toLong, rnd.nextDouble() * 10))
+      .flatMap { case (from, to, weight) => Iterator((from, to, weight), (to, from, weight)) }
+      .groupBy(_._1)
+      .mapValues(friends => friends.groupBy(_._2).mapValues(weights => weights.map(_._3).sum).toSeq)
+
+    val degrees = edgeLists.mapValues(edges => edges.map(_._2).sum)
+    val totalDegreeSum = degrees.map(_._2).sum
+    val fullClusterMembers = Set(0L, 1L, 2L, 3L, 4L)
+    val fullCluster = ClusterData.fromMembers(fullClusterMembers, edgeLists)
+    val part1Members = Set(0L, 2L, 4L)
+    val part1 = ClusterData.fromMembers(part1Members, edgeLists)
+    val part2 = ClusterData.fromMembers(fullClusterMembers -- part1Members, edgeLists)
+    val realModularityChange =
+      part1.modularity(totalDegreeSum) + part2.modularity(totalDegreeSum) -
+        fullCluster.modularity(totalDegreeSum)
+    val spectrum = new ClusterSpectrum(
+      totalDegreeSum,
+      fullCluster,
+      fullClusterMembers,
+      degrees,
+      edgeLists)
+
+    val plusMinusOneVector = spectrum.toPlusMinus(part1Members)
+    val estimatedModularityChange =
+      spectrum.dot(plusMinusOneVector, spectrum.multiply(plusMinusOneVector)) / totalDegreeSum / 2.0
+
+    estimatedModularityChange should be(realModularityChange +- 1e-7)
+  }
+
+  test("cluster spectrum cuts two connected triangles") {
+    import FindModularClusteringByTweaks._
+    val edgeLists = Map(
+      // Two triangels connected by a single edge.
+      0L -> Seq((1L, 1.0), (2L, 1.0)),
+      1L -> Seq((0L, 1.0), (2L, 1.0)),
+      2L -> Seq((0L, 1.0), (1L, 1.0), (3L, 1.0)),
+      3L -> Seq((2L, 1.0), (4L, 1.0), (5L, 1.0)),
+      4L -> Seq((3L, 1.0), (5L, 1.0)),
+      5L -> Seq((3L, 1.0), (4L, 1.0)),
+      // PLus one more dummy point.
+      6L -> Seq((1L, 1.0), (3L, 1.0)))
+
+    val degrees = edgeLists.mapValues(edges => edges.map(_._2).sum)
+    val totalDegreeSum = degrees.map(_._2).sum
+    val fullClusterMembers = Set(0L, 1L, 2L, 3L, 4L, 5l)
+    val fullCluster = ClusterData.fromMembers(fullClusterMembers, edgeLists)
+    val spectrum = new ClusterSpectrum(
+      totalDegreeSum,
+      fullCluster,
+      fullClusterMembers,
+      degrees,
+      edgeLists)
+    val rnd = new Random(0)
+    val (clust1, clust2, _) = spectrum.bestSplit(rnd)
+    val clustWith0 = if (clust1.contains(0l)) clust1 else clust2
+    assert(clust1 == Set(0L, 1L, 2L))
+  }
 }
