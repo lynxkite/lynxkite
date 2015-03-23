@@ -103,11 +103,11 @@ object FEFilters {
       if (typeOf[T] =:= typeOf[String]) {
         val stringFilter = innerSpec match {
           case regexRE(re) => RegexFilter(re)
-          case csv => OneOf(csv.split(",").map(_.trim).toSet)
+          case csv => OneOf(csv.split(",", -1).map(_.trim).toSet)
         }
         stringFilter.asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[Long]) {
-        OneOf(innerSpec.split(",").map(_.trim.toLong).toSet)
+        OneOf(innerSpec.split(",", -1).map(_.trim.toLong).toSet)
           .asInstanceOf[Filter[T]]
       } else if (typeOf[T] =:= typeOf[Double]) {
         val doubleFilter = innerSpec match {

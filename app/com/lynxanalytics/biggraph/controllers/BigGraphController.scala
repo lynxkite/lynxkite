@@ -28,7 +28,7 @@ case class UIValue(
   id: String,
   title: String)
 object UIValue {
-  def fromEntity(e: MetaGraphEntity): UIValue = UIValue(e.gUID.toString, e.toString)
+  def fromEntity(e: MetaGraphEntity): UIValue = UIValue(e.gUID.toString, e.toStringStruct.toString)
   def list(list: List[String]) = list.map(id => UIValue(id, id))
 }
 
@@ -38,6 +38,7 @@ case class FEOperationMeta(
   id: String,
   title: String,
   parameters: List[FEOperationParameterMeta],
+  category: String = "",
   status: FEStatus = FEStatus.enabled,
   description: String = "")
 
@@ -151,9 +152,11 @@ case class ProjectHistory(
   def valid = steps.forall(_.status.enabled)
 }
 case class ProjectHistoryStep(
-  op: FEOperationMeta,
   request: ProjectOperationRequest,
-  status: FEStatus)
+  status: FEStatus,
+  segmentationsBefore: List[FESegmentation],
+  segmentationsAfter: List[FESegmentation],
+  opCategoriesBefore: List[OperationCategory])
 
 // An ordered bundle of metadata types.
 case class MetaDataSeq(vertexSets: List[VertexSet] = List(),
@@ -250,7 +253,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     FEVertexSet(
       id = vs.gUID.toString,
-      title = vs.toString,
+      title = vs.toStringStruct.toString,
       inEdges = (in -- local).toList.map(toFE(_)),
       outEdges = (out -- local).toList.map(toFE(_)),
       localEdges = local.toList.map(toFE(_)),
@@ -262,7 +265,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val visibleAttributes = metaManager.attributes(eb).filter(metaManager.isVisible(_))
     FEEdgeBundle(
       id = eb.gUID.toString,
-      title = eb.toString,
+      title = eb.toStringStruct.toString,
       source = UIValue.fromEntity(eb.srcVertexSet),
       destination = UIValue.fromEntity(eb.dstVertexSet),
       attributes = visibleAttributes.map(UIValue.fromEntity(_)).toList)
@@ -306,6 +309,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
+    Project.validateName(request.name)
     val p = Project(request.name)
     assert(!Operation.projects.contains(p), s"Project ${request.name} already exists.")
     p.notes = request.notes
@@ -330,6 +334,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
+    Project.validateName(request.to)
     val p = Project(request.from)
     p.assertWriteAllowedFrom(user)
     p.copy(Project(request.to))
@@ -358,6 +363,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
+    Project.validateName(request.to)
     val p1 = Project(request.from)
     val p2 = Project(request.to)
     p1.assertReadAllowedFrom(user)
@@ -439,18 +445,24 @@ class BigGraphController(val env: BigGraphEnvironment) {
         val recipient = Project(new SymbolPath(fullPath).toString)
         val ctx = Operation.Context(user, recipient)
         val op = ops.opById(ctx, request.op.id)
+        val segmentationsBefore = state.toFE.segmentations
+        val opCategoriesBefore = ops.categories(user, recipient)
+        def newStep(status: FEStatus) = {
+          val segmentationsAfter = state.toFE.segmentations
+          ProjectHistoryStep(request, status, segmentationsBefore, segmentationsAfter, opCategoriesBefore)
+        }
         if (op.enabled.enabled) {
           try {
             recipient.checkpoint(op.toString, request) {
               op.apply(request.op.parameters)
             }
-            steps :+ ProjectHistoryStep(op.toFE, request, FEStatus.enabled)
+            steps :+ newStep(FEStatus.enabled)
           } catch {
             case t: Throwable =>
-              steps :+ ProjectHistoryStep(op.toFE, request, FEStatus.disabled(t.getMessage))
+              steps :+ newStep(FEStatus.disabled(t.getMessage))
           }
         } else {
-          steps :+ ProjectHistoryStep(op.toFE, request, op.enabled)
+          steps :+ newStep(op.enabled)
         }
       }
       val history = ProjectHistory(p.projectName, request.skips, steps)
@@ -467,6 +479,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
+    Project.validateName(request.newProject)
     val p = Project(request.newProject)
     assert(!Operation.projects.contains(p), s"Project $p already exists.")
     alternateHistory(user, request.history, Some(p))
@@ -487,7 +500,8 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
   def apply(params: Map[String, String]): Unit
-  def toFE: FEOperationMeta = FEOperationMeta(id, title, parameters, enabled, description)
+  def toFE: FEOperationMeta =
+    FEOperationMeta(id, title, parameters, category.title, enabled, description)
   protected def scalars[T: TypeTag] =
     UIValue.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
@@ -509,15 +523,25 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   }
 }
 object Operation {
-  case class Category(title: String, color: String, visible: Boolean = true) {
-    val icon = title.take(1) // The "icon" in the operation toolbox.
+  case class Category(
+      title: String,
+      color: String, // A color class from web/app/styles/operation-toolbox.css.
+      visible: Boolean = true,
+      icon: String = "", // Glyphicon name, or empty for first letter of title.
+      sortKey: String = null // Categories are ordered by this. The title is used by default.
+      ) extends Ordered[Category] {
+    private val safeSortKey = Option(sortKey).getOrElse(title)
+    def compare(that: Category) = this.safeSortKey compare that.safeSortKey
+    def toFE(ops: List[FEOperationMeta]): OperationCategory =
+      OperationCategory(title, icon, color, ops)
   }
 
   case class Context(user: serving.User, project: Project)
 
   def projects(implicit manager: MetaGraphManager): Seq[Project] = {
     val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
-    dirs.map(p => Project(p.path.last.name))
+    // Do not list internal project names (starting with "!").
+    dirs.map(p => Project(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
   }
 }
 
@@ -531,10 +555,10 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def categories(user: serving.User, project: Project): List[OperationCategory] = {
     val context = Operation.Context(user, project)
     val cats = forContext(context).groupBy(_.category).toList
-    cats.filter(_._1.visible).sortBy(_._1.title).map {
+    cats.filter(_._1.visible).sortBy(_._1).map {
       case (cat, ops) =>
         val feOps = ops.map(_.toFE).sortBy(_.title).toList
-        OperationCategory(cat.title, cat.icon, cat.color, feOps)
+        cat.toFE(feOps)
     }
   }
 

@@ -10,19 +10,18 @@ object CollectAttribute extends OpFromJson {
     implicit val tt = inputs.attr.typeTag
     val idToAttr = scalar[Map[ID, T]]
   }
-  def fromJson(j: JsValue) = CollectAttribute((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
+  def fromJson(j: JsValue) = CollectAttribute((j \ "idSet").as[Set[ID]])
 }
 import CollectAttribute._
 case class CollectAttribute[T](
-    idSet: Set[ID],
-    maxCount: Int = 1000) extends TypedMetaGraphOp[VertexAttributeInput[T], Output[T]] {
+    idSet: Set[ID]) extends TypedMetaGraphOp[VertexAttributeInput[T], Output[T]] {
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("idSet" -> idSet, "maxCount" -> maxCount)
+  override def toJson = Json.obj("idSet" -> idSet)
 
   def execute(inputDatas: DataSet, o: Output[T], output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
-    val ids = idSet.toIndexedSeq.sorted.take(maxCount)
+    val ids = idSet.toIndexedSeq.sorted
     val restricted = inputs.attr.rdd.restrictToIdSet(ids)
     output(o.idToAttr, restricted.collect.toMap)
   }

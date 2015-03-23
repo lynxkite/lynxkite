@@ -88,6 +88,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[DeadClass2])
     kryo.register(classOf[DeadClass3])
     kryo.register((0.0, 0.0).getClass)
+    kryo.register(math.Numeric.LongIsIntegral.getClass)  // For using NumericRanges with sc.parallelize.
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

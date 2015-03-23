@@ -1,11 +1,15 @@
-<p ng-if="op.description" class="list-group-item description"
-  ng-bind-html="op.description | trustAsHtml"></p>
-<p ng-if="op.parameters.length === 0" class="list-group-item text-center">
-  No parameters
-</p>
-<form ng-if="op.parameters" class="form-horizontal list-group-item" ng-submit="apply()">
-  <operation-parameters input="op.parameters" output="params" busy="$parent.busy"></operation-parameters>
-</form>
-<div tabindex="0" ng-click="apply()" class="list-group-item ok-button text-center">
-  {{running || busy ? '...' : 'OK'}}
+<div class="panel box col-sm-11 {{color}}">
+  <h1>{{op.title}}</h1>
+
+  <p ng-if="op.description" class="list-group-item description"
+    ng-bind-html="op.description | trustAsHtml"></p>
+  <p ng-if="op.parameters.length === 0" class="list-group-item text-center">
+    No parameters
+  </p>
+  <form ng-if="op.parameters" class="form-horizontal list-group-item" ng-submit="apply()">
+    <operation-parameters input="op.parameters" output="params" busy="$parent.busy"></operation-parameters>
+  </form>
+  <div tabindex="0" ng-click="apply()" class="list-group-item ok-button text-center operation-apply-button">
+    {{applying || busy ? '...' : 'OK'}}
+  </div>
 </div>

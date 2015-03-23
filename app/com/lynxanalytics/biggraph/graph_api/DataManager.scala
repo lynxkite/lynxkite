@@ -90,18 +90,18 @@ class DataManager(sc: spark.SparkContext,
   private def load[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
     future {
       blocking {
-        log.info(s"PERF Loading scalar $scalar of GUID ${scalar.gUID} from disk")
+        log.info(s"PERF Loading scalar $scalar from disk")
         val ois = new java.io.ObjectInputStream(serializedScalarFileName(entityPath(scalar)).open())
         val value = ois.readObject.asInstanceOf[T]
         ois.close()
-        log.info(s"PERF Scalar of GUID ${scalar.gUID} loaded from disk")
+        log.info(s"PERF Scalar $scalar loaded from disk")
         new ScalarData[T](scalar, value)
       }
     }
   }
 
   private def load(entity: MetaGraphEntity): Future[EntityData] = {
-    log.info(s"PERF Found entity $entity of GUID ${entity.gUID} on disk")
+    log.info(s"PERF Found entity $entity on disk")
     entity match {
       case vs: VertexSet => load(vs)
       case eb: EdgeBundle => load(eb)
@@ -127,7 +127,7 @@ class DataManager(sc: spark.SparkContext,
     futureInputs.map { inputs =>
       val inputDatas = DataSet(inputs.toMap)
       instance.outputs.scalars.values
-        .foreach(scalar => log.info(s"PERF Computing scalar $scalar of GUID ${scalar.gUID}"))
+        .foreach(scalar => log.info(s"PERF Computing scalar $scalar"))
       val outputDatas = blocking {
         instance.run(inputDatas, runtimeContext)
       }
@@ -148,7 +148,7 @@ class DataManager(sc: spark.SparkContext,
         successPath(instancePath(instance)).createFromStrings("")
       }
       instance.outputs.scalars.values
-        .foreach(scalar => log.info(s"PERF Computed scalar of GUID ${scalar.gUID}"))
+        .foreach(scalar => log.info(s"PERF Computed scalar $scalar"))
       outputDatas
     }
   }
@@ -254,18 +254,18 @@ class DataManager(sc: spark.SparkContext,
     log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>
-        log.info(s"PERF Instantiating entity $entity of GUID ${entity.gUID} on disk")
+        log.info(s"PERF Instantiating entity $entity on disk")
         entityPath(entity).saveAsObjectFile(rddData.rdd)
-        log.info(s"PERF Instantiated entity of GUID ${entity.gUID} on disk")
+        log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
-        log.info(s"PERF Writing scalar $entity of GUID ${entity.gUID} to disk")
+        log.info(s"PERF Writing scalar $entity to disk")
         val targetDir = entityPath(entity)
         targetDir.mkdirs
         val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
         oos.writeObject(scalarData.value)
         oos.close()
         successPath(targetDir).createFromStrings("")
-        log.info(s"PERF Written scalar of GUID ${entity.gUID} to disk")
+        log.info(s"PERF Written scalar $entity to disk")
       }
     }
     log.info(s"Entity $entity saved.")

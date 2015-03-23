@@ -17,24 +17,23 @@ object SampledView extends OpFromJson {
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
     val vertexIndices = scalar[Map[ID, Int]]
   }
-  def fromJson(j: JsValue) = SampledView((j \ "idSet").as[Set[ID]], (j \ "maxCount").as[Int])
+  def fromJson(j: JsValue) = SampledView((j \ "idSet").as[Set[ID]])
 }
 import SampledView._
 case class SampledView(
-    idSet: Set[ID],
-    maxCount: Int = 1000) extends TypedMetaGraphOp[Input, Output] {
+    idSet: Set[ID]) extends TypedMetaGraphOp[Input, Output] {
 
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = Json.obj("idSet" -> idSet, "maxCount" -> maxCount)
+  override def toJson = Json.obj("idSet" -> idSet)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
     implicit val instance = output.instance
 
     val filtered = inputs.filtered.rdd
-    val ids = idSet.toIndexedSeq.sorted.take(maxCount)
+    val ids = idSet.toIndexedSeq.sorted
     val idFiltered = filtered.restrictToIdSet(ids)
     val svVertices = idFiltered.keys.collect.toSeq
     val idToIdx = svVertices.zipWithIndex.toMap

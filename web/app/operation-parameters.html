@@ -16,7 +16,7 @@
       ng-if="param.options.length > 0 && param.multipleChoice"
       multiple
       class="form-control"
-      ng-model="output[param.id]"
+      ng-model="multiOutput[param.id]"
       ng-options="option.id as option.title for option in param.options"></select>
   </div>
 </div>

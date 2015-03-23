@@ -17,7 +17,7 @@ object SymbolPath {
   import scala.language.implicitConversions
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
   implicit def fromString(str: String): SymbolPath =
-    str.split("/").toSeq.map(Symbol(_))
+    str.split("/", -1).toSeq.map(Symbol(_))
   implicit def fromSymbol(sym: Symbol): SymbolPath = fromString(sym.name)
 }
 

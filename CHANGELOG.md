@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Previously hidden utility operations (like _"Delete vertex attribute"_) are now revealed
+   on the interface. This is so that they can be accessed when editing the history.
  - Import and simple operations should now work even if there is insufficient memory to
    hold the entire graph.
  - New icons: `triangle`, `pentagon`, `star`, `sim`, `radio`.
@@ -15,8 +17,8 @@ Please add changes at the top. When releasing a version add a new header for tha
    you can import from a tab delimited file using `\t` as the value of the delimiter
    parameter.)
  - Project history (the list of operations that have been applied) can now be viewed and
-   also edited. This is an experimental feature. Operations cannot be deleted or inserted
-   yet. Operations from earlier versions cannot be viewed or edited.
+   also edited. This is an experimental feature. Operations from earlier versions cannot be
+   viewed or edited.
  - Fixed an issue with undo. The fix introduces an undo incompatibility. Operations
    from earlier versions cannot be undone after the upgrade.
  - Added a "Filter by attributes" operation. This is identical to filtering the usual way.
