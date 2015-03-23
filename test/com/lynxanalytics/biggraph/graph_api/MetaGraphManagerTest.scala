@@ -130,9 +130,9 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
     // The old tags point to the successfully migrated entities.
-    assert(m.vertexSet("one").toString ==
+    assert(m.vertexSet("one").toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(m.edgeBundle("two").toString ==
+    assert(m.edgeBundle("two").toStringStruct.toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
 
