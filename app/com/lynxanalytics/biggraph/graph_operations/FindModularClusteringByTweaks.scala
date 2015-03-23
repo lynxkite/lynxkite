@@ -92,9 +92,9 @@ object FindModularClusteringByTweaks extends OpFromJson {
    * s^T M s
    *
    * For a normalized eigenvector w with eigenvalue \lambda we have w^T M w = \lambda. Any vector v
-   * can be expressed as a linear combination of orhonormal eigenvectors, v = \sum a_i w_i. Then:
+   * can be expressed as a linear combination of orthonormal eigenvectors, v = \sum a_i w_i. Then:
    * v^T M v = \sum a_i^2 \lambda_i
-   * This shows that to achive the largest value for v^T M v, we have to choose an eigenvector
+   * This shows that to achieve the largest value for v^T M v, we have to choose an eigenvector
    * with the largest possible eigenvalue.
    * Unfortunately, that normally won't be a -1/+1 vector. So to actually get a split candidate,
    * we take this maximally positive eigenvector, and replace <0 numbers with -1 and >=0 numbers
@@ -125,7 +125,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
 
     // See the above article for details, but sparseMatrix is basically the weighted adjecency
     // matrix of the graph restricted to the cluster. There is an additional correction
-    // applied to the diagonal elements that makes sure all raws (and columns) sum up to 0.
+    // applied to the diagonal elements that makes sure all rows (and columns) sum up to 0.
     val sparseMatrix: Array[Array[(Int, Double)]] = indexedIds.map { id =>
       val insideConnections = restrictedEdgeLists
         .getOrElse(id, List())
