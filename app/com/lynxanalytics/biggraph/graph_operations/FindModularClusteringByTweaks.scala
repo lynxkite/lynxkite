@@ -209,6 +209,9 @@ object FindModularClusteringByTweaks extends OpFromJson {
       current
     }
 
+    // Returns (part1, part2, modularityDelta) where part1 and part2 is a partitioning of
+    // the cluster into two parts and modularityDelta is the increase in modularity if
+    // we split the cluster into these two parts.
     def bestSplit(rnd: Random): (Set[ID], Set[ID], Double) = {
       val eigenVector = findBestEigenVector(rnd)
       val asPlusMinus = eigenVector.map(x => if (x < 0) -1.0 else 1.0)
