@@ -26,7 +26,7 @@ sealed trait MetaGraphEntity extends Serializable {
     objectStream.close()
     UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
-  override def toString = toStringStruct.toString
+  override def toString = s"$gUID (${name.name} of $source)"
   lazy val toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
   def manager = source.manager
 }
@@ -391,7 +391,6 @@ trait MetaGraphOp extends Serializable with ToJson {
     UUID.nameUUIDFromBytes((contents + version).getBytes)
   }
 
-  override def toString = toStringStruct.toString
   def toStringStruct = ReflectionMutex.synchronized {
     val mirror = reflect.runtime.currentMirror.reflect(this)
     val className = mirror.symbol.name.toString
@@ -448,7 +447,7 @@ trait MetaGraphOperationInstance {
 
   def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData]
 
-  override def toString = toStringStruct.toString
+  override def toString = s"$gUID ($operation)"
   lazy val toStringStruct: StringStruct = {
     val op = operation.toStringStruct
     val fixed = mutable.Set[UUID]()
