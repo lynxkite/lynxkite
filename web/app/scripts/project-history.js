@@ -80,9 +80,11 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           newProject: newName,
           history: alternateHistory(),
         }, function() {
+          // On success.
           scope.side.state.projectName = newName;
           scope.side.showHistory = false;
         }).then(function() {
+          // On completion, regardless of success.
           scope.saving = false;
         });
       };
