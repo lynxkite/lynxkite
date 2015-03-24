@@ -324,6 +324,12 @@ angular.module('biggraph')
       $location.url('/');
     };
 
+    Side.prototype.maybeSaveAs = function(newName) {
+      // Called by whenever the button is clicked, but perhaps the input is still empty.
+      if (newName === undefined || newName === '') { return; }
+      this.saveAs(newName);
+    };
+
     Side.prototype.saveAs = function(newName) {
       var that = this;
       util.post('/ajax/forkProject',
