@@ -481,10 +481,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
     Project.validateName(request.newProject)
     val p = Project(request.newProject)
-    assert(!Operation.projects.contains(p), s"Project $p already exists.")
-    alternateHistory(user, request.history, Some(p))
-    if (!p.writeAllowedFrom(user)) {
-      p.writeACL += "," + user.email
+    if (request.newProject != request.history.project) {
+      // Saving under a new name.
+      assert(!Operation.projects.contains(p), s"Project $p already exists.")
+      alternateHistory(user, request.history, Some(p))
+      if (!p.writeAllowedFrom(user)) {
+        p.writeACL += "," + user.email
+      }
+    } else {
+      // Overwriting the original project.
+      p.assertWriteAllowedFrom(user)
+      alternateHistory(user, request.history, Some(p))
     }
   }
 }

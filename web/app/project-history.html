@@ -18,26 +18,36 @@
     </div>
 
     <div class="btn-group pull-right" ng-if="localChanges || remoteChanges">
+      <!-- Invalid local changes. -->
       <label class="btn btn-warning" ng-if="localChanges && localValidationResult() !== 'ok'"
         tooltip="Not ready for validation: {{localValidationResult()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
       </label>
+      <!-- Valid local changes. -->
       <label class="btn btn-default" ng-if="localChanges && localValidationResult() === 'ok'" ng-click="validate()"
         tooltip="Validate&nbsp;history {{listLocalChanges()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-ok"></i>
       </label>
+      <!-- Invalid remote changes. -->
       <label class="btn btn-warning" ng-if="!localChanges && !valid"
         tooltip="History is inconsitent {{listInvalidSteps()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
       </label>
-      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid" ng-click="showSaveAs = true"
-        tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
-        <form ng-submit="saveAs(saveAsName)" style="display: inline;" ng-show="showSaveAs">
-          <!-- The input box closes if it loses focus while empty. -->
-          <input class="form-control save-as" ng-model="saveAsName" ng-blur="showSaveAs = saveAsName">
+      <!-- Valid remote changes. "Save as" box is closed. -->
+      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid && !showSaveAs"
+        ng-click="$parent.showSaveAs = true; $parent.saveAsName = side.state.projectName;"
+        tooltip="History is valid. Click to save." tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-floppy-disk"></i>
+      </label>
+      <!-- Valid remote changes. "Save as" box is open. -->
+      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid && showSaveAs"
+        ng-click="saveAs(saveAsName)"
+        tooltip="Click the icon to save as {{saveAsName}}" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <form ng-submit="saveAs(saveAsName)" style="display: inline;">
+          <input class="form-control save-as" ng-disabled="saving"
+            ng-model="saveAsName" ng-click="$event.stopPropagation()">
         </form>
-        <!-- The floppy sends the request if something has been entered. -->
-        <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? saveAs(saveAsName) : 0"></i>
+        <i class="glyphicon glyphicon-floppy-disk"></i>
       </label>
     </div>
 

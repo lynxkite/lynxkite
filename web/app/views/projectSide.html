@@ -55,14 +55,20 @@
           tooltip="Redo {{side.project.redoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-forward"></i>
         </label>
-        <label class="btn btn-default" ng-click="saveAs = true"
+        <!-- "Save as" is closed. The floppy reveals the input box. -->
+        <label class="btn btn-default" ng-click="showSaveAs = true; saveAsName = ''" ng-hide="showSaveAs"
           tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
-          <form ng-submit="side.saveAs(saveAsName)" style="display: inline;" ng-show="saveAs">
-            <!-- The input box closes if it loses focus while empty. -->
-            <input class="form-control save-as" ng-model="saveAsName" ng-blur="saveAs = saveAsName">
+          <i class="glyphicon glyphicon-floppy-disk"></i>
+        </label>
+        <!-- "Save as" is open. The floppy sends the request (if something was entered) and hides the input box. -->
+        <label class="btn btn-default" ng-show="showSaveAs"
+          ng-click="side.maybeSaveAs(saveAsName); showSaveAs = false;"
+          tooltip="{{saveAsName === '' ? 'Enter new name' : 'Click the icon to save as ' + saveAsName}}"
+          tooltip-append-to-body="true" tooltip-placement="bottom">
+          <form ng-submit="side.saveAs(saveAsName)" style="display: inline;">
+            <input class="form-control save-as" ng-model="saveAsName" ng-click="$event.stopPropagation();">
           </form>
-          <!-- The floppy sends the request if something has been entered. -->
-          <i class="glyphicon glyphicon-floppy-disk" ng-click="saveAsName ? side.saveAs(saveAsName) : 0"></i>
+          <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
         <label class="btn btn-default" ng-click="showSettings = !showSettings"
           tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom"
