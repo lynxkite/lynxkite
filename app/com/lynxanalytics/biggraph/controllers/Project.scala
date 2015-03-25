@@ -190,7 +190,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def aclContains(acl: String, user: User): Boolean = {
     // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
     // We translate this to a regex for checking.
-    val regex = acl.replace(".", "\\.").replace(",", "|").replace("*", ".*")
+    val regex = acl.replace(" ", "").replace(".", "\\.").replace(",", "|").replace("*", ".*")
     user.email.matches(regex)
   }
 
