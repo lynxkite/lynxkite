@@ -22,7 +22,10 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         }
       });
       scope.util = util;
-      scope.data = util.nocache('/ajax/splash');
+      function refresh() {
+        scope.data = util.nocache('/ajax/splash');
+      }
+      refresh();
       scope.$watch('data.version', function(v) { scope.version = v; });
       function getScalar(p, name) {
         for (var i = 0; i < p.scalars.length; ++i) {
@@ -83,23 +86,16 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.menu = {
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
-          util.post('/ajax/renameProject', { from: oldName, to: newName }, function() {
-            // refresh splash manually
-            scope.data = util.nocache('/ajax/splash');
-          });
+          util.post('/ajax/renameProject', { from: oldName, to: newName }, refresh);
         },
         duplicate: function(kind, p) {
-          util.post('/ajax/forkProject', { from: p, to: 'Copy of ' + p }, function() {
-          // refresh splash manually
-          scope.data = util.nocache('/ajax/splash');
-          });
+          util.post('/ajax/forkProject', { from: p, to: 'Copy of ' + p }, refresh);
         },
         discard: function(kind, p) {
-          if (window.confirm('Are you sure you want to discard project ' + util.spaced(p) + '?')) {
-            util.post('/ajax/discardProject', { name: p }, function() {
-              // refresh splash manually
-              scope.data = util.nocache('/ajax/splash');
-            });
+          var message = 'Permanently delete project ' + util.spaced(p) + '?';
+          message += ' (If it is a shared project, it will be deleted for everyone.)';
+          if (window.confirm(message)) {
+            util.post('/ajax/discardProject', { name: p }, refresh);
           }
         }
       };
