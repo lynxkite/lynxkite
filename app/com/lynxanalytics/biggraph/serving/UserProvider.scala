@@ -180,6 +180,9 @@ object UserProvider extends mvc.Controller {
       s"Only administrators can create new users. $user is not an administrator.")
     assert(req.email.nonEmpty, "User name missing")
     assert(req.password.nonEmpty, "Password missing")
+    val letters = "abcdefghijklmnopqrstuvwxyz"
+    val allowed = letters + letters.toUpperCase + "._-@"
+    assert(req.email.forall(allowed.contains(_)), "User name contains disallowed characters.")
     assert(!users.contains(req.email), s"User name ${req.email} is already taken.")
     users(req.email) = UserOnDisk(req.email, hash(req.password), req.isAdmin)
     saveUsers()
