@@ -14,6 +14,8 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modal
     body += '\n\nExtra info:';
     body += '\n\n' + $scope.details;
   }
+  // Limit body length to 800 characters to avoid hitting mailto limitations.
+  body = body.slice(0, 800);
 
   $scope.mailto = (
     'mailto:' + support +
