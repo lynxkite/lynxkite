@@ -19,3 +19,10 @@
   color: darkred;
   cursor: pointer;
 }
+
+.value-error + .tooltip > .tooltip-inner {
+  background: darkred;
+}
+.value-error + .tooltip > .tooltip-arrow {
+  border-top-color: darkred;
+}
