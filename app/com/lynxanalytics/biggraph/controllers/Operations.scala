@@ -2019,7 +2019,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     """
     def parameters =
       vertexAttributes.toList.map { attr => Param(s"filterva-${attr.id}", attr.id) } ++
-        project.segmentations.toList.map { seg => Param(s"filterva-${seg.equivalentAttribute.title}", seg.name) } ++
+        project.segmentations.toList.map { seg => Param(s"filterva-${seg.equivalentUIAttribute.title}", seg.name) } ++
         edgeAttributes.toList.map { attr => Param(s"filterea-${attr.id}", attr.id) }
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") ||
@@ -2037,8 +2037,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val vertexFilters = params.collect {
         case (vaFilter(name), filter) if filter.nonEmpty =>
-          // The filter may be for a segmentation's equivalentAttribute or for a vertex attribute.
-          val segAttrs = project.segmentations.map(_.equivalentAttribute)
+          // The filter may be for a segmentation's equivalent attribute or for a vertex attribute.
+          val segAttrs = project.segmentations.map(_.equivalentUIAttribute)
           val segGUIDOpt = segAttrs.find(_.title == name).map(_.id)
           val gUID = segGUIDOpt.getOrElse(project.vertexAttributes(name).gUID)
           FEVertexAttributeFilter(gUID.toString, filter)
