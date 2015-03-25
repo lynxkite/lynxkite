@@ -496,14 +496,18 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   val path: SymbolPath = s"projects/$parentName/checkpointed/segmentations/$name"
   def project = Project(s"$parentName/checkpointed/segmentations/$name/project")
 
+  def equivalentAttribute = {
+    val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
+    UIValue(id = bta, title = s"segmentation[$name]")
+  }
+
   def toFE = {
     val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
-    val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
     FESegmentation(
       name,
       project.projectName,
       bt,
-      UIValue(id = bta, title = "segmentation[%s]".format(name)))
+      equivalentAttribute)
   }
   def belongsTo = {
     Project.withErrorLogging(s"Cannot get 'belongsTo' for $this") {
