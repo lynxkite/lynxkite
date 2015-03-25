@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Error reports now go to `support@lynxanalytics.freshdesk.com` instead of
+   `pizza-support@lynxanalytics.com`.
  - Previously hidden utility operations (like _"Delete vertex attribute"_) are now revealed
    on the interface. This is so that they can be accessed when editing the history.
  - Import and simple operations should now work even if there is insufficient memory to
