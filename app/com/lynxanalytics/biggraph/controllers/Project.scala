@@ -496,7 +496,7 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   val path: SymbolPath = s"projects/$parentName/checkpointed/segmentations/$name"
   def project = Project(s"$parentName/checkpointed/segmentations/$name/project")
 
-  def equivalentAttribute = {
+  def equivalentUIAttribute = {
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
     UIValue(id = bta, title = s"segmentation[$name]")
   }
@@ -507,7 +507,7 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
       name,
       project.projectName,
       bt,
-      equivalentAttribute)
+      equivalentUIAttribute)
   }
   def belongsTo = {
     Project.withErrorLogging(s"Cannot get 'belongsTo' for $this") {
