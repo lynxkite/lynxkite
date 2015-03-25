@@ -1,5 +1,5 @@
 # Name of the cluster.
-CLUSTER_NAME=$USER
+CLUSTER_NAME=${USER}-cluster
 
 # Number of worker instances in the cluster.
 NUM_INSTANCES=3
