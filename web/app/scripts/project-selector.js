@@ -92,7 +92,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           util.post('/ajax/forkProject', { from: p, to: 'Copy of ' + p }, refresh);
         },
         discard: function(kind, p) {
-          if (window.confirm('Permanently delete project ' + util.spaced(p) + '?')) {
+          var message = 'Permanently delete project ' + util.spaced(p) + '?';
+          message += ' (If it is a shared project, it will be deleted for everyone.)';
+          if (window.confirm(message)) {
             util.post('/ajax/discardProject', { name: p }, refresh);
           }
         }
