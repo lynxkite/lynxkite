@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Fixed a bug that caused "hard" filtering to segmentations to fail.
  - Spaces in ACL lists are now ignored.
  - Error reports now go to `support@lynxanalytics.freshdesk.com` instead of
    `pizza-support@lynxanalytics.com`.
