@@ -19,7 +19,7 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modal
 
   $scope.mailto = (
     'mailto:' + support +
-    '?subject=' + encodeURIComponent('[Issue] ' + $scope.message.substr(0, 60)) +
+    '?subject=' + encodeURIComponent('⚠ ' + $scope.message.substr(0, 60)) +
     '&body=' + encodeURIComponent(body)
     );
 
