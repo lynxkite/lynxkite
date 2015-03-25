@@ -288,7 +288,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "ms" -> "0"),
       on = seg)
     assert(belongsTo.size == 5)
-    val similarity = seg.vertexAttributes("fingerprinting similarity score")
+    val similarity = seg.vertexAttributes("fingerprinting_similarity_score")
       .runtimeSafeCast[Double].rdd.values.collect
     assert(similarity.size == 5)
     assert(similarity.filter(_ > 0).size == 2)
@@ -361,7 +361,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "iterations" -> "1",
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
-    val viral = project.vertexAttributes("viral num after iteration 1").runtimeSafeCast[Double]
+    val viral = project.vertexAttributes("viral_num_after_iteration_1").runtimeSafeCast[Double]
     val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
     assert(remapIDs(viral, stringID).collect.toMap == Map(
       "0" -> 0.5,
@@ -406,7 +406,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "iterations" -> "3",
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
-    val viral = project.vertexAttributes("viral num after iteration 3").runtimeSafeCast[Double]
+    val viral = project.vertexAttributes("viral_num_after_iteration_3").runtimeSafeCast[Double]
     assert(remapIDs(viral, stringID).collect.toSeq.sorted == Seq(
       "0" -> 0.0,
       "1" -> 0.0,
@@ -419,7 +419,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "30" -> 3.5,
       "4" -> 3.0,
       "5" -> 4.0))
-    val spread = project.vertexAttributes("viral num spread over iterations").runtimeSafeCast[Double]
+    val spread = project.vertexAttributes("viral_num_spread_over_iterations").runtimeSafeCast[Double]
     assert(remapIDs(spread, stringID).collect.toSeq.sorted == Seq(
       "0" -> 0.0,
       "1" -> 0.0,
@@ -442,7 +442,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "iterations" -> "3",
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
-    val viral2 = project.vertexAttributes("viral2 num after iteration 3").runtimeSafeCast[Double]
+    val viral2 = project.vertexAttributes("viral2_num_after_iteration_3").runtimeSafeCast[Double]
     assert(remapIDs(viral2, stringID).collect.toSeq.sorted == Seq(
       "0" -> 0.0,
       "1" -> 0.0,
@@ -455,7 +455,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "30" -> 3.5,
       "4" -> 3.0,
       "5" -> 4.0))
-    val spread2 = project.vertexAttributes("viral2 num spread over iterations").runtimeSafeCast[Double]
+    val spread2 = project.vertexAttributes("viral2_num_spread_over_iterations").runtimeSafeCast[Double]
     assert(remapIDs(spread2, stringID).collect.toSeq.sorted == Seq(
       "0" -> 0.0,
       "1" -> 0.0,
@@ -478,7 +478,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "iterations" -> "2",
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.0"), on = project.segmentation("cliques").project)
-    val roles3 = project.vertexAttributes("viral3 roles").runtimeSafeCast[String]
+    val roles3 = project.vertexAttributes("viral3_roles").runtimeSafeCast[String]
     assert(remapIDs(roles3, stringID).collect.toSeq.sorted == Seq(
       "0" -> "train",
       "1" -> "train",
