@@ -1845,8 +1845,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       project.scalars("fingerprinting matches found") = count(fingerprinting.matching)
       seg.belongsTo = fingerprinting.matching
-      parent.vertexAttributes("fingerprinting similarity score") = fingerprinting.leftSimilarities
-      project.vertexAttributes("fingerprinting similarity score") = fingerprinting.rightSimilarities
+      parent.vertexAttributes("fingerprinting_similarity_score") = fingerprinting.leftSimilarities
+      project.vertexAttributes("fingerprinting_similarity_score") = fingerprinting.rightSimilarities
     }
   })
 
@@ -1892,8 +1892,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.attr, target)(op.role, roles).result
       }
       val prefix = params("prefix")
-      parent.vertexAttributes(s"$prefix roles") = roles
-      parent.vertexAttributes(s"$prefix $targetName test") = parted.test
+      parent.vertexAttributes(s"${prefix}_roles") = roles
+      parent.vertexAttributes(s"${prefix}_${targetName}_test") = parted.test
       var train = parted.train.entity
       val segSizes = computeSegmentSizes(seg)
       project.vertexAttributes("size") = segSizes
@@ -1903,7 +1903,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val op = graph_operations.CountAttributes[Double]()
         op(op.attribute, train).result.count
       }
-      parent.vertexAttributes(s"$prefix $targetName train") = train
+      parent.vertexAttributes(s"${prefix}_${targetName}_train") = train
       parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
       var timeOfDefinition = {
@@ -1946,9 +1946,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
             .result.attr
         }
-        project.vertexAttributes(s"$prefix $targetName standard deviation after iteration $i") =
+        project.vertexAttributes(s"${prefix}_${targetName}_standard_deviation_after_iteration_$i") =
           segStdDev
-        project.vertexAttributes(s"$prefix $targetName average after iteration $i") =
+        project.vertexAttributes(s"${prefix}_${targetName}_average_after_iteration_$i") =
           segTargetAvg // TODO: use median
         val predicted = {
           aggregateViaConnection(
@@ -1975,7 +1975,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           op(op.attribute, partedTrain.train).result.count
         }
         // the attribute we use for iteration can be defined on the test set as well
-        parent.vertexAttributes(s"$prefix $targetName after iteration $i") = train
+        parent.vertexAttributes(s"${prefix}_${targetName}_after_iteration_$i") = train
         parent.scalars(s"$prefix $targetName coverage after iteration $i") = coverage
         parent.scalars(s"$prefix $targetName mean absolute prediction error after iteration $i") =
           error
@@ -1988,7 +1988,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           unifyAttributeT(timeOfDefinition, newDefinitions)
         }
       }
-      parent.vertexAttributes(s"$prefix $targetName spread over iterations") = timeOfDefinition
+      parent.vertexAttributes(s"${prefix}_${targetName}_spread_over_iterations") = timeOfDefinition
       // TODO: in the end we should calculate with the fact that the real error where the
       // original attribute is defined is 0.0
     }
