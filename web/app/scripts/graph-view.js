@@ -764,24 +764,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var width = vertices.halfColumnWidth * 2;
     var height = this.svg.height();
     var newZoom = zoomFor(xb, yb, width, height) || offsetter.zoom;
-    var newPan;
+    var newPan = panFor(xb, yb, offsetter.zoom, width, height, vertices.xMin);
     // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
     var ratio = newZoom / offsetter.zoom;
-    if (!offsetter.inherited || ratio < 0.1 || ratio > 10) {
+    if (!offsetter.inherited ||
+        ratio < 0.1 || ratio > 10 ||
+        !newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
       offsetter.zoom = newZoom;
+      // Recalculate with the new zoom.
       newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
       offsetter.xOff = newPan.xOff;
       offsetter.yOff = newPan.yOff;
-    } else {
-      // The zoom is all right, but maybe the panning is way off.
-      newPan = panFor(xb, yb, offsetter.zoom, width, height, vertices.xMin);
-      if (!newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
-        offsetter.zoom = newZoom;
-        // Recalculate with the new zoom.
-        newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
-        offsetter.xOff = newPan.xOff;
-        offsetter.yOff = newPan.yOff;
-      }
     }
     offsetter.reDraw();
   };
