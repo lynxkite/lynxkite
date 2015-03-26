@@ -16,7 +16,7 @@ export KITE_META_DIR=$HOME/kite_meta
 export KITE_DATA_DIR=$HOME/kite_data
 
 # The PID file for Kite servers.
-export KITE_PID_FILE=$HOME/kite_pid
+export KITE_PID_FILE=$HOME/kite.pid
 
 # The user registry file for Kite servers.
 export KITE_USERS_FILE=$HOME/kite_users.txt
