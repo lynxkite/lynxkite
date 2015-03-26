@@ -356,8 +356,8 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
         .map { case (external, (line, internal)) => (internal, line) }
         .toSortedRDD(inputs.vs.rdd.partitioner.get)
     linesByInternalId.cacheBackingArray()
-    input.fields.zipWithIndex.foreach {
-      case (field, idx) => if (idx != idFieldIdx) {
+    for ((field, idx) <- input.fields.zipWithIndex) {
+      if (idx != idFieldIdx) {
         output(o.attrs(field), linesByInternalId.mapValues(line => line(idx)))
       }
     }

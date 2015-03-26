@@ -280,10 +280,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
     edgeBundle = newEdgeBundle
 
-    origEAttrs.foreach {
-      case (name, attr) =>
-        edgeAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
+    for ((name, attr) <- origEAttrs) {
+      edgeAttributes(name) =
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
     }
   }
 
@@ -298,10 +297,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val origEAttrs = edgeAttributes.toIndexedSeq
 
     updateVertexSet(pullBundle.srcVertexSet, killSegmentations = false)
-    origVAttrs.foreach {
-      case (name, attr) =>
-        vertexAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
+    for ((name, attr) <- origVAttrs) {
+      vertexAttributes(name) =
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
     }
 
     if (origEB != null) {
@@ -313,7 +311,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       pullBackEdges(origEB, origEAttrs, induction.induced, induction.embedding)
     }
 
-    segmentations.foreach { seg =>
+    for (seg <- segmentations) {
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(
         op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(

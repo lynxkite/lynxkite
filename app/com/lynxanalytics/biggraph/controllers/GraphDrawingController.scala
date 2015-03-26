@@ -285,7 +285,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def loadGUIDsToMemory(gUIDs: Seq[String]): Unit = {
-    gUIDs.foreach(id => dataManager.cache(metaManager.entity(id.asUUID)))
+    for (id <- gUIDs) {
+      dataManager.cache(metaManager.entity(id.asUUID))
+    }
   }
 
   private def tripletMapping(
@@ -457,9 +459,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val weightMap = graph_operations.RestrictAttributeToIds.run(
           weights, filteredEdgeSetIDs).value.toMap
         val counts = mutable.Map[(Int, Int), Double]().withDefaultValue(0.0)
-        idToCoordMapping.foreach {
-          case (id, coord) =>
-            counts(coord) += weightMap(id)
+        for ((id, coord) <- idToCoordMapping) {
+          counts(coord) += weightMap(id)
         }
         counts
           .toMap

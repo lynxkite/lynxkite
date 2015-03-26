@@ -126,19 +126,20 @@ class DataManager(sc: spark.SparkContext,
       })
     futureInputs.map { inputs =>
       val inputDatas = DataSet(inputs.toMap)
-      instance.outputs.scalars.values
-        .foreach(scalar => log.info(s"PERF Computing scalar $scalar"))
+      for (scalar <- instance.outputs.scalars.values) {
+        log.info(s"PERF Computing scalar $scalar")
+      }
       val outputDatas = blocking {
         instance.run(inputDatas, runtimeContext)
       }
       blocking {
         if (instance.operation.isHeavy) {
-          outputDatas.values.foreach { entityData =>
+          for (entityData <- outputDatas.values) {
             saveToDisk(entityData)
           }
         } else {
           // We still save all scalars even for non-heavy operations.
-          outputDatas.values.foreach { entityData =>
+          for (entityData <- outputDatas.values) {
             if (entityData.isInstanceOf[ScalarData[_]]) saveToDisk(entityData)
           }
         }
@@ -147,8 +148,9 @@ class DataManager(sc: spark.SparkContext,
         // partitions is different. So for consistency, all outputs must be from the same run.
         successPath(instancePath(instance)).createFromStrings("")
       }
-      instance.outputs.scalars.values
-        .foreach(scalar => log.info(s"PERF Computed scalar $scalar"))
+      for (scalar <- instance.outputs.scalars.values) {
+        log.info(s"PERF Computed scalar $scalar")
+      }
       outputDatas
     }
   }
