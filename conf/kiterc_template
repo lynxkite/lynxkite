@@ -9,17 +9,17 @@ export SPARK_MASTER=local
 
 # The directory where Kite stores metadata about projects. Must be on the local file system.
 # Do not forget to set up backups!
-export KITE_META_DIR=$HOME/kite/meta
+export KITE_META_DIR=$HOME/kite_meta
 
 # The data where graph data is stored. Should be on a distributed fs (hdsf, s3, etc) unless
 # this is a single machine install.
-export KITE_DATA_DIR=$HOME/kite/data
+export KITE_DATA_DIR=$HOME/kite_data
 
 # The PID file for Kite servers.
-export KITE_PID_FILE=$HOME/kite/pid
+export KITE_PID_FILE=$HOME/kite_pid
 
 # The user registry file for Kite servers.
-export KITE_USERS_FILE=$HOME/kite/users.txt
+export KITE_USERS_FILE=$HOME/kite_users.txt
 
 # Needed if you want to run against yarn.
 # The directory with the YARN configuration.
