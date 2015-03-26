@@ -190,7 +190,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def aclContains(acl: String, user: User): Boolean = {
     // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
     // We translate this to a regex for checking.
-    val regex = acl.replace(".", "\\.").replace(",", "|").replace("*", ".*")
+    val regex = acl.replace(" ", "").replace(".", "\\.").replace(",", "|").replace("*", ".*")
     user.email.matches(regex)
   }
 
@@ -280,10 +280,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
     edgeBundle = newEdgeBundle
 
-    origEAttrs.foreach {
-      case (name, attr) =>
-        edgeAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
+    for ((name, attr) <- origEAttrs) {
+      edgeAttributes(name) =
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
     }
   }
 
@@ -298,10 +297,9 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val origEAttrs = edgeAttributes.toIndexedSeq
 
     updateVertexSet(pullBundle.srcVertexSet, killSegmentations = false)
-    origVAttrs.foreach {
-      case (name, attr) =>
-        vertexAttributes(name) =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
+    for ((name, attr) <- origVAttrs) {
+      vertexAttributes(name) =
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
     }
 
     if (origEB != null) {
@@ -313,7 +311,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       pullBackEdges(origEB, origEAttrs, induction.induced, induction.embedding)
     }
 
-    segmentations.foreach { seg =>
+    for (seg <- segmentations) {
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(
         op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
@@ -496,14 +494,18 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   val path: SymbolPath = s"projects/$parentName/checkpointed/segmentations/$name"
   def project = Project(s"$parentName/checkpointed/segmentations/$name/project")
 
+  def equivalentUIAttribute = {
+    val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
+    UIValue(id = bta, title = s"segmentation[$name]")
+  }
+
   def toFE = {
     val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
-    val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
     FESegmentation(
       name,
       project.projectName,
       bt,
-      UIValue(id = bta, title = "segmentation[%s]".format(name)))
+      equivalentUIAttribute)
   }
   def belongsTo = {
     Project.withErrorLogging(s"Cannot get 'belongsTo' for $this") {
