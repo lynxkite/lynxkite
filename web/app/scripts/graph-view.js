@@ -733,7 +733,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var yFit = 0.5 * this.svg.height() / (yb.max - yCenter);
     // Avoid infinite zoom for 1-vertex graphs.
     if (isFinite(xFit) || isFinite(yFit)) {
-      var newZoom = graphToSVGRatio * Math.min(xFit, yFit);
+      var newZoom = graphToSVGRatio * Math.min(Math.abs(xFit), Math.abs(yFit));
 
       // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
       var ratio = newZoom / offsetter.zoom;
