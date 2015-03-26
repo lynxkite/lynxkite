@@ -156,12 +156,16 @@ object UserProvider extends mvc.Controller {
 
   // Loads user data from usersFile.
   private def loadUsers() = synchronized {
-    val data = FileUtils.readFileToString(usersFile, "utf8")
     users.clear()
-    users ++= json.Json.parse(data).as[Seq[UserOnDisk]].map {
-      u => u.email -> u
+    if (usersFile.exists) {
+      val data = FileUtils.readFileToString(usersFile, "utf8")
+      users ++= json.Json.parse(data).as[Seq[UserOnDisk]].map {
+        u => u.email -> u
+      }
+      log.info(s"User data loaded from $usersFile.")
+    } else {
+      log.info(s"$usersFile does not exist. Starting with empty user registry.")
     }
-    log.info(s"User data loaded from $usersFile.")
   }
 
   // Saves user data to usersFile.
