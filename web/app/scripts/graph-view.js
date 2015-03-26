@@ -752,37 +752,60 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.initSlider(vertices);
   };
 
+  // Returns the ideal zoom setting for the given coordinate bounds,
+  // or undefined if one cannot be found.
+  function zoomFor(xb, yb, width, height) {
+    var xCenter = (xb.min + xb.max) / 2;
+    var yCenter = (yb.min + yb.max) / 2;
+    var xFit = 0.5 * width / (xb.max - xCenter);
+    var yFit = 0.5 * height / (yb.max - yCenter);
+    // Avoid infinite zoom for 1-vertex graphs.
+    if (isFinite(xFit) || isFinite(yFit)) {
+      // Take absolute value, just in case we have negative infinity.
+      return graphToSVGRatio * Math.min(Math.abs(xFit), Math.abs(yFit));
+    }
+    return undefined;
+  }
+
+  // Returns the ideal panning coordinates. xb and yb are the coordinate bounds,
+  // zoom is the offsetter zoom setting, width and height are the viewport dimensions,
+  // and xMin is the viewport X offset.
+  function panFor(xb, yb, zoom, width, height, xMin) {
+    // The bounds of panning positions that can see the graph.
+    var xOffMin = -xb.max * zoom + xMin;
+    var xOffMax = -xb.min * zoom + xMin + width;
+    var yOffMin = -yb.max * zoom;
+    var yOffMax = -yb.min * zoom + height;
+    return {
+      // Returns true if the given offset is also acceptable.
+      acceptable: function(xOff, yOff) {
+        return xOffMin <= xOff && xOff <= xOffMax && yOffMin <= yOff && yOff <= yOffMax;
+      },
+      xOff: (xOffMin + xOffMax) / 2,
+      yOff: (yOffMin + yOffMax) / 2,
+    };
+  }
+
   // Pan/zoom the view (the offsetter) to fit the graph, if necessary.
   GraphView.prototype.initView = function(vertices) {
     var offsetter = vertices.offsetter;
     // Figure out zoom.
     var xb = common.minmax(vertices.map(function(v) { return v.x; }));
     var yb = common.minmax(vertices.map(function(v) { return v.y; }));
-    var xCenter = (xb.min + xb.max) / 2;
-    var yCenter = (yb.min + yb.max) / 2;
-    var xFit = vertices.halfColumnWidth / (xb.max - xCenter);
-    var yFit = 0.5 * this.svg.height() / (yb.max - yCenter);
-    // Avoid infinite zoom for 1-vertex graphs.
-    if (isFinite(xFit) || isFinite(yFit)) {
-      var newZoom = graphToSVGRatio * Math.min(xFit, yFit);
-
-      // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
-      var ratio = newZoom / offsetter.zoom;
-      if (!offsetter.inherited || ratio < 0.1 || ratio > 10) {
-        offsetter.zoom = newZoom;
-        // "Thickness" is scaled to the SVG size. We leave it unchanged.
-      }
-    }
-    // Figure out panning.
-    var xOff = vertices.xMin + vertices.halfColumnWidth - xCenter * offsetter.zoom;
-    var yOff = this.svg.height() / 2 - yCenter * offsetter.zoom;
-    // Apply the new offset if it is a new offsetter, or if the inherited offset is way off.
-    var dx = Math.abs(xOff - offsetter.xOff);
-    var dy = Math.abs(yOff - offsetter.yOff);
+    var width = vertices.halfColumnWidth * 2;
+    var height = this.svg.height();
+    var newZoom = zoomFor(xb, yb, width, height) || offsetter.zoom;
+    var newPan = panFor(xb, yb, offsetter.zoom, width, height, vertices.xMin);
+    // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
+    var ratio = newZoom / offsetter.zoom;
     if (!offsetter.inherited ||
-        dx > vertices.halfColumnWidth || dy > this.svg.height() / 2) {
-      offsetter.xOff = xOff;
-      offsetter.yOff = yOff;
+        ratio < 0.1 || ratio > 10 ||
+        !newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
+      offsetter.zoom = newZoom;
+      // Recalculate with the new zoom.
+      newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
+      offsetter.xOff = newPan.xOff;
+      offsetter.yOff = newPan.yOff;
     }
     offsetter.reDraw();
   };
@@ -956,7 +979,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       drag: 0.2,
       labelAttraction: parseFloat(vertices.side.animate.labelAttraction),
     });
-    // Initial layout.
+    // Generate initial layout for 2 seconds or until it stabilizes.
     var t1 = Date.now();
     while (engine.calculate(vertices) && Date.now() - t1 <= 2000) {}
     engine.apply(vertices);
@@ -1203,7 +1226,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.labelBackground = svg.create(
         'rect', {
           'class': 'label-background',
-          style: 'fill: ' + this.highlight,
           width: 0, height: 0, rx: 2, ry: 2,
         });
     this.dom = svg.group(
@@ -1248,7 +1270,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         this.highlightListeners[i].on(this);
       }
       // Size labelBackground here, because we may not know the label size earlier.
-      this.labelBackground.attr({ width: this.label.width() + 4, height: this.label.height() });
+      this.labelBackground.attr({
+        width: this.label.width() + 4,
+        height: this.label.height(),
+        style: 'fill: ' + this.highlight,
+      });
       this.reDraw();
     } else {
       svg.removeClass(this.dom, 'highlight');
@@ -1256,6 +1282,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       for (i = 0; i < this.highlightListeners.length; ++i) {
         this.highlightListeners[i].off(this);
       }
+      this.labelBackground.attr({ style: '' });
     }
   };
 
