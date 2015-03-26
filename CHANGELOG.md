@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.2.0
+
  - Grah visualizations are now cut to only show on the corresponding side. The previous
    behavior was especially distrurbing when combined with map view.
  - The user registry file now has to be specified in `.kiterc` as `KITE_USERS_FILE`.
