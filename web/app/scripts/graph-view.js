@@ -721,38 +721,67 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.initSlider(vertices);
   };
 
+  // Returns the ideal zoom setting for the given coordinate bounds,
+  // or undefined if one cannot be found.
+  function zoomFor(xb, yb, width, height) {
+    var xCenter = (xb.min + xb.max) / 2;
+    var yCenter = (yb.min + yb.max) / 2;
+    var xFit = 0.5 * width / (xb.max - xCenter);
+    var yFit = 0.5 * height / (yb.max - yCenter);
+    // Avoid infinite zoom for 1-vertex graphs.
+    if (isFinite(xFit) || isFinite(yFit)) {
+      // Take absolute value, just in case we have negative infinity.
+      return graphToSVGRatio * Math.min(Math.abs(xFit), Math.abs(yFit));
+    }
+    return undefined;
+  }
+
+  // Returns the ideal panning coordinates. xb and yb are the coordinate bounds,
+  // zoom is the offsetter zoom setting, width and height are the viewport dimensions,
+  // and xMin is the viewport X offset.
+  function panFor(xb, yb, zoom, width, height, xMin) {
+    // The bounds of panning positions that can see the graph.
+    var xOffMin = -xb.max * zoom + xMin;
+    var xOffMax = -xb.min * zoom + xMin + width;
+    var yOffMin = -yb.max * zoom;
+    var yOffMax = -yb.min * zoom + height;
+    return {
+      // Returns true if the given offset is also acceptable.
+      acceptable: function(xOff, yOff) {
+        return xOffMin <= xOff && xOff <= xOffMax && yOffMin <= yOff && yOff <= yOffMax;
+      },
+      xOff: (xOffMin + xOffMax) / 2,
+      yOff: (yOffMin + yOffMax) / 2,
+    };
+  }
+
   // Pan/zoom the view (the offsetter) to fit the graph, if necessary.
   GraphView.prototype.initView = function(vertices) {
     var offsetter = vertices.offsetter;
     // Figure out zoom.
     var xb = common.minmax(vertices.map(function(v) { return v.x; }));
     var yb = common.minmax(vertices.map(function(v) { return v.y; }));
-    var xCenter = (xb.min + xb.max) / 2;
-    var yCenter = (yb.min + yb.max) / 2;
-    var xFit = vertices.halfColumnWidth / (xb.max - xCenter);
-    var yFit = 0.5 * this.svg.height() / (yb.max - yCenter);
-    // Avoid infinite zoom for 1-vertex graphs.
-    if (isFinite(xFit) || isFinite(yFit)) {
-      var newZoom = graphToSVGRatio * Math.min(Math.abs(xFit), Math.abs(yFit));
-
-      // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
-      var ratio = newZoom / offsetter.zoom;
-      if (!offsetter.inherited || ratio < 0.1 || ratio > 10) {
+    var width = vertices.halfColumnWidth * 2;
+    var height = this.svg.height();
+    var newZoom = zoomFor(xb, yb, width, height) || offsetter.zoom;
+    var newPan;
+    // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
+    var ratio = newZoom / offsetter.zoom;
+    if (!offsetter.inherited || ratio < 0.1 || ratio > 10) {
+      offsetter.zoom = newZoom;
+      newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
+      offsetter.xOff = newPan.xOff;
+      offsetter.yOff = newPan.yOff;
+    } else {
+      // The zoom is all right, but maybe the panning is way off.
+      newPan = panFor(xb, yb, offsetter.zoom, width, height, vertices.xMin);
+      if (!newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
         offsetter.zoom = newZoom;
-        // "Thickness" is scaled to the SVG size. We leave it unchanged.
+        // Recalculate with the new zoom.
+        newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
+        offsetter.xOff = newPan.xOff;
+        offsetter.yOff = newPan.yOff;
       }
-    }
-    // The bounds of panning positions that fall inside.
-    var xMin = vertices.xMin + vertices.halfColumnWidth - xb.max * offsetter.zoom;
-    var xMax = vertices.xMin + vertices.halfColumnWidth - xb.min * offsetter.zoom;
-    var yMin = this.svg.height() / 2 - yb.max * offsetter.zoom;
-    var yMax = this.svg.height() / 2 - yb.min * offsetter.zoom;
-    // Apply a new offset if it is a new offsetter, or if the inherited offset falls outside.
-    if (!offsetter.inherited ||
-        offsetter.xOff < xMin || xMax < offsetter.xOff ||
-        offsetter.yOff < yMin || yMax < offsetter.yOff) {
-      offsetter.xOff = (xMin + xMax) / 2;
-      offsetter.yOff = (yMin + yMax) / 2;
     }
     offsetter.reDraw();
   };
