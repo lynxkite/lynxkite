@@ -6,6 +6,10 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - The user registry file now has to be specified in `.kiterc` as `KITE_USERS_FILE`.
+   Earlier versions used the user registry from `kite_XXX/conf/users.txt`. If you run
+   LynxKite with authentication, please copy this file to a preferable location and add
+   `KITE_USERS_FILE` to your `.kiterc` when upgrading.
  - Error reports now go to `support@lynxanalytics.freshdesk.com` instead of
    `pizza-support@lynxanalytics.com`.
  - Previously hidden utility operations (like _"Delete vertex attribute"_) are now revealed
