@@ -4,20 +4,23 @@ export SPARK_HOME=$HOME/spark-${SPARK_VERSION}
 # Specifies what cluster we use. Options are:
 #  local[x] - for single machine installs use this, with x replaced by the number of cores to be
 #             used
-#  yarn-client - for using yarn (hadoop  v2). Please also set YARN_* settings below.
+#  yarn-client - for using yarn (hadoop v2). Please also set YARN_* settings below.
 #  spark://master-name:master-port - for standalone spark clusters
 export SPARK_MASTER=local
 
 # The directory where Kite stores metadata about projects. Must be on the local file system.
 # Do not forget to set up backups!
-export KITE_META_DIR=$HOME/kite_meta
+export KITE_META_DIR=$HOME/kite/meta
 
 # The data where graph data is stored. Should be on a distributed fs (hdsf, s3, etc) unless
 # this is a single machine install.
-export KITE_DATA_DIR=$HOME/kite_data
+export KITE_DATA_DIR=$HOME/kite/data
 
 # The PID file for Kite servers.
-export KITE_PID_FILE=$HOME/kite.pid
+export KITE_PID_FILE=$HOME/kite/pid
+
+# The user registry file for Kite servers.
+export KITE_USERS_FILE=$HOME/kite/users.txt
 
 # Needed if you want to run against yarn.
 # The directory with the YARN configuration.
