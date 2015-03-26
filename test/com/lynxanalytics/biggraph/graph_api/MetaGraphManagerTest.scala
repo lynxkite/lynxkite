@@ -27,10 +27,10 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val secondLinks = secondInstance.outputs.edgeBundles('links)
 
     // All entities of both operations are available in the manager by guid.
-    firstInstance.entities.all.values.foreach { entity =>
+    for (entity <- firstInstance.entities.all.values) {
       assert(manager.entity(entity.gUID) == entity)
     }
-    secondInstance.entities.all.values.foreach { entity =>
+    for (entity <- secondInstance.entities.all.values) {
       assert(manager.entity(entity.gUID) == entity)
     }
 
@@ -81,7 +81,8 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 
     val m1c = MetaRepositoryManager(m1Dir)
 
-    (firstInstance.entities.all.values ++ secondInstance.entities.all.values).foreach { entity =>
+    val entities = firstInstance.entities.all.values ++ secondInstance.entities.all.values
+    for (entity <- entities) {
       // We have an entity of the GUID of all entities.
       val clonedEntity = m1c.entity(entity.gUID)
       // They look similar.

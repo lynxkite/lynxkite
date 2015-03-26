@@ -159,7 +159,9 @@ object RDDUtils {
         },
         {
           case ((map1, uct1, fct1), (map2, uct2, fct2)) =>
-            map2.foreach { case (k, v) => incrementWeightMap(map1, k, v) }
+            for ((k, v) <- map2) {
+              incrementWeightMap(map1, k, v)
+            }
             (map1, uct1 + uct2, fct1 + fct2)
         })
     val multiplier = if (filteredCount < requiredPositiveSamples / 2) {

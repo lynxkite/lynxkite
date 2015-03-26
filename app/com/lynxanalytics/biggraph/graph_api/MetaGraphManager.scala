@@ -175,21 +175,21 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
     operationInstances(operationInstance.gUID) = operationInstance
-    operationInstance.outputs.all.values.foreach { entity =>
+    for (entity <- operationInstance.outputs.all.values) {
       val gUID = entity.gUID
       assert(
         !entities.contains(gUID),
         "Fatal conflict %s <=> %s".format(entity, entities(gUID)))
       entities(gUID) = entity
     }
-    operationInstance.outputs.edgeBundles.values.foreach { eb =>
+    for (eb <- operationInstance.outputs.edgeBundles.values) {
       outgoingBundlesMap(eb.srcVertexSet.gUID) ::= eb
       incomingBundlesMap(eb.dstVertexSet.gUID) ::= eb
     }
-    operationInstance.outputs.attributes.values.foreach { va =>
+    for (va <- operationInstance.outputs.attributes.values) {
       attributesMap(va.vertexSet.gUID) ::= va
     }
-    operationInstance.inputs.all.values.foreach { entity =>
+    for (entity <- operationInstance.inputs.all.values) {
       dependentOperationsMap(entity.gUID) ::= operationInstance
     }
   }

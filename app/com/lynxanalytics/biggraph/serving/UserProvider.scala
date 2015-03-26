@@ -72,10 +72,11 @@ object UserProvider extends mvc.Controller {
   val logout = mvc.Action { request =>
     synchronized {
       val cookie = request.cookies.find(_.name == "auth")
-      cookie.map(_.value).collect {
+      // Find and forget the signed token(s).
+      val signeds = cookie.map(_.value).collect {
         case SignedToken(signed) => signed
-      }.foreach { signed =>
-        // Forget token.
+      }
+      for (signed <- signeds) {
         tokens -= signed.token
       }
       // Clear cookie.
@@ -186,9 +187,13 @@ object UserProvider extends mvc.Controller {
       s"Only administrators can create new users. $user is not an administrator.")
     assert(req.email.nonEmpty, "User name missing")
     assert(req.password.nonEmpty, "Password missing")
+    val letters = "abcdefghijklmnopqrstuvwxyz"
+    val allowed = letters + letters.toUpperCase + "._-@"
+    assert(req.email.forall(allowed.contains(_)), "User name contains disallowed characters.")
     assert(!users.contains(req.email), s"User name ${req.email} is already taken.")
     users(req.email) = UserOnDisk(req.email, hash(req.password), req.isAdmin)
     saveUsers()
+    log.info(s"Successfully created user ${req.email}.")
   }
 
   // Load data on startup.

@@ -10,6 +10,15 @@ Please add changes at the top. When releasing a version add a new header for tha
    Earlier versions used the user registry from `kite_XXX/conf/users.txt`. If you run
    LynxKite with authentication, please copy this file to a preferable location and add
    `KITE_USERS_FILE` to your `.kiterc` when upgrading.
+ - Improvements in the configuration for number of cores per executor:
+   - One common .kiterc option (`NUM_CORES_PER_EXECUTOR`) regardless of deployment mode
+   - As a consequence, `YARN_CORES_PER_EXECUTOR` option has been removed. Please update
+     .kiterc on YARN deployments by renaming `YARN_CORES_PER_EXECUTOR` to `NUM_CORES_PER_EXECUTOR`.
+   - Use correcty the value of the above option internally to optimize calculations knowing
+     the amount of cores available
+   - In case of EC2, correctly set up this new kiterc option based on the cluster configuration
+ - Fixed a bug that caused "hard" filtering to segmentations to fail.
+ - Spaces in ACL lists are now ignored.
  - Error reports now go to `support@lynxanalytics.freshdesk.com` instead of
    `pizza-support@lynxanalytics.com`.
  - Previously hidden utility operations (like _"Delete vertex attribute"_) are now revealed
