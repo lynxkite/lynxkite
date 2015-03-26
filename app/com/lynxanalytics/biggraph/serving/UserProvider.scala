@@ -72,10 +72,11 @@ object UserProvider extends mvc.Controller {
   val logout = mvc.Action { request =>
     synchronized {
       val cookie = request.cookies.find(_.name == "auth")
-      cookie.map(_.value).collect {
+      // Find and forget the signed token(s).
+      val signeds = cookie.map(_.value).collect {
         case SignedToken(signed) => signed
-      }.foreach { signed =>
-        // Forget token.
+      }
+      for (signed <- signeds) {
         tokens -= signed.token
       }
       // Clear cookie.

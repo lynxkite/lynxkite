@@ -117,7 +117,9 @@ trait TagDir extends TagPath {
   def clone(newParent: TagDir, newName: Symbol): TagSubDir = {
     assert(!newParent.isOffspringOf(this), s"'$newParent' contains '$this'.")
     val cloned = newParent.mkDir(newName)
-    children.foreach { case (name, child) => child.clone(cloned, name) }
+    for ((name, child) <- children) {
+      child.clone(cloned, name)
+    }
     cloned
   }
 
@@ -147,8 +149,8 @@ final case class TagRoot() extends TagDir {
   }
   def loadFromString(data: String) = {
     clear()
-    json.Json.parse(data).as[json.JsObject].fields.foreach {
-      case (name, value) => setTag(name, value.as[String])
+    for ((name, value) <- json.Json.parse(data).as[json.JsObject].fields) {
+      setTag(name, value.as[String])
     }
   }
 }

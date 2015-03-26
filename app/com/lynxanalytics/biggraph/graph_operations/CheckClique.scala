@@ -71,11 +71,10 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
           val members = vsToNs.map(_._1).toSet
           val outSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
           val inSets = mutable.Map[ID, mutable.Set[ID]](members.toSeq.map(m => m -> mutable.Set(m)): _*)
-          vsToNs.foreach {
-            case (v, nsOut, nsIn) =>
-              outSets(v) ++= nsOut
-              // if one direction is enough, we only use the outSets
-              if (needsBothDirections) inSets(v) ++= nsIn else outSets(v) ++= nsIn
+          for ((v, nsOut, nsIn) <- vsToNs) {
+            outSets(v) ++= nsOut
+            // if one direction is enough, we only use the outSets
+            if (needsBothDirections) inSets(v) ++= nsIn else outSets(v) ++= nsIn
           }
           val inv = if (needsBothDirections) {
             (outSets.values.reduceLeft(_ & _) & inSets.values.reduceLeft(_ & _)) != members

@@ -161,13 +161,12 @@ trait FieldNaming {
     val res = new IdentityHashMap[Any, Symbol]()
     val mirror = reflect.runtime.currentMirror.reflect(this)
 
-    mirror.symbol.toType.members
-      .collect {
-        case m: MethodSymbol if (m.isGetter && m.isPublic) => m
-      }
-      .foreach { m =>
-        res.put(mirror.reflectField(m).get, Symbol(m.name.toString))
-      }
+    val fields = mirror.symbol.toType.members.collect {
+      case m: MethodSymbol if (m.isGetter && m.isPublic) => m
+    }
+    for (m <- fields) {
+      res.put(mirror.reflectField(m).get, Symbol(m.name.toString))
+    }
     res
   }
   def nameOf(obj: Any): Symbol = {
@@ -433,7 +432,8 @@ trait MetaGraphOperationInstance {
     val buffer = new ByteArrayOutputStream
     val objectStream = new ObjectOutputStream(buffer)
     objectStream.writeObject(operation.gUID)
-    inputs.all.keys.toSeq.map(_ match { case Symbol(s) => s }).sorted.foreach { name =>
+    val names = inputs.all.keys.toSeq.map(_ match { case Symbol(s) => s }).sorted
+    for (name <- names) {
       objectStream.writeObject(name)
       objectStream.writeObject(inputs.all(Symbol(name)).gUID)
     }

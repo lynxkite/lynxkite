@@ -22,9 +22,8 @@ object Scripting {
       adders: Seq[EntityTemplate[T]],
       entities: Seq[T]): InstanceBuilder[IS, OMDS] = {
       assert(adders.size == entities.size)
-      adders.zip(entities).foreach {
-        case (adder, entity) =>
-          currentInput = adder.set(currentInput, entity)
+      for ((adder, entity) <- adders.zip(entities)) {
+        currentInput = adder.set(currentInput, entity)
       }
       this
     }
