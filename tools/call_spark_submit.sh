@@ -60,11 +60,26 @@ set -eo pipefail
 
 export REPOSITORY_MODE=${REPOSITORY_MODE:-"static<$KITE_META_DIR,$KITE_DATA_DIR>"}
 
-if [ -n "${YARN_NUM_EXECUTORS}" ]; then
-  YARN_EXECUTORS_SETTING="--num-executors ${YARN_NUM_EXECUTORS}"
+if [ -z "${NUM_CORES_PER_EXECUTOR}" ]; then
+  echo "Please define NUM_CORES_PER_EXECUTOR in the kite config file ${KITE_SITE_CONFIG}."
+  exit 1
 fi
-if [ -n "${YARN_CORES_PER_EXECUTOR}" ]; then
-  YARN_CORES_SETTING="--executor-cores ${YARN_CORES_PER_EXECUTOR}"
+
+if [ "${SPARK_MASTER}" == "yarn-client" ]; then
+  if [ -z "${YARN_NUM_EXECUTORS}" ]; then
+    echo "Please define YARN_NUM_EXECUTORS in the kite config file ${KITE_SITE_CONFIG}."
+    exit 1
+  fi
+  if [ -z "${YARN_CONF_DIR}" ]; then
+    echo "Please define YARN_CONFIG_DIR in the kite config file ${KITE_SITE_CONFIG}."
+    exit 1
+  fi
+
+  YARN_SETTINGS="--num-executors ${YARN_NUM_EXECUTORS} --executor-cores ${NUM_CORES_PER_EXECUTOR}"
+fi
+
+if [ "${SPARK_MASTER}" == "local" ]; then
+ export SPARK_MASTER="${SPARK_MASTER}[${NUM_CORES_PER_EXECUTOR}]"
 fi
 
 if [ "${#residual_args[@]}" -ne 1 ]; then
@@ -82,8 +97,7 @@ command=(
     --deploy-mode client \
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \
-    ${YARN_EXECUTORS_SETTING} \
-    ${YARN_CORES_SETTING} \
+    ${YARN_SETTINGS} \
     "${fake_application_jar}" \
     "${app_commands[@]}"
 )
