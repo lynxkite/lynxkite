@@ -742,16 +742,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         // "Thickness" is scaled to the SVG size. We leave it unchanged.
       }
     }
-    // Figure out panning.
-    var xOff = vertices.xMin + vertices.halfColumnWidth - xCenter * offsetter.zoom;
-    var yOff = this.svg.height() / 2 - yCenter * offsetter.zoom;
-    // Apply the new offset if it is a new offsetter, or if the inherited offset is way off.
-    var dx = Math.abs(xOff - offsetter.xOff);
-    var dy = Math.abs(yOff - offsetter.yOff);
+    // The bounds of panning positions that fall inside.
+    var xMin = vertices.xMin + vertices.halfColumnWidth - xb.max * offsetter.zoom;
+    var xMax = vertices.xMin + vertices.halfColumnWidth - xb.min * offsetter.zoom;
+    var yMin = this.svg.height() / 2 - yb.max * offsetter.zoom;
+    var yMax = this.svg.height() / 2 - yb.min * offsetter.zoom;
+    // Apply a new offset if it is a new offsetter, or if the inherited offset falls outside.
     if (!offsetter.inherited ||
-        dx > vertices.halfColumnWidth || dy > this.svg.height() / 2) {
-      offsetter.xOff = xOff;
-      offsetter.yOff = yOff;
+        offsetter.xOff < xMin || xMax < offsetter.xOff ||
+        offsetter.yOff < yMin || yMax < offsetter.yOff) {
+      offsetter.xOff = (xMin + xMax) / 2;
+      offsetter.yOff = (yMin + yMax) / 2;
     }
     offsetter.reDraw();
   };
@@ -931,7 +932,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       drag: 0.2,
       labelAttraction: parseFloat(vertices.side.animate.labelAttraction),
     });
-    // Initial layout.
+    // Generate initial layout for 2 seconds or until it stabilizes.
     var t1 = Date.now();
     while (engine.calculate(vertices) && Date.now() - t1 <= 2000) {}
     engine.apply(vertices);
