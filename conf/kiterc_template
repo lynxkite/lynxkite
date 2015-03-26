@@ -19,7 +19,7 @@ export KITE_DATA_DIR=$HOME/kite_data
 export KITE_PID_FILE=$HOME/kite.pid
 
 # The user registry file for Kite servers.
-export KITE_USERS_FILE=$HOME/kite_users.txt
+export KITE_USERS_FILE=$HOME/kite_users
 
 # Needed if you want to run against yarn.
 # The directory with the YARN configuration.
