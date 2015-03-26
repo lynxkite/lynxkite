@@ -187,6 +187,7 @@ object UserProvider extends mvc.Controller {
     assert(!users.contains(req.email), s"User name ${req.email} is already taken.")
     users(req.email) = UserOnDisk(req.email, hash(req.password), req.isAdmin)
     saveUsers()
+    log.info(s"Successfully created user ${req.email}.")
   }
 
   // Load data on startup.

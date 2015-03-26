@@ -43,9 +43,15 @@ class JsonServer extends mvc.Controller {
     }
   }
 
-  def jsonPost[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
+  def jsonPost[I: json.Reads, O: json.Writes](
+    handler: (User, I) => O,
+    logRequest: Boolean = true) = {
     action(parse.json) { (user, request) =>
-      log.info(s"$user POST ${request.path} ${request.body}")
+      if (logRequest) {
+        log.info(s"$user POST ${request.path} ${request.body}")
+      } else {
+        log.info(s"$user POST ${request.path} (request body logging supressed)")
+      }
       val i = request.body.as[I]
       Ok(json.Json.toJson(handler(user, i)))
     }
@@ -303,7 +309,7 @@ object ProductionJsonServer extends JsonServer {
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 
   def getUsers = jsonGet(UserProvider.getUsers)
-  def createUser = jsonPost(UserProvider.createUser)
+  def createUser = jsonPost(UserProvider.createUser, logRequest = false)
 
   def getGlobalSettings = jsonPublicGet(GlobalSettings(hasAuth = productionMode))
 }
