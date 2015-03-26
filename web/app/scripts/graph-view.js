@@ -1179,7 +1179,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.labelBackground = svg.create(
         'rect', {
           'class': 'label-background',
-          style: 'fill: ' + this.highlight,
           width: 0, height: 0, rx: 2, ry: 2,
         });
     this.dom = svg.group(
@@ -1224,7 +1223,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         this.highlightListeners[i].on(this);
       }
       // Size labelBackground here, because we may not know the label size earlier.
-      this.labelBackground.attr({ width: this.label.width() + 4, height: this.label.height() });
+      this.labelBackground.attr({
+        width: this.label.width() + 4,
+        height: this.label.height(),
+        style: 'fill: ' + this.highlight,
+      });
       this.reDraw();
     } else {
       svg.removeClass(this.dom, 'highlight');
@@ -1232,6 +1235,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       for (i = 0; i < this.highlightListeners.length; ++i) {
         this.highlightListeners[i].off(this);
       }
+      this.labelBackground.attr({ style: '' });
     }
   };
 
