@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Grah visualizations are now cut to only show on the corresponding side. The previous
+   behavior was especially distrurbing when combined with map view.
  - The user registry file now has to be specified in `.kiterc` as `KITE_USERS_FILE`.
    Earlier versions used the user registry from `kite_XXX/conf/users.txt`. If you run
    LynxKite with authentication, please copy this file to a preferable location and add

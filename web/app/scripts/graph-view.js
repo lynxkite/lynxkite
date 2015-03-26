@@ -179,20 +179,48 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   var graphToSVGRatio = 0.8;  // Leave some margin.
   var UNCOLORED = 'hsl(0,0%,42%)';
 
+  GraphView.prototype.addGroup = function(className, clipper) {
+    var group;
+    if (clipper !== undefined) {
+      this.root.prepend(clipper.dom);
+      group = svg.create('g', { 'class': className, 'clip-path': clipper.url });
+    } else {
+      group = svg.create('g', { 'class': className });
+    }
+    this.root.append(group);
+    return group;
+  };
+
   GraphView.prototype.update = function(data, menu) {
     this.clear();
     var zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.graph.left, this.scope.graph.right];
-    this.edgeGroup = svg.create('g', {'class': 'edges'});
-    this.vertexGroup = svg.create('g', {'class': 'nodes'});
+    var halfColumnWidth = this.svg.width() / sides.length / 2;
+    var clippers = [];
+    this.edgeGroups = [];
+    this.vertexGroups = [];
+    for (i = 0; i < sides.length; ++i) {
+      var clipper = new Clipper({
+        x: (i * 2) * halfColumnWidth,
+        y: 0,
+        width: halfColumnWidth * 2,
+        height: 30000,
+      });
+      this.root.prepend(clipper.dom);
+      clippers.push(clipper);
+      this.edgeGroups.push(this.addGroup('edges', clipper));
+    }
+    this.crossEdgeGroup = this.addGroup('edges');
+    for (i = 0; i < sides.length; ++i) {
+      this.vertexGroups.push(this.addGroup('nodes', clippers[i]));
+    }
     this.legend = svg.create('g', {'class': 'legend'});
     this.legendNextLine = 0;
-    this.root.append([this.edgeGroup, this.vertexGroup, this.legend]);
+    this.root.append(this.legend);
     var oldVertices = this.vertices || [];
     this.vertices = [];  // Sparse, indexed by side.
     var vsIndices = [];  // Packed, indexed by position in the JSON.
     var vsIndex = 0;
-    var halfColumnWidth = this.svg.width() / sides.length / 2;
     var i, vs;
     for (i = 0; i < sides.length; ++i) {
       if (sides[i] && sides[i].graphMode) {
@@ -211,13 +239,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu);
         }
         if (dataVs.mode === 'sampled') {
-          vs = this.addSampledVertices(dataVs, offsetter, sides[i]);
+          vs = this.addSampledVertices(dataVs, offsetter, sides[i], this.vertexGroups[i]);
         } else {
-          vs = this.addBucketedVertices(dataVs, offsetter, sides[i]);
+          vs = this.addBucketedVertices(dataVs, offsetter, sides[i], this.vertexGroups[i]);
         }
         vs.offsetter = offsetter;
         vs.xMin = xMin;
         vs.halfColumnWidth = halfColumnWidth;
+        vs.clipper = clippers[i];
         this.vertices[i] = vs;
         this.sideMouseBindings(offsetter, xMin, xMax);
       }
@@ -229,8 +258,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       // even if we only have one side.
       if (e.srcIdx >= vsIndex || e.dstIdx >= vsIndex) { continue; }
       side = undefined;
+      var edgeGroup = this.crossEdgeGroup;
       if (e.srcIdx === e.dstIdx) {
-        side = sides[vsIndices[e.srcIdx]];
+        var idx = vsIndices[e.srcIdx];
+        side = sides[idx];
+        edgeGroup = this.edgeGroups[idx];
         if (side.display === '3d') {
           var scope = this.scope.$new();
           scope.edges = e.edges;
@@ -245,7 +277,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       var src = this.vertices[vsIndices[e.srcIdx]];
       var dst = this.vertices[vsIndices[e.dstIdx]];
-      var edges = this.addEdges(e.edges, src, dst, side);
+      var edges = this.addEdges(e.edges, src, dst, side, edgeGroup);
       if (e.srcIdx === e.dstIdx) {
         src.edges = edges;
       }
@@ -357,7 +389,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return resultMap;
   };
 
-  GraphView.prototype.addSampledVertices = function(data, offsetter, side) {
+  GraphView.prototype.addSampledVertices = function(data, offsetter, side, vertexGroup) {
     var vertices = [];
     vertices.side = side;
     vertices.mode = 'sampled';
@@ -451,8 +483,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       vertices.push(v);
 
-      this.sampledVertexMouseBindings(vertices, v);
-      this.vertexGroup.append(v.dom);
+      this.sampledVertexMouseBindings(vertices, v, vertexGroup);
+      vertexGroup.append(v.dom);
     }
 
     return vertices;
@@ -486,10 +518,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   }
 
-  GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex) {
+  GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex, vertexGroup) {
     var scope = this.scope;
     var svgElement = this.svg;
-    var vertexGroup = this.vertexGroup;
     vertex.dom.on('mousedown touchstart', function(evStart) {
       evStart.stopPropagation();
       vertex.hold();
@@ -800,13 +831,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   function Map(gv, vertices) {
     this.gv = gv;
     this.vertices = vertices;
-    var clipper = new Clipper({
-      x: vertices.xMin,
-      y: 0,
-      width: vertices.halfColumnWidth * 2,
-      height: gv.svg.height() });
-    this.gv.root.prepend(clipper.dom);
-    this.group = svg.create('g', { 'class': 'map', 'clip-path': clipper.url });
+    this.group = svg.create('g', { 'class': 'map', 'clip-path': vertices.clipper.url });
     this.gv.root.prepend(this.group);
     // The size of the Earth in lat/long view. It doesn't make much difference,
     // just has to be a reasonable value to avoid too small/too large numbers.
@@ -962,7 +987,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     });
   };
 
-  GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData) {
+  GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData, vertexGroup) {
     var vertices = [];
     vertices.side = viewData;
     vertices.mode = 'bucketed';
@@ -987,7 +1012,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           0, y - labelSpace, viewData.xAttribute.title,
           { classes: 'axis-label' });
       offsetter.rule(l);
-      this.vertexGroup.append(l.dom);
+      vertexGroup.append(l.dom);
     }
     for (i = 0; i < data.xLabels.length; ++i) {
       if (data.xLabelType === 'between') {
@@ -998,7 +1023,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       l = new Label(x, y, data.xLabels[i]);
       offsetter.rule(l);
       xLabels.push(l);
-      this.vertexGroup.append(l.dom);
+      vertexGroup.append(l.dom);
     }
     // Labels on the left on the left and on the right on the right.
     if (offsetter.xOff < this.svg.width() / 2) {
@@ -1015,7 +1040,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           x + mul * labelSpace, 0, viewData.yAttribute.title,
           { vertical: true, classes: 'axis-label' });
       offsetter.rule(l);
-      this.vertexGroup.append(l.dom);
+      vertexGroup.append(l.dom);
     }
     for (i = 0; i < data.yLabels.length; ++i) {
       if (data.yLabelType === 'between') {
@@ -1026,7 +1051,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       l = new Label(x, y, data.yLabels[i], { classes: side });
       offsetter.rule(l);
       yLabels.push(l);
-      this.vertexGroup.append(l.dom);
+      vertexGroup.append(l.dom);
     }
 
     var sizes = data.vertices.map(function(n) { return n.size; });
@@ -1045,7 +1070,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         continue;
       }
       this.bucketedVertexMouseBindings(vertices, v);
-      this.vertexGroup.append(v.dom);
+      vertexGroup.append(v.dom);
       if (xLabels.length !== 0) {
         v.addHoverListener(xLabels[vertex.x]);
         if (data.xLabelType === 'between') { v.addHoverListener(xLabels[vertex.x + 1]); }
@@ -1064,7 +1089,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return vertices;
   };
 
-  GraphView.prototype.addEdges = function(edges, srcs, dsts, side) {
+  GraphView.prototype.addEdges = function(edges, srcs, dsts, side, edgeGroup) {
     var widthKey;
     var colorKey;
     var colorMap;
@@ -1115,7 +1140,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       var e = new Edge(a, b, edgeScale * width, color, label);
       edgeObjects.push(e);
-      this.edgeGroup.append(e.dom);
+      edgeGroup.append(e.dom);
     }
     return edgeObjects;
   };
