@@ -147,7 +147,9 @@ object UserProvider extends mvc.Controller {
     config.getString(setting).get
   }
 
-  private val usersFile = new java.io.File(System.getProperty("user.dir") + "/conf/users.txt")
+  private val usersFileName = scala.util.Properties.envOrElse("KITE_USERS_FILE", "")
+  assert(usersFileName.nonEmpty, "Please specify KITE_USERS_FILE.")
+  private val usersFile = new java.io.File(usersFileName)
   // Access to these mutable collections must be synchronized.
   private val tokens = collection.mutable.Map[String, User]()
   private val users = collection.mutable.Map[String, UserOnDisk]()
