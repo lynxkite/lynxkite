@@ -7,8 +7,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 ### master
 
  - Improvements in the configuration for number of cores per executor:
-   - One common .kiterc option (NUM_CORES_PER_EXECUTOR) regardless of deployment mode,
-     YARN_CORES_PER_EXECUTOR option removed
+   - One common .kiterc option (`NUM_CORES_PER_EXECUTOR`) regardless of deployment mode
+   - As a consequence, `YARN_CORES_PER_EXECUTOR` option has been removed. Please update
+     .kiterc on YARN deployments by renaming `YARN_CORES_PER_EXECUTOR` to `NUM_CORES_PER_EXECUTOR`.
    - Use correcty the value of the above option internally to optimize calculations knowing
      the amount of cores available
    - In case of EC2, correctly set up this new kiterc option based on the cluster configuration
