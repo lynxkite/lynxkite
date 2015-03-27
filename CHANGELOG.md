@@ -6,8 +6,6 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
-### 1.2.1
-
 ### 1.2.0
 
  - Graph visualizations are now cut to only show on the corresponding side. The previous
