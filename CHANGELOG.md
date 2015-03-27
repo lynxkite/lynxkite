@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.2.1
+
  - Backward compatibility for undo in pre-1.2.0 projects.
 
 ### 1.2.0
