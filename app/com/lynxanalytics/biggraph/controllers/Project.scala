@@ -80,7 +80,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   private def checkpointIndex_=(x: Int): Unit =
     set(rootDir / "checkpointIndex", x.toString)
   def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
-  def checkpointDir(i: Int): SymbolPath = rootDir / "checkpoint" / checkpoints(i)
+  def checkpointDir(i: Int): SymbolPath = {
+    // We used to have absolute checkpoint paths. (Until LynxKite 1.2.0.)
+    // To provide backward compatibility these are transformed into relative paths.
+    // TODO: Eventually remove this code.
+    val path = checkpoints(i)
+    val relative = if (path.startsWith("projects/")) path.split("/", -1).last else path
+    rootDir / "checkpoint" / relative
+  }
 
   def copyCheckpoint(i: Int, destination: Project): Unit = manager.synchronized {
     assert(0 <= i && i < checkpointCount, s"Requested checkpoint $i out of $checkpointCount.")
