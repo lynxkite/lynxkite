@@ -1,0 +1,17 @@
+<label ng-hide="dialogVisible" class="btn btn-default" ng-click="okClick()">
+  {{buttonText}}
+</label>
+<form ng-show="dialogVisible" ng-submit="okClick()" style="display: inline;">
+  <div class="btn-group">
+    <input id="dialogInput"
+           class="btn btn-default"
+           ng-model="dialogText">
+    <label class="btn btn-default" ng-click="okClick()">
+      {{buttonText}}
+    </label>
+    <label class="btn btn-default"
+           ng-click="dialogVisible = false">
+      Cancel
+    </label>
+  </div>
+</form>

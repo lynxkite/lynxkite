@@ -77,7 +77,7 @@ input.save-as {
   box-shadow: inset 1px 1px 1px #B0B0B0;
 }
 
-.extra-controls > table {
+.extra-controls table {
   width: 100%;
 }
 .extra-controls td {
