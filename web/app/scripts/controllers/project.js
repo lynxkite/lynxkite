@@ -708,7 +708,7 @@ angular.module('biggraph')
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes
-    // it possible to edit the state manually in the URL, or use the "back
+    // it possible to edit the state manually in the URL, or use the "back"
     // button to undo state changes.
     util.deepWatch(
       $scope,

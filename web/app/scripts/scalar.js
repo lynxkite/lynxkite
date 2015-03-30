@@ -6,7 +6,6 @@ angular.module('biggraph').directive('scalar', function() {
     templateUrl: 'scalar.html',
     link: function(scope) {
       scope.$watch('scalar', function() {
-        console.log(scope.scalar.typeName);
         var isSavedStatus =
           (scope.scalar.typeName === 'com.lynxanalytics.biggraph.controllers.UIStatus');
         scope.asSavedStatus = isSavedStatus;
