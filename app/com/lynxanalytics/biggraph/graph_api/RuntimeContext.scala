@@ -34,4 +34,9 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
     log.info("Broadcast file at " + filename + " created.")
     Broadcast[T](filename)
   }
+
+  // Calls sc.parallelize with the default number of partitions.
+  def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]) = {
+    sparkContext.parallelize(seq, defaultPartitions)
+  }
 }
