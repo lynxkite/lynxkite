@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
+import play.api.libs.json
 import scala.reflect.runtime.universe.typeOf
 
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
@@ -2060,6 +2061,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           project.edgeBundle.idSet, edgeFilters, heavy = true)
         project.pullBackEdges(edgeEmbedding)
       }
+    }
+  })
+
+  register(new UtilityOperation(_) {
+    val title = "Save UI status as graph attribute"
+    val description =
+      """Saves UI status as a graph attribute that can be reused
+         later to reload the same visualization.
+      """
+    def parameters = List(
+      // In the future we may want a special kind for this so that user's don't see JSON.
+      Param("scalarName", "Name of new graph attribute"),
+      Param("uiStatusJson", "UI status as JSON"))
+
+    def enabled = FEStatus.enabled
+
+    def apply(params: Map[String, String]) = {
+      import UIStatusSerialization._
+      val uiStatusJson = json.Json.parse(params("uiStatusJson"))
+      val uiStatus = json.Json.fromJson[UIStatus](uiStatusJson).get
+      project.scalars(params("scalarName")) =
+        graph_operations.CreateUIStatusScalar(uiStatus).result.created
     }
   })
 

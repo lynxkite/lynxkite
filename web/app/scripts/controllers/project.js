@@ -67,6 +67,28 @@ angular.module('biggraph')
       this.project = undefined;
     }
 
+    Side.prototype.getBackendJson = function() {
+      var backendState = angular.copy(this.state);
+      delete backendState.projectName;
+      return JSON.stringify(backendState, null, 2);
+    };
+
+    Side.prototype.updateFromBackendJson = function(backendJson) {
+      var backendState = JSON.parse(backendJson);
+      backendState.projectName = this.state.projectName;
+      this.state = backendState;
+    };
+
+    Side.prototype.saveStateToBackend = function(scalarName) {
+      this.applyOp(
+        'Save-UI-status-as-graph-attribute',
+        {
+          scalarName: scalarName,
+          uiStatusJson: this.getBackendJson(),
+        });
+    };
+
+
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
       if (!this.loaded() || !this.state.graphMode ||
@@ -686,7 +708,7 @@ angular.module('biggraph')
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes
-    // it possible to edit the state manually in the URL, or use the "back"
+    // it possible to edit the state manually in the URL, or use the "back
     // button to undo state changes.
     util.deepWatch(
       $scope,

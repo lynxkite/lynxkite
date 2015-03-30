@@ -1,0 +1,38 @@
+package com.lynxanalytics.biggraph.controllers
+
+import play.api.libs.json
+
+/**
+ * The UIStatus class corresponds to Side.status in the UI code, as in a JSON (de)serialization
+ * should convert between the two.
+ */
+case class UIFilterStatus(
+  vertex: Map[String, String],
+  edge: Map[String, String])
+case class UIAxisOptions(
+  vertex: Map[String, String],
+  edge: Map[String, String])
+case class UIAnimation(
+  enabled: Boolean,
+  labelAttraction: String)
+case class UIStatus(
+  graphMode: String,
+  display: String,
+  filters: UIFilterStatus,
+  bucketCount: Int,
+  axisOptions: UIAxisOptions,
+  sampleRadius: Int,
+  attributeTitles: Map[String, String],
+  animate: UIAnimation,
+  centers: Seq[String])
+object UIStatusSerialization {
+  implicit val rUIFilterStatus = json.Json.reads[UIFilterStatus]
+  implicit val rUIAxisOptions = json.Json.reads[UIAxisOptions]
+  implicit val rUIAnimation = json.Json.reads[UIAnimation]
+  implicit val rUIStatus = json.Json.reads[UIStatus]
+  implicit val wUIFilterStatus = json.Json.writes[UIFilterStatus]
+  implicit val wUIAxisOptions = json.Json.writes[UIAxisOptions]
+  implicit val wUIAnimation = json.Json.writes[UIAnimation]
+  implicit val wUIStatus = json.Json.writes[UIStatus]
+}
+
