@@ -5,7 +5,8 @@
   <div class="btn-group">
     <input id="dialogInput"
            class="btn btn-default"
-           ng-model="dialogText">
+           ng-model="dialogText"
+           ng-disabled="!dialogEnabled">
     <label class="btn btn-default" ng-click="okClick()">
       {{buttonText}}
     </label>

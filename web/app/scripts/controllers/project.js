@@ -79,13 +79,13 @@ angular.module('biggraph')
       this.state = backendState;
     };
 
-    Side.prototype.saveStateToBackend = function(scalarName) {
+    Side.prototype.saveStateToBackend = function(scalarName, opFinishedCallback) {
       this.applyOp(
         'Save-UI-status-as-graph-attribute',
         {
           scalarName: scalarName,
           uiStatusJson: this.getBackendJson(),
-        });
+        }).then(opFinishedCallback);
     };
 
 
