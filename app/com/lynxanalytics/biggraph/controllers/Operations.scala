@@ -592,6 +592,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new CreateSegmentationOperation(_) {
+    val title = "Combine segmentations"
+    val description =
+      """Creates a new segmentation that is the cross product of two existing segmentations."""
+    def parameters = List(
+      Param("name", "New segmentation name"),
+      Param("seg1", "Segmentation 1", options = segmentations),
+      Param("seg2", "Segmentation 2", options = segmentations))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+    override def summary(params: Map[String, String]) = {
+      val seg1 = params("seg1")
+      val seg2 = params("seg2")
+      s"Combination of $seg1 and $seg2"
+    }
+
+    def apply(params: Map[String, String]) = {
+      val seg1 = project.segmentation(params("seg1"))
+      val seg2 = project.segmentation(params("seg2"))
+      val combination = {
+        val op = graph_operations.CombineSegmentations()
+        op(op.belongsTo1, seg1.belongsTo)(op.belongsTo2, seg2.belongsTo).result
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.project.setVertexSet(combination.segments, idAttr = "id")
+      segmentation.project.notes = summary(params)
+      segmentation.belongsTo = combination.belongsTo
+      segmentation.project.vertexAttributes("size") =
+        computeSegmentSizes(segmentation)
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Internal vertex ID as attribute"
     val description =
