@@ -7,7 +7,6 @@ angular.module('biggraph').directive('textDialog', function($timeout) {
     templateUrl: 'text-dialog.html',
     link: function(scope, element) {
       scope.okClick = function() {
-        console.log(scope);
         if (scope.dialogVisible) {
           scope.onOk({ userText: scope.dialogText });
           scope.dialogVisible = false;

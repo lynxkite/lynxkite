@@ -41,5 +41,5 @@ object CreateUIStatusScalar extends OpFromJson {
 case class CreateUIStatusScalar(value: UIStatus) extends CreateScalar[UIStatus] {
   @transient lazy val tt = typeTag[UIStatus]
   import com.lynxanalytics.biggraph.controllers.UIStatusSerialization._
-  override def toJson = Json.obj("value" -> json.Json.toJson(value))
+  override def toJson = Json.obj("value" -> value)
 }
