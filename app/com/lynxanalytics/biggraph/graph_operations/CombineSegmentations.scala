@@ -30,9 +30,8 @@ case class CombineSegmentations()
   // Creates an ID for the new segmentation from IDs in seg1 and seg2.
   private def newID(a: ID, b: ID) = {
     // IDs generated with randomNumbered have 32 random bits and 32 sequential bits.
-    // Adding is perfect for the random bits and not too bad for the sequential bits.
-    // The change of collision is very low.
-    a + b
+    // The chance of collision is very low.
+    java.lang.Long.rotateLeft(a, 1) ^ b
   }
 
   def execute(inputDatas: DataSet,
