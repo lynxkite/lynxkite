@@ -522,7 +522,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
       val attrName = params("attr")
-      s"Segmentation by $attrName"
+      val spread = params("spread")
+      s"Segmentation by $attrName with spread $spread"
     }
 
     def apply(params: Map[String, String]) = {
@@ -556,6 +557,38 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         aggregateViaConnection(
           bucketing.belongsTo,
           AttributeWithLocalAggregator(attr, "average"))
+    }
+  })
+
+  register(new CreateSegmentationOperation(_) {
+    val title = "Segment by string attribute"
+    val description = """Segments the vertices by a string vertex attribute."""
+    def parameters = List(
+      Param("name", "Segmentation name", defaultValue = "bucketing"),
+      Param("attr", "Attribute", options = vertexAttributes[String]))
+    def enabled = hasEdgeBundle
+    override def summary(params: Map[String, String]) = {
+      val attrName = params("attr")
+      s"Segmentation by $attrName"
+    }
+
+    def apply(params: Map[String, String]) = {
+      val attrName = params("attr")
+      val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
+      val bucketing = {
+        val op = graph_operations.StringBucketing()
+        op(op.attr, attr).result
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.project.setVertexSet(bucketing.segments, idAttr = "id")
+      segmentation.project.notes = summary(params)
+      segmentation.belongsTo = bucketing.belongsTo
+      segmentation.project.vertexAttributes("size") =
+        computeSegmentSizes(segmentation)
+      segmentation.project.vertexAttributes(attrName) =
+        aggregateViaConnection(
+          bucketing.belongsTo,
+          AttributeWithLocalAggregator(attr, "most_common"))
     }
   })
 
