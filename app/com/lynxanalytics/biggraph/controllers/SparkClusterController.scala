@@ -84,6 +84,10 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def checkSparkOperational(): Unit = {
-    assert(environment.sparkContext.parallelize(Seq(1, 2, 3)).count == 3)
+    val sc = environment.sparkContext
+    // This pool's properties are defined at /conf/scheduler-pools.xml.
+    sc.setLocalProperty("spark.scheduler.pool", "sparkcheck")
+    try assert(sc.parallelize(Seq(1, 2, 3), 1).count == 3)
+    finally sc.setLocalProperty("spark.scheduler.pool", null)
   }
 }
