@@ -19,9 +19,9 @@ case class UIStatus(
   graphMode: String,
   display: String,
   filters: UIFilterStatus,
-  bucketCount: Int,
+  bucketCount: String,
   axisOptions: UIAxisOptions,
-  sampleRadius: Int,
+  sampleRadius: String,
   attributeTitles: Map[String, String],
   animate: UIAnimation,
   centers: Seq[String])

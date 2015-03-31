@@ -42,12 +42,12 @@ angular.module('biggraph')
           vertex: {},
         },
         graphMode: undefined,
-        bucketCount: 4,
-        sampleRadius: 1,
+        bucketCount: '4',
+        sampleRadius: '1',
         display: 'svg',
         animate: {
           enabled: false,
-          labelAttraction: 0,
+          labelAttraction: '0',
         },
         attributeTitles: {},
       };
