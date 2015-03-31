@@ -228,7 +228,7 @@
 
         <div ng-if="side.state.graphMode">
           <text-dialog button-text="Save Visualization"
-                       on-ok="side.saveStateToBackend(userText)"
+                       on-ok="side.saveStateToBackend(userText, finishedCallback)"
                        start-value="visualization 1">
           </text-dialog>
         </div>
