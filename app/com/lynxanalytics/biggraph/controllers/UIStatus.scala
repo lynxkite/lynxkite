@@ -33,7 +33,7 @@ case class UIStatus(
   // For explicit center ids entered by the user, this will be set.
   centers: Option[Seq[String]],
   // For centers set by a getCenter request, the following parameters will be set
-  // (with vertexSetId set to "") so that we can redo the getCenter request.
+  // so that we can redo the getCenter request.
   lastCentersRequest: Option[UICenterRequest])
 object UIStatusSerialization {
   implicit val rUIFilterStatus = json.Json.reads[UIFilterStatus]
