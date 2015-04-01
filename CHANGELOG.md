@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - New _"Segment by double attribute"_ and _"Segment by string attribute"_ operations
+   make it possible to create a segmentation by cities of residence or age, for example.
+
 ### 1.2.1
 
  - Backward compatibility for undo in pre-1.2.0 projects.
