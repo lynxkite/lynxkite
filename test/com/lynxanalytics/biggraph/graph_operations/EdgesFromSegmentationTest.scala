@@ -17,7 +17,7 @@ class EdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       val op = EdgesFromSegmentation()
       op(op.belongsTo, components.belongsTo).result
     }
-    assert(result.es.toPairSeq.sorted == Seq(0 -> 1, 1 -> 0))
+    assert(result.es.toPairSeq.sorted == Seq(0 -> 0, 0 -> 1, 1 -> 0, 1 -> 1, 2 -> 2, 3 -> 3))
   }
 
   test("on example graph weak components") {
@@ -35,7 +35,7 @@ class EdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       op(op.belongsTo, components.belongsTo).result
     }
     assert(result.es.toPairSeq.sorted ==
-      Seq(0 -> 1, 0 -> 2, 1 -> 0, 1 -> 2, 2 -> 0, 2 -> 1))
+      Seq(0 -> 0, 0 -> 1, 0 -> 2, 1 -> 0, 1 -> 1, 1 -> 2, 2 -> 0, 2 -> 1, 2 -> 2, 3 -> 3))
   }
 
   // TODO: Add tests with overlapping segments.
