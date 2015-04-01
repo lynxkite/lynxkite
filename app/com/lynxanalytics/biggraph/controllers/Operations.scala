@@ -1052,7 +1052,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Create edges from co-occurrence"
     val description =
       """Connects vertices in the parent project if they co-occur in any segments.
-      Multiple co-occurrences will result in multiple parallel edges."""
+      Multiple co-occurrences will result in multiple parallel edges. Loop edges
+      are generated for each segment that a vertex belongs to."""
     def parameters = List()
     def enabled = FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
     def apply(params: Map[String, String]) = {

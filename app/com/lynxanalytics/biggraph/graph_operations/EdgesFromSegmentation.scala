@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 // Creates a new edge bundle that connects all vertices inside each segment.
 // If two vertices co-occur multiple times, they will be connected multiple
-// times.
+// times. Loop edges are also generated.
 object EdgesFromSegmentation extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
@@ -40,7 +40,7 @@ case class EdgesFromSegmentation()
     val p = belongsTo.partitioner.get
     val segToVs = belongsTo.values.map(e => e.dst -> e.src).toSortedRDD(p)
     val edges = segToVs.groupByKey.values.flatMap { members =>
-      for (v <- members; w <- members; if v != w) yield Edge(v, w)
+      for (v <- members; w <- members) yield Edge(v, w)
     }.randomNumbered(p)
     output(o.es, edges)
   }
