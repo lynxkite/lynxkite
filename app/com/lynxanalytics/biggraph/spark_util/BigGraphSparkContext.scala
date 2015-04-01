@@ -147,7 +147,7 @@ object BigGraphSparkContext {
       .set("spark.core.connection.ack.wait.timeout", "240")
       .set(
         "spark.scheduler.allocation.file",
-        scala.util.Properties.envOrNone("KITE_SCHEDULER_POOLS_CONFIG").get)
+        scala.util.Properties.envOrElse("KITE_SCHEDULER_POOLS_CONFIG", "conf/scheduler-pools.xml"))
     if (useKryo) {
       sparkConf = sparkConf
         .set(
