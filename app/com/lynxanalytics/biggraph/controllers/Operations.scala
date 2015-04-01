@@ -517,7 +517,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("attr", "Attribute", options = vertexAttributes[Double]),
       Param("interval-size", "Interval size"),
       Param("overlap", "Overlap", options = UIValue.list(List("no", "yes"))))
-    def enabled = hasEdgeBundle
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
     override def summary(params: Map[String, String]) = {
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
@@ -560,7 +560,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Param("attr", "Attribute", options = vertexAttributes[String]))
-    def enabled = hasEdgeBundle
+    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes.")
     override def summary(params: Map[String, String]) = {
       val attrName = params("attr")
       s"Segmentation by $attrName"
