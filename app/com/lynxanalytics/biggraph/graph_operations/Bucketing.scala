@@ -22,7 +22,7 @@ case class Bucketing[T: Ordering: reflect.ClassTag](attr: AttributeRDD[T]) {
 
 // Creates a segmentation where each segment represents a distinct value of the attribute.
 object StringBucketing extends OpFromJson {
-  def fromJson(j: JsValue): TypedMetaGraphOp.Type = StringBucketing()
+  def fromJson(j: JsValue) = StringBucketing()
 }
 case class StringBucketing()
     extends TypedMetaGraphOp[VertexAttributeInput[String], Segmentation] {
@@ -46,27 +46,27 @@ case class StringBucketing()
 }
 
 // Creates a segmentation where each segment represents a bucket of the attribute.
-object DoubleBucketing {
+// Bucketing starts from 0 and each bucket is the size of "bucketWidth". If
+// "overlap" is true, buckets will overlap their neighbors, and each vertex will
+// belong to 2 segments.
+object DoubleBucketing extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val attr = vertexAttribute[Double](vs)
-    val min = scalar[Double]
-    val max = scalar[Double]
   }
+  def fromJson(j: JsValue) =
+    DoubleBucketing((j \ "bucketWidth").as[Double], (j \ "overlap").as[Boolean])
 }
-// "Spread" is the number of neighboring buckets to also assign each vertex into.
-// For example with spread = 2 each vertex will belong to 5 segments.
-abstract class DoubleBucketing(spread: Long)
+case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
     extends TypedMetaGraphOp[DoubleBucketing.Input, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new DoubleBucketing.Input
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val inst = instance
-    if (spread > 0) new Segmentation(inputs.vs.entity)
+    if (overlap) new Segmentation(inputs.vs.entity)
     else new Segmentation(inputs.vs.entity, EdgeBundleProperties.partialFunction)
   }
-
-  def whichBucket(min: Double, max: Double, value: Double): Long
+  override def toJson = Json.obj("bucketWidth" -> bucketWidth, "overlap" -> overlap)
 
   def execute(inputDatas: DataSet,
               o: Segmentation,
@@ -74,42 +74,13 @@ abstract class DoubleBucketing(spread: Long)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
-    val min = inputs.min.value
-    val max = inputs.max.value
     val buckets = inputs.attr.rdd.flatMapValues { value =>
-      val bucket = whichBucket(min, max, value)
-      (bucket - spread) to (bucket + spread)
+      val bucket = (value / bucketWidth).toLong
+      if (overlap) (bucket - 1) to bucket
+      else Some(bucket)
     }
     val bucketing = Bucketing(buckets)
     output(o.segments, bucketing.segments)
     output(o.belongsTo, bucketing.belongsTo)
-  }
-}
-
-// DoubleBucketing with a fixed number of buckets.
-object FixedCountDoubleBucketing extends OpFromJson {
-  def fromJson(j: JsValue): TypedMetaGraphOp.Type =
-    FixedCountDoubleBucketing((j \ "bucketCount").as[Long], (j \ "spread").as[Long])
-}
-case class FixedCountDoubleBucketing(bucketCount: Long, spread: Long)
-    extends DoubleBucketing(spread) {
-  override def toJson = Json.obj("bucketCount" -> bucketCount, "spread" -> spread)
-  def whichBucket(min: Double, max: Double, value: Double): Long = {
-    val p = (value - min) / max // 0 to 1 inclusive.
-    (bucketCount - 1) min (bucketCount * p).toLong
-  }
-}
-
-// DoubleBucketing with fixed-size buckets.
-object FixedWidthDoubleBucketing extends OpFromJson {
-  def fromJson(j: JsValue): TypedMetaGraphOp.Type =
-    FixedWidthDoubleBucketing((j \ "bucketWidth").as[Double], (j \ "spread").as[Long])
-}
-case class FixedWidthDoubleBucketing(bucketWidth: Double, spread: Long)
-    extends DoubleBucketing(spread) {
-  override def toJson = Json.obj("bucketWidth" -> bucketWidth, "spread" -> spread)
-  def whichBucket(min: Double, max: Double, value: Double): Long = {
-    val p = (value - min) / bucketWidth
-    p.toLong
   }
 }

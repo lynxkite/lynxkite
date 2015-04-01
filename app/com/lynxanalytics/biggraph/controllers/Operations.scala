@@ -527,19 +527,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val attrName = params("attr")
       val attr = project.vertexAttributes(attrName).runtimeSafeCast[Double]
-      val minmax = {
-        val op = graph_operations.ComputeMinMaxDouble()
-        op(op.attribute, attr).result
-      }
       val overlap = params("overlap") == "yes"
       val intervalSize = params("interval-size").toDouble
       val bucketing = {
-        val op = if (overlap) {
-          graph_operations.FixedWidthDoubleBucketing(intervalSize / 2, spread = 1)
-        } else {
-          graph_operations.FixedWidthDoubleBucketing(intervalSize, spread = 0)
-        }
-        op(op.attr, attr)(op.min, minmax.min)(op.max, minmax.max).result
+        val op = graph_operations.DoubleBucketing(intervalSize, overlap)
+        op(op.attr, attr).result
       }
       val segmentation = project.segmentation(params("name"))
       segmentation.project.setVertexSet(bucketing.segments, idAttr = "id")
