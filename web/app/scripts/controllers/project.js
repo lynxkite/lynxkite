@@ -75,7 +75,6 @@ angular.module('biggraph')
       delete backendState.projectName;
       if (this.state.centers === this.state.lastCentersResponse) {
         delete backendState.centers;
-        backendState.lastCentersRequest.vertexSetId = '';
       } else {
         delete backendState.lastCentersRequest;
       }
@@ -88,7 +87,6 @@ angular.module('biggraph')
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.centers === undefined) {
-        this.state.lastCentersRequest.vertexSetId = this.project.vertexSet;
         this.sendCenterRequest(this.state.lastCentersRequest);
       }
     };
@@ -241,7 +239,6 @@ angular.module('biggraph')
     };
     Side.prototype.requestNewCentersWithFilters = function(count, filters) {
       var params = {
-        vertexSetId: this.project.vertexSet,
         filters: filters,
         count: count,
       };
@@ -251,6 +248,7 @@ angular.module('biggraph')
       var that = this;
       var resolvedParams = angular.copy(params);
       resolvedParams.filters = this.resolveVertexFilters(params.filters);
+      resolvedParams.vertexSetId = this.project.vertexSet;
       this.centerRequest = util.get('/ajax/center', resolvedParams);
       return this.centerRequest.$promise.then(
         function(result) {
