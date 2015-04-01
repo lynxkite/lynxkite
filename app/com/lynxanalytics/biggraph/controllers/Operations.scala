@@ -1058,7 +1058,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
     def apply(params: Map[String, String]) = {
       val op = graph_operations.EdgesFromSegmentation()
-      parent.edgeBundle = op(op.belongsTo, seg.belongsTo).result.es
+      val result = op(op.belongsTo, seg.belongsTo).result
+      parent.edgeBundle = result.es
+      for ((name, attr) <- project.vertexAttributes) {
+        parent.edgeAttributes(s"${seg.name}_$name") =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, result.origin)
+      }
     }
   })
 
