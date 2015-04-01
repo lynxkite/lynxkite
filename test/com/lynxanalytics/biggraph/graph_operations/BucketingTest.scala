@@ -22,7 +22,7 @@ class BucketingTest extends FunSuite with TestGraphOp {
   test("example graph by age with overlap") {
     val g = ExampleGraph()().result
     val bucketing = {
-      val op = DoubleBucketing(bucketWidth = 10.0, overlap = true)
+      val op = DoubleBucketing(bucketWidth = 20.0, overlap = true)
       op(op.attr, g.age).result
     }
     assert(bucketing.segments.toSeq.size == 6)
