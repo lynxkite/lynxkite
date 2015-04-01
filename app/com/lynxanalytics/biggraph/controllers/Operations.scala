@@ -539,10 +539,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.belongsTo = bucketing.belongsTo
       segmentation.project.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
-      segmentation.project.vertexAttributes(s"average_$attrName") =
-        aggregateViaConnection(
-          bucketing.belongsTo,
-          AttributeWithLocalAggregator(attr, "average"))
+      segmentation.project.vertexAttributes(s"interval") = bucketing.label
     }
   })
 
@@ -571,10 +568,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.belongsTo = bucketing.belongsTo
       segmentation.project.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
-      segmentation.project.vertexAttributes(attrName) =
-        aggregateViaConnection(
-          bucketing.belongsTo,
-          AttributeWithLocalAggregator(attr, "most_common"))
+      segmentation.project.vertexAttributes(attrName) = bucketing.label
     }
   })
 
