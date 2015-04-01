@@ -1053,7 +1053,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val description =
       """Connects vertices in the parent project if they co-occur in any segments.
       Multiple co-occurrences will result in multiple parallel edges. Loop edges
-      are generated for each segment that a vertex belongs to."""
+      are generated for each segment that a vertex belongs to. The attributes of
+      the segment are copied to the edges created from it."""
     def parameters = List()
     def enabled = FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
     def apply(params: Map[String, String]) = {
