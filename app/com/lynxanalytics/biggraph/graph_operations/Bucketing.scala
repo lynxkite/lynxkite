@@ -92,14 +92,14 @@ case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
       val bucket = (value / bucketStep).toLong
       if (overlap) (bucket - 1) to bucket
       else Some(bucket)
-    }.mapValues { bucket =>
-      val bottom = bucket * bucketStep
-      val top = bottom + bucketWidth
-      s"$bottom to $top"
     }
     val bucketing = Bucketing(buckets)
     output(o.segments, bucketing.segments)
-    output(o.label, bucketing.label)
+    output(o.label, bucketing.label.mapValues { bucket =>
+      val bottom = bucket * bucketStep
+      val top = bottom + bucketWidth
+      s"$bottom to $top"
+    })
     output(o.belongsTo, bucketing.belongsTo)
   }
 }
