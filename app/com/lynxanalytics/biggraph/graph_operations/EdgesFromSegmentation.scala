@@ -20,6 +20,7 @@ object EdgesFromSegmentation extends OpFromJson {
                input: Input) extends MagicOutput(instance) {
     // Multiple co-occurrence is represented by parallel edges.
     val es = edgeBundle(input.vs.entity, input.vs.entity)
+    val origin = edgeBundle(es.idSet, input.seg.entity, EdgeBundleProperties.partialFunction)
   }
   def fromJson(j: JsValue) = EdgesFromSegmentation()
 }
@@ -39,9 +40,11 @@ case class EdgesFromSegmentation()
     val belongsTo = inputs.belongsTo.rdd
     val p = belongsTo.partitioner.get
     val segToVs = belongsTo.values.map(e => e.dst -> e.src).toSortedRDD(p)
-    val edges = segToVs.groupByKey.values.flatMap { members =>
-      for (v <- members; w <- members) yield Edge(v, w)
+    val segAndEdge = segToVs.groupByKey.flatMap {
+      case (seg, members) =>
+        for (v <- members; w <- members) yield seg -> Edge(v, w)
     }.randomNumbered(p)
-    output(o.es, edges)
+    output(o.es, segAndEdge.mapValues(_._2))
+    output(o.origin, segAndEdge.mapValuesWithKeys { case (eid, (seg, edge)) => Edge(eid, seg) })
   }
 }
