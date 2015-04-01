@@ -6,6 +6,10 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - New _"Create edges from co-occurrence"_ operation creates edges in the parent project
+   for each pair of vertices that co-occur in a segment. If they co-occur multiple times,
+   multiple parallel edges are created.
+
 ### 1.2.1
 
  - Backward compatibility for undo in pre-1.2.0 projects.
