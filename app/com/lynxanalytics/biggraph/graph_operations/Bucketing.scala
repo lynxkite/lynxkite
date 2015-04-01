@@ -74,8 +74,9 @@ case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
+    val bucketStep = if (overlap) bucketWidth / 2 else bucketWidth
     val buckets = inputs.attr.rdd.flatMapValues { value =>
-      val bucket = (value / bucketWidth).toLong
+      val bucket = (value / bucketStep).toLong
       if (overlap) (bucket - 1) to bucket
       else Some(bucket)
     }
