@@ -607,12 +607,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for ((name, attr) <- seg1.project.vertexAttributes) {
         segmentation.project.vertexAttributes(s"${seg1.name}_$name") =
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, combination.embedding1)
+            attr, combination.origin1)
       }
       for ((name, attr) <- seg2.project.vertexAttributes) {
         segmentation.project.vertexAttributes(s"${seg2.name}_$name") =
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, combination.embedding2)
+            attr, combination.origin2)
       }
     }
   })
