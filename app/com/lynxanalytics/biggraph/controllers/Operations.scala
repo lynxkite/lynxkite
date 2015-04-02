@@ -506,6 +506,76 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new CreateSegmentationOperation(_) {
+    val title = "Segment by double attribute"
+    val description =
+      """Segments the vertices by a double vertex attribute.
+
+      <p>If you enable overlapping intervals, then each interval will have a 50% overlap
+      with both the previous and the next interval. As a result each vertex will belong
+      to two segments, guaranteeing that any vertices with an attribute value difference
+      less than half the interval size will share at least one segment."""
+    def parameters = List(
+      Param("name", "Segmentation name", defaultValue = "bucketing"),
+      Param("attr", "Attribute", options = vertexAttributes[Double]),
+      Param("interval-size", "Interval size"),
+      Param("overlap", "Overlap", options = UIValue.list(List("no", "yes"))))
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      val attrName = params("attr")
+      val overlap = params("overlap") == "yes"
+      s"Segmentation by $attrName" + (if (overlap) " with overlap" else "")
+    }
+
+    def apply(params: Map[String, String]) = {
+      val attrName = params("attr")
+      val attr = project.vertexAttributes(attrName).runtimeSafeCast[Double]
+      val overlap = params("overlap") == "yes"
+      val intervalSize = params("interval-size").toDouble
+      val bucketing = {
+        val op = graph_operations.DoubleBucketing(intervalSize, overlap)
+        op(op.attr, attr).result
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.project.setVertexSet(bucketing.segments, idAttr = "id")
+      segmentation.project.notes = summary(params)
+      segmentation.belongsTo = bucketing.belongsTo
+      segmentation.project.vertexAttributes("size") =
+        computeSegmentSizes(segmentation)
+      segmentation.project.vertexAttributes(s"bottom") = bucketing.bottom
+      segmentation.project.vertexAttributes(s"top") = bucketing.top
+    }
+  })
+
+  register(new CreateSegmentationOperation(_) {
+    val title = "Segment by string attribute"
+    val description = """Segments the vertices by a string vertex attribute."""
+    def parameters = List(
+      Param("name", "Segmentation name", defaultValue = "bucketing"),
+      Param("attr", "Attribute", options = vertexAttributes[String]))
+    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      val attrName = params("attr")
+      s"Segmentation by $attrName"
+    }
+
+    def apply(params: Map[String, String]) = {
+      val attrName = params("attr")
+      val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
+      val bucketing = {
+        val op = graph_operations.StringBucketing()
+        op(op.attr, attr).result
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.project.setVertexSet(bucketing.segments, idAttr = "id")
+      segmentation.project.notes = summary(params)
+      segmentation.belongsTo = bucketing.belongsTo
+      segmentation.project.vertexAttributes("size") =
+        computeSegmentSizes(segmentation)
+      segmentation.project.vertexAttributes(attrName) = bucketing.label
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Internal vertex ID as attribute"
     val description =
