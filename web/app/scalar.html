@@ -1,5 +1,11 @@
 <item-name-and-menu menu="side" name="{{scalar.title}}" type="scalar"></item-name-and-menu>
 
-<value class="scalar-value" ref="value"></value>
+<value ng-if="asValue" class="scalar-value" ref="value"></value>
 
-<span class="type-name">{{scalar.typeName}}</span>
+<label ng-if="asSavedStatus" class="btn btn-default"
+       tooltip="Load UI Status" tooltip-append-to-body="true" tooltip-placement="bottom"
+       ng-click="loadStatus()">
+  <i class="glyphicon glyphicon-eye-open"></i>
+</label>
+
+<span ng-if="asValue" class="type-name">{{scalar.typeName}}</span>

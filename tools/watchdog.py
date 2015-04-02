@@ -8,6 +8,7 @@ import time
 import urllib2
 import os
 import signal
+import socket
 import sys
 
 flags = argparse.ArgumentParser(
@@ -111,6 +112,8 @@ def health_check():
     for (url, timeout) in flags.watched_urls:
       urllib2.urlopen(url, timeout=timeout)
   except urllib2.URLError:
+    return False
+  except socket.timeout:
     return False
   return True
 
