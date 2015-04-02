@@ -27,13 +27,6 @@ case class CombineSegmentations()
     new Segmentation(inputs.vs.entity)
   }
 
-  // Creates an ID for the new segmentation from IDs in seg1 and seg2.
-  private def newID(a: ID, b: ID) = {
-    // IDs generated with randomNumbered have 32 random bits and 32 sequential bits.
-    // The chance of collision is very low.
-    java.lang.Long.rotateLeft(a, 1) ^ b
-  }
-
   def execute(inputDatas: DataSet,
               o: Segmentation,
               output: OutputBuilder,
@@ -42,10 +35,13 @@ case class CombineSegmentations()
     val vp = inputs.vs.rdd.partitioner.get
     val belongsTo1 = inputs.belongsTo1.rdd.values.map(e => e.src -> e.dst).toSortedRDD(vp)
     val belongsTo2 = inputs.belongsTo2.rdd.values.map(e => e.src -> e.dst).toSortedRDD(vp)
-    val belongsTo = belongsTo1.sortedJoin(belongsTo2).map {
-      case (v, (seg1, seg2)) => Edge(v, newID(seg1, seg2))
-    }.randomNumbered(vp)
-    output(o.segments, belongsTo.values.map(e => e.dst -> ()).toSortedRDD(vp).distinct)
-    output(o.belongsTo, belongsTo)
+    val vToSeg12 = belongsTo1.sortedJoin(belongsTo2)
+    // Generate random IDs for the new segments.
+    val segToSeg12 = vToSeg12.values.distinct.randomNumbered(vp)
+    val seg12ToSeg = segToSeg12.map { case (seg, seg12) => (seg12, seg) }.toSortedRDD(vp)
+    val seg12ToV = vToSeg12.map { case (v, seg12) => (seg12, v) }.toSortedRDD(vp)
+    val vToSeg = seg12ToV.sortedJoin(seg12ToSeg).values
+    output(o.segments, segToSeg12.mapValues(_ => ()))
+    output(o.belongsTo, vToSeg.map { case (v, seg) => Edge(v, seg) }.randomNumbered(vp))
   }
 }
