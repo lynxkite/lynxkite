@@ -15,20 +15,32 @@ object CombineSegmentations extends OpFromJson {
     val belongsTo1 = edgeBundle(vs, seg1)
     val belongsTo2 = edgeBundle(vs, seg2)
   }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    val segments = vertexSet
+    private val EBP = EdgeBundleProperties // Short alias.
+    val belongsTo = {
+      val p1 = inputs.belongsTo1.entity.properties
+      val p2 = inputs.belongsTo2.entity.properties
+      val properties =
+        if (p1.isFunction && p2.isFunction) EBP.partialFunction
+        else EBP.default
+      edgeBundle(inputs.vs.entity, segments, properties)
+    }
+    val embedding1 = edgeBundle(segments, inputs.seg1.entity, EBP.partialFunction)
+    val embedding2 = edgeBundle(segments, inputs.seg2.entity, EBP.partialFunction)
+  }
   def fromJson(j: JsValue) = CombineSegmentations()
 }
 import CombineSegmentations._
 case class CombineSegmentations()
-    extends TypedMetaGraphOp[Input, Segmentation] {
+    extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
-  def outputMeta(instance: MetaGraphOperationInstance) = {
-    implicit val inst = instance
-    new Segmentation(inputs.vs.entity)
-  }
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
-              o: Segmentation,
+              o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
@@ -43,5 +55,11 @@ case class CombineSegmentations()
     val vToSeg = seg12ToV.sortedJoin(seg12ToSeg).values
     output(o.segments, segToSeg12.mapValues(_ => ()))
     output(o.belongsTo, vToSeg.map { case (v, seg) => Edge(v, seg) }.randomNumbered(vp))
+    output(o.embedding1, segToSeg12.map {
+      case (seg, (seg1, seg2)) => Edge(seg, seg1)
+    }.randomNumbered(vp))
+    output(o.embedding2, segToSeg12.map {
+      case (seg, (seg1, seg2)) => Edge(seg, seg2)
+    }.randomNumbered(vp))
   }
 }
