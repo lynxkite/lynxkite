@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
+import play.api.libs.json
 import scala.reflect.runtime.universe.typeOf
 
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
@@ -1117,6 +1118,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new SegmentationOperation(_) {
+    val title = "Create edges from co-occurrence"
+    val description =
+      """Connects vertices in the parent project if they co-occur in any segments.
+      Multiple co-occurrences will result in multiple parallel edges. Loop edges
+      are generated for each segment that a vertex belongs to. The attributes of
+      the segment are copied to the edges created from it."""
+    def parameters = List()
+    def enabled = FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.EdgesFromSegmentation()
+      val result = op(op.belongsTo, seg.belongsTo).result
+      parent.edgeBundle = result.es
+      for ((name, attr) <- project.vertexAttributes) {
+        parent.edgeAttributes(s"${seg.name}_$name") =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, result.origin)
+      }
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Aggregate on neighbors"
     val description =
@@ -2130,6 +2152,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           project.edgeBundle.idSet, edgeFilters, heavy = true)
         project.pullBackEdges(edgeEmbedding)
       }
+    }
+  })
+
+  register(new UtilityOperation(_) {
+    val title = "Save UI status as graph attribute"
+    val description =
+      """Saves UI status as a graph attribute that can be reused
+         later to reload the same visualization.
+      """
+    def parameters = List(
+      // In the future we may want a special kind for this so that user's don't see JSON.
+      Param("scalarName", "Name of new graph attribute"),
+      Param("uiStatusJson", "UI status as JSON"))
+
+    def enabled = FEStatus.enabled
+
+    def apply(params: Map[String, String]) = {
+      import UIStatusSerialization._
+      val uiStatusJson = json.Json.parse(params("uiStatusJson"))
+      val uiStatus = json.Json.fromJson[UIStatus](uiStatusJson).get
+      project.scalars(params("scalarName")) =
+        graph_operations.CreateUIStatusScalar(uiStatus).result.created
     }
   })
 

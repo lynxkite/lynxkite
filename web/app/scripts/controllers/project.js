@@ -42,12 +42,12 @@ angular.module('biggraph')
           vertex: {},
         },
         graphMode: undefined,
-        bucketCount: 4,
-        sampleRadius: 1,
+        bucketCount: '4',
+        sampleRadius: '1',
         display: 'svg',
         animate: {
           enabled: false,
-          labelAttraction: 0,
+          labelAttraction: '0',
         },
         attributeTitles: {},
       };
@@ -66,6 +66,28 @@ angular.module('biggraph')
       // The /ajax/project Ajax response.
       this.project = undefined;
     }
+
+    Side.prototype.getBackendJson = function() {
+      var backendState = angular.copy(this.state);
+      delete backendState.projectName;
+      return JSON.stringify(backendState, null, 2);
+    };
+
+    Side.prototype.updateFromBackendJson = function(backendJson) {
+      var backendState = JSON.parse(backendJson);
+      backendState.projectName = this.state.projectName;
+      this.state = backendState;
+    };
+
+    Side.prototype.saveStateToBackend = function(scalarName, opFinishedCallback) {
+      this.applyOp(
+        'Save-UI-status-as-graph-attribute',
+        {
+          scalarName: scalarName,
+          uiStatusJson: this.getBackendJson(),
+        }).then(opFinishedCallback);
+    };
+
 
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
