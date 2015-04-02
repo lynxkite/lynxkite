@@ -27,8 +27,8 @@ object CombineSegmentations extends OpFromJson {
         else EBP.default
       edgeBundle(inputs.vs.entity, segments, properties)
     }
-    val embedding1 = edgeBundle(segments, inputs.seg1.entity, EBP.partialFunction)
-    val embedding2 = edgeBundle(segments, inputs.seg2.entity, EBP.partialFunction)
+    val origin1 = edgeBundle(segments, inputs.seg1.entity, EBP.partialFunction)
+    val origin2 = edgeBundle(segments, inputs.seg2.entity, EBP.partialFunction)
   }
   def fromJson(j: JsValue) = CombineSegmentations()
 }
@@ -56,10 +56,10 @@ case class CombineSegmentations()
     val vToSeg = seg12ToV.sortedJoin(seg12ToSeg).values
     output(o.segments, segToSeg12.mapValues(_ => ()))
     output(o.belongsTo, vToSeg.map { case (v, seg) => Edge(v, seg) }.randomNumbered(vp))
-    output(o.embedding1, segToSeg12.map {
+    output(o.origin1, segToSeg12.map {
       case (seg, (seg1, seg2)) => Edge(seg, seg1)
     }.randomNumbered(vp))
-    output(o.embedding2, segToSeg12.map {
+    output(o.origin2, segToSeg12.map {
       case (seg, (seg1, seg2)) => Edge(seg, seg2)
     }.randomNumbered(vp))
   }
