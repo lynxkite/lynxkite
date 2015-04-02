@@ -45,9 +45,10 @@ case class CombineSegmentations()
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vp = inputs.vs.rdd.partitioner.get
-    val belongsTo1 = inputs.belongsTo1.rdd.values.map(e => e.src -> e.dst).toSortedRDD(vp)
-    val belongsTo2 = inputs.belongsTo2.rdd.values.map(e => e.src -> e.dst).toSortedRDD(vp)
-    val vToSeg12 = belongsTo1.sortedJoin(belongsTo2)
+    val belongsTo1 = inputs.belongsTo1.rdd.values.map(e => e.src -> e.dst)
+    val belongsTo2 = inputs.belongsTo2.rdd.values.map(e => e.src -> e.dst)
+    // Unsorted join, because multiple values are expected on both sides.
+    val vToSeg12 = belongsTo1.join(belongsTo2)
     // Generate random IDs for the new segments.
     val segToSeg12 = vToSeg12.values.distinct.randomNumbered(vp)
     val seg12ToSeg = segToSeg12.map { case (seg, seg12) => (seg12, seg) }.toSortedRDD(vp)
