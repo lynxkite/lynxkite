@@ -1048,6 +1048,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new SegmentationOperation(_) {
+    val title = "Create edges from co-occurrence"
+    val description =
+      """Connects vertices in the parent project if they co-occur in any segments.
+      Multiple co-occurrences will result in multiple parallel edges. Loop edges
+      are generated for each segment that a vertex belongs to. The attributes of
+      the segment are copied to the edges created from it."""
+    def parameters = List()
+    def enabled = FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.EdgesFromSegmentation()
+      val result = op(op.belongsTo, seg.belongsTo).result
+      parent.edgeBundle = result.es
+      for ((name, attr) <- project.vertexAttributes) {
+        parent.edgeAttributes(s"${seg.name}_$name") =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, result.origin)
+      }
+    }
+  })
+
   register(new AttributeOperation(_) {
     val title = "Aggregate on neighbors"
     val description =
