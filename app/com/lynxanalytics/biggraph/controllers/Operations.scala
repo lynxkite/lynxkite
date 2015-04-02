@@ -509,9 +509,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Segment by double attribute"
     val description =
       """Segments the vertices by a double vertex attribute.
-      If you enable overlapping intervals, then each interval will have a 50% overlap
+
+      <p>If you enable overlapping intervals, then each interval will have a 50% overlap
       with both the previous and the next interval. As a result each vertex will belong
-      to two segments."""
+      to two segments, guaranteeing that any vertices with an attribute value difference
+      less than half the interval size will share at least one segment."""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Param("attr", "Attribute", options = vertexAttributes[Double]),
