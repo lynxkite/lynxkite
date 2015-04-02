@@ -65,7 +65,9 @@ object DoubleBucketing extends OpFromJson {
       inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     val belongsTo = edgeBundle(inputs.vs.entity, segments, properties)
-    val label = vertexAttribute[String](segments)
+    // The start and end of intervals for each segment.
+    val bottom = vertexAttribute[Double](segments)
+    val top = vertexAttribute[Double](segments)
   }
   def fromJson(j: JsValue) =
     DoubleBucketing((j \ "bucketWidth").as[Double], (j \ "overlap").as[Boolean])
@@ -95,11 +97,8 @@ case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
     }
     val bucketing = Bucketing(buckets)
     output(o.segments, bucketing.segments)
-    output(o.label, bucketing.label.mapValues { bucket =>
-      val bottom = bucket * bucketStep
-      val top = bottom + bucketWidth
-      s"$bottom to $top"
-    })
+    output(o.bottom, bucketing.label.mapValues { bucket => bucket * bucketStep })
+    output(o.top, bucketing.label.mapValues { bucket => bucket * bucketStep + bucketWidth })
     output(o.belongsTo, bucketing.belongsTo)
   }
 }
