@@ -1,0 +1,20 @@
+<div>
+  <span class="tag-list-tag" ng-repeat="tag in getTags()"
+    ng-click="removeTag(tag.id)" tooltip="Click to remove">
+    {{tag.title}}
+  </span>
+
+  <div class="btn-group" dropdown>
+    <a href class="btn-dropdown dropdown-toggle" dropdown-toggle
+      tooltip="Aggregate">
+      <i class="glyphicon glyphicon-plus"></i>
+    </a>
+    <ul class="dropdown-menu">
+      <li ng-repeat="option in options">
+        <a href ng-click="addTag(option.id)">
+          {{option.title}}
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
