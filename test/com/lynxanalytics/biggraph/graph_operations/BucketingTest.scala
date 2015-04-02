@@ -30,7 +30,9 @@ class BucketingTest extends FunSuite with TestGraphOp {
     val segmentSizes = bucketing.belongsTo.toPairSeq.groupBy(_._2).values.map(_.size).toSeq
     assert(segmentSizes.sorted == Seq(1, 1, 1, 1, 2, 2))
     assert(segmentSizes.sum == 4 * 2)
-    assert(bucketing.label.rdd.values.collect.toSeq.sorted ==
-      Seq("-10.0 to 10.0", "0.0 to 20.0", "10.0 to 30.0", "20.0 to 40.0", "40.0 to 60.0", "50.0 to 70.0"))
+    assert(bucketing.bottom.rdd.values.collect.toSeq.sorted ==
+      Seq(-10.0, 0.0, 10.0, 20.0, 40.0, 50.0))
+    assert(bucketing.top.rdd.values.collect.toSeq.sorted ==
+      Seq(10.0, 20.0, 30.0, 40.0, 60.0, 70.0))
   }
 }
