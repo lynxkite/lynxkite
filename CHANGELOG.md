@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - More than one type of aggregation can be selected for each attribute in one operation.
  - New _"Segment by double attribute"_ and _"Segment by string attribute"_ operations
    make it possible to create a segmentation by cities of residence or age, for example.
  - New _"Create edges from co-occurrence"_ operation creates edges in the parent project

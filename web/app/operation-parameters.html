@@ -13,10 +13,14 @@
       ng-model="output[param.id]"
       ng-options="option.id as option.title for option in param.options"></select>
     <select
-      ng-if="param.options.length > 0 && param.multipleChoice"
+      ng-if="param.options.length > 0 && param.multipleChoice && param.kind !== 'tag-list'"
       multiple
       class="form-control"
       ng-model="multiOutput[param.id]"
       ng-options="option.id as option.title for option in param.options"></select>
+    <tag-list
+      ng-if="param.options.length > 0 && param.multipleChoice && param.kind === 'tag-list'"
+      model="multiOutput[param.id]"
+      options="param.options"></tag-list>
   </div>
 </div>

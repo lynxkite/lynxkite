@@ -16,7 +16,12 @@ angular.module('biggraph').directive('operationParameters', function(util) {
         for (var i = 0; i < scope.input.length; ++i) {
           var param = scope.input[i];
           if (param.options.length > 0 && param.multipleChoice) {
-            scope.multiOutput[param.id] = (output[param.id] || '').split(',');
+            var flat = output[param.id];
+            if (flat !== undefined && flat.length > 0) {
+              scope.multiOutput[param.id] = flat.split(',');
+            } else {
+              scope.multiOutput[param.id] = [];
+            }
           }
         }
       });
