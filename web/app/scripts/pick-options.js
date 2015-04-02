@@ -10,10 +10,9 @@ angular.module('biggraph').directive('pickOptions', function() {
         scope.filters = scope.side.nonEmptyVertexFilterNames();
       };
       scope.requestNewCenters = function() {
-        scope.side.sendCenterRequest(
+        scope.side.requestNewCentersWithFilters(
           parseInt(scope.count),
-          scope.side.resolveVertexFilters(
-            scope.filters.filter(function (filter) { return filter.attributeName !== ''; })));
+          scope.filters.filter(function (filter) { return filter.attributeName !== ''; }));
       };
       scope.addFilter = function() {
         scope.filters.push({
