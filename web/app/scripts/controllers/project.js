@@ -70,6 +70,11 @@ angular.module('biggraph')
       this.project = undefined;
     }
 
+    // Creates a JSON formatted version of the current UI state of this side. The output is
+    // abstracted a bit away from the exact status so that it can be reapplied in slighly different
+    // circumctances as well. E.g. project name is omitted, as the same visualization makes
+    // sense in forks of the original project and center list is replaced with the request used
+    // to get this center list (as long as the current center list came from a getCenters request).
     Side.prototype.getBackendJson = function() {
       var backendState = angular.copy(this.state);
       delete backendState.projectName;
