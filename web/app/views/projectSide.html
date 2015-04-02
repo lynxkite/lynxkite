@@ -122,7 +122,7 @@
       </div>
 
       <!-- Extra controls for visualizations. -->
-      <div class="list-group-item extra-controls">
+      <div class="list-group-item extra-controls" ng-if="side.state.graphMode">
         <!-- Sampled view extra controls. -->
         <div ng-if="side.state.graphMode === 'sampled'">
           <table>
@@ -186,7 +186,7 @@
               <td></td>
               <td>
                 <div class="btn-group pick-buttons" ng-show="!side.showPickOptions">
-                  <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
+                  <button class="btn btn-default" ng-click="side.requestNewCenters(1)">
                     Pick
                   </button>
                   <button

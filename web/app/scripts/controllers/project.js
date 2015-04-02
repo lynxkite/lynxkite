@@ -50,6 +50,9 @@ angular.module('biggraph')
           labelAttraction: '0',
         },
         attributeTitles: {},
+        centers: undefined,
+        lastCentersRequest: undefined,
+        lastCentersResponse: undefined,
       };
     }
 
@@ -67,9 +70,20 @@ angular.module('biggraph')
       this.project = undefined;
     }
 
+    // Creates a JSON formatted version of the current UI state of this side. The output is
+    // abstracted a bit away from the exact status so that it can be reapplied in slighly different
+    // circumctances as well. E.g. project name is omitted, as the same visualization makes
+    // sense in forks of the original project and center list is replaced with the request used
+    // to get this center list (as long as the current center list came from a getCenters request).
     Side.prototype.getBackendJson = function() {
       var backendState = angular.copy(this.state);
       delete backendState.projectName;
+      if (this.state.centers === this.state.lastCentersResponse) {
+        delete backendState.centers;
+      } else {
+        delete backendState.lastCentersRequest;
+      }
+      delete backendState.lastCentersResponse;
       return JSON.stringify(backendState, null, 2);
     };
 
@@ -77,6 +91,9 @@ angular.module('biggraph')
       var backendState = JSON.parse(backendJson);
       backendState.projectName = this.state.projectName;
       this.state = backendState;
+      if (this.state.centers === undefined) {
+        this.sendCenterRequest(this.state.lastCentersRequest);
+      }
     };
 
     Side.prototype.saveStateToBackend = function(scalarName, opFinishedCallback) {
@@ -222,32 +239,33 @@ angular.module('biggraph')
 
     Side.prototype.maybeRequestNewCenter = function() {
       if (this.state.graphMode === 'sampled' && !this.state.centers) {
-        this.requestNewCenter(1);
+        this.requestNewCenters(1);
       }
     };
-    Side.prototype.requestRandomCenter = function() {
-      var that = this;
-      this.requestNewCenter(100).then(function() {
-        var centers = that.state.centers;
-        var i = Math.floor(Math.random() * centers.length);
-        that.state.centers = [centers[i]];
-      });
-    };
-    Side.prototype.sendCenterRequest = function(count, filters) {
+    Side.prototype.requestNewCentersWithFilters = function(count, filters) {
       var params = {
-        vertexSetId: this.project.vertexSet,
         filters: filters,
         count: count,
       };
+      this.sendCenterRequest(params);
+    };
+    Side.prototype.sendCenterRequest = function(params) {
       var that = this;
-      this.centerRequest = util.get('/ajax/center', params);
+      var resolvedParams = angular.copy(params);
+      resolvedParams.filters = this.resolveVertexFilters(params.filters);
+      resolvedParams.vertexSetId = this.project.vertexSet;
+      this.centerRequest = util.get('/ajax/center', resolvedParams);
       return this.centerRequest.$promise.then(
-        function(result) { that.state.centers = result.centers; },
+        function(result) {
+          that.state.centers = result.centers;
+          that.state.lastCentersRequest = params;
+          that.state.lastCentersResponse = result.centers;
+        },
         function(response) { util.ajaxError(response); }
       );
     };
-    Side.prototype.requestNewCenter = function(count) {
-      this.sendCenterRequest(count, this.nonEmptyVertexFilters());
+    Side.prototype.requestNewCenters = function(count) {
+      this.requestNewCentersWithFilters(count, this.nonEmptyVertexFilterNames());
     };
 
     Side.prototype.shortName = function() {
