@@ -17,99 +17,88 @@ case class Bucketing[T: Ordering: reflect.ClassTag](attr: AttributeRDD[T]) {
     valueToV.sortedJoin(valueToSeg).map { case (value, (v, seg)) => (v, seg) }
   }
   val segments = segToValue.mapValues(_ => ())
+  val label = segToValue
   val belongsTo = vToSeg.map { case (v, seg) => Edge(v, seg) }.randomNumbered(partitioner)
 }
 
 // Creates a segmentation where each segment represents a distinct value of the attribute.
 object StringBucketing extends OpFromJson {
-  def fromJson(j: JsValue): TypedMetaGraphOp.Type = StringBucketing()
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: VertexAttributeInput[String]) extends MagicOutput(instance) {
+    val segments = vertexSet
+    val belongsTo = edgeBundle(inputs.vs.entity, segments, EdgeBundleProperties.partialFunction)
+    val label = vertexAttribute[String](segments)
+  }
+  def fromJson(j: JsValue) = StringBucketing()
 }
 case class StringBucketing()
-    extends TypedMetaGraphOp[VertexAttributeInput[String], Segmentation] {
+    extends TypedMetaGraphOp[VertexAttributeInput[String], StringBucketing.Output] {
+  import StringBucketing._
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[String]
-  def outputMeta(instance: MetaGraphOperationInstance) = {
-    implicit val inst = instance
-    new Segmentation(inputs.vs.entity, EdgeBundleProperties.partialFunction)
-  }
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(inputDatas: DataSet,
-              o: Segmentation,
+              o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
     val bucketing = Bucketing(inputs.attr.rdd)
     output(o.segments, bucketing.segments)
+    output(o.label, bucketing.label)
     output(o.belongsTo, bucketing.belongsTo)
   }
 }
 
 // Creates a segmentation where each segment represents a bucket of the attribute.
-object DoubleBucketing {
+// Bucketing starts from 0 and each bucket is the size of "bucketWidth". If
+// "overlap" is true, buckets will overlap their neighbors, and each vertex will
+// belong to 2 segments.
+object DoubleBucketing extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val attr = vertexAttribute[Double](vs)
-    val min = scalar[Double]
-    val max = scalar[Double]
   }
+  class Output(properties: EdgeBundleProperties)(
+      implicit instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val segments = vertexSet
+    val belongsTo = edgeBundle(inputs.vs.entity, segments, properties)
+    // The start and end of intervals for each segment.
+    val bottom = vertexAttribute[Double](segments)
+    val top = vertexAttribute[Double](segments)
+  }
+  def fromJson(j: JsValue) =
+    DoubleBucketing((j \ "bucketWidth").as[Double], (j \ "overlap").as[Boolean])
 }
-// "Spread" is the number of neighboring buckets to also assign each vertex into.
-// For example with spread = 2 each vertex will belong to 5 segments.
-abstract class DoubleBucketing(spread: Long)
-    extends TypedMetaGraphOp[DoubleBucketing.Input, Segmentation] {
+case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
+    extends TypedMetaGraphOp[DoubleBucketing.Input, DoubleBucketing.Output] {
+  import DoubleBucketing._
   override val isHeavy = true
   @transient override lazy val inputs = new DoubleBucketing.Input
   def outputMeta(instance: MetaGraphOperationInstance) = {
-    implicit val inst = instance
-    if (spread > 0) new Segmentation(inputs.vs.entity)
-    else new Segmentation(inputs.vs.entity, EdgeBundleProperties.partialFunction)
+    if (overlap) new Output(EdgeBundleProperties.default)(instance, inputs)
+    else new Output(EdgeBundleProperties.partialFunction)(instance, inputs)
   }
-
-  def whichBucket(min: Double, max: Double, value: Double): Long
+  override def toJson = Json.obj("bucketWidth" -> bucketWidth, "overlap" -> overlap)
 
   def execute(inputDatas: DataSet,
-              o: Segmentation,
+              o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
-    val min = inputs.min.value
-    val max = inputs.max.value
+    val bucketStep = if (overlap) bucketWidth / 2 else bucketWidth
     val buckets = inputs.attr.rdd.flatMapValues { value =>
-      val bucket = whichBucket(min, max, value)
-      (bucket - spread) to (bucket + spread)
+      val bucket = (value / bucketStep).toLong
+      if (overlap) (bucket - 1) to bucket
+      else Some(bucket)
     }
     val bucketing = Bucketing(buckets)
     output(o.segments, bucketing.segments)
+    output(o.bottom, bucketing.label.mapValues { bucket => bucket * bucketStep })
+    output(o.top, bucketing.label.mapValues { bucket => bucket * bucketStep + bucketWidth })
     output(o.belongsTo, bucketing.belongsTo)
-  }
-}
-
-// DoubleBucketing with a fixed number of buckets.
-object FixedCountDoubleBucketing extends OpFromJson {
-  def fromJson(j: JsValue): TypedMetaGraphOp.Type =
-    FixedCountDoubleBucketing((j \ "bucketCount").as[Long], (j \ "spread").as[Long])
-}
-case class FixedCountDoubleBucketing(bucketCount: Long, spread: Long)
-    extends DoubleBucketing(spread) {
-  override def toJson = Json.obj("bucketCount" -> bucketCount, "spread" -> spread)
-  def whichBucket(min: Double, max: Double, value: Double): Long = {
-    val p = (value - min) / max // 0 to 1 inclusive.
-    (bucketCount - 1) min (bucketCount * p).toLong
-  }
-}
-
-// DoubleBucketing with fixed-size buckets.
-object FixedWidthDoubleBucketing extends OpFromJson {
-  def fromJson(j: JsValue): TypedMetaGraphOp.Type =
-    FixedWidthDoubleBucketing((j \ "bucketWidth").as[Double], (j \ "spread").as[Long])
-}
-case class FixedWidthDoubleBucketing(bucketWidth: Double, spread: Long)
-    extends DoubleBucketing(spread) {
-  override def toJson = Json.obj("bucketWidth" -> bucketWidth, "spread" -> spread)
-  def whichBucket(min: Double, max: Double, value: Double): Long = {
-    val p = (value - min) / bucketWidth
-    p.toLong
   }
 }

@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
+import play.api.libs.json
 import scala.reflect.runtime.universe.typeOf
 
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
@@ -509,54 +510,40 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val title = "Segment by double attribute"
     val description =
       """Segments the vertices by a double vertex attribute.
-      Can be used either with a fixed bucket count or with a fixed bucket size.
-      (But not with both.) "Spread" is the number of neighboring buckets
-      to also assign a vertex to. For example if "spread" is 2, each vertex will
-      belong to 5 segments."""
+
+      <p>If you enable overlapping intervals, then each interval will have a 50% overlap
+      with both the previous and the next interval. As a result each vertex will belong
+      to two segments, guaranteeing that any vertices with an attribute value difference
+      less than half the interval size will share at least one segment."""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Param("attr", "Attribute", options = vertexAttributes[Double]),
-      Param("bucket-size", "Bucket size"),
-      Param("bucket-count", "Bucket count"),
-      Param("spread", "Spread", defaultValue = "0"))
-    def enabled = hasEdgeBundle
+      Param("interval-size", "Interval size"),
+      Param("overlap", "Overlap", options = UIValue.list(List("no", "yes"))))
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
     override def summary(params: Map[String, String]) = {
       val attrName = params("attr")
-      val spread = params("spread")
-      s"Segmentation by $attrName with spread $spread"
+      val overlap = params("overlap") == "yes"
+      s"Segmentation by $attrName" + (if (overlap) " with overlap" else "")
     }
 
     def apply(params: Map[String, String]) = {
       val attrName = params("attr")
       val attr = project.vertexAttributes(attrName).runtimeSafeCast[Double]
-      val minmax = {
-        val op = graph_operations.ComputeMinMaxDouble()
-        op(op.attribute, attr).result
+      val overlap = params("overlap") == "yes"
+      val intervalSize = params("interval-size").toDouble
+      val bucketing = {
+        val op = graph_operations.DoubleBucketing(intervalSize, overlap)
+        op(op.attr, attr).result
       }
-      val spread = params("spread").toLong
-      val bucketSize = params("bucket-size")
-      val bucketCount = params("bucket-count")
-      assert(bucketSize.nonEmpty || bucketCount.nonEmpty,
-        "Please specify either the bucket size or the bucket count.")
-      assert(bucketSize.isEmpty || bucketCount.isEmpty,
-        "Bucket size and bucket count cannot be set at the same time.")
-      val bucketing = if (bucketSize.nonEmpty) {
-        val op = graph_operations.FixedWidthDoubleBucketing(bucketSize.toDouble, spread)
-        op(op.attr, attr)(op.min, minmax.min)(op.max, minmax.max).result
-      } else if (bucketCount.nonEmpty) {
-        val op = graph_operations.FixedCountDoubleBucketing(bucketCount.toLong, spread)
-        op(op.attr, attr)(op.min, minmax.min)(op.max, minmax.max).result
-      } else ???
       val segmentation = project.segmentation(params("name"))
       segmentation.project.setVertexSet(bucketing.segments, idAttr = "id")
       segmentation.project.notes = summary(params)
       segmentation.belongsTo = bucketing.belongsTo
       segmentation.project.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
-      segmentation.project.vertexAttributes(s"average_$attrName") =
-        aggregateViaConnection(
-          bucketing.belongsTo,
-          AttributeWithLocalAggregator(attr, "average"))
+      segmentation.project.vertexAttributes(s"bottom") = bucketing.bottom
+      segmentation.project.vertexAttributes(s"top") = bucketing.top
     }
   })
 
@@ -566,7 +553,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Param("attr", "Attribute", options = vertexAttributes[String]))
-    def enabled = hasEdgeBundle
+    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes.")
     override def summary(params: Map[String, String]) = {
       val attrName = params("attr")
       s"Segmentation by $attrName"
@@ -585,10 +572,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.belongsTo = bucketing.belongsTo
       segmentation.project.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
-      segmentation.project.vertexAttributes(attrName) =
-        aggregateViaConnection(
-          bucketing.belongsTo,
-          AttributeWithLocalAggregator(attr, "most_common"))
+      segmentation.project.vertexAttributes(attrName) = bucketing.label
     }
   })
 
@@ -1162,6 +1146,27 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.edgeAttributes("Overlap size") =
         // Long is better supported on the frontend.
         graph_operations.IntAttributeToLong.run(res.overlapSize)
+    }
+  })
+
+  register(new SegmentationOperation(_) {
+    val title = "Create edges from co-occurrence"
+    val description =
+      """Connects vertices in the parent project if they co-occur in any segments.
+      Multiple co-occurrences will result in multiple parallel edges. Loop edges
+      are generated for each segment that a vertex belongs to. The attributes of
+      the segment are copied to the edges created from it."""
+    def parameters = List()
+    def enabled = FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.EdgesFromSegmentation()
+      val result = op(op.belongsTo, seg.belongsTo).result
+      parent.edgeBundle = result.es
+      for ((name, attr) <- project.vertexAttributes) {
+        parent.edgeAttributes(s"${seg.name}_$name") =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+            attr, result.origin)
+      }
     }
   })
 
@@ -2178,6 +2183,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           project.edgeBundle.idSet, edgeFilters, heavy = true)
         project.pullBackEdges(edgeEmbedding)
       }
+    }
+  })
+
+  register(new UtilityOperation(_) {
+    val title = "Save UI status as graph attribute"
+    val description =
+      """Saves UI status as a graph attribute that can be reused
+         later to reload the same visualization.
+      """
+    def parameters = List(
+      // In the future we may want a special kind for this so that user's don't see JSON.
+      Param("scalarName", "Name of new graph attribute"),
+      Param("uiStatusJson", "UI status as JSON"))
+
+    def enabled = FEStatus.enabled
+
+    def apply(params: Map[String, String]) = {
+      import UIStatusSerialization._
+      val uiStatusJson = json.Json.parse(params("uiStatusJson"))
+      val uiStatus = json.Json.fromJson[UIStatus](uiStatusJson).get
+      project.scalars(params("scalarName")) =
+        graph_operations.CreateUIStatusScalar(uiStatus).result.created
     }
   })
 
