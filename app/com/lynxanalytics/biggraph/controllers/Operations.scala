@@ -1214,7 +1214,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           m.belongsTo,
           AttributeWithLocalAggregator(oldVAttrs(attr), choice))
-        project.vertexAttributes(attr) = result
+        if (attr == params("key")) { // Don't actually add "_most_common" for the key.
+          project.vertexAttributes(attr) = result
+        } else {
+          project.vertexAttributes(s"${attr}_${choice}") = result
+        }
       }
       if (oldEdges != null) {
         val edgeInduction = {
@@ -1258,11 +1262,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldAttrs = project.edgeAttributes.toMap
       project.edgeBundle = newEdges
 
-      for ((attrName, choice) <- parseAggregateParams(params)) {
-        project.edgeAttributes(attrName) =
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        project.edgeAttributes(s"${attr}_${choice}") =
           aggregateViaConnection(
             mergedResult.belongsTo,
-            AttributeWithLocalAggregator(oldAttrs(attrName), choice))
+            AttributeWithLocalAggregator(oldAttrs(attr), choice))
       }
     }
   })
@@ -2362,8 +2366,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def parseAggregateParams(params: Map[String, String]) = {
     val aggregate = "aggregate-(.*)".r
-    params.collect {
-      case (aggregate(attr), choice) if choice != "ignore" => attr -> choice
+    params.toSeq.collect {
+      case (aggregate(attr), choices) if choices.nonEmpty => attr -> choices
+    }.flatMap {
+      case (attr, choices) => choices.split(",", -1).map(attr -> _)
     }
   }
   def aggregateParams(
@@ -2374,30 +2380,30 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case (name, attr) =>
         val options = if (attr.is[Double]) {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.list(List("ignore", "weighted_sum", "weighted_average", "by_max_weight", "by_min_weight"))
+            UIValue.list(List("weighted_sum", "weighted_average", "by_max_weight", "by_min_weight"))
           } else if (needsGlobal) {
-            UIValue.list(List("ignore", "sum", "average", "min", "max", "count", "first", "std_deviation"))
+            UIValue.list(List("sum", "average", "min", "max", "count", "first", "std_deviation"))
           } else {
-            UIValue.list(List("ignore", "sum", "average", "min", "max", "most_common", "count", "vector", "std_deviation"))
+            UIValue.list(List("sum", "average", "min", "max", "most_common", "count", "vector", "std_deviation"))
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.list(List("ignore", "by_max_weight", "by_min_weight"))
+            UIValue.list(List("by_max_weight", "by_min_weight"))
           } else if (needsGlobal) {
-            UIValue.list(List("ignore", "count", "first"))
+            UIValue.list(List("count", "first"))
           } else {
-            UIValue.list(List("ignore", "most_common", "majority_50", "majority_100", "count", "vector"))
+            UIValue.list(List("most_common", "majority_50", "majority_100", "count", "vector"))
           }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
-            UIValue.list(List("ignore", "by_max_weight", "by_min_weight"))
+            UIValue.list(List("by_max_weight", "by_min_weight"))
           } else if (needsGlobal) {
-            UIValue.list(List("ignore", "count", "first"))
+            UIValue.list(List("count", "first"))
           } else {
-            UIValue.list(List("ignore", "most_common", "count", "vector"))
+            UIValue.list(List("most_common", "count", "vector"))
           }
         }
-        Param(s"aggregate-$name", name, options = options)
+        Param(s"aggregate-$name", name, options = options, multipleChoice = true, kind = "tag-list")
     }
   }
 

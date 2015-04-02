@@ -1,0 +1,17 @@
+/* Trying to get the tag-list to line up with the parameter label. */
+tag-list > div {
+  margin-top: 3px;
+}
+tag-list div[dropdown] {
+  padding-top: 5px;
+  margin-left: 20px;
+}
+.tag-list-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.8);
+  margin-left: 10px;
+  color: black;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}

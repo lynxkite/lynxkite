@@ -55,6 +55,18 @@
         { "id": "1", "title": "Discard all vertices", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "10", "title": "Filter subscribers", "parameters": [
           { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'", "options": [] }
+        ], "status": { "enabled": true, "disabledReason": "" } },
+        { "category": "Vertex operations", "id": "aggregate", "title": "Aggregate something", "parameters": [
+          { "id": "aggregate-age", "title": "age", "defaultValue": "", "options": [
+            {"id": "average", "title": "average"},
+            {"id": "min", "title": "min"},
+            {"id": "max", "title": "max"}
+          ], "multipleChoice": true, "kind": "tag-list" },
+          { "id": "aggregate-income", "title": "income", "defaultValue": "", "options": [
+            {"id": "average", "title": "average"},
+            {"id": "min", "title": "min"},
+            {"id": "max", "title": "max"}
+          ], "multipleChoice": true, "kind": "tag-list" }
         ], "status": { "enabled": true, "disabledReason": "" } }
       ]
     },
