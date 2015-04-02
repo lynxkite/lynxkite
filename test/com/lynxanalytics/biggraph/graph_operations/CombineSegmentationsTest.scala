@@ -35,12 +35,8 @@ class CombineSegmentationsTest extends FunSuite with TestGraphOp {
     assert(byGender.segments.toSeq.size == 2)
 
     val byAge = {
-      val minmax = {
-        val op = ComputeMinMaxDouble()
-        op(op.attribute, g.age).result
-      }
-      val op = FixedCountDoubleBucketing(bucketCount = 2, spread = 0)
-      op(op.attr, g.age)(op.min, minmax.min)(op.max, minmax.max).result
+      val op = DoubleBucketing(40, overlap = false)
+      op(op.attr, g.age).result
     }
     assert(byAge.segments.toSeq.size == 2)
 
