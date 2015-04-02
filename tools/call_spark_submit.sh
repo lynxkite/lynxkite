@@ -87,6 +87,8 @@ if [ "${#residual_args[@]}" -ne 1 ]; then
   exit 1
 fi
 
+export KITE_SCHEDULER_POOLS_CONFIG="${conf_dir}/scheduler-pools.xml"
+
 mode=${residual_args[0]}
 
 command=(
@@ -152,7 +154,7 @@ startWatchdog () {
       SPARK_CHECK_URL="${MAIN_URL}sparkHealthCheck"
       nohup ${tools_dir}/watchdog.py \
           --status_port=${KITE_WATCHDOG_PORT} \
-          --watched_urls="${MAIN_URL}@1,${SPARK_CHECK_URL}@10" \
+          --watched_urls="${MAIN_URL}@1,${SPARK_CHECK_URL}@120" \
           --sleep_seconds=10 \
           --max_failures=10 \
           --script="$0 watchdog_restart" \

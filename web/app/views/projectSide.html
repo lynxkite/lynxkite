@@ -121,108 +121,118 @@
         <project-settings side="side" visible="$parent.showSettings"></project-settings>
       </div>
 
-      <!-- Extra controls for the sampled view. -->
-      <div class="list-group-item extra-controls"
-        ng-if="side.state.graphMode === 'sampled'">
-        <table>
-          <tr>
-            <td>Display:</td>
-            <td>
-              <div class="btn-group">
-                <label class="btn btn-default"
-                  ng-model="side.state.display"
-                  btn-radio="'svg'">
-                  2D
-                </label>
-                <label class="btn btn-default"
-                  ng-model="side.state.display"
-                  btn-radio="'3d'">
-                  3D
-                </label>
-              </div>
-            </td>
-          </tr>
-          <tr ng-if="side.state.display === 'svg'">
-            <td>Layout animation:</td>
-            <td>
-              <div class="btn-group">
-                <label class="btn btn-default"
-                  ng-model="side.state.animate.enabled"
-                  btn-radio="true">
-                  <i class="glyphicon glyphicon-play"></i>
-                </label>
-                <label class="btn btn-default"
-                  ng-model="side.state.animate.enabled"
-                  btn-radio="false">
-                  <i class="glyphicon glyphicon-pause"></i>
-                </label>
-              </div>
-            </td>
-          </tr>
-          <tr ng-if="side.state.display === 'svg'">
-            <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
-              tooltip-append-to-body="true" tooltip-placement="right"
-              tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
-              Label attraction:
-            </td>
-            <td>
-              <input ng-disabled="!side.state.animate.enabled"
-                tooltip="{{side.state.animate.labelAttraction * 100}}%"
-                type="range" max="1" step="0.1" ng-model="side.state.animate.labelAttraction">
-            </td>
-          </tr>
-          <tr>
-            <td>Show vertices:</td>
-            <td>
-              <div id="sample-center"
-                   ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
-                <input class="form-control" ng-model="side.state.centers" tokenfield>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td></td>
-            <td>
-              <div class="btn-group pick-buttons" ng-show="!side.showPickOptions">
-                <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
-                  Pick
-                </button>
-                <button
-                  class="btn btn-default"
-                  ng-click="side.showPickOptions = !side.showPickOptions"
-                  tooltip="Advanced pick options">
-                  ...
-                </button>
-              </div>
-              <pick-options shown="side.showPickOptions" side="side"></pick-options>
-            </td>
-          </tr>
-          <tr>
-            <td ng-class="{ 'de-emph': side.project.edgeBundle === '' }"
-              tooltip-append-to-body="true" tooltip-placement="right"
-              tooltip="{{ side.project.edgeBundle === '' ? 'No edges.' : '' }}">
-              Show neighborhood:
-            </td>
-            <td>
-              <input ng-disabled="side.project.edgeBundle === ''"
-                tooltip="radius {{side.state.sampleRadius}}"
-                type="range" max="10" step="1" ng-model="side.state.sampleRadius">
-            </td>
-          </tr>
-        </table>
-      </div>
+      <!-- Extra controls for visualizations. -->
+      <div class="list-group-item extra-controls">
+        <!-- Sampled view extra controls. -->
+        <div ng-if="side.state.graphMode === 'sampled'">
+          <table>
+            <tr>
+              <td>Display:</td>
+              <td>
+                <div class="btn-group">
+                  <label class="btn btn-default"
+                         ng-model="side.state.display"
+                         btn-radio="'svg'">
+                    2D
+                  </label>
+                  <label class="btn btn-default"
+                         ng-model="side.state.display"
+                         btn-radio="'3d'">
+                    3D
+                  </label>
+                </div>
+              </td>
+            </tr>
+            <tr ng-if="side.state.display === 'svg'">
+              <td>Layout animation:</td>
+              <td>
+                <div class="btn-group">
+                  <label class="btn btn-default"
+                         ng-model="side.state.animate.enabled"
+                         btn-radio="true">
+                    <i class="glyphicon glyphicon-play"></i>
+                  </label>
+                  <label class="btn btn-default"
+                         ng-model="side.state.animate.enabled"
+                         btn-radio="false">
+                    <i class="glyphicon glyphicon-pause"></i>
+                  </label>
+                </div>
+              </td>
+            </tr>
+            <tr ng-if="side.state.display === 'svg'">
+              <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
+                  tooltip-append-to-body="true" tooltip-placement="right"
+                  tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
+                Label attraction:
+              </td>
+              <td>
+                <input ng-disabled="!side.state.animate.enabled"
+                       tooltip="{{side.state.animate.labelAttraction * 100}}%"
+                       type="range" max="1" step="0.1"
+                       ng-model="side.state.animate.labelAttraction">
+              </td>
+            </tr>
+            <tr>
+              <td>Show vertices:</td>
+              <td>
+                <div id="sample-center"
+                     ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
+                  <input class="form-control" ng-model="side.state.centers" tokenfield>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td></td>
+              <td>
+                <div class="btn-group pick-buttons" ng-show="!side.showPickOptions">
+                  <button class="btn btn-default" ng-click="side.requestNewCenter(1)">
+                    Pick
+                  </button>
+                  <button
+                     class="btn btn-default"
+                     ng-click="side.showPickOptions = !side.showPickOptions"
+                     tooltip="Advanced pick options">
+                    ...
+                  </button>
+                </div>
+                <pick-options shown="side.showPickOptions" side="side"></pick-options>
+              </td>
+            </tr>
+            <tr>
+              <td ng-class="{ 'de-emph': side.project.edgeBundle === '' }"
+                  tooltip-append-to-body="true" tooltip-placement="right"
+                  tooltip="{{ side.project.edgeBundle === '' ? 'No edges.' : '' }}">
+                Show neighborhood:
+              </td>
+              <td>
+                <input ng-disabled="side.project.edgeBundle === ''"
+                       tooltip="radius {{side.state.sampleRadius}}"
+                       type="range" max="10" step="1" ng-model="side.state.sampleRadius">
+              </td>
+            </tr>
+          </table>
+        </div>
 
-      <!-- Extra controls for the bucketed view. -->
-      <div class="list-group-item extra-controls"
-        ng-if="side.state.graphMode === 'bucketed'">
-        <table>
-          <tr>
-            <td>Buckets:</td>
-            <td>
-              <lazy-slider value="side.state.bucketCount"></lazy-slider>
-            </td>
-          </tr>
-        </table>
+        <!-- Extra controls for the bucketed view. -->
+        <div ng-if="side.state.graphMode === 'bucketed'">
+          <table>
+            <tr>
+              <td>Buckets:</td>
+              <td>
+                <lazy-slider value="side.state.bucketCount"></lazy-slider>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div ng-if="side.state.graphMode">
+          <text-dialog button-text="Save Visualization"
+                       on-ok="side.saveStateToBackend(userText, finishedCallback)"
+                       start-value="visualization 1">
+          </text-dialog>
+        </div>
+
       </div>
 
       <!-- Summary. -->

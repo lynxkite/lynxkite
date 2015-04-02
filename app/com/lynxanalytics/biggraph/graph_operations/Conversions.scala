@@ -1,10 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import play.api.libs.json
 import scala.reflect.runtime.universe._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.controllers.UIStatus
+import com.lynxanalytics.biggraph.controllers.UIStatusSerialization
 
 // Dynamic values wrap various types into a combined type that we unwrap on FE side
 // The combined type helps us joining arbitrary number of different typed attributes.
@@ -31,6 +34,11 @@ object DynamicValue {
     else if (typeOf[T] <:< typeOf[Seq[Any]]) value => {
       val seq = value.asInstanceOf[Seq[Any]]
       DynamicValue(string = seq.mkString(", "))
+    }
+    else if (typeOf[T] =:= typeOf[UIStatus]) value => {
+      import UIStatusSerialization._
+      val uiStatus = value.asInstanceOf[UIStatus]
+      DynamicValue(string = json.Json.prettyPrint(json.Json.toJson(uiStatus)))
     }
     else value =>
       DynamicValue(string = value.toString)
