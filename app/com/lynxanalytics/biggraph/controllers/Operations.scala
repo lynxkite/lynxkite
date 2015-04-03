@@ -509,7 +509,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new CreateSegmentationOperation(_) {
     val title = "Segment by double attribute"
     val description =
-      """Segments the vertices by a double vertex attribute.
+      """<p>Segments the vertices by a double vertex attribute.
 
       <p>If you enable overlapping intervals, then each interval will have a 50% overlap
       with both the previous and the next interval. As a result each vertex will belong
@@ -1856,7 +1856,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new VertexOperation(_) {
     val title = "Fingerprinting based on attributes"
     val description =
-      """In a graph that has two different string identifier attributes (e.g. Facebook ID and
+      """<p>In a graph that has two different string identifier attributes (e.g. Facebook ID and
       MSISDN) this operation will match the vertices that only have the first attribute defined
       with the vertices that only have the second attribute defined. For the well-matched vertices
       the new attributes will be added. (For example if a vertex only had an MSISDN and we found a
@@ -1965,7 +1965,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new SegmentationOperation(_) {
     val title = "Fingerprinting between project and segmentation"
     val description =
-      """Finds the best match out of the potential matches that are defined between a project and
+      """<p>Finds the best match out of the potential matches that are defined between a project and
       a segmentation. The best match is chosen by comparing the vertex neighborhoods in the project
       and the segmentation.
 
