@@ -579,13 +579,23 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new CreateSegmentationOperation(_) {
     val title = "Combine segmentations"
     val description =
-      """Creates a new segmentation that is the cross product of existing segmentations.
-      Empty segments are discarded in the result. Edges between segmentations are discarded.
+      """<p>Creates a new segmentation from the selected existing segmentations.
+      Each new segment corresponds to one original segment from each of the original
+      segmentations, and the new segment is the intersection of all the corresponding
+      segments. We keep non-empty resulting segments only. Edges between segmentations
+      are discarded.
 
-      <p>If you combine three segmentations with A, B, and C segments, the combined
-      segmentation will have A&times;B&times;C segments, assuming none of them are
-      empty. For example if you have a segmentation by age and another by gender, you
-      can combine them so that your segments are by both age and gender."""
+      <p>If you have segmentations A and B with two segments each, such as:
+      <ul>
+        <li>A = { <i>"men"</i>, <i>"women"</i> }</li>
+        <li>B = { <i>"people younger than 20"</i>, <i>"people older than 20"</i> }</li>
+      </ul>
+      <p>then the combined segmentation will have four segments:
+      <ul>
+        <li>{ <i>"men younger than 20"</i>, <i>"men older than 20"</i>,
+          <i>"women younger than 20"</i>, <i>"women older than 20"</i> }</li>
+      </ul>.
+      """
     def parameters = List(
       Param("name", "New segmentation name"),
       Param("segmentations", "Segmentations", options = segmentations, multipleChoice = true))
