@@ -509,7 +509,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new CreateSegmentationOperation(_) {
     val title = "Segment by double attribute"
     val description =
-      """Segments the vertices by a double vertex attribute.
+      """<p>Segments the vertices by a double vertex attribute.
 
       <p>If you enable overlapping intervals, then each interval will have a 50% overlap
       with both the previous and the next interval. As a result each vertex will belong
@@ -573,6 +573,75 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.project.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
       segmentation.project.vertexAttributes(attrName) = bucketing.label
+    }
+  })
+
+  register(new CreateSegmentationOperation(_) {
+    val title = "Combine segmentations"
+    val description =
+      """<p>Creates a new segmentation from the selected existing segmentations.
+      Each new segment corresponds to one original segment from each of the original
+      segmentations, and the new segment is the intersection of all the corresponding
+      segments. We keep non-empty resulting segments only. Edges between segmentations
+      are discarded.
+
+      <p>If you have segmentations A and B with two segments each, such as:
+      <ul>
+        <li>A = { <i>"men"</i>, <i>"women"</i> }</li>
+        <li>B = { <i>"people younger than 20"</i>, <i>"people older than 20"</i> }</li>
+      </ul>
+      <p>then the combined segmentation will have four segments:
+      <ul>
+        <li>{ <i>"men younger than 20"</i>, <i>"men older than 20"</i>,
+          <i>"women younger than 20"</i>, <i>"women older than 20"</i> }</li>
+      </ul>.
+      """
+    def parameters = List(
+      Param("name", "New segmentation name"),
+      Param("segmentations", "Segmentations", options = segmentations, multipleChoice = true))
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+    override def summary(params: Map[String, String]) = {
+      val segmentations = params("segmentations").split(",").mkString(", ")
+      s"Combination of $segmentations"
+    }
+
+    def apply(params: Map[String, String]) = {
+      val segmentations = params("segmentations").split(",").map(project.segmentation(_))
+      assert(segmentations.size >= 2, "Please select at least 2 segmentations to combine.")
+      val result = project.segmentation(params("name"))
+      // Start by copying the first segmentation.
+      val first = segmentations.head
+      result.project.setVertexSet(first.project.vertexSet, idAttr = "id")
+      result.project.notes = summary(params)
+      result.belongsTo = first.belongsTo
+      for ((name, attr) <- first.project.vertexAttributes) {
+        result.project.vertexAttributes(s"${first.name}_$name") = attr
+      }
+      // Then combine the other segmentations one by one.
+      for (seg <- segmentations.tail) {
+        val combination = {
+          val op = graph_operations.CombineSegmentations()
+          op(op.belongsTo1, result.belongsTo)(op.belongsTo2, seg.belongsTo).result
+        }
+        val attrs = result.project.vertexAttributes.toMap
+        result.project.setVertexSet(combination.segments, idAttr = "id")
+        result.belongsTo = combination.belongsTo
+        for ((name, attr) <- attrs) {
+          // These names are already prefixed.
+          result.project.vertexAttributes(name) =
+            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+              attr, combination.origin1)
+        }
+        for ((name, attr) <- seg.project.vertexAttributes) {
+          // Add prefix for the new attributes.
+          result.project.vertexAttributes(s"${seg.name}_$name") =
+            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+              attr, combination.origin2)
+        }
+      }
+      // Calculate sizes at the end.
+      result.project.vertexAttributes("size") =
+        computeSegmentSizes(result)
     }
   })
 
@@ -1791,7 +1860,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new VertexOperation(_) {
     val title = "Fingerprinting based on attributes"
     val description =
-      """In a graph that has two different string identifier attributes (e.g. Facebook ID and
+      """<p>In a graph that has two different string identifier attributes (e.g. Facebook ID and
       MSISDN) this operation will match the vertices that only have the first attribute defined
       with the vertices that only have the second attribute defined. For the well-matched vertices
       the new attributes will be added. (For example if a vertex only had an MSISDN and we found a
@@ -1900,7 +1969,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new SegmentationOperation(_) {
     val title = "Fingerprinting between project and segmentation"
     val description =
-      """Finds the best match out of the potential matches that are defined between a project and
+      """<p>Finds the best match out of the potential matches that are defined between a project and
       a segmentation. The best match is chosen by comparing the vertex neighborhoods in the project
       and the segmentation.
 
