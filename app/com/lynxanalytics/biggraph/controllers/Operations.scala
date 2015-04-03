@@ -579,41 +579,59 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register(new CreateSegmentationOperation(_) {
     val title = "Combine segmentations"
     val description =
-      """Creates a new segmentation that is the cross product of two existing segmentations."""
+      """Creates a new segmentation that is the cross product of existing segmentations.
+      Empty segments are discarded in the result. Edges between segmentations are discarded.
+
+      <p>If you combine three segmentations with A, B, and C segments, the combined
+      segmentation will have A&times;B&times;C segments, assuming none of them are
+      empty. For example if you have a segmentation by age and another by gender, you
+      can combine them so that your segments are by both age and gender."""
     def parameters = List(
       Param("name", "New segmentation name"),
-      Param("seg1", "Segmentation 1", options = segmentations),
-      Param("seg2", "Segmentation 2", options = segmentations))
+      Param("segmentations", "Segmentations", options = segmentations, multipleChoice = true))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     override def summary(params: Map[String, String]) = {
-      val seg1 = params("seg1")
-      val seg2 = params("seg2")
-      s"Combination of $seg1 and $seg2"
+      val segmentations = params("segmentations").split(",").mkString(", ")
+      s"Combination of $segmentations"
     }
 
     def apply(params: Map[String, String]) = {
-      val seg1 = project.segmentation(params("seg1"))
-      val seg2 = project.segmentation(params("seg2"))
-      val combination = {
-        val op = graph_operations.CombineSegmentations()
-        op(op.belongsTo1, seg1.belongsTo)(op.belongsTo2, seg2.belongsTo).result
+      val segmentations = params("segmentations").split(",").map(project.segmentation(_))
+      assert(segmentations.size >= 2, "Please select at least 2 segmentations to combine.")
+      val result = project.segmentation(params("name"))
+      // Start by copying the first segmentation.
+      val first = segmentations.head
+      result.project.setVertexSet(first.project.vertexSet, idAttr = "id")
+      result.project.notes = summary(params)
+      result.belongsTo = first.belongsTo
+      for ((name, attr) <- first.project.vertexAttributes) {
+        result.project.vertexAttributes(s"${first.name}_$name") = attr
       }
-      val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(combination.segments, idAttr = "id")
-      segmentation.project.notes = summary(params)
-      segmentation.belongsTo = combination.belongsTo
-      segmentation.project.vertexAttributes("size") =
-        computeSegmentSizes(segmentation)
-      for ((name, attr) <- seg1.project.vertexAttributes) {
-        segmentation.project.vertexAttributes(s"${seg1.name}_$name") =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, combination.origin1)
+      // Then combine the other segmentations one by one.
+      for (seg <- segmentations.tail) {
+        val combination = {
+          val op = graph_operations.CombineSegmentations()
+          op(op.belongsTo1, result.belongsTo)(op.belongsTo2, seg.belongsTo).result
+        }
+        val attrs = result.project.vertexAttributes.toMap
+        result.project.setVertexSet(combination.segments, idAttr = "id")
+        result.belongsTo = combination.belongsTo
+        for ((name, attr) <- attrs) {
+          // These names are already prefixed.
+          result.project.vertexAttributes(name) =
+            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+              attr, combination.origin1)
+        }
+        for ((name, attr) <- seg.project.vertexAttributes) {
+          // Add prefix for the new attributes.
+          result.project.vertexAttributes(s"${seg.name}_$name") =
+            graph_operations.PulledOverVertexAttribute.pullAttributeVia(
+              attr, combination.origin2)
+        }
       }
-      for ((name, attr) <- seg2.project.vertexAttributes) {
-        segmentation.project.vertexAttributes(s"${seg2.name}_$name") =
-          graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, combination.origin2)
-      }
+      // Calculate sizes at the end.
+      result.project.vertexAttributes("size") =
+        computeSegmentSizes(result)
     }
   })
 
