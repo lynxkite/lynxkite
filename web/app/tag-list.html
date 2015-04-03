@@ -1,12 +1,13 @@
 <div>
-  <span class="tag-list-tag" ng-repeat="tag in getTags()"
+  <span class="tag-list-tag" ng-repeat="tag in getTags() as tags"
     ng-click="removeTag(tag.id)" tooltip="Click to remove">
     {{tag.title}}
   </span>
+  <!-- Placeholder when no tags are set. -->
+  <span class="tag-list-tag disabled" ng-show="tags.length === 0">none</span>
 
   <div class="btn-group" dropdown>
-    <a href class="btn-dropdown dropdown-toggle" dropdown-toggle
-      tooltip="Aggregate">
+    <a href class="btn-dropdown dropdown-toggle" dropdown-toggle>
       <i class="glyphicon glyphicon-plus"></i>
     </a>
     <ul class="dropdown-menu">

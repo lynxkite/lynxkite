@@ -65,7 +65,11 @@
           { "id": "aggregate-income", "title": "income", "defaultValue": "", "options": [
             {"id": "average", "title": "average"},
             {"id": "min", "title": "min"},
-            {"id": "max", "title": "max"}
+            {"id": "max", "title": "max"},
+            {"id": "best of", "title": "best of"},
+            {"id": "median", "title": "median"},
+            {"id": "most common", "title": "most common"},
+            {"id": "majority", "title": "majority"}
           ], "multipleChoice": true, "kind": "tag-list" }
         ], "status": { "enabled": true, "disabledReason": "" } }
       ]
