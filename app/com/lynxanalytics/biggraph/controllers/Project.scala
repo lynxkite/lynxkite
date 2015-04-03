@@ -442,7 +442,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       }
     }
     def apply(name: String): T = {
-      assert(manager.tagExists(dir / name), s"$name does not exist in $dir.")
+      assert(manager.tagExists(dir / name), s"$name does not exist in $dir")
       manager.entity(dir / name).asInstanceOf[T]
     }
 
