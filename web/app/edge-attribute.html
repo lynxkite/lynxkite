@@ -14,7 +14,7 @@
 
 <form ng-if="attr.canFilter" style="display: inline;">
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters.edge[attr.title]"
-    ng-model-options="{ updateOn: 'blur' }">
+    ng-model-options="{ updateOn: 'change blur' }">
 </form>
 
 <span
