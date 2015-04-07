@@ -183,7 +183,7 @@ case class Fingerprinting(
       if (proposals.count == responsesByGentlemen.count) {
         // All proposals accepted. Stop iteration.
         responsesByGentlemen
-      } else if (iteration > maxIterations) {
+      } else if (iteration >= maxIterations) {
         // Reached maximal number of iterations. We don't try anymore.
         log.info("Fingerprinting reached maximal iteration count $maxIterations. Stopping.")
         responsesByGentlemen
