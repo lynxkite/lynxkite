@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import com.google.common.primitives.Primitives
 import scala.reflect.runtime.universe._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
@@ -38,7 +39,23 @@ abstract class DeriveJS[T](
   implicit def tt: TypeTag[T]
   override val isHeavy = true
   @transient override lazy val inputs = new Input(attrNames.size)
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(tt, instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val inst = instance
+    val testNamedValues =
+      attrNames
+        .zipWithIndex
+        .map {
+          case (attrName, attrIdx) =>
+            val attrTypeTag = inputs.attrs(attrIdx).typeTag
+            val attrTestValue = JSValue.defaultValue(attrTypeTag).value
+            (attrName, attrTestValue)
+        }
+        .toMap
+    val classOfT = Primitives.wrap(RuntimeSafeCastable.classTagFromTypeTag(tt).runtimeClass)
+    val testResult = expr.evaluate(testNamedValues)
+    classOfT.cast(testResult)
+    new Output()(tt, instance, inputs)
+  }
 
   def execute(inputDatas: DataSet,
               o: Output[T],
