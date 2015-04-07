@@ -4,6 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -32,6 +33,8 @@ object Fingerprinting extends OpFromJson {
   }
   def fromJson(j: JsValue) =
     Fingerprinting((j \ "minimumOverlap").as[Int], (j \ "minimumSimilarity").as[Double])
+
+  val maxIterations = 30
 }
 case class Fingerprinting(
   minimumOverlap: Int,
@@ -163,7 +166,9 @@ case class Fingerprinting(
     }
 
     @annotation.tailrec
-    def iterate(gentlemenCandidates: SortedRDD[ID, ArrayBuffer[ID]]): SortedRDD[ID, ID] = {
+    def iterate(
+      gentlemenCandidates: SortedRDD[ID, ArrayBuffer[ID]], iteration: Int): SortedRDD[ID, ID] = {
+
       val proposals = gentlemenCandidates.flatMap {
         case (gentleman, ladies) =>
           if (ladies.isEmpty) None else Some(ladies.head -> gentleman)
@@ -178,15 +183,21 @@ case class Fingerprinting(
       if (proposals.count == responsesByGentlemen.count) {
         // All proposals accepted. Stop iteration.
         responsesByGentlemen
+      } else if (iteration >= maxIterations) {
+        // Reached maximal number of iterations. We don't try anymore.
+        log.info("Fingerprinting reached maximal iteration count $maxIterations. Stopping.")
+        responsesByGentlemen
       } else {
-        iterate(gentlemenCandidates.sortedLeftOuterJoin(responsesByGentlemen).mapValues {
-          case (ladies, Some(response)) => ladies // The proposal was accepted. Sit tight.
-          case (ladies, None) => ladies.drop(1) // Rejected. Try the next lady.
-        })
+        iterate(
+          gentlemenCandidates.sortedLeftOuterJoin(responsesByGentlemen).mapValues {
+            case (ladies, Some(response)) => ladies // The proposal was accepted. Sit tight.
+            case (ladies, None) => ladies.drop(1) // Rejected. Try the next lady.
+          },
+          iteration + 1)
       }
     }
 
-    iterate(gentlemenPreferences)
+    iterate(gentlemenPreferences, 1)
   }
 }
 
