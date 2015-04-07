@@ -263,6 +263,19 @@ object JSValue {
     val c = converter[T]
     c(value)
   }
+  def defaultValue[T: TypeTag]: JSValue = {
+    JSValue(
+      if (typeOf[T] =:= typeOf[Byte]) 0.asInstanceOf[Byte]
+      else if (typeOf[T] =:= typeOf[Short]) 0.asInstanceOf[Short]
+      else if (typeOf[T] =:= typeOf[Int]) 0
+      else if (typeOf[T] =:= typeOf[Long]) 0L
+      else if (typeOf[T] =:= typeOf[Float]) 0.asInstanceOf[Float]
+      else if (typeOf[T] =:= typeOf[Double]) 0.0
+      else if (typeOf[T] =:= typeOf[Char]) 'a'
+      else if (typeOf[T] =:= typeOf[Boolean]) false
+      else if (typeOf[T] =:= typeOf[String]) ""
+      else null)
+  }
 }
 
 object VertexAttributeToJSValue extends OpFromJson {
