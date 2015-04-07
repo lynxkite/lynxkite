@@ -1570,7 +1570,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val from = params("from")
       val to = params("to")
-      s"Rename $from to $to"
+      s"Rename edge attribute $from to $to"
     }
     def apply(params: Map[String, String]) = {
       assert(!project.edgeAttributes.contains(params("to")),
@@ -1591,7 +1591,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val from = params("from")
       val to = params("to")
-      s"Rename $from to $to"
+      s"Rename vertex attribute $from to $to"
     }
     def apply(params: Map[String, String]) = {
       assert(!project.vertexAttributes.contains(params("to")),
@@ -1613,7 +1613,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val from = params("from")
       val to = params("to")
-      s"Rename $from to $to"
+      s"Rename segmentation $from to $to"
     }
     def apply(params: Map[String, String]) = {
       assert(!project.segmentations.contains(params("to")),
@@ -1633,7 +1633,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val from = params("from")
       val to = params("to")
-      s"Rename $from to $to"
+      s"Rename scalar $from to $to"
     }
     def apply(params: Map[String, String]) = {
       assert(!project.scalars.contains(params("to")),
@@ -1654,7 +1654,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val from = params("from")
       val to = params("to")
-      s"Copy $from to $to"
+      s"Copy edge attribute $from to $to"
     }
     def apply(params: Map[String, String]) = {
       project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
@@ -1671,7 +1671,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val from = params("from")
       val to = params("to")
-      s"Copy $from to $to"
+      s"Copy vertex attribute $from to $to"
     }
     def apply(params: Map[String, String]) = {
       assert(params("to").nonEmpty, "Please set the new attribute name.")
@@ -1689,7 +1689,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val from = params("from")
       val to = params("to")
-      s"Copy $from to $to"
+      s"Copy segmentation $from to $to"
     }
     def apply(params: Map[String, String]) = {
       val from = project.segmentation(params("from"))
@@ -1709,7 +1709,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     override def summary(params: Map[String, String]) = {
       val from = params("from")
       val to = params("to")
-      s"Copy $from to $to"
+      s"Copy scalar $from to $to"
     }
     def apply(params: Map[String, String]) = {
       project.scalars(params("to")) = project.scalars(params("from"))
