@@ -3,7 +3,7 @@
 angular.module('biggraph').directive('projectSettings', function(util) {
   return {
     restrict: 'E',
-    scope: { side: '=', visible: '=' },
+    scope: { side: '=' },
     replace: false,
     templateUrl: 'project-settings.html',
     link: function(scope) {
@@ -18,18 +18,13 @@ angular.module('biggraph').directive('projectSettings', function(util) {
         scope.saving = true;
         util.post('/ajax/changeProjectSettings',
         {
-          project: scope.side.project.name,
+          project: scope.side.state.projectName,
           readACL: scope.readACL,
           writeACL: scope.writeACL,
         },
         function() {
-          scope.visible = false;
           scope.side.reload();
         });
-      };
-
-      scope.close = function() {
-        scope.visible = false;
       };
 
       scope.changed = function() {
