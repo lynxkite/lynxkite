@@ -93,7 +93,7 @@ input.save-as {
 #sample-center .input-group-btn .btn {
   margin-left: -1px;  /* Due to some glitch Bootstrap sets this to -4px. */
 }
-#sample-center.loading .tokenfield {
+#sample-center.loading {
   background-color: whitesmoke;
   background-image: linear-gradient(45deg, white 25%, transparent 25%, transparent 50%, white 50%, white 75%, transparent 75%, transparent);
   background-size: 40px 40px;
