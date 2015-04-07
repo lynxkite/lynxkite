@@ -83,9 +83,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Example Graph")
     run("Merge vertices by attribute",
       Map("key" -> "gender", "aggregate-age" -> "average", "aggregate-name" -> "count"))
-    val age = project.vertexAttributes("age").runtimeSafeCast[Double]
+    val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
-    val count = project.vertexAttributes("name").runtimeSafeCast[Double]
+    val count = project.vertexAttributes("name_count").runtimeSafeCast[Double]
     assert(count.rdd.collect.toMap.values.toSet == Set(3.0, 1.0))
     val gender = project.vertexAttributes("gender").runtimeSafeCast[String]
     assert(gender.rdd.collect.toMap.values.toSet == Set("Male", "Female"))
@@ -100,7 +100,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.edgeBundle == null)
     run("Merge vertices by attribute",
       Map("key" -> "gender", "aggregate-age" -> "average"))
-    val age = project.vertexAttributes("age").runtimeSafeCast[Double]
+    val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
     assert(project.edgeBundle == null)
   }

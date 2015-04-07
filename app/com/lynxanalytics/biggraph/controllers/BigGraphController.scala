@@ -54,8 +54,10 @@ case class FEOperationParameterMeta(
 
   val validKinds = Seq(
     "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
-    "multi-vertex-attribute", "multi-edge-attribute", "file")
+    "multi-vertex-attribute", "multi-edge-attribute", "file",
+    "tag-list") // A variation of "multipleChoice" with a more concise, horizontal design.
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
+  if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
 
 case class FEEdgeBundle(
