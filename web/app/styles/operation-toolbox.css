@@ -113,6 +113,11 @@ side-operation-toolbox .operation-toolbox {
 .operation-toolbox .box.green .clicky { color: yellowgreen; }
 .operation-toolbox .box.blue .clicky { color: aquamarine; }
 .operation-toolbox .box.magenta .clicky { color: magenta; }
+.operation-toolbox .box.yellow .dropdown-toggle { color: gold; }
+.operation-toolbox .box.orange .dropdown-toggle { color: orange; }
+.operation-toolbox .box.green .dropdown-toggle { color: yellowgreen; }
+.operation-toolbox .box.blue .dropdown-toggle { color: aquamarine; }
+.operation-toolbox .box.magenta .dropdown-toggle { color: magenta; }
 
 .operation-toolbox .panel .list-group-item {
   border: 0;
