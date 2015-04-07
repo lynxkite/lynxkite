@@ -1506,6 +1506,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Name", options = edgeAttributes))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      s"Discard edge attribute: $name"
+    }
     def apply(params: Map[String, String]) = {
       project.edgeAttributes(params("name")) = null
     }
@@ -1517,6 +1521,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Name", options = vertexAttributes))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      s"Discard vertex attribute: $name"
+    }
     def apply(params: Map[String, String]) = {
       project.vertexAttributes(params("name")) = null
     }
@@ -1528,6 +1536,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      s"Discard segmentation: $name"
+    }
     def apply(params: Map[String, String]) = {
       project.segmentation(params("name")).remove
     }
@@ -1539,6 +1551,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Name", options = scalars))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def summary(params: Map[String, String]) = {
+      val name = params("name")
+      s"Discard scalar: $name"
+    }
     def apply(params: Map[String, String]) = {
       project.scalars(params("name")) = null
     }
@@ -1551,6 +1567,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    override def summary(params: Map[String, String]) = {
+      val from = params("from")
+      val to = params("to")
+      s"Rename $from to $to"
+    }
     def apply(params: Map[String, String]) = {
       assert(!project.edgeAttributes.contains(params("to")),
         s"""An edge-attribute named '${params("to")}' already exists,
@@ -1567,6 +1588,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val from = params("from")
+      val to = params("to")
+      s"Rename $from to $to"
+    }
     def apply(params: Map[String, String]) = {
       assert(!project.vertexAttributes.contains(params("to")),
         s"""A vertex-attribute named '${params("to")}' already exists,
@@ -1584,6 +1610,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("from", "Old name", options = segmentations),
       Param("to", "New name"))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+    override def summary(params: Map[String, String]) = {
+      val from = params("from")
+      val to = params("to")
+      s"Rename $from to $to"
+    }
     def apply(params: Map[String, String]) = {
       assert(!project.segmentations.contains(params("to")),
         s"""A segmentation named '${params("to")}' already exists,
@@ -1599,6 +1630,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("from", "Old name", options = scalars),
       Param("to", "New name"))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def summary(params: Map[String, String]) = {
+      val from = params("from")
+      val to = params("to")
+      s"Rename $from to $to"
+    }
     def apply(params: Map[String, String]) = {
       assert(!project.scalars.contains(params("to")),
         s"""A scalar named '${params("to")}' already exists,
@@ -1615,6 +1651,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    override def summary(params: Map[String, String]) = {
+      val from = params("from")
+      val to = params("to")
+      s"Copy $from to $to"
+    }
     def apply(params: Map[String, String]) = {
       project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
     }
@@ -1627,6 +1668,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def summary(params: Map[String, String]) = {
+      val from = params("from")
+      val to = params("to")
+      s"Copy $from to $to"
+    }
     def apply(params: Map[String, String]) = {
       assert(params("to").nonEmpty, "Please set the new attribute name.")
       project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
@@ -1640,6 +1686,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("from", "Old name", options = segmentations),
       Param("to", "New name"))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
+    override def summary(params: Map[String, String]) = {
+      val from = params("from")
+      val to = params("to")
+      s"Copy $from to $to"
+    }
     def apply(params: Map[String, String]) = {
       val from = project.segmentation(params("from"))
       val to = project.segmentation(params("to"))
@@ -1655,6 +1706,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("from", "Old name", options = scalars),
       Param("to", "New name"))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def summary(params: Map[String, String]) = {
+      val from = params("from")
+      val to = params("to")
+      s"Copy $from to $to"
+    }
     def apply(params: Map[String, String]) = {
       project.scalars(params("to")) = project.scalars(params("from"))
     }
@@ -1672,6 +1728,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled =
       hasVertexSet &&
         FEStatus.assert(otherProjects.size > 0, "This is the only project")
+    override def summary(params: Map[String, String]) = {
+      val them = params("them")
+      s"Import $them as segmentation"
+    }
     def apply(params: Map[String, String]) = {
       val themName = params("them")
       assert(otherProjects.map(_.id).contains(themName), s"Unknown project: $themName")
@@ -1761,6 +1821,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("other", "Other project's name", options = readableProjects),
       Param("id-attr", "ID attribute name", defaultValue = "new_id"))
     def enabled = hasVertexSet
+    override def summary(params: Map[String, String]) = {
+      val other = params("other")
+      s"Union with $other"
+    }
     def apply(params: Map[String, String]): Unit = {
       val otherName = params("other")
       assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
