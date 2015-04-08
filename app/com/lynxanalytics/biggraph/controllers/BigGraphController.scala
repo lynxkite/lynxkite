@@ -417,7 +417,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   // Expand each checkpoint of a project to a separate project, run the code, then clean up.
-  private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.synchronized {
+  private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.tagTransaction {
     val tmpDir = s"!tmp-$Timestamp"
     val ps = (0 until p.checkpointCount).map { i =>
       val tmp = Project(s"$tmpDir-$i")
