@@ -129,6 +129,19 @@ class MetaGraphManager(val repositoryPath: String) {
     (tagRoot / tag).ls.map(_.fullName)
   }
 
+  // At the moment tag transactions are an optimization. The changes will not be rolled back
+  // on failure. It's just a way of batching writes to improve performance.
+  private var tagTransactionDepth = 0
+  def tagTransaction[T](fn: => T) = synchronized {
+    tagTransactionDepth += 1
+    try {
+      fn
+    } finally {
+      tagTransactionDepth -= 1
+      saveTags()
+    }
+  }
+
   def vertexSet(tag: SymbolPath): VertexSet = synchronized {
     vertexSet((tagRoot / tag).gUID)
   }
@@ -225,12 +238,16 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def saveTags(): Unit = synchronized {
-    val dumpFile = new File(repositoryPath, "dump-tags")
-    val j = json.JsObject(tagRoot.allTags.map {
-      tag => tag.fullName.toString -> json.JsString(tag.content)
-    }.toSeq)
-    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
-    dumpFile.renameTo(new File(repositoryPath, "tags"))
+    // Writes are deferred during transactions.
+    // TODO: Make all tag changes through tag transactions and remove this "if".
+    if (tagTransactionDepth == 0) {
+      val dumpFile = new File(repositoryPath, "dump-tags")
+      val j = json.JsObject(tagRoot.allTags.map {
+        tag => tag.fullName.toString -> json.JsString(tag.content)
+      }.toSeq)
+      FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
+      dumpFile.renameTo(new File(repositoryPath, "tags"))
+    }
   }
 
   private def initializeFromDisk(): Unit = synchronized {
