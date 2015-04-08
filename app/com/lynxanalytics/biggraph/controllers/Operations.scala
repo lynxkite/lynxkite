@@ -1018,15 +1018,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val namedAttributes = project.vertexAttributes
         .filter { case (name, attr) => expr.contains(name) }
         .toIndexedSeq
-        .map { case (name, attr) => name -> graph_operations.VertexAttributeToJSValue.run(attr) }
-      val js = JavaScript(expr)
-      val op: graph_operations.DeriveJS[_] = params("type") match {
+      val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJSString(js, namedAttributes.map(_._1))
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes)
         case "double" =>
-          graph_operations.DeriveJSDouble(js, namedAttributes.map(_._1))
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes)
       }
-      val result = op(op.attrs, namedAttributes.map(_._2)).result
       project.vertexAttributes(params("output")) = result.attr
     }
   })
@@ -1053,35 +1050,30 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val namedEdgeAttributes = project.edgeAttributes
         .filter { case (name, attr) => expr.contains(name) }
         .toIndexedSeq
-        .map { case (name, attr) => name -> graph_operations.VertexAttributeToJSValue.run(attr) }
       val namedSrcVertexAttributes = project.vertexAttributes
         .filter { case (name, attr) => expr.contains("src$" + name) }
         .toIndexedSeq
         .map {
           case (name, attr) =>
-            val mappedAttr = graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
-            "src$" + name -> graph_operations.VertexAttributeToJSValue.run(mappedAttr)
+            "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
         }
       val namedDstVertexAttributes = project.vertexAttributes
         .filter { case (name, attr) => expr.contains("dst$" + name) }
         .toIndexedSeq
         .map {
           case (name, attr) =>
-            val mappedAttr = graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
-            "dst$" + name -> graph_operations.VertexAttributeToJSValue.run(mappedAttr)
+            "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
         }
 
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
 
-      val js = JavaScript(expr)
-      val op: graph_operations.DeriveJS[_] = params("type") match {
+      val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJSString(js, namedAttributes.map(_._1))
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes)
         case "double" =>
-          graph_operations.DeriveJSDouble(js, namedAttributes.map(_._1))
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes)
       }
-      val result = op(op.attrs, namedAttributes.map(_._2)).result
       project.edgeAttributes(params("output")) = result.attr
     }
   })
