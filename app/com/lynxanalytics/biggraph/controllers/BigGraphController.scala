@@ -498,11 +498,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 }
 
-abstract class Operation(context: Operation.Context, val category: Operation.Category) {
+abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
   val project = context.project
   val user = context.user
-  def id = title.replace(" ", "-")
-  def title: String
+  def id = originalTitle.replace(" ", "-")
+  def title = originalTitle // Override this to change the display title while keeping the original ID.
   def description: String
   def parameters: List[FEOperationParameterMeta]
   def enabled: FEStatus
@@ -557,13 +557,21 @@ object Operation {
 abstract class OperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
 
-  private val operations = mutable.Buffer[Operation.Context => Operation]()
-  def register(factory: Operation.Context => Operation): Unit = operations += factory
-  private def forContext(context: Operation.Context) = operations.map(_(context))
+  // The registry maps operation IDs to their constructors.
+  private val operations = mutable.Map[String, Operation.Context => Operation]()
+  def register(title: String, factory: (String, Operation.Context) => Operation): Unit = {
+    val id = title.replace(" ", "-")
+    assert(!operations.contains(id), s"$id is already registered.")
+    operations(id) = factory(title, _)
+  }
+
+  private def opsForContext(context: Operation.Context) = {
+    operations.values.toSeq.map(_(context))
+  }
 
   def categories(user: serving.User, project: Project): List[OperationCategory] = {
     val context = Operation.Context(user, project)
-    val cats = forContext(context).groupBy(_.category).toList
+    val cats = opsForContext(context).groupBy(_.category).toList
     cats.filter(_._1.visible).sortBy(_._1).map {
       case (cat, ops) =>
         val feOps = ops.map(_.toFE).sortBy(_.title).toList
@@ -572,11 +580,8 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   }
 
   def opById(context: Operation.Context, id: String): Operation = {
-    // TODO: Do this without instantiating all operations.
-    val ops = forContext(context).filter(_.id == id)
-    assert(ops.nonEmpty, s"Cannot find operation: ${id}")
-    assert(ops.size == 1, s"Operation not unique: ${id}")
-    ops.head
+    assert(operations.contains(id), s"Cannot find operation: ${id}")
+    operations(id)(context)
   }
 
   def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.synchronized {
