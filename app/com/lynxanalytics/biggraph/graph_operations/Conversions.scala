@@ -265,7 +265,7 @@ object JSValue {
   }
   def defaultValue[T: TypeTag]: JSValue = {
     JSValue(
-      if (typeOf[T] =:= typeOf[Byte]) 0.asInstanceOf[Byte]
+      if (typeOf[T] =:= typeOf[Byte]) 0.toByte
       else if (typeOf[T] =:= typeOf[Short]) 0.toShort
       else if (typeOf[T] =:= typeOf[Int]) 0
       else if (typeOf[T] =:= typeOf[Long]) 0L
