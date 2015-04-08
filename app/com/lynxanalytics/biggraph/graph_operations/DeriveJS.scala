@@ -46,7 +46,7 @@ object DeriveJS {
       RuntimeSafeCastable.classTagFromTypeTag(typeTag[T]).runtimeClass)
     val testResult = js.evaluate(testNamedValues)
     // This fails if the result type is of unexpected type. On the other hand, it succeeds
-    // if the result in undefined, as that gets converted to null which casts without problems
+    // if the result is undefined, as that gets converted to null which casts without problems
     // to any reference type. (And we are dealing with a reference type here thanks to the wrap
     // above.)
     classOfT.cast(testResult)
