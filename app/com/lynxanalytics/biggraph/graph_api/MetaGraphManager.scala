@@ -239,6 +239,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def saveTags(): Unit = synchronized {
     // Writes are deferred during transactions.
+    // TODO: Make all tag changes through tag transactions and remove this "if".
     if (tagTransactionDepth == 0) {
       val dumpFile = new File(repositoryPath, "dump-tags")
       val j = json.JsObject(tagRoot.allTags.map {
