@@ -11,12 +11,9 @@
       <input class="form-control" id="writeACL" ng-model="writeACL">
     </div>
   </div>
-  <div class="form-group">
+  <div class="form-group" ng-show="changed()">
     <div class="col-sm-offset-4 col-sm-4">
-      <button type="submit" class="btn btn-{{ changed() ? 'primary' : 'default' }}"
-        ng-click="save()">OK</button>
-      <button class="btn btn-default"
-        ng-click="close()">Cancel</button>
+      <button type="submit" class="btn btn-primary" ng-click="save()">Save changes</button>
     </div>
   </div>
 </table>
