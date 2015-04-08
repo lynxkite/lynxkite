@@ -21,7 +21,7 @@
 
 <form ng-if="attr.canFilter" style="display: inline;">
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters.vertex[attr.title]"
-    ng-model-options="{ updateOn: 'blur' }">
+    ng-model-options="{ updateOn: 'change blur' }">
 </form>
 <span ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'" class="de-emph sampled-visualizations">
   <span class="visualizations"><selected-visualization

@@ -178,7 +178,7 @@
               <td>
                 <div id="sample-center"
                      ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
-                  <input class="form-control" ng-model="side.state.centers" tokenfield>
+                  <input class="form-control" ng-model="side.state.centers" ng-model-options="{ updateOn: 'change blur' }" ng-list>
                 </div>
               </td>
             </tr>
