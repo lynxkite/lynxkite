@@ -113,8 +113,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Restore checkpoint after failing operation") {
     class Bug extends Exception("simulated bug")
-    ops.register(new Operation(_, Operation.Category("Test", "test")) {
-      val title = "Buggy op"
+    ops.register("Buggy op", new Operation(_, _, Operation.Category("Test", "test")) {
       val description = "For testing"
       def enabled = ???
       def parameters = ???
