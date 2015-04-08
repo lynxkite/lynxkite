@@ -23,7 +23,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     ops.apply(
       serving.User.fake,
-      ProjectOperationRequest(on.projectName, FEOperationSpec(op.replace(" ", "-"), params)))
+      ProjectOperationRequest(on.projectName, FEOperationSpec(Operation.titleToID(op), params)))
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
