@@ -23,7 +23,7 @@ sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 libraryDependencies ++= Seq(
   anorm, // Play library for making SQL queries.
   ws, // Play library for making HTTP requests.
-  "com.google.guava" % "guava" % "r05",
+  "com.google.guava" % "guava" % "18.0",
   "org.apache.commons" % "commons-lang3" % "3.3",
   "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided" excludeAll(
     // Version disagreements with Play.
