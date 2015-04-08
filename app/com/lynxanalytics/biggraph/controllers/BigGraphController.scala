@@ -504,7 +504,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
   val project = context.project
   val user = context.user
-  def id = originalTitle.replace(" ", "-")
+  def id = Operation.titleToID(originalTitle)
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   def description: String
   def parameters: List[FEOperationParameterMeta]
@@ -535,6 +535,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   }
 }
 object Operation {
+  def titleToID(title: String) = title.replace(" ", "-")
   case class Category(
       title: String,
       color: String, // A color class from web/app/styles/operation-toolbox.css.
@@ -563,7 +564,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   // The registry maps operation IDs to their constructors.
   private val operations = mutable.Map[String, Operation.Context => Operation]()
   def register(title: String, factory: (String, Operation.Context) => Operation): Unit = {
-    val id = title.replace(" ", "-")
+    val id = Operation.titleToID(title)
     assert(!operations.contains(id), s"$id is already registered.")
     operations(id) = factory(title, _)
   }

@@ -18,7 +18,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     controller.projectOp(
       user,
-      ProjectOperationRequest(on.projectName, FEOperationSpec(op.replace(" ", "-"), params)))
+      ProjectOperationRequest(on.projectName, FEOperationSpec(Operation.titleToID(op), params)))
 
   def vattr[T: TypeTag: ClassTag: Ordering](name: String) = {
     val attr = project.vertexAttributes(name).runtimeSafeCast[T]
