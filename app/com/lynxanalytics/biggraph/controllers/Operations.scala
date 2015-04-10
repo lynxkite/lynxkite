@@ -855,28 +855,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Add ordering attribute", new AttributeOperation(_, _) {
-    val description = """Associates a new vertex attribute to another, already existing attribute (the key attribute).
-    The new attribute will reflect the ordering of the vertices based on the value of the key attribute. This might be
-    useful to identify vertices which have the highest (or lowest) values with respect to some attribute."""
+  register("Add rank attribute", new AttributeOperation(_, _) {
+    val description = """Associates a new vertex attribute to another,
+    already existing attribute (the key attribute). The new attribute will reflect
+    the ranking of the vertices based on the value of the key attribute. This might be
+    useful to identify vertices which have the highest
+    (or lowest) values with respect to some attribute."""
 
     def parameters = List(
-      Param("keyattr", "Key attribute name", defaultValue = ""),
-      Param("ascending", "Ascending order", options = UIValue.list(List("true", "false"))),
-      Param("postfix", "New attribute name postfix", defaultValue = "_order"))
+      Param("keyattr", "Key attribute name", options = vertexAttributes[Double]),
+      Param("order", "Order", options = UIValue.list(List("ascending", "descending"))),
+      Param("rankattr", "Rank attribute name", defaultValue = "ranking"))
 
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric (double) vertex attributes")
     def apply(params: Map[String, String]) = {
       val keyAttr = params("keyattr")
-      val postFix = params("postfix")
-      val ascending = params("ascending").toBoolean
+      val rankAttr = params("rankattr")
+      val ascending = params("order") == "ascending"
       assert(keyAttr.nonEmpty, "Please set a key attribute name.")
-      assert(postFix.nonEmpty, "Please set a postfix for the ordering attribute")
-      assert(project.vertexAttributeNames.contains(keyAttr), "Key attribute not found")
-      val op = graph_operations.AddOrderingAttributeDouble(ascending)
-      val orderingName = keyAttr + postFix
+      assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
+      val op = graph_operations.AddRankingAttributeDouble(ascending)
       val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
-      project.vertexAttributes(orderingName) = toDouble(op(op.sortKey, sortKey).result.ordinal)
+      project.vertexAttributes(rankAttr) = toDouble(op(op.sortKey, sortKey).result.ordinal)
     }
   })
 
