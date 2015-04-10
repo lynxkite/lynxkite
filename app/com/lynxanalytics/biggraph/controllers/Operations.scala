@@ -863,9 +863,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     (or lowest) values with respect to some attribute."""
 
     def parameters = List(
+      Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
       Param("keyattr", "Key attribute name", options = vertexAttributes[Double]),
-      Param("order", "Order", options = UIValue.list(List("ascending", "descending"))),
-      Param("rankattr", "Rank attribute name", defaultValue = "ranking"))
+      Param("order", "Order", options = UIValue.list(List("ascending", "descending"))))
 
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric (double) vertex attributes")
     def apply(params: Map[String, String]) = {
