@@ -813,6 +813,32 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register(new AttributeOperation(_) {
+    val title = "Add ordering attribute"
+    val description = """Associates a new vertex attribute to another, already existing attribute (the key attribute).
+    The new attribute will reflect the ordering of the vertices based on the value of the key attribute. This might be
+    useful to identify vertices which have the highest (or lowest) values with respect to some attribute."""
+
+    def parameters = List(
+      Param("keyattr", "Key attribute name", defaultValue = ""),
+      Param("ascending", "Ascending order", options = UIValue.list(List("true", "false"))),
+      Param("postfix", "New attribute name postfix", defaultValue = "_order"))
+
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric (double) vertex attributes")
+    def apply(params: Map[String, String]) = {
+      val keyAttr = params("keyattr")
+      val postFix = params("postfix")
+      val ascending = params("ascending").toBoolean()
+      assert(keyAttr.nonEmpty, "Please set a key attribute name.")
+      assert(postFix.nonEmpty, "Please set a postfix for the ordering attribute")
+      assert(project.vertexAttributeNames.contains(keyAttr), "Key attribute not found")
+      val op = graph_operations.AddOrderingAttributeDouble(ascending)
+      val orderingName = keyAttr + postFix
+      val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
+      project.vertexAttributes(orderingName) = toDouble(op(op.sortKey, sortKey).result.ordinal)
+    }
+  })
+
   register(new VertexOperation(_) {
     val title = "Example Graph"
     val description =
