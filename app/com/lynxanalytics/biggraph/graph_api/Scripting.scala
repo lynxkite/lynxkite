@@ -1,18 +1,23 @@
 // A convenient interface for running operations.
 //
-// This was originally intended for Scala-language scripting, but it is so convenient
-// that it is used everywhere where we want to run an operation. It relies on having
-// access to an implicit MetaGraphManager and DataManager.
+// It is used everywhere where we want to run an operation. It relies on having
+// access to an implicit MetaGraphManager (for metagraph operations) or DataManager
+// (for data access operations).
 //
 // Usage:
+//
+//   import Scripting._
 //
 //   def getSomething(
 //     input1: VertexSet,
 //     input2: Attribute[Double])(
-//       implicit mm: MetaGraphManager,
-//       implicit dm: DataManager): Attribute[String] = {
+//       implicit m: MetaGraphManager): Attribute[String] = {
 //     val op = graph_operations.MyOperation(1, 2, 3)
 //     op(op.input1, input1)(op.input2, input2).result.output1
+//   }
+//
+//   def getScalarValue(scalar: Scalar[T])(implicit m: DataManager): T = {
+//     scalar.value
 //   }
 
 package com.lynxanalytics.biggraph.graph_api
