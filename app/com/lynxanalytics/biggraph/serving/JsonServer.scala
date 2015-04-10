@@ -1,4 +1,4 @@
-// The controller to receive and dispatch all JSON requests from the frontend.
+// The controller to receive and dispatch all JSON HTTP requests from the frontend.
 package com.lynxanalytics.biggraph.serving
 
 import play.api.libs.functional.syntax.toContraFunctorOps
