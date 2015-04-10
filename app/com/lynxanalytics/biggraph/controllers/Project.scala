@@ -1,3 +1,10 @@
+// Projects are the top-level entities on the UI.
+//
+// A project has a vertex set, an edge bundle, and any number of attributes,
+// scalars and segmentations. It represents data stored in the tag system.
+// The Project instances are short-lived, they are just a rich interface for
+// querying and manipulating the tags.
+
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }

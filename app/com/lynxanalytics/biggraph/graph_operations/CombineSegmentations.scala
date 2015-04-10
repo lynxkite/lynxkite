@@ -1,3 +1,4 @@
+// Creates a segmentation that is the cross product of two segmentations.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -6,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-// Creates a segmentation that is the cross product of two segmentations.
 object CombineSegmentations extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet

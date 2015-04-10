@@ -1,3 +1,4 @@
+// Creates a new vertex set with a given size.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._

@@ -1,3 +1,4 @@
+// Load and caches objects from files.
 package com.lynxanalytics.biggraph.graph_util
 
 import scala.collection.mutable.HashMap

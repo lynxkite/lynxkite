@@ -1,3 +1,4 @@
+// Operations and other classes for importing data in general and from CSV files.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.JavaScript

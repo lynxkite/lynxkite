@@ -1,3 +1,4 @@
+// All operations related to converting between attribute types.
 package com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json

@@ -1,3 +1,4 @@
+// Tools for creating aggregators from attributes and from the choices made on the UI.
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api._

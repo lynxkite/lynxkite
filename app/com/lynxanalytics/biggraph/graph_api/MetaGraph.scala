@@ -1,3 +1,4 @@
+// Everything that is used for representing the metagraph.
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.ByteArrayOutputStream

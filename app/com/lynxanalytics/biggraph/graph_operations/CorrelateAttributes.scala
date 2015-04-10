@@ -1,3 +1,4 @@
+// Calculates the correlation of two Double attributes.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.mllib.stat.Statistics

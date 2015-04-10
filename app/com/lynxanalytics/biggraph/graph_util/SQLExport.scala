@@ -1,3 +1,4 @@
+// Export to SQL databases through JDBC.
 package com.lynxanalytics.biggraph.graph_util
 
 import java.sql

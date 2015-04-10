@@ -1,3 +1,9 @@
+// All the aggregation operations and the aggregators.
+//
+// The operations use a given aggregator to aggregate an attribute.
+// For example the operation AggregateAttributeToScalar with the aggregator
+// Aggregator.Average can calculate the global average of the attribute.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

@@ -1,3 +1,4 @@
+// The number of outgoing edges for each vertex.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark

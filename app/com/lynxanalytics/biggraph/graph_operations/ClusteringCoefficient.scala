@@ -1,3 +1,4 @@
+// Calculates for each vertex how close its neighborhood is to a clique.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

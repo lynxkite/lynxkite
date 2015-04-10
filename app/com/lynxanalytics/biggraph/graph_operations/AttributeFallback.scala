@@ -1,3 +1,4 @@
+// Fills the missing values of an attribute from another attribute
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -7,9 +8,6 @@ import scala.collection.mutable
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-/*
- * This operation fills the missing values of an attribute from another attribute
- */
 object AttributeFallback extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vs = vertexSet

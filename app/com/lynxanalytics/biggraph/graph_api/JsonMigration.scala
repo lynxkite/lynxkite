@@ -1,3 +1,4 @@
+// Classes for implementing metagraph version checks and upgrades from version to version.
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File

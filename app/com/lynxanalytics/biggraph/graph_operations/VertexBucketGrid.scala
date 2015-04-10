@@ -1,3 +1,5 @@
+// Buckets vertices by 0, 1, or 2 attributes.
+// Used for generating the bucketed visualization.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -12,6 +14,8 @@ object VertexBucketGrid extends OpFromJson {
     val vertices = vertexSet
     val xAttribute = if (xBucketed) vertexAttribute[S](vertices) else null
     val yAttribute = if (yBucketed) vertexAttribute[T](vertices) else null
+    // Providing the filtered vertex set as a separate input avoids having to
+    // pull over xAttribute and yAttribute.
     val filtered = vertexSet
     val originalCount = scalar[Long]
   }
@@ -20,6 +24,7 @@ object VertexBucketGrid extends OpFromJson {
     val buckets = scalar[IDBuckets[(Int, Int)]]
     val xBuckets = vertexAttribute[Int](inputs.filtered.entity)
     val yBuckets = vertexAttribute[Int](inputs.filtered.entity)
+    // 0, 1, or 2 BucketedAttributes, depending on xBucketed and yBucketed.
     val indexingSeq = scalar[Seq[BucketedAttribute[_]]]
   }
   def fromJson(j: JsValue) = VertexBucketGrid(

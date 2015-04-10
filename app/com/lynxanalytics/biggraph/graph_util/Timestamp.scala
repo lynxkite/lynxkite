@@ -1,3 +1,4 @@
+// Guaranteed-unique timestamp.
 package com.lynxanalytics.biggraph.graph_util
 
 object Timestamp {

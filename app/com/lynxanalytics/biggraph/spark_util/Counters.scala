@@ -1,3 +1,4 @@
+// Accumulator-based counters for debugging.
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark

@@ -1,9 +1,11 @@
+// HTTP request handlers for cluster-level features.
 package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
 
+// Long-poll request for changes in the "busy" state of Spark.
 case class SparkStatusRequest(
   syncedUntil: Long) // Client requests to be notified only of events after this time.
 
@@ -15,6 +17,7 @@ case class SparkClusterStatusResponse(
   master: String,
   workerInstances: Int)
 
+// Request for resizing the cluster. (If supported by the BigGraphEnvironment.)
 case class SetClusterNumInstanceRequest(
   password: String,
   workerInstances: Int)

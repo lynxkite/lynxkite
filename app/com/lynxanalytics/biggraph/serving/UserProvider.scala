@@ -1,3 +1,4 @@
+// Password and OAuth user authentication.
 package com.lynxanalytics.biggraph.serving
 
 import org.apache.commons.io.FileUtils

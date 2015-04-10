@@ -1,3 +1,4 @@
+// Very simple operations for counting vertices, etc.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.ClassTag

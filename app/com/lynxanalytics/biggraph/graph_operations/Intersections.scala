@@ -1,3 +1,4 @@
+// The intersection of some number of vertex sets.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

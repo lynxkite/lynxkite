@@ -1,3 +1,4 @@
+// Operations for the deprecated /metaGraph interface.
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment

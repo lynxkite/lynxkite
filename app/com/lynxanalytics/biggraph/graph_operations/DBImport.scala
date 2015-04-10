@@ -1,3 +1,4 @@
+// DBTable is a RowInput that can be used with import operations to import via JDBC.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._

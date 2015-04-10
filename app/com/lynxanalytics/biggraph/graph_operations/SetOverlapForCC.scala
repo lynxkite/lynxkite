@@ -1,3 +1,5 @@
+// Generates edges between segments with sufficient overlap.
+// Used in the infocom community search algorithm.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark

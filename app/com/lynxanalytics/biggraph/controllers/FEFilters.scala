@@ -1,3 +1,4 @@
+// Parses the filters set on the UI and creates Filters and FilteredAttributes.
 package com.lynxanalytics.biggraph.controllers
 
 import scala.reflect.runtime.universe._

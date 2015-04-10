@@ -1,3 +1,4 @@
+// Resizable Spark cluster on Google Compute Engine.
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark.SparkContext

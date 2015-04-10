@@ -1,3 +1,4 @@
+// Classes for sorting attribute values into buckets.
 package com.lynxanalytics.biggraph.graph_util
 
 import scala.reflect.runtime.universe._
@@ -11,7 +12,7 @@ trait Bucketer[-T] extends Serializable with ToJson {
   def whichBucket(value: T): Option[Int]
   def bucketLabels: Seq[String]
   def bucketFilters: Seq[String] = Seq() // Filter string equivalent of the bucket. (Optional.)
-  def labelType: String
+  def labelType: String // "bucket" or "between".
   def isEmpty = false
   final def nonEmpty = !isEmpty
 }

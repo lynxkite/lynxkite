@@ -1,3 +1,4 @@
+// Some handy extensions to the SparkContext interface.
 package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark

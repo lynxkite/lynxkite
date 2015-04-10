@@ -1,3 +1,4 @@
+// Export data to CSV files.
 package com.lynxanalytics.biggraph.graph_util
 
 import org.apache.commons.lang.StringEscapeUtils
