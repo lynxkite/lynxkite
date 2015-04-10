@@ -1,4 +1,4 @@
-// The DataManager can get the RDDs for a MetaGraphEntity.
+// The DataManager can get the EntityDatas (RDDs/scalar values) for a MetaGraphEntity.
 //
 // It will either load the data from disk, or run the required operations
 // (and then save the data) when RDDs are requested.
