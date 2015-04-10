@@ -1,4 +1,5 @@
-// Load and caches objects from files.
+// Loads and caches objects from files. It is used to share data between the
+// workers through a distributed file system.
 package com.lynxanalytics.biggraph.graph_util
 
 import scala.collection.mutable.HashMap
