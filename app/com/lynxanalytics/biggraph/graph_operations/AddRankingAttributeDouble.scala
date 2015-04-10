@@ -1,3 +1,9 @@
+// Outputs a new vertex attribute that is ordered with respect to a vertexAttribute[Double]
+// Input: the vertex attribute holding the values on which the sorting is based.
+// Parameter ascending defines the sort order.
+// TODO: Remove the limitation on the input vertex attribute type (i.e., it is double
+// at the moment, but it should also work with Long, String etc.)
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.util.Random
@@ -5,7 +11,7 @@ import scala.util.Random
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-object AddOrderingAttributeDouble extends OpFromJson {
+object AddRankingAttributeDouble extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
     val sortKey = vertexAttribute[Double](vertices)
@@ -14,10 +20,10 @@ object AddOrderingAttributeDouble extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val ordinal = vertexAttribute[Long](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = AddOrderingAttributeDouble((j \ "ascending").as[Boolean])
+  def fromJson(j: JsValue) = AddRankingAttributeDouble((j \ "ascending").as[Boolean])
 }
-import AddOrderingAttributeDouble._
-case class AddOrderingAttributeDouble(ascending: Boolean) extends TypedMetaGraphOp[Input, Output] {
+import AddRankingAttributeDouble._
+case class AddRankingAttributeDouble(ascending: Boolean) extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
   override def toJson = Json.obj("ascending" -> ascending)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -29,9 +35,7 @@ case class AddOrderingAttributeDouble(ascending: Boolean) extends TypedMetaGraph
     implicit val ds = inputDatas
     val sortKey = inputs.sortKey.rdd
 
-    val swapped = sortKey.map({
-      case (id, value) => (value, id)
-    })
+    val swapped = sortKey.map { case (id, value) => value -> id }
 
     val sorted = swapped.sortByKey(ascending)
     val zipped = sorted.zipWithIndex()
