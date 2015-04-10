@@ -855,7 +855,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Add ordering attribute", new AttributeOperation(_) {
+  register("Add ordering attribute", new AttributeOperation(_, _) {
     val description = """Associates a new vertex attribute to another, already existing attribute (the key attribute).
     The new attribute will reflect the ordering of the vertices based on the value of the key attribute. This might be
     useful to identify vertices which have the highest (or lowest) values with respect to some attribute."""
@@ -869,7 +869,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val keyAttr = params("keyattr")
       val postFix = params("postfix")
-      val ascending = params("ascending").toBoolean()
+      val ascending = params("ascending").toBoolean
       assert(keyAttr.nonEmpty, "Please set a key attribute name.")
       assert(postFix.nonEmpty, "Please set a postfix for the ordering attribute")
       assert(project.vertexAttributeNames.contains(keyAttr), "Key attribute not found")
