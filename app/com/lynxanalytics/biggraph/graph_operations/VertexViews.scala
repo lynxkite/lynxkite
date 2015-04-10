@@ -1,3 +1,6 @@
+// A VertexView is a description of how a particular vertex diagram was created
+// and is used when we want to create an edge diagram connected to that vertex
+// diagram.
 package com.lynxanalytics.biggraph.graph_operations
 
 import java.util.UUID

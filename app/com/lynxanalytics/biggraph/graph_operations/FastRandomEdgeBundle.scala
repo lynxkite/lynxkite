@@ -1,3 +1,7 @@
+// Creates a random-generated edge bundle.
+//
+// The degrees will be approximately uniformly distributed between 0 and 2 * averageDegree.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.util.Random

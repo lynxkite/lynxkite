@@ -1,3 +1,5 @@
+// Calculates dispersion, the extent to which two people's mutual friends are not themselves well-connected.
+// Source: http://arxiv.org/abs/1310.6753
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

@@ -1,3 +1,4 @@
+// The filtering operation and all the specific filter classes that can be used.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

@@ -1,3 +1,4 @@
+// A convenient interface for evaluating JavaScript expressions.
 package com.lynxanalytics.biggraph
 
 import scala.util.{ Failure, Success, Try }

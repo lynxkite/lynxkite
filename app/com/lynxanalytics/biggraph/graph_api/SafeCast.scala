@@ -1,3 +1,14 @@
+// Provides extra run-time type safety for graph attributes.
+//
+// Usage:
+//
+//   def asStringAttribute(attr: Attribute[_]): Attribute[String] = {
+//     // Wrong solution, does not catch type mismatches:
+//     attr.asInstanceOf[Attribute[String]]
+//     // Good solution, fails if the parameter is not a String attribute:
+//     attr.runtimeSafeCast[String]
+//   }
+
 package com.lynxanalytics.biggraph.graph_api
 
 import scala.language.higherKinds

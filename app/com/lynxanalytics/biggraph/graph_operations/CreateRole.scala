@@ -1,3 +1,4 @@
+// Creates a new attribute with its value randomly set to "test" or "train" in a given ratio.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.util.Random
@@ -5,10 +6,6 @@ import scala.util.Random
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-/*
- * Creates a 'role' vertexAttribute with its value randomly set to "test" or "train"
- * based on ratio.
- */
 object CreateRole extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet

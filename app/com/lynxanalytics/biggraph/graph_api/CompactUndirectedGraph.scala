@@ -1,3 +1,15 @@
+// CompactUndirectedGraph gives every executor access to the whole graph.
+//
+// For some operations the work can be parallelized, but still every worker
+// needs to see the whole graph. (One example is finding maximal cliques.)
+// CUG writes the whole graph to disk in a compact format and allows anyone
+// to read it.
+//
+// Example usage:
+//
+//   val cug = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections)
+//   rdd.map(vertex => cug.getNeighbors(vertex)
+
 package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark

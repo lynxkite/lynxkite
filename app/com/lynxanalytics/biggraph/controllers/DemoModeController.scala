@@ -1,3 +1,10 @@
+// The HTTP request handler to switch "demo mode" on/off.
+//
+// Demo mode disables the use of Spark for computation. The DataManager will return errors
+// whenever it would have to execute an operation. The idea with demo mode is that we can
+// calculate everything on a cluster as we prepare for a demo, and then copy all the scalars
+// to a laptop and use demo mode to present everything from the laptop at the client.
+
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment

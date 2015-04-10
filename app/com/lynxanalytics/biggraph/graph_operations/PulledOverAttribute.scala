@@ -1,3 +1,11 @@
+// Maps an attribute from one vertex set to another.
+//
+// The purpose of this is to update the attributes after an operation has
+// modified the vertex set. For example after filtering the vertices the
+// attribute values that belonged to discarded vertices need to be discarded
+// as well. You create a PulledOverVertexAttribute that follows the mapping
+// from the unfiltered vertex set to the filtered one.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

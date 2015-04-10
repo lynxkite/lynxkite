@@ -1,3 +1,4 @@
+// Utility classes used in the serialization of the metagraph.
 package com.lynxanalytics.biggraph.graph_api
 
 import play.api.libs.json

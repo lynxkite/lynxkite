@@ -1,3 +1,4 @@
+// Deprecated edge generator uesd by /metaGraph. Use FastRandomEdgeBundle instead.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.util.Random

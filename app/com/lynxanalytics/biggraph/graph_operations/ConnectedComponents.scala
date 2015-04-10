@@ -1,3 +1,4 @@
+// Finds connected components in a graph.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.collection.mutable

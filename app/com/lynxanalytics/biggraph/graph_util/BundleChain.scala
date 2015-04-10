@@ -1,3 +1,4 @@
+// Concatenates a series of edge bundles.
 package com.lynxanalytics.biggraph.graph_util
 
 import com.lynxanalytics.biggraph.graph_api._

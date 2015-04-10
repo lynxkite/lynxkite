@@ -1,3 +1,4 @@
+// Some shared code for manipulating TypeTags.
 package com.lynxanalytics.biggraph.graph_api
 
 import scala.reflect.runtime.universe._

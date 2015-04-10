@@ -1,9 +1,9 @@
+// Same as controllers.Assets, except with a custom 404 handler.
 package com.lynxanalytics.biggraph.serving
 
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 
-// Same as controllers.Assets, except with a custom 404 handler.
 object Assets extends Controller {
   def at(path: String, file: String): Action[AnyContent] = {
     val action = controllers.Assets.at(path, file)

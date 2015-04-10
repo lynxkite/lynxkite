@@ -1,3 +1,4 @@
+// Replaces each A->B edge with a B->A edge.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

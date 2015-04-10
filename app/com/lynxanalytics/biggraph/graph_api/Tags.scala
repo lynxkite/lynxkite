@@ -1,3 +1,4 @@
+// Tags are a small in-memory filesystem that stores projects as directories.
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID

@@ -1,14 +1,12 @@
+// Takes a "role" attribute that has either "test" or "train" set as value.
+// Based on the role the operation partitions the "attr" input into
+// two separate vertexAttributes. The new vertexAttributes will be undefined
+// on those vertices where their respective role is not set.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-/*
- * Takes a 'role' attribute that has either "test" or "train" set as value.
- * Based on the role the operation partitions the 'attr' input into
- * two separate vertexAttributes. The new vertexAttributes will be undefined
- * on those vertices where their respective role is not set. 
- */
 object PartitionAttribute extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vs = vertexSet

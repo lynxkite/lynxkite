@@ -1,8 +1,8 @@
+// Collects the attribute values into a scalar Map for a small ID set.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 
-// Collects the attribute values into a scalar Map for a small ID set.
 object CollectAttribute extends OpFromJson {
   class Output[T](
       implicit instance: MetaGraphOperationInstance,

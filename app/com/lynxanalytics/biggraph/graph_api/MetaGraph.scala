@@ -1,3 +1,14 @@
+// The core classes for representing our data.
+//
+// The "metagraph" is made up of MetaGraphEntities (vertex sets, edge bundles,
+// attributes, and scalars) and MetaGraphOperationInstances. The entities are
+// the inputs and outputs of the operation instances. The operation instance is
+// an operation that is bound to a set of inputs.
+//
+// This file also includes the machinery for declaring operation input/output
+// signatures, and the "data" classes that are the actual RDDs/scalar values
+// that belong to metagraph entities.
+
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.ByteArrayOutputStream
