@@ -5,7 +5,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 # Changes
 
 ### master
-
+ - New vertex operation "Add rank attribute" make it possible for the user to sort an
+   attribute (of double type). This can be used to identify vertices which have the
+   highest of lowest values with respect to some attributes.
  - More than one type of aggregation can be selected for each attribute in one operation.
  - New _"Combine segmentations"_ operation makes it possible to create a segmentation
    by cities of residence _and_ age, for example.
