@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.3.0
+
  - New vertex operation "Add rank attribute" make it possible for the user to sort an
    attribute (of double type). This can be used to identify vertices which have the
    highest of lowest values with respect to some attributes.
