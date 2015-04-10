@@ -1,3 +1,4 @@
+// Convenient Hadoop file interface.
 package com.lynxanalytics.biggraph.graph_util
 
 import com.esotericsoftware.kryo

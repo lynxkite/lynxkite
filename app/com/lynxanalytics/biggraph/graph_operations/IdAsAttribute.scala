@@ -1,3 +1,4 @@
+// Generates a vertex attribute that contains the vertex ID.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._

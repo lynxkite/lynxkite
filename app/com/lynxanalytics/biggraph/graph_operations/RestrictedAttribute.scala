@@ -1,3 +1,4 @@
+// Collects the attribute values into a scalar Map for a small ID set.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._

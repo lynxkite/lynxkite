@@ -1,3 +1,4 @@
+// Merges vertices that match on an attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
@@ -20,7 +21,6 @@ object MergeVertices extends OpFromJson {
   def fromJson(j: JsValue) = MergeVertices()
 }
 import MergeVertices._
-// Merges vertices that match on an attribute.
 case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[T]

@@ -1,3 +1,4 @@
+// Generates edges between segments that overlap.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
@@ -7,7 +8,6 @@ import org.apache.spark.rdd._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-// Generates edges between vertices by the amount of overlap in an attribute.
 object SetOverlap extends OpFromJson {
   // Maximum number of sets to be O(n^2) compared.
   val SetListBruteForceLimit = 70

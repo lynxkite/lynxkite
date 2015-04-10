@@ -1,3 +1,4 @@
+// Operations used in GraphDrawingController for building the diagrams efficiently.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -9,6 +10,9 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
+// Creates vertex attributes that hold the list of edge IDs of incoming/outgoing edges.
+// This kind of attribute is referred to as a "triplet mapping". (The triplet being the
+// edge ID, the src ID and the dst ID.)
 object TripletMapping extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
@@ -69,11 +73,13 @@ case class TripletMapping(sampleSize: Int = -1)
   }
 }
 
+// Pushes a vertex attribute to the edges going from/to the vertex.
 object VertexToEdgeAttribute extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
     val ignoredSrc = vertexSet
     val ignoredDst = vertexSet
+    // The list of edge IDs that belong to the vertex.
     val mapping = vertexAttribute[Array[ID]](vertices)
     val original = vertexAttribute[T](vertices)
     val target = edgeBundle(ignoredSrc, ignoredDst)
@@ -138,6 +144,7 @@ case class VertexToEdgeAttribute[T]()
   }
 }
 
+// Returns a small set of edges given a small set of vertices and a triplet mapping.
 object EdgesForVertices extends OpFromJson {
   class Input(bySource: Boolean) extends MagicInputSignature {
     val vs = vertexSet

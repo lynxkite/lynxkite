@@ -1,3 +1,4 @@
+// Builds a graph from a set of edges provided as a vertex set and two string attributes (src/dst).
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._

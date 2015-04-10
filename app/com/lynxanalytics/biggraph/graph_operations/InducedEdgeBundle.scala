@@ -1,3 +1,11 @@
+// Transforms an edge bundle from one pair of vertex sets to another.
+//
+// The purpose of this is to update the edges after an operation has modified
+// the vertex set. For example after filtering the vertices the edges that
+// belonged to discarded vertices need to be discarded as well. You create an
+// InducedEdgeBundle that follows the mapping from the unfiltered vertex set
+// to the filtered one.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

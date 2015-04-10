@@ -1,3 +1,4 @@
+// Package-level variables. Creates our logger and the BigGraphEnvironment.
 package com.lynxanalytics
 
 import org.slf4j.LoggerFactory

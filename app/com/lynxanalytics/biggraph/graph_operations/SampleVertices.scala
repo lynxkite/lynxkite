@@ -1,3 +1,5 @@
+// Takes a sample of the vertex set.
+// The sample is unbiased, but multiple samples will not be independent.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

@@ -1,3 +1,4 @@
+// Assorted utilities for working with RDDs.
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo

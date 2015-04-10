@@ -1,3 +1,4 @@
+// Operations for creating new scalars from nothing.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._

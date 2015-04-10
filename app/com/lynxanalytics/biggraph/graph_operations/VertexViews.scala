@@ -1,3 +1,4 @@
+// Operation and classes used for efficiently building visualizations.
 package com.lynxanalytics.biggraph.graph_operations
 
 import java.util.UUID

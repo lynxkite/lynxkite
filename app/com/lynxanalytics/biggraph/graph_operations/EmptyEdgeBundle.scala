@@ -1,3 +1,4 @@
+// Creates an empty edge bundle between two vertex sets.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._

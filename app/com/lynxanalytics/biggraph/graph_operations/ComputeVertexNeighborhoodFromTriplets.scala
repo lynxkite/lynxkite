@@ -1,3 +1,5 @@
+// Finds all vertices within a given distance from a set of vertices
+// using per-vertex neighborhoods as input.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

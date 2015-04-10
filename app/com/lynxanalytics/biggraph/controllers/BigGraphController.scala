@@ -1,3 +1,4 @@
+// BigGraphController includes the HTTP request handlers that operate on projects at the metagraph level.
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }

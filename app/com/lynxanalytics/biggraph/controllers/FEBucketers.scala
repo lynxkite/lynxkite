@@ -1,3 +1,4 @@
+// Creates the right Bucketer for an attribute based on the AxisOptions.
 package com.lynxanalytics.biggraph.controllers
 
 import scala.reflect.runtime.universe._

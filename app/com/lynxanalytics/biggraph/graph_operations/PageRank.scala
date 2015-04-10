@@ -1,3 +1,5 @@
+// PageRank is an estimate of the probability that starting from a random vertex
+// a random walk will take us to a specific vertex.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

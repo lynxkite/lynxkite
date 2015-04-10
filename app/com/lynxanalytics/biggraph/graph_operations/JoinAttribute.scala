@@ -1,3 +1,4 @@
+// Creates a new pair-typed attribute from two existing attributes.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._

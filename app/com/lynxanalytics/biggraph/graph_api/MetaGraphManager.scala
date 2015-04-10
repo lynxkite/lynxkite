@@ -1,3 +1,6 @@
+// The MetaGraphManager allows querying and manipulating the metagraph and the tags.
+// All tag access is synchronized on the MetaGraphManager.
+// The MetaGraphManager is also responsible for the persistence of the metagraph.
 package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.commons.io.FileUtils
@@ -44,7 +47,7 @@ class MetaGraphManager(val repositoryPath: String) {
     inst
   }
 
-  // Marks a set of entities for frontend visibility.
+  // Marks a set of entities for frontend visibility on the deprecated /metaGraph interface.
   def show[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {

@@ -1,3 +1,4 @@
+// Common operation input/output signatures.
 package com.lynxanalytics.biggraph
 
 import com.lynxanalytics.biggraph.graph_api._

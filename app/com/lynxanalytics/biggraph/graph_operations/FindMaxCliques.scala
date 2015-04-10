@@ -1,3 +1,4 @@
+// Finds maximal cliques in the graph via the Bron-Kerbosch algorithm.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark

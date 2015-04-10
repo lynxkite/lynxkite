@@ -1,3 +1,4 @@
+// Kryo registration and the creation of the SparkContext.
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo

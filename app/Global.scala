@@ -1,3 +1,4 @@
+// Custom global failure handlers for Play Framework.
 import play.api._
 import play.api.mvc._
 import play.api.mvc.Results._

@@ -1,3 +1,4 @@
+// Package-level types and type aliases.
 package com.lynxanalytics.biggraph
 
 import org.apache.spark.rdd

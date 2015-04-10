@@ -1,3 +1,8 @@
+// "Frontend" operations are all defined here.
+//
+// The code in this file defines the operation parameters to be offered on the UI,
+// and also takes care of parsing the parameters given by the user and creating
+// the "backend" operations and updating the projects.
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
