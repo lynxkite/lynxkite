@@ -1,4 +1,8 @@
-// Operations used in GraphDrawingController for building the diagrams efficiently.
+// A "triplet mapping" is a vertex attribute that contains the list of outgoing
+// or incoming edge IDs. This file contains operations for creating and using
+// such triplet mappings. They are used in GraphDrawingController for building
+// diagrams efficiently.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -10,9 +14,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-// Creates vertex attributes that hold the list of edge IDs of incoming/outgoing edges.
-// This kind of attribute is referred to as a "triplet mapping". (The triplet being the
-// edge ID, the src ID and the dst ID.)
+// Creates outgoing and incoming triplet mappings.
 object TripletMapping extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
