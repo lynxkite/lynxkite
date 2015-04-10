@@ -1,3 +1,4 @@
+// Adds a random number for all vertices in a vertex set.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.util.Random

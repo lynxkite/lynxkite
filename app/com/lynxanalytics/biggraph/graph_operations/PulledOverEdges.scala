@@ -1,3 +1,11 @@
+// This operation is useful when one wants to apply on an edge bundle a tranformative operation
+//  (e.g. filter) that was defined on vertex sets.
+//
+// The way to go is to first apply the operation on edgeBundle.idSet, say it creates a new
+// vertex set destinationVS and also provides an injection from destinationVS to
+// edgeBundle.idSet. Then apply PullOverEdges with the original edge bundle and the above
+// injection.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -5,16 +13,6 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-/*
- * This operation is useful when one wants to apply on an edge bundle a tranformative operation
- *  (e.g. filter) that was defined on vertex sets.
- *
- * The way to go is to first apply the operation on edgeBundle.idSet, say it creates a new
- * vertex set destinationVS and also provides an injection from destinationVS to
- * edgeBundle.idSet. Then apply PullOverEdges with the original edge bundle and the above
- * injection. This will create an edge bundle that can be seen as if you were transfered to original
- * edge bundle with the transformative operation.
- */
 object PulledOverEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val originalSrc = vertexSet

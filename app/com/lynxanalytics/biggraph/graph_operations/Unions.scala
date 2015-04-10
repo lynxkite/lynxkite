@@ -1,3 +1,4 @@
+// Operations for taking the union of vertex sets and edge bundles.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

@@ -1,3 +1,4 @@
+// Operations for "fingerprinting": finding matching vertices by network structure.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.collection.mutable.ArrayBuffer

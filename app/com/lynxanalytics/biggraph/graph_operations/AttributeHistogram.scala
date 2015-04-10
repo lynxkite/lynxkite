@@ -1,3 +1,4 @@
+// Calculates the histogram values based on a Bucketer.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

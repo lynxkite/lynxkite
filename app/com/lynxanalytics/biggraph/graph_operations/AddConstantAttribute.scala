@@ -1,3 +1,4 @@
+// Creates an attribute for a vertex set that has the same value for all vertices.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._

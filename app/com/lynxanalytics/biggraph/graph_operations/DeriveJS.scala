@@ -1,3 +1,4 @@
+// Creates a new attribute by evaluating a JavaScript expression over other attributes.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.google.common.primitives.Primitives

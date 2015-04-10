@@ -1,3 +1,11 @@
+// This operation is used to compute a single index for each vertex based on potentially multiple
+// bucketings. This is basically done as a "product" of per attribute buckets. For a detailed
+// specification, see the comment for VertexView's indexingSeq field.
+//
+// One application of this operation computes one step in the product, that is given the index
+// based on the previous bucketed attributes (baseIndices), it computes the index based on the
+// previous and the current bucketed attribute.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -6,14 +14,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-/* This operation is used to compute a single index for each vertex based on potentially multiple
- * bucketings. This is basically done as a "product" of per attribute buckets. For a detailed
- * specification, see the comment for VertexView's indexingSeq field.
- *
- * One application of this operation computes one step in the product, that is given the index
- * based on the previous bucketed attributes (baseIndices), it computes the index based on the
- * previous and the current bucketed attribute.
- */
 object Indexer extends OpFromJson {
   class Input[T] extends MagicInputSignature {
     val vs = vertexSet

@@ -1,3 +1,4 @@
+// Creates a segmentation where each segment represents a bucket of an attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

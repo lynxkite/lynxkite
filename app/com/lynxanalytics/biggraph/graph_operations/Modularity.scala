@@ -1,3 +1,10 @@
+// Calculates the modularity score of a graph segmentation.
+//
+// The modularity of a segment is the fraction of edges inside it minus the
+// fraction of edges expected to fall inside of it based on the in and out
+// degrees. The modularity of the segmentation is the sum of the segment
+// modularity scores.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark

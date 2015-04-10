@@ -1,3 +1,5 @@
+// Narrows down an ID set to a filtered subset.
+// The output is so complex to support VertexViews.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

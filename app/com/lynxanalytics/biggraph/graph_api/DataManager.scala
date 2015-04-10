@@ -1,3 +1,8 @@
+// The DataManager can get the EntityDatas (RDDs/scalar values) for a MetaGraphEntity.
+//
+// It will either load the data from disk, or run the required operations
+// (and then save the data) when RDDs are requested.
+
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID

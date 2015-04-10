@@ -1,3 +1,8 @@
+// Tries to find a partitioning of the graph with high modularity.
+//
+// Iteratively merges vertices as long as it finds vertex pairs whose merge makes the
+// modularity higher.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
@@ -8,11 +13,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-/* Tries to find a partitioning of the graph with high modularity.
- *
- * Iteratively merges vertices as long as it finds vertex pairs whose merge makes the
- * modularity higher.
- */
 object FindModularPartitioning extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, edges) = graph

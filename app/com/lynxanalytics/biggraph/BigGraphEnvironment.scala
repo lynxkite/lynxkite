@@ -1,3 +1,4 @@
+// BigGraphEnvironment creates and holds the MetaGraphManager and DataManager.
 package com.lynxanalytics.biggraph
 
 import java.io.File

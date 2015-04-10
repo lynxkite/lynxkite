@@ -1,3 +1,4 @@
+// The controller to receive and dispatch all JSON HTTP requests from the frontend.
 package com.lynxanalytics.biggraph.serving
 
 import play.api.libs.functional.syntax.toContraFunctorOps
@@ -30,7 +31,7 @@ class JsonServer extends mvc.Controller {
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     block: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
     if (withAuth) {
-      // TODO: Redirect HTTP to HTTPS. (This will be easier in Play 2.3.)
+      // TODO: Redirect HTTP to HTTPS. (#1400)
       mvc.Action.async(parser) { request =>
         UserProvider.get(request) match {
           case Some(user) => block(user, request)

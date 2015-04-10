@@ -1,3 +1,4 @@
+// For each B and each pair of edges that go A->B and B->C creates an edge that goes A->C.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

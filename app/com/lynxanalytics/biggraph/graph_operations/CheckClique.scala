@@ -1,3 +1,4 @@
+// Operation for debugging/validating the results of a clique finding operation.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

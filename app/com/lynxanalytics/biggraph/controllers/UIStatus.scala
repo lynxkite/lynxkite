@@ -1,3 +1,4 @@
+// Case classes for saving the visualizations.
 package com.lynxanalytics.biggraph.controllers
 
 import play.api.libs.json

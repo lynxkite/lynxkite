@@ -1,3 +1,10 @@
+// Operation to find a clustering of a given graph with high modularity.
+//
+// This implementation is based on iteratively doing small tweaks on the clustering based on the view
+// visible in the individual partitions of data and then reshuffle.
+//
+// This operation ignores the direction of edges.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
@@ -11,13 +18,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-/* Operation to find a clustering of a given graph with high modularity.
-
-This implementation is based on iteratively doing small tweaks on the clustering based on the view
-visible in the individual partitions of data and then reshuffle.
-
-This operation ignores the direction of edges.
-*/
 object FindModularClusteringByTweaks extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, edges) = graph

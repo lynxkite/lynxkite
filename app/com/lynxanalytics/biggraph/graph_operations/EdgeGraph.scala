@@ -1,3 +1,6 @@
+// Creates the edge graph of a graph, where each vertex corresponds to an edge in the original graph,
+// and the vertices are connected when one edge is the continuation of the other.
+// See http://en.wikipedia.org/wiki/Edge_graph for a more precise definition.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark

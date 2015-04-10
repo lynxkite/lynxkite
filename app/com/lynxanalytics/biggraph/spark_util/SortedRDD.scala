@@ -1,3 +1,18 @@
+// An RDD where each partition is locally sorted.
+//
+// When two RDDs are co-partitioned, this allows for a faster join
+// implementation. (About 10x speedup over the usual join.) Some other
+// operations also benefit.
+//
+// This class also includes some useful methods missing from the stock
+// PairRDDFunctions, such as mapValuesWithKeys and fast prefix sampling.
+//
+// All MetaGraphEntities are stored as SortedRDDs.
+//
+// As a further optimization, ArrayBackedSortedRDD stores each partition in one
+// array. These RDDs can be restricted to a subset of IDs via a fast binary
+// search.
+
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark.{ HashPartitioner, Partition, Partitioner, TaskContext }

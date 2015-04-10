@@ -1,3 +1,4 @@
+// Calculates embeddedness, the number of mutual friends between two people, as an edge attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions

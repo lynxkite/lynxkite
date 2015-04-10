@@ -1,3 +1,11 @@
+// Generates some edges between segments with sufficient overlap.
+// Not all justified edges are generated. The only guarantee is that the
+// connected components on the generated graph will be the same as if all
+// justified edges had been generated. (As a result this is more performant
+// than the normal SetOverlap operation.)
+//
+// Used in the infocom community search algorithm.
+
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark

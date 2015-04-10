@@ -1,3 +1,4 @@
+// Discards all A->B edges if there is no B->A edge.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
