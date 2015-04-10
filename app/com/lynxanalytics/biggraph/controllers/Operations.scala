@@ -860,6 +860,31 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Add rank attribute", new AttributeOperation(_, _) {
+    val description = """Associates a new vertex attribute to another,
+    already existing attribute (the key attribute). The new attribute will reflect
+    the ranking of the vertices based on the value of the key attribute. This might be
+    useful to identify vertices which have the highest
+    (or lowest) values with respect to some attribute."""
+
+    def parameters = List(
+      Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
+      Param("keyattr", "Key attribute name", options = vertexAttributes[Double]),
+      Param("order", "Order", options = UIValue.list(List("ascending", "descending"))))
+
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric (double) vertex attributes")
+    def apply(params: Map[String, String]) = {
+      val keyAttr = params("keyattr")
+      val rankAttr = params("rankattr")
+      val ascending = params("order") == "ascending"
+      assert(keyAttr.nonEmpty, "Please set a key attribute name.")
+      assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
+      val op = graph_operations.AddRankingAttributeDouble(ascending)
+      val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
+      project.vertexAttributes(rankAttr) = toDouble(op(op.sortKey, sortKey).result.ordinal)
+    }
+  })
+
   register("Example Graph", new VertexOperation(_, _) {
     val description =
       "Creates small test graph with 4 people and 4 edges between them."

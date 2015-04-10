@@ -32,3 +32,6 @@ public
 # KDE specific
 *.directory
 *.kate-swp
+
+# intellij specific
+.idea
