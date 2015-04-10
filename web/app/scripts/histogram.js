@@ -76,8 +76,8 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
         return !scope.loading && 0 < s && s < scope.origMax * 0.5;
       };
       scope.zoom = function(index) {
-        if (!scope.zoomable(scope.model.sizes[index])) { return; }
-        if (scope.highlighted === index) {
+        if (!scope.zoomable(scope.model.sizes[index]) ||
+            scope.highlighted === index) {
           // Unzoom.
           scope.highlighted = undefined;
           scope.max = scope.origMax;

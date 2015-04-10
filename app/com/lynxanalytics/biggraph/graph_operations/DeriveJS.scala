@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import com.google.common.primitives.Primitives
 import scala.reflect.runtime.universe._
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
@@ -29,16 +30,52 @@ object DeriveJS {
     val op = DeriveJSDouble(JavaScript("-x"), Seq("x"))
     op(op.attrs, Seq(x).map(VertexAttributeToJSValue.run[Double])).result.attr
   }
+
+  def deriveFromAttributes[T: TypeTag](
+    exprString: String,
+    namedAttributes: Seq[(String, Attribute[_])])(implicit manager: MetaGraphManager): Output[T] = {
+
+    val js = JavaScript(exprString)
+
+    // Validate JS using default values for the types of the attributes.
+    val testNamedValues =
+      namedAttributes
+        .map { case (attrName, attr) => (attrName, JSValue.defaultValue(attr.typeTag).value) }
+        .toMap
+    val classOfT = Primitives.wrap(
+      RuntimeSafeCastable.classTagFromTypeTag(typeTag[T]).runtimeClass)
+    val testResult = js.evaluate(testNamedValues)
+    // This fails if the result type is of unexpected type. On the other hand, it succeeds
+    // if the result is undefined, as that gets converted to null which casts without problems
+    // to any reference type. (And we are dealing with a reference type here thanks to the wrap
+    // above.)
+    classOfT.cast(testResult)
+
+    // Good to go, let's prepare the attributes for DeriveJS.
+    val jSValueAttributes =
+      namedAttributes.map { case (_, attr) => VertexAttributeToJSValue.run(attr) }
+
+    val op: DeriveJS[T] =
+      if (typeOf[T] =:= typeOf[String]) {
+        DeriveJSString(js, namedAttributes.map(_._1)).asInstanceOf[DeriveJS[T]]
+      } else if (typeOf[T] =:= typeOf[Double]) {
+        DeriveJSDouble(js, namedAttributes.map(_._1)).asInstanceOf[DeriveJS[T]]
+      } else ???
+
+    import Scripting._
+    op(op.attrs, jSValueAttributes).result
+  }
 }
 import DeriveJS._
 abstract class DeriveJS[T](
   expr: JavaScript,
   attrNames: Seq[String])
     extends TypedMetaGraphOp[Input, Output[T]] {
-  implicit def tt: TypeTag[T]
+  implicit def resultTypeTag: TypeTag[T]
   override val isHeavy = true
   @transient override lazy val inputs = new Input(attrNames.size)
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(tt, instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output()(resultTypeTag, instance, inputs)
 
   def execute(inputDatas: DataSet,
               o: Output[T],
@@ -75,7 +112,7 @@ case class DeriveJSString(
   expr: JavaScript,
   attrNames: Seq[String])
     extends DeriveJS[String](expr, attrNames) {
-  @transient lazy val tt = typeTag[String]
+  @transient lazy val resultTypeTag = typeTag[String]
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
 }
 
@@ -87,6 +124,6 @@ case class DeriveJSDouble(
   expr: JavaScript,
   attrNames: Seq[String])
     extends DeriveJS[Double](expr, attrNames) {
-  @transient lazy val tt = typeTag[Double]
+  @transient lazy val resultTypeTag = typeTag[Double]
   override def toJson = Json.obj("expr" -> expr.expression, "attrNames" -> attrNames)
 }

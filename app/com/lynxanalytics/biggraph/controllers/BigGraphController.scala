@@ -54,8 +54,10 @@ case class FEOperationParameterMeta(
 
   val validKinds = Seq(
     "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
-    "multi-vertex-attribute", "multi-edge-attribute", "file")
+    "multi-vertex-attribute", "multi-edge-attribute", "file",
+    "tag-list") // A variation of "multipleChoice" with a more concise, horizontal design.
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
+  if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
 
 case class FEEdgeBundle(
@@ -349,6 +351,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
     // Historical bridge.
+    val c = Operation.Context(user, Project(request.project))
+    val op = ops.opById(c, "Filter-by-attributes")
+    val emptyParams = op.parameters.map(_.id -> "")
     val vertexParams = request.vertexFilters.map {
       f => s"filterva-${f.attributeName}" -> f.valueSpec
     }
@@ -359,7 +364,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       project = request.project,
       op = FEOperationSpec(
         id = "Filter-by-attributes",
-        parameters = (vertexParams ++ edgeParams).toMap)))
+        parameters = (emptyParams ++ vertexParams ++ edgeParams).toMap)))
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
@@ -415,7 +420,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   // Expand each checkpoint of a project to a separate project, run the code, then clean up.
-  private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.synchronized {
+  private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.tagTransaction {
     val tmpDir = s"!tmp-$Timestamp"
     val ps = (0 until p.checkpointCount).map { i =>
       val tmp = Project(s"$tmpDir-$i")
@@ -496,11 +501,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 }
 
-abstract class Operation(context: Operation.Context, val category: Operation.Category) {
+abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
   val project = context.project
   val user = context.user
-  def id = title.replace(" ", "-")
-  def title: String
+  def id = Operation.titleToID(originalTitle)
+  def title = originalTitle // Override this to change the display title while keeping the original ID.
   def description: String
   def parameters: List[FEOperationParameterMeta]
   def enabled: FEStatus
@@ -530,6 +535,7 @@ abstract class Operation(context: Operation.Context, val category: Operation.Cat
   }
 }
 object Operation {
+  def titleToID(title: String) = title.replace(" ", "-")
   case class Category(
       title: String,
       color: String, // A color class from web/app/styles/operation-toolbox.css.
@@ -555,13 +561,21 @@ object Operation {
 abstract class OperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
 
-  private val operations = mutable.Buffer[Operation.Context => Operation]()
-  def register(factory: Operation.Context => Operation): Unit = operations += factory
-  private def forContext(context: Operation.Context) = operations.map(_(context))
+  // The registry maps operation IDs to their constructors.
+  private val operations = mutable.Map[String, Operation.Context => Operation]()
+  def register(title: String, factory: (String, Operation.Context) => Operation): Unit = {
+    val id = Operation.titleToID(title)
+    assert(!operations.contains(id), s"$id is already registered.")
+    operations(id) = factory(title, _)
+  }
+
+  private def opsForContext(context: Operation.Context) = {
+    operations.values.toSeq.map(_(context))
+  }
 
   def categories(user: serving.User, project: Project): List[OperationCategory] = {
     val context = Operation.Context(user, project)
-    val cats = forContext(context).groupBy(_.category).toList
+    val cats = opsForContext(context).groupBy(_.category).toList
     cats.filter(_._1.visible).sortBy(_._1).map {
       case (cat, ops) =>
         val feOps = ops.map(_.toFE).sortBy(_.title).toList
@@ -570,11 +584,8 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   }
 
   def opById(context: Operation.Context, id: String): Operation = {
-    // TODO: Do this without instantiating all operations.
-    val ops = forContext(context).filter(_.id == id)
-    assert(ops.nonEmpty, s"Cannot find operation: ${id}")
-    assert(ops.size == 1, s"Operation not unique: ${id}")
-    ops.head
+    assert(operations.contains(id), s"Cannot find operation: ${id}")
+    operations(id)(context)
   }
 
   def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.synchronized {
