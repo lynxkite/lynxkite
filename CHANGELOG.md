@@ -8,9 +8,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### 1.3.0
 
- - New vertex operation "Add rank attribute" make it possible for the user to sort an
-   attribute (of double type). This can be used to identify vertices which have the
-   highest of lowest values with respect to some attributes.
+ - New vertex operation _"Add rank attribute"_ makes it possible for the user to sort by
+   an attribute (of double type). This can be used to identify vertices which have the
+   highest or lowest values with respect to some attributes.
  - Improved error checking for JavaScript expressions. (In "derive" operations.)
  - Fixed project history performance issue.
  - More than one type of aggregation can be selected for each attribute in one operation.
@@ -21,6 +21,7 @@ Please add changes at the top. When releasing a version add a new header for tha
  - New _"Create edges from co-occurrence"_ operation creates edges in the parent project
    for each pair of vertices that co-occur in a segment. If they co-occur multiple times,
    multiple parallel edges are created.
+ - Visualizations can be saved into the project for easier sharing.
 
 ### 1.2.1
 
