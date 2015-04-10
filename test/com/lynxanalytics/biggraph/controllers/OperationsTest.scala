@@ -23,7 +23,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     ops.apply(
       serving.User.fake,
-      ProjectOperationRequest(on.projectName, FEOperationSpec(op.replace(" ", "-"), params)))
+      ProjectOperationRequest(on.projectName, FEOperationSpec(Operation.titleToID(op), params)))
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
@@ -83,9 +83,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Example Graph")
     run("Merge vertices by attribute",
       Map("key" -> "gender", "aggregate-age" -> "average", "aggregate-name" -> "count"))
-    val age = project.vertexAttributes("age").runtimeSafeCast[Double]
+    val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
-    val count = project.vertexAttributes("name").runtimeSafeCast[Double]
+    val count = project.vertexAttributes("name_count").runtimeSafeCast[Double]
     assert(count.rdd.collect.toMap.values.toSet == Set(3.0, 1.0))
     val gender = project.vertexAttributes("gender").runtimeSafeCast[String]
     assert(gender.rdd.collect.toMap.values.toSet == Set("Male", "Female"))
@@ -100,7 +100,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.edgeBundle == null)
     run("Merge vertices by attribute",
       Map("key" -> "gender", "aggregate-age" -> "average"))
-    val age = project.vertexAttributes("age").runtimeSafeCast[Double]
+    val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
     assert(project.edgeBundle == null)
   }
@@ -113,8 +113,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Restore checkpoint after failing operation") {
     class Bug extends Exception("simulated bug")
-    ops.register(new Operation(_, Operation.Category("Test", "test")) {
-      val title = "Buggy op"
+    ops.register("Buggy op", new Operation(_, _, Operation.Category("Test", "test")) {
       val description = "For testing"
       def enabled = ???
       def parameters = ???

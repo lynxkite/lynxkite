@@ -70,7 +70,7 @@
           </form>
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
-        <label class="btn btn-default" ng-click="showSettings = !showSettings"
+        <label class="btn btn-{{ showSettings ? 'primary' : 'default' }}" ng-click="showSettings = !showSettings"
           tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom"
           ng-show="util.globals.hasAuth">
           <i class="glyphicon glyphicon-cog"></i>
@@ -118,7 +118,7 @@
 
       <!-- Project settings. -->
       <div class="list-group-item project-settings" ng-if="showSettings">
-        <project-settings side="side" visible="$parent.showSettings"></project-settings>
+        <project-settings side="side"></project-settings>
       </div>
 
       <!-- Extra controls for visualizations. -->
@@ -178,7 +178,7 @@
               <td>
                 <div id="sample-center"
                      ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
-                  <input class="form-control" ng-model="side.state.centers" tokenfield>
+                  <input class="form-control" ng-model="side.state.centers" ng-model-options="{ updateOn: 'change blur' }" ng-list>
                 </div>
               </td>
             </tr>

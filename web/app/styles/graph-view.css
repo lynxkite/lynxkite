@@ -46,7 +46,7 @@ svg .edge.highlight-out {
   stroke: white;
 }
 svg .edge.highlight-out text {
-  fill: white;
+  fill: #888;
 }
 svg #arrow-highlight-in {
   fill: #888;
@@ -55,7 +55,7 @@ svg .edge.highlight-in {
   stroke: #888;
 }
 svg .edge.highlight-in text {
-  fill: #888;
+  fill: white;
 }
 svg .edge .first {
   marker-end: url(#arrow);
@@ -79,7 +79,7 @@ svg .edge text {
   text-anchor: middle;
   font-family: 'Arial Black', sans-serif;
   stroke: none;
-  fill: #444;
+  fill: white;
 }
 
 svg .vertex .label-background {
