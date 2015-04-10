@@ -1,4 +1,4 @@
-// HTTP request handlers for cluster-level features.
+// Request handlers for cluster-level features.
 package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark
