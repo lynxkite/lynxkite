@@ -1,4 +1,4 @@
-// HTTP request handlers that need to use the DataManager.
+// Request handlers that need to use the DataManager.
 //
 // Most notably it includes everything for the bucketed and sampled graphs,
 // but it is also used for the histograms and scalars.
