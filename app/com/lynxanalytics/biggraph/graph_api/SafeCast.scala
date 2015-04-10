@@ -2,7 +2,7 @@
 //
 // Usage:
 //
-//   def asStringAttribute[T](attr: Attribute[T]): Attribute[String] = {
+//   def asStringAttribute(attr: Attribute[_]): Attribute[String] = {
 //     // Wrong solution, does not catch type mismatches:
 //     attr.asInstanceOf[Attribute[String]]
 //     // Good solution, fails if the parameter is not a String attribute:
