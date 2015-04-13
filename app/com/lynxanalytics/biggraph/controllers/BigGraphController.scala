@@ -22,8 +22,6 @@ object FEStatus {
     if (condition) enabled else disabled(disabledReason)
 }
 
-case class VertexSetRequest(id: String)
-
 // Something with a display name and an internal ID.
 case class UIValue(
   id: String,
@@ -43,8 +41,6 @@ case class FEOperationMeta(
   status: FEStatus = FEStatus.enabled,
   description: String = "")
 
-case class FEOperationMetas(ops: List[FEOperationMeta])
-
 case class FEOperationParameterMeta(
     id: String,
     title: String,
@@ -60,22 +56,6 @@ case class FEOperationParameterMeta(
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
-
-case class FEEdgeBundle(
-  id: String,
-  title: String,
-  source: UIValue,
-  destination: UIValue,
-  attributes: List[UIValue])
-
-case class FEVertexSet(
-  id: String,
-  title: String,
-  inEdges: List[FEEdgeBundle],
-  outEdges: List[FEEdgeBundle],
-  localEdges: List[FEEdgeBundle],
-  attributes: List[UIValue],
-  ops: List[FEOperationMeta])
 
 case class FEOperationSpec(
   id: String,
@@ -161,136 +141,8 @@ case class ProjectHistoryStep(
   segmentationsAfter: List[FESegmentation],
   opCategoriesBefore: List[OperationCategory])
 
-// An ordered bundle of metadata types.
-case class MetaDataSeq(vertexSets: List[VertexSet] = List(),
-                       edgeBundles: List[EdgeBundle] = List(),
-                       vertexAttributes: List[Attribute[_]] = List(),
-                       edgeAttributes: List[Attribute[_]] = List())
-
-class FEOperationRepository(env: BigGraphEnvironment) {
-  implicit val manager = env.metaGraphManager
-
-  def registerOperation(op: FEOperation): Unit = {
-    assert(!operations.contains(op.id), s"Already registered: ${op.id}")
-    operations(op.id) = op
-  }
-
-  def getStartingOperationMetas: Seq[FEOperationMeta] = {
-    toSimpleMetas(operations.values.toSeq.filter(_.starting))
-  }
-
-  private def toSimpleMetas(ops: Seq[FEOperation]): Seq[FEOperationMeta] = {
-    ops.map {
-      op => FEOperationMeta(op.id, op.title, op.parameters)
-    }
-  }
-
-  // Get non-starting operations, based on a current view.
-  def getApplicableOperationMetas(vs: VertexSet): Seq[FEOperationMeta] =
-    getApplicableOperationMetas(optionsFor(vs))
-
-  def optionsFor(vs: VertexSet): MetaDataSeq = {
-    val in = manager.incomingBundles(vs).toSet
-    val out = manager.outgoingBundles(vs).toSet
-    val neighbors = in.map(_.srcVertexSet) ++ out.map(_.dstVertexSet) - vs
-    val strangers = manager.allVertexSets - vs
-    // List every vertex set if there are no neighbors.
-    val vertexSets = if (neighbors.nonEmpty) vs +: neighbors.toList else vs +: strangers.toList
-    val edgeBundles = (in ++ out).toList
-    val vertexAttributes = vertexSets.flatMap(manager.attributes(_))
-    val edgeAttributes = edgeBundles.flatMap(manager.attributes(_))
-    return MetaDataSeq(
-      vertexSets.filter(manager.isVisible(_)),
-      edgeBundles.filter(manager.isVisible(_)),
-      vertexAttributes.filter(manager.isVisible(_)),
-      edgeAttributes.filter(manager.isVisible(_)))
-  }
-
-  def getApplicableOperationMetas(options: MetaDataSeq): Seq[FEOperationMeta] = {
-    val vertexSets = options.vertexSets.map(UIValue.fromEntity(_))
-    val edgeBundles = options.edgeBundles.map(UIValue.fromEntity(_))
-    val vertexAttributes = options.vertexAttributes.map(UIValue.fromEntity(_))
-    val edgeAttributes = options.edgeAttributes.map(UIValue.fromEntity(_))
-    operations.values.toSeq.filterNot(_.starting).flatMap { op =>
-      val params: List[FEOperationParameterMeta] = op.parameters.flatMap {
-        case p if p.kind == "vertex-set" => vertexSets.headOption.map(
-          first => p.copy(options = vertexSets, defaultValue = first.id))
-        case p if p.kind == "edge-bundle" => edgeBundles.headOption.map(
-          first => p.copy(options = edgeBundles, defaultValue = first.id))
-        case p if p.kind == "vertex-attribute" => vertexAttributes.headOption.map(
-          first => p.copy(options = vertexAttributes, defaultValue = first.id))
-        case p if p.kind == "edge-attribute" => edgeAttributes.headOption.map(
-          first => p.copy(options = edgeAttributes, defaultValue = first.id))
-        case p if p.kind == "multi-vertex-attribute" => Some(p.copy(options = vertexAttributes))
-        case p if p.kind == "multi-edge-attribute" => Some(p.copy(options = edgeAttributes))
-        case p => Some(p)
-      }
-      if (params.length == op.parameters.length) {
-        // There is a valid option for every parameter, so this is a legitimate operation.
-        Some(FEOperationMeta(op.id, op.title, params))
-      } else {
-        None
-      }
-    }
-  }
-
-  def applyOp(spec: FEOperationSpec): Unit =
-    operations(spec.id).apply(spec.parameters)
-
-  private val operations = mutable.Map[String, FEOperation]()
-}
-
-/**
- * Logic for processing requests
- */
-
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
-  val operations = new FEOperations(env)
-
-  private def toFE(vs: VertexSet): FEVertexSet = {
-    val in = metaManager.incomingBundles(vs).toSet.filter(metaManager.isVisible(_))
-    val out = metaManager.outgoingBundles(vs).toSet.filter(metaManager.isVisible(_))
-    val local = in & out
-    val visibleAttributes = metaManager.attributes(vs).filter(metaManager.isVisible(_))
-
-    FEVertexSet(
-      id = vs.gUID.toString,
-      title = vs.toStringStruct.toString,
-      inEdges = (in -- local).toList.map(toFE(_)),
-      outEdges = (out -- local).toList.map(toFE(_)),
-      localEdges = local.toList.map(toFE(_)),
-      attributes = visibleAttributes.map(UIValue.fromEntity(_)).toList,
-      ops = operations.getApplicableOperationMetas(vs).sortBy(_.title).toList)
-  }
-
-  private def toFE(eb: EdgeBundle): FEEdgeBundle = {
-    val visibleAttributes = metaManager.attributes(eb).filter(metaManager.isVisible(_))
-    FEEdgeBundle(
-      id = eb.gUID.toString,
-      title = eb.toStringStruct.toString,
-      source = UIValue.fromEntity(eb.srcVertexSet),
-      destination = UIValue.fromEntity(eb.dstVertexSet),
-      attributes = visibleAttributes.map(UIValue.fromEntity(_)).toList)
-  }
-
-  def vertexSet(user: serving.User, request: VertexSetRequest): FEVertexSet = {
-    toFE(metaManager.vertexSet(request.id.asUUID))
-  }
-
-  def applyOp(user: serving.User, request: FEOperationSpec): Unit =
-    operations.applyOp(request)
-
-  def startingOperations(user: serving.User, request: serving.Empty): FEOperationMetas =
-    FEOperationMetas(operations.getStartingOperationMetas.sortBy(_.title).toList)
-
-  def startingVertexSets(user: serving.User, request: serving.Empty): UIValues =
-    UIValues(metaManager.allVertexSets
-      .filter(_.source.inputs.all.isEmpty)
-      .filter(metaManager.isVisible(_))
-      .map(UIValue.fromEntity(_)).toList)
-
-  // Project view stuff below.
 
   lazy val version = try {
     scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString

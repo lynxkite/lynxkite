@@ -133,15 +133,11 @@ object ProductionJsonServer extends JsonServer {
     def writes(u: Unit) = json.Json.obj()
   }
 
-  implicit val rVertexSetRequest = json.Json.reads[VertexSetRequest]
   implicit val wFEStatus = json.Json.writes[FEStatus]
   implicit val wUIValue = json.Json.writes[UIValue]
   implicit val wUIValues = json.Json.writes[UIValues]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
-  implicit val wFEOperationMetas = json.Json.writes[FEOperationMetas]
-  implicit val wFEEdgeBundle = json.Json.writes[FEEdgeBundle]
-  implicit val wFEVertexSet = json.Json.writes[FEVertexSet]
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
 
@@ -270,10 +266,6 @@ object ProductionJsonServer extends JsonServer {
   // Play! uses the routings in /conf/routes to execute actions
 
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
-  def vertexSetGet = jsonGet(bigGraphController.vertexSet)
-  def applyOp = jsonPost(bigGraphController.applyOp)
-  def startingOperationsGet = jsonGet(bigGraphController.startingOperations)
-  def startingVertexSetsGet = jsonGet(bigGraphController.startingVertexSets)
   def createProject = jsonPost(bigGraphController.createProject)
   def discardProject = jsonPost(bigGraphController.discardProject)
   def renameProject = jsonPost(bigGraphController.renameProject)
@@ -297,8 +289,6 @@ object ProductionJsonServer extends JsonServer {
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
-  def vertexDiagram = jsonGet(drawingController.getVertexDiagram)
-  def edgeDiagram = jsonGet(drawingController.getEdgeDiagram)
   def complexView = jsonGet(drawingController.getComplexView)
   def center = jsonGet(drawingController.getCenter)
   def histo = jsonGet(drawingController.getHistogram)

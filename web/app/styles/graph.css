@@ -2,14 +2,6 @@
   pointer-events: none;
 }
 
-.spinning {
-  transition: transform 0.5s ease;
-}
-
-.spin180 {
-  transform: rotate(180deg);
-}
-
 .clicky {
   display: inline-block;
   min-width: 30px;
@@ -34,31 +26,8 @@
   font-weight: bold;
 }
 
-.metagraph {
-  margin-top: 10px;
-}
-
-.panel-heading + .list-group sublist .list-group-item:first-child {
-  border-top-width: 1px;
-}
-.panel-heading + .list-group sublist:first-child .list-group-item:first-child {
-  border-top-width: 0;
-}
-.list-group:first-child sublist:first-child .list-group-item:first-child {
-  border-top-width: 0;
-}
-
 h6 {
   font-weight: bold;
-}
-
-.token {
-  display: inline-block;
-  border-radius: 3px;
-  padding-left: 3px;
-  padding-right: 3px;
-  margin: 2px;
-  background: lightblue;
 }
 
 input.form-control.filter {

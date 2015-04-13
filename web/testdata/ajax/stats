@@ -1,6 +1,0 @@
-{
-  "verticesCount": 1000,
-  "edgesCount": 1000,
-  "vertexAttributes": ["age", "weight", "price"],
-  "edgeAttributes": ["count", "total_duration"]
-}

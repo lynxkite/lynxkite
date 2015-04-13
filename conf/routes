@@ -1,7 +1,3 @@
-GET  /ajax/vertexSet   com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexSetGet
-POST /ajax/applyOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.applyOp
-GET  /ajax/startingOps com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingOperationsGet
-GET  /ajax/startingVs  com.lynxanalytics.biggraph.serving.ProductionJsonServer.startingVertexSetsGet
 GET  /ajax/sparkStatus com.lynxanalytics.biggraph.serving.ProductionJsonServer.getClusterStatus
 GET  /ajax/setWorkers  com.lynxanalytics.biggraph.serving.ProductionJsonServer.setClusterNumInstances
 GET  /ajax/spark-status com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkStatus
@@ -23,8 +19,6 @@ POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer
 POST /ajax/renameProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameProject
 POST /ajax/changeProjectSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeProjectSettings
 
-GET  /ajax/vertexDiag  com.lynxanalytics.biggraph.serving.ProductionJsonServer.vertexDiagram
-GET  /ajax/edgeDiag    com.lynxanalytics.biggraph.serving.ProductionJsonServer.edgeDiagram
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
 GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.scalarValue
