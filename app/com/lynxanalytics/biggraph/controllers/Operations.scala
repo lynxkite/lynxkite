@@ -365,6 +365,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.project.setVertexSet(result.segments, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
+      segmentation.project.vertexAttributes("size") = computeSegmentSizes(segmentation)
     }
   })
 
@@ -404,6 +405,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.project.setVertexSet(result.segments, idAttr = "id")
       segmentation.project.notes = title
       segmentation.belongsTo = result.belongsTo
+      segmentation.project.vertexAttributes("size") = computeSegmentSizes(segmentation)
     }
   })
 
