@@ -25,8 +25,8 @@ object SQLExport {
 
   private def makeInserts(quotedTable: String, rdd: RDD[Seq[String]]) = {
     rdd.mapPartitions { it =>
-      val lines = it.map(seq => " (" + seq.mkString(", ") + ")").mkString(",\n") + ";\n"
-      Iterator(s"INSERT INTO $quotedTable VALUES\n" + lines)
+      it.map(seq =>
+        s"INSERT INTO $quotedTable VALUES (" + seq.mkString(", ") + ");")
     }
   }
 
