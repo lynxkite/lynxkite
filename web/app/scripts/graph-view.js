@@ -368,6 +368,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var resultMap;
     if (colorMeta) {
       colorKey = (colorKey === undefined) ? colorMeta.id : colorKey;
+      var fullLegendTitle = legendTitle + ': ' + colorMeta.title;
       if (colorMeta.typeName === 'Double') {
         var values = mapByAttr(siblings, colorKey, 'double');
         resultMap = doubleColorMap(values);
@@ -376,10 +377,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         legendMap['min: ' + bounds.min] = resultMap[bounds.min];
         legendMap['max: ' + bounds.max] = resultMap[bounds.max];
         // only shows the min max values
-        this.addColorLegend(legendMap, sideString, legendTitle);
+        this.addColorLegend(legendMap, sideString, fullLegendTitle);
       } else if (colorMeta.typeName === 'String') {
         resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'));
-        this.addColorLegend(resultMap, sideString, legendTitle);
+        this.addColorLegend(resultMap, sideString, fullLegendTitle);
       } else {
         console.error('The type of ' +
                       colorMeta + ' (' + colorMeta.typeName +
@@ -396,6 +397,21 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     vertices.offsetter = offsetter;
     vertices.vertexSetId = side.vertexSet.id;
 
+    var s = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
+
+    for (var attr in side.vertexAttrs) {
+      if (side.vertexAttrs[attr] !== undefined) {
+        // Capitalize.
+        var attrLabel = attr.charAt(0).toUpperCase() + attr.slice(1);
+        // UnCammelify.
+        attrLabel = attrLabel.replace(/([A-Z])/g, ' $1');
+        // We handle color attributes separately.
+        if (attrLabel.indexOf('Color') === -1) {
+          this.addLegendLine(attrLabel + ': ' + side.vertexAttrs[attr].title, s);
+        }
+      }
+    }
+
     var sizeAttr = (side.vertexAttrs.size) ? side.vertexAttrs.size.id : undefined;
     var sizeMax = 1;
     if (sizeAttr) {
@@ -409,8 +425,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var labelSizeBounds = common.minmax(mapByAttr(data.vertices, labelSizeAttr, 'double'));
       labelSizeMax = labelSizeBounds.max;
     }
-
-    var s = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
 
     var colorAttr = (side.vertexAttrs.color) ? side.vertexAttrs.color.id : undefined;
     var colorMap = this.setupColorMap(data.vertices, side.vertexAttrs.color, s, 'Vertex Color');
@@ -430,7 +444,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var vertex = data.vertices[i];
 
       var label;
-      if (side.vertexAttrs.label) { label = vertex.attrs[side.vertexAttrs.label.id].string; }
+      if (side.vertexAttrs.label) {
+        label = vertex.attrs[side.vertexAttrs.label.id].string;
+      }
 
       var size = 0.5;
       if (sizeAttr) { size = vertex.attrs[sizeAttr].double / sizeMax; }
@@ -490,23 +506,27 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return vertices;
   };
 
-  GraphView.prototype.addColorLegend = function (colorMap, side, title) {
+  GraphView.prototype.addLegendLine = function(text, side, indent) {
+    indent = indent || 0;
     var margin = 50;
-    var x = side === 'left' ? margin : this.svg.width() - margin;
+    var xMargin = margin + indent;
+    var x = side === 'left' ? xMargin : this.svg.width() - xMargin;
     var anchor = side === 'left' ? 'start' : 'end';
     var i = this.legendNextLine;
-    var titleSvg = svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin }) .text(title);
-    this.legend.append(titleSvg);
-    i++;
+    this.legendNextLine++;
+    var legendElement =
+      svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin }).text(text);
+    legendElement.attr('text-anchor', anchor);
+    this.legend.append(legendElement);
+    return legendElement;
+  };
+
+  GraphView.prototype.addColorLegend = function(colorMap, side, title) {
+    this.addLegendLine(title, side);
     for (var attr in colorMap) {
-      var l = svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin })
-        .text(attr || 'undefined');
+      var l = this.addLegendLine(attr || 'undefined', side, 10);
       l.attr('style', 'fill: ' + colorMap[attr] || UNCOLORED);
-      l.attr('text-anchor', anchor);
-      this.legend.append(l);
-      i++;
     }
-    this.legendNextLine = i;
   };
 
   function translateTouchToMouseEvent(ev) {
