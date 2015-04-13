@@ -953,6 +953,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     image.size = this.GLOBE_SIZE * Math.pow(2, -zoomLevel) / this.GM_MULT;
     image.x = x - image.size / 2;
     image.y = y - image.size / 2;
+    // Disable drag & drop on Firefox.
+    image.on('dragstart', function() { return false; });
     this.group.append(image);
     var images = this.images;
     images.push(image);
