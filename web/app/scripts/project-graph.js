@@ -239,6 +239,11 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       }
 
       function updateFilters() {
+        if (!/Chrome/.test(window.navigator.userAgent)) {
+          // Firefox messes up filters. It's only supported on Chrome for now.
+          // https://bugzilla.mozilla.org/show_bug.cgi?id=1153845
+          return;
+        }
         var svg = element.find('svg.graph-view');
         var filter = '';
         if (scope.filters.inverted) {
