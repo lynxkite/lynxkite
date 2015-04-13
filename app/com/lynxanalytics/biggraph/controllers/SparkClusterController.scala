@@ -19,7 +19,6 @@ case class SparkClusterStatusResponse(
 
 // Request for resizing the cluster. (If supported by the BigGraphEnvironment.)
 case class SetClusterNumInstanceRequest(
-  password: String,
   workerInstances: Int)
 
 // This listener is used for long polling on /ajax/spark-status.
@@ -72,6 +71,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def sparkCancelJobs(user: serving.User, req: serving.Empty): Unit = {
+    assert(user.isAdmin, "Only administrators can cancel jobs.")
     sc.cancelAllJobs()
   }
 
@@ -80,8 +80,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def setClusterNumInstances(user: serving.User, request: SetClusterNumInstanceRequest): SparkClusterStatusResponse = {
-    if (request.password != "UCU8HB0d6fQJwyD8UAdDb")
-      throw new IllegalArgumentException("Bad password!")
+    assert(user.isAdmin, "Only administrators can resize the cluster.")
     environment.setNumInstances(request.workerInstances)
     return getClusterStatus(user, serving.Empty())
   }
