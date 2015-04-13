@@ -1,6 +1,0 @@
-{
-  "title": "JS Test Graph",
-  "sources": [{"id": "a", "title": "apple"}, {"id": "b", "title": "banana"}],
-  "derivatives": [{"id": "a", "title": "argyle"}, {"id": "b", "title": "bingo"}]
-}
-

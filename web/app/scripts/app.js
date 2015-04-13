@@ -20,11 +20,6 @@ angular
         controller: 'ProjectViewCtrl',
         reloadOnSearch: false,
       })
-      .when('/metaGraph', {
-        templateUrl: 'views/metaGraph.html',
-        controller: 'MetaGraphViewCtrl',
-        reloadOnSearch: false,
-      })
       .when('/cluster/:password', {
         templateUrl: 'views/clusterManager.html',
         controller: 'ClusterManagerCtrl',
