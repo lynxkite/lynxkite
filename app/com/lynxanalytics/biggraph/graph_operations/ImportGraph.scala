@@ -86,6 +86,9 @@ case class CSV(file: Filename,
                filter: JavaScript = JavaScript("")) extends RowInput {
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   val fields = ImportUtil.split(header, unescapedDelimiter).map(_.trim)
+  assert(
+    fields.forall(_.nonEmpty),
+    s"CSV column with empty name is not allowed. Column names were: $fields")
 
   override def toJson = Json.obj(
     "file" -> file.fullString,
