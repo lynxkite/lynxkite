@@ -22,20 +22,16 @@ class SQLExportTest extends FunSuite with TestGraphOp {
         "age" -> g.age, "gender" -> g.gender,
         "income" -> g.income, "name" -> g.name))
     assert(export.deletion.trim == """
-      DROP TABLE IF EXISTS example_graph;
+      DROP TABLE IF EXISTS "example_graph";
       """.trim)
     assert(export.creation.trim == """
-      CREATE TABLE example_graph (age DOUBLE PRECISION, gender TEXT, income DOUBLE PRECISION, name TEXT);
+      CREATE TABLE "example_graph" ("age" DOUBLE PRECISION, "gender" VARCHAR(512), "income" DOUBLE PRECISION, "name" VARCHAR(512));
       """.trim)
     assert(export.inserts.collect.toSeq.map(linesOf(_)).flatten == linesOf("""
-      INSERT INTO example_graph VALUES
-        (20.3, "Male", 1000.0, "Adam");
-      INSERT INTO example_graph VALUES
-        (18.2, "Female", NULL, "Eve");
-      INSERT INTO example_graph VALUES
-        (50.3, "Male", 2000.0, "Bob");
-      INSERT INTO example_graph VALUES
-        (2.0, "Male", NULL, "Isolated Joe");
+      INSERT INTO "example_graph" VALUES (20.3, 'Male', 1000.0, 'Adam');
+      INSERT INTO "example_graph" VALUES (18.2, 'Female', NULL, 'Eve');
+      INSERT INTO "example_graph" VALUES (50.3, 'Male', 2000.0, 'Bob');
+      INSERT INTO "example_graph" VALUES (2.0, 'Male', NULL, 'Isolated Joe');
       """))
   }
 
