@@ -144,11 +144,6 @@ object MetaRepositoryManager {
       }
     }
 
-    // Visibles.
-    val oldVisibles = MetaGraphManager.loadVisibles(src).map(_.toString)
-    val newVisibles = oldVisibles.map(v => UUID.fromString(guidMapping.getOrElse(v, v)))
-    mm.show(newVisibles.toSeq.map(mm.entity(_)))
-
     // Tags.
     val oldTags = MetaGraphManager.loadTags(src)
     val newTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))

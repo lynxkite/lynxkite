@@ -47,24 +47,6 @@ class MetaGraphManager(val repositoryPath: String) {
     inst
   }
 
-  // Marks a set of entities for frontend visibility on the deprecated /metaGraph interface.
-  def show[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    operation: TypedMetaGraphOp[IS, OMDS],
-    inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
-
-    val inst = apply(operation, inputs: _*)
-    show(inst.outputs)
-    return inst
-  }
-  def show(mds: MetaDataSet): Unit = show(mds.all.values.toSeq)
-  def show(entities: Seq[MetaGraphEntity]): Unit = {
-    visibles ++= entities.map(_.gUID)
-    saveVisibles()
-  }
-  def isVisible(entity: MetaGraphEntity): Boolean = visibles.contains(entity.gUID)
-
-  def allVertexSets: Set[VertexSet] = entities.values.collect { case e: VertexSet => e }.toSet
-
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
   def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
   def attribute(gUID: UUID): Attribute[_] =
@@ -91,7 +73,6 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def setTag(tag: SymbolPath, entity: MetaGraphEntity): Unit = synchronized {
     setTag(tag, entity.gUID.toString)
-    show(Seq(entity))
   }
 
   def setTag(tag: SymbolPath, content: String): Unit = synchronized {
@@ -170,7 +151,6 @@ class MetaGraphManager(val repositoryPath: String) {
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
-  private val visibles = mutable.Set[UUID]()
 
   // All tagRoot access must be synchronized on this MetaGraphManager object.
   // This allows users of MetaGraphManager to safely conduct transactions over
@@ -233,13 +213,6 @@ class MetaGraphManager(val repositoryPath: String) {
     dumpFile.renameTo(finalFile)
   }
 
-  private def saveVisibles(): Unit = {
-    val dumpFile = new File(repositoryPath, "dump-visibles")
-    val j = Json.toJson(visibles.map(_.toString))
-    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
-    dumpFile.renameTo(new File(repositoryPath, "visibles"))
-  }
-
   private def saveTags(): Unit = synchronized {
     // Writes are deferred during transactions.
     // TODO: Make all tag changes through tag transactions and remove this "if".
@@ -270,9 +243,6 @@ class MetaGraphManager(val repositoryPath: String) {
         case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
     }
-
-    visibles.clear
-    visibles ++= MetaGraphManager.loadVisibles(repositoryPath)
 
     setTags(MetaGraphManager.loadTags(repositoryPath))
   }
@@ -321,14 +291,6 @@ object MetaGraphManager {
     files.map { f =>
       f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
     }
-  }
-
-  def loadVisibles(repo: String): Set[UUID] = {
-    val visiblesFile = new File(repo, "visibles")
-    if (visiblesFile.exists) {
-      val j = Json.parse(FileUtils.readFileToString(visiblesFile, "utf8"))
-      j.as[Seq[String]].map(UUID.fromString(_)).toSet
-    } else Set()
   }
 
   def loadTags(repo: String): Map[SymbolPath, String] = {
