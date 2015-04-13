@@ -743,8 +743,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       e.preventDefault();
       var oe = e.originalEvent;
-      var plainScroll = oe.shiftKey ? 0 : oe.deltaY;
-      var shiftScroll = oe.deltaX + (oe.shiftKey ? oe.deltaY : 0);
+      var deltaX = oe.deltaX;
+      var deltaY = oe.deltaY;
+      if (/Firefox/.test(window.navigator.userAgent)) {
+        // Every browser sets different deltas for the same amount of scrolling.
+        // It is tiny on Firefox. We need to boost it.
+        deltaX *= 20;
+        deltaY *= 20;
+      }
+      var plainScroll = oe.shiftKey ? 0 : deltaY;
+      var shiftScroll = deltaX + (oe.shiftKey ? deltaY : 0);
       zoom({ x: mx, y: my }, plainScroll, shiftScroll);
     });
     this.svgDoubleClickListeners.push(function(e) {
