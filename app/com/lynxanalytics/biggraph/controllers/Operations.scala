@@ -2251,7 +2251,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
          later to reload the same visualization.
       """
     def parameters = List(
-      // In the future we may want a special kind for this so that user's don't see JSON.
+      // In the future we may want a special kind for this so that users don't see JSON.
       Param("scalarName", "Name of new graph attribute"),
       Param("uiStatusJson", "UI status as JSON"))
 
