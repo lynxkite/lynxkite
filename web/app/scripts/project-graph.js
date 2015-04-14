@@ -239,26 +239,32 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       }
 
       function updateFilters() {
-        if (!/Chrome/.test(window.navigator.userAgent)) {
-          // Firefox messes up filters. It's only supported on Chrome for now.
-          // https://bugzilla.mozilla.org/show_bug.cgi?id=1153845
-          return;
-        }
         var svg = element.find('svg.graph-view');
         var filter = '';
         if (scope.filters.inverted) {
           filter += 'invert(100%) hue-rotate(180deg) ';
         }
-        filter += 'contrast(' + scope.filters.contrast + '%) ';
-        filter += 'saturate(' + scope.filters.saturation + '%) ';
-        filter += 'brightness(' + scope.filters.brightness + '%) ';
+        // To improve performance and compatibility, filters that do nothing are omitted.
+        var no = noFilters();
+        if (scope.filters.contrast !== no.contrast) {
+          filter += 'contrast(' + scope.filters.contrast + '%) ';
+        }
+        if (scope.filters.saturation !== no.saturation) {
+          filter += 'saturate(' + scope.filters.saturation + '%) ';
+        }
+        if (scope.filters.brightness !== no.brightness) {
+          filter += 'brightness(' + scope.filters.brightness + '%) ';
+        }
         svg.css({ filter: filter, '-webkit-filter': filter });
       }
       function saveFilters() {
         window.localStorage.setItem('graph-filters', JSON.stringify(scope.filters));
       }
+      function noFilters() {
+        return { inverted: false, contrast: 100, saturation: 100, brightness: 100 };
+      }
       scope.resetFilters = function() {
-        scope.filters = { inverted: false, contrast: 100, saturation: 100, brightness: 100 };
+        scope.filters = noFilters();
       };
       scope.resetFilters();
       var loadedFilters = window.localStorage.getItem('graph-filters');
