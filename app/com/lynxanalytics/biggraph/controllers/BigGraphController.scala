@@ -50,8 +50,7 @@ case class FEOperationParameterMeta(
     multipleChoice: Boolean = false) {
 
   val validKinds = Seq(
-    "scalar", "vertex-set", "edge-bundle", "vertex-attribute", "edge-attribute",
-    "multi-vertex-attribute", "multi-edge-attribute", "file",
+    "file", // Simple textbox with file upload button.
     "tag-list") // A variation of "multipleChoice" with a more concise, horizontal design.
   require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
