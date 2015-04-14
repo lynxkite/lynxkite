@@ -1,9 +1,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('ClusterManagerCtrl', function ($scope, $routeParams, $resource) {
-    var password = $routeParams.password;
-
+  .controller('ClusterManagerCtrl', function ($scope, $resource) {
     var ClusterStatus = $resource('/ajax/sparkStatus');
     var SetWorkers = $resource('/ajax/setWorkers');
 
@@ -11,7 +9,6 @@ angular.module('biggraph')
 
     $scope.setWorkers = function(numWorkers) {
       var setWorkersRequest = {
-        password: password,
         workerInstances: numWorkers
       };
       $scope.status = SetWorkers.get({q: setWorkersRequest});

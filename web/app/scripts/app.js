@@ -20,7 +20,7 @@ angular
         controller: 'ProjectViewCtrl',
         reloadOnSearch: false,
       })
-      .when('/cluster/:password', {
+      .when('/cluster', {
         templateUrl: 'views/clusterManager.html',
         controller: 'ClusterManagerCtrl',
       })

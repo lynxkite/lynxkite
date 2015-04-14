@@ -13,7 +13,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object SQLExport {
-  private def quote(s: String) = '"' + StringEscapeUtils.escapeJava(s) + '"'
+  private def quoteIdentifier(s: String) = '"' + s.replaceAll("\"", "\"\"") + '"'
+  private def quoteData(s: String) = "'" + StringEscapeUtils.escapeSql(s) + "'"
   private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
     rdds.foldLeft(base) { (seqs, rdd) =>
       seqs
@@ -22,10 +23,10 @@ object SQLExport {
     }
   }
 
-  private def makeInserts(table: String, rdd: RDD[Seq[String]]) = {
+  private def makeInserts(quotedTable: String, rdd: RDD[Seq[String]]) = {
     rdd.mapPartitions { it =>
-      val lines = it.map(seq => " (" + seq.mkString(", ") + ")").mkString(",\n") + ";\n"
-      Iterator(s"INSERT INTO $table VALUES\n" + lines)
+      it.map(seq =>
+        s"INSERT INTO $quotedTable VALUES (" + seq.mkString(", ") + ");")
     }
   }
 
@@ -39,8 +40,8 @@ object SQLExport {
   private val supportedTypes: Seq[(Type, String, AttributeRDD[_] => AttributeRDD[String])] = Seq(
     (typeOf[Double], "DOUBLE PRECISION",
       rdd => rdd.asInstanceOf[AttributeRDD[Double]].mapValues(_.toString)),
-    (typeOf[String], "TEXT",
-      rdd => rdd.asInstanceOf[AttributeRDD[String]].mapValues(quote(_))),
+    (typeOf[String], "VARCHAR(512)",
+      rdd => rdd.asInstanceOf[AttributeRDD[String]].mapValues(quoteData(_))),
     (typeOf[Long], "BIGINT",
       rdd => rdd.asInstanceOf[AttributeRDD[Long]].mapValues(_.toString)))
 
@@ -87,14 +88,17 @@ class SQLExport private (
     vertexSet: VertexSetRDD,
     sqls: Seq[SQLColumn]) {
 
-  private val columns = sqls.map(col => col.name + " " + col.sqlType).mkString(", ")
+  private val columns = sqls
+    .map(col => s"${quoteIdentifier(col.name)} ${col.sqlType}")
+    .mkString(", ")
   private val values = addRDDs(
     vertexSet.mapValues(_ => Seq[String]()),
     sqls.map(_.stringRDD)).values
 
-  val deletion = s"DROP TABLE IF EXISTS $table;\n"
-  val creation = s"CREATE TABLE $table ($columns);\n"
-  val inserts = makeInserts(table, values)
+  val quotedTable = quoteIdentifier(table);
+  val deletion = s"DROP TABLE IF EXISTS $quotedTable;\n"
+  val creation = s"CREATE TABLE $quotedTable ($columns);\n"
+  val inserts = makeInserts(quotedTable, values)
 
   def insertInto(db: String, delete: Boolean) = {
     // Create the table from the driver.
