@@ -45,6 +45,8 @@ class SQLiteKeyValueStore(file: String) extends KeyValueStore {
   def transaction[T](fn: => T): T = synchronized {
     val ac = connection.getAutoCommit
     connection.setAutoCommit(false)
+    // The SQLite JDBC driver does not support savepoints, but SQLite itself does.
+    // So we create them manually.
     SQL"SAVEPOINT 'X'".executeUpdate
     val t = util.Try(fn)
     if (t.isSuccess) {
