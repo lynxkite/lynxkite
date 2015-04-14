@@ -44,7 +44,7 @@ case class FEOperationMeta(
 case class FEOperationParameterMeta(
     id: String,
     title: String,
-    kind: String = "scalar", // vertex-set, edge-bundle, ...
+    kind: String = "", // Special rendering on the UI.
     defaultValue: String = "",
     options: List[UIValue] = List(),
     multipleChoice: Boolean = false) {
@@ -52,7 +52,7 @@ case class FEOperationParameterMeta(
   val validKinds = Seq(
     "file", // Simple textbox with file upload button.
     "tag-list") // A variation of "multipleChoice" with a more concise, horizontal design.
-  require(validKinds.contains(kind), s"'$kind' is not a valid parameter type")
+  require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
 
@@ -65,7 +65,6 @@ abstract class FEOperation {
   val title: String
   val category: String
   val parameters: List[FEOperationParameterMeta]
-  lazy val starting = parameters.forall(_.kind == "scalar")
   def apply(params: Map[String, String]): Unit
 }
 
