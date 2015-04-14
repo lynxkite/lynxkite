@@ -188,6 +188,17 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         scope.validate();
       };
 
+      // Returns the short name of the segmentation if the step affects a segmentation.
+      scope.segmentationName = function(step) {
+        var p = step.request.project;
+        var path = util.projectPath(p);
+        if (path.length === 1) { // This is the top-level project.
+          return undefined;
+        } else {
+          return path[path.length - 1];
+        }
+      };
+
       function blankStep(seg) {
         var project = scope.side.state.projectName;
         if (seg !== undefined) {
