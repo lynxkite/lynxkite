@@ -9,6 +9,6 @@ Per repository setup
 ====================
     cd web                        # Basic commands:
     npm install && bower install  # Install dependencies. Run this once.
-    grunt test                    # Runs tests.
+    npm test                      # Runs tests.
     grunt                         # Lints and builds "dist".
     grunt serve                   # Opens a browser with live reload.
