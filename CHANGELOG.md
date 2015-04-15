@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Improved compatibility for Mozilla Firefox.
  - Show all visualized attributes as part of the legend in sampled view.
 
 ### 1.3.0

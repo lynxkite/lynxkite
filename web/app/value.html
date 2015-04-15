@@ -9,7 +9,7 @@
 </span>
 <!-- If the data is not present. -->
 <span ng-if="ref.string === undefined">
-  <span ng-if="ref.$resolved === false" class="spinner">|</span>
+  <span ng-if="ref.$resolved === false" class="value spinner">|</span>
   <span ng-if="ref.$error && ref.$status < 500" tooltip="{{ref.$error}}">?</span>
   <span ng-if="ref.$error && ref.$status >= 500"
     class="value-error" tooltip="Click to report error" ng-click="reportError()">&times;</span>
