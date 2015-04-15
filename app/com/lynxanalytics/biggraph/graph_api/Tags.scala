@@ -60,6 +60,8 @@ final case class Tag(name: Symbol, parent: TagDir, content: String) extends TagP
 }
 
 trait TagDir extends TagPath {
+  val store: KeyValueStore
+
   def /(subPath: SymbolPath): TagPath = {
     val p = followPath(subPath)
     assert(p.nonEmpty, s"$subPath not found in $this")
@@ -71,6 +73,7 @@ trait TagDir extends TagPath {
   def existsTag(subPath: SymbolPath) = followPath(subPath).exists(_.isInstanceOf[Tag])
 
   def rmChild(name: Symbol): Unit = synchronized {
+    store.delete(children(name).fullName.toString)
     children -= name
   }
   def rm(offspring: SymbolPath): Unit = synchronized {
@@ -79,6 +82,7 @@ trait TagDir extends TagPath {
   def addTag(name: Symbol, content: String): Tag = synchronized {
     assert(!children.contains(name), s"'$this' already contains '$name'.")
     val result = Tag(name, this, content)
+    store.put(result.fullName.toString, content)
     children(name) = result
     result
   }
@@ -93,7 +97,7 @@ trait TagDir extends TagPath {
   def mkDir(name: Symbol): TagSubDir = synchronized {
     assert(!existsTag(name), s"Tag '$name' already exists.")
     if (existsDir(name)) return (this / name).asInstanceOf[TagSubDir]
-    val result = TagSubDir(name, this)
+    val result = TagSubDir(name, this, store)
     children(name) = result
     result
   }
@@ -129,29 +133,34 @@ trait TagDir extends TagPath {
   def lsRec(indent: Int = 0): String =
     " " * indent + fullName + "\n" + children.values.map(_.lsRec(indent + 1)).mkString
 
-  def clear(): Unit = children.clear()
+  def clear(): Unit = synchronized {
+    store.deletePrefix(fullName.toString + "/")
+    children.clear()
+  }
 
   def ls: Seq[TagPath] = children.values.toSeq.sorted
 
   private val children = mutable.Map[Symbol, TagPath]()
 }
 
-final case class TagSubDir(name: Symbol, parent: TagDir) extends TagDir
+final case class TagSubDir(name: Symbol, parent: TagDir, store: KeyValueStore) extends TagDir
 
-final case class TagRoot() extends TagDir {
+final case class TagRoot(filename: String) extends TagDir {
   val name = null
   val parent = null
+  val store: KeyValueStore = new SQLiteKeyValueStore(filename)
   override val fullName: SymbolPath = new SymbolPath(Seq())
   override def isOffspringOf(other: TagPath): Boolean = (other == this)
-  def saveToString: String = {
-    json.Json.prettyPrint(json.JsObject(
-      allTags.map(tag => tag.fullName.toString -> json.JsString(tag.content)).toSeq
-    ))
-  }
-  def loadFromString(data: String) = {
-    clear()
-    for ((name, value) <- json.Json.parse(data).as[json.JsObject].fields) {
-      setTag(name, value.as[String])
+  def setTags(tags: Map[SymbolPath, String]): Unit = synchronized {
+    store.transaction {
+      for ((k, v) <- tags) {
+        setTag(k, v)
+      }
     }
   }
+  setTags(TagRoot.load(store))
+}
+object TagRoot {
+  def load(store: KeyValueStore): Map[SymbolPath, String] =
+    store.scan("").map { case (k, v) => SymbolPath.fromString(k) -> v }.toMap
 }

@@ -4,20 +4,21 @@ package com.lynxanalytics.biggraph.graph_api
 trait KeyValueStore {
   def clear: Unit
   def get(key: String): Option[String]
+  def delete(key: String): Unit
   def put(key: String, value: String): Unit
-  def scan(prefix: String): Iterator[(String, String)]
+  def scan(prefix: String): Iterable[(String, String)]
+  def deletePrefix(prefix: String): Unit
   def transaction[T](fn: => T): T // Can be nested.
-}
-object KeyValueStore {
-  def apply(file: String) = new SQLiteKeyValueStore(file)
 }
 
 class SQLiteKeyValueStore(file: String) extends KeyValueStore {
   import anorm.SqlStringInterpolation
   import anorm.SqlParser.{ flatten, str }
+  new java.io.File(file).getParentFile.mkdirs // SQLite cannot create the directory.
   implicit val connection = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file)
   SQL"CREATE TABLE IF NOT EXISTS tags (key TEXT PRIMARY KEY, value TEXT)"
     .executeUpdate
+  val Z = '\uffff' // Highest character code.
 
   def clear: Unit = synchronized {
     SQL"DROP TABLE tags"
@@ -31,15 +32,24 @@ class SQLiteKeyValueStore(file: String) extends KeyValueStore {
       .as(str("value").singleOpt)
   }
 
+  def delete(key: String): Unit = synchronized {
+    SQL"DELETE FROM tags WHERE key = $key"
+      .executeUpdate
+  }
+
   def put(key: String, value: String): Unit = synchronized {
     SQL"INSERT OR REPLACE INTO tags VALUES ($key, $value)"
       .executeUpdate
   }
 
-  def scan(prefix: String): Iterator[(String, String)] = synchronized {
-    val z = '\uffff' // Highest character code.
-    SQL"SELECT key, value FROM tags WHERE key BETWEEN $prefix AND ${prefix + z}"
-      .as((str("key") ~ str("value")).*).map(flatten).iterator
+  def scan(prefix: String): Iterable[(String, String)] = synchronized {
+    SQL"SELECT key, value FROM tags WHERE key BETWEEN $prefix AND ${prefix + Z}"
+      .as((str("key") ~ str("value")).*).map(flatten)
+  }
+
+  def deletePrefix(prefix: String): Unit = synchronized {
+    SQL"DELETE FROM tags WHERE key BETWEEN $prefix AND ${prefix + Z}"
+      .executeUpdate
   }
 
   def transaction[T](fn: => T): T = synchronized {
