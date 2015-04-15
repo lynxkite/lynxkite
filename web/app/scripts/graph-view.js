@@ -274,6 +274,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           this.renderers.push(r);
           continue;
         }
+        if (this.vertices[idx].mode === 'sampled' && e.edges.length >= 5) {
+          this.addLegendLine(e.edges.length + ' edges', this.vertices[idx].leftOrRight);
+        }
       }
       var src = this.vertices[vsIndices[e.srcIdx]];
       var dst = this.vertices[vsIndices[e.dstIdx]];
@@ -396,8 +399,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     vertices.mode = 'sampled';
     vertices.offsetter = offsetter;
     vertices.vertexSetId = side.vertexSet.id;
-
-    var s = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
+    vertices.leftOrRight = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
+    var s = vertices.leftOrRight;
 
     for (var attr in side.vertexAttrs) {
       if (side.vertexAttrs[attr] !== undefined) {
@@ -503,6 +506,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       vertexGroup.append(v.dom);
     }
 
+    if (data.vertices.length >= 5) {
+      this.addLegendLine(data.vertices.length + ' vertices', s);
+    }
     return vertices;
   };
 
