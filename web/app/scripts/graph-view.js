@@ -215,7 +215,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.vertexGroups.push(this.addGroup('nodes', clippers[i]));
     }
     this.legend = svg.create('g', {'class': 'legend'});
-    this.legendNextLine = 0;
+    this.legendNextLine = {};
     this.root.append(this.legend);
     var oldVertices = this.vertices || [];
     this.vertices = [];  // Sparse, indexed by side.
@@ -512,8 +512,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var xMargin = margin + indent;
     var x = side === 'left' ? xMargin : this.svg.width() - xMargin;
     var anchor = side === 'left' ? 'start' : 'end';
-    var i = this.legendNextLine;
-    this.legendNextLine++;
+    var i = this.legendNextLine[side] || 0;
+    this.legendNextLine[side] = i + 1;
     var legendElement =
       svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin }).text(text);
     legendElement.attr('text-anchor', anchor);
