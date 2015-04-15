@@ -75,6 +75,9 @@
         <i class="glyphicon glyphicon-exclamation-sign"></i>
         {{step.status.disabledReason}}
       </div>
+      <div ng-show="segmentationName(step)" class="affected-segmentation">
+        <i class="glyphicon glyphicon-arrow-right"></i> {{segmentationName(step)}}
+      </div>
       <operation-toolbox
         categories="step.opCategoriesBefore"
         op="step.request.op.id"

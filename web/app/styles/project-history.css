@@ -48,3 +48,9 @@ project-history .history-options {
   position: relative;
   bottom: 20px;
 }
+
+project-history .affected-segmentation {
+  text-align: center;
+  opacity: 0.6;
+  margin-bottom: 10px;
+}
