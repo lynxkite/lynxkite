@@ -4,7 +4,7 @@ package com.lynxanalytics
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, Filename }
 
 package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
@@ -26,7 +26,9 @@ package object biggraph {
       case staticRepoPattern(bigGraphDir, graphDataDir) =>
         new RepositoryDirs {
           val graphDir = bigGraphDir
-          val dataDir = Filename(graphDataDir)
+          SandboxedPath.registerRoot("$DATA", graphDataDir)
+          SandboxedPath.registerRoot("$UPLOAD", "$DATA/uploads")
+          val dataDir = Filename("$DATA")
         }
       case "local_random" => new TemporaryRepositoryDirs
     }
