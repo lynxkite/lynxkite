@@ -1,3 +1,17 @@
+<style type="text/css">
+  /*  The marker references cannot be in a separate file.
+   *  https://bugzilla.mozilla.org/show_bug.cgi?id=309612
+   */
+  svg .edge .first {
+    marker-end: url(#arrow);
+  }
+  svg .edge.highlight-out .first {
+    marker-end: url(#arrow-highlight-out);
+  }
+  svg .edge.highlight-in .first {
+    marker-end: url(#arrow-highlight-in);
+  }
+</style>
 <svg class="graph-view"
   graph-view graph="graph" menu="contextMenu"
   version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
