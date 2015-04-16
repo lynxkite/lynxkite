@@ -2,12 +2,13 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
 import org.scalatest.FunSuite
+import com.lynxanalytics.biggraph.TestTempDir
 
-class TagsTest extends FunSuite {
-  val storeFile = "/tmp/TagsTest.sqlite"
+class TagsTest extends FunSuite with TestTempDir {
+  val storeFile = tempDir("TagsTest.sqlite")
   def newRoot = {
-    new java.io.File(storeFile).delete
-    TagRoot(storeFile)
+    storeFile.delete
+    TagRoot(storeFile.toString)
   }
   test("We can set/read/reset a tag") {
     val root = newRoot
@@ -36,7 +37,7 @@ class TagsTest extends FunSuite {
     val root = newRoot
     root.setTag("alma/korte/barack", "hello")
     root.cp("alma", "brave_new_world/batoralma")
-    val root2 = TagRoot(storeFile)
+    val root2 = TagRoot(storeFile.toString)
     assert((root2 / "brave_new_world/batoralma/korte/barack").content == "hello")
     assert(root2.lsRec() == root.lsRec())
   }
