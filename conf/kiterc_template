@@ -54,13 +54,11 @@ export KITE_HTTP_PORT=9000
 # so SSD is a nice option here.
 export KITE_LOCAL_TMP=/tmp
 
-# A comma delimited list of fully qualified java class names that one wants to use on
-# executors in addition to default Kite libraries. Actually, the full jar(s) containing the
-# listed class(es) will be made available on executors.
-# Typically you also need to add the jar files containing these classes in the stage directory
-# under subdirectory "extralibs".
-# Typical use case is to configure additional JDBC drivers.
-export EXTRA_STAGED_CLASSES=
+# A colon (:) delimited list of JAR files that should be loaded on Kite CLASSPATH. (Will be loaded
+# both on master and workers.)
+# Typical use case is to configure additional JDBC drivers, all you need to do is to add the
+# jar file here.
+export KITE_EXTRA_JARS=
 
 # Options needed if you want to use authentication and https.
 
