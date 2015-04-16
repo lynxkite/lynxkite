@@ -16,15 +16,17 @@ class SQLiteKeyValueStore(file: String) extends KeyValueStore {
   import anorm.SqlParser.{ flatten, str }
   new java.io.File(file).getParentFile.mkdirs // SQLite cannot create the directory.
   implicit val connection = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file)
-  SQL"CREATE TABLE IF NOT EXISTS tags (key TEXT PRIMARY KEY, value TEXT)"
-    .executeUpdate
-  val Z = '\uffff' // Highest character code.
+  private val Z = '\uffff' // Highest character code.
 
-  def clear: Unit = synchronized {
-    SQL"DROP TABLE tags"
-      .executeUpdate
+  private def createTableIfNotExists: Unit = {
     SQL"CREATE TABLE IF NOT EXISTS tags (key TEXT PRIMARY KEY, value TEXT)"
       .executeUpdate
+  }
+  createTableIfNotExists // Make sure the table exists.
+
+  def clear: Unit = synchronized {
+    SQL"DROP TABLE tags".executeUpdate
+    createTableIfNotExists
   }
 
   def get(key: String): Option[String] = synchronized {
