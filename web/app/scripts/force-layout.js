@@ -58,16 +58,18 @@ var FORCE_LAYOUT = (function() {
           // This causes the vertices to cluster a bit by label.
           repulsion *= 1.0 - this.opts.labelAttraction;
         }
-        if (this.opts.style === 'centralize') {
-          a.x += repulsion * dx / d2 / a.forceMass;
-          a.y += repulsion * dy / d2 / a.forceMass;
-          b.x -= repulsion * dx / d2 / b.forceMass;
-          b.y -= repulsion * dy / d2 / b.forceMass;
-        } else {
+        if (this.opts.style === 'decentralize') {
+          // Note that forceMass is roughly proportional to the degree of the vertex.
           a.x += repulsion * dx / d2 * (a.forceMass / vertices.length);
           a.y += repulsion * dy / d2 * (a.forceMass / vertices.length);
           b.x -= repulsion * dx / d2 * (b.forceMass / vertices.length);
           b.y -= repulsion * dy / d2 * (b.forceMass / vertices.length);
+        } else {
+          // The default is the 'centralize' style.
+          a.x += repulsion * dx / d2 / a.forceMass;
+          a.y += repulsion * dy / d2 / a.forceMass;
+          b.x -= repulsion * dx / d2 / b.forceMass;
+          b.y -= repulsion * dy / d2 / b.forceMass;
         }
       }
     }
