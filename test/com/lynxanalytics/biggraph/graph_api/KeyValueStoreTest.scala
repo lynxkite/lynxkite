@@ -1,10 +1,14 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import org.scalatest.FunSuite
+import com.lynxanalytics.biggraph.TestTempDir
 
-class SQLiteKeyValueStoreTest extends KeyValueStoreTest(new SQLiteKeyValueStore("/tmp/key-value-store-test"))
+class SQLiteKeyValueStoreTest extends KeyValueStoreTest with TestTempDir {
+  val store = new SQLiteKeyValueStore(tempDir("key-value-store-test").toString)
+}
 
-abstract class KeyValueStoreTest(store: KeyValueStore) extends FunSuite {
+abstract class KeyValueStoreTest extends FunSuite {
+  val store: KeyValueStore
   test("get and put") {
     store.clear
     assert(store.get("alma").isEmpty)
