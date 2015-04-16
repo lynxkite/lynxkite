@@ -21,6 +21,16 @@ var FORCE_LAYOUT = (function() {
   lib.Engine.prototype.calculate = function(vertices) {
     var a, b, dx, dy, i, j;
     var maxDist = 0;
+    for (i = 0; i < vertices.length; ++i) {
+      v = vertices[i];
+      if (this.opts.style === 'decentralize') {
+        // Higher-degree vertices are lighter, so they get pushed to the periphery.
+        v.forceMass = vertices.length / (v.degree + 1);
+      } else {
+        // Higher-degree vertices are heavier, so they fall into the center.
+        v.forceMass = v.degree + 1;
+      }
+    }
     if (vertices.edges !== undefined) {
       for (i = 0; i < vertices.edges.length; ++i) {
         var e = vertices.edges[i];
@@ -58,19 +68,10 @@ var FORCE_LAYOUT = (function() {
           // This causes the vertices to cluster a bit by label.
           repulsion *= 1.0 - this.opts.labelAttraction;
         }
-        if (this.opts.style === 'decentralize') {
-          // Note that forceMass is roughly proportional to the degree of the vertex.
-          a.x += repulsion * dx / d2 * (a.forceMass / vertices.length);
-          a.y += repulsion * dy / d2 * (a.forceMass / vertices.length);
-          b.x -= repulsion * dx / d2 * (b.forceMass / vertices.length);
-          b.y -= repulsion * dy / d2 * (b.forceMass / vertices.length);
-        } else {
-          // The default is the 'centralize' style.
-          a.x += repulsion * dx / d2 / a.forceMass;
-          a.y += repulsion * dy / d2 / a.forceMass;
-          b.x -= repulsion * dx / d2 / b.forceMass;
-          b.y -= repulsion * dy / d2 / b.forceMass;
-        }
+        a.x += repulsion * dx / d2 / a.forceMass;
+        a.y += repulsion * dy / d2 / a.forceMass;
+        b.x -= repulsion * dx / d2 / b.forceMass;
+        b.y -= repulsion * dy / d2 / b.forceMass;
       }
     }
     var totalChange = 0;
