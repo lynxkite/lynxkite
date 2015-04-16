@@ -240,7 +240,7 @@ object ProductionJsonServer extends JsonServer {
     import scala.collection.JavaConversions._
     log.info(s"download: $user ${request.path}")
     val path = Filename(request.getQueryString("path").get)
-    val name = Filename(request.getQueryString("name").get)
+    val name = request.getQueryString("name").get
     // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
     val files = Seq(path / "header") ++ (path / "data" / "*").list
     val length = files.map(_.length).sum
