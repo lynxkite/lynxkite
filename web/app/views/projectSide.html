@@ -173,6 +173,21 @@
                        ng-model="side.state.animate.labelAttraction">
               </td>
             </tr>
+            <tr ng-if="side.state.display === 'svg'">
+              <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
+                  tooltip-append-to-body="true" tooltip-placement="right"
+                  tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
+                Centralize:
+              </td>
+              <td>
+                <input ng-disabled="!side.state.animate.enabled"
+                       tooltip="{{side.state.animate.centralize 
+                         ? 'Vertices with large degrees tend to be in the middle.' 
+                         : 'Vertices with large degrees distract each other.'}}"
+                       type="checkbox"
+                       ng-model="side.state.animate.centralize">
+              </td>
+            </tr>
             <tr>
               <td>Show vertices:</td>
               <td>

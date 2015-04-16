@@ -9,6 +9,7 @@ var FORCE_LAYOUT = (function() {
   //   gravity:         force/distance from origin ratio
   //   drag:            force/speed ratio (fluid resistance)
   //   labelAttraction: attraction between matching labels, as fraction of repulsion
+  //   centralize:      whether to ...
   lib.Engine = function(opts) {
     this.opts = opts;
   };
@@ -57,10 +58,17 @@ var FORCE_LAYOUT = (function() {
           // This causes the vertices to cluster a bit by label.
           repulsion *= 1.0 - this.opts.labelAttraction;
         }
-        a.x += repulsion * dx / d2 / a.forceMass;
-        a.y += repulsion * dy / d2 / a.forceMass;
-        b.x -= repulsion * dx / d2 / b.forceMass;
-        b.y -= repulsion * dy / d2 / b.forceMass;
+        if (this.opts.centralize) {
+          a.x += repulsion * dx / d2 / a.forceMass;
+          a.y += repulsion * dy / d2 / a.forceMass;
+          b.x -= repulsion * dx / d2 / b.forceMass;
+          b.y -= repulsion * dy / d2 / b.forceMass;
+        } else {
+          a.x += repulsion * dx / d2 * a.forceMass;
+          a.y += repulsion * dy / d2 * a.forceMass;
+          b.x -= repulsion * dx / d2 * b.forceMass;
+          b.y -= repulsion * dy / d2 * b.forceMass;
+        }
       }
     }
     var totalChange = 0;
