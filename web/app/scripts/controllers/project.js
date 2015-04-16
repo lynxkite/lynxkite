@@ -48,6 +48,7 @@ angular.module('biggraph')
         animate: {
           enabled: false,
           labelAttraction: '0',
+          style: 'centralize',
         },
         attributeTitles: {},
         centers: undefined,

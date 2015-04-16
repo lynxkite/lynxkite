@@ -1004,7 +1004,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       gravity: 0.05,
       drag: 0.2,
       labelAttraction: parseFloat(vertices.side.animate.labelAttraction),
-      centralize: vertices.side.animate.centralize,
+      style: vertices.side.animate.style,
     });
     // Generate initial layout for 2 seconds or until it stabilizes.
     var t1 = Date.now();
@@ -1020,7 +1020,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     };
     vertices.step = function() {
       engine.opts.labelAttraction = parseFloat(vertices.side.animate.labelAttraction);
-      engine.opts.centralize = vertices.side.animate.centralize;
+      engine.opts.style = vertices.side.animate.style;
       if (animating && vertices.side.animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {
