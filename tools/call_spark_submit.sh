@@ -17,6 +17,7 @@ conf_dir=`pwd`/conf
 log_dir=`pwd`/logs
 mkdir -p ${log_dir}
 tools_dir=`pwd`/tools
+extra_libs_dir=`pwd`/extralibs
 popd
 
 
@@ -95,7 +96,7 @@ command=(
     ${SPARK_HOME}/bin/spark-submit \
     --class play.core.server.NettyServer \
     --master ${SPARK_MASTER} \
-    --driver-class-path "${app_classpath}" \
+    --driver-class-path "${app_classpath}:${extra_libs_dir}/*" \
     --deploy-mode client \
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \

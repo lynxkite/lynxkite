@@ -1,6 +1,7 @@
 {
   "name": "web",
   "version": "0.0.0",
+  "repository": {},
   "dependencies": {},
   "devDependencies": {
     "grunt": "~0.4.1",
