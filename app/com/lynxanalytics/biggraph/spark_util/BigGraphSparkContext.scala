@@ -24,7 +24,7 @@ private object SparkStageJars {
     classOf[play.api.libs.json.JsValue])
   val extraJarsToBundle =
     scala.util.Properties.envOrElse("KITE_EXTRA_JARS", "")
-      .split(':')
+      .split(":", -1)
       .map(_.trim)
       .filter(_ != "")
   val jars =
