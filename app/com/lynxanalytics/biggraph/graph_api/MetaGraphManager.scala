@@ -108,7 +108,7 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   def tagTransaction[T](fn: => T) = synchronized {
-    tagRoot.store.transaction { fn }
+    tagRoot.transaction { fn }
   }
 
   def vertexSet(tag: SymbolPath): VertexSet = synchronized {
