@@ -441,7 +441,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def validateName(name: String): Unit = {
     assert(name.nonEmpty, "Name cannot be empty.")
     assert(!name.startsWith("!"), "Name cannot start with '!'.")
-    assert(!name.contains(Project.separator), s"Name cannot contain '$separator'.")
+    assert(!name.contains(Project.separator), s"Name cannot contain '${Project.separator}'.")
     assert(!name.contains("/"), "Name cannot contain '/'.")
   }
 
