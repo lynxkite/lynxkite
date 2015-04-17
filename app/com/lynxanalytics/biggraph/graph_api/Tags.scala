@@ -60,7 +60,7 @@ final case class Tag(name: Symbol, parent: TagDir, content: String) extends TagP
 }
 
 trait TagDir extends TagPath {
-  val store: KeyValueStore
+  protected val store: KeyValueStore
 
   def /(subPath: SymbolPath): TagPath = {
     val p = followPath(subPath)
@@ -148,16 +148,22 @@ final case class TagSubDir(name: Symbol, parent: TagDir, store: KeyValueStore) e
 final case class TagRoot(filename: String) extends TagDir {
   val name = null
   val parent = null
-  val store: KeyValueStore = new SQLiteKeyValueStore(filename)
+  protected val store: KeyValueStore = new SQLiteKeyValueStore(filename)
   override val fullName: SymbolPath = new SymbolPath(Seq())
+
   override def isOffspringOf(other: TagPath): Boolean = (other == this)
+
+  def transaction[T](fn: => T): T = store.transaction(fn)
+
   def setTags(tags: Map[SymbolPath, String]): Unit = synchronized {
-    store.transaction {
+    transaction {
       for ((k, v) <- tags) {
         setTag(k, v)
       }
     }
   }
+
+  // Create tags from the key-value store.
   store.writesCanBeIgnored {
     setTags(TagRoot.load(store))
   }
