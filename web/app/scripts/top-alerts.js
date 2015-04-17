@@ -13,6 +13,9 @@ angular.module('biggraph').directive('topAlerts', function(util) {
           time: new Date(),
         });
       });
+      scope.$on('clear topAlerts', function() {
+        scope.alerts = [];
+      });
       scope.close = function(i) {
         scope.alerts.splice(i, 1);
       };
