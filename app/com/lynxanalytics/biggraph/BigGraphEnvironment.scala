@@ -4,7 +4,7 @@ package com.lynxanalytics.biggraph
 import java.io.File
 import org.apache.spark
 
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, Filename }
 
 trait SparkContextProvider {
   val sparkContext: spark.SparkContext
@@ -35,10 +35,23 @@ trait StaticDirEnvironment extends BigGraphEnvironment {
     sparkContext, repositoryDirs.dataDir)
 }
 
+import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, Filename }
+
 trait RepositoryDirs {
   val graphDir: String
   val dataDir: Filename
+  def setupDataDir(dirPath: String): Filename = {
+    SandboxedPath.registerRoot("$DATA", dirPath)
+    SandboxedPath.registerRoot("$UPLOAD", "$DATA/uploads")
+    Filename("$DATA")
+  }
 }
+
+class RegularRepositoryDirs(bigGraphDir: String, bigDataDir: String) extends RepositoryDirs {
+  val graphDir = bigGraphDir
+  val dataDir = setupDataDir(bigDataDir)
+}
+
 class TemporaryRepositoryDirs extends RepositoryDirs {
   private val sysTempDir = System.getProperty("java.io.tmpdir")
   private val myTempDir = new File(
@@ -46,9 +59,10 @@ class TemporaryRepositoryDirs extends RepositoryDirs {
   myTempDir.mkdir
   private val graphDirFile = new File(myTempDir, "graph")
   graphDirFile.mkdir
+
   private val dataDirFile = new File(myTempDir, "data")
   dataDirFile.mkdir
 
   val graphDir = graphDirFile.toString
-  val dataDir = Filename(dataDirFile.toString)
+  val dataDir = setupDataDir(dataDirFile.toString)
 }
