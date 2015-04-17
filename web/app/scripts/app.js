@@ -1,3 +1,4 @@
+// Creates the "biggraph" Angular module, sets the routing table, provides utility functions.
 'use strict';
 
 angular

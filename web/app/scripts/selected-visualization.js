@@ -1,3 +1,4 @@
+// The visualization tokens for attributes in the project view.
 'use strict';
 
 angular.module('biggraph').directive('selectedVisualization', function() {
