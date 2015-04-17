@@ -9,6 +9,7 @@ trait KeyValueStore {
   def scan(prefix: String): Iterable[(String, String)]
   def deletePrefix(prefix: String): Unit
   def transaction[T](fn: => T): T // Can be nested.
+  def writesCanBeIgnored[T](fn: => T): T // May ignore writes from "fn".
 }
 
 class SQLiteKeyValueStore(file: String) extends KeyValueStore {
@@ -24,7 +25,7 @@ class SQLiteKeyValueStore(file: String) extends KeyValueStore {
   }
   createTableIfNotExists // Make sure the table exists.
 
-  def clear: Unit = synchronized {
+  def clear: Unit = if (doWrites) synchronized {
     SQL"DROP TABLE tags".executeUpdate
     createTableIfNotExists
   }
@@ -34,12 +35,12 @@ class SQLiteKeyValueStore(file: String) extends KeyValueStore {
       .as(str("value").singleOpt)
   }
 
-  def delete(key: String): Unit = synchronized {
+  def delete(key: String): Unit = if (doWrites) synchronized {
     SQL"DELETE FROM tags WHERE key = $key"
       .executeUpdate
   }
 
-  def put(key: String, value: String): Unit = synchronized {
+  def put(key: String, value: String): Unit = if (doWrites) synchronized {
     SQL"INSERT OR REPLACE INTO tags VALUES ($key, $value)"
       .executeUpdate
   }
@@ -49,7 +50,7 @@ class SQLiteKeyValueStore(file: String) extends KeyValueStore {
       .as((str("key") ~ str("value")).*).map(flatten)
   }
 
-  def deletePrefix(prefix: String): Unit = synchronized {
+  def deletePrefix(prefix: String): Unit = if (doWrites) synchronized {
     SQL"DELETE FROM tags WHERE key BETWEEN $prefix AND ${prefix + Z}"
       .executeUpdate
   }
@@ -68,5 +69,13 @@ class SQLiteKeyValueStore(file: String) extends KeyValueStore {
     }
     connection.setAutoCommit(ac)
     t.get
+  }
+
+  private var ignoreWrites = 0
+  private def doWrites = ignoreWrites == 0
+  def writesCanBeIgnored[T](fn: => T): T = {
+    ignoreWrites += 1
+    try { fn }
+    finally { ignoreWrites -= 1 }
   }
 }

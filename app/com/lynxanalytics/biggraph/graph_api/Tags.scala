@@ -158,7 +158,9 @@ final case class TagRoot(filename: String) extends TagDir {
       }
     }
   }
-  setTags(TagRoot.load(store))
+  store.writesCanBeIgnored {
+    setTags(TagRoot.load(store))
+  }
 }
 object TagRoot {
   def load(store: KeyValueStore): Map[SymbolPath, String] =
