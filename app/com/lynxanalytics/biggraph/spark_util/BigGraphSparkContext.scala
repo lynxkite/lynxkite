@@ -22,7 +22,14 @@ private object SparkStageJars {
     classOf[org.sqlite.JDBC],
     classOf[gcs.GoogleHadoopFileSystem],
     classOf[play.api.libs.json.JsValue])
-  val jars = classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath())
+  val extraJarsToBundle =
+    scala.util.Properties.envOrElse("KITE_EXTRA_JARS", "")
+      .split(":", -1)
+      .map(_.trim)
+      .filter(_ != "")
+  val jars =
+    classesToBundle.map(_.getProtectionDomain().getCodeSource().getLocation().getPath()) ++
+      extraJarsToBundle
   require(
     jars.forall(_.endsWith(".jar")),
     "You need to run this from a jar. Use 'sbt stage' to get one.")
