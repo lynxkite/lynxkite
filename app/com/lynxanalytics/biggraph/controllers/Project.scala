@@ -444,7 +444,6 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     assert(!name.contains(Project.separator), s"Name cannot contain '$separator'.")
     assert(!name.contains("/"), "Name cannot contain '/'.")
   }
-}
 
   abstract class Holder[T <: MetaGraphEntity](dir: SymbolPath) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit
