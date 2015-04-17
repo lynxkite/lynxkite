@@ -1,3 +1,4 @@
+// The line for an edge attribute in the project view.
 'use strict';
 
 angular.module('biggraph').directive('edgeAttribute', function(axisOptions) {

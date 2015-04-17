@@ -1,3 +1,4 @@
+// Operation parameter for kind=file. Supports file upload.
 'use strict';
 
 angular.module('biggraph').directive('fileParameter', function(util) {
