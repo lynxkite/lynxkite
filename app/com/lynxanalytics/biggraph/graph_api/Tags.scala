@@ -147,10 +147,9 @@ trait TagDir extends TagPath {
 
 final case class TagSubDir(name: Symbol, parent: TagDir, store: KeyValueStore) extends TagDir
 
-final case class TagRoot(filename: String) extends TagDir {
+final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
   val name = null
   val parent = null
-  protected val store: KeyValueStore = new SQLiteKeyValueStore(filename)
   override val fullName: SymbolPath = new SymbolPath(Seq())
 
   override def isOffspringOf(other: TagPath): Boolean = (other == this)
@@ -173,4 +172,5 @@ final case class TagRoot(filename: String) extends TagDir {
 object TagRoot {
   def load(store: KeyValueStore): Map[SymbolPath, String] =
     store.scan("").map { case (k, v) => SymbolPath.fromString(k) -> v }.toMap
+  def apply(filename: String) = new TagRoot(new SQLiteKeyValueStore(filename))
 }
