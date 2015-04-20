@@ -12,7 +12,7 @@ trait KeyValueStore {
   def writesCanBeIgnored[T](fn: => T): T // May ignore writes from "fn".
 }
 
-class SQLiteKeyValueStore(file: String) extends KeyValueStore {
+case class SQLiteKeyValueStore(file: String) extends KeyValueStore {
   import anorm.SqlStringInterpolation
   import anorm.SqlParser.{ flatten, str }
   new java.io.File(file).getParentFile.mkdirs // SQLite cannot create the directory.
@@ -78,4 +78,24 @@ class SQLiteKeyValueStore(file: String) extends KeyValueStore {
     try { fn }
     finally { ignoreWrites -= 1 }
   }
+}
+
+case class JsonKeyValueStore(file: String) extends KeyValueStore {
+  import java.io.File
+  import org.apache.commons.io.FileUtils
+  import play.api.libs.json.Json
+
+  private val raw = FileUtils.readFileToString(new File(file), "utf8")
+  private val map = Json.parse(raw).as[Map[String, String]]
+
+  def get(key: String): Option[String] = map.get(key)
+  def scan(prefix: String): Iterable[(String, String)] = map.filter(_._1.startsWith(prefix))
+
+  // This is a read-only implementation, used for backward-compatibility.
+  def clear: Unit = ???
+  def delete(key: String): Unit = ???
+  def put(key: String, value: String): Unit = ???
+  def deletePrefix(prefix: String): Unit = ???
+  def transaction[T](fn: => T): T = ???
+  def writesCanBeIgnored[T](fn: => T): T = fn
 }

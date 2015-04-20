@@ -44,8 +44,7 @@ class JsonMigration {
   val version: VersionMap = Map(
     "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1,
-    "com.lynxanalytics.biggraph.graph_api.TagRoot" -> 1)
+    "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
@@ -146,7 +145,7 @@ object MetaRepositoryManager {
     }
 
     // Tags.
-    val oldTags = MetaGraphManager.loadTags(src)
+    val oldTags = TagRoot.loadFromRepo(src)
     val newTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
     mm.setTags(newTags)
   }

@@ -1,6 +1,7 @@
 // Tags are a small in-memory filesystem that stores projects as directories.
 package com.lynxanalytics.biggraph.graph_api
 
+import java.io.File
 import java.util.UUID
 import play.api.libs.json
 import scala.collection.mutable
@@ -166,11 +167,38 @@ final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
 
   // Create tags from the key-value store.
   store.writesCanBeIgnored {
-    setTags(TagRoot.load(store))
+    setTags(TagRoot.loadFromStore(store))
   }
 }
 object TagRoot {
-  def load(store: KeyValueStore): Map[SymbolPath, String] =
+  val sqliteFilename = "tags.sqlite"
+
+  def loadFromRepo(repo: String): Map[SymbolPath, String] =
+    loadFromStore(storeFromRepo(repo))
+
+  private def loadFromStore(store: KeyValueStore): Map[SymbolPath, String] =
     store.scan("").map { case (k, v) => SymbolPath.fromString(k) -> v }.toMap
-  def apply(filename: String) = new TagRoot(new SQLiteKeyValueStore(filename))
+
+  private def storeFromRepo(repo: String): KeyValueStore = {
+    val tagsSQLite = new File(repo, sqliteFilename)
+    val tagsOld = new File(repo, "tags")
+    if (tagsSQLite.exists) {
+      new SQLiteKeyValueStore(tagsSQLite.toString)
+    } else if (tagsOld.exists) {
+      new JsonKeyValueStore(tagsOld.toString)
+    } else { // Nothing to load. Use SQLite.
+      new SQLiteKeyValueStore(tagsSQLite.toString)
+    }
+  }
+
+  def apply(repo: String) = {
+    val tagsSQLite = new File(repo, sqliteFilename)
+    val newStore = new SQLiteKeyValueStore(tagsSQLite.toString)
+    val root = new TagRoot(newStore)
+    val oldStore = storeFromRepo(repo) // May be from earlier versions.
+    if (oldStore != newStore) {
+      root.setTags(loadFromStore(oldStore))
+    }
+    root
+  }
 }
