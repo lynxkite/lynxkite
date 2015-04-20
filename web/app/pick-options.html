@@ -8,7 +8,7 @@
     <select
        class="btn btn-default"
        ng-model="filter.attributeName"
-       ng-options="attr.title as attr.title for attr in side.project.vertexAttributes">
+       ng-options="attr.title as attr.title for attr in side.filterableVertexAttributes()">
     </select>
     <input
        class="btn btn-default"
