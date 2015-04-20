@@ -93,6 +93,7 @@ angular.module('biggraph')
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.centers === undefined) {
+        this.state.centers = [];
         this.sendCenterRequest(this.state.lastCentersRequest);
       }
     };
@@ -109,8 +110,9 @@ angular.module('biggraph')
 
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
+      var noCenters = (this.state.centers === undefined) || (this.state.centers.length === 0);
       if (!this.loaded() || !this.state.graphMode ||
-          (this.state.graphMode === 'sampled' && !this.state.centers)) {
+          (this.state.graphMode === 'sampled' && noCenters)) {
         this.viewData = undefined;
         return;
       }
@@ -239,7 +241,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.maybeRequestNewCenter = function() {
-      if (this.state.graphMode === 'sampled' && !this.state.centers) {
+      if (this.state.graphMode === 'sampled' && this.state.centers === undefined) {
         this.requestNewCenters(1);
       }
     };
