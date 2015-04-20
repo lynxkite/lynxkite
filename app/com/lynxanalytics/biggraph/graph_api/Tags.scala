@@ -192,10 +192,10 @@ object TagRoot {
   }
 
   def apply(repo: String) = {
+    val oldStore = storeFromRepo(repo) // May be from earlier versions.
     val tagsSQLite = new File(repo, sqliteFilename)
     val newStore = new SQLiteKeyValueStore(tagsSQLite.toString)
     val root = new TagRoot(newStore)
-    val oldStore = storeFromRepo(repo) // May be from earlier versions.
     if (oldStore != newStore) {
       root.setTags(loadFromStore(oldStore))
     }
