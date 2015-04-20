@@ -535,18 +535,18 @@ angular.module('biggraph')
       angular.forEach(this.state.filters.edge, addNonEmpty);
       return res.join(', ');
     };
-
+    Side.prototype.filterableVertexAttributes = function() {
+      return this.project.vertexAttributes.concat(
+        this.project.segmentations.map(function(segmentation) {
+          return segmentation.equivalentAttribute;
+        }));
+    };
     Side.prototype.resolveVertexAttribute = function(title) {
-      for (var attrIdx = 0; attrIdx < this.project.vertexAttributes.length; attrIdx++) {
-        var attr = this.project.vertexAttributes[attrIdx];
+      var filterableAttributes = this.filterableVertexAttributes();
+      for (var attrIdx = 0; attrIdx < filterableAttributes.length; attrIdx++) {
+        var attr = filterableAttributes[attrIdx];
         if (attr.title === title) {
           return attr;
-        }
-      }
-      for (var segIdx = 0; segIdx < this.project.segmentations.length; segIdx++) {
-        var sattr = this.project.segmentations[segIdx].equivalentAttribute;
-        if (sattr.title === title) {
-          return { id: sattr.id, title: title };
         }
       }
       return undefined;
@@ -636,7 +636,7 @@ angular.module('biggraph')
     // Removes entries from state which depend on nonexistent attributes
     Side.prototype.cleanState = function() {
       if (!this.loaded()) { return; }
-      var vTitles = this.project.vertexAttributes.map(function(a) { return a.title; });
+      var vTitles = this.filterableVertexAttributes().map(function(a) { return a.title; });
       var eTitles = this.project.edgeAttributes.map(function(a) { return a.title; });
       for (var attr in this.state.filters.edge) {
         if (eTitles.indexOf(attr) === -1) {
