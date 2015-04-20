@@ -73,7 +73,9 @@ trait TagDir extends TagPath {
   def existsTag(subPath: SymbolPath) = followPath(subPath).exists(_.isInstanceOf[Tag])
 
   def rmChild(name: Symbol): Unit = synchronized {
-    store.delete(children(name).fullName.toString)
+    if (children(name).isInstanceOf[Tag]) {
+      store.delete(children(name).fullName.toString)
+    }
     children -= name
   }
   def rm(offspring: SymbolPath): Unit = synchronized {
