@@ -140,7 +140,7 @@ class MetaGraphManager(val repositoryPath: String) {
   // All tagRoot access must be synchronized on this MetaGraphManager object.
   // This allows users of MetaGraphManager to safely conduct transactions over
   // multiple tags.
-  private val tagRoot = TagRoot(s"$repositoryPath/tags.sqlite")
+  private val tagRoot = TagRoot(repositoryPath)
 
   private val outgoingBundlesMap =
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
@@ -260,19 +260,6 @@ object MetaGraphManager {
     val files = opdir.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
     files.map { f =>
       f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
-    }
-  }
-
-  def loadTags(repo: String): Map[SymbolPath, String] = {
-    val tagsSQLite = new File(repo, "tags.sqlite")
-    val tagsOld = new File(repo, "tags")
-    if (tagsSQLite.exists) {
-      TagRoot.load(new SQLiteKeyValueStore(tagsSQLite.toString))
-    } else if (tagsOld.exists) {
-      val j = Json.parse(FileUtils.readFileToString(tagsOld, "utf8"))
-      j.as[Map[String, String]].map { case (k, v) => SymbolPath.fromString(k) -> v }
-    } else {
-      Map()
     }
   }
 }

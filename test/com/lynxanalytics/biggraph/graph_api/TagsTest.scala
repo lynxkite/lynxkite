@@ -1,13 +1,14 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.TestTempDir
 
 class TagsTest extends FunSuite with TestTempDir {
   val storeFile = tempDir("TagsTest.sqlite")
   def newRoot = {
-    storeFile.delete
+    FileUtils.deleteDirectory(storeFile)
     TagRoot(storeFile.toString)
   }
   test("We can set/read/reset a tag") {
