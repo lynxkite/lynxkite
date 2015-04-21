@@ -437,10 +437,18 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   def debugPrint() = manager.debugPrintTag(rootDir)
 
+  // Makes assertions on a user-provided attribute/segmentation/scalar name.
+  def validateName(name: String): Unit = {
+    assert(name.nonEmpty, "Name cannot be empty.")
+    assert(!name.startsWith("!"), "Name cannot start with '!'.")
+    assert(!name.contains(Project.separator), s"Name cannot contain '${Project.separator}'.")
+    assert(!name.contains("/"), "Name cannot contain '/'.")
+  }
+
   abstract class Holder[T <: MetaGraphEntity](dir: SymbolPath) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit
     def update(name: String, entity: T) = manager.synchronized {
-      assert(name.nonEmpty, s"Invalid name: <empty string>")
+      validateName(name)
       if (entity == null) {
         existing(dir / name).foreach(manager.rmTag(_))
       } else {

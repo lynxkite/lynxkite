@@ -983,7 +983,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
     for (var i = 0; i < vertices.length; ++i) {
       var v = vertices[i];
-      v.forceMass = 1;
+      v.degree = 0;
       var pos;
       if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
         pos = v.data.attrs[positionAttr];
@@ -1003,8 +1003,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     if (vertices.edges !== undefined) {
       for (i = 0; i < vertices.edges.length; ++i) {
         var e = vertices.edges[i];
-        e.src.forceMass += 1;
-        e.dst.forceMass += 1;
+        e.src.degree += 1;
+        e.dst.degree += 1;
       }
     }
     var scale = this.svg.height();
@@ -1014,6 +1014,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       gravity: 0.05,
       drag: 0.2,
       labelAttraction: parseFloat(vertices.side.animate.labelAttraction),
+      style: vertices.side.animate.style,
     });
     // Generate initial layout for 2 seconds or until it stabilizes.
     var t1 = Date.now();
@@ -1029,6 +1030,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     };
     vertices.step = function() {
       engine.opts.labelAttraction = parseFloat(vertices.side.animate.labelAttraction);
+      engine.opts.style = vertices.side.animate.style;
       if (animating && vertices.side.animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {

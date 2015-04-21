@@ -17,7 +17,6 @@ conf_dir=`pwd`/conf
 log_dir=`pwd`/logs
 mkdir -p ${log_dir}
 tools_dir=`pwd`/tools
-extra_libs_dir=`pwd`/extralibs
 popd
 
 
@@ -92,11 +91,15 @@ export KITE_SCHEDULER_POOLS_CONFIG="${conf_dir}/scheduler-pools.xml"
 
 mode=${residual_args[0]}
 
+FULL_CLASSPATH=${app_classpath}
+if [ -n "${KITE_EXTRA_JARS}" ]; then
+  FULL_CLASSPATH=${FULL_CLASSPATH}:${KITE_EXTRA_JARS}
+fi
 command=(
     ${SPARK_HOME}/bin/spark-submit \
     --class play.core.server.NettyServer \
     --master ${SPARK_MASTER} \
-    --driver-class-path "${app_classpath}:${extra_libs_dir}/*" \
+    --driver-class-path "${FULL_CLASSPATH}" \
     --deploy-mode client \
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \

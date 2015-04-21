@@ -9,6 +9,7 @@ var FORCE_LAYOUT = (function() {
   //   gravity:         force/distance from origin ratio
   //   drag:            force/speed ratio (fluid resistance)
   //   labelAttraction: attraction between matching labels, as fraction of repulsion
+  //   style:           specifics of the force algorithm
   lib.Engine = function(opts) {
     this.opts = opts;
   };
@@ -20,6 +21,16 @@ var FORCE_LAYOUT = (function() {
   lib.Engine.prototype.calculate = function(vertices) {
     var a, b, dx, dy, i, j;
     var maxDist = 0;
+    for (i = 0; i < vertices.length; ++i) {
+      v = vertices[i];
+      if (this.opts.style === 'decentralize') {
+        // Higher-degree vertices are lighter, so they get pushed to the periphery.
+        v.forceMass = vertices.length / (v.degree + 1);
+      } else {
+        // Higher-degree vertices are heavier, so they fall into the center.
+        v.forceMass = v.degree + 1;
+      }
+    }
     if (vertices.edges !== undefined) {
       for (i = 0; i < vertices.edges.length; ++i) {
         var e = vertices.edges[i];
