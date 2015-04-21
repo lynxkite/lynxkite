@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.graph_util.{ Filename, SandboxedPath }
 import org.scalatest.FunSuite
 import org.scalatest.Tag
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -11,6 +12,9 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
+  val res = getClass.getResource("/controllers/OperationsTest/").getFile
+  println(res)
+  SandboxedPath.registerRoot("$OPERATIONSTEST", "file:" + res)
   val ops = new Operations(this)
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
@@ -175,13 +179,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Fingerprinting based on attributes") {
     run("Import vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
+      "files" -> "$OPERATIONSTEST/fingerprint-100-vertices.csv",
       "header" -> "id,email,name",
       "delimiter" -> ",",
       "id-attr" -> "delete me",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-edges.csv").getFile,
+      "files" -> "$OPERATIONSTEST/fingerprint-100-edges.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",
@@ -221,7 +225,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "them" -> "ExampleGraph2"))
     val seg = project.segmentation("ExampleGraph2").project
     run("Load segmentation links from CSV", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-example-connections.csv").getFile,
+      "files" -> "$OPERATIONSTEST/fingerprint-example-connections.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "filter" -> "",
@@ -252,7 +256,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Fingerprinting between project and segmentation by attribute") {
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-2.csv").getFile,
+      "files" -> "$OPERATIONSTEST/fingerprint-edges-2.csv",
       "header" -> "src,dst,src_link",
       "delimiter" -> ",",
       "src" -> "src",
@@ -266,7 +270,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val other = Project("other")
     project.copy(other)
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-1.csv").getFile,
+      "files" -> "$OPERATIONSTEST/fingerprint-edges-1.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "src" -> "src",
@@ -295,7 +299,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Discard loop edges") {
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
+      "files" -> "$OPERATIONSTEST/loop-edges.csv",
       "header" -> "src,dst,color",
       "delimiter" -> ",",
       "src" -> "src",
@@ -310,7 +314,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Convert vertices into edges") {
     run("Import vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
+      "files" -> "$OPERATIONSTEST/loop-edges.csv",
       "header" -> "src,dst,color",
       "delimiter" -> ",",
       "id-attr" -> "id",
@@ -329,7 +333,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Viral modeling segment logic") {
     run("Import vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-1.csv").getFile,
+      "files" -> "$OPERATIONSTEST/viral-vertices-1.csv",
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
@@ -337,7 +341,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-1.csv").getFile,
+      "files" -> "$OPERATIONSTEST/viral-edges-1.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",
@@ -375,13 +379,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Viral modeling iteration logic") {
     run("Import vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-2.csv").getFile,
+      "files" -> "$OPERATIONSTEST/viral-vertices-2.csv",
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-2.csv").getFile,
+      "files" -> "$OPERATIONSTEST/viral-edges-2.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",
@@ -528,7 +532,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("SQL import & export vertices") {
     run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.sandboxedPath.resolvedName}/test-db"
     run("Export vertex attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
@@ -548,7 +552,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("SQL import & export edges") {
     run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.sandboxedPath.resolvedName}/test-db"
     run("Export edge attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
@@ -570,15 +574,17 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("CSV import & export vertices") {
     run("Example Graph")
-    val path = dataManager.repositoryPath.toString + "/csv-export-test"
+    //    val path = dataManager.repositoryPath.toString + "/csv-export-test"
+    val path = dataManager.repositoryPath + "/csv-export-test"
     run("Export vertex attributes to file", Map(
-      "path" -> path,
+      "path" -> path.toString,
       "link" -> "link",
       "attrs" -> "id,name,age,income,gender",
       "format" -> "CSV"))
-    val header = scala.io.Source.fromFile(path + "/header").mkString
+    val header = (path + "/header").readAsString
+    println(header)
     run("Import vertices from CSV files", Map(
-      "files" -> (path + "/data/*"),
+      "files" -> (path + "/data/*").toString,
       "header" -> header,
       "delimiter" -> ",",
       "filter" -> "",

@@ -13,6 +13,8 @@ import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
+import scala.util.Random
+
 object SandboxedPath {
   private val sandboxedPathPattern = "([$][A-Z]+)(.*)".r
   private val pathResolutions = scala.collection.mutable.Map[String, String]()
@@ -51,6 +53,18 @@ object SandboxedPath {
     //    println(s"back: absolute: $absolutePath, root: [$rootSymbol=$rootResolution] repl: $r")
     SandboxedPath(r)
   }
+
+  // For testing
+  private def randomRootName = "$" + Random.nextString(20).map(x => ((x % 26) + 'A').toChar)
+  def getDummyRootName(rootPath: String): String = {
+    val name = randomRootName
+    if (rootPath.startsWith("file:"))
+      registerRoot(name, rootPath)
+    else
+      registerRoot(name, "file:" + rootPath)
+    name
+  }
+
 }
 
 case class SandboxedPath(rootSymbol: String, rootResolution: String, relativePath: String) {
@@ -58,8 +72,8 @@ case class SandboxedPath(rootSymbol: String, rootResolution: String, relativePat
   def +(suffix: String): SandboxedPath = {
     this.copy(relativePath = relativePath + suffix)
   }
-  def symbolicName() = rootSymbol + relativePath
-  def resolvedName() = rootResolution + relativePath
+  def symbolicName = rootSymbol + relativePath
+  def resolvedName = rootResolution + relativePath
 }
 
 case class Filename(sandboxedPath: SandboxedPath) {
@@ -73,16 +87,29 @@ case class Filename(sandboxedPath: SandboxedPath) {
   }
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
   @transient lazy val uri = path.toUri
-  @transient lazy val path = new hadoop.fs.Path(sandboxedPath.resolvedName())
+  @transient lazy val path = new hadoop.fs.Path(sandboxedPath.resolvedName)
   def open() = fs.open(path)
   def create() = fs.create(path)
   def exists() = fs.exists(path)
   def reader() = new BufferedReader(new InputStreamReader(open))
+  def readAsString() = {
+    val r = reader()
+    Stream.continually(r.readLine()).takeWhile(_ != null).mkString
+  }
   def delete() = fs.delete(path, true)
   def renameTo(fn: Filename) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
-  def list = globStatus.map(st => this.copy(sandboxedPath = SandboxedPath.fromAbsoluteToSymbolic(st.getPath.toString, sandboxedPath.rootSymbol)))
+  def list = {
+    import org.apache.hadoop.fs.Path
+    println(s"sym: ${sandboxedPath.symbolicName}\nres: ${sandboxedPath.resolvedName}")
+    println(s"uri: ${fs.getUri}")
+    val p = new Path("/home")
+    val q = fs.makeQualified(p)
+    println(s"qua: $q")
+    globStatus.map(st => this.copy(sandboxedPath = SandboxedPath.fromAbsoluteToSymbolic(st.getPath.toString, sandboxedPath.rootSymbol)))
+  }
+
   def length = fs.getFileStatus(path).getLen
   def globLength = globStatus.map(_.getLen).sum
 
@@ -91,7 +118,7 @@ case class Filename(sandboxedPath: SandboxedPath) {
     // Make sure we get many small splits.
     conf.setLong("mapred.max.split.size", 50000000)
     sc.newAPIHadoopFile(
-      sandboxedPath.resolvedName(),
+      sandboxedPath.resolvedName,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.Text],
       fClass = classOf[hadoop.mapreduce.lib.input.TextInputFormat],
@@ -103,7 +130,7 @@ case class Filename(sandboxedPath: SandboxedPath) {
     // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
     val hadoopLines = lines.map(x => (hadoop.io.NullWritable.get(), new hadoop.io.Text(x)))
     hadoopLines.saveAsHadoopFile(
-      sandboxedPath.resolvedName(),
+      sandboxedPath.resolvedName,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.Text],
       outputFormatClass = classOf[hadoop.mapred.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
@@ -153,7 +180,7 @@ case class Filename(sandboxedPath: SandboxedPath) {
     import hadoop.mapreduce.lib.input.SequenceFileInputFormat
 
     sc.newAPIHadoopFile(
-      sandboxedPath.resolvedName(),
+      sandboxedPath.resolvedName,
       kClass = classOf[hadoop.io.NullWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[SequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
@@ -172,7 +199,7 @@ case class Filename(sandboxedPath: SandboxedPath) {
     }
     bigGraphLogger.info(s"saving ${data.name} as object file to $sandboxedPath")
     hadoopData.saveAsNewAPIHadoopFile(
-      sandboxedPath.resolvedName(),
+      sandboxedPath.resolvedName,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.BytesWritable],
       outputFormatClass =

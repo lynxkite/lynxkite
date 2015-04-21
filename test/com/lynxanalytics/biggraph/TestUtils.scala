@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph
 
 import java.io.File
+import com.lynxanalytics.biggraph.graph_util.SandboxedPath
 import org.apache.spark
 import org.scalatest.Tag
 
@@ -28,6 +29,7 @@ trait TestTempDir {
     "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
   myTempDir.mkdir
 
+  val myTempDirRoot = SandboxedPath.getDummyRootName(myTempDir.toString)
   def tempDir(dirName: String): File = new File(myTempDir, dirName)
 }
 
