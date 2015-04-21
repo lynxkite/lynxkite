@@ -99,7 +99,7 @@ class DataManager(sc: spark.SparkContext,
         val ois = new java.io.ObjectInputStream(serializedScalarFileName(entityPath(scalar)).open())
         val value = ois.readObject.asInstanceOf[T]
         ois.close()
-        log.info(s"PERF Scalar $scalar loaded from disk")
+        log.info(s"PERF Loaded scalar $scalar from disk")
         new ScalarData[T](scalar, value)
       }
     }
