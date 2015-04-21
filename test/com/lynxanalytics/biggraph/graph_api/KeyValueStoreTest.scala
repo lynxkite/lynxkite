@@ -43,43 +43,12 @@ abstract class KeyValueStoreTest extends FunSuite {
     assert(store.scan("alma").isEmpty)
   }
 
-  test("successful transaction") {
+  test("batching") {
     store.clear
-    store.transaction {
+    store.batch {
       store.put("alma", "korte")
       assert(store.get("alma").get == "korte")
     }
     assert(store.get("alma").get == "korte")
-  }
-
-  test("failed transaction") {
-    store.clear
-    store.put("alma", "barack")
-    class MyException extends Exception
-    intercept[MyException] {
-      store.transaction {
-        store.put("alma", "korte")
-        throw new MyException
-      }
-    }
-    assert(store.get("alma").get == "barack")
-  }
-
-  test("nested transactions") {
-    store.clear
-    store.transaction {
-      store.put("alma", "barack")
-      store.transaction {
-        store.put("alma", "szilva")
-      }
-      class MyException extends Exception
-      intercept[MyException] {
-        store.transaction {
-          store.put("alma", "korte")
-          throw new MyException
-        }
-      }
-    }
-    assert(store.get("alma").get == "szilva")
   }
 }

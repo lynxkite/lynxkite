@@ -8,7 +8,7 @@ trait KeyValueStore {
   def put(key: String, value: String): Unit
   def scan(prefix: String): Iterable[(String, String)]
   def deletePrefix(prefix: String): Unit
-  def transaction[T](fn: => T): T // Can be nested.
+  def batch[T](fn: => T): T // Can be nested. Defer writes until the end.
   def writesCanBeIgnored[T](fn: => T): T // May ignore writes from "fn".
 }
 
@@ -55,20 +55,11 @@ case class SQLiteKeyValueStore(file: String) extends KeyValueStore {
       .executeUpdate
   }
 
-  def transaction[T](fn: => T): T = synchronized {
+  def batch[T](fn: => T): T = synchronized {
     val ac = connection.getAutoCommit
     connection.setAutoCommit(false)
-    // The SQLite JDBC driver does not support savepoints, but SQLite itself does.
-    // So we create them manually.
-    SQL"SAVEPOINT 'X'".executeUpdate
-    val t = util.Try(fn)
-    if (t.isSuccess) {
-      SQL"RELEASE 'X'".executeUpdate
-    } else {
-      SQL"ROLLBACK TO 'X'".executeUpdate
-    }
-    connection.setAutoCommit(ac)
-    t.get
+    try { fn }
+    finally { connection.setAutoCommit(ac) } // Also performs commit if necessary.
   }
 
   private var ignoreWrites = 0
@@ -96,6 +87,6 @@ case class JsonKeyValueStore(file: String) extends KeyValueStore {
   def delete(key: String): Unit = ???
   def put(key: String, value: String): Unit = ???
   def deletePrefix(prefix: String): Unit = ???
-  def transaction[T](fn: => T): T = ???
+  def batch[T](fn: => T): T = ???
   def writesCanBeIgnored[T](fn: => T): T = fn
 }
