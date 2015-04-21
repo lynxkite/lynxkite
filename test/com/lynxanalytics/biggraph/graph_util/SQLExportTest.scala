@@ -43,7 +43,8 @@ class SQLExportTest extends FunSuite with TestGraphOp {
       Map[String, Attribute[_]](
         "age" -> g.age, "gender" -> g.gender,
         "income" -> g.income, "name" -> g.name))
-    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+
+    val db = s"sqlite:${dataManager.repositoryPath.sandboxedPath.resolvedName}/test-db"
     export.insertInto(db, delete = true)
     implicit val connection = sql.DriverManager.getConnection("jdbc:" + db)
     val q = SQL("SELECT name FROM example_graph WHERE age < 20")
