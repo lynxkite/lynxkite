@@ -178,7 +178,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("columns", "Columns (comma separated)"),
       Param("key", "Key column"))
     def source(params: Map[String, String]) = {
-      val columns = params("columns").split(",", -1).map(_.trim)
+      val columns = params("columns").split(",", -1).map(_.trim).filter(_.nonEmpty)
       graph_operations.DBTable(
         params("db"),
         params("table"),
