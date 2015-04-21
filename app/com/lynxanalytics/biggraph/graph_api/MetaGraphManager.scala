@@ -107,8 +107,9 @@ class MetaGraphManager(val repositoryPath: String) {
     (tagRoot / tag).ls.map(_.fullName)
   }
 
-  def tagTransaction[T](fn: => T) = synchronized {
-    tagRoot.transaction { fn }
+  // Defers tag writes until after "fn". Improves performance for large tag transactions.
+  def tagBatch[T](fn: => T) = synchronized {
+    tagRoot.batch { fn }
   }
 
   def vertexSet(tag: SymbolPath): VertexSet = synchronized {

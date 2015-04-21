@@ -155,10 +155,10 @@ final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
 
   override def isOffspringOf(other: TagPath): Boolean = (other == this)
 
-  def transaction[T](fn: => T): T = store.transaction(fn)
+  def batch[T](fn: => T): T = store.batch(fn)
 
   def setTags(tags: Map[SymbolPath, String]): Unit = synchronized {
-    transaction {
+    batch {
       for ((k, v) <- tags) {
         setTag(k, v)
       }
