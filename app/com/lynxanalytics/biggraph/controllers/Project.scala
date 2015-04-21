@@ -438,7 +438,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   def debugPrint() = manager.debugPrintTag(rootDir)
 
   // Makes assertions on a user-provided attribute/segmentation/scalar name.
-  def validateName(name: String): Unit = {
+  private def validateName(name: String): Unit = {
     assert(name.nonEmpty, "Name cannot be empty.")
     assert(!name.startsWith("!"), "Name cannot start with '!'.")
     assert(!name.contains(Project.separator), s"Name cannot contain '${Project.separator}'.")
