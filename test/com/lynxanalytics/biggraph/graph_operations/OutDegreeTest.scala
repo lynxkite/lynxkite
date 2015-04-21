@@ -9,8 +9,8 @@ class OutDegreeTest extends FunSuite with TestGraphOp {
   test("example graph - unweighted") {
     val g = ExampleGraph()().result
     val op = OutDegree()
-    val out = op(op.es, g.edges).result.outDegree
-    assert(out.rdd.collect.toMap ==
+    val res = op(op.es, g.edges).result.outDegree
+    assert(res.rdd.collect.toMap ==
       Map(0 -> 1.0, 1 -> 1.0, 2 -> 2.0, 3 -> 0.0))
   }
 }
