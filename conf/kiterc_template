@@ -11,7 +11,7 @@ export SPARK_MASTER=local
 # Do not forget to set up backups!
 export KITE_META_DIR=$HOME/kite_meta
 
-# The data where graph data is stored. Should be on a distributed fs (hdsf, s3, etc) unless
+# The data where graph data is stored. Should be on a distributed fs (hdfs, s3, etc) unless
 # this is a single machine install.
 export KITE_DATA_DIR=$HOME/kite_data
 
