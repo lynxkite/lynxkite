@@ -115,7 +115,7 @@ object ProductionJsonServer extends JsonServer {
   // We check if licence is still valid.
   if (Limitations.isExpired()) {
     val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
-    println(message)
+    //    println(message)
     log.error(message)
     System.exit(1)
   }

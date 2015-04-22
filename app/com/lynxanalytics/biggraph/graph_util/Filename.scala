@@ -46,11 +46,9 @@ object SandboxedPath {
       new SandboxedPath(rootSymbol, pathResolutions(rootSymbol), relativePath)
   }
   def fromAbsoluteToSymbolic(absolutePath: String, rootSymbol: String): SandboxedPath = {
-    println(s"fromAbsoluteToSymbolic: path: [$absolutePath]  symbol: [$rootSymbol]")
     val rootResolution = pathResolutions(rootSymbol)
     assert(absolutePath.startsWith(rootResolution), s"Bad prefix match: $absolutePath should begin with $rootResolution")
     val r = absolutePath.replaceFirst(rootResolution, java.util.regex.Matcher.quoteReplacement(rootSymbol))
-    //    println(s"back: absolute: $absolutePath, root: [$rootSymbol=$rootResolution] repl: $r")
     SandboxedPath(r)
   }
 
@@ -102,11 +100,10 @@ case class Filename(sandboxedPath: SandboxedPath) {
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
   def list = {
     import org.apache.hadoop.fs.Path
-    println(s"sym: ${sandboxedPath.symbolicName}\nres: ${sandboxedPath.resolvedName}")
-    println(s"uri: ${fs.getUri}")
-    val p = new Path("/home")
-    val q = fs.makeQualified(p)
-    println(s"qua: $q")
+    //    println(s"uri: ${fs.getUri}")
+    //    val p = new Path("/home")
+    // val q = fs.makeQualified(p)
+    //    println(s"qua: $q")
     globStatus.map(st => this.copy(sandboxedPath = SandboxedPath.fromAbsoluteToSymbolic(st.getPath.toString, sandboxedPath.rootSymbol)))
   }
 
