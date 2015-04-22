@@ -16,7 +16,7 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.{ Filename, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.{ DataFile, Timestamp }
 
 class MetaGraphManager(val repositoryPath: String) {
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](

@@ -74,7 +74,7 @@ case class SandboxedPath(rootSymbol: String, rootResolution: String, relativePat
   def resolvedName = rootResolution + relativePath
 }
 
-case class Filename(sandboxedPath: SandboxedPath) {
+case class DataFile(sandboxedPath: SandboxedPath) {
   override def toString = sandboxedPath.symbolicName
   def fullString = toString
   def hadoopConfiguration(): hadoop.conf.Configuration = {
@@ -95,7 +95,7 @@ case class Filename(sandboxedPath: SandboxedPath) {
     Stream.continually(r.readLine()).takeWhile(_ != null).mkString
   }
   def delete() = fs.delete(path, true)
-  def renameTo(fn: Filename) = fs.rename(path, fn.path)
+  def renameTo(fn: DataFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
   def list = {
@@ -204,17 +204,17 @@ case class Filename(sandboxedPath: SandboxedPath) {
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
-  def +(suffix: String): Filename = {
+  def +(suffix: String): DataFile = {
     this.copy(sandboxedPath = sandboxedPath + suffix)
   }
 
-  def /(path_element: String): Filename = {
+  def /(path_element: String): DataFile = {
     this + ("/" + path_element)
   }
 }
 
-object Filename {
-  def apply(str: String): Filename = {
-    new Filename(SandboxedPath(str))
+object DataFile {
+  def apply(str: String): DataFile = {
+    new DataFile(SandboxedPath(str))
   }
 }

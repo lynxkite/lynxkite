@@ -16,7 +16,7 @@ import org.apache.spark
 import scala.collection.immutable
 import scala.collection.mutable
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.DataFile
 import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
@@ -72,7 +72,7 @@ object CompactUndirectedGraph {
   }
 }
 
-case class CompactUndirectedGraph(path: Filename, partitioner: spark.Partitioner) {
+case class CompactUndirectedGraph(path: DataFile, partitioner: spark.Partitioner) {
   @transient lazy val cache = Array.ofDim[CompactUndirectedGraphPartition](partitioner.numPartitions)
 
   def getNeighbors(vid: ID): Seq[ID] = {

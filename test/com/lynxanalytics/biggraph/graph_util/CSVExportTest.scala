@@ -45,7 +45,7 @@ class CSVExportTest extends FunSuite with TestGraphOp {
         "age" -> sampleOut.age))
     val targetDir = tempDir("csv_save_target_dir")
     val sandboxRoot = SandboxedPath.getDummyRootName(targetDir.toString)
-    csvData.saveToDir(Filename(sandboxRoot))
+    csvData.saveToDir(DataFile(sandboxRoot))
 
     val dirSnapshot = TestUtils.runShellCommand(
       """|cd %s

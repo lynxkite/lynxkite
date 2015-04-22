@@ -4,7 +4,7 @@ package com.lynxanalytics.biggraph
 import java.io.File
 import org.apache.spark
 
-import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, Filename }
+import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, DataFile }
 
 trait SparkContextProvider {
   val sparkContext: spark.SparkContext
@@ -35,15 +35,15 @@ trait StaticDirEnvironment extends BigGraphEnvironment {
     sparkContext, repositoryDirs.dataDir)
 }
 
-import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, Filename }
+import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, DataFile }
 
 trait RepositoryDirs {
   val graphDir: String
-  val dataDir: Filename
-  def setupDataDir(dirPath: String): Filename = {
+  val dataDir: DataFile
+  def setupDataDir(dirPath: String): DataFile = {
     SandboxedPath.registerRoot("$DATA", dirPath)
     SandboxedPath.registerRoot("$UPLOAD", "$DATA/uploads")
-    Filename("$DATA")
+    DataFile("$DATA")
   }
 }
 
