@@ -11,6 +11,6 @@ class CentralityTest extends FunSuite with TestGraphOp {
     val op = Centrality()
     val out = op(op.es, g.edges).result.harmonicCentrality
     assert(out.rdd.collect.toMap ==
-      Map(0 -> 3.0, 1 -> 3.0, 2 -> 1.0, 3 -> 1.0))
+      Map(0 -> 2.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0))
   }
 }
