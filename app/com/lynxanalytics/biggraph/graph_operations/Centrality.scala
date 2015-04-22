@@ -3,9 +3,11 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import org.apache.spark._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 import com.twitter.algebird._
 import com.twitter.algebird.HyperLogLog._
@@ -16,7 +18,7 @@ object Centrality extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val harmonicCentrality = vertexAttribute[Int](inputs.vs.entity)
+    val harmonicCentrality = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = Centrality()
 }
@@ -37,7 +39,8 @@ case class Centrality()
     val edges = inputs.es.rdd
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val globalHll = new HyperLogLogMonoid( /*bit size = */ 8)
+    // Hll counters are used to estimate set sizes.
+    val globalHll = new HyperLogLogMonoid( /*bit size = */ 12)
 
     var hyperBallCounters = vertices
       .mapValuesWithKeys {
@@ -45,18 +48,47 @@ case class Centrality()
         case (key, _) => globalHll(key)
       }
 
-    hyperBallCounters = hyperBallCounters
+    // We have to keep track of the HyperBall sizes for the actual and the previous diameter.
+    var hyperBallSizes = vertices.mapValues { _ => (1, 1) }
+    var harmonicCentralities = vertices.mapValues { _ => 0.0 }
+    var keepGoing = true
+    var diameter = 1
+    do {
+      hyperBallCounters = getNextHyperBall(hyperBallCounters, vertexPartitioner, edges)
+      hyperBallSizes = hyperBallSizes.sortedLeftOuterJoin(hyperBallCounters).mapValuesWithKeys {
+        // We loose the counters for vertices with no outgoing edges.
+        case (key, ((_, newValue), hll)) => (newValue, hll.getOrElse(globalHll(key)).estimatedSize.toInt)
+      }
+      harmonicCentralities = harmonicCentralities.sortedJoin(hyperBallSizes).mapValues {
+        case (original, (oldSize, newSize)) => original + (1.0 / diameter) * (newSize - oldSize)
+      }
+
+      keepGoing = hyperBallSizes.map {
+        case (_, (oldSize, newSize)) => newSize > oldSize
+      }.reduce(_ || _)
+      diameter = diameter + 1
+    } while (keepGoing)
+    output(o.harmonicCentrality, harmonicCentralities)
+  }
+
+  /** Returns the HyperBall Hll counters for a diameter increased with 1.*/
+  private def getNextHyperBall(
+    hyperBallCounters: SortedRDD[ID, HLL],
+    vertexPartitioner: Partitioner,
+    edges: EdgeBundleRDD): SortedRDD[ID, HLL] = {
+    // Aggregate the Hll counters for every neighbour.
+    val hyperBallOfNeighbours = hyperBallCounters
       .sortedJoin(edges.map { case (id, edge) => (edge.src, edge.dst) }
         .groupBySortedKey(vertexPartitioner))
       .flatMap { case (_, (hll, neighbours)) => neighbours.map(id => (id, hll)) }
-      // Note that the + operator is defined on Algebird's HLL
+      // Note that the + operator is defined on Algebird's HLL.
       .reduceBySortedKey(vertexPartitioner, _ + _)
 
-    val result = vertices.sortedLeftOuterJoin(hyperBallCounters).mapValuesWithKeys {
-      // We loose the counters for vertices with no outgoing edges
-      case (key, (_, hll)) => hll.getOrElse(globalHll(key)).estimatedSize.toInt
+    // Add the original Hll.
+    val nextHyperBallCounters = hyperBallCounters.sortedJoin(hyperBallOfNeighbours).mapValues {
+      case (originalHll, neighbourHll) => originalHll + neighbourHll
     }
-    output(o.harmonicCentrality, result)
+    nextHyperBallCounters
   }
 }
 
