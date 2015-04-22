@@ -52,21 +52,22 @@ case class Centrality()
     var hyperBallSizes = vertices.mapValues { _ => (1, 1) }
     var harmonicCentralities = vertices.mapValues { _ => 0.0 }
     var keepGoing = true
-    var diameter = 1
+    var diameter = 1.0
     do {
+      val actualDiameter = diameter
       hyperBallCounters = getNextHyperBall(hyperBallCounters, vertexPartitioner, edges)
       hyperBallSizes = hyperBallSizes.sortedLeftOuterJoin(hyperBallCounters).mapValuesWithKeys {
         // We loose the counters for vertices with no outgoing edges.
         case (key, ((_, newValue), hll)) => (newValue, hll.getOrElse(globalHll(key)).estimatedSize.toInt)
       }
       harmonicCentralities = harmonicCentralities.sortedJoin(hyperBallSizes).mapValues {
-        case (original, (oldSize, newSize)) => original + (1.0 / diameter) * (newSize - oldSize)
+        case (original, (oldSize, newSize)) => original + ((newSize - oldSize).toDouble / actualDiameter)
       }
 
       keepGoing = hyperBallSizes.map {
         case (_, (oldSize, newSize)) => newSize > oldSize
       }.reduce(_ || _)
-      diameter = diameter + 1
+      diameter = diameter + 1.0
     } while (keepGoing)
     output(o.harmonicCentrality, harmonicCentralities)
   }
