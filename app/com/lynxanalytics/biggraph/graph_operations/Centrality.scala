@@ -37,17 +37,25 @@ case class Centrality()
     val edges = inputs.es.rdd
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val vertexCount = vertices.count
+    val globalHll = new HyperLogLogMonoid( /*bit size = */ 8)
 
-    val hll = new HyperLogLogMonoid( /*bit size = */ 8)
     var hyperBallCounters = vertices
-      .mapValuesWithKeys { case (key, _) => hll(key) }
+      .mapValuesWithKeys {
+        // Initialize a counter for every vertex 
+        case (key, _) => globalHll(key)
+      }
 
-    hyperBallCounters = hyperBallCounters.sortedJoin(edges.map { case (id, edge) => (edge.src, edge.dst) }.groupBySortedKey(vertexPartitioner))
+    hyperBallCounters = hyperBallCounters
+      .sortedJoin(edges.map { case (id, edge) => (edge.src, edge.dst) }
+        .groupBySortedKey(vertexPartitioner))
       .flatMap { case (_, (hll, neighbours)) => neighbours.map(id => (id, hll)) }
+      // Note that the + operator is defined on Algebird's HLL
       .reduceBySortedKey(vertexPartitioner, _ + _)
 
-    val result = vertices.sortedLeftOuterJoin(hyperBallCounters).mapValues(_._2.size)
+    val result = vertices.sortedLeftOuterJoin(hyperBallCounters).mapValuesWithKeys {
+      // We loose the counters for vertices with no outgoing edges
+      case (key, (_, hll)) => hll.getOrElse(globalHll(key)).estimatedSize.toInt
+    }
     output(o.harmonicCentrality, result)
   }
 }
