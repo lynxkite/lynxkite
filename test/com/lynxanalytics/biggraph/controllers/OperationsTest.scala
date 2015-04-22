@@ -13,7 +13,6 @@ import com.lynxanalytics.biggraph.serving
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val res = getClass.getResource("/controllers/OperationsTest/").getFile
-  println(res)
   SandboxedPath.registerRoot("$OPERATIONSTEST", "file:" + res)
   val ops = new Operations(this)
   def createProject(name: String) = {
@@ -582,7 +581,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "attrs" -> "id,name,age,income,gender",
       "format" -> "CSV"))
     val header = (path + "/header").readAsString
-    println(header)
     run("Import vertices from CSV files", Map(
       "files" -> (path + "/data/*").toString,
       "header" -> header,
