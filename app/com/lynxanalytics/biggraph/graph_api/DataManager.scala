@@ -15,12 +15,12 @@ import scala.concurrent._
 import ExecutionContext.Implicits.global
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.DataFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 class DataManager(sc: spark.SparkContext,
-                  val repositoryPath: Filename) {
+                  val repositoryPath: DataFile) {
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
 
@@ -37,9 +37,9 @@ class DataManager(sc: spark.SparkContext,
       repositoryPath / "entities" / entity.gUID.toString
     }
 
-  private def successPath(basePath: Filename): Filename = basePath / "_SUCCESS"
+  private def successPath(basePath: DataFile): DataFile = basePath / "_SUCCESS"
 
-  private def serializedScalarFileName(basePath: Filename): Filename = basePath / "serialized_data"
+  private def serializedScalarFileName(basePath: DataFile): DataFile = basePath / "serialized_data"
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
