@@ -129,6 +129,9 @@ angular
       error: function(message, details) {
         $rootScope.$broadcast('topAlert', { message: message, details: details });
       },
+      clearAlerts: function() {
+        $rootScope.$broadcast('clear topAlerts');
+      },
       responseToErrorMessage: function(resp) {
         if (resp.data) {
           if (resp.data.error) {
