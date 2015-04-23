@@ -73,5 +73,4 @@ class CentralityTest extends FunSuite with TestGraphOp {
     assert(out.rdd.collect.toMap ==
       Map(0 -> 1.5, 1 -> 1.5, 2 -> 1.5))
   }
-
 }
