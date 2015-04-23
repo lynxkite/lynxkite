@@ -283,7 +283,6 @@ angular.module('biggraph')
     // This is called when the project name changes, or when the project
     // itself is expected to change. (Such as after an operation.)
     Side.prototype.reload = function() {
-      util.clearAlerts();
       if (this.state.projectName) {
         var newProject = this.load();  // The old project is used to look for segmentations.
         for (var i = 0; i < $scope.sides.length; ++i) {
