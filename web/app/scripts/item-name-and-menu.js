@@ -1,3 +1,4 @@
+// An item name with a drop-down menu providing "rename", "discard", and "duplicate" operations.
 'use strict';
 
 angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util) {

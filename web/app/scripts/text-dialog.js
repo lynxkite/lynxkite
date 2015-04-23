@@ -1,3 +1,4 @@
+// A button that offers a text input when clicked.
 'use strict';
 
 angular.module('biggraph').directive('textDialog', function($timeout) {
