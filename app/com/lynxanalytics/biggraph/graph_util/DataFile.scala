@@ -99,12 +99,10 @@ case class DataFile(sandboxedPath: SandboxedPath) {
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
   def list = {
-    import org.apache.hadoop.fs.Path
-    //    println(s"uri: ${fs.getUri}")
-    //    val p = new Path("/home")
-    // val q = fs.makeQualified(p)
-    //    println(s"qua: $q")
-    globStatus.map(st => this.copy(sandboxedPath = SandboxedPath.fromAbsoluteToSymbolic(st.getPath.toString, sandboxedPath.rootSymbol)))
+    globStatus.map(
+      st => this.copy(
+        sandboxedPath =
+          SandboxedPath.fromAbsoluteToSymbolic(st.getPath.toString, sandboxedPath.rootSymbol)))
   }
 
   def length = fs.getFileStatus(path).getLen
