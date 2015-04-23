@@ -48,22 +48,30 @@ case class Centrality()
         case (key, _) => globalHll(key)
       }
 
-    // We have to keep track of the HyperBall sizes for the actual and the previous diameter.
+    // We have to keep track of the HyperBall sizes for the actual
+    // and the previous diameter.
     var hyperBallSizes = vertices.mapValues { _ => (1, 1) }
     var harmonicCentralities = vertices.mapValues { _ => 0.0 }
     var keepGoing = true
     var diameter = 1.0
+
     do {
       val actualDiameter = diameter
-      hyperBallCounters = getNextHyperBall(hyperBallCounters, vertexPartitioner, edges)
-      hyperBallSizes = hyperBallSizes.sortedLeftOuterJoin(hyperBallCounters).mapValuesWithKeys {
-        // We loose the counters for vertices with no outgoing edges.
-        case (key, ((_, newValue), hll)) => (newValue, hll.getOrElse(globalHll(key)).estimatedSize.toInt)
+      hyperBallCounters = getNextHyperBall(
+        hyperBallCounters, vertexPartitioner, edges, globalHll)
+      hyperBallSizes = hyperBallSizes.sortedJoin(hyperBallCounters).mapValues {
+        case ((_, newValue), hll) =>
+          (newValue, hll.estimatedSize.toInt)
       }
-      harmonicCentralities = harmonicCentralities.sortedJoin(hyperBallSizes).mapValues {
-        case (original, (oldSize, newSize)) => original + ((newSize - oldSize).toDouble / actualDiameter)
-      }
+      harmonicCentralities = harmonicCentralities
+        .sortedJoin(hyperBallSizes)
+        .mapValues {
+          case (original, (oldSize, newSize)) => {
+            original + ((newSize - oldSize).toDouble / actualDiameter)
+          }
+        }
 
+      // The algorithm should halt if no counter changes.
       keepGoing = hyperBallSizes.map {
         case (_, (oldSize, newSize)) => newSize > oldSize
       }.reduce(_ || _)
@@ -72,23 +80,29 @@ case class Centrality()
     output(o.harmonicCentrality, harmonicCentralities)
   }
 
-  /** Returns the HyperBall Hll counters for a diameter increased with 1.*/
+  /** Returns hyperBallCounters for a diameter increased with 1.*/
   private def getNextHyperBall(
     hyperBallCounters: SortedRDD[ID, HLL],
     vertexPartitioner: Partitioner,
-    edges: EdgeBundleRDD): SortedRDD[ID, HLL] = {
+    edges: EdgeBundleRDD,
+    globalHll: HyperLogLogMonoid): SortedRDD[ID, HLL] = {
     // Aggregate the Hll counters for every neighbour.
     val hyperBallOfNeighbours = hyperBallCounters
       .sortedJoin(edges.map { case (id, edge) => (edge.src, edge.dst) }
         .groupBySortedKey(vertexPartitioner))
-      .flatMap { case (_, (hll, neighbours)) => neighbours.map(id => (id, hll)) }
+      .flatMap {
+        case (_, (hll, neighbours)) => neighbours.map(id => (id, hll))
+      }
       // Note that the + operator is defined on Algebird's HLL.
       .reduceBySortedKey(vertexPartitioner, _ + _)
 
     // Add the original Hll.
-    val nextHyperBallCounters = hyperBallCounters.sortedJoin(hyperBallOfNeighbours).mapValues {
-      case (originalHll, neighbourHll) => originalHll + neighbourHll
-    }
+    val nextHyperBallCounters = hyperBallCounters
+      .sortedLeftOuterJoin(hyperBallOfNeighbours).mapValues {
+        // There is no counter for
+        case (originalHll, neighbourHll) =>
+          originalHll + neighbourHll.getOrElse(globalHll.zero)
+      }
     nextHyperBallCounters
   }
 }
