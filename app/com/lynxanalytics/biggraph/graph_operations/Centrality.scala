@@ -99,7 +99,7 @@ case class Centrality()
     // Add the original Hll.
     val nextHyperBallCounters = hyperBallCounters
       .sortedLeftOuterJoin(hyperBallOfNeighbours).mapValues {
-        // There is no counter for
+        // There is no counter for the neighbours of vertices with no out edges.
         case (originalHll, neighbourHll) =>
           originalHll + neighbourHll.getOrElse(globalHll.zero)
       }
