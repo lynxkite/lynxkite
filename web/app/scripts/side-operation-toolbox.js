@@ -1,3 +1,5 @@
+// The operation toolbox belonging to a project view.
+// Contains keyboard shortcuts and other mechanisms that are not used in history view.
 'use strict';
 
 angular.module('biggraph').directive('sideOperationToolbox', function($rootScope, hotkeys) {
