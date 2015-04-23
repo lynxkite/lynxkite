@@ -1,3 +1,4 @@
+// The "/users" page for managing LynxKite users.
 'use strict';
 
 angular.module('biggraph')
