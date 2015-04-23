@@ -386,7 +386,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Connected components", new CreateSegmentationOperation(_, _) {
-    val description = ""
+    val description = """Creates a segmentation for every connected set of vertices.
+    - Weak:   Two vertices are connected if there is a path from A -> B or B -> A.
+    - Strong: The algorithm discards non symmetric edges before checking the components.
+    Note that this is different from the common definition of strongly connected components."""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "connected_components"),
       Param(
@@ -846,7 +849,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("PageRank", new AttributeOperation(_, _) {
-    val description = ""
+    val description = """Calculates PageRank for every vertex. PageRank is a calculated
+    simulating random walks on the graph. Informally the higher the PageRank is the more
+    likely the walk stops on a certain vertex."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Param("weights", "Weight attribute", options = edgeAttributes[Double]),
