@@ -1,3 +1,4 @@
+// 3D graph visualization.
 'use strict';
 
 angular.module('biggraph').directive('renderer', function($timeout) {

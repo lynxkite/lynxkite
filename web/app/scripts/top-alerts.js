@@ -1,3 +1,4 @@
+// A list of error messages that hover over the page.
 'use strict';
 
 angular.module('biggraph').directive('topAlerts', function(util) {

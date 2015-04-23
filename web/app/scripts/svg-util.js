@@ -1,3 +1,4 @@
+// Utility functions for SVG building.
 'use strict';
 
 /* exported  SVG_UTIL */

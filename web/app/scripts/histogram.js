@@ -1,3 +1,4 @@
+// Displays a histogram. The data comes from the "histogram-button" directive.
 'use strict';
 
 angular.module('biggraph').directive('histogram', function($timeout, util) {

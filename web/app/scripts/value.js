@@ -1,3 +1,5 @@
+// Presents a DynamicValue response from a scalar request
+// with a loading animation and error handling.
 'use strict';
 
 angular.module('biggraph').directive('value', function(util) {

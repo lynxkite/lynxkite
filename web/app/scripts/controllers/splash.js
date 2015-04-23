@@ -1,3 +1,4 @@
+// The "/" page displays branding and the project list.
 'use strict';
 
 angular.module('biggraph')

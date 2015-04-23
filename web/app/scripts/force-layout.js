@@ -1,3 +1,4 @@
+// The 2D graph layout algoritm used in sampled mode.
 'use strict';
 
 /* exported FORCE_LAYOUT */

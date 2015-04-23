@@ -1,3 +1,5 @@
+// Presents the parameters of an operation. It picks the right presentation
+// (text box, dropdown, etc) based on the parameter metadata.
 'use strict';
 
 angular.module('biggraph').directive('operationParameters', function(util) {

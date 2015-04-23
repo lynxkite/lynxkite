@@ -1,3 +1,4 @@
+// Assorted utility functions.
 'use strict';
 
 /* exported COMMON_UTIL */
@@ -26,7 +27,7 @@ var COMMON_UTIL = {
       if (minmax > 0) {
         return x / minmax - 0.5;
       } else {
-        return 0.0; 
+        return 0.0;
       }
     }
   },

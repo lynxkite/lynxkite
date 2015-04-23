@@ -1,9 +1,13 @@
+// The list of projects.
 'use strict';
 
 angular.module('biggraph').directive('projectSelector', function(util, hotkeys, $timeout) {
   return {
     restrict: 'E',
-    scope: { name: '=', version: '=?' },
+    scope: {
+      name: '=', // Exposes the name of the selected project.
+      version: '=?',  // Exposes the version string.
+    },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
       hotkeys.bindTo(scope)
