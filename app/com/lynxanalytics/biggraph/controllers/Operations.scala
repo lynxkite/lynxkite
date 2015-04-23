@@ -353,8 +353,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Maximal cliques", new CreateSegmentationOperation(_, _) {
     val description = """
-    Create a segmentation of vertices based on the maximal cliques they are the member of.
-    A maximal clique is a maximal set of vertices where there is an edge between every to vertex.
+    Creates a segmentation of vertices based on the maximal cliques they are the member of.
+    A maximal clique is a maximal set of vertices where there is an edge between every two vertex.
     Since one vertex can be part of multiple maximal cliques this segmentation might be overlapping."""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
@@ -389,11 +389,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Connected components", new CreateSegmentationOperation(_, _) {
-    val description = """Creates a segmentation for every connected set of vertices.<ul>
-    <li>Weak:   Two vertices are connected if there is a path from A to B or B to A.</li>
-    <li>Strong: The algorithm discards non symmetric edges before checking the components.
-    Note that this is different from the common definition of strongly connected components.
-    </li></ul>"""
+    val description = """Creates a segmentation for every connected set of vertices.
+    <ul><li>Weak:   Two vertices are connected if there is a path from A->B or B->A.</li>
+    <li>Strong: The algorithm discards non symmetric edges before checking the components. Note
+    that this is different from the common definition of strongly connected components.</li></ul>"""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "connected_components"),
       Param(
@@ -857,9 +856,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("PageRank", new AttributeOperation(_, _) {
     val description = """
-    Calculates PageRank for every vertex. PageRank is a calculated by simulating
-    random walks on the graph. It is more likely for the walk to stop on vertices
-    with higher PageRanks."""
+    Calculates PageRank for every vertex. PageRank is a calculated by simulating random walks
+    on the graph. It is more likely for the walk to stop on vertices with higher PageRanks."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Param("weights", "Weight attribute", options = edgeAttributes[Double]),
