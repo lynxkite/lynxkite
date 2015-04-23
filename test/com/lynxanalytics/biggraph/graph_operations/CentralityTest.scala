@@ -5,6 +5,8 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
+// The algorithm gives an approximation. Asserting on exact centrality
+// values works only for small graphs.
 class CentralityTest extends FunSuite with TestGraphOp {
   test("corner cases") {
     val op = Centrality()
