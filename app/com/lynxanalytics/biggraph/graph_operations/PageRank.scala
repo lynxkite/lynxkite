@@ -52,7 +52,7 @@ case class PageRank(dampingFactor: Double,
         collapsed.mapValues(w => w / total).toArray
       }
 
-    var pageRank = vertices.mapValues(attr => 1.0)
+    var pageRank = vertices.mapValues(_ => 1.0)
     val vertexCount = vertices.count
 
     for (i <- 0 until iterations) {
