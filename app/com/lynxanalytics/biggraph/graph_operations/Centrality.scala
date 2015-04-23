@@ -1,5 +1,7 @@
 // Estimates Harmonic Centrality for each vertex using the HyperBall algorithm.
-// Note that this algorithm does not take weights into account.
+// HyperBall uses HyperLogLog counters to estimate sizes of large sets, so
+// the centrality values calcuated here are approximations. Note that this
+// algorithm does not take weights or parallel edges into account.
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -97,13 +99,11 @@ case class Centrality()
       .reduceBySortedKey(vertexPartitioner, _ + _)
 
     // Add the original Hll.
-    val nextHyperBallCounters = hyperBallCounters
-      .sortedLeftOuterJoin(hyperBallOfNeighbours).mapValues {
-        // There is no counter for the neighbours of vertices with no out edges.
-        case (originalHll, neighbourHll) =>
-          originalHll + neighbourHll.getOrElse(globalHll.zero)
-      }
-    nextHyperBallCounters
+    hyperBallCounters.sortedLeftOuterJoin(hyperBallOfNeighbours).mapValues {
+      // There is no counter for the neighbours of vertices with no out edges.
+      case (originalHll, neighbourHll) =>
+        originalHll + neighbourHll.getOrElse(globalHll.zero)
+    }
   }
 }
 
