@@ -56,7 +56,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       visible = c.project.isSegmentation)) with SegOp
 
   register("Discard vertices", new VertexOperation(_, _) {
-    val description = ""
+    val description = "Throws away all vertices. Note that this operation discards the edges too."
     def parameters = List()
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -65,7 +65,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard edges", new EdgeOperation(_, _) {
-    val description = ""
+    val description = "Throws away all edges."
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -352,7 +352,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
   register("Maximal cliques", new CreateSegmentationOperation(_, _) {
-    val description = ""
+    val description = """
+    Create a segmentation of vertices based on the maximal cliques they are the member of.
+    A maximal clique is a maximal set of vertices where there is an edge between every to vertex.
+    Since one vertex can be part of multiple maximal cliques this segmentation might be overlapping."""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Param("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))),
@@ -386,10 +389,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Connected components", new CreateSegmentationOperation(_, _) {
-    val description = """Creates a segmentation for every connected set of vertices.
-    - Weak:   Two vertices are connected if there is a path from A -> B or B -> A.
-    - Strong: The algorithm discards non symmetric edges before checking the components.
-    Note that this is different from the common definition of strongly connected components."""
+    val description = """Creates a segmentation for every connected set of vertices.<ul>
+    <li>Weak:   Two vertices are connected if there is a path from A to B or B to A.</li>
+    <li>Strong: The algorithm discards non symmetric edges before checking the components.
+    Note that this is different from the common definition of strongly connected components.
+    </li></ul>"""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "connected_components"),
       Param(
@@ -674,7 +678,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Add constant edge attribute", new AttributeOperation(_, _) {
-    val description = ""
+    val description = "Adds an attribute with a fixed value to every edge."
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"),
@@ -693,7 +697,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Add constant vertex attribute", new AttributeOperation(_, _) {
-    val description = ""
+    val description = "Adds an attribute with a fixed value to every vertex."
     def parameters = List(
       Param("name", "Attribute name"),
       Param("value", "Value", defaultValue = "1"),
@@ -750,7 +754,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Reverse edge direction", new EdgeOperation(_, _) {
-    val description = ""
+    val description = "Replaces every edge A->B with its reversed version B->A."
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -782,7 +786,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Clustering coefficient", new AttributeOperation(_, _) {
-    val description = ""
+    val description = """
+    Calculates the local clustering coefficient attribute for every vertex. It quantifies how
+    close the vertex's neighbours are to being a clique. In practise a high (close to 1.0)
+    clustering coefficient means that the neighbours of a vertex are highly interconnected."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
     def enabled = hasEdgeBundle
@@ -835,7 +842,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Degree", new AttributeOperation(_, _) {
-    val description = ""
+    val description = "Calculates the number of neighbours for every vertex."
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "degree"),
       Param("direction", "Count", options = Direction.options))
@@ -849,9 +856,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("PageRank", new AttributeOperation(_, _) {
-    val description = """Calculates PageRank for every vertex. PageRank is a calculated
-    simulating random walks on the graph. Informally the higher the PageRank is the more
-    likely the walk stops on a certain vertex."""
+    val description = """
+    Calculates PageRank for every vertex. PageRank is a calculated by simulating
+    random walks on the graph. It is more likely for the walk to stop on vertices
+    with higher PageRanks."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Param("weights", "Weight attribute", options = edgeAttributes[Double]),
@@ -1485,7 +1493,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard edge attribute", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Throws away an edge attribute."
     def parameters = List(
       Param("name", "Name", options = edgeAttributes))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
@@ -1499,7 +1507,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard vertex attribute", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Throws away a vertex attribute. "
     def parameters = List(
       Param("name", "Name", options = vertexAttributes))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
@@ -1513,7 +1521,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard segmentation", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Throws away a previously calculated segmentation."
     def parameters = List(
       Param("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
@@ -1527,7 +1535,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard scalar", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Throws away a scalar value."
     def parameters = List(
       Param("name", "Name", options = scalars))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
@@ -1541,7 +1549,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Rename edge attribute", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Replaces the name of an edge attribute with a new one."
     def parameters = List(
       Param("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
@@ -1561,7 +1569,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Rename vertex attribute", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Replaces the name of a vertex attribute with a new one."
     def parameters = List(
       Param("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
@@ -1582,7 +1590,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Rename segmentation", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Replaces the name of a segmentation with a new one."
     def parameters = List(
       Param("from", "Old name", options = segmentations),
       Param("to", "New name"))
@@ -1601,7 +1609,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Rename scalar", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Replaces the name of a scalar with a new one."
     def parameters = List(
       Param("from", "Old name", options = scalars),
       Param("to", "New name"))
@@ -1621,7 +1629,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy edge attribute", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Copies the value of an edge attribute for every edges."
     def parameters = List(
       Param("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
@@ -1637,7 +1645,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy vertex attribute", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Copies the value of a vertex attribute for every vertices."
     def parameters = List(
       Param("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
@@ -1654,7 +1662,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy segmentation", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Copies a segmentation."
     def parameters = List(
       Param("from", "Old name", options = segmentations),
       Param("to", "New name"))
@@ -1673,7 +1681,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy scalar", new UtilityOperation(_, _) {
-    val description = ""
+    val description = "Copies a scalar value."
     def parameters = List(
       Param("from", "Old name", options = scalars),
       Param("to", "New name"))
@@ -2276,7 +2284,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     implicit val dataManager = env.dataManager
 
     register("Export vertex attributes to file", new AttributeOperation(_, _) {
-      val description = ""
+      val description = "Writes the vertices and their attributes to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
@@ -2334,7 +2342,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     register("Export edge attributes to file", new AttributeOperation(_, _) {
-      val description = ""
+      val description = "Writes the edges and their attributes to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
@@ -2383,7 +2391,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export segmentation to file", new SegmentationOperation(_, _) {
-      val description = ""
+      val description = "Writes a segmentation to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "segmentation_csv"),
