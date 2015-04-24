@@ -101,7 +101,15 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$10])
     kryo.register(classOf[scala.reflect.ClassTag$$anon$1])
     kryo.register(classOf[Class[_]])
-    kryo.register(classOf[org.roaringbitmap.RoaringBitmap]) // #1518
+    // === #1518 / SPARK-5949 ===
+    kryo.register(classOf[org.roaringbitmap.RoaringBitmap])
+    kryo.register(classOf[org.roaringbitmap.RoaringArray])
+    kryo.register(classOf[org.roaringbitmap.RoaringArray.Element])
+    kryo.register(classOf[Array[org.roaringbitmap.RoaringArray.Element]])
+    kryo.register(classOf[org.roaringbitmap.BitmapContainer])
+    kryo.register(classOf[org.roaringbitmap.ArrayContainer])
+    kryo.register(classOf[Array[Short]])
+    // ==========================
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
