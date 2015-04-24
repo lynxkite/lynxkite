@@ -51,19 +51,26 @@ case class PulledOverVertexAttribute[T]()
     val function = inputs.function.rdd
     val originalAttr = inputs.originalAttr.rdd
     val originalPartitioner = originalAttr.partitioner.get
+    implicit val ct = inputs.originalAttr.meta.classTag
+    val destinationVS = inputs.destinationVS.rdd
+    val destinationPartitioner = destinationVS.partitioner.get
     val pulledAttr =
       if (functionEntity.properties.isIdPreserving) {
         val joinableFunction = function.sortedRepartition(originalPartitioner)
-        originalAttr.sortedJoin(joinableFunction).mapValues { case (value, edge) => value }
+        val originallyPartitioned =
+          originalAttr.sortedJoin(joinableFunction).mapValues { case (value, edge) => value }
+        if (originallyPartitioned.partitioner.get == destinationVS.partitioner.get) {
+          originallyPartitioned
+        } else {
+          originallyPartitioned.toSortedRDD(destinationPartitioner)
+        }
       } else {
-        val destinationVS = inputs.destinationVS.rdd
         val originalToDestinationID = function
           .map { case (id, edge) => (edge.dst, edge.src) }
           .toSortedRDD(originalPartitioner)
-        implicit val ct = inputs.originalAttr.meta.classTag
         originalToDestinationID.sortedJoin(originalAttr)
           .values
-          .toSortedRDD(destinationVS.partitioner.get)
+          .toSortedRDD(destinationPartitioner)
       }
     output(o.pulledAttr, pulledAttr)
   }
