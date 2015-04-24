@@ -43,7 +43,7 @@ object SandboxedPath {
 
   def apply(str: String): SandboxedPath = str match {
     case sandboxedPathPattern(rootSymbol, relativePath) =>
-      new SandboxedPath(rootSymbol, pathResolutions(rootSymbol), relativePath)
+      new SandboxedPath(rootSymbol, relativePath)
   }
   def fromAbsoluteToSymbolic(absolutePath: String, rootSymbol: String): SandboxedPath = {
     val rootResolution = pathResolutions(rootSymbol)
@@ -65,13 +65,13 @@ object SandboxedPath {
 
 }
 
-case class SandboxedPath(rootSymbol: String, rootResolution: String, relativePath: String) {
+case class SandboxedPath(rootSymbol: String, relativePath: String) {
 
   def +(suffix: String): SandboxedPath = {
     this.copy(relativePath = relativePath + suffix)
   }
   def symbolicName = rootSymbol + relativePath
-  def resolvedName = rootResolution + relativePath
+  def resolvedName = RootRepository.getRootInfo(rootSymbol).resolution + relativePath
 }
 
 case class DataFile(sandboxedPath: SandboxedPath) {
