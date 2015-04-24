@@ -1,3 +1,4 @@
+// Graph visualization. Generates the SVG contents.
 'use strict';
 
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {

@@ -1,6 +1,6 @@
+// A context menu for graph vertices.
 'use strict';
 
-// A context menu for graph vertices.
 angular.module('biggraph').directive('contextMenu', function($timeout) {
   return {
     replace: true,

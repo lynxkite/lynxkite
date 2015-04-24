@@ -1,3 +1,4 @@
+// The links at the bottom of every page, such as "logout".
 'use strict';
 
 angular.module('biggraph').directive('bottomLinks', function($window, util) {

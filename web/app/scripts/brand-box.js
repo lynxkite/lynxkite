@@ -1,3 +1,5 @@
+// The "brand box" is displayed on the right hand side when only one project is open.
+// It includes the Lynx Analytics logo and randomly chosen tips.
 'use strict';
 
 angular.module('biggraph').directive('brandBox', function() {

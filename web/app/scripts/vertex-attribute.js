@@ -1,3 +1,4 @@
+// The entry for a vertex attribute in the project view.
 'use strict';
 
 angular.module('biggraph').directive('vertexAttribute', function(axisOptions) {

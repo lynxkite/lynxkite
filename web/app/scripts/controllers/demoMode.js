@@ -1,3 +1,4 @@
+// The "/demoMode" page allows toggling the demo mode.
 'use strict';
 
 angular.module('biggraph')
