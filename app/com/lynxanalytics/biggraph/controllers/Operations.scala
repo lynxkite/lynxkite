@@ -390,9 +390,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Connected components", new CreateSegmentationOperation(_, _) {
     val description = """Creates a segmentation for every connected set of vertices.<ul>
-    <li>Ignore directions: Two vertices are in the same connected component, if there is
-    a path from A->B or B->A.</li>
-    <li>Require both directions: The algorithm discards non symmetric edges before checking
+    <li>Ignore directions: The algorithm adds reversed edges before calculating the components.</li>
+    <li>Require both directions: The algorithm discards non symmetric edges before calculating
     the components.</li></ul>"""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "connected_components"),
