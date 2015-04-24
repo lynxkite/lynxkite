@@ -10,9 +10,8 @@ import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 
 import com.lynxanalytics.biggraph.graph_operations._
-import com.lynxanalytics.biggraph.graph_util.DataFile
+import com.lynxanalytics.biggraph.graph_util.{ RootRepository, DataFile, SandboxedPath }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, DataFile }
 
 object GraphTestUtils {
   implicit class VertexSetOps[T <% VertexSetData](vs: T) {
@@ -55,7 +54,7 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
     val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("dataManager." + dirName)
     managerDir.mkdir
-    val sandboxRoot = SandboxedPath.getDummyRootName(managerDir.toString)
+    val sandboxRoot = RootRepository.getDummyRootName(managerDir.toString)
     new DataManager(sparkContext, DataFile(sandboxRoot))
   }
 }

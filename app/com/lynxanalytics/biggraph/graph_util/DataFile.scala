@@ -17,50 +17,18 @@ import scala.util.Random
 
 object SandboxedPath {
   private val sandboxedPathPattern = "([$][A-Z]+)(.*)".r
-  private val pathResolutions = scala.collection.mutable.Map[String, String]()
-
-  private def rootSymbolSyntaxIsOK(rootSymbol: String): Boolean = {
-    rootSymbol match {
-      case sandboxedPathPattern(_, _) => true
-      case _ => false
-    }
-  }
-
-  private def resolvePathRecursively(path: String): String = {
-    path match {
-      case sandboxedPathPattern(rootSymbol, rest) =>
-        resolvePathRecursively(pathResolutions(rootSymbol)) + rest
-      case _ => path
-    }
-  }
-
-  def registerRoot(rootSymbol: String, rootResolution: String) = {
-    assert(!pathResolutions.contains(rootSymbol), s"Root symbol $rootSymbol already set")
-    assert(rootSymbolSyntaxIsOK(rootSymbol), s"Invalid root symbol syntax: $rootSymbol")
-    val path = resolvePathRecursively(rootResolution)
-    pathResolutions += rootSymbol -> path
-  }
 
   def apply(str: String): SandboxedPath = str match {
     case sandboxedPathPattern(rootSymbol, relativePath) =>
       new SandboxedPath(rootSymbol, relativePath)
   }
   def fromAbsoluteToSymbolic(absolutePath: String, rootSymbol: String): SandboxedPath = {
-    val rootResolution = pathResolutions(rootSymbol)
-    assert(absolutePath.startsWith(rootResolution), s"Bad prefix match: $absolutePath should begin with $rootResolution")
-    val r = absolutePath.replaceFirst(rootResolution, java.util.regex.Matcher.quoteReplacement(rootSymbol))
-    SandboxedPath(r)
-  }
+    val rootInfo = RootRepository.getRootInfo(rootSymbol)
+    val resolution = rootInfo.resolution
+    assert(absolutePath.startsWith(resolution), s"Bad prefix match: $absolutePath should begin with $resolution")
 
-  // For testing
-  private def randomRootName = "$" + Random.nextString(20).map(x => ((x % 26) + 'A').toChar)
-  def getDummyRootName(rootPath: String): String = {
-    val name = randomRootName
-    if (rootPath.startsWith("file:"))
-      registerRoot(name, rootPath)
-    else
-      registerRoot(name, "file:" + rootPath)
-    name
+    val r = rootSymbol + absolutePath.drop(resolution.length)
+    SandboxedPath(r)
   }
 
 }

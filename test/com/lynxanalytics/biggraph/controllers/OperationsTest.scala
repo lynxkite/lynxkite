@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.graph_util.{ DataFile, SandboxedPath }
+import com.lynxanalytics.biggraph.graph_util.{ DataFile, RootRepository }
 import org.scalatest.FunSuite
 import org.scalatest.Tag
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.serving
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val res = getClass.getResource("/controllers/OperationsTest/").getFile
-  SandboxedPath.registerRoot("$OPERATIONSTEST", "file:" + res)
+  RootRepository.registerRoot("$OPERATIONSTEST", "file:" + res)
   val ops = new Operations(this)
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
