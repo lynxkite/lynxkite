@@ -1,6 +1,7 @@
 // Tags are a small in-memory filesystem that stores projects as directories.
 package com.lynxanalytics.biggraph.graph_api
 
+import java.io.File
 import java.util.UUID
 import play.api.libs.json
 import scala.collection.mutable
@@ -60,6 +61,8 @@ final case class Tag(name: Symbol, parent: TagDir, content: String) extends TagP
 }
 
 trait TagDir extends TagPath {
+  protected val store: KeyValueStore
+
   def /(subPath: SymbolPath): TagPath = {
     val p = followPath(subPath)
     assert(p.nonEmpty, s"$subPath not found in $this")
@@ -71,6 +74,12 @@ trait TagDir extends TagPath {
   def existsTag(subPath: SymbolPath) = followPath(subPath).exists(_.isInstanceOf[Tag])
 
   def rmChild(name: Symbol): Unit = synchronized {
+    children(name) match {
+      case tag: Tag =>
+        store.delete(tag.fullName.toString)
+      case dir: TagDir =>
+        store.deletePrefix(dir.fullName.toString + "/")
+    }
     children -= name
   }
   def rm(offspring: SymbolPath): Unit = synchronized {
@@ -79,6 +88,7 @@ trait TagDir extends TagPath {
   def addTag(name: Symbol, content: String): Tag = synchronized {
     assert(!children.contains(name), s"'$this' already contains '$name'.")
     val result = Tag(name, this, content)
+    store.put(result.fullName.toString, content)
     children(name) = result
     result
   }
@@ -93,7 +103,7 @@ trait TagDir extends TagPath {
   def mkDir(name: Symbol): TagSubDir = synchronized {
     assert(!existsTag(name), s"Tag '$name' already exists.")
     if (existsDir(name)) return (this / name).asInstanceOf[TagSubDir]
-    val result = TagSubDir(name, this)
+    val result = TagSubDir(name, this, store)
     children(name) = result
     result
   }
@@ -129,29 +139,69 @@ trait TagDir extends TagPath {
   def lsRec(indent: Int = 0): String =
     " " * indent + fullName + "\n" + children.values.map(_.lsRec(indent + 1)).mkString
 
-  def clear(): Unit = children.clear()
+  def clear(): Unit = synchronized {
+    store.deletePrefix(fullName.toString + "/")
+    children.clear()
+  }
 
   def ls: Seq[TagPath] = children.values.toSeq.sorted
 
   private val children = mutable.Map[Symbol, TagPath]()
 }
 
-final case class TagSubDir(name: Symbol, parent: TagDir) extends TagDir
+final case class TagSubDir(name: Symbol, parent: TagDir, store: KeyValueStore) extends TagDir
 
-final case class TagRoot() extends TagDir {
+final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
   val name = null
   val parent = null
   override val fullName: SymbolPath = new SymbolPath(Seq())
+
   override def isOffspringOf(other: TagPath): Boolean = (other == this)
-  def saveToString: String = {
-    json.Json.prettyPrint(json.JsObject(
-      allTags.map(tag => tag.fullName.toString -> json.JsString(tag.content)).toSeq
-    ))
-  }
-  def loadFromString(data: String) = {
-    clear()
-    for ((name, value) <- json.Json.parse(data).as[json.JsObject].fields) {
-      setTag(name, value.as[String])
+
+  def batch[T](fn: => T): T = store.batch(fn)
+
+  def setTags(tags: Map[SymbolPath, String]): Unit = synchronized {
+    batch {
+      for ((k, v) <- tags) {
+        setTag(k, v)
+      }
     }
+  }
+
+  // Create tags from the key-value store.
+  store.writesCanBeIgnored {
+    setTags(TagRoot.loadFromStore(store))
+  }
+}
+object TagRoot {
+  val sqliteFilename = "tags.sqlite"
+
+  def loadFromRepo(repo: String): Map[SymbolPath, String] =
+    loadFromStore(storeFromRepo(repo))
+
+  private def loadFromStore(store: KeyValueStore): Map[SymbolPath, String] =
+    store.scan("").map { case (k, v) => SymbolPath.fromString(k) -> v }.toMap
+
+  private def storeFromRepo(repo: String): KeyValueStore = {
+    val tagsSQLite = new File(repo, sqliteFilename)
+    val tagsOld = new File(repo, "tags")
+    if (tagsSQLite.exists) {
+      new SQLiteKeyValueStore(tagsSQLite.toString)
+    } else if (tagsOld.exists) {
+      new JsonKeyValueStore(tagsOld.toString)
+    } else { // Nothing to load. Use SQLite.
+      new SQLiteKeyValueStore(tagsSQLite.toString)
+    }
+  }
+
+  def apply(repo: String) = {
+    val oldStore = storeFromRepo(repo) // May be from earlier versions.
+    val tagsSQLite = new File(repo, sqliteFilename)
+    val newStore = new SQLiteKeyValueStore(tagsSQLite.toString)
+    val root = new TagRoot(newStore)
+    if (oldStore != newStore) {
+      root.setTags(loadFromStore(oldStore))
+    }
+    root
   }
 }
