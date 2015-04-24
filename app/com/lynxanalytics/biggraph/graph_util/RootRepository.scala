@@ -1,3 +1,5 @@
+// Singleton class that controls the symbolic root names for file handling.
+
 package com.lynxanalytics.biggraph.graph_util
 
 import scala.util.Random
