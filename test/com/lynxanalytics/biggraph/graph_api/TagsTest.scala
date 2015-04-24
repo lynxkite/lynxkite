@@ -43,6 +43,16 @@ class TagsTest extends FunSuite with TestTempDir {
     assert(root2.lsRec() == root.lsRec())
   }
 
+  test("Directory deletion works") {
+    val root = newRoot
+    root.setTag("alma/korte/barack", "hello")
+    assert(root.exists("alma/korte/barack"))
+    root.rm("alma/korte")
+    assert(!root.exists("alma/korte/barack"))
+    val root2 = TagRoot(storeFile.toString)
+    assert(!root2.exists("alma/korte/barack"))
+  }
+
   test("Can read tag as UUID") {
     val root = newRoot
     val uuid = UUID.randomUUID()
