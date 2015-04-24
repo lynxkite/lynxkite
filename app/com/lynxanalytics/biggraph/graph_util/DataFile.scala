@@ -47,8 +47,9 @@ case class DataFile(sandboxedPath: SandboxedPath) {
   def fullString = toString
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = new hadoop.conf.Configuration()
-    conf.set("fs.s3n.awsAccessKeyId", "") // TODO These will come from someplace global
-    conf.set("fs.s3n.awsSecretAccessKey", "") // TODO ditto
+    val rootInfo = RootRepository.getRootInfo(sandboxedPath.rootSymbol)
+    conf.set("fs.s3n.awsAccessKeyId", rootInfo.accessKey)
+    conf.set("fs.s3n.awsSecretAccessKey", rootInfo.secretKey)
     return conf
   }
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
