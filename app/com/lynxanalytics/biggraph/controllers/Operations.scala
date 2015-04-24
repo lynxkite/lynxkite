@@ -417,7 +417,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Find infocom communities", new CreateSegmentationOperation(_, _) {
-    val description = ""
+    val description = """
+    Finds maximal cliques then merges them to communities. Two cliques are merged if they
+    sufficiently overlap. More details of the algorithm can be found
+    <a href="https://flora.insead.edu/fichiersti_wp/inseadwp2008/2008-64.pdf">here</a>."""
     def parameters = List(
       Param(
         "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
