@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.3.1
+
  - Edges can now be colored based on string attributes as well.
  - SQL operations should be more portable now and will also work if field names contain
    special characters.
