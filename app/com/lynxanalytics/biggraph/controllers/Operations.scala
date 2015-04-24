@@ -841,7 +841,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Degree", new AttributeOperation(_, _) {
-    val description = "Calculates the number of neighbours for every vertex."
+    val description = """
+    Calculates the number of edges connected to every vertex. Note that this can be different
+    from the number of neighbours in case of parallel edges."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "degree"),
       Param("direction", "Count", options = Direction.options))
