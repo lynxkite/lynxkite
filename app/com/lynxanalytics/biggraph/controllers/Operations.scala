@@ -390,21 +390,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Connected components", new CreateSegmentationOperation(_, _) {
     val description = """Creates a segmentation for every connected set of vertices.<ul>
-    <li>Weak:   Two vertices are in the same connected component, if there is a path
-    from A->B or B->A.</li>
-    <li>Strong: The algorithm discards non symmetric edges before checking the components. Note
-    that this is different from the common definition of strongly connected components.</li></ul>"""
+    <li>Ignore directions: Two vertices are in the same connected component, if there is
+    a path from A->B or B->A.</li>
+    <li>Require both directions: The algorithm discards non symmetric edges before checking
+    the components.</li></ul>"""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "connected_components"),
       Param(
-        "type",
-        "Connectedness type",
-        options = UIValue.list(List("weak", "strong"))))
+        "directions",
+        "Edge direction",
+        options = UIValue.list(List("ignore directions", "require both directions"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      val symmetric = params("type") match {
-        case "weak" => addReversed(project.edgeBundle)
-        case "strong" => removeNonSymmetric(project.edgeBundle)
+      val symmetric = params("directions") match {
+        case "ignore directions" => addReversed(project.edgeBundle)
+        case "require both directions" => removeNonSymmetric(project.edgeBundle)
       }
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, symmetric).result
@@ -788,9 +788,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Clustering coefficient", new AttributeOperation(_, _) {
     val description = """
     Calculates the local clustering coefficient attribute for every vertex. It quantifies how
-    close the vertex's neighbours are to being a clique. In practise a high (close to 1.0)
-    clustering coefficient means that the neighbours of a vertex are highly interconnected,
-    0.0 means there are no edges between the neighbours of the vertex."""
+    close the vertex's neighbors are to being a clique. In practice a high (close to 1.0)
+    clustering coefficient means that the neighbors of a vertex are highly interconnected,
+    0.0 means there are no edges between the neighbors of the vertex."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
     def enabled = hasEdgeBundle
@@ -804,7 +804,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Embeddedness", new AttributeOperation(_, _) {
     val description = """
     Calculates the overlap size of vertex neighborhoods along the edges. If an edge A->B
-    has an embeddedness of <tt>N</tt>, it means A and B have <tt>N</tt> common neighbours."""
+    has an embeddedness of <tt>N</tt>, it means A and B have <tt>N</tt> common neighbors."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "embeddedness"))
     def enabled = hasEdgeBundle
@@ -847,7 +847,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Degree", new AttributeOperation(_, _) {
     val description = """
     Calculates the number of edges connected to every vertex. Note that this can be different
-    from the number of neighbours in case of parallel edges."""
+    from the number of neighbors in case of parallel edges."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "degree"),
       Param("direction", "Count", options = Direction.options))
@@ -863,7 +863,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("PageRank", new AttributeOperation(_, _) {
     val description = """
     Calculates PageRank for every vertex. PageRank is a calculated by simulating random walks
-    on the graph. It is more likely for the walk to stop on vertices with higher PageRanks.
+    on the graph. Its PageRank reflects the likelihood that the walk leads to a specific vertex.
 
     Let's imagine a social graph with information flowing along the egdes. In this case high
     PageRank means that the vertex is more likely to be the target of the information. Similarly,
@@ -1637,7 +1637,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy edge attribute", new UtilityOperation(_, _) {
-    val description = "Copies the value of an edge attribute for every edges."
+    val description = "Creates a copy of the edge attribute."
     def parameters = List(
       Param("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
@@ -1653,7 +1653,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy vertex attribute", new UtilityOperation(_, _) {
-    val description = "Copies the value of a vertex attribute for every vertices."
+    val description = "Creates a copy of the vertex attribute."
     def parameters = List(
       Param("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
