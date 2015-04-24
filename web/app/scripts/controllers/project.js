@@ -1,3 +1,4 @@
+// The "/project" page displays one or two projects.
 'use strict';
 
 angular.module('biggraph')

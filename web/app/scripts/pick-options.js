@@ -1,3 +1,4 @@
+// The UI for advanced center selection in sampled mode.
 'use strict';
 
 angular.module('biggraph').directive('pickOptions', function() {

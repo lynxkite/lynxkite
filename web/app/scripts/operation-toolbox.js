@@ -1,3 +1,4 @@
+// The toolbox shows the list of operation categories and the operations.
 'use strict';
 
 angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
