@@ -17,10 +17,10 @@ object RootRepository {
   def randomRootSymbol = "$" + Random.nextString(20).map(x => ((x % 26) + 'A').toChar)
   def getDummyRootName(rootPath: String): String = {
     val name = randomRootSymbol
-    if (rootPath.startsWith("file:"))
-      registerRoot(name, rootPath)
-    else
+    if (rootPath.startsWith("/"))
       registerRoot(name, "file:" + rootPath)
+    else
+      registerRoot(name, rootPath)
     name
   }
 

@@ -37,8 +37,7 @@ class DataFileTest extends FunSuite {
   }
 
   test("Password setting works") {
-    val dummy = RootRepository.randomRootSymbol
-    RootRepository.registerRoot(dummy, "s3n://access:secret@lynx-bnw-test")
+    val dummy = RootRepository.getDummyRootName("s3n://access:secret@lynx-bnw-test")
     val dataFile = DataFile(dummy + "/somedir/somefile")
     val conf = dataFile.hadoopConfiguration()
     assert(conf.get("fs.s3n.awsAccessKeyId") == "access")
