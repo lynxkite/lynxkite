@@ -74,8 +74,11 @@ trait TagDir extends TagPath {
   def existsTag(subPath: SymbolPath) = followPath(subPath).exists(_.isInstanceOf[Tag])
 
   def rmChild(name: Symbol): Unit = synchronized {
-    if (children(name).isInstanceOf[Tag]) {
-      store.delete(children(name).fullName.toString)
+    children(name) match {
+      case tag: Tag =>
+        store.delete(tag.fullName.toString)
+      case dir: TagDir =>
+        store.deletePrefix(dir.fullName.toString + "/")
     }
     children -= name
   }
