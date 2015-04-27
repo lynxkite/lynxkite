@@ -1,3 +1,5 @@
+// The histogram button sends the histogram request and makes the results available.
+// The "histogram" directive then shows the result.
 'use strict';
 
 angular.module('biggraph').directive('histogramButton', function(util) {

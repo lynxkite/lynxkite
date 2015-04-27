@@ -1,3 +1,4 @@
+// The "/project" page displays one or two projects.
 'use strict';
 
 angular.module('biggraph')
@@ -93,6 +94,7 @@ angular.module('biggraph')
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.centers === undefined) {
+        this.state.centers = [];
         this.sendCenterRequest(this.state.lastCentersRequest);
       }
     };
@@ -109,8 +111,9 @@ angular.module('biggraph')
 
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
+      var noCenters = (this.state.centers === undefined) || (this.state.centers.length === 0);
       if (!this.loaded() || !this.state.graphMode ||
-          (this.state.graphMode === 'sampled' && !this.state.centers)) {
+          (this.state.graphMode === 'sampled' && noCenters)) {
         this.viewData = undefined;
         return;
       }
@@ -162,9 +165,12 @@ angular.module('biggraph')
       vd.edgeAttrs.edgeLabel = aggregated(
         this.resolveEdgeAttribute(this.state.attributeTitles['edge label']),
         'vector');
-      vd.edgeAttrs.edgeColor = aggregated(
-        this.resolveEdgeAttribute(this.state.attributeTitles['edge color']),
-        'sum');
+      var edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
+      if (edgeColorAttr !== undefined) {
+        vd.edgeAttrs.edgeColor =
+          (edgeColorAttr.typeName === 'Double') ?
+          aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'vector');
+      }
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
 
@@ -239,7 +245,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.maybeRequestNewCenter = function() {
-      if (this.state.graphMode === 'sampled' && !this.state.centers) {
+      if (this.state.graphMode === 'sampled' && this.state.centers === undefined) {
         this.requestNewCenters(1);
       }
     };
@@ -535,18 +541,18 @@ angular.module('biggraph')
       angular.forEach(this.state.filters.edge, addNonEmpty);
       return res.join(', ');
     };
-
+    Side.prototype.filterableVertexAttributes = function() {
+      return this.project.vertexAttributes.concat(
+        this.project.segmentations.map(function(segmentation) {
+          return segmentation.equivalentAttribute;
+        }));
+    };
     Side.prototype.resolveVertexAttribute = function(title) {
-      for (var attrIdx = 0; attrIdx < this.project.vertexAttributes.length; attrIdx++) {
-        var attr = this.project.vertexAttributes[attrIdx];
+      var filterableAttributes = this.filterableVertexAttributes();
+      for (var attrIdx = 0; attrIdx < filterableAttributes.length; attrIdx++) {
+        var attr = filterableAttributes[attrIdx];
         if (attr.title === title) {
           return attr;
-        }
-      }
-      for (var segIdx = 0; segIdx < this.project.segmentations.length; segIdx++) {
-        var sattr = this.project.segmentations[segIdx].equivalentAttribute;
-        if (sattr.title === title) {
-          return { id: sattr.id, title: title };
         }
       }
       return undefined;
@@ -636,7 +642,7 @@ angular.module('biggraph')
     // Removes entries from state which depend on nonexistent attributes
     Side.prototype.cleanState = function() {
       if (!this.loaded()) { return; }
-      var vTitles = this.project.vertexAttributes.map(function(a) { return a.title; });
+      var vTitles = this.filterableVertexAttributes().map(function(a) { return a.title; });
       var eTitles = this.project.edgeAttributes.map(function(a) { return a.title; });
       for (var attr in this.state.filters.edge) {
         if (eTitles.indexOf(attr) === -1) {

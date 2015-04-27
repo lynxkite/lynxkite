@@ -1,3 +1,5 @@
+// Constructs and sends the diagram request.
+// The result is then rendered by the "graph-view" directive.
 'use strict';
 
 angular.module('biggraph').directive('projectGraph', function (util) {

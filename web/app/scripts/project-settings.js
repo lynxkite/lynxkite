@@ -1,3 +1,4 @@
+// Project-level settings, including ACLs.
 'use strict';
 
 angular.module('biggraph').directive('projectSettings', function(util) {

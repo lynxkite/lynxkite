@@ -177,11 +177,12 @@
               <td ng-class="{ 'de-emph': !side.state.animate.enabled }"
                   tooltip-append-to-body="true" tooltip-placement="right"
                   tooltip="{{ !side.state.animate.enabled ? 'Animation is off.' : '' }}">
-                Style:
+                Layout style:
               </td>
               <td>
                 <select ng-disabled="!side.state.animate.enabled"
-                        ng-model="side.state.animate.style">
+                        ng-model="side.state.animate.style"
+                        class="form-control">
                   <option value="centralize" title="Vertices with large degrees tend to be in the middle.">Centralize</option>
                   <option value="decentralize" title="Vertices with large degrees distract each other.">Decentralize</option>
                 </select> 

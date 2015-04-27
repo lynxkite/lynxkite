@@ -1,3 +1,4 @@
+// The "/cluster" page allows resizing the cluster.
 'use strict';
 
 angular.module('biggraph')

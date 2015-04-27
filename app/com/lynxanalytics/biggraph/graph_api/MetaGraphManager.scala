@@ -77,14 +77,10 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def setTag(tag: SymbolPath, content: String): Unit = synchronized {
     tagRoot.setTag(tag, content)
-    saveTags()
   }
 
   def setTags(tags: Map[SymbolPath, String]): Unit = synchronized {
-    for ((tag, content) <- tags) {
-      tagRoot.setTag(tag, content)
-    }
-    saveTags()
+    tagRoot.setTags(tags)
   }
 
   def getTag(tag: SymbolPath): String = synchronized {
@@ -93,12 +89,10 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def rmTag(tag: SymbolPath): Unit = synchronized {
     (tagRoot / tag).rm
-    saveTags()
   }
 
   def cpTag(from: SymbolPath, to: SymbolPath): Unit = synchronized {
     tagRoot.cp(from, to)
-    saveTags()
   }
 
   def debugPrintTag(tag: SymbolPath): Unit = synchronized {
@@ -113,17 +107,9 @@ class MetaGraphManager(val repositoryPath: String) {
     (tagRoot / tag).ls.map(_.fullName)
   }
 
-  // At the moment tag transactions are an optimization. The changes will not be rolled back
-  // on failure. It's just a way of batching writes to improve performance.
-  private var tagTransactionDepth = 0
-  def tagTransaction[T](fn: => T) = synchronized {
-    tagTransactionDepth += 1
-    try {
-      fn
-    } finally {
-      tagTransactionDepth -= 1
-      saveTags()
-    }
+  // Defers tag writes until after "fn". Improves performance for large tag transactions.
+  def tagBatch[T](fn: => T) = synchronized {
+    tagRoot.batch { fn }
   }
 
   def vertexSet(tag: SymbolPath): VertexSet = synchronized {
@@ -155,7 +141,7 @@ class MetaGraphManager(val repositoryPath: String) {
   // All tagRoot access must be synchronized on this MetaGraphManager object.
   // This allows users of MetaGraphManager to safely conduct transactions over
   // multiple tags.
-  private val tagRoot = TagRoot()
+  private val tagRoot = TagRoot(repositoryPath)
 
   private val outgoingBundlesMap =
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
@@ -213,19 +199,6 @@ class MetaGraphManager(val repositoryPath: String) {
     dumpFile.renameTo(finalFile)
   }
 
-  private def saveTags(): Unit = synchronized {
-    // Writes are deferred during transactions.
-    // TODO: Make all tag changes through tag transactions and remove this "if".
-    if (tagTransactionDepth == 0) {
-      val dumpFile = new File(repositoryPath, "dump-tags")
-      val j = json.JsObject(tagRoot.allTags.map {
-        tag => tag.fullName.toString -> json.JsString(tag.content)
-      }.toSeq)
-      FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
-      dumpFile.renameTo(new File(repositoryPath, "tags"))
-    }
-  }
-
   private def initializeFromDisk(): Unit = synchronized {
     for ((file, j) <- MetaGraphManager.loadOperations(repositoryPath)) {
       try {
@@ -243,8 +216,6 @@ class MetaGraphManager(val repositoryPath: String) {
         case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
     }
-
-    setTags(MetaGraphManager.loadTags(repositoryPath))
   }
 
   def serializeOperation(inst: MetaGraphOperationInstance): json.JsObject = {
@@ -290,16 +261,6 @@ object MetaGraphManager {
     val files = opdir.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
     files.map { f =>
       f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
-    }
-  }
-
-  def loadTags(repo: String): Map[SymbolPath, String] = {
-    val tagsFile = new File(repo, "tags")
-    if (tagsFile.exists) {
-      val j = Json.parse(FileUtils.readFileToString(tagsFile, "utf8"))
-      j.as[Map[String, String]].map { case (k, v) => SymbolPath.fromString(k) -> v }
-    } else {
-      Map()
     }
   }
 }

@@ -1,3 +1,4 @@
+// The Spark status indicator cogwheel in the bottom left.
 'use strict';
 
 angular.module('biggraph')

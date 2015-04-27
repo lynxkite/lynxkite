@@ -1,3 +1,4 @@
+// A list of error messages that hover over the page.
 'use strict';
 
 angular.module('biggraph').directive('topAlerts', function(util) {
@@ -12,6 +13,9 @@ angular.module('biggraph').directive('topAlerts', function(util) {
           details: msg.details,
           time: new Date(),
         });
+      });
+      scope.$on('clear topAlerts', function() {
+        scope.alerts = [];
       });
       scope.close = function(i) {
         scope.alerts.splice(i, 1);
