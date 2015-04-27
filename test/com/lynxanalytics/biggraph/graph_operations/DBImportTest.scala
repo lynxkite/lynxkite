@@ -18,7 +18,7 @@ class DBImportTest extends FunSuite with TestGraphOp {
     statement.executeUpdate("""
     DROP TABLE IF EXISTS subscribers;
     CREATE TABLE subscribers
-      (id INTEGER, name TEXT, gender TEXT, race TEXT, level DOUBLE PRECISION);
+      (id INTEGER, name TEXT, gender TEXT, "race condition" TEXT, level DOUBLE PRECISION);
     INSERT INTO subscribers VALUES
       (1, 'Daniel', 'Male', 'Halfling', 10.0),
       (2, 'Beata', 'Female', 'Dwarf', 20.0),
@@ -26,11 +26,11 @@ class DBImportTest extends FunSuite with TestGraphOp {
     """)
     connection.close()
     val data = ImportVertexList(
-      DBTable(db, "subscribers", Seq("id", "name", "race", "level"), "id")).result
-    assert(data.attrs.keySet == Set("id", "name", "race", "level"))
+      DBTable(db, "subscribers", Seq("id", "name", "race condition", "level"), "id")).result
+    assert(data.attrs.keySet == Set("id", "name", "race condition", "level"))
     assert(data.vertices.rdd.count == 3)
     val names = data.attrs("name").rdd
-    val races = data.attrs("race").rdd
+    val races = data.attrs("race condition").rdd
     val levels = data.attrs("level").rdd
     val racesByNames = names.sortedJoin(races).values.collect.toSeq.sorted
     assert(racesByNames == Seq("Beata" -> "Dwarf", "Daniel" -> "Halfling", "Felix" -> "Gnome"))

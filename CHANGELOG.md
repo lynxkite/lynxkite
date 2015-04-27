@@ -6,6 +6,13 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.3.1
+
+ - Edges can now be colored based on string attributes as well.
+ - SQL operations should be more portable now and will also work if field names contain
+   special characters.
+ - One can now use the newly added .kiterc option, `KITE_EXTRA_JARS`, to add JARS on the classpath
+   of all LynxKite components. Most important usecase is to add JDBC drivers.
  - Multiple ways of 2D graph rendering.
  - Improved compatibility for Mozilla Firefox.
  - Show all visualized attributes as part of the legend in sampled view.
