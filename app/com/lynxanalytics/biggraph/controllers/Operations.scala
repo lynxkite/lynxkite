@@ -895,7 +895,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.Centrality()
+      val op = graph_operations.HyperBallCentrality()
       project.vertexAttributes(params("name")) =
         op(op.es, project.edgeBundle).result.harmonicCentrality
     }
