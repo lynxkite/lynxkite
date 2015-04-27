@@ -16,7 +16,7 @@ class HadoopFileTest extends FunSuite {
       RootRepository.registerRoot("$KJHKJSDDSJ/haha", "mamam")
     }
   }
-
+  /*
   test("Test basic RootRepository logic") {
     RootRepository.registerRoot("$HELLO", "/bello")
     assert(RootRepository.getRootInfo("$HELLO").resolution == "/bello")
@@ -35,7 +35,7 @@ class HadoopFileTest extends FunSuite {
     assert(rr.accessKey == "access")
     assert(rr.secretKey == "secret")
   }
-
+*/
   test("Password setting works") {
     val dummy = RootRepository.getDummyRootName("s3n://access:secret@lynx-bnw-test")
     val dataFile = HadoopFile(dummy + "/somedir/somefile")
