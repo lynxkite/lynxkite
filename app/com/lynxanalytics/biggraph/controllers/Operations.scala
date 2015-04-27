@@ -2079,9 +2079,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
       Param("seed", "Random seed for test set selection", defaultValue = randomSeed),
       Param("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
-      Param("iterations", "Iterations", defaultValue = "3"),
       Param("min_num_defined", "Minimum number of defined attributes in a segment", defaultValue = "3"),
-      Param("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"))
+      Param("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"),
+      Param("iterations", "Iterations", defaultValue = "3"))
     def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
     def enabled = hasVertexSet &&
       FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
