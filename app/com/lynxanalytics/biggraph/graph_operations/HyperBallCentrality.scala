@@ -48,7 +48,7 @@ case class HyperBallCentrality(maxDiameter: Int)
     val edges = inputs.es.rdd.map { case (id, edge) => (edge.src, edge.dst) }
       .groupBySortedKey(vertexPartitioner).cache()
     // Hll counters are used to estimate set sizes.
-    val globalHll = new HyperLogLogMonoid(bits = 12)
+    val globalHll = new HyperLogLogMonoid(bits = 8)
 
     val harmonicCentralities = getHarmonicCentralities(
       diameter = 1,
