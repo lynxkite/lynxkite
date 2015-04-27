@@ -75,8 +75,8 @@ case class HyperBallCentrality(maxDiameter: Int)
     edges: SortedRDD[ID, Iterable[ID]],
     globalHll: HyperLogLogMonoid): SortedRDD[ID, Double] = {
 
-    val newHyperBallCounters = getNextHyperBall(
-      hyperBallCounters, vertexPartitioner, edges, globalHll).cache()
+    val newHyperBallCounters = getNextHyperBalls(
+      hyperBallCounters, vertexPartitioner, edges).cache()
     val newHyperBallSizes = hyperBallSizes.sortedJoin(newHyperBallCounters).mapValues {
       case ((_, newValue), hll) =>
         (newValue, hll.estimatedSize.toInt)
@@ -98,26 +98,19 @@ case class HyperBallCentrality(maxDiameter: Int)
   }
 
   /** Returns hyperBallCounters for a diameter increased with 1.*/
-  private def getNextHyperBall(
+  private def getNextHyperBalls(
     hyperBallCounters: SortedRDD[ID, HLL],
     vertexPartitioner: Partitioner,
-    edges: SortedRDD[ID, Iterable[ID]],
-    globalHll: HyperLogLogMonoid): SortedRDD[ID, HLL] = {
+    edges: SortedRDD[ID, Iterable[ID]]): SortedRDD[ID, HLL] = {
     // Aggregate the Hll counters for every neighbor.
-    val hyperBallOfNeighbors = hyperBallCounters
+    (hyperBallCounters
       .sortedJoin(edges)
       .flatMap {
-        case (_, (hll, neighbors)) => neighbors.map(id => (id, hll))
-      }
+        case (id, (hll, neighbors)) => neighbors.map(nid => (nid, hll))
+        // Add the original Hlls.
+      } ++ hyperBallCounters)
       // Note that the + operator is defined on Algebird's HLL.
       .reduceBySortedKey(vertexPartitioner, _ + _)
-
-    // Add the original Hll.
-    hyperBallCounters.sortedLeftOuterJoin(hyperBallOfNeighbors).mapValues {
-      // There is no counter for the neighbors of vertices with no out edges.
-      case (originalHll, neighborHll) =>
-        originalHll + neighborHll.getOrElse(globalHll.zero)
-    }
   }
 }
 
