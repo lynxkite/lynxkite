@@ -27,7 +27,10 @@ var FORCE_LAYOUT = (function() {
       if (this.opts.style === 'decentralize') {
         // Higher-degree vertices are lighter, so they get pushed to the periphery.
         v.forceMass = vertices.length / (v.degree + 1);
-      } else {
+      } else if (this.opts.style === 'neutral') {
+        // All vertices have the same weight, so graph structure dominates the layout.
+        v.forceMass = 2.0 * vertices.edges.length / vertices.length;
+      } else /* this.opts.style === 'centralize' */ {
         // Higher-degree vertices are heavier, so they fall into the center.
         v.forceMass = v.degree + 1;
       }
