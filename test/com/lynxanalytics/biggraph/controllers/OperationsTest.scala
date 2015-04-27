@@ -69,7 +69,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Aggregate to segmentation") {
     run("Example Graph")
-    run("Connected components", Map("name" -> "cc", "type" -> "strong"))
+    run("Connected components", Map("name" -> "cc", "directions" -> "require both directions"))
     val seg = project.segmentation("cc").project
     run("Aggregate to segmentation",
       Map("aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100"),

@@ -19,10 +19,12 @@ class DemoModeController(environment: BigGraphEnvironment) {
   }
 
   def enterDemoMode(user: serving.User, req: serving.Empty): Unit = {
+    assert(user.isAdmin, "Only administrator users can toggle demo mode.")
     environment.dataManager.computationAllowed = false
   }
 
   def exitDemoMode(user: serving.User, req: serving.Empty): Unit = {
+    assert(user.isAdmin, "Only administrator users can toggle demo mode.")
     environment.dataManager.computationAllowed = true
   }
 }
