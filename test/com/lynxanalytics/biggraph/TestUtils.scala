@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph
 
 import java.io.File
-import com.lynxanalytics.biggraph.graph_util.{ RootRepository, SandboxedPath }
+import com.lynxanalytics.biggraph.graph_util.{ RootRepository }
 import org.apache.spark
 import org.scalatest.Tag
 

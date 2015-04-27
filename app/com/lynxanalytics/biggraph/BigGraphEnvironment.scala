@@ -35,7 +35,7 @@ trait StaticDirEnvironment extends BigGraphEnvironment {
     sparkContext, repositoryDirs.dataDir)
 }
 
-import com.lynxanalytics.biggraph.graph_util.{ SandboxedPath, DataFile }
+import com.lynxanalytics.biggraph.graph_util.{ DataFile }
 
 trait RepositoryDirs {
   val graphDir: String
