@@ -24,6 +24,13 @@ object RootRepository {
     name
   }
 
+  def splitSymbolicPattern(str: String): (String, String) = {
+    str match {
+      case symbolicRootPattern(rootSymbol, relativePath) =>
+        (rootSymbol, relativePath)
+    }
+  }
+
   private def rootSymbolSyntaxIsOK(rootSymbol: String): Boolean = {
     rootSymbol match {
       case symbolicRootPattern(_, rest) => rest.isEmpty
