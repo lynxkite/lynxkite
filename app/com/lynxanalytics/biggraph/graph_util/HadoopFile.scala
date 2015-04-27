@@ -14,11 +14,10 @@ import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object HadoopFile {
-  private val sandboxedPathPattern = "([$][A-Z]+)(.*)".r
 
-  def apply(str: String) = str match {
-    case sandboxedPathPattern(rootSymbol, relativePath) =>
-      new HadoopFile(rootSymbol, relativePath)
+  def apply(str: String) = {
+    val v = RootRepository.splitSymbolicPattern(str)
+    new HadoopFile(v._1, v._2)
   }
 
 }
