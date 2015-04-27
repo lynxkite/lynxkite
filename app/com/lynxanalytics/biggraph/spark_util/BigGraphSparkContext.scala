@@ -14,8 +14,6 @@ import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
 
-import com.twitter.algebird._
-
 private object SparkStageJars {
   val classesToBundle: Seq[Class[_]] = Seq(
     getClass(),

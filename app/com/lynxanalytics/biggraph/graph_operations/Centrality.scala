@@ -1,6 +1,7 @@
 // Estimates Harmonic Centrality for each vertex using the HyperBall algorithm.
+// http://vigna.di.unimi.it/ftp/papers/HyperBall.pdf
 // HyperBall uses HyperLogLog counters to estimate sizes of large sets, so
-// the centrality values calcuated here are approximations. Note that this
+// the centrality values calculated here are approximations. Note that this
 // algorithm does not take weights or parallel edges into account.
 package com.lynxanalytics.biggraph.graph_operations
 
@@ -11,7 +12,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
-import com.twitter.algebird._
+import com.twitter.algebird.HyperLogLogMonoid
+import com.twitter.algebird.HLL
 import com.twitter.algebird.HyperLogLog._
 
 object Centrality extends OpFromJson {
@@ -31,7 +33,6 @@ case class Centrality()
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj()
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -42,12 +43,12 @@ case class Centrality()
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
     // Hll counters are used to estimate set sizes.
-    val globalHll = new HyperLogLogMonoid( /*bit size = */ 12)
+    val globalHll = new HyperLogLogMonoid(bits = 12)
 
     var hyperBallCounters = vertices
       .mapValuesWithKeys {
         // Initialize a counter for every vertex 
-        case (key, _) => globalHll(key)
+        case (vid, _) => globalHll(vid)
       }
 
     // We have to keep track of the HyperBall sizes for the actual
@@ -88,21 +89,21 @@ case class Centrality()
     vertexPartitioner: Partitioner,
     edges: EdgeBundleRDD,
     globalHll: HyperLogLogMonoid): SortedRDD[ID, HLL] = {
-    // Aggregate the Hll counters for every neighbour.
-    val hyperBallOfNeighbours = hyperBallCounters
+    // Aggregate the Hll counters for every neighbor.
+    val hyperBallOfNeighbors = hyperBallCounters
       .sortedJoin(edges.map { case (id, edge) => (edge.src, edge.dst) }
         .groupBySortedKey(vertexPartitioner))
       .flatMap {
-        case (_, (hll, neighbours)) => neighbours.map(id => (id, hll))
+        case (_, (hll, neighbors)) => neighbors.map(id => (id, hll))
       }
       // Note that the + operator is defined on Algebird's HLL.
       .reduceBySortedKey(vertexPartitioner, _ + _)
 
     // Add the original Hll.
-    hyperBallCounters.sortedLeftOuterJoin(hyperBallOfNeighbours).mapValues {
-      // There is no counter for the neighbours of vertices with no out edges.
-      case (originalHll, neighbourHll) =>
-        originalHll + neighbourHll.getOrElse(globalHll.zero)
+    hyperBallCounters.sortedLeftOuterJoin(hyperBallOfNeighbors).mapValues {
+      // There is no counter for the neighbors of vertices with no out edges.
+      case (originalHll, neighborHll) =>
+        originalHll + neighborHll.getOrElse(globalHll.zero)
     }
   }
 }
