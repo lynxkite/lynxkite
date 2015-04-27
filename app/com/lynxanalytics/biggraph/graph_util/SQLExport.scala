@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object SQLExport {
-  private def quoteIdentifier(s: String) = '"' + s.replaceAll("\"", "\"\"") + '"'
+  def quoteIdentifier(s: String) = '"' + s.replaceAll("\"", "\"\"") + '"'
   private def quoteData(s: String) = "'" + StringEscapeUtils.escapeSql(s) + "'"
   private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
     rdds.foldLeft(base) { (seqs, rdd) =>
