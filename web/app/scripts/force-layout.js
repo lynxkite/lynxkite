@@ -27,7 +27,7 @@ var FORCE_LAYOUT = (function() {
       if (this.opts.style === 'decentralize') {
         // Higher-degree vertices are lighter, so they get pushed to the periphery.
         v.forceMass = vertices.length / (v.degree + 1);
-      } else if (this.opts.style === 'scale_free') {
+      } else if (this.opts.style === 'neutral') {
         // Higher degree vertices act as centers.
         v.forceMass = 2.0 * vertices.edges.length / vertices.length;
       } else /* this.opts.style === 'centralize' */ {
