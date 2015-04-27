@@ -165,9 +165,12 @@ angular.module('biggraph')
       vd.edgeAttrs.edgeLabel = aggregated(
         this.resolveEdgeAttribute(this.state.attributeTitles['edge label']),
         'vector');
-      vd.edgeAttrs.edgeColor = aggregated(
-        this.resolveEdgeAttribute(this.state.attributeTitles['edge color']),
-        'sum');
+      var edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
+      if (edgeColorAttr !== undefined) {
+        vd.edgeAttrs.edgeColor =
+          (edgeColorAttr.typeName === 'Double') ?
+          aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'vector');
+      }
 
       vd.edgeWidth = this.resolveEdgeAttribute(this.state.attributeTitles.width);
 

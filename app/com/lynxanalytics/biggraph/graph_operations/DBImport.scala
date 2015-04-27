@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_util.SQLExport.quoteIdentifier
 import anorm.SQL
 import java.sql
 import org.apache.spark.rdd.RDD
@@ -18,6 +19,9 @@ case class DBTable(
     key: String) extends RowInput {
   assert(fields.contains(key), s"$key not found in $fields")
 
+  val quotedTable = quoteIdentifier(table)
+  val quotedKey = quoteIdentifier(key)
+
   override def toJson = Json.obj(
     "db" -> db,
     "table" -> table,
@@ -26,17 +30,18 @@ case class DBTable(
 
   case class Stats(table: String)(implicit val connection: sql.Connection) {
     val (minKey, maxKey) = {
-      val q = SQL(s"SELECT MIN($key) AS min, MAX($key) AS max FROM $table")
+      val q = SQL(
+        s"SELECT MIN($quotedKey) AS min, MAX($quotedKey) AS max FROM $quotedTable")
       q().map(r => (r[Long]("min"), r[Long]("max"))).head
     }
     val count = {
-      val q = SQL(s"SELECT COUNT(*) AS count FROM $table")
+      val q = SQL(s"SELECT COUNT(*) AS count FROM $quotedTable")
       q().map(r => r[Long]("count")).head
     }
   }
 
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
-    val fieldsStr = fields.mkString(", ")
+    val fieldsStr = fields.map(quoteIdentifier(_)).mkString(", ")
     val stats = {
       val connection = sql.DriverManager.getConnection("jdbc:" + db)
       try Stats(table)(connection)
@@ -48,7 +53,7 @@ case class DBTable(
     new org.apache.spark.rdd.JdbcRDD(
       rc.sparkContext,
       () => sql.DriverManager.getConnection("jdbc:" + db),
-      s"SELECT $fieldsStr FROM $table WHERE ? <= $key AND $key <= ?",
+      s"SELECT $fieldsStr FROM $quotedTable WHERE ? <= $quotedKey AND $quotedKey <= ?",
       stats.minKey, stats.maxKey, numPartitions,
       row => fields.map(field => row.getString(field))
     )
