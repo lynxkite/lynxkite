@@ -108,7 +108,7 @@ class SQLExport private (
     inserts.foreach(execute(db, _))
   }
 
-  def saveAs(filename: DataFile) = {
+  def saveAs(filename: HadoopFile) = {
     (filename / "header").createFromStrings(deletion + creation)
     (filename / "data").saveAsTextFile(inserts)
   }

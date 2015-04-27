@@ -19,9 +19,9 @@ case class CSVData(val header: Seq[String],
 
   def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
 
-  def saveDataToDir(path: DataFile) = path.saveAsTextFile(toStringRDD)
+  def saveDataToDir(path: HadoopFile) = path.saveAsTextFile(toStringRDD)
 
-  def saveToDir(path: DataFile) = {
+  def saveToDir(path: HadoopFile) = {
     (path / "header").createFromStrings(CSVData.lineToString(header))
     saveDataToDir(path / "data")
   }

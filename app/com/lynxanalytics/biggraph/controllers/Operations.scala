@@ -8,7 +8,7 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.graph_util.DataFile
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -154,7 +154,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("filter", "(optional) Filtering expression"))
     def source(params: Map[String, String]) = {
-      val files = DataFile(params("files"))
+      val files = HadoopFile(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
       graph_operations.CSV(
@@ -2342,12 +2342,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     })
 
-    def getExportFilename(param: String): DataFile = {
+    def getExportFilename(param: String): HadoopFile = {
       assert(param.nonEmpty, "No export path specified.")
       if (param == "<auto>") {
         dataManager.repositoryPath / "exports" / graph_util.Timestamp.toString
       } else {
-        DataFile(param)
+        HadoopFile(param)
       }
     }
 
@@ -2621,7 +2621,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op.result.created
   }
 
-  def downloadLink(fn: DataFile, name: String) = {
+  def downloadLink(fn: HadoopFile, name: String) = {
     val urlPath = java.net.URLEncoder.encode(fn.fullString, "utf-8")
     val urlName = java.net.URLEncoder.encode(name, "utf-8")
     val url = s"/download?path=$urlPath&name=$urlName"

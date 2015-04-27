@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.DataFile
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.protection.Limitations
 
@@ -239,7 +239,7 @@ object ProductionJsonServer extends JsonServer {
     import play.api.libs.concurrent.Execution.Implicits._
     import scala.collection.JavaConversions._
     log.info(s"download: $user ${request.path}")
-    val path = DataFile(request.getQueryString("path").get)
+    val path = HadoopFile(request.getQueryString("path").get)
     val name = request.getQueryString("name").get
     // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
     val files = Seq(path / "header") ++ (path / "data" / "*").list
