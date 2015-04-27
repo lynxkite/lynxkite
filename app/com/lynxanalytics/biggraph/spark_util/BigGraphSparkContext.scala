@@ -110,6 +110,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.roaringbitmap.ArrayContainer])
     kryo.register(classOf[Array[Short]])
     // ==========================
+    kryo.register(classOf[Array[Array[Long]]]) // #1612
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
