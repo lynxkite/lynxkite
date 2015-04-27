@@ -7,9 +7,9 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 // The algorithm gives an approximation. Asserting on exact centrality
 // values works only for small graphs.
-class CentralityTest extends FunSuite with TestGraphOp {
+class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   test("corner cases") {
-    val op = Centrality()
+    val op = HyperBallCentrality(5)
 
     val g_isolated = SmallTestGraph(Map(0 -> Seq())).result
     val out_isolated = op(op.es, g_isolated.es).result.harmonicCentrality
@@ -34,7 +34,7 @@ class CentralityTest extends FunSuite with TestGraphOp {
 
   test("small example graph") {
     val g = ExampleGraph()().result
-    val op = Centrality()
+    val op = HyperBallCentrality(5)
     val out = op(op.es, g.edges).result.harmonicCentrality
     assert(out.rdd.collect.toMap ==
       Map(0 -> 2.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0))
@@ -46,7 +46,7 @@ class CentralityTest extends FunSuite with TestGraphOp {
       1 -> Seq(2),
       2 -> Seq(3),
       3 -> Seq())).result
-    val op = Centrality()
+    val op = HyperBallCentrality(5)
     val out = op(op.es, g.es).result.harmonicCentrality
     assert(out.rdd.collect.toMap ==
       Map(0 -> 0.0, 1 -> 1.0, 2 -> 1.5, 3 -> (1.5 + (1.0 / 3.0))))
@@ -59,7 +59,7 @@ class CentralityTest extends FunSuite with TestGraphOp {
       2 -> Seq(0),
       3 -> Seq(1),
       4 -> Seq(1))).result
-    val op = Centrality()
+    val op = HyperBallCentrality(5)
     val out = op(op.es, g.es).result.harmonicCentrality
     assert(out.rdd.collect.toMap ==
       Map(0 -> 3.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0, 4 -> 0.0))
@@ -70,7 +70,7 @@ class CentralityTest extends FunSuite with TestGraphOp {
       0 -> Seq(1),
       1 -> Seq(2),
       2 -> Seq(0))).result
-    val op = Centrality()
+    val op = HyperBallCentrality(5)
     val out = op(op.es, g.es).result.harmonicCentrality
     assert(out.rdd.collect.toMap ==
       Map(0 -> 1.5, 1 -> 1.5, 2 -> 1.5))
