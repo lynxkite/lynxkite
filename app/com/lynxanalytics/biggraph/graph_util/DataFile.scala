@@ -13,8 +13,6 @@ import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-import scala.util.Random
-
 object SandboxedPath {
   private val sandboxedPathPattern = "([$][A-Z]+)(.*)".r
 
@@ -25,10 +23,10 @@ object SandboxedPath {
   def fromAbsoluteToSymbolic(absolutePath: String, rootSymbol: String): SandboxedPath = {
     val rootInfo = RootRepository.getRootInfo(rootSymbol)
     val resolution = rootInfo.resolution
-    assert(absolutePath.startsWith(resolution), s"Bad prefix match: $absolutePath should begin with $resolution")
+    assert(absolutePath.startsWith(resolution),
+      s"Bad prefix match: $absolutePath should begin with $resolution")
 
-    val r = rootSymbol + absolutePath.drop(resolution.length)
-    SandboxedPath(r)
+    new SandboxedPath(rootSymbol, absolutePath.drop(resolution.length))
   }
 
 }
