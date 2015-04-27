@@ -158,7 +158,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
     val p = Project(request.name)
     p.assertReadAllowedFrom(user)
-    return p.toFE.copy(opCategories = ops.categories(user, p))
+    val categories = ops.categories(user, p)
+    // Utility operations are made available through dedicated UI elements.
+    // Let's hide them from the project operation toolbox to avoid confusion.
+    val nonUtilities = categories.filter(_.icon != "wrench")
+    p.toFE.copy(opCategories = nonUtilities)
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
