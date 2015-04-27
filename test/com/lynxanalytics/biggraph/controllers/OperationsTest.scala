@@ -573,7 +573,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("CSV import & export vertices") {
     run("Example Graph")
-    //    val path = dataManager.repositoryPath.toString + "/csv-export-test"
     val path = dataManager.repositoryPath + "/csv-export-test"
     run("Export vertex attributes to file", Map(
       "path" -> path.toString,
