@@ -47,6 +47,7 @@ class JsonServer extends mvc.Controller {
   def jsonPost[I: json.Reads, O: json.Writes](
     handler: (User, I) => O,
     logRequest: Boolean = true) = {
+    val t0 = System.currentTimeMillis
     action(parse.json) { (user, request) =>
       if (logRequest) {
         log.info(s"$user POST ${request.path} ${request.body}")
@@ -54,18 +55,31 @@ class JsonServer extends mvc.Controller {
         log.info(s"$user POST ${request.path} (request body logging supressed)")
       }
       val i = request.body.as[I]
-      Ok(json.Json.toJson(handler(user, i)))
+      try {
+        Ok(json.Json.toJson(handler(user, i)))
+      } finally {
+        val dt = System.currentTimeMillis - t0
+        log.info(s"$dt ms to respond to $user POST ${request.path}")
+      }
     }
   }
 
-  def jsonQuery[I: json.Reads, R](user: User, request: mvc.Request[mvc.AnyContent])(handler: (User, I) => R): R = {
+  def jsonQuery[I: json.Reads, R](
+    user: User,
+    request: mvc.Request[mvc.AnyContent])(handler: (User, I) => R): R = {
+    val t0 = System.currentTimeMillis
     val key = "q"
     val value = request.getQueryString(key)
     assert(value.nonEmpty, s"Missing query parameter $key.")
     val s = value.get
     log.info(s"$user GET ${request.path} $s")
     val i = json.Json.parse(s).as[I]
-    handler(user, i)
+    try {
+      handler(user, i)
+    } finally {
+      val dt = System.currentTimeMillis - t0
+      log.info(s"$dt ms to respond to $user GET ${request.path}")
+    }
   }
 
   def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
