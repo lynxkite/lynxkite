@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_util
 
 import org.scalatest.FunSuite
 
-class DataFileTest extends FunSuite {
+class HadoopFileTest extends FunSuite {
 
   test("Test basic RootRepository asserts") {
     RootRepository.registerRoot("$BABABA", "mamam")
@@ -38,7 +38,7 @@ class DataFileTest extends FunSuite {
 
   test("Password setting works") {
     val dummy = RootRepository.getDummyRootName("s3n://access:secret@lynx-bnw-test")
-    val dataFile = DataFile(dummy + "/somedir/somefile")
+    val dataFile = HadoopFile(dummy + "/somedir/somefile")
     val conf = dataFile.hadoopConfiguration()
     assert(conf.get("fs.s3n.awsAccessKeyId") == "access")
     assert(conf.get("fs.s3n.awsSecretAccessKey") == "secret")

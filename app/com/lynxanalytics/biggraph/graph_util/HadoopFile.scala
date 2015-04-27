@@ -13,46 +13,39 @@ import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-object SandboxedPath {
+object HadoopFile {
   private val sandboxedPathPattern = "([$][A-Z]+)(.*)".r
 
-  def apply(str: String): SandboxedPath = str match {
+  def apply(str: String) = str match {
     case sandboxedPathPattern(rootSymbol, relativePath) =>
-      new SandboxedPath(rootSymbol, relativePath)
-  }
-  def fromAbsoluteToSymbolic(absolutePath: String, rootSymbol: String): SandboxedPath = {
-    val rootInfo = RootRepository.getRootInfo(rootSymbol)
-    val resolution = rootInfo.resolution
-    assert(absolutePath.startsWith(resolution),
-      s"Bad prefix match: $absolutePath should begin with $resolution")
-
-    new SandboxedPath(rootSymbol, absolutePath.drop(resolution.length))
+      new HadoopFile(rootSymbol, relativePath)
   }
 
 }
 
-case class SandboxedPath(rootSymbol: String, relativePath: String) {
-
-  def +(suffix: String): SandboxedPath = {
-    this.copy(relativePath = relativePath + suffix)
-  }
+case class HadoopFile(rootSymbol: String, relativePath: String) {
   def symbolicName = rootSymbol + relativePath
   def resolvedName = RootRepository.getRootInfo(rootSymbol).resolution + relativePath
-}
-
-case class DataFile(sandboxedPath: SandboxedPath) {
-  override def toString = sandboxedPath.symbolicName
+  override def toString = symbolicName
   def fullString = toString
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = new hadoop.conf.Configuration()
-    val rootInfo = RootRepository.getRootInfo(sandboxedPath.rootSymbol)
+    val rootInfo = RootRepository.getRootInfo(rootSymbol)
     conf.set("fs.s3n.awsAccessKeyId", rootInfo.accessKey)
     conf.set("fs.s3n.awsSecretAccessKey", rootInfo.secretKey)
     return conf
   }
+  def getRelativePath(absolutePath: String): String = {
+    val rootInfo = RootRepository.getRootInfo(rootSymbol)
+    val resolution = rootInfo.resolution
+    assert(absolutePath.startsWith(resolution),
+      s"Bad prefix match: $absolutePath should begin with $resolution")
+    absolutePath.drop(resolution.length)
+  }
+
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
   @transient lazy val uri = path.toUri
-  @transient lazy val path = new hadoop.fs.Path(sandboxedPath.resolvedName)
+  @transient lazy val path = new hadoop.fs.Path(resolvedName)
   def open() = fs.open(path)
   def create() = fs.create(path)
   def exists() = fs.exists(path)
@@ -62,14 +55,12 @@ case class DataFile(sandboxedPath: SandboxedPath) {
     Stream.continually(r.readLine()).takeWhile(_ != null).mkString
   }
   def delete() = fs.delete(path, true)
-  def renameTo(fn: DataFile) = fs.rename(path, fn.path)
+  def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
   def list = {
     globStatus.map(
-      st => this.copy(
-        sandboxedPath =
-          SandboxedPath.fromAbsoluteToSymbolic(st.getPath.toString, sandboxedPath.rootSymbol)))
+      st => this.copy(relativePath = getRelativePath(st.getPath.toString)))
   }
 
   def length = fs.getFileStatus(path).getLen
@@ -80,7 +71,7 @@ case class DataFile(sandboxedPath: SandboxedPath) {
     // Make sure we get many small splits.
     conf.setLong("mapred.max.split.size", 50000000)
     sc.newAPIHadoopFile(
-      sandboxedPath.resolvedName,
+      resolvedName,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.Text],
       fClass = classOf[hadoop.mapreduce.lib.input.TextInputFormat],
@@ -92,7 +83,7 @@ case class DataFile(sandboxedPath: SandboxedPath) {
     // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
     val hadoopLines = lines.map(x => (hadoop.io.NullWritable.get(), new hadoop.io.Text(x)))
     hadoopLines.saveAsHadoopFile(
-      sandboxedPath.resolvedName,
+      resolvedName,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.Text],
       outputFormatClass = classOf[hadoop.mapred.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
@@ -142,7 +133,7 @@ case class DataFile(sandboxedPath: SandboxedPath) {
     import hadoop.mapreduce.lib.input.SequenceFileInputFormat
 
     sc.newAPIHadoopFile(
-      sandboxedPath.resolvedName,
+      resolvedName,
       kClass = classOf[hadoop.io.NullWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[SequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
@@ -159,9 +150,9 @@ case class DataFile(sandboxedPath: SandboxedPath) {
       bigGraphLogger.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
       fs.delete(path, true)
     }
-    bigGraphLogger.info(s"saving ${data.name} as object file to $sandboxedPath")
+    bigGraphLogger.info(s"saving ${data.name} as object file to ${symbolicName} ${resolvedName}")
     hadoopData.saveAsNewAPIHadoopFile(
-      sandboxedPath.resolvedName,
+      resolvedName,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.BytesWritable],
       outputFormatClass =
@@ -169,17 +160,11 @@ case class DataFile(sandboxedPath: SandboxedPath) {
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
-  def +(suffix: String): DataFile = {
-    this.copy(sandboxedPath = sandboxedPath + suffix)
+  def +(suffix: String): HadoopFile = {
+    this.copy(relativePath = relativePath + suffix)
   }
 
-  def /(path_element: String): DataFile = {
+  def /(path_element: String): HadoopFile = {
     this + ("/" + path_element)
-  }
-}
-
-object DataFile {
-  def apply(str: String): DataFile = {
-    new DataFile(SandboxedPath(str))
   }
 }

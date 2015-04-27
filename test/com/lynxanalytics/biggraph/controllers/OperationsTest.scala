@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.graph_util.{ DataFile, RootRepository }
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, RootRepository }
 import org.scalatest.FunSuite
 import org.scalatest.Tag
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
@@ -531,7 +531,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("SQL import & export vertices") {
     run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath.sandboxedPath.resolvedName}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.resolvedName}/test-db"
     run("Export vertex attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
@@ -551,7 +551,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("SQL import & export edges") {
     run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath.sandboxedPath.resolvedName}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.resolvedName}/test-db"
     run("Export edge attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",

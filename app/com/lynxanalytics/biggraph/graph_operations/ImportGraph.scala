@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.DataFile
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -18,7 +18,7 @@ import org.apache.spark.SparkContext
 // Functions for looking at CSV files. The frontend can use these when
 // constructing the import operation.
 object ImportUtil {
-  def header(file: DataFile): String = {
+  def header(file: HadoopFile): String = {
     assert(file.exists, s"$file does not exist.")
     // Read from first file if there is a glob.
     file.list.head.reader.readLine
@@ -75,12 +75,12 @@ trait RowInput extends ToJson {
 
 object CSV extends FromJson[CSV] {
   def fromJson(j: JsValue) = CSV(
-    DataFile((j \ "file").as[String]),
+    HadoopFile((j \ "file").as[String]),
     (j \ "delimiter").as[String],
     (j \ "header").as[String],
     JavaScript((j \ "filter").as[String]))
 }
-case class CSV(file: DataFile,
+case class CSV(file: HadoopFile,
                delimiter: String,
                header: String,
                filter: JavaScript = JavaScript("")) extends RowInput {
