@@ -19,24 +19,34 @@ object HadoopFile {
     val v = RootRepository.splitSymbolicPattern(str)
     new HadoopFile(v._1, v._2)
   }
-
 }
 
 case class HadoopFile(rootSymbol: String, relativePath: String) {
+  private val s3nPattern = "(s3n?)://(.+):(.+)@(.+)".r
+
   def symbolicName = rootSymbol + relativePath
-  def resolvedName = RootRepository.getRootInfo(rootSymbol).resolution + relativePath
+  def resolvedName = RootRepository.getRootInfo(rootSymbol) + relativePath
   override def toString = symbolicName
   def fullString = toString
+  def getCredentials(): (String, String) = {
+    resolvedName match {
+      case s3nPattern(root, key, secret, relPath) => (key, secret)
+      case _ => ("", "")
+    }
+  }
   def hadoopConfiguration(): hadoop.conf.Configuration = {
+
     val conf = new hadoop.conf.Configuration()
-    val rootInfo = RootRepository.getRootInfo(rootSymbol)
-    conf.set("fs.s3n.awsAccessKeyId", rootInfo.accessKey)
-    conf.set("fs.s3n.awsSecretAccessKey", rootInfo.secretKey)
+    val cred = getCredentials()
+    if (cred._1.nonEmpty) {
+      conf.set("fs.s3n.awsAccessKeyId", cred._1)
+      conf.set("fs.s3n.awsSecretAccessKey", cred._2)
+    }
+
     return conf
   }
   def getRelativePath(absolutePath: String): String = {
-    val rootInfo = RootRepository.getRootInfo(rootSymbol)
-    val resolution = rootInfo.resolution
+    val resolution = RootRepository.getRootInfo(rootSymbol)
     assert(absolutePath.startsWith(resolution),
       s"Bad prefix match: $absolutePath should begin with $resolution")
     absolutePath.drop(resolution.length)
