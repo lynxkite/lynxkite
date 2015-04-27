@@ -1,3 +1,4 @@
+// The "/login" page for logging in.
 'use strict';
 
 var loginScope;

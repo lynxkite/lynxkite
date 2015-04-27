@@ -1,3 +1,4 @@
+// Axis options are per-attribute settings, such as logarithmic vs linear scale.
 'use strict';
 
 angular.module('biggraph').factory('axisOptions', function axisOptionsFactory(util) {

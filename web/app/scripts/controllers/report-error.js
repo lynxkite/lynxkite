@@ -1,3 +1,4 @@
+// The modal dialog for error reporting.
 'use strict';
 
 angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modalInstance, alert) {

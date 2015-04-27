@@ -1,3 +1,4 @@
+// Displays an operation (title, description, parameters, OK button).
 'use strict';
 
 angular.module('biggraph').directive('operation', function(util, hotkeys) {

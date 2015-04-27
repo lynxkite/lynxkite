@@ -1,6 +1,6 @@
+// A button that pops up a textbox with the specified contents selected and ready to be copied.
 'use strict';
 
-// A button that pops up a textbox with the specified contents selected and ready to be copied.
 angular.module('biggraph').directive('copyBox', function() {
   return {
     restrict: 'E',

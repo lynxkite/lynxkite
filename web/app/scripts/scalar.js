@@ -1,3 +1,4 @@
+// The entry for a scalar in the project view.
 'use strict';
 
 angular.module('biggraph').directive('scalar', function() {

@@ -1,3 +1,5 @@
+// The tag list is a list that can be populated from a set of options.
+// (Effectively this is the same as a select[multiple], just with a different, horizontal design.)
 'use strict';
 
 angular.module('biggraph').directive('tagList', function() {

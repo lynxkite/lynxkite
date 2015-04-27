@@ -1,3 +1,4 @@
+// The project history viewer/editor.
 'use strict';
 
 angular.module('biggraph').directive('projectHistory', function(util) {

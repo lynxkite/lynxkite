@@ -145,7 +145,7 @@ object MetaRepositoryManager {
     }
 
     // Tags.
-    val oldTags = MetaGraphManager.loadTags(src)
+    val oldTags = TagRoot.loadFromRepo(src)
     val newTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
     mm.setTags(newTags)
   }

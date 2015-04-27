@@ -1,3 +1,4 @@
+// Creates the "biggraph" Angular module, sets the routing table, provides utility functions.
 'use strict';
 
 angular
@@ -127,6 +128,9 @@ angular
       },
       error: function(message, details) {
         $rootScope.$broadcast('topAlert', { message: message, details: details });
+      },
+      clearAlerts: function() {
+        $rootScope.$broadcast('clear topAlerts');
       },
       responseToErrorMessage: function(resp) {
         if (resp.data) {
