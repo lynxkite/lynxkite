@@ -12,8 +12,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
-  val res = getClass.getResource("/controllers/OperationsTest/").getFile
-  RootRepository.registerRoot("$OPERATIONSTEST", "file:" + res)
+  val res = getClass.getResource("/controllers/OperationsTest/").toString
+  RootRepository.registerRoot("$OPERATIONSTEST", res)
   val ops = new Operations(this)
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
