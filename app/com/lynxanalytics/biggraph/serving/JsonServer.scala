@@ -55,12 +55,11 @@ class JsonServer extends mvc.Controller {
         log.info(s"$user POST ${request.path} (request body logging supressed)")
       }
       val i = request.body.as[I]
-      try {
-        Ok(json.Json.toJson(handler(user, i)))
-      } finally {
-        val dt = System.currentTimeMillis - t0
-        log.info(s"$dt ms to respond to $user POST ${request.path}")
-      }
+      val result = util.Try(Ok(json.Json.toJson(handler(user, i))))
+      val dt = System.currentTimeMillis - t0
+      val status = if (result.isSuccess) "success" else "failure"
+      log.info(s"$dt ms to respond with $status to $user POST ${request.path}")
+      result.get
     }
   }
 
@@ -74,12 +73,11 @@ class JsonServer extends mvc.Controller {
     val s = value.get
     log.info(s"$user GET ${request.path} $s")
     val i = json.Json.parse(s).as[I]
-    try {
-      handler(user, i)
-    } finally {
-      val dt = System.currentTimeMillis - t0
-      log.info(s"$dt ms to respond to $user GET ${request.path}")
-    }
+    val result = util.Try(handler(user, i))
+    val dt = System.currentTimeMillis - t0
+    val status = if (result.isSuccess) "success" else "failure"
+    log.info(s"$dt ms to respond with $status to $user GET ${request.path}")
+    result.get
   }
 
   def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
