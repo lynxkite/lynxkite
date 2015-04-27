@@ -51,7 +51,7 @@ case class HyperBallCentrality(maxDiameter: Int)
     val globalHll = new HyperLogLogMonoid(bits = 12)
 
     val harmonicCentralities = getHarmonicCentralities(
-      diameter = 1.0,
+      diameter = 1,
       harmonicCentralities = vertices.mapValues { _ => 0.0 },
       hyperBallCounters = vertices.mapValuesWithKeys {
         // Initialize a counter for every vertex 
@@ -67,7 +67,7 @@ case class HyperBallCentrality(maxDiameter: Int)
   }
 
   @tailrec private def getHarmonicCentralities(
-    diameter: Double,
+    diameter: Int,
     harmonicCentralities: SortedRDD[ID, Double],
     hyperBallCounters: SortedRDD[ID, HLL],
     hyperBallSizes: SortedRDD[ID, (Int, Int)],
@@ -90,7 +90,7 @@ case class HyperBallCentrality(maxDiameter: Int)
       }
 
     if (diameter < maxDiameter) {
-      getHarmonicCentralities(diameter + 1.0, newHarmonicCentralities,
+      getHarmonicCentralities(diameter + 1, newHarmonicCentralities,
         newHyperBallCounters, newHyperBallSizes, vertexPartitioner, edges, globalHll)
     } else {
       newHarmonicCentralities

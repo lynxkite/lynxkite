@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - New vertex operation _"Centrality"_ makes it possible to count approximate harmonic
+   centrality values.
+
 ### 1.3.1
 
  - Edges can now be colored based on string attributes as well.
