@@ -137,6 +137,49 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
 
+  test("JSON version migration can be retried") {
+    val dir = cleanMetaManagerDir
+    val template = new File(getClass.getResource("/graph_api/MetaGraphManagerTest/migration-test").toURI)
+    FileUtils.copyDirectory(template, new File(dir))
+    assert(new File(dir, "1").exists)
+    assert(!new File(dir, "2").exists)
+    import play.api.libs.json
+    // Load the test data using a fake JsonMigration class.
+    class TestException extends Exception("test")
+    val ex = intercept[Exception] {
+      MetaRepositoryManager(dir, new JsonMigration {
+        override val version = Map(
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0)
+        override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+          // Bad migration from version 1 to version 2.
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
+            j => throw new TestException
+          })
+      })
+    }
+    assert(ex.getCause.isInstanceOf[TestException])
+    // The migration failed, so the version file was not created.
+    assert(new File(dir, "2").exists)
+    assert(!new File(dir, "2/version").exists)
+    // Try again with a corrected upgrader.
+    val m = MetaRepositoryManager(dir, new JsonMigration {
+      override val version = Map(
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0)
+      override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
+        // Correct migration from version 1 to version 2.
+        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
+          j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
+        })
+    })
+    // The migration succeeded.
+    assert(new File(dir, "2").exists)
+    assert(new File(dir, "2/version").exists)
+    assert(m.vertexSet("one").toStringStruct.toString ==
+      "vertices of (CreateSomeGraph of arg=migrated)")
+    assert(m.edgeBundle("two").toStringStruct.toString ==
+      "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
+  }
+
   test("JSON read errors are correctly reported") {
     val dir = cleanMetaManagerDir
     val template = new File(getClass.getResource("/graph_api/MetaGraphManagerTest/json-error-test").toURI)
