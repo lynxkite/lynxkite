@@ -311,7 +311,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
           val segmentationsAfter = state.toFE.segmentations
           ProjectHistoryStep(request, status, segmentationsBefore, segmentationsAfter, opCategoriesBefore)
         }
-        if (op.enabled.enabled) {
+        if (op.enabled.enabled && !op.dirty) {
           try {
             recipient.checkpoint(op.toString, request) {
               op.apply(request.op.parameters)
@@ -321,8 +321,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
             case t: Throwable =>
               steps :+ newStep(FEStatus.disabled(t.getMessage))
           }
-        } else {
+        } else if (!op.dirty) {
           steps :+ newStep(op.enabled)
+        } else {
+          steps // Dirty operations are hidden from the history.
         }
       }
       val history = ProjectHistory(p.projectName, request.skips, steps)
