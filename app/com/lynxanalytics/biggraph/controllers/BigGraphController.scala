@@ -201,7 +201,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
     val p = Project(request.project)
     p.assertWriteAllowedFrom(user)
-    ops.apply(user, request)
+    ops.apply(user, request, dirty = true)
   }
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
@@ -367,6 +367,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
   def apply(params: Map[String, String]): Unit
+  // "Dirty" operations have side-effects, such as writing files. (See #1564.)
+  val dirty = false
   def toFE: FEOperationMeta =
     FEOperationMeta(id, title, parameters, category.title, enabled, description)
   protected def scalars[T: TypeTag] =
@@ -443,11 +445,15 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     operations(id)(context)
   }
 
-  def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.synchronized {
+  def apply(user: serving.User, req: ProjectOperationRequest, dirty: Boolean = false): Unit = manager.synchronized {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
-    p.checkpoint(op.summary(req.op.parameters), req) {
+    // Dirty ops are not checkpointed, as a temporary hack. (#1564)
+    if (!op.dirty) p.checkpoint(op.summary(req.op.parameters), req) {
+      op.apply(req.op.parameters)
+    }
+    else if (dirty) {
       op.apply(req.op.parameters)
     }
   }
