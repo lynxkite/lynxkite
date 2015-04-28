@@ -313,7 +313,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         }
         if (op.enabled.enabled && !op.dirty) {
           try {
-            recipient.checkpoint(op.toString, request) {
+            recipient.checkpoint(op.summary(request.op.parameters), request) {
               op.apply(request.op.parameters)
             }
             steps :+ newStep(FEStatus.enabled)
