@@ -2311,6 +2311,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     implicit val dataManager = env.dataManager
 
     register("Export vertex attributes to file", new AttributeOperation(_, _) {
+      override val dirty = true
       val description = "Writes the vertices and their attributes to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
@@ -2339,6 +2340,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export vertex attributes to database", new AttributeOperation(_, _) {
+      override val dirty = true
       val description = """
         Creates a new table and writes the selected attributes into it.
         """ + jdbcHelpText
@@ -2369,6 +2371,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     register("Export edge attributes to file", new AttributeOperation(_, _) {
+      override val dirty = true
       val description = "Writes the edges and their attributes to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
@@ -2397,6 +2400,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export edge attributes to database", new AttributeOperation(_, _) {
+      override val dirty = true
       val description = """
         Creates a new table and writes the selected attributes into it.
         """ + jdbcHelpText
@@ -2418,6 +2422,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export segmentation to file", new SegmentationOperation(_, _) {
+      override val dirty = true
       val description = "Writes a segmentation to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
@@ -2445,6 +2450,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export segmentation to database", new SegmentationOperation(_, _) {
+      override val dirty = true
       val description = """
         Creates a new table and writes the edges going from the parent graph to this
         segmentation into it.""" + jdbcHelpText
