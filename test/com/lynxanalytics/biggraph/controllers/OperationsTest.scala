@@ -20,14 +20,10 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   }
   val project = createProject("Test_Project")
 
-  def run(op: String,
-          params: Map[String, String] = Map(),
-          on: Project = project,
-          dirty: Boolean = false) =
+  def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
     ops.apply(
       serving.User.fake,
-      ProjectOperationRequest(on.projectName, FEOperationSpec(Operation.titleToID(op), params)),
-      dirty)
+      ProjectOperationRequest(on.projectName, FEOperationSpec(Operation.titleToID(op), params)))
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
@@ -537,7 +533,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "db" -> db,
       "table" -> "example_graph",
       "delete" -> "no",
-      "attrs" -> "id,name,age,income,gender"), dirty = true)
+      "attrs" -> "id,name,age,income,gender"))
     run("Import vertices from a database", Map(
       "db" -> db,
       "table" -> "example_graph",
@@ -557,7 +553,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "db" -> db,
       "table" -> "example_graph",
       "delete" -> "yes",
-      "attrs" -> "weight,comment"), dirty = true)
+      "attrs" -> "weight,comment"))
     run("Import vertices and edges from single database table", Map(
       "db" -> db,
       "table" -> "example_graph",
@@ -579,7 +575,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "path" -> path,
       "link" -> "link",
       "attrs" -> "id,name,age,income,gender",
-      "format" -> "CSV"), dirty = true)
+      "format" -> "CSV"))
     val header = scala.io.Source.fromFile(path + "/header").mkString
     run("Import vertices from CSV files", Map(
       "files" -> (path + "/data/*"),
