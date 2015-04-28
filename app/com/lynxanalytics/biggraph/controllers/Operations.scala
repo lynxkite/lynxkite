@@ -885,6 +885,23 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Centrality", new AttributeOperation(_, _) {
+    val description = """
+    Calculates an approximation of the harmonic centrality for every vertex. The harmonic
+    centrality of the vertex A is the sum of the reciprocals of all shortest paths to A.
+    Higher centrality means that the vertex is more embedded in the graph."""
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "harmonic_centrality"),
+      Param("maxDiameter", "Maximal diameter to check", defaultValue = "10"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt)
+      project.vertexAttributes(params("name")) =
+        op(op.es, project.edgeBundle).result.harmonicCentrality
+    }
+  })
+
   register("Add rank attribute", new AttributeOperation(_, _) {
     val description = """Associates a new vertex attribute to another,
     already existing attribute (the key attribute). The new attribute will reflect
