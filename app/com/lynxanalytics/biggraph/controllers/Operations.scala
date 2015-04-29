@@ -44,7 +44,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
   case class Ratio(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
-    override val kind = "number"
     def validate(value: String) {
       assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
@@ -52,14 +51,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
   case class NonNegInt(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
-    override val kind = "number"
     def validate(value: String) {
       assert(value matches """\d+""", s"$title ($value) has to be a non negative integer.")
     }
   }
   case class NonNegDouble(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
-    override val kind = "number"
     def validate(value: String) {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
