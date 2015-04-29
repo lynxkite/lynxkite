@@ -22,7 +22,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       id: String,
       title: String,
       override val defaultValue: String = "") extends OperationParameterMeta {
-    def validate(value: String) {}
+    def validate(value: String): String = ""
   }
   case class Choice(
       id: String,
@@ -30,36 +30,53 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       override val options: List[UIValue],
       override val multipleChoice: Boolean = false) extends OperationParameterMeta {
     override val kind = "choice"
-    def validate(value: String) {}
+    def validate(value: String): String = ""
   }
   case class TagList(id: String, title: String, override val options: List[UIValue])
       extends OperationParameterMeta {
     override val kind = "tag-list"
     override val multipleChoice = true
-    override val mandatory = false // No need to specify all params for tag lists
-    def validate(value: String) {}
+    def validate(value: String): String = ""
   }
   case class File(id: String, title: String) extends OperationParameterMeta {
     override val kind = "file"
-    def validate(value: String) {}
+    def validate(value: String): String = ""
   }
   case class Ratio(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
-    def validate(value: String) {
-      assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
-        s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
+    def validate(value: String): String = {
+      if ((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0)) {
+        s"$title ($value) has to be a ratio, a double between 0.0 and 1.0"
+      }
+      ""
     }
   }
   case class NonNegInt(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
-    def validate(value: String) {
-      assert(value matches """\d+""", s"$title ($value) has to be a non negative integer.")
+    def validate(value: String): String = {
+      if (value matches """\d+""") {
+        s"$title ($value) has to be a non negative integer."
+      }
+      ""
+    }
+  }
+  case class RandomSeed(id: String, title: String)
+      extends OperationParameterMeta {
+    override val defaultValue = randomSeed()
+    def validate(value: String): String = {
+      if (value matches """[+-]?\d+""") {
+        s"$title ($value) has to be an integer."
+      }
+      ""
     }
   }
   case class NonNegDouble(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
-    def validate(value: String) {
-      assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
+    def validate(value: String): String = {
+      if (value matches """\d+(\.\d+)?""") {
+        s"$title ($value) has to be a non negative double"
+      }
+      ""
     }
   }
 
@@ -134,7 +151,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       chosen between 0 and 2 × the provided parameter."""
     def parameters = List(
       NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
-      NonNegInt("seed", "Seed", defaultValue = randomSeed()))
+      RandomSeed("seed", "Seed"))
     def enabled = hasVertexSet && hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.FastRandomEdgeBundle(
@@ -713,7 +730,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "Generates a new random double attribute with a Gaussian distribution."
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      NonNegInt("seed", "Seed", defaultValue = randomSeed()))
+      RandomSeed("seed", "Seed"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -2137,7 +2154,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("target", "Target attribute",
         options = UIValue.list(parentDoubleAttributes)),
       Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
-      NonNegInt("seed", "Random seed for test set selection", defaultValue = randomSeed()),
+      RandomSeed("seed", "Random seed for test set selection"),
       NonNegDouble("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
       NonNegInt("min_num_defined", "Minimum number of defined attributes in a segment", defaultValue = "3"),
       Ratio("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"),
