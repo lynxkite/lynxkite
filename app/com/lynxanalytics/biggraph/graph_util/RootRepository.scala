@@ -6,10 +6,10 @@ import scala.util.Random
 
 object RootRepository {
   private val pathResolutions = scala.collection.mutable.Map[String, String]()
-  private val symbolicRootPattern = "([$][A-Z]+)(.*)".r
+  private val symbolicRootPattern = "([A-Z]+[$])(.*)".r
 
   // To facilitate testing
-  def randomRootSymbol = "$" + Random.nextString(20).map(x => ((x % 26) + 'A').toChar)
+  def randomRootSymbol = Random.nextString(20).map(x => ((x % 26) + 'A').toChar) + "$"
   def getDummyRootName(rootPath: String): String = {
     val name = randomRootSymbol
     if (rootPath.startsWith("/"))
@@ -38,7 +38,12 @@ object RootRepository {
   def registerRoot(rootSymbol: String, rootResolution: String) = {
     assert(!pathResolutions.contains(rootSymbol), s"Root symbol $rootSymbol already set")
     assert(rootSymbolSyntaxIsOK(rootSymbol), s"Invalid root symbol syntax: $rootSymbol")
-    pathResolutions(rootSymbol) = rootResolution
+    // resolve r"DATA$/uploads" egisterRoot("UPLOAD$", "DATA$/uploads")
+    val resolvedResolution = rootResolution match {
+      case symbolicRootPattern(root, rest) => pathResolutions(root) + rest
+      case _ => rootResolution
+    }
+    pathResolutions(rootSymbol) = resolvedResolution
   }
 
 }

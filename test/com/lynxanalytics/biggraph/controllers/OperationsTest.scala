@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.serving
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
-  RootRepository.registerRoot("$OPERATIONSTEST", res)
+  RootRepository.registerRoot("OPERATIONSTEST$", res)
   val ops = new Operations(this)
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
@@ -178,13 +178,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Fingerprinting based on attributes") {
     run("Import vertices from CSV files", Map(
-      "files" -> "$OPERATIONSTEST/fingerprint-100-vertices.csv",
+      "files" -> "OPERATIONSTEST$/fingerprint-100-vertices.csv",
       "header" -> "id,email,name",
       "delimiter" -> ",",
       "id-attr" -> "delete me",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> "$OPERATIONSTEST/fingerprint-100-edges.csv",
+      "files" -> "OPERATIONSTEST$/fingerprint-100-edges.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",
@@ -224,7 +224,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "them" -> "ExampleGraph2"))
     val seg = project.segmentation("ExampleGraph2").project
     run("Load segmentation links from CSV", Map(
-      "files" -> "$OPERATIONSTEST/fingerprint-example-connections.csv",
+      "files" -> "OPERATIONSTEST$/fingerprint-example-connections.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "filter" -> "",
@@ -255,7 +255,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Fingerprinting between project and segmentation by attribute") {
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "$OPERATIONSTEST/fingerprint-edges-2.csv",
+      "files" -> "OPERATIONSTEST$/fingerprint-edges-2.csv",
       "header" -> "src,dst,src_link",
       "delimiter" -> ",",
       "src" -> "src",
@@ -269,7 +269,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val other = Project("other")
     project.copy(other)
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "$OPERATIONSTEST/fingerprint-edges-1.csv",
+      "files" -> "OPERATIONSTEST$/fingerprint-edges-1.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "src" -> "src",
@@ -298,7 +298,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Discard loop edges") {
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "$OPERATIONSTEST/loop-edges.csv",
+      "files" -> "OPERATIONSTEST$/loop-edges.csv",
       "header" -> "src,dst,color",
       "delimiter" -> ",",
       "src" -> "src",
@@ -313,7 +313,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Convert vertices into edges") {
     run("Import vertices from CSV files", Map(
-      "files" -> "$OPERATIONSTEST/loop-edges.csv",
+      "files" -> "OPERATIONSTEST$/loop-edges.csv",
       "header" -> "src,dst,color",
       "delimiter" -> ",",
       "id-attr" -> "id",
@@ -332,7 +332,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Viral modeling segment logic") {
     run("Import vertices from CSV files", Map(
-      "files" -> "$OPERATIONSTEST/viral-vertices-1.csv",
+      "files" -> "OPERATIONSTEST$/viral-vertices-1.csv",
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
@@ -340,7 +340,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.5"))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> "$OPERATIONSTEST/viral-edges-1.csv",
+      "files" -> "OPERATIONSTEST$/viral-edges-1.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",
@@ -378,13 +378,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Viral modeling iteration logic") {
     run("Import vertices from CSV files", Map(
-      "files" -> "$OPERATIONSTEST/viral-vertices-2.csv",
+      "files" -> "OPERATIONSTEST$/viral-vertices-2.csv",
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> "$OPERATIONSTEST/viral-edges-2.csv",
+      "files" -> "OPERATIONSTEST$/viral-edges-2.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",

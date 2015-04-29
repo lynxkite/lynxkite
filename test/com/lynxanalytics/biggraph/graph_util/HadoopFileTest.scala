@@ -3,45 +3,63 @@ package com.lynxanalytics.biggraph.graph_util
 import org.scalatest.FunSuite
 
 class HadoopFileTest extends FunSuite {
+  val rootPath = getClass.getResource("/graph_util/hadoop_tests").toString
+  RootRepository.registerRoot("HADOOPTEST$", rootPath)
 
   test("Test basic RootRepository asserts") {
-    RootRepository.registerRoot("$BABABA", "mamam")
+    RootRepository.registerRoot("BABABA$", "mamam")
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("$BABABA", "mamam")
+      RootRepository.registerRoot("BABABA$", "mamam")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("@KJHKJSDDSJ", "mamam")
+      RootRepository.registerRoot("KJHKJSDDSJ@", "mamam")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("$KJHKJSDDSJ/haha", "mamam")
+      RootRepository.registerRoot("KJHKJSDDSJ$/haha", "mamam")
     }
   }
-  /*
-  test("Test basic RootRepository logic") {
-    RootRepository.registerRoot("$HELLO", "/bello")
-    assert(RootRepository.getRootInfo("$HELLO").resolution == "/bello")
-    RootRepository.registerRoot("$TESTUPLOAD", "$HELLO/uploads")
-    assert(RootRepository.getRootInfo("$TESTUPLOAD").resolution == "/bello/uploads")
 
-    RootRepository.registerRoot("$AWAY", "s3n://access:secret@lynx-bnw-test")
-    val r = RootRepository.getRootInfo("$AWAY")
-    assert(r.resolution == "s3n://lynx-bnw-test")
-    assert(r.accessKey == "access")
-    assert(r.secretKey == "secret")
-
-    RootRepository.registerRoot("$FARAWAY", "$AWAY/uploads")
-    val rr = RootRepository.getRootInfo("$FARAWAY")
-    assert(rr.resolution == "s3n://lynx-bnw-test/uploads")
-    assert(rr.accessKey == "access")
-    assert(rr.secretKey == "secret")
-  }
-*/
   test("Password setting works") {
-    val dummy = RootRepository.getDummyRootName("s3n://access:secret@lynx-bnw-test")
+    val dummy = RootRepository.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
     val dataFile = HadoopFile(dummy + "/somedir/somefile")
     val conf = dataFile.hadoopConfiguration()
     assert(conf.get("fs.s3n.awsAccessKeyId") == "access")
     assert(conf.get("fs.s3n.awsSecretAccessKey") == "secret")
+  }
+
+  test("Path concatenation works") {
+    val dummy = RootRepository.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
+    val d = HadoopFile(dummy) / "dir/file"
+    assert(d.resolvedName == "s3n://lynx-bnw-test2/dir/file")
+    val q = d + ".ext"
+    assert(q.resolvedName == "s3n://lynx-bnw-test2/dir/file.ext")
+  }
+
+  test("Wildcard matching works") {
+    val f = HadoopFile("HADOOPTEST$") / "*"
+    assert(f.list.length == 5)
+    val g = HadoopFile("HADOOPTEST$/*.txt")
+    assert(g.list.length == 3)
+  }
+
+  test("Hadoop forward-backward conversion works") {
+
+    RootRepository.registerRoot("HADOOPROOTA$", "file:/home/rootdir")
+    val f1 = HadoopFile("HADOOPROOTA$/subdir") / "*"
+    val g1 = f1.copyUpdateRelativePath("file:/home/rootdir/subdir/file")
+    assert(g1.symbolicName == "HADOOPROOTA$/subdir/file")
+
+    RootRepository.registerRoot("HADOOPROOTB$", "s3n://key:secret@rootdir")
+    val f2 = HadoopFile("HADOOPROOTB$/subdir") / "*"
+    val g2 = f2.copyUpdateRelativePath("s3n://rootdir/subdir/file")
+    assert(g2.symbolicName == "HADOOPROOTB$/subdir/file")
+    
+    RootRepository.registerRoot("HADOOPROOTC$", "s3n://key:s")
+    val f3 = HadoopFile("HADOOPROOTC$ecret@rootdir/subdir1/file")
+    assert(f3.relativePath == "ecret@rootdir/subdir1/file")
+    val g3 = f3.copyUpdateRelativePath("s3n://rootdir/subdir1/file")
+    assert(g3.awsID == "key")
+    assert(g3.awsSecret == "secret")
   }
 
 }
