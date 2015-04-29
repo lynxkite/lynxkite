@@ -158,7 +158,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
     val p = Project(request.name)
     p.assertReadAllowedFrom(user)
-    return p.toFE.copy(opCategories = ops.categories(user, p))
+    val categories = ops.categories(user, p)
+    // Utility operations are made available through dedicated UI elements.
+    // Let's hide them from the project operation toolbox to avoid confusion.
+    val nonUtilities = categories.filter(_.icon != "wrench")
+    p.toFE.copy(opCategories = nonUtilities)
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
@@ -307,9 +311,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
           val segmentationsAfter = state.toFE.segmentations
           ProjectHistoryStep(request, status, segmentationsBefore, segmentationsAfter, opCategoriesBefore)
         }
-        if (op.enabled.enabled) {
+        if (op.enabled.enabled && !op.dirty) {
           try {
-            recipient.checkpoint(op.toString, request) {
+            recipient.checkpoint(op.summary(request.op.parameters), request) {
               op.apply(request.op.parameters)
             }
             steps :+ newStep(FEStatus.enabled)
@@ -317,8 +321,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
             case t: Throwable =>
               steps :+ newStep(FEStatus.disabled(t.getMessage))
           }
-        } else {
+        } else if (!op.dirty) {
           steps :+ newStep(op.enabled)
+        } else {
+          steps // Dirty operations are hidden from the history.
         }
       }
       val history = ProjectHistory(p.projectName, request.skips, steps)
@@ -363,6 +369,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
   def apply(params: Map[String, String]): Unit
+  // "Dirty" operations have side-effects, such as writing files. (See #1564.)
+  val dirty = false
   def toFE: FEOperationMeta =
     FEOperationMeta(id, title, parameters, category.title, enabled, description)
   protected def scalars[T: TypeTag] =

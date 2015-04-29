@@ -98,6 +98,7 @@ object MetaRepositoryManager {
           })
         val last = newest.dir.getName.toInt
         val currentDir = new File(repo, (last + 1).toString)
+        FileUtils.deleteDirectory(currentDir) // Make sure we start from scratch.
         log.warn(s"Migrating from ${newest.dir} to $currentDir.")
         migrate(newest.dir.toString, currentDir.toString, newest.version, current)
         writeVersion(currentDir, current.version)
