@@ -44,14 +44,15 @@ case class FEOperationMeta(
 case class FEOperationParameterMeta(
     id: String,
     title: String,
-    kind: String = "", // Special rendering on the UI.
-    defaultValue: String = "",
-    options: List[UIValue] = List(),
-    multipleChoice: Boolean = false) {
+    kind: String, // Special rendering on the UI.
+    defaultValue: String,
+    options: List[UIValue],
+    multipleChoice: Boolean) {
 
   val validKinds = Seq(
     "file", // Simple textbox with file upload button.
-    "tag-list") // A variation of "multipleChoice" with a more concise, horizontal design.
+    "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
+    "number") // A numeric input field.
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
@@ -358,13 +359,26 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 }
 
+abstract class OperationParameterMeta {
+  val id: String
+  val title: String
+  val kind: String = ""
+  val defaultValue: String
+  val options: List[UIValue] = List()
+  def validate(value: String)
+  def multipleChoice: Boolean = false
+  def toFE = {
+    FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
+  }
+}
+
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
   val project = context.project
   val user = context.user
   def id = Operation.titleToID(originalTitle)
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   def description: String
-  def parameters: List[FEOperationParameterMeta]
+  def parameters: List[OperationParameterMeta]
   def enabled: FEStatus
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
@@ -372,7 +386,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
   val dirty = false
   def toFE: FEOperationMeta =
-    FEOperationMeta(id, title, parameters, category.title, enabled, description)
+    FEOperationMeta(id, title, parameters.map { param => param.toFE }, category.title, enabled, description)
   protected def scalars[T: TypeTag] =
     UIValue.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
@@ -451,8 +465,15 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
+    validateParameters(op.parameters, req.op.parameters)
     p.checkpoint(op.summary(req.op.parameters), req) {
       op.apply(req.op.parameters)
+    }
+  }
+
+  def validateParameters(specs: List[OperationParameterMeta], values: Map[String, String]) {
+    for (spec <- specs) {
+      spec.validate(values(spec.id))
     }
   }
 }
