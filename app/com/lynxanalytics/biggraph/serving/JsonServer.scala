@@ -242,7 +242,7 @@ object ProductionJsonServer extends JsonServer {
           val success = tmpFile.renameTo(finalFile)
           assert(success, s"Failed to rename $tmpFile to $finalFile.")
         }
-        Ok(finalFile.fullString)
+        Ok(finalFile.symbolicName)
       } finally upload.ref.clean() // Delete temporary file.
     }
   }

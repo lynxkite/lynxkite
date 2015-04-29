@@ -91,7 +91,7 @@ case class CSV(file: HadoopFile,
     s"CSV column with empty name is not allowed. Column names were: $fields")
 
   override def toJson = Json.obj(
-    "file" -> file.fullString,
+    "file" -> file.symbolicName,
     "delimiter" -> delimiter,
     "header" -> header,
     "filter" -> filter.expression)

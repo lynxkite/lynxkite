@@ -38,7 +38,6 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
   private def hasCredentials = awsID.nonEmpty
 
   override def toString = symbolicName
-  def fullString = toString
 
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = new hadoop.conf.Configuration()
