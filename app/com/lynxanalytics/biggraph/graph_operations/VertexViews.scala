@@ -28,7 +28,7 @@ class BucketedAttribute[T] private (
   def toHistogram(
     filtered: VertexSet)(
       implicit manager: MetaGraphManager): graph_operations.AttributeHistogram.Output = {
-    val originalCount = graph_operations.CountVertices.run(attribute.vertexSet)
+    val originalCount = graph_operations.Count.run(attribute.vertexSet)
     val op = graph_operations.AttributeHistogram[T](bucketer)
     op(op.attr, attribute)(op.filtered, filtered)(op.originalCount, originalCount).result
   }
