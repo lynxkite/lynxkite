@@ -37,9 +37,6 @@
   <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory">
 
     <div class="panel-heading project-name">
-      <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
-        {{parent}} &raquo;
-      </span>
       {{side.shortName()}}
 
       <div class="btn-group pull-right">
@@ -252,7 +249,7 @@
       </div>
 
       <!-- Summary. -->
-      <li class="list-group-item">
+      <li class="list-group-item clearfix">
         <span class="lead">
           <value ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']"></value>
           <span ng-if="side.project.vertexSet === ''">no</span>
@@ -261,6 +258,17 @@
           <span ng-if="side.project.edgeBundle === ''">no</span>
           <span class="de-emph">edges</span>
         </span>
+
+        <div ng-if="side.scalars['!belongsToEdges']" class="small pull-right">
+          <value ref="side.scalars['!belongsToEdges']"></value>
+          <span class="de-emph">links covering</span>
+          <value ref="side.scalars['!coverage']"></value>
+          <span class="de-emph">vertices in
+            <span ng-class="unconnectedSides() ? 'warning' : ''">
+              {{ side.parentProjects().join(' &rarr; ') }}
+            </span>
+          </span>
+        </div>
       </li>
 
       <li class="list-group-item sublist">

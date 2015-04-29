@@ -9,8 +9,8 @@ input[type=range] {
 }
 .warning {
   color: rgb(255, 0, 0);
-  font-style: italic;
 }
+
 .sublist.list-group-item {
   background: #f5f5f5;
 }
