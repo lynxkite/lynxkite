@@ -363,13 +363,13 @@ class BigGraphController(val env: BigGraphEnvironment) {
 abstract class OperationParameterMeta {
   val id: String
   val title: String
-  val kind: String = "default"
-  val defaultValue: String = ""
-  val options: List[UIValue] = List()
-  val multipleChoice: Boolean = false
+  val kind: String
+  val defaultValue: String
+  val options: List[UIValue]
+  val multipleChoice: Boolean
 
-  // Returns an error String if the value is invalid, otherwise an empty String.
-  def validate(value: String): String
+  // Asserts that the value is valid, otherwise throws an AssertionException.
+  def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
 }
 
@@ -479,8 +479,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val missingIds = specIds &~ values.keySet
     assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
     for (spec <- specs) {
-      val errorString = spec.validate(values(spec.id))
-      assert(errorString == "", errorString)
+      spec.validate(values(spec.id))
     }
   }
 }
