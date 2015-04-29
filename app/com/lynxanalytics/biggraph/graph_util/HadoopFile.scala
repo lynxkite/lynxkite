@@ -22,34 +22,54 @@ object HadoopFile {
 }
 
 case class HadoopFile(rootSymbol: String, relativePath: String) {
-  private val s3nPattern = "(s3n?)://(.+):(.+)@(.+)".r
+  private val s3nWithCreadentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
+  private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
 
-  def symbolicName = rootSymbol + relativePath
-  def resolvedName = RootRepository.getRootInfo(rootSymbol) + relativePath
+  val symbolicName = rootSymbol + relativePath
+  val resolvedNameWithCredentials = RootRepository.getRootInfo(rootSymbol) + relativePath
+
+  val (resolvedName, awsID, awsSecret) = resolvedNameWithCredentials match {
+    case s3nWithCreadentialsPattern(scheme, key, secret, relPath) =>
+      (scheme + "://" + relPath, key, secret)
+    case _ =>
+      (resolvedNameWithCredentials, "", "")
+  }
+
+  private def hasCredentials = awsID.nonEmpty
+
   override def toString = symbolicName
   def fullString = toString
-  def getCredentials(): (String, String) = {
-    resolvedName match {
-      case s3nPattern(root, key, secret, relPath) => (key, secret)
-      case _ => ("", "")
-    }
-  }
+
   def hadoopConfiguration(): hadoop.conf.Configuration = {
-
     val conf = new hadoop.conf.Configuration()
-    val cred = getCredentials()
-    if (cred._1.nonEmpty) {
-      conf.set("fs.s3n.awsAccessKeyId", cred._1)
-      conf.set("fs.s3n.awsSecretAccessKey", cred._2)
+    if (hasCredentials) {
+      conf.set("fs.s3n.awsAccessKeyId", awsID)
+      conf.set("fs.s3n.awsSecretAccessKey", awsSecret)
     }
-
     return conf
   }
-  def getRelativePath(absolutePath: String): String = {
+
+  private def reinstateCredentialsIfNeeded(hadoopOutput: String): String = {
+    if (hasCredentials) {
+      hadoopOutput match {
+        case s3nNoCredentialsPattern(scheme, path) =>
+          scheme + "://" + awsID + ":" + awsSecret + "@" + path
+      }
+    } else {
+      hadoopOutput
+    }
+  }
+
+  private def computeRelativePathFromHadoopOutput(hadoopOutput: String): String = {
+    val hadoopOutputWithCredentials = reinstateCredentialsIfNeeded(hadoopOutput)
     val resolution = RootRepository.getRootInfo(rootSymbol)
-    assert(absolutePath.startsWith(resolution),
-      s"Bad prefix match: $absolutePath should begin with $resolution")
-    absolutePath.drop(resolution.length)
+    assert(hadoopOutputWithCredentials.startsWith(resolution),
+      "Bad prefix match: $hadoopOutputWithCredentials should start with $resolution")
+    hadoopOutputWithCredentials.drop(resolution.length)
+  }
+
+  def copyUpdateRelativePath(hadoopOutput: String): HadoopFile = {
+    this.copy(relativePath = computeRelativePathFromHadoopOutput(hadoopOutput))
   }
 
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
@@ -67,10 +87,7 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
   def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
-  def list = {
-    globStatus.map(
-      st => this.copy(relativePath = getRelativePath(st.getPath.toString)))
-  }
+  def list = globStatus.map(st => copyUpdateRelativePath(st.getPath.toString))
 
   def length = fs.getFileStatus(path).getLen
   def globLength = globStatus.map(_.getLen).sum

@@ -41,9 +41,9 @@ trait RepositoryDirs {
   val graphDir: String
   val dataDir: HadoopFile
   def setupDataDir(dirPath: String): HadoopFile = {
-    RootRepository.registerRoot("$DATA", dirPath)
-    RootRepository.registerRoot("$UPLOAD", "$DATA/uploads")
-    HadoopFile("$DATA")
+    RootRepository.registerRoot("DATA$", dirPath)
+    RootRepository.registerRoot("UPLOAD$", "DATA$/uploads")
+    HadoopFile("DATA$")
   }
 }
 
