@@ -370,9 +370,7 @@ abstract class OperationParameterMeta {
   val mandatory = true
 
   def validate(value: String)
-  def toFE = {
-    FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
-  }
+  def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
@@ -474,7 +472,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  def validateParameters(specs: List[OperationParameterMeta], values: Map[String, String]) {
+  private def validateParameters(specs: List[OperationParameterMeta], values: Map[String, String]) {
     for (spec <- specs) {
       val id = spec.id
       if (values contains id) {

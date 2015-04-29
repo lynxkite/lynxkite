@@ -133,7 +133,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       """Creates edges randomly, so that each vertex will have a degree uniformly
       chosen between 0 and 2 × the provided parameter."""
     def parameters = List(
-      NonNegInt("degree", "Average degree", defaultValue = "10.0"),
+      NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
       NonNegInt("seed", "Seed", defaultValue = randomSeed()))
     def enabled = hasVertexSet && hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
