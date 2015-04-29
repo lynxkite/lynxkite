@@ -73,7 +73,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Connected components", Map("name" -> "cc", "directions" -> "require both directions"))
     val seg = project.segmentation("cc").project
     run("Aggregate to segmentation",
-      Map("aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100"),
+      Map("aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100",
+        "aggregate-id" -> "", "aggregate-location" -> "", "aggregate-income" -> ""),
       on = seg)
     val age = seg.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))
@@ -86,7 +87,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   batchedTest("Merge vertices by attribute") {
     run("Example Graph")
     run("Merge vertices by attribute",
-      Map("key" -> "gender", "aggregate-age" -> "average", "aggregate-name" -> "count"))
+      Map("key" -> "gender", "aggregate-age" -> "average", "aggregate-name" -> "count",
+        "aggregate-id" -> "", "aggregate-location" -> "", "aggregate-gender" -> "", "aggregate-income" -> ""))
     val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
     val count = project.vertexAttributes("name_count").runtimeSafeCast[Double]
@@ -103,7 +105,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Discard edges")
     assert(project.edgeBundle == null)
     run("Merge vertices by attribute",
-      Map("key" -> "gender", "aggregate-age" -> "average"))
+      Map("key" -> "gender", "aggregate-age" -> "average", "aggregate-id" -> "", "aggregate-name" -> "",
+        "aggregate-location" -> "", "aggregate-gender" -> "", "aggregate-income" -> ""))
     val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
     assert(project.edgeBundle == null)
@@ -111,7 +114,8 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   batchedTest("Aggregate edge attribute") {
     run("Example Graph")
-    run("Aggregate edge attribute globally", Map("prefix" -> "", "aggregate-weight" -> "sum"))
+    run("Aggregate edge attribute globally",
+      Map("prefix" -> "", "aggregate-weight" -> "sum", "aggregate-comment" -> ""))
     assert(project.scalars("weight_sum").value == 10.0)
   }
 
@@ -213,7 +217,14 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Connect vertices on attribute", Map("fromAttr" -> "email", "toAttr" -> "email"))
     assert(project.scalars("edge_count").value == 18)
     assert(project.scalars("vertex_count").value == 109)
-    run("Merge vertices by attribute", Map("key" -> "name"))
+    run("Merge vertices by attribute", Map(
+      "key" -> "name",
+      "aggregate-email" -> "",
+      "aggregate-id" -> "",
+      "aggregate-name" -> "",
+      "aggregate-delete me" -> "",
+      "aggregate-email similarity score" -> "",
+      "aggregate-name similarity score" -> ""))
     assert(project.scalars("vertex_count").value == 100)
   }
 
@@ -240,7 +251,14 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "ms" -> "0.5"),
       on = seg)
     run("Aggregate from segmentation",
-      Map("prefix" -> "seg", "aggregate-age" -> "average"),
+      Map("prefix" -> "seg",
+        "aggregate-age" -> "average",
+        "aggregate-id" -> "",
+        "aggregate-name" -> "",
+        "aggregate-location" -> "",
+        "aggregate-gender" -> "",
+        "aggregate-fingerprinting_similarity_score" -> "",
+        "aggregate-income" -> ""),
       on = seg)
     val newAge = project.vertexAttributes("seg_age_average")
       .runtimeSafeCast[Double].rdd.collect.toSeq.sorted
@@ -265,7 +283,9 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "",
       "direction" -> "outgoing edges",
-      "aggregate-src_link" -> "most_common"))
+      "aggregate-src_link" -> "most_common",
+      "aggregate-dst" -> "",
+      "aggregate-src" -> ""))
     run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
     val other = Project("other")
     project.copy(other)
@@ -337,9 +357,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
-      "filter" -> "",
-      "min_num_defined" -> "1",
-      "min_ratio_defined" -> "0.5"))
+      "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-1.csv").getFile,
       "header" -> "src,dst",
@@ -512,15 +530,18 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "incoming",
       "direction" -> "incoming edges",
-      "aggregate-weight" -> "sum"))
+      "aggregate-weight" -> "sum",
+      "aggregate-comment" -> ""))
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "outgoing",
       "direction" -> "outgoing edges",
-      "aggregate-weight" -> "sum"))
+      "aggregate-weight" -> "sum",
+      "aggregate-comment" -> ""))
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "all",
       "direction" -> "all edges",
-      "aggregate-weight" -> "sum"))
+      "aggregate-weight" -> "sum",
+      "aggregate-comment" -> ""))
     def value(direction: String) = {
       val attr = project.vertexAttributes(s"${direction}_weight_sum").runtimeSafeCast[Double]
       attr.rdd.collect.toSeq.sorted

@@ -367,9 +367,9 @@ abstract class OperationParameterMeta {
   val defaultValue: String = ""
   val options: List[UIValue] = List()
   val multipleChoice: Boolean = false
-  val mandatory = true
 
-  def validate(value: String)
+  // Returns an error String if the value is invalid, otherwise an empty String.
+  def validate(value: String): String
   def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
 }
 
@@ -473,13 +473,14 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   }
 
   private def validateParameters(specs: List[OperationParameterMeta], values: Map[String, String]) {
+    val specIds = specs.map { spec => spec.id }.toSet
+    val extraIds = values.keySet &~ specIds
+    assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
+    val missingIds = specIds &~ values.keySet
+    assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
     for (spec <- specs) {
-      val id = spec.id
-      if (values contains id) {
-        spec.validate(values(id))
-      } else {
-        assert(!spec.mandatory, "Missing mandatory parameter $id")
-      }
+      val errorString = spec.validate(values(spec.id))
+      assert(errorString == "", errorString)
     }
   }
 }
