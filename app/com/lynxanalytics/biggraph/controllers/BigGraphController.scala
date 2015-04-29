@@ -447,7 +447,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     operations(id)(context)
   }
 
-  def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.synchronized {
+  def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
