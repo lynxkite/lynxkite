@@ -2607,10 +2607,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
 
-  def count(eb: EdgeBundle): Scalar[Long] = {
-    val op = graph_operations.CountEdges()
-    op(op.edges, eb).result.count
-  }
+  def count(eb: EdgeBundle): Scalar[Long] = graph_operations.Count.run(eb)
 
   private def unifyAttributeT[T](a1: Attribute[T], a2: Attribute[_]): Attribute[T] = {
     val op = graph_operations.AttributeFallback[T]()

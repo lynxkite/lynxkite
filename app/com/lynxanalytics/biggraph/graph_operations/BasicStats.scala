@@ -7,6 +7,19 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
+// Convenient shorthands for counting.
+object Count {
+  import Scripting._
+
+  def run(vertices: VertexSet)(implicit manager: MetaGraphManager): Scalar[Long] = {
+    val op = CountVertices()
+    op(op.vertices, vertices).result.count
+  }
+
+  def run(edges: EdgeBundle)(implicit manager: MetaGraphManager): Scalar[Long] =
+    run(edges.idSet)
+}
+
 object CountVertices extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
@@ -15,11 +28,6 @@ object CountVertices extends OpFromJson {
     val count = scalar[Long]
   }
   def fromJson(j: JsValue) = CountVertices()
-  def run(vertices: VertexSet)(implicit manager: MetaGraphManager): Scalar[Long] = {
-    import Scripting._
-    val op = CountVertices()
-    op(op.vertices, vertices).result.count
-  }
 }
 case class CountVertices()
     extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
@@ -38,6 +46,7 @@ case class CountVertices()
   }
 }
 
+// CountEdges is deprecated. Use Count.run(eb) instead.
 object CountEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val srcVS = vertexSet

@@ -232,7 +232,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     xBucketedAttr: graph_operations.BucketedAttribute[S],
     yBucketedAttr: graph_operations.BucketedAttribute[T]): Scalar[spark_util.IDBuckets[(Int, Int)]] = {
 
-    val originalCount = graph_operations.CountVertices.run(original)
+    val originalCount = graph_operations.Count.run(original)
     val op = graph_operations.VertexBucketGrid(xBucketedAttr.bucketer, yBucketedAttr.bucketer)
     var builder = op(op.filtered, filtered)(op.vertices, original)(op.originalCount, originalCount)
     if (xBucketedAttr.nonEmpty) {
@@ -487,8 +487,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val dstIndices = edgeIndexFromIndexingSeq(
           edgeBundle, filtered.ids, filtered.dstTripletMapping, dstView.indexingSeq)
 
-        val cop = graph_operations.CountEdges()
-        val originalEdgeCount = cop(cop.edges, edgeBundle).result.count
+        val originalEdgeCount = graph_operations.Count.run(edgeBundle)
         val countOp = graph_operations.IndexPairCounter()
         val counts = countOp(
           countOp.xIndices, srcIndices)(
@@ -554,7 +553,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val sampledTrips = tripletMapping(edgeBundle, sampled = true)
     val sampledEdges = getFilteredEdgeIds(sampledTrips, edgeBundle, srcFilters, dstFilters, edgeFilters)
     // TODO: See if we can eliminate the extra stage from this "count".
-    val count = graph_operations.CountVertices.run(sampledEdges.ids).value
+    val count = graph_operations.Count.run(sampledEdges.ids).value
     if (count >= 50000) {
       sampledEdges
     } else {

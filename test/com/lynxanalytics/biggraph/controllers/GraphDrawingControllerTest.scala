@@ -400,7 +400,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
 
   test("scalar") {
     val g = graph_operations.ExampleGraph()().result
-    val scalar = graph_operations.CountVertices.run(g.vertices)
+    val scalar = graph_operations.Count.run(g.vertices)
     val req = ScalarValueRequest(
       scalarId = scalar.gUID.toString,
       calculate = true)

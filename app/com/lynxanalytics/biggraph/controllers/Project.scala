@@ -267,8 +267,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
     set(checkpointedDir / "vertexSet", e)
     if (e != null) {
-      val op = graph_operations.CountVertices()
-      scalars("vertex_count") = op(op.vertices, e).result.count
+      scalars("vertex_count") = graph_operations.Count.run(e)
     } else {
       scalars("vertex_count") = null
     }
@@ -359,8 +358,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
     set(checkpointedDir / "edgeBundle", e)
     if (e != null) {
-      val op = graph_operations.CountEdges()
-      scalars("edge_count") = op(op.edges, e).result.count
+      scalars("edge_count") = graph_operations.Count.run(e)
     } else {
       scalars("edge_count") = null
     }
@@ -544,7 +542,7 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
     project.scalars.set("!coverage", graph_operations.Coverage.run(eb))
-    project.scalars.set("!belongsToEdges", graph_operations.CountVertices.run(eb.idSet))
+    project.scalars.set("!belongsToEdges", graph_operations.Count.run(eb))
   }
   def belongsToAttribute: Attribute[Vector[ID]] = {
     val segmentationIds = graph_operations.IdAsAttribute.run(project.vertexSet)
