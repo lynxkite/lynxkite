@@ -91,7 +91,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       chosen between 0 and 2 × the provided parameter."""
     def parameters = List(
       Param("degree", "Average degree", defaultValue = "10.0"),
-      Param("seed", "Seed", defaultValue = "0"))
+      Param("seed", "Seed", defaultValue = randomSeed()))
     def enabled = hasVertexSet && hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.FastRandomEdgeBundle(
@@ -670,7 +670,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "Generates a new random double attribute with a Gaussian distribution."
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      Param("seed", "Seed", defaultValue = "0"))
+      Param("seed", "Seed", defaultValue = randomSeed()))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -882,6 +882,23 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val weights = project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       project.vertexAttributes(params("name")) =
         op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank
+    }
+  })
+
+  register("Centrality", new AttributeOperation(_, _) {
+    val description = """
+    Calculates an approximation of the harmonic centrality for every vertex. The harmonic
+    centrality of the vertex A is the sum of the reciprocals of all shortest paths to A.
+    Higher centrality means that the vertex is more embedded in the graph."""
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "harmonic_centrality"),
+      Param("maxDiameter", "Maximal diameter to check", defaultValue = "10"))
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt)
+      project.vertexAttributes(params("name")) =
+        op(op.es, project.edgeBundle).result.harmonicCentrality
     }
   })
 
@@ -2077,11 +2094,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("target", "Target attribute",
         options = UIValue.list(parentDoubleAttributes)),
       Param("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
-      Param("seed", "Random seed for test set selection", defaultValue = "0"),
+      Param("seed", "Random seed for test set selection", defaultValue = randomSeed()),
       Param("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
-      Param("iterations", "Iterations", defaultValue = "3"),
       Param("min_num_defined", "Minimum number of defined attributes in a segment", defaultValue = "3"),
-      Param("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"))
+      Param("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"),
+      Param("iterations", "Iterations", defaultValue = "3"))
     def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
     def enabled = hasVertexSet &&
       FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
@@ -2294,6 +2311,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     implicit val dataManager = env.dataManager
 
     register("Export vertex attributes to file", new AttributeOperation(_, _) {
+      override val dirty = true
       val description = "Writes the vertices and their attributes to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
@@ -2322,6 +2340,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export vertex attributes to database", new AttributeOperation(_, _) {
+      override val dirty = true
       val description = """
         Creates a new table and writes the selected attributes into it.
         """ + jdbcHelpText
@@ -2352,6 +2371,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     register("Export edge attributes to file", new AttributeOperation(_, _) {
+      override val dirty = true
       val description = "Writes the edges and their attributes to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
@@ -2380,6 +2400,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export edge attributes to database", new AttributeOperation(_, _) {
+      override val dirty = true
       val description = """
         Creates a new table and writes the selected attributes into it.
         """ + jdbcHelpText
@@ -2401,6 +2422,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export segmentation to file", new SegmentationOperation(_, _) {
+      override val dirty = true
       val description = "Writes a segmentation to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
@@ -2428,6 +2450,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
     register("Export segmentation to database", new SegmentationOperation(_, _) {
+      override val dirty = true
       val description = """
         Creates a new table and writes the edges going from the parent graph to this
         segmentation into it.""" + jdbcHelpText
@@ -2628,4 +2651,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val quoted = '"' + url + '"'
     newScalar(s"<a href=$quoted>download</a>")
   }
+
+  // A random number to be used as default value for random seed parameters.
+  def randomSeed() = util.Random.nextInt.toString
 }
