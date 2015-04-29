@@ -676,7 +676,7 @@ angular.module('biggraph')
     // the "common" scalars.
     $scope.commonScalar = function(s) {
       // "vertex_count" and "edge_count" are legacy special-cases.
-      // New special scalars are marked by a "!" prefix.
+      // New special scalars are marked by an "!" prefix.
       return s.title[0] !== '!' && s.title !== 'vertex_count' && s.title !== 'edge_count';
     };
 

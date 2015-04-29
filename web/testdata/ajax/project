@@ -9,8 +9,6 @@
   "scalars": [
     { "id": "1234-vertex-count", "title": "vertex_count", "typeName": "Int" },
     { "id": "1234-edge-count", "title": "edge_count", "typeName": "Int" },
-    { "id": "1234-x", "title": "!coverage", "typeName": "Int" },
-    { "id": "1234count", "title": "!belongsToEdges", "typeName": "Int" },
     { "id": "1234-age-sum", "title": "age_sum", "typeName": "Double" },
     { "id": "1234-call-duration-sum", "title": "call_duration_sum", "typeName": "Double" }
   ],
