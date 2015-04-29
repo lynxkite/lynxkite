@@ -18,7 +18,34 @@ import play.api.libs.json
 import scala.reflect.runtime.universe.typeOf
 
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
-  val Param = FEOperationParameterMeta // Short alias.
+  case class Param(
+      id: String,
+      title: String,
+      override val kind: String = "", // Special rendering on the UI.
+      defaultValue: String = "",
+      override val options: List[UIValue] = List(),
+      override val multipleChoice: Boolean = false) extends OperationParameterMeta {
+    def validate(value: String) {}
+  }
+  case class Ratio(id: String, title: String, defaultValue: String) extends OperationParameterMeta {
+    override val kind = "number"
+    def validate(value: String) {
+      assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
+        s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
+    }
+  }
+  case class NonNegInt(id: String, title: String, defaultValue: String) extends OperationParameterMeta {
+    override val kind = "number"
+    def validate(value: String) {
+      assert(value matches """\d+""", s"$title ($value) has to be a non negative integer.")
+    }
+  }
+  case class NonNegDouble(id: String, title: String, defaultValue: String) extends OperationParameterMeta {
+    override val kind = "number"
+    def validate(value: String) {
+      assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
+    }
+  }
 
   import Operation.Category
   import Operation.Context
@@ -76,7 +103,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("New vertex set", new VertexOperation(_, _) {
     val description = "Creates a new vertex set with no edges and no attributes."
     def parameters = List(
-      Param("size", "Vertex set size"))
+      NonNegInt("size", "Vertex set size"))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val result = graph_operations.CreateVertexSet(params("size").toLong)().result
@@ -90,8 +117,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       """Creates edges randomly, so that each vertex will have a degree uniformly
       chosen between 0 and 2 × the provided parameter."""
     def parameters = List(
-      Param("degree", "Average degree", defaultValue = "10.0"),
-      Param("seed", "Seed", defaultValue = randomSeed()))
+      NonNegInt("degree", "Average degree", defaultValue = "10.0"),
+      NonNegInt("seed", "Seed", defaultValue = randomSeed()))
     def enabled = hasVertexSet && hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.FastRandomEdgeBundle(
@@ -137,7 +164,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   trait RowReader {
-    def sourceParameters: List[FEOperationParameterMeta]
+    def sourceParameters: List[OperationParameterMeta]
     def source(params: Map[String, String]): graph_operations.RowInput
   }
 
@@ -359,7 +386,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Param("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))),
-      Param("min", "Minimum clique size", defaultValue = "3"))
+      NonNegInt("min", "Minimum clique size", defaultValue = "3"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
@@ -426,8 +453,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param(
         "communities_name", "Name for communities segmentation", defaultValue = "communities"),
       Param("bothdir", "Edges required in cliques in both directions", options = UIValue.list(List("true", "false"))),
-      Param("min_cliques", "Minimum clique size", defaultValue = "3"),
-      Param("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
+      NonNegInt("min_cliques", "Minimum clique size", defaultValue = "3"),
+      Ratio("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val cliquesResult = {
@@ -522,7 +549,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Param("attr", "Attribute", options = vertexAttributes[Double]),
-      Param("interval-size", "Interval size"),
+      NonNegDouble("interval-size", "Interval size"),
       Param("overlap", "Overlap", options = UIValue.list(List("no", "yes"))))
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
     override def summary(params: Map[String, String]) = {
@@ -670,7 +697,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "Generates a new random double attribute with a Gaussian distribution."
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
-      Param("seed", "Seed", defaultValue = randomSeed()))
+      NonNegInt("seed", "Seed", defaultValue = randomSeed()))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -873,8 +900,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Param("weights", "Weight attribute", options = edgeAttributes[Double]),
-      Param("iterations", "Number of iterations", defaultValue = "5"),
-      Param("damping", "Damping factor", defaultValue = "0.85"))
+      NonNegInt("iterations", "Number of iterations", defaultValue = "5"),
+      Ratio("damping", "Damping factor", defaultValue = "0.85"))
     def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -892,7 +919,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     Higher centrality means that the vertex is more embedded in the graph."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "harmonic_centrality"),
-      Param("maxDiameter", "Maximal diameter to check", defaultValue = "10"))
+      NonNegInt("maxDiameter", "Maximal diameter to check", defaultValue = "10"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -1198,7 +1225,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Create edges from set overlaps", new SegmentationOperation(_, _) {
     val description = "Connects segments with large enough overlaps."
     def parameters = List(
-      Param("minOverlap", "Minimal overlap for connecting two segments", defaultValue = "3"))
+      NonNegInt("minOverlap", "Minimal overlap for connecting two segments", defaultValue = "3"))
     def enabled = hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.SetOverlap(params("minOverlap").toInt)
@@ -1938,9 +1965,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("rightName", "Second ID attribute", options = vertexAttributes[String]),
       Param("weights", "Edge weights",
         options = UIValue("no weights", "no weights") +: edgeAttributes[Double]),
-      Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
-      Param("mo", "Minimum overlap", defaultValue = "1"),
-      Param("ms", "Minimum similarity", defaultValue = "0.5"))
+      NonNegDouble("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
+      NonNegInt("mo", "Minimum overlap", defaultValue = "1"),
+      Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(vertexAttributes[String].size >= 2, "Two string attributes are needed.")
@@ -2043,9 +2070,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       operation to turn the mapping into a high-quality one-to-one relationship.
       """
     def parameters = List(
-      Param("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
-      Param("mo", "Minimum overlap", defaultValue = "1"),
-      Param("ms", "Minimum similarity", defaultValue = "0.5"))
+      NonNegDouble("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
+      NonNegInt("mo", "Minimum overlap", defaultValue = "1"),
+      Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
     def enabled =
       hasEdgeBundle && FEStatus.assert(parent.edgeBundle != null, s"No edges on $parent")
     def apply(params: Map[String, String]): Unit = {
@@ -2093,12 +2120,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("prefix", "Generated name prefix", defaultValue = "viral"),
       Param("target", "Target attribute",
         options = UIValue.list(parentDoubleAttributes)),
-      Param("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
-      Param("seed", "Random seed for test set selection", defaultValue = randomSeed()),
-      Param("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
-      Param("min_num_defined", "Minimum number of defined attributes in a segment", defaultValue = "3"),
-      Param("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"),
-      Param("iterations", "Iterations", defaultValue = "3"))
+      Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
+      NonNegInt("seed", "Random seed for test set selection", defaultValue = randomSeed()),
+      NonNegDouble("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
+      NonNegInt("min_num_defined", "Minimum number of defined attributes in a segment", defaultValue = "3"),
+      Ratio("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"),
+      NonNegInt("iterations", "Iterations", defaultValue = "3"))
     def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
     def enabled = hasVertexSet &&
       FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
@@ -2500,7 +2527,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   def aggregateParams(
     attrs: Iterable[(String, Attribute[_])],
     needsGlobal: Boolean = false,
-    weighted: Boolean = false): List[FEOperationParameterMeta] = {
+    weighted: Boolean = false): List[OperationParameterMeta] = {
     attrs.toList.map {
       case (name, attr) =>
         val options = if (attr.is[Double]) {

@@ -2,7 +2,9 @@
 <div class="form-group" ng-repeat="param in input">
   <label for="{{param.id}}" class="col-sm-4 control-label">{{param.title}}</label>
   <div class="col-sm-8">
-    <input ng-if="param.options.length === 0 && param.kind !== 'file'"
+    <input ng-if="param.options.length === 0 && param.kind !== 'file' && param.kind !== 'number'"
+      class="form-control" ng-model="output[param.id]">
+    <input ng-if="param.kind === 'number'" type="number"
       class="form-control" ng-model="output[param.id]">
     <file-parameter ng-if="param.kind === 'file'"
       model="output[param.id]" file-uploads="fileUploads.count">
