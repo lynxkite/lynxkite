@@ -5,7 +5,8 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.TestUtils
-import com.lynxanalytics.biggraph.graph_util.{ RootRepository, HadoopFile }
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.RootRepository
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
@@ -18,8 +19,6 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
     val vertexCSVs = HadoopFile(dir + "vertex-data/part-00000")
     val edgeCSVs = HadoopFile(dir + "edge-data/part-00000")
     val vertexHeader = HadoopFile(dir + "vertex-header")
-    println(vertexHeader.resolvedName)
-    println(vertexHeader.relativePath)
     val edgeHeader = HadoopFile(dir + "edge-header")
     val vertexIdFieldName = "vertexId"
     val sourceEdgeFieldName = "srcVertexId"

@@ -44,10 +44,6 @@ class HadoopFileTest extends FunSuite {
 
   test("Wildcard matching works") {
     wildcardTest(HadoopFile("HADOOPTEST$"))
-    val f = HadoopFile("HADOOPTEST$") / "*"
-    assert(f.list.length == 5)
-    val g = HadoopFile("HADOOPTEST$/*.txt")
-    assert(g.list.length == 3)
   }
 
   test("Hadoop forward-backward conversion works") {
@@ -73,10 +69,6 @@ class HadoopFileTest extends FunSuite {
   test("Empty symbolic prefix works with file:// scheme") {
     RootRepository.registerRoot("EMPTYFILE$", "")
     val resourceDir = HadoopFile("EMPTYFILE$") + rootPath
-    println(rootPath)
-    println(resourceDir.resolvedNameWithCredentials)
-    println(resourceDir.relativePath)
-    println(resourceDir.toString)
     wildcardTest(resourceDir)
   }
 }

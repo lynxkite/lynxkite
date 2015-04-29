@@ -4,8 +4,8 @@ package com.lynxanalytics.biggraph
 import java.io.File
 import org.apache.spark
 
-import com.lynxanalytics.biggraph.graph_util.{ RootRepository, HadoopFile }
-
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.RootRepository
 trait SparkContextProvider {
   val sparkContext: spark.SparkContext
 
@@ -34,8 +34,6 @@ trait StaticDirEnvironment extends BigGraphEnvironment {
   override lazy val dataManager = new graph_api.DataManager(
     sparkContext, repositoryDirs.dataDir)
 }
-
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile }
 
 trait RepositoryDirs {
   val graphDir: String

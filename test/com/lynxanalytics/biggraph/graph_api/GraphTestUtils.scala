@@ -10,7 +10,9 @@ import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 
 import com.lynxanalytics.biggraph.graph_operations._
-import com.lynxanalytics.biggraph.graph_util.{ RootRepository, HadoopFile }
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.RootRepository
+
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object GraphTestUtils {
