@@ -50,6 +50,8 @@ case class FEOperationParameterMeta(
     multipleChoice: Boolean) {
 
   val validKinds = Seq(
+    "default", // A simple textbox.
+    "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
     "number") // A numeric input field.
@@ -362,11 +364,12 @@ class BigGraphController(val env: BigGraphEnvironment) {
 abstract class OperationParameterMeta {
   val id: String
   val title: String
-  val kind: String = ""
-  val defaultValue: String
+  val kind: String = "default"
+  val defaultValue: String = ""
   val options: List[UIValue] = List()
+  val multipleChoice: Boolean = false
+
   def validate(value: String)
-  def multipleChoice: Boolean = false
   def toFE = {
     FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
   }
