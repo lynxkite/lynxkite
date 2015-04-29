@@ -21,7 +21,8 @@ private object SparkStageJars {
     classOf[org.postgresql.Driver],
     classOf[org.sqlite.JDBC],
     classOf[gcs.GoogleHadoopFileSystem],
-    classOf[play.api.libs.json.JsValue])
+    classOf[play.api.libs.json.JsValue],
+    classOf[com.twitter.algebird.SparseHLL])
   val extraJarsToBundle =
     scala.util.Properties.envOrElse("KITE_EXTRA_JARS", "")
       .split(":", -1)
