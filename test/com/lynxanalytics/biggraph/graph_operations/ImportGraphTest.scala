@@ -12,9 +12,9 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class ImportGraphTest extends FunSuite with TestGraphOp {
   val resDir = "/graph_operations/ImportGraphTest"
   val res = getClass.getResource(resDir).toString
-  RootRepository.registerRoot("$IMPORTGRAPHTEST", res)
+  RootRepository.registerRoot("IMPORTGRAPHTEST$", res)
   test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
-    val dir = "$IMPORTGRAPHTEST/testgraph/"
+    val dir = "IMPORTGRAPHTEST$/testgraph/"
     val vertexCSVs = HadoopFile(dir + "vertex-data/part-00000")
     val edgeCSVs = HadoopFile(dir + "edge-data/part-00000")
     val vertexHeader = HadoopFile(dir + "vertex-header")
@@ -53,7 +53,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
 
   test("import graph from csv as two edge files including header") {
     // different separator, no quotes around strings, newline at eof, files with wildcard
-    val dir = "$IMPORTGRAPHTEST/two-edge-csv/"
+    val dir = "IMPORTGRAPHTEST$/two-edge-csv/"
 
     val edgeCSVs = HadoopFile(dir + "*")
     val edgeHeader = HadoopFile(dir + "edges1.csv")
@@ -84,7 +84,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
   }
 
   test("import graph from csv with non-numerical IDs") {
-    val dir = "$IMPORTGRAPHTEST/non-num-ids/"
+    val dir = "IMPORTGRAPHTEST$/non-num-ids/"
     val csv = HadoopFile(dir + "edges.csv")
     val edgeSourceFieldName = "srcVertexId"
     val edgeDestFieldName = "dstVertexId"
@@ -124,7 +124,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
   }
 
   test("JavaScript filtering") {
-    val dir = "$IMPORTGRAPHTEST/non-num-ids/"
+    val dir = "IMPORTGRAPHTEST$/non-num-ids/"
     val path = HadoopFile(dir + "edges.csv")
     val csv = CSV(
       path,
@@ -148,10 +148,10 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
   test("import from non-existent file throws AssertionError") {
 
     assertAssertion {
-      ImportEdgeList(CSV(HadoopFile("$DATA/non-existent"), ",", "src,dst"), "src", "dst").result.edges.rdd
+      ImportEdgeList(CSV(HadoopFile("DATA$/non-existent"), ",", "src,dst"), "src", "dst").result.edges.rdd
     }
     assertAssertion {
-      ImportEdgeList(CSV(HadoopFile("$DATA/non-existent/*"), ",", "src,dst"), "src", "dst").result.edges.rdd
+      ImportEdgeList(CSV(HadoopFile("DATA$/non-existent/*"), ",", "src,dst"), "src", "dst").result.edges.rdd
     }
   }
 }
