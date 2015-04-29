@@ -28,11 +28,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
-  def batchedTest(name: String)(fn: => Unit) = test(name) {
-    metaGraphManager.tagBatch(fn)
-  }
-
-  batchedTest("Derived vertex attribute (Double)") {
+  test("Derived vertex attribute (Double)") {
     run("Example Graph")
     run("Derived vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
@@ -40,7 +36,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
   }
 
-  batchedTest("Derived vertex attribute (String)") {
+  test("Derived vertex attribute (String)") {
     run("Example Graph")
     // Test dropping values.
     run("Derived vertex attribute",
@@ -68,7 +64,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       (3, "Bob:Bob loves Eve:18.2#4")))
   }
 
-  batchedTest("Aggregate to segmentation") {
+  test("Aggregate to segmentation") {
     run("Example Graph")
     run("Connected components", Map("name" -> "cc", "directions" -> "require both directions"))
     val seg = project.segmentation("cc").project
@@ -83,7 +79,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(gender.rdd.collect.toMap.values.toSeq.sorted == Seq("", "Male", "Male"))
   }
 
-  batchedTest("Merge vertices by attribute") {
+  test("Merge vertices by attribute") {
     run("Example Graph")
     run("Merge vertices by attribute",
       Map("key" -> "gender", "aggregate-age" -> "average", "aggregate-name" -> "count"))
@@ -98,7 +94,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       Seq(Edge(0, 0), Edge(0, 1), Edge(0, 1), Edge(1, 0)))
   }
 
-  batchedTest("Merge vertices by attribute, no edge bundle") {
+  test("Merge vertices by attribute, no edge bundle") {
     run("Example Graph")
     run("Discard edges")
     assert(project.edgeBundle == null)
@@ -109,13 +105,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.edgeBundle == null)
   }
 
-  batchedTest("Aggregate edge attribute") {
+  test("Aggregate edge attribute") {
     run("Example Graph")
     run("Aggregate edge attribute globally", Map("prefix" -> "", "aggregate-weight" -> "sum"))
     assert(project.scalars("weight_sum").value == 10.0)
   }
 
-  batchedTest("Restore checkpoint after failing operation") {
+  test("Restore checkpoint after failing operation") {
     class Bug extends Exception("simulated bug")
     ops.register("Buggy op", new Operation(_, _, Operation.Category("Test", "test")) {
       val description = "For testing"
@@ -136,7 +132,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.vertexSet != null)
   }
 
-  batchedTest("Project union") {
+  test("Project union") {
     run("Example Graph")
     val other = Project("ExampleGraph2")
     project.copy(other)
@@ -167,7 +163,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(eAttrs("newcomment").rdd.count == 4)
   }
 
-  batchedTest("Project union on vertex sets") {
+  test("Project union on vertex sets") {
     run("New vertex set", Map("size" -> "10"))
     val other = Project("Copy")
     project.copy(other)
@@ -177,7 +173,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.edgeBundle == null)
   }
 
-  batchedTest("Fingerprinting based on attributes") {
+  test("Fingerprinting based on attributes") {
     run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
       "header" -> "id,email,name",
@@ -217,7 +213,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.scalars("vertex_count").value == 100)
   }
 
-  batchedTest("Fingerprinting between project and segmentation") {
+  test("Fingerprinting between project and segmentation") {
     run("Example Graph")
     val other = Project("ExampleGraph2")
     project.copy(other)
@@ -254,7 +250,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     }
   }
 
-  batchedTest("Fingerprinting between project and segmentation by attribute") {
+  test("Fingerprinting between project and segmentation by attribute") {
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-2.csv").getFile,
       "header" -> "src,dst,src_link",
@@ -297,7 +293,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(similarity.filter(_ > 0).size == 2)
   }
 
-  batchedTest("Discard loop edges") {
+  test("Discard loop edges") {
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
       "header" -> "src,dst,color",
@@ -312,7 +308,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(colors == Seq("blue", "green")) // "red" was the loop edge.
   }
 
-  batchedTest("Convert vertices into edges") {
+  test("Convert vertices into edges") {
     run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
       "header" -> "src,dst,color",
@@ -331,7 +327,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(stringIDs == Seq("0", "1", "2"))
   }
 
-  batchedTest("Viral modeling segment logic") {
+  test("Viral modeling segment logic") {
     run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-1.csv").getFile,
       "header" -> "id,num",
@@ -377,7 +373,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.scalars("viral num coverage after iteration 1").value == 6)
   }
 
-  batchedTest("Viral modeling iteration logic") {
+  test("Viral modeling iteration logic") {
     run("Import vertices from CSV files", Map(
       "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-2.csv").getFile,
       "header" -> "id,num",
@@ -498,7 +494,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.scalars("viral3 num mean absolute prediction error after iteration 1").value == 0.5)
   }
 
-  batchedTest("Merge two attributes") {
+  test("Merge two attributes") {
     run("Example Graph")
     // The unification is used everywhere, I'm just worried about the type equality check.
     intercept[java.lang.AssertionError] {
@@ -507,7 +503,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "gender"))
   }
 
-  batchedTest("Aggregate edge attribute to vertices, all directions") {
+  test("Aggregate edge attribute to vertices, all directions") {
     run("Example Graph")
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "incoming",
