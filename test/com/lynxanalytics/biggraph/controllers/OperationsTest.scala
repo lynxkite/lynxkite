@@ -120,7 +120,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     ops.register("Buggy op", new Operation(_, _, Operation.Category("Test", "test")) {
       val description = "For testing"
       def enabled = ???
-      def parameters = ???
+      def parameters = List()
       def apply(params: Map[String, String]) = {
         project.vertexSet = null
         throw new Bug

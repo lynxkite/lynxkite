@@ -36,6 +36,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       extends OperationParameterMeta {
     override val kind = "tag-list"
     override val multipleChoice = true
+    override val mandatory = false
     def validate(value: String) {}
   }
   case class File(id: String, title: String) extends OperationParameterMeta {

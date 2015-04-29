@@ -367,6 +367,7 @@ abstract class OperationParameterMeta {
   val defaultValue: String = ""
   val options: List[UIValue] = List()
   val multipleChoice: Boolean = false
+  val mandatory = true
 
   def validate(value: String)
   def toFE = {
@@ -475,7 +476,12 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
 
   def validateParameters(specs: List[OperationParameterMeta], values: Map[String, String]) {
     for (spec <- specs) {
-      spec.validate(values(spec.id))
+      val id = spec.id
+      if (values contains id) {
+        spec.validate(values(id))
+      } else {
+        assert(!spec.mandatory, "Missing mandatory parameter $id")
+      }
     }
   }
 }
