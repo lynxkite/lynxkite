@@ -45,8 +45,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   case class Ratio(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
     def validate(value: String): String = {
-      if ((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0)) {
-        s"$title ($value) has to be a ratio, a double between 0.0 and 1.0"
+      if (!(value matches """\d+(\.\d+)?""") || (value.toDouble > 1.0)) {
+        return s"$title ($value) has to be a ratio, a double between 0.0 and 1.0"
       }
       ""
     }
@@ -54,18 +54,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   case class NonNegInt(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
     def validate(value: String): String = {
-      if (value matches """\d+""") {
-        s"$title ($value) has to be a non negative integer."
+      if (!(value matches """\d+""")) {
+        return s"$title ($value) has to be a non negative integer."
       }
       ""
     }
   }
-  case class RandomSeed(id: String, title: String)
-      extends OperationParameterMeta {
+  case class RandomSeed(id: String, title: String) extends OperationParameterMeta {
     override val defaultValue = randomSeed()
     def validate(value: String): String = {
-      if (value matches """[+-]?\d+""") {
-        s"$title ($value) has to be an integer."
+      if (!(value matches """[+-]?\d+""")) {
+        return s"$title ($value) has to be an integer."
       }
       ""
     }
@@ -73,8 +72,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   case class NonNegDouble(id: String, title: String, override val defaultValue: String = "")
       extends OperationParameterMeta {
     def validate(value: String): String = {
-      if (value matches """\d+(\.\d+)?""") {
-        s"$title ($value) has to be a non negative double"
+      if (!(value matches """\d+(\.\d+)?""")) {
+        return s"$title ($value) has to be a non negative double"
       }
       ""
     }
