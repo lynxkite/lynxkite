@@ -11,8 +11,7 @@ class AttributeHistogramTest extends FunSuite with TestGraphOp {
 
   test("works on edges") {
     val bucketer = DoubleLinearBucketer(0.0, 5.0, 2)
-    val cop = CountVertices()
-    val count = cop(cop.vertices, g.edges.idSet).result.count
+    val count = CountVertices.run(g.edges.idSet)
     val op = AttributeHistogram(bucketer)
     val out = op(
       op.original, g.edges.idSet)(

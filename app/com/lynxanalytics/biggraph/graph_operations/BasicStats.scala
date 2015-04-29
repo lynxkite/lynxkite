@@ -15,6 +15,11 @@ object CountVertices extends OpFromJson {
     val count = scalar[Long]
   }
   def fromJson(j: JsValue) = CountVertices()
+  def run(vertices: VertexSet)(implicit manager: MetaGraphManager): Scalar[Long] = {
+    import Scripting._
+    val op = CountVertices()
+    op(op.vertices, vertices).result.count
+  }
 }
 case class CountVertices()
     extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
