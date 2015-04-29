@@ -199,3 +199,35 @@ case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
         .sorted(ordering))
   }
 }
+
+object Coverage extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val edges = edgeBundle(src, dst)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val coverage = scalar[Long]
+  }
+  def fromJson(j: JsValue) = Coverage()
+  def run(edges: EdgeBundle)(implicit manager: MetaGraphManager): Scalar[Long] = {
+    import Scripting._
+    val op = Coverage()
+    op(op.edges, edges).result.coverage
+  }
+}
+case class Coverage()
+    extends TypedMetaGraphOp[Coverage.Input, Coverage.Output] {
+  import Coverage._
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val covered = inputs.edges.rdd.values.map(_.src)
+    output(o.coverage, covered.distinct.count)
+  }
+}
