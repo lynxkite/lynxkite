@@ -447,8 +447,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   abstract class Holder[T <: MetaGraphEntity](dir: SymbolPath) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit
-    def update(name: String, entity: T) = manager.synchronized {
+
+    def update(name: String, entity: T) = {
       validateName(name)
+      set(name, entity)
+    }
+
+    // Skip name validation. Special-name entities can be set through this method.
+    def set(name: String, entity: T) = manager.synchronized {
       if (entity == null) {
         existing(dir / name).foreach(manager.rmTag(_))
       } else {
@@ -537,6 +543,8 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   def belongsTo_=(eb: EdgeBundle) = manager.synchronized {
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
+    project.scalars.set("!coverage", graph_operations.Coverage.run(eb))
+    project.scalars.set("!belongsToEdges", graph_operations.CountVertices.run(eb.idSet))
   }
   def belongsToAttribute: Attribute[Vector[ID]] = {
     val segmentationIds = graph_operations.IdAsAttribute.run(project.vertexSet)
