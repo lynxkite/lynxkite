@@ -72,7 +72,7 @@ class HadoopFileTest extends FunSuite {
 
   test("Empty symbolic prefix works with file:// scheme") {
     RootRepository.registerRoot("EMPTYFILE$", "")
-    val resourceDir = HadoopFile("EMPTYFILE$") +  rootPath
+    val resourceDir = HadoopFile("EMPTYFILE$") + rootPath
     println(rootPath)
     println(resourceDir.resolvedNameWithCredentials)
     println(resourceDir.relativePath)
