@@ -21,61 +21,70 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   case class Param(
       id: String,
       title: String,
-      override val defaultValue: String = "") extends OperationParameterMeta {
-    def validate(value: String): String = ""
+      defaultValue: String = "") extends OperationParameterMeta {
+    val kind = "default"
+    val options = List()
+    val multipleChoice = false
+    def validate(value: String): Unit = {}
   }
   case class Choice(
       id: String,
       title: String,
-      override val options: List[UIValue],
-      override val multipleChoice: Boolean = false) extends OperationParameterMeta {
-    override val kind = "choice"
-    def validate(value: String): String = ""
+      options: List[UIValue],
+      multipleChoice: Boolean = false) extends OperationParameterMeta {
+    val kind = "choice"
+    val defaultValue = ""
+    def validate(value: String): Unit = {}
   }
-  case class TagList(id: String, title: String, override val options: List[UIValue])
+  case class TagList(id: String, title: String, options: List[UIValue])
       extends OperationParameterMeta {
-    override val kind = "tag-list"
-    override val multipleChoice = true
-    def validate(value: String): String = ""
+    val kind = "tag-list"
+    val multipleChoice = true
+    val defaultValue = ""
+    def validate(value: String): Unit = {}
   }
   case class File(id: String, title: String) extends OperationParameterMeta {
-    override val kind = "file"
-    def validate(value: String): String = ""
+    val kind = "file"
+    val multipleChoice = false
+    val defaultValue = ""
+    val options = List()
+    def validate(value: String): Unit = {}
   }
-  case class Ratio(id: String, title: String, override val defaultValue: String = "")
+  case class Ratio(id: String, title: String, defaultValue: String = "")
       extends OperationParameterMeta {
-    def validate(value: String): String = {
-      if (!(value matches """\d+(\.\d+)?""") || (value.toDouble > 1.0)) {
-        return s"$title ($value) has to be a ratio, a double between 0.0 and 1.0"
-      }
-      ""
+    val kind = "default"
+    val options = List()
+    val multipleChoice = false
+    def validate(value: String): Unit = {
+      assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
+        s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
     }
   }
-  case class NonNegInt(id: String, title: String, override val defaultValue: String = "")
+  case class NonNegInt(id: String, title: String, defaultValue: String = "")
       extends OperationParameterMeta {
-    def validate(value: String): String = {
-      if (!(value matches """\d+""")) {
-        return s"$title ($value) has to be a non negative integer."
-      }
-      ""
+    val kind = "default"
+    val options = List()
+    val multipleChoice = false
+    def validate(value: String): Unit = {
+      assert(value matches """\d+""", s"$title ($value) has to be a non negative integer")
+    }
+  }
+  case class NonNegDouble(id: String, title: String, defaultValue: String = "")
+      extends OperationParameterMeta {
+    val kind = "default"
+    val options = List()
+    val multipleChoice = false
+    def validate(value: String): Unit = {
+      assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
   }
   case class RandomSeed(id: String, title: String) extends OperationParameterMeta {
-    override val defaultValue = randomSeed()
-    def validate(value: String): String = {
-      if (!(value matches """[+-]?\d+""")) {
-        return s"$title ($value) has to be an integer."
-      }
-      ""
-    }
-  }
-  case class NonNegDouble(id: String, title: String, override val defaultValue: String = "")
-      extends OperationParameterMeta {
-    def validate(value: String): String = {
-      if (!(value matches """\d+(\.\d+)?""")) {
-        return s"$title ($value) has to be a non negative double"
-      }
-      ""
+    val defaultValue = randomSeed()
+    val kind = "default"
+    val options = List()
+    val multipleChoice = false
+    def validate(value: String): Unit = {
+      assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
   }
 
