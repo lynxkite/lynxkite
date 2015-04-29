@@ -580,13 +580,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Example Graph")
     val path = dataManager.repositoryPath + "/csv-export-test"
     run("Export vertex attributes to file", Map(
-      "path" -> path.toString,
+      "path" -> path.symbolicName,
       "link" -> "link",
       "attrs" -> "id,name,age,income,gender",
       "format" -> "CSV"))
     val header = (path + "/header").readAsString
     run("Import vertices from CSV files", Map(
-      "files" -> (path + "/data/*").toString,
+      "files" -> (path + "/data/*").symbolicName,
       "header" -> header,
       "delimiter" -> ",",
       "filter" -> "",
