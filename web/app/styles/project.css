@@ -7,6 +7,9 @@ input[type=range] {
 .de-emph {
   color: rgba(0, 0, 0, 0.3);
 }
+.de-emph .emph {
+  color: black;
+}
 .warning {
   color: rgb(255, 0, 0);
 }

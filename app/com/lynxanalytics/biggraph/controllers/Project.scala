@@ -260,7 +260,6 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   private def updateVertexSet(e: VertexSet, killSegmentations: Boolean) = manager.synchronized {
     if (e != vertexSet) {
-      // TODO: "Induce" the edges and attributes to the new vertex set.
       edgeBundle = null
       vertexAttributes = Map()
       if (killSegmentations) segmentations.foreach(_.remove())
@@ -541,7 +540,8 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   def belongsTo_=(eb: EdgeBundle) = manager.synchronized {
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
-    project.scalars.set("!coverage", graph_operations.Coverage.run(eb))
+    project.scalars.set("!coverage", graph_operations.Coverage.run(eb).srcCoverage)
+    project.scalars.set("!nonEmpty", graph_operations.Coverage.run(eb).dstCoverage)
     project.scalars.set("!belongsToEdges", graph_operations.Count.run(eb))
   }
   def belongsToAttribute: Attribute[Vector[ID]] = {
