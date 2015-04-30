@@ -186,7 +186,7 @@ case class Fingerprinting(
         responsesByGentlemen
       } else if (iteration >= maxIterations) {
         // Reached maximal number of iterations. We don't try anymore.
-        log.info("Fingerprinting reached maximal iteration count $maxIterations. Stopping.")
+        log.info(s"Fingerprinting reached maximal iteration count $maxIterations. Stopping.")
         responsesByGentlemen
       } else {
         iterate(
