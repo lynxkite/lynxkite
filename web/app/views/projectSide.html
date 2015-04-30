@@ -37,6 +37,9 @@
   <div class="panel panel-default project" ng-if="side.project.$resolved && !side.project.$error && !side.showHistory">
 
     <div class="panel-heading project-name">
+      <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'" ng-repeat="parent in side.parentProjects()">
+        {{parent}} &raquo;
+      </span>
       {{side.shortName()}}
 
       <div class="btn-group pull-right">
