@@ -216,13 +216,14 @@ object Coverage extends OpFromJson {
     val edges = edgeBundle(src, dst)
   }
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-    val coverage = scalar[Long]
+    val srcCoverage = scalar[Long]
+    val dstCoverage = scalar[Long]
   }
   def fromJson(j: JsValue) = Coverage()
-  def run(edges: EdgeBundle)(implicit manager: MetaGraphManager): Scalar[Long] = {
+  def run(edges: EdgeBundle)(implicit manager: MetaGraphManager): Output = {
     import Scripting._
     val op = Coverage()
-    op(op.edges, edges).result.coverage
+    op(op.edges, edges).result
   }
 }
 case class Coverage()
@@ -236,7 +237,9 @@ case class Coverage()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val covered = inputs.edges.rdd.values.map(_.src)
-    output(o.coverage, covered.distinct.count)
+    val srcs = inputs.edges.rdd.values.map(_.src)
+    val dsts = inputs.edges.rdd.values.map(_.dst)
+    output(o.srcCoverage, srcs.distinct.count)
+    output(o.dstCoverage, dsts.distinct.count)
   }
 }
