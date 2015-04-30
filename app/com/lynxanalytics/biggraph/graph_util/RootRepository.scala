@@ -2,22 +2,9 @@
 
 package com.lynxanalytics.biggraph.graph_util
 
-import scala.util.Random
-
 object RootRepository {
   private val pathResolutions = scala.collection.mutable.Map[String, String]()
   private val symbolicRootPattern = "([A-Z]+[$])(.*)".r
-
-  // To facilitate testing
-  def randomRootSymbol = Random.nextString(20).map(x => ((x % 26) + 'A').toChar) + "$"
-  def getDummyRootName(rootPath: String): String = {
-    val name = randomRootSymbol
-    if (rootPath.startsWith("/"))
-      registerRoot(name, "file:" + rootPath)
-    else
-      registerRoot(name, rootPath)
-    name
-  }
 
   def splitSymbolicPattern(str: String): (String, String) = {
     str match {

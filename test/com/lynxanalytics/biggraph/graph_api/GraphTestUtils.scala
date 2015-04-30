@@ -5,13 +5,10 @@ import org.apache.spark
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.util.Random
 
-import com.lynxanalytics.biggraph.TestTempDir
-import com.lynxanalytics.biggraph.TestSparkContext
-import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext, BigGraphEnvironment }
 
 import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.RootRepository
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -56,7 +53,7 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
     val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("dataManager." + dirName)
     managerDir.mkdir
-    val sandboxRoot = RootRepository.getDummyRootName(managerDir.toString)
+    val sandboxRoot = TestUtils.getDummyRootName(managerDir.toString)
     new DataManager(sparkContext, HadoopFile(sandboxRoot))
   }
 }

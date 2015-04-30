@@ -44,7 +44,7 @@ class CSVExportTest extends FunSuite with TestGraphOp {
         "name" -> sampleOut.name,
         "age" -> sampleOut.age))
     val targetDir = tempDir("csv_save_target_dir")
-    val sandboxRoot = RootRepository.getDummyRootName(targetDir.toString)
+    val sandboxRoot = TestUtils.getDummyRootName(targetDir.toString)
     csvData.saveToDir(HadoopFile(sandboxRoot))
 
     val dirSnapshot = TestUtils.runShellCommand(
