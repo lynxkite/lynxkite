@@ -16,6 +16,10 @@
     position: static;
     overflow: visible;
   }
+
+  .graph-sidebar {
+    display: none;
+  }
 }
 
 .tooltip {
