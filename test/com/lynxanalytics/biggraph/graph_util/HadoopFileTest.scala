@@ -31,9 +31,9 @@ class HadoopFileTest extends FunSuite {
   test("Path concatenation works") {
     val dummy = TestUtils.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
     val d = HadoopFile(dummy) / "dir/file"
-    assert(d.resolvedName == "s3n://lynx-bnw-test2/dir/file")
+    assert(d.resolvedNameWithNoCredentials == "s3n://lynx-bnw-test2/dir/file")
     val q = d + ".ext"
-    assert(q.resolvedName == "s3n://lynx-bnw-test2/dir/file.ext")
+    assert(q.resolvedNameWithNoCredentials == "s3n://lynx-bnw-test2/dir/file.ext")
   }
 
   def wildcardTest(resourceRoot: HadoopFile) = {

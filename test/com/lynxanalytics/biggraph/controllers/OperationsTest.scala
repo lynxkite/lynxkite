@@ -536,7 +536,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("SQL import & export vertices") {
     run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath.resolvedName}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Export vertex attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
@@ -556,7 +556,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("SQL import & export edges") {
     run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath.resolvedName}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Export edge attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
