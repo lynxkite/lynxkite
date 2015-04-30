@@ -1,6 +1,9 @@
 // A persistent key-value storage interface and implementation(s).
 package com.lynxanalytics.biggraph.graph_api
 
+import java.io.File
+import play.api.libs.json.Json
+
 trait KeyValueStore {
   def readAll: Iterable[(String, String)]
   def delete(key: String): Unit
@@ -12,63 +15,65 @@ trait KeyValueStore {
 
 case class JournalKeyValueStore(file: String) extends KeyValueStore {
   private val Z = '\uffff' // Highest character code.
-  new java.io.File(file).getParentFile.mkdirs // Create directory if necessary.
-  private val out = new java.io.DataOutputStream(
-    new java.io.FileOutputStream(file, /* append = */ true))
+  new File(file).getParentFile.mkdirs // Create directory if necessary.
+  private val out = java.nio.file.Files.newBufferedWriter(
+    java.nio.file.Paths.get(file),
+    java.nio.charset.StandardCharsets.UTF_8,
+    java.nio.file.StandardOpenOption.APPEND,
+    java.nio.file.StandardOpenOption.CREATE)
+  // Journal entry types.
+  val Put = "Put"
+  val Delete = "Delete"
+  val DeletePrefix = "DeletePrefix"
 
   def readAll: Iterable[(String, String)] = {
     import scala.collection.JavaConverters._
     val data = new java.util.TreeMap[String, String]
     for ((command, key, value) <- readCommands) {
       command match {
-        case "put" => data.put(key, value)
-        case "delete" => data.remove(key)
-        case "deletePrefix" => data.subMap(key, key + Z).entrySet.clear
+        case Put => data.put(key, value)
+        case Delete => data.remove(key)
+        case DeletePrefix => data.subMap(key, key + Z).entrySet.clear
       }
     }
     data.asScala
   }
 
   def readCommands: Iterable[(String, String, String)] = {
-    def readStream(in: java.io.DataInputStream): Stream[(String, String, String)] = {
-      try {
-        val command = in.readUTF
-        val key = in.readUTF
-        val value = in.readUTF
-        (command, key, value) #:: readStream(in)
-      } catch {
-        case _: java.io.EOFException =>
-          in.close()
-          Stream.empty
-        case e: Throwable =>
-          in.close()
-          throw e
+    def readStream(in: java.io.BufferedReader): Stream[(String, String, String)] = {
+      val line = in.readLine
+      if (line == null) Stream.empty // End of file reached.
+      else {
+        val j = Json.parse(line).as[Seq[String]]
+        (j(0), j(1), j(2)) #:: readStream(in)
       }
     }
-    if (new java.io.File(file).exists) {
-      val in = new java.io.DataInputStream(
-        new java.io.FileInputStream(file))
+    if (new File(file).exists) {
+      val in = java.nio.file.Files.newBufferedReader(
+        java.nio.file.Paths.get(file),
+        java.nio.charset.StandardCharsets.UTF_8)
       readStream(in)
     } else Seq()
   }
 
-  private def write(command: String, key: String, value: String = "") = {
-    out.writeUTF(command)
-    out.writeUTF(key)
-    out.writeUTF(value)
-    if (flushing) out.flush()
+  private def write(command: String, key: String, value: String = "") = synchronized {
+    if (doWrites) {
+      out.write(Json.toJson(Seq(command, key, value)).toString)
+      out.newLine()
+      if (flushing) out.flush()
+    }
   }
 
-  def delete(key: String): Unit = if (doWrites) synchronized {
-    write("delete", key)
+  def put(key: String, value: String): Unit = synchronized {
+    write(Put, key, value)
   }
 
-  def put(key: String, value: String): Unit = if (doWrites) synchronized {
-    write("put", key, value)
+  def delete(key: String): Unit = synchronized {
+    write(Delete, key)
   }
 
-  def deletePrefix(prefix: String): Unit = if (doWrites) synchronized {
-    write("deletePrefix", prefix)
+  def deletePrefix(prefix: String): Unit = synchronized {
+    write(DeletePrefix, prefix)
   }
 
   private var flushing = true
@@ -84,8 +89,8 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
   }
 
   private var ignoreWrites = 0
-  private def doWrites = ignoreWrites == 0
-  def writesCanBeIgnored[T](fn: => T): T = {
+  private def doWrites = synchronized { ignoreWrites == 0 }
+  def writesCanBeIgnored[T](fn: => T): T = synchronized {
     ignoreWrites += 1
     try { fn }
     finally { ignoreWrites -= 1 }
@@ -93,9 +98,7 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
 }
 
 case class JsonKeyValueStore(file: String) extends KeyValueStore {
-  import java.io.File
   import org.apache.commons.io.FileUtils
-  import play.api.libs.json.Json
 
   private val raw = FileUtils.readFileToString(new File(file), "utf8")
   private val map = Json.parse(raw).as[Map[String, String]]
