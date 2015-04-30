@@ -1,5 +1,4 @@
-echo "Please insert the LynxKite install DVD then press any key."
-read
+echo "Starting LynxKite isntallation..."
 
 mkdir cloudera
 sudo mount /dev/cdrom cloudera
@@ -15,6 +14,7 @@ echo "Installing Cloudera..."
 sudo tar -xf cloudera/cloudera-manager-trusty-cm5.3.3_amd64.tar.gz -C /opt
 sudo useradd --system --home=/opt/cm-5.3.3/run/cloudera-scm-server --no-create-home cloudera-scm
 sudo chown -R cloudera-scm.cloudera-scm /opt/cm-5.3.3
+sudo cp  /opt/cm-5.3.3/etc/init.d
 echo "Cloudera installed successfully."
 
 # Configure PostgreSQL
