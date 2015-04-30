@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_util
 
+import com.lynxanalytics.biggraph.TestUtils
 import org.scalatest.FunSuite
 
 class HadoopFileTest extends FunSuite {
@@ -20,7 +21,7 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("Password setting works") {
-    val dummy = RootRepository.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
+    val dummy = TestUtils.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
     val dataFile = HadoopFile(dummy + "/somedir/somefile")
     val conf = dataFile.hadoopConfiguration()
     assert(conf.get("fs.s3n.awsAccessKeyId") == "access")
@@ -28,7 +29,7 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("Path concatenation works") {
-    val dummy = RootRepository.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
+    val dummy = TestUtils.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
     val d = HadoopFile(dummy) / "dir/file"
     assert(d.resolvedName == "s3n://lynx-bnw-test2/dir/file")
     val q = d + ".ext"
