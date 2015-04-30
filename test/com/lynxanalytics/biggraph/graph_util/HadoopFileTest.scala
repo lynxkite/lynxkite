@@ -18,6 +18,24 @@ class HadoopFileTest extends FunSuite {
     intercept[java.lang.AssertionError] {
       RootRepository.registerRoot("KJHKJSDDSJ$/haha", "mamam")
     }
+    RootRepository.registerRoot("A1$", "")
+    RootRepository.registerRoot("QQ$", "")
+    RootRepository.registerRoot("Q012$", "")
+    RootRepository.registerRoot("P4Q1$", "")
+    RootRepository.registerRoot("W$", "")
+
+    intercept[java.lang.AssertionError] {
+      RootRepository.registerRoot("9$", "")
+    }
+    intercept[java.lang.AssertionError] {
+      RootRepository.registerRoot("3P4$", "")
+    }
+    intercept[java.lang.AssertionError] {
+      RootRepository.registerRoot("$", "")
+    }
+    intercept[java.lang.AssertionError] {
+      RootRepository.registerRoot("A$B", "")
+    }
   }
 
   test("Password setting works") {
