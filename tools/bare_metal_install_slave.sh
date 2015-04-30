@@ -1,4 +1,4 @@
-echo "Starting LynxKite isntallation..."
+echo "Starting LynxKite installation..."
 
 mkdir cloudera
 sudo mount /dev/cdrom cloudera
