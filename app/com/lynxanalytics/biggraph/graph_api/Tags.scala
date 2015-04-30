@@ -174,30 +174,30 @@ final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
   }
 }
 object TagRoot {
-  val sqliteFilename = "tags.sqlite"
+  val journalFilename = "tags.journal"
 
   def loadFromRepo(repo: String): Map[SymbolPath, String] =
     loadFromStore(storeFromRepo(repo))
 
   private def loadFromStore(store: KeyValueStore): Map[SymbolPath, String] =
-    store.scan("").map { case (k, v) => SymbolPath.fromString(k) -> v }.toMap
+    store.readAll.map { case (k, v) => SymbolPath.fromString(k) -> v }.toMap
 
   private def storeFromRepo(repo: String): KeyValueStore = {
-    val tagsSQLite = new File(repo, sqliteFilename)
+    val tagsJournal = new File(repo, journalFilename)
     val tagsOld = new File(repo, "tags")
-    if (tagsSQLite.exists) {
-      new SQLiteKeyValueStore(tagsSQLite.toString)
+    if (tagsJournal.exists) {
+      new JournalKeyValueStore(tagsJournal.toString)
     } else if (tagsOld.exists) {
       new JsonKeyValueStore(tagsOld.toString)
-    } else { // Nothing to load. Use SQLite.
-      new SQLiteKeyValueStore(tagsSQLite.toString)
+    } else { // Nothing to load. Use a journal.
+      new JournalKeyValueStore(tagsJournal.toString)
     }
   }
 
   def apply(repo: String) = {
     val oldStore = storeFromRepo(repo) // May be from earlier versions.
-    val tagsSQLite = new File(repo, sqliteFilename)
-    val newStore = new SQLiteKeyValueStore(tagsSQLite.toString)
+    val tagsJournal = new File(repo, journalFilename)
+    val newStore = new JournalKeyValueStore(tagsJournal.toString)
     val root = new TagRoot(newStore)
     if (oldStore != newStore) {
       root.setTags(loadFromStore(oldStore))
