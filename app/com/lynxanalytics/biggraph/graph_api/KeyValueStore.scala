@@ -12,6 +12,7 @@ trait KeyValueStore {
 
 case class JournalKeyValueStore(file: String) extends KeyValueStore {
   private val Z = '\uffff' // Highest character code.
+  new java.io.File(file).getParentFile.mkdirs // Create directory if necessary.
   private val out = new java.io.DataOutputStream(
     new java.io.FileOutputStream(file, /* append = */ true))
 
@@ -29,21 +30,26 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
   }
 
   def readCommands: Iterable[(String, String, String)] = {
-    val in = new java.io.DataInputStream(
-      new java.io.FileInputStream(file))
-    def readStream: Stream[(String, String, String)] = {
+    def readStream(in: java.io.DataInputStream): Stream[(String, String, String)] = {
       try {
         val command = in.readUTF
         val key = in.readUTF
         val value = in.readUTF
-        (command, key, value) #:: readStream
+        (command, key, value) #:: readStream(in)
       } catch {
-        case e: java.io.EOFException =>
+        case _: java.io.EOFException =>
           in.close()
           Stream.empty
+        case e: Throwable =>
+          in.close()
+          throw e
       }
     }
-    readStream
+    if (new java.io.File(file).exists) {
+      val in = new java.io.DataInputStream(
+        new java.io.FileInputStream(file))
+      readStream(in)
+    } else Seq()
   }
 
   private def write(command: String, key: String, value: String = "") = {
