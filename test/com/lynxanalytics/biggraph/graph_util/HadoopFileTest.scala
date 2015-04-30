@@ -77,9 +77,9 @@ class HadoopFileTest extends FunSuite {
     val g2 = f2.hadoopFileForGlobOutput("s3n://rootdir/subdir/file")
     assert(g2.symbolicName == "HADOOPROOTB$/subdir/file")
 
-    RootRepository.registerRoot("HADOOPROOTC$", "s3n://key:s")
-    val f3 = HadoopFile("HADOOPROOTC$ecret@rootdir/subdir1/file")
-    assert(f3.relativePath == "ecret@rootdir/subdir1/file")
+    RootRepository.registerRoot("HADOOPROOTC$", "s3n:/")
+    val f3 = HadoopFile("HADOOPROOTC$/key:secret@rootdir/subdir1/file")
+    assert(f3.relativePath == "/key:secret@rootdir/subdir1/file")
     val g3 = f3.hadoopFileForGlobOutput("s3n://rootdir/subdir1/file")
     assert(g3.awsID == "key")
     assert(g3.awsSecret == "secret")
@@ -89,5 +89,80 @@ class HadoopFileTest extends FunSuite {
     RootRepository.registerRoot("EMPTYFILE$", "")
     val resourceDir = HadoopFile("EMPTYFILE$") + rootPath
     wildcardTest(resourceDir)
+  }
+
+  def checkOne(rootSymbol: String, pathAndOutput: Tuple2[String, String]) = {
+    val (relativePath, expectedOutput) = (pathAndOutput._1, pathAndOutput._2)
+    if (expectedOutput == "ASSERT") {
+      intercept[java.lang.AssertionError] {
+        HadoopFile(rootSymbol + relativePath)
+      }
+    } else {
+      val file = HadoopFile(rootSymbol + relativePath)
+      assert(file.resolvedName == expectedOutput)
+    }
+  }
+
+  def checkPathRules(rootResolution: String,
+                     relativePathsAndExpectedOutputs: List[Tuple2[String, String]]) = {
+    val rootSymbol = TestUtils.getDummyRootName(rootResolution, false)
+    relativePathsAndExpectedOutputs.foreach { checkOne(rootSymbol, _) }
+  }
+
+  test("Dangerous concatenations get caught") {
+
+    checkPathRules("",
+      List(
+        ("a", "a"),
+        ("/haha", "/haha"),
+        ("///g///", "/g/"),
+        ("", ""),
+        ("b///", "b/"),
+        ("/user/../trick", "ASSERT")))
+
+    checkPathRules("b",
+      List(
+        ("a", "ASSERT"),
+        ("/haha", "b/haha"),
+        ("///g///", "b/g/"),
+        ("", "b"),
+        ("b///", "ASSERT"),
+        ("/user/../trick", "ASSERT")))
+
+    checkPathRules("b/",
+      List(
+        ("a", "b/a"),
+        ("/haha", "b/haha"),
+        ("///g///", "b/g/"),
+        ("", "b/"),
+        ("b///", "b/b/"),
+        ("/user/../trick", "ASSERT")))
+
+    checkPathRules("s3n://key:secret@",
+      List(
+        ("a", "s3n://key:secret@a"),
+        ("///b", "s3n://key:secret@b"),
+        ("/hello..", "ASSERT")
+      ))
+
+    checkPathRules("alma.",
+      List(
+        ("a", "ASSERT"),
+        ("///b", "alma./b"),
+        (".trick", "ASSERT")
+      ))
+
+    checkPathRules("file:/home",
+      List(
+        ("/user", "file:/home/user"),
+        ("//user", "file:/home/user"),
+        ("user", "ASSERT")))
+
+    checkPathRules("/home",
+      List(
+        ("/user", "/home/user"),
+        ("//user", "/home/user"),
+        ("user", "ASSERT")))
+
   }
 }
