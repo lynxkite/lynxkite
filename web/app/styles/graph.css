@@ -1,3 +1,11 @@
+/* Common styles. */
+
+@media print {
+  a[href]:after {
+    content: "";
+  }
+}
+
 .tooltip {
   pointer-events: none;
 }
