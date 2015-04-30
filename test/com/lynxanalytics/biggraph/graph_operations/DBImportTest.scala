@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DBImportTest extends FunSuite with TestGraphOp {
   test("import vertex list from SQLite") {
-    val db = s"sqlite:${dataManager.repositoryPath.resolvedName}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     val connection = sql.DriverManager.getConnection("jdbc:" + db)
     val statement = connection.createStatement()
     statement.executeUpdate("""

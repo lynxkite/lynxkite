@@ -26,13 +26,13 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
   private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
 
   val symbolicName = rootSymbol + relativePath
-  val resolvedNameWithCredentials = RootRepository.getRootInfo(rootSymbol) + relativePath
+  val resolvedName = RootRepository.getRootInfo(rootSymbol) + relativePath
 
-  val (resolvedName, awsID, awsSecret) = resolvedNameWithCredentials match {
+  val (resolvedNameWithNoCredentials, awsID, awsSecret) = resolvedName match {
     case s3nWithCreadentialsPattern(scheme, key, secret, relPath) =>
       (scheme + "://" + relPath, key, secret)
     case _ =>
-      (resolvedNameWithCredentials, "", "")
+      (resolvedName, "", "")
   }
 
   private def hasCredentials = awsID.nonEmpty
@@ -73,7 +73,7 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
 
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
   @transient lazy val uri = path.toUri
-  @transient lazy val path = new hadoop.fs.Path(resolvedName)
+  @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   def open() = fs.open(path)
   def create() = fs.create(path)
   def exists() = fs.exists(path)
@@ -96,7 +96,7 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
     // Make sure we get many small splits.
     conf.setLong("mapred.max.split.size", 50000000)
     sc.newAPIHadoopFile(
-      resolvedName,
+      resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.Text],
       fClass = classOf[hadoop.mapreduce.lib.input.TextInputFormat],
@@ -108,7 +108,7 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
     // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
     val hadoopLines = lines.map(x => (hadoop.io.NullWritable.get(), new hadoop.io.Text(x)))
     hadoopLines.saveAsHadoopFile(
-      resolvedName,
+      resolvedNameWithNoCredentials,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.Text],
       outputFormatClass = classOf[hadoop.mapred.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
@@ -158,7 +158,7 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
     import hadoop.mapreduce.lib.input.SequenceFileInputFormat
 
     sc.newAPIHadoopFile(
-      resolvedName,
+      resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.NullWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[SequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
@@ -175,9 +175,9 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
       bigGraphLogger.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
       fs.delete(path, true)
     }
-    bigGraphLogger.info(s"saving ${data.name} as object file to ${symbolicName} ${resolvedName}")
+    bigGraphLogger.info(s"saving ${data.name} as object file to ${symbolicName} ${resolvedNameWithNoCredentials}")
     hadoopData.saveAsNewAPIHadoopFile(
-      resolvedName,
+      resolvedNameWithNoCredentials,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.BytesWritable],
       outputFormatClass =
