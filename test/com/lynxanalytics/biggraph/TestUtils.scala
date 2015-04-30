@@ -25,14 +25,15 @@ object TestUtils {
   }
 
   def randomRootSymbol = Random.nextString(20).map(x => ((x % 26) + 'A').toChar) + "$"
-  def getDummyRootName(rootPath: String): String = {
+  def getDummyRootName(rootPath: String, canSupplyFileScheme: Boolean = true): String = {
     val name = randomRootSymbol
-    if (rootPath.startsWith("/"))
+    if (rootPath.startsWith("/") && canSupplyFileScheme)
       RootRepository.registerRoot(name, "file:" + rootPath)
     else
       RootRepository.registerRoot(name, rootPath)
     name
   }
+
 }
 
 trait TestTempDir {

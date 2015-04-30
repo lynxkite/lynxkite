@@ -24,9 +24,34 @@ object HadoopFile {
 case class HadoopFile(rootSymbol: String, relativePath: String) {
   private val s3nWithCreadentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
+  private val atAndSlash = "@/+".r
+  private val slashSequenceBeg = "(\\A)//+".r
+  private val slashSequence = "([^:])//+".r
+  private val twoDots = ".."
 
   val symbolicName = rootSymbol + relativePath
-  val resolvedName = RootRepository.getRootInfo(rootSymbol) + relativePath
+
+  private def hasDangerousEnd(str: String) =
+    str.nonEmpty && !str.endsWith("@") && !str.endsWith("/")
+
+  private def hasDangerousStart(str: String) =
+    str.nonEmpty && !str.startsWith("/")
+
+  private def normalizedName(str: String) = {
+    val s1 = atAndSlash.replaceAllIn(str, "@")
+    val s2 = slashSequence.replaceAllIn(s1, "$1/")
+    val s3 = slashSequenceBeg.replaceAllIn(s2, "$1/")
+    assert(!s3.contains(twoDots))
+    s3
+  }
+
+  private def computeResolvedName(rootResolution: String, relativePath: String): String = {
+    // Check
+    assert(!hasDangerousEnd(rootResolution) || !hasDangerousStart(relativePath),
+      s"Concatenation $rootResolution+$relativePath is dangerous")
+    normalizedName(rootResolution + relativePath)
+  }
+  val resolvedName = computeResolvedName(RootRepository.getRootInfo(rootSymbol), relativePath)
 
   val (resolvedNameWithNoCredentials, awsID, awsSecret) = resolvedName match {
     case s3nWithCreadentialsPattern(scheme, key, secret, relPath) =>
