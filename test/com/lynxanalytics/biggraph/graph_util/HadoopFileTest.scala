@@ -51,18 +51,18 @@ class HadoopFileTest extends FunSuite {
 
     RootRepository.registerRoot("HADOOPROOTA$", "file:/home/rootdir")
     val f1 = HadoopFile("HADOOPROOTA$/subdir") / "*"
-    val g1 = f1.copyUpdateRelativePath("file:/home/rootdir/subdir/file")
+    val g1 = f1.hadoopFileForGlobOutput("file:/home/rootdir/subdir/file")
     assert(g1.symbolicName == "HADOOPROOTA$/subdir/file")
 
     RootRepository.registerRoot("HADOOPROOTB$", "s3n://key:secret@rootdir")
     val f2 = HadoopFile("HADOOPROOTB$/subdir") / "*"
-    val g2 = f2.copyUpdateRelativePath("s3n://rootdir/subdir/file")
+    val g2 = f2.hadoopFileForGlobOutput("s3n://rootdir/subdir/file")
     assert(g2.symbolicName == "HADOOPROOTB$/subdir/file")
 
     RootRepository.registerRoot("HADOOPROOTC$", "s3n://key:s")
     val f3 = HadoopFile("HADOOPROOTC$ecret@rootdir/subdir1/file")
     assert(f3.relativePath == "ecret@rootdir/subdir1/file")
-    val g3 = f3.copyUpdateRelativePath("s3n://rootdir/subdir1/file")
+    val g3 = f3.hadoopFileForGlobOutput("s3n://rootdir/subdir1/file")
     assert(g3.awsID == "key")
     assert(g3.awsSecret == "secret")
   }

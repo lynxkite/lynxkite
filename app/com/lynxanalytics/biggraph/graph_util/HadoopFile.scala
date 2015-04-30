@@ -63,11 +63,13 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
     val hadoopOutputWithCredentials = reinstateCredentialsIfNeeded(hadoopOutput)
     val resolution = RootRepository.getRootInfo(rootSymbol)
     assert(hadoopOutputWithCredentials.startsWith(resolution),
-      "Bad prefix match: $hadoopOutputWithCredentials should start with $resolution")
+      s"Bad prefix match: $hadoopOutputWithCredentials ($hadoopOutput) should start with $resolution")
     hadoopOutputWithCredentials.drop(resolution.length)
   }
 
-  def copyUpdateRelativePath(hadoopOutput: String): HadoopFile = {
+  // This function processes the paths returned by hadoop 'ls' (= the globStatus command)
+  // after we called globStatus with this hadoop file.
+  def hadoopFileForGlobOutput(hadoopOutput: String): HadoopFile = {
     this.copy(relativePath = computeRelativePathFromHadoopOutput(hadoopOutput))
   }
 
@@ -86,7 +88,7 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
   def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
-  def list = globStatus.map(st => copyUpdateRelativePath(st.getPath.toString))
+  def list = globStatus.map(st => hadoopFileForGlobOutput(st.getPath.toString))
 
   def length = fs.getFileStatus(path).getLen
   def globLength = globStatus.map(_.getLen).sum
@@ -175,7 +177,7 @@ case class HadoopFile(rootSymbol: String, relativePath: String) {
       bigGraphLogger.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
       fs.delete(path, true)
     }
-    bigGraphLogger.info(s"saving ${data.name} as object file to ${symbolicName} ${resolvedNameWithNoCredentials}")
+    bigGraphLogger.info(s"saving ${data.name} as object file to ${symbolicName}")
     hadoopData.saveAsNewAPIHadoopFile(
       resolvedNameWithNoCredentials,
       keyClass = classOf[hadoop.io.NullWritable],
