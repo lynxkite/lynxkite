@@ -4,6 +4,18 @@
   a[href]:after {
     content: "";
   }
+
+  div.ui-splitbar {
+    display: none;
+  }
+
+  .stretch {
+    position: relative;
+  }
+  .split-screen > .project-sides {
+    position: static;
+    overflow: visible;
+  }
 }
 
 .tooltip {
