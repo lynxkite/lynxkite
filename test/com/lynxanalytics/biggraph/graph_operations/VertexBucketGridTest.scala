@@ -13,8 +13,7 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
   test("Only 1 bucket") {
     val xBucketer = new EmptyBucketer()
     val yBucketer = new EmptyBucketer()
-    val cop = CountVertices()
-    val count = cop(cop.vertices, g.vertices).result.count
+    val count = Count.run(g.vertices)
     val op = VertexBucketGrid[Nothing, Nothing](xBucketer, yBucketer)
     val out = op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.originalCount, count).result
     assert(out.buckets.value.counts == Map((0, 0) -> 4))
@@ -25,8 +24,7 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
     val xBucketer = StringBucketer(Seq("Adam", "Eve"), hasOther = true)
     val yBucketer = DoubleLinearBucketer(2.0, 50.3, numBuckets)
 
-    val cop = CountVertices()
-    val count = cop(cop.vertices, g.vertices).result.count
+    val count = Count.run(g.vertices)
     val op = VertexBucketGrid(xBucketer, yBucketer)
     val out = op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.xAttribute, g.name)(op.yAttribute, g.age)(op.originalCount, count).result
 

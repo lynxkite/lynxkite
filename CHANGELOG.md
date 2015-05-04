@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Segmentation coverage is automatically calculated.
  - New vertex operation _"Centrality"_ makes it possible to count approximate harmonic
    centrality values.
 
