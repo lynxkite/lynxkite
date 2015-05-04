@@ -7,7 +7,7 @@ svg.graph-view {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: #222;
+  background: #222 !important; /* Make sure it shows in print. */
   user-select: none;
 }
 svg.graph-view.loading {
