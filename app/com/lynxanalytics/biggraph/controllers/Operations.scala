@@ -17,7 +17,7 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import play.api.libs.json
 import scala.reflect.runtime.universe.typeOf
 
-class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
+object OperationParams {
   case class Param(
       id: String,
       title: String,
@@ -78,6 +78,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
   }
+
+  // A random number to be used as default value for random seed parameters.
+  def randomSeed() = util.Random.nextInt.toString
   case class RandomSeed(id: String, title: String) extends OperationParameterMeta {
     val defaultValue = randomSeed()
     val kind = "default"
@@ -87,7 +90,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
   }
-
+}
+class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   import Operation.Category
   import Operation.Context
   // Categories.
@@ -122,6 +126,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "Workflows on segmentation",
       "magenta",
       visible = c.project.isSegmentation)) with SegOp
+
+  import OperationParams._
 
   register("Discard vertices", new VertexOperation(_, _) {
     val description = "Throws away all vertices. Note that this operation discards the edges too."
@@ -2719,7 +2725,4 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val quoted = '"' + url + '"'
     newScalar(s"<a href=$quoted>download</a>")
   }
-
-  // A random number to be used as default value for random seed parameters.
-  def randomSeed() = util.Random.nextInt.toString
 }
