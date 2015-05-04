@@ -4,7 +4,7 @@ package com.lynxanalytics.biggraph.graph_util
 
 object RootRepository {
   private val pathResolutions = scala.collection.mutable.Map[String, String]()
-  private val symbolicRootPattern = "([A-Z][A-Z0-9]*[$])(.*)".r
+  private val symbolicRootPattern = "([_A-Z][_A-Z0-9]*[$])(.*)".r
 
   def splitSymbolicPattern(str: String): (String, String) = {
     str match {

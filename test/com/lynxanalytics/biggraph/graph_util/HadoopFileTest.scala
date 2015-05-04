@@ -18,6 +18,8 @@ class HadoopFileTest extends FunSuite {
     intercept[java.lang.AssertionError] {
       RootRepository.registerRoot("KJHKJSDDSJ$/haha", "mamam")
     }
+    RootRepository.registerRoot("_$", "")
+    RootRepository.registerRoot("AB_$", "")
     RootRepository.registerRoot("A1$", "")
     RootRepository.registerRoot("QQ$", "")
     RootRepository.registerRoot("Q012$", "")
