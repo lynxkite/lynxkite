@@ -15,12 +15,9 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object HadoopFile {
 
-  // Make sure that all instantiations of Hadoop file
-  // go through the one-parameter apply
-  private def apply(unused: String, unused2: String) = ???
-  def apply(str: String) = {
+  def apply(str: String): HadoopFile = {
     val v = RootRepository.splitSymbolicPattern(str)
-    new HadoopFile(v._1, v._2)
+    HadoopFile(v._1, v._2)
   }
 }
 
