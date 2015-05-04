@@ -167,4 +167,23 @@ class HadoopFileTest extends FunSuite {
         ("user", "ASSERT")))
 
   }
+
+  test("Check user defined path parsing") {
+    val filename = rootPath + "/subdir/user_roots.txt"
+    val pairs = RootRepository.parseUserDefinedInputFromURI(filename).toList
+
+    val expected = List(
+      "TESTEMPTY" -> "",
+      "TESTS3N" -> "s3n://testkey:testpwd@",
+      "TESTS3NDIR" -> "s3n://testkey:testpwd@directory/",
+      "TESTFILEDIR" -> "file:/home/user/",
+      "TESTBLANKS" -> "hdfs://root/path")
+    assert(pairs == expected)
+  }
+
+  ignore("User defined files are read") {
+    // TODO: This doesn't work.
+    scala.util.Properties.setProp("KITE_ADDITIONAL_ROOT_DEFINITIONS", "~/user_roots.txt")
+    RootRepository.addUserDefinedResolutions()
+  }
 }

@@ -1,0 +1,25 @@
+# Comment
+#
+
+# Blank
+
+#COMMENTEDOUT="file:/home/user/"
+
+#
+#
+TESTEMPTY=""
+
+TESTS3N="s3n://testkey:testpwd@"
+
+TESTS3NDIR="s3n://testkey:testpwd@directory/"
+
+TESTFILEDIR="file:/home/user/"
+
+          TESTBLANKS="hdfs://root/path"                 
+
+# Only whitespace
+                           
+
+
+
+
