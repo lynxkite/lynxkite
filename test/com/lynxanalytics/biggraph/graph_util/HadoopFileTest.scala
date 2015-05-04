@@ -186,4 +186,93 @@ class HadoopFileTest extends FunSuite {
     scala.util.Properties.setProp("KITE_ADDITIONAL_ROOT_DEFINITIONS", "~/user_roots.txt")
     RootRepository.addUserDefinedResolutions()
   }
+
+  val s3LegacyPaths = List(
+    "s3n://testkey:secret@data",
+    "s3n://testkey:secret@data/uploads/file1",
+    "s3n://testkey:secret@data/uploads/file2",
+    "s3n://testkey:secret@data/uploads/subdir/file3"
+  )
+
+  test("Legacy mode works") {
+    def f(savedPath: String, expected: String): Unit = {
+      if (expected == "ASSERT") {
+        intercept[java.lang.AssertionError] {
+          HadoopFile(savedPath, true)
+        }
+      } else {
+        val v = HadoopFile(savedPath, true)
+        assert(v.symbolicName == expected)
+      }
+    }
+    RootRepository.dropResolutions()
+    f("s3n://testkey:secret@data", "ASSERT")
+    f("s3n://testkey:secret@data/uploads/file1", "ASSERT")
+    f("s3n://testkey:secret@data/uploads/file2", "ASSERT")
+    f("s3n://testkey:secret@data/uploads/subdir/file3", "ASSERT")
+    f("s3n://testkey:secret@data/another/subdir/file3", "ASSERT")
+    f("hdfs:/data", "ASSERT")
+    f("hdfs:/data/uploads/file1", "ASSERT")
+    f("hdfs:/data/uploads/file2", "ASSERT")
+    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
+    f("hdfs:/data/another/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
+    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
+
+    // key mismatch
+    RootRepository.registerRoot("TEST_S3N_BAD$", "s3n://badkey:badpwd@")
+    f("s3n://testkey:secret@data", "ASSERT")
+    f("s3n://testkey:secret@data/uploads/file1", "ASSERT")
+    f("s3n://testkey:secret@data/uploads/file2", "ASSERT")
+    f("s3n://testkey:secret@data/uploads/subdir/file3", "ASSERT")
+    f("s3n://testkey:secret@data/another/subdir/file3", "ASSERT")
+    f("hdfs:/data", "ASSERT")
+    f("hdfs:/data/uploads/file1", "ASSERT")
+    f("hdfs:/data/uploads/file2", "ASSERT")
+    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
+    f("hdfs:/data/another/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
+    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
+
+    RootRepository.registerRoot("TEST_S3N$", "s3n://testkey:secret@")
+    f("s3n://testkey:secret@data", "TEST_S3N$data")
+    f("s3n://testkey:secret@data/uploads/file1", "TEST_S3N$data/uploads/file1")
+    f("s3n://testkey:secret@data/uploads/file2", "TEST_S3N$data/uploads/file2")
+    f("s3n://testkey:secret@data/uploads/subdir/file3", "TEST_S3N$data/uploads/subdir/file3")
+    f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N$data/another/subdir/file3")
+    f("hdfs:/data", "ASSERT")
+    f("hdfs:/data/uploads/file1", "ASSERT")
+    f("hdfs:/data/uploads/file2", "ASSERT")
+    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
+    f("hdfs:/data/another/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
+    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
+
+    RootRepository.registerRoot("TEST_S3N_DATA$", "TEST_S3N$/data")
+    f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
+    f("s3n://testkey:secret@data/uploads/file1", "TEST_S3N_DATA$/uploads/file1")
+    f("s3n://testkey:secret@data/uploads/file2", "TEST_S3N_DATA$/uploads/file2")
+    f("s3n://testkey:secret@data/uploads/subdir/file3", "TEST_S3N_DATA$/uploads/subdir/file3")
+    f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N_DATA$/another/subdir/file3")
+    f("hdfs:/data", "ASSERT")
+    f("hdfs:/data/uploads/file1", "ASSERT")
+    f("hdfs:/data/uploads/file2", "ASSERT")
+    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
+    f("hdfs:/data/another/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
+    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
+
+  }
 }

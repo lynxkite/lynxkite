@@ -15,8 +15,8 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object HadoopFile {
 
-  def apply(str: String): HadoopFile = {
-    val v = RootRepository.splitSymbolicPattern(str)
+  def apply(str: String, legacyMode: Boolean = false): HadoopFile = {
+    val v = RootRepository.splitSymbolicPattern(str, legacyMode)
     HadoopFile(v._1, v._2)
   }
 }
@@ -33,22 +33,10 @@ case class HadoopFile private (rootSymbol: String, relativePath: String) {
   private def hasDangerousStart(str: String) =
     str.nonEmpty && !str.startsWith("/")
 
-  private def normalizedName(str: String) = {
-    val s1 = "@/+".r.replaceAllIn(str, "@") // Collapes @/ sequences
-
-    // Collapse slashes into one slash, unless in contexts such as s3n://
-    val s2 = "([^:])//+".r.replaceAllIn(s1, "$1/")
-
-    // Collapse initial slash sequences as well
-    val s3 = "(\\A)//+".r.replaceAllIn(s2, "$1/")
-    assert(!s3.contains(".."), "Double dots are not allowed in path names")
-    s3
-  }
-
   private def computeResolvedName(rootResolution: String, relativePath: String): String = {
     assert(!hasDangerousEnd(rootResolution) || !hasDangerousStart(relativePath),
       s"The path following $rootSymbol has to start with a slash (/)")
-    normalizedName(rootResolution + relativePath)
+    PathNormalizer.normalize(rootResolution + relativePath)
   }
   val resolvedName = computeResolvedName(RootRepository.getRootInfo(rootSymbol), relativePath)
 
