@@ -7,6 +7,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+
+import play.api.libs.json
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
@@ -105,7 +107,10 @@ case class FESegmentation(
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
 case class Splash(version: String, projects: List[FEProject])
-case class OperationCategory(title: String, icon: String, color: String, ops: List[FEOperationMeta])
+case class OperationCategory(
+    title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
+  def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).isEmpty
+}
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class DiscardProjectRequest(name: String)
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
@@ -141,6 +146,36 @@ case class ProjectHistoryStep(
   segmentationsAfter: List[FESegmentation],
   opCategoriesBefore: List[OperationCategory])
 
+case class SaveWorkflowRequest(
+  workflowName: String,
+  // This may contain parameter refernces in the format ${param-name}. There is a special reference,
+  // ${!projectName} which is automatically replaced with the project name the workflow should run
+  // on. After parameter substitution we parse the string as a JSON form of
+  // List[ProjectOperationRequest] and then we try to apply these operations in sequence.
+  stepsAsJSON: String,
+  description: String)
+
+case class SavedWorkflow(
+    stepsAsJSON: String,
+    author: String,
+    description: String) {
+  @transient lazy val prettyJson: String = SavedWorkflow.asPrettyJson(this)
+}
+object SavedWorkflow {
+  implicit val wUIValue = json.Json.writes[UIValue]
+  implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
+  implicit val wSavedWorkflow = json.Json.writes[SavedWorkflow]
+  implicit val rUIValue = json.Json.reads[UIValue]
+  implicit val rFEOperationParameterMeta = json.Json.reads[FEOperationParameterMeta]
+  implicit val rSavedWorkflow = json.Json.reads[SavedWorkflow]
+  def asPrettyJson(wf: SavedWorkflow): String = json.Json.prettyPrint(json.Json.toJson(wf))
+  def fromJson(js: String): SavedWorkflow =
+    json.Json.fromJson[SavedWorkflow](json.Json.parse(js)).get
+}
+
+object BigGraphController {
+  val workflowsRoot: SymbolPath = s"workflows"
+}
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
 
@@ -309,9 +344,16 @@ class BigGraphController(val env: BigGraphEnvironment) {
         val op = ops.opById(ctx, request.op.id)
         val segmentationsBefore = state.toFE.segmentations
         val opCategoriesBefore = ops.categories(user, recipient)
+        val opCategoriesBeforeWithOp =
+          if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty) {
+            ???
+          } else {
+            opCategoriesBefore
+          }
         def newStep(status: FEStatus) = {
           val segmentationsAfter = state.toFE.segmentations
-          ProjectHistoryStep(request, status, segmentationsBefore, segmentationsAfter, opCategoriesBefore)
+          ProjectHistoryStep(
+            request, status, segmentationsBefore, segmentationsAfter, opCategoriesBeforeWithOp)
         }
         if (op.enabled.enabled && !op.dirty) {
           try {
@@ -358,6 +400,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
       alternateHistory(user, request.history, Some(p))
     }
   }
+
+  def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
+    val savedWorkflow = SavedWorkflow(
+      request.stepsAsJSON,
+      user.email,
+      request.description)
+    assert(!request.workflowName.contains('/'), "Workflow names cannot contain /")
+    val tagName = BigGraphController.workflowsRoot / request.workflowName / Timestamp.toString
+    metaManager.setTag(tagName, savedWorkflow.prettyJson)
+  }
+
 }
 
 abstract class OperationParameterMeta {
@@ -432,6 +485,52 @@ object Operation {
   }
 }
 
+object WorkflowOperation {
+  private val WorkflowParameterRegex = "\\$\\{([^{]+)\\}".r
+  private def findParameterReferences(source: String): Set[String] = {
+    WorkflowParameterRegex
+      .findAllMatchIn(source)
+      .map(_.group(1))
+      .toSet
+  }
+  val category = Operation.Category("User Defined Workflows", "pink")
+  val deprecatedCategory = Operation.Category("Deprecated User Defined Workflows", "red")
+}
+case class WorkflowOperation(
+  fullName: SymbolPath,
+  workflow: SavedWorkflow,
+  context: Operation.Context,
+  deprecated: Boolean = false)
+    extends Operation(
+      fullName.drop(1).head.name,
+      context,
+      if (deprecated) WorkflowOperation.deprecatedCategory else WorkflowOperation.category) {
+
+  override val id = fullName.toString
+
+  private val date = "1981.03.15"
+  val description =
+    s"<p>User defined workflow saved by ${workflow.author} on $date<p>${workflow.description}"
+
+  val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsJSON)
+
+  val (systemRefernces, customReferences) = parameterReferences.partition(_.startsWith("!"))
+
+  private val unknownSystemReferences = systemRefernces &~ Set("!project")
+  assert(
+    unknownSystemReferences.isEmpty,
+    "Unknown system parameter(s): " + unknownSystemReferences)
+
+  def parameters =
+    customReferences
+      .toList
+      .sorted
+      .map(paramName => OperationParams.Param(paramName, paramName))
+
+  def enabled = FEStatus.enabled
+  def apply(params: Map[String, String]): Unit = ???
+}
+
 abstract class OperationRepository(env: BigGraphEnvironment) {
   implicit val manager = env.metaGraphManager
 
@@ -443,13 +542,23 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     operations(id) = factory(title, _)
   }
 
-  private def opsForContext(context: Operation.Context) = {
+  private def opsForContext(context: Operation.Context): Seq[Operation] = {
     operations.values.toSeq.map(_(context))
   }
 
+  private def workflowOpFromTag(fullName: SymbolPath, context: Operation.Context) =
+    WorkflowOperation(fullName, SavedWorkflow.fromJson(manager.getTag(fullName)), context)
+
+  private def workflowOperations(context: Operation.Context): Seq[Operation] =
+    manager
+      .lsTag(BigGraphController.workflowsRoot)
+      .map(perNamePrefix => manager.lsTag(perNamePrefix).sorted.last)
+      .map(fullName => workflowOpFromTag(fullName, context))
+
   def categories(user: serving.User, project: Project): List[OperationCategory] = {
     val context = Operation.Context(user, project)
-    val cats = opsForContext(context).groupBy(_.category).toList
+    val allOps = opsForContext(context) ++ workflowOperations(context)
+    val cats = allOps.groupBy(_.category).toList
     cats.filter(_._1.visible).sortBy(_._1).map {
       case (cat, ops) =>
         val feOps = ops.map(_.toFE).sortBy(_.title).toList
@@ -458,8 +567,13 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   }
 
   def opById(context: Operation.Context, id: String): Operation = {
-    assert(operations.contains(id), s"Cannot find operation: ${id}")
-    operations(id)(context)
+    if (id.startsWith(BigGraphController.workflowsRoot.toString + "/")) {
+      // Oho, a workflow operation!
+      workflowOpFromTag(id, context)
+    } else {
+      assert(operations.contains(id), s"Cannot find operation: ${id}")
+      operations(id)(context)
+    }
   }
 
   def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
