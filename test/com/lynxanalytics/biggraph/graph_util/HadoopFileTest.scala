@@ -173,11 +173,11 @@ class HadoopFileTest extends FunSuite {
     val pairs = RootRepository.parseUserDefinedInputFromURI(filename).toList
 
     val expected = List(
-      "TESTEMPTY" -> "",
-      "TESTS3N" -> "s3n://testkey:testpwd@",
-      "TESTS3NDIR" -> "s3n://testkey:testpwd@directory/",
+      "TEST_EMPTY" -> "",
+      "TEST_S3N" -> "s3n://testkey:testpwd@",
+      "TEST_S3NDIR" -> "s3n://testkey:testpwd@directory/",
       "TESTFILEDIR" -> "file:/home/user/",
-      "TESTBLANKS" -> "hdfs://root/path")
+      "TESTBLANKS_" -> "hdfs://root/path")
     assert(pairs == expected)
   }
 
