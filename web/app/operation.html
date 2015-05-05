@@ -1,8 +1,7 @@
 <div class="panel box col-sm-11 {{color}}">
   <h1>{{op.title}}</h1>
 
-  <p ng-if="op.description" class="list-group-item description"
-    ng-bind-html="op.description | trustAsHtml"></p>
+  <p help-id="op.id" class="list-group-item description"></p>
   <p ng-if="op.parameters.length === 0" class="list-group-item text-center">
     No parameters
   </p>

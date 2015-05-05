@@ -52,7 +52,7 @@
           { "id": "files", "title": "Files", "defaultValue": "", "options": [], "kind": "file" },
           { "id": "header", "title": "Header", "defaultValue": "<read from file>", "options": [], "kind": "" }
         ], "status": { "enabled": true, "disabledReason": "" } },
-        { "id": "1", "title": "Discard all vertices", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
+        { "id": "Discard-vertices", "title": "Discard all vertices", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "10", "title": "Filter subscribers", "parameters": [
           { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'", "options": [] }
         ], "status": { "enabled": true, "disabledReason": "" } },
