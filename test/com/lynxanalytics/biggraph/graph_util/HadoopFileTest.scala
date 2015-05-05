@@ -187,13 +187,6 @@ class HadoopFileTest extends FunSuite {
     RootRepository.addUserDefinedResolutions()
   }
 
-  val s3LegacyPaths = List(
-    "s3n://testkey:secret@data",
-    "s3n://testkey:secret@data/uploads/file1",
-    "s3n://testkey:secret@data/uploads/file2",
-    "s3n://testkey:secret@data/uploads/subdir/file3"
-  )
-
   test("Legacy mode works") {
     def f(savedPath: String, expected: String): Unit = {
       if (expected == "ASSERT") {
@@ -262,6 +255,23 @@ class HadoopFileTest extends FunSuite {
     f("s3n://testkey:secret@data/uploads/file1", "TEST_S3N_DATA$/uploads/file1")
     f("s3n://testkey:secret@data/uploads/file2", "TEST_S3N_DATA$/uploads/file2")
     f("s3n://testkey:secret@data/uploads/subdir/file3", "TEST_S3N_DATA$/uploads/subdir/file3")
+    f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N_DATA$/another/subdir/file3")
+    f("hdfs:/data", "ASSERT")
+    f("hdfs:/data/uploads/file1", "ASSERT")
+    f("hdfs:/data/uploads/file2", "ASSERT")
+    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
+    f("hdfs:/data/another/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
+    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
+    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
+    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
+
+    RootRepository.registerRoot("UPLOAD$", "TEST_S3N_DATA$/uploads")
+    f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
+    f("s3n://testkey:secret@data/uploads/file1", "UPLOAD$/file1")
+    f("s3n://testkey:secret@data/uploads/file2", "UPLOAD$/file2")
+    f("s3n://testkey:secret@data/uploads/subdir/file3", "UPLOAD$/subdir/file3")
     f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N_DATA$/another/subdir/file3")
     f("hdfs:/data", "ASSERT")
     f("hdfs:/data/uploads/file1", "ASSERT")
