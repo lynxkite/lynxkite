@@ -8,7 +8,9 @@ import scala.util.Random
 import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext, BigGraphEnvironment }
 
 import com.lynxanalytics.biggraph.graph_operations._
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.{ RootRepository, HadoopFile }
+import com.lynxanalytics.biggraph.registerStandardPrefixes
+import com.lynxanalytics.biggraph.standardDataPrefix
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -59,8 +61,11 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
 }
 
 trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
+  RootRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
+  RootRepository.registerRoot(standardDataPrefix, dataManager.repositoryPath.symbolicName)
+  registerStandardPrefixes()
 }
 
 object SmallTestGraph extends OpFromJson {

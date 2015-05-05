@@ -1,6 +1,7 @@
 // Package-level variables. Creates our logger and the BigGraphEnvironment.
 package com.lynxanalytics
 
+import com.lynxanalytics.biggraph.graph_util.RootRepository
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
@@ -19,12 +20,11 @@ package object biggraph {
   // static<big_graph_dir,graph_data_dir>
   private val staticRepoPattern = "static<(.+),(.+)>".r
 
-  val repoDirs =
-    scala.util.Properties.envOrElse("REPOSITORY_MODE", "local_random") match {
-      case staticRepoPattern(bigGraphDir, graphDataDir) =>
-        new RegularRepositoryDirs(bigGraphDir, graphDataDir)
-      case "local_random" => new TemporaryRepositoryDirs
-    }
+  val standardDataPrefix = "DATA$"
+
+  def registerStandardPrefixes() = {
+    RootRepository.registerRoot("UPLOAD$", standardDataPrefix + "/uploads")
+  }
 
   // static<hostname_of_master>
   // We just connect to a standing spark cluster, no resize support.
@@ -40,7 +40,17 @@ package object biggraph {
   // Supports resizing.
   private val newGCEPattern = "newGCE<(.+)>".r
 
-  lazy val BigGraphProductionEnvironment: BigGraphEnvironment =
+  lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
+
+    val repoDirs =
+      scala.util.Properties.envOrElse("REPOSITORY_MODE", "local_random") match {
+        case staticRepoPattern(bigGraphDir, graphDataDir) =>
+          new RegularRepositoryDirs(bigGraphDir, graphDataDir, standardDataPrefix)
+        case "local_random" => new TemporaryRepositoryDirs(standardDataPrefix)
+      }
+    repoDirs.forcePrefixRegistration()
+    registerStandardPrefixes()
+
     scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
       case staticPattern(master) =>
         new StaticSparkContextProvider() with StaticDirEnvironment {
@@ -55,4 +65,5 @@ package object biggraph {
           val repositoryDirs = repoDirs
         }
     }
+  }
 }

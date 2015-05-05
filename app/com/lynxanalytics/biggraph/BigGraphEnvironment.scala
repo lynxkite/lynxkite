@@ -37,20 +37,23 @@ trait StaticDirEnvironment extends BigGraphEnvironment {
 
 trait RepositoryDirs {
   val graphDir: String
-  val dataDir: HadoopFile
-  def setupDataDir(dirPath: String): HadoopFile = {
-    RootRepository.registerRoot("DATA$", dirPath)
-    RootRepository.registerRoot("UPLOAD$", "DATA$/uploads")
-    HadoopFile("DATA$")
+  val dataDirSymbolicName: String
+  val dataDirResolvedName: String
+  lazy val dataDir: HadoopFile = {
+    RootRepository.registerRoot(dataDirSymbolicName, dataDirResolvedName)
+    HadoopFile(dataDirSymbolicName)
+  }
+  def forcePrefixRegistration(): Unit = {
+    dataDir
   }
 }
 
-class RegularRepositoryDirs(bigGraphDir: String, bigDataDir: String) extends RepositoryDirs {
+class RegularRepositoryDirs(bigGraphDir: String, bigDataDir: String, val dataDirSymbolicName: String) extends RepositoryDirs {
   val graphDir = bigGraphDir
-  val dataDir = setupDataDir(bigDataDir)
+  val dataDirResolvedName = bigDataDir
 }
 
-class TemporaryRepositoryDirs extends RepositoryDirs {
+class TemporaryRepositoryDirs(val dataDirSymbolicName: String) extends RepositoryDirs {
   private val sysTempDir = System.getProperty("java.io.tmpdir")
   private val myTempDir = new File(
     "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
@@ -62,5 +65,5 @@ class TemporaryRepositoryDirs extends RepositoryDirs {
   dataDirFile.mkdir
 
   val graphDir = graphDirFile.toString
-  val dataDir = setupDataDir(dataDirFile.toString)
+  val dataDirResolvedName = dataDirFile.toString
 }
