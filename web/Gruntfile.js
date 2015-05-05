@@ -46,6 +46,10 @@ module.exports = function (grunt) {
         files: ['<%= yeoman.app %>/styles/{,*/}*.css'],
         tasks: ['newer:copy:styles', 'autoprefixer']
       },
+      help: {
+        files: ['<%= yeoman.app %>/help/{,*/}*.md'],
+        tasks: ['marked']
+      },
       gruntfile: {
         files: ['Gruntfile.js']
       },
@@ -55,6 +59,7 @@ module.exports = function (grunt) {
         },
         files: [
           '<%= yeoman.app %>/{,*/}*.html',
+          '.tmp/{,*/}*.html',
           '.tmp/styles/{,*/}*.css',
           '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
         ]
@@ -169,6 +174,22 @@ module.exports = function (grunt) {
           cwd: '.tmp/styles/',
           src: '{,*/}*.css',
           dest: '.tmp/styles/'
+        }]
+      }
+    },
+
+    // Compile Markdown.
+    marked: {
+      options: {
+        smartypants: true, // Smart typography.
+      },
+      dist: {
+        files: [{
+          expand: true,
+          cwd: '<%= yeoman.app %>',
+          src: '{,*/}/*.md',
+          dest: '.tmp/',
+          ext: '.html'
         }]
       }
     },
@@ -314,6 +335,11 @@ module.exports = function (grunt) {
           cwd: '.tmp/images',
           dest: '<%= yeoman.dist %>/images',
           src: ['generated/*']
+        }, {
+          expand: true,
+          cwd: '.tmp/',
+          dest: '<%= yeoman.dist %>',
+          src: ['{,*/}/*.html']
         }]
       },
       styles: {
@@ -394,6 +420,7 @@ module.exports = function (grunt) {
       'bowerInstall',
       'concurrent:server',
       'autoprefixer',
+      'marked',
       'connect:livereload',
       'watch'
     ]);
@@ -409,6 +436,7 @@ module.exports = function (grunt) {
     'bowerInstall',
     'copy:styles',
     'autoprefixer',
+    'marked',
     'connect:test',
     'protractor'
   ]);
@@ -419,6 +447,7 @@ module.exports = function (grunt) {
     'useminPrepare',
     'concurrent:dist',
     'autoprefixer',
+    'marked',
     'concat',
     'ngmin',
     'copy:dist',
@@ -434,7 +463,8 @@ module.exports = function (grunt) {
     'clean:server',
     'bowerInstall',
     'copy:styles',
-    'autoprefixer'
+    'autoprefixer',
+    'marked'
   ]);
 
   grunt.registerTask('default', [

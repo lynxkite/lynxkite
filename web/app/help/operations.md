@@ -1,0 +1,5 @@
+# Operations
+
+## Discard vertices
+
+Throws away all vertices. This implies discarding all edges, attributes, and segmentations too.
