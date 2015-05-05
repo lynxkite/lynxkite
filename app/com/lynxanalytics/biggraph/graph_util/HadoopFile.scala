@@ -16,8 +16,8 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 object HadoopFile {
 
   def apply(str: String, legacyMode: Boolean = false): HadoopFile = {
-    val v = RootRepository.splitSymbolicPattern(str, legacyMode)
-    HadoopFile(v._1, v._2)
+    val (rootSymbol, relativePath) = RootRepository.splitSymbolicPattern(str, legacyMode)
+    HadoopFile(rootSymbol, relativePath)
   }
 }
 

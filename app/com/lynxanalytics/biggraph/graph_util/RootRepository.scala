@@ -26,7 +26,8 @@ object RootRepository {
 
     val candidates = pathResolutions.filter { x => path.startsWith(x._2) }
     if (candidates.isEmpty) {
-      assert(false, s"Cannot find a prefix notation for path $path")
+      assert(false, s"Cannot find a prefix notation for path $path. " +
+        "See KITE_ADDITIONAL_ROOT_DEFINITIONS in .kiterc for a possible solution")
       ???
     } else {
       candidates.maxBy(_._2.length)
@@ -78,10 +79,11 @@ object RootRepository {
     }
   }
 
-  private def parseInput(stringIterator: scala.collection.Iterator[scala.Predef.String]) = {
-    stringIterator.map { line => line.trim }. // Strip leading and trailing blanks
-      filter(line => line.nonEmpty && !line.startsWith("#")). // Stip empty lines and comments
-      map(line => extractUserDefinedRoot(line))
+  private def parseInput(stringIterator: scala.collection.Iterator[String]) = {
+    stringIterator.map { line => "[#].*$".r.replaceAllIn(line, "") } // Strip comments
+      .map { line => line.trim } // Strip leading and trailing blanks
+      .filter(line => line.nonEmpty) // Strip blank lines
+      .map(line => extractUserDefinedRoot(line))
   }
 
   def parseUserDefinedInputFromFile(filename: String) = {
@@ -98,7 +100,8 @@ object RootRepository {
   }
 
   def addUserDefinedResolutions() = {
-    val userDefinedRootResolutionFile = scala.util.Properties.envOrElse("KITE_ADDITIONAL_ROOT_DEFINITIONS", "")
+    val userDefinedRootResolutionFile =
+      scala.util.Properties.envOrElse("KITE_ADDITIONAL_ROOT_DEFINITIONS", "")
     if (userDefinedRootResolutionFile.nonEmpty) {
       val userDefinedResolutions = parseUserDefinedInputFromFile(userDefinedRootResolutionFile)
       for ((rootSymbolNoDollar, path) <- userDefinedResolutions) {
