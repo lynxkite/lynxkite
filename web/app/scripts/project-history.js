@@ -29,6 +29,18 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             }
             watchStep(step);
           }
+          scope.code = JSON.stringify(
+            history.steps.map(function(step) {
+              var request = angular.copy(step.request);
+              var path = util.projectPath(request.project);
+              path[0] = '!project';
+              request.project = path.join('/');
+              return request;
+            }),
+            null,
+            2);
+        } else {
+          scope.code = '';
         }
       }
       scope.$watch('history', update);
