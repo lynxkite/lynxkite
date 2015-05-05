@@ -5,13 +5,13 @@
 
 #COMMENTEDOUT="file:/home/user/"
 
+# # #
 #
-#
-TEST_EMPTY=""
+TEST_EMPTY="" #empty 
 
-TEST_S3N="s3n://testkey:testpwd@"
+TEST_S3N="s3n://testkey:testpwd@" #
 
-TEST_S3NDIR="s3n://testkey:testpwd@directory/"
+TEST_S3NDIR="s3n://testkey:testpwd@directory/" #####
 
 TESTFILEDIR="file:/home/user/"
 

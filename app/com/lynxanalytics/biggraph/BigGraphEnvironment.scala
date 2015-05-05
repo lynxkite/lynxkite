@@ -6,6 +6,7 @@ import org.apache.spark
 
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.RootRepository
+
 trait SparkContextProvider {
   val sparkContext: spark.SparkContext
 
