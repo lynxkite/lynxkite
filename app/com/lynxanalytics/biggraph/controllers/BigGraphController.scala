@@ -8,10 +8,12 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
+import java.util.regex.Pattern
 import play.api.libs.json
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.{ Failure, Success, Try }
+import scala.util.matching.Regex
 
 case class FEStatus(enabled: Boolean, disabledReason: String = "") {
   def ||(other: => FEStatus) = if (enabled) this else other
@@ -109,7 +111,7 @@ case class ProjectRequest(name: String)
 case class Splash(version: String, projects: List[FEProject])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
-  def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).isEmpty
+  def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class DiscardProjectRequest(name: String)
@@ -336,17 +338,16 @@ class BigGraphController(val env: BigGraphEnvironment) {
     withCheckpoints(p) { checkpoints =>
       val state = checkpoints(request.skips) // State before the first operation.
       val steps = request.requests.foldLeft(List[ProjectHistoryStep]()) { (steps, request) =>
-        // The request may refer to a segmentation. Figure out the recipient project.
-        val relativePath = SymbolPath.fromString(request.project).tail
-        val fullPath = Symbol(state.projectName) :: relativePath.toList
-        val recipient = Project(new SymbolPath(fullPath).toString)
-        val ctx = Operation.Context(user, recipient)
-        val op = ops.opById(ctx, request.op.id)
+
+        val op = ops.operationOnSubproject(state, request, user)
+        val recipient = op.project
+
         val segmentationsBefore = state.toFE.segmentations
         val opCategoriesBefore = ops.categories(user, recipient)
         val opCategoriesBeforeWithOp =
-          if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty) {
-            ???
+          if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty &&
+            op.isInstanceOf[WorkflowOperation]) {
+            opCategoriesBefore :+ WorkflowOperation.deprecatedCategory.toFE(List(op.toFE))
           } else {
             opCategoriesBefore
           }
@@ -486,7 +487,10 @@ object Operation {
 }
 
 object WorkflowOperation {
-  private val WorkflowParameterRegex = "\\$\\{([^{]+)\\}".r
+  private val WorkflowParameterRegex = "\\$\\{([-A-Za-z0-9_ ]+)\\}".r
+  private def workflowConcreteParameterRegex(parameterName: String): Regex = {
+    ("\\$\\{" + Pattern.quote(parameterName) + "\\}").r
+  }
   private def findParameterReferences(source: String): Set[String] = {
     WorkflowParameterRegex
       .findAllMatchIn(source)
@@ -495,22 +499,30 @@ object WorkflowOperation {
   }
   val category = Operation.Category("User Defined Workflows", "pink")
   val deprecatedCategory = Operation.Category("Deprecated User Defined Workflows", "red")
+
+  implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
+  implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
+  def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
+    json.Json.fromJson[List[ProjectOperationRequest]](json.Json.parse(stepsAsJSON)).get
+  }
 }
 case class WorkflowOperation(
   fullName: SymbolPath,
   workflow: SavedWorkflow,
   context: Operation.Context,
-  deprecated: Boolean = false)
+  operationRepository: OperationRepository)
     extends Operation(
       fullName.drop(1).head.name,
       context,
-      if (deprecated) WorkflowOperation.deprecatedCategory else WorkflowOperation.category) {
+      WorkflowOperation.category) {
 
   override val id = fullName.toString
 
-  private val date = "1981.03.15"
+  private val dateString =
+    (new java.text.SimpleDateFormat("dd-MM-yyyy hh:mm")).format(new java.util.Date())
+
   val description =
-    s"<p>User defined workflow saved by ${workflow.author} on $date<p>${workflow.description}"
+    s"<p>User defined workflow saved by ${workflow.author} at $dateString<p>${workflow.description}"
 
   val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsJSON)
 
@@ -528,7 +540,20 @@ case class WorkflowOperation(
       .map(paramName => OperationParams.Param(paramName, paramName))
 
   def enabled = FEStatus.enabled
-  def apply(params: Map[String, String]): Unit = ???
+  def apply(params: Map[String, String]): Unit = {
+    var stepsAsJSON = workflow.stepsAsJSON
+    for ((paramName, paramValue) <- params) {
+      stepsAsJSON = WorkflowOperation.workflowConcreteParameterRegex(paramName)
+        .replaceAllIn(stepsAsJSON, Regex.quoteReplacement(paramValue))
+    }
+    stepsAsJSON = WorkflowOperation.workflowConcreteParameterRegex("!project")
+      .replaceAllIn(stepsAsJSON, Regex.quoteReplacement(context.project.projectName))
+    val steps = WorkflowOperation.stepsFromJSON(stepsAsJSON)
+    for (step <- steps) {
+      val op = operationRepository.operationOnSubproject(context.project, step, context.user)
+      op.apply(step.op.parameters)
+    }
+  }
 }
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
@@ -547,13 +572,17 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   }
 
   private def workflowOpFromTag(fullName: SymbolPath, context: Operation.Context) =
-    WorkflowOperation(fullName, SavedWorkflow.fromJson(manager.getTag(fullName)), context)
+    WorkflowOperation(fullName, SavedWorkflow.fromJson(manager.getTag(fullName)), context, this)
 
   private def workflowOperations(context: Operation.Context): Seq[Operation] =
-    manager
-      .lsTag(BigGraphController.workflowsRoot)
-      .map(perNamePrefix => manager.lsTag(perNamePrefix).sorted.last)
-      .map(fullName => workflowOpFromTag(fullName, context))
+    if (manager.tagExists(BigGraphController.workflowsRoot)) {
+      manager
+        .lsTag(BigGraphController.workflowsRoot)
+        .map(perNamePrefix => manager.lsTag(perNamePrefix).sorted.last)
+        .map(fullName => workflowOpFromTag(fullName, context))
+    } else {
+      Seq()
+    }
 
   def categories(user: serving.User, project: Project): List[OperationCategory] = {
     val context = Operation.Context(user, project)
@@ -574,6 +603,19 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
       assert(operations.contains(id), s"Cannot find operation: ${id}")
       operations(id)(context)
     }
+  }
+
+  def operationOnSubproject(
+    mainProject: Project,
+    request: ProjectOperationRequest,
+    user: serving.User): Operation = {
+    val subProjectPath = SymbolPath.fromString(request.project)
+    val mainProjectSymbol = Symbol(mainProject.projectName)
+    val relativePath = subProjectPath.tail
+    val fullPath = mainProjectSymbol :: relativePath.toList
+    val recipient = Project(new SymbolPath(fullPath).toString)
+    val ctx = Operation.Context(user, recipient)
+    opById(ctx, request.op.id)
   }
 
   def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
