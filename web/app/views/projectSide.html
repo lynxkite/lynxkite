@@ -186,7 +186,7 @@
                   <option value="centralize" title="Vertices with large degrees tend to be in the middle.">Centralize</option>
                   <option value="decentralize" title="Vertices with large degrees tend to be on the periphery.">Decentralize</option>
                   <option value="neutral" title="Vertices with large degrees act as centers themselves.">Neutral</option>
-                </select> 
+                </select>
               </td>
             </tr>
             <tr>
@@ -252,14 +252,31 @@
       </div>
 
       <!-- Summary. -->
-      <li class="list-group-item">
-        <span class="lead">
-          <value ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']"></value>
-          <span ng-if="side.project.vertexSet === ''">no</span>
-          <span class="de-emph">vertices with</span>
-          <value ng-if="side.project.edgeBundle !== ''" ref="side.scalars['edge_count']"></value>
-          <span ng-if="side.project.edgeBundle === ''">no</span>
-          <span class="de-emph">edges</span>
+      <li class="list-group-item de-emph">
+        <span ng-if="side.scalars['!belongsToEdges'] === undefined" class="lead">
+          <!-- Project summary -->
+          <value class="emph" ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']"></value>
+          <span class="emph" ng-if="side.project.vertexSet === ''">no</span>
+          vertices with
+          <value class="emph" ng-if="side.project.edgeBundle !== ''" ref="side.scalars['edge_count']"></value>
+          <span class="emph" ng-if="side.project.edgeBundle === ''">no</span>
+          edges
+        </span>
+
+        <span ng-if="side.scalars['!belongsToEdges'] !== undefined" class="lead">
+          <!-- Segmentation summary -->
+          <value class="emph" ref="side.scalars['vertex_count']"></value>
+          <span ng-if="side.scalars['!nonEmpty'].double === side.scalars['vertex_count'].double">
+            non-empty segments
+          </span>
+          <span ng-if="side.scalars['!nonEmpty'].double !== side.scalars['vertex_count'].double">
+            segments (of which <value class="emph" ref="side.scalars['!nonEmpty']"></value> are non-empty)
+          </span>
+          with total size of <value class="emph" ref="side.scalars['!belongsToEdges']"></value>
+          covering <value class="emph" ref="side.scalars['!coverage']"></value> base vertices
+          <span ng-if="side.project.edgeBundle !== ''">
+            with <value class="emph" ref="side.scalars['edge_count']"></value> edges
+          </span>
         </span>
       </li>
 

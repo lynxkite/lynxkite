@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - LynxKite pages can now be printed. Visualizations are also supported. This provides a
+   method of exporting the visualization in a scalable vector graphics format.
+ - Segmentation coverage is automatically calculated.
  - New vertex operation _"Centrality"_ makes it possible to count approximate harmonic
    centrality values.
 
