@@ -75,7 +75,7 @@ trait RowInput extends ToJson {
 
 object CSV extends FromJson[CSV] {
   def fromJson(j: JsValue) = CSV(
-    HadoopFile((j \ "file").as[String]),
+    HadoopFile((j \ "file").as[String], true),
     (j \ "delimiter").as[String],
     (j \ "header").as[String],
     JavaScript((j \ "filter").as[String]))
