@@ -26,7 +26,8 @@ object RootRepository {
 
     val candidates = pathResolutions.filter { x => path.startsWith(x._2) }
     if (candidates.isEmpty) {
-      ("", "")
+      assert(false, s"Cannot find a prefix notation for path $path")
+      ???
     } else {
       candidates.maxBy(_._2.length)
     }
@@ -35,7 +36,6 @@ object RootRepository {
   def tryToSplitBasedOnTheAvailableRoots(str: String, legacyMode: Boolean): (String, String) = {
     assert(legacyMode)
     val (rootSym, resolution) = getBestCandidate(str)
-    assert(resolution.nonEmpty, s"Cannot find a prefix notation for path $str")
     (rootSym, str.drop(resolution.length))
   }
   def splitSymbolicPattern(str: String, legacyMode: Boolean): (String, String) = {
