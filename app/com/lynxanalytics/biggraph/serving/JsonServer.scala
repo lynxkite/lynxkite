@@ -233,7 +233,7 @@ object ProductionJsonServer extends JsonServer {
         finally stream.close()
         val digest = md.digest().map("%02x".format(_)).mkString
         val finalName = s"$baseName.$digest"
-        val uploadsDir = dataRepo / "uploads"
+        val uploadsDir = HadoopFile("UPLOAD$")
         uploadsDir.mkdirs() // Create the directory if it does not already exist.
         val finalFile = uploadsDir / finalName
         if (finalFile.exists) {
