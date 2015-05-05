@@ -672,9 +672,12 @@ angular.module('biggraph')
       }
     };
 
-    // "vertex_count" and "edge_count" are displayed separately at the top.
+    // Some special scalars receive special treatment and are not listed among
+    // the "common" scalars.
     $scope.commonScalar = function(s) {
-      return s.title !== 'vertex_count' && s.title !== 'edge_count';
+      // "vertex_count" and "edge_count" are legacy special-cases.
+      // New special scalars are marked by an "!" prefix.
+      return s.title[0] !== '!' && s.title !== 'vertex_count' && s.title !== 'edge_count';
     };
 
     $scope.unconnectedSides = function() {

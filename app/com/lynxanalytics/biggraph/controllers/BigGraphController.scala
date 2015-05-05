@@ -44,12 +44,14 @@ case class FEOperationMeta(
 case class FEOperationParameterMeta(
     id: String,
     title: String,
-    kind: String = "", // Special rendering on the UI.
-    defaultValue: String = "",
-    options: List[UIValue] = List(),
-    multipleChoice: Boolean = false) {
+    kind: String, // Special rendering on the UI.
+    defaultValue: String,
+    options: List[UIValue],
+    multipleChoice: Boolean) {
 
   val validKinds = Seq(
+    "default", // A simple textbox.
+    "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
     "tag-list") // A variation of "multipleChoice" with a more concise, horizontal design.
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
@@ -358,13 +360,26 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 }
 
+abstract class OperationParameterMeta {
+  val id: String
+  val title: String
+  val kind: String
+  val defaultValue: String
+  val options: List[UIValue]
+  val multipleChoice: Boolean
+
+  // Asserts that the value is valid, otherwise throws an AssertionException.
+  def validate(value: String): Unit
+  def toFE = FEOperationParameterMeta(id, title, kind, defaultValue, options, multipleChoice)
+}
+
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
   val project = context.project
   val user = context.user
   def id = Operation.titleToID(originalTitle)
   def title = originalTitle // Override this to change the display title while keeping the original ID.
   def description: String
-  def parameters: List[FEOperationParameterMeta]
+  def parameters: List[OperationParameterMeta]
   def enabled: FEStatus
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
@@ -372,7 +387,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
   val dirty = false
   def toFE: FEOperationMeta =
-    FEOperationMeta(id, title, parameters, category.title, enabled, description)
+    FEOperationMeta(id, title, parameters.map { param => param.toFE }, category.title, enabled, description)
   protected def scalars[T: TypeTag] =
     UIValue.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
@@ -447,12 +462,24 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     operations(id)(context)
   }
 
-  def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.synchronized {
+  def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
+    validateParameters(op.parameters, req.op.parameters)
     p.checkpoint(op.summary(req.op.parameters), req) {
       op.apply(req.op.parameters)
+    }
+  }
+
+  private def validateParameters(specs: List[OperationParameterMeta], values: Map[String, String]) {
+    val specIds = specs.map { spec => spec.id }.toSet
+    val extraIds = values.keySet &~ specIds
+    assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
+    val missingIds = specIds &~ values.keySet
+    assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
+    for (spec <- specs) {
+      spec.validate(values(spec.id))
     }
   }
 }

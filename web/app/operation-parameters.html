@@ -2,24 +2,24 @@
 <div class="form-group" ng-repeat="param in input">
   <label for="{{param.id}}" class="col-sm-4 control-label">{{param.title}}</label>
   <div class="col-sm-8">
-    <input ng-if="param.options.length === 0 && param.kind !== 'file'"
+    <input ng-if="param.kind === 'default'"
       class="form-control" ng-model="output[param.id]">
     <file-parameter ng-if="param.kind === 'file'"
       model="output[param.id]" file-uploads="fileUploads.count">
     </file-parameter>
     <select
-      ng-if="param.options.length > 0 && !param.multipleChoice"
+      ng-if="param.kind === 'choice' && !param.multipleChoice"
       class="form-control"
       ng-model="output[param.id]"
       ng-options="option.id as option.title for option in param.options"></select>
     <select
-      ng-if="param.options.length > 0 && param.multipleChoice && param.kind !== 'tag-list'"
+      ng-if="param.kind === 'choice' && param.multipleChoice"
       multiple
       class="form-control"
       ng-model="multiOutput[param.id]"
       ng-options="option.id as option.title for option in param.options"></select>
     <tag-list
-      ng-if="param.options.length > 0 && param.multipleChoice && param.kind === 'tag-list'"
+      ng-if="param.kind === 'tag-list'"
       model="multiOutput[param.id]"
       options="param.options"></tag-list>
   </div>
