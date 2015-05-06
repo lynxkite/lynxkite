@@ -1,6 +1,6 @@
 <div class="panel panel-default project history" ng-if="show && !workflowMode.enabled">
 
-  <div class="panel-heading project-name" ng-show="!workflowMode.enabled">
+  <div class="panel-heading project-name">
     <span class="de-emph" ng-repeat="parent in side.parentProjects()">
       {{parent}} &raquo;
     </span>
@@ -58,7 +58,7 @@
     <div class="clearfix"></div>
   </div>
 
-  <div class="list-group" ng-show="!workflowMode.enabled">
+  <div class="list-group">
     <li class="list-group-item uneditable" ng-if="!history.$resolved">
       <progressbar value="100" class="progress-striped active">
         Loading...
