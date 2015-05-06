@@ -15,30 +15,29 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object HadoopFile {
 
-  def apply(str: String, legacyMode: Boolean = false): HadoopFile = {
-    val (rootSymbol, relativePath) = RootRepository.splitSymbolicPattern(str, legacyMode)
-    HadoopFile(rootSymbol, relativePath)
-  }
-}
-
-case class HadoopFile private (rootSymbol: String, relativePath: String) {
-  private val s3nWithCreadentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
-  private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
-
-  val symbolicName = rootSymbol + relativePath
-
   private def hasDangerousEnd(str: String) =
     str.nonEmpty && !str.endsWith("@") && !str.endsWith("/")
 
   private def hasDangerousStart(str: String) =
     str.nonEmpty && !str.startsWith("/")
 
-  private def computeResolvedName(rootResolution: String, relativePath: String): String = {
+  def apply(str: String, legacyMode: Boolean = false): HadoopFile = {
+    val (rootSymbol, relativePath) = RootRepository.splitSymbolicPattern(str, legacyMode)
+    val rootResolution = RootRepository.getRootInfo(rootSymbol)
+    val normalizedRelativePath =
+      PathNormalizer.normalize(rootResolution + relativePath).drop(rootResolution.length)
     assert(!hasDangerousEnd(rootResolution) || !hasDangerousStart(relativePath),
       s"The path following $rootSymbol has to start with a slash (/)")
-    PathNormalizer.normalize(rootResolution + relativePath)
+    HadoopFile(rootSymbol, normalizedRelativePath)
   }
-  val resolvedName = computeResolvedName(RootRepository.getRootInfo(rootSymbol), relativePath)
+}
+
+case class HadoopFile private (rootSymbol: String, normalizedRelativePath: String) {
+  private val s3nWithCreadentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
+  private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
+
+  val symbolicName = rootSymbol + normalizedRelativePath
+  val resolvedName = RootRepository.getRootInfo(rootSymbol) + normalizedRelativePath
 
   val (resolvedNameWithNoCredentials, awsID, awsSecret) = resolvedName match {
     case s3nWithCreadentialsPattern(scheme, key, secret, relPath) =>
@@ -82,7 +81,7 @@ case class HadoopFile private (rootSymbol: String, relativePath: String) {
   // This function processes the paths returned by hadoop 'ls' (= the globStatus command)
   // after we called globStatus with this hadoop file.
   def hadoopFileForGlobOutput(hadoopOutput: String): HadoopFile = {
-    this.copy(relativePath = computeRelativePathFromHadoopOutput(hadoopOutput))
+    this.copy(normalizedRelativePath = computeRelativePathFromHadoopOutput(hadoopOutput))
   }
 
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
@@ -200,7 +199,7 @@ case class HadoopFile private (rootSymbol: String, relativePath: String) {
   }
 
   def +(suffix: String): HadoopFile = {
-    this.copy(relativePath = relativePath + suffix)
+    this.copy(normalizedRelativePath = normalizedRelativePath + suffix)
   }
 
   def /(path_element: String): HadoopFile = {
