@@ -940,14 +940,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     it may be useful to identify information sources in the reversed graph."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
-      Choice("weights", "Weight attribute", options = edgeAttributes[Double]),
+      Choice("weights", "Weight attribute",
+        options = UIValue("no weights", "no weights") +: edgeAttributes[Double]),
       NonNegInt("iterations", "Number of iterations", defaultValue = "5"),
       Ratio("damping", "Damping factor", defaultValue = "0.85"))
-    def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
-      val weights = project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
+      val weights = if (params("weights") == "no weights") {
+        const(project.edgeBundle)
+      } else {
+        project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
+      }
       project.vertexAttributes(params("name")) =
         op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank
     }
