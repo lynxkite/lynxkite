@@ -13,6 +13,9 @@
   border: 0;
   margin: 0;
 }
+.help li {
+  margin-top: 10px;
+}
 
 #help-button {
   cursor: pointer;

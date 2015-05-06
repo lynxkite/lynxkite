@@ -17,7 +17,7 @@ angular.module('biggraph').directive('helpContent', function() {
             lastId = e.attr('id') || lastId;
           }
           if (e.is('span[name]') && !e.attr('id')) {
-            e.attr('id', lastId + '-' + e.attr('name'));
+            e.attr('id', lastId + '-' + e.attr('name').toLowerCase());
           }
         });
       };
@@ -62,9 +62,9 @@ angular.module('biggraph').directive('helpId', function() {
           // An anchor. Take the <li> if this is inside a <li>, otherwise take the parent.
           var li = content.closest('li');
           if (li.length === 1) {
-            content = li.children();
+            content = li.contents();
           } else {
-            content = content.parent().children();
+            content = content.parent().contents();
           }
         }
         content = content.clone();

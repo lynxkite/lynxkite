@@ -38,8 +38,7 @@ case class FEOperationMeta(
   title: String,
   parameters: List[FEOperationParameterMeta],
   category: String = "",
-  status: FEStatus = FEStatus.enabled,
-  description: String = "")
+  status: FEStatus = FEStatus.enabled)
 
 case class FEOperationParameterMeta(
     id: String,
@@ -378,7 +377,6 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   val user = context.user
   def id = Operation.titleToID(originalTitle)
   def title = originalTitle // Override this to change the display title while keeping the original ID.
-  def description: String
   def parameters: List[OperationParameterMeta]
   def enabled: FEStatus
   // A summary of the operation, to be displayed on the UI.
@@ -387,7 +385,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
   val dirty = false
   def toFE: FEOperationMeta =
-    FEOperationMeta(id, title, parameters.map { param => param.toFE }, category.title, enabled, description)
+    FEOperationMeta(id, title, parameters.map { param => param.toFE }, category.title, enabled)
   protected def scalars[T: TypeTag] =
     UIValue.list(project.scalarNames[T].toList)
   protected def vertexAttributes[T: TypeTag] =
