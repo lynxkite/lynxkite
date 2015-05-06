@@ -12,40 +12,41 @@ export SPARK_MASTER=local
 export KITE_META_DIR=$HOME/kite_meta
 
 # The data where graph data is stored. Should be on a distributed fs (hdfs, s3, etc) unless
-# this is a single machine install.
-# Some examples: 
+# this is a single machine install. Please note that giving the full uri (e.g., file:/...)
+# is now mandatory.
+export KITE_DATA_DIR=file:$HOME/kite_data/
 #
-# KITE_DATA_DIR= s3n://key:secret@data/
+# Further examples for KITE_DATA_DIR:
+#
+# export KITE_DATA_DIR= s3n://key:secret@data/
 # In this scenario, the users can access files in directory s3n://data. To access a file
-# such as s3n://data/exports, users should say DATA$/exports. They will not have access
+# such as s3n://data/exports, users should say DATA$exports. They will not have access
 # to the credentials (i.e., key and secret in this example). If either the password or
 # the key changes, KITE_DATA_DIR (and only KITE_DATA_DIR) should be updated accordingly.
 #
-# KITE_DATA_DIR=s3n://key:secret@
+# export KITE_DATA_DIR=s3n://key:secret@
 # Here, the users have access to the root directory of the s3n filesystem. However, they
 # still do not have access to the credentials. Now they can refer to the exports directory
-# like this: DATA$/data/exports (assuming the same directory structure as in the previous
+# like this: DATA$data/exports (assuming the same directory structure as in the previous
 # example.
 #
-# KITE_DATA_DIR=hdfs://nameservice1:8020/user/kite/data/
+# export KITE_DATA_DIR=hdfs://nameservice1:8020/user/kite/data/
 # Credentials play no part here, but if the data directory is moved someplace else
 # (say, hdfs://nameservice1:8020/user/kite/data2), only the KITE_DATA_DIR variable
 # has to be updated. As usual, users can refer to data in their directory using
-# the DATA$ notation: e.g., DATA$/uploads/*
-
-# KITE_DATA_DIR=file:$HOME/kite_data/
+# the DATA$ notation: e.g., DATA$uploads/*
+#
+# export KITE_DATA_DIR=file:$HOME/kite_data/
 # This is a single machine configuration. As you see, the full uri name must be used here. 
 # (e.g., file:$HOME/kite_data/ rather than just $HOME/kite_data/).
-
-
-export KITE_DATA_DIR=file:$HOME/kite_data/
-
+#
 # In the above examples, the variable KITE_DATA_DIR was used to define the DATA$
 # prefix. Should other prefixes be necessary (e.g., an empty prefix can be
 # defined for the users to have unlimited access to everything), they should
 # be specified in a separete file. See the file root_definitions.txt for
 # details.
 # export KITE_ADDITIONAL_ROOT_DEFINITIONS=<location of your root definitions file>
+
 
 # The PID file for Kite servers.
 export KITE_PID_FILE=$HOME/kite.pid
