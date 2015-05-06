@@ -7,6 +7,19 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.graph_api._
 
+// Convenient shorthands for counting.
+object Count {
+  import Scripting._
+
+  def run(vertices: VertexSet)(implicit manager: MetaGraphManager): Scalar[Long] = {
+    val op = CountVertices()
+    op(op.vertices, vertices).result.count
+  }
+
+  def run(edges: EdgeBundle)(implicit manager: MetaGraphManager): Scalar[Long] =
+    run(edges.idSet)
+}
+
 object CountVertices extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
@@ -33,6 +46,7 @@ case class CountVertices()
   }
 }
 
+// CountEdges is deprecated. Use Count.run(eb) instead.
 object CountEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val srcVS = vertexSet
@@ -192,5 +206,40 @@ case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
         .top(numTopValues)(ordering)
         .toSeq
         .sorted(ordering))
+  }
+}
+
+object Coverage extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val edges = edgeBundle(src, dst)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val srcCoverage = scalar[Long]
+    val dstCoverage = scalar[Long]
+  }
+  def fromJson(j: JsValue) = Coverage()
+  def run(edges: EdgeBundle)(implicit manager: MetaGraphManager): Output = {
+    import Scripting._
+    val op = Coverage()
+    op(op.edges, edges).result
+  }
+}
+case class Coverage()
+    extends TypedMetaGraphOp[Coverage.Input, Coverage.Output] {
+  import Coverage._
+  override val isHeavy = true
+  @transient override lazy val inputs = new Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val id = inputDatas
+    val srcs = inputs.edges.rdd.values.map(_.src)
+    val dsts = inputs.edges.rdd.values.map(_.dst)
+    output(o.srcCoverage, srcs.distinct.count)
+    output(o.dstCoverage, dsts.distinct.count)
   }
 }

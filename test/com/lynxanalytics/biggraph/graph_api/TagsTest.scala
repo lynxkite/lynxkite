@@ -6,7 +6,7 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.TestTempDir
 
 class TagsTest extends FunSuite with TestTempDir {
-  val storeFile = tempDir("TagsTest.sqlite")
+  val storeFile = tempDir("TagsTest")
   def newRoot = {
     FileUtils.deleteDirectory(storeFile)
     TagRoot(storeFile.toString)

@@ -1,70 +1,96 @@
 // A persistent key-value storage interface and implementation(s).
 package com.lynxanalytics.biggraph.graph_api
 
+import java.io.File
+import play.api.libs.json.Json
+
 trait KeyValueStore {
-  def clear: Unit
-  def get(key: String): Option[String]
+  def readAll: Iterable[(String, String)]
   def delete(key: String): Unit
   def put(key: String, value: String): Unit
-  def scan(prefix: String): Iterable[(String, String)]
   def deletePrefix(prefix: String): Unit
   def batch[T](fn: => T): T // Can be nested. Defer writes until the end.
   def writesCanBeIgnored[T](fn: => T): T // May ignore writes from "fn".
 }
 
-case class SQLiteKeyValueStore(file: String) extends KeyValueStore {
-  import anorm.SqlStringInterpolation
-  import anorm.SqlParser.{ flatten, str }
-  new java.io.File(file).getParentFile.mkdirs // SQLite cannot create the directory.
-  implicit val connection = java.sql.DriverManager.getConnection("jdbc:sqlite:" + file)
+case class JournalKeyValueStore(file: String) extends KeyValueStore {
   private val Z = '\uffff' // Highest character code.
+  new File(file).getParentFile.mkdirs // Create directory if necessary.
+  private val out = java.nio.file.Files.newBufferedWriter(
+    java.nio.file.Paths.get(file),
+    java.nio.charset.StandardCharsets.UTF_8,
+    java.nio.file.StandardOpenOption.APPEND,
+    java.nio.file.StandardOpenOption.CREATE)
+  // Journal entry types.
+  val Put = "Put"
+  val Delete = "Delete"
+  val DeletePrefix = "DeletePrefix"
 
-  private def createTableIfNotExists: Unit = {
-    SQL"CREATE TABLE IF NOT EXISTS tags (key TEXT PRIMARY KEY, value TEXT)"
-      .executeUpdate
-  }
-  createTableIfNotExists // Make sure the table exists.
-
-  def clear: Unit = if (doWrites) synchronized {
-    SQL"DROP TABLE tags".executeUpdate
-    createTableIfNotExists
-  }
-
-  def get(key: String): Option[String] = synchronized {
-    SQL"SELECT value FROM tags WHERE key = $key"
-      .as(str("value").singleOpt)
-  }
-
-  def delete(key: String): Unit = if (doWrites) synchronized {
-    SQL"DELETE FROM tags WHERE key = $key"
-      .executeUpdate
-  }
-
-  def put(key: String, value: String): Unit = if (doWrites) synchronized {
-    SQL"INSERT OR REPLACE INTO tags VALUES ($key, $value)"
-      .executeUpdate
+  def readAll: Iterable[(String, String)] = {
+    import scala.collection.JavaConverters._
+    val data = new java.util.TreeMap[String, String]
+    for ((command, key, value) <- readCommands) {
+      command match {
+        case Put => data.put(key, value)
+        case Delete => data.remove(key)
+        case DeletePrefix => data.subMap(key, key + Z).entrySet.clear
+      }
+    }
+    data.asScala
   }
 
-  def scan(prefix: String): Iterable[(String, String)] = synchronized {
-    SQL"SELECT key, value FROM tags WHERE key BETWEEN $prefix AND ${prefix + Z}"
-      .as((str("key") ~ str("value")).*).map(flatten)
+  def readCommands: Iterable[(String, String, String)] = {
+    def readStream(in: java.io.BufferedReader): Stream[(String, String, String)] = {
+      val line = in.readLine
+      if (line == null) Stream.empty // End of file reached.
+      else {
+        val j = Json.parse(line).as[Seq[String]]
+        (j(0), j(1), j(2)) #:: readStream(in)
+      }
+    }
+    if (new File(file).exists) {
+      val in = java.nio.file.Files.newBufferedReader(
+        java.nio.file.Paths.get(file),
+        java.nio.charset.StandardCharsets.UTF_8)
+      readStream(in)
+    } else Seq()
   }
 
-  def deletePrefix(prefix: String): Unit = if (doWrites) synchronized {
-    SQL"DELETE FROM tags WHERE key BETWEEN $prefix AND ${prefix + Z}"
-      .executeUpdate
+  private def write(command: String, key: String, value: String = "") = synchronized {
+    if (doWrites) {
+      out.write(Json.toJson(Seq(command, key, value)).toString)
+      out.newLine()
+      if (flushing) out.flush()
+    }
   }
 
+  def put(key: String, value: String): Unit = synchronized {
+    write(Put, key, value)
+  }
+
+  def delete(key: String): Unit = synchronized {
+    write(Delete, key)
+  }
+
+  def deletePrefix(prefix: String): Unit = synchronized {
+    write(DeletePrefix, prefix)
+  }
+
+  private var flushing = true
   def batch[T](fn: => T): T = synchronized {
-    val ac = connection.getAutoCommit
-    connection.setAutoCommit(false)
-    try { fn }
-    finally { connection.setAutoCommit(ac) } // Also performs commit if necessary.
+    val f = flushing
+    flushing = false
+    try {
+      fn
+    } finally {
+      flushing = true
+      out.flush()
+    }
   }
 
   private var ignoreWrites = 0
-  private def doWrites = ignoreWrites == 0
-  def writesCanBeIgnored[T](fn: => T): T = {
+  private def doWrites = synchronized { ignoreWrites == 0 }
+  def writesCanBeIgnored[T](fn: => T): T = synchronized {
     ignoreWrites += 1
     try { fn }
     finally { ignoreWrites -= 1 }
@@ -72,18 +98,14 @@ case class SQLiteKeyValueStore(file: String) extends KeyValueStore {
 }
 
 case class JsonKeyValueStore(file: String) extends KeyValueStore {
-  import java.io.File
   import org.apache.commons.io.FileUtils
-  import play.api.libs.json.Json
 
   private val raw = FileUtils.readFileToString(new File(file), "utf8")
   private val map = Json.parse(raw).as[Map[String, String]]
 
-  def get(key: String): Option[String] = map.get(key)
-  def scan(prefix: String): Iterable[(String, String)] = map.filter(_._1.startsWith(prefix))
+  def readAll: Iterable[(String, String)] = map
 
   // This is a read-only implementation, used for backward-compatibility.
-  def clear: Unit = ???
   def delete(key: String): Unit = ???
   def put(key: String, value: String): Unit = ???
   def deletePrefix(prefix: String): Unit = ???
