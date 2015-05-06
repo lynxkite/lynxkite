@@ -81,10 +81,37 @@ class HadoopFileTest extends FunSuite {
 
     RootRepository.registerRoot("HADOOPROOTC$", "s3n:/")
     val f3 = HadoopFile("HADOOPROOTC$/key:secret@rootdir/subdir1/file")
-    assert(f3.relativePath == "/key:secret@rootdir/subdir1/file")
+    assert(f3.normalizedRelativePath == "/key:secret@rootdir/subdir1/file")
     val g3 = f3.hadoopFileForGlobOutput("s3n://rootdir/subdir1/file")
     assert(g3.awsID == "key")
     assert(g3.awsSecret == "secret")
+
+    RootRepository.registerRoot("HADOOPROOTD$", "s3n://")
+    val f4 = HadoopFile("HADOOPROOTD$key:secret@rootdir/subdir1/file")
+    assert(f4.normalizedRelativePath == "key:secret@rootdir/subdir1/file")
+    val g4 = f4.hadoopFileForGlobOutput("s3n://rootdir/subdir1/file")
+    assert(g4.awsID == "key")
+    assert(g4.awsSecret == "secret")
+
+    RootRepository.registerRoot("HADOOP_ROOT$", "s3n:")
+    val f5 = HadoopFile("HADOOP_ROOT$//key:secret@rootdir/subdir1/file")
+    assert(f5.normalizedRelativePath == "//key:secret@rootdir/subdir1/file")
+    val g5 = f5.hadoopFileForGlobOutput("s3n://rootdir/subdir1/file")
+    assert(g5.awsID == "key")
+    assert(g5.awsSecret == "secret")
+
+    RootRepository.registerRoot("HADOOP_ROOT1$", "file:/home///user/")
+    val f6 = HadoopFile("HADOOP_ROOT1$file.txt")
+    assert(f6.normalizedRelativePath == "file.txt")
+    val g6 = f6.hadoopFileForGlobOutput("file:/home/user/file.txt")
+    assert(g6.symbolicName == "HADOOP_ROOT1$file.txt")
+
+    RootRepository.registerRoot("HADOOP_ROOT2$", "file:/home///user")
+    val f7 = HadoopFile("HADOOP_ROOT2$/file.txt")
+    assert(f7.normalizedRelativePath == "/file.txt")
+    val g7 = f7.hadoopFileForGlobOutput("file:/home/user/file.txt")
+    assert(g7.symbolicName == "HADOOP_ROOT2$/file.txt")
+
   }
 
   test("Empty symbolic prefix works with file:// scheme") {
