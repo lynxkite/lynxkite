@@ -182,6 +182,7 @@ module.exports = function (grunt) {
     marked: {
       options: {
         smartypants: true, // Smart typography.
+        sanitize: false, // Allow HTML.
       },
       dist: {
         files: [{
