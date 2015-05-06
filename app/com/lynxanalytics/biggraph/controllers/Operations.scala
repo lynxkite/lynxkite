@@ -2723,7 +2723,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   // Whether a JavaScript expression contains a given identifier.
   // It's a best-effort implementation with no guarantees of correctness.
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    val re = ".*\\W" + java.util.regex.Pattern.quote(identifier) + "\\W.*"
+    val re = ".*\\b" + java.util.regex.Pattern.quote(identifier) + "\\b.*"
     expr.matches(re)
   }
 }
