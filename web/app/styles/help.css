@@ -1,0 +1,29 @@
+.read-more {
+  height: initial;
+  border: 0;
+  text-align: right;
+  cursor: pointer;
+  margin: 0;
+}
+.read-more:hover {
+  text-decoration: underline;
+}
+
+.help hr {
+  border: 0;
+  margin: 0;
+}
+
+#help-button {
+  cursor: pointer;
+}
+#help-popup {
+  position: absolute;
+  width: 30%;
+  background: white;
+  color: black;
+  z-index: 3;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0 2px 5px;
+}
