@@ -260,15 +260,13 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   private def updateVertexSet(e: VertexSet, killSegmentations: Boolean) = manager.synchronized {
     if (e != vertexSet) {
-      // TODO: "Induce" the edges and attributes to the new vertex set.
       edgeBundle = null
       vertexAttributes = Map()
       if (killSegmentations) segmentations.foreach(_.remove())
     }
     set(checkpointedDir / "vertexSet", e)
     if (e != null) {
-      val op = graph_operations.CountVertices()
-      scalars("vertex_count") = op(op.vertices, e).result.count
+      scalars("vertex_count") = graph_operations.Count.run(e)
     } else {
       scalars("vertex_count") = null
     }
@@ -359,8 +357,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     }
     set(checkpointedDir / "edgeBundle", e)
     if (e != null) {
-      val op = graph_operations.CountEdges()
-      scalars("edge_count") = op(op.edges, e).result.count
+      scalars("edge_count") = graph_operations.Count.run(e)
     } else {
       scalars("edge_count") = null
     }
@@ -447,8 +444,14 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   abstract class Holder[T <: MetaGraphEntity](dir: SymbolPath) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit
-    def update(name: String, entity: T) = manager.synchronized {
+
+    def update(name: String, entity: T) = {
       validateName(name)
+      set(name, entity)
+    }
+
+    // Skip name validation. Special-name entities can be set through this method.
+    def set(name: String, entity: T) = manager.synchronized {
       if (entity == null) {
         existing(dir / name).foreach(manager.rmTag(_))
       } else {
@@ -537,6 +540,9 @@ case class Segmentation(parentName: String, name: String)(implicit manager: Meta
   def belongsTo_=(eb: EdgeBundle) = manager.synchronized {
     assert(eb.dstVertexSet == project.vertexSet, s"Incorrect 'belongsTo' relationship for $name")
     manager.setTag(path / "belongsTo", eb)
+    project.scalars.set("!coverage", graph_operations.Coverage.run(eb).srcCoverage)
+    project.scalars.set("!nonEmpty", graph_operations.Coverage.run(eb).dstCoverage)
+    project.scalars.set("!belongsToEdges", graph_operations.Count.run(eb))
   }
   def belongsToAttribute: Attribute[Vector[ID]] = {
     val segmentationIds = graph_operations.IdAsAttribute.run(project.vertexSet)
