@@ -151,7 +151,7 @@ case class ProjectHistoryStep(
 case class SaveWorkflowRequest(
   workflowName: String,
   // This may contain parameter refernces in the format ${param-name}. There is a special reference,
-  // ${!projectName} which is automatically replaced with the project name the workflow should run
+  // ${!project} which is automatically replaced with the project name the workflow should run
   // on. After parameter substitution we parse the string as a JSON form of
   // List[ProjectOperationRequest] and then we try to apply these operations in sequence.
   stepsAsJSON: String,
