@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Strings visualized as icons will be randomly matched to neutral icons (circle, square,
+   triangle, hexagon, pentagon, star) if an icon with the given name does not exist.
  - LynxKite pages can now be printed. Visualizations are also supported. This provides a
    method of exporting the visualization in a scalable vector graphics format.
  - Segmentation coverage is automatically calculated.
