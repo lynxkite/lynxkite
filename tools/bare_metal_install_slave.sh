@@ -12,5 +12,7 @@ echo "Java installed successfully."
 echo "Installing Cloudera..."
 sudo tar -xf $DVD_ROOT/cloudera-manager-trusty-cm5.3.3_amd64.tar.gz -C /opt
 sudo cp /opt/cm-5.3.3/etc/init.d/cloudera-scm-agent /etc/init.d/cloudera-scm-agent
+sudo sed -i 's/CMF_DEFAULTS=.*/CMF_DEFAULTS=\/opt\/cm-5.3.3\/etc\/default/' /etc/init.d/cloudera-scm-agent
+sudo update-rc.d cloudera-scm-agent defaults
 echo "Cloudera installed successfully."
 
