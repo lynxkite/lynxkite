@@ -1,12 +1,16 @@
-<div class="panel panel-default project history" ng-if="show">
+<div class="panel panel-default project history" ng-if="show && !workflowMode.enabled">
 
-  <div class="panel-heading project-name">
+  <div class="panel-heading project-name" ng-show="!workflowMode.enabled">
     <span class="de-emph" ng-repeat="parent in side.parentProjects()">
       {{parent}} &raquo;
     </span>
     {{side.shortName()}}
 
     <div class="btn-group pull-right">
+      <label class="btn btn-default" ng-click="enterWorkflowSaving()"
+        tooltip="Save as Workflow" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-film"></i>
+      </label>
       <label class="btn btn-info active" ng-click="closeHistory()"
         tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-time"></i>
@@ -54,7 +58,7 @@
     <div class="clearfix"></div>
   </div>
 
-  <div class="list-group">
+  <div class="list-group" ng-show="!workflowMode.enabled">
     <li class="list-group-item uneditable" ng-if="!history.$resolved">
       <progressbar value="100" class="progress-striped active">
         Loading...
@@ -107,5 +111,6 @@
 
     </li>
   </div>
-  <workflow-saver code="code"></workflow-saver>
 </div>
+<workflow-saver ng-if="show" visible="workflowMode.enabled" code="code" side="side">
+</workflow-saver>

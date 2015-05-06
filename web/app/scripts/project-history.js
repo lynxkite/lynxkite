@@ -29,18 +29,6 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             }
             watchStep(step);
           }
-          scope.code = JSON.stringify(
-            history.steps.map(function(step) {
-              var request = angular.copy(step.request);
-              var path = util.projectPath(request.project);
-              path[0] = '!project';
-              request.project = path.join('/');
-              return request;
-            }),
-            null,
-            2);
-        } else {
-          scope.code = '';
         }
       }
       scope.$watch('history', update);
@@ -210,6 +198,26 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         } else {
           return path[path.length - 1];
         }
+      };
+
+      scope.workflowMode = { enabled: false };
+      scope.enterWorkflowSaving = function() {
+        var history = scope.history;
+        if (history && history.$resolved && !history.$error) {
+          scope.code = JSON.stringify(
+            history.steps.map(function(step) {
+              var request = angular.copy(step.request);
+              var path = util.projectPath(request.project);
+              path[0] = '!project';
+              request.project = path.join('/');
+              return request;
+            }),
+            null,
+            2);
+        } else {
+          scope.code = '';
+        }
+        scope.workflowMode.enabled = true;
       };
 
       function blankStep(seg) {
