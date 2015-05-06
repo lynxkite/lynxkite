@@ -43,7 +43,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var circle = angular.element('#svg-icons #circle');
     var cbb = circle[0].getBBox();
     var icon = angular.element('#svg-icons #' + name.toLowerCase());
-    if (icon.length === 0) { icon = circle; }
+    if (icon.length === 0) {
+      // The name does not match an icon. Pick a neutral shape deterministically.
+      var neutrals = ['circle', 'square', 'hexagon', 'triangle', 'pentagon', 'star'];
+      var index = common.hashCode(name) % neutrals.length;
+      icon = angular.element('#svg-icons #' + neutrals[index]);
+    }
     var bb = icon[0].getBBox();
     var clone = icon.clone();
     // Take the scaling factor from the circle icon.
