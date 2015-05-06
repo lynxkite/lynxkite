@@ -24,8 +24,9 @@ object HadoopFile {
   def apply(str: String, legacyMode: Boolean = false): HadoopFile = {
     val (rootSymbol, relativePath) = RootRepository.splitSymbolicPattern(str, legacyMode)
     val rootResolution = RootRepository.getRootInfo(rootSymbol)
-    val normalizedRelativePath =
-      PathNormalizer.normalize(rootResolution + relativePath).drop(rootResolution.length)
+    val normalizedFullPath = PathNormalizer.normalize(rootResolution + relativePath)
+    assert(normalizedFullPath.startsWith(rootResolution))
+    val normalizedRelativePath = normalizedFullPath.drop(rootResolution.length)
     assert(!hasDangerousEnd(rootResolution) || !hasDangerousStart(relativePath),
       s"The path following $rootSymbol has to start with a slash (/)")
     HadoopFile(rootSymbol, normalizedRelativePath)
