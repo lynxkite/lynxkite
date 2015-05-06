@@ -347,7 +347,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
         val opCategoriesBeforeWithOp =
           if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty &&
             op.isInstanceOf[WorkflowOperation]) {
-            opCategoriesBefore :+ WorkflowOperation.deprecatedCategory.toFE(List(op.toFE))
+            val deprCat = WorkflowOperation.deprecatedCategory
+            val deprCatFE = deprCat.toFE(List(op.toFE.copy(category = deprCat.title)))
+            opCategoriesBefore :+ deprCatFE
           } else {
             opCategoriesBefore
           }
@@ -403,11 +405,16 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
+    val dateString =
+      (new java.text.SimpleDateFormat("dd-MM-yyyy hh:mm")).format(new java.util.Date())
+    val description =
+      s"<p>User defined workflow saved by ${user.email} at $dateString<p>${request.description}"
+
     val savedWorkflow = SavedWorkflow(
       request.stepsAsJSON,
       user.email,
-      request.description)
-    assert(!request.workflowName.contains('/'), "Workflow names cannot contain /")
+      description)
+    Project.validateName(request.workflowName)
     val tagName = BigGraphController.workflowsRoot / request.workflowName / Timestamp.toString
     metaManager.setTag(tagName, savedWorkflow.prettyJson)
   }
@@ -518,11 +525,7 @@ case class WorkflowOperation(
 
   override val id = fullName.toString
 
-  private val dateString =
-    (new java.text.SimpleDateFormat("dd-MM-yyyy hh:mm")).format(new java.util.Date())
-
-  val description =
-    s"<p>User defined workflow saved by ${workflow.author} at $dateString<p>${workflow.description}"
+  val description = workflow.description
 
   val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsJSON)
 
