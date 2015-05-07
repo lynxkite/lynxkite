@@ -2388,7 +2388,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.vertexAttributes(label)
@@ -2419,7 +2419,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
         val attrs: Seq[(String, Attribute[_])] = labels.map {
           label => label -> project.vertexAttributes(label)
@@ -2448,7 +2448,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.edgeAttributes(label)
@@ -2479,7 +2479,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.edgeAttributes(label)
