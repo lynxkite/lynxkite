@@ -80,9 +80,8 @@ object OperationParams {
   }
 
   // A random number to be used as default value for random seed parameters.
-  def randomSeed() = util.Random.nextInt.toString
   case class RandomSeed(id: String, title: String) extends OperationParameterMeta {
-    val defaultValue = randomSeed()
+    val defaultValue = util.Random.nextInt.toString
     val kind = "default"
     val options = List()
     val multipleChoice = false
