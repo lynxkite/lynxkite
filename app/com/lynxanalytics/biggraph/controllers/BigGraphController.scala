@@ -171,8 +171,7 @@ object SavedWorkflow {
   implicit val rFEOperationParameterMeta = json.Json.reads[FEOperationParameterMeta]
   implicit val rSavedWorkflow = json.Json.reads[SavedWorkflow]
   def asPrettyJson(wf: SavedWorkflow): String = json.Json.prettyPrint(json.Json.toJson(wf))
-  def fromJson(js: String): SavedWorkflow =
-    json.Json.fromJson[SavedWorkflow](json.Json.parse(js)).get
+  def fromJson(js: String): SavedWorkflow = json.Json.parse(js).as[SavedWorkflow]
 }
 
 object BigGraphController {
@@ -510,7 +509,7 @@ object WorkflowOperation {
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
-    json.Json.fromJson[List[ProjectOperationRequest]](json.Json.parse(stepsAsJSON)).get
+    json.Json.parse(stepsAsJSON).as[List[ProjectOperationRequest]]
   }
 }
 case class WorkflowOperation(
