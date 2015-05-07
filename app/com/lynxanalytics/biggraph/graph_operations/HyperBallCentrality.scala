@@ -24,19 +24,20 @@ object HyperBallCentrality extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val harmonicCentrality = vertexAttribute[Double](inputs.vs.entity)
+    val centrality = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HyperBallCentrality(
-    (j \ "maxDiameter").as[Int])
+    (j \ "maxDiameter").as[Int],
+    (j \ "algorithm").as[String])
 }
 import HyperBallCentrality._
-case class HyperBallCentrality(maxDiameter: Int)
+case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
     extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("maxDiameter" -> maxDiameter)
+  override def toJson = Json.obj("maxDiameter" -> maxDiameter, "algorithm" -> algorithm)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -50,9 +51,9 @@ case class HyperBallCentrality(maxDiameter: Int)
     // Hll counters are used to estimate set sizes.
     val globalHll = new HyperLogLogMonoid(bits = 8)
 
-    val harmonicCentralities = getHarmonicCentralities(
+    val centralities = getCentralities(
       diameter = 1,
-      harmonicCentralities = vertices.mapValues { _ => 0.0 },
+      centralities = vertices.mapValues { _ => 0.0 },
       hyperBallCounters = vertices.mapValuesWithKeys {
         // Initialize a counter for every vertex 
         case (vid, _) => globalHll(vid)
@@ -63,12 +64,12 @@ case class HyperBallCentrality(maxDiameter: Int)
       vertexPartitioner,
       edges,
       globalHll)
-    output(o.harmonicCentrality, harmonicCentralities)
+    output(o.centrality, centralities)
   }
 
-  @tailrec private def getHarmonicCentralities(
+  @tailrec private def getCentralities(
     diameter: Int,
-    harmonicCentralities: SortedRDD[ID, Double],
+    centralities: SortedRDD[ID, Double],
     hyperBallCounters: SortedRDD[ID, HLL],
     hyperBallSizes: SortedRDD[ID, (Int, Int)],
     vertexPartitioner: Partitioner,
@@ -81,7 +82,7 @@ case class HyperBallCentrality(maxDiameter: Int)
       case ((_, newValue), hll) =>
         (newValue, hll.estimatedSize.toInt)
     }
-    val newHarmonicCentralities = harmonicCentralities
+    val newCentralities = centralities
       .sortedJoin(newHyperBallSizes)
       .mapValues {
         case (original, (oldSize, newSize)) => {
@@ -90,10 +91,10 @@ case class HyperBallCentrality(maxDiameter: Int)
       }
 
     if (diameter < maxDiameter) {
-      getHarmonicCentralities(diameter + 1, newHarmonicCentralities,
+      getCentralities(diameter + 1, newCentralities,
         newHyperBallCounters, newHyperBallSizes, vertexPartitioner, edges, globalHll)
     } else {
-      newHarmonicCentralities
+      newCentralities
     }
   }
 

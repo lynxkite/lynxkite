@@ -960,13 +960,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     Higher centrality means that the vertex is more embedded in the graph."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "harmonic_centrality"),
-      NonNegInt("maxDiameter", "Maximal diameter to check", defaultValue = "10"))
+      NonNegInt("maxDiameter", "Maximal diameter to check", defaultValue = "10"),
+      Choice("algorithm", "Centrality type", options = UIValue.list(List("Lin", "Harmonic"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt)
+      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt, params("algorithm"))
       project.vertexAttributes(params("name")) =
-        op(op.es, project.edgeBundle).result.harmonicCentrality
+        op(op.es, project.edgeBundle).result.centrality
     }
   })
 
