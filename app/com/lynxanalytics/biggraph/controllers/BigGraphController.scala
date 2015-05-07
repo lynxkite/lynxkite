@@ -150,9 +150,9 @@ case class ProjectHistoryStep(
 
 case class SaveWorkflowRequest(
   workflowName: String,
-  // This may contain parameter refernces in the format ${param-name}. There is a special reference,
-  // ${!project} which is automatically replaced with the project name the workflow should run
-  // on. After parameter substitution we parse the string as a JSON form of
+  // This may contain parameter references in the format ${param-name}. There is a special
+  // reference, ${!project} which is automatically replaced with the project name the workflow
+  // should run on. After parameter substitution we parse the string as a JSON form of
   // List[ProjectOperationRequest] and then we try to apply these operations in sequence.
   stepsAsJSON: String,
   description: String)
@@ -529,9 +529,9 @@ case class WorkflowOperation(
 
   val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsJSON)
 
-  val (systemRefernces, customReferences) = parameterReferences.partition(_.startsWith("!"))
+  val (systemReferences, customReferences) = parameterReferences.partition(_.startsWith("!"))
 
-  private val unknownSystemReferences = systemRefernces &~ Set("!project")
+  private val unknownSystemReferences = systemReferences &~ Set("!project")
   assert(
     unknownSystemReferences.isEmpty,
     "Unknown system parameter(s): " + unknownSystemReferences)
