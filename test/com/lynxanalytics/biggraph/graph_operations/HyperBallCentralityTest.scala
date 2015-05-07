@@ -11,25 +11,16 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   test("corner cases") {
     val op = HyperBallCentrality(5, "Harmonic")
 
-    val g_isolated = SmallTestGraph(Map(0 -> Seq())).result
-    val out_isolated = op(op.es, g_isolated.es).result.centrality
-    assert(out_isolated.rdd.collect.toMap == Map(0 -> 0.0))
-
-    val g_loop = SmallTestGraph(Map(0 -> Seq(0))).result
-    val out_loop = op(op.es, g_loop.es).result.centrality
-    assert(out_loop.rdd.collect.toMap == Map(0 -> 0.0))
-
-    val g_parallel = SmallTestGraph(Map(
+    check(op, Map(0 -> Seq()), Map(0 -> 0.0))
+    check(op, Map(0 -> Seq(0)), Map(0 -> 0.0))
+    check(op, Map(
       0 -> Seq(1, 1),
-      1 -> Seq())).result
-    val out_parallel = op(op.es, g_parallel.es).result.centrality
-    assert(out_parallel.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 1.0))
-
-    val g_complete = SmallTestGraph(Map(
+      1 -> Seq()),
+      Map(0 -> 0.0, 1 -> 1.0))
+    check(op, Map(
       0 -> Seq(1),
-      1 -> Seq(0))).result
-    val out_complete = op(op.es, g_complete.es).result.centrality
-    assert(out_complete.rdd.collect.toMap == Map(0 -> 1.0, 1 -> 1.0))
+      1 -> Seq(0)),
+      Map(0 -> 1.0, 1 -> 1.0))
   }
 
   test("small example graph") {
@@ -41,38 +32,35 @@ class HyperBallCentralityTest extends FunSuite with TestGraphOp {
   }
 
   test("path graph") {
-    val g = SmallTestGraph(Map(
+    check(HyperBallCentrality(5, "Harmonic"), Map(
       0 -> Seq(1),
       1 -> Seq(2),
       2 -> Seq(3),
-      3 -> Seq())).result
-    val op = HyperBallCentrality(5, "Harmonic")
-    val out = op(op.es, g.es).result.centrality
-    assert(out.rdd.collect.toMap ==
+      3 -> Seq()),
       Map(0 -> 0.0, 1 -> 1.0, 2 -> 1.5, 3 -> (1.5 + (1.0 / 3.0))))
   }
 
   test("tree graph") {
-    val g = SmallTestGraph(Map(
+    check(HyperBallCentrality(5, "Harmonic"), Map(
       0 -> Seq(),
       1 -> Seq(0),
       2 -> Seq(0),
       3 -> Seq(1),
-      4 -> Seq(1))).result
-    val op = HyperBallCentrality(5, "Harmonic")
-    val out = op(op.es, g.es).result.centrality
-    assert(out.rdd.collect.toMap ==
+      4 -> Seq(1)),
       Map(0 -> 3.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0, 4 -> 0.0))
   }
 
   test("triangle graph") {
-    val g = SmallTestGraph(Map(
+    check(HyperBallCentrality(5, "Harmonic"), Map(
       0 -> Seq(1),
       1 -> Seq(2),
-      2 -> Seq(0))).result
-    val op = HyperBallCentrality(5, "Harmonic")
-    val out = op(op.es, g.es).result.centrality
-    assert(out.rdd.collect.toMap ==
+      2 -> Seq(0)),
       Map(0 -> 1.5, 1 -> 1.5, 2 -> 1.5))
+  }
+
+  def check(op: HyperBallCentrality, graph: Map[Int, Seq[Int]], result: Map[Int, Double]): Unit = {
+    val g = SmallTestGraph(graph).result
+    val out = op(op.es, g.es).result.centrality
+    assert(out.rdd.collect.toMap == result)
   }
 }
