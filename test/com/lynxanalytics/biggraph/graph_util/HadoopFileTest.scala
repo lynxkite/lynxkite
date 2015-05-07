@@ -359,4 +359,14 @@ class HadoopFileTest extends FunSuite {
     f("file:/home/user/kite_data/uploads/subdir/file3", "EMPTY$file:/home/user/kite_data/uploads/subdir/file3")
     f("file:/home/user/kite_data/another/subdir/file3", "EMPTY$file:/home/user/kite_data/another/subdir/file3")
   }
+
+  test("ReadAsString test") {
+    val resourceDir = HadoopFile(TestUtils.getDummyRootName(rootPath))
+    val text = resourceDir / "multiline.txt"
+    assert(text.readAsString() ==
+      "Whan that Aprille with his shoures soote\n"
+      + "The droghte of Marche hath perced to the roote,\n"
+      + "And bathed every veyne in swich licour,\n"
+      + "Of which vertu engendred is the flour;\n")
+  }
 }
