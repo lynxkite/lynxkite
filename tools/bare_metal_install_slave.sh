@@ -1,5 +1,5 @@
 if [ "$1" == "" ]; then
-    echo "First argument is missing, it has be the hostname of the master machine."
+    echo "First argument is missing, it has to be the hostname of the master machine."
     exit 1
 fi
 MASTER_HOSTNAME=$1
