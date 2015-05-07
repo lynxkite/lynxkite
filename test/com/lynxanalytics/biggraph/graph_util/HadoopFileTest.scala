@@ -106,11 +106,11 @@ class HadoopFileTest extends FunSuite {
     val g6 = f6.hadoopFileForGlobOutput("file:/home/user/file.txt")
     assert(g6.symbolicName == "HADOOP_ROOT1$file.txt")
 
-    RootRepository.registerRoot("HADOOP_ROOT2$", "file:/home///user")
+    RootRepository.registerRoot("HADOOP_ROOT2$", "file:/home///user/")
     val f7 = HadoopFile("HADOOP_ROOT2$/file.txt")
-    assert(f7.normalizedRelativePath == "/file.txt")
+    assert(f7.normalizedRelativePath == "file.txt")
     val g7 = f7.hadoopFileForGlobOutput("file:/home/user/file.txt")
-    assert(g7.symbolicName == "HADOOP_ROOT2$/file.txt")
+    assert(g7.symbolicName == "HADOOP_ROOT2$file.txt")
 
   }
 
