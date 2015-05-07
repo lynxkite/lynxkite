@@ -40,6 +40,15 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
   }
 
+  test("Derived vertex attribute with substring conflict (#1676)") {
+    run("Example Graph")
+    run("Rename vertex attribute", Map("from" -> "income", "to" -> "nam"))
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.size == 4)
+  }
+
   test("Derived vertex attribute (String)") {
     run("Example Graph")
     // Test dropping values.

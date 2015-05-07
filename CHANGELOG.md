@@ -13,6 +13,7 @@ Please add changes at the top. When releasing a version add a new header for tha
    to hide s3n passwords from the users; futhermore, it will be easier to move the data
    to another location. A new kiterc option KITE_ADDITIONAL_ROOT_DEFINITIONS can be used
    to provide extra prefixes. See the files kiterc_template and root_definitions.txt for details.
+ - New aggregation method: `count distinct`
  - LynxKite pages can now be printed. Visualizations are also supported. This provides a
    method of exporting the visualization in a scalable vector graphics format.
  - Segmentation coverage is automatically calculated.
