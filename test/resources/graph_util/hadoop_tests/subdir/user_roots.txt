@@ -1,0 +1,26 @@
+# Comment
+#
+
+# Blank
+
+#COMMENTEDOUT="file:/home/user/"
+
+# # #
+#
+TEST_EMPTY="" #empty 
+
+TEST_S3N="s3n://testkey:testpwd@" #
+
+TEST_S3NDIR="s3n://testkey:testpwd@directory/" #####
+
+TESTFILEDIR="file:/home/user/"
+
+          # This doesn't end in a slash!!!
+          TESTBLANKS_="hdfs://root/path"                 
+
+# Only whitespace
+                           
+
+
+
+
