@@ -7,12 +7,11 @@ Please add changes at the top. When releasing a version add a new header for tha
 ### master
 
  - Data files and directories can now only be accessed via a special prefix notation.
-   For example, what used to be hdfs://nameservice1:8020/user/kite/data/uploads/* is
-   now simply DATA$uploads/*, assuming that KITE_DATA_DIR has been set to
-   hdfs://nameservice1:8020/user/kite/data/ in ~/.kiterc. This enables the administrator
-   to hide s3n passwords from the users; futhermore, it will be easier to move the data
-   to another location. A new kiterc option KITE_ADDITIONAL_ROOT_DEFINITIONS can be used
-   to provide extra prefixes. See the files kiterc_template and root_definitions.txt for details.
+   For example, what used to be hdfs://nameservice1:8020/user/kite/data/uploads/file is
+   now simply UPLOADS$/file. This enables the administrator to hide s3n passwords from
+   the users; futhermore, it will be easier to move the data to another location. A new kiterc
+   option KITE_ADDITIONAL_ROOT_DEFINITIONS can be used to provide extra prefixes (other
+   than UPLOADS$) See the files kiterc_template and root_definitions.txt for details.
  - New aggregation method: `count distinct`
  - LynxKite pages can now be printed. Visualizations are also supported. This provides a
    method of exporting the visualization in a scalable vector graphics format.
