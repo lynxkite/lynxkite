@@ -71,7 +71,7 @@ object RootRepository {
     pathResolutions(rootSymbol) = PathNormalizer.normalize(resolvedResolution)
   }
 
-  private def extractUserDefinedRoot(rootDef: String) = {
+  private def extractUserDefinedRoot(rootDef: String): (String, String) = {
     val pattern = "([_A-Z][_A-Z0-9]+)=\"([^\"]*)\"".r
     rootDef match {
       case pattern(rootSymbolNoDollar, path) =>
@@ -79,17 +79,17 @@ object RootRepository {
     }
   }
 
-  private def parseInput(stringIterator: scala.collection.Iterator[String]) = {
+  private def parseInput(stringIterator: Iterator[String]): Iterator[(String, String)] = {
     stringIterator.map { line => "[#].*$".r.replaceAllIn(line, "") } // Strip comments
       .map { line => line.trim } // Strip leading and trailing blanks
       .filter(line => line.nonEmpty) // Strip blank lines
       .map(line => extractUserDefinedRoot(line))
   }
 
-  def parseUserDefinedInputFromFile(filename: String) = {
+  def parseUserDefinedInputFromFile(filename: String): Iterator[(String, String)] = {
     parseInput(Source.fromFile(filename).getLines)
   }
-  def parseUserDefinedInputFromURI(filename: String) = {
+  def parseUserDefinedInputFromURI(filename: String): Iterator[(String, String)] = {
     val URI = new java.net.URI(filename)
     parseInput(Source.fromURI(URI).getLines)
   }
