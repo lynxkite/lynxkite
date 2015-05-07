@@ -41,6 +41,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     val inputEdges = inputs.es.rdd.values
       .map(edge => (edge.src, edge.dst))
     val inputVertices = inputs.vs.rdd
+    val partitioner = inputVertices.partitioner.get
     val graph = inputEdges
       .groupBySortedKey(inputVertices.partitioner.get)
       .mapValues(_.toSet)
@@ -50,9 +51,9 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
         case (vId, (_, Some(cId))) => Edge(vId, cId)
         case (vId, (_, None)) => Edge(vId, vId)
       }
-    output(o.belongsTo, ccEdges.randomNumbered(rc.defaultPartitioner))
+    output(o.belongsTo, ccEdges.randomNumbered(partitioner))
     val ccVertices = ccEdges.map(_.dst -> ())
-      .toSortedRDD(rc.defaultPartitioner)
+      .toSortedRDD(partitioner)
       .distinct
     output(o.segments, ccVertices)
   }
