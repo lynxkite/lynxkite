@@ -200,7 +200,7 @@ case class HadoopFile private (rootSymbol: String, normalizedRelativePath: Strin
   }
 
   def +(suffix: String): HadoopFile = {
-    this.copy(normalizedRelativePath = normalizedRelativePath + suffix)
+    HadoopFile(symbolicName + suffix)
   }
 
   def /(path_element: String): HadoopFile = {
