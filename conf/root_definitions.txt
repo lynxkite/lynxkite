@@ -1,8 +1,15 @@
 # Configuration file to specify what file paths users are allowed to
 # access using what prefixes.
 #
-# Lines that begin with a hashmark (#) are comments and
-# ignored.
+# Special prefixes can be defined here that expand to directories, paths, etc.
+# Suppose, for example, that the administrator speficies 
+# DIR="file:/home/user/kite/" in this file. Then whenever the user references
+# DIR$subdir/data.txt (s)he will access the file:/home/users/kite/subdir/data.txt
+# Moreover, there is no other way a user can refer to that file (unless there are
+# other prefixes defined here that make this possible).
+
+# Format:
+# Lines that begin with a hashmark (#) are comments and ignored.
 #
 # Root symbols should only contain capital letters, underscore,
 # and digits; the first character cannot be a digit.
@@ -13,14 +20,15 @@
 # The quotation marks are not part of the path, but they
 # should still be supplied.
 #
+#
 # Examples: 
 # LOCAL1="file:/home/user/old_kite_data/"
 # LOCAL2="file:/home/user/old_kite_data2/
 # S3N_OLD_DIR="s3n://key:pwd@old_kite_data/"
 # S3N_OLD_DIR2="s3n://key:pwd@"
 # EMPTY=""
-
-# Note a specification of EMPTY such as the one above gives the user
+#
+# Note that a specification of EMPTY such as the one above gives the user
 # full access to anything; e.g., they can say
 # $EMPTY$s3n://key:password@somedir/somefile or
 # $EMTPY$file://etc/passwd
