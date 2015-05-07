@@ -67,6 +67,19 @@ class HadoopFileTest extends FunSuite {
     wildcardTest(HadoopFile("HADOOPTEST$"))
   }
 
+  test("Hadoop normalization works for operator /") {
+    RootRepository.registerRoot("ROOT1$", "file:/home/rootdir/")
+    val f1 = HadoopFile("ROOT1$") / "file.txt"
+    assert(f1.symbolicName == "ROOT1$file.txt")
+    assert(f1.resolvedName == "file:/home/rootdir/file.txt")
+
+    RootRepository.registerRoot("ROOT2$", "file:/home/rootdir")
+    val f2 = HadoopFile("ROOT2$") / "file.txt"
+    assert(f2.symbolicName == "ROOT2$/file.txt")
+    assert(f2.resolvedName == "file:/home/rootdir/file.txt")
+
+  }
+
   test("Hadoop forward-backward conversion works") {
 
     RootRepository.registerRoot("HADOOPROOTA$", "file:/home/rootdir")
