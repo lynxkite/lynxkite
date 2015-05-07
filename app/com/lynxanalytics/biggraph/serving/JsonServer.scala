@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.protection.Limitations
 
@@ -234,7 +234,7 @@ object ProductionJsonServer extends JsonServer {
         finally stream.close()
         val digest = md.digest().map("%02x".format(_)).mkString
         val finalName = s"$baseName.$digest"
-        val uploadsDir = dataRepo / "uploads"
+        val uploadsDir = HadoopFile("UPLOAD$")
         uploadsDir.mkdirs() // Create the directory if it does not already exist.
         val finalFile = uploadsDir / finalName
         if (finalFile.exists) {
@@ -243,7 +243,7 @@ object ProductionJsonServer extends JsonServer {
           val success = tmpFile.renameTo(finalFile)
           assert(success, s"Failed to rename $tmpFile to $finalFile.")
         }
-        Ok(finalFile.fullString)
+        Ok(finalFile.symbolicName)
       } finally upload.ref.clean() // Delete temporary file.
     }
   }
@@ -252,8 +252,8 @@ object ProductionJsonServer extends JsonServer {
     import play.api.libs.concurrent.Execution.Implicits._
     import scala.collection.JavaConversions._
     log.info(s"download: $user ${request.path}")
-    val path = Filename(request.getQueryString("path").get)
-    val name = Filename(request.getQueryString("name").get)
+    val path = HadoopFile(request.getQueryString("path").get)
+    val name = request.getQueryString("name").get
     // For now this is about CSV downloads. We want to read the "header" file and then the "data" directory.
     val files = Seq(path / "header") ++ (path / "data" / "*").list
     val length = files.map(_.length).sum

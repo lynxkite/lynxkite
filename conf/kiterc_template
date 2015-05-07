@@ -12,8 +12,13 @@ export SPARK_MASTER=local
 export KITE_META_DIR=$HOME/kite_meta
 
 # The data where graph data is stored. Should be on a distributed fs (hdfs, s3, etc) unless
-# this is a single machine install.
-export KITE_DATA_DIR=$HOME/kite_data
+# this is a single machine install. Please note that giving the full uri (e.g., file:/...)
+# is now mandatory.
+export KITE_DATA_DIR=file:$HOME/kite_data/
+
+# Configuration file to specify what file paths users are
+# allowed to access using what prefixes.
+export KITE_ADDITIONAL_ROOT_DEFINITIONS=${KITE_DEPLOYMENT_CONFIG_DIR}/root_definitions.txt
 
 # The PID file for Kite servers.
 export KITE_PID_FILE=$HOME/kite.pid
