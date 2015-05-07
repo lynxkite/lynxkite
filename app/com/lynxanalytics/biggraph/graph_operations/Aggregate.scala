@@ -318,6 +318,14 @@ object Aggregator {
     }
   }
 
+  object CountDistinct extends LocalAggregatorFromJson { def fromJson(j: JsValue) = CountDistinct() }
+  case class CountDistinct[T]() extends LocalAggregator[T, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
+    def aggregate(values: Iterable[T]) = {
+      values.toSet.size
+    }
+  }
+
   // Majority is like MostCommon, but returns "" if the mode is < fraction of the values.
   object Majority extends LocalAggregatorFromJson {
     def fromJson(j: JsValue) = Majority((j \ "fraction").as[Double])
