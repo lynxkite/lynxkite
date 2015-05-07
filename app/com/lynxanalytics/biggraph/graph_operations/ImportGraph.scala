@@ -250,11 +250,11 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, input)
+    val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.randomNumbered(partitioner.numPartitions)
+    val idToName = names.randomNumbered(partitioner)
     val nameToId = idToName.map { case (id, name) => (name, id) }
       .toSortedRDD(partitioner)
     putEdgeBundle(columns, nameToId, nameToId, o.edges, output, partitioner)
@@ -296,8 +296,8 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, input)
+    val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
     val srcToId =
       ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
@@ -346,7 +346,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = rc.defaultPartitioner
+    val partitioner = inputs.vs.rdd.partitioner.get
     val lines = input.lines(rc)
     val idFieldIdx = input.fields.indexOf(idField)
     val externalIdToInternalId = ImportCommon.checkIdMapping(
@@ -358,7 +358,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
     val linesByInternalId =
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
-        .toSortedRDD(inputs.vs.rdd.partitioner.get)
+        .toSortedRDD(partitioner)
     linesByInternalId.cacheBackingArray()
     for ((field, idx) <- input.fields.zipWithIndex) {
       if (idx != idFieldIdx) {
