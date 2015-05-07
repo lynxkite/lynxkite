@@ -1,6 +1,5 @@
-# Configuration file for fine tuning data file access.
-# This also makes it possible to support legacy files
-# whose paths fall beyond the scope of the DATA$ root.
+# Configuration file to specify what file paths users are allowed to
+# access using what prefixes.
 #
 # Lines that begin with a hashmark (#) are comments and
 # ignored.
