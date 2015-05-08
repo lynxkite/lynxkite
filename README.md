@@ -14,7 +14,18 @@ Install `sbt` (Scala Build Tool):
     sudo apt-get update
     sudo apt-get install sbt
 
-Check out the [README.md](web/README.md) file in the `web` directory to do the per repository setup steps.
+Setup git:
+
+    tools/git/setup.sh
+
+Per repository setup
+====================
+    cd web                          # Basic commands:
+    npm install && bower install    # Install dependencies. Run this once.
+    npm install -g grunt-cli bower  # Install grunt command line interface. Run this once.
+    npm test                        # Runs tests.
+    grunt                           # Lints and builds "dist".
+    grunt serve                     # Opens a browser with live reload.
 
 Run LynxKite
 ============
