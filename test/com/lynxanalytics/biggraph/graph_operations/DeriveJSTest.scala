@@ -41,7 +41,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       Seq())
     val derived = op(op.vs, g.vertices.entity)(
       op.attrs,
-      VertexAttributeToJSValue.seq()).result.attr
+      Seq()).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0))
   }
 
@@ -53,7 +53,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       Seq())
     val derived = op(op.vs, g.edges.idSet)(
       op.attrs,
-      VertexAttributeToJSValue.seq()).result.attr
+      Seq()).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> "hallo", 1 -> "hallo", 2 -> "hallo", 3 -> "hallo"))
   }
 
