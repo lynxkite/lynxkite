@@ -74,22 +74,43 @@ trait RowInput extends ToJson {
 }
 
 object CSV extends FromJson[CSV] {
-  def fromJson(j: JsValue) = CSV(
-    HadoopFile((j \ "file").as[String], true),
-    (j \ "delimiter").as[String],
-    (j \ "header").as[String],
-    JavaScript((j \ "filter").as[String]))
-}
-case class CSV(file: HadoopFile,
-               delimiter: String,
-               header: String,
-               filter: JavaScript = JavaScript("")) extends RowInput {
-  val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
-  val fields = ImportUtil.split(header, unescapedDelimiter).map(_.trim)
-  assert(
-    fields.forall(_.nonEmpty),
-    s"CSV column with empty name is not allowed. Column names were: $fields")
+  def fromJson(j: JsValue): CSV = {
+    val header = (j \ "header").as[String]
+    val delimiter = (j \ "delimiter").as[String]
+    val fields = getFields(delimiter, header)
+    new CSV(
+      HadoopFile((j \ "file").as[String], true),
+      delimiter,
+      header,
+      fields,
+      JavaScript((j \ "filter").as[String]))
+  }
 
+  def getFields(delimiter: String, header: String): Seq[String] = {
+    val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
+    ImportUtil.split(header, unescapedDelimiter).map(_.trim)
+  }
+
+  def apply(file: HadoopFile,
+            delimiter: String,
+            header: String,
+            filter: JavaScript = JavaScript("")): CSV = {
+    val fields = getFields(delimiter, header)
+    assert(
+      fields.forall(_.nonEmpty),
+      s"CSV column with empty name is not allowed. Column names were: $fields")
+    assert(
+      (fields.toSet.size == fields.size),
+      s"Duplicate CSV column name is not allowed. Column names were: $fields")
+    new CSV(file, delimiter, header, fields, filter)
+  }
+}
+case class CSV private (file: HadoopFile,
+                        delimiter: String,
+                        header: String,
+                        fields: Seq[String],
+                        filter: JavaScript) extends RowInput {
+  val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   override def toJson = Json.obj(
     "file" -> file.symbolicName,
     "delimiter" -> delimiter,
