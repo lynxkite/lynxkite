@@ -375,24 +375,28 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   function Vertices(graphView) {
     this.gv = graphView;
     this.vs = [];
-    this.initIcons([]);
   }
-  // Prepare a label-icon map for these labels.
-  Vertices.prototype.initIcons = function(labels) {
-    var neutrals = ['square', 'hexagon', 'pentagon', 'star', 'triangle'];
-    var mapping = { undefined: 'circle' };
+  // Prepare a label-icon map for these labels, generate legend.
+  Vertices.prototype.initIcons = function(attr, labels) {
+    var neutrals = ['square', 'hexagon', 'pentagon', 'star', 'triangle', 'circle'];
+    function dropNeutral(label) {
+      var j = neutrals.indexOf(label);
+      if (j !== -1) {
+        neutrals.splice(j, 1);
+      }
+    }
+    var mapping = {};
     var i, label;
     // Assign literals first.
     for (i = 0; i < labels.length; ++i) {
       label = labels[i];
       if (!mapping[label]) {
-        if (hasIcon(label)) {
+        if (label === undefined) {
+          mapping[label] = 'circle';
+          dropNeutral('circle');
+        } else if (hasIcon(label)) {
           mapping[label] = label;
-          var j = neutrals.indexOf(label);
-          if (j !== 0) {
-            // If an icon is directly referenced, we cannot use it as a neutral anymore.
-            neutrals.splice(j, 1);
-          }
+          dropNeutral(label);
         } else {
           mapping[label] = 'neutral';
         }
@@ -412,11 +416,23 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
     }
     this.iconMapping = mapping;
+    // Generate legend.
+    this.addLegendLine('Icon: ' + attr);
+    for (i = 0; i < labels.length; ++i) {
+      label = labels[i];
+      var icon = mapping[label];
+      if (label === undefined || label === icon) {
+        continue; // Don't mention obvious mappings.
+      }
+      this.addLegendLine(icon + ': ' + label, 10);
+    }
   };
 
   Vertices.prototype.getIcon = function(label) {
+    if (!label) {
+      return getIcon('circle');
+    }
     var i = getIcon(this.iconMapping[label]);
-    console.log(i);
     return i;
   };
 
@@ -484,8 +500,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         var attrLabel = attr.charAt(0).toUpperCase() + attr.slice(1);
         // UnCammelify.
         attrLabel = attrLabel.replace(/([A-Z])/g, ' $1');
-        // We handle color attributes separately.
-        if (attrLabel.indexOf('Color') === -1) {
+        // We handle icon and color attributes separately.
+        if (attrLabel.indexOf('Color') === -1 && attrLabel !== 'Icon') {
           vertices.addLegendLine(attrLabel + ': ' + side.vertexAttrs[attr].title);
         }
       }
@@ -528,7 +544,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         icon = vertex.attrs[side.vertexAttrs.icon.id].string;
         iconStrings.push(icon);
       }
-      vertices.initIcons(iconStrings);
+      vertices.initIcons(side.vertexAttrs.icon.title, iconStrings);
     }
 
     for (i = 0; i < data.vertices.length; ++i) {
