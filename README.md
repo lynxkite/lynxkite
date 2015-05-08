@@ -15,11 +15,13 @@ Install `sbt` (Scala Build Tool):
     sudo apt-get install sbt
 
 Install Spark:
-   Go to https://spark.apache.org/downloads.html and download appropriate version,
-   e.g., spark-1.3.0-bin-hadoop2.4.tgz. Then:
-   cd ~/Downloads
-   tar xf spark-1.3.0-bin-hadoop2.4.tgz
-   ln -s /home/<username>/Downloads/spark-1.3.0-bin-hadoop2.4 ~/spark-1.3.0
+
+   - Go to https://spark.apache.org/downloads.html and download appropriate version,
+     e.g., spark-1.3.0-bin-hadoop2.4.tgz. Then:
+
+         cd ~/Downloads
+         tar xf spark-1.3.0-bin-hadoop2.4.tgz
+         ln -s /home/<username>/Downloads/spark-1.3.0-bin-hadoop2.4 ~/spark-1.3.0
 
 
 Per repository setup
