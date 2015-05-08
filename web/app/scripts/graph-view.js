@@ -220,9 +220,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.vertexGroups.push(this.addGroup('nodes', clippers[i]));
     }
     this.legend = svg.create('g', {'class': 'legend'});
-    this.legendNextLine = {};
     this.root.append(this.legend);
-    var oldVertices = this.vertices || new Vertices();
+    var oldVertices = this.vertices || new Vertices(this);
     this.vertices = [];  // Sparse, indexed by side.
     var vsIndices = [];  // Packed, indexed by position in the JSON.
     var vsIndex = 0;
@@ -280,7 +279,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           continue;
         }
         if (this.vertices[idx].mode === 'sampled' && e.edges.length >= 5) {
-          this.addLegendLine(e.edges.length + ' edges', this.vertices[idx].leftOrRight);
+          this.vertices[idx].addLegendLine(e.edges.length + ' edges');
         }
       }
       var src = this.vertices[vsIndices[e.srcIdx]];
@@ -371,36 +370,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return colorMap;
   }
 
-  GraphView.prototype.setupColorMap = function(
-      siblings, colorMeta, sideString, legendTitle, colorKey) {
-    var resultMap;
-    if (colorMeta) {
-      colorKey = (colorKey === undefined) ? colorMeta.id : colorKey;
-      var fullLegendTitle = legendTitle + ': ' + colorMeta.title;
-      if (colorMeta.typeName === 'Double') {
-        var values = mapByAttr(siblings, colorKey, 'double');
-        resultMap = doubleColorMap(values);
-        var bounds = common.minmax(values);
-        var legendMap = {};
-        legendMap['min: ' + bounds.min] = resultMap[bounds.min];
-        legendMap['max: ' + bounds.max] = resultMap[bounds.max];
-        // only shows the min max values
-        this.addColorLegend(legendMap, sideString, fullLegendTitle);
-      } else if (colorMeta.typeName === 'String') {
-        resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'));
-        this.addColorLegend(resultMap, sideString, fullLegendTitle);
-      } else {
-        console.error('The type of ' +
-                      colorMeta + ' (' + colorMeta.typeName +
-                      ') is not supported for color visualization!');
-      }
-    }
-    return resultMap;
-  };
-
   // Vertices represents a set of vertices. The Vertex objects are in the "vs" array.
   // A wide range of metadata is also contained in this object, plus some methods.
-  function Vertices() {
+  function Vertices(graphView) {
+    this.gv = graphView;
     this.vs = [];
     this.initIcons([]);
   }
@@ -447,14 +420,63 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return i;
   };
 
+  Vertices.prototype.addLegendLine = function(text, indent) {
+    indent = indent || 0;
+    var margin = 50;
+    var xMargin = margin + indent;
+    var x = this.leftOrRight === 'left' ? xMargin : this.gv.svg.width() - xMargin;
+    var anchor = this.leftOrRight === 'left' ? 'start' : 'end';
+    var i = this.legendNextLine || 0;
+    this.legendNextLine = i + 1;
+    var legendElement =
+      svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin }).text(text);
+    legendElement.attr('text-anchor', anchor);
+    this.gv.legend.append(legendElement);
+    return legendElement;
+  };
+
+  Vertices.prototype.addColorLegend = function(colorMap, title) {
+    this.addLegendLine(title);
+    for (var attr in colorMap) {
+      var l = this.addLegendLine(attr || 'undefined', 10);
+      l.attr('style', 'fill: ' + colorMap[attr] || UNCOLORED);
+    }
+  };
+
+  Vertices.prototype.setupColorMap = function(
+      siblings, colorMeta, legendTitle, colorKey) {
+    var resultMap;
+    if (colorMeta) {
+      colorKey = (colorKey === undefined) ? colorMeta.id : colorKey;
+      var fullLegendTitle = legendTitle + ': ' + colorMeta.title;
+      if (colorMeta.typeName === 'Double') {
+        var values = mapByAttr(siblings, colorKey, 'double');
+        resultMap = doubleColorMap(values);
+        var bounds = common.minmax(values);
+        var legendMap = {};
+        legendMap['min: ' + bounds.min] = resultMap[bounds.min];
+        legendMap['max: ' + bounds.max] = resultMap[bounds.max];
+        // only shows the min max values
+        this.addColorLegend(legendMap, fullLegendTitle);
+      } else if (colorMeta.typeName === 'String') {
+        resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'));
+        this.addColorLegend(resultMap, fullLegendTitle);
+      } else {
+        console.error('The type of ' +
+                      colorMeta + ' (' + colorMeta.typeName +
+                      ') is not supported for color visualization!');
+      }
+    }
+    return resultMap;
+  };
+
   GraphView.prototype.addSampledVertices = function(data, offsetter, side, vertexGroup) {
-    var vertices = new Vertices();
+    var vertices = new Vertices(this);
     vertices.side = side;
     vertices.mode = 'sampled';
     vertices.offsetter = offsetter;
     vertices.vertexSetId = side.vertexSet.id;
     vertices.leftOrRight = (offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
-    var s = vertices.leftOrRight;
 
     for (var attr in side.vertexAttrs) {
       if (side.vertexAttrs[attr] !== undefined) {
@@ -464,7 +486,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         attrLabel = attrLabel.replace(/([A-Z])/g, ' $1');
         // We handle color attributes separately.
         if (attrLabel.indexOf('Color') === -1) {
-          this.addLegendLine(attrLabel + ': ' + side.vertexAttrs[attr].title, s);
+          vertices.addLegendLine(attrLabel + ': ' + side.vertexAttrs[attr].title);
         }
       }
     }
@@ -484,11 +506,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
 
     var colorAttr = (side.vertexAttrs.color) ? side.vertexAttrs.color.id : undefined;
-    var colorMap = this.setupColorMap(data.vertices, side.vertexAttrs.color, s, 'Vertex Color');
+    var colorMap = vertices.setupColorMap(data.vertices, side.vertexAttrs.color, 'Vertex Color');
 
     var labelColorAttr = (side.vertexAttrs.labelColor) ? side.vertexAttrs.labelColor.id : undefined;
-    var labelColorMap = this.setupColorMap(
-      data.vertices, side.vertexAttrs.labelColor, s, 'Label Color');
+    var labelColorMap = vertices.setupColorMap(
+      data.vertices, side.vertexAttrs.labelColor, 'Label Color');
 
     var opacityAttr = (side.vertexAttrs.opacity) ? side.vertexAttrs.opacity.id : undefined;
     var opacityMax = 1;
@@ -574,32 +596,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
 
     if (data.vertices.length >= 5) {
-      this.addLegendLine(data.vertices.length + ' vertices', s);
+      vertices.addLegendLine(data.vertices.length + ' vertices');
     }
     return vertices;
-  };
-
-  GraphView.prototype.addLegendLine = function(text, side, indent) {
-    indent = indent || 0;
-    var margin = 50;
-    var xMargin = margin + indent;
-    var x = side === 'left' ? xMargin : this.svg.width() - xMargin;
-    var anchor = side === 'left' ? 'start' : 'end';
-    var i = this.legendNextLine[side] || 0;
-    this.legendNextLine[side] = i + 1;
-    var legendElement =
-      svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin }).text(text);
-    legendElement.attr('text-anchor', anchor);
-    this.legend.append(legendElement);
-    return legendElement;
-  };
-
-  GraphView.prototype.addColorLegend = function(colorMap, side, title) {
-    this.addLegendLine(title, side);
-    for (var attr in colorMap) {
-      var l = this.addLegendLine(attr || 'undefined', side, 10);
-      l.attr('style', 'fill: ' + colorMap[attr] || UNCOLORED);
-    }
   };
 
   function translateTouchToMouseEvent(ev) {
@@ -1116,7 +1115,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   GraphView.prototype.addBucketedVertices = function(data, offsetter, viewData, vertexGroup) {
-    var vertices = new Vertices();
+    var vertices = new Vertices(this);
     vertices.side = viewData;
     vertices.mode = 'bucketed';
     vertices.offsetter = offsetter;
@@ -1230,11 +1229,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         }
         return undefined;
       };
-      var sideString = (srcs.offsetter.xOff < this.svg.width() / 2) ? 'left' : 'right';
       widthKey = attrKey(side.edgeAttrs.width);
       colorKey = attrKey(side.edgeAttrs.edgeColor);
-      colorMap = this.setupColorMap(
-        edges, side.edgeAttrs.edgeColor, sideString, 'Edge Color', colorKey);
+      colorMap = srcs.setupColorMap(
+        edges, side.edgeAttrs.edgeColor, 'Edge Color', colorKey);
       labelKey = attrKey(side.edgeAttrs.edgeLabel);
     }
 
