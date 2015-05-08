@@ -34,7 +34,8 @@ object DeriveJS {
 
   def deriveFromAttributes[T: TypeTag](
     exprString: String,
-    namedAttributes: Seq[(String, Attribute[_])])(implicit manager: MetaGraphManager): Output[T] = {
+    namedAttributes: Seq[(String, Attribute[_])],
+    vertexSet: VertexSet)(implicit manager: MetaGraphManager): Output[T] = {
 
     val js = JavaScript(exprString)
 
@@ -64,7 +65,7 @@ object DeriveJS {
       } else ???
 
     import Scripting._
-    op(op.attrs, jSValueAttributes).result
+    op(op.vs, vertexSet)(op.attrs, jSValueAttributes).result
   }
 }
 import DeriveJS._
