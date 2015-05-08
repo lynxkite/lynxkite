@@ -217,7 +217,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Fingerprinting based on attributes", Map(
       "leftName" -> "email",
       "rightName" -> "name",
-      "weights" -> "no weights",
+      "weights" -> "!no weight",
       "mrew" -> "0.0",
       "mo" -> "1",
       "ms" -> "0.5"))
