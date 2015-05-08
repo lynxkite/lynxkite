@@ -1125,14 +1125,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
+      val vertexSet = project.vertexSet
       val namedAttributes = project.vertexAttributes
         .filter { case (name, attr) => containsIdentifierJS(expr, name) }
         .toIndexedSeq
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet)
       }
       project.vertexAttributes(params("output")) = result.attr
     }
@@ -1156,6 +1157,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
+      val idSet = project.edgeBundle.idSet
       val namedEdgeAttributes = project.edgeAttributes
         .filter { case (name, attr) => containsIdentifierJS(expr, name) }
         .toIndexedSeq
@@ -1179,9 +1181,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet)
       }
       project.edgeAttributes(params("output")) = result.attr
     }
