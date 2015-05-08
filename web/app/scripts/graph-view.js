@@ -304,11 +304,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   function copyLayoutAndFreezeOld(from, to) {
     var fromById = {};
-    for (var i = 0; i < from.length; ++i) {
-      fromById[from[i].id] = from[i];
+    for (var i = 0; i < from.vs.length; ++i) {
+      fromById[from.vs[i].id] = from.vs[i];
     }
-    for (i = 0; i < to.length; ++i) {
-      var v = to[i];
+    for (i = 0; i < to.vs.length; ++i) {
+      var v = to.vs[i];
       var fv = fromById[v.id];
       if (fv) {
         v.x = fv.x;
