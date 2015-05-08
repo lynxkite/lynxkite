@@ -553,13 +553,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
-        UIValue("", "no weight") +: edgeAttributes[Double]))
+        UIValue("!no weight", "no weight") +: edgeAttributes[Double]))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val edgeBundle = project.edgeBundle
       val weightsName = params("weights")
       val weights =
-        if (weightsName == "") const(edgeBundle)
+        if (weightsName == "!no weight") const(edgeBundle)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
         val op = graph_operations.FindModularClusteringByTweaks()
@@ -945,14 +945,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     it may be useful to identify information sources in the reversed graph."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
-      Choice("weights", "Weight attribute", options = edgeAttributes[Double]),
+      Choice("weights", "Weight attribute",
+        options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
       NonNegInt("iterations", "Number of iterations", defaultValue = "5"),
       Ratio("damping", "Damping factor", defaultValue = "0.85"))
-    def enabled = FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes.")
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
-      val weights = project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
+      val weights =
+        if (params("weights") == "!no weight") const(project.edgeBundle)
+        else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
       project.vertexAttributes(params("name")) =
         op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank
     }
@@ -2010,7 +2013,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("leftName", "First ID attribute", options = vertexAttributes[String]),
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
       Choice("weights", "Edge weights",
-        options = UIValue("no weights", "no weights") +: edgeAttributes[Double]),
+        options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
       NonNegDouble("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
       NonNegInt("mo", "Minimum overlap", defaultValue = "1"),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
@@ -2024,11 +2027,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(mo >= 1, "Minimum overlap cannot be less than 1.")
       val leftName = project.vertexAttributes(params("leftName")).runtimeSafeCast[String]
       val rightName = project.vertexAttributes(params("rightName")).runtimeSafeCast[String]
-      val weights = if (params("weights") == "no weights") {
-        const(project.edgeBundle)
-      } else {
-        project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-      }
+      val weights =
+        if (params("weights") == "!no weight") const(project.edgeBundle)
+        else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
 
       // TODO: Calculate relative edge weight, filter the edge bundle and pull over the weights.
       assert(mrew == 0, "Minimum relative edge weight is not implemented yet.")
