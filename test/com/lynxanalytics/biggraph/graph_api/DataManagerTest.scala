@@ -6,7 +6,7 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
   test("We can obtain a simple new graph") {
@@ -107,8 +107,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     implicit val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
     import Scripting._
-
-    val testCSVFile = Filename(myTempDir.toString) / "almakorte.csv"
+    val testCSVFile = HadoopFile(myTempDirRoot) / "almakorte.csv"
     testCSVFile.createFromStrings("alma,korte,barack\n3,4,5\n")
     val operation = graph_operations.ImportEdgeList(
       graph_operations.CSV(testCSVFile, ",", "alma,korte,barack"),
@@ -120,7 +119,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     // Fake barack being on disk.
     val entityPath = dataManager.repositoryPath / "entities" / barack.gUID.toString
     val instancePath = dataManager.repositoryPath / "operations" / barack.source.gUID.toString
-    def fakeSuccess(path: Filename): Unit = {
+    def fakeSuccess(path: HadoopFile): Unit = {
       val successPath = path / "_SUCCESS"
       path.mkdirs
       successPath.createFromStrings("")
@@ -140,7 +139,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager = cleanDataManager
     import Scripting._
 
-    val testfile = Filename(myTempDir.toString) / "test.csv"
+    val testfile = HadoopFile(myTempDirRoot) / "test.csv"
     testfile.delete()
     val imported = graph_operations.ImportEdgeList(
       graph_operations.CSV(testfile, ",", "src,dst"), "src", "dst")().result

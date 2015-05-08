@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -18,7 +18,7 @@ import org.apache.spark.SparkContext
 // Functions for looking at CSV files. The frontend can use these when
 // constructing the import operation.
 object ImportUtil {
-  def header(file: Filename): String = {
+  def header(file: HadoopFile): String = {
     assert(file.exists, s"$file does not exist.")
     // Read from first file if there is a glob.
     file.list.head.reader.readLine
@@ -75,12 +75,12 @@ trait RowInput extends ToJson {
 
 object CSV extends FromJson[CSV] {
   def fromJson(j: JsValue) = CSV(
-    Filename((j \ "file").as[String]),
+    HadoopFile((j \ "file").as[String], true),
     (j \ "delimiter").as[String],
     (j \ "header").as[String],
     JavaScript((j \ "filter").as[String]))
 }
-case class CSV(file: Filename,
+case class CSV(file: HadoopFile,
                delimiter: String,
                header: String,
                filter: JavaScript = JavaScript("")) extends RowInput {
@@ -91,7 +91,7 @@ case class CSV(file: Filename,
     s"CSV column with empty name is not allowed. Column names were: $fields")
 
   override def toJson = Json.obj(
-    "file" -> file.fullString,
+    "file" -> file.symbolicName,
     "delimiter" -> delimiter,
     "header" -> header,
     "filter" -> filter.expression)

@@ -7,8 +7,8 @@ import scala.ref.SoftReference
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object FileBasedObjectCache {
-  private val cache = HashMap[Filename, SoftReference[AnyRef]]()
-  def get[T](filename: Filename): T = synchronized {
+  private val cache = HashMap[HadoopFile, SoftReference[AnyRef]]()
+  def get[T](filename: HadoopFile): T = synchronized {
     cache.get(filename).flatMap(_.get).getOrElse {
       log.info(s"Loading object from $filename...")
       val value = filename.loadObjectKryo.asInstanceOf[AnyRef]

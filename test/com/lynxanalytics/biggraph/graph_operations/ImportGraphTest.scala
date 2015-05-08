@@ -5,17 +5,21 @@ import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.TestUtils
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.RootRepository
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ImportGraphTest extends FunSuite with TestGraphOp {
+  val resDir = "/graph_operations/ImportGraphTest"
+  val res = getClass.getResource(resDir).toString
+  RootRepository.registerRoot("IMPORTGRAPHTEST$", res)
   test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
-    val dir = "/graph_operations/ImportGraphTest/testgraph/"
-    val vertexCSVs = Filename(getClass.getResource(dir + "vertex-data/part-00000").getFile)
-    val edgeCSVs = Filename(getClass.getResource(dir + "edge-data/part-00000").getFile)
-    val vertexHeader = Filename(getClass.getResource(dir + "vertex-header").getFile)
-    val edgeHeader = Filename(getClass.getResource(dir + "edge-header").getFile)
+    val dir = "IMPORTGRAPHTEST$/testgraph/"
+    val vertexCSVs = HadoopFile(dir + "vertex-data/part-00000")
+    val edgeCSVs = HadoopFile(dir + "edge-data/part-00000")
+    val vertexHeader = HadoopFile(dir + "vertex-header")
+    val edgeHeader = HadoopFile(dir + "edge-header")
     val vertexIdFieldName = "vertexId"
     val sourceEdgeFieldName = "srcVertexId"
     val destEdgeFieldName = "dstVertexId"
@@ -48,9 +52,10 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
 
   test("import graph from csv as two edge files including header") {
     // different separator, no quotes around strings, newline at eof, files with wildcard
-    val dir = "/graph_operations/ImportGraphTest/two-edge-csv/"
-    val edgeCSVs = Filename(getClass.getResource(dir).toString + "*")
-    val edgeHeader = Filename(getClass.getResource(dir + "edges1.csv").getFile)
+    val dir = "IMPORTGRAPHTEST$/two-edge-csv/"
+
+    val edgeCSVs = HadoopFile(dir + "*")
+    val edgeHeader = HadoopFile(dir + "edges1.csv")
     val edgeSourceFieldName = "srcVertexId"
     val edgeDestFieldName = "dstVertexId"
     val delimiter = "|"
@@ -78,8 +83,8 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
   }
 
   test("import graph from csv with non-numerical IDs") {
-    val dir = "/graph_operations/ImportGraphTest/non-num-ids/"
-    val csv = Filename(getClass.getResource(dir + "edges.csv").getFile)
+    val dir = "IMPORTGRAPHTEST$/non-num-ids/"
+    val csv = HadoopFile(dir + "edges.csv")
     val edgeSourceFieldName = "srcVertexId"
     val edgeDestFieldName = "dstVertexId"
     val delimiter = "|"
@@ -118,8 +123,8 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
   }
 
   test("JavaScript filtering") {
-    val dir = "/graph_operations/ImportGraphTest/non-num-ids/"
-    val path = Filename(getClass.getResource(dir + "edges.csv").getFile)
+    val dir = "IMPORTGRAPHTEST$/non-num-ids/"
+    val path = HadoopFile(dir + "edges.csv")
     val csv = CSV(
       path,
       "|",
@@ -140,11 +145,12 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
   }
 
   test("import from non-existent file throws AssertionError") {
+
     assertAssertion {
-      ImportEdgeList(CSV(Filename("non-existent"), ",", "src,dst"), "src", "dst").result.edges.rdd
+      ImportEdgeList(CSV(HadoopFile("DATA$/non-existent"), ",", "src,dst"), "src", "dst").result.edges.rdd
     }
     assertAssertion {
-      ImportEdgeList(CSV(Filename("non-existent/*"), ",", "src,dst"), "src", "dst").result.edges.rdd
+      ImportEdgeList(CSV(HadoopFile("DATA$/non-existent/*"), ",", "src,dst"), "src", "dst").result.edges.rdd
     }
   }
 }

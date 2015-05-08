@@ -8,7 +8,7 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -17,7 +17,7 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import play.api.libs.json
 import scala.reflect.runtime.universe.typeOf
 
-class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
+object OperationParams {
   case class Param(
       id: String,
       title: String,
@@ -78,8 +78,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
   }
+
+  // A random number to be used as default value for random seed parameters.
   case class RandomSeed(id: String, title: String) extends OperationParameterMeta {
-    val defaultValue = randomSeed()
+    val defaultValue = util.Random.nextInt.toString
     val kind = "default"
     val options = List()
     val multipleChoice = false
@@ -87,7 +89,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(value matches """[+-]?\d+""", s"$title ($value) has to be an integer")
     }
   }
-
+}
+class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   import Operation.Category
   import Operation.Context
   // Categories.
@@ -122,6 +125,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "Workflows on segmentation",
       "magenta",
       visible = c.project.isSegmentation)) with SegOp
+
+  import OperationParams._
 
   register("Discard vertices", new VertexOperation(_, _) {
     val description = "Throws away all vertices. Note that this operation discards the edges too."
@@ -222,7 +227,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("filter", "(optional) Filtering expression"))
     def source(params: Map[String, String]) = {
-      val files = Filename(params("files"))
+      val files = HadoopFile(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
       graph_operations.CSV(
@@ -1124,7 +1129,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val namedAttributes = project.vertexAttributes
-        .filter { case (name, attr) => expr.contains(name) }
+        .filter { case (name, attr) => containsIdentifierJS(expr, name) }
         .toIndexedSeq
       val result = params("type") match {
         case "string" =>
@@ -1155,17 +1160,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
       val namedEdgeAttributes = project.edgeAttributes
-        .filter { case (name, attr) => expr.contains(name) }
+        .filter { case (name, attr) => containsIdentifierJS(expr, name) }
         .toIndexedSeq
       val namedSrcVertexAttributes = project.vertexAttributes
-        .filter { case (name, attr) => expr.contains("src$" + name) }
+        .filter { case (name, attr) => containsIdentifierJS(expr, "src$" + name) }
         .toIndexedSeq
         .map {
           case (name, attr) =>
             "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
         }
       val namedDstVertexAttributes = project.vertexAttributes
-        .filter { case (name, attr) => expr.contains("dst$" + name) }
+        .filter { case (name, attr) => containsIdentifierJS(expr, "dst$" + name) }
         .toIndexedSeq
         .map {
           case (name, attr) =>
@@ -2389,7 +2394,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.vertexAttributes(label)
@@ -2420,7 +2425,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
         val attrs: Seq[(String, Attribute[_])] = labels.map {
           label => label -> project.vertexAttributes(label)
@@ -2430,12 +2435,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     })
 
-    def getExportFilename(param: String): Filename = {
+    def getExportFilename(param: String): HadoopFile = {
       assert(param.nonEmpty, "No export path specified.")
       if (param == "<auto>") {
         dataManager.repositoryPath / "exports" / graph_util.Timestamp.toString
       } else {
-        Filename(param)
+        HadoopFile(param)
       }
     }
 
@@ -2449,7 +2454,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.edgeAttributes(label)
@@ -2480,7 +2485,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Choice("delete", "Overwrite table if it exists", options = UIValue.list(List("no", "yes"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
-        assert(params("attrs").nonEmpty, "Nothing selected for export.")
+        assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
         val attrs: Map[String, Attribute[_]] = labels.map {
           label => label -> project.edgeAttributes(label)
@@ -2578,7 +2583,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             UIValue.list(List("sum", "average", "min", "max", "count", "first", "std_deviation"))
           } else {
-            UIValue.list(List("sum", "average", "min", "max", "most_common", "count", "vector", "std_deviation"))
+            UIValue.list(List("sum", "average", "min", "max", "most_common", "count_distinct", "count", "vector", "std_deviation"))
           }
         } else if (attr.is[String]) {
           if (weighted) { // At the moment all weighted aggregators are global.
@@ -2586,7 +2591,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             UIValue.list(List("count", "first"))
           } else {
-            UIValue.list(List("most_common", "majority_50", "majority_100", "count", "vector"))
+            UIValue.list(List("most_common", "count_distinct", "majority_50", "majority_100", "count", "vector"))
           }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
@@ -2594,7 +2599,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           } else if (needsGlobal) {
             UIValue.list(List("count", "first"))
           } else {
-            UIValue.list(List("most_common", "count", "vector"))
+            UIValue.list(List("most_common", "count_distinct", "count", "vector"))
           }
         }
         TagList(s"aggregate-$name", name, options = options)
@@ -2710,14 +2715,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op.result.created
   }
 
-  def downloadLink(fn: Filename, name: String) = {
-    val urlPath = java.net.URLEncoder.encode(fn.fullString, "utf-8")
+  def downloadLink(fn: HadoopFile, name: String) = {
+    val urlPath = java.net.URLEncoder.encode(fn.symbolicName, "utf-8")
     val urlName = java.net.URLEncoder.encode(name, "utf-8")
     val url = s"/download?path=$urlPath&name=$urlName"
     val quoted = '"' + url + '"'
     newScalar(s"<a href=$quoted>download</a>")
   }
 
-  // A random number to be used as default value for random seed parameters.
-  def randomSeed() = util.Random.nextInt.toString
+  // Whether a JavaScript expression contains a given identifier.
+  // It's a best-effort implementation with no guarantees of correctness.
+  def containsIdentifierJS(expr: String, identifier: String): Boolean = {
+    val re = ".*\\b" + java.util.regex.Pattern.quote(identifier) + "\\b.*"
+    expr.matches(re)
+  }
 }

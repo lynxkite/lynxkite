@@ -54,3 +54,7 @@ project-history .affected-segmentation {
   opacity: 0.6;
   margin-bottom: 10px;
 }
+
+workflow-saver .form-group {
+  padding: 0px 10px;
+}
