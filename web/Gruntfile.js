@@ -47,8 +47,8 @@ module.exports = function (grunt) {
         tasks: ['newer:copy:styles', 'autoprefixer']
       },
       help: {
-        files: ['<%= yeoman.app %>/help/{,*/}*.md'],
-        tasks: ['marked']
+        files: ['<%= yeoman.app %>/help/{,*/}*.adoc'],
+        tasks: ['asciidoctor']
       },
       gruntfile: {
         files: ['Gruntfile.js']
@@ -178,21 +178,16 @@ module.exports = function (grunt) {
       }
     },
 
-    // Compile Markdown.
-    marked: {
+    // Compile AsciiDoc.
+    asciidoctor: {
       options: {
-        smartypants: true, // Smart typography.
-        sanitize: false, // Allow HTML.
+        showNumberedHeadings: false,
       },
       dist: {
-        files: [{
-          expand: true,
-          cwd: '<%= yeoman.app %>',
-          src: '{,*/}/*.md',
-          dest: '.tmp/',
-          ext: '.html'
-        }]
-      }
+        files: {
+          '.tmp/help.html': ['<%= yeoman.app %>/help/*.adoc'],
+        },
+      },
     },
 
     // Automatically inject Bower components into the app
@@ -421,7 +416,7 @@ module.exports = function (grunt) {
       'bowerInstall',
       'concurrent:server',
       'autoprefixer',
-      'marked',
+      'asciidoctor',
       'connect:livereload',
       'watch'
     ]);
@@ -437,7 +432,7 @@ module.exports = function (grunt) {
     'bowerInstall',
     'copy:styles',
     'autoprefixer',
-    'marked',
+    'asciidoctor',
     'connect:test',
     'protractor'
   ]);
@@ -448,7 +443,7 @@ module.exports = function (grunt) {
     'useminPrepare',
     'concurrent:dist',
     'autoprefixer',
-    'marked',
+    'asciidoctor',
     'concat',
     'ngmin',
     'copy:dist',
@@ -465,7 +460,7 @@ module.exports = function (grunt) {
     'bowerInstall',
     'copy:styles',
     'autoprefixer',
-    'marked'
+    'asciidoctor'
   ]);
 
   grunt.registerTask('default', [
