@@ -22,6 +22,7 @@ var FORCE_LAYOUT = (function() {
   lib.Engine.prototype.calculate = function(vertices) {
     var a, b, dx, dy, i, j;
     var maxDist = 0;
+    var edgeCount = (vertices.edges || []).length;
     for (i = 0; i < vertices.vs.length; ++i) {
       v = vertices.vs[i];
       if (this.opts.style === 'decentralize') {
@@ -29,7 +30,9 @@ var FORCE_LAYOUT = (function() {
         v.forceMass = vertices.vs.length / (v.degree + 1);
       } else if (this.opts.style === 'neutral') {
         // All vertices have the same weight, so graph structure dominates the layout.
-        v.forceMass = 2.0 * vertices.edges.length / vertices.vs.length;
+        // (Make the total mass match the "centralize" mode, so that the layout is
+        // of a similar size.)
+        v.forceMass = (2.0 * edgeCount + vertices.vs.length) / vertices.length;
       } else /* this.opts.style === 'centralize' */ {
         // Higher-degree vertices are heavier, so they fall into the center.
         v.forceMass = v.degree + 1;

@@ -48,7 +48,7 @@ case class DBTable(
       finally connection.close()
     }
     // Have at most 100,000 rows per partition.
-    val numPartitions = rc.defaultPartitioner.numPartitions max (stats.count / 100000).toInt
+    val numPartitions = rc.partitionerForNBytes(stats.count * fields.size * 30).numPartitions
 
     new org.apache.spark.rdd.JdbcRDD(
       rc.sparkContext,

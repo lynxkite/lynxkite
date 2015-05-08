@@ -23,6 +23,8 @@ object AttributeWithLocalAggregator {
     choice match {
       case "most_common" =>
         AttributeWithLocalAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
+      case "count_distinct" =>
+        AttributeWithLocalAggregator(attr, graph_operations.Aggregator.CountDistinct[T]())
       case "majority_50" =>
         AttributeWithLocalAggregator(
           attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
