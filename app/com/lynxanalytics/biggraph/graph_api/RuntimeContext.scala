@@ -23,8 +23,6 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
   // A suitable partitioner for N bytes.
   def partitionerForNBytes(n: Long): spark.Partitioner =
     new spark.HashPartitioner((n / bytesPerPartition).toInt max defaultPartitions)
-  lazy val defaultPartitioner: spark.Partitioner =
-    new spark.HashPartitioner(defaultPartitions)
   lazy val onePartitionPartitioner: spark.Partitioner =
     new spark.HashPartitioner(1)
 

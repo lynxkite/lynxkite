@@ -42,9 +42,10 @@ case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = rc.defaultPartitioner
+    val belongsTo = inputs.belongsTo.rdd
+    val partitioner = belongsTo.partitioner.get
 
-    val sets = inputs.belongsTo.rdd.values
+    val sets = belongsTo.values
       .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
 
@@ -78,7 +79,7 @@ case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
       case (prefix, sets) => edgesFor(prefix, sets)
     }
 
-    val numberedEdgesWithOverlaps = edgesWithOverlaps.randomNumbered(rc.defaultPartitioner)
+    val numberedEdgesWithOverlaps = edgesWithOverlaps.randomNumbered(partitioner)
 
     output(o.overlaps, numberedEdgesWithOverlaps.mapValues(_._1))
     output(o.overlapSize, numberedEdgesWithOverlaps.mapValues(_._2))
