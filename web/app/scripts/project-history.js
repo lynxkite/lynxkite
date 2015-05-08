@@ -200,6 +200,24 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         }
       };
 
+      scope.workflowMode = { enabled: false };
+      scope.enterWorkflowSaving = function() {
+        var history = scope.history;
+        if (history && history.$resolved && !history.$error) {
+          var requests = history.steps.map(function(step) {
+            var request = angular.copy(step.request);
+            var path = util.projectPath(request.project);
+            path[0] = '!project';
+            request.project = path.join('/');
+            return request;
+          });
+          scope.code = JSON.stringify(requests, null, 2);
+        } else {
+          scope.code = '';
+        }
+        scope.workflowMode.enabled = true;
+      };
+
       function blankStep(seg) {
         var project = scope.side.state.projectName;
         if (seg !== undefined) {

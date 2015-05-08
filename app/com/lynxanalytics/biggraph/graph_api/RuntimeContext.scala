@@ -5,15 +5,15 @@ import org.apache.spark
 import scala.util.Random
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 
-case class Broadcast[T](filename: Filename) {
+case class Broadcast[T](filename: HadoopFile) {
   def get: T = FileBasedObjectCache.get[T](filename)
 }
 
 case class RuntimeContext(sparkContext: spark.SparkContext,
-                          broadcastDirectory: Filename,
+                          broadcastDirectory: HadoopFile,
                           // The number of cores available for computations.
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.

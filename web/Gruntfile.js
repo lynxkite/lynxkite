@@ -82,6 +82,7 @@ module.exports = function (grunt) {
             }
             if (req.url.indexOf('/ajax/createProject') === 0 ||
                 req.url.indexOf('/ajax/jsError') === 0 ||
+                req.url.indexOf('/ajax/saveWorkflow') === 0 ||
                 req.url.indexOf('/logout') === 0) {
               res.end();
               return;
