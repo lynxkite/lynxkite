@@ -14,12 +14,15 @@ Install `sbt` (Scala Build Tool):
     sudo apt-get update
     sudo apt-get install sbt
 
+Per repository setup
+====================
+
 Setup `git`:
 
     tools/git/setup.sh
 
-Per repository setup
-====================
+Setup GUI tools:
+
     cd web                          # Basic commands:
     npm install && bower install    # Install dependencies. Run this once.
     npm install -g grunt-cli bower  # Install grunt command line interface. Run this once.
