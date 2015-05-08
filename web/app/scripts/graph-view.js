@@ -386,7 +386,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
     }
     var mapping = {};
+    var unassigned = [];
     var i, label;
+    this.addLegendLine('Icon: ' + attr);
     // Assign literals first.
     for (i = 0; i < labels.length; ++i) {
       label = labels[i];
@@ -394,46 +396,38 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         if (label === undefined) {
           mapping[label] = 'circle';
           dropNeutral('circle');
+          this.addLegendLine('circle: undefined', 10);
         } else if (hasIcon(label)) {
           mapping[label] = label;
           dropNeutral(label);
         } else {
-          mapping[label] = 'neutral';
+          unassigned.push(label);
         }
       }
     }
     // Assign neutrals.
-    labels = Object.keys(mapping);
-    labels.sort();
-    for (i = 0; i < labels.length; ++i) {
-      label = labels[i];
-      if (mapping[label] === 'neutral') {
-        if (neutrals.length > 0) {
-          mapping[label] = neutrals.shift();
-        } else {
-          mapping[label] = 'circle';
-        }
+    if (neutrals.length === 0) { neutrals = ['circle']; }
+    if (unassigned.length <= neutrals.length) {
+      for (i = 0; i < unassigned.length; ++i) {
+        mapping[unassigned[i]] = neutrals[i];
+        this.addLegendLine(neutrals[i] + ': ' + unassigned[i], 10);
       }
+    } else {
+      var wildcard = neutrals.pop();
+      for (i = 0; i < neutrals.length; ++i) {
+        mapping[unassigned[i]] = neutrals[i];
+        this.addLegendLine(neutrals[i] + ': ' + unassigned[i], 10);
+      }
+      this.addLegendLine(wildcard + ': other', 10);
     }
     this.iconMapping = mapping;
-    // Generate legend.
-    this.addLegendLine('Icon: ' + attr);
-    for (i = 0; i < labels.length; ++i) {
-      label = labels[i];
-      var icon = mapping[label];
-      if (label === undefined || label === icon) {
-        continue; // Don't mention obvious mappings.
-      }
-      this.addLegendLine(icon + ': ' + label, 10);
-    }
   };
 
   Vertices.prototype.getIcon = function(label) {
-    if (!label) {
+    if (!this.iconMapping) {
       return getIcon('circle');
     }
-    var i = getIcon(this.iconMapping[label]);
-    return i;
+    return getIcon(this.iconMapping[label] || 'circle');
   };
 
   Vertices.prototype.addLegendLine = function(text, indent) {
