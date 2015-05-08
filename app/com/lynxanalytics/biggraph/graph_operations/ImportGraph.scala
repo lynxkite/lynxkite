@@ -102,6 +102,7 @@ object CSV extends FromJson[CSV] {
     assert(
       (fields.toSet.size == fields.size),
       s"Duplicate CSV column name is not allowed. Column names were: $fields")
+    assert(file.list.nonEmpty, s"$file does not exist.")
     new CSV(file, delimiter, header, fields, filter)
   }
 }
@@ -118,7 +119,6 @@ case class CSV private (file: HadoopFile,
     "filter" -> filter.expression)
 
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
-    assert(file.list.nonEmpty, s"$file does not exist.")
     val globLength = file.globLength
     // Estimate how much bigger the in-memory representation is, compared to the CSV file size.
     val explosion = System.getProperty("biggraph.csv.explosion", "20").toLong
