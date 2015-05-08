@@ -51,7 +51,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val op = DeriveJSString(
       JavaScript(expr),
       Seq())
-    val derived = op(op.vs, g.vertices.entity)(
+    val derived = op(op.vs, g.edges.idSet)(
       op.attrs,
       VertexAttributeToJSValue.seq()).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> "hallo", 1 -> "hallo", 2 -> "hallo", 3 -> "hallo"))
