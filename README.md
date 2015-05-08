@@ -14,7 +14,7 @@ Install `sbt` (Scala Build Tool):
     sudo apt-get update
     sudo apt-get install sbt
 
-Setup git:
+Setup `git`:
 
     tools/git/setup.sh
 
