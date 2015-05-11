@@ -403,7 +403,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           mapping[label] = 'circle';
           dropNeutral('circle');
           this.addLegendLine('circle: undefined', 10);
-        } else if (hasIcon(label)) {
+        } else if (hasIcon(label) && label !== 'circle') {
           mapping[label] = label;
           dropNeutral(label);
         } else {
@@ -501,7 +501,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         // UnCammelify.
         attrLabel = attrLabel.replace(/([A-Z])/g, ' $1');
         // We handle icon and color attributes separately.
-        if (attrLabel.indexOf('Color') === -1 && attrLabel !== 'Icon') {
+        if (attrLabel.indexOf('Color') === -1 && attrLabel !== ' Icon') {
           vertices.addLegendLine(attrLabel + ': ' + side.vertexAttrs[attr].title);
         }
       }
@@ -541,8 +541,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var iconStrings = [];
       for (i = 0; i < data.vertices.length; ++i) {
         vertex = data.vertices[i];
-        icon = vertex.attrs[side.vertexAttrs.icon.id].string;
-        iconStrings.push(icon);
+        icon = vertex.attrs[side.vertexAttrs.icon.id];
+        if (icon.defined) {
+          iconStrings.push(icon.string);
+        } else {
+          iconStrings.push(undefined);
+        }
       }
       vertices.initIcons(side.vertexAttrs.icon.title, iconStrings);
     }
