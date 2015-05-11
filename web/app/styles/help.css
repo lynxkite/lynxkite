@@ -1,20 +1,18 @@
 .read-more {
-  height: initial;
-  border: 0;
+  display: block;
   text-align: right;
   cursor: pointer;
-  margin: 0;
-}
-.read-more:hover {
-  text-decoration: underline;
 }
 
-.help hr {
-  border: 0;
-  margin: 0;
+.help dl {
+  margin-left: 30px;
 }
-.help li {
-  margin-top: 10px;
+.help dt {
+  display: list-item;
+  list-style-type: disc;
+}
+.help dt > a { /* Anchor. */
+  display: none;
 }
 
 #help-button {

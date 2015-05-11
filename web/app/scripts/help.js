@@ -8,40 +8,26 @@ angular.module('biggraph').directive('helpContent', function() {
     templateUrl: 'help-content.html',
     link: function(scope, element) {
       scope.onload = function() {
-        var lastId;
-        // Expand anchor IDs. <a name="X"> inside a section on Y (<h2 id="Y">) will get id="Y-X".
-        // This is used for easy definition and reference of operation parameters.
-        element.find('*').each(function(i, e) {
-          e = angular.element(e);
-          if (e.is(headersUntil(6))) {
-            lastId = e.attr('id') || lastId;
-          }
-          if (e.is('span[name]') && !e.attr('id')) {
-            e.attr('id', lastId + '-' + e.attr('name').toLowerCase());
-          }
+        // Move heading IDs to sectionbody divs.
+        element.find('div.sect1').each(function(i, div) {
+          div = angular.element(div);
+          var heading = div.children('[id]').first();
+          var body = div.children('.sectionbody');
+          body.attr('id', heading.attr('id'));
+          heading.attr('id', '');
+        });
+        // Move anchor IDs inside <dt> to the next <dd>.
+        element.find('dt > a[id]').each(function(i, a) {
+          a = angular.element(a);
+          var dd = a.parent().next('dd');
+          var section = a.closest('div.sectionbody');
+          var id = section.attr('id') + '-' + a.attr('id');
+          dd.attr('id', id);
         });
       };
     },
   };
 });
-
-// Returns the list of header tags (h1, h2, ...) until and including hn.
-function headersUntil(n) {
-  var list = [];
-  for (var i = 1; i <= n; ++i) {
-    list.push('h' + i);
-  }
-  return list.join(',');
-}
-
-// Returns the header level of a jQuery element.
-function headerLevel(e) {
-  if (e.is(headersUntil(6))) {
-    return parseInt(e[0].tagName[1]);
-  } else {
-    return undefined;
-  }
-}
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
 angular.module('biggraph').directive('helpId', function() {
@@ -54,19 +40,8 @@ angular.module('biggraph').directive('helpId', function() {
       scope.$watch('helpId', function() {
         var id = scope.helpId.toLowerCase();
         var content = angular.element('help-content').find('#' + id).first();
-        if (content.is(headersUntil(6))) {
-          // A header. Take all content until the next header on the same level or higher.
-          content = content.nextUntil(headersUntil(headerLevel(content)));
-        }
-        if (content.is('[name]')) {
-          // An anchor. Take the <li> if this is inside a <li>, otherwise take the parent.
-          var li = content.closest('li');
-          if (li.length === 1) {
-            content = li.contents();
-          } else {
-            content = content.parent().contents();
-          }
-        }
+        console.log('id', id);
+        console.log('content', content);
         content = content.clone();
         function expander(e, what) {
           return function() {
@@ -74,16 +49,11 @@ angular.module('biggraph').directive('helpId', function() {
             what.show();
           };
         }
-        for (var i = 0; i < content.length; ++i) {
-          if (content[i].tagName === 'HR') {
-            var hr = content.slice(i, i + 1);
-            hr.text('read more');
-            hr.addClass('read-more');
-            var rest = content.slice(i + 1);
-            rest.hide();
-            hr.click(expander(hr, rest));
-          }
-        }
+        var details = content.children('.exampleblock');
+        var readMore = angular.element('<a class="read-more">read more</a>');
+        readMore.click(expander(readMore, details));
+        details.before(readMore);
+        details.hide();
         element.empty();
         element.append(content);
       });
@@ -102,7 +72,7 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
       var button = element.find('#help-button');
       var popup = element.find('#help-popup');
       popup.hide();
-      var showing = false;
+      var sticky = false;
 
       scope.$on('$destroy', function() {
         popup.remove();
@@ -110,6 +80,7 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
       scope.$on('help popup opened', function(e, source) {
         if (scope !== source) { // Another popup opened. Hide ourselves.
           popup.hide();
+          sticky = false;
         }
       });
 
@@ -128,11 +99,11 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
         show();
       };
       scope.off = function() {
-        if (!showing) { popup.hide(); }
+        if (!sticky) { popup.hide(); }
       };
       scope.toggle = function() {
-        showing = !showing;
-        if (showing) { show(); }
+        sticky = !sticky;
+        if (sticky) { show(); }
       };
     }
   };

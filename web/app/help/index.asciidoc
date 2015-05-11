@@ -1,3 +1,7 @@
 // Main structure file that builds the full documentation from its parts.
 
+// Match ID generation used for operations.
+:idprefix:
+:idseparator: -
+
 include::operations/index.asciidoc[]
