@@ -74,23 +74,31 @@ side-operation-toolbox .operation-toolbox {
 .operation-toolbox .category.orange { color: orange; }
 .operation-toolbox .category.yellow { color: gold; }
 .operation-toolbox .category.green { color: yellowgreen; }
+.operation-toolbox .category.red { color: red; }
+.operation-toolbox .category.pink { color: pink; }
 .operation-toolbox .category.blue { color: aquamarine; }
 .operation-toolbox .category.magenta { color: magenta; }
 .operation-toolbox .category.active { color: black; }
 .operation-toolbox .category.active.yellow { background: gold; }
 .operation-toolbox .category.active.orange { background: orange; }
 .operation-toolbox .category.active.green { background: yellowgreen; }
+.operation-toolbox .category.active.red { background: red; }
+.operation-toolbox .category.active.pink { background: pink; }
 .operation-toolbox .category.active.blue { background: aquamarine; }
 .operation-toolbox .category.active.magenta { background: magenta; }
 .operation-toolbox .box.yellow h1 { background: gold; }
 .operation-toolbox .box.orange h1 { background: orange; }
 .operation-toolbox .box.green h1 { background: yellowgreen; }
+.operation-toolbox .box.red h1 { background: red; }
+.operation-toolbox .box.pink h1 { background: pink; }
 .operation-toolbox .box.blue h1 { background: aquamarine; }
 .operation-toolbox .box.magenta h1 { background: magenta; }
 .operation-toolbox .box .clicky:hover { color: black !important; }
 .operation-toolbox .box.yellow .clicky:hover { background: gold; }
 .operation-toolbox .box.orange .clicky:hover { background: orange; }
 .operation-toolbox .box.green .clicky:hover { background: yellowgreen; }
+.operation-toolbox .box.red .clicky:hover { background: red; }
+.operation-toolbox .box.pink .clicky:hover { background: pink; }
 .operation-toolbox .box.blue .clicky:hover { background: aquamarine; }
 .operation-toolbox .box.magenta .clicky:hover { background: magenta; }
 .operation-toolbox .box.yellow .ok-button:focus,
@@ -99,6 +107,10 @@ side-operation-toolbox .operation-toolbox {
 .operation-toolbox .box.orange .ok-button:hover { background: orange; }
 .operation-toolbox .box.green .ok-button:focus,
 .operation-toolbox .box.green .ok-button:hover { background: yellowgreen; }
+.operation-toolbox .box.red .ok-button:focus,
+.operation-toolbox .box.red .ok-button:hover { background: red; }
+.operation-toolbox .box.pink .ok-button:focus,
+.operation-toolbox .box.pink .ok-button:hover { background: pink; }
 .operation-toolbox .box.blue .ok-button:focus,
 .operation-toolbox .box.blue .ok-button:hover { background: aquamarine; }
 .operation-toolbox .box.magenta .ok-button:focus,
@@ -106,16 +118,22 @@ side-operation-toolbox .operation-toolbox {
 .operation-toolbox .box.yellow .operation:hover { color: gold; }
 .operation-toolbox .box.orange .operation:hover { color: orange; }
 .operation-toolbox .box.green .operation:hover { color: yellowgreen; }
+.operation-toolbox .box.red .operation:hover { color: red; }
+.operation-toolbox .box.pink .operation:hover { color: pink; }
 .operation-toolbox .box.blue .operation:hover { color: aquamarine; }
 .operation-toolbox .box.magenta .operation:hover { color: magenta; }
 .operation-toolbox .box.yellow .clicky { color: gold; }
 .operation-toolbox .box.orange .clicky { color: orange; }
 .operation-toolbox .box.green .clicky { color: yellowgreen; }
+.operation-toolbox .box.red .clicky { color: red; }
+.operation-toolbox .box.pink .clicky { color: pink; }
 .operation-toolbox .box.blue .clicky { color: aquamarine; }
 .operation-toolbox .box.magenta .clicky { color: magenta; }
 .operation-toolbox .box.yellow .dropdown-toggle { color: gold; }
 .operation-toolbox .box.orange .dropdown-toggle { color: orange; }
 .operation-toolbox .box.green .dropdown-toggle { color: yellowgreen; }
+.operation-toolbox .box.red .dropdown-toggle { color: red; }
+.operation-toolbox .box.pink .dropdown-toggle { color: pink; }
 .operation-toolbox .box.blue .dropdown-toggle { color: aquamarine; }
 .operation-toolbox .box.magenta .dropdown-toggle { color: magenta; }
 

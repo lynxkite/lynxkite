@@ -11,6 +11,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object SQLExport {
   def quoteIdentifier(s: String) = '"' + s.replaceAll("\"", "\"\"") + '"'
@@ -98,6 +99,7 @@ class SQLExport private (
   val quotedTable = quoteIdentifier(table);
   val deletion = s"DROP TABLE IF EXISTS $quotedTable;\n"
   val creation = s"CREATE TABLE $quotedTable ($columns);\n"
+  log.info(s"Executing statements: $deletion $creation")
   val inserts = makeInserts(quotedTable, values)
 
   def insertInto(db: String, delete: Boolean) = {
@@ -108,7 +110,7 @@ class SQLExport private (
     inserts.foreach(execute(db, _))
   }
 
-  def saveAs(filename: Filename) = {
+  def saveAs(filename: HadoopFile) = {
     (filename / "header").createFromStrings(deletion + creation)
     (filename / "data").saveAsTextFile(inserts)
   }
