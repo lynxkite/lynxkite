@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Strings visualized as icons will be matched to neutral icons (circle, square,
+   triangle, hexagon, pentagon, star) if an icon with the given name does not exist.
  - _"PageRank"_ operation can now be used without weights.
  - Data files and directories can now only be accessed via a special prefix notation.
    For example, what used to be `hdfs://nameservice1:8020/user/kite/data/uploads/file` is
