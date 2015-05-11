@@ -240,7 +240,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   val jdbcHelpText = """
     The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
-    (For example <tt>mysql://127.0.0.1/?user=batman&password=alfred</tt>.)"""
+    (For example <tt>mysql://127.0.0.1/my_database?user=batman&password=alfred</tt>.)"""
   val sqlImportHelpText = jdbcHelpText + """
     An integer column must be specified as the key, and you have to select a key range."""
 
