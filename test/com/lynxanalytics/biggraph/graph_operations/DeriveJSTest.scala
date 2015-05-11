@@ -32,4 +32,29 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == Set(
       0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob", 3 -> "Mr Isolated Joe"))
   }
+
+  test("DeriveJS works with no input attributes (vertices)") {
+    val expr = "1.0"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq())
+    val derived = op(op.vs, g.vertices.entity)(
+      op.attrs,
+      Seq()).result.attr
+    assert(derived.rdd.collect.toSet == Set(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0))
+  }
+
+  test("DeriveJS works with no input attributes (edges)") {
+    val expr = "'hallo'"
+    val g = ExampleGraph()().result
+    val op = DeriveJSString(
+      JavaScript(expr),
+      Seq())
+    val derived = op(op.vs, g.edges.idSet)(
+      op.attrs,
+      Seq()).result.attr
+    assert(derived.rdd.collect.toSet == Set(0 -> "hallo", 1 -> "hallo", 2 -> "hallo", 3 -> "hallo"))
+  }
+
 }

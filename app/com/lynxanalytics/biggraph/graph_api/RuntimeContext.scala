@@ -5,15 +5,15 @@ import org.apache.spark
 import scala.util.Random
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 
-case class Broadcast[T](filename: Filename) {
+case class Broadcast[T](filename: HadoopFile) {
   def get: T = FileBasedObjectCache.get[T](filename)
 }
 
 case class RuntimeContext(sparkContext: spark.SparkContext,
-                          broadcastDirectory: Filename,
+                          broadcastDirectory: HadoopFile,
                           // The number of cores available for computations.
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.
@@ -23,8 +23,6 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
   // A suitable partitioner for N bytes.
   def partitionerForNBytes(n: Long): spark.Partitioner =
     new spark.HashPartitioner((n / bytesPerPartition).toInt max defaultPartitions)
-  lazy val defaultPartitioner: spark.Partitioner =
-    new spark.HashPartitioner(defaultPartitions)
   lazy val onePartitionPartitioner: spark.Partitioner =
     new spark.HashPartitioner(1)
 

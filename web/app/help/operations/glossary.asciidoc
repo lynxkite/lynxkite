@@ -2,7 +2,7 @@
 
 tag::database-import[]
 The database name is the JDBC connection string without the `jdbc:` prefix.
-(For example `mysql://127.0.0.1/?user=batman&password=alfred`.)
+(For example `mysql://127.0.0.1/my_database?user=batman&password=alfred`.)
 An integer column must be specified as the key, and you have to select a key range.
 end::database-import[]
 

@@ -1,4 +1,4 @@
-<div class="panel panel-default project history" ng-if="show">
+<div class="panel panel-default project history" ng-if="show && !workflowMode.enabled">
 
   <div class="panel-heading project-name">
     <span class="de-emph" ng-repeat="parent in side.parentProjects()">
@@ -7,13 +7,13 @@
     {{side.shortName()}}
 
     <div class="btn-group pull-right">
-      <label class="btn btn-info active" ng-click="closeHistory()"
-        tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-time"></i>
+      <label class="btn btn-default" ng-click="enterWorkflowSaving()"
+        tooltip="Save as Workflow" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-film"></i>
       </label>
-      <label class="btn btn-default" ng-click="closeProject()"
-        tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-remove"></i>
+      <label class="btn btn-default" ng-click="closeHistory()"
+        tooltip="Back to project" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-arrow-left"></i>
       </label>
     </div>
 
@@ -108,3 +108,5 @@
     </li>
   </div>
 </div>
+<workflow-saver ng-if="show" visible="workflowMode.enabled" code="code" side="side">
+</workflow-saver>
