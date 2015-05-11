@@ -75,7 +75,6 @@ case class ScaleFreeEdgeBundle(iterations: Int, seed: Long, perIterationMultipli
     var edges = vs.map { case (id, _) => Edge(id, id) }
     val masterRnd = new Random(seed)
     for (i <- (0 until iterations)) {
-      println(s"Starting iteration $i with ${edges.count} edges.")
       val firsts = sample(edges, perIterationMultiplier, masterRnd.nextLong())
       val seconds = sample(edges, perIterationMultiplier, masterRnd.nextLong())
       val shuffledSeconds = shuffle(seconds, masterRnd.nextLong(), partitioner)
@@ -90,11 +89,9 @@ case class ScaleFreeEdgeBundle(iterations: Int, seed: Long, perIterationMultipli
         .map { case (edge, idx) => idx -> edge }
         .toSortedRDD(partitioner)
 
-      println(s"S&S ${numberedFirsts.count} and ${numberedSeconds.count}.")
       edges = numberedFirsts.sortedJoin(numberedSeconds)
         .mapValues { case (edge1, edge2) => Edge(edge1.src, edge2.dst) }
         .values
-      println(s"Ending iteration $i with ${edges.count} edges.")
     }
     output(o.es, edges.randomNumbered(partitioner))
   }
