@@ -1,0 +1,5 @@
+## Import vertex attributes from CSV files
+
+Imports vertex attributes for existing vertices from a CSV file.
+
+include::glossary.asciidoc[tag=file-import]

@@ -1,0 +1,15 @@
+## Create random edge bundle
+
+Creates edges randomly, so that each vertex will have a degree uniformly chosen between 0 and 2 ×
+the provided parameter.
+
+====
+[[degree]] Average degree::
+The degree of a vertex will be chosen uniformly between 0 and 2 × this number. This results in
+generating (number of vertices × average degree) edges.
+
+[[seed]] Seed::
+The random seed.
++
+include::glossary.asciidoc[tag=random-seed]
+====

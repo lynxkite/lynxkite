@@ -1,0 +1,19 @@
+## Convert vertices into edges
+
+Re-interprets the vertices as edges. You select two string-typed vertex attributes
+which specify the source and destination of the edges. New vertices will be generated for each
+distinct value of these attributes, and they will be connected if an orignal vertex described
+a connection between them.
+
+An example use-case is if your vertices are calls. The converted graph will have subscribers as
+its vertices and the calls as its edges.
+
+====
+[[src]] Source::
+An A&nbsp;&rarr;&nbsp;B edge is generated if a vertex exists with the source attribute A and
+destination attribute B.
+
+[[dst]] Destination::
+An A&nbsp;&rarr;&nbsp;B edge is generated if a vertex exists with the source attribute A and
+destination attribute B.
+====

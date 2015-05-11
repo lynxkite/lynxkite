@@ -1,0 +1,33 @@
+// Operation descriptions.
+
+# Operations
+
+include::connect-vertices-on-attribute.asciidoc[]
+
+include::convert-vertices-into-edges.asciidoc[]
+
+include::create-random-edge-bundle.asciidoc[]
+
+include::discard-edges.asciidoc[]
+
+include::discard-vertices.asciidoc[]
+
+include::import-edges-for-existing-vertices-from-a-database.asciidoc[]
+
+include::import-edges-for-existing-vertices-from-csv-files.asciidoc[]
+
+include::import-vertex-attributes-from-a-database.asciidoc[]
+
+include::import-vertex-attributes-from-csv-files.asciidoc[]
+
+include::import-vertices-and-edges-from-a-single-csv-fileset.asciidoc[]
+
+include::import-vertices-and-edges-from-a-single-database-table.asciidoc[]
+
+include::import-vertices-from-a-database.asciidoc[]
+
+include::import-vertices-from-csv-files.asciidoc[]
+
+include::maximal-cliques.asciidoc[]
+
+include::new-vertex-set.asciidoc[]

@@ -1,0 +1,5 @@
+## Import vertex attributes from a database
+
+Imports vertex attributes for existing vertices from a SQL database.
+
+include::glossary.asciidoc[tag=database-import]

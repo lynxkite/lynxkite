@@ -1,0 +1,3 @@
+// Main structure file that builds the full documentation from its parts.
+
+include::operations/index.asciidoc[]
