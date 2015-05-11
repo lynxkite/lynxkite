@@ -381,6 +381,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   function Vertices(graphView) {
     this.gv = graphView;
     this.vs = [];
+    this.iconMapping = {};
   }
   // Prepare a label-icon map for these labels, generate legend.
   Vertices.prototype.initIcons = function(attr, labels) {
@@ -430,9 +431,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   Vertices.prototype.getIcon = function(label) {
-    if (!this.iconMapping) {
-      return getIcon('circle');
-    }
     return getIcon(this.iconMapping[label] || 'circle');
   };
 
