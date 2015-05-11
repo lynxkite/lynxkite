@@ -38,14 +38,20 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return angular.element('#svg-icons #circle').length > 0;
   }
 
+  // Returns a reference to the icon inside #svg-icons.
+  function getOriginalIcon(name) {
+    return angular.element('#svg-icons #' + name.toLowerCase());
+  }
+
   function hasIcon(name) {
     if (!name) { return false; }
-    var icon = angular.element('#svg-icons #' + name.toLowerCase());
+    var icon = getOriginalIcon(name);
     return icon.length !== 0;
   }
 
+  // Creates a scaled clone of the icon inside #svg-icons.
   function getIcon(name) {
-    var icon = angular.element('#svg-icons #' + name.toLowerCase());
+    var icon = getOriginalIcon(name);
     var circle = angular.element('#svg-icons #circle');
     var cbb = circle[0].getBBox();
     var bb = icon[0].getBBox();
