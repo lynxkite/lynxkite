@@ -1,0 +1,24 @@
+// To avoid repetition, add text here and include it in the operation.
+
+tag::database-import[]
+The database name is the JDBC connection string without the `jdbc:` prefix.
+(For example `mysql://127.0.0.1/?user=batman&password=alfred`.)
+An integer column must be specified as the key, and you have to select a key range.
+end::database-import[]
+
+tag::file-import[]
+Wildcard (`foo/*.csv`) and glob (`foo/{bar,baz}.csv`) patterns are accepted.
+S3 paths must include the key name and secret key in the following format:
+`s3n://key_name:secret_key@bucket/dir/file`
+end::file-import[]
+
+tag::random-seed[]
+=====
+LynxKite operations are typically deterministic. If you re-run an operation with
+the same random seed, you will get the same results as before. To get a truly independent random
+re-run, make sure you choose a different random seed.
+
+The default value for random seed parameters is randomly picked, so only very
+rarely do you need to give random seeds any thought.
+=====
+end::random-seed[]

@@ -47,7 +47,7 @@ module.exports = function (grunt) {
         tasks: ['newer:copy:styles', 'autoprefixer']
       },
       help: {
-        files: ['<%= yeoman.app %>/help/{,*/}*.adoc'],
+        files: ['<%= yeoman.app %>/help/{,*/}*.asciidoc'],
         tasks: ['asciidoctor']
       },
       gruntfile: {
@@ -182,10 +182,11 @@ module.exports = function (grunt) {
     asciidoctor: {
       options: {
         showNumberedHeadings: false,
+        safeMode: 'safe', // Allow includes.
       },
       dist: {
         files: {
-          '.tmp/help.html': ['<%= yeoman.app %>/help/*.adoc'],
+          '.tmp/help.html': ['<%= yeoman.app %>/help/index.asciidoc'],
         },
       },
     },
