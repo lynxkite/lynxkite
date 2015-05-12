@@ -35,7 +35,7 @@
       { "id": "4444444",
         "attrs": {
           "5": { "double": 20, "string": "20", "defined": true },
-          "7": { "double": 0, "string": "", "defined": true },
+          "7": { "double": 0, "string": "", "defined": false },
           "6": { "double": 30, "string": "30", "defined": true },
           "8": { "double": 0, "string": "black", "defined": true },
           "profile_url": { "double": 0, "string": "https://graph.facebook.com/daniel.darabos/picture", "defined": true },
