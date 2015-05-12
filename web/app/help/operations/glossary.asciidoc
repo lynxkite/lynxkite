@@ -8,8 +8,8 @@ end::database-import[]
 
 tag::file-import[]
 Wildcard (`foo/*.csv`) and glob (`foo/{bar,baz}.csv`) patterns are accepted.
-S3 paths must include the key name and secret key in the following format:
-`s3n://key_name:secret_key@bucket/dir/file`
+The file must be specified relative to a root that the LynxKite administrator has configured
+through the `KITE_ADDITIONAL_ROOT_DEFINITIONS` file. The syntax would then be `MY_ROOT$dir/*.csv`.
 end::file-import[]
 
 tag::random-seed[]
