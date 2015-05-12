@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - _"Create scale-free random edge bundle"_ operation added which allows one to create
+   a scale free random graph.
  - _"PageRank"_ operation can now be used without weights.
  - Data files and directories can now only be accessed via a special prefix notation.
    For example, what used to be `hdfs://nameservice1:8020/user/kite/data/uploads/file` is
