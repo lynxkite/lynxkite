@@ -32,6 +32,24 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
+  test("Merge parallel edges works") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
+      "header" -> "src,dst,call",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    run("Merge parallel edges", Map(
+      "aggregate-src" -> "",
+      "aggregate-dst" -> "",
+      "aggregate-call" -> "count"
+    ))
+    project.edgeAttributes.foreach(println)
+    val call = project.edgeAttributes("call_count").runtimeSafeCast[Double]
+    assert(call.rdd.values.collect.toSeq.sorted == Seq(3.0, 5.0))
+  }
+
   test("Derived vertex attribute (Double)") {
     run("Example Graph")
     run("Derived vertex attribute",
@@ -622,4 +640,5 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
   }
+
 }
