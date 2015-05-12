@@ -17,6 +17,8 @@
 #
 # The paths that they define should either be empty, or
 # end in an at sign (@) or end in a slash (/).
+# The defined paths should always start with a file system specifiation (e.g. s3n: or file:) unless
+# they are empty.
 # The quotation marks are not part of the path, but they
 # should still be supplied.
 #

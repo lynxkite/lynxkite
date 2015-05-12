@@ -31,6 +31,8 @@ object HadoopFile {
       s"The path following $rootSymbol has to start with a slash (/)")
     HadoopFile(rootSymbol, normalizedRelativePath)
   }
+
+  lazy val defaultFs = hadoop.fs.FileSystem.get(new hadoop.conf.Configuration())
 }
 
 case class HadoopFile private (rootSymbol: String, normalizedRelativePath: String) {
