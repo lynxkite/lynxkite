@@ -266,7 +266,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   val jdbcHelpText = """
     The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
-    (For example <tt>mysql://127.0.0.1/?user=batman&password=alfred</tt>.)"""
+    (For example <tt>mysql://127.0.0.1/my_database?user=batman&password=alfred</tt>.)"""
   val sqlImportHelpText = jdbcHelpText + """
     An integer column must be specified as the key, and you have to select a key range."""
 
@@ -1154,14 +1154,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
+      val vertexSet = project.vertexSet
       val namedAttributes = project.vertexAttributes
         .filter { case (name, attr) => containsIdentifierJS(expr, name) }
         .toIndexedSeq
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, vertexSet)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet)
       }
       project.vertexAttributes(params("output")) = result.attr
     }
@@ -1185,6 +1186,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
+      val idSet = project.edgeBundle.idSet
       val namedEdgeAttributes = project.edgeAttributes
         .filter { case (name, attr) => containsIdentifierJS(expr, name) }
         .toIndexedSeq
@@ -1208,9 +1210,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val result = params("type") match {
         case "string" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes)
+          graph_operations.DeriveJS.deriveFromAttributes[String](expr, namedAttributes, idSet)
         case "double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes)
+          graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, idSet)
       }
       project.edgeAttributes(params("output")) = result.attr
     }
@@ -1433,10 +1435,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       <p>Edge attributes can be aggregated across the merged edges.
       """
 
-    def parameters =
-      aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) })
-
+    def parameters = aggregateParams(project.edgeAttributes)
     def enabled = hasEdgeBundle
 
     def apply(params: Map[String, String]) = {
@@ -1523,7 +1522,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val description = "The result is a single scalar value."
     def parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) },
+        project.edgeAttributes,
         needsGlobal = true)
     def enabled =
       FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
@@ -1544,7 +1543,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("prefix", "Generated name prefix"),
       Choice("weight", "Weight", options = edgeAttributes[Double])) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) },
+        project.edgeAttributes,
         needsGlobal = true, weighted = true)
     def enabled =
       FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes")
@@ -1568,7 +1567,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) })
+        project.edgeAttributes)
     def enabled =
       FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]) = {
@@ -1593,7 +1592,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("weight", "Weight", options = edgeAttributes[Double]),
       Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) },
+        project.edgeAttributes,
         weighted = true)
     def enabled =
       FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes")

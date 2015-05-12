@@ -31,4 +31,15 @@ var COMMON_UTIL = {
       }
     }
   },
+
+  // Java's hash function in JS.
+  hashCode: function(text) {
+    /* jshint bitwise: false */
+    var hash = 0;
+    for (var i = 0; i < text.length; ++i) {
+      hash = hash * 31 + text.charCodeAt(i);
+      hash |= 0; // Trim to 32 bits.
+    }
+    return Math.abs(hash);
+  }
 };
