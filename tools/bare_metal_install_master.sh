@@ -20,6 +20,10 @@ sudo mkdir -p /opt/cloudera/parcel-repo
 sudo cp $DVD_ROOT/CDH-5.3.3-1.cdh5.3.3.p0.5-trusty.parcel /opt/cloudera/parcel-repo/CDH-5.3.3-1.cdh5.3.3.p0.5-trusty.parcel
 sudo cp $DVD_ROOT/CDH-5.3.3-1.cdh5.3.3.p0.5-trusty.parcel.sha1 /opt/cloudera/parcel-repo/CDH-5.3.3-1.cdh5.3.3.p0.5-trusty.parcel.sha1
 sudo cp $DVD_ROOT/manifest.json /opt/cloudera/parcel-repo/manifest.json
+# Start a web server in the parcel repo to make Cloudera happy
+cd /opt/cloudera/parcel-repo
+python -m SimpleHTTPServer 8900 > /dev/null 2>&1 &
+cd -
 
 # Config the services to start automatically
 sudo cp /opt/cm-5.3.3/etc/init.d/cloudera-scm-agent /etc/init.d/cloudera-scm-agent

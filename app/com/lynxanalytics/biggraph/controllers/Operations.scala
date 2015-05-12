@@ -1186,10 +1186,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Merge parallel edges", new EdgeOperation(_, _) {
-    def parameters =
-      aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) })
-
+    def parameters = aggregateParams(project.edgeAttributes)
     def enabled = hasEdgeBundle
 
     def apply(params: Map[String, String]) = {
@@ -1272,7 +1269,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Aggregate edge attribute globally", new AttributeOperation(_, _) {
     def parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) },
+        project.edgeAttributes,
         needsGlobal = true)
     def enabled =
       FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
@@ -1292,7 +1289,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("prefix", "Generated name prefix"),
       Choice("weight", "Weight", options = edgeAttributes[Double])) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) },
+        project.edgeAttributes,
         needsGlobal = true, weighted = true)
     def enabled =
       FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes")
@@ -1314,7 +1311,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) })
+        project.edgeAttributes)
     def enabled =
       FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
     def apply(params: Map[String, String]) = {
@@ -1337,7 +1334,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("weight", "Weight", options = edgeAttributes[Double]),
       Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(
-        project.edgeAttributes.map { case (name, ea) => (name, ea) },
+        project.edgeAttributes,
         weighted = true)
     def enabled =
       FEStatus.assert(edgeAttributes[Double].nonEmpty, "No numeric edge attributes")
