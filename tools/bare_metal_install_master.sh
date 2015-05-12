@@ -1,7 +1,6 @@
 echo "Starting LynxKite installation..."
 
 DVD_ROOT="$(dirname $0)"
-CALL_ROOT=$PWD
 
 # Install Java
 echo "Installing Java..."
@@ -24,7 +23,7 @@ sudo cp $DVD_ROOT/manifest.json /opt/cloudera/parcel-repo/manifest.json
 # Start a web server in the parcel repo to make Cloudera happy
 cd /opt/cloudera/parcel-repo
 python -m SimpleHTTPServer 8900 > /dev/null 2>&1 &
-cd $CALL_ROOT
+cd -
 
 # Config the services to start automatically
 sudo cp /opt/cm-5.3.3/etc/init.d/cloudera-scm-agent /etc/init.d/cloudera-scm-agent
