@@ -2,6 +2,9 @@
 
 package com.lynxanalytics.biggraph.graph_util
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+
+import org.apache.hadoop
 import scala.io.Source
 
 object PathNormalizer {
@@ -21,29 +24,45 @@ object PathNormalizer {
 object RootRepository {
   private val pathResolutions = scala.collection.mutable.Map[String, String]()
   private val symbolicRootPattern = "([_A-Z][_A-Z0-9]*[$])(.*)".r
+  private val schemePattern = "[A-Za-z][-\\+\\.A-Za-z0-9]*:".r
 
-  private def getBestCandidate(path: String): (String, String) = {
+  private def hasScheme(filename: String): Boolean = {
+    schemePattern.findPrefixMatchOf(filename).nonEmpty
+  }
+
+  private def getBestCandidate(path: String): Option[(String, String)] = {
 
     val candidates = pathResolutions.filter { x => path.startsWith(x._2) }
     if (candidates.isEmpty) {
-      assert(false, s"Cannot find a prefix notation for path $path. " +
-        "See KITE_ROOT_DEFINITIONS in .kiterc for a possible solution")
-      ???
+      None
     } else {
-      candidates.maxBy(_._2.length)
+      Some(candidates.maxBy(_._2.length))
     }
   }
 
-  def tryToSplitBasedOnTheAvailableRoots(str: String, legacyMode: Boolean): (String, String) = {
-    assert(legacyMode)
-    val (rootSym, resolution) = getBestCandidate(str)
-    (rootSym, str.drop(resolution.length))
-  }
+  private def fullyQualify(path: String): String =
+    HadoopFile.defaultFs.makeQualified(new hadoop.fs.Path(path)).toString
+
+  def tryToSplitBasedOnTheAvailableRoots(path: String): (String, String) =
+    getBestCandidate(path)
+      .map {
+        case (rootSym, resolution) =>
+          (rootSym, path.drop(resolution.length))
+      }
+      .getOrElse(throw new AssertionError(
+        s"Cannot find a prefix notation for path $path. " +
+          "See KITE_ADDITIONAL_ROOT_DEFINITIONS in .kiterc for a possible solution"))
+
   def splitSymbolicPattern(str: String, legacyMode: Boolean): (String, String) = {
     str match {
       case symbolicRootPattern(rootSymbol, relativePath) =>
         (rootSymbol, relativePath)
-      case _ => tryToSplitBasedOnTheAvailableRoots(str, legacyMode)
+      case _ if legacyMode =>
+        if (hasScheme(str)) tryToSplitBasedOnTheAvailableRoots(str)
+        else tryToSplitBasedOnTheAvailableRoots(fullyQualify(str))
+      case _ =>
+        throw new AssertionError(
+          "File name specifications should always start with a registered prefix (XYZ$)")
     }
   }
 
@@ -68,6 +87,10 @@ object RootRepository {
       case symbolicRootPattern(root, rest) => pathResolutions(root) + rest
       case _ => rootResolution
     }
+    assert(
+      resolvedResolution.isEmpty || hasScheme(resolvedResolution),
+      "Resolved prefix definition has to specify URI scheme (aka filesystem type) or be empty." +
+        s"But ${rootSymbol}'s definition ${rootResolution} resolved to ${resolvedResolution}.")
     pathResolutions(rootSymbol) = PathNormalizer.normalize(resolvedResolution)
   }
 
