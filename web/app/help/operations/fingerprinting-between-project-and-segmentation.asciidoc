@@ -1,0 +1,40 @@
+## Fingerprinting between project and segmentation
+
+Finds the best match out of the potential matches that are defined between a project and
+a segmentation. The best match is chosen by comparing the vertex neighborhoods in the project
+and the segmentation.
+
+The result of this operation is an updated edge set between the project and the
+segmentation, that is a one-to-one matching.
+
+### Example use-case
+
+Project M is an MSISDN graph based on call data. Project F is a Facebook
+graph. A CSV file contains a number of MSISDN{to}Facebook ID mappings, a many-to-many
+relationship. Connect the two projects with
+link:{help}import-project-as-segmentation[Import project as segmentation] and
+link:{help}load-segmentation-links-from-csv[Load segmentation links from CSV], then use the
+fingerprinting operation to turn the mapping into a high-quality one-to-one relationship.
+
+====
+The matches are identified by calculating a similarity score between vertices and picking a
+matching that ensures a high total similarity score across the matched pairs.
+
+The similarity calculation is based on the network structure: the more alike their neighborhoods
+are, the more similar two vertices are considered. Vertex attributes are not considered in the
+calculation.
+
+[[mrew]] Minimum relative edge weight::
+The relative edge weight is the edge weight relative to the summed edge weights of the vertex.
+Ignoring low-weight connections can avoid a noise in the similarity score from high-degree
+vertices such as a pizza delivery service.
+
+[[mo]] Minimum overlap::
+The number of common neighbors two vertices must have to be considered for matching.
+It must be at least 1. (If two vertices have no common neighbors their similarity would be zero
+anyway.)
+
+[[ms]] Minimum similarity::
+The similarity threshold below which two vertices will not be considered a match even if there are
+no better matches for them. Similarity is normalized to [0, 1].
+====

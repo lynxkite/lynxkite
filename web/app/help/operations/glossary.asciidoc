@@ -1,0 +1,123 @@
+// To avoid repetition, add text here and include it in multiple places.
+//
+// Include syntax:
+//   include::glossary.asciidoc[tag=my-tag]
+//
+// Note that there are no implicit newlines around the inclusion. This means you could
+// (intentionally or not) include something as inline content.
+
+tag::database-access[]
+The database name is the JDBC connection string without the `jdbc:` prefix.
+(For example `mysql://127.0.0.1/my_database?user=batman&password=alfred`.)
+end::database-access[]
+
+tag::database-import[]
+[[db]] Database::
+include::glossary.asciidoc[tag=database-access]
+
+[[table]] Table or view::
+Table to import from. This can be anything that can be put into the `SELECT * FROM table`
+statement.
+
+[[columns]] Columns::
+The comma-separated list of columns to import.
+
+[[key]] Key column::
+This column is used to partition the SQL query. The range from `min(key)` to `max(key)` will be
+split into a sub-range for each Spark worker, so they can each query a part of the data in
+parallel.
+end::database-import[]
+
+tag::file-export[]
+There are two ways to access the exported data:
+
+ - Set _Destination path_ to `<auto>`. A download link will be created as a project scalar.
+   You can download the file through this link. This works even for large files as long as
+   they fit on your hard drive.
+ - Set _Destination path_ to a distributed file system path that you can access. This allows
+   you to access the exported data using the standard tools for the file system. A download link
+   will still be provided, but the standard tools can allow for higher throughput access.
+end::file-export[]
+
+tag::csv-import[]
+[[files]] Files::
+Upload a file using the button on the right, or specify the path to an existing file set.
+Wildcard (`+foo/*.csv+`) and glob (`+foo/{bar,baz}.csv+`) patterns are accepted.
++
+The file must be specified relative to a root that the LynxKite administrator has configured
+through the `KITE_ROOT_DEFINITIONS` file. The syntax would then be
+`+MY_ROOT$dir/*.csv+`.
+
+[[header]] Header::
+The list of column names. This parameter serves two purposes:
++
+ - Each column specified will be imported as an attribute.
+ - If this line is found in the CSV, it will be ignored.
++
+When left as `<read first line>`, the header is read automatically from the file.
+
+[[delimiter]] Delimiter::
+The column delimiter in the CSV. Typical values are `,` (comma), `;` (semicolon), `\t` (tab).
+
+[[filter]] (optional) Filtering expression::
+A JavaScript expression can be provided here to restrict the import to lines that match a
+condition. For example `id != ''` would ignore lines where the `id` column is empty.
+end::csv-import[]
+
+tag::random-seed[]
+=====
+LynxKite operations are typically deterministic. If you re-run an operation with
+the same random seed, you will get the same results as before. To get a truly independent random
+re-run, make sure you choose a different random seed.
+
+The default value for random seed parameters is randomly picked, so only very
+rarely do you need to give random seeds any thought.
+=====
+end::random-seed[]
+
+tag::global-aggregators[]
+The available aggregators are:
+
+ * For `Double` attributes:
+ ** `sum`
+ ** `average`
+ ** `min`
+ ** `max`
+ ** `count` (number of cases where the attribute is defined)
+ ** `first` (arbitrarily picks a value)
+ ** `std_deviation` (standard deviation)
+
+ * For other attributes:
+ ** `count` (number of cases where the attribute is defined)
+ ** `first` (arbitrarily picks a value)
+end::global-aggregators[]
+
+tag::local-aggregators[]
+The available aggregators are:
+
+ * For `Double` attributes:
+ ** `sum`
+ ** `average`
+ ** `min`
+ ** `max`
+ ** `most_common`
+ ** `count_distinct` (the number of distinct values)
+ ** `count` (number of cases where the attribute is defined)
+ ** `vector` (all the values, as a `Vector` attribute)
+ ** `first` (arbitrarily picks a value)
+ ** `std_deviation` (standard deviation)
+
+ * For `String` attributes:
+ ** `most_common`
+ ** `count_distinct` (the number of distinct values)
+ ** `majority_50` (the value that 50% agree on, or empty string)
+ ** `majority_100` (the value that 100% agree on, or empty string)
+ ** `count` (number of cases where the attribute is defined)
+ ** `vector` (all the values, as a `Vector` attribute)
+
+ * For other attributes:
+ ** `most_common`
+ ** `count_distinct` (the number of distinct values)
+ ** `count` (number of cases where the attribute is defined)
+ ** `vector` (all the values, as a `Vector` attribute)
+end::local-aggregators[]

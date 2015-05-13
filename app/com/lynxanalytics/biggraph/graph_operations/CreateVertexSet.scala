@@ -16,6 +16,7 @@ object CreateVertexSet extends OpFromJson {
 }
 import CreateVertexSet._
 case class CreateVertexSet(size: Long) extends TypedMetaGraphOp[NoInput, Output] {
+  override val isHeavy = true
   @transient override lazy val inputs = new NoInput
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)

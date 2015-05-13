@@ -1,0 +1,4 @@
+## Filter by attributes
+
+Keeps only vertices and edges that match the filters.
+For more details see link:{help}filter-syntax[Filter syntax].

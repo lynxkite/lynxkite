@@ -1,0 +1,19 @@
+## Export segmentation to database
+
+Creates a new table and writes the edges going from the parent graph to this
+segmentation into it.
+
+include::glossary.asciidoc[tag=database-access]
+
+====
+[[db]] Database::
+The database to write to.
++
+include::glossary.asciidoc[tag=database-access]
+
+[[table]] Table::
+The table to create in the database.
+
+[[delete]] Overwrite table if it exists::
+If enabled, all data in the table will be deleted before inserting the new data. Be careful!
+====
