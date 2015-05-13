@@ -1260,14 +1260,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Merge parallel edges by string attribute", new EdgeOperation(_, _) {
-    val description =
-      """<p>Multiple edges going from A to B that share the given edge attribute
-         will be merged into a single edge. The edges going from A to B are not merged
-         with edges going from B to A.
-
-      <p>The shared attribute can be aggregated across the merged edges.
-      """
-
     def parameters = List(
       Choice("key", "Merge by", options = edgeAttributes[String])) ++
       aggregateParams(project.edgeAttributes)
