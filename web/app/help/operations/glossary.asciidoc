@@ -13,8 +13,7 @@ end::database-access[]
 
 tag::database-import[]
 [[db]] Database::
-The database name: the JDBC connection string without the `jdbc:` prefix.
-(For example `mysql://127.0.0.1/my_database?user=batman&password=alfred`.)
+include::glossary.asciidoc[tag=database-access]
 
 [[table]] Table or view::
 Table to import from. This can be anything that can be put into the `SELECT * FROM table`
