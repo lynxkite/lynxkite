@@ -1,0 +1,14 @@
+## Dispersion
+
+Calculates the extent to which two people's mutual friends are not themselves well-connected
+as an edge attribute normalized to 0.0 -- 1.0.
+
+It is a useful signal for identifying romantic partnership's according to
+http://arxiv.org/abs/1310.6753[
+  _Romantic Partnerships and the Dispersion of Social Ties:
+  A Network Analysis of Relationship Status on Facebook_]
+
+====
+[[name]] Attribute name::
+The new edge attribute will be created under this name.
+====

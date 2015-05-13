@@ -1,0 +1,14 @@
+## Add constant vertex attribute
+
+Adds an attribute with a fixed value to every vertex.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[value]] Value::
+The attribute value. Should be a number if _Type_ is set to `Double`.
+
+[[type]] Type::
+The operation can create either `Double` (numeric) or `String` typed attributes.
+====
