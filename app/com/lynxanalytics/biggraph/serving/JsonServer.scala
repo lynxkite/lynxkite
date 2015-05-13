@@ -275,17 +275,12 @@ object ProductionJsonServer extends JsonServer {
     val logDir = Play.application.getFile("logs")
     assert(logDir.exists, "Application log directory not found")
     assert(logDir.isDirectory, "'logs' is not a directory")
-    val logFileName = (logDir.listFiles.map { file =>
-      {
-        if (file.isFile && file.getName.startsWith("application")) {
-          file.getName
-        } else {
-          ""
-        }
-      }
-    } ++ List("")).max
-    assert(logFileName != "", "No application log file found")
-    val logFile = new File(logDir, logFileName)
+    val logFileNames = logDir.listFiles
+      .filter(_.isFile)
+      .map { file => file.getName }
+      .filter(_.startsWith("application"))
+    assert(logFileNames.size > 0, "No application log file found")
+    val logFile = new File(logDir, logFileNames.max)
     Ok.sendFile(logFile)
   }
 
