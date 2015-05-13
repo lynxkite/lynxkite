@@ -6,9 +6,9 @@ equals the destination attribute of B, an A{to}B edge will be generated.
 The two attributes must be of the same data type.
 
 ====
-[[fromAttr]] Source attribute::
+[[fromattr]] Source attribute::
 An A{to}B edge is generated when this attribute on A matches the destination attribute on B.
 
-[[toAttr]] Destination attribute::
+[[toattr]] Destination attribute::
 An A{to}B edge is generated when the source attribute on A matches this attribute on B.
 ====

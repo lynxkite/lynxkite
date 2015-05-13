@@ -4,9 +4,9 @@ Calculates the Pearson correlation coefficient of two attributes.
 Only vertices where both attributes are defined are considered.
 
 ====
-[[attrA]] First attribute::
+[[attra]] First attribute::
 The correlation of these two attributes will be calculated.
 
-[[attrB]] Second attribute::
+[[attrb]] Second attribute::
 The correlation of these two attributes will be calculated.
 ====

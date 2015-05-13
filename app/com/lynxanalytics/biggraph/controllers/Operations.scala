@@ -169,13 +169,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Create scale-free random edge bundle", new EdgeOperation(_, _) {
-    val description =
-      """<p>Creates edges randomly so that the resulting graph is scale-free.
-
-      <p>This is an iterative algorithm. We start with one edge per vertex and in each
-      iteration the number of edges gets approximately multipled by
-      "Per iteration edge number multiplier".
-      """
     def parameters = List(
       NonNegInt("iterations", "Number of iterations", default = 10),
       NonNegDouble(
