@@ -8,7 +8,7 @@ The shared attribute can be aggregated across the merged edges.
 
 ====
 
-[[keyattr]] Merge by::
+[[key]] Merge by::
 The edge attribute on which the merging will be based.
 
 include::glossary.asciidoc[tag=local-aggregators]
