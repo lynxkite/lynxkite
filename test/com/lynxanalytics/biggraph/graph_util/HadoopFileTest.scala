@@ -232,7 +232,6 @@ class HadoopFileTest extends FunSuite {
 
   test("Legacy mode works") {
     def f(savedPath: String, expected: String): Unit = {
-      println(s"Testing $savedPath expecting $expected")
       if (expected == "ASSERT") {
         intercept[java.lang.AssertionError] {
           HadoopFile(savedPath, true)
