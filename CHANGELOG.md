@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Option to download the last server log on the Report Error dialog.
  - Strings visualized as icons will be matched to neutral icons (circle, square,
    triangle, hexagon, pentagon, star) if an icon with the given name does not exist.
  - _"PageRank"_ operation can now be used without weights.
