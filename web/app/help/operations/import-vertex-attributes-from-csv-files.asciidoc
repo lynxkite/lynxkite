@@ -3,7 +3,7 @@
 Imports vertex attributes for existing vertices from a CSV file.
 
 ====
-include::glossary.asciidoc[tag=csv-import]
+include::{g}[tag=csv-import]
 
 [[id-attr]] Vertex ID attribute::
 The vertex attribute which is used in the CSV's ID field.

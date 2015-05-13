@@ -1,7 +1,7 @@
 // To avoid repetition, add text here and include it in multiple places.
 //
 // Include syntax:
-//   include::glossary.asciidoc[tag=my-tag]
+//   include::{g}[tag=my-tag]
 //
 // Note that there are no implicit newlines around the inclusion. This means you could
 // (intentionally or not) include something as inline content.

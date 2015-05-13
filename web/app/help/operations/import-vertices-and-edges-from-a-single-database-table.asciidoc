@@ -9,7 +9,7 @@ Vertices will be generated for the endpoints of the edges with two vertex attrib
  - `id` will contain the internal vertex ID.
 
 ====
-include::glossary.asciidoc[tag=database-import]
+include::{g}[tag=database-import]
 
 [[src]] Source ID field:: The database column that contains the edge source ID.
 [[dst]] Destination ID field:: The database column that contains the edge destination ID.

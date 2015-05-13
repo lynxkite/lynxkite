@@ -4,7 +4,7 @@ Imports edges from a CSV file, or files. Your vertices must have an identifying 
 the edges can be attached to them.
 
 ====
-include::glossary.asciidoc[tag=csv-import]
+include::{g}[tag=csv-import]
 
 [[attr]] Vertex ID attribute::
 The IDs that are used in the file when defining the edges.
