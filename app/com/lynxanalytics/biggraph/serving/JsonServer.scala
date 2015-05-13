@@ -281,6 +281,7 @@ object ProductionJsonServer extends JsonServer {
       .filter(_.startsWith("application"))
     assert(logFileNames.size > 0, "No application log file found")
     val logFile = new File(logDir, logFileNames.max)
+    log.info(s"$user has downloaded log file $logFile")
     Ok.sendFile(logFile)
   }
 
