@@ -8,7 +8,7 @@ Higher centrality means that the vertex is more embedded in the graph.
 [[name]] Attribute name::
 The new attribute will be created under this name.
 
-[[maxDiameter]] Maximal diameter to check::
+[[maxdiameter]] Maximal diameter to check::
 The algorithm works by counting the shortest paths up to a certain length in each iteration.
 This parameter sets the maximal length to check, so it has a strong influence over the run
 time of the operation.

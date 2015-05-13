@@ -7,4 +7,7 @@
 // Shortcut for edge notation. (A{to}B)
 :to: &nbsp;&rarr;&nbsp;
 
+// Prefix for internal links. (link:{help}my-operation[My operation])
+:help: /help.html#
+
 include::operations/index.asciidoc[]

@@ -3,9 +3,7 @@
 Creates small test graph with 4 people and 4 edges between them.
 
 ====
-The contents are:
-
-.Vertices
+The vertices and their attributes are:
 |===
 | name | age | gender | income | location
 
@@ -15,7 +13,7 @@ The contents are:
 | Isolated Joe | 2.0 | Male | _undefined_ | _coordinates of Sydney_
 |===
 
-.Edges
+The edges and their attributes are:
 |===
 | src | dst | comment | weight
 

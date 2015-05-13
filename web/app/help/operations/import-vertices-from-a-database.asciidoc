@@ -3,4 +3,6 @@
 Imports vertices (no edges) from a SQL database.
 An extra vertex attribute is generated to hold the internal vertex ID.
 
+====
 include::glossary.asciidoc[tag=database-import]
+====

@@ -12,8 +12,8 @@ segmentation, that is a one-to-one matching.
 Project M is an MSISDN graph based on call data. Project F is a Facebook
 graph. A CSV file contains a number of MSISDN{to}Facebook ID mappings, a many-to-many
 relationship. Connect the two projects with
-link:import-project-as-segmentation[Import project as segmentation] and
-link:load-segmentation-links-from-csv[Load segmentation links from CSV], then use the
+link:{help}import-project-as-segmentation[Import project as segmentation] and
+link:{help}load-segmentation-links-from-csv[Load segmentation links from CSV], then use the
 fingerprinting operation to turn the mapping into a high-quality one-to-one relationship.
 
 ====
@@ -36,5 +36,5 @@ anyway.)
 
 [[ms]] Minimum similarity::
 The similarity threshold below which two vertices will not be considered a match even if there are
-no better matches for them. Similarity is normalized between 0.0 and 1.0.
+no better matches for them. Similarity is normalized to [0, 1].
 ====

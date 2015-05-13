@@ -225,7 +225,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def sourceParameters = List(
       Param("db", "Database"),
       Param("table", "Table or view"),
-      Param("columns", "Columns (comma separated)"),
+      Param("columns", "Columns"),
       Param("key", "Key column"))
     def source(params: Map[String, String]) = {
       val columns = params("columns").split(",", -1).map(_.trim).filter(_.nonEmpty)
@@ -332,8 +332,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class ImportVertexAttributesOperation(t: String, c: Context)
       extends VertexOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
-      Choice("id-attr", "Vertex id attribute", options = vertexAttributes[String]),
-      Param("id-field", "ID field in the CSV file"),
+      Choice("id-attr", "Vertex ID attribute", options = vertexAttributes[String]),
+      Param("id-field", "ID field"),
       Param("prefix", "Name prefix for the imported vertex attributes"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
