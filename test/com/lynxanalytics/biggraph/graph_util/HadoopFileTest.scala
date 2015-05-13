@@ -221,12 +221,6 @@ class HadoopFileTest extends FunSuite {
     assert(pairs == expected)
   }
 
-  ignore("User defined files are read") {
-    // TODO: This doesn't work.
-    scala.util.Properties.setProp("KITE_ROOT_DEFINITIONS", "~/user_roots.txt")
-    RootRepository.addUserDefinedResolutions()
-  }
-
   test("Legacy mode works") {
     def f(savedPath: String, expected: String): Unit = {
       if (expected == "ASSERT") {
