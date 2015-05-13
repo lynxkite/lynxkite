@@ -32,7 +32,7 @@ var FORCE_LAYOUT = (function() {
         // All vertices have the same weight, so graph structure dominates the layout.
         // (Make the total mass match the "centralize" mode, so that the layout is
         // of a similar size.)
-        v.forceMass = (2.0 * edgeCount + vertices.vs.length) / vertices.length;
+        v.forceMass = (2.0 * edgeCount + vertices.vs.length) / vertices.vs.length;
       } else /* this.opts.style === 'centralize' */ {
         // Higher-degree vertices are heavier, so they fall into the center.
         v.forceMass = v.degree + 1;
