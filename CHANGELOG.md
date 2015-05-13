@@ -6,11 +6,11 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
- - When running an EC2 cluster, one cannot directly reference s3 files as before (using
-   the format "s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@bucket/path"), see the changelog
+ - When running an EC2 cluster, you cannot directly reference s3 files as before (using
+   the format `s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@bucket/path`), see the changelog
    entry below about the data file prefix notation. Instead, for EC2 cluster we automatically
-   setup the prefix "S3" to point to "s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@". In practice
-   this means that when using an EC2 cluster you need to refer to files on S3 as: "S3$bucket/path".
+   setup the prefix `S3` to point to `s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@`. In practice
+   this means that when using an EC2 cluster you need to refer to files on S3 as: `S3$bucket/path`.
  - _"Create scale-free random edge bundle"_ operation added which allows one to create
    a scale free random graph.
  - One can save a sequence of operations as a workflow. The feature is accessible from the
