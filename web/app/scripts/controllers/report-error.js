@@ -27,4 +27,6 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modal
   $scope.close = function() {
     $modalInstance.dismiss('close');
   };
+
+  $scope.logFileName = 'application-' + new Date().toLocaleFormat('%Y%m%d') + '.log';
 });
