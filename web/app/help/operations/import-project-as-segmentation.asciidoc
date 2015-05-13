@@ -1,0 +1,13 @@
+## Import project as segmentation
+
+Copies another project into a new segmentation for this one. There will be no
+connections between the segments and the base vertices. You can import/create those via
+other operations (see
+link:{help}load-segmentation-links-from-csv[Load segmentation links from CSV] and
+link:{help}define-segmentation-links-from-matching-attributes[
+  Define segmentation links from matching attributes]).
+
+====
+[[them]] Other project's name::
+The project to import.
+====
