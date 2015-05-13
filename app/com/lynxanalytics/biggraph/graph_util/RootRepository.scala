@@ -60,6 +60,9 @@ object RootRepository {
       case _ if legacyMode =>
         if (hasScheme(str)) tryToSplitBasedOnTheAvailableRoots(str)
         else tryToSplitBasedOnTheAvailableRoots(fullyQualify(str))
+      case _ =>
+        throw new AssertionError(
+          "File name specifications should always start with a registered prefix (XYZ$)")
     }
   }
 
