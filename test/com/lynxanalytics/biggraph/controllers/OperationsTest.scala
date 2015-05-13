@@ -32,6 +32,33 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
+  test("merge_parallel edges by string attribute works") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
+      "header" -> "src,dst,call",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "filter" -> ""))
+    run("Merge parallel edges by string attribute", Map(
+      "key" -> "call",
+      "aggregate-src" -> "",
+      "aggregate-dst" -> "",
+      "aggregate-call" -> "most_common"
+    ))
+    val call = project.edgeAttributes("call_most_common").runtimeSafeCast[String]
+    assert(call.rdd.values.collect.toSeq.sorted == Seq(
+      "Monday", // Mary->John, Wednesday
+      // "Monday",  // Mary->John, Wednesday - duplicate
+      "Saturday", // Mary->John, Saturday
+      //"Saturday", // Mary->John, Saturday - duplicate
+      "Tuesday", // John->Mary, Tuesday
+      //"Tuesday",  // John->Mary, Tuesday - duplicate
+      "Wednesday", // Mary->John, Wednesday
+      "Wednesday" // John->Mary, Wednesday
+    ))
+  }
+
   test("Merge parallel edges works") {
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
@@ -45,7 +72,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "aggregate-dst" -> "",
       "aggregate-call" -> "count"
     ))
-    project.edgeAttributes.foreach(println)
     val call = project.edgeAttributes("call_count").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(3.0, 5.0))
   }
