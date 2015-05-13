@@ -5,6 +5,7 @@
 // the "backend" operations and updating the projects.
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.graph_operations.JoinAttributes
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
@@ -1401,6 +1402,51 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private def mergeEdgesWithKey(edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[String]) = {
+    val edgesAndKey: Attribute[((ID, ID), String)] = joinAttr(edgesAsAttr, keyAttr)
+    val op = graph_operations.MergeVertices[((ID, ID), String)]()
+    op(op.attr, edgesAndKey).result
+  }
+
+  private def mergeEdges(edgesAsAttr: Attribute[(ID, ID)]) = {
+    val op = graph_operations.MergeVertices[(ID, ID)]()
+    op(op.attr, edgesAsAttr).result
+  }
+  // Common code for operations "merge parallel edges" and "merge parallel edges by key"
+
+  private def applyMergeParallelEdgesByKey(project: Project, params: Map[String, String]) = {
+
+    val edgesAsAttr = {
+      val op = graph_operations.EdgeBundleAsAttribute()
+      op(op.edges, project.edgeBundle).result.attr
+    }
+
+    val haveKeyAttr = params.contains("key")
+
+    val mergedResult =
+      if (haveKeyAttr) {
+        val keyAttr = project.edgeAttributes(params("key")).runtimeSafeCast[String]
+        mergeEdgesWithKey(edgesAsAttr, keyAttr)
+      } else {
+        mergeEdges(edgesAsAttr)
+      }
+
+    val newEdges = {
+      val op = graph_operations.PulledOverEdges()
+      op(op.originalEB, project.edgeBundle)(op.injection, mergedResult.representative)
+        .result.pulledEB
+    }
+    val oldAttrs = project.edgeAttributes.toMap
+    project.edgeBundle = newEdges
+
+    for ((attr, choice) <- parseAggregateParams(params)) {
+      project.edgeAttributes(s"${attr}_${choice}") =
+        aggregateViaConnection(
+          mergedResult.belongsTo,
+          AttributeWithLocalAggregator(oldAttrs(attr), choice))
+    }
+  }
+
   register("Merge parallel edges", new EdgeOperation(_, _) {
     val description =
       """<p>Multiple edges going from A to B will be merged into a single edge.
@@ -1413,28 +1459,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
 
     def apply(params: Map[String, String]) = {
-      val edgesAsAttr = {
-        val op = graph_operations.EdgeBundleAsAttribute()
-        op(op.edges, project.edgeBundle).result.attr
-      }
-      val mergedResult = {
-        val op = graph_operations.MergeVertices[(ID, ID)]()
-        op(op.attr, edgesAsAttr).result
-      }
-      val newEdges = {
-        val op = graph_operations.PulledOverEdges()
-        op(op.originalEB, project.edgeBundle)(op.injection, mergedResult.representative)
-          .result.pulledEB
-      }
-      val oldAttrs = project.edgeAttributes.toMap
-      project.edgeBundle = newEdges
-
-      for ((attr, choice) <- parseAggregateParams(params)) {
-        project.edgeAttributes(s"${attr}_${choice}") =
-          aggregateViaConnection(
-            mergedResult.belongsTo,
-            AttributeWithLocalAggregator(oldAttrs(attr), choice))
-      }
+      applyMergeParallelEdgesByKey(project, params)
     }
   })
 
@@ -1454,34 +1479,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "There must be at least one string edge attribute")
 
     def apply(params: Map[String, String]) = {
-      val keyAttr: Attribute[String] = project.edgeAttributes(params("key")).runtimeSafeCast[String]
-
-      val edgesAsAttr: Attribute[(ID, ID)] = {
-        val op = graph_operations.EdgeBundleAsAttribute()
-        op(op.edges, project.edgeBundle).result.attr
-      }
-      val edgesAndKey: Attribute[((ID, ID), String)] = {
-        val op = graph_operations.JoinAttributes[(ID, ID), String]()
-        op(op.a, edgesAsAttr)(op.b, keyAttr).result.attr
-      }
-      val mergedResult = {
-        val op = graph_operations.MergeVertices[((ID, ID), String)]()
-        op(op.attr, edgesAndKey).result
-      }
-      val newEdges = {
-        val op = graph_operations.PulledOverEdges()
-        op(op.originalEB, project.edgeBundle)(op.injection, mergedResult.representative)
-          .result.pulledEB
-      }
-      val oldAttrs = project.edgeAttributes.toMap
-      project.edgeBundle = newEdges
-
-      for ((attr, choice) <- parseAggregateParams(params)) {
-        project.edgeAttributes(s"${attr}_${choice}") =
-          aggregateViaConnection(
-            mergedResult.belongsTo,
-            AttributeWithLocalAggregator(oldAttrs(attr), choice))
-      }
+      assert(params("key").nonEmpty, "Please set an edge attribute name.")
+      applyMergeParallelEdgesByKey(project, params)
     }
   })
 
