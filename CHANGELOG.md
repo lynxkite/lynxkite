@@ -22,7 +22,7 @@ Please add changes at the top. When releasing a version add a new header for tha
    For example, what used to be `hdfs://nameservice1:8020/user/kite/data/uploads/file` is
    now simply `UPLOADS$/file`. This enables the administrator to hide s3n passwords from
    the users; futhermore, it will be easier to move the data to another location. A new kiterc
-   option `KITE_ADDITIONAL_ROOT_DEFINITIONS` can be used to provide extra prefixes (other
+   option `KITE_ROOT_DEFINITIONS` can be used to provide extra prefixes (other
    than `UPLOADS$`) See the files `kiterc_template` and `root_definitions.txt` in directory
    `kite_???/conf` for details.
  - New aggregation method: `count distinct`
