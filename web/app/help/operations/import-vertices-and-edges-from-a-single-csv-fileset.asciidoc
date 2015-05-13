@@ -1,0 +1,16 @@
+## Import vertices and edges from single CSV fileset
+
+Imports edges from a CSV file or files. Each line in the CSV represents one edge.
+Each field in the CSV will be accessible as an edge attribute.
+
+Vertices will be generated for the endpoints of the edges with two vertex attributes:
+
+ - `stringID` will contain the ID string that was used in the CSV.
+ - `id` will contain the internal vertex ID.
+
+====
+include::glossary.asciidoc[tag=csv-import]
+
+[[src]] Source ID field:: The CSV field that contains the edge source ID.
+[[dst]] Destination ID field:: The CSV field that contains the edge destination ID.
+====

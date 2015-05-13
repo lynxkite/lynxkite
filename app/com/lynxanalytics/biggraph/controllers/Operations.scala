@@ -61,9 +61,10 @@ object OperationParams {
         s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
     }
   }
-  case class NonNegInt(id: String, title: String, defaultValue: String = "")
+  case class NonNegInt(id: String, title: String, default: Int)
       extends OperationParameterMeta {
     val kind = "default"
+    val defaultValue = default.toString
     val options = List()
     val multipleChoice = false
     def validate(value: String): Unit = {
@@ -130,7 +131,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   import OperationParams._
 
   register("Discard vertices", new VertexOperation(_, _) {
-    val description = "Throws away all vertices. Note that this operation discards the edges too."
     def parameters = List()
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -139,7 +139,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard edges", new EdgeOperation(_, _) {
-    val description = "Throws away all edges."
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -148,9 +147,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("New vertex set", new VertexOperation(_, _) {
-    val description = "Creates a new vertex set with no edges and no attributes."
     def parameters = List(
-      NonNegInt("size", "Vertex set size"))
+      NonNegInt("size", "Vertex set size", default = 10))
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val result = graph_operations.CreateVertexSet(params("size").toLong)().result
@@ -160,9 +158,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Create random edge bundle", new EdgeOperation(_, _) {
-    val description =
-      """Creates edges randomly, so that each vertex will have a degree uniformly
-      chosen between 0 and 2 × the provided parameter."""
     def parameters = List(
       NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
       RandomSeed("seed", "Seed"))
@@ -174,12 +169,25 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Create scale-free random edge bundle", new EdgeOperation(_, _) {
+    def parameters = List(
+      NonNegInt("iterations", "Number of iterations", default = 10),
+      NonNegDouble(
+        "perIterationMultiplier",
+        "Per iteration edge number multiplier",
+        defaultValue = "1.3"),
+      RandomSeed("seed", "Seed"))
+    def enabled = hasVertexSet && hasNoEdgeBundle
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.ScaleFreeEdgeBundle(
+        params("iterations").toInt,
+        params("seed").toLong,
+        params("perIterationMultiplier").toDouble)
+      project.edgeBundle = op(op.vs, project.vertexSet).result.es
+    }
+  })
+
   register("Connect vertices on attribute", new EdgeOperation(_, _) {
-    val description =
-      """Creates edges between vertices that are equal in a chosen attribute. If the source
-      attribute of A equals the destination attribute of B, an A&nbsp;&rarr;&nbsp;B edge will
-      be generated.
-      """
     def parameters = List(
       Choice("fromAttr", "Source attribute", options = vertexAttributes),
       Choice("toAttr", "Destination attribute", options = vertexAttributes))
@@ -215,12 +223,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def source(params: Map[String, String]): graph_operations.RowInput
   }
 
-  val csvImportHelpText =
-    """ Wildcard (foo/*.csv) and glob (foo/{bar,baz}.csv) patterns are accepted. S3 paths must
-      include the key name and secret key in the following format:
-        <tt>s3n://key_name:secret_key@bucket/dir/file</tt>
-      """
-
   trait CSVRowReader extends RowReader {
     def sourceParameters = List(
       File("files", "Files"),
@@ -239,17 +241,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
 
-  val jdbcHelpText = """
-    The database name is the JDBC connection string without the <tt>jdbc:</tt> prefix.
-    (For example <tt>mysql://127.0.0.1/my_database?user=batman&password=alfred</tt>.)"""
-  val sqlImportHelpText = jdbcHelpText + """
-    An integer column must be specified as the key, and you have to select a key range."""
-
   trait SQLRowReader extends RowReader {
     def sourceParameters = List(
       Param("db", "Database"),
       Param("table", "Table or view"),
-      Param("columns", "Columns (comma separated)"),
+      Param("columns", "Columns"),
       Param("key", "Key column"))
     def source(params: Map[String, String]) = {
       val columns = params("columns").split(",", -1).map(_.trim).filter(_.nonEmpty)
@@ -278,25 +274,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
   register("Import vertices from CSV files",
-    new ImportVerticesOperation(_, _) with CSVRowReader {
-      val description =
-        """Imports vertices (no edges) from a CSV file, or files.
-      Each field in the CSV will be accessible as a vertex attribute.
-      An extra vertex attribute is generated to hold the internal vertex ID.
-      """ + csvImportHelpText
-    })
+    new ImportVerticesOperation(_, _) with CSVRowReader)
   register("Import vertices from a database",
-    new ImportVerticesOperation(_, _) with SQLRowReader {
-      val description =
-        """Imports vertices (no edges) from a SQL database.
-      An extra vertex attribute is generated to hold the internal vertex ID.
-      """ + sqlImportHelpText
-    })
+    new ImportVerticesOperation(_, _) with SQLRowReader)
 
   abstract class ImportEdgesForExistingVerticesOperation(t: String, c: Context)
       extends VertexOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
-      Choice("attr", "Vertex id attribute", options = vertexAttributes[String]),
+      Choice("attr", "Vertex ID attribute", options = vertexAttributes[String]),
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"))
     def enabled =
@@ -314,17 +299,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
   register("Import edges for existing vertices from CSV files",
-    new ImportEdgesForExistingVerticesOperation(_, _) with CSVRowReader {
-      val description =
-        """Imports edges from a CSV file, or files. Your vertices must have a key attribute, by which
-      the edges can be attached to them.""" + csvImportHelpText
-    })
+    new ImportEdgesForExistingVerticesOperation(_, _) with CSVRowReader)
   register("Import edges for existing vertices from a database",
-    new ImportEdgesForExistingVerticesOperation(_, _) with SQLRowReader {
-      val description =
-        """Imports edges from a SQL database. Your vertices must have a key attribute, by which
-      the edges can be attached to them.""" + sqlImportHelpText
-    })
+    new ImportEdgesForExistingVerticesOperation(_, _) with SQLRowReader)
 
   abstract class ImportVerticesAndEdgesOperation(t: String, c: Context)
       extends VertexOperation(t, c) with RowReader {
@@ -343,34 +320,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
   register("Import vertices and edges from single CSV fileset",
-    new ImportVerticesAndEdgesOperation(_, _) with CSVRowReader {
-      val description =
-        """Imports edges from a CSV file, or files.
-      Each field in the CSV will be accessible as an edge attribute.
-      Vertices will be generated for the endpoints of the edges.
-      Two vertex attributes will be generated.
-      "stringID" will contain the ID string that was used in the CSV.
-      "id" will contain the internal vertex ID.
-      """ + csvImportHelpText
-    })
+    new ImportVerticesAndEdgesOperation(_, _) with CSVRowReader)
   register("Import vertices and edges from single database table",
-    new ImportVerticesAndEdgesOperation(_, _) with SQLRowReader {
-      val description =
-        """Imports edges from a SQL database.
-      Each column in the table will be accessible as an edge attribute.
-      Vertices will be generated for the endpoints of the edges.
-      Two vertex attributes will be generated.
-      "stringID" will contain the ID string that was used in the database.
-      "id" will contain the internal vertex ID.
-      """ + sqlImportHelpText
-    })
+    new ImportVerticesAndEdgesOperation(_, _) with SQLRowReader)
 
   register("Convert vertices into edges", new EdgeOperation(_, _) {
-    val description =
-      """Re-interprets the vertices as edges. You select two string-typed vertex attributes
-      which specify the source and destination of the edges. An example use-case is if your
-      vertices are calls. The converted graph will have subscribers as its vertices and the
-      calls as its edges."""
     def parameters = List(
       Choice("src", "Source", options = vertexAttributes[String]),
       Choice("dst", "Destination", options = vertexAttributes[String]))
@@ -398,8 +352,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class ImportVertexAttributesOperation(t: String, c: Context)
       extends VertexOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
-      Choice("id-attr", "Vertex id attribute", options = vertexAttributes[String]),
-      Param("id-field", "ID field in the CSV file"),
+      Choice("id-attr", "Vertex ID attribute", options = vertexAttributes[String]),
+      Param("id-field", "ID field"),
       Param("prefix", "Name prefix for the imported vertex attributes"))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -413,27 +367,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
   register("Import vertex attributes from CSV files",
-    new ImportVertexAttributesOperation(_, _) with CSVRowReader {
-      val description =
-        """Imports vertex attributes for existing vertices from a CSV file.
-      """ + csvImportHelpText
-    })
+    new ImportVertexAttributesOperation(_, _) with CSVRowReader)
   register("Import vertex attributes from a database",
-    new ImportVertexAttributesOperation(_, _) with SQLRowReader {
-      val description =
-        """Imports vertex attributes for existing vertices from a SQL database.
-      """ + sqlImportHelpText
-    })
+    new ImportVertexAttributesOperation(_, _) with SQLRowReader)
 
   register("Maximal cliques", new CreateSegmentationOperation(_, _) {
-    val description = """
-    Creates a segmentation of vertices based on the maximal cliques they are the member of.
-    A maximal clique is a maximal set of vertices where there is an edge between every two vertex.
-    Since one vertex can be part of multiple maximal cliques this segmentation might be overlapping."""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Choice("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))),
-      NonNegInt("min", "Minimum clique size", defaultValue = "3"))
+      NonNegInt("min", "Minimum clique size", default = 3))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
@@ -447,9 +389,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Check cliques", new SegmentationUtilityOperation(_, _) {
-    val description = "Validates that the given segmentations are in fact cliques."
     def parameters = List(
-      Param("selected", "Clique ids to check", defaultValue = "<All>"),
+      Param("selected", "Segment IDs to check", defaultValue = "<All>"),
       Choice("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
@@ -463,10 +404,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Connected components", new CreateSegmentationOperation(_, _) {
-    val description = """Creates a segmentation for every connected set of vertices.<ul>
-    <li>Ignore directions: The algorithm adds reversed edges before calculating the components.</li>
-    <li>Require both directions: The algorithm discards non symmetric edges before calculating
-    the components.</li></ul>"""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "connected_components"),
       Choice(
@@ -490,17 +427,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Find infocom communities", new CreateSegmentationOperation(_, _) {
-    val description = """
-    Finds maximal cliques then merges them to communities. Two cliques are merged if they
-    sufficiently overlap. More details of the algorithm can be found
-    <a href="https://flora.insead.edu/fichiersti_wp/inseadwp2008/2008-64.pdf">here</a>."""
     def parameters = List(
       Param(
         "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
       Param(
         "communities_name", "Name for communities segmentation", defaultValue = "communities"),
       Choice("bothdir", "Edges required in cliques in both directions", options = UIValue.list(List("true", "false"))),
-      NonNegInt("min_cliques", "Minimum clique size", defaultValue = "3"),
+      NonNegInt("min_cliques", "Minimum clique size", default = 3),
       Ratio("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -550,7 +483,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Modular clustering", new CreateSegmentationOperation(_, _) {
-    val description = "Tries to find a clustering of the graph with high modularity."
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
@@ -586,13 +518,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Segment by double attribute", new CreateSegmentationOperation(_, _) {
-    val description =
-      """<p>Segments the vertices by a double vertex attribute.
-
-      <p>If you enable overlapping intervals, then each interval will have a 50% overlap
-      with both the previous and the next interval. As a result each vertex will belong
-      to two segments, guaranteeing that any vertices with an attribute value difference
-      less than half the interval size will share at least one segment."""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = vertexAttributes[Double]),
@@ -626,7 +551,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Segment by string attribute", new CreateSegmentationOperation(_, _) {
-    val description = """Segments the vertices by a string vertex attribute."""
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = vertexAttributes[String]))
@@ -654,24 +578,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Combine segmentations", new CreateSegmentationOperation(_, _) {
-    val description =
-      """<p>Creates a new segmentation from the selected existing segmentations.
-      Each new segment corresponds to one original segment from each of the original
-      segmentations, and the new segment is the intersection of all the corresponding
-      segments. We keep non-empty resulting segments only. Edges between segmentations
-      are discarded.
-
-      <p>If you have segmentations A and B with two segments each, such as:
-      <ul>
-        <li>A = { <i>"men"</i>, <i>"women"</i> }</li>
-        <li>B = { <i>"people younger than 20"</i>, <i>"people older than 20"</i> }</li>
-      </ul>
-      <p>then the combined segmentation will have four segments:
-      <ul>
-        <li>{ <i>"men younger than 20"</i>, <i>"men older than 20"</i>,
-          <i>"women younger than 20"</i>, <i>"women older than 20"</i> }</li>
-      </ul>.
-      """
     def parameters = List(
       Param("name", "New segmentation name"),
       Choice("segmentations", "Segmentations", options = segmentations, multipleChoice = true))
@@ -722,10 +628,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Internal vertex ID as attribute", new AttributeOperation(_, _) {
-    val description =
-      """Exposes the internal vertex ID as an attribute. This attribute is automatically generated
-      by operations that generate new vertex sets. But you can regenerate it with this operation
-      if necessary."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "id"))
     def enabled = hasVertexSet
@@ -740,8 +642,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   register("Add gaussian vertex attribute", new AttributeOperation(_, _) {
-    val description =
-      "Generates a new random double attribute with a Gaussian distribution."
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "random"),
       RandomSeed("seed", "Seed"))
@@ -754,7 +654,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Add constant edge attribute", new AttributeOperation(_, _) {
-    val description = "Adds an attribute with a fixed value to every edge."
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"),
@@ -773,7 +672,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Add constant vertex attribute", new AttributeOperation(_, _) {
-    val description = "Adds an attribute with a fixed value to every vertex."
     def parameters = List(
       Param("name", "Attribute name"),
       Param("value", "Value", defaultValue = "1"),
@@ -789,9 +687,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Fill with constant default value", new AttributeOperation(_, _) {
-    val description =
-      """An attribute may not be defined on every vertex. This operation sets a default value
-      for the vertices where it was not defined."""
     def parameters = List(
       Choice("attr", "Vertex attribute", options = vertexAttributes[String] ++ vertexAttributes[Double]),
       Param("def", "Default value"))
@@ -808,10 +703,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Merge two attributes", new AttributeOperation(_, _) {
-    val description =
-      """An attribute may not be defined on every vertex. This operation uses the secondary
-      attribute to fill in the values where the primary attribute is undefined. If both are
-      undefined on a vertex then the result is undefined too."""
     def parameters = List(
       Param("name", "New attribute name", defaultValue = ""),
       Choice("attr1", "Primary attribute", options = vertexAttributes),
@@ -830,7 +721,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Reverse edge direction", new EdgeOperation(_, _) {
-    val description = "Replaces every edge A->B with its reversed version B->A."
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -845,10 +735,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Add reversed edges", new EdgeOperation(_, _) {
-    val description =
-      """Using this operation you end up with a graph with symmetric edges: if there is an
-      edge from A->B then there is a corresponding edge from B->A. This is the closest you
-      can get to an "undirected" graph."""
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -862,11 +748,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Clustering coefficient", new AttributeOperation(_, _) {
-    val description = """
-    Calculates the local clustering coefficient attribute for every vertex. It quantifies how
-    close the vertex's neighbors are to being a clique. In practice a high (close to 1.0)
-    clustering coefficient means that the neighbors of a vertex are highly interconnected,
-    0.0 means there are no edges between the neighbors of the vertex."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "clustering_coefficient"))
     def enabled = hasEdgeBundle
@@ -878,9 +759,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Embeddedness", new AttributeOperation(_, _) {
-    val description = """
-    Calculates the overlap size of vertex neighborhoods along the edges. If an edge A->B
-    has an embeddedness of <tt>N</tt>, it means A and B have <tt>N</tt> common neighbors."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "embeddedness"))
     def enabled = hasEdgeBundle
@@ -891,9 +769,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Dispersion", new AttributeOperation(_, _) {
-    val description = """Calculates in what extent a given edge acts as intermediary between the
-    the mutual neighbors of its vertices. Might be useful for locating romantic partnerships based
-    on network structure in a social network."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "dispersion"))
     def enabled = hasEdgeBundle
@@ -921,9 +796,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Degree", new AttributeOperation(_, _) {
-    val description = """
-    Calculates the number of edges connected to every vertex. Note that this can be different
-    from the number of neighbors in case of parallel edges."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "degree"),
       Choice("direction", "Count", options = Direction.options))
@@ -937,18 +809,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("PageRank", new AttributeOperation(_, _) {
-    val description = """
-    Calculates PageRank for every vertex. PageRank is a calculated by simulating random walks
-    on the graph. Its PageRank reflects the likelihood that the walk leads to a specific vertex.
-
-    Let's imagine a social graph with information flowing along the egdes. In this case high
-    PageRank means that the vertex is more likely to be the target of the information. Similarly,
-    it may be useful to identify information sources in the reversed graph."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
       Choice("weights", "Weight attribute",
         options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
-      NonNegInt("iterations", "Number of iterations", defaultValue = "5"),
+      NonNegInt("iterations", "Number of iterations", default = 5),
       Ratio("damping", "Damping factor", defaultValue = "0.85"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -963,13 +828,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Centrality", new AttributeOperation(_, _) {
-    val description = """
-    Calculates an approximation of the harmonic centrality for every vertex. The harmonic
-    centrality of the vertex A is the sum of the reciprocals of all shortest paths to A.
-    Higher centrality means that the vertex is more embedded in the graph."""
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "harmonic_centrality"),
-      NonNegInt("maxDiameter", "Maximal diameter to check", defaultValue = "10"))
+      NonNegInt("maxDiameter", "Maximal diameter to check", default = 10))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
@@ -980,12 +841,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Add rank attribute", new AttributeOperation(_, _) {
-    val description = """Associates a new vertex attribute to another,
-    already existing attribute (the key attribute). The new attribute will reflect
-    the ranking of the vertices based on the value of the key attribute. This might be
-    useful to identify vertices which have the highest
-    (or lowest) values with respect to some attribute."""
-
     def parameters = List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
       Choice("keyattr", "Key attribute name", options = vertexAttributes[Double]),
@@ -1005,8 +860,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Example Graph", new VertexOperation(_, _) {
-    val description =
-      "Creates small test graph with 4 people and 4 edges between them."
     def parameters = List()
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
@@ -1021,7 +874,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   private val toStringHelpText = "Converts the selected %s attributes to string type."
   register("Vertex attribute to string", new AttributeOperation(_, _) {
-    val description = toStringHelpText.format("vertex")
     def parameters = List(
       Choice("attr", "Vertex attribute", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
@@ -1033,7 +885,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Edge attribute to string", new AttributeOperation(_, _) {
-    val description = toStringHelpText.format("edge")
     def parameters = List(
       Choice("attr", "Edge attribute", options = edgeAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
@@ -1049,7 +900,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     number) type.
     """
   register("Vertex attribute to double", new AttributeOperation(_, _) {
-    val description = toDoubleHelpText.format("vertex")
     val eligible = vertexAttributes[String] ++ vertexAttributes[Long]
     def parameters = List(
       Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true))
@@ -1063,7 +913,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Edge attribute to double", new AttributeOperation(_, _) {
-    val description = toDoubleHelpText.format("edge")
     val eligible = edgeAttributes[String] ++ edgeAttributes[Long]
     def parameters = List(
       Choice("attr", "Edge attribute", options = eligible, multipleChoice = true))
@@ -1077,9 +926,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Vertex attributes to position", new AttributeOperation(_, _) {
-    val description =
-      """Creates an attribute of type <tt>(Double, Double)</tt> from two <tt>Double</tt> attributes.
-      The created attribute can be used as an X-Y or latitude-longitude location."""
     def parameters = List(
       Param("output", "Save as", defaultValue = "position"),
       Choice("x", "X or latitude", options = vertexAttributes[Double]),
@@ -1098,11 +944,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Edge graph", new VertexOperation(_, _) {
-    val description =
-      """Creates the edge graph (aka line graph), where each vertex corresponds to an edge in the
-      current graph. The vertices will be connected, if one corresponding edge is the continuation
-      of the other.
-      """
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -1114,13 +955,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Derived vertex attribute", new AttributeOperation(_, _) {
-    val description =
-      """Generates a new attribute based on existing attributes. The value expression can be
-      an arbitrary JavaScript expression, and it can refer to existing attributes as if they
-      were local variables. For example you can write <tt>age * 2</tt> to generate a new attribute
-      that is the double of the age attribute. Or you can write
-      <tt>gender == 'Male' ? 'Mr ' + name : 'Ms ' + name</tt> for a more complex example.
-      """
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
@@ -1144,15 +978,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Derived edge attribute", new AttributeOperation(_, _) {
-    val description =
-      """Generates a new attribute based on existing attributes. The value expression can be
-      an arbitrary JavaScript expression, and it can refer to existing attributes on the edge as if
-      they were local variables. It can also refer to attributes of the source and destination
-      vertex of the edge using the format src$attribute and dst$attribute.
-
-      For example you can write <tt>weight * Math.abs(src$age - dst$age)</tt> to generate a new
-      attribute that is the weighted age difference of the two endpoints of the edge.
-      """
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
@@ -1194,7 +1019,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Aggregate to segmentation", new SegmentationOperation(_, _) {
-    val description = "For example, it can calculate the average age of each clique."
     def parameters = aggregateParams(parent.vertexAttributes)
     def enabled =
       FEStatus.assert(parent.vertexAttributes.nonEmpty,
@@ -1210,8 +1034,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Weighted aggregate to segmentation", new SegmentationOperation(_, _) {
-    val description =
-      "For example, it can calculate the average age per kilogram of each clique."
     def parameters = List(
       Choice("weight", "Weight", options = vertexAttributes[Double])) ++
       aggregateParams(parent.vertexAttributes, weighted = true)
@@ -1231,8 +1053,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Aggregate from segmentation", new SegmentationOperation(_, _) {
-    val description =
-      "For example, it can calculate the average size of cliques a person belongs to."
     def parameters = List(
       Param("prefix", "Generated name prefix",
         defaultValue = project.asSegmentation.name)) ++
@@ -1251,9 +1071,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Weighted aggregate from segmentation", new SegmentationOperation(_, _) {
-    val description =
-      """For example, it can calculate an averge over the cliques a person belongs to,
-      weighted by the size of the cliques."""
     def parameters = List(
       Param("prefix", "Generated name prefix",
         defaultValue = project.asSegmentation.name),
@@ -1275,9 +1092,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Create edges from set overlaps", new SegmentationOperation(_, _) {
-    val description = "Connects segments with large enough overlaps."
     def parameters = List(
-      NonNegInt("minOverlap", "Minimal overlap for connecting two segments", defaultValue = "3"))
+      NonNegInt("minOverlap", "Minimal overlap for connecting two segments", default = 3))
     def enabled = hasNoEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.SetOverlap(params("minOverlap").toInt)
@@ -1290,11 +1106,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Create edges from co-occurrence", new SegmentationOperation(_, _) {
-    val description =
-      """Connects vertices in the parent project if they co-occur in any segments.
-      Multiple co-occurrences will result in multiple parallel edges. Loop edges
-      are generated for each segment that a vertex belongs to. The attributes of
-      the segment are copied to the edges created from it."""
     def parameters = List()
     def enabled = FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
     def apply(params: Map[String, String]) = {
@@ -1310,8 +1121,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Aggregate on neighbors", new AttributeOperation(_, _) {
-    val description =
-      "For example it can calculate the average age of the friends of each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
       Choice("direction", "Aggregate on", options = Direction.options)) ++
@@ -1331,8 +1140,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Weighted aggregate on neighbors", new AttributeOperation(_, _) {
-    val description =
-      "For example it can calculate the average age per kilogram of the friends of each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
       Choice("weight", "Weight", options = vertexAttributes[Double]),
@@ -1356,10 +1163,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Merge vertices by attribute", new VertexOperation(_, _) {
-    val description =
-      """Merges each set of vertices that are equal by the chosen attribute. Aggregations
-      can be specified for how to handle the rest of the attributes, which may be different
-      among the merged vertices."""
     def parameters = List(
       Choice("key", "Match by", options = vertexAttributes)) ++
       aggregateParams(project.vertexAttributes)
@@ -1448,13 +1251,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   register("Merge parallel edges", new EdgeOperation(_, _) {
-    val description =
-      """<p>Multiple edges going from A to B will be merged into a single edge.
-      The edges going from A to B are not merged with edges going from B to A.
-
-      <p>Edge attributes can be aggregated across the merged edges.
-      """
-
     def parameters = aggregateParams(project.edgeAttributes)
     def enabled = hasEdgeBundle
 
@@ -1485,7 +1281,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard loop edges", new EdgeOperation(_, _) {
-    val description = "Discards edges that connect a vertex to itself."
     def parameters = List()
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
@@ -1502,7 +1297,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Aggregate vertex attribute globally", new AttributeOperation(_, _) {
-    val description = "The result is a single scalar value."
     def parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(project.vertexAttributes, needsGlobal = true)
     def enabled =
@@ -1518,7 +1312,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Weighted aggregate vertex attribute globally", new AttributeOperation(_, _) {
-    val description = "The result is a single scalar value."
     def parameters = List(
       Param("prefix", "Generated name prefix"),
       Choice("weight", "Weight", options = vertexAttributes[Double])) ++
@@ -1539,7 +1332,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Aggregate edge attribute globally", new AttributeOperation(_, _) {
-    val description = "The result is a single scalar value."
     def parameters = List(Param("prefix", "Generated name prefix")) ++
       aggregateParams(
         project.edgeAttributes,
@@ -1558,7 +1350,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Weighted aggregate edge attribute globally", new AttributeOperation(_, _) {
-    val description = "The result is a single scalar value."
     def parameters = List(
       Param("prefix", "Generated name prefix"),
       Choice("weight", "Weight", options = edgeAttributes[Double])) ++
@@ -1581,8 +1372,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Aggregate edge attribute to vertices", new AttributeOperation(_, _) {
-    val description =
-      "For example it can calculate the average duration of calls for each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
@@ -1605,8 +1394,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Weighted aggregate edge attribute to vertices", new AttributeOperation(_, _) {
-    val description =
-      "For example it can calculate the average cost per second of calls for each person."
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Choice("weight", "Weight", options = edgeAttributes[Double]),
@@ -1634,14 +1421,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("No operation", new UtilityOperation(_, _) {
-    val description = "Placeholder when creating new operations."
     def parameters = List()
     def enabled = FEStatus.enabled
     def apply(params: Map[String, String]) = {}
   })
 
   register("Discard edge attribute", new UtilityOperation(_, _) {
-    val description = "Throws away an edge attribute."
     def parameters = List(
       Choice("name", "Name", options = edgeAttributes))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
@@ -1655,7 +1440,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard vertex attribute", new UtilityOperation(_, _) {
-    val description = "Throws away a vertex attribute. "
     def parameters = List(
       Choice("name", "Name", options = vertexAttributes))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
@@ -1669,7 +1453,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard segmentation", new UtilityOperation(_, _) {
-    val description = "Throws away a previously calculated segmentation."
     def parameters = List(
       Choice("name", "Name", options = segmentations))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
@@ -1683,7 +1466,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Discard scalar", new UtilityOperation(_, _) {
-    val description = "Throws away a scalar value."
     def parameters = List(
       Choice("name", "Name", options = scalars))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
@@ -1697,7 +1479,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Rename edge attribute", new UtilityOperation(_, _) {
-    val description = "Replaces the name of an edge attribute with a new one."
     def parameters = List(
       Choice("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
@@ -1717,7 +1498,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Rename vertex attribute", new UtilityOperation(_, _) {
-    val description = "Replaces the name of a vertex attribute with a new one."
     def parameters = List(
       Choice("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
@@ -1738,7 +1518,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Rename segmentation", new UtilityOperation(_, _) {
-    val description = "Replaces the name of a segmentation with a new one."
     def parameters = List(
       Choice("from", "Old name", options = segmentations),
       Param("to", "New name"))
@@ -1757,7 +1536,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Rename scalar", new UtilityOperation(_, _) {
-    val description = "Replaces the name of a scalar with a new one."
     def parameters = List(
       Choice("from", "Old name", options = scalars),
       Param("to", "New name"))
@@ -1777,7 +1555,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy edge attribute", new UtilityOperation(_, _) {
-    val description = "Creates a copy of the edge attribute."
     def parameters = List(
       Choice("from", "Old name", options = edgeAttributes),
       Param("to", "New name"))
@@ -1793,7 +1570,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy vertex attribute", new UtilityOperation(_, _) {
-    val description = "Creates a copy of the vertex attribute."
     def parameters = List(
       Choice("from", "Old name", options = vertexAttributes),
       Param("to", "New name"))
@@ -1810,7 +1586,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy segmentation", new UtilityOperation(_, _) {
-    val description = "Copies a segmentation."
     def parameters = List(
       Choice("from", "Old name", options = segmentations),
       Param("to", "New name"))
@@ -1829,7 +1604,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy scalar", new UtilityOperation(_, _) {
-    val description = "Copies a scalar value."
     def parameters = List(
       Choice("from", "Old name", options = scalars),
       Param("to", "New name"))
@@ -1845,10 +1619,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Import project as segmentation", new CreateSegmentationOperation(_, _) {
-    val description =
-      """Copies another project into a new segmentation for this one. There will be no
-      connections between the segments and the base vertices. You can import/create those via
-      a new operation."""
     def parameters = List(
       Choice("them", "Other project's name", options = otherProjects))
     private def otherProjects = readableProjects.filter(_.id != project.projectName)
@@ -1899,22 +1669,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   }
   register("Load segmentation links from CSV",
-    new LoadSegmentationLinksOperation(_, _) with CSVRowReader {
-      val description =
-        "Import the connection between the main project and this segmentation from a CSV." +
-          csvImportHelpText
-    })
+    new LoadSegmentationLinksOperation(_, _) with CSVRowReader)
   register("Load segmentation links from a database",
-    new LoadSegmentationLinksOperation(_, _) with SQLRowReader {
-      val description =
-        "Import the connection between the main project and this segmentation from a SQL database." +
-          sqlImportHelpText
-    })
+    new LoadSegmentationLinksOperation(_, _) with SQLRowReader)
 
   register("Define segmentation links from matching attributes",
     new SegmentationOperation(_, _) {
-      val description =
-        "Connect vertices in the main project with segmentations based on matching attributes."
       def parameters = List(
         Choice(
           "base-id-attr",
@@ -1938,11 +1698,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     })
 
   register("Union with another project", new VertexOperation(_, _) {
-    val description =
-      """The resulting graph is just a disconnected graph containing the vertices and edges of
-      the two originating projects. All vertex and edge attributes are preserved. If an attribute
-      exists in both projects, it must have the same data type in both.
-      """
     def parameters = List(
       Choice("other", "Other project's name", options = readableProjects),
       Param("id-attr", "ID attribute name", defaultValue = "new_id"))
@@ -2044,23 +1799,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Fingerprinting based on attributes", new VertexOperation(_, _) {
-    val description =
-      """<p>In a graph that has two different string identifier attributes (e.g. Facebook ID and
-      MSISDN) this operation will match the vertices that only have the first attribute defined
-      with the vertices that only have the second attribute defined. For the well-matched vertices
-      the new attributes will be added. (For example if a vertex only had an MSISDN and we found a
-      matching Facebook ID, this will be saved as the Facebook ID of the vertex.)
-
-      <p>The matched vertices will not be automatically merged, but this can easily be performed
-      with the "Merge vertices by attribute" operation on either of the two identifier attributes.
-      """
     def parameters = List(
       Choice("leftName", "First ID attribute", options = vertexAttributes[String]),
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
       Choice("weights", "Edge weights",
         options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
       NonNegDouble("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
-      NonNegInt("mo", "Minimum overlap", defaultValue = "1"),
+      NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
     def enabled =
       hasEdgeBundle &&
@@ -2108,8 +1853,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy vertex attributes from segmentation", new SegmentationOperation(_, _) {
-    val description =
-      "Copies all vertex attributes from the segmentation to the parent."
     def parameters = List(
       Param("prefix", "Attribute name prefix", defaultValue = seg.name))
     def enabled =
@@ -2128,8 +1871,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Copy vertex attributes to segmentation", new SegmentationOperation(_, _) {
-    val description =
-      "Copies all vertex attributes from the parent to the segmentation."
     def parameters = List(
       Param("prefix", "Attribute name prefix"))
     def enabled =
@@ -2148,22 +1889,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Fingerprinting between project and segmentation", new SegmentationOperation(_, _) {
-    val description =
-      """<p>Finds the best match out of the potential matches that are defined between a project and
-      a segmentation. The best match is chosen by comparing the vertex neighborhoods in the project
-      and the segmentation.
-
-      <p>The result of this operation is an updated edge set between the project and the
-      segmentation, that is a one-to-one matching.
-
-      <p>Example use-case: Project M is an MSISDN graph based on call data. Project F is a Facebook
-      graph. A CSV file contains a number of MSISDN -> Facebook ID mappings, a many-to-many
-      relationship. Connect the two projects with "Import project as segmentation", then use this
-      operation to turn the mapping into a high-quality one-to-one relationship.
-      """
     def parameters = List(
       NonNegDouble("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
-      NonNegInt("mo", "Minimum overlap", defaultValue = "1"),
+      NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
     def enabled =
       hasEdgeBundle && FEStatus.assert(parent.edgeBundle != null, s"No edges on $parent")
@@ -2196,7 +1924,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Change project notes", new UtilityOperation(_, _) {
-    val description = ""
     def parameters = List(
       Param("notes", "New contents"))
     def enabled = FEStatus.enabled
@@ -2206,8 +1933,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Viral modeling", new SegmentationWorkflowOperation(_, _) {
-    val description = """Viral modeling tries to predict unknown values of an attribute based on
-        the known values of the attribute on peers that belong to the same segments."""
     def parameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "viral"),
       Choice("target", "Target attribute",
@@ -2215,9 +1940,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
       RandomSeed("seed", "Random seed for test set selection"),
       NonNegDouble("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
-      NonNegInt("min_num_defined", "Minimum number of defined attributes in a segment", defaultValue = "3"),
+      NonNegInt("min_num_defined", "Minimum number of defined attributes in a segment", default = 3),
       Ratio("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"),
-      NonNegInt("iterations", "Iterations", defaultValue = "3"))
+      NonNegInt("iterations", "Iterations", default = 3))
     def parentDoubleAttributes = parent.vertexAttributeNames[Double].toList
     def enabled = hasVertexSet &&
       FEStatus.assert(UIValue.list(parentDoubleAttributes).nonEmpty,
@@ -2337,7 +2062,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Correlate two attributes", new AttributeOperation(_, _) {
-    val description = """Calculates correlation coefficient of two attributes."""
     def parameters = List(
       Choice("attrA", "First attribute", options = vertexAttributes[Double]),
       Choice("attrB", "Second attribute", options = vertexAttributes[Double]))
@@ -2354,10 +2078,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Filter by attributes", new AttributeOperation(_, _) {
-    val description =
-      """Keeps only vertices and edges that match the filters. The filter syntax is documented in the
-    <a href="http://rnd.lynxanalytics.com/lynxkite-user-guide">LynxKite User Guide</a>.
-    """
     def parameters =
       vertexAttributes.toList.map { attr => Param(s"filterva-${attr.id}", attr.id) } ++
         project.segmentations.toList.map { seg => Param(s"filterva-${seg.equivalentUIAttribute.title}", seg.name) } ++
@@ -2405,10 +2125,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Save UI status as graph attribute", new UtilityOperation(_, _) {
-    val description =
-      """Saves UI status as a graph attribute that can be reused
-         later to reload the same visualization.
-      """
     def parameters = List(
       // In the future we may want a special kind for this so that users don't see JSON.
       Param("scalarName", "Name of new graph attribute"),
@@ -2431,7 +2147,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     register("Export vertex attributes to file", new AttributeOperation(_, _) {
       override val dirty = true
-      val description = "Writes the vertices and their attributes to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
@@ -2460,9 +2175,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     register("Export vertex attributes to database", new AttributeOperation(_, _) {
       override val dirty = true
-      val description = """
-        Creates a new table and writes the selected attributes into it.
-        """ + jdbcHelpText
       def parameters = List(
         Param("db", "Database"),
         Param("table", "Table"),
@@ -2491,7 +2203,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     register("Export edge attributes to file", new AttributeOperation(_, _) {
       override val dirty = true
-      val description = "Writes the edges and their attributes to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
@@ -2520,9 +2231,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     register("Export edge attributes to database", new AttributeOperation(_, _) {
       override val dirty = true
-      val description = """
-        Creates a new table and writes the selected attributes into it.
-        """ + jdbcHelpText
       def parameters = List(
         Param("db", "Database"),
         Param("table", "Table"),
@@ -2542,7 +2250,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     register("Export segmentation to file", new SegmentationOperation(_, _) {
       override val dirty = true
-      val description = "Writes a segmentation to a text file."
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "segmentation_csv"),
@@ -2570,9 +2277,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     register("Export segmentation to database", new SegmentationOperation(_, _) {
       override val dirty = true
-      val description = """
-        Creates a new table and writes the edges going from the parent graph to this
-        segmentation into it.""" + jdbcHelpText
       def parameters = List(
         Param("db", "Database"),
         Param("table", "Table"),

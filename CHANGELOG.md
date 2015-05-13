@@ -6,6 +6,17 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - When running an EC2 cluster, you cannot directly reference s3 files as before (using
+   the format `s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@bucket/path`), see the changelog
+   entry below about the data file prefix notation. Instead, for EC2 cluster we automatically
+   setup the prefix `S3` to point to `s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@`. In practice
+   this means that when using an EC2 cluster you need to refer to files on S3 as: `S3$bucket/path`.
+ - Improved stability and graceful degradation. Not having enough memory now will only result in
+   degraded performance not failures.
+ - _"Create scale-free random edge bundle"_ operation added which allows one to create
+   a scale free random graph.
+ - One can save a sequence of operations as a workflow. The feature is accessible from the
+   project history editor/viewer and saved workflows show up as a new operation category.
  - Strings visualized as icons will be matched to neutral icons (circle, square,
    triangle, hexagon, pentagon, star) if an icon with the given name does not exist.
  - _"PageRank"_ operation can now be used without weights.
@@ -13,7 +24,7 @@ Please add changes at the top. When releasing a version add a new header for tha
    For example, what used to be `hdfs://nameservice1:8020/user/kite/data/uploads/file` is
    now simply `UPLOADS$/file`. This enables the administrator to hide s3n passwords from
    the users; futhermore, it will be easier to move the data to another location. A new kiterc
-   option `KITE_ADDITIONAL_ROOT_DEFINITIONS` can be used to provide extra prefixes (other
+   option `KITE_ROOT_DEFINITIONS` can be used to provide extra prefixes (other
    than `UPLOADS$`) See the files `kiterc_template` and `root_definitions.txt` in directory
    `kite_???/conf` for details.
  - New aggregation method: `count distinct`

@@ -1,0 +1,13 @@
+## Add Gaussian vertex attribute
+
+Generates a new random double attribute with a Gaussian (normal) distribution.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[seed]] Seed::
+The random seed.
++
+include::glossary.asciidoc[tag=random-seed]
+====
