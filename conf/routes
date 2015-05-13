@@ -43,5 +43,7 @@ GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 
 GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getGlobalSettings
 
+GET  /appLog           com.lynxanalytics.biggraph.serving.Assets.appLog
+
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
