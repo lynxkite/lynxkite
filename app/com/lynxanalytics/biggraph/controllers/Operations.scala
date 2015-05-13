@@ -1438,6 +1438,53 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Merge parallel edges by string attribute", new EdgeOperation(_, _) {
+    val description =
+      """<p>Multiple edges going from A to B that share the given edge attribute
+         will be merged into a single edge. The edges going from A to B are not merged
+         with edges going from B to A.
+
+      <p>The shared attribute can be aggregated across the merged edges.
+      """
+
+    def parameters = List(
+      Choice("key", "Merge by", options = edgeAttributes[String])) ++
+      aggregateParams(project.edgeAttributes)
+    def enabled = FEStatus.assert(edgeAttributes[String].nonEmpty,
+      "There must be at least one string edge attribute")
+
+    def apply(params: Map[String, String]) = {
+      val keyAttr: Attribute[String] = project.edgeAttributes(params("key")).runtimeSafeCast[String]
+
+      val edgesAsAttr: Attribute[(ID, ID)] = {
+        val op = graph_operations.EdgeBundleAsAttribute()
+        op(op.edges, project.edgeBundle).result.attr
+      }
+      val edgesAndKey: Attribute[((ID, ID), String)] = {
+        val op = graph_operations.JoinAttributes[(ID, ID), String]()
+        op(op.a, edgesAsAttr)(op.b, keyAttr).result.attr
+      }
+      val mergedResult = {
+        val op = graph_operations.MergeVertices[((ID, ID), String)]()
+        op(op.attr, edgesAndKey).result
+      }
+      val newEdges = {
+        val op = graph_operations.PulledOverEdges()
+        op(op.originalEB, project.edgeBundle)(op.injection, mergedResult.representative)
+          .result.pulledEB
+      }
+      val oldAttrs = project.edgeAttributes.toMap
+      project.edgeBundle = newEdges
+
+      for ((attr, choice) <- parseAggregateParams(params)) {
+        project.edgeAttributes(s"${attr}_${choice}") =
+          aggregateViaConnection(
+            mergedResult.belongsTo,
+            AttributeWithLocalAggregator(oldAttrs(attr), choice))
+      }
+    }
+  })
+
   register("Discard loop edges", new EdgeOperation(_, _) {
     val description = "Discards edges that connect a vertex to itself."
     def parameters = List()
