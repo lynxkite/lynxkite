@@ -7,7 +7,7 @@ the new attributes will be added. (For example if a vertex only had an MSISDN an
 matching Facebook ID, this will be saved as the Facebook ID of the vertex.)
 
 The matched vertices will not be automatically merged, but this can easily be performed
-with the link:merge-vertices-by-attribute["Merge vertices by attribute"] operation
+with the link:{help}merge-vertices-by-attribute[Merge vertices by attribute] operation
 on either of the two identifier attributes.
 
 ====
@@ -18,10 +18,10 @@ The similarity calculation is based on the network structure: the more alike the
 are, the more similar two vertices are considered. Vertex attributes are not considered in the
 calculation.
 
-[[leftName]] First ID attribute::
+[[leftname]] First ID attribute::
 Two identifying attributes have to be selected.
 
-[[rightName]] Second ID attribute::
+[[rightname]] Second ID attribute::
 Two identifying attributes have to be selected.
 
 [[weights]] Edge weights::
@@ -40,5 +40,5 @@ anyway.)
 
 [[ms]] Minimum similarity::
 The similarity threshold below which two vertices will not be considered a match even if there are
-no better matches for them. Similarity is normalized between 0.0 and 1.0.
+no better matches for them. Similarity is normalized to [0, 1].
 ====

@@ -7,10 +7,12 @@ segments. We keep non-empty resulting segments only. Edges between segmentations
 are discarded.
 
 If you have segmentations A and B with two segments each, such as:
+
  - A = { _"men"_, _"women"_ }
  - B = { _"people younger than 20"_, _"people older than 20"_ }
 
 then the combined segmentation will have four segments:
+
   - { _"men younger than 20"_, _"men older than 20"_,
       _"women younger than 20"_, _"women older than 20"_ }
 

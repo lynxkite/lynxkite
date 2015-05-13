@@ -2,4 +2,17 @@
 
 Imports vertex attributes for existing vertices from a CSV file.
 
-include::glossary.asciidoc[tag=file-import]
+====
+include::glossary.asciidoc[tag=csv-import]
+
+[[id-attr]] Vertex ID attribute::
+The vertex attribute which is used in the CSV's ID field.
+
+[[id-field]] ID field::
+The ID field name in the CSV. This should be a string field that uses the same IDs as
+the chosen vertex ID attribute.
+
+[[prefix]] Name prefix for the imported vertex attributes::
+Prepend this prefix string to the new vertex attribute names. This can be used to avoid
+accidentally overwriting existing attributes.
+====

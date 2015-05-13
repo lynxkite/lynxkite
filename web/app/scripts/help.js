@@ -40,8 +40,6 @@ angular.module('biggraph').directive('helpId', function() {
       scope.$watch('helpId', function() {
         var id = scope.helpId.toLowerCase();
         var content = angular.element('help-content').find('#' + id).first();
-        console.log('id', id);
-        console.log('content', content);
         content = content.clone();
         function expander(e, what) {
           return function() {
