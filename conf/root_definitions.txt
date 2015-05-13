@@ -23,13 +23,12 @@
 #
 # Examples: 
 # LOCAL1="file:/home/user/old_kite_data/"
-# LOCAL2="file:/home/user/old_kite_data2/
+# LOCAL2="file:/home/user/old_kite_data2/"
 # S3N_OLD_DIR="s3n://key:pwd@old_kite_data/"
 # S3N_OLD_DIR2="s3n://key:pwd@"
 # EMPTY=""
 #
 # Note that a specification of EMPTY such as the one above gives the user
 # full access to anything; e.g., they can say
-# $EMPTY$s3n://key:password@somedir/somefile or
-# $EMTPY$file://etc/passwd
-
+# EMPTY$s3n://key:password@somedir/somefile or
+# EMPTY$file://etc/passwd

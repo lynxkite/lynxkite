@@ -6,7 +6,11 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
- - Option to download the last server log on the Report Error dialog.
+ - New button added to the Report Error dialog to download the last server log.
+ - _"Create scale-free random edge bundle"_ operation added which allows one to create
+   a scale free random graph.
+ - One can save a sequence of operations as a workflow. The feature is accessible from the
+   project history editor/viewer and saved workflows show up as a new operation category.
  - Strings visualized as icons will be matched to neutral icons (circle, square,
    triangle, hexagon, pentagon, star) if an icon with the given name does not exist.
  - _"PageRank"_ operation can now be used without weights.
