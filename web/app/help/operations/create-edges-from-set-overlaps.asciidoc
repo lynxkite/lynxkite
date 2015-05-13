@@ -3,6 +3,6 @@
 Connects segments with large enough overlaps.
 
 ====
-[[minOverlap]] Minimal overlap for connecting two segments::
+[[minoverlap]] Minimal overlap for connecting two segments::
 Two segments will be connected if they have at least this many members in common.
 ====
