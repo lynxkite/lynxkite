@@ -120,8 +120,6 @@ include::import-edges-for-existing-vertices-from-a-database.asciidoc[]
 
 include::import-edges-for-existing-vertices-from-csv-files.asciidoc[]
 
-include::import-project-as-segmentation.asciidoc[]
-
 include::import-vertex-attributes-from-a-database.asciidoc[]
 
 include::import-vertex-attributes-from-csv-files.asciidoc[]
@@ -134,62 +132,10 @@ include::import-vertices-from-a-database.asciidoc[]
 
 include::import-vertices-from-csv-files.asciidoc[]
 
-include::internal-vertex-id-as-attribute.asciidoc[]
-
-include::load-segmentation-links-from-a-database.asciidoc[]
-
-include::load-segmentation-links-from-csv.asciidoc[]
-
 include::maximal-cliques.asciidoc[]
 
-include::merge-parallel-edges.asciidoc[]
+include::merge-parallel-edges-by-string-attribute.asciidoc[]
 
-include::merge-two-attributes.asciidoc[]
-
-include::merge-vertices-by-attribute.asciidoc[]
-
-include::modular-clustering.asciidoc[]
+include::merge-parallel-edges-by-string-attribute.asciidoc~[]
 
 include::new-vertex-set.asciidoc[]
-
-include::no-operation.asciidoc[]
-
-include::pagerank.asciidoc[]
-
-include::rename-edge-attribute.asciidoc[]
-
-include::rename-scalar.asciidoc[]
-
-include::rename-segmentation.asciidoc[]
-
-include::rename-vertex-attribute.asciidoc[]
-
-include::reverse-edge-direction.asciidoc[]
-
-include::save-ui-status-as-graph-attribute.asciidoc[]
-
-include::segment-by-double-attribute.asciidoc[]
-
-include::segment-by-string-attribute.asciidoc[]
-
-include::union-with-another-project.asciidoc[]
-
-include::vertex-attribute-to-double.asciidoc[]
-
-include::vertex-attribute-to-position.asciidoc[]
-
-include::vertex-attribute-to-string.asciidoc[]
-
-include::viral-modeling.asciidoc[]
-
-include::weighted-aggregate-edge-attribute-globally.asciidoc[]
-
-include::weighted-aggregate-edge-attribute-to-vertices.asciidoc[]
-
-include::weighted-aggregate-from-segmentation.asciidoc[]
-
-include::weighted-aggregate-on-neighbors.asciidoc[]
-
-include::weighted-aggregate-to-segmentation.asciidoc[]
-
-include::weighted-aggregate-vertex-attribute-globally.asciidoc[]
