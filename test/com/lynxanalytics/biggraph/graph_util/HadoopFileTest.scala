@@ -223,7 +223,7 @@ class HadoopFileTest extends FunSuite {
 
   ignore("User defined files are read") {
     // TODO: This doesn't work.
-    scala.util.Properties.setProp("KITE_ADDITIONAL_ROOT_DEFINITIONS", "~/user_roots.txt")
+    scala.util.Properties.setProp("KITE_ROOT_DEFINITIONS", "~/user_roots.txt")
     RootRepository.addUserDefinedResolutions()
   }
 

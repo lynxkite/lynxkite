@@ -27,7 +27,7 @@ object RootRepository {
     val candidates = pathResolutions.filter { x => path.startsWith(x._2) }
     if (candidates.isEmpty) {
       assert(false, s"Cannot find a prefix notation for path $path. " +
-        "See KITE_ADDITIONAL_ROOT_DEFINITIONS in .kiterc for a possible solution")
+        "See KITE_ROOT_DEFINITIONS in .kiterc for a possible solution")
       ???
     } else {
       candidates.maxBy(_._2.length)
@@ -101,7 +101,7 @@ object RootRepository {
 
   def addUserDefinedResolutions() = {
     val userDefinedRootResolutionFile =
-      scala.util.Properties.envOrElse("KITE_ADDITIONAL_ROOT_DEFINITIONS", "")
+      scala.util.Properties.envOrElse("KITE_ROOT_DEFINITIONS", "")
     if (userDefinedRootResolutionFile.nonEmpty) {
       val userDefinedResolutions = parseUserDefinedInputFromFile(userDefinedRootResolutionFile)
       for ((rootSymbolNoDollar, path) <- userDefinedResolutions) {
