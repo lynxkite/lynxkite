@@ -8,15 +8,18 @@ class HadoopFileTest extends FunSuite {
   RootRepository.registerRoot("HADOOPTEST$", rootPath)
 
   test("Test basic RootRepository asserts") {
-    RootRepository.registerRoot("BABABA$", "mamam")
+    RootRepository.registerRoot("BABABA$", "x:mamam")
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("BABABA$", "mamam")
+      RootRepository.registerRoot("BABABA$", "x:mamam")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("KJHKJSDDSJ@", "mamam")
+      RootRepository.registerRoot("KJHKJSDDSJ@", "x:mamam")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("KJHKJSDDSJ$/haha", "mamam")
+      RootRepository.registerRoot("KJHKJSDDSJ$/haha", "x:mamam")
+    }
+    intercept[java.lang.AssertionError] {
+      RootRepository.registerRoot("NOSCHEME$", "noschemetobefoundhere/alma")
     }
     RootRepository.registerRoot("_$", "")
     RootRepository.registerRoot("AB_$", "")
@@ -162,22 +165,22 @@ class HadoopFileTest extends FunSuite {
         ("b///", "b/"),
         ("/user/../trick", "ASSERT")))
 
-    checkPathRules("b",
+    checkPathRules("x:b",
       List(
         ("a", "ASSERT"),
-        ("/haha", "b/haha"),
-        ("///g///", "b/g/"),
-        ("", "b"),
+        ("/haha", "x:b/haha"),
+        ("///g///", "x:b/g/"),
+        ("", "x:b"),
         ("b///", "ASSERT"),
         ("/user/../trick", "ASSERT")))
 
-    checkPathRules("b/",
+    checkPathRules("x:b/",
       List(
-        ("a", "b/a"),
-        ("/haha", "b/haha"),
-        ("///g///", "b/g/"),
-        ("", "b/"),
-        ("b///", "b/b/"),
+        ("a", "x:b/a"),
+        ("/haha", "x:b/haha"),
+        ("///g///", "x:b/g/"),
+        ("", "x:b/"),
+        ("b///", "x:b/b/"),
         ("/user/../trick", "ASSERT")))
 
     checkPathRules("s3n://key:secret@",
@@ -187,10 +190,10 @@ class HadoopFileTest extends FunSuite {
         ("/hello..", "ASSERT")
       ))
 
-    checkPathRules("alma.",
+    checkPathRules("x:alma.",
       List(
         ("a", "ASSERT"),
-        ("///b", "alma./b"),
+        ("///b", "x:alma./b"),
         (".trick", "ASSERT")
       ))
 
@@ -200,10 +203,10 @@ class HadoopFileTest extends FunSuite {
         ("//user", "file:/home/user"),
         ("user", "ASSERT")))
 
-    checkPathRules("/home",
+    checkPathRules("x:/home",
       List(
-        ("/user", "/home/user"),
-        ("//user", "/home/user"),
+        ("/user", "x:/home/user"),
+        ("//user", "x:/home/user"),
         ("user", "ASSERT")))
 
   }
@@ -289,6 +292,9 @@ class HadoopFileTest extends FunSuite {
     f("file:/home/user/kite_data/uploads/file2", "ASSERT")
     f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
     f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
+
+    RootRepository.registerRoot("TEST_SCHEME_ADDITION$", "file:/varr/")
+    f("/varr/alma", "TEST_SCHEME_ADDITION$alma")
 
     RootRepository.registerRoot("TEST_S3N_DATA$", "TEST_S3N$/data")
     f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
