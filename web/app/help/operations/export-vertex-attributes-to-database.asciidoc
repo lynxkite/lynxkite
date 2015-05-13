@@ -2,13 +2,11 @@
 
 Creates a new table and writes the selected attributes into it.
 
-include::glossary.asciidoc[tag=database-access]
-
 ====
 [[db]] Database::
 The database to write to.
 +
-include::glossary.asciidoc[tag=database-access]
+include::{g}[tag=database-access]
 
 [[table]] Table::
 The table to create in the database.

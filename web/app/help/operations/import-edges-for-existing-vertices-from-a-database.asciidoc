@@ -4,7 +4,7 @@ Imports edges from a SQL database. Your vertices must have an identifying attrib
 the edges can be attached to them.
 
 ====
-include::glossary.asciidoc[tag=database-import]
+include::{g}[tag=database-import]
 
 [[attr]] Vertex ID attribute::
 The IDs that are used in the database when defining the edges.

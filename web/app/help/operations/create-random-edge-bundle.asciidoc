@@ -11,5 +11,5 @@ This results in generating _number of vertices &times; average degree_ edges.
 [[seed]] Seed::
 The random seed.
 +
-include::glossary.asciidoc[tag=random-seed]
+include::{g}[tag=random-seed]
 ====

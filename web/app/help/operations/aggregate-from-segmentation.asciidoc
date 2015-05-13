@@ -7,5 +7,5 @@ For example, it can calculate the average size of cliques a person belongs to.
 [[prefix]] Generated name prefix::
 Save the aggregated attributes with this prefix.
 
-include::glossary.asciidoc[tag=local-aggregators]
+include::{g}[tag=local-aggregators]
 ====
