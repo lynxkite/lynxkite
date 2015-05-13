@@ -1,10 +1,19 @@
 // To avoid repetition, add text here and include it in the operation.
 
-tag::database-import[]
+tag::database-access[]
 The database name is the JDBC connection string without the `jdbc:` prefix.
 (For example `mysql://127.0.0.1/my_database?user=batman&password=alfred`.)
-An integer column must be specified as the key, and you have to select a key range.
-end::database-import[]
+end::database-access[]
+
+tag::file-export[]
+There are two ways to access the exported data:
+ - Set *path* to `<auto>`. A download link will be created as a project scalar.
+   You can download the file through this link. This works even for large files as long as
+   they fit on your hard drive.
+ - Set *path* to a distributed file system path that you can access. This allows you to
+   access the exported data using the standard tools for the file system. A download link
+   will still be provided, but the standard tools can allow for higher throughput access.
+end::file-export[]
 
 tag::file-import[]
 Wildcard (`foo/*.csv`) and glob (`foo/{bar,baz}.csv`) patterns are accepted.
@@ -22,3 +31,50 @@ The default value for random seed parameters is randomly picked, so only very
 rarely do you need to give random seeds any thought.
 =====
 end::random-seed[]
+
+tag::global-aggregators[]
+The available aggregators are:
+
+ * For `Double` attributes:
+ ** `sum`
+ ** `average`
+ ** `min`
+ ** `max`
+ ** `count` (number of cases where the attribute is defined)
+ ** `first` (arbitrarily picks a value)
+ ** `std_deviation` (standard deviation)
+
+ * For other attributes:
+ ** `count` (number of cases where the attribute is defined)
+ ** `first` (arbitrarily picks a value)
+end::global-aggregators[]
+
+tag::local-aggregators[]
+The available aggregators are:
+
+ * For `Double` attributes:
+ ** `sum`
+ ** `average`
+ ** `min`
+ ** `max`
+ ** `most_common`
+ ** `count_distinct` (the number of distinct values)
+ ** `count` (number of cases where the attribute is defined)
+ ** `vector` (all the values, as a `Vector` attribute)
+ ** `first` (arbitrarily picks a value)
+ ** `std_deviation` (standard deviation)
+
+ * For `String` attributes:
+ ** `most_common`
+ ** `count_distinct` (the number of distinct values)
+ ** `majority_50` (the value that 50% agree on, or empty string)
+ ** `majority_100` (the value that 100% agree on, or empty string)
+ ** `count` (number of cases where the attribute is defined)
+ ** `vector` (all the values, as a `Vector` attribute)
+
+ * For other attributes:
+ ** `most_common`
+ ** `count_distinct` (the number of distinct values)
+ ** `count` (number of cases where the attribute is defined)
+ ** `vector` (all the values, as a `Vector` attribute)
+end::local-aggregators[]

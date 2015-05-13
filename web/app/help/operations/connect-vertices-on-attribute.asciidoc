@@ -1,16 +1,14 @@
 ## Connect vertices on attribute
 
 Creates edges between vertices that are equal in a chosen attribute. If the source attribute of A
-equals the destination attribute of B, an A&nbsp;&rarr;&nbsp;B edge will be generated.
+equals the destination attribute of B, an A{to}B edge will be generated.
 
 The two attributes must be of the same data type.
 
 ====
 [[fromAttr]] Source attribute::
-An A&nbsp;&rarr;&nbsp;B edge is generated when this attribute on A matches the destination
-attribute on B.
+An A{to}B edge is generated when this attribute on A matches the destination attribute on B.
 
 [[toAttr]] Destination attribute::
-An A&nbsp;&rarr;&nbsp;B edge is generated when the source attribute on A matches this
-attribute on B.
+An A{to}B edge is generated when the source attribute on A matches this attribute on B.
 ====

@@ -4,4 +4,7 @@
 :idprefix:
 :idseparator: -
 
+// Shortcut for edge notation. (A{to}B)
+:to: &nbsp;&rarr;&nbsp;
+
 include::operations/index.asciidoc[]

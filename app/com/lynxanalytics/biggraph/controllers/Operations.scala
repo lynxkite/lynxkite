@@ -261,7 +261,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class ImportEdgesForExistingVerticesOperation(t: String, c: Context)
       extends VertexOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
-      Choice("attr", "Vertex id attribute", options = vertexAttributes[String]),
+      Choice("attr", "Vertex ID attribute", options = vertexAttributes[String]),
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"))
     def enabled =
@@ -370,7 +370,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Check cliques", new SegmentationUtilityOperation(_, _) {
     def parameters = List(
-      Param("selected", "Clique ids to check", defaultValue = "<All>"),
+      Param("selected", "Segment IDs to check", defaultValue = "<All>"),
       Choice("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))))
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
