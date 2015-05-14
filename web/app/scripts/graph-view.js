@@ -5,7 +5,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
-  var svgIcons; // #svg-icons
   var directive = {
       restrict: 'E',
       templateUrl: 'graph-view.html',
@@ -13,11 +12,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       replace: true,
       link: function(scope, element) {
         element = angular.element(element);
-        svgIcons = element.find('#svg-icons');
-        var svg = element.find('svg.graph-view');
-        scope.gv = new GraphView(scope, svg);
+        scope.gv = new GraphView(scope, element);
         scope.updateGraph = function() {
-          if (scope.graph.view === undefined || !scope.graph.view.$resolved || !iconsLoaded()) {
+          if (scope.graph.view === undefined ||
+            !scope.graph.view.$resolved ||
+            !scope.gv.iconsLoaded()) {
             scope.gv.loading();
           } else if (scope.graph.view.$error) {
             scope.gv.error(scope.graph.view);
@@ -35,37 +34,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
       },
     };
-
-  function iconsLoaded() {
-    return svgIcons.find('#circle').length > 0;
-  }
-
-  // Returns a reference to the icon inside #svg-icons.
-  function getOriginalIcon(name) {
-    return svgIcons.find('#' + name.toLowerCase());
-  }
-
-  function hasIcon(name) {
-    if (!name) { return false; }
-    var icon = getOriginalIcon(name);
-    return icon.length !== 0;
-  }
-
-  // Creates a scaled clone of the icon inside #svg-icons.
-  function getIcon(name) {
-    var icon = getOriginalIcon(name);
-    var circle = svgIcons.find('#circle');
-    var cbb = circle[0].getBBox();
-    var bb = icon[0].getBBox();
-    var clone = icon.clone();
-    // Take the scaling factor from the circle icon.
-    clone.scale = 2 / Math.max(cbb.width, cbb.height);
-    clone.center = {
-      x: bb.x + bb.width / 2,
-      y: bb.y + bb.height / 2,
-    };
-    return clone;
-  }
 
   function Offsetter(xOff, yOff, zoom, thickness, menu) {
     this.xOff = xOff;
@@ -112,7 +80,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   function GraphView(scope, element) {
     this.scope = scope;
     this.unregistration = [];  // Cleanup functions to be called before building a new graph.
-    this.svg = element;
+    this.rootElement = element;
+    this.svg = element.find('svg.graph-view');
     this.svg.append([
       svg.marker('arrow'),
       svg.marker('arrow-highlight-in'),
@@ -155,6 +124,37 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     });
     this.renderers = [];  // 3D renderers.
   }
+
+  GraphView.prototype.iconsLoaded = function() {
+    return this.hasIcon('circle');
+  };
+
+  // Returns a reference to the icon inside #svg-icons.
+  GraphView.prototype.getOriginalIcon = function(name) {
+    return this.rootElement.find('#svg-icons #' + name.toLowerCase());
+  };
+
+  GraphView.prototype.hasIcon = function(name) {
+    if (!name) { return false; }
+    var icon = this.getOriginalIcon(name);
+    return icon.length !== 0;
+  };
+
+  // Creates a scaled clone of the icon inside #svg-icons.
+  GraphView.prototype.getIcon = function(name) {
+    var icon = this.getOriginalIcon(name);
+    var circle = this.getOriginalIcon('circle');
+    var cbb = circle[0].getBBox();
+    var bb = icon[0].getBBox();
+    var clone = icon.clone();
+    // Take the scaling factor from the circle icon.
+    clone.scale = 2 / Math.max(cbb.width, cbb.height);
+    clone.center = {
+      x: bb.x + bb.width / 2,
+      y: bb.y + bb.height / 2,
+    };
+    return clone;
+  };
 
   GraphView.prototype.clear = function() {
     svg.removeClass(this.svg, 'loading');
@@ -406,7 +406,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           mapping[label] = 'circle';
           dropNeutral('circle');
           this.addLegendLine('circle: undefined', 10);
-        } else if (hasIcon(label) && label !== 'circle') {
+        } else if (this.gv.hasIcon(label) && label !== 'circle') {
           mapping[label] = label;
           dropNeutral(label);
         } else {
@@ -433,7 +433,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   Vertices.prototype.getIcon = function(label) {
-    return getIcon(this.iconMapping[label] || 'circle');
+    return this.gv.getIcon(this.iconMapping[label] || 'circle');
   };
 
   Vertices.prototype.addLegendLine = function(text, indent) {
