@@ -13,4 +13,8 @@
 // Shortcut for includes. (include::{g}[tag=my-glossary-entry])
 :g: glossary.asciidoc
 
+include::ui/project-header.asciidoc[]
+
+:leveloffset: +1
 include::operations/index.asciidoc[]
+:leveloffset: -1
