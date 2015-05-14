@@ -74,22 +74,44 @@ trait RowInput extends ToJson {
 }
 
 object CSV extends FromJson[CSV] {
-  def fromJson(j: JsValue) = CSV(
-    HadoopFile((j \ "file").as[String], true),
-    (j \ "delimiter").as[String],
-    (j \ "header").as[String],
-    JavaScript((j \ "filter").as[String]))
-}
-case class CSV(file: HadoopFile,
-               delimiter: String,
-               header: String,
-               filter: JavaScript = JavaScript("")) extends RowInput {
-  val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
-  val fields = ImportUtil.split(header, unescapedDelimiter).map(_.trim)
-  assert(
-    fields.forall(_.nonEmpty),
-    s"CSV column with empty name is not allowed. Column names were: $fields")
+  def fromJson(j: JsValue): CSV = {
+    val header = (j \ "header").as[String]
+    val delimiter = (j \ "delimiter").as[String]
+    val fields = getFields(delimiter, header)
+    new CSV(
+      HadoopFile((j \ "file").as[String], true),
+      delimiter,
+      header,
+      fields,
+      JavaScript((j \ "filter").as[String]))
+  }
 
+  def getFields(delimiter: String, header: String): Seq[String] = {
+    val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
+    ImportUtil.split(header, unescapedDelimiter).map(_.trim)
+  }
+
+  def apply(file: HadoopFile,
+            delimiter: String,
+            header: String,
+            filter: JavaScript = JavaScript("")): CSV = {
+    val fields = getFields(delimiter, header)
+    assert(
+      fields.forall(_.nonEmpty),
+      s"CSV column with empty name is not allowed. Column names were: $fields")
+    assert(
+      (fields.toSet.size == fields.size),
+      s"Duplicate CSV column name is not allowed. Column names were: $fields")
+    assert(file.list.nonEmpty, s"$file does not exist.")
+    new CSV(file, delimiter, header, fields, filter)
+  }
+}
+case class CSV private (file: HadoopFile,
+                        delimiter: String,
+                        header: String,
+                        fields: Seq[String],
+                        filter: JavaScript) extends RowInput {
+  val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   override def toJson = Json.obj(
     "file" -> file.symbolicName,
     "delimiter" -> delimiter,
@@ -97,7 +119,6 @@ case class CSV(file: HadoopFile,
     "filter" -> filter.expression)
 
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
-    assert(file.list.nonEmpty, s"$file does not exist.")
     val globLength = file.globLength
     // Estimate how much bigger the in-memory representation is, compared to the CSV file size.
     val explosion = System.getProperty("biggraph.csv.explosion", "20").toLong
@@ -250,11 +271,11 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, input)
+    val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.randomNumbered(partitioner.numPartitions)
+    val idToName = names.randomNumbered(partitioner)
     val nameToId = idToName.map { case (id, name) => (name, id) }
       .toSortedRDD(partitioner)
     putEdgeBundle(columns, nameToId, nameToId, o.edges, output, partitioner)
@@ -296,8 +317,8 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, input)
+    val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
     val srcToId =
       ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
@@ -346,7 +367,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = rc.defaultPartitioner
+    val partitioner = inputs.vs.rdd.partitioner.get
     val lines = input.lines(rc)
     val idFieldIdx = input.fields.indexOf(idField)
     val externalIdToInternalId = ImportCommon.checkIdMapping(
@@ -358,7 +379,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
     val linesByInternalId =
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
-        .toSortedRDD(inputs.vs.rdd.partitioner.get)
+        .toSortedRDD(partitioner)
     linesByInternalId.cacheBackingArray()
     for ((field, idx) <- input.fields.zipWithIndex) {
       if (idx != idFieldIdx) {

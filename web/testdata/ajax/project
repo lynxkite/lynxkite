@@ -50,9 +50,9 @@
         { "id": "import", "description": "Imports vertices from a CSV file, or files. Wildcard (foo/*.csv) and glob (foo/{bar,baz}.csv) patterns are accepted. S3 paths must include the key name and secret key in the following format: <tt>s3n://key name:secret key@bucket/dir/file</tt>",
           "title": "Import vertices", "parameters": [
           { "id": "files", "title": "Files", "defaultValue": "", "options": [], "kind": "file" },
-          { "id": "header", "title": "Header", "defaultValue": "<read from file>", "options": [], "kind": "" }
+          { "id": "header", "title": "Header", "defaultValue": "<read from file>", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
-        { "id": "1", "title": "Discard all vertices", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
+        { "id": "Discard-vertices", "title": "Discard all vertices", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "10", "title": "Filter subscribers", "parameters": [
           { "id": "11", "title": "Expression", "defaultValue": "favorite_color != 'blue'", "options": [] }
         ], "status": { "enabled": true, "disabledReason": "" } },
@@ -71,7 +71,27 @@
             {"id": "most common", "title": "most common"},
             {"id": "majority", "title": "majority"}
           ], "multipleChoice": true, "kind": "tag-list" }
-        ], "status": { "enabled": true, "disabledReason": "" } }
+        ], "status": { "enabled": true, "disabledReason": "" } },
+        {
+          "id":"New-vertex-set",
+          "title":"New vertex set",
+          "parameters":[
+            {
+              "id":"size",
+              "title":"Vertex set size",
+              "kind":"default",
+              "defaultValue":"",
+              "options":[],
+              "multipleChoice":false
+            }
+          ],
+          "category":"Vertex operations",
+          "status":{
+            "enabled":true,
+            "disabledReason":""
+          },
+          "description":"Creates a new vertex set with no edges and no attributes."
+        }
       ]
     },
 
@@ -83,7 +103,7 @@
         { "id": "3", "title": "Reverse edges", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "4", "title": "Add reversed edges", "parameters": [], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "12", "title": "Build edges from expression", "parameters": [
-          { "id": "12a", "title": "Expression", "defaultValue": "a.favorite_color == b.favorite_color", "options": [] }
+          { "id": "12a", "title": "Expression", "defaultValue": "a.favorite_color == b.favorite_color", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } }
       ]
     },
@@ -93,42 +113,42 @@
       "color": "yellow", "icon": "",
       "ops": [
         { "id": "13", "title": "Add constant edge attribute", "parameters": [
-          { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant", "options": [] },
-          { "id": "14", "title": "Value", "defaultValue": "1.0", "options": []}
+          { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant", "options": [], "kind": "default" },
+          { "id": "14", "title": "Value", "defaultValue": "1.0", "options": [], "kind": "default"}
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "13", "title": "Add constant vertex attribute", "parameters": [
-          { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant", "options": [] },
-          { "id": "14", "title": "Value", "defaultValue": "1.0", "options": []}
+          { "id": "13a", "title": "Name of new attribute", "defaultValue": "constant", "options": [], "kind": "default" },
+          { "id": "14", "title": "Value", "defaultValue": "1.0", "options": [], "kind": "default"}
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "15", "title": "Add degree", "parameters": [
-          { "id": "15a", "title": "Name of new attribute", "defaultValue": "degree", "options": [] }
+          { "id": "15a", "title": "Name of new attribute", "defaultValue": "degree", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "16", "title": "Add out-degree", "parameters": [
-          { "id": "16a", "title": "Name of new attribute", "defaultValue": "out_degree", "options": [] }
+          { "id": "16a", "title": "Name of new attribute", "defaultValue": "out_degree", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "17", "title": "Add in-degree", "parameters": [
-          { "id": "17a", "title": "Name of new attribute", "defaultValue": "in_degree", "options": [] }
+          { "id": "17a", "title": "Name of new attribute", "defaultValue": "in_degree", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "18", "title": "Add clustering coefficient", "parameters": [
-          { "id": "18a", "title": "Name of new attribute", "defaultValue": "clustering_coefficient", "options": [] }
+          { "id": "18a", "title": "Name of new attribute", "defaultValue": "clustering_coefficient", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "19", "title": "Add PageRank", "parameters": [
-          { "id": "19a", "title": "Name of new attribute", "defaultValue": "pagerank", "options": [] },
-          { "id": "20", "title": "Damping factor", "defaultValue": "0.85", "options": [] },
-          { "id": "21", "title": "Iterations", "defaultValue": "5", "options": [] }
+          { "id": "19a", "title": "Name of new attribute", "defaultValue": "pagerank", "options": [], "kind": "default" },
+          { "id": "20", "title": "Damping factor", "defaultValue": "0.85", "options": [], "kind": "default" },
+          { "id": "21", "title": "Iterations", "defaultValue": "5", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "38", "title": "Duplicate attribute", "parameters": [
-          { "id": "39", "title": "Existing attribute", "options": [] },
-          { "id": "40", "title": "New attribute", "options": [] }
+          { "id": "39", "title": "Existing attribute", "options": [], "kind": "default" },
+          { "id": "40", "title": "New attribute", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "29a", "title": "Discard date", "parameters": [
-          { "id": "29b", "title": "Attribute", "options": [] }
+          { "id": "29b", "title": "Attribute", "options": [], "kind": "default" }
         ], "status": { "enabled": false, "disabledReason": "None of the attributes contain dates." } },
         { "id": "29c", "title": "Granularity: day", "parameters": [
-          { "id": "29d", "title": "Attribute", "options": [] }
+          { "id": "29d", "title": "Attribute", "options": [], "kind": "default" }
         ], "status": { "enabled": false, "disabledReason": "None of the attributes contain dates." } },
         { "id": "29e", "title": "Granularity: hour", "parameters": [
-          { "id": "29f", "title": "Attribute", "options": [] }
+          { "id": "29f", "title": "Attribute", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } }
       ]
     },
@@ -138,15 +158,15 @@
       "color": "green", "icon": "",
       "ops": [
         { "id": "34", "title": "Find maximal cliques", "parameters": [
-          { "id": "34a", "title": "Name of new segmentation", "defaultValue": "cliques", "options": [] },
-          { "id": "35", "title": "Minimal clique size", "defaultValue": "3", "options": [] }
+          { "id": "34a", "title": "Name of new segmentation", "defaultValue": "cliques", "options": [], "kind": "default" },
+          { "id": "35", "title": "Minimal clique size", "defaultValue": "3", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "36", "title": "Find connected components", "parameters": [
-          { "id": "36a", "title": "Name of new segmentation", "defaultValue": "connected_components", "options": [] }
+          { "id": "36a", "title": "Name of new segmentation", "defaultValue": "connected_components", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "37", "title": "Find communities", "parameters": [
-          { "id": "37a", "title": "Name of new segmentation", "defaultValue": "communities", "options": [] },
-          { "id": "37b", "title": "Algorithm", "defaultValue": "two", "options": [{ "id": "one", "title": "One" }, { "id": "two", "title": "Two" }] }
+          { "id": "37a", "title": "Name of new segmentation", "defaultValue": "communities", "options": [], "kind": "default" },
+          { "id": "37b", "title": "Algorithm", "defaultValue": "two", "options": [{ "id": "one", "title": "One" }, { "id": "two", "title": "Two" }], "kind": "choice" }
         ], "status": { "enabled": true, "disabledReason": "" } }
       ]
     }

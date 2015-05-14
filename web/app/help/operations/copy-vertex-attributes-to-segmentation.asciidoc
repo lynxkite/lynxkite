@@ -1,0 +1,10 @@
+## Copy vertex attributes to segmentation
+
+Copies all vertex attributes from the parent to the segmentation.
+
+This operation available only when each segment contains just one vertex.
+
+====
+[[prefix]] Attribute name prefix::
+A prefix for the new attribute names. Leave empty for no prefix.
+====

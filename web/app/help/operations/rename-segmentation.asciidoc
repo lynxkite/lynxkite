@@ -1,0 +1,13 @@
+## Rename segmentation
+
+Changes the name of a segmentation.
+
+This operation is more easily accessed from the segmentation's dropdown menu in the project view.
+
+====
+[[from]] Old name::
+The segmentation to rename.
+
+[[to]] New name::
+The new name.
+====

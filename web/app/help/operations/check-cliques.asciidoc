@@ -1,0 +1,13 @@
+## Check cliques
+
+Validates that the segments of the segmentation are in fact cliques.
+
+Creates a new `invalid_cliques` scalar, which lists non-clique segment IDs up to a certain number.
+
+====
+[[selected]] Segment IDs to check::
+The validation can be restricted to a subset of the segments, resulting in quicker operation.
+
+[[bothdir]] Edges required in both directions::
+Whether edges have to exist in both directions between all members of a clique.
+====

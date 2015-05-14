@@ -140,15 +140,17 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     import Scripting._
 
     val testfile = HadoopFile(myTempDirRoot) / "test.csv"
-    testfile.delete()
+    // Create the file as the operation constuctor checks for its existence.
+    testfile.createFromStrings("src,dst\n1,2\n")
     val imported = graph_operations.ImportEdgeList(
       graph_operations.CSV(testfile, ",", "src,dst"), "src", "dst")().result
 
+    // Delete file, so that the actual computation fails.
+    testfile.delete()
     // The file does not exist, so the import fails.
-    val e = intercept[java.util.concurrent.ExecutionException] {
+    val e = intercept[Exception] {
       dataManager.get(imported.edges)
     }
-    assert(e.getCause.isInstanceOf[AssertionError])
     // Create the file.
     testfile.createFromStrings("src,dst\n1,2\n")
     // The result can be accessed now.

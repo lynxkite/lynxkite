@@ -31,8 +31,8 @@ case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sc = rc.sparkContext
-    val edgePartitioner = rc.defaultPartitioner
     val edges = inputs.es.rdd
+    val edgePartitioner = edges.partitioner.get
     val newVS = edges.mapValues(_ => ())
 
     val edgesBySource = edges.map {
