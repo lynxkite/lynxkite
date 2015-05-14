@@ -1,0 +1,13 @@
+### Graph visualization screen
+
+When some kind of visualization is turned on a visualization screen opens above the <<project-header>>.
+
+There are two main types of visualizations:
+
+Concrete Vertices View::
+Shows some selected center vertices and their neighborhood with all the edges among these vertices. The set of the center vertices and the size of the neighborhood can be selected by the user.
+
+Bucketed View::
+Shows a consolidated view of all the vertices of the graph. Vertices can be groupped by up to two
+attributes and the system visualises the sizes of the groups and the amount of edges going among
+the groups.
