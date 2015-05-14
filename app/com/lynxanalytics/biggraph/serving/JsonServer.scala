@@ -272,6 +272,7 @@ object ProductionJsonServer extends JsonServer {
   }
 
   def appLog = action(parse.anyContent) { (user, request) =>
+    assert(user.isAdmin, "Only admins can access the server logs")
     val logDir = Play.application.getFile("logs")
     assert(logDir.exists, "Application log directory not found")
     assert(logDir.isDirectory, "'logs' is not a directory")
