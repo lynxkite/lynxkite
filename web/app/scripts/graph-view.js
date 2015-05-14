@@ -827,14 +827,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       offsetter.reDraw();
     }
     this.svgMouseWheelListeners.push(function(e) {
-      var mx = e.originalEvent.pageX;
-      var my = e.originalEvent.pageY;
-      var svgX = mx - svgElement.offset().left;
-      if ((svgX < xMin) || (svgX >= xMax)) {
+      var oe = e.originalEvent;
+      var mx = oe.pageX - svgElement.offset().left;
+      var my = oe.pageY - svgElement.offset().top;
+      if ((mx < xMin) || (mx >= xMax)) {
         return;
       }
       e.preventDefault();
-      var oe = e.originalEvent;
       var deltaX = oe.deltaX;
       var deltaY = oe.deltaY;
       if (/Firefox/.test(window.navigator.userAgent)) {
@@ -848,17 +847,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       zoom({ x: mx, y: my }, plainScroll, shiftScroll);
     });
     this.svgDoubleClickListeners.push(function(e) {
-      var mx = e.originalEvent.pageX;
-      var my = e.originalEvent.pageY;
-      var svgX = mx - svgElement.offset().left;
-      if ((svgX < xMin) || (svgX >= xMax)) {
+      var oe = e.originalEvent;
+      var mx = oe.pageX - svgElement.offset().left;
+      var my = oe.pageY - svgElement.offset().top;
+      if ((mx < xMin) || (mx >= xMax)) {
         return;
       }
       e.preventDefault();
       // Left/right is in/out.
       var scroll = e.which === 1 ? -500 : 500;
       // Shift affects thickness.
-      var shift = e.originalEvent.shiftKey;
+      var shift = oe.shiftKey;
       zoom(
         { x: mx, y: my },
         shift ? 0 : scroll,
