@@ -1,11 +1,15 @@
-## Aggregate from segmentation
+## Weighted aggregate from segmentation
 
 Aggregates vertex attributes across all the segments that a vertex in the base project belongs to.
-For example, it can calculate the average size of cliques a person belongs to.
+For example, it can calculate an averge over the cliques a person belongs to, weighted by
+the size of the cliques.
 
 ====
 [[prefix]] Generated name prefix::
 Save the aggregated attributes with this prefix.
+
+[[weight]] Weight::
+The `Double` attribute to use as weight.
 
 include::{g}[tag=local-aggregators]
 ====

@@ -10,4 +10,7 @@
 // Prefix for internal links. (link:{help}my-operation[My operation])
 :help: /help.html#
 
+// Shortcut for includes. (include::{g}[tag=my-glossary-entry])
+:g: glossary.asciidoc
+
 include::operations/index.asciidoc[]
