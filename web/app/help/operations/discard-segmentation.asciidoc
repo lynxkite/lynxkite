@@ -1,0 +1,8 @@
+## Discard segmentation
+
+Throws away a segmentation value.
+
+====
+[[name]] Name::
+The segmentation to discard.
+====

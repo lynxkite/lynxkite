@@ -1,0 +1,9 @@
+## Import vertices from CSV files
+
+Imports vertices (no edges) from a CSV file, or files.
+Each field in the CSV will be accessible as a vertex attribute.
+An extra vertex attribute is generated to hold the internal vertex ID.
+
+====
+include::{g}[tag=csv-import]
+====

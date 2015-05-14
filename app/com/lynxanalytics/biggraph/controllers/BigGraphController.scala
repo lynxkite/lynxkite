@@ -438,7 +438,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   val user = context.user
   def id = Operation.titleToID(originalTitle)
   def title = originalTitle // Override this to change the display title while keeping the original ID.
-  def description: String
+  val description = "" // Override if description is dynamically generated.
   def parameters: List[OperationParameterMeta]
   def enabled: FEStatus
   // A summary of the operation, to be displayed on the UI.
@@ -524,7 +524,7 @@ case class WorkflowOperation(
 
   override val id = fullName.toString
 
-  val description = workflow.description
+  override val description = workflow.description
 
   val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsJSON)
 

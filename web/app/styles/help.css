@@ -1,0 +1,30 @@
+.read-more {
+  display: block;
+  text-align: right;
+  cursor: pointer;
+}
+
+.help dl {
+  margin-left: 30px;
+}
+.help dt {
+  display: list-item;
+  list-style-type: disc;
+}
+.help dt > a { /* Anchor. */
+  display: none;
+}
+
+#help-button {
+  cursor: pointer;
+}
+#help-popup {
+  position: absolute;
+  width: 30%;
+  background: white;
+  color: black;
+  z-index: 3;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0 2px 5px;
+}

@@ -1,0 +1,13 @@
+## Merge vertices by attribute
+
+Merges each set of vertices that are equal by the chosen attribute. Aggregations
+can be specified for how to handle the rest of the attributes, which may be different
+among the merged vertices.
+
+====
+[[key]] Match by::
+If a set of vertices have the same value for the selected attribute, they will all be merged
+into a single vertex.
+
+include::{g}[tag=local-aggregators]
+====

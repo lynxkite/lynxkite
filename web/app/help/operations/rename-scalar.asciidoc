@@ -1,0 +1,13 @@
+## Rename scalar
+
+Changes the name of a scalar.
+
+This operation is more easily accessed from the scalar's dropdown menu in the project view.
+
+====
+[[from]] Old name::
+The scalar to rename.
+
+[[to]] New name::
+The new name.
+====

@@ -1,0 +1,5 @@
+## Reverse edge direction
+
+Replaces every A{to}B edge with its reverse edge (B{to}A).
+
+Attributes are preserved. Running this operation twice gets back the original graph.

@@ -1,0 +1,12 @@
+## Correlate two attributes
+
+Calculates the Pearson correlation coefficient of two attributes.
+Only vertices where both attributes are defined are considered.
+
+====
+[[attra]] First attribute::
+The correlation of these two attributes will be calculated.
+
+[[attrb]] Second attribute::
+The correlation of these two attributes will be calculated.
+====

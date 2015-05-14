@@ -1,0 +1,16 @@
+// Main structure file that builds the full documentation from its parts.
+
+// Match ID generation used for operations.
+:idprefix:
+:idseparator: -
+
+// Shortcut for edge notation. (A{to}B)
+:to: &nbsp;&rarr;&nbsp;
+
+// Prefix for internal links. (link:{help}my-operation[My operation])
+:help: /help.html#
+
+// Shortcut for includes. (include::{g}[tag=my-glossary-entry])
+:g: glossary.asciidoc
+
+include::operations/index.asciidoc[]
