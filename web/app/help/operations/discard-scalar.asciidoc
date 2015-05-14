@@ -1,0 +1,8 @@
+## Discard scalar
+
+Throws away a scalar value.
+
+====
+[[name]] Name::
+The scalar to discard.
+====

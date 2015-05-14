@@ -1,0 +1,19 @@
+## Weighted aggregate edge attribute to vertices
+
+Aggregates an attribute on all the edges going in or out of vertices.
+For example it can calculate the average cost per second of calls for each person.
+
+====
+[[prefix]] Generated name prefix::
+Save the aggregated attributes with this prefix.
+
+[[weight]] Weight::
+The `Double` attribute to use as weight.
+
+[[direction]] Aggregate on::
+ - `incoming edges`: Aggregate across the edges coming in to each vertex.
+ - `outgoing edges`: Aggregate across the edges going out of each vertex.
+ - `all edges`: Aggregate across all the edges going in or out of each vertex.
+
+include::{g}[tag=local-aggregators]
+====

@@ -1,0 +1,21 @@
+## Export edge attributes to file
+
+Writes the edges and their attributes to a text file.
+The first two columns of the file will contain the source and destination vertex IDs.
+
+include::{g}[tag=file-export]
+
+====
+[[path]] Destination path::
+The file to write to. Must use the link:{help}rooted-files[rooted filenames syntax].
+
+[[link]] Download link name::
+A new scalar will be created under this name. You can download the exported file through this link.
+
+[[attrs]] Attributes::
+Attributes to export.
+
+[[format]] File format::
+The options are CSV (comma-separated values) and SQL dump (which can be imported into a
+SQL database later).
+====
