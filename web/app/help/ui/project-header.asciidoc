@@ -36,8 +36,8 @@ Redoes the last undone operation. Only available if you haven't performed any ne
 since the last undo.
 
 Save as...::
-Makes a copy of the current project with a new name. The user will have write permissions to the
-new copy even if he didn't have for the original.
+Makes a copy of the current project with a new name. You will have write permissions to the
+new copy even if you didn't have for the original.
 
 Project settings::
 Modifies the read and write access settings for the project. Only visible if your Kite instance has
