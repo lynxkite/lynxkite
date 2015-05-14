@@ -204,13 +204,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.update = function(data, menu) {
     this.clear();
+    var i;
     var zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.graph.left, this.scope.graph.right];
-    var halfColumnWidth = this.svg.width() / sides.length / 2;
+    var visibleSides = sides.filter(function(s) { return s && s.graphMode; } );
+    var halfColumnWidth = this.svg.width() / visibleSides.length / 2;
     var clippers = [];
     this.edgeGroups = [];
     this.vertexGroups = [];
-    for (i = 0; i < sides.length; ++i) {
+    for (i = 0; i < visibleSides.length; ++i) {
       var clipper = new Clipper({
         x: (i * 2) * halfColumnWidth,
         y: 0,
@@ -222,43 +224,44 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.edgeGroups.push(this.addGroup('edges', clipper));
     }
     this.crossEdgeGroup = this.addGroup('edges');
-    for (i = 0; i < sides.length; ++i) {
+    for (i = 0; i < visibleSides.length; ++i) {
       this.vertexGroups.push(this.addGroup('nodes', clippers[i]));
     }
     this.legend = svg.create('g', {'class': 'legend'});
     this.root.append(this.legend);
     var oldVertices = this.vertices || new Vertices(this);
-    this.vertices = [];  // Sparse, indexed by side.
-    var vsIndices = [];  // Packed, indexed by position in the JSON.
-    var vsIndex = 0;
-    var i, vs;
+    this.vertices = [];  // Sparse, indexed by side. Everything else is indexed by visible side.
+    var sideIndices = [];  // Maps from visible index to side index.
+    var vsi = 0;
+    var vs;
     for (i = 0; i < sides.length; ++i) {
       if (sides[i] && sides[i].graphMode) {
-        var xMin = (i * 2) * halfColumnWidth;
-        var xOff = (i * 2 + 1) * halfColumnWidth;
-        var xMax = (i * 2 + 2) * halfColumnWidth;
+        var xMin = (vsi * 2) * halfColumnWidth;
+        var xOff = (vsi * 2 + 1) * halfColumnWidth;
+        var xMax = (vsi * 2 + 2) * halfColumnWidth;
         var yOff = this.svg.height() / 2;
-        var dataVs = data.vertexSets[vsIndex];
-        vsIndex += 1;
-        vsIndices.push(i);
-        if (sides[i].display === '3d') { continue; }
-        var offsetter;
-        if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
-          offsetter = oldVertices[i].offsetter.inherit();
-        } else {
-          offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu);
+        var dataVs = data.vertexSets[vsi];
+        if (sides[i].display !== '3d') {
+          var offsetter;
+          if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
+            offsetter = oldVertices[i].offsetter.inherit();
+          } else {
+            offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu);
+          }
+          if (dataVs.mode === 'sampled') {
+            vs = this.addSampledVertices(dataVs, offsetter, sides[i], this.vertexGroups[vsi]);
+          } else {
+            vs = this.addBucketedVertices(dataVs, offsetter, sides[i], this.vertexGroups[vsi]);
+          }
+          vs.offsetter = offsetter;
+          vs.xMin = xMin;
+          vs.halfColumnWidth = halfColumnWidth;
+          vs.clipper = clippers[vsi];
+          this.vertices[i] = vs;
+          this.sideMouseBindings(offsetter, xMin, xMax);
         }
-        if (dataVs.mode === 'sampled') {
-          vs = this.addSampledVertices(dataVs, offsetter, sides[i], this.vertexGroups[i]);
-        } else {
-          vs = this.addBucketedVertices(dataVs, offsetter, sides[i], this.vertexGroups[i]);
-        }
-        vs.offsetter = offsetter;
-        vs.xMin = xMin;
-        vs.halfColumnWidth = halfColumnWidth;
-        vs.clipper = clippers[i];
-        this.vertices[i] = vs;
-        this.sideMouseBindings(offsetter, xMin, xMax);
+        vsi += 1;
+        sideIndices.push(i);
       }
     }
     var side;
@@ -266,30 +269,30 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var e = data.edgeBundles[i];
       // Avoid an error with the Grunt test data, which has edges going to the other side
       // even if we only have one side.
-      if (e.srcIdx >= vsIndex || e.dstIdx >= vsIndex) { continue; }
+      if (e.srcIdx >= visibleSides.length || e.dstIdx >= visibleSides.length) { continue; }
       side = undefined;
       var edgeGroup = this.crossEdgeGroup;
       if (e.srcIdx === e.dstIdx) {
-        var idx = vsIndices[e.srcIdx];
-        side = sides[idx];
+        var idx = e.srcIdx;
+        side = visibleSides[idx];
         edgeGroup = this.edgeGroups[idx];
         if (side.display === '3d') {
           var scope = this.scope.$new();
           scope.edges = e.edges;
           scope.layout3D = e.layout3D;
           scope.width = 2 * halfColumnWidth;
-          scope.left = vsIndices[e.srcIdx] * 2 * halfColumnWidth;
+          scope.left = idx * 2 * halfColumnWidth;
           var r = $compile('<renderer></renderer>')(scope);
           this.svg.after(r);
           this.renderers.push(r);
           continue;
         }
-        if (this.vertices[idx].mode === 'sampled' && e.edges.length >= 5) {
-          this.vertices[idx].addLegendLine(e.edges.length + ' edges');
+        if (this.vertices[sideIndices[idx]].mode === 'sampled' && e.edges.length >= 5) {
+          this.vertices[sideIndices[idx]].addLegendLine(e.edges.length + ' edges');
         }
       }
-      var src = this.vertices[vsIndices[e.srcIdx]];
-      var dst = this.vertices[vsIndices[e.dstIdx]];
+      var src = this.vertices[sideIndices[e.srcIdx]];
+      var dst = this.vertices[sideIndices[e.dstIdx]];
       var edges = this.addEdges(e.edges, src, dst, side, edgeGroup);
       if (e.srcIdx === e.dstIdx) {
         src.edges = edges;
