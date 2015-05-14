@@ -4,8 +4,6 @@ Multiple edges going from A to B that share the same value of the given edge att
 will be merged into a single edge. The edges going from A to B are not merged with edges
 going from B to A.
 
-The shared attribute can be aggregated across the merged edges.
-
 ====
 
 [[key]] Merge by::

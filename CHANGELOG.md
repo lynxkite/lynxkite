@@ -7,7 +7,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 ### master
 
 
- - New edge operation _"Merge parallel edges by string attribute"_ makes it possible
+ - New edge operation _"Merge parallel edges by attribute"_ makes it possible
    for the user to merge those parallel edges between two vertices that share a common
    edge attribute.
  - Admins can download the last server log using the link `http://<kite ip>:<kite port>/logs`.

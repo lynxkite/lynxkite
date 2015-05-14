@@ -1201,9 +1201,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  private def mergeEdgesWithKey(edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[String]) = {
-    val edgesAndKey: Attribute[((ID, ID), String)] = joinAttr(edgesAsAttr, keyAttr)
-    val op = graph_operations.MergeVertices[((ID, ID), String)]()
+  private def mergeEdgesWithKey[T](edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[T]) = {
+    val edgesAndKey: Attribute[((ID, ID), T)] = joinAttr(edgesAsAttr, keyAttr)
+    val op = graph_operations.MergeVertices[((ID, ID), T)]()
     op(op.attr, edgesAndKey).result
   }
 
@@ -1224,7 +1224,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     val mergedResult =
       if (hasKeyAttr) {
-        val keyAttr = project.edgeAttributes(params("key")).runtimeSafeCast[String]
+        val keyAttr = project.edgeAttributes(params("key"))
         mergeEdgesWithKey(edgesAsAttr, keyAttr)
       } else {
         mergeEdges(edgesAsAttr)
@@ -1261,12 +1261,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Merge parallel edges by string attribute", new EdgeOperation(_, _) {
+  register("Merge parallel edges by attribute", new EdgeOperation(_, _) {
     def parameters = List(
-      Choice("key", "Merge by", options = edgeAttributes[String])) ++
+      Choice("key", "Merge by", options = edgeAttributes)) ++
       aggregateParams(project.edgeAttributes)
-    def enabled = FEStatus.assert(edgeAttributes[String].nonEmpty,
-      "There must be at least one string edge attribute")
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty,
+      "There must be at least one edge attribute")
 
     def apply(params: Map[String, String]) = {
       applyMergeParallelEdgesByKey(project, params)
