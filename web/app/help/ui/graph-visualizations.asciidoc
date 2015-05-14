@@ -1,4 +1,4 @@
-### Graph visualization screen
+## Graph visualization screen
 
 When some kind of visualization is turned on a visualization screen opens above the <<project-header>>.
 

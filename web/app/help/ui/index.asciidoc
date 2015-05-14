@@ -1,4 +1,4 @@
-## User Interface Reference
+# User Interface Reference
 
 include::project-header.asciidoc[]
 
