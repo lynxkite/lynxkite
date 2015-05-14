@@ -19,10 +19,6 @@ angular.module('biggraph').directive('projectGraph', function (util) {
       util.deepWatch(scope, 'leftToRightBundle', updateRequest);
       util.deepWatch(scope, 'rightToLeftBundle', updateRequest);
 
-      scope.onIconsLoaded = function() {
-        scope.$broadcast('#svg-icons is loaded');
-      };
-
       scope.graph = {};
       function updateRequest() {
         // This indirection makes it certain that graph-view does not see more recent data than

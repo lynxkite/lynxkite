@@ -5,13 +5,18 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
+  var svgIcons; // #svg-icons
   var directive = {
-      template: '<svg class="graph-view" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>',
+      restrict: 'E',
+      templateUrl: 'graph-view.html',
       scope: { graph: '=', menu: '=' },
       replace: true,
       link: function(scope, element) {
-        scope.gv = new GraphView(scope, element);
-        function updateGraph() {
+        element = angular.element(element);
+        svgIcons = element.find('#svg-icons');
+        var svg = element.find('svg.graph-view');
+        scope.gv = new GraphView(scope, svg);
+        scope.updateGraph = function() {
           if (scope.graph.view === undefined || !scope.graph.view.$resolved || !iconsLoaded()) {
             scope.gv.loading();
           } else if (scope.graph.view.$error) {
@@ -19,28 +24,25 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           } else {
             scope.gv.update(scope.graph.view, scope.menu);
           }
-        }
-        scope.$watch('graph.view', updateGraph);
-        scope.$watch('graph.view.$resolved', updateGraph);
+        };
+        scope.$watch('graph.view', scope.updateGraph);
+        scope.$watch('graph.view.$resolved', scope.updateGraph);
         // An attribute change can happen without a graph data change. Watch them separately.
         // (When switching from "color" to "slider", for example.)
-        util.deepWatch(scope, 'graph.left.vertexAttrs', updateGraph);
-        util.deepWatch(scope, 'graph.right.vertexAttrs', updateGraph);
-        util.deepWatch(scope, 'graph.left.edgeAttrs', updateGraph);
-        util.deepWatch(scope, 'graph.right.edgeAttrs', updateGraph);
-        // It is possible, especially in testing, that we get the graph data faster than the icons.
-        // In this case we delay the drawing until the icons are loaded.
-        scope.$on('#svg-icons is loaded', updateGraph);
+        util.deepWatch(scope, 'graph.left.vertexAttrs', scope.updateGraph);
+        util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
+        util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
+        util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
       },
     };
 
   function iconsLoaded() {
-    return angular.element('#svg-icons #circle').length > 0;
+    return svgIcons.find('#circle').length > 0;
   }
 
   // Returns a reference to the icon inside #svg-icons.
   function getOriginalIcon(name) {
-    return angular.element('#svg-icons #' + name.toLowerCase());
+    return svgIcons.find('#' + name.toLowerCase());
   }
 
   function hasIcon(name) {
@@ -52,7 +54,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   // Creates a scaled clone of the icon inside #svg-icons.
   function getIcon(name) {
     var icon = getOriginalIcon(name);
-    var circle = angular.element('#svg-icons #circle');
+    var circle = svgIcons.find('#circle');
     var cbb = circle[0].getBBox();
     var bb = icon[0].getBBox();
     var clone = icon.clone();
@@ -110,7 +112,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   function GraphView(scope, element) {
     this.scope = scope;
     this.unregistration = [];  // Cleanup functions to be called before building a new graph.
-    this.svg = angular.element(element);
+    this.svg = element;
     this.svg.append([
       svg.marker('arrow'),
       svg.marker('arrow-highlight-in'),
@@ -368,7 +370,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
     // Strings that are valid CSS color names will be used as they are.
     // To identify them we have to try setting them as color on a hidden element.
-    var colorTester = angular.element('#svg-icons')[0];
+    var colorTester = svgIcons[0];
     for (i = 0; i < keys.length; ++i) {
       colorTester.style.color = 'transparent';
       colorTester.style.color = keys[i];
