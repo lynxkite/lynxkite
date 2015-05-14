@@ -9,7 +9,9 @@ angular.module('biggraph').directive('helpContent', function() {
     link: function(scope, element) {
       scope.onload = function() {
         // Move heading IDs to sectionbody divs.
-        element.find('div.sect1,div.sect2,div.sect3,div.sect4').each(function(i, div) {
+        element
+          .find('div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6')
+          .each(function(i, div) {
           div = angular.element(div);
           var heading = div.children('[id]').first();
           div.attr('id', heading.attr('id'));
@@ -19,7 +21,7 @@ angular.module('biggraph').directive('helpContent', function() {
         element.find('dt > a[id]').each(function(i, a) {
           a = angular.element(a);
           var dd = a.parent().next('dd');
-          var section = a.closest('div.sect1,div.sect2,div.sect3,div.sect4');
+          var section = a.closest('div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6');
           var id = section.attr('id') + '-' + a.attr('id');
           dd.attr('id', id);
         });
@@ -41,7 +43,7 @@ angular.module('biggraph').directive('helpId', function() {
         var content = angular.element('help-content').find('#' + id).first();
         content = content.clone();
         if (scope.removeHeader === 'yes') {
-          content.find('h1,h2,h3,h4').first().remove();
+          content.find('h1,h2,h3,h4,h5,h6').first().remove();
         }
         function expander(e, what) {
           return function() {
