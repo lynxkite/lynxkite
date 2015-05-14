@@ -1,4 +1,5 @@
-## The Project Header Bar
+[[project-header]]
+### The Project Header Bar
 
 The project title bar looks something like this:
 
@@ -7,7 +8,7 @@ image::images/project-header.png[Project Header Screenshot]
 It contains the name of the project and also buttons to access various program functions.
 
 [[project-header-buttons]]
-### Project Header Buttons
+#### Project Header Buttons
 
 Not all the buttons listed here are visible all the time, see details below on when each function is
 available.
