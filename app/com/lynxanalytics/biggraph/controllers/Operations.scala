@@ -1220,10 +1220,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       op(op.edges, project.edgeBundle).result.attr
     }
 
-    val haveKeyAttr = params.contains("key")
+    val hasKeyAttr = params.contains("key")
 
     val mergedResult =
-      if (haveKeyAttr) {
+      if (hasKeyAttr) {
         val keyAttr = project.edgeAttributes(params("key")).runtimeSafeCast[String]
         mergeEdgesWithKey(edgesAsAttr, keyAttr)
       } else {
