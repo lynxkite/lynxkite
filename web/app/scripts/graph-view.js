@@ -369,13 +369,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       colorMap[keys[i]] = 'hsl(' + h + ',50%,42%)';
     }
     // Strings that are valid CSS color names will be used as they are.
-    // To identify them we have to try setting them as color on a hidden element.
-    var colorTester = svgIcons[0];
     for (i = 0; i < keys.length; ++i) {
-      colorTester.style.color = 'transparent';
-      colorTester.style.color = keys[i];
-      if (colorTester.style.color !== 'transparent') {
-        colorMap[keys[i]] = keys[i];
+      var tiny = tinycolor(keys[i]);
+      if (tiny.isValid()) {
+        colorMap[keys[i]] = tiny.toString();
       }
     }
     return colorMap;
