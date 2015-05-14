@@ -96,9 +96,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.yOff = y;
     this.reDraw();
   };
+  var drawing = false;
   Offsetter.prototype.reDraw = function() {
-    for (var i = 0; i < this.elements.length; ++i) {
-      this.elements[i].reDraw();
+    setTimeout(this.reDrawInt, 10);
+  };
+  Offsetter.prototype.reDrawInt = function() {
+    if (!drawing) {
+      drawing = true;
+      for (var i = 0; i < this.elements.length; ++i) {
+        this.elements[i].reDraw();
+      }
+      drawing = false;
     }
   };
   Offsetter.prototype.inherit = function() {
