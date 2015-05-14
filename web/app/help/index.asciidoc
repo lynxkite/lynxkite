@@ -15,12 +15,10 @@
 
 # LynxKite User Manual
 
-## Introduction
+:leveloffset: +1
 
-TODO: Some wonderful introduction goes here.
+include::intro/index.asciidoc[]
 
 include::ui/index.asciidoc[]
 
-:leveloffset: +1
 include::operations/index.asciidoc[]
-:leveloffset: -1
