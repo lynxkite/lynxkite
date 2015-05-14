@@ -1244,6 +1244,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           mergedResult.belongsTo,
           AttributeWithLocalAggregator(oldAttrs(attr), choice))
     }
+    if (hasKeyAttr) {
+      val key = params("key")
+      project.edgeAttributes(key) =
+        aggregateViaConnection(mergedResult.belongsTo,
+          AttributeWithLocalAggregator(oldAttrs(key), "most_common"))
+    }
   }
 
   register("Merge parallel edges", new EdgeOperation(_, _) {
