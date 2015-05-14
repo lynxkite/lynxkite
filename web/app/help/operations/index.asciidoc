@@ -146,7 +146,7 @@ include::maximal-cliques.asciidoc[]
 
 include::merge-parallel-edges.asciidoc[]
 
-include::merge-parallel-edges-by-string-attribute.asciidoc[]
+include::merge-parallel-edges-by-attribute.asciidoc[]
 
 include::merge-two-attributes.asciidoc[]
 
