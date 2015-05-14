@@ -9,7 +9,7 @@ Vertices will be generated for the endpoints of the edges with two vertex attrib
  - `id` will contain the internal vertex ID.
 
 ====
-include::glossary.asciidoc[tag=csv-import]
+include::{g}[tag=csv-import]
 
 [[src]] Source ID field:: The CSV field that contains the edge source ID.
 [[dst]] Destination ID field:: The CSV field that contains the edge destination ID.

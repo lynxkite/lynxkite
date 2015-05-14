@@ -1,11 +1,14 @@
-## Aggregate edge attribute to vertices
+## Weighted aggregate edge attribute to vertices
 
 Aggregates an attribute on all the edges going in or out of vertices.
-For example it can calculate the average duration of calls for each person in a call dataset.
+For example it can calculate the average cost per second of calls for each person.
 
 ====
 [[prefix]] Generated name prefix::
 Save the aggregated attributes with this prefix.
+
+[[weight]] Weight::
+The `Double` attribute to use as weight.
 
 [[direction]] Aggregate on::
  - `incoming edges`: Aggregate across the edges coming in to each vertex.

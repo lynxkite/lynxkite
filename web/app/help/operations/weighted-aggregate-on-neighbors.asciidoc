@@ -1,15 +1,18 @@
-## Aggregate on neighbors
+## Weighted aggregate on neighbors
 
 Aggregates across the vertices that are connected to each vertex. Because it works by looking at
 edges, neighbors that are connected with more than one edge will be counted more than once.
 
 // TODO: Update this when #1659 is done.
 
-For example it can calculate the average age of the friends of each person.
+For example it can calculate the average age per kilogram of the friends of each person.
 
 ====
 [[prefix]] Generated name prefix::
 Save the aggregated attributes with this prefix.
+
+[[weight]] Weight::
+The `Double` attribute to use as weight.
 
 [[direction]] Aggregate on::
  - `incoming edges`: Aggregate across the edges coming in to each vertex.
