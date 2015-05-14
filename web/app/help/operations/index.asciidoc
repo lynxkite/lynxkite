@@ -174,8 +174,6 @@ include::segment-by-double-attribute.asciidoc[]
 
 include::segment-by-string-attribute.asciidoc[]
 
-include::test.asciidoc[]
-
 include::union-with-another-project.asciidoc[]
 
 include::vertex-attribute-to-double.asciidoc[]
