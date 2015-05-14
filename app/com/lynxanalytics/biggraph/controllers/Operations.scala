@@ -1267,7 +1267,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "There must be at least one string edge attribute")
 
     def apply(params: Map[String, String]) = {
-      assert(params("key").nonEmpty, "Please set an edge attribute name.")
       applyMergeParallelEdgesByKey(project, params)
     }
   })
