@@ -6,7 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
- - Admins can download the last server log using the link `http://<kite ip>:<kite port>/appLog`.
+ - Admins can download the last server log using the link `http://<kite ip>:<kite port>/logs`.
  - _"Create scale-free random edge bundle"_ operation added which allows one to create
    a scale free random graph.
  - One can save a sequence of operations as a workflow. The feature is accessible from the

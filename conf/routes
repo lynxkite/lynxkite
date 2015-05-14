@@ -35,7 +35,7 @@ POST /ajax/createUser  com.lynxanalytics.biggraph.serving.ProductionJsonServer.c
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
 
-GET  /appLog           com.lynxanalytics.biggraph.serving.ProductionJsonServer.appLog
+GET  /logs             com.lynxanalytics.biggraph.serving.ProductionJsonServer.logs
 
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.UserProvider.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.UserProvider.googleLogin
