@@ -2,7 +2,7 @@
 // The result is then rendered by the "graph-view" directive.
 'use strict';
 
-angular.module('biggraph').directive('projectGraph', function (util) {
+angular.module('biggraph').directive('projectGraph', function (util, loadGraph) {
   return {
     restrict: 'E',
     scope: {
@@ -14,119 +14,14 @@ angular.module('biggraph').directive('projectGraph', function (util) {
     replace: false,
     templateUrl: 'project-graph.html',
     link: function(scope, element) {
-      util.deepWatch(scope, 'left', updateRequest);
-      util.deepWatch(scope, 'right', updateRequest);
-      util.deepWatch(scope, 'leftToRightBundle', updateRequest);
-      util.deepWatch(scope, 'rightToLeftBundle', updateRequest);
-
-      scope.graph = {};
-      function updateRequest() {
-        // This indirection makes it certain that graph-view does not see more recent data than
-        // project-graph does.
-        scope.graph.left = angular.copy(scope.left, scope.graph.left);
-        scope.graph.right = angular.copy(scope.right, scope.graph.right);
-
-        var sides = [];
-        if (scope.left && scope.left.graphMode && scope.left.vertexSet !== undefined) {
-          sides.push(scope.left);
-        }
-        if (scope.right && scope.right.graphMode && scope.right.vertexSet !== undefined) {
-          sides.push(scope.right);
-        }
-        if (sides.length === 0) {  // Nothing to draw.
-          scope.request = undefined;
-          return;
-        }
-        var q = { vertexSets: [], edgeBundles: [] };
-        for (var i = 0; i < sides.length; ++i) {
-          var viewData = sides[i];
-          if (viewData.edgeBundle !== undefined) {
-            var edgeAttrs = [];
-            for (var eIndex in viewData.edgeAttrs) {
-              if (viewData.edgeAttrs[eIndex]) {
-                edgeAttrs.push({
-                  attributeId: viewData.edgeAttrs[eIndex].id,
-                  aggregator: viewData.edgeAttrs[eIndex].aggregator,
-                });
-              }
-            }
-            edgeAttrs.sort();
-            q.edgeBundles.push({
-              srcDiagramId: 'idx[' + i + ']',
-              dstDiagramId: 'idx[' + i + ']',
-              srcIdx: i,
-              dstIdx: i,
-              edgeBundleId: viewData.edgeBundle.id,
-              filters: viewData.filters.edge,
-              edgeWeightId: (viewData.edgeWidth || { id: '' }).id,
-              layout3D: viewData.display === '3d',
-              attrs: edgeAttrs,
-            });
-          }
-          var vertexAttrs = [];
-          for (var index in viewData.vertexAttrs) {
-            if (viewData.vertexAttrs[index]) {
-              vertexAttrs.push(viewData.vertexAttrs[index].id);
-            }
-          }
-          vertexAttrs.sort();
-          var xAttr = (viewData.xAttribute) ? viewData.xAttribute.id : '';
-          var yAttr = (viewData.yAttribute) ? viewData.yAttribute.id : '';
-
-          q.vertexSets.push({
-            vertexSetId: viewData.vertexSet.id,
-            filters: viewData.filters.vertex,
-            mode: viewData.graphMode,
-            // Bucketed view parameters.
-            xBucketingAttributeId: xAttr,
-            yBucketingAttributeId: yAttr,
-            xNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
-            yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
-            xAxisOptions: viewData.xAxisOptions,
-            yAxisOptions: viewData.yAxisOptions,
-            // Sampled view parameters.
-            // angular.js/pull/7370
-            radius: viewData.edgeBundle ? parseInt(viewData.sampleRadius) : 0,
-            centralVertexIds: viewData.centers,
-            sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
-            attrs: vertexAttrs,
-          });
-        }
-
-        if (sides.length === 2 && sides[0].display === 'svg' && sides[1].display === 'svg') {
-          if (scope.leftToRightBundle !== undefined) {
-            q.edgeBundles.push({
-              srcDiagramId: 'idx[0]',
-              dstDiagramId: 'idx[1]',
-              srcIdx: 0,
-              dstIdx: 1,
-              edgeBundleId: scope.leftToRightBundle,
-              filters: [],
-              edgeWeightId: '',
-              layout3D: false,
-              attrs: [],
-            });
-          }
-          if (scope.rightToLeftBundle !== undefined) {
-            q.edgeBundles.push({
-              srcDiagramId: 'idx[1]',
-              dstDiagramId: 'idx[0]',
-              srcIdx: 1,
-              dstIdx: 0,
-              edgeBundleId: scope.rightToLeftBundle,
-              filters: [],
-              edgeWeightId: '',
-              layout3D: false,
-              attrs: [],
-            });
-          }
-        }
-
-        if (!angular.equals(scope.request, q)) {
-          scope.request = q;
-          scope.graph.view = util.get('/ajax/complexView', scope.request);
-        }
+      scope.graph = new loadGraph.Graph();
+      function updateGraph() {
+        scope.graph.load(scope.left, scope.right, scope.leftToRightBundle, scope.rightToLeftBundle);
       }
+      util.deepWatch(scope, 'left', updateGraph);
+      util.deepWatch(scope, 'right', updateGraph);
+      util.deepWatch(scope, 'leftToRightBundle', updateGraph);
+      util.deepWatch(scope, 'rightToLeftBundle', updateGraph);
 
       scope.$watch('graph.view', updateTSV);
       scope.$watch('graph.view.$resolved', updateTSV);
