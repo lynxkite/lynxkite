@@ -18,7 +18,7 @@ export KITE_DATA_DIR=file:$HOME/kite_data/
 
 # Configuration file to specify what file paths users are
 # allowed to access using what prefixes.
-export KITE_ADDITIONAL_ROOT_DEFINITIONS=${KITE_DEPLOYMENT_CONFIG_DIR}/root_definitions.txt
+export KITE_ROOT_DEFINITIONS=${KITE_DEPLOYMENT_CONFIG_DIR}/root_definitions.txt
 
 # The PID file for Kite servers.
 export KITE_PID_FILE=$HOME/kite.pid
@@ -60,8 +60,9 @@ export KITE_HTTP_PORT=9000
 export KITE_LOCAL_TMP=/tmp
 
 # A colon (:) delimited list of JAR files that should be loaded on Kite CLASSPATH. (Will be loaded
-# both on master and workers.)
+# on the master and distributed to the workers.)
 # Wildcards are not supported.
+# Filenames have to be absolute paths.
 # Typical use case is to configure additional JDBC drivers, all you need to do is to add the
 # jar file here.
 export KITE_EXTRA_JARS=

@@ -4,6 +4,8 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+import org.apache.spark.HashPartitioner
+
 object EmptyEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {
     val src = vertexSet
@@ -25,6 +27,6 @@ case class EmptyEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    output(o.eb, rc.sparkContext.emptyRDD[(ID, Edge)].toSortedRDD(rc.defaultPartitioner))
+    output(o.eb, rc.sparkContext.emptyRDD[(ID, Edge)].toSortedRDD(new HashPartitioner(1)))
   }
 }

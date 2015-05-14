@@ -1,0 +1,8 @@
+## Copy vertex attribute
+
+Creates a copy of a vertex attribute.
+
+====
+[[from]] Old name:: The attribute to copy.
+[[to]] New name:: The name of the copy.
+====

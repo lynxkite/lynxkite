@@ -131,7 +131,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   test("Restore checkpoint after failing operation") {
     class Bug extends Exception("simulated bug")
     ops.register("Buggy op", new Operation(_, _, Operation.Category("Test", "test")) {
-      val description = "For testing"
       def enabled = ???
       def parameters = List()
       def apply(params: Map[String, String]) = {
@@ -217,7 +216,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Fingerprinting based on attributes", Map(
       "leftName" -> "email",
       "rightName" -> "name",
-      "weights" -> "no weights",
+      "weights" -> "!no weight",
       "mrew" -> "0.0",
       "mo" -> "1",
       "ms" -> "0.5"))

@@ -1,0 +1,8 @@
+## Import vertices from a database
+
+Imports vertices (no edges) from a SQL database.
+An extra vertex attribute is generated to hold the internal vertex ID.
+
+====
+include::{g}[tag=database-import]
+====

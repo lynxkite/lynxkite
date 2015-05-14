@@ -1,0 +1,22 @@
+## Aggregate on neighbors
+
+Aggregates across the vertices that are connected to each vertex. Because it works by looking at
+edges, neighbors that are connected with more than one edge will be counted more than once.
+
+// TODO: Update this when #1659 is done.
+
+For example it can calculate the average age of the friends of each person.
+
+====
+[[prefix]] Generated name prefix::
+Save the aggregated attributes with this prefix.
+
+[[direction]] Aggregate on::
+ - `incoming edges`: Aggregate across the edges coming in to each vertex.
+ - `outgoing edges`: Aggregate across the edges going out of each vertex.
+ - `all edges`: Aggregate across all the edges going in or out of each vertex.
+ - `symmetric edges`:
+   Aggregate across the incoming edges for which an outgoing edge to the same neighbor also exists.
+
+include::{g}[tag=local-aggregators]
+====

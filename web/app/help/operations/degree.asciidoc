@@ -1,0 +1,17 @@
+## Degree
+
+Calculates the number of edges connected to every vertex.
+
+Note that this can be different from the number of neighbors in case of parallel edges.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[direction]] Count::
+ - `incoming edges`: Count the edges coming in to each vertex.
+ - `outgoing edges`: Count the edges going out of each vertex.
+ - `all edges`: Count all the edges going in or out of each vertex.
+ - `symmetric edges`:
+   Count the incoming edges for which an outgoing edge to the same neighbor also exists.
+====

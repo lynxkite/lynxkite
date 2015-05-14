@@ -1,0 +1,13 @@
+## Segment by string attribute
+
+Segments the vertices by a `String` vertex attribute.
+
+Every vertex with the same attribute value will belong to one segment.
+
+====
+[[name]] Segmentation name::
+The new segmentation will be saved under this name.
+
+[[attr]] Attribute::
+The `String` attribute to segment by.
+====

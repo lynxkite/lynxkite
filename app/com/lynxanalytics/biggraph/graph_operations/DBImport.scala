@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.SQLExport.quoteIdentifier
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import anorm.SQL
 import java.sql
 import org.apache.spark.rdd.RDD
@@ -30,12 +31,15 @@ case class DBTable(
 
   case class Stats(table: String)(implicit val connection: sql.Connection) {
     val (minKey, maxKey) = {
-      val q = SQL(
-        s"SELECT MIN($quotedKey) AS min, MAX($quotedKey) AS max FROM $quotedTable")
+      val query = s"SELECT MIN($quotedKey) AS min, MAX($quotedKey) AS max FROM $quotedTable"
+      log.info(s"Executing query: $query")
+      val q = SQL(query)
       q().map(r => (r[Long]("min"), r[Long]("max"))).head
     }
     val count = {
-      val q = SQL(s"SELECT COUNT(*) AS count FROM $quotedTable")
+      val query = s"SELECT COUNT(*) AS count FROM $quotedTable"
+      log.info(s"Executing query: $query")
+      val q = SQL(query)
       q().map(r => r[Long]("count")).head
     }
   }
@@ -48,12 +52,14 @@ case class DBTable(
       finally connection.close()
     }
     // Have at most 100,000 rows per partition.
-    val numPartitions = rc.defaultPartitioner.numPartitions max (stats.count / 100000).toInt
+    val numPartitions = rc.partitionerForNBytes(stats.count * fields.size * 30).numPartitions
 
+    val query = s"SELECT $fieldsStr FROM $quotedTable WHERE ? <= $quotedKey AND $quotedKey <= ?"
+    log.info(s"Executing query: $query")
     new org.apache.spark.rdd.JdbcRDD(
       rc.sparkContext,
       () => sql.DriverManager.getConnection("jdbc:" + db),
-      s"SELECT $fieldsStr FROM $quotedTable WHERE ? <= $quotedKey AND $quotedKey <= ?",
+      query,
       stats.minKey, stats.maxKey, numPartitions,
       row => fields.map(field => row.getString(field))
     )

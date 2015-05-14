@@ -1,0 +1,18 @@
+## Derived vertex attribute
+
+Generates a new attribute based on existing attributes. The value expression can be
+an arbitrary JavaScript expression, and it can refer to existing attributes as if they
+were local variables. For example you can write `age * 2` to generate a new attribute
+that is the double of the age attribute. Or you can write
+`gender == 'Male' ? 'Mr ' + name : 'Ms ' + name` for a more complex example.
+
+====
+[[output]] Save as::
+The new attribute will be created under this name.
+
+[[type]] Result type::
+The type (`Double` or `String`) of the created attribute.
+
+[[expr]] Value::
+The JavaScript expression.
+====

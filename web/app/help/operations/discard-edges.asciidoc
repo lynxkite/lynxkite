@@ -1,0 +1,3 @@
+## Discard edges
+
+Throws away all edges. This implies discarding all edge attributes too.
