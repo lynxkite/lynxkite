@@ -5,8 +5,6 @@
 // the "backend" operations and updating the projects.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.graph_operations.JoinAttributes
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -14,9 +12,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import play.api.libs.json
-import scala.reflect.runtime.universe.typeOf
 
 object OperationParams {
   case class Param(
