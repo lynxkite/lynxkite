@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - New edge operation _ "Merge parallel edges by string attribute" _ makes it possible
+   for the user to merge those parallel edges between two vertices that share a common
+   edge attribute.
  - When running an EC2 cluster, you cannot directly reference s3 files as before (using
    the format `s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@bucket/path`), see the changelog
    entry below about the data file prefix notation. Instead, for EC2 cluster we automatically
