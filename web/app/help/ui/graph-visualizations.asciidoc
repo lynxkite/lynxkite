@@ -41,7 +41,7 @@ When this mode is selected the user is presented with a set of extra controls be
 
 [[concrete-view-settings]]
 Display::
-You can select between 2D and 3D visualization. 3d allows for showing more vertices efficiently but 
+You can select between 2D and 3D visualization. 3D allows for showing more vertices efficiently but 
 that mode has less features. You cannot (yet) visualize attributes in 3D mode and cannot select and
 move around vertices.
 
@@ -51,10 +51,12 @@ displayed graph as if edges were springs. You can move vertices around and the g
 reorganize itself.
 
 Label attraction::
-When animation is enabled, this will make vertices with the same label attract each other, which results in same label vertices being grouped together.
+When animation is enabled, this will make vertices with the same label attract each other, which
+results in same label vertices being grouped together.
 
 Layout style::
-When animation is enabled, this option determines the exact physics of the simulation. TODO: add details here.
+When animation is enabled, this option determines the exact physics of the simulation. TODO: add
+details here.
 
 Show vertices::
 Lists ‘center’ vertices, that is the vertices whose neighborhood we are displaying. You can change
@@ -62,7 +64,8 @@ this list manually, using the <<pick-button,Pick button>> or using the
 <<context-menu,context menu>> of already displayed vertices.
 
 Show neighborhood::
-You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
+You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center
+vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
 
 #### Pick button
 You can use the pick button to select the <<center-vertices,center vertices>> for the visualization.
@@ -81,16 +84,17 @@ will be shown.
 
 Filter segmentation to this vertex::
 It will setup a filter on the segmentation
-graph such that only segments that contain this vertex selected. This menu is only available if 
+graph such that only segments that contain this vertex are selected. This menu is only available if 
 a segmentation is open on the right side.
 
-Freeze::
-If using layout animation, this action fixes the position of this particular vertex.
+Freeze/unfreeze::
+If using layout animation, freeze fixes the position of this particular vertex. Unfreeze lets
+the vertex move free again.
 
 ### Bucketed view
 
-Shows a consolidated view of all the vertices of the graph. Vertices can be groupped by up to two
-attributes and the system visualises the sizes of the groups and the amount of edges going among
+Shows a consolidated view of all the vertices of the graph. Vertices can be grouped by up to two
+attributes and the system visualizes the sizes of the groups and the amount of edges going among
 the groups.
 
 ### Saving visualizations
