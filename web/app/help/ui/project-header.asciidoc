@@ -22,11 +22,12 @@ Discard current filter::
 Removes all the currently set attribute filters. Only visible if there is at least one filter specified.
 
 Bucketed Graph::
-Visualizes the graph with a bucketed view. Not visible on an empty project.// TODO: link
+Visualizes the graph with a bucketed view. See details in section <<bucketed-view>>. Not visible
+on an empty project.
 
 Concrete Vertices::
 Visualizes a small subset of the graph, simply drawing selected vertices and edges among them.
-Not visible on an empty project.
+See details in section <<concrete-vertices-view>>. Not visible on an empty project.
 
 Undo::
 Undoes the last operation performed on your project.

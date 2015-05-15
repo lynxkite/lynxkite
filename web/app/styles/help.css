@@ -23,8 +23,19 @@
   width: 30%;
   background: white;
   color: black;
-  z-index: 3;
+  z-index: 3000;
   border-radius: 5px;
   padding: 10px;
   box-shadow: 0 2px 5px;
+  overflow-y: scroll;
+}
+
+.help-popup-positioner {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+.help-popup-positioner help-popup {
+  position: absolute;
+  z-index: 2000;
 }

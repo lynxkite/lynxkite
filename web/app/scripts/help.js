@@ -71,6 +71,7 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
     templateUrl: 'help-popup.html',
     link: function(scope, element) {
       var body = angular.element('body');
+      var uiLayout = angular.element('ui-layout');
       var button = element.find('#help-button');
       var popup = element.find('#help-popup');
       popup.hide();
@@ -92,9 +93,32 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
         body.append(popup.detach());
         popup.show();
         var offset = button.offset();
-        offset.top += button.height() + 10;
-        offset.left -= popup.width() / 2;
-        popup.offset(offset);
+        var buttonLeft = offset.left;
+        var buttonTop = offset.top;
+        var buttonHeight = button.height();
+
+        var popupLeft = buttonLeft - popup.width() / 2;
+        var maxLeft = uiLayout.width() - popup.width() - 30;
+        if (popupLeft > maxLeft) {
+          popupLeft = maxLeft;
+        }
+        if (popupLeft < 0) {
+          popupLeft = 0;
+        }
+        var fullHeight = uiLayout.height();
+
+        popup.css('left', popupLeft + 'px');
+        if (buttonTop > fullHeight - buttonTop - buttonHeight) {
+          popup.css('top', 'auto');
+          popup.css('bottom', (fullHeight - buttonTop + 10) + 'px');
+          popup.css('max-height', (offset.top - 20) + 'px');
+        } else {
+          // More room below.
+          var popupTop = buttonTop + buttonHeight + 10;
+          popup.css('bottom', 'auto');
+          popup.css('top', popupTop + 'px');
+          popup.css('max-height', (fullHeight - popupTop - 10) + 'px');
+        }
       }
 
       scope.on = function() {

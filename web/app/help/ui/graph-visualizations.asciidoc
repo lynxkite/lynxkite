@@ -94,3 +94,5 @@ attributes and the system visualises the sizes of the groups and the amount of e
 the groups.
 
 ### Saving visualizations
+
+TODO: Explain saving visualizations here.
