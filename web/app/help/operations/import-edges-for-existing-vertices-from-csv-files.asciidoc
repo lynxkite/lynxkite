@@ -3,6 +3,11 @@
 Imports edges from a CSV file, or files. Your vertices must have an identifying attribute, by which
 the edges can be attached to them.
 
+Example: If you have one CSV fileset for the vertices (e.g. subscribers) and another 
+for the edges (e.g., calls), you import the first CSV with operation <<Import vertices from CSV files>>
+and then use this operation to add the edges.
+
+
 ====
 include::{g}[tag=csv-import]
 

@@ -1,6 +1,6 @@
 ## Vertex attribute to double
 
-Converts the selected `String` typed vertex attributes to `Double` (floating point
+Converts the selected `String` typed vertex attributes to `Double` (double precision floating point
 number) type.
 
 The attributes will be converted in-place. If you want to keep the original `String` attribute as
