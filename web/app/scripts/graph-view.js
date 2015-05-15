@@ -1,6 +1,13 @@
 // Graph visualization. Generates the SVG contents.
 'use strict';
 
+function offsetLeft() {
+  return document.getElementById('graph-view').offsetLeft;
+}
+function offsetTop() {
+  return document.getElementById('graph-view').offsetTop;
+}
+
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor */
   var svg = SVG_UTIL;
@@ -640,7 +647,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex, vertexGroup) {
     var scope = this.scope;
-    var svgElement = this.svg;
     vertex.dom.on('mousedown touchstart', function(evStart) {
       evStart.stopPropagation();
       vertex.hold();
@@ -748,8 +754,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         if (vertex.positioned) { return; }
         translateTouchToMouseEvent(ev);
         var offsetter = vertex.offsetter;
-        var x = (ev.pageX - svgElement.offset().left - offsetter.xOff) / offsetter.zoom;
-        var y = (ev.pageY - svgElement.offset().top - offsetter.yOff) / offsetter.zoom;
+        var x = (ev.pageX - offsetLeft() - offsetter.xOff) / offsetter.zoom;
+        var y = (ev.pageY - offsetTop() - offsetter.yOff) / offsetter.zoom;
         vertex.moveTo(x, y);
         vertex.forceOX = x;
         vertex.forceOY = y;
@@ -802,10 +808,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   GraphView.prototype.sideMouseBindings = function(offsetter, xMin, xMax) {
-    var svgElement = this.svg;
     this.svgMouseDownListeners.push(function(evStart) {
       translateTouchToMouseEvent(evStart);
-      var svgX = evStart.pageX - svgElement.offset().left;
+      var svgX = evStart.pageX - offsetLeft();
       if ((svgX < xMin) || (svgX >= xMax)) {
         return;
       }
@@ -838,7 +843,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var mx = e.originalEvent.pageX;
       var my = e.originalEvent.pageY;
       
-      var svgX = mx - svgElement.offset().left;
+      var svgX = mx - offsetLeft();
       if ((svgX < xMin) || (svgX >= xMax)) {
         return;
       }
@@ -859,7 +864,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.svgDoubleClickListeners.push(function(e) {
       var mx = e.originalEvent.pageX;
       var my = e.originalEvent.pageY;
-      var svgX = mx - svgElement.offset().left;
+      var svgX = mx - offsetLeft();
       if ((svgX < xMin) || (svgX >= xMax)) {
         return;
       }
