@@ -11,8 +11,9 @@ svg.graph-view {
   user-select: none;
 }
 svg.graph-view.loading {
-  background-image: linear-gradient(45deg, #1e1e1e 25%, #262626 25%, #262626 50%, #1e1e1e 50%, #1e1e1e 75%, #262626 75%, #262626);
-  background-size: 40px 40px;
+  /* Because of the !important background above, these need to be !important too. */
+  background-image: linear-gradient(45deg, #1e1e1e 25%, #262626 25%, #262626 50%, #1e1e1e 50%, #1e1e1e 75%, #262626 75%, #262626) !important;
+  background-size: 40px 40px !important;
   animation: progress-bar-stripes 2s linear infinite;
 }
 

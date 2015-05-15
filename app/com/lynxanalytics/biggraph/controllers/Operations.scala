@@ -5,7 +5,6 @@
 // the "backend" operations and updating the projects.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -13,9 +12,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import play.api.libs.json
-import scala.reflect.runtime.universe.typeOf
 
 object OperationParams {
   case class Param(
@@ -1204,33 +1201,75 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private def mergeEdgesWithKey[T](edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[T]) = {
+    val edgesAndKey: Attribute[((ID, ID), T)] = joinAttr(edgesAsAttr, keyAttr)
+    val op = graph_operations.MergeVertices[((ID, ID), T)]()
+    op(op.attr, edgesAndKey).result
+  }
+
+  private def mergeEdges(edgesAsAttr: Attribute[(ID, ID)]) = {
+    val op = graph_operations.MergeVertices[(ID, ID)]()
+    op(op.attr, edgesAsAttr).result
+  }
+  // Common code for operations "merge parallel edges" and "merge parallel edges by key"
+
+  private def applyMergeParallelEdgesByKey(project: Project, params: Map[String, String]) = {
+
+    val edgesAsAttr = {
+      val op = graph_operations.EdgeBundleAsAttribute()
+      op(op.edges, project.edgeBundle).result.attr
+    }
+
+    val hasKeyAttr = params.contains("key")
+
+    val mergedResult =
+      if (hasKeyAttr) {
+        val keyAttr = project.edgeAttributes(params("key"))
+        mergeEdgesWithKey(edgesAsAttr, keyAttr)
+      } else {
+        mergeEdges(edgesAsAttr)
+      }
+
+    val newEdges = {
+      val op = graph_operations.PulledOverEdges()
+      op(op.originalEB, project.edgeBundle)(op.injection, mergedResult.representative)
+        .result.pulledEB
+    }
+    val oldAttrs = project.edgeAttributes.toMap
+    project.edgeBundle = newEdges
+
+    for ((attr, choice) <- parseAggregateParams(params)) {
+      project.edgeAttributes(s"${attr}_${choice}") =
+        aggregateViaConnection(
+          mergedResult.belongsTo,
+          AttributeWithLocalAggregator(oldAttrs(attr), choice))
+    }
+    if (hasKeyAttr) {
+      val key = params("key")
+      project.edgeAttributes(key) =
+        aggregateViaConnection(mergedResult.belongsTo,
+          AttributeWithLocalAggregator(oldAttrs(key), "most_common"))
+    }
+  }
+
   register("Merge parallel edges", new EdgeOperation(_, _) {
     def parameters = aggregateParams(project.edgeAttributes)
     def enabled = hasEdgeBundle
 
     def apply(params: Map[String, String]) = {
-      val edgesAsAttr = {
-        val op = graph_operations.EdgeBundleAsAttribute()
-        op(op.edges, project.edgeBundle).result.attr
-      }
-      val mergedResult = {
-        val op = graph_operations.MergeVertices[(ID, ID)]()
-        op(op.attr, edgesAsAttr).result
-      }
-      val newEdges = {
-        val op = graph_operations.PulledOverEdges()
-        op(op.originalEB, project.edgeBundle)(op.injection, mergedResult.representative)
-          .result.pulledEB
-      }
-      val oldAttrs = project.edgeAttributes.toMap
-      project.edgeBundle = newEdges
+      applyMergeParallelEdgesByKey(project, params)
+    }
+  })
 
-      for ((attr, choice) <- parseAggregateParams(params)) {
-        project.edgeAttributes(s"${attr}_${choice}") =
-          aggregateViaConnection(
-            mergedResult.belongsTo,
-            AttributeWithLocalAggregator(oldAttrs(attr), choice))
-      }
+  register("Merge parallel edges by attribute", new EdgeOperation(_, _) {
+    def parameters = List(
+      Choice("key", "Merge by", options = edgeAttributes)) ++
+      aggregateParams(project.edgeAttributes)
+    def enabled = FEStatus.assert(edgeAttributes.nonEmpty,
+      "There must be at least one edge attribute")
+
+    def apply(params: Map[String, String]) = {
+      applyMergeParallelEdgesByKey(project, params)
     }
   })
 
