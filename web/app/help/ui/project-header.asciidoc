@@ -1,4 +1,5 @@
-# The Project Header Bar
+[[project-header]]
+## Project header bar
 
 The project title bar looks something like this:
 
@@ -7,25 +8,26 @@ image::images/project-header.png[Project Header Screenshot]
 It contains the name of the project and also buttons to access various program functions.
 
 [[project-header-buttons]]
-## Project Header Buttons
+### Project header buttons
 
 Not all the buttons listed here are visible all the time, see details below on when each function is
 available.
 
 // TODO: include icons here somehow.
 
-Apply Current Filter::
+Apply current filter::
 Applies the currently set attribute filters. This means afterwards the project will only contain vertices and edges that meet all the filtering criteria set when pressing the button. Only visible if there is at least one filter specified. //TODO: link to filtering.
 
 Discard current filter::
 Removes all the currently set attribute filters. Only visible if there is at least one filter specified.
 
-Bucketed Graph::
-Visualizes the graph with a bucketed view. Not visible on an empty project.// TODO: link
+Bucketed graph::
+Visualizes the graph with a bucketed view. See details in section <<bucketed-view>>. Not visible
+on an empty project.
 
-Concrete Vertices::
+Concrete vertices::
 Visualizes a small subset of the graph, simply drawing selected vertices and edges among them.
-Not visible on an empty project.
+See details in section <<concrete-vertices-view>>. Not visible on an empty project.
 
 Undo::
 Undoes the last operation performed on your project.
