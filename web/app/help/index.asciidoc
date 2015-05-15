@@ -15,6 +15,10 @@
 
 :leveloffset: +1
 
+# LynxKite User's Guide
+
+Welcome to the LynxKite User's Guide. // TODO: Real text.
+
 include::ui/project-header.asciidoc[]
 
 include::operations/index.asciidoc[]
