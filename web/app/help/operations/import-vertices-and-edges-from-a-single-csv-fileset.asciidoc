@@ -3,10 +3,17 @@
 Imports edges from a CSV file or files. Each line in the CSV represents one edge.
 Each field in the CSV will be accessible as an edge attribute.
 
+This is useful when your fileset contains edges (e.g., calls) and there is no separate
+fileset for vertices. This operation makes it possible to load edges and use them
+as a graph. Note that this graph will never have zero-degree edges.
+
 Vertices will be generated for the endpoints of the edges with two vertex attributes:
 
  - `stringID` will contain the ID string that was used in the CSV.
  - `id` will contain the internal vertex ID.
+
+These two are the only vertex attributes that this graph has. The edge attributes, however,
+will be imported from the fileset.
 
 ====
 include::{g}[tag=csv-import]

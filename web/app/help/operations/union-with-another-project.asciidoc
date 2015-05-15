@@ -7,6 +7,13 @@ exists in both projects, it must have the same data type in both.
 The resulting graph will have as many vertices as the sum of the vertex counts in the two
 source graphs. The same with the edges.
 
+To establish a connection between the two graphs, you can perform
+<<fingerprinting based on attributes>> or <<merge vertices by attribute>>.
+
+For example, you can import a call data graph in one project and a Facebook graph in another.
+Then, after taking the union, you can merge vertices based on an ID, and then
+use fingerprinting to figure out more connections based on neighborhood similarity.
+
 ====
 [[other]] Other project's name::
 The project to merge into the current project.

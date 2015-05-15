@@ -5,6 +5,9 @@ an arbitrary JavaScript expression, and it can refer to existing attributes on t
 they were local variables. It can also refer to attributes of the source and destination
 vertex of the edge using the format `src$attribute` and `dst$attribute`.
 
+The new attribute will only be defined on edges for which all the attributes used in the
+expression are defined.
+
 For example you can write `weight * Math.abs(src$age - dst$age)` to generate a new
 attribute that is the weighted age difference of the two endpoints of the edge.
 

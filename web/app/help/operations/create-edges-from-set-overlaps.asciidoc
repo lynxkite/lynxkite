@@ -2,6 +2,12 @@
 
 Connects segments with large enough overlaps.
 
+Communities are normally generated just as a set of points. But you
+may be interested in looking for some structure there, seeing which
+communities are connected to others. So you can generate edges between
+them by looking at how many parent vertices they have in common.
+
+
 ====
 [[minoverlap]] Minimal overlap for connecting two segments::
 Two segments will be connected if they have at least this many members in common.
