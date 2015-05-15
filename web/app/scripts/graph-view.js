@@ -837,7 +837,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.svgMouseWheelListeners.push(function(e) {
       var mx = e.originalEvent.pageX;
       var my = e.originalEvent.pageY;
-      
       var svgX = mx - svgElement.offset().left;
       if ((svgX < xMin) || (svgX >= xMax)) {
         return;
