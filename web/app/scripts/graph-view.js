@@ -99,7 +99,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   // True if a drawing is in progress
   var drawing = false;
   Offsetter.prototype.reDraw = function() {
-    console.log('r');
     if (!drawing) {
       drawing = true;
       // Give some time for other events to fire before starting the drawing
@@ -107,7 +106,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   };
   function reDrawImpl(o) {
-    console.log('d');
     for (var i = 0; i < o.elements.length; ++i) {
       o.elements[i].reDraw();
     }
