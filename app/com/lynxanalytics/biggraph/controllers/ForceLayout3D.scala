@@ -1,8 +1,6 @@
 // Generates 3D positions for FEEdge endpoints.
 package com.lynxanalytics.biggraph.controllers
 
-import scala.collection.mutable
-
 object ForceLayout3D {
   case class Vertex(id: Int, mass: Double, var pos: FE3DPosition)
 

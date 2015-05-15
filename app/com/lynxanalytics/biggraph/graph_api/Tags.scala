@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
 import java.util.UUID
-import play.api.libs.json
 import scala.collection.mutable
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {

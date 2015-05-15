@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
-import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json

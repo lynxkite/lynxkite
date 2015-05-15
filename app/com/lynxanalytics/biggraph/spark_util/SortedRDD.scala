@@ -16,15 +16,11 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark.{ HashPartitioner, Partition, Partitioner, TaskContext }
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd._
-import org.apache.spark.storage.RDDInfo
-import scala.collection.SortedSet
 import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering
 import scala.reflect.ClassTag
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => bGLog }
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SortedRDD {

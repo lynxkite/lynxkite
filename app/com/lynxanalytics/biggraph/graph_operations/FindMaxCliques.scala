@@ -1,11 +1,8 @@
 // Finds maximal cliques in the graph via the Bron-Kerbosch algorithm.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
 import org.apache.spark.HashPartitioner
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd
-import scala.collection.immutable
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._

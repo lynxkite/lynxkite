@@ -8,7 +8,6 @@ import scala.util.Random
 
 import org.apache.spark.HashPartitioner
 import org.apache.spark.Partitioner
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd
 
 import com.lynxanalytics.biggraph.graph_api._
