@@ -2,7 +2,7 @@
 // This means that it can be embedded in help pages.
 'use strict';
 
-angular.module('biggraph').directive('embeddedVisualization', function(side, loadGraph) {
+angular.module('biggraph').directive('embeddedVisualization', function(util, side, loadGraph) {
   return {
     restrict: 'E',
     scope: {
@@ -18,8 +18,10 @@ angular.module('biggraph').directive('embeddedVisualization', function(side, loa
       scope.$watch('side.project.$resolved', function(loaded) {
         if (loaded) {
           scope.side.onProjectLoaded();
-          scope.graph.load(scope.side.viewData);
         }
+      });
+      util.deepWatch(scope, 'side.viewData', function(vd) {
+        scope.graph.load(vd);
       });
     },
   };
