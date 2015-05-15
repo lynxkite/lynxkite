@@ -4,4 +4,6 @@ include::project-header.asciidoc[]
 
 include::graph-attributes.asciidoc[]
 
+include::vertex-attributes.asciidoc[]
+
 include::graph-visualizations.asciidoc[]
