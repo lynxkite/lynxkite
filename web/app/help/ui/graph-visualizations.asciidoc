@@ -18,19 +18,19 @@ You can visualize graph attributes in various ways, see details in section
 Regardless of the visualization mode you can do the same basic adjustments on the visualization
 screen:
 
-Zooming In/Out::
+Zooming in/out::
 Use your mouse wheel or scroll guessture to zoom in and out. Left doubleclick and right
 doubleclick can also be used for this.
 
 Panning::
 Hold down your left mouse button anywhere on the visualizaton screen and drag the graph around.
 
-Zooming Objects In/Out::
+Zooming objects in/out::
 Hold down the Shift button while zooming in and out to only change the size of objects
 (vertices, edges).
 
 
-### Concrete Vertices View
+### Concrete vertices view
 
 Shows some selected [[center-vertices]]center vertices and their neighborhood with all the edges
  among these vertices. The set of the center vertices and the size of the neighborhood can be
@@ -41,20 +41,22 @@ When this mode is selected the user is presented with a set of extra controls be
 
 [[concrete-view-settings]]
 Display::
-You can select between 2D and 3D visualization. 3d allows for showing more vertices efficiently but 
+You can select between 2D and 3D visualization. 3D allows for showing more vertices efficiently but 
 that mode has less features. You cannot (yet) visualize attributes in 3D mode and cannot select and
 move around vertices.
 
-Layout Animation::
+Layout animation::
 (Only in 2D mode) If enabled, layout animation will continuously do a physical simulation on the
 displayed graph as if edges were springs. You can move vertices around and the graph will
 reorganize itself.
 
 Label attraction::
-When animation is enabled, this will make vertices with the same label attract each other, which results in same label vertices being grouped together.
+When animation is enabled, this will make vertices with the same label attract each other, which
+results in same label vertices being grouped together.
 
 Layout style::
-When animation is enabled, this option determines the exact physics of the simulation. TODO: add details here.
+When animation is enabled, this option determines the exact physics of the simulation. TODO: add
+details here.
 
 Show vertices::
 Lists ‘center’ vertices, that is the vertices whose neighborhood we are displaying. You can change
@@ -62,7 +64,8 @@ this list manually, using the <<pick-button,Pick button>> or using the
 <<context-menu,context menu>> of already displayed vertices.
 
 Show neighborhood::
-You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
+You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center
+vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
 
 #### Pick button
 You can use the pick button to select the <<center-vertices,center vertices>> for the visualization.
@@ -81,16 +84,17 @@ will be shown.
 
 Filter segmentation to this vertex::
 It will setup a filter on the segmentation
-graph such that only segments that contain this vertex selected. This menu is only available if 
+graph such that only segments that contain this vertex are selected. This menu is only available if 
 a segmentation is open on the right side.
 
-Freeze::
-If using layout animation, this action fixes the position of this particular vertex.
+Freeze/unfreeze::
+If using layout animation, freeze fixes the position of this particular vertex. Unfreeze lets
+the vertex move free again.
 
-### Bucketed View
+### Bucketed view
 
-Shows a consolidated view of all the vertices of the graph. Vertices can be groupped by up to two
-attributes and the system visualises the sizes of the groups and the amount of edges going among
+Shows a consolidated view of all the vertices of the graph. Vertices can be grouped by up to two
+attributes and the system visualizes the sizes of the groups and the amount of edges going among
 the groups.
 
 ### Saving visualizations
