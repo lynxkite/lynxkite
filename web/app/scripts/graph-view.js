@@ -105,9 +105,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       setTimeout(reDrawImpl, 20, this);
     }
   };
-  function reDrawImpl(o) {
-    for (var i = 0; i < o.elements.length; ++i) {
-      o.elements[i].reDraw();
+  function reDrawImpl(offsetter) {
+    for (var i = 0; i < offsetter.elements.length; ++i) {
+      offsetter.elements[i].reDraw();
     }
     drawing = false;
   }
