@@ -71,7 +71,7 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
     templateUrl: 'help-popup.html',
     link: function(scope, element) {
       var body = angular.element('body');
-      var uiLayout = angular.element('ui-layout');
+      var uiLayout = angular.element('.kite-top');
       var button = element.find('#help-button');
       var popup = element.find('#help-popup');
       popup.hide();
