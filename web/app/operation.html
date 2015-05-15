@@ -5,7 +5,7 @@
   <p ng-if="op.description" class="list-group-item description"
     ng-bind-html="op.description | trustAsHtml"></p>
   <!-- For documented operations. -->
-  <p help-id="op.id" remove-header="yes" class="list-group-item description"></p>
+  <p help-id="{{op.id}}" remove-header="yes" class="list-group-item description"></p>
 
   <p ng-if="op.parameters.length === 0" class="list-group-item text-center">
     No parameters
