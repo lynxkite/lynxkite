@@ -74,6 +74,9 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
       var button = element.find('#help-button');
       var popup = element.find('#help-popup');
       popup.hide();
+      scope.isEmpty = function() {
+        return popup.children().length === 0;
+      };
       var sticky = false;
 
       scope.$on('$destroy', function() {
