@@ -40,3 +40,13 @@
   /* Must beat ui-splitbar at 1010. Or actually everyting. Except ninjas. */
   z-index: 2000;
 }
+
+.users-guide {
+  background: #48a;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.users-guide .container {
+  background: white;
+  padding: 50px;
+}
