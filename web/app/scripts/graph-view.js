@@ -96,19 +96,23 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.yOff = y;
     this.reDraw();
   };
+  // True if a drawing is in progress
   var drawing = false;
   Offsetter.prototype.reDraw = function() {
-    setTimeout(this.reDrawInt, 10);
-  };
-  Offsetter.prototype.reDrawInt = function() {
+    console.log('r');
     if (!drawing) {
       drawing = true;
-      for (var i = 0; i < this.elements.length; ++i) {
-        this.elements[i].reDraw();
-      }
-      drawing = false;
+      // Give some time for other events to fire before starting the drawing
+      setTimeout(reDrawImpl, 20, this);
     }
   };
+  function reDrawImpl(o) {
+    console.log('d');
+    for (var i = 0; i < o.elements.length; ++i) {
+      o.elements[i].reDraw();
+    }
+    drawing = false;
+  }
   Offsetter.prototype.inherit = function() {
     var offsetter = new Offsetter(this.xOff, this.yOff, this.zoom, this.thickness, this.menu);
     offsetter.inherited = true;
@@ -835,6 +839,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.svgMouseWheelListeners.push(function(e) {
       var mx = e.originalEvent.pageX;
       var my = e.originalEvent.pageY;
+      
       var svgX = mx - svgElement.offset().left;
       if ((svgX < xMin) || (svgX >= xMax)) {
         return;
