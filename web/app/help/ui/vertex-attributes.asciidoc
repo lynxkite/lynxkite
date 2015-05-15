@@ -1,0 +1,76 @@
+## Vertex Attributes
+
+Vertex attributes are values that are defined on some or all individual vertices.
+
+Each vertex attribute has a type. For each vertex the attribute is either undefined or the value
+of the attribute is a value from the attribute's type.
+
+In the vertex attribute list, for each attribute you can see the following information/controls.
+
+* The name of the attribute.
+* The type of the attribute (e.g. String, Double, ...).
+* A filter box where you can specify a filtering criteria on the attribute's value. Once you defined
+a filter for a vertex attribute then all UI visualizations (histograms, graph
+visualization) will only consider vertices that pass your filter. See <<attribute-filter-syntax>
+for details.
+* A histogram button that allows you to see a histogram of the attribute
+* A visualization button that allows you to visualize the attribute on the current graph
+visualization. See details in <<concrete-visualization-options>>.
+(Only available when <<concrete-vertices-view>> is enabled.)
+* The list of currently selected visualizations, if any (see previous point).
+* When <<bucketed-view>> is enabled, two buttons, labeled with X and Y. They select the attribute
+to use for groupping vertices by. X causes the groups by this attribute to be distributed over the
+X axis, and respectively, Y causes the groups to be distributed over the Y axis.
+
+There are lots of ways one can create vertex attributes:
+
+* when importing vertices from a CSV every column will become an attribute
+* you can also import attributes for existing vertices from a CSV
+* you can compute various graph metrics on the vertices (e.g. <<degree>>,
+<<clustering-coefficient>>, etc.)
+* you can derive more attributes from existing ones using the <<derived-vertex-attribute>>
+operation
+* you can smear attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>
+* etc.
+
+
+
+### Concrete visualization options
+
+TODO: Examples using embeds.
+
+label::
+will show the value of the attribute on the centre of each vertex in the graph. 
+
+color::
+This will color vertices based on this attribute. A different color will be selected for each value 
+of the attribute. If the attribute is numeric, the selected color will be a continuous function of
+the attribute value. This is available for String and Double attributes.
+
+opacity::
+This will change the opacity of vertices based on this attribute. The higher the value of the
+attribute the more opaque the vertex will get.
+
+icon::
+Displays each vertex by an icon based on the value of this attribute. Currently the available icons are "circle", "square", "hexagon", "female", "male", "person", "phone", "home", “triangle”, “pentagon”, “star”, “sim”, “radio”. If the value of the attribute is one of the above strings, then the
+corresponding icon will be selected. For other values we randomly select icons. When we run out of
+icons, we fall back to circle. This is only available for String attributes.
+
+image::
+Interprets the value of the attribute as an image URL and displays the pointed image in place of
+the vertex. This can be used e.g. to show facebook profile pictures.
+
+size::
+The size of the vertices will be set based on this attribute. Only available for numeric attributes.
+
+position::
+Available on attribute of type (Double, Double). The attribute will be interpreted as an (X, Y)
+coordinate on the plane and vertices will be layed out on the screen based on these coordinates.
+(You can create a (Double, Double) attribute from two double attributes using the
+<<vertex-attribute-to-position>> operation.)
+
+geo coordinates::
+Available on attribute of type (Double, Double). The attribute will be interpreted as a 
+latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate. 
+(You can create a (Double, Double) attribute from two double attributes using the
+<<vertex-attribute-to-position>> operation.)
