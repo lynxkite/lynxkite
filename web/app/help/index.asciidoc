@@ -13,13 +13,12 @@
 // Shortcut for includes. (include::{g}[tag=my-glossary-entry])
 :g: glossary.asciidoc
 
+# LynxKite User Manual
+
 :leveloffset: +1
 
-# LynxKite User's Guide
+include::intro/index.asciidoc[]
 
-Welcome to the LynxKite User's Guide. // TODO: Real text.
-
-include::ui/project-header.asciidoc[]
+include::ui/index.asciidoc[]
 
 include::operations/index.asciidoc[]
-
