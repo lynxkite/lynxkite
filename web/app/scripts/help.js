@@ -6,7 +6,7 @@ angular.module('biggraph').factory('helpContent', function($http) {
   var html = $http.get('/help.html', { cache: true });
   var dom = html.then(function success(response) {
     /* global $ */
-    var dom = $($.parseHTML('<div>' + response.data + '</div>'));
+    var dom = $($.parseHTML('<div><div id="whole-help">' + response.data + '</div></div>'));
 
     // Move heading IDs to sectionbody divs.
     dom.find('div.sect1,div.sect2,div.sect3,div.sect4').each(function(i, div) {
@@ -39,6 +39,9 @@ angular.module('biggraph').directive('helpId', function(helpContent, $compile) {
       helpContent.then(function(helpContent) {
         var id = scope.helpId.toLowerCase();
         var content = helpContent.find('#' + id).first();
+        if (content.length === 0) {
+          console.warn('Could not find help ID', id);
+        }
         content = content.clone();
         if (scope.removeHeader === 'yes') {
           content.find('h1,h2,h3,h4').first().remove();

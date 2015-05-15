@@ -28,3 +28,13 @@
   padding: 10px;
   box-shadow: 0 2px 5px;
 }
+
+.users-guide {
+  background: #48a;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.users-guide .container {
+  background: white;
+  padding: 50px;
+}
