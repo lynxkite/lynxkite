@@ -2,43 +2,43 @@
 'use strict';
 
 // Loads and preprocesses the help pages.
-angular.module('biggraph').directive('helpContent', function() {
-  return {
-    restrict: 'E',
-    templateUrl: 'help-content.html',
-    link: function(scope, element) {
-      scope.onload = function() {
-        // Move heading IDs to sectionbody divs.
-        element.find('div.sect1,div.sect2,div.sect3,div.sect4').each(function(i, div) {
-          div = angular.element(div);
-          var heading = div.children('[id]').first();
-          div.attr('id', heading.attr('id'));
-          heading.attr('id', '');
-        });
-        // Move anchor IDs inside <dt> to the next <dd>.
-        element.find('dt > a[id]').each(function(i, a) {
-          a = angular.element(a);
-          var dd = a.parent().next('dd');
-          var section = a.closest('div.sect1,div.sect2,div.sect3,div.sect4');
-          var id = section.attr('id') + '-' + a.attr('id');
-          dd.attr('id', id);
-        });
-      };
-    },
-  };
+angular.module('biggraph').factory('helpContent', function($http) {
+  var html = $http.get('/help.html', { cache: true });
+  var dom = html.then(function success(response) {
+    /* global $ */
+    var dom = $($.parseHTML('<div>' + response.data + '</div>'));
+
+    // Move heading IDs to sectionbody divs.
+    dom.find('div.sect1,div.sect2,div.sect3,div.sect4').each(function(i, div) {
+      div = angular.element(div);
+      var heading = div.children('[id]').first();
+      div.attr('id', heading.attr('id'));
+      heading.attr('id', '');
+    });
+    // Move anchor IDs inside <dt> to the next <dd>.
+    dom.find('dt > a[id]').each(function(i, a) {
+      a = angular.element(a);
+      var dd = a.parent().next('dd');
+      var section = a.closest('div.sect1,div.sect2,div.sect3,div.sect4');
+      var id = section.attr('id') + '-' + a.attr('id');
+      dd.attr('id', id);
+    });
+    return dom;
+  });
+  return dom;
 });
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
-angular.module('biggraph').directive('helpId', function() {
+angular.module('biggraph').directive('helpId', function(helpContent, $compile) {
   return {
     restrict: 'A',
-    scope: { helpId: '=', removeHeader: '@' },
+    scope: { helpId: '@', removeHeader: '@' },
     link: function(scope, element) {
       element.addClass('help');
 
-      scope.$watch('helpId', function() {
+      helpContent.then(function(helpContent) {
         var id = scope.helpId.toLowerCase();
-        var content = angular.element('help-content').find('#' + id).first();
+        var content = helpContent.find('#' + id).first();
         content = content.clone();
         if (scope.removeHeader === 'yes') {
           content.find('h1,h2,h3,h4').first().remove();
@@ -56,6 +56,8 @@ angular.module('biggraph').directive('helpId', function() {
         details.hide();
         element.empty();
         element.append(content);
+        // Activate Angular contents.
+        $compile(content)(scope.$new());
       });
     }
   };
