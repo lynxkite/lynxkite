@@ -1,0 +1,13 @@
+## Merge parallel edges by string attribute
+
+Multiple edges going from A to B that share the same value of the given edge attribute
+will be merged into a single edge. The edges going from A to B are not merged with edges
+going from B to A.
+
+====
+
+[[key]] Merge by::
+The edge attribute on which the merging will be based.
+
+include::glossary.asciidoc[tag=local-aggregators]
+====
