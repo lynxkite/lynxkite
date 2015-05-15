@@ -1,10 +1,6 @@
 // Creates edges that connect vertices that have the same value for the given attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd.RDD
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 

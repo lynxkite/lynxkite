@@ -2,8 +2,6 @@
 package com.lynxanalytics.biggraph.graph_util
 
 import org.apache.commons.lang.StringEscapeUtils
-import org.apache.hadoop
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._

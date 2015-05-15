@@ -1,11 +1,7 @@
 // The intersection of some number of vertex sets.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import scala.reflect.runtime.universe._
-
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object VertexSetIntersection extends OpFromJson {
   class Input(numVertexSets: Int) extends MagicInputSignature {

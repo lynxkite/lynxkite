@@ -1,12 +1,8 @@
 // Calculates the histogram values based on a Bucketer.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import scala.collection.mutable
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object AttributeHistogram extends OpFromJson {
