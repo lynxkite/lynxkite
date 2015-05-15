@@ -18,19 +18,19 @@ You can visualize graph attributes in various ways, see details in section
 Regardless of the visualization mode you can do the same basic adjustments on the visualization
 screen:
 
-Zooming In/Out::
+Zooming in/out::
 Use your mouse wheel or scroll guessture to zoom in and out. Left doubleclick and right
 doubleclick can also be used for this.
 
 Panning::
 Hold down your left mouse button anywhere on the visualizaton screen and drag the graph around.
 
-Zooming Objects In/Out::
+Zooming objects in/out::
 Hold down the Shift button while zooming in and out to only change the size of objects
 (vertices, edges).
 
 
-### Concrete Vertices View
+### Concrete vertices view
 
 Shows some selected [[center-vertices]]center vertices and their neighborhood with all the edges
  among these vertices. The set of the center vertices and the size of the neighborhood can be
@@ -45,7 +45,7 @@ You can select between 2D and 3D visualization. 3d allows for showing more verti
 that mode has less features. You cannot (yet) visualize attributes in 3D mode and cannot select and
 move around vertices.
 
-Layout Animation::
+Layout animation::
 (Only in 2D mode) If enabled, layout animation will continuously do a physical simulation on the
 displayed graph as if edges were springs. You can move vertices around and the graph will
 reorganize itself.
@@ -87,7 +87,7 @@ a segmentation is open on the right side.
 Freeze::
 If using layout animation, this action fixes the position of this particular vertex.
 
-### Bucketed View
+### Bucketed view
 
 Shows a consolidated view of all the vertices of the graph. Vertices can be groupped by up to two
 attributes and the system visualises the sizes of the groups and the amount of edges going among
