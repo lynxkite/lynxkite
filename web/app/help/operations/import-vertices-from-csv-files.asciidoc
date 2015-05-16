@@ -5,5 +5,5 @@ Each field in the CSV will be accessible as a vertex attribute.
 An extra vertex attribute is generated to hold the internal vertex ID.
 
 ====
-include::glossary.asciidoc[tag=csv-import]
+include::{g}[tag=csv-import]
 ====

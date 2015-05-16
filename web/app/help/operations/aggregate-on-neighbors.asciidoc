@@ -18,5 +18,5 @@ Save the aggregated attributes with this prefix.
  - `symmetric edges`:
    Aggregate across the incoming edges for which an outgoing edge to the same neighbor also exists.
 
-include::glossary.asciidoc[tag=local-aggregators]
+include::{g}[tag=local-aggregators]
 ====

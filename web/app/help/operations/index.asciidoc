@@ -60,6 +60,8 @@ include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-random-edge-bundle.asciidoc[]
 
+include::create-scale-free-random-edge-bundle.asciidoc[]
+
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
 
 include::degree.asciidoc[]
@@ -143,6 +145,8 @@ include::load-segmentation-links-from-csv.asciidoc[]
 include::maximal-cliques.asciidoc[]
 
 include::merge-parallel-edges.asciidoc[]
+
+include::merge-parallel-edges-by-attribute.asciidoc[]
 
 include::merge-two-attributes.asciidoc[]
 

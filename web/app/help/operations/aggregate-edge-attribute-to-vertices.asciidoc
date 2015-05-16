@@ -12,5 +12,5 @@ Save the aggregated attributes with this prefix.
  - `outgoing edges`: Aggregate across the edges going out of each vertex.
  - `all edges`: Aggregate across all the edges going in or out of each vertex.
 
-include::glossary.asciidoc[tag=local-aggregators]
+include::{g}[tag=local-aggregators]
 ====

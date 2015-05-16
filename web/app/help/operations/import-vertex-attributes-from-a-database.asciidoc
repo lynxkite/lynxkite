@@ -3,7 +3,7 @@
 Imports vertex attributes for existing vertices from a SQL database.
 
 ====
-include::glossary.asciidoc[tag=database-import]
+include::{g}[tag=database-import]
 
 [[id-attr]] Vertex ID attribute::
 The vertex attribute which is used in the database's ID column.

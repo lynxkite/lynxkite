@@ -3,7 +3,7 @@
 Writes a segmentation to a text file.
 The first two columns of the file will contain the base vertex and segment IDs.
 
-include::glossary.asciidoc[tag=file-export]
+include::{g}[tag=file-export]
 
 ====
 [[path]] Destination path::

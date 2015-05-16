@@ -5,8 +5,10 @@ import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.api.mvc
+import play.Play
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Sorting
 
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -15,6 +17,8 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.protection.Limitations
+
+import java.io.File
 
 class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -265,6 +269,21 @@ object ProductionJsonServer extends JsonServer {
         CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
       body = play.api.libs.iteratee.Enumerator.fromStream(stream)
     )
+  }
+
+  def logs = action(parse.anyContent) { (user, request) =>
+    assert(user.isAdmin, "Only admins can access the server logs")
+    val logDir = Play.application.getFile("logs")
+    assert(logDir.exists, "Application log directory not found")
+    assert(logDir.isDirectory, "'logs' is not a directory")
+    val logFileNames = logDir.listFiles
+      .filter(_.isFile)
+      .map { file => file.getName }
+      .filter(_.startsWith("application"))
+    assert(logFileNames.size > 0, "No application log file found")
+    val logFile = new File(logDir, logFileNames.max)
+    log.info(s"$user has downloaded log file $logFile")
+    Ok.sendFile(logFile)
   }
 
   def jsError = mvc.Action(parse.json) { request =>
