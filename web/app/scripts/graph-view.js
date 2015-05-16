@@ -101,8 +101,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Offsetter.prototype.reDraw = function() {
     if (!drawing) {
       drawing = true;
-      // Give some time for other events to fire before starting the drawing
-      setTimeout(reDrawImpl, 20, this);
+      // Call the actual drawing 'asynchronously'.
+      setTimeout(reDrawImpl, 0, this);
     }
   };
   function reDrawImpl(offsetter) {
