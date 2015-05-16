@@ -1,0 +1,53 @@
+[[project-header]]
+## Project header bar
+
+The project title bar looks something like this:
+
+image::images/project-header.png[Project Header Screenshot]
+
+It contains the name of the project and also buttons to access various program functions.
+
+[[project-header-buttons]]
+### Project header buttons
+
+Not all the buttons listed here are visible all the time, see details below on when each function is
+available.
+
+// TODO: include icons here somehow.
+
+Apply current filter::
+Applies the currently set attribute filters. This means afterwards the project will only contain vertices and edges that meet all the filtering criteria set when pressing the button. Only visible if there is at least one filter specified. //TODO: link to filtering.
+
+Discard current filter::
+Removes all the currently set attribute filters. Only visible if there is at least one filter specified.
+
+Bucketed graph::
+Visualizes the graph with a bucketed view. See details in section <<bucketed-view>>. Not visible
+on an empty project.
+
+Concrete vertices::
+Visualizes a small subset of the graph, simply drawing selected vertices and edges among them.
+See details in section <<concrete-vertices-view>>. Not visible on an empty project.
+
+Undo::
+Undoes the last operation performed on your project.
+
+Redo::
+Redoes the last undone operation. Only available if you haven't performed any new operations
+since the last undo.
+
+Save as...::
+Makes a copy of the current project with a new name. You will have write permissions to the
+new copy even if you didn't have for the original.
+
+Project settings::
+Modifies the read and write access settings for the project. Only visible if your Kite instance has
+user authentication enabled.
+
+Close project::
+Closes the project.
+
+Project history::
+Shows the list of operations that have been applied to the project so far. The list can 
+also be edited providing an efficient way to try slightly different workflows.
+// TODO: link to history editing

@@ -2,45 +2,50 @@
 'use strict';
 
 // Loads and preprocesses the help pages.
-angular.module('biggraph').directive('helpContent', function() {
-  return {
-    restrict: 'E',
-    templateUrl: 'help-content.html',
-    link: function(scope, element) {
-      scope.onload = function() {
-        // Move heading IDs to sectionbody divs.
-        element.find('div.sect1').each(function(i, div) {
-          div = angular.element(div);
-          var heading = div.children('[id]').first();
-          var body = div.children('.sectionbody');
-          body.attr('id', heading.attr('id'));
-          heading.attr('id', '');
-        });
-        // Move anchor IDs inside <dt> to the next <dd>.
-        element.find('dt > a[id]').each(function(i, a) {
-          a = angular.element(a);
-          var dd = a.parent().next('dd');
-          var section = a.closest('div.sectionbody');
-          var id = section.attr('id') + '-' + a.attr('id');
-          dd.attr('id', id);
-        });
-      };
-    },
-  };
+angular.module('biggraph').factory('helpContent', function($http) {
+  var html = $http.get('/help.html', { cache: true });
+  var dom = html.then(function success(response) {
+    /* global $ */
+    var dom = $($.parseHTML('<div><div id="whole-help">' + response.data + '</div></div>'));
+
+    // Move heading IDs to sectionbody divs.
+    dom.find('div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6').each(function(i, div) {
+      div = angular.element(div);
+      var heading = div.children('[id]').first();
+      div.attr('id', heading.attr('id'));
+      heading.attr('id', '');
+    });
+    // Move anchor IDs inside <dt> to the next <dd>.
+    dom.find('dt > a[id]').each(function(i, a) {
+      a = angular.element(a);
+      var dd = a.parent().next('dd');
+      var section = a.closest('div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6');
+      var id = section.attr('id') + '-' + a.attr('id');
+      dd.attr('id', id);
+    });
+    return dom;
+  });
+  return dom;
 });
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
-angular.module('biggraph').directive('helpId', function() {
+angular.module('biggraph').directive('helpId', function(helpContent, $compile) {
   return {
     restrict: 'A',
-    scope: { helpId: '=' },
+    scope: { helpId: '@', removeHeader: '@' },
     link: function(scope, element) {
       element.addClass('help');
 
-      scope.$watch('helpId', function() {
+      helpContent.then(function(helpContent) {
         var id = scope.helpId.toLowerCase();
-        var content = angular.element('help-content').find('#' + id).first();
+        var content = helpContent.find('#' + id).first();
+        if (content.length === 0) {
+          console.warn('Could not find help ID', id);
+        }
         content = content.clone();
+        if (scope.removeHeader === 'yes') {
+          content.find('h1,h2,h3,h4,h5,h6').first().remove();
+        }
         function expander(e, what) {
           return function() {
             e.hide();
@@ -54,6 +59,8 @@ angular.module('biggraph').directive('helpId', function() {
         details.hide();
         element.empty();
         element.append(content);
+        // Activate Angular contents.
+        $compile(content)(scope.$new());
       });
     }
   };
@@ -67,9 +74,13 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
     templateUrl: 'help-popup.html',
     link: function(scope, element) {
       var body = angular.element('body');
+      var uiLayout = angular.element('ui-layout');
       var button = element.find('#help-button');
       var popup = element.find('#help-popup');
       popup.hide();
+      scope.isEmpty = function() {
+        return popup.children().length === 0;
+      };
       var sticky = false;
 
       scope.$on('$destroy', function() {
@@ -88,9 +99,32 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
         body.append(popup.detach());
         popup.show();
         var offset = button.offset();
-        offset.top += button.height() + 10;
-        offset.left -= popup.width() / 2;
-        popup.offset(offset);
+        var buttonLeft = offset.left;
+        var buttonTop = offset.top;
+        var buttonHeight = button.height();
+
+        var popupLeft = buttonLeft - popup.width() / 2;
+        var maxLeft = uiLayout.width() - popup.width() - 30;
+        if (popupLeft > maxLeft) {
+          popupLeft = maxLeft;
+        }
+        if (popupLeft < 0) {
+          popupLeft = 0;
+        }
+        var fullHeight = uiLayout.height();
+
+        popup.css('left', popupLeft + 'px');
+        if (buttonTop > fullHeight - buttonTop - buttonHeight) {
+          popup.css('top', 'auto');
+          popup.css('bottom', (fullHeight - buttonTop + 10) + 'px');
+          popup.css('max-height', (offset.top - 20) + 'px');
+        } else {
+          // More room below.
+          var popupTop = buttonTop + buttonHeight + 10;
+          popup.css('bottom', 'auto');
+          popup.css('top', popupTop + 'px');
+          popup.css('max-height', (fullHeight - popupTop - 10) + 'px');
+        }
       }
 
       scope.on = function() {

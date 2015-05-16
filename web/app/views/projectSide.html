@@ -111,6 +111,8 @@
         </label>
       </div>
 
+      <help-popup href="'project-header-buttons'" class="pull-right"></help-popup>
+
       <div class="clearfix"></div>
     </div>
 
@@ -125,6 +127,9 @@
       <div class="list-group-item extra-controls" ng-if="side.state.graphMode">
         <!-- Sampled view extra controls. -->
         <div ng-if="side.state.graphMode === 'sampled'">
+          <div class="help-popup-positioner">
+            <help-popup href="'concrete-view-settings'"></help-popup>
+          </div>
           <table>
             <tr>
               <td>Display:</td>
@@ -211,6 +216,7 @@
                      tooltip="Advanced pick options">
                     ...
                   </button>
+                  <help-popup href="'pick-button'"></help-popup>
                 </div>
                 <pick-options shown="side.showPickOptions" side="side"></pick-options>
               </td>
@@ -247,6 +253,7 @@
                        on-ok="side.saveStateToBackend(userText, finishedCallback)"
                        start-value="visualization 1">
           </text-dialog>
+          <help-popup href="'saving-visualizations'"></help-popup>
         </div>
 
       </div>
