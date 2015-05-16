@@ -34,7 +34,13 @@ var SVG_UTIL = {
   },
 
   draw: function() {
-    return ' ' + Array.prototype.slice.call(arguments).join(' ') + ' ';
+    var args = Array.prototype.slice.call(arguments);
+    for (var i =0;i<args.length;i++) {
+      if (!isNaN(args[i]) && args[i] % 1 != 0) {
+        args[i] = args[i].toFixed(2);
+      }
+    }
+    return ' ' + args.join(' ') + ' ';
   },
 
   arc: function(r, x, y, dir) { return SVG_UTIL.draw('A', r, r, 0, 0, dir, x, y); },
