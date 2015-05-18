@@ -23,13 +23,21 @@ angular.module('biggraph').factory('helpContent', function($http) {
       var id = section.attr('id') + '-' + a.attr('id');
       dd.attr('id', id);
     });
+    // Make cross-references relative to #/help.
+    dom.find('a[href]').each(function(i, a) {
+      a = angular.element(a);
+      var href = a.attr('href');
+      if (href[0] === '#') {
+        a.attr('href', '#/help' + href);
+      }
+    });
     return dom;
   });
   return dom;
 });
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
-angular.module('biggraph').directive('helpId', function(helpContent, $compile) {
+angular.module('biggraph').directive('helpId', function(helpContent, $compile, $anchorScroll) {
   return {
     restrict: 'A',
     scope: { helpId: '@', removeHeader: '@' },
@@ -61,6 +69,10 @@ angular.module('biggraph').directive('helpId', function(helpContent, $compile) {
         element.append(content);
         // Activate Angular contents.
         $compile(content)(scope.$new());
+        if (id === 'whole-help') {
+          // Scroll to linked anchor on help page now that the DOM is in place.
+          $anchorScroll();
+        }
       });
     }
   };
