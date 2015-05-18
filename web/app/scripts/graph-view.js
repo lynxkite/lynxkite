@@ -66,11 +66,21 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.yOff = y;
     this.reDraw();
   };
+  // True if a drawing is in progress
+  var drawing = false;
   Offsetter.prototype.reDraw = function() {
-    for (var i = 0; i < this.elements.length; ++i) {
-      this.elements[i].reDraw();
+    if (!drawing) {
+      drawing = true;
+      // Call the actual drawing 'asynchronously'.
+      setTimeout(reDrawImpl, 0, this);
     }
   };
+  function reDrawImpl(offsetter) {
+    for (var i = 0; i < offsetter.elements.length; ++i) {
+      offsetter.elements[i].reDraw();
+    }
+    drawing = false;
+  }
   Offsetter.prototype.inherit = function() {
     var offsetter = new Offsetter(this.xOff, this.yOff, this.zoom, this.thickness, this.menu);
     offsetter.inherited = true;

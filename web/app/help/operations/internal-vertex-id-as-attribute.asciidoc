@@ -1,8 +1,8 @@
 ## Internal vertex ID as attribute
 
 Exposes the internal vertex ID as an attribute. This attribute is automatically generated
-by operations that generate new vertex sets. But you can regenerate it with this operation
-if necessary.
+by operations that generate new vertex sets. (In most cases this is already available as attribute ‘id’.)
+But you can regenerate it with this operation if necessary.
 
 ====
 [[name]] Attribute name::
