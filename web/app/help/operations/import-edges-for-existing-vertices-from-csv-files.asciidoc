@@ -4,6 +4,14 @@ Imports edges from a CSV file, or files. Your vertices must have an identifying 
 the edges can be attached to them.
 
 ====
+*Example use case*
+
+If you have one CSV fileset for the vertices (e.g. subscribers) and another 
+for the edges (e.g., calls), you import the first CSV with the <<Import vertices from CSV files>>
+operation and then use this operation to add the edges.
+
+*Parameters*
+
 include::{g}[tag=csv-import]
 
 [[attr]] Vertex ID attribute::

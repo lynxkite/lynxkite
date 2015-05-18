@@ -7,15 +7,6 @@ and the segmentation.
 The result of this operation is an updated edge set between the project and the
 segmentation, that is a one-to-one matching.
 
-### Example use-case
-
-Project M is an MSISDN graph based on call data. Project F is a Facebook
-graph. A CSV file contains a number of MSISDN{to}Facebook ID mappings, a many-to-many
-relationship. Connect the two projects with
-link:{help}import-project-as-segmentation[Import project as segmentation] and
-link:{help}load-segmentation-links-from-csv[Load segmentation links from CSV], then use the
-fingerprinting operation to turn the mapping into a high-quality one-to-one relationship.
-
 ====
 The matches are identified by calculating a similarity score between vertices and picking a
 matching that ensures a high total similarity score across the matched pairs.
@@ -23,6 +14,16 @@ matching that ensures a high total similarity score across the matched pairs.
 The similarity calculation is based on the network structure: the more alike their neighborhoods
 are, the more similar two vertices are considered. Vertex attributes are not considered in the
 calculation.
+
+*Example use case*
+
+Project M is an MSISDN graph based on call data. Project F is a Facebook
+graph. A CSV file contains a number of MSISDN{to}Facebook ID mappings, a many-to-many
+relationship. Connect the two projects with <<import-project-as-segmentation>> and
+<<load-segmentation-links-from-csv>>, then use the
+fingerprinting operation to turn the mapping into a high-quality one-to-one relationship.
+
+*Parameters*
 
 [[mrew]] Minimum relative edge weight::
 The relative edge weight is the edge weight relative to the summed edge weights of the vertex.

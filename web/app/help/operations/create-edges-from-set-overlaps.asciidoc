@@ -3,6 +3,15 @@
 Connects segments with large enough overlaps.
 
 ====
+*Example use case*
+
+Communities are generated as a set of vertices, with no edges between them. But you
+may be interested in looking for some structure there, to see which
+communities are connected to others. You can generate edges between
+the communities by looking at how many vertices of the base project they have in common.
+
+*Parameters*
+
 [[minoverlap]] Minimal overlap for connecting two segments::
 Two segments will be connected if they have at least this many members in common.
 ====

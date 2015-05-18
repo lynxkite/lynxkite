@@ -8,6 +8,23 @@ The resulting graph will have as many vertices as the sum of the vertex counts i
 source graphs. The same with the edges.
 
 ====
+*Example use case*
+
+You have imported a call data graph in one project and a Facebook graph in another.
+Some, but not all vertices have an email address associated with them.
+We want to merge the two graphs into a single graph that represents connections
+(either calls or Facebook friendships) between people.
+
+A simple procedure for connecting the two graphs would be the following.
+
+. Take the union of the two projects.
+. Use <<Merge vertices by attribute>> to combine the vertices that can be exactly matched
+based on their email address.
+. Use <<Fingerprinting based on attributes>> to identify more matches based on neighborhood
+similarity.
+
+*Parameters*
+
 [[other]] Other project's name::
 The project to merge into the current project.
 

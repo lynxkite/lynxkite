@@ -1,9 +1,12 @@
 ## Derived vertex attribute
 
-Generates a new attribute based on existing attributes. The value expression can be
+Generates a new attribute based on existing vertex attributes. The value expression can be
 an arbitrary JavaScript expression, and it can refer to existing attributes as if they
-were local variables. For example you can write `age * 2` to generate a new attribute
-that is the double of the age attribute. Or you can write
+were local variables. The new attribute will only be defined on vertices for which all the
+attributes used in the expression are defined.
+
+For example you can write `age * 2` to generate a new attribute
+that is the double of the _age_ attribute. Or you can write
 `gender == 'Male' ? 'Mr ' + name : 'Ms ' + name` for a more complex example.
 
 ====
