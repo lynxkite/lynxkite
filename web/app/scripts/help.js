@@ -108,14 +108,15 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
         var fullHeight = uiLayout.height();
 
         popup.css('left', popupLeft + 'px');
-        if (buttonTop > fullHeight - buttonTop - buttonHeight) {
-          popup.css('top', 'auto');
-          popup.css('bottom', (fullHeight - buttonTop + 10) + 'px');
-          popup.css('max-height', (offset.top - 20) + 'px');
+        // We don't allow large popups upwards as the user won't find the start of the text.
+        var topPopupHeight = Math.min(250, buttonTop - 10);
+        if (fullHeight - buttonTop - buttonHeight - 20 < topPopupHeight) {
+          // Very little room below, we put it above.
+          popup.css('top', (buttonTop - topPopupHeight - 10) + 'px');
+          popup.css('height', topPopupHeight + 'px');
         } else {
-          // More room below.
+          // We have enough room below.
           var popupTop = buttonTop + buttonHeight + 10;
-          popup.css('bottom', 'auto');
           popup.css('top', popupTop + 'px');
           popup.css('max-height', (fullHeight - popupTop - 10) + 'px');
         }
