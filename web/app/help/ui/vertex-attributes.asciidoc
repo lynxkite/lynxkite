@@ -11,7 +11,7 @@ In the vertex attribute list, for each attribute you can see the following infor
 * The type of the attribute (e.g. String, Double, ...).
 * A filter box where you can specify a filtering criteria on the attribute's value. Once you defined
 a filter for a vertex attribute then all UI visualizations (histograms, graph
-visualization) will only consider vertices that pass your filter. See <<attribute-filter-syntax>
+visualization) will only consider vertices that pass your filter. See <<attribute-filter-syntax>>
 for details.
 * A histogram button that allows you to see a histogram of the attribute
 * A visualization button that allows you to visualize the attribute on the current graph
@@ -30,7 +30,7 @@ There are lots of ways one can create vertex attributes:
 <<clustering-coefficient>>, etc.)
 * you can derive more attributes from existing ones using the <<derived-vertex-attribute>>
 operation
-* you can smear attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>
+* you can smear attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>
 * etc.
 
 
