@@ -1,9 +1,8 @@
 ## Connected components
 
-Creates a segment for every connected set of vertices.
-In other words, this operation finds the subgraphs (connected components) in a graph, in which 
-any two or more vertices are connected to each other by paths,
-but are connected to no additional vertices in the supergraph.
+Creates a segment for every connected component of the graph.
+
+Connected components are maximal vertex sets where a path exists between each pair of vertices.
 
 
 ====
