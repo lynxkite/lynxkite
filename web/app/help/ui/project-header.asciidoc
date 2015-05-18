@@ -14,7 +14,9 @@ Not all the buttons listed here are visible all the time, see details below on w
 available.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-filter"></i></label>+++ Apply current filter::
-Applies the currently set attribute filters. This means afterwards the project will only contain vertices and edges that meet all the filtering criteria set when pressing the button. Only visible if there is at least one filter specified. //TODO: link to filtering.
+Applies the currently set attribute filters. This means afterwards the project will only contain
+vertices and edges that meet all the filtering criteria set when pressing the button. Only visible
+if there is at least one filter specified. See <<attribute-filter-syntax>> for details.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-minus"></i></label>+++ Discard current filter::
 Removes all the currently set attribute filters. Only visible if there is at least one filter specified.
