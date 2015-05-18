@@ -13,8 +13,6 @@ It contains the name of the project and also buttons to access various program f
 Not all the buttons listed here are visible all the time, see details below on when each function is
 available.
 
-// TODO: include icons here somehow.
-
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-filter"></i></label>+++ Apply current filter::
 Applies the currently set attribute filters. This means afterwards the project will only contain vertices and edges that meet all the filtering criteria set when pressing the button. Only visible if there is at least one filter specified. //TODO: link to filtering.
 
