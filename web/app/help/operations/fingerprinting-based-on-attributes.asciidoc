@@ -18,6 +18,8 @@ The similarity calculation is based on the network structure: the more alike the
 are, the more similar two vertices are considered. Vertex attributes are not considered in the
 calculation.
 
+*Parameters*
+
 [[leftname]] First ID attribute::
 Two identifying attributes have to be selected.
 
