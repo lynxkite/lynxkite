@@ -1,7 +1,7 @@
 ## Graph visualizations
 
 When some kind of visualization is turned on a visualization screen opens above the
-<<project-header>>. 
+<<project-header>>.
 
 There are multiple types of visualizations, but in every case you see some objects connected by
 some arcs.
@@ -41,7 +41,7 @@ When this mode is selected the user is presented with a set of extra controls be
 
 [[concrete-view-settings]]
 Display::
-You can select between 2D and 3D visualization. 3D allows for showing more vertices efficiently but 
+You can select between 2D and 3D visualization. 3D allows for showing more vertices efficiently but
 that mode has less features. You cannot (yet) visualize attributes in 3D mode and cannot select and
 move around vertices.
 
@@ -55,8 +55,14 @@ When animation is enabled, this will make vertices with the same label attract e
 results in same label vertices being grouped together.
 
 Layout style::
-When animation is enabled, this option determines the exact physics of the simulation. TODO: add
-details here.
+When animation is enabled, this option determines the exact physics of the simulation.
+The different options can be useful depending on the structure of the network that is visualized.
++
+The available options are:
++
+Centralize::: High-degree nodes in the center, low-degree nodes on the periphery.
+Decentralize::: Low-degree nodes in the center, high-degree nodes on the periphery.
+Neutral::: Degree is not factored into the layout.
 
 Show vertices::
 Lists ‘center’ vertices, that is the vertices whose neighborhood we are displaying. You can change
@@ -84,7 +90,7 @@ will be shown.
 
 Filter segmentation to this vertex::
 It will setup a filter on the segmentation
-graph such that only segments that contain this vertex are selected. This menu is only available if 
+graph such that only segments that contain this vertex are selected. This menu is only available if
 a segmentation is open on the right side.
 
 Freeze/unfreeze::
