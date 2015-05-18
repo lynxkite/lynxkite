@@ -54,6 +54,12 @@ angular.module('biggraph').directive('helpId', function(helpContent, $compile, $
         if (scope.removeHeader === 'yes') {
           content.find('h1,h2,h3,h4,h5,h6').first().remove();
         }
+        if (id !== 'whole-help') {
+          // Help links inside the main UI should open in new tabs.
+          content.find('a[href]').each(function(i, a) {
+            a.setAttribute('target', '_blank');
+          });
+        }
         function expander(e, what) {
           return function() {
             e.hide();
