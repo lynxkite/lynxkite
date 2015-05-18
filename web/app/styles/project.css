@@ -107,10 +107,13 @@ input.save-as {
   background: black;
 }
 .project-sides {
-  margin-top: 10px;
+  padding-top: 10px;
+}
+.split-screen {
+  overflow: hidden; /* Kill extra scrollbars. */
 }
 .split-screen > .project-sides {
-  padding-top: 10px;  /* Get out from under the split-bar. */
+  overflow: auto; /* Only scroll project page in split view. */
 }
 
 .project-settings {
