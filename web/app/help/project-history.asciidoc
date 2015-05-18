@@ -1,0 +1,80 @@
+# Project history
+
+Clicking the +++<label class="btn btn-default"><i class="glyphicon glyphicon-time"></i></label>+++ button on
+the <<project-header,project header>> switches the project to history mode. In history mode the sequence of
+operations that had been performed on the project are displayed and may be edited.
+
+// TODO: Embed example history view.
+
+The history mode is useful for a number of purposes:
+
+- *To review the process* that was used to reach the end results. History mode can tell you what files were
+imported at the beginning, what operations were used and with what parameters.
+- *To make changes to the process.* For example after a string of operations you start to wonder what the
+results would look like had you filtered the dataset to just one gender at the very start. You can insert
+the filter in history mode. When you save the change the project will reflect the altered history.
+- *To create a new composite operation* (a _workflow_) from a sequence of operations that you have performed
+on the project.
+
+Visualizations are disabled in history mode.
+Press the +++<label class="btn btn-default"><i class="glyphicon glyphicon-arrow-left"></i></label>+++ button
+to return to the regular project view.
+
+## Modifying an operation
+
+The parameters of the operations are all editable in history mode. The operation category icons can be used
+to pick a different operation to run in the same place.
+
+A modified operation is marked by a striped background. The changes have to be validated first before the
+altered history can be saved.
+Press +++<label class="btn btn-default"><i class="glyphicon glyphicon-ok"></i></label>+++ to perform validation.
+Validation can result in some operations marked as inconsistent.
++++<label class="btn btn-warning"><i class="glyphicon glyphicon-exclamation-sign"></i></label>+++
+Inconsistent operations will have a red
+background and an error message describing the problem.
+
+Note that changing one operation may cause another one to become inconsistent. For example if you change the
+name of the output attribute in a <<derive-vertex-attribute>> operation when this output attribute is used by
+a later operation, that later operation will become inconsistent, since it is now referring to a non-existent
+attribute.
+
+When performing a complex history change you may have to do multiple rounds of changes and validations.
+When you eventually arrive at a new, consistent history, the validation button will be replaced by the save button.
++++<label class="btn btn-default"><i class="glyphicon glyphicon-floppy-disk"></i></label>+++
+The modified history can be saved over the original project, or can be saved under a new name.
+
+## Deleting an operation
+
+Select _Discard operation_ from the drop-down menu
+(+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
+on the bottom right of the operation. Deleting an operation automatically triggers validation.
+
+## Adding a new operation
+
+Select _Insert operation above_ or _Insert operation below_ from the drop-down menu
+(+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
+on the bottom right of the operation. A <<no-operation>> placeholder will be inserted at the selected point
+and a validation pass will be performed. After the validation the placeholder can be replaced with the
+desired operation.
+
+If the project has segmentations at that point in its history, the dropdown will also offer to insert new operations
+on the available segmentations instead of the base project.
+
+## Saving a workflow
+
+Workflows are user-defined composite operations, themselves made up of other operations.
+Workflows can be created in history mode from the history of the existing project.
+Press +++<label class="btn btn-warning"><i class="glyphicon glyphicon-film"></i></label>+++ to turn the history
+into a workflow. The source code of the workflow can then be edited.
+
+The source code of workflows is a JSON list of the operations performed, complete with parameters.
+Creating workflows from project histories has the benefit that the sequence of operations will always be
+consistent, and you never have to look up the exact syntax for the workflow definition.
+
+The history typically includes some setup steps that should not be part of the workflow. Simply delete these
+steps from the workflow source code.
+
+Workflows can have parameters too. Simply replace strings in the source code with `+${my parameter}+`, and
+the workflow will have a parameter called _"my parameter"_.
+
+// TODO: Workflow source code example with parameter.
