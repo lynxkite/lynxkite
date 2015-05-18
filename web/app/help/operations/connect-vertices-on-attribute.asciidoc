@@ -5,6 +5,9 @@ equals the destination attribute of B, an A{to}B edge will be generated.
 
 The two attributes must be of the same data type.
 
+For example, if you connect nodes based on the "name" attribute, then everyone called "John 
+Smith" will be connected to all the other "John Smiths".
+
 ====
 [[fromattr]] Source attribute::
 An A{to}B edge is generated when this attribute on A matches the destination attribute on B.

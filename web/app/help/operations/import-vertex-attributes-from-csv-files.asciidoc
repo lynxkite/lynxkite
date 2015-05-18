@@ -1,6 +1,7 @@
 ## Import vertex attributes from CSV files
 
-Imports vertex attributes for existing vertices from a CSV file.
+Imports vertex attributes for existing vertices from a CSV file. This is
+useful when you already have vertices and just want to import one more attribute.
 
 ====
 include::{g}[tag=csv-import]

@@ -6,7 +6,7 @@ angular.module('biggraph').factory('helpContent', function($http) {
   var html = $http.get('/help.html', { cache: true });
   var dom = html.then(function success(response) {
     /* global $ */
-    var dom = $($.parseHTML('<div>' + response.data + '</div>'));
+    var dom = $($.parseHTML('<div><div id="whole-help">' + response.data + '</div></div>'));
 
     // Move heading IDs to sectionbody divs.
     dom.find('div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6').each(function(i, div) {
@@ -23,13 +23,21 @@ angular.module('biggraph').factory('helpContent', function($http) {
       var id = section.attr('id') + '-' + a.attr('id');
       dd.attr('id', id);
     });
+    // Make cross-references relative to #/help.
+    dom.find('a[href]').each(function(i, a) {
+      a = angular.element(a);
+      var href = a.attr('href');
+      if (href[0] === '#') {
+        a.attr('href', '#/help' + href);
+      }
+    });
     return dom;
   });
   return dom;
 });
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
-angular.module('biggraph').directive('helpId', function(helpContent, $compile) {
+angular.module('biggraph').directive('helpId', function(helpContent, $compile, $anchorScroll) {
   return {
     restrict: 'A',
     scope: { helpId: '@', removeHeader: '@' },
@@ -39,6 +47,9 @@ angular.module('biggraph').directive('helpId', function(helpContent, $compile) {
       helpContent.then(function(helpContent) {
         var id = scope.helpId.toLowerCase();
         var content = helpContent.find('#' + id).first();
+        if (content.length === 0) {
+          console.warn('Could not find help ID', id);
+        }
         content = content.clone();
         if (scope.removeHeader === 'yes') {
           content.find('h1,h2,h3,h4,h5,h6').first().remove();
@@ -58,6 +69,10 @@ angular.module('biggraph').directive('helpId', function(helpContent, $compile) {
         element.append(content);
         // Activate Angular contents.
         $compile(content)(scope.$new());
+        if (id === 'whole-help') {
+          // Scroll to linked anchor on help page now that the DOM is in place.
+          $anchorScroll();
+        }
       });
     }
   };
@@ -75,6 +90,9 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
       var button = element.find('#help-button');
       var popup = element.find('#help-popup');
       popup.hide();
+      scope.isEmpty = function() {
+        return popup.children().length === 0;
+      };
       var sticky = false;
 
       scope.$on('$destroy', function() {

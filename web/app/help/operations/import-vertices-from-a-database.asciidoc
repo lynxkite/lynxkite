@@ -1,6 +1,6 @@
 ## Import vertices from a database
 
-Imports vertices (no edges) from a SQL database.
+Imports vertices (no edges) from an SQL database.
 An extra vertex attribute is generated to hold the internal vertex ID.
 
 ====

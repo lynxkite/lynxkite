@@ -8,6 +8,10 @@ Vertices will be generated for the endpoints of the edges with two vertex attrib
  - `stringID` will contain the ID string that was used in the CSV.
  - `id` will contain the internal vertex ID.
 
+This is useful when your fileset contains edges (e.g., calls) and there is no separate
+fileset for vertices. This operation makes it possible to load edges and use them
+as a graph. Note that this graph will never have zero-degree vertices.
+
 ====
 include::{g}[tag=csv-import]
 
