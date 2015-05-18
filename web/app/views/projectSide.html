@@ -309,12 +309,13 @@
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>
-        <help-popup href="'vertex-attributes'" class="pull-right"></help-popup>
+        <help-popup href="'attributes'" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item" ng-repeat="attr in side.project.vertexAttributes" vertex-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> edges</span>
+        <help-popup href="'attributes'" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item" ng-repeat="attr in side.project.edgeAttributes" edge-attribute="attr" side="side"></li>
 
