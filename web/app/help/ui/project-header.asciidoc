@@ -48,4 +48,4 @@ Closes the project.
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-time"></i></label>+++ Project history::
 Shows the list of operations that have been applied to the project so far. The list can
 also be edited providing an efficient way to try slightly different workflows.
-// TODO: link to history editing
+See <<project-history>>.
