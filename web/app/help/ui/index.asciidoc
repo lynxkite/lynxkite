@@ -7,3 +7,5 @@ include::graph-attributes.asciidoc[]
 include::vertex-attributes.asciidoc[]
 
 include::graph-visualizations.asciidoc[]
+
+include::filter-syntax.asciidoc[]
