@@ -44,9 +44,7 @@ tag::csv-import[]
 Upload a file using the button on the right, or specify the path to an existing file set.
 Wildcard (`+foo/*.csv+`) and glob (`+foo/{bar,baz}.csv+`) patterns are accepted.
 +
-The file must be specified relative to a root that the LynxKite administrator has configured
-through the `KITE_ROOT_DEFINITIONS` file. The syntax would then be
-`+MY_ROOT$dir/*.csv+`.
+The file must be specified as a <<prefixed-paths, prefixed path>>, such as `+MY_ROOT$dir/*.csv+`.
 
 [[header]] Header::
 The list of column names. This parameter serves two purposes:
