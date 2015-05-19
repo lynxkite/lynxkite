@@ -1,11 +1,9 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import java.io.File
 import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.util.Random
 
-import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext, BigGraphEnvironment }
+import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
 import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util.{ RootRepository, HadoopFile }
