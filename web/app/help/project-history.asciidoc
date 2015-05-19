@@ -65,7 +65,7 @@ on the available segmentations instead of the base project.
 
 Workflows are user-defined composite operations, themselves made up of other operations.
 Workflows can be created in history mode from the history of the existing project.
-Press +++<label class="btn btn-warning"><i class="glyphicon glyphicon-film"></i></label>+++ to turn the history
+Press +++<label class="btn btn-default"><i class="glyphicon glyphicon-film"></i></label>+++ to turn the history
 into a workflow. The source code of the workflow can then be edited.
 
 The source code of workflows is a JSON list of the operations performed, complete with parameters.
