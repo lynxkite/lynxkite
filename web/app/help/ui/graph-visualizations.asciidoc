@@ -67,7 +67,8 @@ Neutral::: Degree is not factored into the layout.
 Show vertices::
 Lists ‘center’ vertices, that is the vertices whose neighborhood we are displaying. You can change
 this list manually, using the <<pick-button,Pick button>> or using the
-<<context-menu,context menu>> of already displayed vertices.
+<<context-menu,context menu>> of already displayed vertices. Setting an asterisk here will
+result in the visualization of all the vertices (up to a certain limit).
 
 Show neighborhood::
 You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center
@@ -75,7 +76,11 @@ vertices and their immediate neighbors. 2 also contains neighbors of neighbors. 
 
 #### Pick button
 You can use the pick button to select the <<center-vertices,center vertices>> for the visualization.
-TODO: explain.
+Which vertex will be chosen as the center will depend on the contents of the Show vertices box.
+By default, only one vertex is offered. You can change this behavior by setting the Center count
+field of the advanced Pick options menu. The list of vertices offered will be limited by the
+currently set filters; these can be removed and new filters added with the Add Restriction button.
+
 
 #### Context menu
 When clicking a vertex in Concrete Vertex View you can see a context menu with possible operations
