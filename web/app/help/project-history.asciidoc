@@ -17,6 +17,7 @@ the filter in history mode. When you save the change the project will reflect th
 on the project.
 
 Visualizations are disabled in history mode.
+
 Press the +++<label class="btn btn-default"><i class="glyphicon glyphicon-arrow-left"></i></label>+++ button
 to return to the regular project view.
 
