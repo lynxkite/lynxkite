@@ -25,7 +25,7 @@ visualization. See details in <<concrete-visualization-options>>.
 to use for grouping vertices by. X causes the groups by this attribute to be distributed over the
 X axis, and respectively, Y causes the groups to be distributed over the Y axis.
 
-There are lots of ways one can create attributes:
+There are lots of ways you can create attributes:
 
 * when importing vertices/edges from a CSV every column will automatically become an attribute
 * you can also import attributes for existing vertices from a CSV file
