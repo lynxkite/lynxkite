@@ -37,7 +37,8 @@ angular.module('biggraph').factory('helpContent', function($http) {
 });
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
-angular.module('biggraph').directive('helpId', function(helpContent, $compile, $anchorScroll) {
+angular.module('biggraph').directive('helpId',
+    function(helpContent, $compile, $anchorScroll, util) {
   return {
     restrict: 'A',
     scope: { helpId: '@', removeHeader: '@' },
@@ -54,7 +55,10 @@ angular.module('biggraph').directive('helpId', function(helpContent, $compile, $
         if (scope.removeHeader === 'yes') {
           content.find('h1,h2,h3,h4,h5,h6').first().remove();
         }
-        if (id !== 'whole-help') {
+        if (id === 'whole-help') {
+          // Set title in single-page mode.
+          util.scopeTitle(scope, '"LynxKite User Manual"');
+        } else {
           // Help links inside the main UI should open in new tabs.
           content.find('a[href]').each(function(i, a) {
             a.setAttribute('target', '_blank');
