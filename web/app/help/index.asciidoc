@@ -9,8 +9,12 @@
 
 // Shortcut for includes. (include::{g}[tag=my-glossary-entry])
 :g: glossary.asciidoc
+:toc: macro
+:toc-placement: macro
 
 # LynxKite User Manual
+
+toc::[]
 
 :leveloffset: +1
 
