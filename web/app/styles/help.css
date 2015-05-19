@@ -2,6 +2,18 @@
   font-weight: bold;
 }
 
+#toc {
+  float: right;
+}
+@media print {
+  #toc {
+    /* The table of contents would be quite useful in print. Unfortunately, there is no browser
+     * support for generating page numbers at the moment. And when printing to PDF the links
+     * are not clickable. So we cannot produce a useable table of contents. */
+    display: none;
+  }
+}
+
 .read-more {
   display: block;
   text-align: right;
