@@ -22,6 +22,10 @@
 #help-button {
   cursor: pointer;
 }
+help-popup {
+  padding: 6px; /* Button-like padding. */
+  font-size: 14px;
+}
 #help-popup {
   position: absolute;
   width: 30%;
@@ -31,7 +35,7 @@
   border-radius: 5px;
   padding: 10px;
   box-shadow: 0 2px 5px;
-  overflow-y: scroll;
+  overflow-y: auto; /* Clip and display scrollbars when necessary. */
 }
 
 .help-popup-positioner {
@@ -45,6 +49,7 @@
   z-index: 2000;
 }
 
+/* The single-page help document. */
 .users-guide {
   background: #48a;
   padding-top: 20px;
