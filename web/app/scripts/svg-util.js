@@ -1,23 +1,6 @@
 // Utility functions for SVG building.
 'use strict';
 
-function arcParams(ax, ay, bx, by, zoom) {
-  if (ax === bx && ay === by) {
-    return {r: 0.1 * zoom, x: ax + 0.2 * zoom, y: ay};
-  } else {
-    var dx = bx - ax, dy = by - ay;
-    var d = Math.sqrt(dx * dx + dy * dy);
-    // Use larger radius (less curvature) for long distance edges.
-    var r = d * (d + 1000) / 1000;
-    var h = r - Math.sqrt(r * r - d * d / 4);
-    return {
-      r: r,
-      x: ax + 0.5 * dx - h * dy / d,
-      y: ay + 0.5 * dy + h * dx / d,
-    };
-  }
-}
-
 /* exported  SVG_UTIL */
 var SVG_UTIL = {
   // JQuery addClass/removeClass does not work on SVG elements. (They are in
@@ -51,25 +34,35 @@ var SVG_UTIL = {
   },
 
   draw: function(objects) {
-    for (var i =0;i<objects.length;i++) {
-      if (!isNaN(objects[i]) && objects[i] % 1 !== 0) {
-        objects[i] = objects[i].toFixed(3);
-      }
-    }
     return ' ' + objects.join(' ') + ' ';
   },
 
-  arcParams: function(ax, ay, bx, by, zoom) { return arcParams(ax, ay, bx, by, zoom); },
-
   arc: function(r, x, y, dir) { return SVG_UTIL.draw(['A', r, r, 0, 0, dir, x, y]); },
 
+  arcParams: function(ax, ay, bx, by, zoom) {
+    if (ax === bx && ay === by) {
+      return {r: 0.1 * zoom, x: ax + 0.2 * zoom, y: ay};
+    } else {
+      var dx = bx - ax, dy = by - ay;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      // Use larger radius (less curvature) for long distance edges.
+      var r = d * (d + 1000) / 1000;
+      var h = r - Math.sqrt(r * r - d * d / 4);
+      return {
+        r: r,
+        x: ax + 0.5 * dx - h * dy / d,
+        y: ay + 0.5 * dy + h * dx / d,
+      };
+    }
+  },
+
   arrow1: function(ax, ay, bx, by, zoom) {
-    var a = arcParams(ax, ay, bx, by, zoom);
+    var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
     return SVG_UTIL.draw(['M', ax, ay]) + SVG_UTIL.arc(a.r, a.x, a.y, 0);
   },
 
   arrow2: function(ax, ay, bx, by, zoom) {
-    var a = arcParams(ax, ay, bx, by, zoom);
+    var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
     return SVG_UTIL.draw(['M', bx, by]) + SVG_UTIL.arc(a.r, a.x, a.y, 1);
   },
 
