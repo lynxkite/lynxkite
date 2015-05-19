@@ -1,5 +1,16 @@
 ## Attribute filter syntax
 
+A filter can be used to restrict your view of a project to a subset of vertices/edges based on the
+value of an attribute.
+
+You can specify filters for multiple attributes at the same time, in which case you will only see
+vertices/edges that match all of your filters.
+
+Regardless of the exact the filter, whenever you specify a filter for an attribute you always
+restrict to those edges/vertices where the attribute is defined. E.g. if say you have a filter
+requiring age > 10, then you will only see vertices where age attribute is defined and the value of
+age is more than ten.
+
 The filtering syntax depends on the type of the attribute.
 
 * For `String` and `Long` types the filter is a comma-separated list of values you want to match.
@@ -28,4 +39,7 @@ when the `Vector` contains no positive items. (This would include empty `Vector`
 For example `any(male)` for a `Vector[String]` will match when the  Vector  contains at least one "male". (This would not include empty vectors, but would include those where all elements are "male".)
 
 Any filter can be prefixed with `!` to negate it. For example `!medium` will exclude
-"medium" values.
+"medium" values. Another typical usecase for this is specifying `!` (a single exclamation mark
+character) as the filter for a string attribute. This is interpreted as non-empty, so it will
+restrict to those vertices/edges where the string attribute is defined and its value is not empty
+string.
