@@ -6,12 +6,10 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object AggregateByEdgeBundle extends OpFromJson {
   class Input[From] extends MagicInputSignature {

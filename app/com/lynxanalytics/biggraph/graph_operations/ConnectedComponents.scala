@@ -2,12 +2,8 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.collection.mutable
-import scala.reflect.runtime.universe._
 import scala.util.Random
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
 import com.lynxanalytics.biggraph.graph_api._

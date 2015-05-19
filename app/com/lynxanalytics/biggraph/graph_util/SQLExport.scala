@@ -4,10 +4,7 @@ package com.lynxanalytics.biggraph.graph_util
 import java.sql
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
-
-import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD

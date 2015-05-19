@@ -8,12 +8,10 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.Partitioner
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object InducedEdgeBundle extends OpFromJson {

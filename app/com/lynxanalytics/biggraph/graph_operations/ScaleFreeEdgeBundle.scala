@@ -13,8 +13,6 @@ import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.commons.math3.distribution.PoissonDistribution
 import org.apache.spark.HashPartitioner
 import org.apache.spark.Partitioner
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd
 import org.apache.spark.rdd.RDD
 import scala.reflect.ClassTag
 import scala.util.Random

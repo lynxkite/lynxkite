@@ -6,10 +6,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
-import org.apache.hadoop
 import org.apache.spark
-import org.apache.spark.rdd
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
 import ExecutionContext.Implicits.global
@@ -17,7 +14,6 @@ import ExecutionContext.Implicits.global
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {

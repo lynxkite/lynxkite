@@ -2,7 +2,6 @@
 // using per-vertex neighborhoods as input.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.graph_api._
 import scala.util.Sorting
 

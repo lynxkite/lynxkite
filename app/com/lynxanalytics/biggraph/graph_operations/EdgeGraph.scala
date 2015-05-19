@@ -3,9 +3,6 @@
 // See http://en.wikipedia.org/wiki/Edge_graph for a more precise definition.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
