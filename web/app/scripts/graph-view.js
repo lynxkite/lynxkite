@@ -1560,25 +1560,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Edge.prototype.reposition = function() {
     var src = this.src, dst = this.dst;
     var avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
-    var f = this.first[0];
-    f.setAttribute('d', svg.arrow1(
+    this.first[0].setAttribute('d', svg.arrow1(
         src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom));
-    f.setAttribute(
-      'stroke-width', avgZoom * this.w
-    );
-    var s = this.second[0];
-    s.setAttribute('d', svg.arrow2(
+    this.first[0].setAttribute('stroke-width', avgZoom * this.w);
+    this.second[0].setAttribute('d', svg.arrow2(
         src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom));
-    s.setAttribute(
-      'stroke-width', avgZoom * this.w
-    );
+    this.second[0].setAttribute('stroke-width', avgZoom * this.w);
     var arcParams = svg.arcParams(
       src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
-    var l = this.label[0];
-    l.setAttribute(
-      'x', arcParams.x);
-    l.setAttribute(
-      'y', arcParams.y);
+    this.label[0].setAttribute('x', arcParams.x);
+    this.label[0].setAttribute('y', arcParams.y);
   };
 
   return directive;
