@@ -5,8 +5,8 @@ which specify the source and destination of the edges. New vertices will be gene
 distinct value of these attributes, and they will be connected if an orignal vertex described
 a connection between them.
 
-An example use-case is if your vertices are calls. The converted graph will have subscribers as
-its vertices and the calls as its edges.
+An example use-case is if your vertices are telephone calls. The converted graph will have
+subscribers as its vertices and the calls as its edges.
 
 ====
 [[src]] Source::

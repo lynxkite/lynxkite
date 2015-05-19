@@ -1,3 +1,7 @@
+.help h5 {
+  font-weight: bold;
+}
+
 .read-more {
   display: block;
   text-align: right;
@@ -23,8 +27,30 @@
   width: 30%;
   background: white;
   color: black;
-  z-index: 3;
+  z-index: 3000;
   border-radius: 5px;
   padding: 10px;
   box-shadow: 0 2px 5px;
+  overflow-y: scroll;
+}
+
+.help-popup-positioner {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+.help-popup-positioner help-popup {
+  position: absolute;
+  /* Must beat ui-splitbar at 1010. Or actually everyting. Except ninjas. */
+  z-index: 2000;
+}
+
+.users-guide {
+  background: #48a;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.users-guide .container {
+  background: white;
+  padding: 50px;
 }

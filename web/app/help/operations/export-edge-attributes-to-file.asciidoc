@@ -7,7 +7,7 @@ include::{g}[tag=file-export]
 
 ====
 [[path]] Destination path::
-The file to write to. Must use the link:{help}rooted-files[rooted filenames syntax].
+The file to write to. Must use the <<rooted-files, rooted filenames syntax>>.
 
 [[link]] Download link name::
 A new scalar will be created under this name. You can download the exported file through this link.
