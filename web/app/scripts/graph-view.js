@@ -1476,10 +1476,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertex.prototype.reDraw = function() {
     var sx = this.screenX(), sy = this.screenY();
     var r = this.offsetter.thickness * this.r;
-    this.icon.attr({ transform:
+    this.icon[0].setAttributeNS(null, 'transform',
       svgTranslate(sx, sy) +
       svgScale(r * this.icon.scale) +
-      svgTranslate(-this.icon.center.x, -this.icon.center.y) });
+      svgTranslate(-this.icon.center.x, -this.icon.center.y));
     this.touch.attr({ cx: sx, cy: sy, r: r });
     this.label.attr({ x: sx, y: sy });
     var backgroundWidth = this.labelBackground.attr('width');
@@ -1555,22 +1555,22 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Edge.prototype.reposition = function() {
     var src = this.src, dst = this.dst;
     var avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
-    this.first.attr({
-      d: svg.arrow1(
-        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom),
-      'stroke-width': avgZoom * this.w,
-    });
-    this.second.attr({
-      d: svg.arrow2(
-        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom),
-      'stroke-width': avgZoom * this.w,
-    });
+    this.first[0].setAttributeNS(null, 'd', svg.arrow1(
+        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom));
+    this.first[0].setAttributeNS(null,
+      'stroke-width', avgZoom * this.w
+    );
+    this.second[0].setAttributeNS(null, 'd', svg.arrow2(
+        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom));
+    this.second[0].setAttributeNS(null,
+      'stroke-width', avgZoom * this.w
+    );
     var arcParams = svg.arcParams(
       src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
-    this.label.attr({
-      x: arcParams.x,
-      y: arcParams.y,
-    });
+    this.label[0].setAttributeNS(null,
+      'x', arcParams.x);
+    this.label[0].setAttributeNS(null,
+      'y', arcParams.y);
   };
 
   return directive;
