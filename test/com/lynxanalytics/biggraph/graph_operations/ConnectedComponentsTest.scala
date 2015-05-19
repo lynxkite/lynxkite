@@ -1,7 +1,5 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.scalatest.FunSuite
 
 import scala.util.Random

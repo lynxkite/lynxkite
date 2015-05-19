@@ -2,11 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import java.sql
 import org.scalatest.FunSuite
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
-import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.TestUtils
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 

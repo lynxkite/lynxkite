@@ -5,8 +5,6 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.TestUtils
-
 class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   test("Basic application flow works as expected.") {
     val manager = cleanMetaManager

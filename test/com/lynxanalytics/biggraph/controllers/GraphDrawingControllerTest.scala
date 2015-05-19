@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
