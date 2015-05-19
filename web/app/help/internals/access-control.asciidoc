@@ -8,7 +8,7 @@ is enabled.
 
 ### Access control lists
 
-Access rights are controlled at the project level. A project has two access control lists, one
+Access rights are controlled at the project level. A project has two access control lists: one
 for reading and one for writing.
 
 - The users on the reading list can see everything in the project but cannot make changes.
