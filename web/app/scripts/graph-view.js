@@ -1476,7 +1476,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertex.prototype.reDraw = function() {
     var sx = this.screenX(), sy = this.screenY();
     var r = this.offsetter.thickness * this.r;
-    this.icon[0].setAttributeNS(null, 'transform',
+    this.icon[0].setAttribute('transform',
       svgTranslate(sx, sy) +
       svgScale(r * this.icon.scale) +
       svgTranslate(-this.icon.center.x, -this.icon.center.y));
@@ -1555,21 +1555,21 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Edge.prototype.reposition = function() {
     var src = this.src, dst = this.dst;
     var avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
-    this.first[0].setAttributeNS(null, 'd', svg.arrow1(
+    this.first[0].setAttribute('d', svg.arrow1(
         src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom));
-    this.first[0].setAttributeNS(null,
+    this.first[0].setAttribute(
       'stroke-width', avgZoom * this.w
     );
-    this.second[0].setAttributeNS(null, 'd', svg.arrow2(
+    this.second[0].setAttribute('d', svg.arrow2(
         src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom));
-    this.second[0].setAttributeNS(null,
+    this.second[0].setAttribute(
       'stroke-width', avgZoom * this.w
     );
     var arcParams = svg.arcParams(
       src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
-    this.label[0].setAttributeNS(null,
+    this.label[0].setAttribute(
       'x', arcParams.x);
-    this.label[0].setAttributeNS(null,
+    this.label[0].setAttribute(
       'y', arcParams.y);
   };
 
