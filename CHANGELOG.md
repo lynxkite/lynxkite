@@ -6,7 +6,10 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
-
+ - Moderate performance improvements for graph visualization.
+ - The _User's Guide_ contents are now integrated into LynxKite. Relevant help messages are
+   provided through contextual popups, and the document is also available as a single page,
+   ready for printing, through a new link at the bottom right.
  - New edge operation _"Merge parallel edges by attribute"_ makes it possible
    for the user to merge those parallel edges between two vertices that have the
    same value for the given edge attribute.
