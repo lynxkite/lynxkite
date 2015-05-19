@@ -2,7 +2,11 @@
 
 = LynxKite User Manual
 Lynx Analytics
-:toc:
+
+:toc: macro
+:toc-placement: macro
+
+toc::[]
 
 // Match ID generation used for operations.
 :idprefix:
