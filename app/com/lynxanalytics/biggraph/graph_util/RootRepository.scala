@@ -2,8 +2,6 @@
 
 package com.lynxanalytics.biggraph.graph_util
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-
 import org.apache.hadoop
 import scala.io.Source
 

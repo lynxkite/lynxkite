@@ -5,8 +5,6 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-
 class SetOverlapTest extends FunSuite with TestGraphOp {
   // Creates the graph specified by `nodes` and applies SetOverlap to it.
   // Returns the resulting edges in an easy-to-use format.

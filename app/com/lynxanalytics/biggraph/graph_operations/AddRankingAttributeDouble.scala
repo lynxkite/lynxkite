@@ -6,8 +6,6 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
-import scala.util.Random
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 

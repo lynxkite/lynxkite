@@ -1,10 +1,8 @@
 // BigGraphController includes the request handlers that operate on projects at the metagraph level.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
@@ -12,7 +10,6 @@ import java.util.regex.Pattern
 import play.api.libs.json
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
-import scala.util.{ Failure, Success, Try }
 import scala.util.matching.Regex
 
 case class FEStatus(enabled: Boolean, disabledReason: String = "") {

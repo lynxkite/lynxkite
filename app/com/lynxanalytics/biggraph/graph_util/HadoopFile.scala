@@ -4,11 +4,8 @@ package com.lynxanalytics.biggraph.graph_util
 import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.IOException
-
 import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
