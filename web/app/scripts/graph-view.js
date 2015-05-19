@@ -1476,15 +1476,20 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertex.prototype.reDraw = function() {
     var sx = this.screenX(), sy = this.screenY();
     var r = this.offsetter.thickness * this.r;
-    this.icon.attr({ transform:
+    this.icon[0].setAttribute('transform',
       svgTranslate(sx, sy) +
       svgScale(r * this.icon.scale) +
-      svgTranslate(-this.icon.center.x, -this.icon.center.y) });
-    this.touch.attr({ cx: sx, cy: sy, r: r });
-    this.label.attr({ x: sx, y: sy });
-    var backgroundWidth = this.labelBackground.attr('width');
-    var backgroundHeight = this.labelBackground.attr('height');
-    this.labelBackground.attr({ x: sx - backgroundWidth / 2, y: sy - backgroundHeight / 2 });
+      svgTranslate(-this.icon.center.x, -this.icon.center.y));
+    this.label[0].setAttribute('x', sx);
+    this.label[0].setAttribute('y', sy);
+    this.touch[0].setAttribute('cx', sx);
+    this.touch[0].setAttribute('cy', sy);
+    this.touch[0].setAttribute('r', r);
+
+    var backgroundWidth = this.labelBackground[0].getAttribute('width');
+    var backgroundHeight = this.labelBackground[0].getAttribute('height');
+    this.labelBackground[0].setAttribute('x', sx - backgroundWidth / 2);
+    this.labelBackground[0].setAttribute('y', sy - backgroundHeight / 2);
     for (var i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }
@@ -1555,22 +1560,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Edge.prototype.reposition = function() {
     var src = this.src, dst = this.dst;
     var avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
-    this.first.attr({
-      d: svg.arrow1(
-        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom),
-      'stroke-width': avgZoom * this.w,
-    });
-    this.second.attr({
-      d: svg.arrow2(
-        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom),
-      'stroke-width': avgZoom * this.w,
-    });
+    this.first[0].setAttribute('d', svg.arrow1(
+        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom));
+    this.first[0].setAttribute('stroke-width', avgZoom * this.w);
+    this.second[0].setAttribute('d', svg.arrow2(
+        src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom));
+    this.second[0].setAttribute('stroke-width', avgZoom * this.w);
     var arcParams = svg.arcParams(
       src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
-    this.label.attr({
-      x: arcParams.x,
-      y: arcParams.y,
-    });
+    this.label[0].setAttribute('x', arcParams.x);
+    this.label[0].setAttribute('y', arcParams.y);
   };
 
   return directive;
