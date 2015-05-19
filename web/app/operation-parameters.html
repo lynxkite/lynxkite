@@ -2,7 +2,7 @@
 <div class="form-group" ng-repeat="param in op.parameters">
   <label for="{{param.id}}" class="col-sm-4 control-label">
     {{param.title}}
-    <help-popup href="op.id + '-' + param.id"></help-popup>
+    <help-popup href="{{op.id + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8">
     <input ng-if="param.kind === 'default'"
