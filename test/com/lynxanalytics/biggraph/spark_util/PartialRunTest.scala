@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.spark_util
 import org.scalatest.FunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.Timed
 

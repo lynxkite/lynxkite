@@ -12,8 +12,6 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Partitioner
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.SparkContext
 
 // Functions for looking at CSV files. The frontend can use these when
 // constructing the import operation.

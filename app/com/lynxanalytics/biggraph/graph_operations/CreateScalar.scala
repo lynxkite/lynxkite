@@ -4,7 +4,6 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.controllers.UIStatus
-import com.lynxanalytics.biggraph.controllers.UIStatusSerialization
 import play.api.libs.json
 
 object CreateScalar {

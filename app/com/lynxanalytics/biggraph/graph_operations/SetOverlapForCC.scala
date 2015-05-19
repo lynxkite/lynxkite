@@ -8,14 +8,8 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd
 import scala.collection.mutable
-import scala.math
-
 import com.lynxanalytics.biggraph.graph_api._
-
 import org.apache.spark.rdd._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 

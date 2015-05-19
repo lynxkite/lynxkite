@@ -2,13 +2,10 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo
-import org.apache.hadoop
 import org.apache.spark
 import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.collection.mutable
 import scala.reflect._
-import scala.util.Random
 
 import com.lynxanalytics.biggraph.graph_api._
 

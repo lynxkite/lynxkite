@@ -1,10 +1,6 @@
 // Very simple operations for counting vertices, etc.
 package com.lynxanalytics.biggraph.graph_operations
 
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-
 import com.lynxanalytics.biggraph.graph_api._
 
 // Convenient shorthands for counting.

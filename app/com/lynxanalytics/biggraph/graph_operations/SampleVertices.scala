@@ -2,10 +2,7 @@
 // The sample is unbiased, but multiple samples will not be independent.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SampleVertices extends OpFromJson {
   class Input extends MagicInputSignature {
