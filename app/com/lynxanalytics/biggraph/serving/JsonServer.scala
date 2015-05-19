@@ -1,14 +1,11 @@
 // The controller to receive and dispatch all JSON HTTP requests from the frontend.
 package com.lynxanalytics.biggraph.serving
 
-import play.api.libs.functional.syntax.toContraFunctorOps
 import play.api.libs.json
-import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.api.mvc
 import play.Play
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.Sorting
 
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }

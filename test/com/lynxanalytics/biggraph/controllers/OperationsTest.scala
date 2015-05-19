@@ -1,10 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.RootRepository
 
 import org.scalatest.FunSuite
-import org.scalatest.Tag
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._

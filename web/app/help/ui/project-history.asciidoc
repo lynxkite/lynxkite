@@ -1,4 +1,4 @@
-# Project history
+## Project history
 
 Clicking the +++<label class="btn btn-default"><i class="glyphicon glyphicon-time"></i></label>+++ button on
 the <<project-header,project header>> switches the project to history mode. In history mode the sequence of
@@ -21,7 +21,7 @@ Visualizations are disabled in history mode.
 Press the +++<label class="btn btn-default"><i class="glyphicon glyphicon-arrow-left"></i></label>+++ button
 to return to the regular project view.
 
-## Modifying an operation
+### Modifying an operation
 
 The parameters of the operations are all editable in history mode. The operation category icons can be used
 to pick a different operation to run in the same place.
@@ -44,13 +44,13 @@ When you eventually arrive at a new, consistent history, the validation button w
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-floppy-disk"></i></label>+++
 The modified history can be saved over the original project, or can be saved under a new name.
 
-## Deleting an operation
+### Deleting an operation
 
 Select _Discard operation_ from the drop-down menu
 (+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
 on the bottom right of the operation. Deleting an operation automatically triggers validation.
 
-## Adding a new operation
+### Adding a new operation
 
 Select _Insert operation above_ or _Insert operation below_ from the drop-down menu
 (+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
@@ -61,7 +61,7 @@ desired operation.
 If the project has segmentations at that point in its history, the dropdown will also offer to insert new operations
 on the available segmentations instead of the base project.
 
-## Saving a workflow
+### Saving a workflow
 
 Workflows are user-defined composite operations, themselves made up of other operations.
 Workflows can be created in history mode from the history of the existing project.

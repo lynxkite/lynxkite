@@ -1,7 +1,6 @@
 // Classes for sorting attribute values into buckets.
 package com.lynxanalytics.biggraph.graph_util
 
-import scala.reflect.runtime.universe._
 import scala.math.Fractional
 import scala.math.Numeric
 

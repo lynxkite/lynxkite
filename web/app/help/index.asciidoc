@@ -1,5 +1,13 @@
 // Main structure file that builds the full documentation from its parts.
 
+= LynxKite User Manual
+Lynx Analytics
+
+:toc: macro
+:toc-placement: macro
+
+toc::[]
+
 // Match ID generation used for operations.
 :idprefix:
 :idseparator: -
@@ -9,19 +17,11 @@
 
 // Shortcut for includes. (include::{g}[tag=my-glossary-entry])
 :g: glossary.asciidoc
-:toc: macro
-:toc-placement: macro
-
-# LynxKite User Manual
-
-toc::[]
 
 :leveloffset: +1
 
 include::intro/index.asciidoc[]
 
 include::ui/index.asciidoc[]
-
-include::project-history.asciidoc[]
 
 include::operations/index.asciidoc[]

@@ -6,7 +6,6 @@ import com.google.cloud.hadoop.fs.gcs
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.serializer.KryoRegistrator
-import scala.collection.immutable
 import scala.collection.mutable
 import scala.reflect.ClassTag
 

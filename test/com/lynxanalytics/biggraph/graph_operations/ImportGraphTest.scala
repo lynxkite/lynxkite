@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.FunSuite
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.TestUtils
