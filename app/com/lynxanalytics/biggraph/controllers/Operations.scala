@@ -224,6 +224,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       File("files", "Files"),
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("omitted", "(optional) Comma separated list of columns to omit"),
       Param("filter", "(optional) Filtering expression"))
     def source(params: Map[String, String]) = {
       val files = HadoopFile(params("files"))
@@ -233,6 +234,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         files,
         params("delimiter"),
         header,
+        params("omitted").split(",").map(_.trim).toSet,
         JavaScript(params("filter")))
     }
   }

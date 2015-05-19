@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - You can now omit columns when importing something from a CSV file.
  - Moderate performance improvements for graph visualization.
  - The _User's Guide_ contents are now integrated into LynxKite. Relevant help messages are
    provided through contextual popups, and the document is also available as a single page,
