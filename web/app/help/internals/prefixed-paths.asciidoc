@@ -1,0 +1,28 @@
+[[prefixed-paths]]
+## Prefixed paths
+
+LynxKite provides read and write access to distributed file systems for the purpose of importing
+and exporting project data. To make this access secure and convenient, paths are specified relative
+to _root prefixes_.
+
+Root prefixes are configured during LynxKite deployment through the `root_definitions.txt` file.
+
+For example, let's say we want to import a file on Amazon S3. The file is in bucket `my-company`,
+at `data/file.csv`. The full Hadoop path to this file would be:
+
+ s3n://<key id>:<secret key>@my-company/data/file.csv
+
+During deployment, the `COMPANY_S3` prefix has been configured:
+
+ COMPANY_S3="s3n://<key id>:<secret key>@my-company/"
+
+In this case the file can be referenced for the import operation as:
+
+ COMPANY_S3$data/file.csv
+
+This scheme has a number of benefits:
+
+- The user has to type less.
+- The credentials can remain secret from all users.
+- The credentials can be changed at a single location and it will be applied to all file operations.
+- The root directory can be relocated without affecting users.

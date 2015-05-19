@@ -42,7 +42,7 @@ new copy even if you didn't have for the original.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-cog"></i></label>+++ Project settings::
 Modifies the read and write access settings for the project. Only visible if your Kite instance has
-user authentication enabled.
+user authentication enabled. See <<access-control>> for details.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-remove"></i></label>+++ Close project::
 Closes the project.
