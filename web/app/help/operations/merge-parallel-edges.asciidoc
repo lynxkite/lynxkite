@@ -3,13 +3,17 @@
 Multiple edges going from A to B will be merged into a single edge.
 The edges going from A to B are not merged with edges going from B to A.
 
-For example, this operation can be used to turn a call data graph into a relationship
-graph. Multiple calls will count as one relationship. To find the strength of
-this relationship, you either take the count of calls, or total duration, or the total
-cost, etc.
-
 Edge attributes can be aggregated across the merged edges.
 
 ====
+*Example use case*
+
+This operation can be used to turn a call data graph into a relationship
+graph. Multiple calls will will be merged into one relationship. To define the strength of
+this relationship, you can use the count of calls, or total duration, or the total
+cost, or some other aggregate metric.
+
+*Parameters*
+
 include::glossary.asciidoc[tag=local-aggregators]
 ====

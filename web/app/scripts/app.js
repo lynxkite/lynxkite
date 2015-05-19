@@ -37,6 +37,9 @@ angular
         templateUrl: 'views/users.html',
         controller: 'UsersCtrl',
       })
+      .when('/help', {
+        templateUrl: 'views/help.html',
+      })
       .otherwise({
         redirectTo: '/',
       });
