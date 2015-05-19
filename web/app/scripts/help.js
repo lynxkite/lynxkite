@@ -88,7 +88,7 @@ angular.module('biggraph').directive('helpId', function(helpContent, $compile, $
 angular.module('biggraph').directive('helpPopup', function($rootScope) {
   return {
     restrict: 'E',
-    scope: { helpId: '=href' },
+    scope: { helpId: '@href' },
     templateUrl: 'help-popup.html',
     link: function(scope, element) {
       var body = angular.element('body');
