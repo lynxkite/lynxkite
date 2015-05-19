@@ -9,3 +9,7 @@ include::attributes.asciidoc[]
 include::graph-visualizations.asciidoc[]
 
 include::filter-syntax.asciidoc[]
+
+include::project-history.asciidoc[]
+
+include::hotkeys.asciidoc[]

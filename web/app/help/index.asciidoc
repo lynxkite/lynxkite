@@ -18,6 +18,4 @@ include::intro/index.asciidoc[]
 
 include::ui/index.asciidoc[]
 
-include::project-history.asciidoc[]
-
 include::operations/index.asciidoc[]
