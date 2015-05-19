@@ -106,7 +106,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     implicit val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
     import Scripting._
-    val testCSVFile = HadoopFile(myTempDirRoot) / "almakorte.csv"
+    val testCSVFile = HadoopFile(myTempDirPrefix) / "almakorte.csv"
     testCSVFile.createFromStrings("alma,korte,barack\n3,4,5\n")
     val operation = graph_operations.ImportEdgeList(
       graph_operations.CSV(testCSVFile, ",", "alma,korte,barack"),
@@ -138,7 +138,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager = cleanDataManager
     import Scripting._
 
-    val testfile = HadoopFile(myTempDirRoot) / "test.csv"
+    val testfile = HadoopFile(myTempDirPrefix) / "test.csv"
     // Create the file as the operation constuctor checks for its existence.
     testfile.createFromStrings("src,dst\n1,2\n")
     val imported = graph_operations.ImportEdgeList(

@@ -1,7 +1,7 @@
 // Package-level variables. Creates our logger and the BigGraphEnvironment.
 package com.lynxanalytics
 
-import com.lynxanalytics.biggraph.graph_util.RootRepository
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
@@ -23,7 +23,7 @@ package object biggraph {
   val standardDataPrefix = "DATA$"
 
   def registerStandardPrefixes() = {
-    RootRepository.registerRoot("UPLOAD$", standardDataPrefix + "/uploads")
+    PrefixRepository.registerPrefix("UPLOAD$", standardDataPrefix + "/uploads")
   }
 
   // static<hostname_of_master>

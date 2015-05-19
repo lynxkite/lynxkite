@@ -1,5 +1,5 @@
 package com.lynxanalytics.biggraph.controllers
-import com.lynxanalytics.biggraph.graph_util.RootRepository
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
 import org.scalatest.FunSuite
 
@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.serving
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
-  RootRepository.registerRoot("OPERATIONSTEST$", res)
+  PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
   def createProject(name: String) = {
     val controller = new BigGraphController(this)

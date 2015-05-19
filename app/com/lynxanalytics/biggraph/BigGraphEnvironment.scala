@@ -5,7 +5,7 @@ import java.io.File
 import org.apache.spark
 
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.RootRepository
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
 trait SparkContextProvider {
   val sparkContext: spark.SparkContext
@@ -41,7 +41,7 @@ trait RepositoryDirs {
   val dataDirSymbolicName: String
   val dataDirResolvedName: String
   lazy val dataDir: HadoopFile = {
-    RootRepository.registerRoot(dataDirSymbolicName, dataDirResolvedName)
+    PrefixRepository.registerPrefix(dataDirSymbolicName, dataDirResolvedName)
     HadoopFile(dataDirSymbolicName)
   }
   def forcePrefixRegistration(): Unit = {
