@@ -75,11 +75,17 @@ You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 
 vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
 
 #### Pick button
-You can use the pick button to select the <<center-vertices,center vertices>> for the visualization.
-Which vertex will be chosen as the center will depend on the contents of the Show vertices box.
-By default, only one vertex is offered. You can change this behavior by setting the Center count
-field of the advanced Pick options menu. The list of vertices offered will be limited by the
-currently set filters; these can be removed and new filters added with the Add Restriction button.
+This button is used to populate the contents of the Show vertices box. The vertex
+placed there will be one that satisfies all the currently set restrictions (see
+below).
+You can access more advanced Pick settings by clicking at
++++<label class="btn btn-default">...</label>+++ The available options are:
+
+Center count:: The number of vertices placed in the Show vertices box (default: 1).
+Add Restriction:: Restrictions narrow down the potential set of candidates that will be
+placed in the Show vertices box when you click on the Pick button. They have the same syntax as
+filters (see  <<attribute-filter-syntax>>); futhermore, the default set of restrictions will
+be based on the currently set filters. But this restriction set can be freely modified here.
 
 
 #### Context menu
