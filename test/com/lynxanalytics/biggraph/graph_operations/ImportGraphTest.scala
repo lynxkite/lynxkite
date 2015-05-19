@@ -5,14 +5,14 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.RootRepository
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ImportGraphTest extends FunSuite with TestGraphOp {
   val resDir = "/graph_operations/ImportGraphTest"
   val res = getClass.getResource(resDir).toString
-  RootRepository.registerRoot("IMPORTGRAPHTEST$", res)
+  PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", res)
   test("import testgraph as csv from separate vertex, edge, vertexheader and edgeheader files") {
     val dir = "IMPORTGRAPHTEST$/testgraph/"
     val vertexCSVs = HadoopFile(dir + "vertex-data/part-00000")

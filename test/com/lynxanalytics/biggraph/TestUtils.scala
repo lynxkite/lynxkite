@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph
 
 import java.io.File
-import com.lynxanalytics.biggraph.graph_util.RootRepository
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import org.apache.spark
 import org.scalatest.Tag
 
@@ -24,13 +24,13 @@ object TestUtils {
     Seq("sh", "-c", command).!!
   }
 
-  def randomRootSymbol = Random.nextString(20).map(x => ((x % 26) + 'A').toChar) + "$"
-  def getDummyRootName(rootPath: String, canSupplyFileScheme: Boolean = true): String = {
-    val name = randomRootSymbol
+  def randomPrefixSymbol = Random.nextString(20).map(x => ((x % 26) + 'A').toChar) + "$"
+  def getDummyPrefixName(rootPath: String, canSupplyFileScheme: Boolean = true): String = {
+    val name = randomPrefixSymbol
     if (rootPath.startsWith("/") && canSupplyFileScheme)
-      RootRepository.registerRoot(name, "file:" + rootPath)
+      PrefixRepository.registerPrefix(name, "file:" + rootPath)
     else
-      RootRepository.registerRoot(name, rootPath)
+      PrefixRepository.registerPrefix(name, rootPath)
     name
   }
 
@@ -42,7 +42,7 @@ trait TestTempDir {
     "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
   myTempDir.mkdir
 
-  val myTempDirRoot = TestUtils.getDummyRootName(myTempDir.toString)
+  val myTempDirPrefix = TestUtils.getDummyPrefixName(myTempDir.toString)
   def tempDir(dirName: String): File = new File(myTempDir, dirName)
 }
 

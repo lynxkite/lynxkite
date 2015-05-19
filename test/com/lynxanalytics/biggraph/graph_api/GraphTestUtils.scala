@@ -6,7 +6,7 @@ import scala.util.Random
 import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
 import com.lynxanalytics.biggraph.graph_operations._
-import com.lynxanalytics.biggraph.graph_util.{ RootRepository, HadoopFile }
+import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
 import com.lynxanalytics.biggraph.registerStandardPrefixes
 import com.lynxanalytics.biggraph.standardDataPrefix
 
@@ -53,16 +53,16 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
     val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
     val managerDir = tempDir("dataManager." + dirName)
     managerDir.mkdir
-    val sandboxRoot = TestUtils.getDummyRootName(managerDir.toString)
-    new DataManager(sparkContext, HadoopFile(sandboxRoot))
+    val sandboxPrefix = TestUtils.getDummyPrefixName(managerDir.toString)
+    new DataManager(sparkContext, HadoopFile(sandboxPrefix))
   }
 }
 
 trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
-  RootRepository.dropResolutions()
+  PrefixRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
-  RootRepository.registerRoot(standardDataPrefix, dataManager.repositoryPath.symbolicName)
+  PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }
 

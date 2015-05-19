@@ -11,7 +11,7 @@
 # Format:
 # Lines that begin with a hashmark (#) are comments and ignored.
 #
-# Root symbols should only contain capital letters, underscore,
+# Prefix symbols should only contain capital letters, underscore,
 # and digits; the first character cannot be a digit.
 # The dollar sign is NOT part of the root symbol.
 #

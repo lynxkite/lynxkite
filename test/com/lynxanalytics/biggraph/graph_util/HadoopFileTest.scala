@@ -4,47 +4,47 @@ import com.lynxanalytics.biggraph.TestUtils
 import org.scalatest.FunSuite
 
 class HadoopFileTest extends FunSuite {
-  val rootPath = getClass.getResource("/graph_util/hadoop_tests").toString
-  RootRepository.registerRoot("HADOOPTEST$", rootPath)
+  val prefixPath = getClass.getResource("/graph_util/hadoop_tests").toString
+  PrefixRepository.registerPrefix("HADOOPTEST$", prefixPath)
 
-  test("Test basic RootRepository asserts") {
-    RootRepository.registerRoot("BABABA$", "x:mamam")
+  test("Test basic PrefixRepository asserts") {
+    PrefixRepository.registerPrefix("BABABA$", "x:mamam")
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("BABABA$", "x:mamam")
+      PrefixRepository.registerPrefix("BABABA$", "x:mamam")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("KJHKJSDDSJ@", "x:mamam")
+      PrefixRepository.registerPrefix("KJHKJSDDSJ@", "x:mamam")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("KJHKJSDDSJ$/haha", "x:mamam")
+      PrefixRepository.registerPrefix("KJHKJSDDSJ$/haha", "x:mamam")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("NOSCHEME$", "noschemetobefoundhere/alma")
+      PrefixRepository.registerPrefix("NOSCHEME$", "noschemetobefoundhere/alma")
     }
-    RootRepository.registerRoot("_$", "")
-    RootRepository.registerRoot("AB_$", "")
-    RootRepository.registerRoot("A1$", "")
-    RootRepository.registerRoot("QQ$", "")
-    RootRepository.registerRoot("Q012$", "")
-    RootRepository.registerRoot("P4Q1$", "")
-    RootRepository.registerRoot("W$", "")
+    PrefixRepository.registerPrefix("_$", "")
+    PrefixRepository.registerPrefix("AB_$", "")
+    PrefixRepository.registerPrefix("A1$", "")
+    PrefixRepository.registerPrefix("QQ$", "")
+    PrefixRepository.registerPrefix("Q012$", "")
+    PrefixRepository.registerPrefix("P4Q1$", "")
+    PrefixRepository.registerPrefix("W$", "")
 
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("9$", "")
+      PrefixRepository.registerPrefix("9$", "")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("3P4$", "")
+      PrefixRepository.registerPrefix("3P4$", "")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("$", "")
+      PrefixRepository.registerPrefix("$", "")
     }
     intercept[java.lang.AssertionError] {
-      RootRepository.registerRoot("A$B", "")
+      PrefixRepository.registerPrefix("A$B", "")
     }
   }
 
   test("Password setting works") {
-    val dummy = TestUtils.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
+    val dummy = TestUtils.getDummyPrefixName("s3n://access:secret@lynx-bnw-test2")
     val dataFile = HadoopFile(dummy + "/somedir/somefile")
     val conf = dataFile.hadoopConfiguration()
     assert(conf.get("fs.s3n.awsAccessKeyId") == "access")
@@ -52,17 +52,17 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("Path concatenation works") {
-    val dummy = TestUtils.getDummyRootName("s3n://access:secret@lynx-bnw-test2")
+    val dummy = TestUtils.getDummyPrefixName("s3n://access:secret@lynx-bnw-test2")
     val d = HadoopFile(dummy) / "dir/file"
     assert(d.resolvedNameWithNoCredentials == "s3n://lynx-bnw-test2/dir/file")
     val q = d + ".ext"
     assert(q.resolvedNameWithNoCredentials == "s3n://lynx-bnw-test2/dir/file.ext")
   }
 
-  def wildcardTest(resourceRoot: HadoopFile) = {
-    val all = resourceRoot / "*"
+  def wildcardTest(resourcePrefix: HadoopFile) = {
+    val all = resourcePrefix / "*"
     assert(all.list.length == 5)
-    val txt = resourceRoot / "*.txt"
+    val txt = resourcePrefix / "*.txt"
     assert(txt.list.length == 3)
   }
 
@@ -71,12 +71,12 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("Hadoop normalization works for operator /") {
-    RootRepository.registerRoot("ROOT1$", "file:/home/rootdir/")
+    PrefixRepository.registerPrefix("ROOT1$", "file:/home/rootdir/")
     val f1 = HadoopFile("ROOT1$") / "file.txt"
     assert(f1.symbolicName == "ROOT1$file.txt")
     assert(f1.resolvedName == "file:/home/rootdir/file.txt")
 
-    RootRepository.registerRoot("ROOT2$", "file:/home/rootdir")
+    PrefixRepository.registerPrefix("ROOT2$", "file:/home/rootdir")
     val f2 = HadoopFile("ROOT2$") / "file.txt"
     assert(f2.symbolicName == "ROOT2$/file.txt")
     assert(f2.resolvedName == "file:/home/rootdir/file.txt")
@@ -85,44 +85,44 @@ class HadoopFileTest extends FunSuite {
 
   test("Hadoop forward-backward conversion works") {
 
-    RootRepository.registerRoot("HADOOPROOTA$", "file:/home/rootdir")
+    PrefixRepository.registerPrefix("HADOOPROOTA$", "file:/home/rootdir")
     val f1 = HadoopFile("HADOOPROOTA$/subdir") / "*"
     val g1 = f1.hadoopFileForGlobOutput("file:/home/rootdir/subdir/file")
     assert(g1.symbolicName == "HADOOPROOTA$/subdir/file")
 
-    RootRepository.registerRoot("HADOOPROOTB$", "s3n://key:secret@rootdir")
+    PrefixRepository.registerPrefix("HADOOPROOTB$", "s3n://key:secret@rootdir")
     val f2 = HadoopFile("HADOOPROOTB$/subdir") / "*"
     val g2 = f2.hadoopFileForGlobOutput("s3n://rootdir/subdir/file")
     assert(g2.symbolicName == "HADOOPROOTB$/subdir/file")
 
-    RootRepository.registerRoot("HADOOPROOTC$", "s3n:/")
+    PrefixRepository.registerPrefix("HADOOPROOTC$", "s3n:/")
     val f3 = HadoopFile("HADOOPROOTC$/key:secret@rootdir/subdir1/file")
     assert(f3.normalizedRelativePath == "/key:secret@rootdir/subdir1/file")
     val g3 = f3.hadoopFileForGlobOutput("s3n://rootdir/subdir1/file")
     assert(g3.awsID == "key")
     assert(g3.awsSecret == "secret")
 
-    RootRepository.registerRoot("HADOOPROOTD$", "s3n://")
+    PrefixRepository.registerPrefix("HADOOPROOTD$", "s3n://")
     val f4 = HadoopFile("HADOOPROOTD$key:secret@rootdir/subdir1/file")
     assert(f4.normalizedRelativePath == "key:secret@rootdir/subdir1/file")
     val g4 = f4.hadoopFileForGlobOutput("s3n://rootdir/subdir1/file")
     assert(g4.awsID == "key")
     assert(g4.awsSecret == "secret")
 
-    RootRepository.registerRoot("HADOOP_ROOT$", "s3n:")
+    PrefixRepository.registerPrefix("HADOOP_ROOT$", "s3n:")
     val f5 = HadoopFile("HADOOP_ROOT$//key:secret@rootdir/subdir1/file")
     assert(f5.normalizedRelativePath == "//key:secret@rootdir/subdir1/file")
     val g5 = f5.hadoopFileForGlobOutput("s3n://rootdir/subdir1/file")
     assert(g5.awsID == "key")
     assert(g5.awsSecret == "secret")
 
-    RootRepository.registerRoot("HADOOP_ROOT1$", "file:/home///user/")
+    PrefixRepository.registerPrefix("HADOOP_ROOT1$", "file:/home///user/")
     val f6 = HadoopFile("HADOOP_ROOT1$file.txt")
     assert(f6.normalizedRelativePath == "file.txt")
     val g6 = f6.hadoopFileForGlobOutput("file:/home/user/file.txt")
     assert(g6.symbolicName == "HADOOP_ROOT1$file.txt")
 
-    RootRepository.registerRoot("HADOOP_ROOT2$", "file:/home///user/")
+    PrefixRepository.registerPrefix("HADOOP_ROOT2$", "file:/home///user/")
     val f7 = HadoopFile("HADOOP_ROOT2$/file.txt")
     assert(f7.normalizedRelativePath == "file.txt")
     val g7 = f7.hadoopFileForGlobOutput("file:/home/user/file.txt")
@@ -131,27 +131,27 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("Empty symbolic prefix works with file:// scheme") {
-    RootRepository.registerRoot("EMPTYFILE$", "")
-    val resourceDir = HadoopFile("EMPTYFILE$") + rootPath
+    PrefixRepository.registerPrefix("EMPTYFILE$", "")
+    val resourceDir = HadoopFile("EMPTYFILE$") + prefixPath
     wildcardTest(resourceDir)
   }
 
-  def checkOne(rootSymbol: String, pathAndOutput: Tuple2[String, String]) = {
+  def checkOne(prefixSymbol: String, pathAndOutput: Tuple2[String, String]) = {
     val (relativePath, expectedOutput) = (pathAndOutput._1, pathAndOutput._2)
     if (expectedOutput == "ASSERT") {
       intercept[java.lang.AssertionError] {
-        HadoopFile(rootSymbol + relativePath)
+        HadoopFile(prefixSymbol + relativePath)
       }
     } else {
-      val file = HadoopFile(rootSymbol + relativePath)
+      val file = HadoopFile(prefixSymbol + relativePath)
       assert(file.resolvedName == expectedOutput)
     }
   }
 
-  def checkPathRules(rootResolution: String,
+  def checkPathRules(prefixResolution: String,
                      relativePathsAndExpectedOutputs: List[Tuple2[String, String]]) = {
-    val rootSymbol = TestUtils.getDummyRootName(rootResolution, false)
-    relativePathsAndExpectedOutputs.foreach { checkOne(rootSymbol, _) }
+    val prefixSymbol = TestUtils.getDummyPrefixName(prefixResolution, false)
+    relativePathsAndExpectedOutputs.foreach { checkOne(prefixSymbol, _) }
   }
 
   test("Dangerous concatenations get caught") {
@@ -212,8 +212,8 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("Check user defined path parsing") {
-    val filename = rootPath + "/subdir/user_roots.txt"
-    val pairs = RootRepository.parseUserDefinedInputFromURI(filename).toList
+    val filename = prefixPath + "/subdir/prefix_definitions.txt"
+    val pairs = PrefixRepository.parseUserDefinedInputFromURI(filename).toList
 
     val expected = List(
       "TEST_EMPTY" -> "",
@@ -235,7 +235,7 @@ class HadoopFileTest extends FunSuite {
         assert(v.symbolicName == expected)
       }
     }
-    RootRepository.dropResolutions()
+    PrefixRepository.dropResolutions()
     f("s3n://testkey:secret@data", "ASSERT")
     f("s3n://testkey:secret@data/uploads/file1", "ASSERT")
     f("s3n://testkey:secret@data/uploads/file2", "ASSERT")
@@ -253,7 +253,7 @@ class HadoopFileTest extends FunSuite {
     f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
 
     // key mismatch
-    RootRepository.registerRoot("TEST_S3N_BAD$", "s3n://badkey:badpwd@")
+    PrefixRepository.registerPrefix("TEST_S3N_BAD$", "s3n://badkey:badpwd@")
     f("s3n://testkey:secret@data", "ASSERT")
     f("s3n://testkey:secret@data/uploads/file1", "ASSERT")
     f("s3n://testkey:secret@data/uploads/file2", "ASSERT")
@@ -270,7 +270,7 @@ class HadoopFileTest extends FunSuite {
     f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
     f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
 
-    RootRepository.registerRoot("TEST_S3N$", "s3n://testkey:secret@")
+    PrefixRepository.registerPrefix("TEST_S3N$", "s3n://testkey:secret@")
     f("s3n://testkey:secret@data", "TEST_S3N$data")
     f("s3n://testkey:secret@data/uploads/file1", "TEST_S3N$data/uploads/file1")
     f("s3n://testkey:secret@data/uploads/file2", "TEST_S3N$data/uploads/file2")
@@ -287,10 +287,10 @@ class HadoopFileTest extends FunSuite {
     f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
     f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
 
-    RootRepository.registerRoot("TEST_SCHEME_ADDITION$", "file:/varr/")
+    PrefixRepository.registerPrefix("TEST_SCHEME_ADDITION$", "file:/varr/")
     f("/varr/alma", "TEST_SCHEME_ADDITION$alma")
 
-    RootRepository.registerRoot("TEST_S3N_DATA$", "TEST_S3N$/data")
+    PrefixRepository.registerPrefix("TEST_S3N_DATA$", "TEST_S3N$/data")
     f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
     f("s3n://testkey:secret@data/uploads/file1", "TEST_S3N_DATA$/uploads/file1")
     f("s3n://testkey:secret@data/uploads/file2", "TEST_S3N_DATA$/uploads/file2")
@@ -307,7 +307,7 @@ class HadoopFileTest extends FunSuite {
     f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
     f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
 
-    RootRepository.registerRoot("UPLOAD$", "TEST_S3N_DATA$/uploads")
+    PrefixRepository.registerPrefix("UPLOAD$", "TEST_S3N_DATA$/uploads")
     f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
     f("s3n://testkey:secret@data/uploads/file1", "UPLOAD$/file1")
     f("s3n://testkey:secret@data/uploads/file2", "UPLOAD$/file2")
@@ -324,7 +324,7 @@ class HadoopFileTest extends FunSuite {
     f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
     f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
 
-    RootRepository.registerRoot("HDFS$", "hdfs:/data")
+    PrefixRepository.registerPrefix("HDFS$", "hdfs:/data")
     f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
     f("s3n://testkey:secret@data/uploads/file1", "UPLOAD$/file1")
     f("s3n://testkey:secret@data/uploads/file2", "UPLOAD$/file2")
@@ -341,7 +341,7 @@ class HadoopFileTest extends FunSuite {
     f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
     f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
 
-    RootRepository.registerRoot("EMPTY$", "")
+    PrefixRepository.registerPrefix("EMPTY$", "")
     f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
     f("s3n://testkey:secret@data/uploads/file1", "UPLOAD$/file1")
     f("s3n://testkey:secret@data/uploads/file2", "UPLOAD$/file2")
@@ -361,7 +361,7 @@ class HadoopFileTest extends FunSuite {
   }
 
   test("ReadAsString test") {
-    val resourceDir = HadoopFile(TestUtils.getDummyRootName(rootPath))
+    val resourceDir = HadoopFile(TestUtils.getDummyPrefixName(prefixPath))
     val text = resourceDir / "multiline.txt"
     assert(text.readAsString() ==
       "Whan that Aprille with his shoures soote\n"

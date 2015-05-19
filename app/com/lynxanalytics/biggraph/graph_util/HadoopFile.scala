@@ -19,25 +19,25 @@ object HadoopFile {
     str.nonEmpty && !str.startsWith("/")
 
   def apply(str: String, legacyMode: Boolean = false): HadoopFile = {
-    val (rootSymbol, relativePath) = RootRepository.splitSymbolicPattern(str, legacyMode)
-    val rootResolution = RootRepository.getRootInfo(rootSymbol)
-    val normalizedFullPath = PathNormalizer.normalize(rootResolution + relativePath)
-    assert(normalizedFullPath.startsWith(rootResolution))
-    val normalizedRelativePath = normalizedFullPath.drop(rootResolution.length)
-    assert(!hasDangerousEnd(rootResolution) || !hasDangerousStart(relativePath),
-      s"The path following $rootSymbol has to start with a slash (/)")
-    HadoopFile(rootSymbol, normalizedRelativePath)
+    val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str, legacyMode)
+    val prefixResolution = PrefixRepository.getPrefixInfo(prefixSymbol)
+    val normalizedFullPath = PathNormalizer.normalize(prefixResolution + relativePath)
+    assert(normalizedFullPath.startsWith(prefixResolution))
+    val normalizedRelativePath = normalizedFullPath.drop(prefixResolution.length)
+    assert(!hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
+      s"The path following $prefixSymbol has to start with a slash (/)")
+    HadoopFile(prefixSymbol, normalizedRelativePath)
   }
 
   lazy val defaultFs = hadoop.fs.FileSystem.get(new hadoop.conf.Configuration())
 }
 
-case class HadoopFile private (rootSymbol: String, normalizedRelativePath: String) {
+case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: String) {
   private val s3nWithCreadentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
 
-  val symbolicName = rootSymbol + normalizedRelativePath
-  val resolvedName = RootRepository.getRootInfo(rootSymbol) + normalizedRelativePath
+  val symbolicName = prefixSymbol + normalizedRelativePath
+  val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
   val (resolvedNameWithNoCredentials, awsID, awsSecret) = resolvedName match {
     case s3nWithCreadentialsPattern(scheme, key, secret, relPath) =>
@@ -72,7 +72,7 @@ case class HadoopFile private (rootSymbol: String, normalizedRelativePath: Strin
 
   private def computeRelativePathFromHadoopOutput(hadoopOutput: String): String = {
     val hadoopOutputWithCredentials = reinstateCredentialsIfNeeded(hadoopOutput)
-    val resolution = RootRepository.getRootInfo(rootSymbol)
+    val resolution = PrefixRepository.getPrefixInfo(prefixSymbol)
     assert(hadoopOutputWithCredentials.startsWith(resolution),
       s"Bad prefix match: $hadoopOutputWithCredentials ($hadoopOutput) should start with $resolution")
     hadoopOutputWithCredentials.drop(resolution.length)

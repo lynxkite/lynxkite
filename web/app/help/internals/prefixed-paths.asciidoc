@@ -3,9 +3,9 @@
 
 LynxKite provides read and write access to distributed file systems for the purpose of importing
 and exporting project data. To make this access secure and convenient, paths are specified relative
-to _root prefixes_.
+to _prefixes_.
 
-Root prefixes are configured during LynxKite deployment through the `root_definitions.txt` file.
+Prefixes are configured during LynxKite deployment through the `prefix_definitions.txt` file.
 
 For example, let's say we want to import a file on Amazon S3. The file is in bucket `my-company`,
 at `data/file.csv`. The full Hadoop path to this file would be:
