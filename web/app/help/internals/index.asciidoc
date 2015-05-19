@@ -1,0 +1,5 @@
+# LynxKite internals
+
+include::prefixed-paths.asciidoc[]
+
+include::access-control.asciidoc[]

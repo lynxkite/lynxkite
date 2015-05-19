@@ -24,4 +24,6 @@ include::intro/index.asciidoc[]
 
 include::ui/index.asciidoc[]
 
+include::internals/index.asciidoc[]
+
 include::operations/index.asciidoc[]
