@@ -65,9 +65,9 @@ Decentralize::: Low-degree nodes in the center, high-degree nodes on the periphe
 Neutral::: Degree is not factored into the layout.
 
 Show vertices::
-Lists ‘center’ vertices, that is the vertices whose neighborhood we are displaying. You can change
+Lists "center" vertices, that is the vertices whose neighborhood we are displaying. You can change
 this list manually, using the <<pick-button,Pick button>> or using the
-<<context-menu,context menu>> of already displayed vertices. Setting an asterisk here will
+<<context-menu,context menu>> of already displayed vertices. Setting an asterisk (`+*+`) here will
 result in the visualization of all the vertices (up to a certain limit).
 
 Show neighborhood::
