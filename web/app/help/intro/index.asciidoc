@@ -8,7 +8,7 @@ as huge graphs (aka networks) and enable its users to turn the immense informati
 billions of network connections into business value.
 
 It does that by providing fast data discovery via innovative visualization options, featuring a rich
-set of business relevant graph algorithms and facilitating various ways of smearing information
+set of business relevant graph algorithms and facilitating various ways of propagating information
 via the network connections.
 
 With a distributed architecture powered by https://spark.apache.org/[Apache Spark],
