@@ -110,4 +110,9 @@ the groups.
 
 ### Saving visualizations
 
-TODO: Explain saving visualizations here.
+You can save your current visualization settings using the `Save Visualization` button (only visible when visualization is enabled). Just type a name, press `Save Visualization` again and a new
+entry with the name you've given will show up in the `Attributes of the graph` section.
+
+You can reload the saved visualization options by pressing on the
++++<label class="btn btn-default"><i class="glyphicon glyphicon-eye-open"></i></label>+++
+ button next to the newly created graph attribute.

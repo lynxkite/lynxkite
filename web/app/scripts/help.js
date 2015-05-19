@@ -88,7 +88,7 @@ angular.module('biggraph').directive('helpId', function(helpContent, $compile, $
 angular.module('biggraph').directive('helpPopup', function($rootScope) {
   return {
     restrict: 'E',
-    scope: { helpId: '=href' },
+    scope: { helpId: '@href' },
     templateUrl: 'help-popup.html',
     link: function(scope, element) {
       var body = angular.element('body');
@@ -112,6 +112,7 @@ angular.module('biggraph').directive('helpPopup', function($rootScope) {
       });
 
       function show() {
+        if (popup.is(':visible')) { return; }
         $rootScope.$broadcast('help popup opened', scope);
         // Add the popup at the end of <body> to make sure it's above everything.
         body.append(popup.detach());
