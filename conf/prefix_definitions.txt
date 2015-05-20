@@ -13,7 +13,7 @@
 #
 # Prefix symbols should only contain capital letters, underscore,
 # and digits; the first character cannot be a digit.
-# The dollar sign is NOT part of the root symbol.
+# The dollar sign is NOT part of the prefix symbol.
 #
 # The paths that they define should either be empty, or
 # end in an at sign (@) or end in a slash (/).

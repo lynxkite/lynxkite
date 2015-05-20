@@ -84,18 +84,18 @@ export NUM_CORES_PER_EXECUTOR=${CORES}
 export KITE_MASTER_MEMORY_MB=$((1024 * (RAM_GB - 5)))
 export KITE_HTTP_PORT=5080
 export KITE_LOCAL_TMP=${LOCAL_TMP_DIR}
-export KITE_ADDITIONAL_ROOT_DEFINITIONS=/root/root_definitions.txt
+export KITE_PREFIX_DEFINITIONS=/root/prefix_definitions.txt
 EOF
 
   rsync -ave "$SSH" ${CONFIG_FILE} root@`GetMasterHostName`:.kiterc
 
   # Prepare a root definitions file.
-  ROOTDEF_FILE=/tmp/${CLUSTER_NAME}.rootdef
-  cat > ${ROOTDEF_FILE} <<EOF
+  PREFIXDEF_FILE=/tmp/${CLUSTER_NAME}.prefdef
+  cat > ${PREFIXDEF_FILE} <<EOF
 S3="s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@"
 EOF
 
-  rsync -ave "$SSH" ${ROOTDEF_FILE} root@`GetMasterHostName`:root_definitions.txt
+  rsync -ave "$SSH" ${PREFIXDEF_FILE} root@`GetMasterHostName`:prefix_definitions.txt
   ;;
 
 # ======
