@@ -75,12 +75,14 @@ object CSV extends FromJson[CSV] {
   def fromJson(j: JsValue): CSV = {
     val header = (j \ "header").as[String]
     val delimiter = (j \ "delimiter").as[String]
+    val omitFields = (j \ "omitFields").asOpt[Set[String]].getOrElse(Set[String]())
     val fields = getFields(delimiter, header)
     new CSV(
       HadoopFile((j \ "file").as[String], true),
       delimiter,
       header,
       fields,
+      omitFields,
       JavaScript((j \ "filter").as[String]))
   }
 
@@ -92,6 +94,7 @@ object CSV extends FromJson[CSV] {
   def apply(file: HadoopFile,
             delimiter: String,
             header: String,
+            omitFields: Set[String] = Set(),
             filter: JavaScript = JavaScript("")): CSV = {
     val fields = getFields(delimiter, header)
     assert(
@@ -101,20 +104,35 @@ object CSV extends FromJson[CSV] {
       (fields.toSet.size == fields.size),
       s"Duplicate CSV column name is not allowed. Column names were: $fields")
     assert(file.list.nonEmpty, s"$file does not exist.")
-    new CSV(file, delimiter, header, fields, filter)
+    assert(
+      omitFields.forall(fields.contains(_)),
+      {
+        val missingColumns = omitFields.filter(!fields.contains(_)).mkString(", ")
+        s"Column(s) $missingColumns that you asked to omit are not actually columns."
+      })
+    new CSV(file, delimiter, header, fields, omitFields, filter)
   }
 }
 case class CSV private (file: HadoopFile,
                         delimiter: String,
                         header: String,
-                        fields: Seq[String],
+                        allFields: Seq[String],
+                        omitFields: Set[String],
                         filter: JavaScript) extends RowInput {
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
-  override def toJson = Json.obj(
-    "file" -> file.symbolicName,
-    "delimiter" -> delimiter,
-    "header" -> header,
-    "filter" -> filter.expression)
+  override val fields = allFields.filter(field => !omitFields.contains(field))
+  override def toJson = {
+    val withoutOmits = Json.obj(
+      "file" -> file.symbolicName,
+      "delimiter" -> delimiter,
+      "header" -> header,
+      "filter" -> filter.expression)
+    if (omitFields.isEmpty) {
+      withoutOmits
+    } else {
+      withoutOmits + ("omitFields" -> Json.toJson(omitFields))
+    }
+  }
 
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
     val globLength = file.globLength
@@ -125,19 +143,24 @@ case class CSV private (file: HadoopFile,
     // Only repartition if we need more partitions.
     val numPartitions = lines.partitions.size max partitioner.numPartitions
     log.info(s"Reading $file ($globLength bytes) into $numPartitions partitions.")
-    return lines
+    val fullRows = lines
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
       .filter(jsFilter(_))
-      .repartition(numPartitions)
+    if (omitFields.nonEmpty) {
+      val keptIndices = allFields.zipWithIndex.filter(x => !omitFields.contains(x._1)).map(_._2)
+      fullRows.map(fullRow => keptIndices.map(idx => fullRow(idx)))
+    } else {
+      fullRows
+    }.repartition(numPartitions)
   }
 
   def jsFilter(line: Seq[String]): Boolean = {
-    if (line.length != fields.length) {
+    if (line.length != allFields.length) {
       log.info(s"Input line cannot be parsed: $line")
       return false
     }
-    return filter.isTrue(fields.zip(line).toMap)
+    return filter.isTrue(allFields.zip(line).toMap)
   }
 }
 
