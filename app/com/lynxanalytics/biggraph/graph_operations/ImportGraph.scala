@@ -68,7 +68,7 @@ object ImportUtil {
 
 trait RowInput extends ToJson {
   def fields: Seq[String]
-  def lines(rc: RuntimeContext): RDD[Seq[String]]
+  def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]]
 }
 
 object CSV extends FromJson[CSV] {
@@ -134,7 +134,7 @@ case class CSV private (file: HadoopFile,
     }
   }
 
-  def lines(rc: RuntimeContext): RDD[Seq[String]] = {
+  def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]] = {
     val globLength = file.globLength
     // Estimate how much bigger the in-memory representation is, compared to the CSV file size.
     val explosion = System.getProperty("biggraph.csv.explosion", "20").toLong
@@ -153,7 +153,7 @@ case class CSV private (file: HadoopFile,
     } else {
       fullRows
     }
-    keptFields.repartition(numPartitions)
+    keptFields.randomNumbered(numPartitions)
   }
 
   def jsFilter(line: Seq[String]): Boolean = {
@@ -175,8 +175,7 @@ trait ImportCommon {
   }
 
   protected def readColumns(rc: RuntimeContext, input: RowInput): Columns = {
-    val lines = input.lines(rc)
-    val numbered = lines.randomNumbered()
+    val numbered = input.lines(rc)
     numbered.cacheBackingArray()
     val maxLines = Limitations.maxImportedLines
     if (maxLines >= 0) {
@@ -390,7 +389,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = inputs.vs.rdd.partitioner.get
-    val lines = input.lines(rc)
+    val lines = input.lines(rc).values
     val idFieldIdx = input.fields.indexOf(idField)
     val externalIdToInternalId = ImportCommon.checkIdMapping(
       inputs.idAttr.rdd.map { case (internal, external) => (external, internal) },
