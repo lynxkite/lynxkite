@@ -44,8 +44,7 @@ class JsonMigration {
     "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1,
-    "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.CSV" -> 1)
+    "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
@@ -55,10 +54,7 @@ class JsonMigration {
     ("com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets", 0) -> {
       j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
     },
-    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_operations.CSV", 0) -> {
-      j => JsonMigration.replaceJson(j, "omitFields" -> Json.toJson(Set[String]()))
-    })
+    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity)
 }
 
 object MetaRepositoryManager {

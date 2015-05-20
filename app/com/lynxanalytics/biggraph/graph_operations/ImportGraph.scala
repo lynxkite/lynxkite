@@ -75,7 +75,7 @@ object CSV extends FromJson[CSV] {
   def fromJson(j: JsValue): CSV = {
     val header = (j \ "header").as[String]
     val delimiter = (j \ "delimiter").as[String]
-    val omitFields = (j \ "omitFields").as[Set[String]]
+    val omitFields = (j \ "omitFields").asOpt[Set[String]].getOrElse(Set[String]())
     val fields = getFields(delimiter, header)
     new CSV(
       HadoopFile((j \ "file").as[String], true),
@@ -116,12 +116,18 @@ case class CSV private (file: HadoopFile,
                         filter: JavaScript) extends RowInput {
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   override val fields = allFields.filter(field => !omitFields.contains(field))
-  override def toJson = Json.obj(
-    "file" -> file.symbolicName,
-    "delimiter" -> delimiter,
-    "header" -> header,
-    "omitFields" -> omitFields,
-    "filter" -> filter.expression)
+  override def toJson = {
+    val withoutOmits = Json.obj(
+      "file" -> file.symbolicName,
+      "delimiter" -> delimiter,
+      "header" -> header,
+      "filter" -> filter.expression)
+    if (omitFields.isEmpty) {
+      withoutOmits
+    } else {
+      withoutOmits + ("omitFields" -> Json.toJson(omitFields))
+    }
+  }
 
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
     val globLength = file.globLength
