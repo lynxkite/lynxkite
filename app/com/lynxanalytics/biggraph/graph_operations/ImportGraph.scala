@@ -104,7 +104,12 @@ object CSV extends FromJson[CSV] {
       (fields.toSet.size == fields.size),
       s"Duplicate CSV column name is not allowed. Column names were: $fields")
     assert(file.list.nonEmpty, s"$file does not exist.")
-    assert(omitFields.forall(fields.contains(_)))
+    assert(
+      omitFields.forall(fields.contains(_)),
+      {
+        val missingColumns = omitFields.filter(!fields.contains(_)).mkString(", ")
+        s"Column(s) $missingColumns that you asked to omit are not actually columns."
+      })
     new CSV(file, delimiter, header, fields, omitFields, filter)
   }
 }
