@@ -25,12 +25,12 @@ object TestUtils {
   }
 
   def randomPrefixSymbol = Random.nextString(20).map(x => ((x % 26) + 'A').toChar) + "$"
-  def getDummyPrefixName(rootPath: String, canSupplyFileScheme: Boolean = true): String = {
+  def getDummyPrefixName(path: String, canSupplyFileScheme: Boolean = true): String = {
     val name = randomPrefixSymbol
-    if (rootPath.startsWith("/") && canSupplyFileScheme)
-      PrefixRepository.registerPrefix(name, "file:" + rootPath)
+    if (path.startsWith("/") && canSupplyFileScheme)
+      PrefixRepository.registerPrefix(name, "file:" + path)
     else
-      PrefixRepository.registerPrefix(name, rootPath)
+      PrefixRepository.registerPrefix(name, path)
     name
   }
 
