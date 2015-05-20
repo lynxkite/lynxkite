@@ -1,4 +1,4 @@
-## Import vertex attributes from a database
+### Import vertex attributes from a database
 
 Imports vertex attributes for existing vertices from a SQL database.
 

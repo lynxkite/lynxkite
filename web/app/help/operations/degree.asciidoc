@@ -1,4 +1,4 @@
-## Degree
+### Degree
 
 Calculates the number of edges connected to every vertex.
 

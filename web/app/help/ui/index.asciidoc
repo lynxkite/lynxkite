@@ -6,6 +6,8 @@ include::graph-attributes.asciidoc[]
 
 include::attributes.asciidoc[]
 
+include::segmentations.asciidoc[]
+
 include::graph-visualizations.asciidoc[]
 
 include::filter-syntax.asciidoc[]

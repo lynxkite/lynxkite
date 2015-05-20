@@ -1,4 +1,4 @@
-## Export segmentation to database
+### Export segmentation to database
 
 Creates a new table and writes the edges going from the parent graph to this
 segmentation into it.

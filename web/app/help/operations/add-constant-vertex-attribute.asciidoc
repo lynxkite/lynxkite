@@ -1,4 +1,4 @@
-## Add constant vertex attribute
+### Add constant vertex attribute
 
 Adds an attribute with a fixed value to every vertex.
 

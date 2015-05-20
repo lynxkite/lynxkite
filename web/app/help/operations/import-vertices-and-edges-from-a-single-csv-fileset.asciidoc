@@ -1,4 +1,4 @@
-## Import vertices and edges from single CSV fileset
+### Import vertices and edges from single CSV fileset
 
 Imports edges from a CSV file or files. Each line in the CSV represents one edge.
 Each field in the CSV will be accessible as an edge attribute.

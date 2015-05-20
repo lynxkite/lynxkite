@@ -1,4 +1,4 @@
-## Merge parallel edges
+### Merge parallel edges
 
 Multiple edges going from A to B will be merged into a single edge.
 The edges going from A to B are not merged with edges going from B to A.

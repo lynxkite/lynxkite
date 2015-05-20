@@ -1,4 +1,4 @@
-## Fingerprinting between project and segmentation
+### Fingerprinting between project and segmentation
 
 Finds the best match out of the potential matches that are defined between a project and
 a segmentation. The best match is chosen by comparing the vertex neighborhoods in the project

@@ -1,4 +1,4 @@
-## Merge vertices by attribute
+### Merge vertices by attribute
 
 Merges each set of vertices that are equal by the chosen attribute. Aggregations
 can be specified for how to handle the rest of the attributes, which may be different

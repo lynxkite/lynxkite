@@ -1,4 +1,4 @@
-## Add constant edge attribute
+### Add constant edge attribute
 
 Adds an attribute with a fixed value to every edge.
 

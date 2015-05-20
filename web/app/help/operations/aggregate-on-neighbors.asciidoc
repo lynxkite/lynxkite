@@ -1,4 +1,4 @@
-## Aggregate on neighbors
+### Aggregate on neighbors
 
 Aggregates across the vertices that are connected to each vertex. Because it works by looking at
 edges, neighbors that are connected with more than one edge will be counted more than once.
