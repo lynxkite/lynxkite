@@ -1,4 +1,4 @@
-## Reverse edge direction
+### Reverse edge direction
 
 Replaces every A{to}B edge with its reverse edge (B{to}A).
 

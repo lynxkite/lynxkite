@@ -1,4 +1,4 @@
-## Aggregate edge attribute globally
+### Aggregate edge attribute globally
 
 Aggregates edge attributes across the entire graph into one scalar for each attribute.
 For example you could use it to calculate the average call duration across an entire call dataset.

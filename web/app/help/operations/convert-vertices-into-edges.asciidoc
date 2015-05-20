@@ -1,4 +1,4 @@
-## Convert vertices into edges
+### Convert vertices into edges
 
 Re-interprets the vertices as edges. You select two string-typed vertex attributes
 which specify the source and destination of the edges. New vertices will be generated for each

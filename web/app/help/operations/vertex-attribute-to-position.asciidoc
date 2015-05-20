@@ -1,4 +1,4 @@
-## Vertex attribute to position
+### Vertex attribute to position
 
 Creates an attribute of type `(Double, Double)` from two `Double` attributes.
 The created attribute can be used as an X-Y or latitude-longitude location.

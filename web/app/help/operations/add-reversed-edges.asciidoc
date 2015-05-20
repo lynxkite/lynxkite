@@ -1,4 +1,4 @@
-## Add reversed edges
+### Add reversed edges
 
 For every A{to}B edge adds a new B{to}A edge, copying over the attributes of the original.
 Thus this operation will double the number of edges in the project.

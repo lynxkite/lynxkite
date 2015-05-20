@@ -1,4 +1,4 @@
-## Centrality
+### Centrality
 
 Calculates an approximation of the harmonic centrality for every vertex. The harmonic
 centrality of the vertex A is the sum of the reciprocals of all shortest paths to A.

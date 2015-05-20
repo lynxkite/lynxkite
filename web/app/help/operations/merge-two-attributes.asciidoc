@@ -1,4 +1,4 @@
-## Merge two attributes
+### Merge two attributes
 
 An attribute may not be defined on every vertex. This operation uses the secondary
 attribute to fill in the values where the primary attribute is undefined. If both are

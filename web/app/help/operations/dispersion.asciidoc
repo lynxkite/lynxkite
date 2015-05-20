@@ -1,4 +1,4 @@
-## Dispersion
+### Dispersion
 
 Calculates the extent to which two people's mutual friends are not themselves well-connected
 as an edge attribute normalized to [0, 1].

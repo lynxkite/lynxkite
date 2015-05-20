@@ -1,4 +1,4 @@
-## Copy vertex attributes to segmentation
+### Copy vertex attributes to segmentation
 
 Copies all vertex attributes from the parent to the segmentation.
 

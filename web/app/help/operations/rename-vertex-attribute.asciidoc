@@ -1,4 +1,4 @@
-## Rename vertex attribute
+### Rename vertex attribute
 
 Changes the name of a vertex attribute.
 

@@ -1,4 +1,4 @@
-## Import vertices and edges from single database table
+### Import vertices and edges from single database table
 
 Imports edges from a SQL database. Each row in the table represents one edge.
 Each column in the table will be accessible as an edge attribute.

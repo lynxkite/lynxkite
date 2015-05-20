@@ -1,4 +1,4 @@
-## Load segmentation links from CSV
+### Load segmentation links from CSV
 
 Import the connection between the main project and this segmentation from a CSV.
 Each line in the CSV represents a connection between one base vertex and one segment.

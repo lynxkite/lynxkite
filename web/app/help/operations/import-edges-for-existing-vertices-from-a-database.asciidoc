@@ -1,4 +1,4 @@
-## Import edges for existing vertices from a database
+### Import edges for existing vertices from a database
 
 Imports edges from a SQL database. Your vertices must have an identifying attribute, by which
 the edges can be attached to them.
