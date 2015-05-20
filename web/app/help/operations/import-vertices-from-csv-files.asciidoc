@@ -1,4 +1,4 @@
-## Import vertices from CSV files
+### Import vertices from CSV files
 
 Imports vertices (no edges) from a CSV file, or files.
 Each field in the CSV will be accessible as a vertex attribute.

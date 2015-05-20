@@ -1,4 +1,4 @@
-## Export vertex attributes to file
+### Export vertex attributes to file
 
 Writes the vertices and their attributes to a text file.
 The first two columns of the file will contain the source and destination vertex IDs.

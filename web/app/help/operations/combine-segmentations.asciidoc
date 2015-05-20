@@ -1,4 +1,4 @@
-## Combine segmentations
+### Combine segmentations
 
 Creates a new segmentation from the selected existing segmentations.
 Each new segment corresponds to one original segment from each of the original

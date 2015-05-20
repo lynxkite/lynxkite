@@ -1,3 +1,3 @@
-## Discard loop edges
+### Discard loop edges
 
 Discards edges that connect a vertex to itself.

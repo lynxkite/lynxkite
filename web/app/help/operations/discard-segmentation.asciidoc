@@ -1,4 +1,4 @@
-## Discard segmentation
+### Discard segmentation
 
 Throws away a segmentation value.
 

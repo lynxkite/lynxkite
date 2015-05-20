@@ -1,4 +1,4 @@
-## Find infocom communities
+### Find infocom communities
 
 Creates a segmentation of overlapping communities.
 

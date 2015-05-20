@@ -1,4 +1,4 @@
-## Aggregate to segmentation
+### Aggregate to segmentation
 
 Aggregates vertex attributes across all the vertices that belong to a segment.
 For example, it can calculate the average age of each clique.

@@ -1,4 +1,4 @@
-## Add Gaussian vertex attribute
+### Add Gaussian vertex attribute
 
 Generates a new random double attribute with a Gaussian (normal) distribution
 with a mean of 0 and a standard deviation of 1.

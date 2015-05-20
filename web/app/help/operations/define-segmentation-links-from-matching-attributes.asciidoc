@@ -1,4 +1,4 @@
-## Define segmentation links from matching attributes
+### Define segmentation links from matching attributes
 
 Connect vertices in the base project with segments based on matching attributes.
 

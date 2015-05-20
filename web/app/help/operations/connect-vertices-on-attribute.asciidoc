@@ -1,4 +1,4 @@
-## Connect vertices on attribute
+### Connect vertices on attribute
 
 Creates edges between vertices that are equal in a chosen attribute. If the source attribute of A
 equals the destination attribute of B, an A{to}B edge will be generated.

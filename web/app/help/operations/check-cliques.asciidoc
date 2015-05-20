@@ -1,4 +1,4 @@
-## Check cliques
+### Check cliques
 
 Validates that the segments of the segmentation are in fact cliques.
 

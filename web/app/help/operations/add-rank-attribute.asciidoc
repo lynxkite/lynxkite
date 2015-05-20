@@ -1,4 +1,4 @@
-## Add rank attribute
+### Add rank attribute
 
 Creates a new vertex attribute that is the _rank_ of the vertex when ordered by the key
 attribute. Rank 0 will be the vertex with the highest or lowest key attribute value

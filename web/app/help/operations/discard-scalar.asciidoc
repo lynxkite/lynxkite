@@ -1,4 +1,4 @@
-## Discard scalar
+### Discard scalar
 
 Throws away a scalar value.
 

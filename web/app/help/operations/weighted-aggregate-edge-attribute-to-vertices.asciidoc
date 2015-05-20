@@ -1,4 +1,4 @@
-## Weighted aggregate edge attribute to vertices
+### Weighted aggregate edge attribute to vertices
 
 Aggregates an attribute on all the edges going in or out of vertices.
 For example it can calculate the average cost per second of calls for each person.
