@@ -36,6 +36,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Merge parallel edges by attribute", Map(
       "key" -> "call",
@@ -63,6 +64,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Edge attribute to double", Map("attr" -> "call"))
     run("Merge parallel edges by attribute", Map(
@@ -92,6 +94,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Merge parallel edges", Map(
       "aggregate-src" -> "",
@@ -265,6 +268,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "header" -> "id,email,name",
       "delimiter" -> ",",
       "id-attr" -> "delete me",
+      "omitted" -> "",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-100-edges.csv",
@@ -273,6 +277,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     // Turn empty strings into "undefined".
     run("Derived vertex attribute", Map(
@@ -317,6 +322,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "files" -> "OPERATIONSTEST$/fingerprint-example-connections.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
+      "omitted" -> "",
       "filter" -> "",
       "base-id-attr" -> "name",
       "base-id-field" -> "src",
@@ -357,6 +363,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "",
@@ -373,6 +380,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Import project as segmentation", Map(
       "them" -> "other"))
@@ -402,6 +410,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     def colors =
       project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
@@ -416,6 +425,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "header" -> "src,dst,color",
       "delimiter" -> ",",
       "id-attr" -> "id",
+      "omitted" -> "",
       "filter" -> ""))
     var colors =
       project.vertexAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
@@ -435,6 +445,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
+      "omitted" -> "",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
       "files" -> "OPERATIONSTEST$/viral-edges-1.csv",
@@ -443,6 +454,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Maximal cliques", Map(
       "name" -> "cliques",
@@ -479,6 +491,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
+      "omitted" -> "",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
       "files" -> "OPERATIONSTEST$/viral-edges-2.csv",
@@ -487,6 +500,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Maximal cliques", Map(
       "name" -> "cliques",
@@ -685,6 +699,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "header" -> header,
       "delimiter" -> ",",
       "filter" -> "",
+      "omitted" -> "",
       "id-attr" -> "x"))
     val name = project.vertexAttributes("name").runtimeSafeCast[String]
     val income = project.vertexAttributes("income").runtimeSafeCast[String]
