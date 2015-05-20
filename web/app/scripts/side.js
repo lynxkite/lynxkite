@@ -536,7 +536,7 @@ angular.module('biggraph')
 
     Side.prototype.openSegmentation = function(seg) {
       // For now segmentations always open on the right.
-      this.sides[0].state.projectName = seg.fullName;
+      this.sides[1].state.projectName = seg.fullName;
     };
 
     Side.prototype.loadScalars = function() {
