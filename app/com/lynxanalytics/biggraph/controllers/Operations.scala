@@ -234,7 +234,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         files,
         params("delimiter"),
         header,
-        params("omitted").split(",").map(_.trim).toSet,
+        params("omitted").split(",").map(_.trim).filter(_.nonEmpty).toSet,
         JavaScript(params("filter")))
     }
   }
