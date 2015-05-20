@@ -147,12 +147,13 @@ case class CSV private (file: HadoopFile,
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
       .filter(jsFilter(_))
-    if (omitFields.nonEmpty) {
+    val keptFields = if (omitFields.nonEmpty) {
       val keptIndices = allFields.zipWithIndex.filter(x => !omitFields.contains(x._1)).map(_._2)
       fullRows.map(fullRow => keptIndices.map(idx => fullRow(idx)))
     } else {
       fullRows
-    }.repartition(numPartitions)
+    }
+    keptFields.repartition(numPartitions)
   }
 
   def jsFilter(line: Seq[String]): Boolean = {
