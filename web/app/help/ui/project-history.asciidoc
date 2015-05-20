@@ -35,7 +35,7 @@ Inconsistent operations will have a red
 background and an error message describing the problem.
 
 Note that changing one operation may cause another one to become inconsistent. For example if you change the
-name of the output attribute in a <<derive-vertex-attribute>> operation when this output attribute is used by
+name of the output attribute in a <<derived-vertex-attribute>> operation when this output attribute is used by
 a later operation, that later operation will become inconsistent, since it is now referring to a non-existent
 attribute.
 
