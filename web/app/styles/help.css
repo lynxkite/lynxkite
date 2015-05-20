@@ -62,19 +62,19 @@ help-popup {
 }
 
 /* Anchors for linking to sections. */
-a.anchor {
+.help a.anchor {
   float: right;
   display: none;
 }
-a.anchor:before {
+.help a.anchor:before {
   content: "\25B6  open help";
   font-size: 14px;
   vertical-align: middle;
 }
-h1:hover a.anchor,
-h2:hover a.anchor,
-h3:hover a.anchor,
-h4:hover a.anchor {
+.help h1:hover a.anchor,
+.help h2:hover a.anchor,
+.help h3:hover a.anchor,
+.help h4:hover a.anchor {
   display: block;
 }
 
