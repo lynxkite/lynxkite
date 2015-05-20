@@ -33,11 +33,9 @@ var SVG_UTIL = {
     e[0].setAttributeNS(null, 'class', SVG_UTIL.classesOf(e).minus(cls).join(' '));
   },
 
-  draw: function(objects) {
-    return ' ' + objects.join(' ') + ' ';
+  arc: function(r, x, y, dir) {
+    return 'A ' + r + ' ' + r + ' 0 0 ' + dir + ' ' + x + ' ' + y + ' ';
   },
-
-  arc: function(r, x, y, dir) { return SVG_UTIL.draw(['A', r, r, 0, 0, dir, x, y]); },
 
   arcParams: function(ax, ay, bx, by, zoom) {
     if (ax === bx && ay === by) {
@@ -56,14 +54,19 @@ var SVG_UTIL = {
     }
   },
 
-  arrow1: function(ax, ay, bx, by, zoom) {
+  arrows: function(ax, ay, bx, by, zoom) {
     var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
-    return SVG_UTIL.draw(['M', ax, ay]) + SVG_UTIL.arc(a.r, a.x, a.y, 0);
+    var arcPfx = 'A ' + a.r + ' ' + a.r + ' 0 0 ';
+    var arcSfx = ' ' + a.x + ' ' + a.y + ' ';
+    return [
+      'M ' + ax + ' ' + ay + ' ' + arcPfx + 0 + arcSfx,
+      'M ' + bx + ' ' + by + ' ' + arcPfx + 1 + arcSfx
+    ];
   },
 
   arrow2: function(ax, ay, bx, by, zoom) {
     var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
-    return SVG_UTIL.draw(['M', bx, by]) + SVG_UTIL.arc(a.r, a.x, a.y, 1);
+    return 'M ' + bx + ' ' + by + ' ' + SVG_UTIL.arc(a.r, a.x, a.y, 1);
   },
 
   group: function(l, attrs) {
