@@ -18,7 +18,7 @@ export KITE_DATA_DIR=file:$HOME/kite_data/
 
 # Configuration file to specify what file paths users are
 # allowed to access using what prefixes.
-export KITE_ROOT_DEFINITIONS=${KITE_DEPLOYMENT_CONFIG_DIR}/root_definitions.txt
+export KITE_PREFIX_DEFINITIONS=${KITE_DEPLOYMENT_CONFIG_DIR}/root_definitions.txt
 
 # The PID file for Kite servers.
 export KITE_PID_FILE=$HOME/kite.pid
