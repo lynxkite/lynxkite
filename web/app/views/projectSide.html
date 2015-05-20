@@ -321,6 +321,7 @@
 
       <li class="list-group-item" ng-if="side.project.segmentations.length !== 0">
         <span class="lead de-emph">Segmentations</span>
+        <help-popup href="segmentations" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
     </div>
