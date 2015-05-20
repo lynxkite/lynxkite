@@ -3,6 +3,8 @@
 = LynxKite User Manual
 Lynx Analytics
 
+:sectlinks:
+:sectanchors:
 :toc: macro
 :toc-placement: macro
 
