@@ -59,6 +59,9 @@ When left as `<read first line>`, the header is read automatically from the file
 [[delimiter]] Delimiter::
 The column delimiter in the CSV. Typical values are `,` (comma), `;` (semicolon), `\t` (tab).
 
+[[omitted]] (optional) Comma separated list of columns to omit::
+If you don't want to read all columns of your CSV, list here the name of columns you don't need.
+
 [[filter]] (optional) Filtering expression::
 A JavaScript expression can be provided here to restrict the import to lines that match a
 condition. For example `id != ''` would ignore lines where the `id` column is empty.
