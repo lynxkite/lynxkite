@@ -1,4 +1,4 @@
-## Weighted aggregate to segmentation
+### Weighted aggregate to segmentation
 
 Aggregates vertex attributes across all the vertices that belong to a segment.
 For example, it can calculate the average age per kilogram of each clique.

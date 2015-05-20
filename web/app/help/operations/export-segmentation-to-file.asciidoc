@@ -1,4 +1,4 @@
-## Export segmentation to file
+### Export segmentation to file
 
 Writes a segmentation to a text file.
 The first two columns of the file will contain the base vertex and segment IDs.

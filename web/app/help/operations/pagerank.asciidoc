@@ -1,4 +1,4 @@
-## PageRank
+### PageRank
 
 Calculates http://en.wikipedia.org/wiki/PageRank[PageRank] for every vertex.
 PageRank is a calculated by simulating random walks

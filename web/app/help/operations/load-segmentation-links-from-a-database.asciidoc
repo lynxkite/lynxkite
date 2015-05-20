@@ -1,4 +1,4 @@
-## Load segmentation links from a database
+### Load segmentation links from a database
 
 Import the connection between the main project and this segmentation from a SQL database.
 Each database row represents a connection between one base vertex and one segment.

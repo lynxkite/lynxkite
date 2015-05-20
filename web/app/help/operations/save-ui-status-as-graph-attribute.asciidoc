@@ -1,4 +1,4 @@
-## Save UI status as graph attribute
+### Save UI status as graph attribute
 
 Saves UI status as a graph attribute that can be reused later to reload the same visualization.
 

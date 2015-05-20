@@ -1,4 +1,4 @@
-## Correlate two attributes
+### Correlate two attributes
 
 Calculates the Pearson correlation coefficient of two attributes.
 Only vertices where both attributes are defined are considered.

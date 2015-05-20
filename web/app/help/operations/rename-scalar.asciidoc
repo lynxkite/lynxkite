@@ -1,4 +1,4 @@
-## Rename scalar
+### Rename scalar
 
 Changes the name of a scalar.
 

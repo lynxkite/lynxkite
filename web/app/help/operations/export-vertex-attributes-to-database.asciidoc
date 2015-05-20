@@ -1,4 +1,4 @@
-## Export vertex attributes to database
+### Export vertex attributes to database
 
 Creates a new table and writes the selected attributes into it.
 

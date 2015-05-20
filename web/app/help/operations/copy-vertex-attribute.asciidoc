@@ -1,4 +1,4 @@
-## Copy vertex attribute
+### Copy vertex attribute
 
 Creates a copy of a vertex attribute.
 

@@ -1,4 +1,4 @@
-## Discard edge attribute
+### Discard edge attribute
 
 Throws away an edge attribute.
 
