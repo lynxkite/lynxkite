@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Fixed regression. (Segmentations opened on the wrong side.)
+
 ### 1.4.0
 
  - You can now omit columns when importing something from a CSV file.
