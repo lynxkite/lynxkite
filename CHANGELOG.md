@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.4.1
+
  - Fixed regression. (Segmentations opened on the wrong side.)
 
 ### 1.4.0
