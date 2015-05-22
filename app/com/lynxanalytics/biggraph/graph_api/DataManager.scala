@@ -211,14 +211,16 @@ class DataManager(sc: spark.SparkContext,
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
         val instanceFuture = getInstanceFuture(instance)
-        set(
-          entity,
-          // And the entity will have to wait until its full completion (including saves).
-          if (instance.operation.isHeavy && !entity.isInstanceOf[Scalar[_]]) {
-            instanceFuture.flatMap(_ => load(entity))
-          } else {
-            instanceFuture.map(_(entity.gUID))
-          })
+        for (output <- instance.outputs.all.values) {
+          set(
+            output,
+            // And the entity will have to wait until its full completion (including saves).
+            if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
+              instanceFuture.flatMap(_ => load(output))
+            } else {
+              instanceFuture.map(_(output.gUID))
+            })
+        }
       }
     }
   }
