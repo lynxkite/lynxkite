@@ -1701,6 +1701,20 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val other = params("other")
       s"Union with $other"
     }
+
+    def checkTypeCollision(other: Project) = {
+      val commonAttributeNames =
+        project.vertexAttributeNames.toSet & other.vertexAttributeNames.toSet
+
+      for (name <- commonAttributeNames) {
+        val a1 = project.vertexAttributes(name)
+        val a2 = other.vertexAttributes(name)
+        assert(a1.typeTag.tpe == a2.typeTag.tpe,
+          s"Attribute '$name' has conflicting types in the two projects: " +
+            s"(${a1.typeTag.tpe} and ${a2.typeTag.tpe})")
+      }
+
+    }
     def apply(params: Map[String, String]): Unit = {
       val otherName = params("other")
       assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
@@ -1709,10 +1723,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         // Nothing to do
         return
       }
+      checkTypeCollision(other)
       val vsUnion = {
         val op = graph_operations.VertexSetUnion(2)
         op(op.vss, Seq(project.vertexSet, other.vertexSet)).result
       }
+
       val newVertexAttributes = unifyAttributes(
         project.vertexAttributes
           .map {
