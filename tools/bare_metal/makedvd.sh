@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ueo pipefail
 
 if [ $# != 1 ]; then
   >&2 echo "Usage: $0 <LynxKite archive to put on the DVD.>"
@@ -9,7 +10,7 @@ if [ ! -f "$LYNXKITE_TGZ" ]; then
   >&2 echo "ERROR: The specified LynxKite archive ($LYNXKITE_TGZ) does not exist."
   exit 1
 fi
-set -xueo pipefail
+set -x
 
 BARE_METAL_DIR=$(dirname "$0")
 REPO_DIR="$BARE_METAL_DIR/../.."
