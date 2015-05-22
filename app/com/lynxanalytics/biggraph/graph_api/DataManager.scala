@@ -133,7 +133,7 @@ class DataManager(sc: spark.SparkContext,
       val outputDatas = blocking {
         instance.run(inputDatas, runtimeContext)
       }
-      validateOutput(outputDatas)
+      validateOutput(instance, outputDatas)
       blocking {
         if (instance.operation.isHeavy) {
           for (entityData <- outputDatas.values) {
@@ -157,25 +157,32 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private def validateOutput(output: Map[UUID, EntityData]): Unit = {
+  private def validateOutput(instance: MetaGraphOperationInstance,
+                             output: Map[UUID, EntityData]): Unit = {
     // Make sure attributes re-use the partitioners from their vertex sets.
     // An identity check is used to catch the case where the same number of partitions is used
     // accidentally (as is often the case in tests), but the code does not guarantee this.
-    val attributes = output.values.collect { case a: AttributeData[_] => a }
-    for (attrd <- attributes) {
-      val attr = attrd.entity
-      val vs = attr.vertexSet
-      // The vertex set must either be loaded, or in the output.
-      val vsd = output.get(vs.gUID) match {
-        case Some(x) => x.asInstanceOf[VertexSetData]
-        case None =>
-          assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $attr, not known")
-          assert(entityCache(vs.gUID).value.nonEmpty, s"$vs, vertex set of $attr, not loaded")
-          assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $attr, failed")
-          entityCache(vs.gUID).value.get.get.asInstanceOf[VertexSetData]
-      }
-      assert(vsd.rdd.partitioner.get eq attrd.rdd.partitioner.get,
-        s"The partitioner of $attr does not match the partitioner of $vs.")
+    instance.operation match {
+      // PulledOverVertexAttribute is whitelisted because it will re-use the existing partitioner
+      // if it is of the right size. But otherwise it creates a new partitioner.
+      case _: com.lynxanalytics.biggraph.graph_operations.PulledOverVertexAttribute[_] =>
+      case _ =>
+        val attributes = output.values.collect { case a: AttributeData[_] => a }
+        for (attrd <- attributes) {
+          val attr = attrd.entity
+          val vs = attr.vertexSet
+          // The vertex set must either be loaded, or in the output.
+          val vsd = output.get(vs.gUID) match {
+            case Some(x) => x.asInstanceOf[VertexSetData]
+            case None =>
+              assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $attr, not known")
+              assert(entityCache(vs.gUID).value.nonEmpty, s"$vs, vertex set of $attr, not loaded")
+              assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $attr, failed")
+              entityCache(vs.gUID).value.get.get.asInstanceOf[VertexSetData]
+          }
+          assert(vsd.rdd.partitioner.get eq attrd.rdd.partitioner.get,
+            s"The partitioner of $attr does not match the partitioner of $vs.")
+        }
     }
   }
 
