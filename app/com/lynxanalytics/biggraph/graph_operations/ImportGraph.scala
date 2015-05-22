@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
+import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -254,15 +255,17 @@ trait ImportEdges extends ImportCommon {
                     output: OutputBuilder,
                     partitioner: Partitioner): Unit = {
     val edgeSrcDst = columns(src).sortedJoin(columns(dst))
-    val bySrc = edgeSrcDst.map {
-      case (edgeId, (src, dst)) => src -> (edgeId, dst)
-    }.toSortedRDD(partitioner)
-    val byDst = bySrc.sortedJoin(srcToId).map {
-      case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid)
-    }.toSortedRDD(partitioner)
-    val edges = byDst.sortedJoin(dstToId).map {
-      case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did)
-    }.toSortedRDD(partitioner)
+    val srcResolvedByDst = RDDUtils.magicLookup(
+      edgeSrcDst.map {
+        case (edgeId, (src, dst)) => src -> (edgeId, dst)
+      },
+      srcToId)
+      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
+
+    val edges = RDDUtils.magicLookup(srcResolvedByDst, dstToId)
+      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
+      .toSortedRDD(partitioner)
+
     output(oeb, edges)
   }
 }
