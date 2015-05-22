@@ -262,6 +262,23 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.edgeBundle == null)
   }
 
+  test("Project union - useful error message (#1611)") {
+    run("Example Graph")
+    val other = Project("ExampleGraph2")
+    project.copy(other)
+    run("Rename vertex attribute",
+      Map("from" -> "age", "to" -> "newage"), on = other)
+    run("Add constant vertex attribute",
+      Map("name" -> "age", "value" -> "dummy", "type" -> "String"), on = other)
+
+    val ex = intercept[java.lang.AssertionError] {
+      run("Union with another project",
+        Map("other" -> "ExampleGraph2", "id-attr" -> "new_id"))
+    }
+    assert(ex.getMessage.contains(
+      "Attribute 'age' has conflicting types in the two projects: (Double and String)"))
+  }
+
   test("Fingerprinting based on attributes") {
     run("Import vertices from CSV files", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-100-vertices.csv",
