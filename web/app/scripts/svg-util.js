@@ -33,10 +33,6 @@ var SVG_UTIL = {
     e[0].setAttributeNS(null, 'class', SVG_UTIL.classesOf(e).minus(cls).join(' '));
   },
 
-  arc: function(r, x, y, dir) {
-    return 'A ' + r + ' ' + r + ' 0 0 ' + dir + ' ' + x + ' ' + y + ' ';
-  },
-
   arcParams: function(ax, ay, bx, by, zoom) {
     if (ax === bx && ay === by) {
       return {r: 0.1 * zoom, x: ax + 0.2 * zoom, y: ay};
