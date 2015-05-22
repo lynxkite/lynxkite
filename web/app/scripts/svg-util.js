@@ -52,11 +52,11 @@ var SVG_UTIL = {
 
   arrows: function(ax, ay, bx, by, zoom) {
     var a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
-    var arcPfx = 'A ' + a.r + ' ' + a.r + ' 0 0 ';
-    var arcSfx = ' ' + a.x + ' ' + a.y + ' ';
+    var arcPfx = ' A ' + a.r + ' ' + a.r + ' 0 0 ';
+    var arcSfx = a.x + ' ' + a.y + ' ';
     return [
-      'M ' + ax + ' ' + ay + ' ' + arcPfx + 0 + arcSfx,
-      'M ' + bx + ' ' + by + ' ' + arcPfx + 1 + arcSfx
+      'M ' + ax + ' ' + ay + arcPfx + '0 ' + arcSfx,
+      'M ' + bx + ' ' + by + arcPfx + '1 ' + arcSfx
     ];
   },
 
