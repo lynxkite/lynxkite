@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import scala.collection.mutable
 import scala.reflect._
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 
 // A container for storing ID counts per bucket and a sample.
@@ -38,6 +39,17 @@ class IDBuckets[T] extends Serializable {
 }
 object IDBuckets {
   val MaxSampleSize = 50
+}
+
+class CountOrdering[T] extends Ordering[(T, Long)] with Serializable {
+  def compare(x: (T, Long), y: (T, Long)): Int = {
+    val (xk, xc) = x
+    val (yk, yc) = y
+
+    if (xc < yc) -1
+    else if (xc > yc) 1
+    else (xk.hashCode - yk.hashCode)
+  }
 }
 
 object RDDUtils {
@@ -177,6 +189,35 @@ object RDDUtils {
 
   def incrementWeightMap[K](map: mutable.Map[K, Double], key: K, increment: Double): Unit = {
     map(key) = if (map.contains(key)) (map(key) + increment) else increment
+  }
+
+  private def pedestrianLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    sourceRDD: RDD[(K, T)], lookupTable: SortedRDD[K, S]): RDD[(K, (T, S))] = {
+    import Implicits._
+    sourceRDD.toSortedRDD(lookupTable.partitioner.get).sortedJoin(lookupTable)
+  }
+  def magicLookup[K: Ordering: ClassTag, T: ClassTag, S](
+    sourceRDD: RDD[(K, T)],
+    lookupTable: SortedRDD[K, S],
+    countsOpt: Option[RDD[(K, Long)]] = None): RDD[(K, (T, S))] = {
+
+    val partitioner = lookupTable.partitioner.get
+    val counts = countsOpt.getOrElse(
+      sourceRDD.mapValues(x => 1L).reduceByKey(lookupTable.partitioner.get, _ + _))
+    val tops = counts.top(partitioner.numPartitions)(new CountOrdering[K]).sorted
+    val biggest = tops.last
+    if (biggest._2 > 100000) {
+      log.info(s"Looking up in $lookupTable for $sourceRDD.")
+      log.info(s"Found very large key: $biggest. Invoking magic to deal with the situation.")
+      val topMap = lookupTable.restrictToIdSet(tops.map(_._1).toIndexedSeq.sorted).collect.toMap
+      val larges = sourceRDD
+        .flatMap { case (key, tValue) => topMap.get(key).map(sValue => key -> (tValue, sValue)) }
+      val smalls = pedestrianLookup(
+        sourceRDD.filter { case (key, _) => !topMap.contains(key) }, lookupTable)
+      (smalls ++ larges).coalesce(sourceRDD.partitions.size)
+    } else {
+      pedestrianLookup(sourceRDD, lookupTable)
+    }
   }
 }
 
