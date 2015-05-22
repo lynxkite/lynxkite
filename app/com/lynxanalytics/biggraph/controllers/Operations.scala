@@ -1709,7 +1709,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       for (name <- commonAttributeNames) {
         val a1 = project.vertexAttributes(name)
         val a2 = other.vertexAttributes(name)
-        assert(a1.typeTag.tpe == a2.typeTag.tpe,
+        assert(a1.typeTag.tpe =:= a2.typeTag.tpe,
           s"Attribute '$name' has conflicting types in the two projects: " +
             s"(${a1.typeTag.tpe} and ${a2.typeTag.tpe})")
       }
