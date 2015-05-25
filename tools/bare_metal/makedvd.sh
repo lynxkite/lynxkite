@@ -40,7 +40,7 @@ wget --directory-prefix="$BUILD/" \
 
 # Get Oracle Server JRE 7.
 wget --directory-prefix="$BUILD/" \
-   --header='Cookie: oraclelicense=accept-securebackup-cookie' \
+  --header='Cookie: oraclelicense=accept-securebackup-cookie' \
   'http://download.oracle.com/otn-pub/java/jdk/7u80-b15/server-jre-7u80-linux-x64.tar.gz'
 
 # Create DVD image.
