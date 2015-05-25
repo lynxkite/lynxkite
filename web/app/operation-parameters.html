@@ -1,6 +1,9 @@
 <!-- This has to be inside a <form class="form-horizontal">. -->
-<div class="form-group" ng-repeat="param in input">
-  <label for="{{param.id}}" class="col-sm-4 control-label">{{param.title}}</label>
+<div class="form-group" ng-repeat="param in op.parameters">
+  <label for="{{param.id}}" class="col-sm-4 control-label">
+    {{param.title}}
+    <help-popup href="{{op.id + '-' + param.id}}"></help-popup>
+  </label>
   <div class="col-sm-8">
     <input ng-if="param.kind === 'default'"
       class="form-control" ng-model="output[param.id]">

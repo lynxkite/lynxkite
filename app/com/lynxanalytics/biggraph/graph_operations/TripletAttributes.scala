@@ -5,14 +5,10 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.collection.mutable
-import scala.reflect._
-import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 // Creates outgoing and incoming triplet mappings.
 object TripletMapping extends OpFromJson {

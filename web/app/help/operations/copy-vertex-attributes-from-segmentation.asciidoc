@@ -1,0 +1,20 @@
+### Copy vertex attributes from segmentation
+
+Copies all vertex attributes from the segmentation to the parent.
+
+This operation is only available when each vertex belongs to just one segment.
+(As in the case of connected components, for example.)
+
+====
+*Example use case*
+
+You have performed <<fingerprinting-between-project-and-segmentation>>. At this point there is
+a sparse one-to-one connection between the project vertices and the segmentation vertices.
+You can use <<copy-vertex-attributes-from-segmentation>> and
+<<copy-vertex-attributes-to-segmentation>> to copy all attributes from one side to the other.
+
+*Parameters*
+
+[[prefix]] Attribute name prefix::
+A prefix for the new attribute names. Leave empty for no prefix.
+====

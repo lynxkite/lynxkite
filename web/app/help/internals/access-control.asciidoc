@@ -1,0 +1,40 @@
+[[access-control]]
+## User authentication & access control
+
+User authentication is an optional feature and can be turned on or off depending on the
+deployment. If user authentication is enabled LynxKite data can only be accessed after
+authentication. The _logout_ link is only displayed at the bottom right if authentication
+is enabled.
+
+### Access control lists
+
+Access rights are controlled at the project level. A project has two access control lists: one
+for reading and one for writing.
+
+- The users on the reading list can see everything in the project but cannot make changes.
+- The users on the writing list can see everything and make any change (including modifying
+the writing list).
+
+The access control lists can be modified in the project settings
++++<label class="btn btn-default"><i class="glyphicon glyphicon-cog"></i></label>+++.
+The lists are comma-delimited and `+*+` (asterisk) can be used as a wildcard. `+*+` means all
+logged in users. `+*@lynxanalytics.com+`, for example, means all users with user names matching
+that pattern.
+
+When creating a project, you have the choice of setting it to _private_, _publicly readable_, or
+_publicly writable_. These options provide different default access control lists, but the lists
+can be freely modified later.
+
+If a user has no read access to a project, that project will not show up for them in the project
+list.
+
+If a user has read-only access to a project, they can always create a copy of the project and
+make changes to the copy.
+
+### Administrator users
+
+Administrator users have special privileges:
+
+- Administrators can read and write all projects, regardless of the access control lists.
+- Administrators can create new users, including new administrators. The users are managed
+through the `/users` page.

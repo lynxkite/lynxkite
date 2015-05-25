@@ -1,0 +1,16 @@
+### Import vertices and edges from single database table
+
+Imports edges from a SQL database. Each row in the table represents one edge.
+Each column in the table will be accessible as an edge attribute.
+
+Vertices will be generated for the endpoints of the edges with two vertex attributes:
+
+ - `stringID` will contain the ID string that was used in the CSV.
+ - `id` will contain the internal vertex ID.
+
+====
+include::{g}[tag=database-import]
+
+[[src]] Source ID field:: The database column that contains the edge source ID.
+[[dst]] Destination ID field:: The database column that contains the edge destination ID.
+====

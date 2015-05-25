@@ -9,8 +9,8 @@
 
 package com.lynxanalytics.biggraph.spark_util
 
-import scala.reflect.{ ClassTag, classTag }
-import scala.math.{ Ordering, max, min }
+import scala.reflect.{ ClassTag }
+import scala.math.{ Ordering }
 
 /**
  * The Sorting object provides functions that can sort various kinds of

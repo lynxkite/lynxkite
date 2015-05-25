@@ -22,8 +22,6 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.biggraph.graph_util
-
 object Scripting {
   import scala.language.implicitConversions
 

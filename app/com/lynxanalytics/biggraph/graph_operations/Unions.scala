@@ -1,13 +1,9 @@
 // Operations for taking the union of vertex sets and edge bundles.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd.RDD
-import scala.reflect.runtime.universe._
-
+import org.apache.spark.HashPartitioner
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object VertexSetUnion extends OpFromJson {
   class Input(numVertexSets: Int) extends MagicInputSignature {
@@ -44,11 +40,14 @@ case class VertexSetUnion(numVertexSets: Int)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    val vss = inputs.vss.map(_.rdd)
+
+    val totalNumPartitions = vss.map(_.partitioner.get.numPartitions).sum
+    val unionPartitioner = new HashPartitioner(totalNumPartitions)
     val unionWithOldIds = rc.sparkContext.union(
-      inputs.vss
-        .map(_.rdd)
+      vss
         .zipWithIndex
-        .map { case (rdd, idx) => rdd.mapValues(_ => idx) }).randomNumbered(rc.defaultPartitioner)
+        .map { case (rdd, idx) => rdd.mapValues(_ => idx) }).randomNumbered(unionPartitioner)
     output(o.union, unionWithOldIds.mapValues(_ => ()))
     for (idx <- 0 until numVertexSets) {
       output(
@@ -56,7 +55,7 @@ case class VertexSetUnion(numVertexSets: Int)
         unionWithOldIds
           .filter { case (newId, (oldId, sourceIdx)) => sourceIdx == idx }
           .map { case (newId, (oldId, sourceIdx)) => Edge(oldId, newId) }
-          .randomNumbered(rc.defaultPartitioner))
+          .randomNumbered(vss(idx).partitioner.get))
     }
   }
 }

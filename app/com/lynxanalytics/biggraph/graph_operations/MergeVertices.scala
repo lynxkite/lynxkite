@@ -1,11 +1,7 @@
 // Merges vertices that match on an attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd.RDD
 import scala.util.Random
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -34,8 +30,9 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
-    val partitioner = rc.defaultPartitioner
-    val byAttr = inputs.attr.rdd.map { case (id, attr) => (attr, id) }
+    val attr = inputs.attr.rdd
+    val partitioner = attr.partitioner.get
+    val byAttr = attr.map { case (id, attr) => (attr, id) }
     val matching = byAttr
       .groupByKey(partitioner)
       .mapPartitionsWithIndex {

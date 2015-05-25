@@ -2,17 +2,13 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import java.sql
 import org.scalatest.FunSuite
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
-import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.TestUtils
-import com.lynxanalytics.biggraph.graph_util.Filename
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DBImportTest extends FunSuite with TestGraphOp {
   test("import vertex list from SQLite") {
-    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     val connection = sql.DriverManager.getConnection("jdbc:" + db)
     val statement = connection.createStatement()
     statement.executeUpdate("""

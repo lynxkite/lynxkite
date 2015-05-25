@@ -6,12 +6,10 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object AggregateByEdgeBundle extends OpFromJson {
   class Input[From] extends MagicInputSignature {
@@ -315,6 +313,14 @@ object Aggregator {
     def outputTypeTag(inputTypeTag: TypeTag[T]) = inputTypeTag
     def aggregate(values: Iterable[T]) = {
       values.groupBy(identity).maxBy(_._2.size)._1
+    }
+  }
+
+  object CountDistinct extends LocalAggregatorFromJson { def fromJson(j: JsValue) = CountDistinct() }
+  case class CountDistinct[T]() extends LocalAggregator[T, Double] {
+    def outputTypeTag(inputTypeTag: TypeTag[T]) = typeTag[Double]
+    def aggregate(values: Iterable[T]) = {
+      values.toSet.size
     }
   }
 

@@ -4,16 +4,20 @@ package com.lynxanalytics.biggraph.graph_util
 import java.sql
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.reflect.runtime.universe._
-
-import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object SQLExport {
-  def quoteIdentifier(s: String) = '"' + s.replaceAll("\"", "\"\"") + '"'
+  private val SimpleIdentifier = "[a-zA-Z0-9_]+".r
+  def quoteIdentifier(s: String) = {
+    s match {
+      case SimpleIdentifier() => s
+      case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
+    }
+  }
   private def quoteData(s: String) = "'" + StringEscapeUtils.escapeSql(s) + "'"
   private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
     rdds.foldLeft(base) { (seqs, rdd) =>
@@ -98,6 +102,7 @@ class SQLExport private (
   val quotedTable = quoteIdentifier(table);
   val deletion = s"DROP TABLE IF EXISTS $quotedTable;\n"
   val creation = s"CREATE TABLE $quotedTable ($columns);\n"
+  log.info(s"Executing statements: $deletion $creation")
   val inserts = makeInserts(quotedTable, values)
 
   def insertInto(db: String, delete: Boolean) = {
@@ -108,7 +113,7 @@ class SQLExport private (
     inserts.foreach(execute(db, _))
   }
 
-  def saveAs(filename: Filename) = {
+  def saveAs(filename: HadoopFile) = {
     (filename / "header").createFromStrings(deletion + creation)
     (filename / "data").saveAsTextFile(inserts)
   }

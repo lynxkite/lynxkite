@@ -1,0 +1,21 @@
+### Merge vertices by attribute
+
+Merges each set of vertices that are equal by the chosen attribute. Aggregations
+can be specified for how to handle the rest of the attributes, which may be different
+among the merged vertices. Any edge that connected two vertices that are merged will become a loop.
+
+====
+*Example use case*
+
+You merge phone numbers that have the same IMEI; each vertex then
+represents one mobile device. You can aggregate one attribute as `count` to have an attribute that
+represents the number of phone numbers merged into one vertex.
+
+*Parameters*
+
+[[key]] Match by::
+If a set of vertices have the same value for the selected attribute, they will all be merged
+into a single vertex.
+
+include::{g}[tag=local-aggregators]
+====

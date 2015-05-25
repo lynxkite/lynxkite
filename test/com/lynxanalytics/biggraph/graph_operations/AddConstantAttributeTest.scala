@@ -5,8 +5,6 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-
 class AddConstantAttributeTest extends FunSuite with TestGraphOp {
   test("triangle vertex attribute") {
     val g = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(2), 2 -> Seq(0))).result

@@ -1,0 +1,24 @@
+### Segment by double attribute
+
+Segments the vertices by a `Double` vertex attribute.
+
+The domain of the attribute is split into intervals of the given size and every vertex that
+belongs to a given interval will belong to one segment. Empty segments are not created.
+
+====
+[[name]] Segmentation name::
+The new segmentation will be saved under this name.
+
+[[attr]] Attribute::
+The `Double` attribute to segment by.
+
+[[interval-size]] Interval size::
+The attribute's domain will be split into intervals of this size. The splitting always starts at
+zero.
+
+[[overlap]] Overlap::
+If you enable overlapping intervals, then each interval will have a 50% overlap
+with both the previous and the next interval. As a result each vertex will belong
+to two segments, guaranteeing that any vertices with an attribute value difference
+less than half the interval size will share at least one segment.
+====

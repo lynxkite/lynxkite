@@ -6,6 +6,43 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.4.1
+
+ - Fixed regression. (Segmentations opened on the wrong side.)
+
+### 1.4.0
+
+ - You can now omit columns when importing something from a CSV file.
+ - Moderate performance improvements for graph visualization.
+ - The _User's Guide_ contents are now integrated into LynxKite. Relevant help messages are
+   provided through contextual popups, and the document is also available as a single page,
+   ready for printing, through a new link at the bottom right.
+ - New edge operation _"Merge parallel edges by attribute"_ makes it possible
+   for the user to merge those parallel edges between two vertices that have the
+   same value for the given edge attribute.
+ - Admins can download the last server log using the link `http://<kite ip>:<kite port>/logs`.
+ - When running an EC2 cluster, you cannot directly reference s3 files as before (using
+   the format `s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@bucket/path`), see the changelog
+   entry below about the data file prefix notation. Instead, for EC2 cluster we automatically
+   setup the prefix `S3` to point to `s3n://AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY@`. In practice
+   this means that when using an EC2 cluster you need to refer to files on S3 as: `S3$bucket/path`.
+ - Improved stability and graceful degradation. Not having enough memory now will only result in
+   degraded performance not failures.
+ - _"Create scale-free random edge bundle"_ operation added which allows one to create
+   a scale free random graph.
+ - One can save a sequence of operations as a workflow. The feature is accessible from the
+   project history editor/viewer and saved workflows show up as a new operation category.
+ - Strings visualized as icons will be matched to neutral icons (circle, square,
+   triangle, hexagon, pentagon, star) if an icon with the given name does not exist.
+ - _"PageRank"_ operation can now be used without weights.
+ - Data files and directories can now only be accessed via a special prefix notation.
+   For example, what used to be `hdfs://nameservice1:8020/user/kite/data/uploads/file` is
+   now simply `UPLOADS$/file`. This enables the administrator to hide s3n passwords from
+   the users; futhermore, it will be easier to move the data to another location. A new kiterc
+   option `KITE_PREFIX_DEFINITIONS` can be used to provide extra prefixes (other
+   than `UPLOADS$`) See the files `kiterc_template` and `prefix_definitions.txt` in directory
+   `kite_???/conf` for details.
+ - New aggregation method: `count distinct`
  - LynxKite pages can now be printed. Visualizations are also supported. This provides a
    method of exporting the visualization in a scalable vector graphics format.
  - Segmentation coverage is automatically calculated.

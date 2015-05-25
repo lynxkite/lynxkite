@@ -1,0 +1,15 @@
+### Weighted aggregate edge attribute globally
+
+Aggregates edge attributes across the entire graph into one scalar for each attribute.
+For example you could use it to calculate the total income as the sum of call durations
+weighted by the rates across an entire call dataset.
+
+====
+[[prefix]] Generated name prefix::
+Save the aggregated values with this prefix.
+
+[[weight]] Weight::
+The `Double` attribute to use as weight.
+
+include::{g}[tag=global-aggregators]
+====

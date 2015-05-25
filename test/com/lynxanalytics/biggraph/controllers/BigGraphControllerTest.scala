@@ -3,11 +3,9 @@ package com.lynxanalytics.biggraph.controllers
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.ClassTag
 import org.scalatest.{ FunSuite, BeforeAndAfterEach }
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment with BeforeAndAfterEach {

@@ -7,7 +7,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.annotation.tailrec
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark._
 
 import com.lynxanalytics.biggraph.graph_api._

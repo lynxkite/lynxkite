@@ -1,0 +1,16 @@
+### Aggregate edge attribute to vertices
+
+Aggregates an attribute on all the edges going in or out of vertices.
+For example it can calculate the average duration of calls for each person in a call dataset.
+
+====
+[[prefix]] Generated name prefix::
+Save the aggregated attributes with this prefix.
+
+[[direction]] Aggregate on::
+ - `incoming edges`: Aggregate across the edges coming in to each vertex.
+ - `outgoing edges`: Aggregate across the edges going out of each vertex.
+ - `all edges`: Aggregate across all the edges going in or out of each vertex.
+
+include::{g}[tag=local-aggregators]
+====

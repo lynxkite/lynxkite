@@ -1,0 +1,8 @@
+### Copy segmentation
+
+Creates a copy of a segmentation.
+
+====
+[[from]] Old name:: The segmentation to copy.
+[[to]] New name:: The name of the copy.
+====

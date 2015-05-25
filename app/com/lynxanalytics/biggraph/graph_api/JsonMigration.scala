@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
-import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
@@ -44,7 +43,8 @@ class JsonMigration {
   val version: VersionMap = Map(
     "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1)
+    "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1,
+    "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
@@ -53,7 +53,8 @@ class JsonMigration {
     ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets", 0) -> {
       j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
-    })
+    },
+    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity)
 }
 
 object MetaRepositoryManager {

@@ -2,8 +2,6 @@
 package com.lynxanalytics.biggraph.graph_util
 
 import org.apache.commons.lang.StringEscapeUtils
-import org.apache.hadoop
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -19,9 +17,9 @@ case class CSVData(val header: Seq[String],
 
   def toStringRDD: rdd.RDD[String] = data.map(CSVData.lineToStringNoNewLine(_))
 
-  def saveDataToDir(path: Filename) = path.saveAsTextFile(toStringRDD)
+  def saveDataToDir(path: HadoopFile) = path.saveAsTextFile(toStringRDD)
 
-  def saveToDir(path: Filename) = {
+  def saveToDir(path: HadoopFile) = {
     (path / "header").createFromStrings(CSVData.lineToString(header))
     saveDataToDir(path / "data")
   }

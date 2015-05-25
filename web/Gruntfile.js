@@ -46,6 +46,10 @@ module.exports = function (grunt) {
         files: ['<%= yeoman.app %>/styles/{,*/}*.css'],
         tasks: ['newer:copy:styles', 'autoprefixer']
       },
+      help: {
+        files: ['<%= yeoman.app %>/help/{,*/}*.asciidoc'],
+        tasks: ['asciidoctor']
+      },
       gruntfile: {
         files: ['Gruntfile.js']
       },
@@ -55,6 +59,7 @@ module.exports = function (grunt) {
         },
         files: [
           '<%= yeoman.app %>/{,*/}*.html',
+          '.tmp/{,*/}*.html',
           '.tmp/styles/{,*/}*.css',
           '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
         ]
@@ -82,6 +87,7 @@ module.exports = function (grunt) {
             }
             if (req.url.indexOf('/ajax/createProject') === 0 ||
                 req.url.indexOf('/ajax/jsError') === 0 ||
+                req.url.indexOf('/ajax/saveWorkflow') === 0 ||
                 req.url.indexOf('/logout') === 0) {
               res.end();
               return;
@@ -171,6 +177,19 @@ module.exports = function (grunt) {
           dest: '.tmp/styles/'
         }]
       }
+    },
+
+    // Compile AsciiDoc.
+    asciidoctor: {
+      options: {
+        showNumberedHeadings: false,
+        safeMode: 'safe', // Allow includes.
+      },
+      dist: {
+        files: {
+          '.tmp/help.html': ['<%= yeoman.app %>/help/index.asciidoc'],
+        },
+      },
     },
 
     // Automatically inject Bower components into the app
@@ -270,10 +289,11 @@ module.exports = function (grunt) {
       }
     },
 
-    // ngmin tries to make the code safe for minification automatically by
-    // using the Angular long form for dependency injection. It doesn't work on
-    // things like resolve or inject so those have to be done manually.
-    ngmin: {
+    // ng-annotate adds and removes AngularJS dependency injection annotations.
+    // It is non-intrusive so your source code stays exactly the same otherwise.
+    // No lost comments or moved lines. Annotations are useful because with them
+    // you're able to minify your source code using your favorite JS minifier.
+    ngAnnotate: {
       dist: {
         files: [{
           expand: true,
@@ -314,6 +334,11 @@ module.exports = function (grunt) {
           cwd: '.tmp/images',
           dest: '<%= yeoman.dist %>/images',
           src: ['generated/*']
+        }, {
+          expand: true,
+          cwd: '.tmp',
+          dest: '<%= yeoman.dist %>',
+          src: ['{,*/}*.html']
         }]
       },
       styles: {
@@ -394,6 +419,7 @@ module.exports = function (grunt) {
       'bowerInstall',
       'concurrent:server',
       'autoprefixer',
+      'asciidoctor',
       'connect:livereload',
       'watch'
     ]);
@@ -409,6 +435,7 @@ module.exports = function (grunt) {
     'bowerInstall',
     'copy:styles',
     'autoprefixer',
+    'asciidoctor',
     'connect:test',
     'protractor'
   ]);
@@ -419,8 +446,9 @@ module.exports = function (grunt) {
     'useminPrepare',
     'concurrent:dist',
     'autoprefixer',
+    'asciidoctor',
     'concat',
-    'ngmin',
+    'ngAnnotate',
     'copy:dist',
     'cdnify',
     'cssmin',
@@ -434,7 +462,8 @@ module.exports = function (grunt) {
     'clean:server',
     'bowerInstall',
     'copy:styles',
-    'autoprefixer'
+    'autoprefixer',
+    'asciidoctor'
   ]);
 
   grunt.registerTask('default', [

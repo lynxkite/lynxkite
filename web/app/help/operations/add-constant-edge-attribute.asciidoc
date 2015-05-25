@@ -1,0 +1,23 @@
+### Add constant edge attribute
+
+Adds an attribute with a fixed value to every edge.
+
+====
+*Example use case*
+
+Create a constant edge attribute with value 'A' to the graph in project A.
+Then, create a constant edge attribute with value 'B' to the graph in project B. Use the same
+attribute name in both cases. From then on, if a union graph is created from these two graphs,
+the edge attribute will tell which graph the edge originally belonged to.
+
+*Parameters*
+
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[value]] Value::
+The attribute value. Should be a number if _Type_ is set to `Double`.
+
+[[type]] Type::
+The operation can create either `Double` (numeric) or `String` typed attributes.
+====

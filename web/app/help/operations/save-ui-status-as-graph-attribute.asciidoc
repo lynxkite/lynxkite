@@ -1,0 +1,14 @@
+### Save UI status as graph attribute
+
+Saves UI status as a graph attribute that can be reused later to reload the same visualization.
+
+This operation is normally accessed via the _Save Visualization_ button in the visualization
+options panel.
+
+====
+[[scalarname]] Name of new graph attribute::
+The visualization will be saved under this name.
+
+[[uistatusjson]] UI status as JSON::
+The JSON string describing the visualization state.
+====

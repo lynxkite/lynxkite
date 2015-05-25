@@ -1,0 +1,15 @@
+### Weighted aggregate vertex attribute globally
+
+Aggregates vertex attributes across the entire graph into one scalar for each attribute.
+For example you could use it to calculate the average age across an entire dataset of people
+weighted by their PageRank.
+
+====
+[[prefix]] Generated name prefix::
+Save the aggregated values with this prefix.
+
+[[weight]] Weight::
+The `Double` attribute to use as weight.
+
+include::{g}[tag=global-aggregators]
+====

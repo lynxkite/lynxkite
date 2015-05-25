@@ -1,0 +1,20 @@
+### Load segmentation links from CSV
+
+Import the connection between the main project and this segmentation from a CSV.
+Each line in the CSV represents a connection between one base vertex and one segment.
+
+====
+include::glossary.asciidoc[tag=database-import]
+
+[[base-id-attr]] Identifying vertex attribute in base project::
+The `String` vertex attribute that can be joined to the identifying field in the CSV.
+
+[[base-id-field]] Identifying column for base project::
+The CSV field that can be joined to the identifying attribute on the base project.
+
+[[seg-id-attr]] Identifying vertex attribute in segmentation::
+The `String` vertex attribute that can be joined to the identifying field in the CSV.
+
+[[seg-id-field]] Identifying field for segmentation::
+The CSV field that can be joined to the identifying attribute on the segmentation.
+====

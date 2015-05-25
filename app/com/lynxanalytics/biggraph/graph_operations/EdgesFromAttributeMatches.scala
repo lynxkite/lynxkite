@@ -1,10 +1,6 @@
 // Creates edges that connect vertices that have the same value for the given attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd.RDD
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -27,13 +23,13 @@ case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttribu
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
-    val partitioner = rc.defaultPartitioner
-    val byAttr = inputs.attr.rdd.map { case (id, attr) => (attr, id) }
-    val matching = byAttr.groupByKey(partitioner)
+    val attr = inputs.attr.rdd
+    val byAttr = attr.map { case (id, attr) => (attr, id) }
+    val matching = byAttr.groupByKey()
     val edges = matching.flatMap {
       case (attr, vertices) => for { a <- vertices; b <- vertices; if a != b } yield Edge(a, b)
     }
-    output(o.edges, edges.randomNumbered(partitioner))
+    output(o.edges, edges.randomNumbered(attr.partitioner.get))
   }
 }
 
@@ -65,16 +61,20 @@ case class EdgesFromBipartiteAttributeMatches[T]()
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.fromAttr.data.classTag
-    val partitioner = rc.defaultPartitioner
     val fromByAttr = inputs.fromAttr.rdd
       .map { case (id, attr) => (attr, id) }
-      .groupByKey(partitioner)
+      .groupByKey()
     val toByAttr = inputs.toAttr.rdd
       .map { case (id, attr) => (attr, id) }
-      .groupByKey(partitioner)
+      .groupByKey()
     val edges = fromByAttr.join(toByAttr).flatMap {
       case (attr, (fromIds, toIds)) => for { a <- fromIds; b <- toIds } yield Edge(a, b)
     }
+    val fromPartitioner = inputs.from.rdd.partitioner.get
+    val toPartitioner = inputs.to.rdd.partitioner.get
+    val partitioner =
+      if (fromPartitioner.numPartitions > toPartitioner.numPartitions) fromPartitioner
+      else toPartitioner
     output(o.edges, edges.randomNumbered(partitioner))
   }
 }

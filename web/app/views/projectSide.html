@@ -111,6 +111,8 @@
         </label>
       </div>
 
+      <help-popup href="project-header-buttons" class="pull-right"></help-popup>
+
       <div class="clearfix"></div>
     </div>
 
@@ -125,6 +127,9 @@
       <div class="list-group-item extra-controls" ng-if="side.state.graphMode">
         <!-- Sampled view extra controls. -->
         <div ng-if="side.state.graphMode === 'sampled'">
+          <div class="help-popup-positioner">
+            <help-popup href="concrete-view-settings"></help-popup>
+          </div>
           <table>
             <tr>
               <td>Display:</td>
@@ -212,6 +217,7 @@
                     ...
                   </button>
                 </div>
+                <help-popup href="pick-button" class="pull-right"></help-popup>
                 <pick-options shown="side.showPickOptions" side="side"></pick-options>
               </td>
             </tr>
@@ -247,6 +253,7 @@
                        on-ok="side.saveStateToBackend(userText, finishedCallback)"
                        start-value="visualization 1">
           </text-dialog>
+          <help-popup href="saving-visualizations"></help-popup>
         </div>
 
       </div>
@@ -295,22 +302,26 @@
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of the</span> graph</span>
+        <help-popup href="graph-attributes" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item" ng-repeat="scalar in side.project.scalars | filter: commonScalar"
         scalar="scalar" value="side.scalars[scalar.title]" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>
+        <help-popup href="attributes" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item" ng-repeat="attr in side.project.vertexAttributes" vertex-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> edges</span>
+        <help-popup href="attributes" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item" ng-repeat="attr in side.project.edgeAttributes" edge-attribute="attr" side="side"></li>
 
       <li class="list-group-item" ng-if="side.project.segmentations.length !== 0">
         <span class="lead de-emph">Segmentations</span>
+        <help-popup href="segmentations" class="pull-right"></help-popup>
       </li>
       <li class="sublist list-group-item" ng-repeat="segmentation in side.project.segmentations" segmentation="segmentation" side="side"></li>
     </div>
