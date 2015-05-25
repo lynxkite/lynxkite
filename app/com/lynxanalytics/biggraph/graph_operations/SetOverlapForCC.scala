@@ -8,14 +8,8 @@
 
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd
 import scala.collection.mutable
-import scala.math
-
 import com.lynxanalytics.biggraph.graph_api._
-
 import org.apache.spark.rdd._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -43,9 +37,12 @@ abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = rc.defaultPartitioner
 
-    val bySet = inputs.belongsTo.rdd.values
+    val belongsTo = inputs.belongsTo.rdd
+
+    val partitioner = belongsTo.partitioner.get
+
+    val bySet = belongsTo.values
       .map { case Edge(vId, setId) => setId -> vId }
       .groupByKey(partitioner)
     val byMember = bySet
@@ -54,7 +51,7 @@ abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
     val edges: RDD[Edge] = byMember.flatMap {
       case (vId, sets) => edgesFor(vId, sets.toSeq)
     }
-    output(o.overlaps, edges.randomNumbered(rc.defaultPartitioner))
+    output(o.overlaps, edges.randomNumbered(partitioner))
   }
 
   // Override this with the actual overlap function implementations

@@ -6,7 +6,8 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.util.Random
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import org.apache.spark.HashPartitioner
+import org.apache.spark.Partitioner
 import org.apache.spark.rdd
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -41,18 +42,19 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Double)
     implicit val id = inputDatas
 
     val vs = inputs.vs.rdd
-    val inCandidates = randomCopies(vs, averageDegree, seed, rc)
-    val outCandidates = randomCopies(vs, averageDegree, seed * seed + 42 * seed + 77, rc)
+    val partitioner = new HashPartitioner(
+      vs.partitioner.get.numPartitions * averageDegree.ceil.toInt)
+    val inCandidates = randomCopies(vs, averageDegree, seed, partitioner)
+    val outCandidates = randomCopies(vs, averageDegree, seed * seed + 42 * seed + 77, partitioner)
     val randomEdges = inCandidates.zipPartitions(outCandidates, true) { (it1, it2) =>
       it1.zip(it2).map { case (id1, id2) => Edge(id1, id2) }
     }
-    output(o.es, randomEdges.randomNumbered(rc.defaultPartitioner))
+    output(o.es, randomEdges.randomNumbered(partitioner))
   }
 
   private def randomCopies(
-    vs: VertexSetRDD, averageCopies: Double, seed: Int, rc: RuntimeContext): rdd.RDD[ID] = {
+    vs: VertexSetRDD, averageCopies: Double, seed: Int, partitioner: Partitioner): rdd.RDD[ID] = {
 
-    val partitioner = rc.defaultPartitioner
     val numPartitions = partitioner.numPartitions
     vs
       .mapPartitionsWithIndex {

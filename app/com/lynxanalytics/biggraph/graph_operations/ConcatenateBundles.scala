@@ -1,8 +1,6 @@
 // For each B and each pair of edges that go A->B and B->C creates an edge that goes A->C.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -58,7 +56,12 @@ case class ConcatenateBundles() extends TypedMetaGraphOp[Input, Output] {
       case (_, ((vertexA, weightAB), (vertexC, weightBC))) => (Edge(vertexA, vertexC), weightAB * weightBC)
     }.reduceByKey(_ + _) // TODO: possibility to define arbitrary concat functions as JS
 
-    val numberedAC = AC.randomNumbered(rc.defaultPartitioner)
+    val partitionerAB = edgesAB.partitioner.get
+    val partitionerBC = edgesBC.partitioner.get
+    val partitionerAC =
+      if (partitionerAB.numPartitions > partitionerBC.numPartitions) partitionerAB
+      else partitionerBC
+    val numberedAC = AC.randomNumbered(partitionerAC)
 
     output(o.edgesAC, numberedAC.mapValues { case (edge, weight) => edge })
     output(o.weightsAC, numberedAC.mapValues { case (edge, weight) => weight })

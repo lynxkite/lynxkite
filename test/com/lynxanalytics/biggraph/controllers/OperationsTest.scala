@@ -1,8 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
 import org.scalatest.FunSuite
-import org.scalatest.Tag
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -11,6 +10,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving
 
 class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
+  val res = getClass.getResource("/controllers/OperationsTest/").toString
+  PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
@@ -28,12 +29,97 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
+  test("merge_parallel edges by attribute works for String") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
+      "header" -> "src,dst,call",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "omitted" -> "",
+      "filter" -> ""))
+    run("Merge parallel edges by attribute", Map(
+      "key" -> "call",
+      "aggregate-src" -> "",
+      "aggregate-dst" -> "",
+      "aggregate-call" -> ""
+    ))
+    val call = project.edgeAttributes("call").runtimeSafeCast[String]
+    assert(call.rdd.values.collect.toSeq.sorted == Seq(
+      "Monday", // Mary->John, Wednesday
+      // "Monday",  // Mary->John, Wednesday - duplicate
+      "Saturday", // Mary->John, Saturday
+      //"Saturday", // Mary->John, Saturday - duplicate
+      "Tuesday", // John->Mary, Tuesday
+      //"Tuesday",  // John->Mary, Tuesday - duplicate
+      "Wednesday", // Mary->John, Wednesday
+      "Wednesday" // John->Mary, Wednesday
+    ))
+  }
+
+  test("merge parallel edges by attribute works for Double") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> "OPERATIONSTEST$/merge-parallel-edges-double.csv",
+      "header" -> "src,dst,call",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "omitted" -> "",
+      "filter" -> ""))
+    run("Edge attribute to double", Map("attr" -> "call"))
+    run("Merge parallel edges by attribute", Map(
+      "key" -> "call",
+      "aggregate-src" -> "",
+      "aggregate-dst" -> "",
+      "aggregate-call" -> ""
+    ))
+    val call = project.edgeAttributes("call").runtimeSafeCast[Double]
+    assert(call.rdd.values.collect.toSeq.sorted == Seq(
+      1.0, // Mary->John, 1.0
+      // 1.0,  // Mary->John, 1.0 - duplicate
+      2.0, // John->Mary, 2.0
+      // 2.0,  // John->Mary, 2.0 - duplicate
+      3.0, // Mary->John, 3.0
+      3.0, // John->Mary, 3.0
+      6.0 // Mary->John, 6.0
+    // ,6.0 // Mary->John, 6.0 - duplicate
+
+    ))
+  }
+
+  test("Merge parallel edges works") {
+    run("Import vertices and edges from single CSV fileset", Map(
+      "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
+      "header" -> "src,dst,call",
+      "delimiter" -> ",",
+      "src" -> "src",
+      "dst" -> "dst",
+      "omitted" -> "",
+      "filter" -> ""))
+    run("Merge parallel edges", Map(
+      "aggregate-src" -> "",
+      "aggregate-dst" -> "",
+      "aggregate-call" -> "count"
+    ))
+    val call = project.edgeAttributes("call_count").runtimeSafeCast[Double]
+    assert(call.rdd.values.collect.toSeq.sorted == Seq(3.0, 5.0))
+  }
+
   test("Derived vertex attribute (Double)") {
     run("Example Graph")
     run("Derived vertex attribute",
       Map("type" -> "double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
+  }
+
+  test("Derived vertex attribute with substring conflict (#1676)") {
+    run("Example Graph")
+    run("Rename vertex attribute", Map("from" -> "income", "to" -> "nam"))
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.size == 4)
   }
 
   test("Derived vertex attribute (String)") {
@@ -118,7 +204,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   test("Restore checkpoint after failing operation") {
     class Bug extends Exception("simulated bug")
     ops.register("Buggy op", new Operation(_, _, Operation.Category("Test", "test")) {
-      val description = "For testing"
       def enabled = ???
       def parameters = List()
       def apply(params: Map[String, String]) = {
@@ -179,18 +264,20 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Fingerprinting based on attributes") {
     run("Import vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-vertices.csv").getFile,
+      "files" -> "OPERATIONSTEST$/fingerprint-100-vertices.csv",
       "header" -> "id,email,name",
       "delimiter" -> ",",
       "id-attr" -> "delete me",
+      "omitted" -> "",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-100-edges.csv").getFile,
+      "files" -> "OPERATIONSTEST$/fingerprint-100-edges.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     // Turn empty strings into "undefined".
     run("Derived vertex attribute", Map(
@@ -204,7 +291,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Fingerprinting based on attributes", Map(
       "leftName" -> "email",
       "rightName" -> "name",
-      "weights" -> "no weights",
+      "weights" -> "!no weight",
       "mrew" -> "0.0",
       "mo" -> "1",
       "ms" -> "0.5"))
@@ -232,9 +319,10 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "them" -> "ExampleGraph2"))
     val seg = project.segmentation("ExampleGraph2").project
     run("Load segmentation links from CSV", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-example-connections.csv").getFile,
+      "files" -> "OPERATIONSTEST$/fingerprint-example-connections.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
+      "omitted" -> "",
       "filter" -> "",
       "base-id-attr" -> "name",
       "base-id-field" -> "src",
@@ -270,11 +358,12 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Fingerprinting between project and segmentation by attribute") {
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-2.csv").getFile,
+      "files" -> "OPERATIONSTEST$/fingerprint-edges-2.csv",
       "header" -> "src,dst,src_link",
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "",
@@ -286,11 +375,12 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val other = Project("other")
     project.copy(other)
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/fingerprint-edges-1.csv").getFile,
+      "files" -> "OPERATIONSTEST$/fingerprint-edges-1.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Import project as segmentation", Map(
       "them" -> "other"))
@@ -315,11 +405,12 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Discard loop edges") {
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
+      "files" -> "OPERATIONSTEST$/loop-edges.csv",
       "header" -> "src,dst,color",
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     def colors =
       project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
@@ -330,10 +421,11 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Convert vertices into edges") {
     run("Import vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/loop-edges.csv").getFile,
+      "files" -> "OPERATIONSTEST$/loop-edges.csv",
       "header" -> "src,dst,color",
       "delimiter" -> ",",
       "id-attr" -> "id",
+      "omitted" -> "",
       "filter" -> ""))
     var colors =
       project.vertexAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
@@ -349,18 +441,20 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Viral modeling segment logic") {
     run("Import vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-1.csv").getFile,
+      "files" -> "OPERATIONSTEST$/viral-vertices-1.csv",
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
+      "omitted" -> "",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-1.csv").getFile,
+      "files" -> "OPERATIONSTEST$/viral-edges-1.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Maximal cliques", Map(
       "name" -> "cliques",
@@ -393,18 +487,20 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Viral modeling iteration logic") {
     run("Import vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/viral-vertices-2.csv").getFile,
+      "files" -> "OPERATIONSTEST$/viral-vertices-2.csv",
       "header" -> "id,num",
       "delimiter" -> ",",
       "id-attr" -> "internalID",
+      "omitted" -> "",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
-      "files" -> getClass.getResource("/controllers/OperationsTest/viral-edges-2.csv").getFile,
+      "files" -> "OPERATIONSTEST$/viral-edges-2.csv",
       "header" -> "src,dst",
       "delimiter" -> ",",
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst",
+      "omitted" -> "",
       "filter" -> ""))
     run("Maximal cliques", Map(
       "name" -> "cliques",
@@ -549,7 +645,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("SQL import & export vertices") {
     run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Export vertex attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
@@ -569,7 +665,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("SQL import & export edges") {
     run("Example Graph")
-    val db = s"sqlite:${dataManager.repositoryPath}/test-db"
+    val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Export edge attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
@@ -591,22 +687,24 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("CSV import & export vertices") {
     run("Example Graph")
-    val path = dataManager.repositoryPath.toString + "/csv-export-test"
+    val path = dataManager.repositoryPath + "/csv-export-test"
     run("Export vertex attributes to file", Map(
-      "path" -> path,
+      "path" -> path.symbolicName,
       "link" -> "link",
       "attrs" -> "id,name,age,income,gender",
       "format" -> "CSV"))
-    val header = scala.io.Source.fromFile(path + "/header").mkString
+    val header = (path + "/header").readAsString
     run("Import vertices from CSV files", Map(
-      "files" -> (path + "/data/*"),
+      "files" -> (path + "/data/*").symbolicName,
       "header" -> header,
       "delimiter" -> ",",
       "filter" -> "",
+      "omitted" -> "",
       "id-attr" -> "x"))
     val name = project.vertexAttributes("name").runtimeSafeCast[String]
     val income = project.vertexAttributes("income").runtimeSafeCast[String]
     assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
   }
+
 }

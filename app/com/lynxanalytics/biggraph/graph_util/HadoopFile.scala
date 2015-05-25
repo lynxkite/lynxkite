@@ -4,43 +4,103 @@ package com.lynxanalytics.biggraph.graph_util
 import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.IOException
-
 import com.lynxanalytics.biggraph.bigGraphLogger
 import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
-case class Filename(
-    val filename: String,
-    val awsAccessKeyId: String,
-    val awsSecretAccessKey: String) {
-  override def toString() = filename
-  def fullString = if (awsAccessKeyId.isEmpty) filename else {
-    filename.replace("s3n://", s"s3n://$awsAccessKeyId:$awsSecretAccessKey@")
+object HadoopFile {
+
+  private def hasDangerousEnd(str: String) =
+    str.nonEmpty && !str.endsWith("@") && !str.endsWith("/")
+
+  private def hasDangerousStart(str: String) =
+    str.nonEmpty && !str.startsWith("/")
+
+  def apply(str: String, legacyMode: Boolean = false): HadoopFile = {
+    val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str, legacyMode)
+    val prefixResolution = PrefixRepository.getPrefixInfo(prefixSymbol)
+    val normalizedFullPath = PathNormalizer.normalize(prefixResolution + relativePath)
+    assert(normalizedFullPath.startsWith(prefixResolution))
+    val normalizedRelativePath = normalizedFullPath.drop(prefixResolution.length)
+    assert(!hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
+      s"The path following $prefixSymbol has to start with a slash (/)")
+    HadoopFile(prefixSymbol, normalizedRelativePath)
   }
-  def isEmpty = filename.isEmpty
-  def nonEmpty = filename.nonEmpty
+
+  lazy val defaultFs = hadoop.fs.FileSystem.get(new hadoop.conf.Configuration())
+}
+
+case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: String) {
+  private val s3nWithCreadentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
+  private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
+
+  val symbolicName = prefixSymbol + normalizedRelativePath
+  val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
+
+  val (resolvedNameWithNoCredentials, awsID, awsSecret) = resolvedName match {
+    case s3nWithCreadentialsPattern(scheme, key, secret, relPath) =>
+      (scheme + "://" + relPath, key, secret)
+    case _ =>
+      (resolvedName, "", "")
+  }
+
+  private def hasCredentials = awsID.nonEmpty
+
+  override def toString = symbolicName
+
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = new hadoop.conf.Configuration()
-    conf.set("fs.s3n.awsAccessKeyId", awsAccessKeyId)
-    conf.set("fs.s3n.awsSecretAccessKey", awsSecretAccessKey)
+    if (hasCredentials) {
+      conf.set("fs.s3n.awsAccessKeyId", awsID)
+      conf.set("fs.s3n.awsSecretAccessKey", awsSecret)
+    }
     return conf
   }
+
+  private def reinstateCredentialsIfNeeded(hadoopOutput: String): String = {
+    if (hasCredentials) {
+      hadoopOutput match {
+        case s3nNoCredentialsPattern(scheme, path) =>
+          scheme + "://" + awsID + ":" + awsSecret + "@" + path
+      }
+    } else {
+      hadoopOutput
+    }
+  }
+
+  private def computeRelativePathFromHadoopOutput(hadoopOutput: String): String = {
+    val hadoopOutputWithCredentials = reinstateCredentialsIfNeeded(hadoopOutput)
+    val resolution = PrefixRepository.getPrefixInfo(prefixSymbol)
+    assert(hadoopOutputWithCredentials.startsWith(resolution),
+      s"Bad prefix match: $hadoopOutputWithCredentials ($hadoopOutput) should start with $resolution")
+    hadoopOutputWithCredentials.drop(resolution.length)
+  }
+
+  // This function processes the paths returned by hadoop 'ls' (= the globStatus command)
+  // after we called globStatus with this hadoop file.
+  def hadoopFileForGlobOutput(hadoopOutput: String): HadoopFile = {
+    this.copy(normalizedRelativePath = computeRelativePathFromHadoopOutput(hadoopOutput))
+  }
+
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
   @transient lazy val uri = path.toUri
-  @transient lazy val path = new hadoop.fs.Path(filename)
+  @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   def open() = fs.open(path)
   def create() = fs.create(path)
   def exists() = fs.exists(path)
   def reader() = new BufferedReader(new InputStreamReader(open))
+  def readAsString() = {
+    val r = reader()
+    org.apache.commons.io.IOUtils.toString(r)
+  }
   def delete() = fs.delete(path, true)
-  def renameTo(fn: Filename) = fs.rename(path, fn.path)
+  def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
-  def list = globStatus.map(st => this.copy(filename = st.getPath.toString))
+  def list = globStatus.map(st => hadoopFileForGlobOutput(st.getPath.toString))
+
   def length = fs.getFileStatus(path).getLen
   def globLength = globStatus.map(_.getLen).sum
 
@@ -49,7 +109,7 @@ case class Filename(
     // Make sure we get many small splits.
     conf.setLong("mapred.max.split.size", 50000000)
     sc.newAPIHadoopFile(
-      filename,
+      resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.Text],
       fClass = classOf[hadoop.mapreduce.lib.input.TextInputFormat],
@@ -61,7 +121,7 @@ case class Filename(
     // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
     val hadoopLines = lines.map(x => (hadoop.io.NullWritable.get(), new hadoop.io.Text(x)))
     hadoopLines.saveAsHadoopFile(
-      filename,
+      resolvedNameWithNoCredentials,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.Text],
       outputFormatClass = classOf[hadoop.mapred.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
@@ -111,7 +171,7 @@ case class Filename(
     import hadoop.mapreduce.lib.input.SequenceFileInputFormat
 
     sc.newAPIHadoopFile(
-      filename,
+      resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.NullWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[SequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
@@ -128,9 +188,9 @@ case class Filename(
       bigGraphLogger.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
       fs.delete(path, true)
     }
-    bigGraphLogger.info(s"saving ${data.name} as object file to $filename")
+    bigGraphLogger.info(s"saving ${data.name} as object file to ${symbolicName}")
     hadoopData.saveAsNewAPIHadoopFile(
-      filename,
+      resolvedNameWithNoCredentials,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.BytesWritable],
       outputFormatClass =
@@ -138,21 +198,11 @@ case class Filename(
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
-  def +(suffix: String): Filename = {
-    this.copy(filename = filename + suffix)
+  def +(suffix: String): HadoopFile = {
+    HadoopFile(symbolicName + suffix)
   }
 
-  def /(path_element: String): Filename = {
+  def /(path_element: String): HadoopFile = {
     this + ("/" + path_element)
-  }
-}
-object Filename {
-  private val filenamePattern = "(s3n?)://(.+):(.+)@(.+)".r
-  def apply(str: String): Filename = {
-    str match {
-      case filenamePattern(protocol, id, key, path) =>
-        new Filename(protocol + "://" + path, id, key)
-      case _ => new Filename(str, "", "")
-    }
   }
 }

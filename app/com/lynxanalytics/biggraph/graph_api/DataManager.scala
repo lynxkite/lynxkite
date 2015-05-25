@@ -6,21 +6,17 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
-import org.apache.hadoop
 import org.apache.spark
-import org.apache.spark.rdd
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
 import ExecutionContext.Implicits.global
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 class DataManager(sc: spark.SparkContext,
-                  val repositoryPath: Filename) {
+                  val repositoryPath: HadoopFile) {
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
 
@@ -37,9 +33,9 @@ class DataManager(sc: spark.SparkContext,
       repositoryPath / "entities" / entity.gUID.toString
     }
 
-  private def successPath(basePath: Filename): Filename = basePath / "_SUCCESS"
+  private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
 
-  private def serializedScalarFileName(basePath: Filename): Filename = basePath / "serialized_data"
+  private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&

@@ -1,0 +1,94 @@
+.help h5 {
+  font-weight: bold;
+}
+
+#toc {
+  float: right;
+}
+@media print {
+  #toc {
+    /* The table of contents would be quite useful in print. Unfortunately, there is no browser
+     * support for generating page numbers at the moment. And when printing to PDF the links
+     * are not clickable. So we cannot produce a usable table of contents. */
+    display: none;
+  }
+}
+
+.read-more {
+  display: block;
+  text-align: right;
+  cursor: pointer;
+}
+
+.help dl {
+  margin-left: 30px;
+}
+.help dt {
+  display: list-item;
+  list-style-type: disc;
+}
+.help dt > a { /* Anchor. */
+  display: none;
+}
+
+#help-button {
+  cursor: pointer;
+}
+help-popup {
+  padding: 6px; /* Button-like padding. */
+  font-size: 14px;
+}
+#help-popup {
+  position: absolute;
+  width: 30%;
+  background: white;
+  color: black;
+  z-index: 3000;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0 2px 5px;
+  overflow-y: auto; /* Clip and display scrollbars when necessary. */
+}
+
+.help-popup-positioner {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+.help-popup-positioner help-popup {
+  position: absolute;
+  /* Must beat ui-splitbar at 1010. Or actually everyting. Except ninjas. */
+  z-index: 2000;
+}
+
+/* Anchors for linking to sections. */
+.help a.anchor {
+  float: right;
+  display: none;
+}
+.help a.anchor:before {
+  content: "\25B6  open help";
+  font-size: 14px;
+  vertical-align: middle;
+}
+.help h1:hover a.anchor,
+.help h2:hover a.anchor,
+.help h3:hover a.anchor,
+.help h4:hover a.anchor {
+  display: block;
+}
+
+/* The single-page help document. */
+.users-guide {
+  background: #48a;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.users-guide .container {
+  background: white;
+  padding: 50px;
+}
+
+.users-guide a.anchor:before {
+  content: "\2605  link here";
+}

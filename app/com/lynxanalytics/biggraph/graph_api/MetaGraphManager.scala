@@ -5,10 +5,6 @@ package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.commons.io.FileUtils
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.util.UUID
 import play.api.libs.json
 import play.api.libs.json.Json
@@ -16,7 +12,7 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.{ Filename, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](

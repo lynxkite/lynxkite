@@ -3,12 +3,9 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.google.common.primitives.Primitives
 import scala.reflect.runtime.universe._
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object DeriveJS {
   class Input(attrCount: Int)
@@ -34,7 +31,8 @@ object DeriveJS {
 
   def deriveFromAttributes[T: TypeTag](
     exprString: String,
-    namedAttributes: Seq[(String, Attribute[_])])(implicit manager: MetaGraphManager): Output[T] = {
+    namedAttributes: Seq[(String, Attribute[_])],
+    vertexSet: VertexSet)(implicit manager: MetaGraphManager): Output[T] = {
 
     val js = JavaScript(exprString)
 
@@ -64,7 +62,7 @@ object DeriveJS {
       } else ???
 
     import Scripting._
-    op(op.attrs, jSValueAttributes).result
+    op(op.vs, vertexSet)(op.attrs, jSValueAttributes).result
   }
 }
 import DeriveJS._

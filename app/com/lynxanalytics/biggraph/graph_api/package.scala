@@ -1,8 +1,6 @@
 // Package-level types and type aliases.
 package com.lynxanalytics.biggraph
 
-import org.apache.spark.rdd
-
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 package object graph_api {

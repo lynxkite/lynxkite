@@ -1,12 +1,8 @@
 // The filtering operation and all the specific filter classes that can be used.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import scala.reflect.runtime.universe._
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Counters
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 abstract class Filter[-T] extends Serializable with ToJson {
   def matches(value: T): Boolean

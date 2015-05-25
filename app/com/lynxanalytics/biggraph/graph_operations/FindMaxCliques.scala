@@ -1,10 +1,8 @@
 // Finds maximal cliques in the graph via the Bron-Kerbosch algorithm.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd
-import scala.collection.immutable
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -35,14 +33,17 @@ case class FindMaxCliques(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    val inputPartitioner = inputs.vs.rdd.partitioner.get
     val cug = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections)
+    val numTasks = (rc.numAvailableCores * 5) max (inputPartitioner.numPartitions * 5)
+    val outputPartitioner = new HashPartitioner(numTasks)
     val cliqueLists = computeCliques(
-      inputs.vs.data, cug, rc, minCliqueSize, rc.numAvailableCores * 5)
-    val indexedCliqueLists = cliqueLists.randomNumbered(rc.defaultPartitioner)
+      inputs.vs.data, cug, rc, minCliqueSize, numTasks)
+    val indexedCliqueLists = cliqueLists.randomNumbered(outputPartitioner)
     output(o.segments, indexedCliqueLists.mapValues(_ => ()))
     output(o.belongsTo, indexedCliqueLists.flatMap {
       case (cid, vids) => vids.map(vid => Edge(vid, cid))
-    }.randomNumbered(rc.defaultPartitioner))
+    }.randomNumbered(outputPartitioner))
   }
 
   // Implementation of the actual algorithm.

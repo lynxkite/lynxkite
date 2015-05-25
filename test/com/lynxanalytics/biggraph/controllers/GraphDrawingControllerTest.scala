@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -184,7 +183,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(100.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
     // Approximately two edges per vertex.
-    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 201.0)))
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 198.0)))
   }
 
   test("big bucketed view with buckets") {
@@ -220,7 +219,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.edgeBundles(0).edges.size == 4)
     // Roughly 25% each of 201 edges (=48). Bigger buckets should have more edges in them.
     assert(res.edgeBundles(0).edges.toSet ==
-      Set(FEEdge(0, 0, 74.0), FEEdge(0, 1, 50.0), FEEdge(1, 0, 50.0), FEEdge(1, 1, 27.0)))
+      Set(FEEdge(0, 0, 77.0), FEEdge(0, 1, 44.0), FEEdge(1, 0, 46.0), FEEdge(1, 1, 31.0)))
   }
 
   test("small bucketed view with filters") {
@@ -265,7 +264,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(47.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
     // Should be about 12.5% of 201. (50% src is removed, 50% dst is removed, 50% attribute is <0)
-    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 27.0)))
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 21.0)))
   }
 
   test("big bucketed view with filters") {
@@ -310,7 +309,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(244.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
     // Should be about 12.5% of 990. (50% src is removed, 50% dst is removed, 50% attribute is <0)
-    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 122.0)))
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 115.0)))
   }
 
   test("histogram for double") {

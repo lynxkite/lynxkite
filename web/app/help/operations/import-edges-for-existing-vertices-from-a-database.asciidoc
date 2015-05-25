@@ -1,0 +1,17 @@
+### Import edges for existing vertices from a database
+
+Imports edges from a SQL database. Your vertices must have an identifying attribute, by which
+the edges can be attached to them.
+
+====
+include::{g}[tag=database-import]
+
+[[attr]] Vertex ID attribute::
+The IDs that are used in the database when defining the edges.
+
+[[src]] Source ID field::
+The database field that specifies the source of the edge.
+
+[[dst]] Destination ID field::
+The database field that specifies the destination of the edge.
+====

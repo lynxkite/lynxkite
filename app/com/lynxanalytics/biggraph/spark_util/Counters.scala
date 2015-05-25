@@ -2,8 +2,6 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.SparkContext.IntAccumulatorParam
 import scala.collection.mutable
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 

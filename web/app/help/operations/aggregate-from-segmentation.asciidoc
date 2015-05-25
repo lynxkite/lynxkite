@@ -1,0 +1,11 @@
+### Aggregate from segmentation
+
+Aggregates vertex attributes across all the segments that a vertex in the base project belongs to.
+For example, it can calculate the average size of cliques a person belongs to.
+
+====
+[[prefix]] Generated name prefix::
+Save the aggregated attributes with this prefix.
+
+include::{g}[tag=local-aggregators]
+====

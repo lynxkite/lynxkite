@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -12,13 +12,11 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.Partitioner
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.SparkContext
 
 // Functions for looking at CSV files. The frontend can use these when
 // constructing the import operation.
 object ImportUtil {
-  def header(file: Filename): String = {
+  def header(file: HadoopFile): String = {
     assert(file.exists, s"$file does not exist.")
     // Read from first file if there is a glob.
     file.list.head.reader.readLine
@@ -74,30 +72,69 @@ trait RowInput extends ToJson {
 }
 
 object CSV extends FromJson[CSV] {
-  def fromJson(j: JsValue) = CSV(
-    Filename((j \ "file").as[String]),
-    (j \ "delimiter").as[String],
-    (j \ "header").as[String],
-    JavaScript((j \ "filter").as[String]))
-}
-case class CSV(file: Filename,
-               delimiter: String,
-               header: String,
-               filter: JavaScript = JavaScript("")) extends RowInput {
-  val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
-  val fields = ImportUtil.split(header, unescapedDelimiter).map(_.trim)
-  assert(
-    fields.forall(_.nonEmpty),
-    s"CSV column with empty name is not allowed. Column names were: $fields")
+  def fromJson(j: JsValue): CSV = {
+    val header = (j \ "header").as[String]
+    val delimiter = (j \ "delimiter").as[String]
+    val omitFields = (j \ "omitFields").asOpt[Set[String]].getOrElse(Set[String]())
+    val fields = getFields(delimiter, header)
+    new CSV(
+      HadoopFile((j \ "file").as[String], true),
+      delimiter,
+      header,
+      fields,
+      omitFields,
+      JavaScript((j \ "filter").as[String]))
+  }
 
-  override def toJson = Json.obj(
-    "file" -> file.fullString,
-    "delimiter" -> delimiter,
-    "header" -> header,
-    "filter" -> filter.expression)
+  def getFields(delimiter: String, header: String): Seq[String] = {
+    val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
+    ImportUtil.split(header, unescapedDelimiter).map(_.trim)
+  }
+
+  def apply(file: HadoopFile,
+            delimiter: String,
+            header: String,
+            omitFields: Set[String] = Set(),
+            filter: JavaScript = JavaScript("")): CSV = {
+    val fields = getFields(delimiter, header)
+    assert(
+      fields.forall(_.nonEmpty),
+      s"CSV column with empty name is not allowed. Column names were: $fields")
+    assert(
+      (fields.toSet.size == fields.size),
+      s"Duplicate CSV column name is not allowed. Column names were: $fields")
+    assert(file.list.nonEmpty, s"$file does not exist.")
+    assert(
+      omitFields.forall(fields.contains(_)),
+      {
+        val missingColumns = omitFields.filter(!fields.contains(_)).mkString(", ")
+        s"Column(s) $missingColumns that you asked to omit are not actually columns."
+      })
+    new CSV(file, delimiter, header, fields, omitFields, filter)
+  }
+}
+case class CSV private (file: HadoopFile,
+                        delimiter: String,
+                        header: String,
+                        allFields: Seq[String],
+                        omitFields: Set[String],
+                        filter: JavaScript) extends RowInput {
+  val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
+  override val fields = allFields.filter(field => !omitFields.contains(field))
+  override def toJson = {
+    val withoutOmits = Json.obj(
+      "file" -> file.symbolicName,
+      "delimiter" -> delimiter,
+      "header" -> header,
+      "filter" -> filter.expression)
+    if (omitFields.isEmpty) {
+      withoutOmits
+    } else {
+      withoutOmits + ("omitFields" -> Json.toJson(omitFields))
+    }
+  }
 
   def lines(rc: RuntimeContext): RDD[Seq[String]] = {
-    assert(file.list.nonEmpty, s"$file does not exist.")
     val globLength = file.globLength
     // Estimate how much bigger the in-memory representation is, compared to the CSV file size.
     val explosion = System.getProperty("biggraph.csv.explosion", "20").toLong
@@ -106,19 +143,25 @@ case class CSV(file: Filename,
     // Only repartition if we need more partitions.
     val numPartitions = lines.partitions.size max partitioner.numPartitions
     log.info(s"Reading $file ($globLength bytes) into $numPartitions partitions.")
-    return lines
+    val fullRows = lines
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
       .filter(jsFilter(_))
-      .repartition(numPartitions)
+    val keptFields = if (omitFields.nonEmpty) {
+      val keptIndices = allFields.zipWithIndex.filter(x => !omitFields.contains(x._1)).map(_._2)
+      fullRows.map(fullRow => keptIndices.map(idx => fullRow(idx)))
+    } else {
+      fullRows
+    }
+    keptFields.repartition(numPartitions)
   }
 
   def jsFilter(line: Seq[String]): Boolean = {
-    if (line.length != fields.length) {
+    if (line.length != allFields.length) {
       log.info(s"Input line cannot be parsed: $line")
       return false
     }
-    return filter.isTrue(fields.zip(line).toMap)
+    return filter.isTrue(allFields.zip(line).toMap)
   }
 }
 
@@ -250,11 +293,11 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, input)
+    val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
     val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.randomNumbered(partitioner.numPartitions)
+    val idToName = names.randomNumbered(partitioner)
     val nameToId = idToName.map { case (id, name) => (name, id) }
       .toSortedRDD(partitioner)
     putEdgeBundle(columns, nameToId, nameToId, o.edges, output, partitioner)
@@ -296,8 +339,8 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = rc.defaultPartitioner
     val columns = readColumns(rc, input)
+    val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
     val srcToId =
       ImportCommon.checkIdMapping(inputs.srcVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
@@ -346,7 +389,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val partitioner = rc.defaultPartitioner
+    val partitioner = inputs.vs.rdd.partitioner.get
     val lines = input.lines(rc)
     val idFieldIdx = input.fields.indexOf(idField)
     val externalIdToInternalId = ImportCommon.checkIdMapping(
@@ -358,7 +401,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
     val linesByInternalId =
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
-        .toSortedRDD(inputs.vs.rdd.partitioner.get)
+        .toSortedRDD(partitioner)
     linesByInternalId.cacheBackingArray()
     for ((field, idx) <- input.fields.zipWithIndex) {
       if (idx != idFieldIdx) {

@@ -1,12 +1,11 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import org.scalatest.FunSuite
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
   test("We can obtain a simple new graph") {
@@ -107,8 +106,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     implicit val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
     import Scripting._
-
-    val testCSVFile = Filename(myTempDir.toString) / "almakorte.csv"
+    val testCSVFile = HadoopFile(myTempDirPrefix) / "almakorte.csv"
     testCSVFile.createFromStrings("alma,korte,barack\n3,4,5\n")
     val operation = graph_operations.ImportEdgeList(
       graph_operations.CSV(testCSVFile, ",", "alma,korte,barack"),
@@ -120,7 +118,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     // Fake barack being on disk.
     val entityPath = dataManager.repositoryPath / "entities" / barack.gUID.toString
     val instancePath = dataManager.repositoryPath / "operations" / barack.source.gUID.toString
-    def fakeSuccess(path: Filename): Unit = {
+    def fakeSuccess(path: HadoopFile): Unit = {
       val successPath = path / "_SUCCESS"
       path.mkdirs
       successPath.createFromStrings("")
@@ -140,16 +138,18 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager = cleanDataManager
     import Scripting._
 
-    val testfile = Filename(myTempDir.toString) / "test.csv"
-    testfile.delete()
+    val testfile = HadoopFile(myTempDirPrefix) / "test.csv"
+    // Create the file as the operation constuctor checks for its existence.
+    testfile.createFromStrings("src,dst\n1,2\n")
     val imported = graph_operations.ImportEdgeList(
       graph_operations.CSV(testfile, ",", "src,dst"), "src", "dst")().result
 
+    // Delete file, so that the actual computation fails.
+    testfile.delete()
     // The file does not exist, so the import fails.
-    val e = intercept[java.util.concurrent.ExecutionException] {
+    val e = intercept[Exception] {
       dataManager.get(imported.edges)
     }
-    assert(e.getCause.isInstanceOf[AssertionError])
     // Create the file.
     testfile.createFromStrings("src,dst\n1,2\n")
     // The result can be accessed now.

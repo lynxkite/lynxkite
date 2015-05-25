@@ -1,10 +1,7 @@
 // Creates a segmentation where each segment represents a bucket of an attribute.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 // Helper class for creating segmentations by an attribute.

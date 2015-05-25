@@ -1,0 +1,23 @@
+### Derived edge attribute
+
+Generates a new attribute based on existing attributes. The value expression can be
+an arbitrary JavaScript expression, and it can refer to existing attributes on the edge as if
+they were local variables. It can also refer to attributes of the source and destination
+vertex of the edge using the format `src$attribute` and `dst$attribute`.
+
+The new attribute will only be defined on edges for which all the attributes used in the
+expression are defined.
+
+For example you can write `weight * Math.abs(src$age - dst$age)` to generate a new
+attribute that is the weighted age difference of the two endpoints of the edge.
+
+====
+[[output]] Save as::
+The new attribute will be created under this name.
+
+[[type]] Result type::
+The type (`Double` or `String`) of the created attribute.
+
+[[expr]] Value::
+The JavaScript expression.
+====

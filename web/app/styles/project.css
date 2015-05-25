@@ -107,10 +107,7 @@ input.save-as {
   background: black;
 }
 .project-sides {
-  margin-top: 10px;
-}
-.split-screen > .project-sides {
-  padding-top: 10px;  /* Get out from under the split-bar. */
+  padding-top: 10px;
 }
 
 .project-settings {

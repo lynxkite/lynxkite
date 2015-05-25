@@ -1,0 +1,8 @@
+### Copy edge attribute
+
+Creates a copy of an edge attribute.
+
+====
+[[from]] Old name:: The attribute to copy.
+[[to]] New name:: The name of the copy.
+====

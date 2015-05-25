@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._

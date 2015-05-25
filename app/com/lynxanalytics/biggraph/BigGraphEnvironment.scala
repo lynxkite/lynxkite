@@ -4,7 +4,8 @@ package com.lynxanalytics.biggraph
 import java.io.File
 import org.apache.spark
 
-import com.lynxanalytics.biggraph.graph_util.Filename
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
 trait SparkContextProvider {
   val sparkContext: spark.SparkContext
@@ -37,18 +38,33 @@ trait StaticDirEnvironment extends BigGraphEnvironment {
 
 trait RepositoryDirs {
   val graphDir: String
-  val dataDir: Filename
+  val dataDirSymbolicName: String
+  val dataDirResolvedName: String
+  lazy val dataDir: HadoopFile = {
+    PrefixRepository.registerPrefix(dataDirSymbolicName, dataDirResolvedName)
+    HadoopFile(dataDirSymbolicName)
+  }
+  def forcePrefixRegistration(): Unit = {
+    dataDir
+  }
 }
-class TemporaryRepositoryDirs extends RepositoryDirs {
+
+class RegularRepositoryDirs(bigGraphDir: String, bigDataDir: String, val dataDirSymbolicName: String) extends RepositoryDirs {
+  val graphDir = bigGraphDir
+  val dataDirResolvedName = bigDataDir
+}
+
+class TemporaryRepositoryDirs(val dataDirSymbolicName: String) extends RepositoryDirs {
   private val sysTempDir = System.getProperty("java.io.tmpdir")
   private val myTempDir = new File(
     "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
   myTempDir.mkdir
   private val graphDirFile = new File(myTempDir, "graph")
   graphDirFile.mkdir
+
   private val dataDirFile = new File(myTempDir, "data")
   dataDirFile.mkdir
 
   val graphDir = graphDirFile.toString
-  val dataDir = Filename(dataDirFile.toString)
+  val dataDirResolvedName = dataDirFile.toString
 }

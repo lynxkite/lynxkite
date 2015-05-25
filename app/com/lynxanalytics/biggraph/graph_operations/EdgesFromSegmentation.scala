@@ -3,12 +3,8 @@
 // times. Loop edges are also generated.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
-import org.apache.spark.rdd.RDD
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object EdgesFromSegmentation extends OpFromJson {
   class Input extends MagicInputSignature {

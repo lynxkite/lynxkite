@@ -6,10 +6,10 @@ import com.google.cloud.hadoop.fs.gcs
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.serializer.KryoRegistrator
-import scala.collection.immutable
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
@@ -186,6 +186,7 @@ object BigGraphSparkContext {
     if (master != "") {
       sparkConf = sparkConf.setMaster(master)
     }
+    log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
     return new SparkContext(sparkConf)
   }
 }

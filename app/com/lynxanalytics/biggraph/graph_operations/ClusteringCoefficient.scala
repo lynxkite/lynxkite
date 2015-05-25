@@ -1,13 +1,11 @@
 // Calculates for each vertex how close its neighborhood is to a clique.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import scala.collection.SortedSet
 import scala.collection.mutable
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 object ClusteringCoefficient extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput) extends MagicOutput(instance) {
