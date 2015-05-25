@@ -959,7 +959,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     centrality of the vertex A is the sum of the reciprocals of all shortest paths to A.
     Higher centrality means that the vertex is more embedded in the graph."""
     def parameters = List(
-      Param("name", "Attribute name", defaultValue = "harmonic_centrality"),
+      Param("name", "Attribute name", defaultValue = "centrality"),
       NonNegInt("maxDiameter", "Maximal diameter to check", defaultValue = "10"),
       Choice("algorithm", "Centrality type", options = UIValue.list(List("Lin", "Harmonic"))))
     def enabled = hasEdgeBundle

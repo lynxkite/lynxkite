@@ -50,19 +50,21 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
       .groupBySortedKey(vertexPartitioner).cache()
     // Hll counters are used to estimate set sizes.
     val globalHll = new HyperLogLogMonoid(bits = 8)
+    val hyperBallCounters = vertices.mapValuesWithKeys {
+      // Initialize a counter for every vertex 
+      case (vid, _) => globalHll(vid)
+    }
+    // We have to keep track of the HyperBall sizes for the actual
+    // and the previous diameter.
+    val hyperBallSizes = vertices.mapValues { _ => (1, 1) }
 
     assert(algorithm == "Harmonic" || algorithm == "Lin")
     if (algorithm == "Harmonic") {
       val centralities = getHarmonicCentralities(
         diameter = 1,
         centralities = vertices.mapValues { _ => 0.0 },
-        hyperBallCounters = vertices.mapValuesWithKeys {
-          // Initialize a counter for every vertex 
-          case (vid, _) => globalHll(vid)
-        },
-        // We have to keep track of the HyperBall sizes for the actual
-        // and the previous diameter.
-        hyperBallSizes = vertices.mapValues { _ => (1, 1) },
+        hyperBallCounters = hyperBallCounters,
+        hyperBallSizes = hyperBallSizes,
         vertexPartitioner,
         edges,
         globalHll)
@@ -71,20 +73,15 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
       val (finalSumDistances, sizes) = getMeasures(
         diameter = 1,
         sumDistances = vertices.mapValues { _ => 0 },
-        hyperBallCounters = vertices.mapValuesWithKeys {
-          // Initialize a counter for every vertex 
-          case (vid, _) => globalHll(vid)
-        },
-        // We have to keep track of the HyperBall sizes for the actual
-        // and the previous diameter.
-        hyperBallSizes = vertices.mapValues { _ => (1, 1) },
+        hyperBallCounters = hyperBallCounters,
+        hyperBallSizes = hyperBallSizes,
         vertexPartitioner,
         edges,
         globalHll)
       val centralities = finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
         case (vid, (sumDistance, size)) => {
           if (sumDistance == 0) {
-            0.0
+            1.0 // Compute 1.0 for vertices with empty coreachable set by definition.
           } else {
             size.toDouble * size.toDouble / sumDistance.toDouble
           }
