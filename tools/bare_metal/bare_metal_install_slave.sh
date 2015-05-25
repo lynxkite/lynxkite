@@ -4,6 +4,7 @@ if [ "$1" == "" ]; then
 fi
 MASTER_HOSTNAME=$1
 
+set -e
 echo "Starting LynxKite installation..."
 
 DVD_ROOT="$(dirname $0)"

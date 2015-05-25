@@ -1,3 +1,4 @@
+set -e
 echo "Starting LynxKite installation..."
 
 DVD_ROOT="$(dirname $0)"
