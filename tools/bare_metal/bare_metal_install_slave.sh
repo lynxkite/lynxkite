@@ -5,6 +5,7 @@ fi
 MASTER_HOSTNAME=$1
 
 set -e
+set -u
 echo "Starting LynxKite installation..."
 
 DVD_ROOT="$(dirname $0)"
