@@ -1,6 +1,4 @@
-set -e
-set -u
-set -o pipefail
+set -ueo pipefail
 echo "Starting LynxKite installation..."
 
 DVD_ROOT="$(dirname $0)"
