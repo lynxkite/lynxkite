@@ -20,7 +20,7 @@ random walk.
 
 [[iterations]] Number of iterations::
 PageRank is an iterative algorithm. More iterations take more time but can lead to more precise
-results. For good results set the number of iterations to the diameter of the graph, or to the
+results. As a rule of thumb set the number of iterations to the diameter of the graph, or to the
 median shortest path.
 
 [[damping]] Damping factor::
