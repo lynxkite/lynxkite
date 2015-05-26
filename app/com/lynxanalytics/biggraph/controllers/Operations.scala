@@ -2480,10 +2480,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def count(eb: EdgeBundle): Scalar[Long] = graph_operations.Count.run(eb)
 
-  private def unifyAttributeEdgeT[T](a1: Attribute[T], a2: Attribute[_]): Attribute[T] = {
-    val op = graph_operations.AttributeFallback[T]()
-    op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast(a1.typeTag)).result.defaultedAttr
-  }
   private def unifyAttributeT[T](a1: Attribute[T], a2: Attribute[_]): Attribute[T] = {
     val op = graph_operations.AttributeFallback[T]()
     op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast(a1.typeTag)).result.defaultedAttr
