@@ -7,7 +7,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 ### master
 
  - Two new attribute operations implemented: _Fill edge attribute with constant default value_
-   and _Merge two edge attributes_. These do the same to edges that
+   and _Merge two edge attributes_. These do the same to edges what
    _Fill with constant default value_ and _Merge two attributes_ could do to vertices. Note that
    the latter two operations have been renamed to
    _Fill vertex attribute with constant default value_ and _Merge two vertex attributes_,
