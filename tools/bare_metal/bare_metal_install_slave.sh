@@ -1,5 +1,5 @@
 if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <hostname of the master machine>."
+    >&2 echo "Usage: $0 <hostname of the master machine>."
     exit 1
 fi
 MASTER_HOSTNAME=$1
