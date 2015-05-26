@@ -1,4 +1,4 @@
-if [ "$1" == "" ]; then
+if [ "$#" -ne 1 ]; then
     echo "First argument is missing, it has to be the hostname of the master machine."
     exit 1
 fi
