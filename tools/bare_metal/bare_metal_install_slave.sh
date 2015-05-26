@@ -1,5 +1,5 @@
 if [ "$#" -ne 1 ]; then
-    echo "First argument is missing, it has to be the hostname of the master machine."
+    echo "Usage: $0 <hostname of the master machine>."
     exit 1
 fi
 MASTER_HOSTNAME=$1
