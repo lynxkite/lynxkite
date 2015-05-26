@@ -634,6 +634,34 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "gender"))
   }
 
+  test("Merge two edge attributes") {
+    run("Example Graph")
+    run("Derived edge attribute",
+      Map("type" -> "double", "output" -> "income_edge", "expr" -> "src$income"))
+    run("Merge two edge attributes",
+      Map("name" -> "merged", "attr1" -> "income_edge", "attr2" -> "weight"))
+    val merged = project.edgeAttributes("merged").runtimeSafeCast[Double]
+    assert(merged.rdd.values.collect.toSeq.sorted == Seq(2.0, 1000.0, 2000.0, 2000.0))
+  }
+
+  test("Fill with constant default value") {
+    run("Example Graph")
+    run("Fill with constant default value",
+      Map("attr" -> "income", "def" -> "-1.0"))
+    val filledIncome = project.vertexAttributes("income").runtimeSafeCast[Double]
+    assert(filledIncome.rdd.values.collect.toSeq.sorted == Seq(-1.0, -1.0, 1000.0, 2000.0))
+  }
+
+  test("Fill edge attribute with constant default value") {
+    run("Example Graph")
+    run("Derived edge attribute",
+      Map("type" -> "double", "output" -> "income_edge", "expr" -> "src$income"))
+    run("Fill edge attribute with constant default value",
+      Map("attr" -> "income_edge", "def" -> "-1.0"))
+    val filledIncome = project.edgeAttributes("income_edge").runtimeSafeCast[Double]
+    assert(filledIncome.rdd.values.collect.toSeq.sorted == Seq(-1.0, 1000.0, 2000.0, 2000.0))
+  }
+
   test("Aggregate edge attribute to vertices, all directions") {
     run("Example Graph")
     run("Aggregate edge attribute to vertices", Map(

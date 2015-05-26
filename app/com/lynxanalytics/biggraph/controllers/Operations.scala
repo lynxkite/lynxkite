@@ -690,6 +690,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("def", "Default value"))
     def enabled = FEStatus.assert(
       (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No vertex attributes.")
+    override def title = "Fill vertex attribute with constant default value"
     def apply(params: Map[String, String]) = {
       val attr = project.vertexAttributes(params("attr"))
       val op: graph_operations.AddConstantAttribute[_] =
@@ -700,6 +701,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Fill edge attribute with constant default value", new AttributeOperation(_, _) {
+    def parameters = List(
+      Choice("attr", "Edge attribute", options = edgeAttributes[String] ++ edgeAttributes[Double]),
+      Param("def", "Default value"))
+    def enabled = FEStatus.assert(
+      (edgeAttributes[String] ++ edgeAttributes[Double]).nonEmpty, "No edge attributes.")
+    def apply(params: Map[String, String]) = {
+      val attr = project.edgeAttributes(params("attr"))
+      val op: graph_operations.AddConstantAttribute[_] =
+        graph_operations.AddConstantAttribute.doubleOrString(
+          isDouble = attr.is[Double], params("def"))
+      val default = op(op.vs, project.edgeBundle.idSet).result
+      project.edgeAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+    }
+  })
+
   register("Merge two attributes", new AttributeOperation(_, _) {
     def parameters = List(
       Param("name", "New attribute name", defaultValue = ""),
@@ -707,6 +724,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("attr2", "Secondary attribute", options = vertexAttributes))
     def enabled = FEStatus.assert(
       vertexAttributes.size >= 2, "Not enough vertex attributes.")
+    override def title = "Merge two vertex attributes"
     def apply(params: Map[String, String]) = {
       val name = params("name")
       assert(name.nonEmpty, "You must specify a name for the new attribute.")
@@ -715,6 +733,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
       project.vertexAttributes(name) = unifyAttribute(attr1, attr2)
+    }
+  })
+
+  register("Merge two edge attributes", new AttributeOperation(_, _) {
+    def parameters = List(
+      Param("name", "New attribute name", defaultValue = ""),
+      Choice("attr1", "Primary attribute", options = edgeAttributes),
+      Choice("attr2", "Secondary attribute", options = edgeAttributes))
+    def enabled = FEStatus.assert(
+      edgeAttributes.size >= 2, "Not enough edge attributes.")
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      assert(name.nonEmpty, "You must specify a name for the new attribute.")
+      val attr1 = project.edgeAttributes(params("attr1"))
+      val attr2 = project.edgeAttributes(params("attr2"))
+      assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
+        "The two attributes must have the same type.")
+      project.edgeAttributes(name) = unifyAttribute(attr1, attr2)
     }
   })
 
@@ -2444,6 +2480,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   def count(eb: EdgeBundle): Scalar[Long] = graph_operations.Count.run(eb)
 
+  private def unifyAttributeEdgeT[T](a1: Attribute[T], a2: Attribute[_]): Attribute[T] = {
+    val op = graph_operations.AttributeFallback[T]()
+    op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast(a1.typeTag)).result.defaultedAttr
+  }
   private def unifyAttributeT[T](a1: Attribute[T], a2: Attribute[_]): Attribute[T] = {
     val op = graph_operations.AttributeFallback[T]()
     op(op.originalAttr, a1)(op.defaultAttr, a2.runtimeSafeCast(a1.typeTag)).result.defaultedAttr
