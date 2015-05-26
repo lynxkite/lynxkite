@@ -57,47 +57,48 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
     // and the previous diameter.
     val hyperBallSizes = vertices.mapValues { _ => (1, 1) }
 
-    assert(algorithm == "Harmonic" || algorithm == "Lin")
-    if (algorithm == "Harmonic") {
-      val centralities = getHarmonicCentralities(
-        diameter = 1,
-        centralities = vertices.mapValues { _ => 0.0 },
-        hyperBallCounters = hyperBallCounters,
-        hyperBallSizes = hyperBallSizes,
-        vertexPartitioner,
-        edges,
-        globalHll)
-      output(o.centrality, centralities)
-    } else {
-      val (finalSumDistances, sizes) = getMeasures(
-        diameter = 1,
-        sumDistances = vertices.mapValues { _ => 0 },
-        hyperBallCounters = hyperBallCounters,
-        hyperBallSizes = hyperBallSizes,
-        vertexPartitioner,
-        edges,
-        globalHll)
-      val centralities = finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
-        case (vid, (sumDistance, size)) => {
-          if (sumDistance == 0) {
-            1.0 // Compute 1.0 for vertices with empty coreachable set by definition.
-          } else {
-            size.toDouble * size.toDouble / sumDistance.toDouble
+    algorithm match {
+      case "Harmonic" => {
+        val centralities = getHarmonicCentralities(
+          diameter = 1,
+          harmonicCentralities = vertices.mapValues { _ => 0.0 },
+          hyperBallCounters = hyperBallCounters,
+          hyperBallSizes = hyperBallSizes,
+          vertexPartitioner,
+          edges)
+        output(o.centrality, centralities)
+      }
+      case "Lin" => {
+        val (finalSumDistances, sizes) = getMeasures(
+          diameter = 1,
+          sumDistances = vertices.mapValues { _ => 0 },
+          hyperBallCounters = hyperBallCounters,
+          hyperBallSizes = hyperBallSizes,
+          vertexPartitioner,
+          edges)
+        val centralities = finalSumDistances.sortedJoin(sizes).mapValuesWithKeys {
+          case (vid, (sumDistance, size)) => {
+            if (sumDistance == 0) {
+              1.0 // Compute 1.0 for vertices with empty coreachable set by definition.
+            } else {
+              size.toDouble * size.toDouble / sumDistance.toDouble
+            }
           }
         }
+        output(o.centrality, centralities)
       }
-      output(o.centrality, centralities)
     }
   }
 
+  /* For every vertex A returns the sum of the distances to A and
+     the size of the coreachable set of A.*/
   @tailrec private def getMeasures(
-    diameter: Int,
-    sumDistances: SortedRDD[ID, Int],
-    hyperBallCounters: SortedRDD[ID, HLL],
-    hyperBallSizes: SortedRDD[ID, (Int, Int)],
+    diameter: Int, // Max diameter - iterations - to check
+    sumDistances: SortedRDD[ID, Int], // The sum of the distances to every vertex
+    hyperBallCounters: SortedRDD[ID, HLL], // HLLs counting the coreachable sets
+    hyperBallSizes: SortedRDD[ID, (Int, Int)], // Sizes of the coreachable sets
     vertexPartitioner: Partitioner,
-    edges: SortedRDD[ID, Iterable[ID]],
-    globalHll: HyperLogLogMonoid): (SortedRDD[ID, Int], SortedRDD[ID, Int]) = {
+    edges: SortedRDD[ID, Iterable[ID]]): (SortedRDD[ID, Int], SortedRDD[ID, Int]) = {
 
     val newHyperBallCounters = getNextHyperBalls(
       hyperBallCounters, vertexPartitioner, edges).cache()
@@ -115,20 +116,20 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
 
     if (diameter < maxDiameter) {
       getMeasures(diameter + 1, newSumDistances,
-        newHyperBallCounters, newHyperBallSizes, vertexPartitioner, edges, globalHll)
+        newHyperBallCounters, newHyperBallSizes, vertexPartitioner, edges)
     } else {
       (newSumDistances, newHyperBallSizes.mapValuesWithKeys { case (_, (_, newSize)) => newSize })
     }
   }
 
+  /* Returns the harmonic centrality of every vertex.*/
   @tailrec private def getHarmonicCentralities(
-    diameter: Int,
-    centralities: SortedRDD[ID, Double],
-    hyperBallCounters: SortedRDD[ID, HLL],
-    hyperBallSizes: SortedRDD[ID, (Int, Int)],
+    diameter: Int, // Max diameter - iterations - to check
+    harmonicCentralities: SortedRDD[ID, Double],
+    hyperBallCounters: SortedRDD[ID, HLL], // HLLs counting the coreachable sets
+    hyperBallSizes: SortedRDD[ID, (Int, Int)], // Sizes of the coreachable sets
     vertexPartitioner: Partitioner,
-    edges: SortedRDD[ID, Iterable[ID]],
-    globalHll: HyperLogLogMonoid): SortedRDD[ID, Double] = {
+    edges: SortedRDD[ID, Iterable[ID]]): SortedRDD[ID, Double] = {
 
     val newHyperBallCounters = getNextHyperBalls(
       hyperBallCounters, vertexPartitioner, edges).cache()
@@ -136,7 +137,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
       case ((_, newValue), hll) =>
         (newValue, hll.estimatedSize.toInt)
     }
-    val newHarmonicCentralities = centralities
+    val newHarmonicCentralities = harmonicCentralities
       .sortedJoin(newHyperBallSizes)
       .mapValues {
         case (original, (oldSize, newSize)) => {
@@ -146,7 +147,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
 
     if (diameter < maxDiameter) {
       getHarmonicCentralities(diameter + 1, newHarmonicCentralities,
-        newHyperBallCounters, newHyperBallSizes, vertexPartitioner, edges, globalHll)
+        newHyperBallCounters, newHyperBallSizes, vertexPartitioner, edges)
     } else {
       newHarmonicCentralities
     }

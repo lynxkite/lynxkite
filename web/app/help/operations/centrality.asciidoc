@@ -17,6 +17,6 @@ to the results. In typical small world graphs this effect may be acceptable, how
 
 [[algorithm]] The centrality algorithm to use::
 - The Harmonic Centrality of the vertex A is the sum of the reciprocals of all shortest paths to A.
-- Lin's Centrality of the vertex A is the square of the size of it's coreachable set divided by the
+- Lin's Centrality of the vertex A is the square of the size of its coreachable set divided by the
 sum of the shortest paths to A.
 ====
