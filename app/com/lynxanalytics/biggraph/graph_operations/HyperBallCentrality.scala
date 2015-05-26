@@ -27,7 +27,7 @@ object HyperBallCentrality extends OpFromJson {
   }
   def fromJson(j: JsValue) = HyperBallCentrality(
     (j \ "maxDiameter").as[Int],
-    (j \ "algorithm").as[String])
+    (j \ "algorithm").asOpt[String].getOrElse("Harmonic"))
 }
 import HyperBallCentrality._
 case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
