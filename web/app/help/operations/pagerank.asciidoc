@@ -1,8 +1,8 @@
 ### PageRank
 
 Calculates http://en.wikipedia.org/wiki/PageRank[PageRank] for every vertex.
-PageRank is a calculated by simulating random walks
-on the graph. Its PageRank reflects the likelihood that the walk leads to a specific vertex.
+PageRank is a calculated by simulating random walks on the graph. Its PageRank
+reflects the likelihood that the walk leads to a specific vertex.
 
 Let's imagine a social graph with information flowing along the egdes. In this case high
 PageRank means that the vertex is more likely to be the target of the information.
@@ -19,6 +19,11 @@ The edge weights. Edges with greater weight correspond to higher probabilities i
 random walk.
 
 [[iterations]] Number of iterations::
-PageRank is an iterative algorithm. More iterations take more time. For good results set the
-number of iterations to the diameter of the graph, or to the median shortest path.
+PageRank is an iterative algorithm. More iterations take more time but can lead to more precise
+results. For good results set the number of iterations to the diameter of the graph, or to the
+median shortest path.
+
+[[damping]] Damping factor::
+The probability of continuing the random walk at each step. Higher damping factors lead to longer
+random walks.
 ====
