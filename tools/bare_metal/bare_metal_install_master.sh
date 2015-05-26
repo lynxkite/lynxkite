@@ -1,4 +1,6 @@
 set -e
+set -u
+set -o pipefail
 echo "Starting LynxKite installation..."
 
 DVD_ROOT="$(dirname $0)"
@@ -31,16 +33,17 @@ sudo cp /opt/cm-5.3.3/etc/init.d/cloudera-scm-agent /etc/init.d/cloudera-scm-age
 sudo sed -i 's/CMF_DEFAULTS=.*/CMF_DEFAULTS=\/opt\/cm-5.3.3\/etc\/default/' /etc/init.d/cloudera-scm-agent
 sudo update-rc.d cloudera-scm-agent defaults
 sudo service cloudera-scm-agent start
-sudo cp /opt/cm-5.3.3/etc/init.d/cloudera-scm-server /etc/init.d/cloudera-scm-server
-sudo sed -i 's/CMF_DEFAULTS=.*/CMF_DEFAULTS=\/opt\/cm-5.3.3\/etc\/default/' /etc/init.d/cloudera-scm-server
-sudo update-rc.d cloudera-scm-server defaults
-sudo service cloudera-scm-server start
-echo "Cloudera installed successfully."
 
 # Configure PostgreSQL
 echo "Configuring PostgreSQL..."
 # Feed the following setup SQL script to psql
 echo "create user clouderauser password 'clouderapassword';create database clouderadb;\q\n" | sudo -u postgres psql
-sudo -u cloudera-scm /opt/cm5.3.3/share/cmf/schema/scm_prepare_database.sh postgresql clouderadb clouderauser clouderapassword 
+sudo -u cloudera-scm /opt/cm-5.3.3/share/cmf/schema/scm_prepare_database.sh postgresql clouderadb clouderauser clouderapassword 
 echo "PostgreSQL configured successfully."
+
+sudo cp /opt/cm-5.3.3/etc/init.d/cloudera-scm-server /etc/init.d/cloudera-scm-server
+sudo sed -i 's/CMF_DEFAULTS=.*/CMF_DEFAULTS=\/opt\/cm-5.3.3\/etc\/default/' /etc/init.d/cloudera-scm-server
+sudo update-rc.d cloudera-scm-server defaults
+sudo service cloudera-scm-server start
+echo "Cloudera installed successfully."
 
