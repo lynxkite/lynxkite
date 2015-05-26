@@ -2,7 +2,7 @@
 set -ueo pipefail
 
 if [ $# != 1 ]; then
-  >&2 echo "Usage: $0 <LynxKite archive to put on the DVD.>"
+  >&2 echo "Usage: $0 <LynxKite archive to put on the DVD>."
   exit 1
 fi
 LYNXKITE_TGZ="$1"
