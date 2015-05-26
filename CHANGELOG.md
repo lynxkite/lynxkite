@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Lin's Centrality algorithm is added.
+
 ### 1.4.1
 
  - Fixed regression. (Segmentations opened on the wrong side.)
