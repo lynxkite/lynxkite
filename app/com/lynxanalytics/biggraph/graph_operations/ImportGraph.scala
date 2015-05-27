@@ -137,7 +137,7 @@ case class CSV private (file: HadoopFile,
   def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]] = {
     val globLength = file.globLength
     // Estimate how much bigger the in-memory representation is, compared to the CSV file size.
-    val explosion = System.getProperty("biggraph.csv.explosion", "20").toLong
+    val explosion = System.getProperty("biggraph.csv.explosion", "5").toLong
     val partitioner = rc.partitionerForNBytes(globLength * explosion)
     val lines = file.loadTextFile(rc.sparkContext)
     // Only repartition if we need more partitions.
