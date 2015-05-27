@@ -46,7 +46,7 @@ class DataManager(sc: spark.SparkContext,
 
   // How much bigger the in-memory representation is, compared to the serialized file size.
   private lazy val kryoExplosion =
-    System.getProperty("biggraph.kryo.explosion", "7").toInt
+    System.getProperty("biggraph.kryo.explosion", "70").toInt
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
       val fn = entityPath(vertexSet)
