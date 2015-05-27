@@ -287,6 +287,13 @@ class DataManager(sc: spark.SparkContext,
     val shuffleFraction = conf.getDouble("spark.shuffle.memoryFraction", 0.2)
     val workFraction = 1.0 - cacheFraction - shuffleFraction
     val workMemory = workFraction * cacheMemory / cacheFraction
+    log.info("Creating runtime context")
+    log.info("Work memory: " + workMemory)
+    log.info("Total cores: " + totalCores)
+    log.info("Cache memory: " + cacheMemory)
+    log.info("Work fraction: " + workFraction)
+    log.info("Cache fraction: " + cacheFraction)
+    log.info("WM per core: " + (workMemory / totalCores).toLong)
     RuntimeContext(
       sparkContext = sc,
       broadcastDirectory = repositoryPath / "broadcasts",
