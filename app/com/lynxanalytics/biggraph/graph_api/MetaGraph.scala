@@ -503,6 +503,7 @@ case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaData
     operation.execute(inputDatas, result, outputBuilder, runtimeContext)
     outputBuilder.dataMap.toMap
   }
+  override lazy val hashCode = gUID.hashCode
 }
 
 sealed trait EntityData {
