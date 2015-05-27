@@ -45,10 +45,14 @@ class CountOrdering[T] extends Ordering[(T, Long)] with Serializable {
   def compare(x: (T, Long), y: (T, Long)): Int = {
     val (xk, xc) = x
     val (yk, yc) = y
+    val xh = xk.hashCode
+    val yh = yk.hashCode
 
     if (xc < yc) -1
     else if (xc > yc) 1
-    else (xk.hashCode - yk.hashCode)
+    else if (xh < yh) -1
+    else if (xh > yh) 1
+    else 0
   }
 }
 
@@ -204,7 +208,8 @@ object RDDUtils {
     val partitioner = lookupTable.partitioner.get
     val counts = countsOpt.getOrElse(
       sourceRDD.mapValues(x => 1L).reduceByKey(lookupTable.partitioner.get, _ + _))
-    val tops = counts.top(partitioner.numPartitions)(new CountOrdering[K]).sorted
+    val numTops = partitioner.numPartitions min 100
+    val tops = counts.top(numTops)(new CountOrdering[K]).sorted
     val biggest = tops.last
     if (biggest._2 > 100000) {
       log.info(s"Looking up in $lookupTable for $sourceRDD.")
