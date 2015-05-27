@@ -457,6 +457,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   protected def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
   protected def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
   protected def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
+  protected def isNotSegmentation = FEStatus.assert(!project.isSegmentation,
+    "This operation makes no sense with segmentations.")
   // All projects that the user has read access to.
   protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
     UIValue.list(Operation.projects
