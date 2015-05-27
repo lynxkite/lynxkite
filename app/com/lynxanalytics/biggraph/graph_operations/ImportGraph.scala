@@ -166,7 +166,6 @@ case class CSV private (file: HadoopFile,
 }
 
 trait ImportCommon {
-  //type Columns = Map[String, SortedRDD[ID, String]]
   class Columns(numberedLines: SortedRDD[ID, Seq[String]], fields: Seq[String]) {
     val singleColumns = fields.zipWithIndex.map {
       case (field, idx) => field -> numberedLines.flatMapValues(line => Option(line(idx)))
