@@ -167,7 +167,20 @@ case class CSV private (file: HadoopFile,
 }
 
 trait ImportCommon {
-  type Columns = Map[String, SortedRDD[ID, String]]
+  class Columns(numberedLines: SortedRDD[ID, Seq[String]], fields: Seq[String]) {
+    val singleColumns = fields.zipWithIndex.map {
+      case (field, idx) => field -> numberedLines.flatMapValues(line => Option(line(idx)))
+    }.toMap
+
+    def apply(fieldName: String) = singleColumns(fieldName)
+
+    def columnPair(fieldName1: String, fieldName2: String): SortedRDD[ID, (String, String)] = {
+      val idx1 = fields.indexOf(fieldName1)
+      val idx2 = fields.indexOf(fieldName2)
+      numberedLines.flatMapValues(line =>
+        Option(line(idx1)).flatMap(value1 => Option(line(idx2)).map(value2 => (value1, value2))))
+    }
+  }
 
   val input: RowInput
 
@@ -187,9 +200,7 @@ trait ImportCommon {
           s"Can't import $numLines lines as your licence only allows $maxLines.")
       }
     }
-    return input.fields.zipWithIndex.map {
-      case (field, idx) => field -> numbered.flatMapValues(line => Option(line(idx)))
-    }.toMap
+    return new Columns(numbered, input.fields)
   }
 }
 object ImportCommon {
@@ -227,10 +238,10 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val columns = readColumns(rc, input)
-    for ((field, rdd) <- columns) {
+    for ((field, rdd) <- columns.singleColumns) {
       output(o.attrs(field), rdd)
     }
-    output(o.vertices, columns.values.head.mapValues(_ => ()))
+    output(o.vertices, columns.singleColumns.values.head.mapValues(_ => ()))
   }
 }
 
@@ -243,12 +254,12 @@ trait ImportEdges extends ImportCommon {
   def putEdgeAttributes(columns: Columns,
                         oattr: Map[String, EntityContainer[Attribute[String]]],
                         output: OutputBuilder): Unit = {
-    for ((field, rdd) <- columns) {
+    for ((field, rdd) <- columns.singleColumns) {
       output(oattr(field), rdd)
     }
   }
 
-  def edgeSrcDst(columns: Columns) = columns(src).sortedJoin(columns(dst))
+  def edgeSrcDst(columns: Columns) = columns.columnPair(src, dst)
 
   def putEdgeBundle(columns: Columns,
                     srcToId: SortedRDD[String, ID],
@@ -256,7 +267,7 @@ trait ImportEdges extends ImportCommon {
                     oeb: EdgeBundle,
                     output: OutputBuilder,
                     partitioner: Partitioner): Unit = {
-    val edgeSrcDst = columns(src).sortedJoin(columns(dst))
+    val edgeSrcDst = columns.columnPair(src, dst)
     val srcResolvedByDst = RDDUtils.hybridLookup(
       edgeSrcDst.map {
         case (edgeId, (src, dst)) => src -> (edgeId, dst)
@@ -267,7 +278,6 @@ trait ImportEdges extends ImportCommon {
     val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .toSortedRDD(partitioner)
-
     output(oeb, edges)
   }
 }
@@ -301,7 +311,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
     val columns = readColumns(rc, input)
     val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
-    val namesWithCounts = (columns(src).values ++ columns(dst).values)
+    val namesWithCounts = columns.columnPair(src, dst).values.flatMap(sd => Iterator(sd._1, sd._2))
       .map(x => x -> 1L)
       .reduceByKey(partitioner, _ + _)
     val idToNameWithCount = namesWithCounts.randomNumbered(partitioner)
