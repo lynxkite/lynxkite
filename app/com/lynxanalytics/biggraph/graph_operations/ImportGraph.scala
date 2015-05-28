@@ -248,6 +248,8 @@ trait ImportEdges extends ImportCommon {
     }
   }
 
+  def edgeSrcDst(columns: Columns) = columns(src).sortedJoin(columns(dst))
+
   def putEdgeBundle(columns: Columns,
                     srcToId: SortedRDD[String, ID],
                     dstToId: SortedRDD[String, ID],
@@ -255,14 +257,14 @@ trait ImportEdges extends ImportCommon {
                     output: OutputBuilder,
                     partitioner: Partitioner): Unit = {
     val edgeSrcDst = columns(src).sortedJoin(columns(dst))
-    val srcResolvedByDst = RDDUtils.magicLookup(
+    val srcResolvedByDst = RDDUtils.hybridLookup(
       edgeSrcDst.map {
         case (edgeId, (src, dst)) => src -> (edgeId, dst)
       },
       srcToId)
       .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = RDDUtils.magicLookup(srcResolvedByDst, dstToId)
+    val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .toSortedRDD(partitioner)
 
@@ -299,13 +301,27 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
     val columns = readColumns(rc, input)
     val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
-    val names = (columns(src).values ++ columns(dst).values).distinct
-    val idToName = names.randomNumbered(partitioner)
-    val nameToId = idToName.map { case (id, name) => (name, id) }
+    val namesWithCounts = (columns(src).values ++ columns(dst).values)
+      .map(x => x -> 1L)
+      .reduceByKey(partitioner, _ + _)
+    val idToNameWithCount = namesWithCounts.randomNumbered(partitioner)
+    val nameToIdWithCount = idToNameWithCount
+      .map { case (id, (name, count)) => (name, (id, count)) }
       .toSortedRDD(partitioner)
-    putEdgeBundle(columns, nameToId, nameToId, o.edges, output, partitioner)
-    output(o.vertices, idToName.mapValues(_ => ()))
-    output(o.stringID, idToName)
+    val srcResolvedByDst = RDDUtils.hybridLookupUsingCounts(
+      edgeSrcDst(columns).map {
+        case (edgeId, (src, dst)) => src -> (edgeId, dst)
+      },
+      nameToIdWithCount)
+      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
+
+    val edges = RDDUtils.hybridLookupUsingCounts(srcResolvedByDst, nameToIdWithCount)
+      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
+      .toSortedRDD(partitioner)
+
+    output(o.edges, edges)
+    output(o.vertices, idToNameWithCount.mapValues(_ => ()))
+    output(o.stringID, idToNameWithCount.mapValues(_._1))
   }
 }
 
@@ -354,7 +370,18 @@ case class ImportEdgeListForExistingVertexSet(input: RowInput, src: String, dst:
         ImportCommon.checkIdMapping(
           inputs.dstVidAttr.rdd.map { case (k, v) => v -> k }, partitioner)
     }
-    putEdgeBundle(columns, srcToId, dstToId, o.edges, output, partitioner)
+    val srcResolvedByDst = RDDUtils.hybridLookup(
+      edgeSrcDst(columns).map {
+        case (edgeId, (src, dst)) => src -> (edgeId, dst)
+      },
+      srcToId)
+      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
+
+    val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
+      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
+      .toSortedRDD(partitioner)
+
+    output(o.edges, edges)
   }
 }
 
