@@ -20,6 +20,9 @@ import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object CompactUndirectedGraph {
+  // Returns a pair of HadoopFile sequences: (neighborsFiles, startsFiles).
+  // The ith partition of the CUG should be written into/read from neighborsFiles(i) and
+  // startsFiles(i).
   def getHadoopFiles(path: HadoopFile, numPartitions: Int): (Seq[HadoopFile], Seq[HadoopFile]) = {
     (0 until numPartitions)
       .map { pid =>
