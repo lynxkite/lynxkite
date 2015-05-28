@@ -46,7 +46,7 @@ class DataManager(sc: spark.SparkContext,
 
   // How much bigger the in-memory representation is, compared to the serialized file size.
   private lazy val kryoExplosion =
-    System.getProperty("biggraph.kryo.explosion", "7").toInt
+    System.getProperty("biggraph.kryo.explosion", "70").toInt
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
       val fn = entityPath(vertexSet)
@@ -287,6 +287,13 @@ class DataManager(sc: spark.SparkContext,
     val shuffleFraction = conf.getDouble("spark.shuffle.memoryFraction", 0.2)
     val workFraction = 1.0 - cacheFraction - shuffleFraction
     val workMemory = workFraction * cacheMemory / cacheFraction
+    log.info("Creating runtime context")
+    log.info("Work memory: " + workMemory)
+    log.info("Total cores: " + totalCores)
+    log.info("Cache memory: " + cacheMemory)
+    log.info("Work fraction: " + workFraction)
+    log.info("Cache fraction: " + cacheFraction)
+    log.info("WM per core: " + (workMemory / totalCores).toLong)
     RuntimeContext(
       sparkContext = sc,
       broadcastDirectory = repositoryPath / "broadcasts",

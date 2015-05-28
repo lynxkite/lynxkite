@@ -129,7 +129,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
       "|",
       ImportUtil.header(path),
       filter = JavaScript("comment.indexOf('loves') != -1"))
-    val comments = csv.lines(dataManager.runtimeContext).map(_(2))
+    val comments = csv.lines(dataManager.runtimeContext).values.map(_(2))
     assert(TestUtils.RDDToSortedString(comments) ==
       """|Bob loves Darth Vader
          |Harry loves Voldemort
@@ -145,7 +145,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
       ImportUtil.header(path),
       omitFields = Set("comment"))
     assert(csv.fields == Seq("srcVertexId", "dstVertexId"))
-    val stuff = csv.lines(dataManager.runtimeContext)
+    val stuff = csv.lines(dataManager.runtimeContext).values
     assert(TestUtils.RDDToSortedString(stuff) ==
       """|List(Bob, Darth Vader)
          |List(Darth Vader, Adam)
