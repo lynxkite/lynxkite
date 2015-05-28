@@ -167,6 +167,9 @@ object BigGraphSparkContext {
         "spark.scheduler.mode",
         "FAIR")
       .set("spark.core.connection.ack.wait.timeout", "240")
+      // Combines shuffle output into a single file which improves shuffle performance and reduces
+      // number of open files for jobs with many reduce tasks. It only has some bad side effects
+      // on ext3 with >8 cores, so I think we can enable this for our usecases.
       .set("spark.shuffle.consolidateFiles", "true")
       .set(
         "spark.scheduler.allocation.file",
