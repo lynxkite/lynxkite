@@ -752,4 +752,19 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
   }
 
+  test("Segmentation handles belongsTo edges properly") {
+    run("Example Graph")
+    run("Segment by double attribute",
+      Map("name" -> "segm", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
+    )
+    val segm = project.segmentation("segm")
+
+    run("Add constant vertex attribute",
+      Map("name" -> "const", "value" -> "1.0", "type" -> "Double"), on = segm.project)
+
+    run("Merge vertices by attribute",
+      Map("key" -> "const", "aggregate-bottom" -> "", "aggregate-id" -> "",
+        "aggregate-size" -> "", "aggregate-top" -> "", "aggregate-const" -> "count"),
+      on = segm.project)
+  }
 }
