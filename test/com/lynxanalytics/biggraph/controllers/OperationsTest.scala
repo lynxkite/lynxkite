@@ -609,19 +609,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "min_num_defined" -> "1",
       "min_ratio_defined" -> "0.0"), on = project.segmentation("cliques").project)
     val roles3 = project.vertexAttributes("viral3_roles").runtimeSafeCast[String]
-    assert(remapIDs(roles3, stringID).collect.toSeq.sorted == Seq(
-      "0" -> "train",
-      "1" -> "train",
-      "10" -> "train",
-      "100" -> "train",
-      "1000" -> "train",
-      "2" -> "train",
-      "20" -> "test",
-      "200" -> "test",
-      "3" -> "test",
-      "30" -> "train",
-      "4" -> "train",
-      "5" -> "test"))
     assert(project.scalars("viral3 num mean absolute prediction error after iteration 1").value == 0.5)
   }
 
