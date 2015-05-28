@@ -20,6 +20,18 @@ import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object CompactUndirectedGraph {
+  // Returns a pair of HadoopFile sequences: (neighborsFiles, startsFiles).
+  // The ith partition of the CUG should be written into/read from neighborsFiles(i) and
+  // startsFiles(i).
+  def getHadoopFiles(path: HadoopFile, numPartitions: Int): (Seq[HadoopFile], Seq[HadoopFile]) = {
+    (0 until numPartitions)
+      .map { pid =>
+        val dir = path / pid.toString
+        (dir / "neighbors", dir / "starts")
+      }
+      .unzip
+  }
+
   def apply(rc: RuntimeContext,
             edges: EdgeBundleData,
             needsBothDirections: Boolean = true): CompactUndirectedGraph = {
@@ -41,6 +53,9 @@ object CompactUndirectedGraph {
           (combined - v).toArray.sorted
         }
       }
+    // We need to generate filenames here, on the master as prefix repository is not available
+    // on the workers.
+    val (neighborsFiles, startsFiles) = getHadoopFiles(path, adjList.partitions.size)
     log.info("CUG Writing...")
     adjList.mapPartitionsWithIndex {
       case (pid, it) =>
@@ -56,12 +71,11 @@ object CompactUndirectedGraph {
         Iterator((pid, neighbors.toArray, starts.toArray))
     }.foreach {
       case (pid, neighborsArray, startsArray) =>
-        val dir = path / pid.toString
         log.info(s"Creating neighbors partition $pid")
-        (dir / "neighbors").createFromObjectKryo(neighborsArray)
+        neighborsFiles(pid).createFromObjectKryo(neighborsArray)
         log.info(s"Creating starts partition $pid")
         // "starts" is sorted because adjList is a SortedRDD.
-        (dir / "starts").createFromObjectKryo(startsArray)
+        startsFiles(pid).createFromObjectKryo(startsArray)
         log.info(s"CUG partition $pid all done")
     }
     log.info("CUG Partitions written.")
@@ -76,12 +90,14 @@ case class CompactUndirectedGraph(path: HadoopFile, partitioner: spark.Partition
     getPartition(vid).getNeighbors(vid)
   }
 
+  val (neighborsFiles, startsFiles) =
+    CompactUndirectedGraph.getHadoopFiles(path, partitioner.numPartitions)
+
   def getPartition(vid: ID): CompactUndirectedGraphPartition = {
     val pid = partitioner.getPartition(vid)
     if (cache(pid) == null) {
-      val dir = path / pid.toString
-      val neighbors = FileBasedObjectCache.get[Array[ID]](dir / "neighbors")
-      val starts = FileBasedObjectCache.get[Array[(ID, Int)]](dir / "starts")
+      val neighbors = FileBasedObjectCache.get[Array[ID]](neighborsFiles(pid))
+      val starts = FileBasedObjectCache.get[Array[(ID, Int)]](startsFiles(pid))
       cache(pid) = new CompactUndirectedGraphPartition(neighbors, starts)
     }
     cache(pid)
