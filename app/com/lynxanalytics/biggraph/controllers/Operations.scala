@@ -7,6 +7,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
+import com.lynxanalytics.biggraph.graph_operations.{ EmptyEdgeBundle, CreateVertexSet }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -133,6 +134,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexSet = null
     }
   })
+
+  private def checkSanityForSegmentations(project: Project) = {
+    if (project.isSegmentation) {
+      val segm = project.asSegmentation
+      assert(project.vertexSet.gUID == segm.belongsTo.dstVertexSet.gUID)
+    }
+  }
 
   register("Discard edges", new EdgeOperation(_, _) {
     def parameters = List()
@@ -681,6 +689,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         graph_operations.AddConstantAttribute.doubleOrString(
           isDouble = (params("type") == "Double"), params("value"))
       project.vertexAttributes(params("name")) = op(op.vs, project.vertexSet).result.attr
+      checkSanityForSegmentations(project)
     }
   })
 
@@ -1237,6 +1246,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               eAttr, edgeInduction.embedding)
         }
       }
+      checkSanityForSegmentations(project)
     }
   })
 
