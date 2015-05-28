@@ -247,7 +247,7 @@ object RDDUtils {
 
   // Common implementation for the above hybrid lookup methods.
   // This will find the top key (the ones with the largest count) from the countsTable. Then if
-  // any count is higher then maxValuesPerKey, then it does a hybrid lookup. To get the lookup
+  // any count is higher than maxValuesPerKey, then it does a hybrid lookup. To get the lookup
   // table for large elements, it feds the top keys from countTable into largeKeysMapFn.
   private def hybridLookupImpl[K: Ordering: ClassTag, T: ClassTag, S, C](
     sourceRDD: RDD[(K, T)],
