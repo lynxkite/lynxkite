@@ -260,26 +260,6 @@ trait ImportEdges extends ImportCommon {
   }
 
   def edgeSrcDst(columns: Columns) = columns.columnPair(src, dst)
-
-  def putEdgeBundle(columns: Columns,
-                    srcToId: SortedRDD[String, ID],
-                    dstToId: SortedRDD[String, ID],
-                    oeb: EdgeBundle,
-                    output: OutputBuilder,
-                    partitioner: Partitioner): Unit = {
-    val edgeSrcDst = columns.columnPair(src, dst)
-    val srcResolvedByDst = RDDUtils.hybridLookup(
-      edgeSrcDst.map {
-        case (edgeId, (src, dst)) => src -> (edgeId, dst)
-      },
-      srcToId)
-      .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
-
-    val edges = RDDUtils.hybridLookup(srcResolvedByDst, dstToId)
-      .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
-      .toSortedRDD(partitioner)
-    output(oeb, edges)
-  }
 }
 
 object ImportEdgeList extends OpFromJson {
