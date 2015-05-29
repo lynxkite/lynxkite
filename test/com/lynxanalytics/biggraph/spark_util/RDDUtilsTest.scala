@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import org.scalatest.FunSuite
 import org.apache.spark.HashPartitioner
+import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.TestSparkContext
 
 class RDDUtilsTest extends FunSuite with TestSparkContext {
@@ -37,5 +38,38 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
       val partitioner = new HashPartitioner(parts)
       assert(partitioner.getPartition(id) == part, s"genID($parts, $part, $row)")
     }
+  }
+
+  test("lookup operations work as expected") {
+    val rnd = new util.Random(0)
+    val localSource = (0 until 1000).map(_ => (rnd.nextInt(100), rnd.nextLong()))
+    val localLookup = (0 until 50).map(x => (x, rnd.nextDouble()))
+    val localLookupMap = localLookup.toMap
+    val localResult = localSource
+      .flatMap {
+        case (key, value) => localLookupMap.get(key).map(lv => key -> (value, lv))
+      }
+      .sorted
+
+    def checkGood(rdd: RDD[(Int, (Long, Double))]) {
+      assert(rdd.collect.toSeq.sorted == localResult)
+    }
+
+    import Implicits._
+    val sourceRDD = sparkContext.parallelize(localSource, 10)
+    val lookupRDD = sparkContext.parallelize(localLookup).toSortedRDD(new HashPartitioner(10))
+
+    checkGood(RDDUtils.joinLookup(sourceRDD, lookupRDD))
+    checkGood(RDDUtils.smallTableLookup(sourceRDD, localLookupMap))
+    checkGood(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200))
+    checkGood(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0))
+
+    val counts = sourceRDD
+      .keys
+      .map(_ -> 1l)
+      .reduceBySortedKey(lookupRDD.partitioner.get, _ + _)
+    val lookupRDDWihtCounts = lookupRDD.sortedJoin(counts)
+    checkGood(RDDUtils.hybridLookupUsingCounts(sourceRDD, lookupRDDWihtCounts, 200))
+    checkGood(RDDUtils.hybridLookupUsingCounts(sourceRDD, lookupRDDWihtCounts, 0))
   }
 }

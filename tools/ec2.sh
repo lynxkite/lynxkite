@@ -63,6 +63,7 @@ start)
     -i "${SSH_KEY}" \
     -s ${NUM_INSTANCES} \
     --instance-type ${TYPE} \
+    --no-ganglia \
     --region=${REGION} launch ${CLUSTER_NAME}
 
   # Prepare a config file.
