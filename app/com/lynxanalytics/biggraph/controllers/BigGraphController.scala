@@ -357,7 +357,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         if (op.enabled.enabled && !op.dirty) {
           try {
             recipient.checkpoint(op.summary(request.op.parameters), request) {
-              op.apply(request.op.parameters)
+              op.validateAndApply(request.op.parameters)
             }
             steps :+ newStep(FEStatus.enabled)
           } catch {
@@ -440,7 +440,24 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def enabled: FEStatus
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
-  def apply(params: Map[String, String]): Unit
+  protected def apply(params: Map[String, String]): Unit
+
+  def validateParameters(values: Map[String, String]): Unit = {
+    val paramIds = parameters.map { param => param.id }.toSet
+    val extraIds = values.keySet &~ paramIds
+    assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
+    val missingIds = paramIds &~ values.keySet
+    assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
+    for (param <- parameters) {
+      param.validate(values(param.id))
+    }
+  }
+
+  def validateAndApply(params: Map[String, String]): Unit = {
+    validateParameters(params)
+    apply(params)
+  }
+
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
   val dirty = false
   def toFE: FEOperationMeta =
@@ -550,7 +567,7 @@ case class WorkflowOperation(
     val steps = WorkflowOperation.stepsFromJSON(stepsAsJSON)
     for (step <- steps) {
       val op = operationRepository.operationOnSubproject(context.project, step, context.user)
-      op.apply(step.op.parameters)
+      op.validateAndApply(step.op.parameters)
     }
   }
 }
@@ -621,9 +638,8 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
-    validateParameters(op.parameters, req.op.parameters)
     p.checkpoint(op.summary(req.op.parameters), req) {
-      op.apply(req.op.parameters)
+      op.validateAndApply(req.op.parameters)
     }
   }
 
