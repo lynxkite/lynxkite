@@ -755,16 +755,17 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   test("Segmentation handles belongsTo edges properly") {
     run("Example Graph")
     run("Segment by double attribute",
-      Map("name" -> "segm", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
+      Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
     )
-    val segm = project.segmentation("segm")
+    val seg = project.segmentation("seg")
 
     run("Add constant vertex attribute",
-      Map("name" -> "const", "value" -> "1.0", "type" -> "Double"), on = segm.project)
+      Map("name" -> "const", "value" -> "1.0", "type" -> "Double"), on = seg.project)
 
     run("Merge vertices by attribute",
       Map("key" -> "const", "aggregate-bottom" -> "", "aggregate-id" -> "",
         "aggregate-size" -> "", "aggregate-top" -> "", "aggregate-const" -> "count"),
-      on = segm.project)
+      on = seg.project)
+    assert(project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
 }
