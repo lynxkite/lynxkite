@@ -522,8 +522,28 @@ object WorkflowOperation {
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
-  def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
+  private def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
     json.Json.parse(stepsAsJSON).as[List[ProjectOperationRequest]]
+  }
+  private def substituteJSONParameters(
+    jSONTemplate: String, parameters: Map[String, String], context: Operation.Context): String = {
+
+    var completeJSON = jSONTemplate
+
+    for ((paramName, paramValue) <- parameters) {
+      completeJSON = workflowConcreteParameterRegex(paramName)
+        .replaceAllIn(completeJSON, Regex.quoteReplacement(paramValue))
+    }
+
+    workflowConcreteParameterRegex("!project")
+      .replaceAllIn(completeJSON, Regex.quoteReplacement(context.project.projectName))
+  }
+  def workflowSteps(
+    jSONTemplate: String,
+    parameters: Map[String, String],
+    context: Operation.Context): List[ProjectOperationRequest] = {
+
+    stepsFromJSON(substituteJSONParameters(jSONTemplate, parameters, context))
   }
 }
 case class WorkflowOperation(
@@ -558,13 +578,7 @@ case class WorkflowOperation(
   def enabled = FEStatus.enabled
   def apply(params: Map[String, String]): Unit = {
     var stepsAsJSON = workflow.stepsAsJSON
-    for ((paramName, paramValue) <- params) {
-      stepsAsJSON = WorkflowOperation.workflowConcreteParameterRegex(paramName)
-        .replaceAllIn(stepsAsJSON, Regex.quoteReplacement(paramValue))
-    }
-    stepsAsJSON = WorkflowOperation.workflowConcreteParameterRegex("!project")
-      .replaceAllIn(stepsAsJSON, Regex.quoteReplacement(context.project.projectName))
-    val steps = WorkflowOperation.stepsFromJSON(stepsAsJSON)
+    val steps = WorkflowOperation.workflowSteps(stepsAsJSON, params, context)
     for (step <- steps) {
       val op = operationRepository.operationOnSubproject(context.project, step, context.user)
       op.validateAndApply(step.op.parameters)
@@ -634,7 +648,8 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     opById(ctx, request.op.id)
   }
 
-  def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
+  def apply(
+    user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
