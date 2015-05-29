@@ -768,4 +768,20 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       on = seg.project)
     assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
+
+  test("Segmentation stays sane after filtering (which uses pullBack)") {
+    run("Example Graph")
+    run("Segment by double attribute",
+      Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
+    )
+    val seg = project.segmentation("seg")
+
+    run("Filter by attributes", Map("filterva-age" -> "> 10",
+      "filterva-gender" -> "", "filterva-id" -> "", "filterva-income" -> "",
+      "filterva-location" -> "", "filterva-name" -> "", "filterea-comment" -> "",
+      "filterea-weight" -> "", "filterva-segmentation[seg]" -> ""))
+
+    assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
+  }
+
 }
