@@ -135,13 +135,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  private def checkSanityForSegmentations(project: Project) = {
-    if (project.isSegmentation) {
-      val segm = project.asSegmentation
-      assert(project.vertexSet.gUID == segm.belongsTo.dstVertexSet.gUID)
-    }
-  }
-
   register("Discard edges", new EdgeOperation(_, _) {
     def parameters = List()
     def enabled = hasEdgeBundle
@@ -689,7 +682,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         graph_operations.AddConstantAttribute.doubleOrString(
           isDouble = (params("type") == "Double"), params("value"))
       project.vertexAttributes(params("name")) = op(op.vs, project.vertexSet).result.attr
-      checkSanityForSegmentations(project)
     }
   })
 
@@ -1246,7 +1238,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               eAttr, edgeInduction.embedding)
         }
       }
-      checkSanityForSegmentations(project)
     }
   })
 
