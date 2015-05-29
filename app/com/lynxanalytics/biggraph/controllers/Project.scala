@@ -263,12 +263,19 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       edgeBundle = null
       vertexAttributes = Map()
       if (killSegmentations) segmentations.foreach(_.remove())
-    }
-    set(checkpointedDir / "vertexSet", e)
-    if (e != null) {
-      scalars("vertex_count") = graph_operations.Count.run(e)
-    } else {
-      scalars("vertex_count") = null
+      set(checkpointedDir / "vertexSet", e)
+      if (e != null) {
+        scalars("vertex_count") = graph_operations.Count.run(e)
+      } else {
+        scalars("vertex_count") = null
+      }
+      // This must be the last thing we do otherwise
+      // we run into assertions when we update belongsTo
+      if (isSegmentation) {
+        val seg = asSegmentation
+        val op = graph_operations.EmptyEdgeBundle()
+        seg.belongsTo = op(op.src, seg.parent.vertexSet)(op.dst, e).result.eb
+      }
     }
   }
 
