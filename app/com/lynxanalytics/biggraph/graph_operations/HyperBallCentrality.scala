@@ -36,7 +36,10 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("maxDiameter" -> maxDiameter, "algorithm" -> algorithm)
+  override def toJson = Json.obj("maxDiameter" -> maxDiameter) ++ (algorithm match {
+    case "Harmonic" => Json.obj() // Compatibility.
+    case _ => Json.obj("algorithm" -> algorithm)
+  })
 
   def execute(inputDatas: DataSet,
               o: Output,
