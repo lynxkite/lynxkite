@@ -766,6 +766,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       Map("key" -> "const", "aggregate-bottom" -> "", "aggregate-id" -> "",
         "aggregate-size" -> "", "aggregate-top" -> "", "aggregate-const" -> "count"),
       on = seg.project)
-    assert(project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
+    assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
 }
