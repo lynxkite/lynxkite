@@ -657,15 +657,4 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
       op.validateAndApply(req.op.parameters)
     }
   }
-
-  private def validateParameters(specs: List[OperationParameterMeta], values: Map[String, String]) {
-    val specIds = specs.map { spec => spec.id }.toSet
-    val extraIds = values.keySet &~ specIds
-    assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
-    val missingIds = specIds &~ values.keySet
-    assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
-    for (spec <- specs) {
-      spec.validate(values(spec.id))
-    }
-  }
 }
