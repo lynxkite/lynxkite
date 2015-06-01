@@ -315,7 +315,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val origEB = edgeBundle
     val origEAttrs = edgeAttributes.toIndexedSeq
     val origBelongsTo: Option[EdgeBundle] =
-      if (isSegmentation) Some(asSegmentation.belongsTo) else Some(null)
+      if (isSegmentation) Some(asSegmentation.belongsTo) else None
 
     updateVertexSet(pullBundle.srcVertexSet, killSegmentations = false)
     for ((name, attr) <- origVAttrs) {
@@ -344,7 +344,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val op = graph_operations.InducedEdgeBundle(induceSrc = false)
       seg.belongsTo = op(
         op.dstMapping, graph_operations.ReverseEdges.run(pullBundle))(
-          op.edges, origBelongsTo.getOrElse(null)).result.induced
+          op.edges, origBelongsTo.get).result.induced
     }
   }
 
