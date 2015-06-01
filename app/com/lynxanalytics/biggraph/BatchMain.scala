@@ -15,15 +15,26 @@ object BatchMain {
     val env = BigGraphProductionEnvironment
     implicit val metaManager = env.metaGraphManager
 
-    val scriptFileName = args(0)
-    val projectName = args(1)
-    val params = args
-      .drop(2)
+    if (args.size < 2) {
+      println("""
+Usage:
+./run-kite.sh batch name_of_script_file name_of_project [parameter_values]
+
+parameter_values is list of items in the format parameter_name:parameter_value
+
+For example:
+./run-kite.sh batch my_script.json MyProject seed:42 input_file_name:data1.csv
+""")
+      System.exit(-1)
+    }
+    val scriptFileName :: projectName :: paramSpecs = args.toList
+    val params = paramSpecs
       .map { paramSpec =>
         val colonIdx = paramSpec.indexOf(':')
         assert(
           colonIdx > 0,
-          "Invalid parameter value spec. Parameter values should be specified as name:value")
+          s"Invalid parameter value spec: $paramSpec. " +
+            "Parameter values should be specified as name:value")
         (paramSpec.take(colonIdx), paramSpec.drop(colonIdx + 1))
       }
       .toMap
@@ -31,10 +42,15 @@ object BatchMain {
     Project.validateName(projectName)
     val user = User("Batch User", isAdmin = true)
     val project = Project(projectName)
-    project.writeACL = user.email
-    project.readACL = user.email
-    project.notes = ""
-    project.checkpointAfter("")
+
+    if (!Operation.projects.contains(project)) {
+      // Create project if doesn't yet exist.
+      project.writeACL = user.email
+      project.readACL = user.email
+      project.notes = ""
+      project.checkpointAfter("")
+    }
+
     val context = Operation.Context(user, project)
 
     val opJson = Source.fromFile(scriptFileName).mkString
