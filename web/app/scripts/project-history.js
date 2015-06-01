@@ -177,6 +177,13 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         }
       };
 
+      // Discard operation.
+      scope.discard = function(step) {
+        var pos = scope.history.steps.indexOf(step);
+        scope.history.steps.splice(pos, 1);
+        scope.validate();
+      };
+
       // Insert new operation.
       scope.insertBefore = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
