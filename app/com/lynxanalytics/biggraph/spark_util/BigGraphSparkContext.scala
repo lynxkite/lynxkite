@@ -115,6 +115,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[Short]])
     // ==========================
     kryo.register(classOf[Array[Array[Long]]]) // #1612
+    kryo.register(classOf[com.lynxanalytics.biggraph.spark_util.CountOrdering[_]])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -167,6 +168,10 @@ object BigGraphSparkContext {
         "spark.scheduler.mode",
         "FAIR")
       .set("spark.core.connection.ack.wait.timeout", "240")
+      // Combines shuffle output into a single file which improves shuffle performance and reduces
+      // number of open files for jobs with many reduce tasks. It only has some bad side effects
+      // on ext3 with >8 cores, so I think we can enable this for our usecases.
+      .set("spark.shuffle.consolidateFiles", "true")
       .set(
         "spark.scheduler.allocation.file",
         scala.util.Properties.envOrElse("KITE_SCHEDULER_POOLS_CONFIG", "conf/scheduler-pools.xml"))
