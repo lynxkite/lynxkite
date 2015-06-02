@@ -7,6 +7,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
 import org.apache.spark
+import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
 import ExecutionContext.Implicits.global
@@ -19,6 +20,7 @@ class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
+  val sqlContext = new SQLContext(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
