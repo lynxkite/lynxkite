@@ -3,6 +3,7 @@
 
 package com.lynxanalytics.biggraph
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.Operation
 import com.lynxanalytics.biggraph.controllers.Operations
 import com.lynxanalytics.biggraph.controllers.Project
@@ -23,7 +24,7 @@ object BatchMain {
     implicit val dataManager = env.dataManager
 
     if (args.size < 1) {
-      println("""
+      System.err.println("""
 Usage:
 ./run-kite.sh batch name_of_script_file [parameter_values]
 
@@ -55,11 +56,12 @@ For example:
         case "" => ()
         case scalarRE(projectNameSpec, scalarName) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          println(s"Computing scalar ${scalarName} on project ${projectName}...")
+          log.info(s"Computing scalar ${scalarName} on project ${projectName}...")
           Project.validateName(projectName)
           val project = Project(projectName)
           val scalar = project.scalars(scalarName)
-          println(s"Value of scalar ${scalarName} on project ${projectName}: ${scalar.value}")
+          log.info(s"Value of scalar ${scalarName} on project ${projectName}: ${scalar.value}")
+          println(s"${projectName}|${scalarName}|${scalar.value}")
         case opsRE(projectNameSpec) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           Project.validateName(projectName)
@@ -70,7 +72,7 @@ For example:
             // Create project if doesn't yet exist.
             project.writeACL = user.email
             project.readACL = user.email
-            project.notes = s"Created by batch job: BatchMain ${args.mkString(" ")}"
+            project.notes = s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"
             project.checkpointAfter("")
           }
 
@@ -93,7 +95,7 @@ For example:
             }
           }
         case _ =>
-          println(s"Cannot parse line: ${line}")
+          System.err.println(s"Cannot parse line: ${line}")
           System.exit(1)
       }
     }
