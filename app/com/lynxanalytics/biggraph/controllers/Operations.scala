@@ -128,7 +128,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Discard vertices", new VertexOperation(_, _) {
     def parameters = List()
-    def enabled = hasVertexSet
+    def enabled = hasVertexSet && isNotSegmentation
     def apply(params: Map[String, String]) = {
       project.vertexSet = null
     }
@@ -690,6 +690,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("def", "Default value"))
     def enabled = FEStatus.assert(
       (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No vertex attributes.")
+    override def title = "Fill vertex attribute with constant default value"
     def apply(params: Map[String, String]) = {
       val attr = project.vertexAttributes(params("attr"))
       val op: graph_operations.AddConstantAttribute[_] =
@@ -700,6 +701,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Fill edge attribute with constant default value", new AttributeOperation(_, _) {
+    def parameters = List(
+      Choice("attr", "Edge attribute", options = edgeAttributes[String] ++ edgeAttributes[Double]),
+      Param("def", "Default value"))
+    def enabled = FEStatus.assert(
+      (edgeAttributes[String] ++ edgeAttributes[Double]).nonEmpty, "No edge attributes.")
+    def apply(params: Map[String, String]) = {
+      val attr = project.edgeAttributes(params("attr"))
+      val op: graph_operations.AddConstantAttribute[_] =
+        graph_operations.AddConstantAttribute.doubleOrString(
+          isDouble = attr.is[Double], params("def"))
+      val default = op(op.vs, project.edgeBundle.idSet).result
+      project.edgeAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+    }
+  })
+
   register("Merge two attributes", new AttributeOperation(_, _) {
     def parameters = List(
       Param("name", "New attribute name", defaultValue = ""),
@@ -707,6 +724,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("attr2", "Secondary attribute", options = vertexAttributes))
     def enabled = FEStatus.assert(
       vertexAttributes.size >= 2, "Not enough vertex attributes.")
+    override def title = "Merge two vertex attributes"
     def apply(params: Map[String, String]) = {
       val name = params("name")
       assert(name.nonEmpty, "You must specify a name for the new attribute.")
@@ -715,6 +733,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
       project.vertexAttributes(name) = unifyAttribute(attr1, attr2)
+    }
+  })
+
+  register("Merge two edge attributes", new AttributeOperation(_, _) {
+    def parameters = List(
+      Param("name", "New attribute name", defaultValue = ""),
+      Choice("attr1", "Primary attribute", options = edgeAttributes),
+      Choice("attr2", "Secondary attribute", options = edgeAttributes))
+    def enabled = FEStatus.assert(
+      edgeAttributes.size >= 2, "Not enough edge attributes.")
+    def apply(params: Map[String, String]) = {
+      val name = params("name")
+      assert(name.nonEmpty, "You must specify a name for the new attribute.")
+      val attr1 = project.edgeAttributes(params("attr1"))
+      val attr2 = project.edgeAttributes(params("attr2"))
+      assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
+        "The two attributes must have the same type.")
+      project.edgeAttributes(name) = unifyAttribute(attr1, attr2)
     }
   })
 
@@ -827,14 +863,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Centrality", new AttributeOperation(_, _) {
     def parameters = List(
-      Param("name", "Attribute name", defaultValue = "harmonic_centrality"),
-      NonNegInt("maxDiameter", "Maximal diameter to check", default = 10))
+      Param("name", "Attribute name", defaultValue = "centrality"),
+      NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
+      Choice("algorithm", "Centrality type", options = UIValue.list(List("Harmonic", "Lin"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt)
+      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt, params("algorithm"))
       project.vertexAttributes(params("name")) =
-        op(op.es, project.edgeBundle).result.harmonicCentrality
+        op(op.es, project.edgeBundle).result.centrality
     }
   })
 
@@ -1701,6 +1738,20 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val other = params("other")
       s"Union with $other"
     }
+
+    def checkTypeCollision(other: Project) = {
+      val commonAttributeNames =
+        project.vertexAttributeNames.toSet & other.vertexAttributeNames.toSet
+
+      for (name <- commonAttributeNames) {
+        val a1 = project.vertexAttributes(name)
+        val a2 = other.vertexAttributes(name)
+        assert(a1.typeTag.tpe =:= a2.typeTag.tpe,
+          s"Attribute '$name' has conflicting types in the two projects: " +
+            s"(${a1.typeTag.tpe} and ${a2.typeTag.tpe})")
+      }
+
+    }
     def apply(params: Map[String, String]): Unit = {
       val otherName = params("other")
       assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
@@ -1709,10 +1760,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         // Nothing to do
         return
       }
+      checkTypeCollision(other)
       val vsUnion = {
         val op = graph_operations.VertexSetUnion(2)
         op(op.vss, Seq(project.vertexSet, other.vertexSet)).result
       }
+
       val newVertexAttributes = unifyAttributes(
         project.vertexAttributes
           .map {

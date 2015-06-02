@@ -116,6 +116,8 @@ include::export-vertex-attributes-to-database.asciidoc[]
 
 include::export-vertex-attributes-to-file.asciidoc[]
 
+include::fill-edge-attribute-with-constant-default-value.asciidoc[]
+
 include::fill-with-constant-default-value.asciidoc[]
 
 include::filter-by-attributes.asciidoc[]
@@ -157,6 +159,8 @@ include::merge-parallel-edges.asciidoc[]
 include::merge-parallel-edges-by-attribute.asciidoc[]
 
 include::merge-two-attributes.asciidoc[]
+
+include::merge-two-edge-attributes.asciidoc[]
 
 include::merge-vertices-by-attribute.asciidoc[]
 

@@ -263,12 +263,19 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       edgeBundle = null
       vertexAttributes = Map()
       if (killSegmentations) segmentations.foreach(_.remove())
-    }
-    set(checkpointedDir / "vertexSet", e)
-    if (e != null) {
-      scalars("vertex_count") = graph_operations.Count.run(e)
-    } else {
-      scalars("vertex_count") = null
+      set(checkpointedDir / "vertexSet", e)
+      if (e != null) {
+        scalars("vertex_count") = graph_operations.Count.run(e)
+      } else {
+        scalars("vertex_count") = null
+      }
+      // This must be the last thing we do otherwise
+      // we run into assertions when we update belongsTo
+      if (isSegmentation) {
+        val seg = asSegmentation
+        val op = graph_operations.EmptyEdgeBundle()
+        seg.belongsTo = op(op.src, seg.parent.vertexSet)(op.dst, e).result.eb
+      }
     }
   }
 
@@ -307,6 +314,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     val origVAttrs = vertexAttributes.toIndexedSeq
     val origEB = edgeBundle
     val origEAttrs = edgeAttributes.toIndexedSeq
+    val origBelongsTo: Option[EdgeBundle] =
+      if (isSegmentation) Some(asSegmentation.belongsTo) else None
 
     updateVertexSet(pullBundle.srcVertexSet, killSegmentations = false)
     for ((name, attr) <- origVAttrs) {
@@ -335,7 +344,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
       val op = graph_operations.InducedEdgeBundle(induceSrc = false)
       seg.belongsTo = op(
         op.dstMapping, graph_operations.ReverseEdges.run(pullBundle))(
-          op.edges, seg.belongsTo).result.induced
+          op.edges, origBelongsTo.get).result.induced
     }
   }
 

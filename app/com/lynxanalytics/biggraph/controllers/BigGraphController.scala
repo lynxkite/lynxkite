@@ -357,7 +357,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         if (op.enabled.enabled && !op.dirty) {
           try {
             recipient.checkpoint(op.summary(request.op.parameters), request) {
-              op.apply(request.op.parameters)
+              op.validateAndApply(request.op.parameters)
             }
             steps :+ newStep(FEStatus.enabled)
           } catch {
@@ -440,7 +440,24 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def enabled: FEStatus
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
-  def apply(params: Map[String, String]): Unit
+  protected def apply(params: Map[String, String]): Unit
+
+  def validateParameters(values: Map[String, String]): Unit = {
+    val paramIds = parameters.map { param => param.id }.toSet
+    val extraIds = values.keySet &~ paramIds
+    assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
+    val missingIds = paramIds &~ values.keySet
+    assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
+    for (param <- parameters) {
+      param.validate(values(param.id))
+    }
+  }
+
+  def validateAndApply(params: Map[String, String]): Unit = {
+    validateParameters(params)
+    apply(params)
+  }
+
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
   val dirty = false
   def toFE: FEOperationMeta =
@@ -457,6 +474,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   protected def hasNoVertexSet = FEStatus.assert(project.vertexSet == null, "Vertices already exist.")
   protected def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
   protected def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
+  protected def isNotSegmentation = FEStatus.assert(!project.isSegmentation,
+    "This operation is not available with segmentations.")
   // All projects that the user has read access to.
   protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
     UIValue.list(Operation.projects
@@ -505,8 +524,28 @@ object WorkflowOperation {
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
-  def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
+  private def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
     json.Json.parse(stepsAsJSON).as[List[ProjectOperationRequest]]
+  }
+  private def substituteJSONParameters(
+    jSONTemplate: String, parameters: Map[String, String], context: Operation.Context): String = {
+
+    var completeJSON = jSONTemplate
+
+    for ((paramName, paramValue) <- parameters) {
+      completeJSON = workflowConcreteParameterRegex(paramName)
+        .replaceAllIn(completeJSON, Regex.quoteReplacement(paramValue))
+    }
+
+    workflowConcreteParameterRegex("!project")
+      .replaceAllIn(completeJSON, Regex.quoteReplacement(context.project.projectName))
+  }
+  def workflowSteps(
+    jSONTemplate: String,
+    parameters: Map[String, String],
+    context: Operation.Context): List[ProjectOperationRequest] = {
+
+    stepsFromJSON(substituteJSONParameters(jSONTemplate, parameters, context))
   }
 }
 case class WorkflowOperation(
@@ -541,16 +580,10 @@ case class WorkflowOperation(
   def enabled = FEStatus.enabled
   def apply(params: Map[String, String]): Unit = {
     var stepsAsJSON = workflow.stepsAsJSON
-    for ((paramName, paramValue) <- params) {
-      stepsAsJSON = WorkflowOperation.workflowConcreteParameterRegex(paramName)
-        .replaceAllIn(stepsAsJSON, Regex.quoteReplacement(paramValue))
-    }
-    stepsAsJSON = WorkflowOperation.workflowConcreteParameterRegex("!project")
-      .replaceAllIn(stepsAsJSON, Regex.quoteReplacement(context.project.projectName))
-    val steps = WorkflowOperation.stepsFromJSON(stepsAsJSON)
+    val steps = WorkflowOperation.workflowSteps(stepsAsJSON, params, context)
     for (step <- steps) {
       val op = operationRepository.operationOnSubproject(context.project, step, context.user)
-      op.apply(step.op.parameters)
+      op.validateAndApply(step.op.parameters)
     }
   }
 }
@@ -617,24 +650,13 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     opById(ctx, request.op.id)
   }
 
-  def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
+  def apply(
+    user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
     val p = Project(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
-    validateParameters(op.parameters, req.op.parameters)
     p.checkpoint(op.summary(req.op.parameters), req) {
-      op.apply(req.op.parameters)
-    }
-  }
-
-  private def validateParameters(specs: List[OperationParameterMeta], values: Map[String, String]) {
-    val specIds = specs.map { spec => spec.id }.toSet
-    val extraIds = values.keySet &~ specIds
-    assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
-    val missingIds = specIds &~ values.keySet
-    assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
-    for (spec <- specs) {
-      spec.validate(values(spec.id))
+      op.validateAndApply(req.op.parameters)
     }
   }
 }
