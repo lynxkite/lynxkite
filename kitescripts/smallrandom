@@ -1,3 +1,4 @@
+Operations('${project}')
 [
   {
     "project": "!project",
@@ -39,5 +40,19 @@
         "aggregate-size": "average"
       }
     }
+  },
+  {
+    "project": "!project",
+    "op": {
+      "id": "Aggregate-vertex-attribute-globally",
+      "parameters": {
+        "prefix": "",
+        "aggregate-id": "",
+        "aggregate-maximal_cliques_size_average": "average",
+        "aggregate-ordinal": ""
+      }
+    }
   }
 ]
+EndOperations
+GetScalar('${project}', 'maximal_cliques_size_average_average')
