@@ -527,25 +527,31 @@ object WorkflowOperation {
   private def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
     json.Json.parse(stepsAsJSON).as[List[ProjectOperationRequest]]
   }
-  private def substituteJSONParameters(
-    jSONTemplate: String, parameters: Map[String, String], context: Operation.Context): String = {
-
-    var completeJSON = jSONTemplate
+  def substituteUserParameters(jsonTemplate: String, parameters: Map[String, String]): String = {
+    var completeJSON = jsonTemplate
 
     for ((paramName, paramValue) <- parameters) {
       completeJSON = workflowConcreteParameterRegex(paramName)
         .replaceAllIn(completeJSON, Regex.quoteReplacement(paramValue))
     }
 
+    completeJSON
+  }
+
+  private def substituteJSONParameters(
+    jsonTemplate: String, parameters: Map[String, String], context: Operation.Context): String = {
+
+    var withUserParams = substituteUserParameters(jsonTemplate, parameters)
+
     workflowConcreteParameterRegex("!project")
-      .replaceAllIn(completeJSON, Regex.quoteReplacement(context.project.projectName))
+      .replaceAllIn(withUserParams, Regex.quoteReplacement(context.project.projectName))
   }
   def workflowSteps(
-    jSONTemplate: String,
+    jsonTemplate: String,
     parameters: Map[String, String],
     context: Operation.Context): List[ProjectOperationRequest] = {
 
-    stepsFromJSON(substituteJSONParameters(jSONTemplate, parameters, context))
+    stepsFromJSON(substituteJSONParameters(jsonTemplate, parameters, context))
   }
 }
 case class WorkflowOperation(
