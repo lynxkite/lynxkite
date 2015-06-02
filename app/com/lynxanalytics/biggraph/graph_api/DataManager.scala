@@ -165,7 +165,7 @@ class DataManager(sc: spark.SparkContext,
     instance.operation match {
       // PulledOverVertexAttribute is whitelisted because it will re-use the existing partitioner
       // if it is of the right size. But otherwise it creates a new partitioner.
-      case _: com.lynxanalytics.biggraph.graph_operations.PulledOverVertexAttribute[_] =>
+      case _: com.lynxanalytics.biggraph.graph_operations.PulledOverVertexAttribute[_] => ()
       case _ =>
         val attributes = output.values.collect { case x: AttributeData[_] => x }
         val edgeBundles = output.values.collect { case x: EdgeBundleData => x }
