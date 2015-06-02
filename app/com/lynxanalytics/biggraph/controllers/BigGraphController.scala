@@ -527,9 +527,7 @@ object WorkflowOperation {
   private def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
     json.Json.parse(stepsAsJSON).as[List[ProjectOperationRequest]]
   }
-  private def substituteJSONParameters(
-    jSONTemplate: String, parameters: Map[String, String], context: Operation.Context): String = {
-
+  def substituteUserParameters(jSONTemplate: String, parameters: Map[String, String]): String = {
     var completeJSON = jSONTemplate
 
     for ((paramName, paramValue) <- parameters) {
@@ -537,8 +535,16 @@ object WorkflowOperation {
         .replaceAllIn(completeJSON, Regex.quoteReplacement(paramValue))
     }
 
+    completeJSON
+  }
+
+  private def substituteJSONParameters(
+    jSONTemplate: String, parameters: Map[String, String], context: Operation.Context): String = {
+
+    var withUserParams = substituteUserParameters(jSONTemplate, parameters)
+
     workflowConcreteParameterRegex("!project")
-      .replaceAllIn(completeJSON, Regex.quoteReplacement(context.project.projectName))
+      .replaceAllIn(withUserParams, Regex.quoteReplacement(context.project.projectName))
   }
   def workflowSteps(
     jSONTemplate: String,
