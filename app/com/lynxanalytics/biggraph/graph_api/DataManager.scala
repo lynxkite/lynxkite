@@ -167,21 +167,24 @@ class DataManager(sc: spark.SparkContext,
       // if it is of the right size. But otherwise it creates a new partitioner.
       case _: com.lynxanalytics.biggraph.graph_operations.PulledOverVertexAttribute[_] =>
       case _ =>
-        val attributes = output.values.collect { case a: AttributeData[_] => a }
-        for (attrd <- attributes) {
-          val attr = attrd.entity
-          val vs = attr.vertexSet
+        val attributes = output.values.collect { case x: AttributeData[_] => x }
+        val edgeBundles = output.values.collect { case x: EdgeBundleData => x }
+        val dataAndVs =
+          attributes.map(x => x -> x.entity.vertexSet) ++
+            edgeBundles.map(x => x -> x.entity.idSet)
+        for ((entityd, vs) <- dataAndVs) {
+          val entity = entityd.entity
           // The vertex set must either be loaded, or in the output.
           val vsd = output.get(vs.gUID) match {
-            case Some(x) => x.asInstanceOf[VertexSetData]
+            case Some(vsd) => vsd.asInstanceOf[VertexSetData]
             case None =>
-              assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $attr, not known")
-              assert(entityCache(vs.gUID).value.nonEmpty, s"$vs, vertex set of $attr, not loaded")
-              assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $attr, failed")
+              assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $entity, not known")
+              assert(entityCache(vs.gUID).value.nonEmpty, s"$vs, vertex set of $entity, not loaded")
+              assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $entity, failed")
               entityCache(vs.gUID).value.get.get.asInstanceOf[VertexSetData]
           }
-          assert(vsd.rdd.partitioner.get eq attrd.rdd.partitioner.get,
-            s"The partitioner of $attr does not match the partitioner of $vs.")
+          assert(vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
+            s"The partitioner of $entity does not match the partitioner of $vs.")
         }
     }
   }
