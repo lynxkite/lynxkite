@@ -25,7 +25,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 
   assert(projectName.nonEmpty, s"Invalid project name: <empty string>")
   assert(!projectName.contains(Project.separator), s"Invalid project name: $projectName")
-  val rootDir: SymbolPath = s"projects/$projectName"
+  val rootDir: SymbolPath =
+    SymbolPath.fromString("projects") / SymbolPath.fromString(s"$projectName")
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
   def toFE: FEProject = {
@@ -525,7 +526,8 @@ object Project {
 
 case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
   def parent = Project(parentName)
-  val path: SymbolPath = s"projects/$parentName/checkpointed/segmentations/$name"
+  val path: SymbolPath = SymbolPath.fromString(s"projects/$parentName") /
+    "checkpointed" / "segmentations" / name
   def project = Project(s"$parentName/checkpointed/segmentations/$name/project")
 
   def equivalentUIAttribute = {

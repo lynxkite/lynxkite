@@ -6,8 +6,16 @@ import java.util.UUID
 import scala.collection.mutable
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
-  def /(name: Symbol): SymbolPath = path.toSeq :+ name
+  def checkSuffixDir(suffixDir: String) = {
+    assert(!suffixDir.contains("/"), s"Directory name $suffixDir contains a slash ('/')")
+    assert(suffixDir.nonEmpty)
+  }
+  def /(suffixDir: Symbol): SymbolPath = {
+    checkSuffixDir(suffixDir.name)
+    path.toSeq :+ suffixDir
+  }
   def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
+  def /(suffixDir: String): SymbolPath = /(Symbol(suffixDir))
   override def toString = path.map(_.name).mkString("/")
   def iterator = path.iterator
   def parent: SymbolPath = path.init
@@ -17,9 +25,9 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Order
 object SymbolPath {
   import scala.language.implicitConversions
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
-  implicit def fromString(str: String): SymbolPath =
+  def fromString(str: String): SymbolPath =
     str.split("/", -1).toSeq.map(Symbol(_))
-  implicit def fromSymbol(sym: Symbol): SymbolPath = fromString(sym.name)
+  def fromSymbol(sym: Symbol): SymbolPath = fromString(sym.name)
 }
 
 sealed trait TagPath extends Serializable with Ordered[TagPath] {
@@ -100,8 +108,9 @@ trait TagDir extends TagPath {
   }
 
   def mkDir(name: Symbol): TagSubDir = synchronized {
-    assert(!existsTag(name), s"Tag '$name' already exists.")
-    if (existsDir(name)) return (this / name).asInstanceOf[TagSubDir]
+    val path = SymbolPath.fromSymbol(name)
+    assert(!existsTag(path), s"Tag '$name' already exists.")
+    if (existsDir(path)) return (this / path).asInstanceOf[TagSubDir]
     val result = TagSubDir(name, this, store)
     children(name) = result
     result
