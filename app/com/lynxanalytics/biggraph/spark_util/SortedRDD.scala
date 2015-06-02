@@ -125,7 +125,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
 
   def sortedRepartition(newPartitioner: Partitioner)(
     implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
-    if (partitioner == newPartitioner) this
+    if (partitioner eq newPartitioner) this
     else this.toSortedRDD(newPartitioner)
   }
 

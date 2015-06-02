@@ -162,30 +162,24 @@ class DataManager(sc: spark.SparkContext,
     // Make sure attributes re-use the partitioners from their vertex sets.
     // An identity check is used to catch the case where the same number of partitions is used
     // accidentally (as is often the case in tests), but the code does not guarantee this.
-    instance.operation match {
-      // PulledOverVertexAttribute is whitelisted because it will re-use the existing partitioner
-      // if it is of the right size. But otherwise it creates a new partitioner.
-      case _: com.lynxanalytics.biggraph.graph_operations.PulledOverVertexAttribute[_] => ()
-      case _ =>
-        val attributes = output.values.collect { case x: AttributeData[_] => x }
-        val edgeBundles = output.values.collect { case x: EdgeBundleData => x }
-        val dataAndVs =
-          attributes.map(x => x -> x.entity.vertexSet) ++
-            edgeBundles.map(x => x -> x.entity.idSet)
-        for ((entityd, vs) <- dataAndVs) {
-          val entity = entityd.entity
-          // The vertex set must either be loaded, or in the output.
-          val vsd = output.get(vs.gUID) match {
-            case Some(vsd) => vsd.asInstanceOf[VertexSetData]
-            case None =>
-              assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $entity, not known")
-              assert(entityCache(vs.gUID).value.nonEmpty, s"$vs, vertex set of $entity, not loaded")
-              assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $entity, failed")
-              entityCache(vs.gUID).value.get.get.asInstanceOf[VertexSetData]
-          }
-          assert(vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
-            s"The partitioner of $entity does not match the partitioner of $vs.")
-        }
+    val attributes = output.values.collect { case x: AttributeData[_] => x }
+    val edgeBundles = output.values.collect { case x: EdgeBundleData => x }
+    val dataAndVs =
+      attributes.map(x => x -> x.entity.vertexSet) ++
+        edgeBundles.map(x => x -> x.entity.idSet)
+    for ((entityd, vs) <- dataAndVs) {
+      val entity = entityd.entity
+      // The vertex set must either be loaded, or in the output.
+      val vsd = output.get(vs.gUID) match {
+        case Some(vsd) => vsd.asInstanceOf[VertexSetData]
+        case None =>
+          assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $entity, not known")
+          assert(entityCache(vs.gUID).value.nonEmpty, s"$vs, vertex set of $entity, not loaded")
+          assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $entity, failed")
+          entityCache(vs.gUID).value.get.get.asInstanceOf[VertexSetData]
+      }
+      assert(vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
+        s"The partitioner of $entity does not match the partitioner of $vs.")
     }
   }
 

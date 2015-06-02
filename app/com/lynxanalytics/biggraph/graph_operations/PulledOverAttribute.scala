@@ -57,7 +57,7 @@ case class PulledOverVertexAttribute[T]()
         val joinableFunction = function.sortedRepartition(originalPartitioner)
         val originallyPartitioned =
           originalAttr.sortedJoin(joinableFunction).mapValues { case (value, edge) => value }
-        if (originallyPartitioned.partitioner.get == destinationVS.partitioner.get) {
+        if (originalPartitioner eq destinationPartitioner) {
           originallyPartitioned
         } else {
           originallyPartitioned.toSortedRDD(destinationPartitioner)
