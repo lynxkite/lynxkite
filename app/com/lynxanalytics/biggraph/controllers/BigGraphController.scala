@@ -172,7 +172,7 @@ object SavedWorkflow {
 }
 
 object BigGraphController {
-  val workflowsRoot: SymbolPath = s"workflows"
+  val workflowsRoot: SymbolPath = SymbolPath.fromString("workflows")
 }
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -485,7 +485,12 @@ object Operation {
   case class Context(user: serving.User, project: Project)
 
   def projects(implicit manager: MetaGraphManager): Seq[Project] = {
-    val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
+    val dirs = {
+      if (manager.tagExists(SymbolPath.fromString("projects")))
+        manager.lsTag(SymbolPath.fromString("projects"))
+      else
+        Nil
+    }
     // Do not list internal project names (starting with "!").
     dirs.map(p => Project(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
   }
@@ -599,7 +604,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def opById(context: Operation.Context, id: String): Operation = {
     if (id.startsWith(BigGraphController.workflowsRoot.toString + "/")) {
       // Oho, a workflow operation!
-      workflowOpFromTag(id, context)
+      workflowOpFromTag(SymbolPath.fromString(id), context)
     } else {
       assert(operations.contains(id), s"Cannot find operation: ${id}")
       operations(id)(context)

@@ -76,8 +76,9 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
   }
 
   override def beforeEach() = {
-    if (metaGraphManager.tagExists("projects")) {
-      for (t <- metaGraphManager.lsTag("projects")) {
+    val path = SymbolPath.fromString("projects")
+    if (metaGraphManager.tagExists(path)) {
+      for (t <- metaGraphManager.lsTag(path)) {
         metaGraphManager.rmTag(t)
       }
     }
