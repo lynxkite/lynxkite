@@ -47,7 +47,7 @@ For example:
       // Create project if doesn't yet exist.
       project.writeACL = user.email
       project.readACL = user.email
-      project.notes = ""
+      project.notes = s"Created by batch job: BatchMain ${args.mkString(" ")}"
       project.checkpointAfter("")
     }
 
