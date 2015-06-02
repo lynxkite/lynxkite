@@ -1,9 +1,10 @@
-if [ "$1" == "" ]; then
-    echo "First argument is missing, it has to be the hostname of the master machine."
+if [ "$#" -ne 1 ]; then
+    >&2 echo "Usage: $0 <hostname of the master machine>."
     exit 1
 fi
 MASTER_HOSTNAME=$1
 
+set -ue
 echo "Starting LynxKite installation..."
 
 DVD_ROOT="$(dirname $0)"
@@ -17,6 +18,8 @@ echo "Java installed successfully."
 # Install Cloudera
 echo "Installing Cloudera..."
 sudo tar -xf $DVD_ROOT/cloudera-manager-trusty-cm5.3.3_amd64.tar.gz -C /opt
+sudo useradd --system --home=/opt/cm-5.3.3/run/cloudera-scm-server --no-create-home cloudera-scm
+sudo chown -R cloudera-scm.cloudera-scm /opt/cm-5.3.3
 
 # Config the server host
 sudo sed -i 's/server_host=.*/server_host='"$MASTER_HOSTNAME"'/' /opt/cm-5.3.3/etc/cloudera-scm-agent/config.ini

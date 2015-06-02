@@ -262,6 +262,23 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.edgeBundle == null)
   }
 
+  test("Project union - useful error message (#1611)") {
+    run("Example Graph")
+    val other = Project("ExampleGraph2")
+    project.copy(other)
+    run("Rename vertex attribute",
+      Map("from" -> "age", "to" -> "newage"), on = other)
+    run("Add constant vertex attribute",
+      Map("name" -> "age", "value" -> "dummy", "type" -> "String"), on = other)
+
+    val ex = intercept[java.lang.AssertionError] {
+      run("Union with another project",
+        Map("other" -> "ExampleGraph2", "id-attr" -> "new_id"))
+    }
+    assert(ex.getMessage.contains(
+      "Attribute 'age' has conflicting types in the two projects: (Double and String)"))
+  }
+
   test("Fingerprinting based on attributes") {
     run("Import vertices from CSV files", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-100-vertices.csv",
@@ -485,129 +502,6 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(project.scalars("viral num coverage after iteration 1").value == 6)
   }
 
-  test("Viral modeling iteration logic") {
-    run("Import vertices from CSV files", Map(
-      "files" -> "OPERATIONSTEST$/viral-vertices-2.csv",
-      "header" -> "id,num",
-      "delimiter" -> ",",
-      "id-attr" -> "internalID",
-      "omitted" -> "",
-      "filter" -> ""))
-    run("Import edges for existing vertices from CSV files", Map(
-      "files" -> "OPERATIONSTEST$/viral-edges-2.csv",
-      "header" -> "src,dst",
-      "delimiter" -> ",",
-      "attr" -> "id",
-      "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "filter" -> ""))
-    run("Maximal cliques", Map(
-      "name" -> "cliques",
-      "bothdir" -> "false",
-      "min" -> "3"))
-    run("Vertex attribute to double", Map(
-      "attr" -> "num"))
-    val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
-
-    run("Viral modeling", Map(
-      "prefix" -> "viral",
-      "target" -> "num",
-      "test_set_ratio" -> "0",
-      "max_deviation" -> "1.5", // more than square root of 2 to let 100-200 spread on 1000
-      "seed" -> "0",
-      "iterations" -> "3",
-      "min_num_defined" -> "1",
-      "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
-    val viral = project.vertexAttributes("viral_num_after_iteration_3").runtimeSafeCast[Double]
-    assert(remapIDs(viral, stringID).collect.toSeq.sorted == Seq(
-      "0" -> 0.0,
-      "1" -> 0.0,
-      "10" -> 0.0,
-      "100" -> 0.5,
-      "2" -> 1.0,
-      "20" -> 1.0,
-      "200" -> 0.75,
-      "3" -> 1.0,
-      "30" -> 3.5,
-      "4" -> 3.0,
-      "5" -> 4.0))
-    val spread = project.vertexAttributes("viral_num_spread_over_iterations").runtimeSafeCast[Double]
-    assert(remapIDs(spread, stringID).collect.toSeq.sorted == Seq(
-      "0" -> 0.0,
-      "1" -> 0.0,
-      "10" -> 1.0,
-      "100" -> 2.0,
-      "2" -> 0.0,
-      "20" -> 1.0,
-      "200" -> 3.0,
-      "3" -> 0.0,
-      "30" -> 1.0,
-      "4" -> 0.0,
-      "5" -> 0.0))
-
-    run("Viral modeling", Map(
-      "prefix" -> "viral2",
-      "target" -> "num",
-      "test_set_ratio" -> "0",
-      "max_deviation" -> "0.75", // lower deviation changes viral spread to 200 from 30-100
-      "seed" -> "0",
-      "iterations" -> "3",
-      "min_num_defined" -> "1",
-      "min_ratio_defined" -> "0.5"), on = project.segmentation("cliques").project)
-    val viral2 = project.vertexAttributes("viral2_num_after_iteration_3").runtimeSafeCast[Double]
-    assert(remapIDs(viral2, stringID).collect.toSeq.sorted == Seq(
-      "0" -> 0.0,
-      "1" -> 0.0,
-      "10" -> 0.0,
-      "100" -> 0.5,
-      "2" -> 1.0,
-      "20" -> 1.0,
-      "200" -> 0.75,
-      "3" -> 1.0,
-      "30" -> 3.5,
-      "4" -> 3.0,
-      "5" -> 4.0))
-    val spread2 = project.vertexAttributes("viral2_num_spread_over_iterations").runtimeSafeCast[Double]
-    assert(remapIDs(spread2, stringID).collect.toSeq.sorted == Seq(
-      "0" -> 0.0,
-      "1" -> 0.0,
-      "10" -> 1.0,
-      "100" -> 2.0,
-      "2" -> 0.0,
-      "20" -> 1.0,
-      "200" -> 3.0,
-      "3" -> 0.0,
-      "30" -> 1.0,
-      "4" -> 0.0,
-      "5" -> 0.0))
-
-    run("Viral modeling", Map(
-      "prefix" -> "viral3",
-      "target" -> "num",
-      "test_set_ratio" -> "0.4", // to check validation
-      "max_deviation" -> "10",
-      "seed" -> "0",
-      "iterations" -> "2",
-      "min_num_defined" -> "1",
-      "min_ratio_defined" -> "0.0"), on = project.segmentation("cliques").project)
-    val roles3 = project.vertexAttributes("viral3_roles").runtimeSafeCast[String]
-    assert(remapIDs(roles3, stringID).collect.toSeq.sorted == Seq(
-      "0" -> "train",
-      "1" -> "train",
-      "10" -> "train",
-      "100" -> "train",
-      "1000" -> "train",
-      "2" -> "train",
-      "20" -> "test",
-      "200" -> "test",
-      "3" -> "test",
-      "30" -> "train",
-      "4" -> "train",
-      "5" -> "test"))
-    assert(project.scalars("viral3 num mean absolute prediction error after iteration 1").value == 0.5)
-  }
-
   test("Merge two attributes") {
     run("Example Graph")
     // The unification is used everywhere, I'm just worried about the type equality check.
@@ -615,6 +509,34 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "age"))
     }
     run("Merge two attributes", Map("name" -> "x", "attr1" -> "name", "attr2" -> "gender"))
+  }
+
+  test("Merge two edge attributes") {
+    run("Example Graph")
+    run("Derived edge attribute",
+      Map("type" -> "double", "output" -> "income_edge", "expr" -> "src$income"))
+    run("Merge two edge attributes",
+      Map("name" -> "merged", "attr1" -> "income_edge", "attr2" -> "weight"))
+    val merged = project.edgeAttributes("merged").runtimeSafeCast[Double]
+    assert(merged.rdd.values.collect.toSeq.sorted == Seq(2.0, 1000.0, 2000.0, 2000.0))
+  }
+
+  test("Fill with constant default value") {
+    run("Example Graph")
+    run("Fill with constant default value",
+      Map("attr" -> "income", "def" -> "-1.0"))
+    val filledIncome = project.vertexAttributes("income").runtimeSafeCast[Double]
+    assert(filledIncome.rdd.values.collect.toSeq.sorted == Seq(-1.0, -1.0, 1000.0, 2000.0))
+  }
+
+  test("Fill edge attribute with constant default value") {
+    run("Example Graph")
+    run("Derived edge attribute",
+      Map("type" -> "double", "output" -> "income_edge", "expr" -> "src$income"))
+    run("Fill edge attribute with constant default value",
+      Map("attr" -> "income_edge", "def" -> "-1.0"))
+    val filledIncome = project.edgeAttributes("income_edge").runtimeSafeCast[Double]
+    assert(filledIncome.rdd.values.collect.toSeq.sorted == Seq(-1.0, 1000.0, 2000.0, 2000.0))
   }
 
   test("Aggregate edge attribute to vertices, all directions") {
@@ -705,6 +627,54 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val income = project.vertexAttributes("income").runtimeSafeCast[String]
     assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
+  }
+
+  test("Segmentation handles belongsTo edges properly") {
+    run("Example Graph")
+    run("Segment by double attribute",
+      Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
+    )
+    val seg = project.segmentation("seg")
+
+    run("Add constant vertex attribute",
+      Map("name" -> "const", "value" -> "1.0", "type" -> "Double"), on = seg.project)
+
+    run("Merge vertices by attribute",
+      Map("key" -> "const", "aggregate-bottom" -> "", "aggregate-id" -> "",
+        "aggregate-size" -> "", "aggregate-top" -> "", "aggregate-const" -> "count"),
+      on = seg.project)
+    assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
+  }
+
+  test("Segmentation stays sane after filtering (which uses pullBack)") {
+    run("Example Graph")
+    run("Segment by double attribute",
+      Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
+    )
+    val seg = project.segmentation("seg")
+
+    run("Filter by attributes", Map("filterva-age" -> "> 10",
+      "filterva-gender" -> "", "filterva-id" -> "", "filterva-income" -> "",
+      "filterva-location" -> "", "filterva-name" -> "", "filterea-comment" -> "",
+      "filterea-weight" -> "", "filterva-segmentation[seg]" -> ""))
+
+    assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
+  }
+
+  test("Segmentation stays sane after filtering on the segmentation side (this uses pullBack)") {
+    run("Example Graph")
+    run("Segment by double attribute",
+      Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
+    )
+    val seg = project.segmentation("seg")
+    run("Add rank attribute",
+      Map("rankattr" -> "ranking", "keyattr" -> "top", "order" -> "ascending"), on = seg.project)
+
+    run("Filter by attributes",
+      Map("filterva-ranking" -> "> 0", "filterva-bottom" -> "", "filterva-id" -> "",
+        "filterva-size" -> "", "filterva-top" -> ""), on = seg.project)
+
+    assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
 
 }

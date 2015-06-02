@@ -1,8 +1,7 @@
 ### Centrality
 
-Calculates an approximation of the harmonic centrality for every vertex. The harmonic
-centrality of the vertex A is the sum of the reciprocals of all shortest paths to A.
-Higher centrality means that the vertex is more embedded in the graph.
+Calculates an approximation of the centrality for every vertex. Higher centrality means that
+the vertex is more embedded in the graph.
 
 ====
 [[name]] Attribute name::
@@ -12,7 +11,12 @@ The new attribute will be created under this name.
 The algorithm works by counting the shortest paths up to a certain length in each iteration.
 This parameter sets the maximal length to check, so it has a strong influence over the run
 time of the operation.
-
++
 A setting lower than the actual diameter of the graph can theoretically introduce unbounded error
-to the results. In typical graphs this effect may be acceptable, however.
+to the results. In typical small world graphs this effect may be acceptable, however.
+
+[[algorithm]] The centrality algorithm to use::
+- The Harmonic Centrality of the vertex A is the sum of the reciprocals of all shortest paths to A.
+- Lin's Centrality of the vertex A is the square of the size of its coreachable set divided by the
+sum of the shortest paths to A.
 ====
