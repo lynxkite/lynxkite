@@ -82,11 +82,6 @@ if [ "${SPARK_MASTER}" == "local" ]; then
  export SPARK_MASTER="${SPARK_MASTER}[${NUM_CORES_PER_EXECUTOR}]"
 fi
 
-if [ "${#residual_args[@]}" -ne 1 ]; then
-  echo "Usage: $0 interactive|start|stop|restart"
-  exit 1
-fi
-
 export KITE_SCHEDULER_POOLS_CONFIG="${conf_dir}/scheduler-pools.xml"
 
 mode=${residual_args[0]}
@@ -95,17 +90,25 @@ FULL_CLASSPATH=${app_classpath}
 if [ -n "${KITE_EXTRA_JARS}" ]; then
   FULL_CLASSPATH=${FULL_CLASSPATH}:${KITE_EXTRA_JARS}
 fi
+
+if [ "${mode}" == "batch" ]; then
+  className="com.lynxanalytics.biggraph.BatchMain"
+else
+  className="play.core.server.NettyServer"
+fi
+
 command=(
     ${SPARK_HOME}/bin/spark-submit \
-    --class play.core.server.NettyServer \
-    --master ${SPARK_MASTER} \
+    --class "${className}" \
+    --master "${SPARK_MASTER}" \
     --driver-class-path "${FULL_CLASSPATH}" \
     --deploy-mode client \
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \
     ${YARN_SETTINGS} \
     "${fake_application_jar}" \
-    "${app_commands[@]}"
+    "${app_commands[@]}" \
+    "${residual_args[@]:1}"
 )
 
 startKite () {
@@ -176,6 +179,9 @@ case $mode in
   interactive)
     exec "${command[@]}"
   ;;
+  batch)
+    exec "${command[@]}"
+  ;;
   start)
     startKite
     startWatchdog
@@ -193,6 +199,10 @@ case $mode in
   watchdog_restart)
     stopKite
     startKite
+  ;;
+  *)
+    echo "Usage: $0 interactive|start|stop|restart|batch"
+    exit 1
   ;;
 esac
 
