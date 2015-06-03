@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.4.2
+
  - Improvements to the import graph workflow: somewhat less computation stages plus the
    algorithm is not sensitive anymore to vertices with millions of edges.
  - Two new attribute operations implemented: _Fill edge attribute with constant default value_
