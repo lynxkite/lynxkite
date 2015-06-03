@@ -20,17 +20,22 @@ tools_dir=`pwd`/tools
 popd
 
 
+export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
+export KITE_RANDOM_SECRET=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 if [ -f ${KITE_SITE_CONFIG} ]; then
   echo "Loading configuration from: ${KITE_SITE_CONFIG}"
-  export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
-  export KITE_RANDOM_SECRET=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
-  export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
   source ${KITE_SITE_CONFIG}
 else
   echo "Warning, no Kite Site Config found at: ${KITE_SITE_CONFIG}"
   echo "Default location is $HOME/.kiterc, but you can override via the environment variable:"
   echo "KITE_SITE_CONFIG"
   echo "You can find an example config file at ${conf_dir}/kiterc_template"
+fi
+
+if [ -f "${KITE_SITE_CONFIG_OVERRIDES}" ]; then
+  echo "Loading configuration overrides from: ${KITE_SITE_CONFIG_OVERRIDES}"
+  source ${KITE_SITE_CONFIG_OVERRIDES}
 fi
 
 addJPropIfNonEmpty () {

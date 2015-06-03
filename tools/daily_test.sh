@@ -1,10 +1,8 @@
 #!/bin/bash
 
-echo alma1
-
 set -ue
 
-TESTS_BASE_DIR=$HOME/kite_daily_tests
+TESTS_NAME_PREFIX="kite_daily_tests/"
 
 DIR=$(dirname $0)
 
@@ -12,32 +10,26 @@ pushd $DIR/.. > /dev/null
 KITE_BASE=`pwd`
 popd > /dev/null
 
+if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
+  echo "You must run this script from inside a stage, not from the source tree!"
+  exit 1
+fi
+
 RANDOM_SUFFIX=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 6 | head -n 1`
 TODAY=`date "+%Y%m%d"`
 
-BASE_DIR="${TESTS_BASE_DIR}/${TODAY}_${RANDOM_SUFFIX}"
+TEST_NAME="${TESTS_NAME_PREFIX}${TODAY}_${RANDOM_SUFFIX}"
 
-echo "Running kite daily test. Creating meta, data dirs and config under ${BASE_DIR}"
+echo "Running kite daily test: ${TEST_NAME}"
 
-mkdir -p ${BASE_DIR}
+# Prepare a overrides file.
+OVERRIDES_FILE=/tmp/${TEST_NAME}.overrides
+mkdir -p $(dirname ${OVERRIDES_FILE})
 
-# Prepare a config file.
-CONFIG_FILE=${BASE_DIR}/kiterc
-
-cat > ${CONFIG_FILE} <<EOF
-# !!!Warning!!! Some values are overriden at the end of the file.
-
-`cat ${KITE_BASE}/conf/kiterc_template`
-
-# Override settings created by daily_test.sh
-# These will reset some values above. Feel free to edit as necessary.
-export KITE_META_DIR=${BASE_DIR}/meta
-export KITE_DATA_DIR=file:${BASE_DIR}/data
-export EXECUTOR_MEMORY=2g
-export NUM_CORES_PER_EXECUTOR=4
-export KITE_MASTER_MEMORY_MB=2000
+cat > ${OVERRIDES_FILE} <<EOF
+export KITE_META_DIR=\${KITE_META_DIR}/${TEST_NAME}
+export KITE_DATA_DIR=\${KITE_DATA_DIR}/${TEST_NAME}
 EOF
 
-cd $KITE_BASE
-
-KITE_SITE_CONFIG=${CONFIG_FILE} ./run_batch.sh kitescripts/dailytest
+KITE_SITE_CONFIG_OVERRIDES=${OVERRIDES_FILE} \
+  ${KITE_BASE}/bin/biggraph batch ${KITE_BASE}/kitescripts/dailytest
