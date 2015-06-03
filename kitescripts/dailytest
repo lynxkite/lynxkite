@@ -5,7 +5,7 @@ Operations('createrandom')
     "op": {
       "id": "New-vertex-set",
       "parameters": {
-        "size": "10000"
+        "size": "10000000"
       }
     }
   },
@@ -79,7 +79,7 @@ Operations('loadandprocessrandom')
       "id": "Filter-by-attributes",
       "parameters": {
         "filterva-id": "",
-        "filterva-degree": "<100",
+        "filterva-degree": "<500",
         "filterea-dstVertexId": "",
         "filterva-stringID": "",
         "filterea-srcVertexId": "",
