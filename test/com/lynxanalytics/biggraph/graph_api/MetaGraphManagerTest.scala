@@ -75,7 +75,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
         vertexSets = Map('inputVertices -> firstVertices),
         attributes = Map('inputAttr -> firstVattr)))
 
-    val path = SymbolPath.fromString("my/favorite/vertices/first")
+    val path = SymbolPath.fromSlashyString("my/favorite/vertices/first")
     m1o.setTag(path, firstVertices)
 
     val m1c = MetaRepositoryManager(m1Dir)
@@ -130,9 +130,9 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
     // The old tags point to the successfully migrated entities.
-    assert(m.vertexSet(SymbolPath.fromString("one")).toStringStruct.toString ==
+    assert(m.vertexSet(SymbolPath("one")).toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(m.edgeBundle(SymbolPath.fromString("two")).toStringStruct.toString ==
+    assert(m.edgeBundle(SymbolPath("two")).toStringStruct.toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
 
@@ -173,9 +173,9 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // The migration succeeded.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
-    assert(m.vertexSet(SymbolPath.fromString("one")).toStringStruct.toString ==
+    assert(m.vertexSet(SymbolPath("one")).toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(m.edgeBundle(SymbolPath.fromString("two")).toStringStruct.toString ==
+    assert(m.edgeBundle(SymbolPath("two")).toStringStruct.toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
 

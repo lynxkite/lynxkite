@@ -17,7 +17,8 @@ import play.api.libs.json.Json
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
-class Project(val projectName: String)(implicit manager: MetaGraphManager) {
+class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
+  val projectName = projectPath.toString
   override def toString = projectName
   override def equals(p: Any) =
     p.isInstanceOf[Project] && projectName == p.asInstanceOf[Project].projectName
@@ -26,7 +27,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   assert(projectName.nonEmpty, s"Invalid project name: <empty string>")
   assert(!projectName.contains(Project.separator), s"Invalid project name: $projectName")
   val rootDir: SymbolPath =
-    SymbolPath.fromString("projects") / SymbolPath.fromString(s"$projectName")
+    SymbolPath("projects") / SymbolPath.fromSlashyString(projectName)
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
   def toFE: FEProject = {
@@ -219,7 +220,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
     //   project/parentName/checkpointed/segmentations/segmentationName/project
     val parentName = new SymbolPath(rootDir.drop(1).dropRight(4))
     val segmentationName = rootDir.dropRight(1).last.name
-    Segmentation(parentName.toString, segmentationName)
+    Segmentation(parentName, segmentationName)
   }
 
   def notes = get(checkpointedDir / "notes")
@@ -411,7 +412,7 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
   }.toSeq
 
   def segmentations = segmentationNames.map(segmentation(_))
-  def segmentation(name: String) = Segmentation(projectName, name)
+  def segmentation(name: String) = Segmentation(projectPath, name)
   def segmentationNames = ls(checkpointedDir / "segmentations").map(_.last.name)
 
   def copy(to: Project): Unit = cp(rootDir, to.rootDir)
@@ -502,7 +503,8 @@ class Project(val projectName: String)(implicit manager: MetaGraphManager) {
 object Project {
   val separator = "|"
 
-  def apply(projectName: String)(implicit metaManager: MetaGraphManager): Project = new Project(projectName)
+  def apply(projectPath: SymbolPath)(implicit metaManager: MetaGraphManager): Project =
+    new Project(projectPath)
 
   def withErrorLogging[T](message: String)(op: => T): Option[T] = {
     try {
@@ -524,11 +526,11 @@ object Project {
   }
 }
 
-case class Segmentation(parentName: String, name: String)(implicit manager: MetaGraphManager) {
-  def parent = Project(parentName)
-  val path: SymbolPath = SymbolPath.fromString(s"projects/$parentName") /
-    "checkpointed" / "segmentations" / name
-  def project = Project(s"$parentName/checkpointed/segmentations/$name/project")
+case class Segmentation(parentPath: SymbolPath, name: String)(implicit manager: MetaGraphManager) {
+  def parent = Project(parentPath)
+  val parentName = parent.projectName
+  val path: SymbolPath = parentPath / "checkpointed" / "segmentations" / name
+  def project = Project(parentPath / "checkpointed" / "segmentations" / name / "project")
 
   def equivalentUIAttribute = {
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
