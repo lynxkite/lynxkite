@@ -39,11 +39,11 @@ object SymbolPath {
       new SymbolPath(path.map(Symbol(_)))
     }
 
-  def apply(first: String, path: String*): SymbolPath = {
-    apply_common(first, path.toSeq)
+  def apply(first: String, optional: String*): SymbolPath = {
+    apply_common(first, optional.toSeq)
   }
-  def apply(first: Symbol, path: Symbol*): SymbolPath = {
-    apply_common(first.name, path.map(x => x.name).seq)
+  def apply(first: Symbol, optional: Symbol*): SymbolPath = {
+    apply_common(first.name, optional.map(x => x.name).seq)
   }
 }
 
