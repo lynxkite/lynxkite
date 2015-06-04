@@ -16,11 +16,13 @@ export KITE_META_DIR=$HOME/kite_meta
 # is now mandatory.
 export KITE_DATA_DIR=file:$HOME/kite_data/
 
-# Configuration file to specify what file paths users are allowed to access
-# using what prefixes. You can use the prefix_definitions_template.txt in the
-# KITE_DEPLOYMENT_CONFIG_DIR as a template and set KITE_PREFIX_DEFINITIONS
-# accordingly, e.g. $HOME/prefix_definitions.txt. Please keep in mind that
-# the prefix definition file should be Kite version independent.
+# Configuration file to specify what file paths users are allowed to access using
+# what prefixes. If you need to define custom prefix definitions, you need to
+# set this. Use kite_???/conf/prefix_definitions_template.txt as a template when
+# creating your custom prefix configuration file. Make sure you put the config
+# file to a Kite version independent location (not inside the kite_??? directory,
+# e.g. $HOME/kite_conf). Then set KITE_PREFIX_DEFINITIONS to point to your newly
+# created config file (e.g. $HOME/kite_conf/prefix_definitions.txt).
 export KITE_PREFIX_DEFINITIONS=
 
 # The PID file for Kite servers.
