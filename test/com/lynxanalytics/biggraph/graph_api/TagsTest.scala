@@ -14,7 +14,7 @@ class TagsTest extends FunSuite with TestTempDir {
   test("We can set/read/reset a tag") {
     val root = newRoot
     root.setTag(SymbolPath.fromSlashyString("alma/korte/barack"), "hello")
-    assert((root / (SymbolPath.fromSymbol('alma) / 'korte / 'barack)).content == "hello")
+    assert((root / SymbolPath('alma, 'korte, 'barack)).content == "hello")
     root.setTag(SymbolPath.fromSlashyString("alma/korte/barack"), "good-bye")
     assert((root / SymbolPath.fromSlashyString("alma/korte/barack")).content == "good-bye")
   }
@@ -62,6 +62,6 @@ class TagsTest extends FunSuite with TestTempDir {
     val root = newRoot
     val uuid = UUID.randomUUID()
     root.setTag(SymbolPath.fromSlashyString("alma/korte/barack"), uuid.toString)
-    assert((root / (SymbolPath.fromSymbol('alma) / 'korte / 'barack)).gUID == uuid)
+    assert((root / SymbolPath('alma, 'korte, 'barack)).gUID == uuid)
   }
 }
