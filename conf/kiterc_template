@@ -34,7 +34,7 @@ export KITE_USERS_FILE=$HOME/kite_users
 # export YARN_NUM_EXECUTORS=2
 
 # Specify how much memory is available for Kite on a single worker machine.
-# Ignored for standalone single machine instances, see KITE_MASTER_MEMORY_MB for that case.
+# Ignored for single machine installs, see KITE_MASTER_MEMORY_MB for that case.
 export EXECUTOR_MEMORY=1g
 
 # Number of cores per executor Kite should use. (For a YARN deployment, use this instead of
@@ -42,7 +42,7 @@ export EXECUTOR_MEMORY=1g
 export NUM_CORES_PER_EXECUTOR=4
 
 # Specify how much memory is available for Kite on the master machine in megabytes.
-# For standalone single machine instances this also determines executor memory and
+# For single machine installs this also determines executor memory and
 # EXECUTOR_MEMORY is ignored in that case.
 export KITE_MASTER_MEMORY_MB=1024
 
