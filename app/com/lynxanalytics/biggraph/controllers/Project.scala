@@ -529,7 +529,7 @@ object Project {
 case class Segmentation(parentPath: SymbolPath, name: String)(implicit manager: MetaGraphManager) {
   def parent = Project(parentPath)
   val parentName = parent.projectName
-  val path: SymbolPath = parentPath / "checkpointed" / "segmentations" / name
+  val path = SymbolPath("projects") / parentPath / "checkpointed" / "segmentations" / name
   def project = Project(parentPath / "checkpointed" / "segmentations" / name / "project")
 
   def equivalentUIAttribute = {
