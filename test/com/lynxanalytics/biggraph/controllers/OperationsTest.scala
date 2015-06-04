@@ -17,7 +17,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val controller = new BigGraphController(this)
     val request = CreateProjectRequest(name = name, notes = name, privacy = "public-write")
     controller.createProject(null, request)
-    Project(name)
+    Project(SymbolPath(name))
   }
   val project = createProject("Test_Project")
 
@@ -223,7 +223,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Project union") {
     run("Example Graph")
-    val other = Project("ExampleGraph2")
+    val other = Project(SymbolPath("ExampleGraph2"))
     project.copy(other)
     run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = other)
     run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = other)
@@ -254,7 +254,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Project union on vertex sets") {
     run("New vertex set", Map("size" -> "10"))
-    val other = Project("Copy")
+    val other = Project(SymbolPath("Copy"))
     project.copy(other)
     run("Union with another project", Map("other" -> "Copy", "id-attr" -> "new_id"))
 
@@ -264,7 +264,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Project union - useful error message (#1611)") {
     run("Example Graph")
-    val other = Project("ExampleGraph2")
+    val other = Project(SymbolPath("ExampleGraph2"))
     project.copy(other)
     run("Rename vertex attribute",
       Map("from" -> "age", "to" -> "newage"), on = other)
@@ -330,7 +330,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Fingerprinting between project and segmentation") {
     run("Example Graph")
-    val other = Project("ExampleGraph2")
+    val other = Project(SymbolPath("ExampleGraph2"))
     project.copy(other)
     run("Import project as segmentation", Map(
       "them" -> "ExampleGraph2"))
@@ -389,7 +389,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "aggregate-dst" -> "",
       "aggregate-src" -> ""))
     run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
-    val other = Project("other")
+    val other = Project(SymbolPath("other"))
     project.copy(other)
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-edges-1.csv",
