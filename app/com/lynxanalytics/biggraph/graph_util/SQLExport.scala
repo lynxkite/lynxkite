@@ -62,7 +62,7 @@ object SQLExport {
     val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
     assert(opt.nonEmpty, s"Attribute '$name' is of an unsupported type: ${attr.typeTag}")
     val (tpe, sqlType) = opt.get
-    SQLColumn(name, sqlType, attr.rdd, /* nullable = */ true)
+    SQLColumn(name, sqlType, attr.rdd, nullable = true)
   }
 
   def apply(
@@ -89,8 +89,8 @@ object SQLExport {
     }
     new SQLExport(dataManager.sqlContext, table, edgeBundle.idSet.rdd, Seq(
       // The src and dst vertex ids are mandatory.
-      SQLColumn(srcColumnName, LongType, edgeBundle.rdd.mapValues(_.src), /* nullable = */ false),
-      SQLColumn(dstColumnName, LongType, edgeBundle.rdd.mapValues(_.dst), /* nullable = */ false)
+      SQLColumn(srcColumnName, LongType, edgeBundle.rdd.mapValues(_.src), nullable = false),
+      SQLColumn(dstColumnName, LongType, edgeBundle.rdd.mapValues(_.dst), nullable = false)
     ) ++ attributes.toSeq.sortBy(_._1).map { case (name, attr) => sqlAttribute(name, attr) })
   }
 }
@@ -110,9 +110,9 @@ class SQLExport private (
 
   def insertInto(db: String, delete: Boolean) = {
     if (delete) {
-      dataFrame.createJDBCTable("jdbc:" + db, quoteIdentifier(table), true)
+      dataFrame.createJDBCTable("jdbc:" + db, quoteIdentifier(table), allowExisting = true)
     } else {
-      dataFrame.insertIntoJDBC("jdbc:" + db, quoteIdentifier(table), false)
+      dataFrame.insertIntoJDBC("jdbc:" + db, quoteIdentifier(table), overwrite = false)
     }
   }
 }
