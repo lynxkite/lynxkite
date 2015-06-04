@@ -606,7 +606,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def opById(context: Operation.Context, id: String): Operation = {
     if (id.startsWith(BigGraphController.workflowsRoot.toString + "/")) {
       // Oho, a workflow operation!
-      workflowOpFromTag(SymbolPath.fromSlashyString(id), context)
+      workflowOpFromTag(SymbolPath.fromSafeSlashyString(id), context)
     } else {
       assert(operations.contains(id), s"Cannot find operation: ${id}")
       operations(id)(context)
@@ -617,7 +617,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     mainProject: Project,
     request: ProjectOperationRequest,
     user: serving.User): Operation = {
-    val subProjectPath = SymbolPath.fromSlashyString(request.project)
+    val subProjectPath = SymbolPath.fromSafeSlashyString(request.project)
     val mainProjectSymbol = Symbol(mainProject.projectName)
     val relativePath = subProjectPath.tail
     val fullPath = mainProjectSymbol :: relativePath.toList
@@ -627,7 +627,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   }
 
   def apply(user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
-    val p = Project(SymbolPath.fromSlashyString(req.project))
+    val p = Project(SymbolPath.fromSafeSlashyString(req.project))
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
     validateParameters(op.parameters, req.op.parameters)
