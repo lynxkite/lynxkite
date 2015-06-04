@@ -17,8 +17,8 @@ export KITE_META_DIR=$HOME/kite_meta
 export KITE_DATA_DIR=file:$HOME/kite_data/
 
 # Configuration file to specify what file paths users are allowed to access
-# using what prefixes. Consider moving prefix_definitions.txt out of the
-# Kite KITE_DEPLOYMENT_CONFIG_DIR and change KITE_PREFIX_DEFINITIONS accordingly. 
+# using what prefixes. Consider moving prefix_definitions.txt out of
+# KITE_DEPLOYMENT_CONFIG_DIR and change KITE_PREFIX_DEFINITIONS accordingly. 
 export KITE_PREFIX_DEFINITIONS=${KITE_DEPLOYMENT_CONFIG_DIR}/prefix_definitions.txt
 
 # The PID file for Kite servers.
