@@ -62,7 +62,7 @@ object SQLExport {
     val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
     assert(opt.nonEmpty, s"Attribute '$name' is of an unsupported type: ${attr.typeTag}")
     val (tpe, sqlType) = opt.get
-    SQLColumn(name, sqlType, attr.rdd, true)
+    SQLColumn(name, sqlType, attr.rdd, /* nullable = */ true)
   }
 
   def apply(
@@ -88,8 +88,9 @@ object SQLExport {
         s"Attribute $name is not for edge bundle $edgeBundle")
     }
     new SQLExport(dataManager.sqlContext, table, edgeBundle.idSet.rdd, Seq(
-      SQLColumn(srcColumnName, LongType, edgeBundle.rdd.mapValues(_.src), false),
-      SQLColumn(dstColumnName, LongType, edgeBundle.rdd.mapValues(_.dst), false)
+      // The src and dst vertex ids are mandatory.
+      SQLColumn(srcColumnName, LongType, edgeBundle.rdd.mapValues(_.src), /* nullable = */ false),
+      SQLColumn(dstColumnName, LongType, edgeBundle.rdd.mapValues(_.dst), /* nullable = */ false)
     ) ++ attributes.toSeq.sortBy(_._1).map { case (name, attr) => sqlAttribute(name, attr) })
   }
 }
