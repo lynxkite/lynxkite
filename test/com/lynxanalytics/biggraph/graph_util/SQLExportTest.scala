@@ -13,28 +13,6 @@ class SQLExportTest extends FunSuite with TestGraphOp {
     s.trim.split("\n", -1).map(_.trim)
   }
 
-  test("check dump") {
-    val g = ExampleGraph()().result
-    val export = SQLExport(
-      "example graph",
-      g.vertices,
-      Map[String, Attribute[_]](
-        "age" -> g.age, "gender" -> g.gender,
-        "income" -> g.income, "name" -> g.name))
-    assert(export.deletion.trim == """
-      DROP TABLE IF EXISTS "example graph";
-      """.trim)
-    assert(export.creation.trim == """
-      CREATE TABLE "example graph" (age DOUBLE PRECISION, gender VARCHAR(512), income DOUBLE PRECISION, name VARCHAR(512));
-      """.trim)
-    assert(export.inserts.collect.toSeq.map(linesOf(_)).flatten == linesOf("""
-      INSERT INTO "example graph" VALUES (20.3, 'Male', 1000.0, 'Adam');
-      INSERT INTO "example graph" VALUES (18.2, 'Female', NULL, 'Eve');
-      INSERT INTO "example graph" VALUES (50.3, 'Male', 2000.0, 'Bob');
-      INSERT INTO "example graph" VALUES (2.0, 'Male', NULL, 'Isolated Joe');
-      """))
-  }
-
   test("export to SQLite") {
     val g = ExampleGraph()().result
     val export = SQLExport(
@@ -47,7 +25,11 @@ class SQLExportTest extends FunSuite with TestGraphOp {
     val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     export.insertInto(db, delete = true)
     implicit val connection = sql.DriverManager.getConnection("jdbc:" + db)
-    val q = SQL("SELECT name FROM \"example graph\" WHERE age < 20")
-    assert(q().map(row => row[String]("name")).sorted == Seq("Eve", "Isolated Joe"))
+    val q1 = SQL("SELECT name FROM \"example graph\" WHERE age < 20")
+    assert(q1().map(row => row[String]("name")).sorted == Seq("Eve", "Isolated Joe"))
+
+    export.insertInto(db, delete = false)
+    val q2 = SQL("SELECT name FROM \"example graph\" WHERE age < 20")
+    assert(q2().map(row => row[String]("name")).sorted == Seq("Eve", "Eve", "Isolated Joe", "Isolated Joe"))
   }
 }
