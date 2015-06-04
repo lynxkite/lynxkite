@@ -28,6 +28,7 @@ class SQLExportTest extends FunSuite with TestGraphOp {
     val q1 = SQL("SELECT name FROM \"example graph\" WHERE age < 20")
     assert(q1().map(row => row[String]("name")).sorted == Seq("Eve", "Isolated Joe"))
 
+    // We don't delete the existing table so we expect duplications.
     export.insertInto(db, delete = false)
     val q2 = SQL("SELECT name FROM \"example graph\" WHERE age < 20")
     assert(q2().map(row => row[String]("name")).sorted == Seq("Eve", "Eve", "Isolated Joe", "Isolated Joe"))
