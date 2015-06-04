@@ -11,8 +11,14 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-import org.apache.spark.sql.{ SQLContext, Row }
-import org.apache.spark.sql.types.{ StructType, StructField, DataType, DoubleType, StringType, LongType }
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.SparkContext
 
 object SQLExport {
