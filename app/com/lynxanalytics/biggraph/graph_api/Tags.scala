@@ -6,6 +6,10 @@ import java.util.UUID
 import scala.collection.mutable
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
+  override def equals(p: Any) = {
+    p.isInstanceOf[SymbolPath] && toString == p.asInstanceOf[SymbolPath].toString
+  }
+  override def hashCode = toString.hashCode
   def /(suffixDir: Symbol): SymbolPath = {
     SymbolPath.check(suffixDir.name)
     path.toSeq :+ suffixDir
@@ -23,7 +27,6 @@ object SymbolPath {
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
   def fromSlashyString(str: String): SymbolPath =
     str.split("/", -1).toSeq.map(Symbol(_))
-  def fromSymbol(sym: Symbol): SymbolPath = apply(sym.name)
   def check(name: String) = {
     assert(!name.contains("/"), s"Directory name $name contains a slash ('/')")
     assert(name.nonEmpty)
