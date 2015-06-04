@@ -27,7 +27,7 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   assert(projectName.nonEmpty, s"Invalid project name: <empty string>")
   assert(!projectName.contains(Project.separator), s"Invalid project name: $projectName")
   val rootDir: SymbolPath =
-    SymbolPath("projects") / SymbolPath.fromSlashyString(projectName)
+    SymbolPath("projects") / SymbolPath.fromSafeSlashyString(projectName)
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
   def toFE: FEProject = {

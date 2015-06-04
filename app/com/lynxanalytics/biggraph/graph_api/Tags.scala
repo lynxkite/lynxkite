@@ -25,7 +25,13 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Order
 object SymbolPath {
   import scala.language.implicitConversions
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
-  def fromSlashyString(str: String): SymbolPath =
+  // Be careful when you call this. In general, the string parameter
+  // can only come from a reliable source, that is:
+  // (1) a string literal, such as "alma/korte/barack" or
+  // (2) a string that have been put together programatically (e.g.,
+  //     SymbolPath('alma, 'korte, 'barack).toString) or
+  // (3) a string saved by ourselves
+  def fromSafeSlashyString(str: String): SymbolPath =
     str.split("/", -1).toSeq.map(Symbol(_))
   def check(name: String) = {
     assert(!name.contains("/"), s"Directory name $name contains a slash ('/')")
@@ -205,7 +211,7 @@ object TagRoot {
     loadFromStore(storeFromRepo(repo))
 
   private def loadFromStore(store: KeyValueStore): Map[SymbolPath, String] =
-    store.readAll.map { case (k, v) => SymbolPath.fromSlashyString(k) -> v }.toMap
+    store.readAll.map { case (k, v) => SymbolPath.fromSafeSlashyString(k) -> v }.toMap
 
   private def storeFromRepo(repo: String): KeyValueStore = {
     val tagsJournal = new File(repo, journalFilename)

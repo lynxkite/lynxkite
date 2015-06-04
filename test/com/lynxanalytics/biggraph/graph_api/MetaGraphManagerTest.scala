@@ -75,7 +75,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
         vertexSets = Map('inputVertices -> firstVertices),
         attributes = Map('inputAttr -> firstVattr)))
 
-    val path = SymbolPath.fromSlashyString("my/favorite/vertices/first")
+    val path = SymbolPath.fromSafeSlashyString("my/favorite/vertices/first")
     m1o.setTag(path, firstVertices)
 
     val m1c = MetaRepositoryManager(m1Dir)
