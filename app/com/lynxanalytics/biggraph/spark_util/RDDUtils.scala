@@ -341,12 +341,47 @@ object Implicits {
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
     // Sorts each partition of the RDD in isolation.
-    def toSortedRDD = SortedRDD.fromUnsorted(self)
-    def toSortedRDD(partitioner: spark.Partitioner)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
-      SortedRDD.fromUnsorted(self.partitionBy(partitioner))
+    // Avoids shuffling/sorting if possible.
+    def toSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
+      toSortedRDD(self.partitioner.orNull)
+    def toSortedRDD(partitioner: spark.Partitioner)(
+      implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      self match {
+        case self: SortedRDD[K, V] if Option(partitioner) == self.partitioner =>
+          // No need to shuffle/sort, just override the partitioner.
+          new SortedPartitionerOverride(self, partitioner)
+        case _ =>
+          val partitioned = new PartitionerOverride(self.partitionBy(partitioner), partitioner)
+          SortedRDD.fromUnsorted(partitioned)
+      }
+    }
+
     def groupBySortedKey(partitioner: spark.Partitioner)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
       SortedRDD.fromUnsorted(self.groupByKey(partitioner))
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
       SortedRDD.fromUnsorted(self.reduceByKey(partitioner, f))
   }
+}
+
+// Spark's partitionBy will not change the partitioner if it is equal to the original.
+// We want to change the partitioner even in this case, because DataManager does identity
+// checks on partitioners to detect coding mistakes.
+class PartitionerOverride[T: ClassTag](self: RDD[T], newPartitioner: spark.Partitioner) extends RDD[T](self) {
+  override val partitioner = Option(newPartitioner)
+  assert(partitioner == self.partitioner, s"Partitioner override mismatch on $self")
+  // Just forward everything to the original RDD.
+  def compute(split: org.apache.spark.Partition, context: org.apache.spark.TaskContext) =
+    self.iterator(split, context)
+  protected def getPartitions = self.partitions
+}
+class SortedPartitionerOverride[K: ClassTag: Ordering, V: ClassTag](
+    self: SortedRDD[K, V], newPartitioner: spark.Partitioner) extends SortedRDD[K, V](self) {
+  override val partitioner = Option(newPartitioner)
+  assert(partitioner == self.partitioner, s"Partitioner override mismatch on $self")
+  // Just forward everything to the original RDD.
+  override def compute(split: org.apache.spark.Partition, context: org.apache.spark.TaskContext) =
+    self.iterator(split, context)
+  def cacheBackingArray(): Unit = self.cacheBackingArray
+  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
+    new SortedPartitionerOverride(self.restrictToIdSet(ids), newPartitioner)
 }
