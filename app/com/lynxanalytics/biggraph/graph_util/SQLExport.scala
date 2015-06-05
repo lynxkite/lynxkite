@@ -5,7 +5,6 @@ import java.sql
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
-import scala.language.existentials
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -56,7 +55,7 @@ object SQLExport {
     (typeOf[String], StringType),
     (typeOf[Long], LongType))
 
-  private case class SQLColumn(name: String, sqlType: DataType, rdd: SortedRDD[ID, _], nullable: Boolean)
+  private case class SQLColumn[T](name: String, sqlType: DataType, rdd: SortedRDD[ID, T], nullable: Boolean)
 
   private def sqlAttribute[T](name: String, attr: Attribute[T])(implicit dm: DataManager) = {
     val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
@@ -99,7 +98,7 @@ class SQLExport private (
     sqlContext: SQLContext,
     table: String,
     vertexSet: VertexSetRDD,
-    sqls: Seq[SQLColumn]) {
+    sqls: Seq[SQLColumn[_]]) {
 
   private val schema =
     StructType(sqls.map(sql => StructField(sql.name, sql.sqlType, sql.nullable)))
