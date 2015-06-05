@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Removed the _SQL dump_ option in file export operations. The only supported output format
+   is CSV now.
+
 ### 1.4.2
 
  - Improvements to the import graph workflow: somewhat less computation stages plus the
