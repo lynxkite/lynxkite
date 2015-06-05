@@ -1,0 +1,58 @@
+Operations('${project}')
+[
+  {
+    "project": "!project",
+    "op": {
+      "id": "New-vertex-set",
+      "parameters": {
+        "size": "10"
+      }
+    }
+  },
+  {
+    "project": "!project",
+    "op": {
+      "id": "Create-random-edge-bundle",
+      "parameters": {
+        "degree": "5",
+        "seed": "${seed}"
+      }
+    }
+  },
+  {
+    "project": "!project",
+    "op": {
+      "id": "Maximal-cliques",
+      "parameters": {
+        "name": "maximal_cliques",
+        "bothdir": "false",
+        "min": "2"
+      }
+    }
+  },
+  {
+    "project": "!project/checkpointed/segmentations/maximal_cliques/project",
+    "op": {
+      "id": "Aggregate-from-segmentation",
+      "parameters": {
+        "prefix": "maximal_cliques",
+        "aggregate-id": "",
+        "aggregate-size": "average"
+      }
+    }
+  },
+  {
+    "project": "!project",
+    "op": {
+      "id": "Aggregate-vertex-attribute-globally",
+      "parameters": {
+        "prefix": "",
+        "aggregate-id": "",
+        "aggregate-maximal_cliques_size_average": "average",
+        "aggregate-ordinal": ""
+      }
+    }
+  }
+]
+EndOperations
+GetScalar('${project}', 'maximal_cliques_size_average_average')

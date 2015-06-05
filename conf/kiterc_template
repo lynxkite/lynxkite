@@ -16,9 +16,14 @@ export KITE_META_DIR=$HOME/kite_meta
 # is now mandatory.
 export KITE_DATA_DIR=file:$HOME/kite_data/
 
-# Configuration file to specify what file paths users are
-# allowed to access using what prefixes.
-export KITE_PREFIX_DEFINITIONS=${KITE_DEPLOYMENT_CONFIG_DIR}/prefix_definitions.txt
+# Configuration file to specify what file paths users are allowed to access using
+# what prefixes. If you need to define custom prefix definitions, you need to
+# set this. Use kite_???/conf/prefix_definitions_template.txt as a template when
+# creating your custom prefix configuration file. Make sure you put the config
+# file to a Kite version independent location (not inside the kite_??? directory,
+# e.g. $HOME/kite_conf). Then set KITE_PREFIX_DEFINITIONS to point to your newly
+# created config file (e.g. $HOME/kite_conf/prefix_definitions.txt).
+export KITE_PREFIX_DEFINITIONS=
 
 # The PID file for Kite servers.
 export KITE_PID_FILE=$HOME/kite.pid
@@ -33,7 +38,7 @@ export KITE_USERS_FILE=$HOME/kite_users
 # export YARN_NUM_EXECUTORS=2
 
 # Specify how much memory is available for Kite on a single worker machine.
-# Ignored for single machine installs, see SPARK_DRIVER_MEMORY_MB for that case.
+# Ignored for single machine installs, see KITE_MASTER_MEMORY_MB for that case.
 export EXECUTOR_MEMORY=1g
 
 # Number of cores per executor Kite should use. (For a YARN deployment, use this instead of
@@ -41,7 +46,7 @@ export EXECUTOR_MEMORY=1g
 export NUM_CORES_PER_EXECUTOR=4
 
 # Specify how much memory is available for Kite on the master machine in megabytes.
-# For standalone single machine instances this also determines executor memory and
+# For single machine installs this also determines executor memory and
 # EXECUTOR_MEMORY is ignored in that case.
 export KITE_MASTER_MEMORY_MB=1024
 
