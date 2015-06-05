@@ -19,6 +19,13 @@ object BatchMain {
   private val opsEnd = "EndOperations"
 
   def main(args: Array[String]) {
+    // We set up log config to use Play's stupid non-default log config file location.
+    val logConfigFile =
+      scala.util.Properties.envOrNone("KITE_DEPLOYMENT_CONFIG_DIR").get + "/logger.xml"
+    scala.util.Properties.setProp("logback.configurationFile", logConfigFile)
+    val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR").get
+    scala.util.Properties.setProp("LOGGER_HOME", stageDir)
+
     val env = BigGraphProductionEnvironment
     implicit val metaManager = env.metaGraphManager
     implicit val dataManager = env.dataManager
