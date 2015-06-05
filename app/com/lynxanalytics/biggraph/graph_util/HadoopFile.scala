@@ -88,16 +88,15 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   @transient lazy val uri = path.toUri
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   def open() = fs.open(path)
-  private def close() = fs.close()
   def create() = fs.create(path)
   def exists() = fs.exists(path)
   def readAsString() = {
     val reader = new BufferedReader(new InputStreamReader(open))
-    try org.apache.commons.io.IOUtils.toString(reader) finally close()
+    try org.apache.commons.io.IOUtils.toString(reader) finally reader.close()
   }
   def readFirstLine() = {
     val reader = new BufferedReader(new InputStreamReader(open))
-    try reader.readLine finally close()
+    try reader.readLine finally reader.close()
   }
   def delete() = fs.delete(path, true)
   def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
