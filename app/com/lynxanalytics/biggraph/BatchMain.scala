@@ -3,6 +3,7 @@
 
 package com.lynxanalytics.biggraph
 
+import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.Operation
 import com.lynxanalytics.biggraph.controllers.Operations
@@ -58,7 +59,7 @@ For example:
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           log.info(s"Computing scalar ${scalarName} on project ${projectName}...")
           Project.validateName(projectName)
-          val project = Project(projectName)
+          val project = Project(SymbolPath.fromSafeSlashyString(projectName))
           val scalar = project.scalars(scalarName)
           log.info(s"Value of scalar ${scalarName} on project ${projectName}: ${scalar.value}")
           println(s"${projectName}|${scalarName}|${scalar.value}")
@@ -66,7 +67,7 @@ For example:
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           Project.validateName(projectName)
           val user = User("Batch User", isAdmin = true)
-          val project = Project(projectName)
+          val project = Project(SymbolPath.fromSafeSlashyString(projectName))
 
           if (!Operation.projects.contains(project)) {
             // Create project if doesn't yet exist.
