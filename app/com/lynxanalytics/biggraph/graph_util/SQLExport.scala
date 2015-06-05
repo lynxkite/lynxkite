@@ -12,12 +12,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.types.DataType
-import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.types.LongType
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types
 import org.apache.spark.SparkContext
 
 object SQLExport {
@@ -50,12 +45,12 @@ object SQLExport {
     connection.close()
   }
 
-  private val supportedTypes: Seq[(Type, DataType)] = Seq(
-    (typeOf[Double], DoubleType),
-    (typeOf[String], StringType),
-    (typeOf[Long], LongType))
+  private val supportedTypes: Seq[(Type, types.DataType)] = Seq(
+    (typeOf[Double], types.DoubleType),
+    (typeOf[String], types.StringType),
+    (typeOf[Long], types.LongType))
 
-  private case class SQLColumn[T](name: String, sqlType: DataType, rdd: SortedRDD[ID, T], nullable: Boolean)
+  private case class SQLColumn[T](name: String, sqlType: types.DataType, rdd: SortedRDD[ID, T], nullable: Boolean)
 
   private def sqlAttribute[T](name: String, attr: Attribute[T])(implicit dm: DataManager) = {
     val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
@@ -88,8 +83,8 @@ object SQLExport {
     }
     new SQLExport(dataManager.sqlContext, table, edgeBundle.idSet.rdd, Seq(
       // The src and dst vertex ids are mandatory.
-      SQLColumn(srcColumnName, LongType, edgeBundle.rdd.mapValues(_.src), nullable = false),
-      SQLColumn(dstColumnName, LongType, edgeBundle.rdd.mapValues(_.dst), nullable = false)
+      SQLColumn(srcColumnName, types.LongType, edgeBundle.rdd.mapValues(_.src), nullable = false),
+      SQLColumn(dstColumnName, types.LongType, edgeBundle.rdd.mapValues(_.dst), nullable = false)
     ) ++ attributes.toSeq.sortBy(_._1).map { case (name, attr) => sqlAttribute(name, attr) })
   }
 }
@@ -101,7 +96,7 @@ class SQLExport private (
     sqls: Seq[SQLColumn[_]]) {
 
   private val schema =
-    StructType(sqls.map(sql => StructField(sql.name, sql.sqlType, sql.nullable)))
+    types.StructType(sqls.map(sql => types.StructField(sql.name, sql.sqlType, sql.nullable)))
   private val rowRDD = addRDDs(
     vertexSet.mapValues(_ => Nil),
     sqls.map(_.rdd))
