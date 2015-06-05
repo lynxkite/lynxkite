@@ -4,7 +4,7 @@ Import the connection between the main project and this segmentation from a CSV.
 Each line in the CSV represents a connection between one base vertex and one segment.
 
 ====
-include::glossary.asciidoc[tag=database-import]
+include::glossary.asciidoc[tag=csv-import]
 
 [[base-id-attr]] Identifying vertex attribute in base project::
 The `String` vertex attribute that can be joined to the identifying field in the CSV.

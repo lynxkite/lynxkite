@@ -6,6 +6,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+### 1.4.2
+
  - Improvements to the import graph workflow: somewhat less computation stages plus the
    algorithm is not sensitive anymore to vertices with millions of edges.
  - Two new attribute operations implemented: _Fill edge attribute with constant default value_
@@ -47,10 +49,10 @@ Please add changes at the top. When releasing a version add a new header for tha
  - _"PageRank"_ operation can now be used without weights.
  - Data files and directories can now only be accessed via a special prefix notation.
    For example, what used to be `hdfs://nameservice1:8020/user/kite/data/uploads/file` is
-   now simply `UPLOADS$/file`. This enables the administrator to hide s3n passwords from
+   now simply `UPLOAD$/file`. This enables the administrator to hide s3n passwords from
    the users; futhermore, it will be easier to move the data to another location. A new kiterc
    option `KITE_PREFIX_DEFINITIONS` can be used to provide extra prefixes (other
-   than `UPLOADS$`) See the files `kiterc_template` and `prefix_definitions.txt` in directory
+   than `UPLOAD$`) See the files `kiterc_template` and `prefix_definitions.txt` in directory
    `kite_???/conf` for details.
  - New aggregation method: `count distinct`
  - LynxKite pages can now be printed. Visualizations are also supported. This provides a

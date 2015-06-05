@@ -82,3 +82,12 @@ mappings in Universal ++= {
     tool -> ("tools/" + tool.getName)
   }
 }
+
+// Includes all files in the kitescripts directory for stage. Does not include files subdirectories!
+mappings in Universal ++= {
+  val pathFinder = baseDirectory.value / "kitescripts" * "*"
+  pathFinder.get map {
+    tool: File =>
+    tool -> ("kitescripts/" + tool.getName)
+  }
+}
