@@ -20,7 +20,7 @@ object ImportUtil {
   def header(file: HadoopFile): String = {
     assert(file.exists, s"$file does not exist.")
     // Read from first file if there is a glob.
-    file.list.head.reader.readLine
+    file.list.head.readFirstLine()
   }
 
   private[graph_operations] def splitter(delimiter: String): String => Seq[String] = {
