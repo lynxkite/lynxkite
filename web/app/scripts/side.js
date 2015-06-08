@@ -282,6 +282,21 @@ angular.module('biggraph')
       }
     };
 
+    // Reloads all sides. Avoids reloading a side more than once.
+    Side.prototype.reloadAllProjects = function() {
+      for (var i = 0; i < this.sides.length; ++i) {
+        var side = this.sides[i];
+        if (side.state.projectName) {
+          side.project = side.load();
+        } else {
+          side.project = undefined;
+        }
+      }
+      if (this.onreload) {
+        this.onreload();
+      }
+    };
+
     Side.prototype.load = function() {
       return util.nocache('/ajax/project', { name: this.state.projectName });
     };
