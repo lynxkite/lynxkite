@@ -201,7 +201,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
-    Project.validateName(request.name)
+    Project.validateName(request.name, "Project name")
     val p = Project(request.name)
     assert(!Operation.projects.contains(p), s"Project ${request.name} already exists.")
     p.notes = request.notes
@@ -226,7 +226,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
-    Project.validateName(request.to)
+    Project.validateName(request.to, "Project name")
     val p = Project(request.from)
     p.assertWriteAllowedFrom(user)
     p.copy(Project(request.to))
@@ -258,7 +258,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
-    Project.validateName(request.to)
+    Project.validateName(request.to, "Project name")
     val p1 = Project(request.from)
     val p2 = Project(request.to)
     p1.assertReadAllowedFrom(user)
@@ -384,7 +384,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
-    Project.validateName(request.newProject)
+    Project.validateName(request.newProject, "Project name")
     val p = Project(request.newProject)
     if (request.newProject != request.history.project) {
       // Saving under a new name.
@@ -410,7 +410,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       request.stepsAsJSON,
       user.email,
       description)
-    Project.validateName(request.workflowName)
+    Project.validateName(request.workflowName, "Workflow name")
     val tagName = BigGraphController.workflowsRoot / request.workflowName / Timestamp.toString
     metaManager.setTag(tagName, savedWorkflow.prettyJson)
   }
