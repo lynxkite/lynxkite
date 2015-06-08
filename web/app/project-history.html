@@ -64,12 +64,8 @@
       Error loading history.
       <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
     </li>
-    <li class="list-group-item uneditable" ng-if="history.skips">
-      <div style="font-size: 30px">&hellip;</div>
-      {{history.skips}} earlier {{history.skips === 1 ? 'step' : 'steps'}} cannot be edited.
-    </li>
     <li class="list-group-item" ng-repeat="step in history.steps"
-      ng-class="{ 'local-changes': step.localChanges, invalid: !step.status.enabled }"
+      ng-class="{ 'local-changes': step.localChanges, 'has-checkpoint': step.hasCheckpoint && !step.localChanges, invalid: !step.status.enabled }"
       ng-init="cat = findCategory(step.opCategoriesBefore, step.request)">
       <div ng-hide="step.status.enabled" class="error">
         <i class="glyphicon glyphicon-exclamation-sign"></i>

@@ -48,12 +48,18 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       function alternateHistory() {
         var requests = [];
         var steps = scope.history.steps;
+        var skips = 0;
         for (var i = 0; i < steps.length; ++i) {
-          requests.push(steps[i].request);
+          var s = steps[i];
+          if (s.hasCheckpoint && !s.localChanges) {
+            skips += 1;
+          } else {
+            requests.push(s.request);
+          }
         }
         return {
           project: scope.side.state.projectName,
-          skips: scope.history.skips,
+          skips: skips,
           requests: requests,
         };
       }
