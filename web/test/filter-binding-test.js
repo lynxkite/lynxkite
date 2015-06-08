@@ -3,7 +3,7 @@ describe('the all filters button', function() {
   beforeEach(function() {
     mocks.addTo(browser);
     browser.get('/#/project/Project_Strawberry');
-    this.header = element(by.css('.project-name'))
+    this.header = element(by.css('.side > .project > .project-name'))
   });
 
   it('is linked to the vertex attribute filter box', function() {
