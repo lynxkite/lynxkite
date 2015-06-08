@@ -40,7 +40,7 @@ object SymbolPath {
 
   private def apply_common(first: String, optional: Seq[String]): SymbolPath =
     {
-      val path = (optional.reverse :+ first).reverse
+      val path = first +: optional
       for (name <- path) check(name)
       new SymbolPath(path.map(Symbol(_)))
     }
