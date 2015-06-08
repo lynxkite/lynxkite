@@ -1664,7 +1664,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val themName = params("them")
       assert(otherProjects.map(_.id).contains(themName), s"Unknown project: $themName")
-      val them = Project(SymbolPath(themName))
+      val them = Project.fromPath(themName)
       assert(them.vertexSet != null, s"No vertex set in $them")
       val segmentation = project.segmentation(params("them"))
       them.copy(segmentation.project)
@@ -1755,7 +1755,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]): Unit = {
       val otherName = params("other")
       assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
-      val other = Project(SymbolPath(otherName))
+      val other = Project.fromPath(otherName)
       if (other.vertexSet == null) {
         // Nothing to do
         return

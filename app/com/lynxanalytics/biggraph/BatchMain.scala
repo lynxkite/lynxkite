@@ -66,7 +66,7 @@ For example:
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           log.info(s"Computing scalar ${scalarName} on project ${projectName}...")
           Project.validateName(projectName)
-          val project = Project(SymbolPath.fromSafeSlashyString(projectName))
+          val project = Project.fromPath(projectName)
           val scalar = project.scalars(scalarName)
           log.info(s"Value of scalar ${scalarName} on project ${projectName}: ${scalar.value}")
           println(s"${projectName}|${scalarName}|${scalar.value}")
@@ -74,7 +74,7 @@ For example:
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           Project.validateName(projectName)
           val user = User("Batch User", isAdmin = true)
-          val project = Project(SymbolPath.fromSafeSlashyString(projectName))
+          val project = Project.fromPath(projectName)
 
           if (!Operation.projects.contains(project)) {
             // Create project if doesn't yet exist.

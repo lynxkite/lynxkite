@@ -13,16 +13,16 @@ class TagsTest extends FunSuite with TestTempDir {
   }
   test("We can set/read/reset a tag") {
     val root = newRoot
-    root.setTag(SymbolPath.fromSafeSlashyString("alma/korte/barack"), "hello")
+    root.setTag(SymbolPath.parse("alma/korte/barack"), "hello")
     assert((root / SymbolPath('alma, 'korte, 'barack)).content == "hello")
-    root.setTag(SymbolPath.fromSafeSlashyString("alma/korte/barack"), "good-bye")
-    assert((root / SymbolPath.fromSafeSlashyString("alma/korte/barack")).content == "good-bye")
+    root.setTag(SymbolPath.parse("alma/korte/barack"), "good-bye")
+    assert((root / SymbolPath.parse("alma/korte/barack")).content == "good-bye")
   }
 
   test("We can clone a tag") {
     val root = newRoot
-    val src = SymbolPath.fromSafeSlashyString("alma/korte/barack")
-    val dst = SymbolPath.fromSafeSlashyString("alma/cseresznye")
+    val src = SymbolPath.parse("alma/korte/barack")
+    val dst = SymbolPath.parse("alma/cseresznye")
     root.setTag(src, "hello")
     root.cp(src, dst)
     assert((root / src).content == "hello")
@@ -31,28 +31,28 @@ class TagsTest extends FunSuite with TestTempDir {
 
   test("We can clone a directory") {
     val root = newRoot
-    root.setTag(SymbolPath.fromSafeSlashyString("alma/korte/barack"), "hello")
-    root.cp(SymbolPath("alma"), SymbolPath.fromSafeSlashyString("brave_new_world/batoralma"))
+    root.setTag(SymbolPath.parse("alma/korte/barack"), "hello")
+    root.cp(SymbolPath("alma"), SymbolPath.parse("brave_new_world/batoralma"))
     assert((root /
-      SymbolPath.fromSafeSlashyString("brave_new_world/batoralma/korte/barack")).content == "hello")
+      SymbolPath.parse("brave_new_world/batoralma/korte/barack")).content == "hello")
   }
 
   test("We can save and reload") {
     val root = newRoot
-    root.setTag(SymbolPath.fromSafeSlashyString("alma/korte/barack"), "hello")
-    root.cp(SymbolPath("alma"), SymbolPath.fromSafeSlashyString("brave_new_world/batoralma"))
+    root.setTag(SymbolPath.parse("alma/korte/barack"), "hello")
+    root.cp(SymbolPath("alma"), SymbolPath.parse("brave_new_world/batoralma"))
     val root2 = TagRoot(storeFile.toString)
     assert((root2 /
-      SymbolPath.fromSafeSlashyString("brave_new_world/batoralma/korte/barack")).content == "hello")
+      SymbolPath.parse("brave_new_world/batoralma/korte/barack")).content == "hello")
     assert(root2.lsRec() == root.lsRec())
   }
 
   test("Directory deletion works") {
     val root = newRoot
-    val path = SymbolPath.fromSafeSlashyString("alma/korte/barack")
+    val path = SymbolPath.parse("alma/korte/barack")
     root.setTag(path, "hello")
     assert(root.exists(path))
-    root.rm(SymbolPath.fromSafeSlashyString("alma/korte"))
+    root.rm(SymbolPath.parse("alma/korte"))
     assert(!root.exists(path))
     val root2 = TagRoot(storeFile.toString)
     assert(!root2.exists(path))
@@ -61,7 +61,7 @@ class TagsTest extends FunSuite with TestTempDir {
   test("Can read tag as UUID") {
     val root = newRoot
     val uuid = UUID.randomUUID()
-    root.setTag(SymbolPath.fromSafeSlashyString("alma/korte/barack"), uuid.toString)
+    root.setTag(SymbolPath.parse("alma/korte/barack"), uuid.toString)
     assert((root / SymbolPath('alma, 'korte, 'barack)).gUID == uuid)
   }
 }
