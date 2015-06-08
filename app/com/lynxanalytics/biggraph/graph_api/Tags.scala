@@ -7,12 +7,12 @@ import scala.collection.mutable
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
   override def equals(p: Any) = {
-    p.isInstanceOf[SymbolPath] && toString == p.asInstanceOf[SymbolPath].toString
+    p.isInstanceOf[SymbolPath] && path == p.asInstanceOf[SymbolPath].path
   }
   override def hashCode = toString.hashCode
-  def /(suffixDir: Symbol): SymbolPath = {
-    SymbolPath.check(suffixDir.name)
-    path.toSeq :+ suffixDir
+  def /(symbol: Symbol): SymbolPath = {
+    SymbolPath.check(symbol)
+    path.toSeq :+ symbol
   }
   def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
   def /(suffixDir: String): SymbolPath = /(Symbol(suffixDir))
@@ -25,32 +25,24 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Order
 object SymbolPath {
   import scala.language.implicitConversions
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
-  // Be careful when you call this. In general, the string parameter
-  // can only come from a reliable source, that is:
-  // (1) a string literal, such as "alma/korte/barack" or
-  // (2) a string that have been put together programatically (e.g.,
-  //     SymbolPath('alma, 'korte, 'barack).toString) or
-  // (3) a string saved by ourselves
-  def fromSafeSlashyString(str: String): SymbolPath =
+  def parse(str: String): SymbolPath =
     str.split("/", -1).toSeq.map(Symbol(_))
-  def check(name: String) = {
-    assert(!name.contains("/"), s"Directory name $name contains a slash ('/')")
-    assert(name.nonEmpty)
+  def check(symbol: Symbol) = {
+    val str = symbol.name
+    assert(!str.contains("/"), s"Name $str contains a slash ('/')")
+    assert(str.nonEmpty)
   }
 
-  private def apply_common(first: String, optional: Seq[String]): SymbolPath =
-    {
-      val path = first +: optional
-      for (name <- path) check(name)
-      new SymbolPath(path.map(Symbol(_)))
-    }
+  def apply(first: Symbol, optional: Symbol*): SymbolPath = {
+    val path = first +: optional
+    for (name <- path) check(name)
+    new SymbolPath(path)
+  }
 
   def apply(first: String, optional: String*): SymbolPath = {
-    apply_common(first, optional.toSeq)
+    apply(Symbol(first), optional.map(Symbol(_)): _*)
   }
-  def apply(first: Symbol, optional: Symbol*): SymbolPath = {
-    apply_common(first.name, optional.map(x => x.name).seq)
-  }
+
 }
 
 sealed trait TagPath extends Serializable with Ordered[TagPath] {
@@ -211,7 +203,7 @@ object TagRoot {
     loadFromStore(storeFromRepo(repo))
 
   private def loadFromStore(store: KeyValueStore): Map[SymbolPath, String] =
-    store.readAll.map { case (k, v) => SymbolPath.fromSafeSlashyString(k) -> v }.toMap
+    store.readAll.map { case (k, v) => SymbolPath.parse(k) -> v }.toMap
 
   private def storeFromRepo(repo: String): KeyValueStore = {
     val tagsJournal = new File(repo, journalFilename)
