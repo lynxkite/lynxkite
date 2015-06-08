@@ -127,23 +127,23 @@ case class ProjectSettingsRequest(project: String, readACL: String, writeACL: St
 case class HistoryRequest(project: String)
 case class AlternateHistory(
   project: String,
-  skips: Int, // Number of checkpoints to skip.
+  skips: Int, // Number of unmodified operations.
   requests: List[ProjectOperationRequest])
 case class SaveHistoryRequest(
   newProject: String,
   history: AlternateHistory)
 case class ProjectHistory(
     project: String,
-    skips: Int, // Number of checkpoints skipped.
     steps: List[ProjectHistoryStep]) {
-  def valid = steps.forall(_.status.enabled)
+  def valid = steps.forall(step => step.hasCheckpoint || step.status.enabled)
 }
 case class ProjectHistoryStep(
   request: ProjectOperationRequest,
   status: FEStatus,
   segmentationsBefore: List[FESegmentation],
   segmentationsAfter: List[FESegmentation],
-  opCategoriesBefore: List[OperationCategory])
+  opCategoriesBefore: List[OperationCategory],
+  hasCheckpoint: Boolean)
 
 case class SaveWorkflowRequest(
   workflowName: String,
@@ -294,19 +294,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = metaManager.synchronized {
     val p = Project(request.project)
     p.assertReadAllowedFrom(user)
-    withCheckpoints(p) { checkpoints =>
-      assert(checkpoints.nonEmpty, s"No history for $p. Try the parent project.")
-      val ops = checkpoints.tail // The first checkpoint is the empty project.
-      // lastIndexWhere returns -1 when there is no such element.
-      val loggedFrom = ops.lastIndexWhere(_.lastOperationRequest.isEmpty) + 1
-      // Find the lowest number of skips to get a valid history.
-      (loggedFrom to ops.size).view.flatMap { skips =>
-        val remaining = ops.drop(skips)
-        val requests = remaining.map(_.lastOperationRequest.get)
-        val h = validateHistory(user, AlternateHistory(request.project, skips, requests.toList))
-        if (h.valid) Some(h) else None
-      }.head
-    }
+    assert(p.checkpointCount > 0, s"No history for $p. Try the parent project.")
+    validateHistory(user, AlternateHistory(request.project, p.checkpointCount, List()))
   }
 
   // Expand each checkpoint of a project to a separate project, run the code, then clean up.
@@ -328,54 +317,71 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   // Returns the evaluated alternate history, and optionally copies the resulting state into a new project.
-  private def alternateHistory(user: serving.User, request: AlternateHistory, copyTo: Option[Project]): ProjectHistory = metaManager.synchronized {
+  private def alternateHistory(
+    user: serving.User,
+    request: AlternateHistory,
+    copyTo: Option[Project]): ProjectHistory = metaManager.synchronized {
     val p = Project(request.project)
     p.assertReadAllowedFrom(user)
     withCheckpoints(p) { checkpoints =>
-      val state = checkpoints(request.skips) // State before the first operation.
-      val steps = request.requests.foldLeft(List[ProjectHistoryStep]()) { (steps, request) =>
-
-        val op = ops.operationOnSubproject(state, request, user)
-        val recipient = op.project
-
-        val segmentationsBefore = state.toFE.segmentations
-        val opCategoriesBefore = ops.categories(user, recipient)
-        val opCategoriesBeforeWithOp =
-          if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty &&
-            op.isInstanceOf[WorkflowOperation]) {
-            val deprCat = WorkflowOperation.deprecatedCategory
-            val deprCatFE = deprCat.toFE(List(op.toFE.copy(category = deprCat.title)))
-            opCategoriesBefore :+ deprCatFE
-          } else {
-            opCategoriesBefore
-          }
-        def newStep(status: FEStatus) = {
-          val segmentationsAfter = state.toFE.segmentations
-          ProjectHistoryStep(
-            request, status, segmentationsBefore, segmentationsAfter, opCategoriesBeforeWithOp)
-        }
-        if (op.enabled.enabled && !op.dirty) {
-          try {
-            recipient.checkpoint(op.summary(request.op.parameters), request) {
-              op.validateAndApply(request.op.parameters)
-            }
-            steps :+ newStep(FEStatus.enabled)
-          } catch {
-            case t: Throwable =>
-              steps :+ newStep(FEStatus.disabled(t.getMessage))
-          }
-        } else if (!op.dirty) {
-          steps :+ newStep(op.enabled)
-        } else {
-          steps // Dirty operations are hidden from the history.
-        }
-      }
-      val history = ProjectHistory(p.projectName, request.skips, steps)
+      val beforeAfter = checkpoints.zip(checkpoints.tail)
+      var state = checkpoints.head
+      val skippedSteps = beforeAfter.view.flatMap {
+        case (before, after) =>
+          state = after
+          val request = after.lastOperationRequest
+          request.flatMap(historyStep(user, before, _))
+      }.take(request.skips).map(_.copy(hasCheckpoint = true)).toIndexedSeq
+      state.debugPrint()
+      val modifiedSteps = request.requests.flatMap(historyStep(user, state, _))
+      val steps = skippedSteps ++ modifiedSteps
+      val history = ProjectHistory(p.projectName, steps.toList)
       if (copyTo.nonEmpty) {
         assert(history.valid, s"Tried to copy invalid history for project $p.")
         state.copy(copyTo.get)
       }
       history
+    }
+  }
+
+  private def historyStep(
+    user: serving.User,
+    state: Project,
+    request: ProjectOperationRequest): Option[ProjectHistoryStep] = {
+    val op = ops.operationOnSubproject(state, request, user)
+    val recipient = op.project
+
+    val segmentationsBefore = state.toFE.segmentations
+    val opCategoriesBefore = ops.categories(user, recipient)
+    val opCategoriesBeforeWithOp =
+      if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty &&
+        op.isInstanceOf[WorkflowOperation]) {
+        val deprCat = WorkflowOperation.deprecatedCategory
+        val deprCatFE = deprCat.toFE(List(op.toFE.copy(category = deprCat.title)))
+        opCategoriesBefore :+ deprCatFE
+      } else {
+        opCategoriesBefore
+      }
+    def newStep(status: FEStatus) = {
+      val segmentationsAfter = state.toFE.segmentations
+      ProjectHistoryStep(
+        request, status, segmentationsBefore, segmentationsAfter, opCategoriesBeforeWithOp,
+        hasCheckpoint = false)
+    }
+    if (op.enabled.enabled && !op.dirty) {
+      try {
+        recipient.checkpoint(op.summary(request.op.parameters), request) {
+          op.validateAndApply(request.op.parameters)
+        }
+        Some(newStep(FEStatus.enabled))
+      } catch {
+        case t: Throwable =>
+          Some(newStep(FEStatus.disabled(t.getMessage)))
+      }
+    } else if (op.dirty) {
+      None // Dirty operations are hidden from the history.
+    } else {
+      Some(newStep(op.enabled))
     }
   }
 
