@@ -13,16 +13,18 @@ fake_application_jar=${lib_dir}/empty.jar
 KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 
 pushd ${lib_dir}/..
-conf_dir=`pwd`/conf
-log_dir=`pwd`/logs
+stage_dir=`pwd`
+conf_dir=${stage_dir}/conf
+log_dir=${stage_dir}/logs
 mkdir -p ${log_dir}
-tools_dir=`pwd`/tools
+tools_dir=${stage_dir}/tools
 popd
 
 
 export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
 export KITE_RANDOM_SECRET=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
+export KITE_STAGE_DIR=${stage_dir}
 if [ -f ${KITE_SITE_CONFIG} ]; then
   echo "Loading configuration from: ${KITE_SITE_CONFIG}"
   source ${KITE_SITE_CONFIG}

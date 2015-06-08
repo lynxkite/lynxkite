@@ -90,10 +90,14 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   def open() = fs.open(path)
   def create() = fs.create(path)
   def exists() = fs.exists(path)
-  def reader() = new BufferedReader(new InputStreamReader(open))
+  private def reader() = new BufferedReader(new InputStreamReader(open))
   def readAsString() = {
     val r = reader()
-    org.apache.commons.io.IOUtils.toString(r)
+    try org.apache.commons.io.IOUtils.toString(r) finally r.close()
+  }
+  def readFirstLine() = {
+    val r = reader()
+    try r.readLine finally r.close()
   }
   def delete() = fs.delete(path, true)
   def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
