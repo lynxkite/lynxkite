@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .factory('side', function (util) {
+  .factory('side', function (util, $rootScope) {
     function defaultSideState() {
       return {
         projectName: undefined,
@@ -277,9 +277,7 @@ angular.module('biggraph')
       } else {
         this.project = undefined;
       }
-      if (this.onreload) {
-        this.onreload();
-      }
+      $rootScope.$broadcast('project reloaded');
     };
 
     // Reloads all sides. Avoids reloading a side more than once.
@@ -292,9 +290,7 @@ angular.module('biggraph')
           side.project = undefined;
         }
       }
-      if (this.onreload) {
-        this.onreload();
-      }
+      $rootScope.$broadcast('project reloaded');
     };
 
     Side.prototype.load = function() {
