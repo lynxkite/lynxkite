@@ -82,7 +82,11 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           history: alternateHistory(),
         }, function() {
           // On success.
-          scope.side.state.projectName = newName;
+          if (scope.side.state.projectName === newName) {
+            scope.side.reload();
+          } else {
+            scope.side.state.projectName = newName; // Will trigger a reload.
+          }
           scope.side.showHistory = false;
         }).then(function() {
           // On completion, regardless of success.
