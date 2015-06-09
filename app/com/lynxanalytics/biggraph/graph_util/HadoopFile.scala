@@ -89,6 +89,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   // The caller is responsible for calling close().
   def open() = fs.open(path)
+  // The caller is responsible for calling close().
   def create() = fs.create(path)
   def exists() = fs.exists(path)
   private def reader() = new BufferedReader(new InputStreamReader(open))
