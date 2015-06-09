@@ -386,7 +386,7 @@ angular.module('biggraph')
         },
         function() {
           that.reload();
-        });
+        }).$status;
     };
 
     Side.prototype.saveNotes = function() {

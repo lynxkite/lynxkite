@@ -104,9 +104,10 @@ angular
         // Helpful for debugging/error reporting.
         resource.$url = url;
         resource.$params = params;
-        // Returns a promise of the success state, for flexibility.
-        return resource.$promise
+        // A promise of the success state, for flexibility.
+        resource.$status = resource.$promise
           .then(function() { return true; }, function() { return false; });
+        return resource;
       },
       // Easier to read numbers. 1234 -> 1k
       human: function(x) {

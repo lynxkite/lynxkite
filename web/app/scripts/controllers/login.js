@@ -10,7 +10,7 @@ angular.module('biggraph')
     $scope.passwordSignIn = window.location.hostname !== 'pizzakite.lynxanalytics.com';
 
     function tryLogin(url, credentials) {
-      util.post(url, credentials).then(function(success) {
+      util.post(url, credentials).$status.then(function(success) {
         $scope.submitted = false;
         if (success) {
           $location.url('/');

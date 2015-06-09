@@ -11,7 +11,7 @@ angular.module('biggraph')
           email: $scope.newUserName,
           password: $scope.newPassword,
           isAdmin: $scope.newUserIsAdmin || false,
-        }).then(function() {
+        }).$status.then(function() {
           $scope.list = util.nocache('/ajax/getUsers');
         });
     };
