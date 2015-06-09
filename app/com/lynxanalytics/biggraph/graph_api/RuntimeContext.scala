@@ -14,6 +14,7 @@ case class Broadcast[T](filename: HadoopFile) {
 
 case class RuntimeContext(sparkContext: spark.SparkContext,
                           broadcastDirectory: HadoopFile,
+                          numExecutors: Int,
                           // The number of cores available for computations.
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.

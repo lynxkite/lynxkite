@@ -55,4 +55,4 @@ Operations('${project}')
   }
 ]
 EndOperations
-GetScalar('${project}', 'maximal_cliques_size_average_average')
+BenchmarkScalar('${project}', 'maximal_cliques_size_average_average')
