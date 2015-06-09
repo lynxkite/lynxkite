@@ -22,8 +22,9 @@ object BatchMain {
   private val opsRE = raw"Operations\s*\(\s*'([^']+)'\s*\)".r
   private val opsEnd = "EndOperations"
 
-  def getScalarMeta(projectName: String, scalarName: String, params: Map[String, String])(implicit metaManager: MetaGraphManager): Scalar[_] = {
-
+  def getScalarMeta(
+    projectName: String, scalarName: String, params: Map[String, String])(
+      implicit metaManager: MetaGraphManager): Scalar[_] = {
     Project.validateName(projectName)
     val project = Project(projectName)
     project.scalars(scalarName)
