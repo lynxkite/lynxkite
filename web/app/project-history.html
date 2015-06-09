@@ -17,30 +17,26 @@
       </label>
     </div>
 
-    <div class="btn-group pull-right" ng-if="localChanges || remoteChanges">
-      <!-- Invalid local changes. -->
-      <label class="btn btn-warning" ng-if="localChanges && localValidationResult() !== 'ok'"
-        tooltip="Not ready for validation: {{localValidationResult()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-exclamation-sign"></i>
-      </label>
-      <!-- Valid local changes. -->
-      <label class="btn btn-default" ng-if="localChanges && localValidationResult() === 'ok'" ng-click="validate()"
-        tooltip="Validate&nbsp;history {{listLocalChanges()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-ok"></i>
+    <div class="btn-group pull-right">
+      <!-- No changes. -->
+      <label class="btn btn-default" ng-if="!remoteChanges"
+        tooltip="No changes" tooltip-append-to-body="true" tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-floppy-disk"></i>
       </label>
       <!-- Invalid remote changes. -->
-      <label class="btn btn-warning" ng-if="!localChanges && !valid"
-        tooltip="History is inconsitent {{listInvalidSteps()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
+      <label class="btn btn-warning" ng-if="!valid"
+        tooltip="History is inconsitent {{listInvalidSteps()}}"
+        tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
       </label>
       <!-- Valid remote changes. "Save as" box is closed. -->
-      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid && !showSaveAs"
+      <label class="btn btn-default" ng-if="remoteChanges && valid && !showSaveAs"
         ng-click="$parent.showSaveAs = true; $parent.saveAsName = side.state.projectName;"
         tooltip="History is valid. Click to save." tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-floppy-disk"></i>
       </label>
       <!-- Valid remote changes. "Save as" box is open. -->
-      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid && showSaveAs"
+      <label class="btn btn-default" ng-if="remoteChanges && valid && showSaveAs"
         ng-click="saveAs(saveAsName)"
         tooltip="Click the icon to save as {{saveAsName}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <form ng-submit="saveAs(saveAsName)" style="display: inline;">
@@ -65,7 +61,11 @@
       <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
     </li>
     <li class="list-group-item" ng-repeat="step in history.steps"
-      ng-class="{ 'local-changes': step.localChanges, 'has-checkpoint': step.hasCheckpoint && !step.localChanges, invalid: !step.status.enabled }"
+      ng-class="{
+        'has-checkpoint': step.hasCheckpoint,
+        invalid: !step.status.enabled,
+        uneditable: !step.editable,
+      }"
       ng-init="cat = findCategory(step.opCategoriesBefore, step.request)">
       <div ng-hide="step.status.enabled" class="error">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
@@ -78,9 +78,10 @@
         categories="step.opCategoriesBefore"
         op="step.request.op.id"
         category="cat"
-        params="step.request.op.parameters">
+        params="step.request.op.parameters"
+        editable="step.editable">
       </operation-toolbox>
-      <div class="btn-group history-options pull-right" dropdown>
+      <div class="btn-group history-options pull-right" dropdown ng-hide="localChanges">
         <a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>
         <ul class="dropdown-menu">
           <li><a href ng-click="discard(step)">
