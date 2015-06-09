@@ -20,10 +20,9 @@ angular.module('biggraph').directive('workflowSaver', function(util) {
             stepsAsJSON: scope.code,
             description: scope.description,
           },
-          function(success) {
-            if (success) {
-              scope.visible = false;
-            }
+          function() {
+            scope.visible = false;
+            scope.side.reloadAllProjects();
           });
       };
     }

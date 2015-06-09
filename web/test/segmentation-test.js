@@ -3,7 +3,7 @@ describe('the segmentation', function() {
   beforeEach(function() {
     mocks.addTo(browser);
     browser.get('/#/project/Project_Strawberry');
-    this.sides = element.all(by.css('div.project'));
+    this.sides = element.all(by.css('.side > .project'));
     this.segmentation = this.sides.first().all(by.css('[segmentation]')).first();
     this.openButton = this.segmentation.element(by.css('[tooltip="Open"]'));
   });
@@ -15,7 +15,7 @@ describe('the segmentation', function() {
     this.openButton.click();
     expect(this.sides.count()).toBe(2);
     function projectName(p) {
-      return p.element(by.css('.project-name')).getText();
+      return p.element(by.css('.side > .project > .project-name')).getText();
     }
     expect(projectName(this.sides.get(0))).toBe('Project Strawberry');
     expect(projectName(this.sides.get(1))).toContain('maximal cliques');
