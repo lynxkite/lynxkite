@@ -341,9 +341,22 @@ object Implicits {
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
     // Sorts each partition of the RDD in isolation.
-    def toSortedRDD = SortedRDD.fromUnsorted(self)
-    def toSortedRDD(partitioner: spark.Partitioner)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
-      SortedRDD.fromUnsorted(self.partitionBy(partitioner))
+    def toSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
+      toSortedRDD(self.partitioner.orNull)
+    def toSortedRDD(partitioner: spark.Partitioner)(
+      implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      self match {
+        case self: SortedRDD[K, V] if partitioner eq self.partitioner.orNull =>
+          self
+        case self if partitioner eq self.partitioner.orNull =>
+          SortedRDD.fromUnsorted(self)
+        case self =>
+          // Use ShuffledRDD instead of partitionBy to avoid re-using an equal but non-identical
+          // partitioner.
+          SortedRDD.fromUnsorted(new spark.rdd.ShuffledRDD(self, partitioner))
+      }
+    }
+
     def groupBySortedKey(partitioner: spark.Partitioner)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
       SortedRDD.fromUnsorted(self.groupByKey(partitioner))
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
