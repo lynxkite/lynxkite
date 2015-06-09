@@ -126,7 +126,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
   def sortedRepartition(newPartitioner: Partitioner)(
     implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
     if (partitioner eq newPartitioner) this
-    else this.toSortedRDD(newPartitioner)
+    else new ShuffledRDD(this, newPartitioner).toSortedRDD
   }
 
   // See comments at DerivedSortedRDD before blindly using this method!
