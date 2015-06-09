@@ -508,6 +508,9 @@ object Project {
   def fromPath(stringPath: String)(implicit metaManager: MetaGraphManager): Project =
     new Project(SymbolPath.parse(stringPath))
 
+  def fromName(name: String)(implicit metaManager: MetaGraphManager): Project =
+    new Project(SymbolPath(name))
+
   def withErrorLogging[T](message: String)(op: => T): Option[T] = {
     try {
       Some(op)
