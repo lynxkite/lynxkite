@@ -13,6 +13,7 @@ angular.module('biggraph').directive('operationToolbox', function(hotkeys) {
       category: '=?',  // (Input/output.) Currently selected category (if any).
       searching: '=?',  // (Input/output.) Whether operation search is active.
       applying: '=',  // (Input.) Whether an operation is just being submitted.
+      editable: '=',  // (Input.) Whether the toolbox should be interactive.
     },
     templateUrl: 'operation-toolbox.html',
     link: function(scope, elem) {

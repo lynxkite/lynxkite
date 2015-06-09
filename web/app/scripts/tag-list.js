@@ -8,6 +8,7 @@ angular.module('biggraph').directive('tagList', function() {
     scope: {
       model: '=',
       options: '=',
+      editable: '=',
     },
     templateUrl: 'tag-list.html',
     link: function(scope) {
@@ -16,7 +17,9 @@ angular.module('biggraph').directive('tagList', function() {
         scope.model.push(id);
       };
       scope.removeTag = function(id) {
-        scope.model = scope.model.filter(function(x) { return x !== id; });
+        if (scope.editable) {
+          scope.model = scope.model.filter(function(x) { return x !== id; });
+        }
       };
       scope.getTags = function() {
         var tagsByID = {};

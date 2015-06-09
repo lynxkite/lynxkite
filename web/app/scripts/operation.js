@@ -7,6 +7,7 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
     scope: {
       op: '=',  // (Input.)
       color: '=',  // (Input.)
+      editable: '=',  // (Input.)
       params: '=',  // (Input/output.)
       applying: '=?',  // (Input.) Whether an operation is being applied currently.
     },

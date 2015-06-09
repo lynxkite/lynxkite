@@ -11,7 +11,7 @@
     No parameters
   </p>
   <form ng-if="op.parameters" class="form-horizontal list-group-item" ng-submit="apply()">
-    <operation-parameters op="op" output="params" busy="$parent.busy"></operation-parameters>
+    <operation-parameters op="op" output="params" busy="$parent.busy" editable="editable"></operation-parameters>
   </form>
   <div tabindex="0" ng-click="apply()" class="list-group-item ok-button text-center operation-apply-button">
     {{applying || busy ? '...' : 'OK'}}
