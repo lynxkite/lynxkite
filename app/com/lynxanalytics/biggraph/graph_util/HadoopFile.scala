@@ -87,6 +87,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   @transient lazy val fs = hadoop.fs.FileSystem.get(uri, hadoopConfiguration)
   @transient lazy val uri = path.toUri
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
+  // The caller is responsible for calling close().
   def open() = fs.open(path)
   def create() = fs.create(path)
   def exists() = fs.exists(path)
