@@ -3,6 +3,7 @@
 
 package com.lynxanalytics.biggraph
 
+import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.Operation
 import com.lynxanalytics.biggraph.controllers.Operations
@@ -73,7 +74,7 @@ For example:
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           Project.validateName(projectName)
           val user = User("Batch User", isAdmin = true)
-          val project = Project.fromPath(projectName)
+          val project = Project(SymbolPath(projectName))
 
           if (!Operation.projects.contains(project)) {
             // Create project if doesn't yet exist.
