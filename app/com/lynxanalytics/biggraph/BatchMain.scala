@@ -74,7 +74,7 @@ For example:
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           Project.validateName(projectName)
           val user = User("Batch User", isAdmin = true)
-          val project = Project(SymbolPath(projectName))
+          val project = Project.fromName(projectName)
 
           if (!Operation.projects.contains(project)) {
             // Create project if doesn't yet exist.
