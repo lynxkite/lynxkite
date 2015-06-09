@@ -9,7 +9,6 @@ cd $DIR/..
 
 RATIO=0.050625
 for i in `seq 10`; do
-echo "Running with ratio: $RATIO"
 rm -r ~/kite_meta
 rm -r ~/kite_data/entities
 rm -r ~/kite_data/scalars

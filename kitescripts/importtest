@@ -29,4 +29,4 @@ Operations('loadrandom')
 ]
 EndOperations
 
-GetScalar('loadrandom', 'id_count')
+BenchmarkScalar('loadrandom', 'id_count')
