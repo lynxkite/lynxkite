@@ -3,7 +3,6 @@
 
 package com.lynxanalytics.biggraph
 
-import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.Operation
 import com.lynxanalytics.biggraph.controllers.Operations
