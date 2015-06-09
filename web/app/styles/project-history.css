@@ -35,6 +35,7 @@ project-history .operation-toolbox .box h1 {
   font-size: 20px;
 }
 
+/* Show OK button for operation with local changes only. */
 project-history .operation-apply-button {
   display: none;
 }

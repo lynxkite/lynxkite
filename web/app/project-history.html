@@ -63,6 +63,7 @@
     <li class="list-group-item" ng-repeat="step in history.steps"
       ng-class="{
         'has-checkpoint': step.hasCheckpoint,
+        'local-changes': step.localChanges,
         invalid: !step.status.enabled,
         uneditable: !step.editable,
       }"

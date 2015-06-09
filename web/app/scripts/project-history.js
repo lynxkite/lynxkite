@@ -24,6 +24,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         if (history && history.$resolved && !history.$error) {
           for (var i = 0; i < history.steps.length; ++i) {
             var step = history.steps[i];
+            step.localChanges = false;
             step.editable = true;
             if (!step.hasCheckpoint && !step.status.enabled) {
               scope.valid = false;
@@ -42,6 +43,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           function() { return step.request; },
           function(after, before) {
             if (after === before) { return; }
+            step.localChanges = true;
             scope.localChanges = true;
             // Steps after a change cannot use checkpoints.
             // This is visually communicated as well.
