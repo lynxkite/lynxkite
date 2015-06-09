@@ -77,11 +77,13 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       }
 
       function validate() {
+        scope.validating = true;
         scope.updatedHistory = util.nocache('/ajax/validateHistory', alternateHistory());
       }
       function copyUpdate() {
         if (scope.updatedHistory.$resolved) {
           scope.remoteChanges = true;
+          scope.validating = false;
           scope.history = scope.updatedHistory;
         }
       }
