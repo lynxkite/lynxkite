@@ -261,8 +261,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
     Project.validateName(request.to)
-    val p1 = projectFromName(request.from)
-    val p2 = projectFromName(request.to)
+    val p1 = Project(SymbolPath(request.from))
+    val p2 = Project(SymbolPath(request.to))
     p1.assertReadAllowedFrom(user)
     assert(!Operation.projects.contains(p2), s"Project $p2 already exists.")
     p1.copy(p2)
@@ -272,19 +272,19 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def undoProject(user: serving.User, request: UndoProjectRequest): Unit = metaManager.synchronized {
-    val p = projectFromName(request.project)
+    val p = Project(SymbolPath(request.project))
     p.assertWriteAllowedFrom(user)
     p.undo()
   }
 
   def redoProject(user: serving.User, request: RedoProjectRequest): Unit = metaManager.synchronized {
-    val p = projectFromName(request.project)
+    val p = Project(SymbolPath(request.project))
     p.assertWriteAllowedFrom(user)
     p.redo()
   }
 
   def changeProjectSettings(user: serving.User, request: ProjectSettingsRequest): Unit = metaManager.synchronized {
-    val p = projectFromName(request.project)
+    val p = Project(SymbolPath(request.project))
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
     assert(user.isAdmin || p.aclContains(request.writeACL, user),
@@ -294,7 +294,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = metaManager.synchronized {
-    val p = projectFromName(request.project)
+    val p = Project(SymbolPath(request.project))
     p.assertReadAllowedFrom(user)
     withCheckpoints(p) { checkpoints =>
       assert(checkpoints.nonEmpty, s"No history for $p. Try the parent project.")
@@ -315,7 +315,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.tagBatch {
     val tmpDir = s"!tmp-$Timestamp"
     val ps = (0 until p.checkpointCount).map { i =>
-      val tmp = projectFromName(s"$tmpDir-$i")
+      val tmp = Project(SymbolPath(s"$tmpDir-$i"))
       assert(!Operation.projects.contains(tmp), s"Project $tmp already exists.")
       p.copyCheckpoint(i, tmp)
       tmp
@@ -331,7 +331,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   // Returns the evaluated alternate history, and optionally copies the resulting state into a new project.
   private def alternateHistory(user: serving.User, request: AlternateHistory, copyTo: Option[Project]): ProjectHistory = metaManager.synchronized {
-    val p = projectFromName(request.project)
+    val p = Project(SymbolPath(request.project))
     p.assertReadAllowedFrom(user)
     withCheckpoints(p) { checkpoints =>
       val state = checkpoints(request.skips) // State before the first operation.
@@ -387,7 +387,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
     Project.validateName(request.newProject)
-    val p = projectFromName(request.newProject)
+    val p = Project(SymbolPath(request.newProject))
     if (request.newProject != request.history.project) {
       // Saving under a new name.
       assert(!Operation.projects.contains(p), s"Project $p already exists.")
@@ -511,7 +511,7 @@ object Operation {
         Nil
     }
     // Do not list internal project names (starting with "!").
-    dirs.map(p => Project.fromPath(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
+    dirs.map(p => Project(SymbolPath(p.path.last.name))).filterNot(_.projectName.startsWith("!"))
   }
 }
 
