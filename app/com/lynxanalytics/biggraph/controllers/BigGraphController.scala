@@ -332,7 +332,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
           val request = after.lastOperationRequest
           request.flatMap(historyStep(user, before, _))
       }.take(request.skips).map(_.copy(hasCheckpoint = true)).toIndexedSeq
-      state.debugPrint()
       val modifiedSteps = request.requests.flatMap(historyStep(user, state, _))
       val steps = skippedSteps ++ modifiedSteps
       val history = ProjectHistory(p.projectName, steps.toList)
