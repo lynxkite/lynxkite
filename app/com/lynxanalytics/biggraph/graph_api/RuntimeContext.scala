@@ -21,7 +21,6 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           workMemoryPerCore: Long) {
   val workerMemoryMult = scala.util.Properties.envOrElse("WORKER_MEMORY_MULT", "0.5").toDouble
   val bytesPerPartition = (workMemoryPerCore * workerMemoryMult).toLong
-  println(s"Bytes per partition: $bytesPerPartition")
   val defaultPartitions = numAvailableCores
   // A suitable partitioner for N bytes.
   def partitionerForNBytes(n: Long): spark.Partitioner =
