@@ -1,5 +1,5 @@
 // This operation is useful when one wants to apply on an edge bundle a tranformative operation
-// (e.g. filter) that was defined on vertex sets.
+//  (e.g. filter) that was defined on vertex sets.
 //
 // The way to go is to first apply the operation on edgeBundle.idSet, say it creates a new
 // vertex set destinationVS and also provides an injection from destinationVS to
