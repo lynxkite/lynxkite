@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment with BeforeAndAfterEach {
   val controller = new BigGraphController(this)
-  val project = Project(SymbolPath("Test_Project"))
+  val project = Project.fromPath("Test_Project")
   val user = com.lynxanalytics.biggraph.serving.User.fake
 
   def run(op: String, params: Map[String, String] = Map(), on: Project = project) =

@@ -223,7 +223,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Project union") {
     run("Example Graph")
-    val other = Project(SymbolPath("ExampleGraph2"))
+    val other = Project.fromPath("ExampleGraph2")
     project.copy(other)
     run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = other)
     run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = other)
@@ -254,7 +254,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Project union on vertex sets") {
     run("New vertex set", Map("size" -> "10"))
-    val other = Project(SymbolPath("Copy"))
+    val other = Project.fromPath("Copy")
     project.copy(other)
     run("Union with another project", Map("other" -> "Copy", "id-attr" -> "new_id"))
 
@@ -264,7 +264,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Project union - useful error message (#1611)") {
     run("Example Graph")
-    val other = Project(SymbolPath("ExampleGraph2"))
+    val other = Project.fromPath("ExampleGraph2")
     project.copy(other)
     run("Rename vertex attribute",
       Map("from" -> "age", "to" -> "newage"), on = other)
@@ -330,7 +330,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   test("Fingerprinting between project and segmentation") {
     run("Example Graph")
-    val other = Project(SymbolPath("ExampleGraph2"))
+    val other = Project.fromPath("ExampleGraph2")
     project.copy(other)
     run("Import project as segmentation", Map(
       "them" -> "ExampleGraph2"))
@@ -389,7 +389,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
       "aggregate-dst" -> "",
       "aggregate-src" -> ""))
     run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
-    val other = Project(SymbolPath("other"))
+    val other = Project.fromPath("other")
     project.copy(other)
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-edges-1.csv",
@@ -676,5 +676,4 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
     assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
-
 }

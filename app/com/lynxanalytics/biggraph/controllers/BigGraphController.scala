@@ -511,7 +511,7 @@ object Operation {
         Nil
     }
     // Do not list internal project names (starting with "!").
-    dirs.map(p => Project(SymbolPath(p.path.last.name))).filterNot(_.projectName.startsWith("!"))
+    dirs.map(p => Project.fromPath(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
   }
 }
 
