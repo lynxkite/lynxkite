@@ -307,7 +307,7 @@ object ProductionJsonServer extends JsonServer {
   def redoProject = jsonPost(bigGraphController.redoProject)
   def changeProjectSettings = jsonPost(bigGraphController.changeProjectSettings)
   def getHistory = jsonGet(bigGraphController.getHistory)
-  def validateHistory = jsonGet(bigGraphController.validateHistory)
+  def validateHistory = jsonPost(bigGraphController.validateHistory)
   def saveHistory = jsonPost(bigGraphController.saveHistory)
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
 

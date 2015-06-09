@@ -80,7 +80,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
 
       function validate() {
         scope.validating = true;
-        scope.updatedHistory = util.nocache('/ajax/validateHistory', alternateHistory());
+        scope.updatedHistory = util.post('/ajax/validateHistory', alternateHistory());
       }
       function copyUpdate() {
         if (scope.updatedHistory.$resolved) {
@@ -105,7 +105,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             scope.side.state.projectName = newName; // Will trigger a reload.
           }
           scope.side.showHistory = false;
-        }).then(function() {
+        }).$status.then(function() {
           // On completion, regardless of success.
           scope.saving = false;
         });

@@ -9,7 +9,7 @@ POST /ajax/discardProject com.lynxanalytics.biggraph.serving.ProductionJsonServe
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
 GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project
 GET  /ajax/getHistory    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getHistory
-GET  /ajax/validateHistory com.lynxanalytics.biggraph.serving.ProductionJsonServer.validateHistory
+POST /ajax/validateHistory com.lynxanalytics.biggraph.serving.ProductionJsonServer.validateHistory
 POST /ajax/saveHistory   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveHistory
 POST /ajax/saveWorkflow   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveWorkflow
 GET  /ajax/splash        com.lynxanalytics.biggraph.serving.ProductionJsonServer.splash
