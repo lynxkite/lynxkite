@@ -1,0 +1,32 @@
+Operations('loadrandom')
+[
+  {
+    "project": "!project",
+    "op": {
+      "id": "Import-vertices-and-edges-from-single-CSV-fileset",
+      "parameters": {
+        "dst": "dstVertexId",
+        "files": "${glob}",
+        "filter": "",
+        "src": "srcVertexId",
+        "header": "srcVertexId,dstVertexId,weight",
+        "omitted": "",
+        "delimiter": ","
+      }
+    }
+  },
+  {
+    "project": "!project",
+    "op": {
+      "id": "Aggregate-vertex-attribute-globally",
+      "parameters": {
+        "aggregate-id": "count",
+        "prefix": "",
+        "aggregate-stringID": ""
+      }
+    }
+  }
+]
+EndOperations
+
+GetScalar('loadrandom', 'id_count')
