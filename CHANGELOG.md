@@ -1,10 +1,14 @@
 <!---
-Please add changes at the top. When releasing a version add a new header for that release.
+Please add changes to "master". When releasing a version add a new header for that release.
 -->
 
 # Changes
 
 ### master
+
+ - History editing improvements. Operations with problems (such as importing a file that no
+   longer exists) can be edited now. Long histories can now be edited without problem. The
+   UI has been revised a bit. (The _Validate_ button has been removed.)
 
 ### 1.4.2
 
