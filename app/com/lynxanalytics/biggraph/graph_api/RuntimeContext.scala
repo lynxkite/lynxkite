@@ -14,11 +14,13 @@ case class Broadcast[T](filename: HadoopFile) {
 
 case class RuntimeContext(sparkContext: spark.SparkContext,
                           broadcastDirectory: HadoopFile,
+                          numExecutors: Int,
                           // The number of cores available for computations.
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.
                           workMemoryPerCore: Long) {
-  val bytesPerPartition = workMemoryPerCore / 2 // Make sure we fit 2 copies.
+  val workerMemoryMult = scala.util.Properties.envOrElse("WORKER_MEMORY_MULT", "0.5").toDouble
+  val bytesPerPartition = (workMemoryPerCore * workerMemoryMult).toLong
   val defaultPartitions = numAvailableCores
   // A suitable partitioner for N bytes.
   def partitionerForNBytes(n: Long): spark.Partitioner =

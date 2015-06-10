@@ -9,15 +9,27 @@ import com.lynxanalytics.biggraph.controllers.Operation
 import com.lynxanalytics.biggraph.controllers.Operations
 import com.lynxanalytics.biggraph.controllers.Project
 import com.lynxanalytics.biggraph.controllers.WorkflowOperation
+import com.lynxanalytics.biggraph.graph_api.MetaGraphManager
+import com.lynxanalytics.biggraph.graph_api.Scalar
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving.User
 import scala.io.Source
 
 object BatchMain {
   private val commentRE = "#.*".r
-  private val scalarRE = raw"GetScalar\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)".r
+  private val scalarArgPtrn = raw"\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)"
+  private val scalarRE = ("GetScalar" + scalarArgPtrn).r
+  private val scalarBenchRE = ("BenchmarkScalar" + scalarArgPtrn).r
   private val opsRE = raw"Operations\s*\(\s*'([^']+)'\s*\)".r
   private val opsEnd = "EndOperations"
+
+  def getScalarMeta(
+    projectName: String, scalarName: String, params: Map[String, String])(
+      implicit metaManager: MetaGraphManager): Scalar[_] = {
+    Project.validateName(projectName)
+    val project = Project.fromName(projectName)
+    project.scalars(scalarName)
+  }
 
   def main(args: Array[String]) {
     // We set up log config to use Play's stupid non-default log config file location.
@@ -64,12 +76,29 @@ For example:
         case "" => ()
         case scalarRE(projectNameSpec, scalarName) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          log.info(s"Computing scalar ${scalarName} on project ${projectName}...")
-          Project.validateName(projectName)
-          val project = Project.fromPath(projectName)
-          val scalar = project.scalars(scalarName)
+          val scalar = getScalarMeta(projectName, scalarName, params)
           log.info(s"Value of scalar ${scalarName} on project ${projectName}: ${scalar.value}")
           println(s"${projectName}|${scalarName}|${scalar.value}")
+        case scalarBenchRE(projectNameSpec, scalarName) =>
+          val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
+          val scalar = getScalarMeta(projectName, scalarName, params)
+          val rc0 = dataManager.runtimeContext
+          val t0 = System.nanoTime
+          val value = scalar.value
+          val duration = System.nanoTime - t0
+          val rc1 = dataManager.runtimeContext
+          assert(
+            rc0 == rc1,
+            "Runtime context changed while running, benchmark is invalid.\n" +
+              s"Before: $rc0\nAfter: $rc1")
+          val outRow = Seq(
+            rc0.numExecutors,
+            rc0.numAvailableCores,
+            rc0.workMemoryPerCore,
+            rc0.bytesPerPartition,
+            duration,
+            value)
+          println(outRow.mkString(","))
         case opsRE(projectNameSpec) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           Project.validateName(projectName)

@@ -444,19 +444,11 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
 
   def debugPrint() = manager.debugPrintTag(rootDir)
 
-  // Makes assertions on a user-provided attribute/segmentation/scalar name.
-  private def validateName(name: String): Unit = {
-    assert(name.nonEmpty, "Name cannot be empty.")
-    assert(!name.startsWith("!"), "Name cannot start with '!'.")
-    assert(!name.contains(Project.separator), s"Name cannot contain '${Project.separator}'.")
-    assert(!name.contains("/"), "Name cannot contain '/'.")
-  }
-
   abstract class Holder[T <: MetaGraphEntity](dir: SymbolPath) extends Iterable[(String, T)] {
     def validate(name: String, entity: T): Unit
 
     def update(name: String, entity: T) = {
-      validateName(name)
+      Project.validateName(name)
       set(name, entity)
     }
 
@@ -523,11 +515,11 @@ object Project {
   }
 
   // Makes assertions on a user-provided project name.
-  def validateName(name: String): Unit = {
-    assert(name.nonEmpty, "Project name cannot be empty.")
-    assert(!name.startsWith("!"), "Project name cannot start with '!'.")
-    assert(!name.contains(separator), s"Project name cannot contain '$separator'.")
-    assert(!name.contains("/"), "Project name cannot contain '/'.")
+  def validateName(name: String, what: String = "Name"): Unit = {
+    assert(name.nonEmpty, s"$what cannot be empty.")
+    assert(!name.startsWith("!"), s"$what cannot start with '!'.")
+    assert(!name.contains(separator), s"$what cannot contain '$separator'.")
+    assert(!name.contains("/"), s"$what cannot contain '/'.")
   }
 }
 
