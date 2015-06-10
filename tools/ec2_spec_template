@@ -22,7 +22,7 @@ RAM_GB=30
 LOCAL_TMP_DIR=/mnt/tmp
 
 # The s3 directory to store graph data in without the s3:// prefix.
-S3_DATAREPO=lynx-bnw-data/${USER}-cluster
+S3_DATAREPO=lynx-bnw-data/lynxkite-data-repo
 
 # Spark installation to use for this cluster.
 SPARK_HOME=$HOME/spark-`cat ${KITE_BASE}/conf/SPARK_VERSION`
