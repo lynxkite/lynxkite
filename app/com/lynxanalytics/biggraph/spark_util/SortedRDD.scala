@@ -123,12 +123,6 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
   override val partitioner = self.partitioner
   override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
 
-  def sortedRepartition(newPartitioner: Partitioner)(
-    implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
-    if (partitioner == newPartitioner) this
-    else this.toSortedRDD(newPartitioner)
-  }
-
   // See comments at DerivedSortedRDD before blindly using this method!
   private def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
     new DerivedSortedRDD(this, derivation)
