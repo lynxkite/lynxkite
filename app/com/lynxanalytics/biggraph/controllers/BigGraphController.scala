@@ -600,7 +600,7 @@ case class WorkflowOperation(
 }
 
 abstract class OperationRepository(env: BigGraphEnvironment) {
-  implicit val manager = env.metaGraphManager
+  implicit lazy val manager = env.metaGraphManager
 
   // The registry maps operation IDs to their constructors.
   private val operations = mutable.Map[String, Operation.Context => Operation]()
@@ -637,6 +637,8 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
         cat.toFE(feOps)
     }
   }
+
+  def operationIds = operations.keys.toSeq
 
   def opById(context: Operation.Context, id: String): Operation = {
     if (id.startsWith(BigGraphController.workflowsRoot.toString + "/")) {
