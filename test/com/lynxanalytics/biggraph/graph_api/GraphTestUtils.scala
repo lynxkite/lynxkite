@@ -235,8 +235,10 @@ case class AddVertexAttribute(values: Map[Int, String])
   override def toJson =
     Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+    implicit val id = inputDatas
     val sc = rc.sparkContext
     val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
-    output(o.attr, sc.parallelize(idMap).toSortedRDD(rc.onePartitionPartitioner))
+    val partitioner = inputs.vs.rdd.partitioner.get
+    output(o.attr, sc.parallelize(idMap).toSortedRDD(partitioner))
   }
 }

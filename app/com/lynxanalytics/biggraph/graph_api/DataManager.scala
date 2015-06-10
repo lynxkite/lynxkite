@@ -7,6 +7,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
 import org.apache.spark
+import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
 import ExecutionContext.Implicits.global
@@ -19,6 +20,7 @@ class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
+  val sqlContext = new SQLContext(sc)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -93,8 +95,7 @@ class DataManager(sc: spark.SparkContext,
       blocking {
         log.info(s"PERF Loading scalar $scalar from disk")
         val ois = new java.io.ObjectInputStream(serializedScalarFileName(entityPath(scalar)).open())
-        val value = ois.readObject.asInstanceOf[T]
-        ois.close()
+        val value = try ois.readObject.asInstanceOf[T] finally ois.close()
         log.info(s"PERF Loaded scalar $scalar from disk")
         new ScalarData[T](scalar, value)
       }
@@ -133,6 +134,7 @@ class DataManager(sc: spark.SparkContext,
       val outputDatas = blocking {
         instance.run(inputDatas, runtimeContext)
       }
+      validateOutput(instance, outputDatas)
       blocking {
         if (instance.operation.isHeavy) {
           for (entityData <- outputDatas.values) {
@@ -153,6 +155,32 @@ class DataManager(sc: spark.SparkContext,
         log.info(s"PERF Computed scalar $scalar")
       }
       outputDatas
+    }
+  }
+
+  private def validateOutput(instance: MetaGraphOperationInstance,
+                             output: Map[UUID, EntityData]): Unit = {
+    // Make sure attributes re-use the partitioners from their vertex sets.
+    // An identity check is used to catch the case where the same number of partitions is used
+    // accidentally (as is often the case in tests), but the code does not guarantee this.
+    val attributes = output.values.collect { case x: AttributeData[_] => x }
+    val edgeBundles = output.values.collect { case x: EdgeBundleData => x }
+    val dataAndVs =
+      attributes.map(x => x -> x.entity.vertexSet) ++
+        edgeBundles.map(x => x -> x.entity.idSet)
+    for ((entityd, vs) <- dataAndVs) {
+      val entity = entityd.entity
+      // The vertex set must either be loaded, or in the output.
+      val vsd = output.get(vs.gUID) match {
+        case Some(vsd) => vsd.asInstanceOf[VertexSetData]
+        case None =>
+          assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $entity, not known")
+          assert(entityCache(vs.gUID).value.nonEmpty, s"$vs, vertex set of $entity, not loaded")
+          assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $entity, failed")
+          entityCache(vs.gUID).value.get.get.asInstanceOf[VertexSetData]
+      }
+      assert(vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
+        s"The partitioner of $entity does not match the partitioner of $vs.")
     }
   }
 
@@ -181,14 +209,16 @@ class DataManager(sc: spark.SparkContext,
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
         val instanceFuture = getInstanceFuture(instance)
-        set(
-          entity,
-          // And the entity will have to wait until its full completion (including saves).
-          if (instance.operation.isHeavy && !entity.isInstanceOf[Scalar[_]]) {
-            instanceFuture.flatMap(_ => load(entity))
-          } else {
-            instanceFuture.map(_(entity.gUID))
-          })
+        for (output <- instance.outputs.all.values) {
+          set(
+            output,
+            // And the entity will have to wait until its full completion (including saves).
+            if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
+              instanceFuture.flatMap(_ => load(output))
+            } else {
+              instanceFuture.map(_(output.gUID))
+            })
+        }
       }
     }
   }
@@ -297,6 +327,7 @@ class DataManager(sc: spark.SparkContext,
     RuntimeContext(
       sparkContext = sc,
       broadcastDirectory = repositoryPath / "broadcasts",
+      numExecutors = numExecutors,
       numAvailableCores = totalCores,
       workMemoryPerCore = (workMemory / totalCores).toLong)
   }

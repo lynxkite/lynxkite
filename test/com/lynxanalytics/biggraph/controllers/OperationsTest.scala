@@ -29,7 +29,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
-  test("merge_parallel edges by attribute works for String") {
+  test("merge parallel edges by attribute works for String") {
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
       "header" -> "src,dst,call",
@@ -571,7 +571,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     run("Export vertex attributes to database", Map(
       "db" -> db,
       "table" -> "example_graph",
-      "delete" -> "no",
+      "delete" -> "yes",
       "attrs" -> "id,name,age,income,gender"))
     run("Import vertices from a database", Map(
       "db" -> db,

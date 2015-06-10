@@ -2199,7 +2199,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
         Choice("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
-        Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
+        Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
@@ -2212,9 +2212,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           case "CSV" =>
             val csv = graph_util.CSVExport.exportVertexAttributes(project.vertexSet, attrs)
             csv.saveToDir(path)
-          case "SQL dump" =>
-            val export = graph_util.SQLExport(project.projectName, project.vertexSet, attrs)
-            export.saveAs(path)
         }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
@@ -2255,7 +2252,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
         Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
-        Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
+        Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
@@ -2268,9 +2265,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           case "CSV" =>
             val csv = graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle, attrs)
             csv.saveToDir(path)
-          case "SQL dump" =>
-            val export = graph_util.SQLExport(project.projectName, project.edgeBundle, attrs)
-            export.saveAs(path)
         }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
@@ -2301,7 +2295,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "segmentation_csv"),
-        Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
+        Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val path = getExportFilename(params("path"))
@@ -2312,11 +2306,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               seg.belongsTo, attributes = Map(),
               srcColumnName = "vertex_id", dstColumnName = s"${name}_id")
             csv.saveToDir(path)
-          case "SQL dump" =>
-            val export = graph_util.SQLExport(
-              name, seg.belongsTo, attributes = Map[String, Attribute[_]](),
-              srcColumnName = "vertex_id", dstColumnName = s"${name}_id")
-            export.saveAs(path)
         }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))

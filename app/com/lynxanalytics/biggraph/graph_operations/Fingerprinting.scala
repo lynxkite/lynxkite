@@ -52,6 +52,8 @@ case class Fingerprinting(
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vertexPartitioner = inputs.target.rdd.partitioner.get
+    val leftPartitioner = inputs.left.rdd.partitioner.get
+    val rightPartitioner = inputs.right.rdd.partitioner.get
 
     // These are the two sides we are trying to connect.
     val lefts = inputs.candidates.rdd
@@ -127,9 +129,9 @@ case class Fingerprinting(
             if (similarity < minimumSimilarity) None
             else Some(leftID -> (rightID, similarity))
           }
-      }.toSortedRDD(vertexPartitioner)
+      }.toSortedRDD(leftPartitioner)
     val rightSimilarities =
-      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(vertexPartitioner)
+      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(rightPartitioner)
 
     // Run findStableMarriage with the smaller side as "ladies".
     def flipped(rdd: RDD[(ID, ID)]) =
