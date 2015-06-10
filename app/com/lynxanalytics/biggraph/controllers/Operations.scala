@@ -2191,7 +2191,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   { // "Dirty operations", that is operations that use a data manager. Think twice if you really
     // need this before putting an operation here.
-    implicit val dataManager = env.dataManager
+    implicit lazy val dataManager = env.dataManager
 
     register("Export vertex attributes to file", new AttributeOperation(_, _) {
       override val dirty = true
