@@ -70,6 +70,7 @@ object ImportUtil {
 trait RowInput extends ToJson {
   def fields: Seq[String]
   def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]]
+  val mayHaveNulls: Boolean
 }
 
 object CSV extends FromJson[CSV] {
@@ -121,7 +122,7 @@ case class CSV private (file: HadoopFile,
                         omitFields: Set[String],
                         filter: JavaScript) extends RowInput {
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
-  override val fields = allFields.filter(field => !omitFields.contains(field))
+  val fields = allFields.filter(field => !omitFields.contains(field))
   override def toJson = {
     val withoutOmits = Json.obj(
       "file" -> file.symbolicName,
@@ -157,6 +158,8 @@ case class CSV private (file: HadoopFile,
     keptFields.randomNumbered(numPartitions)
   }
 
+  val mayHaveNulls = false
+
   def jsFilter(line: Seq[String]): Boolean = {
     if (line.length != allFields.length) {
       log.info(s"Input line cannot be parsed: $line")
@@ -167,9 +170,24 @@ case class CSV private (file: HadoopFile,
 }
 
 trait ImportCommon {
-  class Columns(numberedLines: SortedRDD[ID, Seq[String]], fields: Seq[String]) {
+  class Columns(
+      allNumberedLines: SortedRDD[ID, Seq[String]],
+      fields: Seq[String],
+      mayHaveNulls: Boolean,
+      requiredFields: Set[String] = Set()) {
+    val filteredNumberedLines =
+      if (requiredFields.isEmpty || !mayHaveNulls) allNumberedLines
+      else {
+        val requiredIndexes = requiredFields.map(fieldName => fields.indexOf(fieldName)).toArray
+        allNumberedLines.filter {
+          case (id, line) => requiredIndexes.forall(idx => line(idx) != null)
+        }
+      }
     val singleColumns = fields.zipWithIndex.map {
-      case (field, idx) => field -> numberedLines.flatMapValues(line => Option(line(idx)))
+      case (field, idx) =>
+        (field,
+          if (mayHaveNulls) filteredNumberedLines.flatMapValues(line => Option(line(idx)))
+          else filteredNumberedLines.mapValues(line => line(idx)))
     }.toMap
 
     def apply(fieldName: String) = singleColumns(fieldName)
@@ -177,8 +195,12 @@ trait ImportCommon {
     def columnPair(fieldName1: String, fieldName2: String): SortedRDD[ID, (String, String)] = {
       val idx1 = fields.indexOf(fieldName1)
       val idx2 = fields.indexOf(fieldName2)
-      numberedLines.flatMapValues(line =>
-        Option(line(idx1)).flatMap(value1 => Option(line(idx2)).map(value2 => (value1, value2))))
+      if (mayHaveNulls) {
+        filteredNumberedLines.flatMapValues(line =>
+          Option(line(idx1)).flatMap(value1 => Option(line(idx2)).map(value2 => (value1, value2))))
+      } else {
+        filteredNumberedLines.mapValues(line => (line(idx1), line(idx2)))
+      }
     }
   }
 
@@ -188,7 +210,10 @@ trait ImportCommon {
     assert(input.fields.contains(field), s"No such field: $field in ${input.fields}")
   }
 
-  protected def readColumns(rc: RuntimeContext, input: RowInput): Columns = {
+  protected def readColumns(
+    rc: RuntimeContext,
+    input: RowInput,
+    requiredFields: Set[String] = Set()): Columns = {
     val numbered = input.lines(rc)
     numbered.cacheBackingArray()
     val maxLines = Limitations.maxImportedLines
@@ -199,7 +224,7 @@ trait ImportCommon {
           s"Can't import $numLines lines as your licence only allows $maxLines.")
       }
     }
-    return new Columns(numbered, input.fields)
+    return new Columns(numbered, input.fields, input.mayHaveNulls, requiredFields)
   }
 }
 object ImportCommon {
@@ -240,7 +265,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
     for ((field, rdd) <- columns.singleColumns) {
       output(o.attrs(field), rdd)
     }
-    output(o.vertices, columns.singleColumns.values.head.mapValues(_ => ()))
+    output(o.vertices, columns.filteredNumberedLines.mapValues(_ => ()))
   }
 }
 
@@ -287,7 +312,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val columns = readColumns(rc, input)
+    val columns = readColumns(rc, input, Set(src, dst))
     val partitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
     val namesWithCounts = columns.columnPair(src, dst).values.flatMap(sd => Iterator(sd._1, sd._2))
