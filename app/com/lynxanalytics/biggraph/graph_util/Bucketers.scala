@@ -99,25 +99,19 @@ abstract class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
       val decimals = (0 to maxDecimals).find { decimals =>
         fmt(labels, decimals).toSet.size == labels.size
       }
-      fmt(labels, decimals.getOrElse(2))
+      fmt(labels, decimals.getOrElse(maxDecimals) + 1)
     }
   }
 
   override def bucketFilters = {
-    val ls = bucketLabels.drop(1).dropRight(1)
-    if (ls.size < 1) Seq() else {
-      val first = "<" + ls.head
-      val last = ">=" + ls.last
-      val middle = if (ls.size < 2) Seq() else {
-        ls.sliding(2).map { ab =>
-          val a = ab(0)
-          val b = ab(1)
-          s"[$a,$b)"
-        }.toSeq
-      }
-      first +: middle :+ last
+    if (bounds.isEmpty) Seq("")
+    else {
+      val first = s"< ${bounds.head}"
+      val last = s">= ${bounds.last}"
+      first +: (bounds.sliding(2).map { case Seq(from, to) => s"[$from, $to)" }).toSeq :+ last
     }
   }
+
 }
 
 object DoubleLinearBucketer extends FromJson[DoubleLinearBucketer] {
