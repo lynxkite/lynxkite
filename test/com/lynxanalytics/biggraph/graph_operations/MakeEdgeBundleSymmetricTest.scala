@@ -6,10 +6,10 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class RemoveNonSymmetricEdgesTest extends FunSuite with TestGraphOp {
+class MakeEdgeBundleSymmetricTest extends FunSuite with TestGraphOp {
   test("example graph") {
     val g = ExampleGraph()().result
-    val op = RemoveNonSymmetricEdges()
+    val op = MakeEdgeBundleSymmetric()
     val out = op(op.es, g.edges).result
     assert(out.symmetric.toPairSeq == Seq(0 -> 1, 1 -> 0))
   }
