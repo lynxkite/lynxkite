@@ -8,8 +8,6 @@ object RemoveNonSymmetricEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
-    val injection = edgeBundle(
-      symmetric.idSet, inputs.es.idSet, EdgeBundleProperties.embedding)
   }
   def fromJson(j: JsValue) = RemoveNonSymmetricEdges()
 }
@@ -41,6 +39,5 @@ case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output
         }
     }.toSortedRDD(es.partitioner.get)
     output(o.symmetric, edges)
-    output(o.injection, edges.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
 }
