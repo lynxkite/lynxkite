@@ -2422,7 +2422,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
 
   def removeNonSymmetric(eb: EdgeBundle): EdgeBundle = {
-    val op = graph_operations.RemoveNonSymmetricEdges()
+    val op = graph_operations.MakeEdgeBundleSymmetric()
     op(op.es, eb).result.symmetric
   }
 
