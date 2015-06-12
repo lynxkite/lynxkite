@@ -1,7 +1,9 @@
 // A persistent key-value storage interface and implementation(s).
 package com.lynxanalytics.biggraph.graph_api
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import java.io.File
+import com.fasterxml.jackson.core.JsonProcessingException
 import play.api.libs.json.Json
 
 trait KeyValueStore {
@@ -25,16 +27,29 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
   val Put = "Put"
   val Delete = "Delete"
   val DeletePrefix = "DeletePrefix"
+  val Error = "CorruptedInput"
 
   def readAll: Iterable[(String, String)] = {
     import scala.collection.JavaConverters._
     val data = new java.util.TreeMap[String, String]
+    var errorAtEnd = false
     for ((command, key, value) <- readCommands) {
       command match {
-        case Put => data.put(key, value)
-        case Delete => data.remove(key)
-        case DeletePrefix => data.subMap(key, key + Z).entrySet.clear
+        case Error =>
+          errorAtEnd = true;
+          log.info(
+            s"Bad input line: '$key' in file: '$file' " +
+              s"""json error: ${value.replaceAll("\\n", " ")}""")
+        case Put => errorAtEnd = false; data.put(key, value)
+        case Delete => errorAtEnd = false; data.remove(key)
+        case DeletePrefix => errorAtEnd = false; data.subMap(key, key + Z).entrySet.clear
       }
+    }
+
+    if (errorAtEnd) {
+      out.newLine()
+      out.flush()
+      log.warn(s"Error was found at end of '$file' appending newline")
     }
     data.asScala
   }
@@ -44,7 +59,14 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
       val line = in.readLine
       if (line == null) Stream.empty // End of file reached.
       else {
-        val j = Json.parse(line).as[Seq[String]]
+        val j =
+          try {
+            Json.parse(line).as[Seq[String]]
+          } catch {
+            // Sorry, we'll use the existing interface to convey information about
+            // this awkward situation to the caller.
+            case e: JsonProcessingException => Seq[String](Error, line, e.getMessage)
+          }
         (j(0), j(1), j(2)) #:: readStream(in)
       }
     }
