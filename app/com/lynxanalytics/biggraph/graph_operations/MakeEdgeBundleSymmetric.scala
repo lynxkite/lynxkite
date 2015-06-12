@@ -1,6 +1,4 @@
-// Discards all A->B edges if there is no B->A edge.
-// If there is at least one B->A edge, exactly one
-// A->B edge will be retained. (That is, no more than one.)
+// Keeps the smaller set of A->B and B->A edges.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -10,8 +8,6 @@ object MakeEdgeBundleSymmetric extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
-    val injection = edgeBundle(
-      symmetric.idSet, inputs.es.idSet, EdgeBundleProperties.embedding)
   }
   def fromJson(j: JsValue) = MakeEdgeBundleSymmetric()
 }
@@ -30,24 +26,18 @@ case class MakeEdgeBundleSymmetric() extends TypedMetaGraphOp[GraphInput, Output
     implicit val id = inputDatas
     val vsPart = inputs.vs.rdd.partitioner.get
     val es = inputs.es.rdd
-    val bySourceMulti = es.map {
-      case (id, e) => e.src -> (id, e)
-    }.groupBySortedKey(vsPart)
 
-    val bySourceUnique = bySourceMulti.map {
-      case (id, e) => (id, e.seq.head)
-    }.groupBySortedKey(vsPart)
-
-    val byDest = es.map {
-      case (id, e) => e.dst -> e.src
-    }.groupBySortedKey(vsPart).mapValues(_.toSet)
-    val edges = bySourceUnique.sortedJoin(byDest).flatMap {
-      case (vertexId, (outEdges, inEdgeSources)) =>
-        outEdges.collect {
-          case (id, outEdge) if inEdgeSources.contains(outEdge.dst) => id -> outEdge
-        }
+    val edgesAB = es.map { case (id, e) => ((e.src, e.dst), 1) }.reduceByKey(_ + _)
+    val edgesBA = edgesAB.map { case ((a, b), n) => ((b, a), n) }
+    val joined = edgesAB.join(edgesBA)
+    val fewerEdges = joined.map { case ((a, b), (n1, n2)) => if (n1 < n2) ((a, b), n1) else ((a, b), n2) }
+    val dummyEdgesPlusID = fewerEdges.flatMap {
+      case ((a, b), n) => List.fill(n) { Edge(a, b) }
+    }.zipWithUniqueId()
+    val dummyIDPlusEdges = dummyEdgesPlusID.map {
+      case (e, i) => (i, e)
     }.toSortedRDD(es.partitioner.get)
-    output(o.symmetric, edges)
-    output(o.injection, edges.mapValuesWithKeys { case (id, _) => Edge(id, id) })
+
+    output(o.symmetric, dummyIDPlusEdges)
   }
 }
