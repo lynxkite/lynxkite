@@ -1,4 +1,5 @@
 // Discards all A->B edges if there is no B->A edge.
+// We'll keep this only for backward compatibility; see MakeEdgeBundleSymmetric
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -8,6 +9,12 @@ object RemoveNonSymmetricEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
+
+    // This is not used anywhere, however, we'll keep it just to
+    // play safe. A similar operation MakeEdgeBundleSymmetric does
+    // not have an injection field at all.
+    val injection = edgeBundle(
+      symmetric.idSet, inputs.es.idSet, EdgeBundleProperties.embedding)
   }
   def fromJson(j: JsValue) = RemoveNonSymmetricEdges()
 }
@@ -39,5 +46,6 @@ case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output
         }
     }.toSortedRDD(es.partitioner.get)
     output(o.symmetric, edges)
+    output(o.injection, edges.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
 }
