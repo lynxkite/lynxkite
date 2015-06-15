@@ -30,13 +30,10 @@ case class MakeEdgeBundleSymmetric() extends TypedMetaGraphOp[GraphInput, Output
     val edgesAB = es.map { case (id, e) => ((e.src, e.dst), 1) }.reduceByKey(_ + _)
     val edgesBA = edgesAB.map { case ((a, b), n) => ((b, a), n) }
     val joined = edgesAB.join(edgesBA)
-    val fewerEdges = joined.map { case ((a, b), (n1, n2)) => if (n1 < n2) ((a, b), n1) else ((a, b), n2) }
-    val dummyEdgesPlusID = fewerEdges.flatMap {
+    val fewerEdges = joined.map { case (k, (n1, n2)) => (k, (n1 min n2)) }
+    val dummyIDPlusEdges = fewerEdges.flatMap {
       case ((a, b), n) => List.fill(n) { Edge(a, b) }
-    }.zipWithUniqueId()
-    val dummyIDPlusEdges = dummyEdgesPlusID.map {
-      case (e, i) => (i, e)
-    }.toSortedRDD(es.partitioner.get)
+    }.randomNumbered(es.partitioner.get)
 
     output(o.symmetric, dummyIDPlusEdges)
   }

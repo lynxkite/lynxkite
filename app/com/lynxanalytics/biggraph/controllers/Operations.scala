@@ -412,7 +412,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val symmetric = params("directions") match {
         case "ignore directions" => addReversed(project.edgeBundle)
-        case "require both directions" => removeNonSymmetric(project.edgeBundle)
+        case "require both directions" => makeEdgeBundleSymmetric(project.edgeBundle)
       }
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, symmetric).result
@@ -2421,7 +2421,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.esAB, eb).result.esBA
   }
 
-  def removeNonSymmetric(eb: EdgeBundle): EdgeBundle = {
+  def makeEdgeBundleSymmetric(eb: EdgeBundle): EdgeBundle = {
     val op = graph_operations.MakeEdgeBundleSymmetric()
     op(op.es, eb).result.symmetric
   }
@@ -2457,7 +2457,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       case "symmetric edges" =>
         // Use "null" as the injection because it is an error to use
         // "symmetric edges" with edge attributes.
-        (removeNonSymmetric(origEB), Some(null))
+        (makeEdgeBundleSymmetric(origEB), Some(null))
     }
 
     def pull[T](attribute: Attribute[T]): Attribute[T] = {
