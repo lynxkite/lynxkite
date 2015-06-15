@@ -89,7 +89,21 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     val sc = environment.sparkContext
     // This pool's properties are defined at /conf/scheduler-pools.xml.
     sc.setLocalProperty("spark.scheduler.pool", "sparkcheck")
-    try assert(sc.parallelize(Seq(1, 2, 3), 1).count == 3)
-    finally sc.setLocalProperty("spark.scheduler.pool", null)
+    try {
+      assert(sc.parallelize(Seq(1, 2, 3), 1).count == 3)
+      exerciseMetaGraph()
+    } finally sc.setLocalProperty("spark.scheduler.pool", null)
+  }
+
+  private def exerciseMetaGraph() = {
+    import com.lynxanalytics.biggraph.graph_operations.{ ExampleGraph, CountVertices }
+    import com.lynxanalytics.biggraph.graph_api.Scripting._
+    implicit val metaManager = environment.metaGraphManager
+    implicit val dataManager = environment.dataManager
+
+    val g = ExampleGraph()().result
+    val op = CountVertices()
+    val out = op(op.vertices, g.vertices).result
+    assert(out.count.value == 4)
   }
 }
