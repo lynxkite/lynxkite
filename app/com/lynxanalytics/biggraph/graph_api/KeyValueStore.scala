@@ -33,7 +33,7 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
     import scala.collection.JavaConverters._
     val data = new java.util.TreeMap[String, String]
     // Append a newline at each (re)start before
-    // we start parsing the file
+    // we start parsing the file.
     out.newLine(); out.flush();
     for ((command, key, value) <- readCommands) {
       command match {
@@ -49,10 +49,10 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
   def readCommands: Iterable[(String, String, String)] = {
     def readStream(in: java.io.BufferedReader): Stream[(String, String, String)] = {
       val line = in.readLine
-      if (line == null) Stream.empty // End of file reached
+      if (line == null) Stream.empty // End of file reached.
       else {
         val j =
-          if (line.isEmpty) Seq[String](SkipEntry, "", "") // Ignore empty lines
+          if (line.isEmpty) Seq[String](SkipEntry, "", "") // Ignore empty lines.
           else {
             try {
               Json.parse(line).as[Seq[String]]
