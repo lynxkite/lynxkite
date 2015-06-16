@@ -12,7 +12,7 @@ def rnd():
   return random.random()
 
 def skewedchoice(s):
-  """Randomly picks a word from "s". Earlier entries have highed probabilities."""
+  """Randomly picks a word from "s". Earlier entries have higher probabilities."""
   options = s.split()
   n = len(options)
   for i in range(n):
