@@ -49,6 +49,28 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
          |((2,1),Bob loves Eve)""".stripMargin)
   }
 
+  test("Globs work with header") {
+    val dir = "IMPORTGRAPHTEST$/two-edge-csv/"
+    val edgeHeaderNoGlob = HadoopFile(dir + "edges1.csv")
+    val headerLine1 = ImportUtil.header(edgeHeaderNoGlob)
+    val edgeHeaderGlob = HadoopFile(dir + "edges1.*")
+    val headerLine2 = ImportUtil.header(edgeHeaderGlob)
+    assert(headerLine1 == headerLine2)
+
+    val dirFile = HadoopFile(dir)
+    intercept[Throwable] {
+      ImportUtil.header(dirFile)
+    }
+    val nonExistentFile = HadoopFile(dir + "not_existent")
+    intercept[Throwable] {
+      ImportUtil.header(nonExistentFile)
+    }
+    val nonExistentGlob = HadoopFile(dir + "not_existent.*")
+    intercept[Throwable] {
+      ImportUtil.header(nonExistentGlob)
+    }
+  }
+
   test("import graph from csv as two edge files including header") {
     // different separator, no quotes around strings, newline at eof, files with wildcard
     val dir = "IMPORTGRAPHTEST$/two-edge-csv/"
