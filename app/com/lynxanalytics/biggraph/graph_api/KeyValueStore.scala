@@ -1,10 +1,11 @@
 // A persistent key-value storage interface and implementation(s).
 package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import java.io.File
 import com.fasterxml.jackson.core.JsonProcessingException
+import java.io.File
 import play.api.libs.json.Json
+
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 trait KeyValueStore {
   def readAll: Iterable[(String, String)]
@@ -27,7 +28,6 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
   val Put = "Put"
   val Delete = "Delete"
   val DeletePrefix = "DeletePrefix"
-  val SkipEntry = "SkipEntry"
 
   def readAll: Iterable[(String, String)] = {
     import scala.collection.JavaConverters._
@@ -37,7 +37,6 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
     out.newLine(); out.flush();
     for ((command, key, value) <- readCommands) {
       command match {
-        case SkipEntry => None
         case Put => data.put(key, value)
         case Delete => data.remove(key)
         case DeletePrefix => data.subMap(key, key + Z).entrySet.clear
@@ -50,22 +49,20 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
     def readStream(in: java.io.BufferedReader): Stream[(String, String, String)] = {
       val line = in.readLine
       if (line == null) Stream.empty // End of file reached.
+      else if (line.isEmpty) readStream(in) // Blank line skipped.
       else {
-        val j =
-          if (line.isEmpty) Seq[String](SkipEntry, "", "") // Ignore empty lines.
-          else {
-            try {
-              Json.parse(line).as[Seq[String]]
-            } catch {
-              case e: JsonProcessingException =>
-                log.warn(s"Bad input line: '$line' in file: '$file' " +
-                  s"""json error: ${e.getMessage.replaceAll("\\n", " ")}""")
-                Seq[String](SkipEntry, "", "")
-            }
-          }
-        (j(0), j(1), j(2)) #:: readStream(in)
+        try {
+          val j = Json.parse(line).as[Seq[String]]
+          (j(0), j(1), j(2)) #:: readStream(in)
+        } catch {
+          case e: JsonProcessingException =>
+            log.warn(s"Bad input line: '$line' in file: '$file' " +
+              s"""json error: ${e.getMessage.replaceAll("\\n", " ")}""")
+            readStream(in)
+        }
       }
     }
+
     if (new File(file).exists) {
       val in = java.nio.file.Files.newBufferedReader(
         java.nio.file.Paths.get(file),
