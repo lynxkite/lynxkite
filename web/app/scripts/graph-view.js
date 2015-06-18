@@ -340,10 +340,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   }
 
-  function unfreezeAll(vs) {
-    for (var i = 0; i < vs.length; ++i) {
-      if (vs[i].frozen) {
-        vs[i].frozen -= 1;
+  function unfreezeAll(vertices) {
+    for (var i = 0; i < vertices.vs.length; ++i) {
+      if (vertices.vs[i].frozen) {
+        vertices.vs[i].frozen -= 1;
       }
     }
   }
