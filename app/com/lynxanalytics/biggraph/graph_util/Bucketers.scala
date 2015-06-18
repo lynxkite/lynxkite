@@ -106,9 +106,16 @@ abstract class DoubleBucketer(min: Double, max: Double, numBuckets: Int)
   override def bucketFilters = {
     if (bounds.isEmpty) Seq("")
     else {
-      val first = s"< ${bounds.head}"
-      val last = s">= ${bounds.last}"
-      first +: (bounds.sliding(2).map { case Seq(from, to) => s"[$from, $to)" }).toSeq :+ last
+      val first = s"<${bounds.head}"
+      val last = s">=${bounds.last}"
+      val middles = bounds
+        .sliding(2)
+        // To deal with the sliding API that returns a shorter window if the whole seq
+        // is shorter then the requested sliding window. Idiots.
+        .filter(_.size == 2)
+        .map { case Seq(from, to) => s"[$from,$to)" }
+        .toSeq
+      first +: middles :+ last
     }
   }
 
