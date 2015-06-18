@@ -1170,9 +1170,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
+      val realEdges = stripDuplicateEdges(edges)
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
-          edges,
+          realEdges,
           AttributeWithLocalAggregator(project.vertexAttributes(attr), choice))
         project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
       }
@@ -1190,12 +1191,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
+      val realEdges = stripDuplicateEdges(edges)
       val weightName = params("weight")
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
       for ((name, choice) <- parseAggregateParams(params)) {
         val attr = project.vertexAttributes(name)
         val result = aggregateViaConnection(
-          edges,
+          realEdges,
           AttributeWithWeightedAggregator(weight, attr, choice))
         project.vertexAttributes(s"${prefix}${name}_${choice}_by_${weightName}") = result
       }
@@ -2434,6 +2436,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   def addReversed(eb: EdgeBundle): EdgeBundle = {
     val op = graph_operations.AddReversedEdges()
     op(op.es, eb).result.esPlus
+  }
+
+  def stripDuplicateEdges(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.StripDuplicateEdgesFromBundle()
+    op(op.es, eb).result.unique
   }
 
   object Direction {
