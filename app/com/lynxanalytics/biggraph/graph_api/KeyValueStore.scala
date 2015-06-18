@@ -32,9 +32,6 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
   def readAll: Iterable[(String, String)] = {
     import scala.collection.JavaConverters._
     val data = new java.util.TreeMap[String, String]
-    // Append a newline at each (re)start before
-    // we start parsing the file.
-    out.newLine(); out.flush();
     for ((command, key, value) <- readCommands) {
       command match {
         case Put => data.put(key, value)
@@ -71,8 +68,18 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
     } else Seq()
   }
 
+  private var streamInited = false
+  private def initStreamAtStartup() = {
+    if (!streamInited) {
+      out.newLine()
+      out.flush()
+      streamInited = true
+    }
+  }
+
   private def write(command: String, key: String, value: String = "") = synchronized {
     if (doWrites) {
+      initStreamAtStartup()
       out.write(Json.toJson(Seq(command, key, value)).toString)
       out.newLine()
       if (flushing) out.flush()
