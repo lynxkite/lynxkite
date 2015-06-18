@@ -31,7 +31,12 @@ object OperationParams {
       multipleChoice: Boolean = false) extends OperationParameterMeta {
     val kind = "choice"
     val defaultValue = ""
-    def validate(value: String): Unit = {}
+    def validate(value: String): Unit = {
+      val possibleValues = options.map { x => x.id }.toSet
+      val givenValues = value.split(",", -1).toSet
+      assert(givenValues subsetOf possibleValues,
+        s"Unknown option(s): ${givenValues -- possibleValues} (Possibilities: $possibleValues)")
+    }
   }
   case class TagList(id: String, title: String, options: List[UIValue])
       extends OperationParameterMeta {
