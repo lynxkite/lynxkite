@@ -1,8 +1,11 @@
 // A persistent key-value storage interface and implementation(s).
 package com.lynxanalytics.biggraph.graph_api
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import java.io.File
 import play.api.libs.json.Json
+
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 trait KeyValueStore {
   def readAll: Iterable[(String, String)]
@@ -43,11 +46,20 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
     def readStream(in: java.io.BufferedReader): Stream[(String, String, String)] = {
       val line = in.readLine
       if (line == null) Stream.empty // End of file reached.
+      else if (line.isEmpty) readStream(in) // Blank line skipped.
       else {
-        val j = Json.parse(line).as[Seq[String]]
-        (j(0), j(1), j(2)) #:: readStream(in)
+        try {
+          val j = Json.parse(line).as[Seq[String]]
+          (j(0), j(1), j(2)) #:: readStream(in)
+        } catch {
+          case e: JsonProcessingException =>
+            log.warn(s"Bad input line: '$line' in file: '$file' " +
+              s"""json error: ${e.getMessage.replaceAll("\\n", " ")}""")
+            readStream(in)
+        }
       }
     }
+
     if (new File(file).exists) {
       val in = java.nio.file.Files.newBufferedReader(
         java.nio.file.Paths.get(file),
@@ -56,8 +68,18 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
     } else Seq()
   }
 
+  private var streamInited = false
+  private def initStreamAtStartup() = {
+    if (!streamInited) {
+      out.newLine()
+      out.flush()
+      streamInited = true
+    }
+  }
+
   private def write(command: String, key: String, value: String = "") = synchronized {
     if (doWrites) {
+      initStreamAtStartup()
       out.write(Json.toJson(Seq(command, key, value)).toString)
       out.newLine()
       if (flushing) out.flush()
