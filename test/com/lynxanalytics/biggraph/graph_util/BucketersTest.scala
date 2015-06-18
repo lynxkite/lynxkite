@@ -33,7 +33,7 @@ class VertexBucketerTest extends FunSuite {
     // This is not exactly true, thanks to inaccuracies in the arithmetic.
     // assert(fb.bounds == Seq(10, 100))
     // But when rounded for string formatting, we get the expected result.
-    assert(fb.bucketLabels == Seq("1", "10", "100", "1000"))
+    assert(fb.bucketLabels == Seq("1.0", "10.0", "100.0", "1000.0"))
     // And numbers generally end up in the right bucket.
     assert(fb.whichBucket(0).get == 0)
     assert(fb.whichBucket(1).get == 0)
@@ -56,13 +56,16 @@ class VertexBucketerTest extends FunSuite {
   }
 
   test("Bucketing double labels for large numbers") {
-    assert(DoubleLinearBucketer(100, 400, 3).bucketLabels == Seq("100", "200", "300", "400"))
+    assert(
+      DoubleLinearBucketer(100, 400, 3).bucketLabels == Seq("100.0", "200.0", "300.0", "400.0"))
   }
   test("Bucketing double labels for small numbers") {
-    assert(DoubleLinearBucketer(0.001, 0.002, 2).bucketLabels == Seq("0.0010", "0.0015", "0.0020"))
+    assert(
+      DoubleLinearBucketer(0.001, 0.002, 2).bucketLabels == Seq("0.00100", "0.00150", "0.00200"))
   }
   test("Bucketing double labels for small differences") {
-    assert(DoubleLinearBucketer(3.001, 3.004, 3).bucketLabels == Seq("3.001", "3.002", "3.003", "3.004"))
+    assert(DoubleLinearBucketer(3.001, 3.004, 3).bucketLabels ==
+      Seq("3.0010", "3.0020", "3.0030", "3.0040"))
   }
 
   test("Bucketing long labels by integer division") {
@@ -83,12 +86,16 @@ class VertexBucketerTest extends FunSuite {
 
   test("Double bucket filters") {
     assert(DoubleLinearBucketer(10, 20, 1).bucketFilters
-      == Seq())
+      == Seq(""))
     assert(DoubleLinearBucketer(10, 30, 2).bucketFilters
-      == Seq("<20", ">=20"))
+      == Seq("<20.0", ">=20.0"))
     assert(DoubleLinearBucketer(10, 40, 3).bucketFilters
-      == Seq("<20", "[20,30)", ">=30"))
+      == Seq("<20.0", "[20.0,30.0)", ">=30.0"))
     assert(DoubleLogBucketer(1, 10000, 4).bucketFilters
-      == Seq("<10", "[10,100)", "[100,1000)", ">=1000"))
+      == Seq(
+        "<10.000000000000002",
+        "[10.000000000000002,100.00000000000004)",
+        "[100.00000000000004,1000.0000000000007)",
+        ">=1000.0000000000007"))
   }
 }
