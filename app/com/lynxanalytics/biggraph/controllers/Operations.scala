@@ -33,7 +33,7 @@ object OperationParams {
     val defaultValue = ""
     def validate(value: String): Unit = {
       val possibleValues = options.map { x => x.id }.toSet
-      val givenValues = value.split(",").toSet
+      val givenValues = value.split(",", -1).toSet
       assert(givenValues subsetOf possibleValues,
         s"Unknown option(s): ${givenValues -- possibleValues} (Possibilities: $possibleValues)")
     }
