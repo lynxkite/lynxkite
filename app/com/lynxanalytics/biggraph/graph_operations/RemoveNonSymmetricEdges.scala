@@ -9,10 +9,6 @@ object RemoveNonSymmetricEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
       extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
-
-    // This is not used anywhere, however, we'll keep it just to
-    // play safe. A similar operation MakeEdgeBundleSymmetric does
-    // not have an injection field at all.
     val injection = edgeBundle(
       symmetric.idSet, inputs.es.idSet, EdgeBundleProperties.embedding)
   }
