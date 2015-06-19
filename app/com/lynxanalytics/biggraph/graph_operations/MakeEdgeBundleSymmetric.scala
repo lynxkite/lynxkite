@@ -24,7 +24,6 @@ case class MakeEdgeBundleSymmetric() extends TypedMetaGraphOp[GraphInput, Output
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val vsPart = inputs.vs.rdd.partitioner.get
     val es = inputs.es.rdd
 
     val edgesAB = es.map { case (id, e) => ((e.src, e.dst), 1) }.reduceByKey(_ + _)
