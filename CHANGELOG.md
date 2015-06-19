@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Operations _Degree_, _Aggregate on neighbors_, and _Weighted aggregate on neighbors_ can
+   now also make calculations directly on neighboring vertices (that is, regardless of the
+   number of edges between the vertices).
  - Removed the _SQL dump_ option in file export operations. The only supported output format
    is CSV now.
 
