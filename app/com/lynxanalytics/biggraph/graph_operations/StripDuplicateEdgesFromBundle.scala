@@ -32,7 +32,7 @@ case class StripDuplicateEdgesFromBundle() extends TypedMetaGraphOp[GraphInput, 
     val representativeEdges = swapped.reduceByKey((oneID, anotherID) => oneID)
     val swappedBack = representativeEdges.map { case (e, id) => (id, e) }
 
-    val esPart = inputs.es.rdd.partitioner.get
+    val esPart = es.partitioner.get
     output(o.unique, swappedBack.toSortedRDD(esPart))
   }
 }
