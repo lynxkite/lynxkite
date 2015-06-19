@@ -1,11 +1,11 @@
 ### Weighted aggregate on neighbors
 
-Aggregates across the vertices that are connected to each vertex. Because it works by looking at
-edges, neighbors that are connected with more than one edge will be counted more than once.
+Aggregates across the vertices that are connected to each vertex. Because it works by
+looking at edges, neighbors that are connected with more than one edge will be
+counted more than once; to change this behaviour, use one of the 'neighbor'
+Aggregate settings (see below).
 
-// TODO: Update this when #1659 is done.
-
-For example it can calculate the average age per kilogram of the friends of each person.
+For example, it can calculate the average age per kilogram of the friends of each person.
 
 ====
 [[prefix]] Generated name prefix::
@@ -19,7 +19,17 @@ The `Double` attribute to use as weight.
  - `outgoing edges`: Aggregate across the edges going out of each vertex.
  - `all edges`: Aggregate across all the edges going in or out of each vertex.
  - `symmetric edges`:
-   Aggregate across the incoming edges for which an outgoing edge to the same neighbor also exists.
+    Aggregate across the 'symmetric' edges for each vertex: this means that if you have n edges
+    going from A to B and k edges going from B to A, then the smaller number of edges will be
+    taken into account for both A and B.
+ - `in-neighbors`: For each vertex A, aggregate across those neighbors
+    that have an outgoing edge to A.
+ -  `out-neighbors`: For each vertex A, aggregate across those neighbors
+    that have an incoming edge from A.
+ - `all neighbors`: For each vertex A, aggregate across those neighbors
+    that either have an outgoing edge to or an incoming edge from A.
+ - `symmetric neighbors`: For each vertex A, aggregate across those neighbors
+    that have both an outgoing edge to and an incoming edge from A.
 
 include::{g}[tag=local-aggregators]
 ====

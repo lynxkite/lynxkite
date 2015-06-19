@@ -2,7 +2,8 @@
 
 Calculates the number of edges connected to every vertex.
 
-Note that this can be different from the number of neighbors in case of parallel edges.
+Note that this can be different from the number of neighbors in case of parallel edges;
+if you need the number of neighbors, use one of the 'neighbor' Count settings (see below).
 
 ====
 [[name]] Attribute name::
@@ -13,5 +14,15 @@ The new attribute will be created under this name.
  - `outgoing edges`: Count the edges going out of each vertex.
  - `all edges`: Count all the edges going in or out of each vertex.
  - `symmetric edges`:
-   Count the incoming edges for which an outgoing edge to the same neighbor also exists.
+    Count the 'symmetric' edges for each vertex: this means that if you have n edges
+    going from A to B and k edges going from B to A, then the smaller number of edges will be
+    taken into account for both A and B.
+ - `in-neighbors`: For each vertex A, count those neighbors
+    that have an outgoing edge to A.
+ -  `out-neighbors`: For each vertex A, count those neighbors
+    that have an incoming edge from A.
+ - `all neighbors`: For each vertex A, count those neighbors
+    that either have an outgoing edge to or an incoming edge from A.
+ - `symmetric neighbors`: For each vertex A, count those neighbors
+    that have both an outgoing edge to and an incoming edge from A.
 ====
