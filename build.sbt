@@ -23,6 +23,10 @@ sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 libraryDependencies ++= Seq(
   anorm, // Play library for making SQL queries.
   ws, // Play library for making HTTP requests.
+  // These jackson deps are needed to resolve some jackson version conflict by forcing ot use 2.4.4
+  "com.fasterxml.jackson.core" % "jackson-core" % "2.4.4",
+  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4.4",
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4",
   "com.google.guava" % "guava" % "18.0",
   "org.apache.commons" % "commons-lang3" % "3.3",
   "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided" excludeAll(
