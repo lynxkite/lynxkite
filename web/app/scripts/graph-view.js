@@ -1,7 +1,7 @@
 // Graph visualization. Generates the SVG contents.
 'use strict';
 
-angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
+angular.module('biggraph').directive('graphView', function(util, $compile, $timeout, $window) {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
@@ -32,6 +32,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
         util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
         util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
+        var timer;
+        var eventName = 'resize.graph-view-' + scope.$id;
+        var window = angular.element($window);
+        window.bind(eventName, function() {
+          $timeout.cancel(timer);
+          timer = $timeout(scope.updateGraph, 100);
+        });
+        scope.$on('$destroy', function() {
+          $timeout.cancel(timer);
+          window.unbind(eventName);
+        });
       },
     };
 
