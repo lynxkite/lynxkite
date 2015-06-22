@@ -102,11 +102,10 @@ class SQLExport private (
     sqls.map(_.rdd))
   private val dataFrame = sqlContext.createDataFrame(rowRDD, schema)
 
-  def insertInto(db: String, delete: Boolean) = {
-    if (delete) {
-      dataFrame.createJDBCTable("jdbc:" + db, quoteIdentifier(table), allowExisting = true)
-    } else {
-      dataFrame.insertIntoJDBC("jdbc:" + db, quoteIdentifier(table), overwrite = false)
-    }
+  def insertInto(db: String, mode: String = "error") = {
+    dataFrame
+      .write
+      .mode(mode)
+      .jdbc("jdbc:" + db, quoteIdentifier(table), new java.util.Properties())
   }
 }
