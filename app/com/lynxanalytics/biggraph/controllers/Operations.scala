@@ -2238,7 +2238,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           label => label -> project.vertexAttributes(label)
         }
         val export = graph_util.SQLExport(params("table"), project.vertexSet, attrs.toMap)
-        export.insertInto(params("db"), delete = params("delete") == "yes")
+        export.insertInto(
+          params("db"),
+          if (params("delete") == "yes") "overwrite" else "error")
       }
     })
 
@@ -2291,7 +2293,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           label => label -> project.edgeAttributes(label)
         }.toMap
         val export = graph_util.SQLExport(params("table"), project.edgeBundle, attrs)
-        export.insertInto(params("db"), delete = params("delete") == "yes")
+        export.insertInto(
+          params("db"),
+          if (params("delete") == "yes") "overwrite" else "error")
       }
     })
 
@@ -2326,7 +2330,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val export = graph_util.SQLExport(params("table"), seg.belongsTo, Map[String, Attribute[_]]())
-        export.insertInto(params("db"), delete = params("delete") == "yes")
+        export.insertInto(
+          params("db"),
+          if (params("delete") == "yes") "overwrite" else "error")
       }
     })
   }
