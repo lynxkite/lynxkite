@@ -17,12 +17,22 @@
       </label>
     </div>
 
-    <div class="btn-group pull-right">
-      <!-- No changes. -->
-      <label class="btn btn-default" ng-if="!remoteChanges"
-        tooltip="No changes" tooltip-append-to-body="true" tooltip-placement="bottom">
+    <!-- No changes. -->
+    <div class="btn-group pull-right" ng-show="!localChanges && !remoteChanges"
+      tooltip="No changes" tooltip-append-to-body="true" tooltip-placement="bottom">
+      <label class="btn btn-default" disabled>
         <i class="glyphicon glyphicon-floppy-disk"></i>
       </label>
+    </div>
+    <!-- Local changes. -->
+    <div class="btn-group pull-right" ng-show="localChanges"
+      tooltip="You are currently editing an operation"
+      tooltip-append-to-body="true" tooltip-placement="bottom">
+      <label class="btn btn-default" disabled>
+        <i class="glyphicon glyphicon-floppy-disk"></i>
+      </label>
+    </div>
+    <div class="btn-group pull-right" ng-show="!localChanges && remoteChanges">
       <!-- Invalid remote changes. -->
       <label class="btn btn-warning" ng-if="!valid"
         tooltip="History is inconsitent {{listInvalidSteps()}}"
