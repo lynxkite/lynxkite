@@ -172,6 +172,8 @@ include::no-operation.asciidoc[]
 
 include::pagerank.asciidoc[]
 
+include::project-as-its-own-segmentation.asciidoc[]
+
 include::rename-edge-attribute.asciidoc[]
 
 include::rename-scalar.asciidoc[]
