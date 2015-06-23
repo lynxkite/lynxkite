@@ -25,7 +25,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           for (var i = 0; i < history.steps.length; ++i) {
             var step = history.steps[i];
             step.localChanges = false;
-            step.editable = true;
+            step.editable = scope.valid;
             if (!step.hasCheckpoint && !step.status.enabled) {
               scope.valid = false;
             }
