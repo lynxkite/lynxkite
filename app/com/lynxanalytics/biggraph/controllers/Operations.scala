@@ -1680,7 +1680,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val op = graph_operations.LoopEdgeBundle()
       segmentation.belongsTo = op(op.vs, project.vertexSet).result.eb
-      segmentation.project.vertexAttributes("size") = computeSimpleSegmentSizes()
+      // TODO: uncomment and/or refactor this when a decision is reached about #1843
+      // segmentation.project.vertexAttributes("size") = computeSimpleSegmentSizes()
       segmentation.project.discardCheckpoints()
     }
   })
@@ -1705,7 +1706,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       them.copyAsSegmentation(segmentation)
       val op = graph_operations.EmptyEdgeBundle()
       segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
-      segmentation.project.vertexAttributes("size") = computeSegmentSizes(segmentation)
+      // TODO: uncomment and/or refactor this when a decision is reached about #1843
+      // segmentation.project.vertexAttributes("size") = computeSegmentSizes(segmentation)
       segmentation.project.discardCheckpoints()
     }
   })
