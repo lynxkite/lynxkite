@@ -102,6 +102,8 @@ class SQLExport private (
     sqls.map(_.rdd))
   private val dataFrame = sqlContext.createDataFrame(rowRDD, schema)
 
+  // For valid values of mode, see the mode method defined in DataFrameWriter:
+  // http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameWriter
   def insertInto(db: String, mode: String = "error") = {
     dataFrame
       .write
