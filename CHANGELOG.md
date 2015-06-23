@@ -7,6 +7,8 @@ Please add changes at the top. When releasing a version add a new header for tha
 ### master
 
  - Switching to Spark 1.4.0.
+ - Appending data to an existing DB table is not supported anymore (as it's dangerous
+   if done accidentally). In other words, you can only export to a DB by creating a new table.
  - Removed the _SQL dump_ option in file export operations. The only supported output format
    is CSV now.
 
