@@ -15,6 +15,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         scope.history = util.nocache('/ajax/getHistory', {
           project: scope.side.state.projectName,
         });
+        scope.updatedHistory = undefined;
       }
 
       function update() {
@@ -83,7 +84,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         scope.updatedHistory = util.post('/ajax/validateHistory', alternateHistory());
       }
       function copyUpdate() {
-        if (scope.updatedHistory.$resolved) {
+        if (scope.updatedHistory && scope.updatedHistory.$resolved) {
           scope.remoteChanges = true;
           scope.validating = false;
           scope.history = scope.updatedHistory;
