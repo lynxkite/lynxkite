@@ -18,9 +18,11 @@ import org.apache.spark.Partitioner
 // constructing the import operation.
 object ImportUtil {
   def header(file: HadoopFile): String = {
-    assert(file.exists, s"$file does not exist.")
+    // TODO: we don't check here if all the files begin with the same header!
+    val files = file.list
+    assert(files.nonEmpty, s"Not found: $file")
     // Read from first file if there is a glob.
-    file.list.head.readFirstLine()
+    files.head.readFirstLine()
   }
 
   private[graph_operations] def splitter(delimiter: String): String => Seq[String] = {

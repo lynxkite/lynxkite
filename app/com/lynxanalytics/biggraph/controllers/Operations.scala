@@ -31,7 +31,12 @@ object OperationParams {
       multipleChoice: Boolean = false) extends OperationParameterMeta {
     val kind = "choice"
     val defaultValue = ""
-    def validate(value: String): Unit = {}
+    def validate(value: String): Unit = {
+      val possibleValues = options.map { x => x.id }.toSet
+      val givenValues = value.split(",", -1).toSet
+      assert(givenValues subsetOf possibleValues,
+        s"Unknown option(s): ${givenValues -- possibleValues} (Possibilities: $possibleValues)")
+    }
   }
   case class TagList(id: String, title: String, options: List[UIValue])
       extends OperationParameterMeta {
@@ -412,7 +417,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val symmetric = params("directions") match {
         case "ignore directions" => addReversed(project.edgeBundle)
-        case "require both directions" => removeNonSymmetric(project.edgeBundle)
+        case "require both directions" => makeEdgeBundleSymmetric(project.edgeBundle)
       }
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, symmetric).result
@@ -1664,7 +1669,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val themName = params("them")
       assert(otherProjects.map(_.id).contains(themName), s"Unknown project: $themName")
-      val them = Project(themName)
+      val them = Project.fromName(themName)
       assert(them.vertexSet != null, s"No vertex set in $them")
       val segmentation = project.segmentation(params("them"))
       them.copy(segmentation.project)
@@ -1755,7 +1760,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]): Unit = {
       val otherName = params("other")
       assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
-      val other = Project(otherName)
+      val other = Project.fromName(otherName)
       if (other.vertexSet == null) {
         // Nothing to do
         return
@@ -2199,7 +2204,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "vertex_attributes_csv"),
         Choice("attrs", "Attributes", options = vertexAttributes, multipleChoice = true),
-        Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
+        Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
@@ -2212,9 +2217,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           case "CSV" =>
             val csv = graph_util.CSVExport.exportVertexAttributes(project.vertexSet, attrs)
             csv.saveToDir(path)
-          case "SQL dump" =>
-            val export = graph_util.SQLExport(project.projectName, project.vertexSet, attrs)
-            export.saveAs(path)
         }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
@@ -2255,7 +2257,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
         Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
-        Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
+        Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
@@ -2268,9 +2270,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           case "CSV" =>
             val csv = graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle, attrs)
             csv.saveToDir(path)
-          case "SQL dump" =>
-            val export = graph_util.SQLExport(project.projectName, project.edgeBundle, attrs)
-            export.saveAs(path)
         }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
@@ -2301,7 +2300,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "segmentation_csv"),
-        Choice("format", "File format", options = UIValue.list(List("CSV", "SQL dump"))))
+        Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val path = getExportFilename(params("path"))
@@ -2312,11 +2311,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               seg.belongsTo, attributes = Map(),
               srcColumnName = "vertex_id", dstColumnName = s"${name}_id")
             csv.saveToDir(path)
-          case "SQL dump" =>
-            val export = graph_util.SQLExport(
-              name, seg.belongsTo, attributes = Map[String, Attribute[_]](),
-              srcColumnName = "vertex_id", dstColumnName = s"${name}_id")
-            export.saveAs(path)
         }
         project.scalars(params("link")) =
           downloadLink(path, project.projectName + "_" + params("link"))
@@ -2432,14 +2426,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.esAB, eb).result.esBA
   }
 
-  def removeNonSymmetric(eb: EdgeBundle): EdgeBundle = {
-    val op = graph_operations.RemoveNonSymmetricEdges()
+  def makeEdgeBundleSymmetric(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.MakeEdgeBundleSymmetric()
     op(op.es, eb).result.symmetric
   }
 
   def addReversed(eb: EdgeBundle): EdgeBundle = {
     val op = graph_operations.AddReversedEdges()
     op(op.es, eb).result.esPlus
+  }
+
+  def stripDuplicateEdges(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.StripDuplicateEdgesFromBundle()
+    op(op.es, eb).result.unique
   }
 
   object Direction {
@@ -2449,7 +2448,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "outgoing edges",
       "all edges"))
     // Options suitable when edge attributes are not involved.
-    val options = attrOptions :+ UIValue("symmetric edges", "symmetric edges")
+    val options = attrOptions :+
+      UIValue("symmetric edges", "symmetric edges") :+
+      UIValue("in-neighbors", "in-neighbors") :+
+      UIValue("out-neighbors", "out-neighbors") :+
+      UIValue("all neighbors", "all neighbors") :+
+      UIValue("symmetric neighbors", "symmetric neighbors")
+    // Neighborhood directions correspond to these
+    // edge directions, but they also retain only one A->B edge in
+    // the output edgeBundle
+    private val neighborOptionMapping = Map(
+      "in-neighbors" -> "incoming edges",
+      "out-neighbors" -> "outgoing edges",
+      "all neighbors" -> "all edges",
+      "symmetric neighbors" -> "symmetric edges"
+    )
   }
   case class Direction(direction: String, origEB: EdgeBundle, reversed: Boolean = false) {
     val unchangedOut: (EdgeBundle, Option[EdgeBundle]) = (origEB, None)
@@ -2458,17 +2471,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val res = op(op.esAB, origEB).result
       (res.esBA, Some(res.injection))
     }
-    val (edgeBundle, pullBundleOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
-      case "incoming edges" => if (reversed) reversedOut else unchangedOut
-      case "outgoing edges" => if (reversed) unchangedOut else reversedOut
-      case "all edges" =>
-        val op = graph_operations.AddReversedEdges()
-        val res = op(op.es, origEB).result
-        (res.esPlus, Some(res.newToOriginal))
-      case "symmetric edges" =>
-        // Use "null" as the injection because it is an error to use
-        // "symmetric edges" with edge attributes.
-        (removeNonSymmetric(origEB), Some(null))
+    private def computeEdgeBundleAndPullBundleOpt(dir: String): (EdgeBundle, Option[EdgeBundle]) = {
+      dir match {
+        case "incoming edges" => if (reversed) reversedOut else unchangedOut
+        case "outgoing edges" => if (reversed) unchangedOut else reversedOut
+        case "all edges" =>
+          val op = graph_operations.AddReversedEdges()
+          val res = op(op.es, origEB).result
+          (res.esPlus, Some(res.newToOriginal))
+        case "symmetric edges" =>
+          // Use "null" as the injection because it is an error to use
+          // "symmetric edges" with edge attributes.
+          (makeEdgeBundleSymmetric(origEB), Some(null))
+      }
+    }
+
+    val (edgeBundle, pullBundleOpt): (EdgeBundle, Option[EdgeBundle]) = {
+      if (Direction.neighborOptionMapping.contains(direction)) {
+        val (eB, pBO) = computeEdgeBundleAndPullBundleOpt(Direction.neighborOptionMapping(direction))
+        (stripDuplicateEdges(eB), pBO)
+      } else {
+        computeEdgeBundleAndPullBundleOpt(direction)
+      }
     }
 
     def pull[T](attribute: Attribute[T]): Attribute[T] = {

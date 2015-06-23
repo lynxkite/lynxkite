@@ -75,7 +75,8 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
         vertexSets = Map('inputVertices -> firstVertices),
         attributes = Map('inputAttr -> firstVattr)))
 
-    m1o.setTag("my/favorite/vertices/first", firstVertices)
+    val path = SymbolPath.parse("my/favorite/vertices/first")
+    m1o.setTag(path, firstVertices)
 
     val m1c = MetaRepositoryManager(m1Dir)
 
@@ -93,7 +94,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
       }
     }
 
-    assert(m1c.vertexSet("my/favorite/vertices/first").gUID == firstVertices.gUID)
+    assert(m1c.vertexSet(path).gUID == firstVertices.gUID)
   }
 
   test("No operation should be calculated twice") {
@@ -129,9 +130,9 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
     // The old tags point to the successfully migrated entities.
-    assert(m.vertexSet("one").toStringStruct.toString ==
+    assert(m.vertexSet(SymbolPath("one")).toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(m.edgeBundle("two").toStringStruct.toString ==
+    assert(m.edgeBundle(SymbolPath("two")).toStringStruct.toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
 
@@ -172,9 +173,9 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // The migration succeeded.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
-    assert(m.vertexSet("one").toStringStruct.toString ==
+    assert(m.vertexSet(SymbolPath("one")).toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(m.edgeBundle("two").toStringStruct.toString ==
+    assert(m.edgeBundle(SymbolPath("two")).toStringStruct.toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
 

@@ -11,7 +11,7 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     val controller = new BigGraphController(this)
     val request = CreateProjectRequest(name = name, notes = name, privacy = "public-write")
     controller.createProject(null, request)
-    Project(name)
+    Project.fromName(name)
   }
   val project = createProject("Test_Project")
 
@@ -33,7 +33,7 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     assert(undoRedo(project) == ("C", ""))
     project.undo()
     assert(undoRedo(project) == ("A", "C"))
-    val copy = Project("Test_Project_Copy")
+    val copy = Project.fromPath("Test_Project_Copy")
     project.copy(copy)
     assert(undoRedo(copy) == ("A", "C"))
     project.checkpointAfter("D")
@@ -46,7 +46,7 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   }
 
   test("Segmentations") {
-    val p1 = Project("1")
+    val p1 = Project.fromPath("1")
     val p2 = p1.segmentation("2").project
     val p3 = p2.segmentation("3").project
     p1.notes = "1"; p2.notes = "2"; p3.notes = "3"

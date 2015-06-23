@@ -4,13 +4,13 @@
 angular.module('biggraph').directive('workflowSaver', function(util) {
   return {
     restrict: 'E',
-    scope: { code: '=', visible: '=', side: '=' },
+    scope: { code: '=', mode: '=', side: '=' },
     templateUrl: 'workflow-saver.html',
     link: function(scope) {
       scope.name = '';
       scope.description = '';
       scope.cancel = function() {
-        scope.visible = false;
+        scope.mode.enabled = false;
       };
       scope.save = function() {
         util.post(
@@ -20,10 +20,9 @@ angular.module('biggraph').directive('workflowSaver', function(util) {
             stepsAsJSON: scope.code,
             description: scope.description,
           },
-          function(success) {
-            if (success) {
-              scope.visible = false;
-            }
+          function() {
+            scope.mode.enabled = false;
+            scope.side.reloadAllProjects();
           });
       };
     }

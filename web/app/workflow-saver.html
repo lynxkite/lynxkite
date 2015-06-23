@@ -1,4 +1,4 @@
-<div ng-show="visible" class="panel panel-default project workflow-saver">
+<div ng-show="mode.enabled" class="panel panel-default project workflow-saver">
   <div class="panel-heading project-name" ng-show="!workflowMode">
     <span class="de-emph" ng-repeat="parent in side.parentProjects()">
       {{parent}} &raquo;

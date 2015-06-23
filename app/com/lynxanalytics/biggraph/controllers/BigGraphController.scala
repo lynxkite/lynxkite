@@ -172,7 +172,7 @@ object SavedWorkflow {
 }
 
 object BigGraphController {
-  val workflowsRoot: SymbolPath = s"workflows"
+  val workflowsRoot: SymbolPath = SymbolPath("workflows")
 }
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -191,7 +191,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
-    val p = Project(request.name)
+    val p = Project.fromPath(request.name)
     p.assertReadAllowedFrom(user)
     val categories = ops.categories(user, p)
     // Utility operations are made available through dedicated UI elements.
@@ -202,7 +202,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
     Project.validateName(request.name, "Project name")
-    val p = Project(request.name)
+    val p = Project.fromName(request.name)
     assert(!Operation.projects.contains(p), s"Project ${request.name} already exists.")
     p.notes = request.notes
     request.privacy match {
@@ -220,28 +220,28 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
-    val p = Project(request.name)
+    val p = Project.fromName(request.name)
     p.assertWriteAllowedFrom(user)
     p.remove()
   }
 
   def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
     Project.validateName(request.to, "Project name")
-    val p = Project(request.from)
+    val p = Project.fromName(request.from)
     p.assertWriteAllowedFrom(user)
-    p.copy(Project(request.to))
+    p.copy(Project.fromName(request.to))
     p.remove()
   }
 
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
-    val p = Project(request.project)
+    val p = Project.fromPath(request.project)
     p.assertWriteAllowedFrom(user)
     ops.apply(user, request)
   }
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
     // Historical bridge.
-    val c = Operation.Context(user, Project(request.project))
+    val c = Operation.Context(user, Project.fromPath(request.project))
     val op = ops.opById(c, "Filter-by-attributes")
     val emptyParams = op.parameters.map(_.id -> "")
     val vertexParams = request.vertexFilters.map {
@@ -259,8 +259,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
     Project.validateName(request.to, "Project name")
-    val p1 = Project(request.from)
-    val p2 = Project(request.to)
+    val p1 = Project.fromName(request.from)
+    val p2 = Project.fromName(request.to)
     p1.assertReadAllowedFrom(user)
     assert(!Operation.projects.contains(p2), s"Project $p2 already exists.")
     p1.copy(p2)
@@ -270,19 +270,19 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def undoProject(user: serving.User, request: UndoProjectRequest): Unit = metaManager.synchronized {
-    val p = Project(request.project)
+    val p = Project.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     p.undo()
   }
 
   def redoProject(user: serving.User, request: RedoProjectRequest): Unit = metaManager.synchronized {
-    val p = Project(request.project)
+    val p = Project.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     p.redo()
   }
 
   def changeProjectSettings(user: serving.User, request: ProjectSettingsRequest): Unit = metaManager.synchronized {
-    val p = Project(request.project)
+    val p = Project.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
     assert(user.isAdmin || p.aclContains(request.writeACL, user),
@@ -292,7 +292,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = metaManager.synchronized {
-    val p = Project(request.project)
+    val p = Project.fromName(request.project)
     p.assertReadAllowedFrom(user)
     assert(p.checkpointCount > 0, s"No history for $p. Try the parent project.")
     validateHistory(user, AlternateHistory(request.project, p.checkpointCount, List()))
@@ -302,7 +302,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.tagBatch {
     val tmpDir = s"!tmp-$Timestamp"
     val ps = (0 until p.checkpointCount).map { i =>
-      val tmp = Project(s"$tmpDir-$i")
+      val tmp = Project.fromName(s"$tmpDir-$i")
       assert(!Operation.projects.contains(tmp), s"Project $tmp already exists.")
       p.copyCheckpoint(i, tmp)
       tmp
@@ -322,7 +322,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     user: serving.User,
     request: AlternateHistory,
     copyTo: Option[Project]): ProjectHistory = metaManager.synchronized {
-    val p = Project(request.project)
+    val p = Project.fromName(request.project)
     p.assertReadAllowedFrom(user)
     withCheckpoints(p) { checkpoints =>
       val beforeAfter = checkpoints.zip(checkpoints.tail)
@@ -395,7 +395,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
     Project.validateName(request.newProject, "Project name")
-    val p = Project(request.newProject)
+    val p = Project.fromName(request.newProject)
     if (request.newProject != request.history.project) {
       // Saving under a new name.
       assert(!Operation.projects.contains(p), s"Project $p already exists.")
@@ -512,9 +512,14 @@ object Operation {
   case class Context(user: serving.User, project: Project)
 
   def projects(implicit manager: MetaGraphManager): Seq[Project] = {
-    val dirs = if (manager.tagExists("projects")) manager.lsTag("projects") else Nil
+    val dirs = {
+      if (manager.tagExists(SymbolPath("projects")))
+        manager.lsTag(SymbolPath("projects"))
+      else
+        Nil
+    }
     // Do not list internal project names (starting with "!").
-    dirs.map(p => Project(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
+    dirs.map(p => Project.fromName(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
   }
 }
 
@@ -646,7 +651,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
   def opById(context: Operation.Context, id: String): Operation = {
     if (id.startsWith(BigGraphController.workflowsRoot.toString + "/")) {
       // Oho, a workflow operation!
-      workflowOpFromTag(id, context)
+      workflowOpFromTag(SymbolPath.parse(id), context)
     } else {
       assert(operations.contains(id), s"Cannot find operation: ${id}")
       operations(id)(context)
@@ -657,18 +662,18 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     mainProject: Project,
     request: ProjectOperationRequest,
     user: serving.User): Operation = {
-    val subProjectPath = SymbolPath.fromString(request.project)
+    val subProjectPath = SymbolPath.parse(request.project)
     val mainProjectSymbol = Symbol(mainProject.projectName)
     val relativePath = subProjectPath.tail
     val fullPath = mainProjectSymbol :: relativePath.toList
-    val recipient = Project(new SymbolPath(fullPath).toString)
+    val recipient = Project(SymbolPath.fromIterable(fullPath))
     val ctx = Operation.Context(user, recipient)
     opById(ctx, request.op.id)
   }
 
   def apply(
     user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
-    val p = Project(req.project)
+    val p = Project.fromPath(req.project)
     val context = Operation.Context(user, p)
     val op = opById(context, req.op.id)
     p.checkpoint(op.summary(req.op.parameters), req) {
