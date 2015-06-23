@@ -358,7 +358,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
         "aggregate-name" -> "",
         "aggregate-location" -> "",
         "aggregate-gender" -> "",
-//        "aggregate-size" -> "", TODO: uncomment and/or refactor this when a decision is reached about #1843
+        //        "aggregate-size" -> "", TODO: uncomment and/or refactor this when a decision is reached about #1843
         "aggregate-fingerprinting_similarity_score" -> "",
         "aggregate-income" -> ""),
       on = seg)
