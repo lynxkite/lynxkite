@@ -358,6 +358,7 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
         "aggregate-name" -> "",
         "aggregate-location" -> "",
         "aggregate-gender" -> "",
+        "aggregate-size" -> "",
         "aggregate-fingerprinting_similarity_score" -> "",
         "aggregate-income" -> ""),
       on = seg)
@@ -675,5 +676,13 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
         "filterva-size" -> "", "filterva-top" -> ""), on = seg.project)
 
     assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
+  }
+
+  test("Project as its own segmentation") {
+    run("Example Graph")
+    run("Project as its own segmentation", Map("name" -> "seg"))
+    val seg = project.segmentation("seg")
+    val size = seg.project.vertexAttributes("size").runtimeSafeCast[Double]
+    assert(size.rdd.values.collect.toSeq == Seq(1.0, 1.0, 1.0, 1.0))
   }
 }
