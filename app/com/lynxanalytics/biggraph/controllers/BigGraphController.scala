@@ -316,7 +316,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
-  // Returns the evaluated alternate history, and optionally copies the resulting state into a new project.
+  // Returns the evaluated alternate history, and optionally
+  // copies the resulting state into a new project.
   private def alternateHistory(
     user: serving.User,
     request: AlternateHistory,
@@ -343,6 +344,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
+  // Tries to execute the requested operation on the project.
+  // Returns the ProjectHistoryStep to be displayed in the history, or None if it should be hidden.
   private def historyStep(
     user: serving.User,
     state: Project,
@@ -352,6 +355,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
     val segmentationsBefore = state.toFE.segmentations
     val opCategoriesBefore = ops.categories(user, recipient)
+    // If it's a deprecated workflow operation, display it in a special category.
     val opCategoriesBeforeWithOp =
       if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty &&
         op.isInstanceOf[WorkflowOperation]) {
@@ -363,24 +367,24 @@ class BigGraphController(val env: BigGraphEnvironment) {
       }
     def newStep(status: FEStatus) = {
       val segmentationsAfter = state.toFE.segmentations
-      ProjectHistoryStep(
+      Some(ProjectHistoryStep(
         request, status, segmentationsBefore, segmentationsAfter, opCategoriesBeforeWithOp,
-        hasCheckpoint = false)
+        hasCheckpoint = false))
     }
     if (op.enabled.enabled && !op.dirty) {
       try {
         recipient.checkpoint(op.summary(request.op.parameters), request) {
           op.validateAndApply(request.op.parameters)
         }
-        Some(newStep(FEStatus.enabled))
+        newStep(FEStatus.enabled)
       } catch {
         case t: Throwable =>
-          Some(newStep(FEStatus.disabled(t.getMessage)))
+          newStep(FEStatus.disabled(t.getMessage))
       }
     } else if (op.dirty) {
       None // Dirty operations are hidden from the history.
     } else {
-      Some(newStep(op.enabled))
+      newStep(op.enabled)
     }
   }
 
