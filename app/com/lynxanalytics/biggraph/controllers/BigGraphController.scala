@@ -331,8 +331,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
         case (before, after) =>
           state = after
           val request = after.lastOperationRequest
-          request.flatMap(historyStep(user, before, _))
-      }.take(request.skips).map(_.copy(hasCheckpoint = true)).toIndexedSeq
+          request.flatMap(historyStep(user, before, _, nextCheckpoint = Some(after)))
+      }.take(request.skips).toIndexedSeq
       val modifiedSteps = request.requests.flatMap(historyStep(user, state, _))
       val steps = skippedSteps ++ modifiedSteps
       val history = ProjectHistory(p.projectName, steps.toList)
@@ -349,7 +349,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
   private def historyStep(
     user: serving.User,
     state: Project,
-    request: ProjectOperationRequest): Option[ProjectHistoryStep] = {
+    request: ProjectOperationRequest,
+    nextCheckpoint: Option[Project] = None): Option[ProjectHistoryStep] = {
     val op = ops.operationOnSubproject(state, request, user)
     val recipient = op.project
 
@@ -366,10 +367,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
         opCategoriesBefore
       }
     def newStep(status: FEStatus) = {
-      val segmentationsAfter = state.toFE.segmentations
+      val segmentationsAfter = nextCheckpoint.getOrElse(state).toFE.segmentations
       Some(ProjectHistoryStep(
         request, status, segmentationsBefore, segmentationsAfter, opCategoriesBeforeWithOp,
-        hasCheckpoint = false))
+        hasCheckpoint = nextCheckpoint.nonEmpty))
     }
     if (op.enabled.enabled && !op.dirty) {
       try {
