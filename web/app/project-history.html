@@ -83,7 +83,8 @@
         editable="step.editable"
         applying="validating">
       </operation-toolbox>
-      <div class="btn-group history-options pull-right" dropdown ng-hide="localChanges">
+      <div class="btn-group history-options pull-right" dropdown
+        ng-hide="localChanges || !step.editable">
         <a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>
         <ul class="dropdown-menu">
           <li><a href ng-click="discard(step)">
