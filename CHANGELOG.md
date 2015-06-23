@@ -6,6 +6,9 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Switching to Spark 1.4.0.
+ - Appending data to an existing DB table is not supported anymore (as it's dangerous
+   if done accidentally). In other words, you can only export to a DB by creating a new table.
  - Operations _Degree_, _Aggregate on neighbors_, and _Weighted aggregate on neighbors_ can
    now also make calculations directly on neighboring vertices (that is, regardless of the
    number of edges between the vertices).

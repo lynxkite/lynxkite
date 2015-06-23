@@ -590,12 +590,12 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     run("Export edge attributes to database", Map(
       "db" -> db,
-      "table" -> "example_graph",
+      "table" -> "example_graph_edges",
       "delete" -> "yes",
       "attrs" -> "weight,comment"))
     run("Import vertices and edges from single database table", Map(
       "db" -> db,
-      "table" -> "example_graph",
+      "table" -> "example_graph_edges",
       "columns" -> "srcVertexId,dstVertexId,weight,comment",
       "key" -> "srcVertexId",
       "src" -> "srcVertexId",
