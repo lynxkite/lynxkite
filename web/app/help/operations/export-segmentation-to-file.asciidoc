@@ -13,6 +13,5 @@ The file to write to. Must use <<prefixed-paths>>.
 A new scalar will be created under this name. You can download the exported file through this link.
 
 [[format]] File format::
-The options are CSV (comma-separated values) and SQL dump (which can be imported into a
-SQL database later).
+Only CSV (comma-separated values) is currently supported.
 ====

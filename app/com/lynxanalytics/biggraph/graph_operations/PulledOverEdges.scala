@@ -49,7 +49,7 @@ case class PulledOverEdges()
     val destinationPartitioner = destinationVS.partitioner.get
     val pulledEB =
       if (injectionEntity.properties.isIdPreserving) {
-        val joinableOriginalEB = originalEB.sortedRepartition(destinationPartitioner)
+        val joinableOriginalEB = originalEB.toSortedRDD(destinationPartitioner)
         joinableOriginalEB.sortedJoin(destinationVS).mapValues { case (edge, _) => edge }
       } else {
         val originalToDestinationID = injection

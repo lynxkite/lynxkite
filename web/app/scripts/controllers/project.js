@@ -97,9 +97,7 @@ angular.module('biggraph')
     $scope.sides.push(new side.Side($scope.sides));
     $scope.left = $scope.sides[0];
     $scope.left.primary = true; // Used by side-operation-toolbox.
-    $scope.left.onreload = sendReloadNotification;
     $scope.right = $scope.sides[1];
-    $scope.right.onreload = sendReloadNotification;
 
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
@@ -234,6 +232,7 @@ angular.module('biggraph')
     function sendReloadNotification() {
       wiggleChannel('reload:' + $scope.linkChannel);
     }
+    $scope.$on('project reloaded', sendReloadNotification);
 
     var pongs = {};
     function cleanChannels() {

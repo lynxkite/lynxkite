@@ -10,6 +10,12 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.types
+
 object SQLExport {
   private val SimpleIdentifier = "[a-zA-Z0-9_]+".r
   def quoteIdentifier(s: String) = {
@@ -18,13 +24,12 @@ object SQLExport {
       case _ => '"' + s.replaceAll("\"", "\"\"") + '"'
     }
   }
-  private def quoteData(s: String) = "'" + StringEscapeUtils.escapeSql(s) + "'"
-  private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
+  private def addRDDs(base: SortedRDD[ID, Seq[_]], rdds: Seq[SortedRDD[ID, _]]): RDD[Row] = {
     rdds.foldLeft(base) { (seqs, rdd) =>
       seqs
         .sortedLeftOuterJoin(rdd)
-        .mapValues { case (seq, opt) => seq :+ opt.getOrElse("NULL") }
-    }
+        .mapValues { case (seq, opt) => seq :+ opt.getOrElse(null) }
+    }.values.map { seq => Row.fromSeq(seq) }
   }
 
   private def makeInserts(quotedTable: String, rdd: RDD[Seq[String]]) = {
@@ -41,21 +46,10 @@ object SQLExport {
     connection.close()
   }
 
-  private val supportedTypes: Seq[(Type, String, AttributeRDD[_] => AttributeRDD[String])] = Seq(
-    (typeOf[Double], "DOUBLE PRECISION",
-      rdd => rdd.asInstanceOf[AttributeRDD[Double]].mapValues(_.toString)),
-    (typeOf[String], "VARCHAR(512)",
-      rdd => rdd.asInstanceOf[AttributeRDD[String]].mapValues(quoteData(_))),
-    (typeOf[Long], "BIGINT",
-      rdd => rdd.asInstanceOf[AttributeRDD[Long]].mapValues(_.toString)))
-
-  private case class SQLColumn(name: String, sqlType: String, stringRDD: SortedRDD[ID, String])
+  private case class SQLColumn[T](name: String, sqlType: types.DataType, rdd: SortedRDD[ID, T], nullable: Boolean)
 
   private def sqlAttribute[T](name: String, attr: Attribute[T])(implicit dm: DataManager) = {
-    val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
-    assert(opt.nonEmpty, s"Attribute '$name' is of an unsupported type: ${attr.typeTag}")
-    val (tpe, sqlType, toStringFn) = opt.get
-    SQLColumn(name, sqlType, toStringFn(attr.rdd))
+    SQLColumn(name, ScalaReflection.schemaFor(attr.typeTag.tpe).dataType, attr.rdd, nullable = true)
   }
 
   def apply(
@@ -65,7 +59,7 @@ object SQLExport {
     for ((name, attr) <- attributes) {
       assert(attr.vertexSet == vertexSet, s"Attribute $name is not for vertex set $vertexSet")
     }
-    new SQLExport(table, vertexSet.rdd, attributes.toSeq.sortBy(_._1).map {
+    new SQLExport(dataManager.sqlContext, table, vertexSet.rdd, attributes.toSeq.sortBy(_._1).map {
       case (name, attr) => sqlAttribute(name, attr)
     })
   }
@@ -80,41 +74,32 @@ object SQLExport {
       assert(attr.vertexSet == edgeBundle.idSet,
         s"Attribute $name is not for edge bundle $edgeBundle")
     }
-    new SQLExport(table, edgeBundle.idSet.rdd, Seq(
-      SQLColumn(srcColumnName, "BIGINT", edgeBundle.rdd.mapValues(_.src.toString)),
-      SQLColumn(dstColumnName, "BIGINT", edgeBundle.rdd.mapValues(_.dst.toString))
+    new SQLExport(dataManager.sqlContext, table, edgeBundle.idSet.rdd, Seq(
+      // The src and dst vertex ids are mandatory.
+      SQLColumn(srcColumnName, types.LongType, edgeBundle.rdd.mapValues(_.src), nullable = false),
+      SQLColumn(dstColumnName, types.LongType, edgeBundle.rdd.mapValues(_.dst), nullable = false)
     ) ++ attributes.toSeq.sortBy(_._1).map { case (name, attr) => sqlAttribute(name, attr) })
   }
 }
 import SQLExport._
 class SQLExport private (
+    sqlContext: SQLContext,
     table: String,
     vertexSet: VertexSetRDD,
-    sqls: Seq[SQLColumn]) {
+    sqls: Seq[SQLColumn[_]]) {
 
-  private val columns = sqls
-    .map(col => s"${quoteIdentifier(col.name)} ${col.sqlType}")
-    .mkString(", ")
-  private val values = addRDDs(
-    vertexSet.mapValues(_ => Seq[String]()),
-    sqls.map(_.stringRDD)).values
-
-  val quotedTable = quoteIdentifier(table);
-  val deletion = s"DROP TABLE IF EXISTS $quotedTable;\n"
-  val creation = s"CREATE TABLE $quotedTable ($columns);\n"
-  log.info(s"Executing statements: $deletion $creation")
-  val inserts = makeInserts(quotedTable, values)
+  private val schema =
+    types.StructType(sqls.map(sql => types.StructField(sql.name, sql.sqlType, sql.nullable)))
+  private val rowRDD = addRDDs(
+    vertexSet.mapValues(_ => Nil),
+    sqls.map(_.rdd))
+  private val dataFrame = sqlContext.createDataFrame(rowRDD, schema)
 
   def insertInto(db: String, delete: Boolean) = {
-    // Create the table from the driver.
-    if (delete) execute(db, deletion + creation)
-    else execute(db, creation)
-    // Running the data updates from parallel tasks.
-    inserts.foreach(execute(db, _))
-  }
-
-  def saveAs(filename: HadoopFile) = {
-    (filename / "header").createFromStrings(deletion + creation)
-    (filename / "data").saveAsTextFile(inserts)
+    if (delete) {
+      dataFrame.createJDBCTable("jdbc:" + db, quoteIdentifier(table), allowExisting = true)
+    } else {
+      dataFrame.insertIntoJDBC("jdbc:" + db, quoteIdentifier(table), overwrite = false)
+    }
   }
 }

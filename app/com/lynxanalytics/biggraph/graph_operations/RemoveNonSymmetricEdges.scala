@@ -1,4 +1,5 @@
 // Discards all A->B edges if there is no B->A edge.
+// We'll keep this only for backward compatibility; see MakeEdgeBundleSymmetric
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._

@@ -321,7 +321,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       axisOptions = AxisOptions())
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
-    assert(res.labels == Seq("2", "14", "26", "38", "50"))
+    assert(res.labels == Seq("2.0", "14.1", "26.2", "38.2", "50.3"))
     assert(res.sizes == Seq(1, 2, 0, 1))
   }
 
@@ -334,7 +334,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       axisOptions = AxisOptions())
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
-    assert(res.labels == Seq("1000", "1250", "1500", "1750", "2000"))
+    assert(res.labels == Seq("1000.0", "1250.0", "1500.0", "1750.0", "2000.0"))
     assert(res.sizes == Seq(1, 0, 0, 1))
   }
 
@@ -347,7 +347,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       axisOptions = AxisOptions(logarithmic = true))
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
-    assert(res.labels == Seq("2", "4", "10", "22", "50"))
+    assert(res.labels == Seq("2.0", "4.5", "10.0", "22.5", "50.3"))
     assert(res.sizes == Seq(1, 0, 2, 1))
   }
 
@@ -375,7 +375,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       edgeBundleId = g.edges.gUID.toString)
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
-    assert(res.labels == Seq("1.0", "1.8", "2.5", "3.3", "4.0"))
+    assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
     assert(res.sizes == Seq(1, 1, 1, 1))
   }
 
@@ -393,7 +393,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       edgeBundleId = g.edges.gUID.toString)
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
-    assert(res.labels == Seq("1.0", "1.8", "2.5", "3.3", "4.0"))
+    assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
     assert(res.sizes == Seq(0, 1, 1, 1))
   }
 

@@ -6,8 +6,16 @@ import java.util.UUID
 import scala.collection.mutable
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
-  def /(name: Symbol): SymbolPath = path.toSeq :+ name
+  override def equals(p: Any) = {
+    p.isInstanceOf[SymbolPath] && path == p.asInstanceOf[SymbolPath].path
+  }
+  override def hashCode = toString.hashCode
+  def /(symbol: Symbol): SymbolPath = {
+    SymbolPath.check(symbol)
+    path.toSeq :+ symbol
+  }
   def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
+  def /(suffixDir: String): SymbolPath = /(Symbol(suffixDir))
   override def toString = path.map(_.name).mkString("/")
   def iterator = path.iterator
   def parent: SymbolPath = path.init
@@ -17,9 +25,24 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Order
 object SymbolPath {
   import scala.language.implicitConversions
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
-  implicit def fromString(str: String): SymbolPath =
+  def parse(str: String): SymbolPath =
     str.split("/", -1).toSeq.map(Symbol(_))
-  implicit def fromSymbol(sym: Symbol): SymbolPath = fromString(sym.name)
+  def check(symbol: Symbol) = {
+    val str = symbol.name
+    assert(!str.contains("/"), s"Name $str contains a slash ('/')")
+    assert(str.nonEmpty)
+  }
+
+  def apply(first: Symbol, optional: Symbol*): SymbolPath = {
+    val path = first +: optional
+    for (name <- path) check(name)
+    new SymbolPath(path)
+  }
+
+  def apply(first: String, optional: String*): SymbolPath = {
+    apply(Symbol(first), optional.map(Symbol(_)): _*)
+  }
+
 }
 
 sealed trait TagPath extends Serializable with Ordered[TagPath] {
@@ -100,8 +123,9 @@ trait TagDir extends TagPath {
   }
 
   def mkDir(name: Symbol): TagSubDir = synchronized {
-    assert(!existsTag(name), s"Tag '$name' already exists.")
-    if (existsDir(name)) return (this / name).asInstanceOf[TagSubDir]
+    val tagName = SymbolPath(name)
+    assert(!existsTag(tagName), s"Tag '$name' already exists.")
+    if (existsDir(tagName)) return (this / tagName).asInstanceOf[TagSubDir]
     val result = TagSubDir(name, this, store)
     children(name) = result
     result
@@ -179,7 +203,7 @@ object TagRoot {
     loadFromStore(storeFromRepo(repo))
 
   private def loadFromStore(store: KeyValueStore): Map[SymbolPath, String] =
-    store.readAll.map { case (k, v) => SymbolPath.fromString(k) -> v }.toMap
+    store.readAll.map { case (k, v) => SymbolPath.parse(k) -> v }.toMap
 
   private def storeFromRepo(repo: String): KeyValueStore = {
     val tagsJournal = new File(repo, journalFilename)

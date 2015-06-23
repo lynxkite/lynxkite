@@ -62,7 +62,7 @@ describe('the graph view', function() {
       var circle = element.all(by.css('g.vertex > circle')).first();
       circle.click();
       expect(menu.isDisplayed()).toBe(true);
-      var something = element.all(by.css('div.project-name')).first();
+      var something = element.all(by.css('.side > .project > .project-name')).first();
       something.click();
       expect(menu.isDisplayed()).toBe(false);
     });
