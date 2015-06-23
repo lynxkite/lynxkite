@@ -6,6 +6,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 
 ### master
 
+ - Switching to Spark 1.4.0.
  - Removed the _SQL dump_ option in file export operations. The only supported output format
    is CSV now.
 
