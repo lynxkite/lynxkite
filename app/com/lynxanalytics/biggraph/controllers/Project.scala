@@ -415,6 +415,13 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   def segmentationNames = ls(checkpointedDir / "segmentations").map(_.last.name)
 
   def copy(to: Project): Unit = cp(rootDir, to.rootDir)
+
+  def copyAsSegmentation(to: Segmentation): Unit = {
+    // TODO: When copying projects into segmentations,
+    // there's no need to copy everything, so we should not just call copy blindly.
+    copy(to.project)
+  }
+
   def remove(): Unit = manager.synchronized {
     existing(rootDir).foreach(manager.rmTag(_))
     log.info(s"A project has been discarded: $rootDir")
