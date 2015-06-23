@@ -2442,6 +2442,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     op(op.es, eb).result.esPlus
   }
 
+  def stripDuplicateEdges(eb: EdgeBundle): EdgeBundle = {
+    val op = graph_operations.StripDuplicateEdgesFromBundle()
+    op(op.es, eb).result.unique
+  }
+
   object Direction {
     // Options suitable when edge attributes are involved.
     val attrOptions = UIValue.list(List(
@@ -2449,7 +2454,21 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       "outgoing edges",
       "all edges"))
     // Options suitable when edge attributes are not involved.
-    val options = attrOptions :+ UIValue("symmetric edges", "symmetric edges")
+    val options = attrOptions :+
+      UIValue("symmetric edges", "symmetric edges") :+
+      UIValue("in-neighbors", "in-neighbors") :+
+      UIValue("out-neighbors", "out-neighbors") :+
+      UIValue("all neighbors", "all neighbors") :+
+      UIValue("symmetric neighbors", "symmetric neighbors")
+    // Neighborhood directions correspond to these
+    // edge directions, but they also retain only one A->B edge in
+    // the output edgeBundle
+    private val neighborOptionMapping = Map(
+      "in-neighbors" -> "incoming edges",
+      "out-neighbors" -> "outgoing edges",
+      "all neighbors" -> "all edges",
+      "symmetric neighbors" -> "symmetric edges"
+    )
   }
   case class Direction(direction: String, origEB: EdgeBundle, reversed: Boolean = false) {
     val unchangedOut: (EdgeBundle, Option[EdgeBundle]) = (origEB, None)
@@ -2458,17 +2477,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val res = op(op.esAB, origEB).result
       (res.esBA, Some(res.injection))
     }
-    val (edgeBundle, pullBundleOpt): (EdgeBundle, Option[EdgeBundle]) = direction match {
-      case "incoming edges" => if (reversed) reversedOut else unchangedOut
-      case "outgoing edges" => if (reversed) unchangedOut else reversedOut
-      case "all edges" =>
-        val op = graph_operations.AddReversedEdges()
-        val res = op(op.es, origEB).result
-        (res.esPlus, Some(res.newToOriginal))
-      case "symmetric edges" =>
-        // Use "null" as the injection because it is an error to use
-        // "symmetric edges" with edge attributes.
-        (makeEdgeBundleSymmetric(origEB), Some(null))
+    private def computeEdgeBundleAndPullBundleOpt(dir: String): (EdgeBundle, Option[EdgeBundle]) = {
+      dir match {
+        case "incoming edges" => if (reversed) reversedOut else unchangedOut
+        case "outgoing edges" => if (reversed) unchangedOut else reversedOut
+        case "all edges" =>
+          val op = graph_operations.AddReversedEdges()
+          val res = op(op.es, origEB).result
+          (res.esPlus, Some(res.newToOriginal))
+        case "symmetric edges" =>
+          // Use "null" as the injection because it is an error to use
+          // "symmetric edges" with edge attributes.
+          (makeEdgeBundleSymmetric(origEB), Some(null))
+      }
+    }
+
+    val (edgeBundle, pullBundleOpt): (EdgeBundle, Option[EdgeBundle]) = {
+      if (Direction.neighborOptionMapping.contains(direction)) {
+        val (eB, pBO) = computeEdgeBundleAndPullBundleOpt(Direction.neighborOptionMapping(direction))
+        (stripDuplicateEdges(eB), pBO)
+      } else {
+        computeEdgeBundleAndPullBundleOpt(direction)
+      }
     }
 
     def pull[T](attribute: Attribute[T]): Attribute[T] = {
