@@ -16,6 +16,7 @@ Please add changes to "master". When releasing a version add a new header for th
  - For neighbor aggregations and degree the meaning of "symmetric" edges makes more sense now:
    the number of symmetric edges between A and B is now understood as
    _max(number of edgex A->B, number of edges B->A)_
+ - EC2 Kite instances now listen on port 4044 (instead of 5080 before).
  - Smoke test script added: when you install a new Kite instance, you can run
      `kite_xxx/tools/daily_test.sh`
    to see if everything is set up correctly.
