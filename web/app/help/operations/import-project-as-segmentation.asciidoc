@@ -5,9 +5,9 @@ connections between the segments and the base vertices. You can import/create th
 other operations (see <<load-segmentation-links-from-csv>> and
 <<define-segmentation-links-from-matching-attributes>>).
 
-Note that you cannot import the project itself as segmentation; only other projects
-can be used here. If you need to import the project into itself as segmentation, you
-can either make a copy of it first and import the copy, or use <<copy-graph-into-a-segmentation>>.
+Note that it is possible to import the project itself as segmentation. But even in this
+special case, there will be no connections between the segments and the base vertices.
+Another operation, <<copy-graph-into-a-segmentation>> can be used overcome this limitation.
 
 ====
 [[them]] Other project's name::
