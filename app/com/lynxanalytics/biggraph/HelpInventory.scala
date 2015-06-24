@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.controllers.Operations
 object HelpInventory extends App {
   val ops = new Operations(null)
   val fos = new java.io.FileOutputStream(args.head)
-  for (op <- ops.operationIds.sorted) {
+  for (op <- ops.operationIds.map(_.toLowerCase).sorted) {
     fos.write(op.getBytes)
     fos.write('\n')
   }
