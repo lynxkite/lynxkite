@@ -175,7 +175,7 @@ trait ImportCommon {
       fields: Seq[String],
       mayHaveNulls: Boolean,
       requiredFields: Set[String] = Set()) {
-    val filteredNumberedLines =
+    val numberedValidLines =
       if (requiredFields.isEmpty || !mayHaveNulls) allNumberedLines
       else {
         val requiredIndexes = requiredFields.map(fieldName => fields.indexOf(fieldName)).toArray
@@ -186,8 +186,8 @@ trait ImportCommon {
     val singleColumns = fields.zipWithIndex.map {
       case (field, idx) =>
         (field,
-          if (mayHaveNulls) filteredNumberedLines.flatMapValues(line => Option(line(idx)))
-          else filteredNumberedLines.mapValues(line => line(idx)))
+          if (mayHaveNulls) numberedValidLines.flatMapValues(line => Option(line(idx)))
+          else numberedValidLines.mapValues(line => line(idx)))
     }.toMap
 
     def apply(fieldName: String) = singleColumns(fieldName)
@@ -196,10 +196,14 @@ trait ImportCommon {
       val idx1 = fields.indexOf(fieldName1)
       val idx2 = fields.indexOf(fieldName2)
       if (mayHaveNulls) {
-        filteredNumberedLines.flatMapValues(line =>
-          Option(line(idx1)).flatMap(value1 => Option(line(idx2)).map(value2 => (value1, value2))))
+        numberedValidLines.flatMapValues { line =>
+          val value1 = line(idx1)
+          val value2 = line(idx2)
+          if ((value1 != null) && (value2 != null)) Some((value1, value2))
+          else None
+        }
       } else {
-        filteredNumberedLines.mapValues(line => (line(idx1), line(idx2)))
+        numberedValidLines.mapValues(line => (line(idx1), line(idx2)))
       }
     }
   }
@@ -265,7 +269,7 @@ case class ImportVertexList(input: RowInput) extends ImportCommon
     for ((field, rdd) <- columns.singleColumns) {
       output(o.attrs(field), rdd)
     }
-    output(o.vertices, columns.filteredNumberedLines.mapValues(_ => ()))
+    output(o.vertices, columns.numberedValidLines.mapValues(_ => ()))
   }
 }
 
