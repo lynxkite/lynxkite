@@ -66,4 +66,6 @@ case class DBTable(
       row => fields.map(field => row.getString(field))
     ).randomNumbered(numPartitions)
   }
+
+  val mayHaveNulls = true
 }
