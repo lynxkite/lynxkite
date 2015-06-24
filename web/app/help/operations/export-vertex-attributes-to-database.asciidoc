@@ -1,19 +1,7 @@
 ### Export vertex attributes to database
 
-Creates a new table and writes the selected attributes into it.
+Creates a new database table and writes the selected vertex attributes into it.
 
 ====
-[[db]] Database::
-The database to write to.
-+
-include::{g}[tag=database-access]
-
-[[table]] Table::
-The table to create in the database.
-
-[[attrs]] Attributes::
-Attributes to export.
-
-[[delete]] Overwrite table if it exists::
-If enabled, all data in the table will be deleted before inserting the new data. Be careful!
+include::{g}[tag=database-export]
 ====

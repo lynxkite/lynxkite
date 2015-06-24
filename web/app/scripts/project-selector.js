@@ -66,7 +66,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             privacy: scope.newProject.privacy,
           }, function() {
             scope.name = name;
-          }).then(function() {
+          }).$status.then(function() {
             scope.newProject.sending = false;
           });
       };

@@ -17,30 +17,36 @@
       </label>
     </div>
 
-    <div class="btn-group pull-right" ng-if="localChanges || remoteChanges">
-      <!-- Invalid local changes. -->
-      <label class="btn btn-warning" ng-if="localChanges && localValidationResult() !== 'ok'"
-        tooltip="Not ready for validation: {{localValidationResult()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-exclamation-sign"></i>
+    <!-- No changes. -->
+    <div class="btn-group pull-right" ng-show="!localChanges && !remoteChanges"
+      tooltip="No changes" tooltip-append-to-body="true" tooltip-placement="bottom">
+      <label class="btn btn-default" disabled>
+        <i class="glyphicon glyphicon-floppy-disk"></i>
       </label>
-      <!-- Valid local changes. -->
-      <label class="btn btn-default" ng-if="localChanges && localValidationResult() === 'ok'" ng-click="validate()"
-        tooltip="Validate&nbsp;history {{listLocalChanges()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-ok"></i>
+    </div>
+    <!-- Local changes. -->
+    <div class="btn-group pull-right" ng-show="localChanges"
+      tooltip="You are currently editing an operation"
+      tooltip-append-to-body="true" tooltip-placement="bottom">
+      <label class="btn btn-default" disabled>
+        <i class="glyphicon glyphicon-floppy-disk"></i>
       </label>
+    </div>
+    <div class="btn-group pull-right" ng-show="!localChanges && remoteChanges">
       <!-- Invalid remote changes. -->
-      <label class="btn btn-warning" ng-if="!localChanges && !valid"
-        tooltip="History is inconsitent {{listInvalidSteps()}}" tooltip-append-to-body="true" tooltip-placement="bottom">
+      <label class="btn btn-warning" ng-if="!valid"
+        tooltip="History is inconsitent {{listInvalidSteps()}}"
+        tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
       </label>
       <!-- Valid remote changes. "Save as" box is closed. -->
-      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid && !showSaveAs"
+      <label class="btn btn-default" ng-if="remoteChanges && valid && !showSaveAs"
         ng-click="$parent.showSaveAs = true; $parent.saveAsName = side.state.projectName;"
         tooltip="History is valid. Click to save." tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-floppy-disk"></i>
       </label>
       <!-- Valid remote changes. "Save as" box is open. -->
-      <label class="btn btn-default" ng-if="!localChanges && remoteChanges && valid && showSaveAs"
+      <label class="btn btn-default" ng-if="remoteChanges && valid && showSaveAs"
         ng-click="saveAs(saveAsName)"
         tooltip="Click the icon to save as {{saveAsName}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <form ng-submit="saveAs(saveAsName)" style="display: inline;">
@@ -55,7 +61,7 @@
   </div>
 
   <div class="list-group">
-    <li class="list-group-item uneditable" ng-if="!history.$resolved">
+    <li class="list-group-item" ng-if="!history.$resolved">
       <progressbar value="100" class="progress-striped active">
         Loading...
       </progressbar>
@@ -64,12 +70,13 @@
       Error loading history.
       <i class="pull-right"><a href ng-click="reportError()">report problem</a></i>
     </li>
-    <li class="list-group-item uneditable" ng-if="history.skips">
-      <div style="font-size: 30px">&hellip;</div>
-      {{history.skips}} earlier {{history.skips === 1 ? 'step' : 'steps'}} cannot be edited.
-    </li>
     <li class="list-group-item" ng-repeat="step in history.steps"
-      ng-class="{ 'local-changes': step.localChanges, invalid: !step.status.enabled }"
+      ng-class="{
+        'has-checkpoint': step.hasCheckpoint,
+        'local-changes': step.localChanges,
+        invalid: !step.status.enabled,
+        uneditable: !step.editable,
+      }"
       ng-init="cat = findCategory(step.opCategoriesBefore, step.request)">
       <div ng-hide="step.status.enabled" class="error">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
@@ -82,9 +89,12 @@
         categories="step.opCategoriesBefore"
         op="step.request.op.id"
         category="cat"
-        params="step.request.op.parameters">
+        params="step.request.op.parameters"
+        editable="step.editable"
+        applying="validating">
       </operation-toolbox>
-      <div class="btn-group history-options pull-right" dropdown>
+      <div class="btn-group history-options pull-right" dropdown
+        ng-hide="localChanges || !step.editable">
         <a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>
         <ul class="dropdown-menu">
           <li><a href ng-click="discard(step)">

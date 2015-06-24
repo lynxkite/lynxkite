@@ -66,6 +66,8 @@ include::copy-vertex-attributes-to-segmentation.asciidoc[]
 
 include::correlate-two-attributes.asciidoc[]
 
+include::create-edges-from-co-occurrence.asciidoc[]
+
 include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-random-edge-bundle.asciidoc[]
@@ -192,9 +194,9 @@ include::segment-by-string-attribute.asciidoc[]
 
 include::union-with-another-project.asciidoc[]
 
-include::vertex-attribute-to-double.asciidoc[]
+include::vertex-attributes-to-position.asciidoc[]
 
-include::vertex-attribute-to-position.asciidoc[]
+include::vertex-attribute-to-double.asciidoc[]
 
 include::vertex-attribute-to-string.asciidoc[]
 

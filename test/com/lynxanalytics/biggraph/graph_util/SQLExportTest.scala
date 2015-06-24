@@ -23,13 +23,13 @@ class SQLExportTest extends FunSuite with TestGraphOp {
         "income" -> g.income, "name" -> g.name))
 
     val db = s"sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
-    export.insertInto(db, delete = true)
+    export.insertInto(db)
     implicit val connection = sql.DriverManager.getConnection("jdbc:" + db)
     val q1 = SQL("SELECT name FROM \"example graph\" WHERE age < 20")
     assert(q1().map(row => row[String]("name")).sorted == Seq("Eve", "Isolated Joe"))
 
     // We don't delete the existing table so we expect duplications.
-    export.insertInto(db, delete = false)
+    export.insertInto(db, mode = "append")
     val q2 = SQL("SELECT name FROM \"example graph\" WHERE age < 20")
     assert(q2().map(row => row[String]("name")).sorted == Seq("Eve", "Eve", "Isolated Joe", "Isolated Joe"))
   }

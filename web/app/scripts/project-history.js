@@ -15,6 +15,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         scope.history = util.nocache('/ajax/getHistory', {
           project: scope.side.state.projectName,
         });
+        scope.updatedHistory = undefined;
       }
 
       function update() {
@@ -24,17 +25,20 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         if (history && history.$resolved && !history.$error) {
           for (var i = 0; i < history.steps.length; ++i) {
             var step = history.steps[i];
-            if (!step.status.enabled) {
+            step.localChanges = false;
+            step.editable = scope.valid;
+            if (!step.hasCheckpoint && !step.status.enabled) {
               scope.valid = false;
             }
-            watchStep(step);
+            watchStep(i, step);
           }
         }
       }
       scope.$watch('history', update);
       scope.$watch('history.$resolved', update);
+      scope.$on('apply operation', validate);
 
-      function watchStep(step) {
+      function watchStep(index, step) {
         util.deepWatch(
           scope,
           function() { return step.request; },
@@ -42,38 +46,52 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             if (after === before) { return; }
             step.localChanges = true;
             scope.localChanges = true;
+            // Steps after a change cannot use checkpoints.
+            // This is visually communicated as well.
+            var steps = scope.history.steps;
+            for (var i = index; i < steps.length; ++i) {
+              steps[i].hasCheckpoint = false;
+            }
+            for (i = 0; i < steps.length; ++i) {
+              if (i !== index) {
+                steps[i].editable = false;
+              }
+            }
           });
       }
 
       function alternateHistory() {
         var requests = [];
         var steps = scope.history.steps;
+        var skips = 0;
         for (var i = 0; i < steps.length; ++i) {
-          requests.push(steps[i].request);
+          var s = steps[i];
+          if (s.hasCheckpoint) {
+            skips += 1;
+          } else {
+            requests.push(s.request);
+          }
         }
         return {
           project: scope.side.state.projectName,
-          skips: scope.history.skips,
+          skips: skips,
           requests: requests,
         };
       }
 
-      // Performs a light validation in the browser, returning "ok" if it passes,
-      // otherwise an error string.
-      scope.localValidationResult = function() {
-        var steps = scope.history.steps;
-        for (var i = 0; i < steps.length; ++i) {
-          if (steps[i].request.op.id === undefined) {
-            return 'an operation is unset';
-          }
+      function validate() {
+        scope.validating = true;
+        scope.updatedHistory = util.post('/ajax/validateHistory', alternateHistory());
+      }
+      function copyUpdate() {
+        if (scope.updatedHistory && scope.updatedHistory.$resolved) {
+          scope.remoteChanges = true;
+          scope.validating = false;
+          scope.history = scope.updatedHistory;
         }
-        return 'ok';
-      };
-
-      scope.validate = function() {
-        scope.remoteChanges = true;
-        scope.history = util.nocache('/ajax/validateHistory', alternateHistory());
-      };
+      }
+      scope.$watch('updatedHistory', copyUpdate);
+      scope.$watch('updatedHistory.$resolved', copyUpdate);
 
       scope.saveAs = function(newName) {
         scope.saving = true;
@@ -88,7 +106,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             scope.side.state.projectName = newName; // Will trigger a reload.
           }
           scope.side.showHistory = false;
-        }).then(function() {
+        }).$status.then(function() {
           // On completion, regardless of success.
           scope.saving = false;
         });
@@ -142,16 +160,6 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         return names;
       }
 
-      scope.listLocalChanges = function() {
-        var changed = opNamesForSteps(scope.history.steps.filter(
-              function(step) { return step.localChanges; }));
-        if (changed.length === 0) {
-          return '';  // No name for the changed step.
-        }
-        var has = changed.length === 1 ? 'has' : 'have';
-        return '(' + changed.join(', ') + ' ' + has + ' changed)';
-      };
-
       scope.listInvalidSteps = function() {
         var invalids = opNamesForSteps(scope.history.steps.filter(
               function(step) { return !step.status.enabled; }));
@@ -185,19 +193,19 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       scope.discard = function(step) {
         var pos = scope.history.steps.indexOf(step);
         scope.history.steps.splice(pos, 1);
-        scope.validate();
+        validate();
       };
 
       // Insert new operation.
       scope.insertBefore = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
         scope.history.steps.splice(pos, 0, blankStep(seg));
-        scope.validate();
+        validate();
       };
       scope.insertAfter = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
         scope.history.steps.splice(pos + 1, 0, blankStep(seg));
-        scope.validate();
+        validate();
       };
 
       // Returns the short name of the segmentation if the step affects a segmentation.
