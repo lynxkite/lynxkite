@@ -1,4 +1,4 @@
-### Merge parallel edges by string attribute
+### Merge parallel edges by attribute
 
 Multiple edges going from A to B that share the same value of the given edge attribute
 will be merged into a single edge. The edges going from A to B are not merged with edges
