@@ -18,7 +18,18 @@ Please add changes at the top. When releasing a version add a new header for tha
  - Fixed bug: editing the history now causes project reload.
  - Fixed a bug where we didn't close some files when we didn't need them which caused s3 lockups.
  - Fixed a bug where vertices became frozen when attributes were visualized on them.
- - 
+ - Smoke test script added: when you install a new Kite instance, you can run:
+     kite_xxx/tools/daily_test.sh
+   to see if everything is set up correctly.
+ - Fixed a bug where cross edges between project and segmentation could be broken for certain
+   operations.
+ - For neighbor aggregations and degree the meaning of "symmetric" edges makes more sense now:
+   the number of symmetric edges between A and B is now understood as
+   max(number of edgex A->B, number of edges B->A)
+ - Added new options for neighbor aggregations and degree which allows to consider unique neighbors
+   (until now, always considered a neigbor multiple times if it was connected to the base vertex
+   with multiple edges).
+ - Improved watchdog to detect a wider range of potential problems.
 
 ### 1.4.2
 
