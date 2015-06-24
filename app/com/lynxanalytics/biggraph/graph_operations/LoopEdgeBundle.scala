@@ -10,7 +10,7 @@ object LoopEdgeBundle extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val eb = edgeBundle(inputs.vs.entity, inputs.vs.entity)
+    val eb = edgeBundle(inputs.vs.entity, inputs.vs.entity, idSet = inputs.vs.entity)
   }
   def fromJson(j: JsValue) = LoopEdgeBundle()
 }
@@ -28,8 +28,7 @@ case class LoopEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
     implicit val iLoveScalaImplicits = inputDatas
 
     val vertexIDPlusUnit = inputs.vs.rdd
-    val loopEdges = vertexIDPlusUnit.map { case (id, _) => Edge(id, id) }.randomNumbered()
-    val vsPart = vertexIDPlusUnit.partitioner.get
-    output(o.eb, loopEdges.toSortedRDD(vsPart))
+    val loopEdges = vertexIDPlusUnit.mapValuesWithKeys { case (id, _) => Edge(id, id) }
+    output(o.eb, loopEdges)
   }
 }

@@ -416,10 +416,18 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
 
   def copy(to: Project): Unit = cp(rootDir, to.rootDir)
 
-  def copyAsSegmentation(to: Segmentation): Unit = {
-    // TODO: When copying projects into segmentations,
-    // there's no need to copy everything, so we should not just call copy blindly.
-    copy(to.project)
+  def copyToSegmentation(to: Segmentation): Unit = {
+    val stuffNeededInSegmentations =
+      List("vertexAttributes", "scalars", "edgeAttributes", "vertexSet", "edgeBundle", "notes")
+    val targetRoot = to.project.checkpointedDir
+    val sourceRoot = checkpointedDir
+
+    for (tag <- stuffNeededInSegmentations) {
+      val source = sourceRoot / tag
+      if (exists(source)) {
+        cp(source, targetRoot / tag)
+      }
+    }
   }
 
   def remove(): Unit = manager.synchronized {
@@ -434,6 +442,10 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
+
+  private def exists(tag: SymbolPath): Boolean =
+    existing(tag) != None
+
   private def set(tag: SymbolPath, entity: MetaGraphEntity): Unit = manager.synchronized {
     if (entity == null) {
       existing(tag).foreach(manager.rmTag(_))
