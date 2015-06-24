@@ -14,6 +14,11 @@ Please add changes at the top. When releasing a version add a new header for tha
    number of edges between the vertices).
  - Removed the _SQL dump_ option in file export operations. The only supported output format
    is CSV now.
+ - Fixed saving forkflows. The save dialog didn't actually show in prod deployments.
+ - Fixed bug: editing the history now causes project reload.
+ - Fixed a bug where we didn't close some files when we didn't need them which caused s3 lockups.
+ - Fixed a bug where vertices became frozen when attributes were visualized on them.
+ - 
 
 ### 1.4.2
 
