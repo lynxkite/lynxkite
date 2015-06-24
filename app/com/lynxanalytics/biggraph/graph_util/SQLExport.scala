@@ -10,10 +10,11 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types
-import org.apache.spark.SparkContext
 
 object SQLExport {
   private val SimpleIdentifier = "[a-zA-Z0-9_]+".r
@@ -45,18 +46,10 @@ object SQLExport {
     connection.close()
   }
 
-  private val supportedTypes: Seq[(Type, types.DataType)] = Seq(
-    (typeOf[Double], types.DoubleType),
-    (typeOf[String], types.StringType),
-    (typeOf[Long], types.LongType))
-
   private case class SQLColumn[T](name: String, sqlType: types.DataType, rdd: SortedRDD[ID, T], nullable: Boolean)
 
   private def sqlAttribute[T](name: String, attr: Attribute[T])(implicit dm: DataManager) = {
-    val opt = supportedTypes.find(line => line._1 =:= attr.typeTag.tpe)
-    assert(opt.nonEmpty, s"Attribute '$name' is of an unsupported type: ${attr.typeTag}")
-    val (tpe, sqlType) = opt.get
-    SQLColumn(name, sqlType, attr.rdd, nullable = true)
+    SQLColumn(name, ScalaReflection.schemaFor(attr.typeTag.tpe).dataType, attr.rdd, nullable = true)
   }
 
   def apply(
@@ -102,11 +95,12 @@ class SQLExport private (
     sqls.map(_.rdd))
   private val dataFrame = sqlContext.createDataFrame(rowRDD, schema)
 
-  def insertInto(db: String, delete: Boolean) = {
-    if (delete) {
-      dataFrame.createJDBCTable("jdbc:" + db, quoteIdentifier(table), allowExisting = true)
-    } else {
-      dataFrame.insertIntoJDBC("jdbc:" + db, quoteIdentifier(table), overwrite = false)
-    }
+  // For valid values of mode, see the mode method defined in DataFrameWriter:
+  // http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameWriter
+  def insertInto(db: String, mode: String = "error") = {
+    dataFrame
+      .write
+      .mode(mode)
+      .jdbc("jdbc:" + db, quoteIdentifier(table), new java.util.Properties())
   }
 }

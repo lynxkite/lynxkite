@@ -76,6 +76,7 @@ module.exports = function (grunt) {
         middleware: function(connect, options, mws) {
           // Custom behavior for some Ajax requests.
           mws.unshift(function(req, res, next) {
+            req.method = 'GET';
             if (req.url.indexOf('/ajax/complexView') === 0) {
               if (req.url.indexOf('layout3D%22:true') !== -1) {
                 req.url = req.url.replace('complexView', 'complexView-global');
@@ -224,7 +225,7 @@ module.exports = function (grunt) {
         flow: {
           html: {
             steps: {
-              js: ['concat', 'uglifyjs'],
+              js: ['concat'],
               css: ['cssmin']
             },
             post: {}
@@ -452,7 +453,6 @@ module.exports = function (grunt) {
     'copy:dist',
     'cdnify',
     'cssmin',
-    'uglify',
     'rev',
     'usemin',
     'htmlmin'

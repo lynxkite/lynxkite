@@ -5,7 +5,7 @@
 angular.module('biggraph').directive('operationParameters', function(util) {
   return {
     restrict: 'E',
-    scope: { op: '=', output: '=', busy: '=?' },
+    scope: { op: '=', output: '=', busy: '=?', editable: '=' },
     templateUrl: 'operation-parameters.html',
     link: function(scope) {
       scope.fileUploads = { count: 0 };

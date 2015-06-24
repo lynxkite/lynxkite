@@ -83,7 +83,7 @@ export KITE_DATA_DIR=s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DA
 export EXECUTOR_MEMORY=$((RAM_GB - 5))g
 export NUM_CORES_PER_EXECUTOR=${CORES}
 export KITE_MASTER_MEMORY_MB=$((1024 * (RAM_GB - 5)))
-export KITE_HTTP_PORT=5080
+export KITE_HTTP_PORT=4044
 export KITE_LOCAL_TMP=${LOCAL_TMP_DIR}
 export KITE_PREFIX_DEFINITIONS=/root/prefix_definitions.txt
 EOF
@@ -125,7 +125,7 @@ biggraphstage/bin/biggraph restart
 exit
 EOF
 
-  echo "Server started on http://${HOST}:5080"
+  echo "Server started on http://${HOST}:4044"
   ;;
 
 # ======

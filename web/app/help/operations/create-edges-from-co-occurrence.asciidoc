@@ -1,0 +1,6 @@
+### Create edges from co-occurrence
+
+Connects vertices in the parent project if they co-occur in any segments.
+Multiple co-occurrences will result in multiple parallel edges. Loop edges
+are generated for each segment that a vertex belongs to. The attributes of
+the segment are copied to the edges created from it.
