@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+### 1.4.3
+
  - History editing improvements. Operations with problems (such as importing a file that no
    longer exists) can be edited now. Long histories can now be edited without problem. The
    UI has been revised a bit. (The _Validate_ button has been removed.)
