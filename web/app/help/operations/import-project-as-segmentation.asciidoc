@@ -7,7 +7,7 @@ other operations (see <<load-segmentation-links-from-csv>> and
 
 Note that you cannot import the project itself as segmentation; only other projects
 can be used here. If you need to import the project into itself as segmentation, you
-can either make a copy of it first and import the copy, or use <<project-as-its-own-segmentation>>.
+can either make a copy of it first and import the copy, or use <<copy-graph-into-a-segmentation>>.
 
 ====
 [[them]] Other project's name::

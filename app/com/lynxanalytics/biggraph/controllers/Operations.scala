@@ -1635,7 +1635,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val from = project.segmentation(params("from"))
       val to = project.segmentation(params("to"))
-      from.project.copyAsSegmentation(to)
+      from.project.copy(to.project)
       to.belongsTo = from.belongsTo
     }
   })
@@ -1655,60 +1655,38 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Project as its own segmentation", new CreateSegmentationOperation(_, _) {
+  register("Copy graph into a segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = project.projectName))
     def enabled = hasVertexSet
-    override def summary(params: Map[String, String]) = {
-      val name = params("name")
-      s"Create a segmentation called $name that corresponds to the project vertex set"
-    }
 
-    private def computeSimpleSegmentSizes(): Attribute[Double] = {
-      import com.lynxanalytics.biggraph.graph_operations.AddConstantDoubleAttribute
-      val op = AddConstantDoubleAttribute(1.0)
-      op(op.vs, project.vertexSet).result.attr
-    }
     def apply(params: Map[String, String]) = {
-      val tmpSelfName = scala.util.Random.alphanumeric.take(10).mkString
-      val tmpSelfCopy = Project.fromName(tmpSelfName)
-      project.copy(tmpSelfCopy)
-
       val segmentation = project.segmentation(params("name"))
-      tmpSelfCopy.copyAsSegmentation(segmentation)
-      tmpSelfCopy.remove()
+      project.copyToSegmentation(segmentation)
 
       val op = graph_operations.LoopEdgeBundle()
       segmentation.belongsTo = op(op.vs, project.vertexSet).result.eb
-      // TODO: uncomment and/or refactor this when a decision is reached about #1843
-      // segmentation.project.vertexAttributes("size") = computeSimpleSegmentSizes()
-      segmentation.project.discardCheckpoints()
     }
   })
 
   register("Import project as segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
-      Choice("them", "Other project's name", options = otherProjects))
-    private def otherProjects = readableProjects.filter(_.id != project.projectName)
-    def enabled =
-      hasVertexSet &&
-        FEStatus.assert(otherProjects.size > 0, "This is the only project")
+      Choice("them", "Other project's name", options = allProjects))
+    private def allProjects = readableProjects
+    def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
       val them = params("them")
       s"Import $them as segmentation"
     }
     def apply(params: Map[String, String]) = {
       val themName = params("them")
-      assert(otherProjects.map(_.id).contains(themName), s"Unknown project: $themName")
+      assert(allProjects.map(_.id).contains(themName), s"Unknown project: $themName")
       val them = Project.fromName(themName)
       assert(them.vertexSet != null, s"No vertex set in $them")
       val segmentation = project.segmentation(params("them"))
-      them.copyAsSegmentation(segmentation)
+      them.copyToSegmentation(segmentation)
       val op = graph_operations.EmptyEdgeBundle()
       segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
-      // TODO: uncomment and/or refactor this when a decision is reached about #1843
-      // segmentation.project.vertexAttributes("size") = computeSegmentSizes(segmentation)
-      segmentation.project.discardCheckpoints()
     }
   })
 
