@@ -12,9 +12,9 @@ Please add changes at the top. When releasing a version add a new header for tha
    number of edges between the vertices).
  - For neighbor aggregations and degree the meaning of "symmetric" edges makes more sense now:
    the number of symmetric edges between A and B is now understood as
-   max(number of edgex A->B, number of edges B->A)
- - Smoke test script added: when you install a new Kite instance, you can run:
-     kite_xxx/tools/daily_test.sh
+   _max(number of edgex A->B, number of edges B->A)_
+ - Smoke test script added: when you install a new Kite instance, you can run
+     `kite_xxx/tools/daily_test.sh`
    to see if everything is set up correctly.
  - Fixed saving workflows. The save dialog didn't actually show in prod deployments.
  - Fixed a bug where we didn't close some files when we didn't need them which caused s3 lockups.
