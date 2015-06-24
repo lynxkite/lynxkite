@@ -95,11 +95,12 @@ class SQLExport private (
     sqls.map(_.rdd))
   private val dataFrame = sqlContext.createDataFrame(rowRDD, schema)
 
-  def insertInto(db: String, delete: Boolean) = {
-    if (delete) {
-      dataFrame.createJDBCTable("jdbc:" + db, quoteIdentifier(table), allowExisting = true)
-    } else {
-      dataFrame.insertIntoJDBC("jdbc:" + db, quoteIdentifier(table), overwrite = false)
-    }
+  // For valid values of mode, see the mode method defined in DataFrameWriter:
+  // http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameWriter
+  def insertInto(db: String, mode: String = "error") = {
+    dataFrame
+      .write
+      .mode(mode)
+      .jdbc("jdbc:" + db, quoteIdentifier(table), new java.util.Properties())
   }
 }
