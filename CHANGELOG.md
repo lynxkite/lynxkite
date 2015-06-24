@@ -7,7 +7,7 @@ Please add changes at the top. When releasing a version add a new header for tha
 ### master
 
  - New operation _Copy graph into a segmentation_ can import the project as its own
-   segmentation and creates edges between the original vertices and
+   segmentation and create edges between the original vertices and
    their corresponding vertices in the segmentation.
  - Operations _Degree_, _Aggregate on neighbors_, and _Weighted aggregate on neighbors_ can
    now also make calculations directly on neighboring vertices (that is, regardless of the
