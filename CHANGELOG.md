@@ -7,29 +7,26 @@ Please add changes at the top. When releasing a version add a new header for tha
 ### master
 
  - Switching to Spark 1.4.0.
- - Appending data to an existing DB table is not supported anymore (as it's dangerous
-   if done accidentally). In other words, you can only export to a DB by creating a new table.
  - Operations _Degree_, _Aggregate on neighbors_, and _Weighted aggregate on neighbors_ can
-   now also make calculations directly on neighboring vertices (that is, regardless of the
+   now also make calculations directly on unique neighboring vertices (that is, regardless of the
    number of edges between the vertices).
- - Removed the _SQL dump_ option in file export operations. The only supported output format
-   is CSV now.
- - Fixed saving workflows. The save dialog didn't actually show in prod deployments.
- - Fixed bug: editing the history now causes project reload.
- - Fixed a bug where we didn't close some files when we didn't need them which caused s3 lockups.
- - Fixed a bug where vertices became frozen when attributes were visualized on them.
- - Smoke test script added: when you install a new Kite instance, you can run:
-     kite_xxx/tools/daily_test.sh
-   to see if everything is set up correctly.
- - Fixed a bug where cross edges between project and segmentation could be broken for certain
-   operations.
  - For neighbor aggregations and degree the meaning of "symmetric" edges makes more sense now:
    the number of symmetric edges between A and B is now understood as
    max(number of edgex A->B, number of edges B->A)
- - Added new options for neighbor aggregations and degree which allows to consider unique neighbors
-   (until now, always considered a neigbor multiple times if it was connected to the base vertex
-   with multiple edges).
+ - Smoke test script added: when you install a new Kite instance, you can run:
+     kite_xxx/tools/daily_test.sh
+   to see if everything is set up correctly.
+ - Fixed saving workflows. The save dialog didn't actually show in prod deployments.
+ - Fixed a bug where we didn't close some files when we didn't need them which caused s3 lockups.
+ - Appending data to an existing DB table is not supported anymore (as it's dangerous
+   if done accidentally). In other words, you can only export to a DB by creating a new table.
+ - Removed the _SQL dump_ option in file export operations. The only supported output format
+   is CSV now.
  - Improved watchdog to detect a wider range of potential problems.
+ - Fixed bug: editing the history now causes project reload.
+ - Fixed a bug where vertices became frozen when attributes were visualized on them.
+ - Fixed a bug where cross edges between project and segmentation could be broken for certain
+   operations.
 
 ### 1.4.2
 
