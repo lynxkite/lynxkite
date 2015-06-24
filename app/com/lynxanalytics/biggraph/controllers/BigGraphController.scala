@@ -326,13 +326,18 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.assertReadAllowedFrom(user)
     withCheckpoints(p) { checkpoints =>
       val beforeAfter = checkpoints.zip(checkpoints.tail)
-      var state = checkpoints.head
-      val skippedSteps = beforeAfter.view.flatMap {
+      // Operate on a lazy "view" because historyStep() is slow.
+      val skippedStepsAndStates = beforeAfter.view.flatMap {
         case (before, after) =>
-          state = after
           val request = after.lastOperationRequest
-          request.flatMap(historyStep(user, before, _, nextCheckpoint = Some(after)))
+          val stepOpt = request.flatMap(historyStep(user, before, _, nextCheckpoint = Some(after)))
+          stepOpt.map(_ -> after)
       }.take(request.skips).toIndexedSeq
+      val (skippedSteps, skippedStates) = skippedStepsAndStates.unzip
+      // The state to be mutated by the modified steps.
+      // Starts from the state after the last skipped step
+      // or (if there are none) from the first checkpoint.
+      val state = skippedStates.lastOption.getOrElse(checkpoints.head)
       val modifiedSteps = request.requests.flatMap(historyStep(user, state, _))
       val steps = skippedSteps ++ modifiedSteps
       val history = ProjectHistory(p.projectName, steps.toList)
