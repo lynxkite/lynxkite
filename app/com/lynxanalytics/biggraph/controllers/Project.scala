@@ -34,10 +34,11 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
     val fe = toFE
     FEProjectListElement(
       fe.name,
+      fe.notes,
       fe.error,
       fe.vertexSet.nonEmpty,
       fe.edgeBundle.nonEmpty,
-      fe.scalars)
+      fe.scalars.filter(scalar => (scalar.title == "edge_count" || scalar.title == "vertex_count")))
   }
 
   def toFE: FEProject = {
