@@ -80,6 +80,13 @@ case class FEAttribute(
   isNumeric: Boolean,
   isInternal: Boolean)
 
+case class FEProjectListElement(
+  name: String,
+  error: String = "",
+  vertexSet: String = "",
+  edgeBundle: String = "",
+  scalars: List[FEAttribute] = List())
+
 case class FEProject(
   name: String,
   error: String = "", // If this is non-empty the project is broken and cannot be opened.
@@ -105,7 +112,7 @@ case class FESegmentation(
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
-case class Splash(version: String, projects: List[FEProject])
+case class Splash(version: String, projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
@@ -186,7 +193,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
-    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
+    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toListElementFE)
     return Splash(version, projects.toList)
   }
 

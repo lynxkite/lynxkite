@@ -29,6 +29,12 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   val rootDir: SymbolPath = SymbolPath("projects") / projectPath
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
+
+  def toListElementFE: FEProjectListElement = {
+    val fe = toFE
+    FEProjectListElement(fe.name, fe.error, fe.vertexSet, fe.edgeBundle, fe.scalars)
+  }
+
   def toFE: FEProject = {
     Try(unsafeToFE) match {
       case Success(fe) => fe
