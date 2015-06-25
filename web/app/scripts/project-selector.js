@@ -50,9 +50,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         for (var i = 0; i < scope.data.projects.length; ++i) {
           var p = scope.data.projects[i];
           scope.vertexCounts[p.name] =
-            p.vertexSet ? getScalar(p, 'vertex_count') : { string: 'no' };
+            p.hasVertices ? getScalar(p, 'vertex_count') : { string: 'no' };
           scope.edgeCounts[p.name] =
-            p.edgeBundle ? getScalar(p, 'edge_count') : { string: 'no' };
+            p.hasEdges ? getScalar(p, 'edge_count') : { string: 'no' };
         }
       });
       scope.createProject = function() {
