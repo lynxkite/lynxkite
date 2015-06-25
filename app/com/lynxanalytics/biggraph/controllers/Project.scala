@@ -444,10 +444,6 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
-
-  private def exists(tag: SymbolPath): Boolean =
-    existing(tag) != None
-
   private def set(tag: SymbolPath, entity: MetaGraphEntity): Unit = manager.synchronized {
     if (entity == null) {
       existing(tag).foreach(manager.rmTag(_))
