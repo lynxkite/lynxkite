@@ -1671,8 +1671,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Import project as segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
-      Choice("them", "Other project's name", options = allProjects))
-    private def allProjects = readableProjects
+      Choice("them", "Other project's name", options = readableProjects))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
       val them = params("them")
@@ -1680,7 +1679,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       val themName = params("them")
-      assert(allProjects.map(_.id).contains(themName), s"Unknown project: $themName")
+      assert(readableProjects.map(_.id).contains(themName), s"Unknown project: $themName")
       val them = Project.fromName(themName)
       assert(them.vertexSet != null, s"No vertex set in $them")
       val segmentation = project.segmentation(params("them"))
