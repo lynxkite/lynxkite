@@ -16,7 +16,7 @@ object LoopEdgeBundle extends OpFromJson {
 }
 import LoopEdgeBundle._
 case class LoopEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
-  override val isHeavy = true
+  override val isHeavy = false
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
