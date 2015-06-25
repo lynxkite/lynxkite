@@ -32,7 +32,12 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
 
   def toListElementFE: FEProjectListElement = {
     val fe = toFE
-    FEProjectListElement(fe.name, fe.error, fe.vertexSet, fe.edgeBundle, fe.scalars)
+    FEProjectListElement(
+      fe.name,
+      fe.error,
+      fe.vertexSet.nonEmpty,
+      fe.edgeBundle.nonEmpty,
+      fe.scalars)
   }
 
   def toFE: FEProject = {

@@ -65,7 +65,21 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
   test("project list") {
     val splash = controller.splash(user, null)
     assert(splash.projects.size == 1)
-    assert(splash.projects(0) == "Test_Project")
+    assert(splash.projects(0).name == "Test_Project")
+    assert(!splash.projects(0).hasVertices)
+    assert(!splash.projects(0).hasEdges)
+    assert(splash.projects(0).scalars.size == 0)
+  }
+
+  test("project list with scalars") {
+    run("Example Graph")
+    controller.forkProject(user, ForkProjectRequest(from = project.projectName, to = "new_project"))
+    val splash = controller.splash(user, null)
+    assert(splash.projects.size == 2)
+    assert(splash.projects(1).name == "new_project")
+    assert(splash.projects(1).hasVertices)
+    assert(splash.projects(1).hasEdges)
+    assert(splash.projects(1).scalars.size == 2)
   }
 
   test("fork project") {
