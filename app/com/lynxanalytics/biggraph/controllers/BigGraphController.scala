@@ -439,6 +439,7 @@ abstract class OperationParameterMeta {
   val defaultValue: String
   val options: List[UIValue]
   val multipleChoice: Boolean
+  val mandatory: Boolean
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
@@ -461,10 +462,16 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     val paramIds = parameters.map { param => param.id }.toSet
     val extraIds = values.keySet &~ paramIds
     assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
-    val missingIds = paramIds &~ values.keySet
+    val mandatoryParamIds =
+      parameters.filter(_.mandatory).map { param => param.id }.toSet
+    val missingIds = mandatoryParamIds &~ values.keySet
     assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
     for (param <- parameters) {
-      param.validate(values(param.id))
+      if (values.contains(param.id)) {
+        param.validate(values(param.id))
+      } else {
+        param.validate(param.defaultValue)
+      }
     }
   }
 
