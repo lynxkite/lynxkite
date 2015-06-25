@@ -417,16 +417,18 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   def copy(to: Project): Unit = cp(rootDir, to.rootDir)
 
   def copyToSegmentation(to: Segmentation): Unit = {
-    val stuffNeededInSegmentations =
-      List("vertexAttributes", "scalars", "edgeAttributes", "vertexSet", "edgeBundle", "notes")
-    val targetRoot = to.project.checkpointedDir
-    val sourceRoot = checkpointedDir
-
-    for (tag <- stuffNeededInSegmentations) {
-      val source = sourceRoot / tag
-      if (exists(source)) {
-        cp(source, targetRoot / tag)
-      }
+    val other = to.project
+    other.vertexSet = vertexSet
+    other.notes = notes
+    other.edgeBundle = edgeBundle
+    for (n <- vertexAttributeNames) {
+      other.vertexAttributes(n) = vertexAttributes(n)
+    }
+    for (n <- scalarNames) {
+      other.scalars(n) = scalars(n)
+    }
+    for (n <- edgeAttributeNames) {
+      other.edgeAttributes(n) = edgeAttributes(n)
     }
   }
 
