@@ -469,8 +469,6 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     for (param <- parameters) {
       if (values.contains(param.id)) {
         param.validate(values(param.id))
-      } else {
-        param.validate(param.defaultValue)
       }
     }
   }
