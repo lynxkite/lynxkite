@@ -2406,7 +2406,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             UIValue.list(List("most_common", "count_distinct", "count", "vector"))
           }
         }
-        TagList(s"aggregate-$name", name, options = options, mandatory = false)
+        TagList(s"aggregate-$name", name, options = options)
     }
   }
 
