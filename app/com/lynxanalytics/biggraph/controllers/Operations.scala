@@ -40,8 +40,11 @@ object OperationParams {
         s"Unknown option(s): ${givenValues -- possibleValues} (Possibilities: $possibleValues)")
     }
   }
-  case class TagList(id: String, title: String, options: List[UIValue],
-                     mandatory: Boolean = false) extends OperationParameterMeta {
+  case class TagList(
+      id: String,
+      title: String,
+      options: List[UIValue],
+      mandatory: Boolean = false) extends OperationParameterMeta {
     val kind = "tag-list"
     val multipleChoice = true
     val defaultValue = ""
