@@ -7,7 +7,7 @@ other operations (see <<load-segmentation-links-from-csv>> and
 
 Note that it is possible to import the project itself as segmentation. But even in this
 special case, there will be no connections between the segments and the base vertices.
-Another operation, <<copy-graph-into-a-segmentation>> can be used overcome this limitation.
+Another operation, <<copy-graph-into-a-segmentation>> can be used to overcome this limitation.
 
 ====
 [[them]] Other project's name::
