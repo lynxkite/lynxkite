@@ -3,6 +3,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SampleVertices extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -24,7 +25,7 @@ case class SampleVertices(n: Int) extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
 
     val vs = inputs.vs.rdd
-    val sampleOrSo = vs.takeFirstNValuesOrSo(n * 2).collect.map(_._1)
+    val sampleOrSo = vs.partialRDD(rc).takeFirstNValuesOrSo(n * 2).collect.map(_._1)
     val sizeOrSo = sampleOrSo.size
     val sample = {
       if (sizeOrSo >= n) sampleOrSo.take(n)
