@@ -30,15 +30,20 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
 
+  private def feAttr(name: String): Option[FEAttribute] = {
+    if (scalars.contains(name)) {
+      Some(feAttr(scalars(name), name))
+    } else {
+      None
+    }
+  }
+
   def toListElementFE: FEProjectListElement = {
-    val fe = toFE
     FEProjectListElement(
-      fe.name,
-      fe.notes,
-      fe.error,
-      fe.vertexSet.nonEmpty,
-      fe.edgeBundle.nonEmpty,
-      fe.scalars.filter(scalar => (scalar.title == "edge_count" || scalar.title == "vertex_count")))
+      projectName,
+      notes,
+      feAttr("vertex_count"),
+      feAttr("edge_count"))
   }
 
   def toFE: FEProject = {
@@ -51,18 +56,19 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
     }
   }
 
+  private def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+    val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
+    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
+      .exists(e.typeTag.tpe <:< _)
+    val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
+    FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
+  }
+
   // May raise an exception.
   private def unsafeToFE: FEProject = {
     assert(manager.tagExists(checkpointedDir / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
-      val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
-      val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
-        .exists(e.typeTag.tpe <:< _)
-      val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
-      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
-    }
     def feList(things: Iterable[(String, TypedEntity[_])]) = {
       things.map { case (name, e) => feAttr(e, name) }.toList
     }

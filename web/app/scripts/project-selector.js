@@ -31,17 +31,12 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       }
       refresh();
       scope.$watch('data.version', function(v) { scope.version = v; });
-      function getScalar(p, name) {
-        for (var i = 0; i < p.scalars.length; ++i) {
-          if (p.scalars[i].title === name) {
-            var res = util.get('/ajax/scalarValue', {
-              scalarId: p.scalars[i].id, calculate: false
-            });
-            res.details = { project: p.title, scalar: p.scalars[i] };
-            return res;
-          }
-        }
-        return { error: 'Attribute not found: ' + name };
+      function getScalar(title, scalar) {
+        var res = util.get('/ajax/scalarValue', {
+          scalarId: scalar.id, calculate: false
+        });
+        res.details = { project: title, scalar: scalar };
+        return res;
       }
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved || scope.data.$error) { return; }
@@ -50,9 +45,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         for (var i = 0; i < scope.data.projects.length; ++i) {
           var p = scope.data.projects[i];
           scope.vertexCounts[p.name] =
-            p.hasVertices ? getScalar(p, 'vertex_count') : { string: 'no' };
+            p.vertexCount ? getScalar(p.title, p.vertexCount) : { string: 'no' };
           scope.edgeCounts[p.name] =
-            p.hasEdges ? getScalar(p, 'edge_count') : { string: 'no' };
+            p.edgeCount ? getScalar(p.title, p.edgeCount) : { string: 'no' };
         }
       });
       scope.createProject = function() {
