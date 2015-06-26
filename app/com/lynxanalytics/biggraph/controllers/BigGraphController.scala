@@ -83,10 +83,8 @@ case class FEAttribute(
 case class FEProjectListElement(
   name: String,
   notes: String = "",
-  error: String = "", // If this is non-empty the project is broken and cannot be opened.
-  hasVertices: Boolean, // Whether the project has vertices defined.
-  hasEdges: Boolean, // Whether the project has edges defined.
-  scalars: List[FEAttribute] = List())
+  vertexCount: Option[FEAttribute], // Whether the project has vertices defined.
+  edgeCount: Option[FEAttribute]) // Whether the project has edges defined.
 
 case class FEProject(
   name: String,
