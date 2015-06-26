@@ -96,32 +96,31 @@ object RDDUtils {
    * we had to process to get the filtered sample we needed. This is necessary to be able to
    * estimate totals from the filtered numbers.
    */
-  private def unfilteredCounts[T](
-    full: SortedRDD[ID, _], restricted: SortedRDD[ID, T]): SortedRDD[ID, (T, Int)] =
-    new BiDerivedSortedRDD(
-      full,
-      restricted,
-      (fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]) =>
-        fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
-          new Iterator[(ID, (T, Int))] {
-            def hasNext = rit.hasNext
-            def next() = {
-              val nxt = rit.next
-              var c = 1
-              while (fit.next._1 < nxt._1) c += 1
-              (nxt._1, (nxt._2, c))
-            }
-          }
-        })
+  private def unfilteredCounts[T, X](
+    full: RDD[(ID, X)], restricted: RDD[(ID, T)]): RDD[(ID, (T, Int))] = {
+    full.zipPartitions(restricted, true) { (fit, rit) =>
+      new Iterator[(ID, (T, Int))] {
+        def hasNext = rit.hasNext
+        def next() = {
+          val nxt = rit.next
+          var c = 1
+          while (fit.next._1 < nxt._1) c += 1
+          (nxt._1, (nxt._2, c))
+        }
+      }
+    }
+  }
 
   def estimateValueCounts[T](
     fullRDD: SortedRDD[ID, _],
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
-    requiredPositiveSamples: Int): IDBuckets[T] = {
+    requiredPositiveSamples: Int,
+    rc: RuntimeContext): IDBuckets[T] = {
 
-    val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
-    val withCounts = unfilteredCounts(fullRDD, dataUsed)
+    import Implicits._
+    val dataUsed = data.partialRDD(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
+    val withCounts = unfilteredCounts(fullRDD.partialRDD(rc), dataUsed)
     val (valueBuckets, unfilteredCount, filteredCount) = withCounts
       .aggregate((
         new IDBuckets[T]() /* observed value counts */ ,
@@ -159,10 +158,13 @@ object RDDUtils {
     weightsRDD: SortedRDD[ID, Double],
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
-    requiredPositiveSamples: Int): Map[T, Double] = {
+    requiredPositiveSamples: Int,
+    rc: RuntimeContext): Map[T, Double] = {
 
-    val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
-    val withWeightsAndCounts = unfilteredCounts(fullRDD, dataUsed.sortedJoin(weightsRDD))
+    import Implicits._
+    val dataUsed =
+      data.sortedJoin(weightsRDD).partialRDD(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
+    val withWeightsAndCounts = unfilteredCounts(fullRDD.partialRDD(rc), dataUsed)
     val (valueWeights, unfilteredCount, filteredCount) = withWeightsAndCounts
       .values
       .aggregate((
@@ -337,6 +339,23 @@ object Implicits {
         dep.rdd.printDetails(indent + 1)
       }
     }
+
+    // Returns an RDD that only contains as many partitions as there are available cores.
+    def partialRDD(rc: RuntimeContext): RDD[T] =
+      new PartialRDD(self, rc.numAvailableCores)
+
+    // Take a sample of approximately the given size.
+    def takeFirstNValuesOrSo(n: Int): RDD[T] = {
+      val numPartitions = self.partitions.size
+      val div = n / numPartitions
+      val mod = n % numPartitions
+      self.mapPartitionsWithIndex(
+        { (pid, it) =>
+          val elementsFromThisPartition = if (pid < mod) (div + 1) else div
+          it.take(elementsFromThisPartition)
+        },
+        preservesPartitioning = true)
+    }
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
@@ -362,4 +381,11 @@ object Implicits {
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
       SortedRDD.fromUnsorted(self.reduceByKey(partitioner, f))
   }
+}
+
+// An RDD that only has a subset of the partitions from the original RDD.
+private[spark_util] class PartialRDD[T: ClassTag](rdd: RDD[T], n: Int) extends RDD[T](rdd) {
+  def getPartitions: Array[spark.Partition] = rdd.partitions.take(n)
+  override val partitioner = None
+  def compute(split: spark.Partition, context: spark.TaskContext) = rdd.compute(split, context)
 }

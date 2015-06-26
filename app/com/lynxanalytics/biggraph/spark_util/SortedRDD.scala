@@ -232,28 +232,6 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     combineByKey(createCombiner, mergeValue)
   }
 
-  def takeFirstNValuesOrSo(n: Int): SortedRDD[K, V] = {
-    val numPartitions = partitions.size
-    val div = n / numPartitions
-    val mod = n % numPartitions
-    // Actually, normal assumptions of derive does NOT apply here. This means that if you have
-    // an RDD x returned by this call and then you call y = x.restrictToIdSet,
-    // you might see items in y not present x.
-    derive(
-      _.mapPartitionsWithIndex(
-        { (pid, it) =>
-          val elementsFromThisPartition = if (pid < mod) (div + 1) else div
-          it.take(elementsFromThisPartition)
-        },
-        preservesPartitioning = true))
-  }
-
-  def collectFirstNValuesOrSo(n: Int)(implicit ct: ClassTag[V]): Seq[V] = {
-    takeFirstNValuesOrSo(n)
-      .map { case (k, v) => v }
-      .collect
-  }
-
   // The ids seq needs to be sorted.
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V]
 
@@ -261,7 +239,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
 }
 
 // SortedRDD which was derived from one other sorted rdd without changing the id space.
-// Also, the derivation must be such that the value of on item (k, v) in the result only depends
+// Also, the derivation must be such that the value of an item (k, v) in the result only depends
 // on the value of items (k, ?) in the input. E.g. it can not depend on the ordinal of (k, ?)s in
 // the input or values of other items.
 // With other words, we assume that the order filter by id and derivation are exchangeable.
