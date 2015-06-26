@@ -326,6 +326,38 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V] private[spark_util] (da
   }
 }
 
+// Same as SortedArrayRDD, but assumes that the input partitions are already sorted.
+private[spark_util] class AlreadySortedArrayRDD[K: Ordering, V] private[spark_util] (data: RDD[(K, V)])
+    extends SortedArrayRDD[K, V](data) {
+  override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
+    val it = data.compute(split, context)
+    val array = it.toArray
+    Iterator((split.index, array))
+  }
+}
+
+// "Trust me, this RDD is partitioned with this partitioner."
+private[spark_util] class AlreadyPartitionedRDD[T: ClassTag](data: RDD[T], p: Partitioner)
+    extends RDD[T](data) {
+  assert(p.numPartitions == data.partitions.size, s"Mismatched partitioner: $p")
+  override val partitioner = Some(p)
+  override def getPartitions: Array[Partition] = data.partitions
+  override def compute(split: Partition, context: TaskContext): Iterator[T] = {
+    data.compute(split, context)
+  }
+}
+
+// "Trust me, this RDD is already sorted."
+private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
+    extends SortedRDD[K, V](data) {
+  // Normal operations run on the iterators. Arrays are only created when necessary.
+  lazy val arrayRDD = new AlreadySortedArrayRDD(data)
+  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
+    new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
+  def cacheBackingArray(): Unit =
+    arrayRDD.cache()
+}
+
 private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedArrayRDD[K, V])
     extends SortedRDD[K, V](
       arrayRDD.mapPartitions(

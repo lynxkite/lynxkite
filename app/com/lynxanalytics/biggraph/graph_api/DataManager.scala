@@ -54,10 +54,19 @@ class DataManager(sc: spark.SparkContext,
       val fn = entityPath(vertexSet)
       val bytes = (fn / "*").globLength
       // Repartition for optimal processing performance.
-      val partitioner = runtimeContext.partitionerForNBytes(bytes * kryoExplosion)
-      val rdd = fn
+      val bestPartitioner = runtimeContext.partitionerForNBytes(bytes * kryoExplosion)
+      val files = fn
         .loadObjectFile[(ID, Unit)](sc)
-        .toSortedRDD(partitioner)
+      val difference = math.abs(bestPartitioner.numPartitions - files.partitions.size).toDouble
+      val rdd = if (difference / bestPartitioner.numPartitions < 0.1) {
+        log.info(
+          s"Loading $vertexSet with shuffle" +
+            s" (${files.partitions.size} -> ${bestPartitioner.numPartitions} partitions)")
+        files.toSortedRDD(bestPartitioner)
+      } else {
+        log.info(s"Loading $vertexSet without shuffle (${files.partitions.size} partitions)")
+        files.asSortedRDD(new spark.HashPartitioner(files.partitions.size))
+      }
       new VertexSetData(vertexSet, rdd)
     }
   }
@@ -68,7 +77,7 @@ class DataManager(sc: spark.SparkContext,
       val idsRDD = idSet.rdd.cache
       val rawRDD = entityPath(edgeBundle)
         .loadObjectFile[(ID, Edge)](sc)
-        .toSortedRDD(idsRDD.partitioner.get)
+        .asSortedRDD(idsRDD.partitioner.get)
       new EdgeBundleData(
         edgeBundle,
         idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
@@ -82,7 +91,7 @@ class DataManager(sc: spark.SparkContext,
       val vsRDD = vs.rdd.cache
       val rawRDD = entityPath(attribute)
         .loadObjectFile[(ID, T)](sc)
-        .toSortedRDD(vsRDD.partitioner.get)
+        .asSortedRDD(vsRDD.partitioner.get)
       new AttributeData[T](
         attribute,
         // This join does nothing except enforcing colocation.
