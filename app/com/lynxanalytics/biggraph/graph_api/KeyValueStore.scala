@@ -56,6 +56,9 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
             log.warn(s"Bad input line: '$line' in file: '$file' " +
               s"""json error: ${e.getMessage.replaceAll("\\n", " ")}""")
             readStream(in)
+          case e: Throwable =>
+            log.error(s"Bad input line: '$line' in file: '$file'")
+            throw e
         }
       }
     }
