@@ -203,6 +203,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
   implicit val wFEProject = json.Json.writes[FEProject]
+  implicit val wFEProjectListElement = json.Json.writes[FEProjectListElement]
   implicit val wSplash = json.Json.writes[Splash]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
   implicit val wProjectOperationRequest = json.Json.writes[ProjectOperationRequest]
