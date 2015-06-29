@@ -46,27 +46,12 @@ class DataManager(sc: spark.SparkContext,
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
-  // How much bigger the in-memory representation is, compared to the serialized file size.
-  private lazy val kryoExplosion =
-    System.getProperty("biggraph.kryo.explosion", "70").toInt
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
       val fn = entityPath(vertexSet)
-      val bytes = (fn / "*").globLength
-      // Repartition for optimal processing performance.
-      val bestPartitioner = runtimeContext.partitionerForNBytes(bytes * kryoExplosion)
       val files = fn
-        .loadObjectFile[(ID, Unit)](sc)
-      val difference = math.abs(bestPartitioner.numPartitions - files.partitions.size).toDouble
-      val rdd = if (difference / bestPartitioner.numPartitions < 0.1) {
-        log.info(
-          s"Loading $vertexSet with shuffle" +
-            s" (${files.partitions.size} -> ${bestPartitioner.numPartitions} partitions)")
-        files.toSortedRDD(bestPartitioner)
-      } else {
-        log.info(s"Loading $vertexSet without shuffle (${files.partitions.size} partitions)")
-        files.asSortedRDD(new spark.HashPartitioner(files.partitions.size))
-      }
+        .loadObjectFile[Unit](sc)
+      val rdd = files.asSortedRDD(new spark.HashPartitioner(files.partitions.size))
       new VertexSetData(vertexSet, rdd)
     }
   }
@@ -76,7 +61,7 @@ class DataManager(sc: spark.SparkContext,
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val idsRDD = idSet.rdd.cache
       val rawRDD = entityPath(edgeBundle)
-        .loadObjectFile[(ID, Edge)](sc)
+        .loadObjectFile[Edge](sc)
         .asSortedRDD(idsRDD.partitioner.get)
       new EdgeBundleData(
         edgeBundle,
@@ -90,7 +75,7 @@ class DataManager(sc: spark.SparkContext,
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val vsRDD = vs.rdd.cache
       val rawRDD = entityPath(attribute)
-        .loadObjectFile[(ID, T)](sc)
+        .loadObjectFile[T](sc)
         .asSortedRDD(vsRDD.partitioner.get)
       new AttributeData[T](
         attribute,
@@ -296,8 +281,10 @@ class DataManager(sc: spark.SparkContext,
     log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>
+        val partitioner = runtimeContext.partitionerForNRows(rddData.rdd.count)
+        val repartitioned = rddData.rdd.toSortedRDD(partitioner)
         log.info(s"PERF Instantiating entity $entity on disk")
-        entityPath(entity).saveAsObjectFile(rddData.rdd)
+        entityPath(entity).saveAsObjectFile(repartitioned)
         log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
         log.info(s"PERF Writing scalar $entity to disk")
