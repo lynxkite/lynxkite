@@ -6,6 +6,9 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Faster loading of the project list page.
+ - Fixed missing CSS.
+
 ### 1.4.3
 
  - History editing improvements. Operations with problems (such as importing a file that no
