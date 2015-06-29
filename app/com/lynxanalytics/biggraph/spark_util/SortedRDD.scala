@@ -26,7 +26,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object SortedRDD {
   // Creates a SortedRDD from an unsorted but partitioned RDD.
   def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] = {
-    val arrayRDD = new SortedArrayRDD(rdd)
+    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
     new ArrayBackedSortedRDD(arrayRDD)
   }
 }
@@ -305,7 +305,7 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
 // the partition id. x._2 is an array of key-value pairs sorted by key. data is assumed to be
 // partitioned by a hash partitioner. A (k,v) in partition i of data will end up in the array in
 // partition i of this SortedArrayRDD.
-private[spark_util] class SortedArrayRDD[K: Ordering, V] private[spark_util] (data: RDD[(K, V)])
+private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], needsSorting: Boolean)
     extends RDD[(Int, Array[(K, V)])](data) {
 
   assert(
@@ -321,17 +321,7 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V] private[spark_util] (da
   override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
     val it = data.compute(split, context)
     val array = it.toArray
-    Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
-    Iterator((split.index, array))
-  }
-}
-
-// Same as SortedArrayRDD, but assumes that the input partitions are already sorted.
-private[spark_util] class AlreadySortedArrayRDD[K: Ordering, V] private[spark_util] (data: RDD[(K, V)])
-    extends SortedArrayRDD[K, V](data) {
-  override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
-    val it = data.compute(split, context)
-    val array = it.toArray
+    if (needsSorting) Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
     Iterator((split.index, array))
   }
 }
@@ -351,7 +341,7 @@ private[spark_util] class AlreadyPartitionedRDD[T: ClassTag](data: RDD[T], p: Pa
 private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
     extends SortedRDD[K, V](data) {
   // Normal operations run on the iterators. Arrays are only created when necessary.
-  lazy val arrayRDD = new AlreadySortedArrayRDD(data)
+  lazy val arrayRDD = new SortedArrayRDD(data, needsSorting = false)
   def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
     new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
   def cacheBackingArray(): Unit =
