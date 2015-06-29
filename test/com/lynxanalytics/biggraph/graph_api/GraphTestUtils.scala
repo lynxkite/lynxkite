@@ -90,9 +90,7 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    val p =
-      if (numPartitions == 1) rc.onePartitionPartitioner
-      else new spark.HashPartitioner(numPartitions)
+    val p = new spark.HashPartitioner(numPartitions)
     output(
       o.vs,
       sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))

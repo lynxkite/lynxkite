@@ -53,8 +53,7 @@ case class DBTable(
       try Stats(table)(connection)
       finally connection.close()
     }
-    // Have at most 100,000 rows per partition.
-    val numPartitions = rc.partitionerForNBytes(stats.count * fields.size * 30).numPartitions
+    val numPartitions = rc.partitionerForNRows(stats.count).numPartitions
 
     val query = s"SELECT $fieldsStr FROM $quotedTable WHERE ? <= $quotedKey AND $quotedKey <= ?"
     log.info(s"Executing query: $query")
