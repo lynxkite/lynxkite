@@ -10,14 +10,19 @@ import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
-import ExecutionContext.Implicits.global
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+object DataManager {
+  val maxParallelSparkStages = 5
+}
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
+  implicit val executionContext =
+    ExecutionContext.fromExecutorService(
+      java.util.concurrent.Executors.newFixedThreadPool(DataManager.maxParallelSparkStages))
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   val sqlContext = new SQLContext(sc)
