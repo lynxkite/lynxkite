@@ -22,9 +22,8 @@ TEST_NAME="${TESTS_NAME_PREFIX}${TODAY}_${RANDOM_SUFFIX}"
 
 echo "Running kite daily test: ${TEST_NAME}"
 
-# Prepare a overrides file.
-OVERRIDES_FILE=/tmp/${TEST_NAME}.overrides
-mkdir -p $(dirname ${OVERRIDES_FILE})
+# Prepare the overrides file.
+OVERRIDES_FILE="/tmp/$(basename $TEST_NAME).overrides"
 
 cat > ${OVERRIDES_FILE} <<EOF
 export KITE_META_DIR=\${KITE_META_DIR}/${TEST_NAME}
