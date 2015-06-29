@@ -146,7 +146,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Discard vertices", new VertexOperation(_, _) {
     def parameters = List()
-    def enabled = hasVertexSet
+    def enabled = hasVertexSet && isNotSegmentation
     def apply(params: Map[String, String]) = {
       project.vertexSet = null
     }
