@@ -11,8 +11,9 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Order
   }
   override def hashCode = toString.hashCode
   def /(symbol: Symbol): SymbolPath = {
-    SymbolPath.check(symbol)
-    path.toSeq :+ symbol
+    val expanded = path.toSeq :+ symbol
+    SymbolPath.check(symbol, expanded)
+    expanded
   }
   def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
   def /(suffixDir: String): SymbolPath = /(Symbol(suffixDir))
@@ -27,16 +28,17 @@ object SymbolPath {
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
   def parse(str: String): SymbolPath =
     str.split("/", -1).toSeq.map(Symbol(_))
-  def check(symbol: Symbol) = {
+  def check(symbol: Symbol, fullPath: SymbolPath) = {
     val str = symbol.name
-    assert(!str.contains("/"), s"Name $str contains a slash ('/')")
-    assert(str.nonEmpty)
+    assert(!str.contains("/"), s"Name $str in $fullPath contains a slash ('/').")
+    assert(str.nonEmpty, s"$fullPath contains an empty name.")
   }
 
   def apply(first: Symbol, optional: Symbol*): SymbolPath = {
     val path = first +: optional
-    for (name <- path) check(name)
-    new SymbolPath(path)
+    val newPath = new SymbolPath(path)
+    for (name <- path) check(name, newPath)
+    newPath
   }
 
   def apply(first: String, optional: String*): SymbolPath = {
