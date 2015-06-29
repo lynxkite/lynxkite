@@ -56,6 +56,13 @@ addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
 addJPropIfNonEmpty pidfile.path "${KITE_PID_FILE}"
 addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
 
+mode=${residual_args[0]}
+
+if [ "$mode" == "batch" ]; then
+  # We set up log config to use Play's stupid non-default log config file location.
+  addJPropIfNonEmpty logback.configurationFile "${conf_dir}/logger.xml"
+  addJPropIfNonEmpty application.home "${stage_dir}"
+fi
 
 # -mem flag overrides KITE_MASTER_MEMORY_MB and we use 1024 if neither is set.
 final_app_mem=${app_mem:-${KITE_MASTER_MEMORY_MB:-1024}}
@@ -90,8 +97,6 @@ if [ "${SPARK_MASTER}" == "local" ]; then
 fi
 
 export KITE_SCHEDULER_POOLS_CONFIG="${conf_dir}/scheduler-pools.xml"
-
-mode=${residual_args[0]}
 
 FULL_CLASSPATH=${app_classpath}
 if [ -n "${KITE_EXTRA_JARS}" ]; then

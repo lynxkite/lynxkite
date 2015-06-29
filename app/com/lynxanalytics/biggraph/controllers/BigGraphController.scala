@@ -80,6 +80,12 @@ case class FEAttribute(
   isNumeric: Boolean,
   isInternal: Boolean)
 
+case class FEProjectListElement(
+  name: String,
+  notes: String = "",
+  vertexCount: Option[FEAttribute], // Whether the project has vertices defined.
+  edgeCount: Option[FEAttribute]) // Whether the project has edges defined.
+
 case class FEProject(
   name: String,
   error: String = "", // If this is non-empty the project is broken and cannot be opened.
@@ -105,7 +111,7 @@ case class FESegmentation(
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
-case class Splash(version: String, projects: List[FEProject])
+case class Splash(version: String, projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
@@ -186,7 +192,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
-    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
+    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toListElementFE)
     return Splash(version, projects.toList)
   }
 
@@ -439,6 +445,7 @@ abstract class OperationParameterMeta {
   val defaultValue: String
   val options: List[UIValue]
   val multipleChoice: Boolean
+  val mandatory: Boolean
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
@@ -461,10 +468,14 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     val paramIds = parameters.map { param => param.id }.toSet
     val extraIds = values.keySet &~ paramIds
     assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
-    val missingIds = paramIds &~ values.keySet
+    val mandatoryParamIds =
+      parameters.filter(_.mandatory).map { param => param.id }.toSet
+    val missingIds = mandatoryParamIds &~ values.keySet
     assert(missingIds.size == 0, s"""Missing parameters: ${missingIds.mkString(", ")}""")
     for (param <- parameters) {
-      param.validate(values(param.id))
+      if (values.contains(param.id)) {
+        param.validate(values(param.id))
+      }
     }
   }
 

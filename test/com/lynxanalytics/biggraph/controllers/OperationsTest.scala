@@ -685,4 +685,20 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     val name = seg.project.vertexAttributes("name").runtimeSafeCast[String]
     assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
   }
+
+  test("Optional and mandatory parameters work") {
+    run("Example Graph")
+    run("Aggregate edge attribute to vertices", Map(
+      "prefix" -> "incoming",
+      "direction" -> "incoming edges",
+      // "aggregate-comment" -> "", This is now optional
+      "aggregate-weight" -> "sum"))
+    intercept[java.lang.AssertionError] {
+      run("Aggregate edge attribute to vertices", Map(
+        "prefix" -> "incoming",
+        // "direction" -> "incoming edges", But this is not
+        "aggregate-comment" -> "",
+        "aggregate-weight" -> "sum"))
+    }
+  }
 }
