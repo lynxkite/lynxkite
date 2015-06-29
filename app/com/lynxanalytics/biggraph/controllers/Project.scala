@@ -30,7 +30,7 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
 
-  private def feAttr(name: String): Option[FEAttribute] = {
+  private def feScalar(name: String): Option[FEAttribute] = {
     if (scalars.contains(name)) {
       Some(feAttr(scalars(name), name))
     } else {
@@ -42,8 +42,8 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
     FEProjectListElement(
       projectName,
       notes,
-      feAttr("vertex_count"),
-      feAttr("edge_count"))
+      feScalar("vertex_count"),
+      feScalar("edge_count"))
   }
 
   def toFE: FEProject = {
