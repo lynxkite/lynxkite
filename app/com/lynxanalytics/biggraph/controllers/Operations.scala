@@ -114,7 +114,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class AttributeOperation(t: String, c: Context)
     extends Operation(t, c, Category("Attribute operations", "yellow"))
   abstract class CreateSegmentationOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Create segmentation", "green"))
+    extends Operation(t, c, Category(
+      "Create segmentation",
+      "green",
+      visible = !c.project.isSegmentation))
   abstract class UtilityOperation(t: String, c: Context)
     extends Operation(t, c, Category("Utility operations", "green", icon = "wrench", sortKey = "zz"))
   trait SegOp extends Operation {
@@ -143,7 +146,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Discard vertices", new VertexOperation(_, _) {
     def parameters = List()
-    def enabled = hasVertexSet && isNotSegmentation
+    def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       project.vertexSet = null
     }
@@ -389,7 +392,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Choice("bothdir", "Edges required in both directions", options = UIValue.list(List("true", "false"))),
       NonNegInt("min", "Minimum clique size", default = 3))
-    def enabled = hasEdgeBundle && isNotSegmentation
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
       val result = op(op.es, project.edgeBundle).result
@@ -423,7 +426,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         "directions",
         "Edge direction",
         options = UIValue.list(List("ignore directions", "require both directions"))))
-    def enabled = hasEdgeBundle && isNotSegmentation
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val symmetric = params("directions") match {
         case "ignore directions" => addReversed(project.edgeBundle)
@@ -448,7 +451,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("bothdir", "Edges required in cliques in both directions", options = UIValue.list(List("true", "false"))),
       NonNegInt("min_cliques", "Minimum clique size", default = 3),
       Ratio("adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
-    def enabled = hasEdgeBundle && isNotSegmentation
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val cliquesResult = {
         val op = graph_operations.FindMaxCliques(
@@ -500,7 +503,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
         UIValue("!no weight", "no weight") +: edgeAttributes[Double]))
-    def enabled = hasEdgeBundle && isNotSegmentation
+    def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val edgeBundle = project.edgeBundle
       val weightsName = params("weights")
@@ -536,8 +539,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("attr", "Attribute", options = vertexAttributes[Double]),
       NonNegDouble("interval-size", "Interval size"),
       Choice("overlap", "Overlap", options = UIValue.list(List("no", "yes"))))
-    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.") &&
-      isNotSegmentation
+    def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No double vertex attributes.")
     override def summary(params: Map[String, String]) = {
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
@@ -568,8 +570,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = vertexAttributes[String]))
-    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes.") &&
-      isNotSegmentation
+    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes.")
     override def summary(params: Map[String, String]) = {
       val attrName = params("attr")
       s"Segmentation by $attrName"
@@ -596,8 +597,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "New segmentation name"),
       Choice("segmentations", "Segmentations", options = segmentations, multipleChoice = true))
-    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations") &&
-      isNotSegmentation
+    def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     override def summary(params: Map[String, String]) = {
       val segmentations = params("segmentations").split(",").mkString(", ")
       s"Combination of $segmentations"
