@@ -281,10 +281,8 @@ class DataManager(sc: spark.SparkContext,
     log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>
-        val partitioner = runtimeContext.partitionerForNRows(rddData.rdd.count)
-        val repartitioned = rddData.rdd.toSortedRDD(partitioner)
         log.info(s"PERF Instantiating entity $entity on disk")
-        entityPath(entity).saveAsObjectFile(repartitioned)
+        entityPath(entity).saveAsObjectFile(rddData.rdd)
         log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
         log.info(s"PERF Writing scalar $entity to disk")

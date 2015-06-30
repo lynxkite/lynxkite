@@ -264,7 +264,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(51.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
     // Should be about 12.5% of 182. (50% src is removed, 50% dst is removed, 50% attribute is <0)
-    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 26.0)))
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 27.0)))
   }
 
   test("big bucketed view with filters") {
@@ -309,7 +309,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.vertexSets(0).vertices.toSet == Set(FEVertex(253.0, 0, 0)))
     assert(res.edgeBundles(0).edges.size == 1)
     // Should be about 12.5% of 990. (50% src is removed, 50% dst is removed, 50% attribute is <0)
-    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 117.0)))
+    assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 131.0)))
   }
 
   test("histogram for double") {
