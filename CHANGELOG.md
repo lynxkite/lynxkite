@@ -6,12 +6,20 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+### 1.4.4
+
+ - Faster loading of the project list page.
+ - Fixed missing CSS.
+
 ### 1.4.3
 
  - History editing improvements. Operations with problems (such as importing a file that no
    longer exists) can be edited now. Long histories can now be edited without problem. The
    UI has been revised a bit. (The _Validate_ button has been removed.)
  - Switching to Spark 1.4.0.
+ - New operation _Copy graph into a segmentation_ can import the project as its own
+   segmentation and create edges between the original vertices and
+   their corresponding vertices in the segmentation.
  - Operations _Degree_, _Aggregate on neighbors_, and _Weighted aggregate on neighbors_ can
    now also make calculations directly on unique neighboring vertices (that is, regardless of the
    number of edges between the vertices).
