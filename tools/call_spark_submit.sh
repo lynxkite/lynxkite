@@ -129,7 +129,7 @@ startKite () {
     exit 1
   fi
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
-  >&2 echo "Kite server successfully started."
+  >&2 echo "Kite server started (PID $!)."
 }
 
 stopByPIDFile () {
@@ -179,7 +179,7 @@ startWatchdog () {
           --script="$0 watchdog_restart" \
           --pid_file ${WATCHDOG_PID_FILE} \
           > ${log_dir}/watchdog.stdout.$$ 2> ${log_dir}/watchdog.stderr.$$ &
-      >&2 echo "Kite Watchdog successfully started."
+      >&2 echo "Kite Watchdog started (PID $!)."
   fi
 }
 
