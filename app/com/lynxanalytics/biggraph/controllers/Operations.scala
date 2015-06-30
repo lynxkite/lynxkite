@@ -114,7 +114,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class AttributeOperation(t: String, c: Context)
     extends Operation(t, c, Category("Attribute operations", "yellow"))
   abstract class CreateSegmentationOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Create segmentation", "green"))
+    extends Operation(t, c, Category(
+      "Create segmentation",
+      "green",
+      visible = !c.project.isSegmentation))
   abstract class UtilityOperation(t: String, c: Context)
     extends Operation(t, c, Category("Utility operations", "green", icon = "wrench", sortKey = "zz"))
   trait SegOp extends Operation {
@@ -1665,27 +1668,37 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Copy graph into a segmentation", new CreateSegmentationOperation(_, _) {
+    def parameters = List(
+      Param("name", "Segmentation name", defaultValue = project.projectName))
+    def enabled = hasVertexSet
+
+    def apply(params: Map[String, String]) = {
+      val segmentation = project.segmentation(params("name"))
+      project.copyToSegmentation(segmentation)
+
+      val op = graph_operations.LoopEdgeBundle()
+      segmentation.belongsTo = op(op.vs, project.vertexSet).result.eb
+    }
+  })
+
   register("Import project as segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
-      Choice("them", "Other project's name", options = otherProjects))
-    private def otherProjects = readableProjects.filter(_.id != project.projectName)
-    def enabled =
-      hasVertexSet &&
-        FEStatus.assert(otherProjects.size > 0, "This is the only project")
+      Choice("them", "Other project's name", options = readableProjects))
+    def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
       val them = params("them")
       s"Import $them as segmentation"
     }
     def apply(params: Map[String, String]) = {
       val themName = params("them")
-      assert(otherProjects.map(_.id).contains(themName), s"Unknown project: $themName")
+      assert(readableProjects.map(_.id).contains(themName), s"Unknown project: $themName")
       val them = Project.fromName(themName)
       assert(them.vertexSet != null, s"No vertex set in $them")
       val segmentation = project.segmentation(params("them"))
-      them.copy(segmentation.project)
+      them.copyToSegmentation(segmentation)
       val op = graph_operations.EmptyEdgeBundle()
       segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
-      segmentation.project.discardCheckpoints()
     }
   })
 

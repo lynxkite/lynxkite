@@ -27,6 +27,13 @@ object GraphTestUtils {
         .toSeq
         .sorted
     }
+    def toIdPairSeq(): Seq[(ID, (ID, ID))] = {
+      eb.rdd
+        .collect
+        .map { case (id, edge) => (id, (edge.src, edge.dst)) }
+        .toSeq
+        .sorted
+    }
     def toPairCounts(): Map[(ID, ID), Int] = {
       eb.rdd
         .collect

@@ -52,6 +52,8 @@ include::convert-vertices-into-edges.asciidoc[]
 
 include::copy-edge-attribute.asciidoc[]
 
+include::copy-graph-into-a-segmentation.asciidoc[]
+
 include::copy-scalar.asciidoc[]
 
 include::copy-segmentation.asciidoc[]

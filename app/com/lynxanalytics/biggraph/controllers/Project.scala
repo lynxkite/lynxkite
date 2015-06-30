@@ -29,6 +29,23 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   val rootDir: SymbolPath = SymbolPath("projects") / projectPath
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
+
+  private def feScalar(name: String): Option[FEAttribute] = {
+    if (scalars.contains(name)) {
+      Some(feAttr(scalars(name), name))
+    } else {
+      None
+    }
+  }
+
+  def toListElementFE: FEProjectListElement = {
+    FEProjectListElement(
+      projectName,
+      notes,
+      feScalar("vertex_count"),
+      feScalar("edge_count"))
+  }
+
   def toFE: FEProject = {
     Try(unsafeToFE) match {
       case Success(fe) => fe
@@ -39,18 +56,19 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
     }
   }
 
+  private def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+    val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
+    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
+      .exists(e.typeTag.tpe <:< _)
+    val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
+    FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
+  }
+
   // May raise an exception.
   private def unsafeToFE: FEProject = {
     assert(manager.tagExists(checkpointedDir / "notes"), s"No such project: $projectName")
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
-      val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
-      val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
-        .exists(e.typeTag.tpe <:< _)
-      val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
-      FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
-    }
     def feList(things: Iterable[(String, TypedEntity[_])]) = {
       things.map { case (name, e) => feAttr(e, name) }.toList
     }
@@ -415,6 +433,23 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   def segmentationNames = ls(checkpointedDir / "segmentations").map(_.last.name)
 
   def copy(to: Project): Unit = cp(rootDir, to.rootDir)
+
+  def copyToSegmentation(to: Segmentation): Unit = {
+    val other = to.project
+    other.vertexSet = vertexSet
+    other.notes = notes
+    other.edgeBundle = edgeBundle
+    for (n <- vertexAttributeNames) {
+      other.vertexAttributes(n) = vertexAttributes(n)
+    }
+    for (n <- scalarNames) {
+      other.scalars(n) = scalars(n)
+    }
+    for (n <- edgeAttributeNames) {
+      other.edgeAttributes(n) = edgeAttributes(n)
+    }
+  }
+
   def remove(): Unit = manager.synchronized {
     existing(rootDir).foreach(manager.rmTag(_))
     log.info(s"A project has been discarded: $rootDir")

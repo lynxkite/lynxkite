@@ -677,6 +677,15 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
     assert(seg.project.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
 
+  test("Copy graph into a segmentation") {
+    run("Example Graph")
+    run("Copy graph into a segmentation", Map("name" -> "seg"))
+    val seg = project.segmentation("seg")
+    assert(seg.belongsTo.toIdPairSeq == Seq((0, (0, 0)), (1, (1, 1)), (2, (2, 2)), (3, (3, 3))))
+    val name = seg.project.vertexAttributes("name").runtimeSafeCast[String]
+    assert(name.rdd.values.collect.toSeq.sorted == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+  }
+
   test("Optional and mandatory parameters work") {
     run("Example Graph")
     run("Aggregate edge attribute to vertices", Map(
