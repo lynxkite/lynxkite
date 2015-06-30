@@ -16,7 +16,8 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object DataManager {
-  val maxParallelSparkStages = 5
+  val maxParallelSparkStages =
+    scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
 }
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
