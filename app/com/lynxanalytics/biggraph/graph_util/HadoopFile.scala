@@ -7,8 +7,8 @@ import org.apache.spark
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.spark_util._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object HadoopFile {
 
@@ -173,19 +173,26 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     fs.mkdirs(path)
   }
 
-  def loadObjectFile[T: scala.reflect.ClassTag](sc: spark.SparkContext): spark.rdd.RDD[(Long, T)] = {
+  // Loads a Long-keyed SortedRDD, optionally with a specific partitioner.
+  def loadEntityRDD[T: scala.reflect.ClassTag](
+    sc: spark.SparkContext,
+    partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
     import hadoop.mapreduce.lib.input.SequenceFileInputFormat
 
-    sc.newAPIHadoopFile(
+    val file = sc.newAPIHadoopFile(
       resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
       conf = hadoopConfiguration)
+    val p = partitioner.getOrElse(new spark.HashPartitioner(file.partitions.size))
+    file
       .map { case (k, v) => k.get -> RDDUtils.kryoDeserialize[T](v.getBytes) }
+      .asSortedRDD(p)
   }
 
-  def saveAsObjectFile[T](data: spark.rdd.RDD[(Long, T)]): Unit = {
+  // Saves a Long-keyed SortedRDD.
+  def saveEntityRDD[T](data: SortedRDD[Long, T]): Unit = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
     val hadoopData = data.map {
