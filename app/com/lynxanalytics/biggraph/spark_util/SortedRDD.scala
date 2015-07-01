@@ -121,7 +121,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     s"$self was used to create a SortedRDD, but it wasn't partitioned")
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
-  override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
+  override def compute(split: Partition, context: TaskContext) = self.iterator(split, context)
 
   // See comments at DerivedSortedRDD before blindly using this method!
   private def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
@@ -319,7 +319,7 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], need
   override def getPartitions: Array[Partition] = data.partitions
   override val partitioner = data.partitioner
   override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
-    val it = data.compute(split, context)
+    val it = data.iterator(split, context)
     val array = it.toArray
     if (needsSorting) Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
     Iterator((split.index, array))
@@ -333,7 +333,7 @@ private[spark_util] class AlreadyPartitionedRDD[T: ClassTag](data: RDD[T], p: Pa
   override val partitioner = Some(p)
   override def getPartitions: Array[Partition] = data.partitions
   override def compute(split: Partition, context: TaskContext): Iterator[T] = {
-    data.compute(split, context)
+    data.iterator(split, context)
   }
 }
 
