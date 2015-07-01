@@ -49,8 +49,7 @@ class DataManager(sc: spark.SparkContext,
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
       val fn = entityPath(vertexSet)
-      val files = fn
-        .loadObjectFile[Unit](sc)
+      val files = fn.loadObjectFile[Unit](sc)
       val rdd = files.asSortedRDD(new spark.HashPartitioner(files.partitions.size))
       new VertexSetData(vertexSet, rdd)
     }

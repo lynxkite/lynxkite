@@ -222,4 +222,13 @@ private[graph_util] class WholeSequenceFileInputFormat[K, V]
   // Do not allow splitting/combining files.
   override protected def isSplitable(
     context: hadoop.mapreduce.JobContext, file: hadoop.fs.Path): Boolean = false
+  // Read files in order.
+  override protected def listStatus(job: hadoop.mapreduce.JobContext) = {
+    val l = super.listStatus(job)
+    java.util.Collections.sort(l, new java.util.Comparator[hadoop.fs.FileStatus] {
+      def compare(a: hadoop.fs.FileStatus, b: hadoop.fs.FileStatus) =
+        a.getPath.getName compare b.getPath.getName
+    })
+    l
+  }
 }
