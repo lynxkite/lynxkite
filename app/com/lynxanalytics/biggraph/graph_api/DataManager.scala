@@ -21,9 +21,21 @@ object DataManager {
 }
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
+  // Limit parallelism to maxParallelSparkStages.
   implicit val executionContext =
     ExecutionContext.fromExecutorService(
-      java.util.concurrent.Executors.newFixedThreadPool(DataManager.maxParallelSparkStages))
+      java.util.concurrent.Executors.newFixedThreadPool(
+        DataManager.maxParallelSparkStages,
+        new java.util.concurrent.ThreadFactory() {
+          val f = java.util.concurrent.Executors.defaultThreadFactory()
+          def newThread(r: Runnable) = {
+            val t = f.newThread(r)
+            t.setDaemon(true)
+            t.setName(s"DataManager-${t.getName}")
+            t
+          }
+        }
+      ))
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   val sqlContext = new SQLContext(sc)
