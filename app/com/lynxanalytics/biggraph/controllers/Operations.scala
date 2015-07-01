@@ -461,7 +461,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val cliquesSegmentation = project.segmentation(params("cliques_name"))
       cliquesSegmentation.project.setVertexSet(cliquesResult.segments, idAttr = "id")
-      cliquesSegmentation.project.notes = "Maximal cliques of %s".format(project.projectName)
+      cliquesSegmentation.project.notes = "Maximal cliques"
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
       cliquesSegmentation.project.vertexAttributes("size") =
         computeSegmentSizes(cliquesSegmentation)
@@ -490,8 +490,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       val communitiesSegmentation = project.segmentation(params("communities_name"))
       communitiesSegmentation.project.setVertexSet(ccResult.segments, idAttr = "id")
-      communitiesSegmentation.project.notes =
-        "Infocom Communities of %s".format(project.projectName)
+      communitiesSegmentation.project.notes = "Infocom Communities"
       communitiesSegmentation.belongsTo = vertexToCommunity
       communitiesSegmentation.project.vertexAttributes("size") =
         computeSegmentSizes(communitiesSegmentation)
@@ -1670,7 +1669,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Copy graph into a segmentation", new CreateSegmentationOperation(_, _) {
     def parameters = List(
-      Param("name", "Segmentation name", defaultValue = project.projectName))
+      Param("name", "Segmentation name", defaultValue = "self_as_segmentation"))
     def enabled = hasVertexSet
 
     def apply(params: Map[String, String]) = {
