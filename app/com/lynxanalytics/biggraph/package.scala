@@ -57,11 +57,11 @@ package object biggraph {
           val repositoryDirs = repoDirs
         }
       case standingGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", true) with StaticDirEnvironment {
+        new spark_util.GCEManagedCluster(clusterName, "LynxKite", true) with StaticDirEnvironment {
           val repositoryDirs = repoDirs
         }
       case newGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", false) with StaticDirEnvironment {
+        new spark_util.GCEManagedCluster(clusterName, "LynxKite", false) with StaticDirEnvironment {
           val repositoryDirs = repoDirs
         }
     }
