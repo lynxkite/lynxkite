@@ -49,8 +49,7 @@ class DataManager(sc: spark.SparkContext,
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
       val fn = entityPath(vertexSet)
-      val files = fn.loadObjectFile[Unit](sc)
-      val rdd = files.asSortedRDD(new spark.HashPartitioner(files.partitions.size))
+      val rdd = fn.loadEntityRDD[Unit](sc)
       new VertexSetData(vertexSet, rdd)
     }
   }
@@ -59,9 +58,7 @@ class DataManager(sc: spark.SparkContext,
     getFuture(edgeBundle.idSet).map { idSet =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val idsRDD = idSet.rdd.cache
-      val rawRDD = entityPath(edgeBundle)
-        .loadObjectFile[Edge](sc)
-        .asSortedRDD(idsRDD.partitioner.get)
+      val rawRDD = entityPath(edgeBundle).loadEntityRDD[Edge](sc, idsRDD.partitioner)
       new EdgeBundleData(
         edgeBundle,
         idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
@@ -73,9 +70,7 @@ class DataManager(sc: spark.SparkContext,
     getFuture(attribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val vsRDD = vs.rdd.cache
-      val rawRDD = entityPath(attribute)
-        .loadObjectFile[T](sc)
-        .asSortedRDD(vsRDD.partitioner.get)
+      val rawRDD = entityPath(attribute).loadEntityRDD[T](sc, vsRDD.partitioner)
       new AttributeData[T](
         attribute,
         // This join does nothing except enforcing colocation.
@@ -281,7 +276,7 @@ class DataManager(sc: spark.SparkContext,
     data match {
       case rddData: EntityRDDData =>
         log.info(s"PERF Instantiating entity $entity on disk")
-        entityPath(entity).saveAsObjectFile(rddData.rdd)
+        entityPath(entity).saveEntityRDD(rddData.rdd)
         log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
         log.info(s"PERF Writing scalar $entity to disk")
