@@ -16,7 +16,7 @@ trait SparkContextProvider {
 }
 
 class StaticSparkContextProvider() extends SparkContextProvider {
-  val sparkContext = spark_util.BigGraphSparkContext("BigGraphServer")
+  val sparkContext = spark_util.BigGraphSparkContext("LynxKite")
   if (!sparkContext.isLocal) {
     bigGraphLogger.info("Wait 10 seconds for the workers to log in to the master...")
     Thread.sleep(10000)
