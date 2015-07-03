@@ -155,25 +155,31 @@ class DataManager(sc: spark.SparkContext,
       validateOutput(instance, outputDatas)
       blocking {
         if (instance.operation.isHeavy) {
-          for (entityData <- outputDatas.values) {
-            saveToDisk(entityData)
-          }
+          saveOutputs(instance, outputDatas.values)
         } else {
           // We still save all scalars even for non-heavy operations.
-          for (entityData <- outputDatas.values) {
-            if (entityData.isInstanceOf[ScalarData[_]]) saveToDisk(entityData)
+          // This can happen asynchronously though.
+          future {
+            saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
           }
         }
-        // Mark the operation as complete. Entities may not be loaded from incomplete operations.
-        // The reason for this is that an operation may give different results if the number of
-        // partitions is different. So for consistency, all outputs must be from the same run.
-        successPath(instancePath(instance)).createFromStrings("")
       }
       for (scalar <- instance.outputs.scalars.values) {
         log.info(s"PERF Computed scalar $scalar")
       }
       outputDatas
     }
+  }
+
+  private def saveOutputs(instance: MetaGraphOperationInstance,
+                          outputs: Iterable[EntityData]): Unit = {
+    for (output <- outputs) {
+      saveToDisk(output)
+    }
+    // Mark the operation as complete. Entities may not be loaded from incomplete operations.
+    // The reason for this is that an operation may give different results if the number of
+    // partitions is different. So for consistency, all outputs must be from the same run.
+    successPath(instancePath(instance)).createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,
