@@ -24,7 +24,7 @@
   <logger name="play" level="INFO" />
   <logger name="application" level="INFO" />
   <logger name="org.apache.spark" level="INFO" />
-  <logger name="BigGraph backend" level="INFO" />
+  <logger name="LynxKite" level="INFO" />
 
   <root level="ERROR">
     <appender-ref ref="FILE" />
