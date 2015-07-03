@@ -32,7 +32,7 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
   def readAll: Iterable[(String, String)] = {
     import scala.collection.JavaConverters._
     val data = new java.util.TreeMap[String, String]
-    for ((command, key, value) <- readCommands) {
+    forCommands { (command, key, value) =>
       command match {
         case Put => data.put(key, value)
         case Delete => data.remove(key)
@@ -42,33 +42,24 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
     data.asScala
   }
 
-  def readCommands: Iterable[(String, String, String)] = {
-    def readStream(in: java.io.BufferedReader): Stream[(String, String, String)] = {
-      val line = in.readLine
-      if (line == null) Stream.empty // End of file reached.
-      else if (line.isEmpty) readStream(in) // Blank line skipped.
-      else {
-        try {
-          val j = Json.parse(line).as[Seq[String]]
-          (j(0), j(1), j(2)) #:: readStream(in)
-        } catch {
-          case e: JsonProcessingException =>
-            log.warn(s"Bad input line: '$line' in file: '$file' " +
-              s"""json error: ${e.getMessage.replaceAll("\\n", " ")}""")
-            readStream(in)
-          case e: Throwable =>
-            log.error(s"Bad input line: '$line' in file: '$file'")
-            throw e
+  def forCommands[T](f: (String, String, String) => T): Unit = {
+    if (new File(file).exists) {
+      for (line <- scala.io.Source.fromFile(file, "utf-8").getLines) {
+        if (line.nonEmpty) {
+          try {
+            val j = Json.parse(line).as[Seq[String]]
+            f(j(0), j(1), j(2))
+          } catch {
+            case e: JsonProcessingException =>
+              log.warn(s"Bad input line: '$line' in file: '$file' " +
+                s"""json error: ${e.getMessage.replaceAll("\\n", " ")}""")
+            case e: Throwable =>
+              log.error(s"Bad input line: '$line' in file: '$file'")
+              throw e
+          }
         }
       }
     }
-
-    if (new File(file).exists) {
-      val in = java.nio.file.Files.newBufferedReader(
-        java.nio.file.Paths.get(file),
-        java.nio.charset.StandardCharsets.UTF_8)
-      readStream(in)
-    } else Seq()
   }
 
   private var streamInited = false
