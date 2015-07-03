@@ -2,11 +2,18 @@
 package com.lynxanalytics
 
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
+import ch.qos.logback.classic.LoggerContext
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
 package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
+
+  // Make sure play and spark logs contain the proper context.
+  val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
+  val frameworkPackages = ctx.getFrameworkPackages
+  frameworkPackages.add("play.api.Logger")
+  frameworkPackages.add("org.apache.spark.Logging")
 
   // Initialize reflection to avoid thread-safety issues
   // TODO: ditch this when we get to Scala 2.11
