@@ -21,7 +21,7 @@ angular.module('biggraph')
         animate: {
           enabled: false,
           labelAttraction: '0',
-          style: 'centralize',
+          style: 'neutral',
         },
         attributeTitles: {},
         centers: undefined,
