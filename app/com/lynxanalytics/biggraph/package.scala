@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
 package object biggraph {
-  val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
+  val bigGraphLogger = LoggerFactory.getLogger("LynxKite")
 
   // Make sure play and spark logs contain the proper context.
   val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
