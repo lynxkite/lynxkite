@@ -27,11 +27,12 @@ class DataManager(sc: spark.SparkContext,
       java.util.concurrent.Executors.newFixedThreadPool(
         DataManager.maxParallelSparkStages,
         new java.util.concurrent.ThreadFactory() {
-          val f = java.util.concurrent.Executors.defaultThreadFactory()
-          def newThread(r: Runnable) = {
-            val t = f.newThread(r)
+          private var nextIndex = 1
+          def newThread(r: Runnable) = synchronized {
+            val t = new Thread(r)
             t.setDaemon(true)
-            t.setName(s"DataManager-${t.getName}")
+            t.setName(s"DataManager-$nextIndex")
+            nextIndex += 1
             t
           }
         }
