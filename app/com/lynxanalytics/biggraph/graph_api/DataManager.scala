@@ -11,6 +11,7 @@ import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
 
+import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -46,12 +47,24 @@ class DataManager(sc: spark.SparkContext,
   private def instancePath(instance: MetaGraphOperationInstance) =
     repositoryPath / "operations" / instance.gUID.toString
 
-  private def entityPath(entity: MetaGraphEntity) =
+  private def entityPath(entity: MetaGraphEntity) = {
     if (entity.isInstanceOf[Scalar[_]]) {
       repositoryPath / "scalars" / entity.gUID.toString
     } else {
       repositoryPath / "entities" / entity.gUID.toString
     }
+  }
+
+  // Things saved during previous runs.
+  val savedInstances: Set[UUID] = {
+    val instances = (repositoryPath / "operations" / "*" / "_SUCCESS").list
+    instances.map(_.path.getParent.getName.asUUID).toSet
+  }
+  val savedEntities: Set[UUID] = {
+    val scalars = (repositoryPath / "scalars" / "*" / "_SUCCESS").list
+    val entities = (repositoryPath / "entities" / "*" / "_SUCCESS").list
+    (scalars ++ entities).map(_.path.getParent.getName.asUUID).toSet
+  }
 
   private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
 
@@ -59,8 +72,8 @@ class DataManager(sc: spark.SparkContext,
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
-      successPath(instancePath(entity.source)).exists &&
-      successPath(entityPath(entity)).exists
+      savedInstances.contains(entity.source.gUID) &&
+      savedEntities.contains(entity.gUID)
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
