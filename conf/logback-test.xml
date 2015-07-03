@@ -9,7 +9,7 @@
     <file>logs/test-${bySecond}.log</file>
   </appender>
 
-  <root level="debug">
+  <root level="info">
     <appender-ref ref="FILE" />
   </root>
 
