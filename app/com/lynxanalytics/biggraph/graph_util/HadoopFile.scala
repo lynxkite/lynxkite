@@ -226,11 +226,14 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
 // A SequenceFile loader that creates one partition per file.
 private[graph_util] class WholeSequenceFileInputFormat[K, V]
     extends hadoop.mapreduce.lib.input.SequenceFileInputFormat[K, V] {
+
   // Do not allow splitting/combining files.
   override protected def isSplitable(
     context: hadoop.mapreduce.JobContext, file: hadoop.fs.Path): Boolean = false
+
   // Read files in order.
-  override protected def listStatus(job: hadoop.mapreduce.JobContext) = {
+  override protected def listStatus(
+    job: hadoop.mapreduce.JobContext): java.util.List[hadoop.fs.FileStatus] = {
     val l = super.listStatus(job)
     java.util.Collections.sort(l, new java.util.Comparator[hadoop.fs.FileStatus] {
       def compare(a: hadoop.fs.FileStatus, b: hadoop.fs.FileStatus) =
