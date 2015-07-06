@@ -51,13 +51,13 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
   test("We can reload a graph from disk without recomputing it") {
     val metaManager = cleanMetaManager
     val dataManager1 = cleanDataManager
-    val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
     val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
     val names = instance.outputs.attributes('name).runtimeSafeCast[String]
     val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
     val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
+    val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
     val data2 = dataManager2.get(names)
     val scalarData2 = dataManager2.get(greeting)
     assert(data1 ne data2)
@@ -128,10 +128,11 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     fakeSuccess(instancePath)
 
     // Check that we managed to fake.
-    assert(dataManager.isCalculated(barack))
+    val dataManager2 = new DataManager(sparkContext, dataManager.repositoryPath)
+    assert(dataManager2.isCalculated(barack))
 
     // And now we get the future for it, this should not stack overflow or anything evil.
-    dataManager.get(barack)
+    dataManager2.get(barack)
   }
 
   test("Failed operation can be retried") {
