@@ -9,12 +9,6 @@ import scala.reflect.runtime.universe._
 package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("LynxKite")
 
-  // Make sure play and spark logs contain the proper context.
-  val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
-  val frameworkPackages = ctx.getFrameworkPackages
-  frameworkPackages.add("play.api.Logger")
-  frameworkPackages.add("org.apache.spark.Logging")
-
   // Initialize reflection to avoid thread-safety issues
   // TODO: ditch this when we get to Scala 2.11
   def printType[T: TypeTag]: Unit = bigGraphLogger.debug("initialize reflection for type: " + typeOf[T])
@@ -48,6 +42,12 @@ package object biggraph {
   private val newGCEPattern = "newGCE<(.+)>".r
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
+
+    // Make sure play and spark logs contain the proper context.
+    val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
+    val frameworkPackages = ctx.getFrameworkPackages
+    frameworkPackages.add("play.api.Logger")
+    frameworkPackages.add("org.apache.spark.Logging")
 
     val repoDirs =
       scala.util.Properties.envOrElse("REPOSITORY_MODE", "local_random") match {
