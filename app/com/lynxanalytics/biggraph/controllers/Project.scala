@@ -58,8 +58,10 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
 
   private def typeNameOf(tpe: Type): String = tpe match {
     case t if t == typeOf[ID] => "ID"
-    case t: TypeRef if t <:< typeOf[Vector[Any]] => "VECTOR OF " + typeNameOf(t.args(0)) + "S"
-    case t: TypeRef if t <:< typeOf[List[Any]] => "LIST OF " + typeNameOf(t.args(0)) + "S"
+    case t: TypeRef if t <:< typeOf[Vector[Any]] =>
+      "VECTOR OF " + typeNameOf(t.args(0)) + "S"
+    case t: TypeRef if t <:< typeOf[List[Any]] =>
+      "LIST OF " + typeNameOf(t.args(0)) + "S"
     case _ => tpe.toString
   }
 
