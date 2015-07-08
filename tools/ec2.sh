@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -ueo pipefail
+trap 'echo Failed.' ERR
 
 DIR=$(dirname $0)
 
