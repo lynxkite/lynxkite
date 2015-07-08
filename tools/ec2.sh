@@ -40,6 +40,7 @@ source $2
 
 GetMasterHostName() {
   aws ec2 describe-instances \
+    --output=json \
     --region=${REGION} \
     --filters "Name=instance.group-name,Values=${CLUSTER_NAME}-master" \
     | grep PublicDnsName | grep ec2 | cut -d'"' -f 4 | head -1
