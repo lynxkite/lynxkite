@@ -56,21 +56,19 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
     }
   }
 
-  private def typeNameOf(tpe: Type): String = tpe match {
-    case t if t == typeOf[ID] => "ID"
-    case t: TypeRef if t <:< typeOf[Vector[Any]] =>
-      "VECTOR OF " + typeNameOf(t.args(0)) + "S"
-    case t: TypeRef if t <:< typeOf[List[Any]] =>
-      "LIST OF " + typeNameOf(t.args(0)) + "S"
-    case _ => tpe.toString
-  }
-
   private def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
     val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
-    FEAttribute(e.gUID.toString, name, typeNameOf(e.typeTag.tpe), canBucket, canFilter, isNumeric, isInternal)
+    FEAttribute(
+      e.gUID.toString,
+      name,
+      e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      canBucket,
+      canFilter,
+      isNumeric,
+      isInternal)
   }
 
   // May raise an exception.
