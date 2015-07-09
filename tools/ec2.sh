@@ -72,6 +72,11 @@ start)
   MASTER=`GetMasterHostName`
   # Prepare a config file.
   CONFIG_FILE=/tmp/${CLUSTER_NAME}.kiterc
+  if [ -n "${S3_DATAREPO:-}" ]; then
+    KITE_DATA_DIR="s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}"
+  else
+    KITE_DATA_DIR="hdfs://$MASTER:9000/data"
+  fi
 
   cat > ${CONFIG_FILE} <<EOF
 # !!!Warning!!! Some values are overriden at the end of the file.
@@ -83,7 +88,7 @@ start)
 # These will reset some values above. Feel free to edit as necessary.
 export SPARK_HOME=/root/spark
 export SPARK_MASTER="spark://\`curl http://169.254.169.254/latest/meta-data/public-hostname\`:7077"
-export KITE_DATA_DIR=hdfs://$MASTER:9000/data
+export KITE_DATA_DIR=$KITE_DATA_DIR
 export EXECUTOR_MEMORY=$((RAM_GB - 5))g
 export NUM_CORES_PER_EXECUTOR=${CORES}
 export KITE_MASTER_MEMORY_MB=$((1024 * (RAM_GB - 5)))
