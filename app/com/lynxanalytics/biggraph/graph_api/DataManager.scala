@@ -10,14 +10,34 @@ import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
-import ExecutionContext.Implicits.global
 
+import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+object DataManager {
+  val maxParallelSparkStages =
+    scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
+}
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
+  // Limit parallelism to maxParallelSparkStages.
+  implicit val executionContext =
+    ExecutionContext.fromExecutorService(
+      java.util.concurrent.Executors.newFixedThreadPool(
+        DataManager.maxParallelSparkStages,
+        new java.util.concurrent.ThreadFactory() {
+          private var nextIndex = 1
+          def newThread(r: Runnable) = synchronized {
+            val t = new Thread(r)
+            t.setDaemon(true)
+            t.setName(s"DataManager-$nextIndex")
+            nextIndex += 1
+            t
+          }
+        }
+      ))
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   val sqlContext = new SQLContext(sc)
@@ -28,12 +48,24 @@ class DataManager(sc: spark.SparkContext,
   private def instancePath(instance: MetaGraphOperationInstance) =
     repositoryPath / "operations" / instance.gUID.toString
 
-  private def entityPath(entity: MetaGraphEntity) =
+  private def entityPath(entity: MetaGraphEntity) = {
     if (entity.isInstanceOf[Scalar[_]]) {
       repositoryPath / "scalars" / entity.gUID.toString
     } else {
       repositoryPath / "entities" / entity.gUID.toString
     }
+  }
+
+  // Things saved during previous runs.
+  val savedInstances: Set[UUID] = {
+    val instances = (repositoryPath / "operations" / "*" / "_SUCCESS").list
+    instances.map(_.path.getParent.getName.asUUID).toSet
+  }
+  val savedEntities: Set[UUID] = {
+    val scalars = (repositoryPath / "scalars" / "*" / "_SUCCESS").list
+    val entities = (repositoryPath / "entities" / "*" / "_SUCCESS").list
+    (scalars ++ entities).map(_.path.getParent.getName.asUUID).toSet
+  }
 
   private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
 
@@ -41,8 +73,8 @@ class DataManager(sc: spark.SparkContext,
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
-      successPath(instancePath(entity.source)).exists &&
-      successPath(entityPath(entity)).exists
+      savedInstances.contains(entity.source.gUID) &&
+      savedEntities.contains(entity.gUID)
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
@@ -125,25 +157,31 @@ class DataManager(sc: spark.SparkContext,
       validateOutput(instance, outputDatas)
       blocking {
         if (instance.operation.isHeavy) {
-          for (entityData <- outputDatas.values) {
-            saveToDisk(entityData)
-          }
+          saveOutputs(instance, outputDatas.values)
         } else {
           // We still save all scalars even for non-heavy operations.
-          for (entityData <- outputDatas.values) {
-            if (entityData.isInstanceOf[ScalarData[_]]) saveToDisk(entityData)
+          // This can happen asynchronously though.
+          future {
+            saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
           }
         }
-        // Mark the operation as complete. Entities may not be loaded from incomplete operations.
-        // The reason for this is that an operation may give different results if the number of
-        // partitions is different. So for consistency, all outputs must be from the same run.
-        successPath(instancePath(instance)).createFromStrings("")
       }
       for (scalar <- instance.outputs.scalars.values) {
         log.info(s"PERF Computed scalar $scalar")
       }
       outputDatas
     }
+  }
+
+  private def saveOutputs(instance: MetaGraphOperationInstance,
+                          outputs: Iterable[EntityData]): Unit = {
+    for (output <- outputs) {
+      saveToDisk(output)
+    }
+    // Mark the operation as complete. Entities may not be loaded from incomplete operations.
+    // The reason for this is that an operation may give different results if the number of
+    // partitions is different. So for consistency, all outputs must be from the same run.
+    successPath(instancePath(instance)).createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,

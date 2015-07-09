@@ -59,7 +59,7 @@ class CSVExportTest extends FunSuite with TestGraphOp {
       """|./data/_SUCCESS
          |========
          |********
-         |./data/part-00000
+         |./data/part-r-00000
          |========
          |18.2,"Eve",1
          |20.3,"Adam",0

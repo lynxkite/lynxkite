@@ -15,6 +15,7 @@ case class UIAxisOptions(
   edge: Map[String, String])
 case class UIAnimation(
   enabled: Boolean,
+  style: String,
   labelAttraction: String)
 case class UIAttributeFilter(
   val attributeName: String,

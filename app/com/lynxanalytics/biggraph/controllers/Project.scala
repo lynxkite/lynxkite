@@ -61,7 +61,14 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
     val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
-    FEAttribute(e.gUID.toString, name, e.typeTag.tpe.toString, canBucket, canFilter, isNumeric, isInternal)
+    FEAttribute(
+      e.gUID.toString,
+      name,
+      e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      canBucket,
+      canFilter,
+      isNumeric,
+      isInternal)
   }
 
   // May raise an exception.

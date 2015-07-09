@@ -29,9 +29,7 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4",
   "com.google.guava" % "guava" % "18.0",
   "org.apache.commons" % "commons-lang3" % "3.3",
-  "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided" excludeAll(
-    // Version disagreements with Play.
-    ExclusionRule(organization = "org.slf4j", name = "slf4j-api")),
+  "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
