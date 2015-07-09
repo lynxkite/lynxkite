@@ -161,4 +161,11 @@ destroy)
     destroy \
     ${CLUSTER_NAME}
   ;;
+
+# ======
+*)
+  echo "Unrecognized option: $1"
+  exit 1
+  ;;
+
 esac
