@@ -344,7 +344,8 @@ object Implicits {
     def asSortedRDD(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
       assert(self.partitions.size == partitioner.numPartitions,
-        s"$partitioner does not apply to $self")
+        s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
+          s" to RDD of size ${self.partitions.size}: $self")
       new AlreadySortedRDD(new AlreadyPartitionedRDD(self, partitioner))
     }
     // Sorts each partition of the RDD in isolation.
