@@ -69,6 +69,7 @@ start)
     --no-ganglia \
     --region=${REGION} launch ${CLUSTER_NAME}
 
+  MASTER=`GetMasterHostName`
   # Prepare a config file.
   CONFIG_FILE=/tmp/${CLUSTER_NAME}.kiterc
 
@@ -78,11 +79,11 @@ start)
 `cat ${KITE_BASE}/conf/kiterc_template`
 
 
-# Override settings created by start_ec2_cluster.sh. 
+# Override settings created by start_ec2_cluster.sh.
 # These will reset some values above. Feel free to edit as necessary.
 export SPARK_HOME=/root/spark
 export SPARK_MASTER="spark://\`curl http://169.254.169.254/latest/meta-data/public-hostname\`:7077"
-export KITE_DATA_DIR=s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}
+export KITE_DATA_DIR=hdfs://$MASTER:9000/data
 export EXECUTOR_MEMORY=$((RAM_GB - 5))g
 export NUM_CORES_PER_EXECUTOR=${CORES}
 export KITE_MASTER_MEMORY_MB=$((1024 * (RAM_GB - 5)))
@@ -91,7 +92,7 @@ export KITE_LOCAL_TMP=${LOCAL_TMP_DIR}
 export KITE_PREFIX_DEFINITIONS=/root/prefix_definitions.txt
 EOF
 
-  rsync -ave "$SSH" ${CONFIG_FILE} root@`GetMasterHostName`:.kiterc
+  rsync -ave "$SSH" "${CONFIG_FILE}" "root@$MASTER:.kiterc"
 
   # Prepare a root definitions file.
   PREFIXDEF_FILE=/tmp/${CLUSTER_NAME}.prefdef
