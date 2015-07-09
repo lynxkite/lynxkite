@@ -126,11 +126,11 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   def saveAsTextFile(lines: spark.rdd.RDD[String]): Unit = {
     // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
     val hadoopLines = lines.map(x => (hadoop.io.NullWritable.get(), new hadoop.io.Text(x)))
-    hadoopLines.saveAsHadoopFile(
+    hadoopLines.saveAsNewAPIHadoopFile(
       resolvedNameWithNoCredentials,
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.Text],
-      outputFormatClass = classOf[hadoop.mapred.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
+      outputFormatClass = classOf[hadoop.mapreduce.lib.output.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
