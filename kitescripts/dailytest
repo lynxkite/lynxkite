@@ -188,3 +188,4 @@ EndOperations
 GetScalar('loadandprocessrandom', 'communities_degree_average_max_std_deviation')
 GetScalar('loadandprocessrandom', 'highest_degree_sum')
 GetScalar('loadandprocessrandom', 'weight_sum')
+ResetTimer
