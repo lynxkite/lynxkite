@@ -22,6 +22,8 @@ object BatchMain {
   private val scalarBenchRE = ("BenchmarkScalar" + scalarArgPtrn).r
   private val opsRE = raw"Operations\s*\(\s*'([^']+)'\s*\)".r
   private val opsEnd = "EndOperations"
+  private val waitForever = "WaitForever"
+  private val resetTimer = "ResetTimer"
 
   def getScalarMeta(
     projectName: String, scalarName: String, params: Map[String, String])(
@@ -61,6 +63,7 @@ For example:
       .toMap
 
     val lit = Source.fromFile(scriptFileName).getLines()
+    var timer = System.currentTimeMillis
     while (lit.hasNext) {
       val line = lit.next()
       val trimmed = line.trim
@@ -123,6 +126,13 @@ For example:
               op.validateAndApply(step.op.parameters)
             }
           }
+        case `waitForever` =>
+          println("Waiting indefinitely...")
+          this.synchronized { this.wait() }
+        case `resetTimer` =>
+          val t = System.currentTimeMillis
+          println(f"Time elapsed: ${0.001 * (t - timer)}%.3f s")
+          timer = t
         case _ =>
           System.err.println(s"Cannot parse line: ${line}")
           System.exit(1)

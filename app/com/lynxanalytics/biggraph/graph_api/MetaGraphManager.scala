@@ -173,7 +173,7 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
-    log.info(s"Saving $inst to disk.")
+    log.info(s"Saving operation $inst to disk.")
     val j = serializeOperation(inst)
     // Validate the serialized operation by trying to reload it.
     val i = deserializeOperation(j)

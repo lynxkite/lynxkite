@@ -155,7 +155,7 @@ object BigGraphSparkContext {
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
       .set("spark.akka.threads",
         scala.util.Properties.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
-      .set("spark.local.dir", scala.util.Properties.envOrElse("SPARK_DIR", "/tmp"))
+      .set("spark.local.dir", scala.util.Properties.envOrElse("KITE_LOCAL_TMP", "/tmp"))
       // Speculative execution will start extra copies of tasks to eliminate long tail latency.
       .set("spark.speculation", "true") // Enable speculative execution.
       .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
