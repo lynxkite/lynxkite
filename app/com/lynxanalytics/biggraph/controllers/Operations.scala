@@ -560,8 +560,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.belongsTo = bucketing.belongsTo
       segmentation.project.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
-      segmentation.project.vertexAttributes(s"bottom") = bucketing.bottom
-      segmentation.project.vertexAttributes(s"top") = bucketing.top
+      segmentation.project.vertexAttributes("bottom") = bucketing.bottom
+      segmentation.project.vertexAttributes("top") = bucketing.top
     }
   })
 
