@@ -154,7 +154,7 @@ object FEFilters {
   private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
   private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
   private val boundRE = s"$comparatorPattern$numberPattern".r
-  private val forallRE = s"\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r
-  private val existsRE = s"\\s*(?:exists|any|some|∃)\\((.*)\\)\\s*".r
-  private val regexRE = s"\\s*regexp?\\((.*)\\)\\s*".r
+  private val forallRE = "\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r
+  private val existsRE = "\\s*(?:exists|any|some|∃)\\((.*)\\)\\s*".r
+  private val regexRE = "\\s*regexp?\\((.*)\\)\\s*".r
 }
