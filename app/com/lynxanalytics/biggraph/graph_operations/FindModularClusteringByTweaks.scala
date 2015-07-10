@@ -457,7 +457,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
       }
     }
 
-    log.info(s"Splitting clusters")
+    log.info("Splitting clusters")
     val splitQueue = mutable.Queue(changedClusters.toSeq: _*)
     while (splitQueue.nonEmpty) {
       val clusterId = splitQueue.dequeue
