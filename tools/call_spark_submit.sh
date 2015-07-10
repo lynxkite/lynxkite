@@ -128,6 +128,10 @@ startKite () {
     >&2 echo "Kite is already running (or delete ${KITE_PID_FILE})"
     exit 1
   fi
+  if [ ! -d "${SPARK_HOME}" ]; then
+    >&2 echo "Spark cannot be found at ${SPARK_HOME}"
+    exit 1
+  fi
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
   >&2 echo "Kite server started (PID $!)."
 }
