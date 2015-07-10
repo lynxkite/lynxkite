@@ -234,7 +234,7 @@ chgrp -R ${TARGET_GROUP} ${TARGET_HOME}/kite_prefix_definitions.txt
 
 # Test if kite starts
 
-KITE_RUN_SCRIPT=$(ls  ${LYNXKITE_BASE}/run*)
+KITE_RUN_SCRIPT=$(ls ${LYNXKITE_BASE}/run*)
 
 echo "Testing Lynxkite startup"
 if su ${TARGET_USER} ${KITE_RUN_SCRIPT} start; then
@@ -243,27 +243,27 @@ if su ${TARGET_USER} ${KITE_RUN_SCRIPT} start; then
     su ${TARGET_USER} ${KITE_RUN_SCRIPT} stop > /dev/null 2>&1
 fi
 
-# Install Lynxkite as a service and run kite (works with initctl but not yet with systemctl)
+# Install LynxKite as a service and run kite (works with initctl but not yet with systemctl)
 echo "Setting up LynxKite as server"
 
 if type initctl > /dev/null 2>%1; then
     echo "Creating upstart configuration file for initctl"
     cat <<EOM > /etc/init/lynxkite.conf
 #Lynxkite
-description     "Lynxkite server"
+description "LynxKite server"
 
 start on runlevel [2345]
 stop on runlevel [!2345]
 
 respawn
 
-exec su ${TARGET_USER}  ${KITE_RUN_SCRIPT} interactive
+exec su ${TARGET_USER} ${KITE_RUN_SCRIPT} interactive
 EOM
     if  initctl start lynxkite; then
-	echo "Lynxkite is running as a system service."
+	echo "LynxKite is running as a system service."
     else
 	echo "Cannot install LynxKite as a system service."
-	echo "Try starting manually to trubleshoot by running."
+	echo "Try starting manually to troubleshoot by running:"
 	echo "${KITE_RUN_SCRIPT} interactive"
     fi
 
@@ -274,7 +274,7 @@ EOM
 
 else    
     if su ${TARGET_USER} ${KITE_RUN_SCRIPT} start; then
-	echo "Lynxkite is running, but it cannot be installed as a system service."
+	echo "LynxKite is running, but it cannot be installed as a system service."
     else
 	echo "Cannot install LynxKite as a system service."
     fi
