@@ -24,7 +24,7 @@ class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
     p.isInstanceOf[Project] && projectName == p.asInstanceOf[Project].projectName
   override def hashCode = projectName.hashCode
 
-  assert(projectName.nonEmpty, s"Invalid project name: <empty string>")
+  assert(projectName.nonEmpty, "Invalid project name: <empty string>")
   assert(!projectName.contains(Project.separator), s"Invalid project name: $projectName")
   val rootDir: SymbolPath = SymbolPath("projects") / projectPath
   // Part of the state that needs to be checkpointed.
