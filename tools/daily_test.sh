@@ -15,7 +15,8 @@ if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
   exit 1
 fi
 
-RANDOM_SUFFIX=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 6 | head -n 1`
+RANDOM_SUFFIX=$(python -c \
+  'import random, string; print "".join(random.choice(string.letters) for i in range(6))')
 TODAY=`date "+%Y%m%d"`
 
 TEST_NAME="${TESTS_NAME_PREFIX}${TODAY}_${RANDOM_SUFFIX}"
