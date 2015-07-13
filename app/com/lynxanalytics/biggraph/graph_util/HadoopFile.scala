@@ -6,9 +6,9 @@ import org.apache.hadoop
 import org.apache.spark
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import com.lynxanalytics.biggraph.bigGraphLogger
-import com.lynxanalytics.biggraph.spark_util.BigGraphSparkContext
-import com.lynxanalytics.biggraph.spark_util.RDDUtils
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.spark_util._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object HadoopFile {
 
@@ -173,34 +173,44 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     fs.mkdirs(path)
   }
 
-  def loadObjectFile[T: scala.reflect.ClassTag](sc: spark.SparkContext): spark.rdd.RDD[T] = {
+  // Loads a Long-keyed SortedRDD, optionally with a specific partitioner.
+  def loadEntityRDD[T: scala.reflect.ClassTag](
+    sc: spark.SparkContext,
+    partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
     import hadoop.mapreduce.lib.input.SequenceFileInputFormat
 
-    sc.newAPIHadoopFile(
+    val file = sc.newAPIHadoopFile(
       resolvedNameWithNoCredentials,
-      kClass = classOf[hadoop.io.NullWritable],
+      kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.BytesWritable],
-      fClass = classOf[SequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
+      fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
       conf = hadoopConfiguration)
-      .map(pair => RDDUtils.kryoDeserialize[T](pair._2.getBytes))
+    val p = partitioner.getOrElse(new spark.HashPartitioner(file.partitions.size))
+    file
+      .map { case (k, v) => k.get -> RDDUtils.kryoDeserialize[T](v.getBytes) }
+      .asSortedRDD(p)
   }
 
-  def saveAsObjectFile(data: spark.rdd.RDD[_]): Unit = {
+  // Saves a Long-keyed SortedRDD.
+  def saveEntityRDD[T](data: SortedRDD[Long, T]): Unit = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
-    val hadoopData = data.map(x =>
-      (hadoop.io.NullWritable.get(), new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(x))))
+    val hadoopData = data.map {
+      case (k, v) =>
+        new hadoop.io.LongWritable(k) ->
+          new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(v))
+    }
     if (fs.exists(path)) {
-      bigGraphLogger.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
+      log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
       fs.delete(path, true)
     }
-    bigGraphLogger.info(s"saving ${data.name} as object file to ${symbolicName}")
+    log.info(s"saving ${data.name} as object file to ${symbolicName}")
     hadoopData.saveAsNewAPIHadoopFile(
       resolvedNameWithNoCredentials,
-      keyClass = classOf[hadoop.io.NullWritable],
+      keyClass = classOf[hadoop.io.LongWritable],
       valueClass = classOf[hadoop.io.BytesWritable],
       outputFormatClass =
-        classOf[SequenceFileOutputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
+        classOf[SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
@@ -210,5 +220,25 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
 
   def /(path_element: String): HadoopFile = {
     this + ("/" + path_element)
+  }
+}
+
+// A SequenceFile loader that creates one partition per file.
+private[graph_util] class WholeSequenceFileInputFormat[K, V]
+    extends hadoop.mapreduce.lib.input.SequenceFileInputFormat[K, V] {
+
+  // Do not allow splitting/combining files.
+  override protected def isSplitable(
+    context: hadoop.mapreduce.JobContext, file: hadoop.fs.Path): Boolean = false
+
+  // Read files in order.
+  override protected def listStatus(
+    job: hadoop.mapreduce.JobContext): java.util.List[hadoop.fs.FileStatus] = {
+    val l = super.listStatus(job)
+    java.util.Collections.sort(l, new java.util.Comparator[hadoop.fs.FileStatus] {
+      def compare(a: hadoop.fs.FileStatus, b: hadoop.fs.FileStatus) =
+        a.getPath.getName compare b.getPath.getName
+    })
+    l
   }
 }
