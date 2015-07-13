@@ -10,8 +10,17 @@ case class SparkStatusRequest(
   syncedUntil: Long) // Client requests to be notified only of events after this time.
 
 case class SparkStatusResponse(
-  activeStages: Seq[Int],
-  timestamp: Long) // This is the status at the given time.
+  timestamp: Long, // This is the status at the given time.
+  activeStages: List[StageInfo],
+  pastStages: List[StageInfo])
+
+case class StageInfo(
+  id: Int, // Stage ID.
+  hash: Long, // Two stages that do the same thing are expected to have the same hash.
+  size: Int, // Number of tasks.
+  var tasksCompleted: Int = 0, // Number of tasks already done.
+  var lastTaskTime: Long = 0, // Timestamp of last task completion.
+  var failed: Boolean = false)
 
 case class SparkClusterStatusResponse(
   master: String,
@@ -24,25 +33,53 @@ case class SetClusterNumInstanceRequest(
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
 class SparkListener extends spark.scheduler.SparkListener {
-  val activeStages = collection.mutable.Set[Int]()
+  val activeStages = collection.mutable.Map[Int, StageInfo]()
+  val pastStages = collection.mutable.Queue[StageInfo]()
   val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
-  var currentResp = SparkStatusResponse(Seq(), 0)
+  var currentResp = SparkStatusResponse(0, List(), List())
 
   override def onStageCompleted(
     stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
-    activeStages -= stageCompleted.stageInfo.stageId
+    val id = stageCompleted.stageInfo.stageId
+    val stage = activeStages(id)
+    activeStages -= id
+    stage.failed = stageCompleted.stageInfo.failureReason.nonEmpty
+    pastStages.enqueue(stage)
+    while (pastStages.size > 10) {
+      pastStages.dequeue()
+    }
     send()
+  }
+
+  override def onTaskEnd(taskEnd: spark.scheduler.SparkListenerTaskEnd): Unit = synchronized {
+    val id = taskEnd.stageId
+    if (activeStages.contains(id)) {
+      val stage = activeStages(id)
+      stage.tasksCompleted += 1
+      val time = taskEnd.taskInfo.finishTime
+      // Post at most one update per second.
+      if (time - stage.lastTaskTime > 1000) {
+        stage.lastTaskTime = time
+        send()
+      }
+    }
   }
 
   override def onStageSubmitted(
     stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
-    activeStages += stageSubmitted.stageInfo.stageId
+    val stage = stageSubmitted.stageInfo
+    val id = stage.stageId
+    val hash = stage.details.hashCode
+    val size = stage.numTasks
+    val time = stage.submissionTime.getOrElse(System.currentTimeMillis)
+    activeStages += id -> StageInfo(id, hash, size, lastTaskTime = time)
     send()
   }
 
   private def send(): Unit = synchronized {
     val time = System.currentTimeMillis
-    currentResp = SparkStatusResponse(activeStages.toSeq, time)
+    currentResp =
+      SparkStatusResponse(time, activeStages.values.toList, pastStages.reverseIterator.toList)
     for (p <- promises) {
       p.success(currentResp)
     }

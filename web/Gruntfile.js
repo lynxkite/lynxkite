@@ -94,8 +94,11 @@ module.exports = function (grunt) {
               return;
             }
             if (req.url.indexOf('/ajax/spark-status') === 0) {
-              setTimeout(next, 10000);
-              return;
+              // Delay all but the first request to simulate long polling.
+              if (req.url.indexOf('0') === -1) {
+                setTimeout(next, 10000);
+                return;
+              }
             }
             next();
           });

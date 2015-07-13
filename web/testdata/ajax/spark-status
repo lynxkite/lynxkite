@@ -1,4 +1,33 @@
 {
   "timestamp": -1,
-  "activeStages": []
+  "activeStages": [{
+    "failed": false,
+    "hash": 1234567,
+    "id": 4,
+    "lastTaskTime": -100,
+    "size": 10,
+    "tasksCompleted": 5
+  }],
+  "pastStages": [{
+    "failed": false,
+    "hash": 2345678,
+    "id": 3,
+    "lastTaskTime": -1000,
+    "size": 10,
+    "tasksCompleted": 10
+  }, {
+    "failed": true,
+    "hash": 3456789,
+    "id": 2,
+    "lastTaskTime": -10000,
+    "size": 10,
+    "tasksCompleted": 9
+  }, {
+    "failed": false,
+    "hash": 4567890,
+    "id": 1,
+    "lastTaskTime": -100000,
+    "size": 5,
+    "tasksCompleted": 5
+  }]
 }
