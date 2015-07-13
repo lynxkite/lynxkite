@@ -3,17 +3,15 @@
 ## Requires the kite install...sh scripts in the same directory
 ## Should be run as root
 ## 
-## Tested on Ubuntu 14, CentOs 6,7, Redhat 7, Amazon AMI 2015.03
-## Should work on any recent Ubuntu/Debian, RedHat/Fedora/CentOs 
-##     (Systemd support not implemented yet)  
+## Tested on Ubuntu 14, CentOs 6,7, Redhat 7, Amazon AMI 2015.03, SUSE 12
+## Should work on any recent Ubuntu/Debian, RedHat/Fedora/CentOs, SUSE
 ##
 ## What the script does: 
-##             -installs openjdk-7
+##             -installs wget and openjdk-7
 ##             -calls the kite install script
 ##             -downloads and unpacks the appropriate spark version
 ##             -creates .kiterc and kite-prefix-defitions.txt
-##             -installs lynxkite as a system service and starts it 
-##                  (does not work with systemd yet, where manual start/stop is required)
+##             -installs lynxkite as a system service and starts it
 ##
 ## Configuration
 HADOOP_VERSIONS="2.6 2.4 2.3 2 1"
@@ -151,19 +149,27 @@ else
     echo "Package manager not found. Please install OpenJDK-7 manually"
 fi
 
-#Install Lynxkite
+#Shutdown lynxkite if running
 if [ -e "/etc/init/lynxkite.conf" ]; then
-    echo "Shutting down lynxkite"
     if ( initctl status lynxkite | grep start ); then
-	initctl stop lynxkite
+        echo "Shutting down LynxKite using initctl"
+    	initctl stop lynxkite
+    fi
+elif [ -e "/usr/lib/systemd/system/lynxkite.service" ]; then
+    if ( systemctl status lynxkite | grep active ); then
+	echo "Shutting down LynxKite using systemctl"
+	systemctl stop lynxkite
     fi
 fi    
+
+#Install Lynxkite
 LYNXKITE_BASE_TEMP="${TARGET_HOME}/lynxkite-temp"
 if [ -e ${LYNXKITE_BASE_TEMP} ]; then 
     rm -R ${LYNXKITE_BASE_TEMP} >/dev/null 2>&1
 fi
 mkdir ${LYNXKITE_BASE_TEMP}
 cd ${LYNXKITE_BASE_TEMP}
+echo "Running lynxkite installer"
 ${INSTALL_SCRIPTS_DIR}/install-kite-${KITE_TOINSTALL}.sh
 KITE_DIST_FOLDER_TEMP=$(ls -d ${LYNXKITE_BASE_TEMP}/kite*)
 LYNXKITE_VERSION=$(cat ${KITE_DIST_FOLDER_TEMP}/version | grep release | awk -F'release ' '{print $2}' | awk -F' ' '{print $1}')
@@ -236,15 +242,17 @@ chgrp -R ${TARGET_GROUP} ${TARGET_HOME}/kite_prefix_definitions.txt
 
 KITE_RUN_SCRIPT=$(ls ${LYNXKITE_BASE}/run*)
 
-echo "Testing Lynxkite startup"
+echo "Testing LynxKite startup"
 if su ${TARGET_USER} ${KITE_RUN_SCRIPT} start; then
-    echo "Startup test successfull, shutting down..."
+    echo "Startup test successful, shutting down..."
     sleep 5
     su ${TARGET_USER} ${KITE_RUN_SCRIPT} stop > /dev/null 2>&1
 fi
 
-# Install LynxKite as a service and run kite (works with initctl but not yet with systemctl)
+# Install LynxKite as a service and run kite 
 echo "Setting up LynxKite as server"
+
+#Create /etc/init/lynxkite.conf
 
 if type initctl > /dev/null 2>%1; then
     echo "Creating upstart configuration file for initctl"
@@ -260,6 +268,7 @@ respawn
 exec su ${TARGET_USER} ${KITE_RUN_SCRIPT} interactive
 EOM
     if  initctl start lynxkite; then
+	echo "Installation complete."
 	echo "LynxKite is running as a system service."
     else
 	echo "Cannot install LynxKite as a system service."
@@ -267,11 +276,44 @@ EOM
 	echo "${KITE_RUN_SCRIPT} interactive"
     fi
 
-#Check what's going on with systemctl
+#Create /usr/lib/systemd/system/lynxkite.service
 
-#elif type systemctl > /dev/null 2>%1; then
-#    echo "Found systemctl. Creating systemd configuation file"    
+elif type systemctl > /dev/null 2>%1; then
+################
+# Temporary patch for cat /dev/urandom  
+# We can remove this later, but wanted to have a working script with the older releases
+    cp ${KITE_DIST_FOLDER}/bin/biggraph ${KITE_DIST_FOLDER}/bin/biggraph.beforepatch
+    cat ${KITE_DIST_FOLDER}/bin/biggraph.beforepatch | \
+     sed "/export KITE_RANDOM_SECRET=.cat \/dev\/urandom/c\export KITE_RANDOM_SECRET=\$(python -c 'import random, string; print \"\".join(random.choice(string.letters) for i in range(32))')" > \
+     ${KITE_DIST_FOLDER}/bin/biggraph
+    chown -R ${TARGET_USER} ${KITE_DIST_FOLDER}/bin/biggraph 
+    chgrp -R ${TARGET_GROUP} ${KITE_DIST_FOLDER}/bin/biggraph
+################
+    echo "Creating systemd configuation file"    
+    cat <<EOM > /usr/lib/systemd/system/lynxkite.service
+[Unit]
+Description=LynxKite Server
 
+[Service]
+
+ExecStart=${KITE_RUN_SCRIPT} interactive
+WorkingDirectory=${LYNXKITE_BASE}
+User=${TARGET_USER}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOM
+    systemctl daemon-reload
+    systemctl enable lynxkite >/dev/null
+    if  systemctl start lynxkite; then
+	echo "Installation complete."
+	echo "LynxKite is running as a system service."
+    else
+	echo "Cannot install LynxKite as a system service."
+	echo "Try starting manually to troubleshoot by running:"
+	echo "${KITE_RUN_SCRIPT} interactive"
+    fi
 else    
     if su ${TARGET_USER} ${KITE_RUN_SCRIPT} start; then
 	echo "LynxKite is running, but it cannot be installed as a system service."
@@ -281,5 +323,3 @@ else
     echo "Please start/stop LynxKite manually by running"
     echo "${KITE_RUN_SCRIPT} start/stop"
 fi
-
-
