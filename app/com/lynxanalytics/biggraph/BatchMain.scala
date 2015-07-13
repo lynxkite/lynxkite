@@ -91,7 +91,6 @@ For example:
             rc0.numExecutors,
             rc0.numAvailableCores,
             rc0.workMemoryPerCore,
-            rc0.bytesPerPartition,
             duration,
             value)
           println(outRow.mkString(","))

@@ -78,18 +78,10 @@ class DataManager(sc: spark.SparkContext,
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
-  // How much bigger the in-memory representation is, compared to the serialized file size.
-  private lazy val kryoExplosion =
-    System.getProperty("biggraph.kryo.explosion", "70").toInt
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
       val fn = entityPath(vertexSet)
-      val bytes = (fn / "*").globLength
-      // Repartition for optimal processing performance.
-      val partitioner = runtimeContext.partitionerForNBytes(bytes * kryoExplosion)
-      val rdd = fn
-        .loadObjectFile[(ID, Unit)](sc)
-        .toSortedRDD(partitioner)
+      val rdd = fn.loadEntityRDD[Unit](sc)
       new VertexSetData(vertexSet, rdd)
     }
   }
@@ -98,9 +90,7 @@ class DataManager(sc: spark.SparkContext,
     getFuture(edgeBundle.idSet).map { idSet =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val idsRDD = idSet.rdd.cache
-      val rawRDD = entityPath(edgeBundle)
-        .loadObjectFile[(ID, Edge)](sc)
-        .toSortedRDD(idsRDD.partitioner.get)
+      val rawRDD = entityPath(edgeBundle).loadEntityRDD[Edge](sc, idsRDD.partitioner)
       new EdgeBundleData(
         edgeBundle,
         idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
@@ -112,9 +102,7 @@ class DataManager(sc: spark.SparkContext,
     getFuture(attribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val vsRDD = vs.rdd.cache
-      val rawRDD = entityPath(attribute)
-        .loadObjectFile[(ID, T)](sc)
-        .toSortedRDD(vsRDD.partitioner.get)
+      val rawRDD = entityPath(attribute).loadEntityRDD[T](sc, vsRDD.partitioner)
       new AttributeData[T](
         attribute,
         // This join does nothing except enforcing colocation.
@@ -326,7 +314,7 @@ class DataManager(sc: spark.SparkContext,
     data match {
       case rddData: EntityRDDData =>
         log.info(s"PERF Instantiating entity $entity on disk")
-        entityPath(entity).saveAsObjectFile(rddData.rdd)
+        entityPath(entity).saveEntityRDD(rddData.rdd)
         log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
         log.info(s"PERF Writing scalar $entity to disk")
