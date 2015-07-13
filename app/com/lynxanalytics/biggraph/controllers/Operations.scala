@@ -127,37 +127,38 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   // Categories
   abstract class AlgorithmOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Algorithms", "blue"))
-
-  abstract class PropagationOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Propagations", "green"))
+    extends Operation(t, c, Category("Algorithmic operations", "green", icon = "book"))
 
   abstract class EdgeAttributesOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Edge attributes", "red"))
+    extends Operation(t, c, Category("Edge attribute operations", "blue", sortKey = "Attribute, edge"))
 
   abstract class VertexAttributesOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Vertex attributes", "blue"))
+    extends Operation(t, c, Category("Vertex attribute operations", "blue", sortKey = "Attribute, vertex"))
+
+  abstract class GlobalOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Global operations", "magenta", icon = "globe"))
+
+  abstract class ExportOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Export operations", "yellow", icon = "export", sortKey = "IO, export"))
+
+  abstract class ImportOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Import operations", "yellow", icon = "import", sortKey = "IO, import"))
+
+  abstract class MetricsOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Metrics operations", "green", icon = "stats"))
+
+  abstract class PropagationOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Propagation operations", "green", icon = "fullscreen"))
 
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
-      "Create segmentation",
+      "Segmentation operations",
       "green",
+      icon = "th-large",
       visible = !c.project.isSegmentation))
 
-  abstract class ExportOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Xport", "blue"))
-
-  abstract class ImportOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Import", "blue"))
-
-  abstract class MetricsOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Metrics", "blue"))
-
-  abstract class GlobalOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Global", "blue"))
-
   abstract class StructureOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Structure", "magenta"))
+    extends Operation(t, c, Category("Structure operations", "pink", icon = "asterisk"))
 
   import OperationParams._
 
