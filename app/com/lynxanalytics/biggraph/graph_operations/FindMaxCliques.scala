@@ -35,7 +35,7 @@ case class FindMaxCliques(
     implicit val id = inputDatas
     val inputPartitioner = inputs.vs.rdd.partitioner.get
     val cug = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections)
-    val numTasks = (rc.numAvailableCores * 5) max (inputPartitioner.numPartitions * 5)
+    val numTasks = (rc.numAvailableCores * 5) max inputPartitioner.numPartitions
     val outputPartitioner = new HashPartitioner(numTasks)
     val cliqueLists = computeCliques(
       inputs.vs.data, cug, rc, minCliqueSize, numTasks)
