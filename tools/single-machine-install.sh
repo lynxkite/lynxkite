@@ -162,7 +162,7 @@ elif [ -e "/usr/lib/systemd/system/lynxkite.service" ]; then
     fi
 fi    
 
-#Install Lynxkite
+#Install LynxKite
 LYNXKITE_BASE_TEMP="${TARGET_HOME}/lynxkite-temp"
 if [ -e ${LYNXKITE_BASE_TEMP} ]; then 
     rm -R ${LYNXKITE_BASE_TEMP} >/dev/null 2>&1
