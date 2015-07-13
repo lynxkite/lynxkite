@@ -32,16 +32,17 @@ angular.module('biggraph')
         return (20 * stage.tasksCompleted / stage.size).toFixed(1) + 'px';
       };
 
-      scope.message = function(status, stage) {
-        if (stage.failed) {
-          return 'Failed.';
-        } else if (!stage.active) {
-          return 'Completed.';
-        } else {
+      scope.message = function(status) {
+        var last = 0;
+        for (var i = 0; i < status.activeStages.length; ++i) {
+          var stage = status.activeStages[i];
           // Correct against client/server clock offset using status.received.
           var t = Date.now() - stage.lastTaskTime + status.timestamp - status.received;
-          return 'Last progress ' + (t / 1000).toFixed() + ' seconds ago.';
+          if (t > last) {
+            last = t;
+          }
         }
+        return 'Last progress ' + (last / 1000).toFixed() + ' seconds ago.';
       };
     },
   };
