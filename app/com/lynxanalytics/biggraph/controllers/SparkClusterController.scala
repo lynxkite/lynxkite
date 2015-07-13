@@ -45,7 +45,7 @@ class SparkListener extends spark.scheduler.SparkListener {
     activeStages -= id
     stage.failed = stageCompleted.stageInfo.failureReason.nonEmpty
     pastStages.enqueue(stage)
-    while (pastStages.size > 5) {
+    while (pastStages.size > 10) {
       pastStages.dequeue()
     }
     send()
