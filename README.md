@@ -1,12 +1,13 @@
 LynxKite
 ========
 
-Global setup steps
-==================
+## Global setup steps
+
 Install `nvm` (https://github.com/creationix/nvm). Then:
 
     nvm install v0.10.25
     nvm alias default v0.10.25
+    npm install -g grunt-cli bower
 
 Install `sbt` (Scala Build Tool):
 
@@ -24,23 +25,28 @@ Install Spark:
          tar xf Downloads/spark-1.3.0-bin-hadoop2.4.tgz
          ln -s spark-1.3.0-bin-hadoop2.4/ spark-1.3.0
 
+Install Python (for various tools) and Ruby (for AWS CLI and Sass). Then:
 
-Per repository setup
-====================
+    sudo gem install sass
 
-Setup `git`:
+
+## Per repository setup
+
+Set up `git` pre-commit hooks:
 
     tools/git/setup.sh
 
-Setup GUI tools:
+Set up web build tools:
 
-    cd web                          # Basic commands:
-    npm install && bower install    # Install dependencies. Run this once.
-    npm install -g grunt-cli bower  # Install grunt command line interface. Run this once.
-    npm test                        # Runs tests.
-    grunt                           # Lints and builds "dist".
-    grunt serve                     # Opens a browser with live reload.
+    cd web
+    npm install
+    bower install
 
-Run LynxKite
-============
+## Configure .kiterc
+
+    cp conf/kiterc_template ~/.kiterc
+    vi ~/.kiterc # Change defaults if necessary.
+
+## Run LynxKite
+
 To build and run LynxKite invoke the `run.sh` shell script.
