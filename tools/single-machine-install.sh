@@ -95,13 +95,6 @@ fi
 
 
 
-#If called by vagrant, make the output nicer (disable wget progress bar)
-
-VAGRANT_FLAG="disabled"
-
-if [[ $# -ge 4 && "$4" == "--vagrant" ]]; then
-    VAGRANT_FLAG="enabled"
-fi    
 
 echo "Installing LynxKite version ${KITE_TOINSTALL} in size ${KITE_SIZE}"    
 echo "Setting up Lynxkite for ${KITE_NUM_CORES} core(s) and ${KITE_MEMORY}MBytes of memory"
@@ -187,20 +180,11 @@ KITE_DIST_FOLDER=$(ls -d ${LYNXKITE_BASE}/kite*)
 
 echo "Checking if spark-${SPARK_VERSION} is installed"
 if [ ! -e "${TARGET_HOME}/spark-${SPARK_VERSION}" ]; then
-    if [ "${VAGRANT_FLAG}"  =  "enabled" ]; then
-        echo "Downloading spark. This is a large file, be patient..."
-    fi
     for version in ${HADOOP_VERSIONS}; do
 	SPARK_FILE=spark-${SPARK_VERSION}-bin-hadoop${version}
 	SPARK_URL="http://d3kbcqa49mib13.cloudfront.net/${SPARK_FILE}.tgz"
-	if [ "${VAGRANT_FLAG}"  =  "enabled" ]; then
-	    if wget ${SPARK_URL} -O ${TARGET_HOME}/${SPARK_FILE}.tgz > /dev/null 2>&1; then
+        if wget ${SPARK_URL} -O ${TARGET_HOME}/${SPARK_FILE}.tgz; then
 		break
-	    fi
-        else
-	    if wget ${SPARK_URL} -O ${TARGET_HOME}/${SPARK_FILE}.tgz; then
-		break
-	    fi
 	fi
 	rm ${TARGET_HOME}/${SPARK_FILE}.tgz    
     done
