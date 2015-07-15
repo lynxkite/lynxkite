@@ -32,4 +32,7 @@ anyway.
 [[adjacency_threshold]] Adjacency threshold for clique overlaps::
 Clique overlap is a measure of the overlap between two cliques relative to their sizes.
 It is normalized to [0, 1). This parameter controls when to merge cliques into a community.
++
+Note that sometimes a single large community (besides many small ones) is generated.
+Increasing this threshold above a certain level gets rid of the single large community.
 ====
