@@ -181,13 +181,13 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
 
     val file = sc.newAPIHadoopFile(
       resolvedNameWithNoCredentials,
-      kClass = classOf[hadoop.io.LongWritable],
+      kClass = classOf[hadoop.io.NullWritable],
       vClass = classOf[hadoop.io.BytesWritable],
-      fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
+      fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
       conf = hadoopConfiguration)
     val p = partitioner.getOrElse(new spark.HashPartitioner(file.partitions.size))
     file
-      .map { case (k, v) => k.get -> RDDUtils.kryoDeserialize[T](v.getBytes) }
+      .map { case (k, v) => RDDUtils.kryoDeserialize[(Long, T)](v.getBytes) }
       .asSortedRDD(p)
   }
 
@@ -195,10 +195,9 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   def saveEntityRDD[T](data: SortedRDD[Long, T]): Unit = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
-    val hadoopData = data.map {
-      case (k, v) =>
-        new hadoop.io.LongWritable(k) ->
-          new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(v))
+    val hadoopData = data.map { x =>
+      hadoop.io.NullWritable.get() ->
+        new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(x))
     }
     if (fs.exists(path)) {
       log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
@@ -207,10 +206,10 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     log.info(s"saving ${data.name} as object file to ${symbolicName}")
     hadoopData.saveAsNewAPIHadoopFile(
       resolvedNameWithNoCredentials,
-      keyClass = classOf[hadoop.io.LongWritable],
+      keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.BytesWritable],
       outputFormatClass =
-        classOf[SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
+        classOf[SequenceFileOutputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
   }
 
