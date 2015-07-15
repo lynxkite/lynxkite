@@ -8,6 +8,9 @@ http://arxiv.org/abs/1310.6753[
   _Romantic Partnerships and the Dispersion of Social Ties:
   A Network Analysis of Relationship Status on Facebook_].
 
+High dispersion in a social graph - when the mutual friends are _not_ well connected - means
+the relationship is likely to be romantic.
+
 ====
 [[name]] Attribute name::
 The new edge attribute will be created under this name.
