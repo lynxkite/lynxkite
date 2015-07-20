@@ -126,8 +126,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       sortKey = "zz")) with SegOp
 
   // Categories
-  abstract class AlgorithmOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Algorithmic operations", "green", icon = "book"))
+  abstract class SpecialtyOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Specialty operations", "green", icon = "book"))
 
   abstract class EdgeAttributesOperation(t: String, c: Context)
     extends Operation(t, c, Category("Edge attribute operations", "blue", sortKey = "Attribute, edge"))
@@ -145,14 +145,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     extends Operation(t, c, Category("Import operations", "yellow", icon = "import", sortKey = "IO, import"))
 
   abstract class MetricsOperation(t: String, c: Context)
-    extends Operation(t, c, Category("Metrics operations", "green", icon = "stats"))
+    extends Operation(t, c, Category("Graph metrics", "green", icon = "stats"))
 
   abstract class PropagationOperation(t: String, c: Context)
     extends Operation(t, c, Category("Propagation operations", "green", icon = "fullscreen"))
 
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
-      "Segmentation operations",
+      "Create segmentation",
       "green",
       icon = "th-large",
       visible = !c.project.isSegmentation))
@@ -1898,7 +1898,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Fingerprinting based on attributes", new AlgorithmOperation(_, _) {
+  register("Fingerprinting based on attributes", new SpecialtyOperation(_, _) {
     def parameters = List(
       Choice("leftName", "First ID attribute", options = vertexAttributes[String]),
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
@@ -1990,7 +1990,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Fingerprinting between project and segmentation", new AlgorithmOperation(_, _) with SegOp {
+  register("Fingerprinting between project and segmentation", new SpecialtyOperation(_, _) with SegOp {
     def segmentationParameters = List(
       NonNegDouble("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
       NonNegInt("mo", "Minimum overlap", default = 1),
@@ -2035,7 +2035,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Viral modeling", new AlgorithmOperation(_, _) with SegOp {
+  register("Viral modeling", new SpecialtyOperation(_, _) with SegOp {
     def segmentationParameters = List(
       Param("prefix", "Generated name prefix", defaultValue = "viral"),
       Choice("target", "Target attribute",
