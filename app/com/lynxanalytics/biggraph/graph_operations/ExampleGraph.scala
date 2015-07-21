@@ -72,14 +72,17 @@ case class ExampleGraph() extends TypedMetaGraphOp[Input, Output] {
         (5L, Edge(Bob, Cat)),
         (6L, Edge(Bob, Fish)),
         (7L, Edge(Bob, Fish)),
-        (8L, Edge(Fish, Bob)),
-        (9L, Edge(Fish, Cat)),
-        (10L, Edge(Fish, Cat)),
-        (11L, Edge(Cat, Fish)),
-        (12L, Edge(Cat, Bob)),
-        (13L, Edge(Cat, Bob)),
-        (14L, Edge(Mouse, Cat)),
-        (15L, Edge(Fish, Wanda))))
+        (8L, Edge(Bob, Fish)),
+        (9L, Edge(Fish, Bob)),
+        (10L, Edge(Fish, Bob)),
+        (11L, Edge(Fish, Cat)),
+        (12L, Edge(Fish, Cat)),
+        (13L, Edge(Fish, Cat)),
+        (14L, Edge(Cat, Fish)),
+        (15L, Edge(Cat, Bob)),
+        (16L, Edge(Cat, Bob)),
+        (17L, Edge(Mouse, Cat)),
+        (18L, Edge(Fish, Wanda))))
         .toSortedRDD(partitioner))
     output(o.name, sc.parallelize(Seq(
       (Adam, "Adam"),
