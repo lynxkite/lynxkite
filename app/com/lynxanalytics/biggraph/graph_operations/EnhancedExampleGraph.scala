@@ -1,4 +1,4 @@
-// A small graph with all sorts of attributes. Used for testing.
+// A somewhat more complex graph with all sorts of attributes. Used for testing.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -37,6 +37,30 @@ object EnhancedExampleGraph extends OpFromJson {
   val Fish = 5L
   val Mouse = 6L
   val Wanda = 7L
+
+  val eAdamEve = 0L
+  val eEveAdam = 1L
+  val eBobAdam = 2L
+  val eBobEve = 3L
+  val eBobBob = 4L
+  val eBobCat = 5L
+  val eBobFish1 = 6L
+  val eBobFish2 = 7L
+  val eBobFish3 = 8L
+  val eFishBob1 = 9L
+  val eFishBob2 = 10L
+  val eFishCat1 = 11L
+  val eFishCat2 = 12L
+  val eFishCat3 = 13L
+  val eCatFish = 14L
+  val eCatBob1 = 15L
+  val eCatBob2 = 16L
+  val eMouseCat = 17L
+  val eFishWanda = 18L
+
+  val eFirstEdge = eAdamEve
+  val eLastEdge = eFishWanda
+
 }
 import EnhancedExampleGraph._
 case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
@@ -64,25 +88,25 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
     output(
       o.edges,
       sc.parallelize(Seq(
-        (0L, Edge(Adam, Eve)),
-        (1L, Edge(Eve, Adam)),
-        (2L, Edge(Bob, Adam)),
-        (3L, Edge(Bob, Eve)),
-        (4L, Edge(Bob, Bob)),
-        (5L, Edge(Bob, Cat)),
-        (6L, Edge(Bob, Fish)),
-        (7L, Edge(Bob, Fish)),
-        (8L, Edge(Bob, Fish)),
-        (9L, Edge(Fish, Bob)),
-        (10L, Edge(Fish, Bob)),
-        (11L, Edge(Fish, Cat)),
-        (12L, Edge(Fish, Cat)),
-        (13L, Edge(Fish, Cat)),
-        (14L, Edge(Cat, Fish)),
-        (15L, Edge(Cat, Bob)),
-        (16L, Edge(Cat, Bob)),
-        (17L, Edge(Mouse, Cat)),
-        (18L, Edge(Fish, Wanda))))
+        (eAdamEve, Edge(Adam, Eve)),
+        (eEveAdam, Edge(Eve, Adam)),
+        (eBobAdam, Edge(Bob, Adam)),
+        (eBobEve, Edge(Bob, Eve)),
+        (eBobBob, Edge(Bob, Bob)),
+        (eBobCat, Edge(Bob, Cat)),
+        (eBobFish1, Edge(Bob, Fish)),
+        (eBobFish2, Edge(Bob, Fish)),
+        (eBobFish3, Edge(Bob, Fish)),
+        (eFishBob1, Edge(Fish, Bob)),
+        (eFishBob2, Edge(Fish, Bob)),
+        (eFishCat1, Edge(Fish, Cat)),
+        (eFishCat2, Edge(Fish, Cat)),
+        (eFishCat3, Edge(Fish, Cat)),
+        (eCatFish, Edge(Cat, Fish)),
+        (eCatBob1, Edge(Cat, Bob)),
+        (eCatBob2, Edge(Cat, Bob)),
+        (eMouseCat, Edge(Mouse, Cat)),
+        (eFishWanda, Edge(Fish, Wanda))))
         .toSortedRDD(partitioner))
     output(o.name, sc.parallelize(Seq(
       (Adam, "Adam"),
@@ -129,23 +153,9 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (1L, "Eve loves Adam"),
       (2L, "Bob envies Adam"),
       (3L, "Bob loves Eve"))).toSortedRDD(partitioner))
-    output(o.weight, sc.parallelize(Seq(
-      (0L, 1.0),
-      (1L, 2.0),
-      (2L, 3.0),
-      (3L, 4.0),
-      (4L, 5.0),
-      (5L, 6.0),
-      (6L, 7.0),
-      (7L, 8.0),
-      (8L, 9.0),
-      (9L, 10.0),
-      (10L, 11.0),
-      (11L, 12.0),
-      (12L, 13.0),
-      (13L, 14.0),
-      (14L, 15.0),
-      (15L, 16.0))).toSortedRDD(partitioner))
+    output(o.weight, sc.parallelize((eFirstEdge to eLastEdge).map { x => (x, x.toDouble) })
+      .toSortedRDD(partitioner))
+
     output(o.greeting, "Hello world!")
   }
 }
