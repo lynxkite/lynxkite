@@ -46,6 +46,10 @@ module.exports = function (grunt) {
         files: ['<%= yeoman.app %>/styles/{,*/}*.css'],
         tasks: ['newer:copy:styles', 'autoprefixer']
       },
+      sass: {
+        files: ['<%= yeoman.app %>/styles/{,*/}*.scss'],
+        tasks: ['newer:copy:styles', 'sass', 'autoprefixer']
+      },
       help: {
         files: ['<%= yeoman.app %>/help/{,*/}*.asciidoc'],
         tasks: ['asciidoctor']
@@ -166,6 +170,19 @@ module.exports = function (grunt) {
         }]
       },
       server: '.tmp'
+    },
+
+    // Compile Sass to CSS.
+    sass: {
+      dist: {
+        files: [{
+          expand: true,
+          cwd: '.tmp/styles/',
+          src: '{,*/}*.scss',
+          dest: '.tmp/styles/',
+          ext: '.css',
+        }]
+      }
     },
 
     // Add vendor prefixed styles
@@ -349,7 +366,7 @@ module.exports = function (grunt) {
         expand: true,
         cwd: '<%= yeoman.app %>/styles',
         dest: '.tmp/styles/',
-        src: '{,*/}*.css'
+        src: '{,*/}*.{,s}css'
       }
     },
 
@@ -422,6 +439,7 @@ module.exports = function (grunt) {
       'clean:server',
       'bowerInstall',
       'concurrent:server',
+      'sass',
       'autoprefixer',
       'asciidoctor',
       'connect:livereload',
@@ -429,15 +447,11 @@ module.exports = function (grunt) {
     ]);
   });
 
-  grunt.registerTask('server', function (target) {
-    grunt.log.warn('The `server` task has been deprecated. Use `grunt serve` to start a server.');
-    grunt.task.run(['serve:' + target]);
-  });
-
   grunt.registerTask('test', [
     'clean:server',
     'bowerInstall',
     'copy:styles',
+    'sass',
     'autoprefixer',
     'asciidoctor',
     'connect:test',
@@ -449,6 +463,7 @@ module.exports = function (grunt) {
     'bowerInstall',
     'useminPrepare',
     'concurrent:dist',
+    'sass',
     'autoprefixer',
     'asciidoctor',
     'concat',
@@ -465,14 +480,13 @@ module.exports = function (grunt) {
     'clean:server',
     'bowerInstall',
     'copy:styles',
+    'sass',
     'autoprefixer',
     'asciidoctor'
   ]);
 
   grunt.registerTask('default', [
     'newer:jshint',
-// Tests disabled. (#188)
-//  'test',
     'build'
   ]);
 };
