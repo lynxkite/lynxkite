@@ -23,6 +23,10 @@ object DynamicValue {
       val doubleValue = value.asInstanceOf[Double]
       if (doubleValue.isNaN) {
         DynamicValue(string = "undefined")
+      } else if (doubleValue.isPosInfinity) {
+        DynamicValue(string = "positive infinity")
+      } else if (doubleValue.isNegInfinity) {
+        DynamicValue(string = "negative infinity")
       } else {
         DynamicValue(double = Some(doubleValue), string = df.format(value))
       }
