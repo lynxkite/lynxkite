@@ -149,10 +149,10 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (Wanda, (3.1412, 101.68653)) // Kuala Lumpur
     )).toSortedRDD(partitioner))
     output(o.comment, sc.parallelize(Seq(
-      (0L, "Adam loves Eve"),
-      (1L, "Eve loves Adam"),
-      (2L, "Bob envies Adam"),
-      (3L, "Bob loves Eve"))).toSortedRDD(partitioner))
+      (eAdamEve, "Adam loves Eve"),
+      (eEveAdam, "Eve loves Adam"),
+      (eBobAdam, "Bob envies Adam"),
+      (eBobEve, "Bob loves Eve"))).toSortedRDD(partitioner))
     output(o.weight, sc.parallelize((eFirstEdge to eLastEdge).map { x => (x, x.toDouble) })
       .toSortedRDD(partitioner))
 
