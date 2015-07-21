@@ -116,7 +116,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // ==========================
     kryo.register(classOf[Array[Array[Long]]]) // #1612
     kryo.register(classOf[com.lynxanalytics.biggraph.spark_util.CountOrdering[_]])
-    kryo.register(classOf[org.apache.spark.mllib.stat.MultivariateOnlineSummarizer])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
