@@ -6,6 +6,7 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Reorganized operation categories. We hope you find them more logical.
  - Richer progress indicator.
 
 ### 1.4.4
