@@ -2,7 +2,9 @@
 
 Calculates the Pearson correlation coefficient of two attributes.
 Only vertices where both attributes are defined are considered.
-
++
+Note that correlation can be undefined if at least one of the
+attributes is a constant.
 ====
 [[attra]] First attribute::
 The correlation of these two attributes will be calculated.
