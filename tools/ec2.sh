@@ -29,14 +29,14 @@ if [ "$#" -ne 2 ]; then
   exit 1
 fi
 
+# ==== Reading config and defining common vars/functions. ===
+source $2
+
 if [ -z "${AWS_ACCESS_KEY_ID:-}" -o -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
   echo "You need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables exported for this script "
   echo "to work."
   exit 1
 fi
-
-# ==== Reading config and defining common vars/functions. ===
-source $2
 
 GetMasterHostName() {
   aws ec2 describe-instances \

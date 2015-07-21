@@ -22,7 +22,8 @@ popd > /dev/null
 
 
 export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
-export KITE_RANDOM_SECRET=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+export KITE_RANDOM_SECRET=$(python -c \
+  'import random, string; print "".join(random.choice(string.letters) for i in range(32))')
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 export KITE_STAGE_DIR=${stage_dir}
 if [ -f ${KITE_SITE_CONFIG} ]; then

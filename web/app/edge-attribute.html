@@ -49,7 +49,7 @@
 <histogram-button ng-show="attr.canBucket" attr="attr" side="side"
   model="histogram" type="edge" tsv="histogramTSV">
 </histogram-button>
-<copy-box ng-show="histogram" description="Histogram as TSV" data="{{histogramTSV}}"></copy-box>
+<copy-box ng-show="histogram" description="Copy&nbsp;histogram to&nbsp;clipboard" data="{{histogramTSV}}"></copy-box>
 <label ng-show="histogram && attr.isNumeric">
   <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
 </label>
