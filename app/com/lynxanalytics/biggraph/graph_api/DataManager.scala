@@ -59,11 +59,14 @@ class DataManager(sc: spark.SparkContext,
   // Things saved during previous runs.
   val savedInstances: Set[UUID] = {
     val instances = (repositoryPath / "operations" / "*" / "_SUCCESS").list
+      .filter(f => !(f.path.toString contains ".deleted"))
     instances.map(_.path.getParent.getName.asUUID).toSet
   }
   val savedEntities: Set[UUID] = {
     val scalars = (repositoryPath / "scalars" / "*" / "_SUCCESS").list
+      .filter(f => !(f.path.toString contains ".deleted"))
     val entities = (repositoryPath / "entities" / "*" / "_SUCCESS").list
+      .filter(f => !(f.path.toString contains ".deleted"))
     (scalars ++ entities).map(_.path.getParent.getName.asUUID).toSet
   }
 

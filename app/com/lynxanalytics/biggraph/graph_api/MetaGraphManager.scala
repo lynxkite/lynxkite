@@ -8,6 +8,7 @@ import java.io.File
 import java.util.UUID
 import play.api.libs.json
 import play.api.libs.json.Json
+import scala.collection.immutable
 import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 
@@ -133,6 +134,10 @@ class MetaGraphManager(val repositoryPath: String) {
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
+
+  def getEntities(): mutable.Map[UUID, MetaGraphEntity] = {
+    entities
+  }
 
   // All tagRoot access must be synchronized on this MetaGraphManager object.
   // This allows users of MetaGraphManager to safely conduct transactions over
