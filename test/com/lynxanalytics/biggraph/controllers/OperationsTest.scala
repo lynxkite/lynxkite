@@ -9,10 +9,11 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving
 
-class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
+trait OperationsTestBase extends TestGraphOp with BigGraphEnvironment {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
-  val ops = new Operations(this)
+  def getOperations(): Operations
+  val ops = getOperations()
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
     val request = CreateProjectRequest(name = name, notes = name, privacy = "public-write")
@@ -28,7 +29,10 @@ class OperationsTest extends FunSuite with TestGraphOp with BigGraphEnvironment 
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
+}
 
+class OperationsTest extends FunSuite with OperationsTestBase {
+  def getOperations(): Operations = new Operations(this)
   test("merge parallel edges by attribute works for String") {
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
