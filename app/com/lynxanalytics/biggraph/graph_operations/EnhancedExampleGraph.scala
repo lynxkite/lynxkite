@@ -58,8 +58,8 @@ object EnhancedExampleGraph extends OpFromJson {
   val eMouseCat = 17L
   val eFishWanda = 18L
 
-  val eFirstEdge = eAdamEve
-  val eLastEdge = eFishWanda
+  val firstEdge = eAdamEve
+  val lastEdge = eFishWanda
 
 }
 import EnhancedExampleGraph._
@@ -152,8 +152,23 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
       (eAdamEve, "Adam loves Eve"),
       (eEveAdam, "Eve loves Adam"),
       (eBobAdam, "Bob envies Adam"),
-      (eBobEve, "Bob loves Eve"))).toSortedRDD(partitioner))
-    output(o.weight, sc.parallelize((eFirstEdge to eLastEdge).map { x => (x, x.toDouble) })
+      (eBobEve, "Bob loves Eve"),
+      (eBobBob, "Bob hates himself"),
+      (eBobCat, "Bob doesn't see the cat"),
+      (eBobFish1, "Bob owns the fish"),
+      (eBobFish2, "Bob feeds the fish"),
+      (eBobFish3, "Bob complains to the fish"),
+      (eFishBob1, "The fish understands Bob"),
+      (eFishBob2, "The fish helps Bob"),
+      (eFishCat1, "The fish summons the cat"),
+      (eFishCat2, "The fish mesmerizes the cat"),
+      (eFishCat3, "The fish controls the cat"),
+      (eCatFish, "The cat obeys the fish"),
+      (eCatBob1, "The cat distracts Bob's attention"),
+      (eCatBob2, "The cat steals Bob's phone"),
+      (eMouseCat, "The mouse sees the cat"),
+      (eFishWanda, "The fish calls Wanda"))).toSortedRDD(partitioner))
+    output(o.weight, sc.parallelize((firstEdge to lastEdge).map { x => (x, x.toDouble) })
       .toSortedRDD(partitioner))
 
     output(o.greeting, "Hello world!")
