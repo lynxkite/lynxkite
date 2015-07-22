@@ -1,13 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import org.scalatest.FunSuite
-import com.lynxanalytics.biggraph.graph_api._
-import org.scalatest.FunSuite
-
-import com.lynxanalytics.biggraph.BigGraphEnvironment
-import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class MergeParallelEdgesOperationTest extends OperationsTestBase {
   test("merge parallel edges by attribute works for String") {
