@@ -18,11 +18,11 @@ object OperationParams {
   case class Param(
       id: String,
       title: String,
-      defaultValue: String = "") extends OperationParameterMeta {
+      defaultValue: String = "",
+      mandatory: Boolean = true) extends OperationParameterMeta {
     val kind = "default"
     val options = List()
     val multipleChoice = false
-    val mandatory = true
     def validate(value: String): Unit = {}
   }
   case class Choice(
@@ -2184,9 +2184,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Filter by attributes", new StructureOperation(_, _) {
     def parameters =
-      vertexAttributes.toList.map { attr => Param(s"filterva-${attr.id}", attr.id) } ++
-        project.segmentations.toList.map { seg => Param(s"filterva-${seg.equivalentUIAttribute.title}", seg.name) } ++
-        edgeAttributes.toList.map { attr => Param(s"filterea-${attr.id}", attr.id) }
+      vertexAttributes.toList.map {
+        attr => Param(s"filterva-${attr.id}", attr.id, mandatory = false)
+      } ++
+        project.segmentations.toList.map {
+          seg => Param(s"filterva-${seg.equivalentUIAttribute.title}", seg.name, mandatory = false)
+        } ++
+        edgeAttributes.toList.map {
+          attr => Param(s"filterea-${attr.id}", attr.id, mandatory = false)
+        }
     def enabled =
       FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes") ||
         FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")

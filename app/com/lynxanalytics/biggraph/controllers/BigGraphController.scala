@@ -249,7 +249,6 @@ class BigGraphController(val env: BigGraphEnvironment) {
     // Historical bridge.
     val c = Operation.Context(user, Project.fromPath(request.project))
     val op = ops.opById(c, "Filter-by-attributes")
-    val emptyParams = op.parameters.map(_.id -> "")
     val vertexParams = request.vertexFilters.map {
       f => s"filterva-${f.attributeName}" -> f.valueSpec
     }
@@ -260,7 +259,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       project = request.project,
       op = FEOperationSpec(
         id = "Filter-by-attributes",
-        parameters = (emptyParams ++ vertexParams ++ edgeParams).toMap)))
+        parameters = (vertexParams ++ edgeParams).toMap)))
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
