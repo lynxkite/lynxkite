@@ -219,6 +219,10 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
+  implicit val rDeletionRequest = json.Json.reads[MarkDeletedRequest]
+  implicit val wDeletionMethod = json.Json.writes[DataFilesDesc]
+  implicit val wDeletableFilesStatus = json.Json.writes[DataFilesStatus]
+
   // File upload.
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
@@ -333,6 +337,10 @@ object ProductionJsonServer extends JsonServer {
 
   def getUsers = jsonGet(UserProvider.getUsers)
   def createUser = jsonPost(UserProvider.createUser, logRequest = false)
+
+  val cleanerController = new CleanerController(BigGraphProductionEnvironment)
+  def getCleaner = jsonGet(cleanerController.getCleaner)
+  def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
 
   def getGlobalSettings = jsonPublicGet(GlobalSettings(hasAuth = productionMode))
 }
