@@ -1,13 +1,12 @@
 package com.lynxanalytics.biggraph.controllers
-import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
 trait OperationsTestBase extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
