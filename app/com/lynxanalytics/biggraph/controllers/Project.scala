@@ -13,9 +13,202 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving.User
+import java.util.UUID
 import play.api.libs.json.Json
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
+
+case class ProjectState(
+  vertexSetGUID: UUID,
+  vertexAttributeGUIDs: Map[String, UUID],
+  edgeBundleGUID: UUID,
+  edgeAttributeGUIDs: Map[String, UUID],
+  scalarGUIDs: Map[String, UUID],
+  segmentations: Map[String, SegmentationState])
+
+case class SegmentationState(
+  project: ProjectState,
+  belongsToGUID: UUID)
+
+object ProjectState {
+  implicit class ProjectStateUtils(state: ProjectState)(implicit manager: MetaGraphManager) {
+    def vertexSet: VertexSet =
+      Option(state.vertexSetGUID).map(manager.vertexSet(_)).getOrElse(null)
+    def vertexAttributes: Map[String, Attribute[_]] =
+      state.vertexAttributeGUIDs.mapValues(manager.attribute(_))
+    def edgeBundle: EdgeBundle =
+      Option(state.edgeBundleGUID).map(manager.edgeBundle(_)).getOrElse(null)
+    def edgeAttributes: Map[String, Attribute[_]] =
+      state.edgeAttributeGUIDs.mapValues(manager.attribute(_))
+    def scalars: Map[String, Scalar[_]] =
+      state.scalarGUIDs.mapValues(manager.scalar(_))
+  }
+}
+object SegmentationState {
+  implicit class SegmentationStateUtils(
+      state: SegmentationState)(
+          implicit manager: MetaGraphManager) extends ProjectState.ProjectStateUtils(state.project) {
+    def belongsTo: EdgeBundle =
+      Option(state.belongsToGUID).map(manager.edgeBundle(_)).getOrElse(null)
+  }
+}
+
+abstract class StateMapHolder[T <: MetaGraphEntity] extends Map[String, T] {
+  protected def getMap: Map[String, T]
+  protected def updateMap(newMap: Map[String, UUID]): Unit
+  def validate(name: String, entity: T): Unit
+
+  def updateEntityMap(newMap: Map[String, T]): Unit =
+    updateMap(newMap.mapValues(_.gUID))
+  // Skip name validation. Special-name entities can be set through this method.
+  def set(name: String, entity: T) = {
+    if (entity == null) {
+      updateEntityMap(getMap - name)
+    } else {
+      validate(name, entity)
+      updateEntityMap(getMap + (name -> entity))
+    }
+  }
+
+  def update(name: String, entity: T) = {
+    Project.validateName(name)
+    set(name, entity)
+  }
+
+  // Implementing the map interface
+  def get(key: String) = getMap.get(key)
+  def iterator = getMap.iterator
+  def +[T1 >: T](kv: (String, T1)) = getMap + kv
+  def -(key: String) = getMap - key
+}
+
+abstract class MutableProjectState {
+  implicit val manager: MetaGraphManager
+  def state: ProjectState
+  def state_=(newState: ProjectState): Unit
+  def parentState: MutableProjectState
+
+  def vertexSet = state.vertexSet
+  def vertexSet_=(e: VertexSet): Unit = {
+    updateVertexSet(e, killSegmentations = true)
+  }
+  protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
+    if (e != vertexSet) {
+      edgeBundle = null
+      vertexAttributes = Map()
+      if (killSegmentations) state = state.copy(segmentations = Map())
+      if (e != null) {
+        state = state.copy(vertexSetGUID = e.gUID)
+        scalars("vertex_count") = graph_operations.Count.run(e)
+      } else {
+        state = state.copy(vertexSetGUID = null)
+        scalars("vertex_count") = null
+      }
+    }
+  }
+  def setVertexSet(e: VertexSet, idAttr: String): Unit = {
+    vertexSet = e
+    vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e)
+  }
+
+  def edgeBundle = state.edgeBundle
+  def edgeBundle_=(e: EdgeBundle) = {
+    if (e != edgeBundle) {
+      assert(e == null || vertexSet != null, s"No vertex set")
+      assert(e == null || e.srcVertexSet == vertexSet, s"Edge bundle does not match vertex set")
+      assert(e == null || e.dstVertexSet == vertexSet, s"Edge bundle does not match vertex set")
+      edgeAttributes = Map()
+      state = state.copy(edgeBundleGUID = e.gUID)
+      scalars("edge_count") = graph_operations.Count.run(e)
+    } else {
+      state = state.copy(edgeBundleGUID = null)
+      scalars("edge_count") = null
+    }
+  }
+
+  def vertexAttributes =
+    new StateMapHolder[Attribute[_]] {
+      protected def getMap = state.vertexAttributes
+      protected def updateMap(newMap: Map[String, UUID]) =
+        state = state.copy(vertexAttributeGUIDs = newMap)
+      def validate(name: String, attr: Attribute[_]): Unit = {
+        assert(
+          attr.vertexSet == state.vertexSet,
+          s"Vertex attribute $name does not match vertex set")
+      }
+    }
+  def vertexAttributes_=(attrs: Map[String, Attribute[_]]) =
+    vertexAttributes.updateEntityMap(attrs)
+
+  def edgeAttributes =
+    new StateMapHolder[Attribute[_]] {
+      protected def getMap = state.edgeAttributes
+      protected def updateMap(newMap: Map[String, UUID]) =
+        state = state.copy(edgeAttributeGUIDs = newMap)
+      def validate(name: String, attr: Attribute[_]): Unit = {
+        assert(
+          attr.vertexSet == state.edgeBundle.idSet,
+          s"Edge attribute $name does not match edge bundle")
+      }
+    }
+  def edgeAttributes_=(attrs: Map[String, Attribute[_]]) =
+    edgeAttributes.updateEntityMap(attrs)
+
+  def scalars =
+    new StateMapHolder[Scalar[_]] {
+      protected def getMap = state.scalars
+      protected def updateMap(newMap: Map[String, UUID]) =
+        state = state.copy(scalarGUIDs = newMap)
+      def validate(name: String, scalar: Scalar[_]): Unit = {}
+    }
+  def scalars_=(newScalars: Map[String, Scalar[_]]) =
+    scalars.updateEntityMap(newScalars)
+
+  def segmentations = segmentationNames.map(segmentation(_))
+  def segmentation(name: String) = new MutableSegmentationState(this, name)
+  def segmentationNames = state.segmentations.keys
+}
+
+class MutableTopLevelState(
+    initialState: ProjectState)(
+        implicit val manager: MetaGraphManager) extends MutableProjectState {
+  var state = initialState
+  def parentState = null
+}
+
+class MutableSegmentationState(
+    val parentState: MutableProjectState,
+    segmentationName: String) extends MutableProjectState {
+
+  assert(
+    parentState.state.segmentations.contains(segmentationName),
+    s"No such segmentation: $segmentationName")
+
+  implicit val manager = parentState.manager
+  def segmentationState = parentState.state.segmentations(segmentationName)
+  def segmentationState_=(newState: SegmentationState): Unit = {
+    val pState = parentState.state
+    parentState.state = pState.copy(
+      segmentations = pState.segmentations + (segmentationName -> newState))
+  }
+  def state = segmentationState.project
+  def state_=(newState: ProjectState): Unit = {
+    segmentationState = segmentationState.copy(project = newState)
+  }
+
+  def belongsTo = segmentationState.belongsTo
+  def belongsTo_=(e: EdgeBundle): Unit = {
+    segmentationState = segmentationState.copy(belongsToGUID = e.gUID)
+  }
+
+  override protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
+    if (e != vertexSet) {
+      super.updateVertexSet(e, killSegmentations)
+      val op = graph_operations.EmptyEdgeBundle()
+      belongsTo = op(op.src, parentState.vertexSet)(op.dst, e).result.eb
+    }
+  }
+}
 
 class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   val projectName = projectPath.toString
