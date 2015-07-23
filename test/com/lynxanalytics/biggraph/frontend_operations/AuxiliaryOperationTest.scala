@@ -1,11 +1,11 @@
 // These tests check some lower level infrastructure beneath
 // various operations. So, there is no single operation this class
 // is revolving around.
-package com.lynxanalytics.biggraph.controllers
+package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.controllers._
 
-class AuxilaryOperationTest extends OperationsTestBase {
+class AuxiliaryOperationTest extends OperationsTestBase {
 
   test("Restore checkpoint after failing operation") {
     class Bug extends Exception("simulated bug")
