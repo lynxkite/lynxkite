@@ -1,4 +1,4 @@
-package com.lynxanalytics.biggraph.controllers
+package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
