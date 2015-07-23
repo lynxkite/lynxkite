@@ -13,7 +13,11 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving.User
+
+import java.io.File
 import java.util.UUID
+import org.apache.commons.io.FileUtils
+import play.api.libs.json
 import play.api.libs.json.Json
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
@@ -24,32 +28,196 @@ case class ProjectState(
   edgeBundleGUID: UUID,
   edgeAttributeGUIDs: Map[String, UUID],
   scalarGUIDs: Map[String, UUID],
-  segmentations: Map[String, SegmentationState])
+  segmentations: Map[String, SegmentationState],
+  notes: String,
+  lastOperationDesc: String,
+  lastOperationRequest: ProjectOperationRequest)
 
 case class SegmentationState(
   project: ProjectState,
   belongsToGUID: UUID)
 
-object ProjectState {
-  implicit class ProjectStateUtils(state: ProjectState)(implicit manager: MetaGraphManager) {
-    def vertexSet: VertexSet =
-      Option(state.vertexSetGUID).map(manager.vertexSet(_)).getOrElse(null)
-    def vertexAttributes: Map[String, Attribute[_]] =
-      state.vertexAttributeGUIDs.mapValues(manager.attribute(_))
-    def edgeBundle: EdgeBundle =
-      Option(state.edgeBundleGUID).map(manager.edgeBundle(_)).getOrElse(null)
-    def edgeAttributes: Map[String, Attribute[_]] =
-      state.edgeAttributeGUIDs.mapValues(manager.attribute(_))
-    def scalars: Map[String, Scalar[_]] =
-      state.scalarGUIDs.mapValues(manager.scalar(_))
+object ProjectViewer {
+  def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+    val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
+    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
+      .exists(e.typeTag.tpe <:< _)
+    val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
+    FEAttribute(
+      e.gUID.toString,
+      name,
+      e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      canBucket,
+      canFilter,
+      isNumeric,
+      isInternal)
   }
 }
-object SegmentationState {
-  implicit class SegmentationStateUtils(
-      state: SegmentationState)(
-          implicit manager: MetaGraphManager) extends ProjectState.ProjectStateUtils(state.project) {
-    def belongsTo: EdgeBundle =
-      Option(state.belongsToGUID).map(manager.edgeBundle(_)).getOrElse(null)
+sealed trait ProjectViewer {
+  val state: ProjectState
+  implicit val manager: MetaGraphManager
+
+  def vertexSet: VertexSet =
+    Option(state.vertexSetGUID).map(manager.vertexSet(_)).getOrElse(null)
+  def vertexAttributes: Map[String, Attribute[_]] =
+    state.vertexAttributeGUIDs.mapValues(manager.attribute(_))
+  def edgeBundle: EdgeBundle =
+    Option(state.edgeBundleGUID).map(manager.edgeBundle(_)).getOrElse(null)
+  def edgeAttributes: Map[String, Attribute[_]] =
+    state.edgeAttributeGUIDs.mapValues(manager.attribute(_))
+  def scalars: Map[String, Scalar[_]] =
+    state.scalarGUIDs.mapValues(manager.scalar(_))
+
+  def segmentationViewers: Map[String, SegmentationViewer] =
+    state.segmentations
+      .map { case (name, state) => name -> new SegmentationViewer(state, name, this) }
+
+  def viewerFor(path: Seq[String]): ProjectViewer =
+    if (path.isEmpty) this
+    else segmentationViewers(path.head).viewerFor(path.tail)
+
+  def isSegmentation = isInstanceOf[SegmentationViewer]
+
+  def asSegmentation = asInstanceOf[SegmentationViewer]
+
+  // Methods for convertion to FE objects.
+  private def feScalar(name: String): Option[FEAttribute] = {
+    if (scalars.contains(name)) {
+      Some(ProjectViewer.feAttr(scalars(name), name))
+    } else {
+      None
+    }
+  }
+
+  def toListElementFE(projectName: String): FEProjectListElement = {
+    FEProjectListElement(
+      projectName,
+      state.notes,
+      feScalar("vertex_count"),
+      feScalar("edge_count"))
+  }
+
+  def toFE(projectName: String): FEProject = {
+    Try(unsafeToFE(projectName)) match {
+      case Success(fe) => fe
+      case Failure(ex) => FEProject(
+        name = projectName,
+        error = ex.getMessage
+      )
+    }
+  }
+
+  protected def getFEMembers: Option[FEAttribute] = None
+
+  // May raise an exception.
+  private def unsafeToFE(projectName: String): FEProject = {
+    val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
+    val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
+    def feList(things: Iterable[(String, TypedEntity[_])]) = {
+      things.map { case (name, e) => ProjectViewer.feAttr(e, name) }.toList
+    }
+
+    FEProject(
+      name = projectName,
+      undoOp = state.lastOperationDesc,
+      redoOp = "", // nextOperation, //!!!
+      readACL = "", // !!!
+      writeACL = "", // writeACL,
+      vertexSet = vs,
+      edgeBundle = eb,
+      notes = state.notes,
+      scalars = feList(scalars),
+      vertexAttributes = feList(vertexAttributes) ++ getFEMembers,
+      edgeAttributes = feList(edgeAttributes),
+      segmentations = segmentationViewers
+        .map { case (name, segm) => segm.toFESegmentation(projectName) }
+        .toList)
+  }
+}
+
+class RootProjectViewer(val state: ProjectState)(implicit val manager: MetaGraphManager)
+  extends ProjectViewer
+
+class SegmentationViewer(
+    segmentationState: SegmentationState, segmentationName: String, parent: ProjectViewer)(
+        implicit val manager: MetaGraphManager) extends ProjectViewer {
+
+  val state = segmentationState.project
+
+  def belongsTo: EdgeBundle =
+    Option(segmentationState.belongsToGUID).map(manager.edgeBundle(_)).getOrElse(null)
+
+  def belongsToAttribute: Attribute[Vector[ID]] = {
+    val segmentationIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
+    val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
+    val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
+    aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
+  }
+
+  def membersAttribute: Attribute[Vector[ID]] = {
+    val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
+    val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
+    aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr
+  }
+
+  override protected def getFEMembers: Option[FEAttribute] =
+    Some(ProjectViewer.feAttr(membersAttribute, "#members", isInternal = true))
+
+  def equivalentUIAttribute = {
+    val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
+    UIValue(id = bta, title = s"segmentation[$segmentationName]")
+  }
+
+  def toFESegmentation(parentName: String): FESegmentation = {
+    val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
+    FESegmentation(
+      segmentationName,
+      parentName,
+      bt,
+      equivalentUIAttribute)
+  }
+
+}
+
+object ProjectStateRepository {
+  implicit val fFEOperationSpec = Json.format[FEOperationSpec]
+  implicit val fProjectOperationRequest = Json.format[ProjectOperationRequest]
+
+  // We need to define this manually because of the cyclic reference.
+  implicit val fSegmentationState = new json.Format[SegmentationState] {
+    def reads(j: json.JsValue): json.JsResult[SegmentationState] = {
+      json.JsSuccess(SegmentationState(
+        jsonToProjectState(j \ "project"),
+        (j \ "belongsToGUID").as[UUID]))
+    }
+    def writes(o: SegmentationState): json.JsValue =
+      Json.obj(
+        "project" -> projectStateToJSon(o.project),
+        "belongsToGUID" -> o.belongsToGUID)
+  }
+  implicit val fProjectState = Json.format[ProjectState]
+  def projectStateToJSon(state: ProjectState): json.JsValue = Json.toJson(state)
+  def jsonToProjectState(j: json.JsValue): ProjectState = j.as[ProjectState]
+}
+
+class ProjectStateRepository(val baseDir: String) {
+  val baseDirFile = new File(baseDir)
+  baseDirFile.mkdirs
+
+  def newCheckpoint(state: ProjectState): String = {
+    val checkpoint = Timestamp.toString
+    val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
+    val finalFile = new File(baseDirFile, s"save-$checkpoint")
+    FileUtils.writeStringToFile(
+      dumpFile,
+      Json.prettyPrint(ProjectStateRepository.projectStateToJSon(state)), "utf8")
+    dumpFile.renameTo(finalFile)
+    checkpoint
+  }
+
+  def readCheckpoint(checkpoint: String): ProjectState = {
+    ProjectStateRepository.jsonToProjectState(
+      Json.parse(FileUtils.readFileToString(new File(baseDirFile, checkpoint), "utf8")))
   }
 }
 
@@ -71,7 +239,7 @@ abstract class StateMapHolder[T <: MetaGraphEntity] extends Map[String, T] {
   }
 
   def update(name: String, entity: T) = {
-    Project.validateName(name)
+    ProjectFrame.validateName(name)
     set(name, entity)
   }
 
@@ -88,7 +256,9 @@ abstract class MutableProjectState {
   def state_=(newState: ProjectState): Unit
   def parentState: MutableProjectState
 
-  def vertexSet = state.vertexSet
+  def viewer: ProjectViewer
+
+  def vertexSet = viewer.vertexSet
   def vertexSet_=(e: VertexSet): Unit = {
     updateVertexSet(e, killSegmentations = true)
   }
@@ -111,7 +281,7 @@ abstract class MutableProjectState {
     vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e)
   }
 
-  def edgeBundle = state.edgeBundle
+  def edgeBundle = viewer.edgeBundle
   def edgeBundle_=(e: EdgeBundle) = {
     if (e != edgeBundle) {
       assert(e == null || vertexSet != null, s"No vertex set")
@@ -128,12 +298,12 @@ abstract class MutableProjectState {
 
   def vertexAttributes =
     new StateMapHolder[Attribute[_]] {
-      protected def getMap = state.vertexAttributes
+      protected def getMap = viewer.vertexAttributes
       protected def updateMap(newMap: Map[String, UUID]) =
         state = state.copy(vertexAttributeGUIDs = newMap)
       def validate(name: String, attr: Attribute[_]): Unit = {
         assert(
-          attr.vertexSet == state.vertexSet,
+          attr.vertexSet == viewer.vertexSet,
           s"Vertex attribute $name does not match vertex set")
       }
     }
@@ -142,12 +312,12 @@ abstract class MutableProjectState {
 
   def edgeAttributes =
     new StateMapHolder[Attribute[_]] {
-      protected def getMap = state.edgeAttributes
+      protected def getMap = viewer.edgeAttributes
       protected def updateMap(newMap: Map[String, UUID]) =
         state = state.copy(edgeAttributeGUIDs = newMap)
       def validate(name: String, attr: Attribute[_]): Unit = {
         assert(
-          attr.vertexSet == state.edgeBundle.idSet,
+          attr.vertexSet == viewer.edgeBundle.idSet,
           s"Edge attribute $name does not match edge bundle")
       }
     }
@@ -156,7 +326,7 @@ abstract class MutableProjectState {
 
   def scalars =
     new StateMapHolder[Scalar[_]] {
-      protected def getMap = state.scalars
+      protected def getMap = viewer.scalars
       protected def updateMap(newMap: Map[String, UUID]) =
         state = state.copy(scalarGUIDs = newMap)
       def validate(name: String, scalar: Scalar[_]): Unit = {}
@@ -164,16 +334,105 @@ abstract class MutableProjectState {
   def scalars_=(newScalars: Map[String, Scalar[_]]) =
     scalars.updateEntityMap(newScalars)
 
+  // !!! Not sure this makes sense vs just a map.
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new MutableSegmentationState(this, name)
-  def segmentationNames = state.segmentations.keys
+  def segmentationNames = viewer.segmentationViewers.keys
+
+  def editorFor(path: Seq[String]): MutableProjectState =
+    if (path.isEmpty) this
+    else segmentation(path.head).editorFor(path.tail)
+
+  def isSegmentation = isInstanceOf[MutableSegmentationState]
+  def asSegmentation = asInstanceOf[MutableSegmentationState]
+
+  def notes = state.notes
+  def notes_=(n: String) = state = state.copy(notes = n)
+
+  def lastOperationDesc = state.lastOperationDesc
+  def lastOperationDesc_=(n: String) =
+    state = state.copy(lastOperationDesc = n)
+
+  def lastOperationRequest = state.lastOperationRequest
+  def lastOperationRequest_=(n: ProjectOperationRequest) =
+    state = state.copy(lastOperationRequest = n)
+
+  def pullBackEdges(injection: EdgeBundle): Unit = {
+    val op = graph_operations.PulledOverEdges()
+    val newEB = op(op.originalEB, edgeBundle)(op.injection, injection).result.pulledEB
+    pullBackEdges(edgeBundle, edgeAttributes.toIndexedSeq, newEB, injection)
+  }
+  def pullBackEdges(
+    origEdgeBundle: EdgeBundle,
+    origEAttrs: Seq[(String, Attribute[_])],
+    newEdgeBundle: EdgeBundle,
+    pullBundle: EdgeBundle): Unit = {
+
+    assert(pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
+      s"Not a partial function: $pullBundle")
+    assert(pullBundle.srcVertexSet.gUID == newEdgeBundle.idSet.gUID,
+      s"Wrong source: $pullBundle")
+    assert(pullBundle.dstVertexSet.gUID == origEdgeBundle.idSet.gUID,
+      s"Wrong destination: $pullBundle")
+
+    edgeBundle = newEdgeBundle
+
+    for ((name, attr) <- origEAttrs) {
+      edgeAttributes(name) =
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
+    }
+  }
+
+  def pullBack(pullBundle: EdgeBundle): Unit = {
+    assert(pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
+      s"Not a partial function: $pullBundle")
+    assert(pullBundle.dstVertexSet.gUID == vertexSet.gUID,
+      s"Wrong destination: $pullBundle")
+    val origVS = vertexSet
+    val origVAttrs = vertexAttributes.toIndexedSeq
+    val origEB = edgeBundle
+    val origEAttrs = edgeAttributes.toIndexedSeq
+    val origBelongsTo: Option[EdgeBundle] =
+      if (isSegmentation) Some(asSegmentation.belongsTo) else None
+
+    updateVertexSet(pullBundle.srcVertexSet, killSegmentations = false)
+    for ((name, attr) <- origVAttrs) {
+      vertexAttributes(name) =
+        graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
+    }
+
+    if (origEB != null) {
+      val iop = graph_operations.InducedEdgeBundle()
+      val induction = iop(
+        iop.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
+          iop.dstMapping, graph_operations.ReverseEdges.run(pullBundle))(
+            iop.edges, origEB).result
+      pullBackEdges(origEB, origEAttrs, induction.induced, induction.embedding)
+    }
+
+    for (seg <- segmentations) {
+      val op = graph_operations.InducedEdgeBundle(induceDst = false)
+      seg.belongsTo = op(
+        op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
+          op.edges, seg.belongsTo).result.induced
+    }
+
+    if (isSegmentation) {
+      val seg = asSegmentation
+      val op = graph_operations.InducedEdgeBundle(induceSrc = false)
+      seg.belongsTo = op(
+        op.dstMapping, graph_operations.ReverseEdges.run(pullBundle))(
+          op.edges, origBelongsTo.get).result.induced
+    }
+  }
 }
 
-class MutableTopLevelState(
+class MutableRootState(
     initialState: ProjectState)(
         implicit val manager: MetaGraphManager) extends MutableProjectState {
   var state = initialState
   def parentState = null
+  def viewer = new RootProjectViewer(state)
 }
 
 class MutableSegmentationState(
@@ -196,7 +455,9 @@ class MutableSegmentationState(
     segmentationState = segmentationState.copy(project = newState)
   }
 
-  def belongsTo = segmentationState.belongsTo
+  def viewer = new SegmentationViewer(segmentationState, segmentationName, parentState.viewer)
+
+  def belongsTo = viewer.belongsTo
   def belongsTo_=(e: EdgeBundle): Unit = {
     segmentationState = segmentationState.copy(belongsToGUID = e.gUID)
   }
@@ -209,6 +470,118 @@ class MutableSegmentationState(
     }
   }
 }
+
+class ProjectFrame(val projectPath: SymbolPath)(
+    implicit manager: MetaGraphManager) {
+  val projectName = projectPath.toString
+  override def toString = projectName
+  override def equals(p: Any) =
+    p.isInstanceOf[ProjectFrame] && projectName == p.asInstanceOf[ProjectFrame].projectName
+  override def hashCode = projectName.hashCode
+
+  assert(projectName.nonEmpty, "Invalid project name: <empty string>")
+  assert(!projectName.contains(ProjectFrame.separator), s"Invalid project name: $projectName")
+  val rootDir: SymbolPath = SymbolPath("projects") / projectPath
+
+  private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
+    case "" => Seq()
+    case x => x.split(java.util.regex.Pattern.quote(ProjectFrame.separator), -1)
+  }
+
+  private def checkpoints_=(cs: Seq[String]): Unit =
+    set(rootDir / "checkpoints", cs.mkString(ProjectFrame.separator))
+  private def checkpointIndex = get(rootDir / "checkpointIndex") match {
+    case "" => 0
+    case x => x.toInt
+  }
+  private def checkpointIndex_=(x: Int): Unit =
+    set(rootDir / "checkpointIndex", x.toString)
+  def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
+
+  def undo(): Unit = manager.synchronized {
+    assert(checkpointIndex > 0, s"Already at checkpoint $checkpointIndex.")
+    checkpointIndex -= 1
+  }
+  def redo(): Unit = manager.synchronized {
+    assert(checkpointIndex < checkpoints.size - 1,
+      s"Already at checkpoint $checkpointIndex of ${checkpoints.size}.")
+    checkpointIndex += 1
+  }
+
+  def dodo(newState: ProjectState): Unit = manager.synchronized {
+    val nextIndex = checkpointCount
+    val checkpoint = manager.stateRepo.newCheckpoint(newState)
+    checkpoints = checkpoints.take(nextIndex) :+ checkpoint
+    checkpointIndex = nextIndex
+  }
+
+  def currentState = manager.stateRepo.readCheckpoint(checkpoints(checkpointIndex))
+
+  def viewerFor(path: Seq[String]) = new RootProjectViewer(currentState).viewerFor(path)
+
+  def editorFor(path: Seq[String]) = new MutableRootState(currentState).editorFor(path)
+
+  private def existing(tag: SymbolPath): Option[SymbolPath] =
+    if (manager.tagExists(tag)) Some(tag) else None
+  private def set(tag: SymbolPath, content: String): Unit = manager.setTag(tag, content)
+  private def get(tag: SymbolPath): String = manager.synchronized {
+    existing(tag).map(manager.getTag(_)).getOrElse("")
+  }
+
+  def readACL: String = get(rootDir / "readACL")
+  def readACL_=(x: String): Unit = set(rootDir / "readACL", x)
+
+  def writeACL: String = get(rootDir / "writeACL")
+  def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
+
+  def assertReadAllowedFrom(user: User): Unit = {
+    assert(readAllowedFrom(user), s"User $user does not have read access to project $projectName.")
+  }
+  def assertWriteAllowedFrom(user: User): Unit = {
+    assert(writeAllowedFrom(user), s"User $user does not have write access to project $projectName.")
+  }
+  def readAllowedFrom(user: User): Boolean = {
+    // Write access also implies read access.
+    user.isAdmin || writeAllowedFrom(user) || aclContains(readACL, user)
+  }
+  def writeAllowedFrom(user: User): Boolean = {
+    user.isAdmin || aclContains(writeACL, user)
+  }
+
+  def aclContains(acl: String, user: User): Boolean = {
+    // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
+    // We translate this to a regex for checking.
+    val regex = acl.replace(" ", "").replace(".", "\\.").replace(",", "|").replace("*", ".*")
+    user.email.matches(regex)
+  }
+}
+
+class SubProject(frame: ProjectFrame, path: Seq[String]) {
+  def viewer = frame.viewerFor(path)
+  def editor = frame.editorFor(path)
+}
+
+object ProjectFrame {
+  val separator = "|"
+
+  def fromName(rootProjectName: String)(implicit metaManager: MetaGraphManager): ProjectFrame = {
+    validateName(rootProjectName)
+    new ProjectFrame(SymbolPath(rootProjectName))
+  }
+  def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
+    val nameElements = projectName.split(separator)
+    new SubProject(fromName(nameElements.head), nameElements.tail)
+  }
+
+  def validateName(name: String, what: String = "Name"): Unit = {
+    assert(name.nonEmpty, s"$what cannot be empty.")
+    assert(!name.startsWith("!"), s"$what cannot start with '!'.")
+    assert(!name.contains(separator), s"$what cannot contain '$separator'.")
+    assert(!name.contains("/"), s"$what cannot contain '/'.")
+  }
+}
+
+/////////!!!!!!!!!!!!!!!!!!!!!!1
 
 class Project(val projectPath: SymbolPath)(implicit manager: MetaGraphManager) {
   val projectName = projectPath.toString
@@ -817,3 +1190,4 @@ case class Segmentation(parentPath: SymbolPath, name: String)(implicit manager: 
     manager.rmTag(path)
   }
 }
+
