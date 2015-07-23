@@ -19,6 +19,7 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
+import scala.collection
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
@@ -41,22 +42,6 @@ case class SegmentationState(
   project: ProjectState,
   belongsToGUID: UUID)
 
-object ProjectViewer {
-  def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
-    val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
-    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
-      .exists(e.typeTag.tpe <:< _)
-    val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
-    FEAttribute(
-      e.gUID.toString,
-      name,
-      e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
-      canBucket,
-      canFilter,
-      isNumeric,
-      isInternal)
-  }
-}
 sealed trait ProjectViewer {
   val state: ProjectState
   implicit val manager: MetaGraphManager
@@ -74,7 +59,7 @@ sealed trait ProjectViewer {
 
   def segmentationViewers: Map[String, SegmentationViewer] =
     state.segmentations
-      .map { case (name, state) => name -> new SegmentationViewer(state, name, this) }
+      .map { case (name, state) => name -> new SegmentationViewer(this, name) }
 
   def offspringViewer(path: Seq[String]): ProjectViewer =
     if (path.isEmpty) this
@@ -141,16 +126,33 @@ sealed trait ProjectViewer {
       writeACL = "")
   }
 }
+object ProjectViewer {
+  def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+    val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
+    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
+      .exists(e.typeTag.tpe <:< _)
+    val isNumeric = Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
+    FEAttribute(
+      e.gUID.toString,
+      name,
+      e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      canBucket,
+      canFilter,
+      isNumeric,
+      isInternal)
+  }
+}
 
 class RootProjectViewer(val state: ProjectState)(implicit val manager: MetaGraphManager)
     extends ProjectViewer {
   def editor: RootProjectEditor = new RootProjectEditor(state)
 }
 
-class SegmentationViewer(
-    segmentationState: SegmentationState, segmentationName: String, parent: ProjectViewer)(
-        implicit val manager: MetaGraphManager) extends ProjectViewer {
+class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String)
+    extends ProjectViewer {
 
+  implicit val manager = parent.manager
+  val segmentationState: SegmentationState = parent.state.segmentations(segmentationName)
   val state = segmentationState.project
 
   def belongsTo: EdgeBundle =
@@ -231,7 +233,10 @@ class ProjectStateRepository(val baseDir: String) {
   }
 }
 
-abstract class StateMapHolder[T <: MetaGraphEntity] extends Map[String, T] {
+// This class is used to provide a convenient interface for entity map-like project data as
+// scalars and attributes. The instantiator needs to know how to do the actual updates on the
+// underlying state.
+abstract class StateMapHolder[T <: MetaGraphEntity] extends collection.Map[String, T] {
   protected def getMap: Map[String, T]
   protected def updateMap(newMap: Map[String, UUID]): Unit
   def validate(name: String, entity: T): Unit
@@ -264,7 +269,6 @@ sealed trait ProjectEditor {
   implicit val manager: MetaGraphManager
   def state: ProjectState
   def state_=(newState: ProjectState): Unit
-  def parentState: ProjectEditor
 
   def viewer: ProjectViewer
 
@@ -437,23 +441,18 @@ class RootProjectEditor(
     initialState: ProjectState)(
         implicit val manager: MetaGraphManager) extends ProjectEditor {
   var state = initialState
-  def parentState = null
   def viewer = new RootProjectViewer(state)
 }
 
 class SegmentationEditor(
-    val parentState: ProjectEditor,
-    segmentationName: String) extends ProjectEditor {
+    val parent: ProjectEditor,
+    val segmentationName: String) extends ProjectEditor {
 
-  assert(
-    parentState.state.segmentations.contains(segmentationName),
-    s"No such segmentation: $segmentationName")
-
-  implicit val manager = parentState.manager
-  def segmentationState = parentState.state.segmentations(segmentationName)
+  implicit val manager = parent.manager
+  def segmentationState = parent.state.segmentations(segmentationName)
   def segmentationState_=(newState: SegmentationState): Unit = {
-    val pState = parentState.state
-    parentState.state = pState.copy(
+    val pState = parent.state
+    parent.state = pState.copy(
       segmentations = pState.segmentations + (segmentationName -> newState))
   }
   def state = segmentationState.project
@@ -461,7 +460,7 @@ class SegmentationEditor(
     segmentationState = segmentationState.copy(project = newState)
   }
 
-  def viewer = new SegmentationViewer(segmentationState, segmentationName, parentState.viewer)
+  def viewer = parent.viewer.segmentationViewers(segmentationName)
 
   def belongsTo = viewer.belongsTo
   def belongsTo_=(e: EdgeBundle): Unit = {
@@ -472,7 +471,7 @@ class SegmentationEditor(
     if (e != vertexSet) {
       super.updateVertexSet(e, killSegmentations)
       val op = graph_operations.EmptyEdgeBundle()
-      belongsTo = op(op.src, parentState.vertexSet)(op.dst, e).result.eb
+      belongsTo = op(op.src, parent.vertexSet)(op.dst, e).result.eb
     }
   }
 }
