@@ -30,6 +30,7 @@ case class ProjectState(
   scalarGUIDs: Map[String, UUID],
   segmentations: Map[String, SegmentationState],
   notes: String,
+  // !!! These should probably live in ProjectFrame instead.
   lastOperationDesc: String,
   lastOperationRequest: ProjectOperationRequest)
 object ProjectState {
@@ -75,9 +76,11 @@ sealed trait ProjectViewer {
     state.segmentations
       .map { case (name, state) => name -> new SegmentationViewer(state, name, this) }
 
-  def viewerFor(path: Seq[String]): ProjectViewer =
+  def offspringViewer(path: Seq[String]): ProjectViewer =
     if (path.isEmpty) this
-    else segmentationViewers(path.head).viewerFor(path.tail)
+    else segmentationViewers(path.head).offspringViewer(path.tail)
+
+  def editor: ProjectEditor
 
   def isSegmentation = isInstanceOf[SegmentationViewer]
 
@@ -122,10 +125,6 @@ sealed trait ProjectViewer {
 
     FEProject(
       name = projectName,
-      undoOp = state.lastOperationDesc,
-      redoOp = "", // nextOperation, //!!!
-      readACL = "", // !!!
-      writeACL = "", // writeACL,
       vertexSet = vs,
       edgeBundle = eb,
       notes = state.notes,
@@ -134,12 +133,19 @@ sealed trait ProjectViewer {
       edgeAttributes = feList(edgeAttributes),
       segmentations = segmentationViewers
         .map { case (name, segm) => segm.toFESegmentation(projectName) }
-        .toList)
+        .toList,
+      // To be set by the ProjectFrame for root projects.
+      undoOp = "",
+      redoOp = "",
+      readACL = "",
+      writeACL = "")
   }
 }
 
 class RootProjectViewer(val state: ProjectState)(implicit val manager: MetaGraphManager)
-  extends ProjectViewer
+    extends ProjectViewer {
+  def editor: RootProjectEditor = new RootProjectEditor(state)
+}
 
 class SegmentationViewer(
     segmentationState: SegmentationState, segmentationName: String, parent: ProjectViewer)(
@@ -180,6 +186,7 @@ class SegmentationViewer(
       equivalentUIAttribute)
   }
 
+  def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
 }
 
 object ProjectStateRepository {
@@ -253,11 +260,11 @@ abstract class StateMapHolder[T <: MetaGraphEntity] extends Map[String, T] {
   def -(key: String) = getMap - key
 }
 
-abstract class MutableProjectState {
+sealed trait ProjectEditor {
   implicit val manager: MetaGraphManager
   def state: ProjectState
   def state_=(newState: ProjectState): Unit
-  def parentState: MutableProjectState
+  def parentState: ProjectEditor
 
   def viewer: ProjectViewer
 
@@ -339,15 +346,11 @@ abstract class MutableProjectState {
 
   // !!! Not sure this makes sense vs just a map.
   def segmentations = segmentationNames.map(segmentation(_))
-  def segmentation(name: String) = new MutableSegmentationState(this, name)
+  def segmentation(name: String) = new SegmentationEditor(this, name)
   def segmentationNames = viewer.segmentationViewers.keys
 
-  def editorFor(path: Seq[String]): MutableProjectState =
-    if (path.isEmpty) this
-    else segmentation(path.head).editorFor(path.tail)
-
-  def isSegmentation = isInstanceOf[MutableSegmentationState]
-  def asSegmentation = asInstanceOf[MutableSegmentationState]
+  def isSegmentation = isInstanceOf[SegmentationEditor]
+  def asSegmentation = asInstanceOf[SegmentationEditor]
 
   def notes = state.notes
   def notes_=(n: String) = state = state.copy(notes = n)
@@ -430,17 +433,17 @@ abstract class MutableProjectState {
   }
 }
 
-class MutableRootState(
+class RootProjectEditor(
     initialState: ProjectState)(
-        implicit val manager: MetaGraphManager) extends MutableProjectState {
+        implicit val manager: MetaGraphManager) extends ProjectEditor {
   var state = initialState
   def parentState = null
   def viewer = new RootProjectViewer(state)
 }
 
-class MutableSegmentationState(
-    val parentState: MutableProjectState,
-    segmentationName: String) extends MutableProjectState {
+class SegmentationEditor(
+    val parentState: ProjectEditor,
+    segmentationName: String) extends ProjectEditor {
 
   assert(
     parentState.state.segmentations.contains(segmentationName),
@@ -522,14 +525,10 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   def checkpointState(idx: Int) = manager.stateRepo.readCheckpoint(checkpoints(idx))
 
-  def currentState = checkpointsState(checkpointIndex)
+  def currentState = checkpointState(checkpointIndex)
 
-  def viewerFor(path: Seq[String]) = new RootProjectViewer(currentState).viewerFor(path)
-  def viewer = viewerFor(Seq())
-
-  def editorFor(path: Seq[String]) = new MutableRootState(currentState).editorFor(path)
-  def editor = editorFor(Seq())
-  def checkpointEditor(idx: Int) = new MutableRootState(checkpointState(idx))
+  def viewer = new RootProjectViewer(currentState)
+  def checkpointViewer(idx: Int) = new RootProjectViewer(checkpointState(idx))
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
@@ -570,12 +569,11 @@ class ProjectFrame(val projectPath: SymbolPath)(
     log.info(s"A project has been discarded: $rootDir")
   }
 
+  private def cp(from: SymbolPath, to: SymbolPath) = manager.synchronized {
+    existing(to).foreach(manager.rmTag(_))
+    manager.cpTag(from, to)
+  }
   def copy(to: ProjectFrame): Unit = cp(rootDir, to.rootDir)
-}
-
-class SubProject(frame: ProjectFrame, path: Seq[String]) {
-  def viewer = frame.viewerFor(path)
-  def editor = frame.editorFor(path)
 }
 
 object ProjectFrame {
@@ -585,16 +583,30 @@ object ProjectFrame {
     validateName(rootProjectName)
     new ProjectFrame(SymbolPath(rootProjectName))
   }
-  def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
-    val nameElements = projectName.split(separator)
-    new SubProject(fromName(nameElements.head), nameElements.tail)
-  }
 
   def validateName(name: String, what: String = "Name"): Unit = {
     assert(name.nonEmpty, s"$what cannot be empty.")
     assert(!name.startsWith("!"), s"$what cannot start with '!'.")
     assert(!name.contains(separator), s"$what cannot contain '$separator'.")
     assert(!name.contains("/"), s"$what cannot contain '/'.")
+  }
+}
+
+class SubProject(frame: ProjectFrame, path: Seq[String]) {
+  def viewer = frame.viewer.offspringViewer(path)
+  def fullName = (frame.projectName +: path).mkString(ProjectFrame.separator)
+  def toFE: FEProject = {
+    val raw = viewer.toFE(fullName)
+    if (path.isEmpty) {
+      // TODO: undoOp, redoOp
+      raw.copy(undoOp = "", redoOp = "", readACL = frame.readACL, writeACL = frame.writeACL)
+    } else raw
+  }
+}
+object SubProject {
+  def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
+    val nameElements = projectName.split(ProjectFrame.separator, -1)
+    new SubProject(ProjectFrame.fromName(nameElements.head), nameElements.tail)
   }
 }
 
