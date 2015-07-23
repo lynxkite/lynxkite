@@ -32,6 +32,9 @@ case class ProjectState(
   notes: String,
   lastOperationDesc: String,
   lastOperationRequest: ProjectOperationRequest)
+object ProjectState {
+  val emptyState = ProjectState(null, Map(), null, Map(), Map(), Map(), "", null, null)
+}
 
 case class SegmentationState(
   project: ProjectState,
@@ -172,7 +175,7 @@ class SegmentationViewer(
     val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
     FESegmentation(
       segmentationName,
-      parentName,
+      parentName + ProjectFrame.separator + segmentationName,
       bt,
       equivalentUIAttribute)
   }
@@ -515,11 +518,18 @@ class ProjectFrame(val projectPath: SymbolPath)(
     checkpointIndex = nextIndex
   }
 
-  def currentState = manager.stateRepo.readCheckpoint(checkpoints(checkpointIndex))
+  def initialize(): Unit = dodo(ProjectState.emptyState)
+
+  def checkpointState(idx: Int) = manager.stateRepo.readCheckpoint(checkpoints(idx))
+
+  def currentState = checkpointsState(checkpointIndex)
 
   def viewerFor(path: Seq[String]) = new RootProjectViewer(currentState).viewerFor(path)
+  def viewer = viewerFor(Seq())
 
   def editorFor(path: Seq[String]) = new MutableRootState(currentState).editorFor(path)
+  def editor = editorFor(Seq())
+  def checkpointEditor(idx: Int) = new MutableRootState(checkpointState(idx))
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
@@ -554,6 +564,13 @@ class ProjectFrame(val projectPath: SymbolPath)(
     val regex = acl.replace(" ", "").replace(".", "\\.").replace(",", "|").replace("*", ".*")
     user.email.matches(regex)
   }
+
+  def remove(): Unit = manager.synchronized {
+    existing(rootDir).foreach(manager.rmTag(_))
+    log.info(s"A project has been discarded: $rootDir")
+  }
+
+  def copy(to: ProjectFrame): Unit = cp(rootDir, to.rootDir)
 }
 
 class SubProject(frame: ProjectFrame, path: Seq[String]) {
