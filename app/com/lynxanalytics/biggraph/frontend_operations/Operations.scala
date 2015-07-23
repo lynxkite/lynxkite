@@ -3,7 +3,7 @@
 // The code in this file defines the operation parameters to be offered on the UI,
 // and also takes care of parsing the parameters given by the user and creating
 // the "backend" operations and updating the projects.
-package com.lynxanalytics.biggraph.controllers
+package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
 
 object OperationParams {
