@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class DerivedVertexAttributeOperationTest extends OperationsTestBase {
+class DerivedAttributeOperationTest extends OperationsTestBase {
   test("Derived vertex attribute (Double)") {
     run("Example Graph")
     run("Derived vertex attribute",
