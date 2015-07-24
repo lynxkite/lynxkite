@@ -198,12 +198,23 @@ object BigGraphSparkContext {
 }
 
 class SparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
-  val MaxStageAttempts = 4
+  val MaxStageFailures = 4
+  val stageFailures = collection.mutable.Map[Int, Int]()
+
+  override def onStageCompleted(
+    stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
+    val stage = stageCompleted.stageInfo
+    if (stage.failureReason.nonEmpty) {
+      stageFailures(stage.stageId) = stageFailures.getOrElse(stage.stageId, 0) + 1
+    }
+  }
+
   override def onStageSubmitted(
-    stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = {
+    stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
     val stage = stageSubmitted.stageInfo
-    if (stage.attemptId >= MaxStageAttempts) {
-      log.warn(s"Stage ${stage.stageId} reached attempt ${stage.attemptId}." +
+    val failures = stageFailures.getOrElse(stage.stageId, 0)
+    if (failures >= MaxStageFailures) {
+      log.warn(s"Stage ${stage.stageId} has failed $failures times." +
         " Cancelling all jobs to prevent infinite retries. (#2001)")
       sc.cancelAllJobs()
     }
