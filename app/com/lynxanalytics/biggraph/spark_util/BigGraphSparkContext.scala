@@ -3,8 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
+import org.apache.spark
 import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -144,12 +143,12 @@ object BigGraphSparkContext {
     useKryo: Boolean = true,
     debugKryo: Boolean = false,
     useJars: Boolean = true,
-    master: String = ""): SparkContext = {
+    master: String = ""): spark.SparkContext = {
     val versionFound = org.apache.spark.SPARK_VERSION
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
-    var sparkConf = new SparkConf()
+    var sparkConf = new spark.SparkConf()
       .setAppName(appName)
       .set("spark.executor.memory",
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
@@ -192,6 +191,21 @@ object BigGraphSparkContext {
       sparkConf = sparkConf.setMaster(master)
     }
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
-    return new SparkContext(sparkConf)
+    val sc = new spark.SparkContext(sparkConf)
+    sc.addSparkListener(new SparkListener(sc))
+    sc
+  }
+}
+
+class SparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
+  val MaxStageAttempts = 4
+  override def onStageSubmitted(
+    stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = {
+    val stage = stageSubmitted.stageInfo
+    if (stage.attemptId >= MaxStageAttempts) {
+      log.warn(s"Stage ${stage.stageId} reached attempt ${stage.attemptId}." +
+        " Cancelling all jobs to prevent infinite retries. (#2001)")
+      sc.cancelAllJobs()
+    }
   }
 }
