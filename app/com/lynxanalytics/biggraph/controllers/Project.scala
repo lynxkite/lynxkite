@@ -33,7 +33,7 @@ case class CommonProjectState(
   notes: String)
 
 case class RootProjectState(
-  project: CommonProjectState,
+  state: CommonProjectState,
   lastOperationDesc: String,
   lastOperationRequest: ProjectOperationRequest)
 
@@ -45,7 +45,7 @@ object RootProjectState {
 }
 
 case class SegmentationState(
-  project: CommonProjectState,
+  state: CommonProjectState,
   belongsToGUID: UUID)
 
 sealed trait ProjectViewer {
@@ -151,7 +151,7 @@ object ProjectViewer {
 
 class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: MetaGraphManager)
     extends ProjectViewer {
-  val state = rootState.project
+  val state = rootState.state
   def editor: RootProjectEditor = new RootProjectEditor(rootState)
 }
 
@@ -160,7 +160,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 
   implicit val manager = parent.manager
   val segmentationState: SegmentationState = parent.state.segmentations(segmentationName)
-  val state = segmentationState.project
+  val state = segmentationState.state
 
   def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
 
@@ -211,7 +211,7 @@ object ProjectStateRepository {
     }
     def writes(o: SegmentationState): json.JsValue =
       Json.obj(
-        "project" -> commonProjectStateToJSon(o.project),
+        "project" -> commonProjectStateToJSon(o.state),
         "belongsToGUID" -> o.belongsToGUID)
   }
   implicit val fCommonProjectState = Json.format[CommonProjectState]
@@ -446,9 +446,9 @@ class RootProjectEditor(
         implicit val manager: MetaGraphManager) extends ProjectEditor {
   var rootState = initialState
 
-  def state = rootState.project
+  def state = rootState.state
   def state_=(newState: CommonProjectState): Unit = {
-    rootState = rootState.copy(project = newState)
+    rootState = rootState.copy(state = newState)
   }
 
   def viewer = new RootProjectViewer(rootState)
@@ -474,9 +474,9 @@ class SegmentationEditor(
     parent.state = pState.copy(
       segmentations = pState.segmentations + (segmentationName -> newState))
   }
-  def state = segmentationState.project
+  def state = segmentationState.state
   def state_=(newState: CommonProjectState): Unit = {
-    segmentationState = segmentationState.copy(project = newState)
+    segmentationState = segmentationState.copy(state = newState)
   }
 
   def viewer = parent.viewer.segmentationViewers(segmentationName)
