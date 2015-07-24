@@ -31,6 +31,9 @@ case class CommonProjectState(
   scalarGUIDs: Map[String, UUID],
   segmentations: Map[String, SegmentationState],
   notes: String)
+object CommonProjectState {
+  def emptyState(notes: String) = CommonProjectState(null, Map(), null, Map(), Map(), Map(), notes)
+}
 
 case class RootProjectState(
   state: CommonProjectState,
@@ -38,15 +41,15 @@ case class RootProjectState(
   lastOperationRequest: ProjectOperationRequest)
 
 object RootProjectState {
-  val emptyState = RootProjectState(
-    CommonProjectState(null, Map(), null, Map(), Map(), Map(), ""),
-    null,
-    null)
+  def emptyState(notes: String) = RootProjectState(CommonProjectState.emptyState(notes), null, null)
 }
 
 case class SegmentationState(
   state: CommonProjectState,
   belongsToGUID: UUID)
+object SegmentationState {
+  def emptyState(notes: String) = SegmentationState(CommonProjectState.emptyState(notes), null)
+}
 
 sealed trait ProjectViewer {
   val state: CommonProjectState
@@ -285,6 +288,8 @@ sealed trait ProjectEditor {
 
   def viewer: ProjectViewer
 
+  def rootState: RootProjectState
+
   def vertexSet = viewer.vertexSet
   def vertexSet_=(e: VertexSet): Unit = {
     updateVertexSet(e, killSegmentations = true)
@@ -336,6 +341,9 @@ sealed trait ProjectEditor {
     }
   def vertexAttributes_=(attrs: Map[String, Attribute[_]]) =
     vertexAttributes.updateEntityMap(attrs)
+  def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
+    case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
+  }.toSeq
 
   def edgeAttributes =
     new StateMapHolder[Attribute[_]] {
@@ -350,6 +358,9 @@ sealed trait ProjectEditor {
     }
   def edgeAttributes_=(attrs: Map[String, Attribute[_]]) =
     edgeAttributes.updateEntityMap(attrs)
+  def edgeAttributeNames[T: TypeTag] = edgeAttributes.collect {
+    case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
+  }.toSeq
 
   def scalars =
     new StateMapHolder[Scalar[_]] {
@@ -360,6 +371,9 @@ sealed trait ProjectEditor {
     }
   def scalars_=(newScalars: Map[String, Scalar[_]]) =
     scalars.updateEntityMap(newScalars)
+  def scalarNames[T: TypeTag] = scalars.collect {
+    case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
+  }.toSeq
 
   // !!! Not sure this makes sense vs just a map.
   def segmentations = segmentationNames.map(segmentation(_))
@@ -440,6 +454,9 @@ sealed trait ProjectEditor {
           op.edges, origBelongsTo.get).result.induced
     }
   }
+
+  def setLastOperationDesc(n: String): Unit
+  def setLastOperationRequest(n: ProjectOperationRequest): Unit
 }
 
 class RootProjectEditor(
@@ -457,10 +474,12 @@ class RootProjectEditor(
   def lastOperationDesc = rootState.lastOperationDesc
   def lastOperationDesc_=(n: String) =
     rootState = rootState.copy(lastOperationDesc = n)
+  def setLastOperationDesc(n: String) = lastOperationDesc = n
 
   def lastOperationRequest = rootState.lastOperationRequest
   def lastOperationRequest_=(n: ProjectOperationRequest) =
     rootState = rootState.copy(lastOperationRequest = n)
+  def setLastOperationRequest(n: ProjectOperationRequest) = lastOperationRequest = n
 }
 
 class SegmentationEditor(
@@ -468,6 +487,15 @@ class SegmentationEditor(
     val segmentationName: String) extends ProjectEditor {
 
   implicit val manager = parent.manager
+
+  {
+    val oldSegs = parent.state.segmentations
+    if (!oldSegs.contains(segmentationName)) {
+      parent.state = parent.state.copy(
+        segmentations = oldSegs + (segmentationName -> SegmentationState.emptyState("")))
+    }
+  }
+
   def segmentationState = parent.state.segmentations(segmentationName)
   def segmentationState_=(newState: SegmentationState): Unit = {
     val pState = parent.state
@@ -481,6 +509,8 @@ class SegmentationEditor(
 
   def viewer = parent.viewer.segmentationViewers(segmentationName)
 
+  def rootState = parent.rootState
+
   def belongsTo = viewer.belongsTo
   def belongsTo_=(e: EdgeBundle): Unit = {
     segmentationState = segmentationState.copy(belongsToGUID = e.gUID)
@@ -493,6 +523,12 @@ class SegmentationEditor(
       belongsTo = op(op.src, parent.vertexSet)(op.dst, e).result.eb
     }
   }
+
+  def setLastOperationDesc(n: String) =
+    parent.setLastOperationDesc(s"$n on $segmentationName")
+
+  def setLastOperationRequest(n: ProjectOperationRequest) =
+    parent.setLastOperationRequest(n.copy(project = s"${segmentationState}|${n.project}"))
 }
 
 class ProjectFrame(val projectPath: SymbolPath)(
@@ -522,6 +558,8 @@ class ProjectFrame(val projectPath: SymbolPath)(
     set(rootDir / "checkpointIndex", x.toString)
   def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
 
+  def exists = checkpointCount > 0
+
   def undo(): Unit = manager.synchronized {
     assert(checkpointIndex > 0, s"Already at checkpoint $checkpointIndex.")
     checkpointIndex -= 1
@@ -539,8 +577,6 @@ class ProjectFrame(val projectPath: SymbolPath)(
     checkpointIndex = nextIndex
   }
 
-  def initialize(): Unit = dodo(RootProjectState.emptyState)
-
   def checkpointState(idx: Int): RootProjectState =
     manager.stateRepo.readCheckpoint(checkpoints(idx))
 
@@ -553,6 +589,8 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   def viewer = new RootProjectViewer(currentState)
   def checkpointViewer(idx: Int) = new RootProjectViewer(checkpointState(idx))
+
+  def toListElementFE = viewer.toListElementFE(projectName)
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
@@ -616,7 +654,7 @@ object ProjectFrame {
   }
 }
 
-class SubProject(frame: ProjectFrame, path: Seq[String]) {
+class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
   def fullName = (frame.projectName +: path).mkString(ProjectFrame.separator)
   def toFE: FEProject = {
@@ -634,6 +672,11 @@ object SubProject {
   def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
     val nameElements = projectName.split(ProjectFrame.separator, -1)
     new SubProject(ProjectFrame.fromName(nameElements.head), nameElements.tail)
+  }
+
+  def fromSubPath(frame: ProjectFrame, path: String): SubProject = {
+    val nameElements = path.split(ProjectFrame.separator, -1)
+    new SubProject(frame, nameElements)
   }
 }
 

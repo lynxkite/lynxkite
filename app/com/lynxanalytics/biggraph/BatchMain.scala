@@ -7,7 +7,9 @@ import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.Operation
 import com.lynxanalytics.biggraph.frontend_operations.Operations
-import com.lynxanalytics.biggraph.controllers.Project
+import com.lynxanalytics.biggraph.controllers.ProjectFrame
+import com.lynxanalytics.biggraph.controllers.RootProjectState
+import com.lynxanalytics.biggraph.controllers.SubProject
 import com.lynxanalytics.biggraph.controllers.WorkflowOperation
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager
 import com.lynxanalytics.biggraph.graph_api.Scalar
@@ -28,9 +30,8 @@ object BatchMain {
   def getScalarMeta(
     projectName: String, scalarName: String, params: Map[String, String])(
       implicit metaManager: MetaGraphManager): Scalar[_] = {
-    Project.validateName(projectName)
-    val project = Project.fromName(projectName)
-    project.scalars(scalarName)
+    val project = ProjectFrame.fromName(projectName)
+    project.viewer.scalars(scalarName)
   }
 
   def main(args: Array[String]) {
@@ -96,19 +97,18 @@ For example:
           println(outRow.mkString(","))
         case opsRE(projectNameSpec) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          Project.validateName(projectName)
           val user = User("Batch User", isAdmin = true)
-          val project = Project.fromName(projectName)
 
-          if (!Operation.projects.contains(project)) {
+          val project = ProjectFrame.fromName(projectName)
+          if (!project.exists) {
             // Create project if doesn't yet exist.
             project.writeACL = user.email
             project.readACL = user.email
-            project.notes = s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"
-            project.checkpointAfter("")
+            project.dodo(RootProjectState.emptyState(
+              s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
           }
 
-          val context = Operation.Context(user, project)
+          val context = Operation.Context(user, project.viewer)
 
           var opJson = ""
           var line = ""
@@ -121,10 +121,11 @@ For example:
           val opRepo = new Operations(env)
 
           for (step <- WorkflowOperation.workflowSteps(opJson, params, context)) {
-            val op = opRepo.operationOnSubproject(context.project, step, context.user)
-            project.checkpoint(op.summary(step.op.parameters), step) {
-              op.validateAndApply(step.op.parameters)
-            }
+            val sp = SubProject.fromSubPath(project, step.project)
+            val context = Operation.Context(user, sp.viewer)
+            val op = opRepo.opById(context, step.op.id)
+            op.validateAndApply(step.op.parameters)
+            project.dodo(op.project.rootState)
           }
         case `waitForever` =>
           println("Waiting indefinitely...")
