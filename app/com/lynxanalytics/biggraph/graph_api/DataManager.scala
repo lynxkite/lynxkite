@@ -56,15 +56,16 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  // Things saved during previous runs.
-  val savedInstances: Set[UUID] = {
-    val instances = (repositoryPath / "operations" / "*" / "_SUCCESS").list
-    instances.map(_.path.getParent.getName.asUUID).toSet
+  // Things saved during previous runs. Checking for the _SUCCESS files is slow so we use the
+  // list of directories instead. The results are thus somewhat optimistic.
+  val possiblySavedInstances: Set[UUID] = {
+    val instances = (repositoryPath / "operations" / "*").list
+    instances.map(_.path.getName.asUUID).toSet
   }
-  val savedEntities: Set[UUID] = {
-    val scalars = (repositoryPath / "scalars" / "*" / "_SUCCESS").list
-    val entities = (repositoryPath / "entities" / "*" / "_SUCCESS").list
-    (scalars ++ entities).map(_.path.getParent.getName.asUUID).toSet
+  val possiblySavedEntities: Set[UUID] = {
+    val scalars = (repositoryPath / "scalars" / "*").list
+    val entities = (repositoryPath / "entities" / "*").list
+    (scalars ++ entities).map(_.path.getName.asUUID).toSet
   }
 
   private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
@@ -73,8 +74,12 @@ class DataManager(sc: spark.SparkContext,
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
-      savedInstances.contains(entity.source.gUID) &&
-      savedEntities.contains(entity.gUID)
+      // Fast check for directory.
+      possiblySavedInstances.contains(entity.source.gUID) &&
+      possiblySavedEntities.contains(entity.gUID) &&
+      // Slow check for _SUCCESS file.
+      successPath(instancePath(entity.source)).exists &&
+      successPath(entityPath(entity)).exists
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
