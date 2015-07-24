@@ -23,27 +23,33 @@ import scala.collection
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
-case class ProjectState(
+case class CommonProjectState(
   vertexSetGUID: UUID,
   vertexAttributeGUIDs: Map[String, UUID],
   edgeBundleGUID: UUID,
   edgeAttributeGUIDs: Map[String, UUID],
   scalarGUIDs: Map[String, UUID],
   segmentations: Map[String, SegmentationState],
-  notes: String,
-  // !!! These should probably live in ProjectFrame instead.
+  notes: String)
+
+case class RootProjectState(
+  project: CommonProjectState,
   lastOperationDesc: String,
   lastOperationRequest: ProjectOperationRequest)
-object ProjectState {
-  val emptyState = ProjectState(null, Map(), null, Map(), Map(), Map(), "", null, null)
+
+object RootProjectState {
+  val emptyState = RootProjectState(
+    CommonProjectState(null, Map(), null, Map(), Map(), Map(), ""),
+    null,
+    null)
 }
 
 case class SegmentationState(
-  project: ProjectState,
+  project: CommonProjectState,
   belongsToGUID: UUID)
 
 sealed trait ProjectViewer {
-  val state: ProjectState
+  val state: CommonProjectState
   implicit val manager: MetaGraphManager
 
   def vertexSet: VertexSet =
@@ -143,9 +149,10 @@ object ProjectViewer {
   }
 }
 
-class RootProjectViewer(val state: ProjectState)(implicit val manager: MetaGraphManager)
+class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: MetaGraphManager)
     extends ProjectViewer {
-  def editor: RootProjectEditor = new RootProjectEditor(state)
+  val state = rootState.project
+  def editor: RootProjectEditor = new RootProjectEditor(rootState)
 }
 
 class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String)
@@ -154,6 +161,8 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   implicit val manager = parent.manager
   val segmentationState: SegmentationState = parent.state.segmentations(segmentationName)
   val state = segmentationState.project
+
+  def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
 
   def belongsTo: EdgeBundle =
     Option(segmentationState.belongsToGUID).map(manager.edgeBundle(_)).getOrElse(null)
@@ -187,8 +196,6 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
       bt,
       equivalentUIAttribute)
   }
-
-  def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
 }
 
 object ProjectStateRepository {
@@ -199,37 +206,42 @@ object ProjectStateRepository {
   implicit val fSegmentationState = new json.Format[SegmentationState] {
     def reads(j: json.JsValue): json.JsResult[SegmentationState] = {
       json.JsSuccess(SegmentationState(
-        jsonToProjectState(j \ "project"),
+        jsonToCommonProjectState(j \ "project"),
         (j \ "belongsToGUID").as[UUID]))
     }
     def writes(o: SegmentationState): json.JsValue =
       Json.obj(
-        "project" -> projectStateToJSon(o.project),
+        "project" -> commonProjectStateToJSon(o.project),
         "belongsToGUID" -> o.belongsToGUID)
   }
-  implicit val fProjectState = Json.format[ProjectState]
-  def projectStateToJSon(state: ProjectState): json.JsValue = Json.toJson(state)
-  def jsonToProjectState(j: json.JsValue): ProjectState = j.as[ProjectState]
+  implicit val fCommonProjectState = Json.format[CommonProjectState]
+  implicit val fRootProjectState = Json.format[RootProjectState]
+
+  def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
+  def jsonToCommonProjectState(j: json.JsValue): CommonProjectState = j.as[CommonProjectState]
 }
 
 class ProjectStateRepository(val baseDir: String) {
+  import ProjectStateRepository.fRootProjectState
+
   val baseDirFile = new File(baseDir)
   baseDirFile.mkdirs
 
-  def newCheckpoint(state: ProjectState): String = {
+  def newCheckpoint(state: RootProjectState): String = {
     val checkpoint = Timestamp.toString
     val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
     val finalFile = new File(baseDirFile, s"save-$checkpoint")
     FileUtils.writeStringToFile(
       dumpFile,
-      Json.prettyPrint(ProjectStateRepository.projectStateToJSon(state)), "utf8")
+      Json.prettyPrint(Json.toJson(state)),
+      "utf8")
     dumpFile.renameTo(finalFile)
     checkpoint
   }
 
-  def readCheckpoint(checkpoint: String): ProjectState = {
-    ProjectStateRepository.jsonToProjectState(
-      Json.parse(FileUtils.readFileToString(new File(baseDirFile, checkpoint), "utf8")))
+  def readCheckpoint(checkpoint: String): RootProjectState = {
+    Json.parse(FileUtils.readFileToString(new File(baseDirFile, checkpoint), "utf8"))
+      .as[RootProjectState]
   }
 }
 
@@ -267,8 +279,8 @@ abstract class StateMapHolder[T <: MetaGraphEntity] extends collection.Map[Strin
 
 sealed trait ProjectEditor {
   implicit val manager: MetaGraphManager
-  def state: ProjectState
-  def state_=(newState: ProjectState): Unit
+  def state: CommonProjectState
+  def state_=(newState: CommonProjectState): Unit
 
   def viewer: ProjectViewer
 
@@ -359,14 +371,6 @@ sealed trait ProjectEditor {
   def notes = state.notes
   def notes_=(n: String) = state = state.copy(notes = n)
 
-  def lastOperationDesc = state.lastOperationDesc
-  def lastOperationDesc_=(n: String) =
-    state = state.copy(lastOperationDesc = n)
-
-  def lastOperationRequest = state.lastOperationRequest
-  def lastOperationRequest_=(n: ProjectOperationRequest) =
-    state = state.copy(lastOperationRequest = n)
-
   def pullBackEdges(injection: EdgeBundle): Unit = {
     val op = graph_operations.PulledOverEdges()
     val newEB = op(op.originalEB, edgeBundle)(op.injection, injection).result.pulledEB
@@ -438,10 +442,25 @@ sealed trait ProjectEditor {
 }
 
 class RootProjectEditor(
-    initialState: ProjectState)(
+    initialState: RootProjectState)(
         implicit val manager: MetaGraphManager) extends ProjectEditor {
-  var state = initialState
-  def viewer = new RootProjectViewer(state)
+  var rootState = initialState
+
+  def state = rootState.project
+  def state_=(newState: CommonProjectState): Unit = {
+    rootState = rootState.copy(project = newState)
+  }
+
+  def viewer = new RootProjectViewer(rootState)
+
+  def lastOperationDesc = rootState.lastOperationDesc
+  def lastOperationDesc_=(n: String) =
+    rootState = rootState.copy(lastOperationDesc = n)
+
+  def lastOperationRequest = rootState.lastOperationRequest
+  def lastOperationRequest_=(n: ProjectOperationRequest) =
+    rootState = rootState.copy(lastOperationRequest = n)
+
 }
 
 class SegmentationEditor(
@@ -456,7 +475,7 @@ class SegmentationEditor(
       segmentations = pState.segmentations + (segmentationName -> newState))
   }
   def state = segmentationState.project
-  def state_=(newState: ProjectState): Unit = {
+  def state_=(newState: CommonProjectState): Unit = {
     segmentationState = segmentationState.copy(project = newState)
   }
 
@@ -513,14 +532,14 @@ class ProjectFrame(val projectPath: SymbolPath)(
     checkpointIndex += 1
   }
 
-  def dodo(newState: ProjectState): Unit = manager.synchronized {
+  def dodo(newState: RootProjectState): Unit = manager.synchronized {
     val nextIndex = checkpointCount
     val checkpoint = manager.stateRepo.newCheckpoint(newState)
     checkpoints = checkpoints.take(nextIndex) :+ checkpoint
     checkpointIndex = nextIndex
   }
 
-  def initialize(): Unit = dodo(ProjectState.emptyState)
+  def initialize(): Unit = dodo(RootProjectState.emptyState)
 
   def checkpointState(idx: Int) = manager.stateRepo.readCheckpoint(checkpoints(idx))
 
