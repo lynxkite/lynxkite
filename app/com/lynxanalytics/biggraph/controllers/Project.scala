@@ -217,8 +217,9 @@ object ProjectStateRepository {
   implicit val fCommonProjectState = Json.format[CommonProjectState]
   implicit val fRootProjectState = Json.format[RootProjectState]
 
-  def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
-  def jsonToCommonProjectState(j: json.JsValue): CommonProjectState = j.as[CommonProjectState]
+  private def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
+  private def jsonToCommonProjectState(j: json.JsValue): CommonProjectState =
+    j.as[CommonProjectState]
 }
 
 class ProjectStateRepository(val baseDir: String) {
@@ -460,7 +461,6 @@ class RootProjectEditor(
   def lastOperationRequest = rootState.lastOperationRequest
   def lastOperationRequest_=(n: ProjectOperationRequest) =
     rootState = rootState.copy(lastOperationRequest = n)
-
 }
 
 class SegmentationEditor(
@@ -541,9 +541,15 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   def initialize(): Unit = dodo(RootProjectState.emptyState)
 
-  def checkpointState(idx: Int) = manager.stateRepo.readCheckpoint(checkpoints(idx))
+  def checkpointState(idx: Int): RootProjectState =
+    manager.stateRepo.readCheckpoint(checkpoints(idx))
 
-  def currentState = checkpointState(checkpointIndex)
+  def currentState: RootProjectState = checkpointState(checkpointIndex)
+
+  // The state we'd reach with a redo or None if no redo is available.
+  def nextState: Option[RootProjectState] =
+    if (checkpointIndex < checkpoints.size - 1) Some(checkpointState(checkpointIndex + 1))
+    else None
 
   def viewer = new RootProjectViewer(currentState)
   def checkpointViewer(idx: Int) = new RootProjectViewer(checkpointState(idx))
@@ -616,8 +622,11 @@ class SubProject(frame: ProjectFrame, path: Seq[String]) {
   def toFE: FEProject = {
     val raw = viewer.toFE(fullName)
     if (path.isEmpty) {
-      // TODO: undoOp, redoOp
-      raw.copy(undoOp = "", redoOp = "", readACL = frame.readACL, writeACL = frame.writeACL)
+      raw.copy(
+        undoOp = frame.currentState.lastOperationDesc,
+        redoOp = frame.nextState.map(_.lastOperationDesc).getOrElse(""),
+        readACL = frame.readACL,
+        writeACL = frame.writeACL)
     } else raw
   }
 }
