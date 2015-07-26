@@ -24,31 +24,31 @@ import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
 case class CommonProjectState(
-  vertexSetGUID: UUID,
+  vertexSetGUID: Option[UUID],
   vertexAttributeGUIDs: Map[String, UUID],
-  edgeBundleGUID: UUID,
+  edgeBundleGUID: Option[UUID],
   edgeAttributeGUIDs: Map[String, UUID],
   scalarGUIDs: Map[String, UUID],
   segmentations: Map[String, SegmentationState],
   notes: String)
 object CommonProjectState {
-  def emptyState(notes: String) = CommonProjectState(null, Map(), null, Map(), Map(), Map(), notes)
+  def emptyState(notes: String) = CommonProjectState(None, Map(), None, Map(), Map(), Map(), notes)
 }
 
 case class RootProjectState(
   state: CommonProjectState,
   lastOperationDesc: String,
-  lastOperationRequest: ProjectOperationRequest)
+  lastOperationRequest: Option[ProjectOperationRequest])
 
 object RootProjectState {
-  def emptyState(notes: String) = RootProjectState(CommonProjectState.emptyState(notes), null, null)
+  def emptyState(notes: String) = RootProjectState(CommonProjectState.emptyState(notes), "", None)
 }
 
 case class SegmentationState(
   state: CommonProjectState,
-  belongsToGUID: UUID)
+  belongsToGUID: Option[UUID])
 object SegmentationState {
-  def emptyState(notes: String) = SegmentationState(CommonProjectState.emptyState(notes), null)
+  def emptyState(notes: String) = SegmentationState(CommonProjectState.emptyState(notes), None)
 }
 
 sealed trait ProjectViewer {
@@ -56,11 +56,11 @@ sealed trait ProjectViewer {
   implicit val manager: MetaGraphManager
 
   def vertexSet: VertexSet =
-    Option(state.vertexSetGUID).map(manager.vertexSet(_)).getOrElse(null)
+    state.vertexSetGUID.map(manager.vertexSet(_)).getOrElse(null)
   def vertexAttributes: Map[String, Attribute[_]] =
     state.vertexAttributeGUIDs.mapValues(manager.attribute(_))
   def edgeBundle: EdgeBundle =
-    Option(state.edgeBundleGUID).map(manager.edgeBundle(_)).getOrElse(null)
+    state.edgeBundleGUID.map(manager.edgeBundle(_)).getOrElse(null)
   def edgeAttributes: Map[String, Attribute[_]] =
     state.edgeAttributeGUIDs.mapValues(manager.attribute(_))
   def scalars: Map[String, Scalar[_]] =
@@ -168,10 +168,10 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
 
   def belongsTo: EdgeBundle =
-    Option(segmentationState.belongsToGUID).map(manager.edgeBundle(_)).getOrElse(null)
+    segmentationState.belongsToGUID.map(manager.edgeBundle(_)).getOrElse(null)
 
   def belongsToAttribute: Attribute[Vector[ID]] = {
-    val segmentationIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
+    val segmentationIds = graph_operations.IdAsAttribute.run(vertexSet)
     val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
@@ -209,12 +209,12 @@ object ProjectStateRepository {
   implicit val fSegmentationState = new json.Format[SegmentationState] {
     def reads(j: json.JsValue): json.JsResult[SegmentationState] = {
       json.JsSuccess(SegmentationState(
-        jsonToCommonProjectState(j \ "project"),
-        (j \ "belongsToGUID").as[UUID]))
+        jsonToCommonProjectState(j \ "state"),
+        (j \ "belongsToGUID").as[Option[UUID]]))
     }
     def writes(o: SegmentationState): json.JsValue =
       Json.obj(
-        "project" -> commonProjectStateToJSon(o.state),
+        "state" -> commonProjectStateToJSon(o.state),
         "belongsToGUID" -> o.belongsToGUID)
   }
   implicit val fCommonProjectState = Json.format[CommonProjectState]
@@ -231,10 +231,13 @@ class ProjectStateRepository(val baseDir: String) {
   val baseDirFile = new File(baseDir)
   baseDirFile.mkdirs
 
+  def checkpointFileName(checkpoint: String): File =
+    new File(baseDirFile, s"save-$checkpoint")
+
   def newCheckpoint(state: RootProjectState): String = {
     val checkpoint = Timestamp.toString
     val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
-    val finalFile = new File(baseDirFile, s"save-$checkpoint")
+    val finalFile = checkpointFileName(checkpoint)
     FileUtils.writeStringToFile(
       dumpFile,
       Json.prettyPrint(Json.toJson(state)),
@@ -244,7 +247,7 @@ class ProjectStateRepository(val baseDir: String) {
   }
 
   def readCheckpoint(checkpoint: String): RootProjectState = {
-    Json.parse(FileUtils.readFileToString(new File(baseDirFile, checkpoint), "utf8"))
+    Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
       .as[RootProjectState]
   }
 }
@@ -300,10 +303,10 @@ sealed trait ProjectEditor {
       vertexAttributes = Map()
       if (killSegmentations) state = state.copy(segmentations = Map())
       if (e != null) {
-        state = state.copy(vertexSetGUID = e.gUID)
+        state = state.copy(vertexSetGUID = Some(e.gUID))
         scalars("vertex_count") = graph_operations.Count.run(e)
       } else {
-        state = state.copy(vertexSetGUID = null)
+        state = state.copy(vertexSetGUID = None)
         scalars("vertex_count") = null
       }
     }
@@ -320,10 +323,10 @@ sealed trait ProjectEditor {
       assert(e == null || e.srcVertexSet == vertexSet, s"Edge bundle does not match vertex set")
       assert(e == null || e.dstVertexSet == vertexSet, s"Edge bundle does not match vertex set")
       edgeAttributes = Map()
-      state = state.copy(edgeBundleGUID = e.gUID)
+      state = state.copy(edgeBundleGUID = Some(e.gUID))
       scalars("edge_count") = graph_operations.Count.run(e)
     } else {
-      state = state.copy(edgeBundleGUID = null)
+      state = state.copy(edgeBundleGUID = None)
       scalars("edge_count") = null
     }
   }
@@ -478,7 +481,7 @@ class RootProjectEditor(
 
   def lastOperationRequest = rootState.lastOperationRequest
   def lastOperationRequest_=(n: ProjectOperationRequest) =
-    rootState = rootState.copy(lastOperationRequest = n)
+    rootState = rootState.copy(lastOperationRequest = Option(n))
   def setLastOperationRequest(n: ProjectOperationRequest) = lastOperationRequest = n
 }
 
@@ -513,7 +516,7 @@ class SegmentationEditor(
 
   def belongsTo = viewer.belongsTo
   def belongsTo_=(e: EdgeBundle): Unit = {
-    segmentationState = segmentationState.copy(belongsToGUID = e.gUID)
+    segmentationState = segmentationState.copy(belongsToGUID = Some(e.gUID))
   }
 
   override protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
@@ -545,7 +548,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
     case "" => Seq()
-    case x => x.split(java.util.regex.Pattern.quote(ProjectFrame.separator), -1)
+    case x => x.split(ProjectFrame.quotedSeparator, -1)
   }
 
   private def checkpoints_=(cs: Seq[String]): Unit =
@@ -640,6 +643,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
 object ProjectFrame {
   val separator = "|"
+  val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
 
   def fromName(rootProjectName: String)(implicit metaManager: MetaGraphManager): ProjectFrame = {
     validateName(rootProjectName)
@@ -670,12 +674,12 @@ class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
 }
 object SubProject {
   def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
-    val nameElements = projectName.split(ProjectFrame.separator, -1)
+    val nameElements = projectName.split(ProjectFrame.quotedSeparator, -1)
     new SubProject(ProjectFrame.fromName(nameElements.head), nameElements.tail)
   }
 
   def fromSubPath(frame: ProjectFrame, path: String): SubProject = {
-    val nameElements = path.split(ProjectFrame.separator, -1)
+    val nameElements = path.split(ProjectFrame.quotedSeparator, -1)
     new SubProject(frame, nameElements)
   }
 }
