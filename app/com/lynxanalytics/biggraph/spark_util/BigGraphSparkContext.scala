@@ -192,12 +192,12 @@ object BigGraphSparkContext {
     }
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
     val sc = new spark.SparkContext(sparkConf)
-    sc.addSparkListener(new SparkListener(sc))
+    sc.addSparkListener(new BigGraphSparkListener(sc))
     sc
   }
 }
 
-class SparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
+class BigGraphSparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
   val MaxStageFailures = 4
   val stageFailures = collection.mutable.Map[Int, Int]()
 
