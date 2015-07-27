@@ -237,7 +237,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         p.writeACL = "*"
         p.readACL = "*"
     }
-    p.dodo(RootProjectState.emptyState(request.notes))
+    p.initialize
   }
 
   def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
@@ -249,6 +249,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
     val p = ProjectFrame.fromName(request.from)
     p.assertWriteAllowedFrom(user)
+    assertProjectNotExists(request.to)
     p.copy(ProjectFrame.fromName(request.to))
     p.remove()
   }
