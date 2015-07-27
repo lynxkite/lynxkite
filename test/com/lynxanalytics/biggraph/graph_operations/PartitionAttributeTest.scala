@@ -13,7 +13,7 @@ class PartitionAttributeTest extends FunSuite with TestGraphOp {
       op(op.vertices, g.vertices).result.role
     }
     val roles = roleAttr.rdd.collect.toMap
-    assert(roles == Map(0 -> "train", 1 -> "train", 2 -> "test", 3 -> "test"))
+    assert(roles == Map(0 -> "train", 1 -> "test", 2 -> "train", 3 -> "train"))
 
     val op = PartitionAttribute[Double]()
     val out = op(op.attr, g.age)(op.role, roleAttr).result

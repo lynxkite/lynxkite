@@ -22,7 +22,8 @@ popd > /dev/null
 
 
 export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
-export KITE_RANDOM_SECRET=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+export KITE_RANDOM_SECRET=$(python -c \
+  'import random, string; print "".join(random.choice(string.letters) for i in range(32))')
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
 export KITE_STAGE_DIR=${stage_dir}
 if [ -f ${KITE_SITE_CONFIG} ]; then
@@ -128,8 +129,12 @@ startKite () {
     >&2 echo "Kite is already running (or delete ${KITE_PID_FILE})"
     exit 1
   fi
+  if [ ! -d "${SPARK_HOME}" ]; then
+    >&2 echo "Spark cannot be found at ${SPARK_HOME}"
+    exit 1
+  fi
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
-  >&2 echo "Kite server successfully started."
+  >&2 echo "Kite server started (PID $!)."
 }
 
 stopByPIDFile () {
@@ -179,7 +184,7 @@ startWatchdog () {
           --script="$0 watchdog_restart" \
           --pid_file ${WATCHDOG_PID_FILE} \
           > ${log_dir}/watchdog.stdout.$$ 2> ${log_dir}/watchdog.stderr.$$ &
-      >&2 echo "Kite Watchdog successfully started."
+      >&2 echo "Kite Watchdog started (PID $!)."
   fi
 }
 

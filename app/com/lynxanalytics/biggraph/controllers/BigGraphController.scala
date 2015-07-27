@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
 
 import java.util.regex.Pattern
 import play.api.libs.json
@@ -80,6 +81,12 @@ case class FEAttribute(
   isNumeric: Boolean,
   isInternal: Boolean)
 
+case class FEProjectListElement(
+  name: String,
+  notes: String = "",
+  vertexCount: Option[FEAttribute], // Whether the project has vertices defined.
+  edgeCount: Option[FEAttribute]) // Whether the project has edges defined.
+
 case class FEProject(
   name: String,
   error: String = "", // If this is non-empty the project is broken and cannot be opened.
@@ -105,7 +112,7 @@ case class FESegmentation(
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
-case class Splash(version: String, projects: List[FEProject])
+case class Splash(version: String, projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
@@ -186,7 +193,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
-    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
+    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toListElementFE)
     return Splash(version, projects.toList)
   }
 
@@ -496,6 +503,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   protected def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
   protected def isNotSegmentation = FEStatus.assert(!project.isSegmentation,
     "This operation is not available with segmentations.")
+  protected def isSegmentation = FEStatus.assert(project.isSegmentation,
+    "This operation is only available for segmentations.")
   // All projects that the user has read access to.
   protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
     UIValue.list(Operation.projects

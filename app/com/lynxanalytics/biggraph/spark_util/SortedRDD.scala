@@ -26,7 +26,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object SortedRDD {
   // Creates a SortedRDD from an unsorted but partitioned RDD.
   def fromUnsorted[K: Ordering, V](rdd: RDD[(K, V)]): SortedRDD[K, V] = {
-    val arrayRDD = new SortedArrayRDD(rdd)
+    val arrayRDD = new SortedArrayRDD(rdd, needsSorting = true)
     new ArrayBackedSortedRDD(arrayRDD)
   }
 }
@@ -121,7 +121,7 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     s"$self was used to create a SortedRDD, but it wasn't partitioned")
   override def getPartitions: Array[Partition] = self.partitions
   override val partitioner = self.partitioner
-  override def compute(split: Partition, context: TaskContext) = self.compute(split, context)
+  override def compute(split: Partition, context: TaskContext) = self.iterator(split, context)
 
   // See comments at DerivedSortedRDD before blindly using this method!
   private def derive[R](derivation: DerivedSortedRDD.Derivation[K, V, R]) =
@@ -283,7 +283,7 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
 // the partition id. x._2 is an array of key-value pairs sorted by key. data is assumed to be
 // partitioned by a hash partitioner. A (k,v) in partition i of data will end up in the array in
 // partition i of this SortedArrayRDD.
-private[spark_util] class SortedArrayRDD[K: Ordering, V] private[spark_util] (data: RDD[(K, V)])
+private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], needsSorting: Boolean)
     extends RDD[(Int, Array[(K, V)])](data) {
 
   assert(
@@ -297,11 +297,33 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V] private[spark_util] (da
   override def getPartitions: Array[Partition] = data.partitions
   override val partitioner = data.partitioner
   override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
-    val it = data.compute(split, context)
+    val it = data.iterator(split, context)
     val array = it.toArray
-    Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
+    if (needsSorting) Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
     Iterator((split.index, array))
   }
+}
+
+// "Trust me, this RDD is partitioned with this partitioner."
+private[spark_util] class AlreadyPartitionedRDD[T: ClassTag](data: RDD[T], p: Partitioner)
+    extends RDD[T](data) {
+  assert(p.numPartitions == data.partitions.size, s"Mismatched partitioner: $p")
+  override val partitioner = Some(p)
+  override def getPartitions: Array[Partition] = data.partitions
+  override def compute(split: Partition, context: TaskContext): Iterator[T] = {
+    data.iterator(split, context)
+  }
+}
+
+// "Trust me, this RDD is already sorted."
+private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
+    extends SortedRDD[K, V](data) {
+  // Normal operations run on the iterators. Arrays are only created when necessary.
+  lazy val arrayRDD = new SortedArrayRDD(data, needsSorting = false)
+  def restrictToIdSet(ids: IndexedSeq[K]): SortedRDD[K, V] =
+    new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
+  def cacheBackingArray(): Unit =
+    arrayRDD.cache()
 }
 
 private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedArrayRDD[K, V])

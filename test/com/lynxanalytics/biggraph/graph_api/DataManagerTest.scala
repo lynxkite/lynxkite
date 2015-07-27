@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
+import org.apache.spark
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
@@ -50,13 +51,13 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
   test("We can reload a graph from disk without recomputing it") {
     val metaManager = cleanMetaManager
     val dataManager1 = cleanDataManager
-    val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
     val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
     val names = instance.outputs.attributes('name).runtimeSafeCast[String]
     val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
     val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
+    val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
     val data2 = dataManager2.get(names)
     val scalarData2 = dataManager2.get(greeting)
     assert(data1 ne data2)
@@ -127,10 +128,11 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     fakeSuccess(instancePath)
 
     // Check that we managed to fake.
-    assert(dataManager.isCalculated(barack))
+    val dataManager2 = new DataManager(sparkContext, dataManager.repositoryPath)
+    assert(dataManager2.isCalculated(barack))
 
     // And now we get the future for it, this should not stack overflow or anything evil.
-    dataManager.get(barack)
+    dataManager2.get(barack)
   }
 
   test("Failed operation can be retried") {
@@ -155,5 +157,46 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     // The result can be accessed now.
     assert(TestUtils.RDDToSortedString(
       dataManager.get(imported.stringID).rdd.values) == "1\n2")
+  }
+
+  test("We don't start too many spark jobs") {
+    implicit val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+
+    object CountingListener extends spark.scheduler.SparkListener {
+      var activeStages = 0
+      var maxActiveStages = 0
+      override def onStageCompleted(
+        stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
+
+        activeStages -= 1
+      }
+
+      override def onStageSubmitted(
+        stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
+
+        activeStages += 1
+        if (activeStages > maxActiveStages) {
+          maxActiveStages = activeStages
+        }
+      }
+    }
+
+    dataManager.runtimeContext.sparkContext.addSparkListener(CountingListener)
+
+    import Scripting._
+    import scala.concurrent._
+    import scala.concurrent.duration._
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val futureSeq = (0 until (DataManager.maxParallelSparkStages * 2)).map { i =>
+      val vs = graph_operations.CreateVertexSet(i + 100)().result.vs
+      val count = graph_operations.Count.run(vs)
+      dataManager.getFuture(count)
+    }
+
+    val allDone = Future.sequence(futureSeq)
+    Await.ready(allDone, Duration(10, SECONDS))
+    assert(CountingListener.maxActiveStages == DataManager.maxParallelSparkStages)
   }
 }

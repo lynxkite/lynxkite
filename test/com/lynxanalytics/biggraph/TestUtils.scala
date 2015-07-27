@@ -50,8 +50,8 @@ private object SparkContextContainer {
   lazy val sparkContext = BigGraphSparkContext(
     "BigGraphTests",
     useJars = false,
-    debugKryo = false,
-    master = "local") // Set this to true if you are debugging kryo issues.
+    debugKryo = false, // Set this to true if you are debugging kryo issues.
+    master = "local")
 }
 
 trait TestSparkContext {

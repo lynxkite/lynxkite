@@ -359,6 +359,14 @@ object Implicits {
   }
 
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
+    // Trust that this RDD is partitioned and sorted. Make sure it uses the given partitioner.
+    def asSortedRDD(partitioner: spark.Partitioner)(
+      implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      assert(self.partitions.size == partitioner.numPartitions,
+        s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
+          s" to RDD of size ${self.partitions.size}: $self")
+      new AlreadySortedRDD(new AlreadyPartitionedRDD(self, partitioner))
+    }
     // Sorts each partition of the RDD in isolation.
     def toSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
       toSortedRDD(self.partitioner.get)
