@@ -194,7 +194,7 @@ case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
     val ordering = new ComputeTopValues.PairOrdering[T]
     val attribute = inputs.attribute.rdd
     val sampled =
-      if (sampleSize > 0) attribute.partialRDD(rc).takeFirstNValuesOrSo(sampleSize)
+      if (sampleSize > 0) attribute.coalesce(rc).takeFirstNValuesOrSo(sampleSize)
       else attribute
     output(o.topValues,
       sampled
