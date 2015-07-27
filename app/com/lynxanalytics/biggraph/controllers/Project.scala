@@ -32,23 +32,25 @@ case class CommonProjectState(
   segmentations: Map[String, SegmentationState],
   notes: String)
 object CommonProjectState {
-  def emptyState(notes: String) = CommonProjectState(None, Map(), None, Map(), Map(), Map(), notes)
+  def emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "")
 }
 
 case class RootProjectState(
-  state: CommonProjectState,
-  lastOperationDesc: String,
-  lastOperationRequest: Option[SubProjectOperation])
+    state: CommonProjectState,
+    previousCheckpoint: Option[String],
+    lastOperationDesc: String,
+    lastOperationRequest: Option[SubProjectOperation]) {
+}
 
 object RootProjectState {
-  def emptyState(notes: String) = RootProjectState(CommonProjectState.emptyState(notes), "", None)
+  def emptyState = RootProjectState(CommonProjectState.emptyState, None, "", None)
 }
 
 case class SegmentationState(
   state: CommonProjectState,
   belongsToGUID: Option[UUID])
 object SegmentationState {
-  def emptyState(notes: String) = SegmentationState(CommonProjectState.emptyState(notes), None)
+  def emptyState = SegmentationState(CommonProjectState.emptyState, None)
 }
 
 sealed trait ProjectViewer {
@@ -223,8 +225,9 @@ object ProjectStateRepository {
   private def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
   private def jsonToCommonProjectState(j: json.JsValue): CommonProjectState =
     j.as[CommonProjectState]
-}
 
+  val startingState = RootProjectState.emptyState
+}
 class ProjectStateRepository(val baseDir: String) {
   import ProjectStateRepository.fRootProjectState
 
@@ -247,8 +250,12 @@ class ProjectStateRepository(val baseDir: String) {
   }
 
   def readCheckpoint(checkpoint: String): RootProjectState = {
-    Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
-      .as[RootProjectState]
+    if (checkpoint == "") {
+      ProjectStateRepository.startingState
+    } else {
+      Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
+        .as[RootProjectState]
+    }
   }
 }
 
@@ -495,7 +502,7 @@ class SegmentationEditor(
     val oldSegs = parent.state.segmentations
     if (!oldSegs.contains(segmentationName)) {
       parent.state = parent.state.copy(
-        segmentations = oldSegs + (segmentationName -> SegmentationState.emptyState("")))
+        segmentations = oldSegs + (segmentationName -> SegmentationState.emptyState))
     }
   }
 
@@ -546,7 +553,23 @@ class ProjectFrame(val projectPath: SymbolPath)(
   assert(!projectName.contains(ProjectFrame.separator), s"Invalid project name: $projectName")
   val rootDir: SymbolPath = SymbolPath("projects") / projectPath
 
-  private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
+  // Current checkpoint of the project
+  private def checkpoint: String = get(rootDir / "checkpoint")
+  private def checkpoint_=(x: String): Unit = set(rootDir / "checkpoint", x)
+
+  // The farthest checkpoint available in the current redo sequence
+  private def farthestCheckpoint: String = get(rootDir / "farthestCheckpoint")
+  private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "farthestCheckpoint", x)
+
+  // The next checkpoint in the current redo sequence if a redo is available
+  private def nextCheckpoint: Option[String] = get(rootDir / "nextCheckpoint") match {
+    case "" => None
+    case x => Some(x)
+  }
+  private def nextCheckpoint_=(x: Option[String]): Unit =
+    set(rootDir / "nextCheckpoint", x.getOrElse(""))
+
+  /*private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
     case "" => Seq()
     case x => x.split(ProjectFrame.quotedSeparator, -1)
   }
@@ -559,39 +582,45 @@ class ProjectFrame(val projectPath: SymbolPath)(
   }
   private def checkpointIndex_=(x: Int): Unit =
     set(rootDir / "checkpointIndex", x.toString)
-  def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0
+  def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0*/
 
-  def exists = checkpointCount > 0
+  def exists = manager.tagExists(rootDir)
 
   def undo(): Unit = manager.synchronized {
-    assert(checkpointIndex > 0, s"Already at checkpoint $checkpointIndex.")
-    checkpointIndex -= 1
+    nextCheckpoint = Some(checkpoint)
+    val state = currentState
+    checkpoint = currentState.previousCheckpoint.get
   }
   def redo(): Unit = manager.synchronized {
-    assert(checkpointIndex < checkpoints.size - 1,
-      s"Already at checkpoint $checkpointIndex of ${checkpoints.size}.")
-    checkpointIndex += 1
+    val next = nextCheckpoint.get
+    checkpoint = next
+    lazy val reverseCheckpoints: Stream[String] = farthestCheckpoint #:: reverseCheckpoints.map {
+      next => checkpointState(next).previousCheckpoint.get
+    }
+    nextCheckpoint = reverseCheckpoints.takeWhile(_ != next).lastOption
   }
 
   def dodo(newState: RootProjectState): Unit = manager.synchronized {
-    val nextIndex = checkpointCount
-    val checkpoint = manager.stateRepo.newCheckpoint(newState)
-    checkpoints = checkpoints.take(nextIndex) :+ checkpoint
-    checkpointIndex = nextIndex
+    checkpoint = manager.stateRepo.newCheckpoint(
+      newState.copy(previousCheckpoint = Some(checkpoint)))
+    farthestCheckpoint = checkpoint
+    nextCheckpoint = None
   }
 
-  def checkpointState(idx: Int): RootProjectState =
-    manager.stateRepo.readCheckpoint(checkpoints(idx))
+  def initialize: Unit = manager.synchronized {
+    checkpoint = ""
+    nextCheckpoint = None
+    farthestCheckpoint = ""
+  }
 
-  def currentState: RootProjectState = checkpointState(checkpointIndex)
+  def checkpointState(checkpoint: String): RootProjectState =
+    manager.stateRepo.readCheckpoint(checkpoint)
 
-  // The state we'd reach with a redo or None if no redo is available.
-  def nextState: Option[RootProjectState] =
-    if (checkpointIndex < checkpoints.size - 1) Some(checkpointState(checkpointIndex + 1))
-    else None
+  def currentState: RootProjectState = checkpointState(checkpoint)
+
+  def nextState: Option[RootProjectState] = nextCheckpoint.map(checkpointState(_))
 
   def viewer = new RootProjectViewer(currentState)
-  def checkpointViewer(idx: Int) = new RootProjectViewer(checkpointState(idx))
 
   def toListElementFE = viewer.toListElementFE(projectName)
 
@@ -599,7 +628,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
     if (manager.tagExists(tag)) Some(tag) else None
   private def set(tag: SymbolPath, content: String): Unit = manager.setTag(tag, content)
   private def get(tag: SymbolPath): String = manager.synchronized {
-    existing(tag).map(manager.getTag(_)).getOrElse("")
+    existing(tag).map(manager.getTag(_)).get
   }
 
   def readACL: String = get(rootDir / "readACL")
@@ -642,6 +671,8 @@ class ProjectFrame(val projectPath: SymbolPath)(
 }
 
 object ProjectFrame {
+  val x: Stream[Int] = 0 #:: x.map(_ + 1)
+
   val separator = "|"
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
 

@@ -104,8 +104,10 @@ For example:
             // Create project if doesn't yet exist.
             project.writeACL = user.email
             project.readACL = user.email
-            project.dodo(RootProjectState.emptyState(
-              s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
+            project.initialize
+            /// !!!! add note
+            ///project.dodo(RootProjectState.emptyState(
+            //  s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
           }
 
           val context = Operation.Context(user, project.viewer)
