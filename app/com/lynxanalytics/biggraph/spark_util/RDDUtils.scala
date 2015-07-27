@@ -119,8 +119,8 @@ object RDDUtils {
     rc: RuntimeContext): IDBuckets[T] = {
 
     import Implicits._
-    val dataUsed = data.partialRDD(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
-    val withCounts = unfilteredCounts(fullRDD.partialRDD(rc), dataUsed)
+    val dataUsed = data.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
+    val withCounts = unfilteredCounts(fullRDD.coalesce(rc), dataUsed)
     val (valueBuckets, unfilteredCount, filteredCount) = withCounts
       .aggregate((
         new IDBuckets[T]() /* observed value counts */ ,
@@ -163,8 +163,8 @@ object RDDUtils {
 
     import Implicits._
     val dataUsed =
-      data.sortedJoin(weightsRDD).partialRDD(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
-    val withWeightsAndCounts = unfilteredCounts(fullRDD.partialRDD(rc), dataUsed)
+      data.sortedJoin(weightsRDD).coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
+    val withWeightsAndCounts = unfilteredCounts(fullRDD.coalesce(rc), dataUsed)
     val (valueWeights, unfilteredCount, filteredCount) = withWeightsAndCounts
       .values
       .aggregate((
@@ -341,8 +341,8 @@ object Implicits {
     }
 
     // Returns an RDD that only contains as many partitions as there are available cores.
-    def partialRDD(rc: RuntimeContext): RDD[T] =
-      new PartialRDD(self, rc.numAvailableCores)
+    def coalesce(rc: RuntimeContext): RDD[T] =
+      self.coalesce(rc.numAvailableCores)
 
     // Take a sample of approximately the given size.
     def takeFirstNValuesOrSo(n: Int): RDD[T] = {
@@ -389,11 +389,4 @@ object Implicits {
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(implicit ck: ClassTag[K], cv: ClassTag[V]) =
       SortedRDD.fromUnsorted(self.reduceByKey(partitioner, f))
   }
-}
-
-// An RDD that only has a subset of the partitions from the original RDD.
-private[spark_util] class PartialRDD[T: ClassTag](rdd: RDD[T], n: Int) extends RDD[T](rdd) {
-  def getPartitions: Array[spark.Partition] = rdd.partitions.take(n)
-  override val partitioner = None
-  def compute(split: spark.Partition, context: spark.TaskContext) = rdd.compute(split, context)
 }

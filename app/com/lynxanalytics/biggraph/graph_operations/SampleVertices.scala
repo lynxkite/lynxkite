@@ -25,7 +25,7 @@ case class SampleVertices(n: Int) extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
 
     val vs = inputs.vs.rdd
-    val sampleOrSo = vs.partialRDD(rc).takeFirstNValuesOrSo(n * 2).collect.map(_._1)
+    val sampleOrSo = vs.coalesce(rc).takeFirstNValuesOrSo(n * 2).collect.map(_._1)
     val sizeOrSo = sampleOrSo.size
     val sample = {
       if (sizeOrSo >= n) sampleOrSo.take(n)
