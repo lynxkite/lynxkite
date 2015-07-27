@@ -32,7 +32,8 @@ object JsonMigration {
   val current = new JsonMigration
 
   // Replaces fields in a JsObject.
-  def replaceJson(j: json.JsObject, replacements: (String, json.JsValue)*): json.JsObject = {
+  def replaceJson(jv: json.JsValue, replacements: (String, json.JsValue)*): json.JsObject = {
+    val j = jv.as[json.JsObject] // For more convenient invocation.
     val oldValues = j.fields.toMap
     val newValues = replacements.toMap
     new json.JsObject((oldValues ++ newValues).toSeq.sortBy(_._1))
@@ -41,19 +42,27 @@ object JsonMigration {
 import JsonMigration._
 class JsonMigration {
   val version: VersionMap = Map(
-    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
     "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
   val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
-    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets", 0) -> {
       j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
     },
+    ("com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar", 0) -> {
+      j =>
+        val default = json.JsString("neutral")
+        val animate = JsonMigration.replaceJson(j \ "value" \ "animate", "style" -> default)
+        val value = JsonMigration.replaceJson(j \ "value", "animate" -> animate)
+        JsonMigration.replaceJson(j, "value" -> value)
+    },
+    ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity)
 }
 

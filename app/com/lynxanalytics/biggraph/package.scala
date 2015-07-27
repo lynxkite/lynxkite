@@ -2,11 +2,12 @@
 package com.lynxanalytics
 
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
+import ch.qos.logback.classic.LoggerContext
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
 package object biggraph {
-  val bigGraphLogger = LoggerFactory.getLogger("BigGraph backend")
+  val bigGraphLogger = LoggerFactory.getLogger("LynxKite")
 
   // Initialize reflection to avoid thread-safety issues
   // TODO: ditch this when we get to Scala 2.11
@@ -42,6 +43,12 @@ package object biggraph {
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
 
+    // Make sure play and spark logs contain the proper context.
+    val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
+    val frameworkPackages = ctx.getFrameworkPackages
+    frameworkPackages.add("play.api.Logger")
+    frameworkPackages.add("org.apache.spark.Logging")
+
     val repoDirs =
       scala.util.Properties.envOrElse("REPOSITORY_MODE", "local_random") match {
         case staticRepoPattern(bigGraphDir, graphDataDir) =>
@@ -57,11 +64,11 @@ package object biggraph {
           val repositoryDirs = repoDirs
         }
       case standingGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", true) with StaticDirEnvironment {
+        new spark_util.GCEManagedCluster(clusterName, "LynxKite", true) with StaticDirEnvironment {
           val repositoryDirs = repoDirs
         }
       case newGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "BigGraphServer", false) with StaticDirEnvironment {
+        new spark_util.GCEManagedCluster(clusterName, "LynxKite", false) with StaticDirEnvironment {
           val repositoryDirs = repoDirs
         }
     }

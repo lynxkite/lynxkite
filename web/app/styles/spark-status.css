@@ -1,7 +1,11 @@
+.project-sides {
+  padding-bottom: 60px; /* Make sure the status does not hide anything. */
+}
+
 .spark-status {
   position: fixed;
-  bottom: 0;
-  right: 50px;
+  bottom: 5px;
+  right: 5px;
 }
 
 .spark-status .spinner {
@@ -17,4 +21,23 @@
 }
 .spark-status:hover .kill {
   opacity: 0.5;
+}
+
+.spark-status-stages {
+  position: relative;
+  width: 200px;
+  height: 20px;
+}
+
+.spark-status-stage {
+  width: 21px; /* Overlap borders. */
+  height: 20px;
+  position: absolute;
+  transition: height 0.5s ease, background-color 1s, opacity 1s, right 0.1s ease;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+.spark-status-stage.failed {
+  border-color: red;
 }

@@ -1,4 +1,17 @@
-<div class="spark-status" ng-show="status.activeStages.length > 0">
-  <span class="glyphicon glyphicon-cog spinner" tooltip="Calculating..."></span>
-  <span class="glyphicon glyphicon-remove kill" tooltip="Stop&nbsp;calculation" ng-click="kill()"></span>
+<div class="spark-status">
+  <div ng-show="status.activeStages.length > 0" class="text-right">
+    <span class="glyphicon glyphicon-cog spinner" tooltip="{{ message(status) }}"></span>
+    <span class="glyphicon glyphicon-remove kill" tooltip="Stop&nbsp;calculation" ng-click="kill()"></span>
+  </div>
+  <div class="spark-status-stages">
+    <div class="spark-status-stage" ng-repeat="stage in stages(status) track by stage.id"
+      ng-class="{ failed: stage.failed }"
+      ng-style="{
+        right: $index * 20,
+        height: height(stage),
+        'background-color': hashToColor(stage.active, stage.hash),
+        opacity: $index < 9 ? 1 : 0,
+      }">
+    </div>
+  </div>
 </div>
