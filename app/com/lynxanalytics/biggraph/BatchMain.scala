@@ -121,7 +121,7 @@ For example:
           val opRepo = new Operations(env)
 
           for (step <- WorkflowOperation.workflowSteps(opJson, params, context)) {
-            val sp = SubProject.fromSubPath(project, step.project)
+            val sp = SubProject(project, step.path)
             val context = Operation.Context(user, sp.viewer)
             val op = opRepo.opById(context, step.op.id)
             op.validateAndApply(step.op.parameters)

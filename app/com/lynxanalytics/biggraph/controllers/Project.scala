@@ -38,7 +38,7 @@ object CommonProjectState {
 case class RootProjectState(
   state: CommonProjectState,
   lastOperationDesc: String,
-  lastOperationRequest: Option[ProjectOperationRequest])
+  lastOperationRequest: Option[SubProjectOperation])
 
 object RootProjectState {
   def emptyState(notes: String) = RootProjectState(CommonProjectState.emptyState(notes), "", None)
@@ -203,7 +203,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 
 object ProjectStateRepository {
   implicit val fFEOperationSpec = Json.format[FEOperationSpec]
-  implicit val fProjectOperationRequest = Json.format[ProjectOperationRequest]
+  implicit val fSubProjectOperation = Json.format[SubProjectOperation]
 
   // We need to define this manually because of the cyclic reference.
   implicit val fSegmentationState = new json.Format[SegmentationState] {
@@ -459,7 +459,7 @@ sealed trait ProjectEditor {
   }
 
   def setLastOperationDesc(n: String): Unit
-  def setLastOperationRequest(n: ProjectOperationRequest): Unit
+  def setLastOperationRequest(n: SubProjectOperation): Unit
 }
 
 class RootProjectEditor(
@@ -480,9 +480,9 @@ class RootProjectEditor(
   def setLastOperationDesc(n: String) = lastOperationDesc = n
 
   def lastOperationRequest = rootState.lastOperationRequest
-  def lastOperationRequest_=(n: ProjectOperationRequest) =
+  def lastOperationRequest_=(n: SubProjectOperation) =
     rootState = rootState.copy(lastOperationRequest = Option(n))
-  def setLastOperationRequest(n: ProjectOperationRequest) = lastOperationRequest = n
+  def setLastOperationRequest(n: SubProjectOperation) = lastOperationRequest = n
 }
 
 class SegmentationEditor(
@@ -530,8 +530,8 @@ class SegmentationEditor(
   def setLastOperationDesc(n: String) =
     parent.setLastOperationDesc(s"$n on $segmentationName")
 
-  def setLastOperationRequest(n: ProjectOperationRequest) =
-    parent.setLastOperationRequest(n.copy(project = s"${segmentationState}|${n.project}"))
+  def setLastOperationRequest(n: SubProjectOperation) =
+    parent.setLastOperationRequest(n.copy(path = segmentationName +: n.path))
 }
 
 class ProjectFrame(val projectPath: SymbolPath)(
@@ -658,7 +658,7 @@ object ProjectFrame {
   }
 }
 
-class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
+case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
   def fullName = (frame.projectName +: path).mkString(ProjectFrame.separator)
   def toFE: FEProject = {
@@ -676,11 +676,6 @@ object SubProject {
   def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
     val nameElements = projectName.split(ProjectFrame.quotedSeparator, -1)
     new SubProject(ProjectFrame.fromName(nameElements.head), nameElements.tail)
-  }
-
-  def fromSubPath(frame: ProjectFrame, path: String): SubProject = {
-    val nameElements = path.split(ProjectFrame.quotedSeparator, -1)
-    new SubProject(frame, nameElements)
   }
 }
 

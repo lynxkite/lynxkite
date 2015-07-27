@@ -119,7 +119,17 @@ case class OperationCategory(
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class DiscardProjectRequest(name: String)
+
+// A request for the execution of a FE operation on a specific project. The project might be
+// a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
+// project. In this case, the project parameter has the format:
+// rootProjectName|childSegmentationName|grandChildSegmentationName|...
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
+// Represents an operation executed on a subproject. It is only meaningful in the context of
+// a root project. path specifies the offspring project in question, e.g. it could be sg like:
+// Seq(childSegmentationName, grandChildSegmentationName, ...)
+case class SubProjectOperation(path: Seq[String], op: FEOperationSpec)
+
 case class ProjectAttributeFilter(attributeName: String, valueSpec: String)
 case class ProjectFilterRequest(
   project: String,
@@ -135,7 +145,7 @@ case class HistoryRequest(project: String)
 case class AlternateHistory(
   project: String,
   skips: Int, // Number of unmodified operations.
-  requests: List[ProjectOperationRequest])
+  requests: List[SubProjectOperation])
 case class SaveHistoryRequest(
   newProject: String,
   history: AlternateHistory)
@@ -145,7 +155,7 @@ case class ProjectHistory(
   def valid = steps.forall(step => step.hasCheckpoint || step.status.enabled)
 }
 case class ProjectHistoryStep(
-  request: ProjectOperationRequest,
+  request: SubProjectOperation,
   status: FEStatus,
   segmentationsBefore: List[FESegmentation],
   segmentationsAfter: List[FESegmentation],
@@ -154,10 +164,9 @@ case class ProjectHistoryStep(
 
 case class SaveWorkflowRequest(
   workflowName: String,
-  // This may contain parameter references in the format ${param-name}. There is a special
-  // reference, ${!project} which is automatically replaced with the project name the workflow
-  // should run on. After parameter substitution we parse the string as a JSON form of
-  // List[ProjectOperationRequest] and then we try to apply these operations in sequence.
+  // This may contain parameter references in the format ${param-name}. After parameter
+  // substitution we parse the string as a JSON form of List[SubProjectOperation] and then we try
+  // to apply these operations in sequence.
   stepsAsJSON: String,
   description: String)
 
@@ -298,8 +307,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.writeACL = request.writeACL
   }
 
-  def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = ???
-  /*    val p = ProjectFrame.fromName(request.project)
+  def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = ??? /*
+    val p = ProjectFrame.fromName(request.project)
     p.assertReadAllowedFrom(user)
     assert(p.checkpointCount > 0, s"No history for $p.")
     validateHistory(user, AlternateHistory(request.project, p.checkpointCount, List()))
@@ -346,7 +355,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   private def historyStep(
     user: serving.User,
     state: Project,
-    request: ProjectOperationRequest,
+    request: SubProjectOperation,
     nextCheckpoint: Option[Project] = None): Option[ProjectHistoryStep] = {
     val op = ops.operationOnSubproject(state, request, user)
     val recipient = op.project
@@ -469,7 +478,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     validateParameters(params)
     apply(params)
     project.setLastOperationDesc(summary(params))
-    project.setLastOperationRequest(ProjectOperationRequest("", FEOperationSpec(id, params)))
+    project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
   }
 
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
@@ -544,9 +553,9 @@ object WorkflowOperation {
   val deprecatedCategory = Operation.Category("Deprecated User Defined Workflows", "red")
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
-  implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
-  private def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
-    json.Json.parse(stepsAsJSON).as[List[ProjectOperationRequest]]
+  implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
+  private def stepsFromJSON(stepsAsJSON: String): List[SubProjectOperation] = {
+    json.Json.parse(stepsAsJSON).as[List[SubProjectOperation]]
   }
   def substituteUserParameters(jsonTemplate: String, parameters: Map[String, String]): String = {
     var completeJSON = jsonTemplate
@@ -571,7 +580,7 @@ object WorkflowOperation {
   def workflowSteps(
     jsonTemplate: String,
     parameters: Map[String, String],
-    context: Operation.Context): List[ProjectOperationRequest] = {
+    context: Operation.Context): List[SubProjectOperation] = {
 
     stepsFromJSON(substituteJSONParameters(jsonTemplate, parameters, context))
   }
