@@ -6,12 +6,9 @@ import java.io.FileInputStream
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 
 object HelpInventory extends App {
-  import scala.io.Source
-  val hiddenOps = Source.fromFile(args(1)).getLines
-    .map { _.toLowerCase }.toSet
-  println(hiddenOps)
+  val hiddenOps = Set("enhanced-example-graph")
   val ops = new Operations(null)
-  val fos = new java.io.FileOutputStream(args(0))
+  val fos = new java.io.FileOutputStream(args.head)
   for (op <- ops.operationIds.map(_.toLowerCase).sorted) {
     if (!hiddenOps.contains(op)) {
       fos.write(op.getBytes)
