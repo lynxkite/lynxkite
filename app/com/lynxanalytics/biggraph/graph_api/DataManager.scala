@@ -22,6 +22,7 @@ object DataManager {
   val scalarDir = "scalars"
   val entityDir = "entities"
   val operationDir = "operations"
+  val deletedSfx = ".deleted"
 }
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
@@ -63,14 +64,14 @@ class DataManager(sc: spark.SparkContext,
   // list of directories instead. The results are thus somewhat optimistic.
   val possiblySavedInstances: Set[UUID] = {
     val instances = (repositoryPath / DataManager.operationDir / "*").list
-      .filterNot(f => f.path.toString contains ".deleted")
+      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
     instances.map(_.path.getName.asUUID).toSet
   }
   val possiblySavedEntities: Set[UUID] = {
     val scalars = (repositoryPath / DataManager.scalarDir / "*").list
-      .filterNot(f => f.path.toString contains ".deleted")
+      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
     val entities = (repositoryPath / DataManager.entityDir / "*").list
-      .filterNot(f => f.path.toString contains ".deleted")
+      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
     (scalars ++ entities).map(_.path.getName.asUUID).toSet
   }
 
