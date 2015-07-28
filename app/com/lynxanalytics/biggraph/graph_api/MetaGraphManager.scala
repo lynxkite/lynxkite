@@ -135,8 +135,8 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
 
-  def getEntities(): mutable.Map[UUID, MetaGraphEntity] = {
-    entities
+  def getEntities(): immutable.Map[UUID, MetaGraphEntity] = {
+    entities.toMap
   }
 
   // All tagRoot access must be synchronized on this MetaGraphManager object.

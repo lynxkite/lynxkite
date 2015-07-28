@@ -219,9 +219,9 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
-  implicit val rDeletionRequest = json.Json.reads[MarkDeletedRequest]
-  implicit val wDeletionMethod = json.Json.writes[DataFilesDesc]
-  implicit val wDeletableFilesStatus = json.Json.writes[DataFilesStatus]
+  implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]
+  implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
+  implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
 
   // File upload.
   def upload = {

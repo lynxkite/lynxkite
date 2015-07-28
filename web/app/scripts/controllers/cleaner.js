@@ -10,11 +10,7 @@ angular.module('biggraph')
         .post('/ajax/markFilesDeleted', {
           method: $scope.selectedMethod,
         }).$status.then(function() {
-          $scope.list = util.nocache('/ajax/getCleaner');
+          $scope.methods = util.nocache('/ajax/getCleaner');
         });
-    };
-
-    $scope.reportListError = function() {
-      util.reportRequestError($scope.list, 'Cleaner cannot be loaded.');
     };
   });
