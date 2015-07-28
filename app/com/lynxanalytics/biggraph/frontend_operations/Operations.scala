@@ -2240,8 +2240,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     def apply(params: Map[String, String]) = {
       import UIStatusSerialization._
-      val uiStatusJson = json.Json.parse(params("uiStatusJson"))
-      val uiStatus = json.Json.fromJson[UIStatus](uiStatusJson).get
+      val j = json.Json.parse(params("uiStatusJson"))
+      val uiStatus = j.as[UIStatus]
       project.scalars(params("scalarName")) =
         graph_operations.CreateUIStatusScalar(uiStatus).result.created
     }
