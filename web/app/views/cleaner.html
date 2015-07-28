@@ -6,32 +6,16 @@
       <tr><th>Method</th><th>Number of files</th><th>Size of files</th><th/></tr>
       <tr>
         <td>Total files</td>
-        <td>{{ methods.total.fileNumber }}</td>
-        <td>{{ methods.total.totalSize }}</td>
+        <td>{{ fileStatus.total.fileNumber }}</td>
+        <td>{{ fileStatus.total.totalSize }}</td>
         <td/>
       </tr>
-      <tr>
-        <td>Does not exist in metagraph</td>
-        <td>{{ methods.existsInMetaGraph.fileNumber }}</td>
-        <td>{{ methods.existsInMetaGraph.totalSize }}</td>
+      <tr ng-repeat="method in fileStatus.methods">
+        <td>{{ method.name }}</td>
+        <td>{{ method.fileNumber }}</td>
+        <td>{{ method.totalSize }}</td>
         <td>
-          <input name="method" type="radio" ng-model="selectedMethod" value="existInMetaGraph"/>
-        </td>
-      </tr>
-      <tr>
-        <td>Not referred from project</td>
-        <td>{{ methods.referredFromProject.fileNumber }}</td>
-        <td>{{ methods.referredFromProject.totalSize }}</td>
-        <td>
-          <input name="method" type="radio" ng-model="selectedMethod" value="notReferredFromProject"/>
-        </td>
-      </tr>
-      <tr>
-        <td>Transitively not referred from project</td>
-        <td>{{ methods.transitivelyReferredFromProject.fileNumber }}</td>
-        <td>{{ methods.transitivelyReferredFromProject.totalSize }}</td>
-        <td>
-          <input name="method" type="radio" ng-model="selectedMethod" value="transitivelyNotReferredFromProject"/>
+          <input name="selectedMethod" type="radio" ng-model="$parent.selectedMethod" value="{{ method.id }}"/>
         </td>
       </tr>
     </table>
