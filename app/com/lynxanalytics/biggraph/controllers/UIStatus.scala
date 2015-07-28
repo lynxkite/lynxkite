@@ -10,9 +10,11 @@ import play.api.libs.json
 case class UIFilterStatus(
   vertex: Map[String, String],
   edge: Map[String, String])
+case class UIAttributeAxisOptions(
+  logarithmic: Boolean)
 case class UIAxisOptions(
-  vertex: Map[String, String],
-  edge: Map[String, String])
+  vertex: Map[String, UIAttributeAxisOptions],
+  edge: Map[String, UIAttributeAxisOptions])
 case class UIAnimation(
   enabled: Boolean,
   style: String,
@@ -38,17 +40,12 @@ case class UIStatus(
   // so that we can redo the getCenter request.
   lastCentersRequest: Option[UICenterRequest])
 object UIStatusSerialization {
-  implicit val rUIFilterStatus = json.Json.reads[UIFilterStatus]
-  implicit val rUIAxisOptions = json.Json.reads[UIAxisOptions]
-  implicit val rUIAnimation = json.Json.reads[UIAnimation]
-  implicit val rUIAttributeFilter = json.Json.reads[UIAttributeFilter]
-  implicit val rUICenterRequest = json.Json.reads[UICenterRequest]
-  implicit val rUIStatus = json.Json.reads[UIStatus]
-  implicit val wUIFilterStatus = json.Json.writes[UIFilterStatus]
-  implicit val wUIAxisOptions = json.Json.writes[UIAxisOptions]
-  implicit val wUIAnimation = json.Json.writes[UIAnimation]
-  implicit val wUIAttributeFilter = json.Json.writes[UIAttributeFilter]
-  implicit val wUICenterRequest = json.Json.writes[UICenterRequest]
-  implicit val wUIStatus = json.Json.writes[UIStatus]
+  implicit val fUIFilterStatus = json.Json.format[UIFilterStatus]
+  implicit val fUIAttributeAxisOptions = json.Json.format[UIAttributeAxisOptions]
+  implicit val fUIAxisOptions = json.Json.format[UIAxisOptions]
+  implicit val fUIAnimation = json.Json.format[UIAnimation]
+  implicit val fUIAttributeFilter = json.Json.format[UIAttributeFilter]
+  implicit val fUICenterRequest = json.Json.format[UICenterRequest]
+  implicit val fUIStatus = json.Json.format[UIStatus]
 }
 
