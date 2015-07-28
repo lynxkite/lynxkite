@@ -19,6 +19,9 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object DataManager {
   val maxParallelSparkStages =
     scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
+  val scalarDir = "scalars"
+  val entityDir = "entities"
+  val operationDir = "operations"
 }
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
@@ -46,28 +49,28 @@ class DataManager(sc: spark.SparkContext,
   var computationAllowed = true
 
   private def instancePath(instance: MetaGraphOperationInstance) =
-    repositoryPath / "operations" / instance.gUID.toString
+    repositoryPath / DataManager.operationDir / instance.gUID.toString
 
   private def entityPath(entity: MetaGraphEntity) = {
     if (entity.isInstanceOf[Scalar[_]]) {
-      repositoryPath / "scalars" / entity.gUID.toString
+      repositoryPath / DataManager.scalarDir / entity.gUID.toString
     } else {
-      repositoryPath / "entities" / entity.gUID.toString
+      repositoryPath / DataManager.entityDir / entity.gUID.toString
     }
   }
 
   // Things saved during previous runs. Checking for the _SUCCESS files is slow so we use the
   // list of directories instead. The results are thus somewhat optimistic.
   val possiblySavedInstances: Set[UUID] = {
-    val instances = (repositoryPath / "operations" / "*").list
-      .filter(f => !(f.path.toString contains ".deleted"))
+    val instances = (repositoryPath / DataManager.operationDir / "*").list
+      .filterNot(f => f.path.toString contains ".deleted")
     instances.map(_.path.getName.asUUID).toSet
   }
   val possiblySavedEntities: Set[UUID] = {
-    val scalars = (repositoryPath / "scalars" / "*").list
-      .filter(f => !(f.path.toString contains ".deleted"))
-    val entities = (repositoryPath / "entities" / "*").list
-      .filter(f => !(f.path.toString contains ".deleted"))
+    val scalars = (repositoryPath / DataManager.scalarDir / "*").list
+      .filterNot(f => f.path.toString contains ".deleted")
+    val entities = (repositoryPath / DataManager.entityDir / "*").list
+      .filterNot(f => f.path.toString contains ".deleted")
     (scalars ++ entities).map(_.path.getName.asUUID).toSet
   }
 
