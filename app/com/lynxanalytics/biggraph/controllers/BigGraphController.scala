@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
 
 import java.util.regex.Pattern
 import play.api.libs.json

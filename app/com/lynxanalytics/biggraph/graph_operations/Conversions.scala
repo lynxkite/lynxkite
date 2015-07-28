@@ -19,8 +19,18 @@ case class DynamicValue(
 object DynamicValue {
   val df = new java.text.DecimalFormat("#.#####")
   def converter[T: TypeTag]: (T => DynamicValue) = {
-    if (typeOf[T] =:= typeOf[Double]) value =>
-      DynamicValue(double = Some(value.asInstanceOf[Double]), string = df.format(value))
+    if (typeOf[T] =:= typeOf[Double]) value => {
+      val doubleValue = value.asInstanceOf[Double]
+      if (doubleValue.isNaN) {
+        DynamicValue(string = "undefined")
+      } else if (doubleValue.isPosInfinity) {
+        DynamicValue(string = "positive infinity")
+      } else if (doubleValue.isNegInfinity) {
+        DynamicValue(string = "negative infinity")
+      } else {
+        DynamicValue(double = Some(doubleValue), string = df.format(value))
+      }
+    }
     else if (typeOf[T] =:= typeOf[Long]) value =>
       DynamicValue(
         double = Some(value.asInstanceOf[Long].toDouble), string = value.toString)

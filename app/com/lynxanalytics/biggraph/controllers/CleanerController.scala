@@ -13,15 +13,15 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-case class DataFilesDesc(
+case class DataFilesStats(
   fileNumber: Long,
   totalSize: Long)
 
 case class DataFilesStatus(
-  total: DataFilesDesc,
-  existsInMetaGraph: DataFilesDesc,
-  referredFromProject: DataFilesDesc,
-  transitivelyReferredFromProject: DataFilesDesc)
+  total: DataFilesStats,
+  existsInMetaGraph: DataFilesStats,
+  referredFromProject: DataFilesStats,
+  transitivelyReferredFromProject: DataFilesStats)
 
 case class MarkDeletedRequest(method: String)
 
@@ -39,22 +39,22 @@ class CleanerController(environment: BigGraphEnvironment) {
     val allFiles = files.entities ++ files.operations ++ files.scalars
 
     DataFilesStatus(
-      DataFilesDesc(allFiles.size, allFiles.foldLeft(0L)(_ + _._2)),
-      getDataFilesDesc(
-        allEntities(environment.metaGraphManager.getEntities().values),
+      DataFilesStats(allFiles.size, allFiles.map(_._2).sum),
+      getDataFilesStats(
+        existInMetaGraph(),
         files),
-      DataFilesDesc(0, 0),
-      DataFilesDesc(0, 0))
+      DataFilesStats(0, 0),
+      DataFilesStats(0, 0))
   }
 
   private def getAllFiles(): AllFiles = {
     AllFiles(
-      getAllFiles("entities"),
-      getAllFiles("operations"),
-      getAllFiles("scalars"))
+      getAllFilesInDir("entities"),
+      getAllFilesInDir("operations"),
+      getAllFilesInDir("scalars"))
   }
 
-  private def getAllFiles(dir: String): Map[String, Long] = {
+  private def getAllFilesInDir(dir: String): Map[String, Long] = {
     val hadoopFileDir = environment.dataManager.repositoryPath / dir
     hadoopFileDir.listStatus.filter {
       subDir => !(subDir.getPath().toString contains ".deleted")
@@ -64,6 +64,10 @@ class CleanerController(environment: BigGraphEnvironment) {
         baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed()
       }
     }.toMap
+  }
+
+  private def existInMetaGraph(): DataToKeep = {
+    allEntities(environment.metaGraphManager.getEntities().values)
   }
 
   private def allEntities(baseEntities: Iterable[MetaGraphEntity]): DataToKeep = {
@@ -79,14 +83,14 @@ class CleanerController(environment: BigGraphEnvironment) {
     DataToKeep(operations.toSet, entities.toSet, scalars.toSet)
   }
 
-  private def getDataFilesDesc(
+  private def getDataFilesStats(
     dataToKeep: DataToKeep,
-    files: AllFiles): DataFilesDesc = {
+    files: AllFiles): DataFilesStats = {
     val entityFiles = files.entities -- dataToKeep.entities
     val operationFiles = files.operations -- dataToKeep.operations
     val scalarFiles = files.scalars -- dataToKeep.scalars
     val allFiles = entityFiles ++ operationFiles ++ scalarFiles
-    DataFilesDesc(allFiles.size, allFiles.foldLeft(0L)(_ + _._2))
+    DataFilesStats(allFiles.size, allFiles.map(_._2).sum)
   }
 
   def markFilesDeleted(user: serving.User, req: MarkDeletedRequest): Unit = synchronized {
@@ -94,8 +98,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     log.info(s"Attempting to mark unused files deleted using '${req.method}'.")
     val files = getAllFiles()
     val dataToKeep = req.method match {
-      case "existInMetaGraph" =>
-        allEntities(environment.metaGraphManager.getEntities().values)
+      case "existInMetaGraph" => existInMetaGraph()
     }
     markDeleted("entities", files.entities.keys.toSet -- dataToKeep.entities)
     markDeleted("operations", files.operations.keys.toSet -- dataToKeep.operations)
