@@ -14,18 +14,23 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class DataFilesStats(
+  id: String = "",
+  name: String = "",
+  desc: String = "",
   fileNumber: Long,
   totalSize: Long)
 
 case class DataFilesStatus(
   total: DataFilesStats,
-  existsInMetaGraph: DataFilesStats,
-  referredFromProject: DataFilesStats,
-  transitivelyReferredFromProject: DataFilesStats)
+  methods: List[DataFilesStats])
+
+case class Method(
+  id: String,
+  name: String,
+  desc: String,
+  filesToKeep: () => Set[String])
 
 case class MarkDeletedRequest(method: String)
-
-case class DataToKeep(operations: Set[String], entities: Set[String], scalars: Set[String])
 
 case class AllFiles(
   entities: Map[String, Long],
@@ -33,31 +38,36 @@ case class AllFiles(
   scalars: Map[String, Long])
 
 class CleanerController(environment: BigGraphEnvironment) {
-  def getCleaner(user: serving.User, req: serving.Empty): DataFilesStatus = {
+  val methods = List(
+    Method(
+      "notExistsInMetaGraph",
+      "Delete files which do not exist in the MetaGraph",
+      "",
+      existInMetaGraph))
+
+  def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
     val files = getAllFiles()
     val allFiles = files.entities ++ files.operations ++ files.scalars
 
     DataFilesStatus(
-      DataFilesStats(allFiles.size, allFiles.map(_._2).sum),
-      getDataFilesStats(
-        existInMetaGraph(),
-        files),
-      DataFilesStats(0, 0),
-      DataFilesStats(0, 0))
+      DataFilesStats(fileNumber = allFiles.size, totalSize = allFiles.map(_._2).sum),
+      methods.map { m =>
+        getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(), files)
+      })
   }
 
   private def getAllFiles(): AllFiles = {
     AllFiles(
-      getAllFilesInDir("entities"),
-      getAllFilesInDir("operations"),
+      getAllFilesInDir(DataManager.entityDir),
+      getAllFilesInDir(DataManager.operationDir),
       getAllFilesInDir(DataManager.scalarDir))
   }
 
   private def getAllFilesInDir(dir: String): Map[String, Long] = {
     val hadoopFileDir = environment.dataManager.repositoryPath / dir
-    hadoopFileDir.listStatus.filter {
-      subDir => !(subDir.getPath().toString contains ".deleted")
+    hadoopFileDir.listStatus.filterNot {
+      subDir => subDir.getPath().toString contains ".deleted"
     }.map { subDir =>
       {
         val baseName = subDir.getPath().getName()
@@ -66,43 +76,43 @@ class CleanerController(environment: BigGraphEnvironment) {
     }.toMap
   }
 
-  private def existInMetaGraph(): DataToKeep = {
+  private def existInMetaGraph(): Set[String] = {
     allEntities(environment.metaGraphManager.getEntities().values)
   }
 
-  private def allEntities(baseEntities: Iterable[MetaGraphEntity]): DataToKeep = {
-    val operations = new HashSet[String]
-    val scalars = new HashSet[String]
-    val entities = new HashSet[String]
+  private def allEntities(baseEntities: Iterable[MetaGraphEntity]): Set[String] = {
+    val filesToKeep = new HashSet[String]
     for (baseEntity <- baseEntities) {
       val operation = baseEntity.source
-      operations += operation.gUID.toString
-      entities ++= operation.outputs.all.values.map { e => e.gUID.toString }
-      scalars ++= operation.outputs.scalars.values.map { e => e.gUID.toString }
+      filesToKeep += operation.gUID.toString
+      filesToKeep ++= operation.outputs.all.values.map { e => e.gUID.toString }
     }
-    DataToKeep(operations.toSet, entities.toSet, scalars.toSet)
+    filesToKeep.toSet
   }
 
   private def getDataFilesStats(
-    dataToKeep: DataToKeep,
+    id: String,
+    name: String,
+    desc: String,
+    filesToKeep: Set[String],
     files: AllFiles): DataFilesStats = {
-    val entityFiles = files.entities -- dataToKeep.entities
-    val operationFiles = files.operations -- dataToKeep.operations
-    val scalarFiles = files.scalars -- dataToKeep.scalars
+    val entityFiles = files.entities -- filesToKeep
+    val operationFiles = files.operations -- filesToKeep
+    val scalarFiles = files.scalars -- filesToKeep
     val allFiles = entityFiles ++ operationFiles ++ scalarFiles
-    DataFilesStats(allFiles.size, allFiles.map(_._2).sum)
+    DataFilesStats(id, name, desc, allFiles.size, allFiles.map(_._2).sum)
   }
 
   def markFilesDeleted(user: serving.User, req: MarkDeletedRequest): Unit = synchronized {
     assert(user.isAdmin, "Only administrators can delete orphan files.")
+    assert(methods.map { m => m.id } contains req.method,
+      s"Unkown orphan file deletion method: ${req.method}")
     log.info(s"Attempting to mark unused files deleted using '${req.method}'.")
     val files = getAllFiles()
-    val dataToKeep = req.method match {
-      case "existInMetaGraph" => existInMetaGraph()
-    }
-    markDeleted(DataManager.entityDir, files.entities.keys.toSet -- dataToKeep.entities)
-    markDeleted(DataManager.operationDir, files.operations.keys.toSet -- dataToKeep.operations)
-    markDeleted(DataManager.scalarDir, files.scalars.keys.toSet -- dataToKeep.scalars)
+    val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
+    markDeleted(DataManager.entityDir, files.entities.keys.toSet -- filesToKeep)
+    markDeleted(DataManager.operationDir, files.operations.keys.toSet -- filesToKeep)
+    markDeleted(DataManager.scalarDir, files.scalars.keys.toSet -- filesToKeep)
   }
 
   private def markDeleted(dir: String, files: Set[String]): Unit = {
