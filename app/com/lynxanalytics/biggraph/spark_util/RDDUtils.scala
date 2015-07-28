@@ -97,7 +97,7 @@ object RDDUtils {
    * estimate totals from the filtered numbers.
    */
   private def unfilteredCounts[T, X](
-    full: RDD[(ID, X)], restricted: RDD[(ID, T)]): RDD[(ID, (T, Int))] = {
+    full: SortedRDD[ID, X], restricted: SortedRDD[ID, T]): RDD[(ID, (T, Int))] = {
     full.zipPartitions(restricted, true) { (fit, rit) =>
       new Iterator[(ID, (T, Int))] {
         def hasNext = rit.hasNext
@@ -119,9 +119,9 @@ object RDDUtils {
     rc: RuntimeContext): IDBuckets[T] = {
 
     import Implicits._
-    val dataUsed = data.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
-    val withCounts = unfilteredCounts(fullRDD.coalesce(rc), dataUsed)
-    val (valueBuckets, unfilteredCount, filteredCount) = withCounts
+    val withCounts = unfilteredCounts(fullRDD, data)
+    val sampleWithCounts = withCounts.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
+    val (valueBuckets, unfilteredCount, filteredCount) = sampleWithCounts
       .aggregate((
         new IDBuckets[T]() /* observed value counts */ ,
         0 /* estimated total count corresponding to the observed filtered sample */ ,
@@ -162,9 +162,10 @@ object RDDUtils {
     rc: RuntimeContext): Map[T, Double] = {
 
     import Implicits._
-    val dataUsed =
-      data.sortedJoin(weightsRDD).coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
-    val withWeightsAndCounts = unfilteredCounts(fullRDD.coalesce(rc), dataUsed)
+    val withWeights = data.sortedJoin(weightsRDD)
+    val withWeightsAndCounts = unfilteredCounts(fullRDD, withWeights)
+    val sampleWithWeightsAndCounts =
+      withWeightsAndCounts.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
     val (valueWeights, unfilteredCount, filteredCount) = withWeightsAndCounts
       .values
       .aggregate((
