@@ -37,13 +37,14 @@ object CommonProjectState {
 
 case class RootProjectState(
     state: CommonProjectState,
+    checkpoint: Option[String],
     previousCheckpoint: Option[String],
     lastOperationDesc: String,
     lastOperationRequest: Option[SubProjectOperation]) {
 }
 
 object RootProjectState {
-  def emptyState = RootProjectState(CommonProjectState.emptyState, None, "", None)
+  def emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None)
 }
 
 case class SegmentationState(
@@ -237,16 +238,18 @@ class ProjectStateRepository(val baseDir: String) {
   def checkpointFileName(checkpoint: String): File =
     new File(baseDirFile, s"save-$checkpoint")
 
-  def newCheckpoint(state: RootProjectState): String = {
-    val checkpoint = Timestamp.toString
-    val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
-    val finalFile = checkpointFileName(checkpoint)
-    FileUtils.writeStringToFile(
-      dumpFile,
-      Json.prettyPrint(Json.toJson(state)),
-      "utf8")
-    dumpFile.renameTo(finalFile)
-    checkpoint
+  def checkpoint(state: RootProjectState): String = {
+    state.checkpoint.getOrElse({
+      val checkpoint = Timestamp.toString
+      val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
+      val finalFile = checkpointFileName(checkpoint)
+      FileUtils.writeStringToFile(
+        dumpFile,
+        Json.prettyPrint(Json.toJson(state)),
+        "utf8")
+      dumpFile.renameTo(finalFile)
+      checkpoint
+    })
   }
 
   def readCheckpoint(checkpoint: String): RootProjectState = {
@@ -254,7 +257,7 @@ class ProjectStateRepository(val baseDir: String) {
       ProjectStateRepository.startingState
     } else {
       Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
-        .as[RootProjectState]
+        .as[RootProjectState].copy(checkpoint = Some(checkpoint))
     }
   }
 }
@@ -554,7 +557,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
   val rootDir: SymbolPath = SymbolPath("projects") / projectPath
 
   // Current checkpoint of the project
-  private def checkpoint: String = get(rootDir / "checkpoint")
+  def checkpoint: String = get(rootDir / "checkpoint")
   private def checkpoint_=(x: String): Unit = set(rootDir / "checkpoint", x)
 
   // The farthest checkpoint available in the current redo sequence
@@ -601,9 +604,13 @@ class ProjectFrame(val projectPath: SymbolPath)(
   }
 
   def dodo(newState: RootProjectState): Unit = manager.synchronized {
-    checkpoint = manager.stateRepo.newCheckpoint(
-      newState.copy(previousCheckpoint = Some(checkpoint)))
-    farthestCheckpoint = checkpoint
+    setCheckpoint(manager.stateRepo.checkpoint(
+      newState.copy(previousCheckpoint = Some(checkpoint))))
+  }
+
+  def setCheckpoint(cp: String): Unit = manager.synchronized {
+    checkpoint = cp
+    farthestCheckpoint = cp
     nextCheckpoint = None
   }
 
