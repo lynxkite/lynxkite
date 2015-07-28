@@ -51,7 +51,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     AllFiles(
       getAllFilesInDir("entities"),
       getAllFilesInDir("operations"),
-      getAllFilesInDir("scalars"))
+      getAllFilesInDir(DataManager.scalarDir))
   }
 
   private def getAllFilesInDir(dir: String): Map[String, Long] = {
@@ -100,9 +100,9 @@ class CleanerController(environment: BigGraphEnvironment) {
     val dataToKeep = req.method match {
       case "existInMetaGraph" => existInMetaGraph()
     }
-    markDeleted("entities", files.entities.keys.toSet -- dataToKeep.entities)
-    markDeleted("operations", files.operations.keys.toSet -- dataToKeep.operations)
-    markDeleted("scalars", files.scalars.keys.toSet -- dataToKeep.scalars)
+    markDeleted(DataManager.entityDir, files.entities.keys.toSet -- dataToKeep.entities)
+    markDeleted(DataManager.operationDir, files.operations.keys.toSet -- dataToKeep.operations)
+    markDeleted(DataManager.scalarDir, files.scalars.keys.toSet -- dataToKeep.scalars)
   }
 
   private def markDeleted(dir: String, files: Set[String]): Unit = {
