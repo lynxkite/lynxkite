@@ -27,7 +27,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             var step = history.steps[i];
             step.localChanges = false;
             step.editable = scope.valid;
-            if (!step.hasCheckpoint && !step.status.enabled) {
+            if ((step.checkpoint === undefined) && !step.status.enabled) {
               scope.valid = false;
             }
             watchStep(i, step);
@@ -50,7 +50,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             // This is visually communicated as well.
             var steps = scope.history.steps;
             for (var i = index; i < steps.length; ++i) {
-              steps[i].hasCheckpoint = false;
+              steps[i].checkpoint = undefined;
             }
             for (i = 0; i < steps.length; ++i) {
               if (i !== index) {
@@ -63,18 +63,17 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       function alternateHistory() {
         var requests = [];
         var steps = scope.history.steps;
-        var skips = 0;
+        var startingPoint = '';
         for (var i = 0; i < steps.length; ++i) {
           var s = steps[i];
-          if (s.hasCheckpoint) {
-            skips += 1;
+          if (s.checkpoint !== undefined) {
+            startingPoint = s.checkpoint
           } else {
             requests.push(s.request);
           }
         }
         return {
-          project: scope.side.state.projectName,
-          skips: skips,
+          startingPoint: startingPoint,
           requests: requests,
         };
       }
@@ -96,6 +95,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       scope.saveAs = function(newName) {
         scope.saving = true;
         util.post('/ajax/saveHistory', {
+          oldProject: scope.side.state.projectName,
           newProject: newName,
           history: alternateHistory(),
         }, function() {

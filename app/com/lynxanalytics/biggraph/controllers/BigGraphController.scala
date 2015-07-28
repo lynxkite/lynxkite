@@ -151,15 +151,12 @@ case class SaveHistoryRequest(
   history: AlternateHistory)
 case class ProjectHistory(steps: List[ProjectHistoryStep])
 case class ProjectHistoryStep(
-    request: SubProjectOperation,
-    status: FEStatus,
-    segmentationsBefore: List[FESegmentation],
-    segmentationsAfter: List[FESegmentation],
-    opCategoriesBefore: List[OperationCategory],
-    checkpoint: Option[String]) {
-
-  def hasCheckpoint = checkpoint.nonEmpty
-}
+  request: SubProjectOperation,
+  status: FEStatus,
+  segmentationsBefore: List[FESegmentation],
+  segmentationsAfter: List[FESegmentation],
+  opCategoriesBefore: List[OperationCategory],
+  checkpoint: Option[String])
 
 case class SaveWorkflowRequest(
   workflowName: String,

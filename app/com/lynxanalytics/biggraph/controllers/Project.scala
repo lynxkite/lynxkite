@@ -475,7 +475,7 @@ sealed trait ProjectEditor {
 class RootProjectEditor(
     initialState: RootProjectState)(
         implicit val manager: MetaGraphManager) extends ProjectEditor {
-  var rootState = initialState
+  var rootState: RootProjectState = initialState.copy(checkpoint = None)
 
   def state = rootState.state
   def state_=(newState: CommonProjectState): Unit = {
