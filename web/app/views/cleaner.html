@@ -11,17 +11,20 @@
         <td/>
       </tr>
       <tr ng-repeat="method in fileStatus.methods">
-        <td>{{ method.name }}</td>
+        <td title="{{ method.desc }}">{{ method.name }}</td>
         <td>{{ method.fileNumber }}</td>
         <td>{{ method.totalSize }}</td>
         <td>
-          <input name="selectedMethod" type="radio" ng-model="$parent.selectedMethod" value="{{ method.id }}"/>
+          <input name="selectedMethod" type="radio"
+                 ng-model="$parent.selectedMethod" value="{{ method.id }}"/>
         </td>
       </tr>
     </table>
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
-        <button type="submit" class="btn btn-success" ng-click="deleteOrphanFiles()">Mark deleted</button>
+        <button type="submit" class="btn btn-success" ng-click="deleteOrphanFiles()">
+          Mark deleted
+        </button>
       </div>
     </div>
   </form>

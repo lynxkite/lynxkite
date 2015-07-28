@@ -38,20 +38,24 @@ case class AllFiles(
   scalars: Map[String, Long])
 
 class CleanerController(environment: BigGraphEnvironment) {
-  val methods = List(
+  private val methods = List(
     Method(
       "notExistsInMetaGraph",
-      "Delete files which do not exist in the MetaGraph",
-      "",
+      "Files which do not exist in the MetaGraph",
+      """Truly orphan files. These are created e.g. when the kite meta directory
+      is deleted. Deleting these should not have any side effects.""",
       existInMetaGraph))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
+    log.info(s"${user.email} requesting data files status.")
     val files = getAllFiles()
     val allFiles = files.entities ++ files.operations ++ files.scalars
 
     DataFilesStatus(
-      DataFilesStats(fileNumber = allFiles.size, totalSize = allFiles.map(_._2).sum),
+      DataFilesStats(
+        fileNumber = allFiles.size,
+        totalSize = allFiles.map(_._2).sum),
       methods.map { m =>
         getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(), files)
       })
@@ -64,15 +68,16 @@ class CleanerController(environment: BigGraphEnvironment) {
       getAllFilesInDir(DataManager.scalarDir))
   }
 
+  // Return all files and dirs and their respecitve sizes in bytes in a
+  // certain directory - not recursively, except for those files or dirs
+  // marked as deleted.
   private def getAllFilesInDir(dir: String): Map[String, Long] = {
     val hadoopFileDir = environment.dataManager.repositoryPath / dir
     hadoopFileDir.listStatus.filterNot {
-      subDir => subDir.getPath().toString contains ".deleted"
+      subDir => subDir.getPath().toString contains DataManager.deletedSfx
     }.map { subDir =>
-      {
-        val baseName = subDir.getPath().getName()
-        baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed()
-      }
+      val baseName = subDir.getPath().getName()
+      baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed
     }.toMap
   }
 
@@ -80,6 +85,9 @@ class CleanerController(environment: BigGraphEnvironment) {
     allEntities(environment.metaGraphManager.getEntities().values)
   }
 
+  // Returns the set of ID strings of all the entities and scalars created by
+  // the parent operations of the baseEntities, plus the ID strings of the
+  // operations themselves.
   private def allEntities(baseEntities: Iterable[MetaGraphEntity]): Set[String] = {
     val filesToKeep = new HashSet[String]
     for (baseEntity <- baseEntities) {
@@ -96,10 +104,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     desc: String,
     filesToKeep: Set[String],
     files: AllFiles): DataFilesStats = {
-    val entityFiles = files.entities -- filesToKeep
-    val operationFiles = files.operations -- filesToKeep
-    val scalarFiles = files.scalars -- filesToKeep
-    val allFiles = entityFiles ++ operationFiles ++ scalarFiles
+    val allFiles = (files.entities ++ files.operations ++ files.scalars) -- filesToKeep
     DataFilesStats(id, name, desc, allFiles.size, allFiles.map(_._2).sum)
   }
 
@@ -107,7 +112,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     assert(user.isAdmin, "Only administrators can delete orphan files.")
     assert(methods.map { m => m.id } contains req.method,
       s"Unkown orphan file deletion method: ${req.method}")
-    log.info(s"Attempting to mark unused files deleted using '${req.method}'.")
+    log.info(s"${user.email} attempting to mark orphan files deleted using '${req.method}'.")
     val files = getAllFiles()
     val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
     markDeleted(DataManager.entityDir, files.entities.keys.toSet -- filesToKeep)
@@ -118,7 +123,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   private def markDeleted(dir: String, files: Set[String]): Unit = {
     val hadoopFileDir = environment.dataManager.repositoryPath / dir
     for (file <- files) {
-      (hadoopFileDir / file).renameTo(hadoopFileDir / (file + ".deleted"))
+      (hadoopFileDir / file).renameTo(hadoopFileDir / (file + DataManager.deletedSfx))
     }
     log.info(s"${files.size} files marked deleted in ${hadoopFileDir.path}.")
   }
