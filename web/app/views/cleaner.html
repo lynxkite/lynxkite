@@ -6,13 +6,13 @@
       <tr><th>Method</th><th>Number of files</th><th>Size of files</th><th/></tr>
       <tr>
         <td>Total files</td>
-        <td>{{ fileStatus.total.fileNumber }}</td>
+        <td>{{ fileStatus.total.fileCount }}</td>
         <td>{{ fileStatus.total.totalSize }}</td>
         <td/>
       </tr>
       <tr ng-repeat="method in fileStatus.methods">
         <td title="{{ method.desc }}">{{ method.name }}</td>
-        <td>{{ method.fileNumber }}</td>
+        <td>{{ method.fileCount }}</td>
         <td>{{ method.totalSize }}</td>
         <td>
           <input name="selectedMethod" type="radio"
@@ -27,8 +27,8 @@
         </button>
       </div>
       <div class="form-group">
-        <button type="submit" class="btn btn-success" ng-click="deleteOrphanFiles()">
-          Delete orphan files
+        <button type="submit" class="btn btn-success" ng-click="deleteMarkedFiles()">
+          Delete marked files
         </button>
       </div>
     </div>
