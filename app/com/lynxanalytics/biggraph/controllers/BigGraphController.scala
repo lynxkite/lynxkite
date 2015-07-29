@@ -409,7 +409,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assert(historyExtension.map(_._2).forall(_.status.enabled), "Trying to save invalid history")
 
     // Create/check target project.
-    Project.validateName(request.newProject, "Project name")
+    ProjectFrame.validateName(request.newProject, "Project name")
     val p = ProjectFrame.fromName(request.newProject)
     if (request.newProject != request.oldProject) {
       // Saving under a new name.
