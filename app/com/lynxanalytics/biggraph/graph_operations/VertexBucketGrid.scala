@@ -70,7 +70,7 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     val originalCount = inputs.originalCount.value
     output(
       o.buckets,
-      RDDUtils.estimateValueCounts(vertices, xyBuckets, originalCount, 50000))
+      RDDUtils.estimateValueCounts(vertices, xyBuckets, originalCount, 50000, rc))
     output(o.indexingSeq, indexingSeq)
   }
 }

@@ -1,0 +1,40 @@
+# Benchmark for a large histogram calculation.
+
+Operations('random')
+[
+  {
+    "project": "!project",
+    "op": {
+      "id": "New-vertex-set",
+      "parameters": {
+        "size": "10000000"
+      }
+    }
+  },
+  {
+    "project": "!project",
+    "op": {
+      "id": "Add-gaussian-vertex-attribute",
+      "parameters": {
+        "name": "random",
+        "seed": "1571682864"
+      }
+    }
+  },
+  {
+    "project": "!project",
+    "op": {
+      "id": "Aggregate-vertex-attribute-globally",
+      "parameters": {
+        "prefix": "",
+        "aggregate-random": "average"
+      }
+    }
+  }
+]
+EndOperations
+
+GetScalar('random', 'vertex_count')
+ResetTimer
+Histogram('random', 'random')
+ResetTimer

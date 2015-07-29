@@ -47,6 +47,7 @@ case class IndexPairCounter() extends TypedMetaGraphOp[Input, Output] {
         inputs.weights.rdd,
         xIndices.sortedJoin(yIndices),
         inputs.originalCount.value,
-        50000))
+        50000,
+        rc))
   }
 }

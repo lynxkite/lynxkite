@@ -19,6 +19,10 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object DataManager {
   val maxParallelSparkStages =
     scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
+  val scalarDir = "scalars"
+  val entityDir = "entities"
+  val operationDir = "operations"
+  val deletedSfx = ".deleted"
 }
 class DataManager(sc: spark.SparkContext,
                   val repositoryPath: HadoopFile) {
@@ -46,25 +50,29 @@ class DataManager(sc: spark.SparkContext,
   var computationAllowed = true
 
   private def instancePath(instance: MetaGraphOperationInstance) =
-    repositoryPath / "operations" / instance.gUID.toString
+    repositoryPath / DataManager.operationDir / instance.gUID.toString
 
   private def entityPath(entity: MetaGraphEntity) = {
     if (entity.isInstanceOf[Scalar[_]]) {
-      repositoryPath / "scalars" / entity.gUID.toString
+      repositoryPath / DataManager.scalarDir / entity.gUID.toString
     } else {
-      repositoryPath / "entities" / entity.gUID.toString
+      repositoryPath / DataManager.entityDir / entity.gUID.toString
     }
   }
 
-  // Things saved during previous runs.
-  val savedInstances: Set[UUID] = {
-    val instances = (repositoryPath / "operations" / "*" / "_SUCCESS").list
-    instances.map(_.path.getParent.getName.asUUID).toSet
+  // Things saved during previous runs. Checking for the _SUCCESS files is slow so we use the
+  // list of directories instead. The results are thus somewhat optimistic.
+  val possiblySavedInstances: Set[UUID] = {
+    val instances = (repositoryPath / DataManager.operationDir / "*").list
+      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
+    instances.map(_.path.getName.asUUID).toSet
   }
-  val savedEntities: Set[UUID] = {
-    val scalars = (repositoryPath / "scalars" / "*" / "_SUCCESS").list
-    val entities = (repositoryPath / "entities" / "*" / "_SUCCESS").list
-    (scalars ++ entities).map(_.path.getParent.getName.asUUID).toSet
+  val possiblySavedEntities: Set[UUID] = {
+    val scalars = (repositoryPath / DataManager.scalarDir / "*").list
+      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
+    val entities = (repositoryPath / DataManager.entityDir / "*").list
+      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
+    (scalars ++ entities).map(_.path.getName.asUUID).toSet
   }
 
   private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
@@ -73,8 +81,12 @@ class DataManager(sc: spark.SparkContext,
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
-      savedInstances.contains(entity.source.gUID) &&
-      savedEntities.contains(entity.gUID)
+      // Fast check for directory.
+      possiblySavedInstances.contains(entity.source.gUID) &&
+      possiblySavedEntities.contains(entity.gUID) &&
+      // Slow check for _SUCCESS file.
+      successPath(instancePath(entity.source)).exists &&
+      successPath(entityPath(entity)).exists
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
@@ -89,7 +101,8 @@ class DataManager(sc: spark.SparkContext,
   private def load(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
     getFuture(edgeBundle.idSet).map { idSet =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
-      val idsRDD = idSet.rdd.cache
+      val idsRDD = idSet.rdd
+      idsRDD.cacheBackingArray()
       val rawRDD = entityPath(edgeBundle).loadEntityRDD[Edge](sc, idsRDD.partitioner)
       new EdgeBundleData(
         edgeBundle,
@@ -101,7 +114,8 @@ class DataManager(sc: spark.SparkContext,
     implicit val ct = attribute.classTag
     getFuture(attribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
-      val vsRDD = vs.rdd.cache
+      val vsRDD = vs.rdd
+      vsRDD.cacheBackingArray()
       val rawRDD = entityPath(attribute).loadEntityRDD[T](sc, vsRDD.partitioner)
       new AttributeData[T](
         attribute,
