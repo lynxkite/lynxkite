@@ -1,0 +1,38 @@
+<div class="col-sm-offset-3 col-sm-6">
+
+  <h1>Cleaner</h1>
+  <form>
+    <table class="table table-striped">
+      <tr><th>Method</th><th>Number of files</th><th>Size of files</th><th/></tr>
+      <tr>
+        <td>Total files</td>
+        <td>{{ fileStatus.total.fileCount }}</td>
+        <td>{{ fileStatus.total.totalSize }}</td>
+        <td/>
+      </tr>
+      <tr ng-repeat="method in fileStatus.methods">
+        <td title="{{ method.desc }}">{{ method.name }}</td>
+        <td>{{ method.fileCount }}</td>
+        <td>{{ method.totalSize }}</td>
+        <td>
+          <input name="selectedMethod" type="radio"
+                 ng-model="$parent.selectedMethod" value="{{ method.id }}"/>
+        </td>
+      </tr>
+    </table>
+    <div class="form-horizontal">
+      <div class="form-group">
+        <button type="submit" class="btn btn-success" ng-click="markFilesDeleted()">
+          Mark files deleted
+        </button>
+      </div>
+      <div class="form-group">
+        <button type="submit" class="btn btn-success" ng-click="deleteMarkedFiles()">
+          Delete marked files
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <bottom-links info="list"></bottom-links>
+</div>
