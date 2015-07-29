@@ -110,8 +110,6 @@ For example:
             //  s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
           }
 
-          val context = Operation.Context(user, project.viewer)
-
           var opJson = ""
           var line = ""
           while (line != opsEnd) {
@@ -122,7 +120,7 @@ For example:
 
           val opRepo = new Operations(env)
 
-          for (step <- WorkflowOperation.workflowSteps(opJson, params, context)) {
+          for (step <- WorkflowOperation.workflowSteps(opJson, params)) {
             val sp = SubProject(project, step.path)
             val context = Operation.Context(user, sp.viewer)
             val op = opRepo.opById(context, step.op.id)

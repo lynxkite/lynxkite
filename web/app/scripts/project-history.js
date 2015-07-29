@@ -224,13 +224,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         var history = scope.history;
         if (history && history.$resolved && !history.$error) {
           var requests = history.steps.map(function(step) {
-            var request = angular.copy(step.request);
-            var absoluteName = request.project;
-            // Replace the root project name with "!project" so that the
-            // workflow can be executed on other projects as well.
-            var relativeName = absoluteName.replace(/^[^/]*/, '!project');
-            request.project = relativeName;
-            return request;
+            return step.request;
           });
           scope.code = JSON.stringify(requests, null, 2);
         } else {
