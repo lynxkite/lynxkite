@@ -20,6 +20,7 @@ package object biggraph {
 
   // static<big_graph_dir,graph_data_dir>
   private val staticRepoPattern = "static<(.+),(.+)>".r
+  private val staticRepoWithEphemeralPattern = "static<(.+),(.+),(.+)>".r
 
   val standardDataPrefix = "DATA$"
 
@@ -53,6 +54,9 @@ package object biggraph {
       scala.util.Properties.envOrElse("REPOSITORY_MODE", "local_random") match {
         case staticRepoPattern(bigGraphDir, graphDataDir) =>
           new RegularRepositoryDirs(bigGraphDir, graphDataDir, standardDataPrefix)
+        case staticRepoWithEphemeralPattern(bigGraphDir, graphDataDir, ephemeralGraphDataDir) =>
+          new RegularRepositoryDirsWithEphemeral(
+            bigGraphDir, graphDataDir, standardDataPrefix, ephemeralGraphDataDir)
         case "local_random" => new TemporaryRepositoryDirs(standardDataPrefix)
       }
     repoDirs.forcePrefixRegistration()
