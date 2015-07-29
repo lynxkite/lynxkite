@@ -117,7 +117,7 @@ sealed trait ProjectViewer {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(things: Iterable[(String, TypedEntity[_])]) = {
-      things.map { case (name, e) => ProjectViewer.feAttr(e, name) }.toList
+      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feAttr(e, name) }.toList
     }
 
     FEProject(
@@ -129,6 +129,8 @@ sealed trait ProjectViewer {
       vertexAttributes = feList(vertexAttributes) ++ getFEMembers,
       edgeAttributes = feList(edgeAttributes),
       segmentations = segmentationViewers
+        .toSeq
+        .sortBy(_._1)
         .map { case (name, segm) => segm.toFESegmentation(projectName) }
         .toList,
       // To be set by the ProjectFrame for root projects.
