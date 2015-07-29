@@ -92,12 +92,13 @@ class CleanerController(environment: BigGraphEnvironment) {
     baseEntities: Iterable[MetaGraphEntity]): Set[String] = {
     val files = new HashSet[String]
     val operations = new HashMap[String, MetaGraphOperationInstance]
+    // Collecting the set of unique operations first to avoid duplications.
     for (baseEntity <- baseEntities) {
       val operation = baseEntity.source
       operations += (operation.gUID.toString -> operation)
     }
-    for (operation <- operations.values) {
-      files += operation.gUID.toString
+    for ((id, operation) <- operations) {
+      files += id
       files ++= operation.outputs.all.values.map { e => e.gUID.toString }
     }
     files.toSet
