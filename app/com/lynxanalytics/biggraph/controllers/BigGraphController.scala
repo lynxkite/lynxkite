@@ -232,6 +232,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
         p.readACL = "*"
     }
     p.initialize
+    if (request.notes != "") {
+      ops.apply(user, SubProject(p, Seq()), Operations.addNotesOperation(request.notes))
+    }
   }
 
   def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
@@ -251,7 +254,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
     val p = SubProject.parsePath(request.project)
     p.frame.assertWriteAllowedFrom(user)
-    ops.apply(user, request)
+    ops.apply(user, p, request.op)
   }
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
@@ -397,7 +400,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       checkpointHistory.reverse.filter(_.status.enabled) ++ historyExtension.map(_._2))
   }
 
-  def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = {
+  def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.tagBatch {
     // See first that we can deal with this history.
     def historyExtension = extendedHistory(
       user,
@@ -617,8 +620,7 @@ case class WorkflowOperation(
       val subEditor = project.offspringEditor(step.path)
       val localContext = Operation.Context(context.user, subEditor.viewer)
       // We execute the sub-operation.
-      val op = operationRepository.opById(localContext, step.op.id)
-      op.validateAndApply(step.op.parameters)
+      val op = operationRepository.appliedOp(localContext, step.op)
       // Then we copy back the state created by the sub-operation.
       subEditor.state = op.project.state
     }
@@ -675,26 +677,20 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  /* Nem fog ez kelleni.
-  def operationOnSubproject(
-    mainProject: ProjectFrame,
-    request: ProjectOperationRequest,
-    user: serving.User): Operation = {
-    val subProjectPath = SymbolPath.parse(request.project)
-    val mainProjectSymbol = Symbol(mainProject.projectName)
-    val relativePath = subProjectPath.tail
-    val fullPath = mainProjectSymbol :: relativePath.toList
-    val recipient = Project(SymbolPath.fromIterable(fullPath))
-    val ctx = Operation.Context(user, recipient)
-    opById(ctx, request.op.id)
-  }*/
+  // Applies the operation specified by op in the given context and returnes the
+  // applied operation.
+  def appliedOp(context: Operation.Context, opSpec: FEOperationSpec): Operation = {
+    val op = opById(context, opSpec.id)
+    op.validateAndApply(opSpec.parameters)
+    op
+  }
 
   def apply(
-    user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
-    val p = SubProject.parsePath(req.project)
-    val context = Operation.Context(user, p.viewer)
-    val op = opById(context, req.op.id)
-    op.validateAndApply(req.op.parameters)
-    p.frame.dodo(op.project.rootState)
+    user: serving.User,
+    subProject: SubProject,
+    op: FEOperationSpec): Unit = manager.tagBatch {
+
+    val context = Operation.Context(user, subProject.viewer)
+    subProject.frame.dodo(appliedOp(context, op).project.rootState)
   }
 }

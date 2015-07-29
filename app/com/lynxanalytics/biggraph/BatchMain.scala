@@ -98,16 +98,18 @@ For example:
         case opsRE(projectNameSpec) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
           val user = User("Batch User", isAdmin = true)
-
           val project = ProjectFrame.fromName(projectName)
+          val opRepo = new Operations(env)
           if (!project.exists) {
             // Create project if doesn't yet exist.
             project.writeACL = user.email
             project.readACL = user.email
             project.initialize
-            /// !!!! add note
-            ///project.dodo(RootProjectState.emptyState(
-            //  s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
+            opRepo.apply(
+              user,
+              SubProject(project, Seq()),
+              Operations.addNotesOperation(
+                s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
           }
 
           var opJson = ""
@@ -118,14 +120,9 @@ For example:
             line = lit.next
           }
 
-          val opRepo = new Operations(env)
-
           for (step <- WorkflowOperation.workflowSteps(opJson, params)) {
             val sp = SubProject(project, step.path)
-            val context = Operation.Context(user, sp.viewer)
-            val op = opRepo.opById(context, step.op.id)
-            op.validateAndApply(step.op.parameters)
-            project.dodo(op.project.rootState)
+            opRepo.apply(user, sp, step.op)
           }
         case `waitForever` =>
           println("Waiting indefinitely...")
