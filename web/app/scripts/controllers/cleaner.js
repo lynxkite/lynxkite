@@ -14,9 +14,9 @@ angular.module('biggraph')
         });
     };
 
-    $scope.deleteOrphanFiles = function() {
+    $scope.deleteMarkedFiles = function() {
       util
-        .post('/ajax/deleteOrphanFiles', {
+        .post('/ajax/deleteMarkedFiles', {
           fake: 0,
         }).$status.then(function() {
           $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');

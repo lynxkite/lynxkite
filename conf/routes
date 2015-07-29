@@ -34,7 +34,7 @@ POST /ajax/createUser  com.lynxanalytics.biggraph.serving.ProductionJsonServer.c
 
 GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
 POST /ajax/markFilesDeleted      com.lynxanalytics.biggraph.serving.ProductionJsonServer.markFilesDeleted
-POST /ajax/deleteOrphanFiles     com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteOrphanFiles
+POST /ajax/deleteMarkedFiles     com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteMarkedFiles
 
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
