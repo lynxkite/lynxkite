@@ -173,12 +173,7 @@ case class SavedWorkflow(
   @transient lazy val prettyJson: String = SavedWorkflow.asPrettyJson(this)
 }
 object SavedWorkflow {
-  implicit val wUIValue = json.Json.writes[UIValue]
-  implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
-  implicit val wSavedWorkflow = json.Json.writes[SavedWorkflow]
-  implicit val rUIValue = json.Json.reads[UIValue]
-  implicit val rFEOperationParameterMeta = json.Json.reads[FEOperationParameterMeta]
-  implicit val rSavedWorkflow = json.Json.reads[SavedWorkflow]
+  implicit val fSavedWorkflow = json.Json.format[SavedWorkflow]
   def asPrettyJson(wf: SavedWorkflow): String = json.Json.prettyPrint(json.Json.toJson(wf))
   def fromJson(js: String): SavedWorkflow = json.Json.parse(js).as[SavedWorkflow]
 }
@@ -583,21 +578,11 @@ object WorkflowOperation {
     completeJSON
   }
 
-  private def substituteJSONParameters(
-    jsonTemplate: String, parameters: Map[String, String], context: Operation.Context): String = {
-
-    var withUserParams = substituteUserParameters(jsonTemplate, parameters)
-
-    // System variables come here using workflowConcreteParameterRegex.
-
-    withUserParams
-  }
   def workflowSteps(
     jsonTemplate: String,
-    parameters: Map[String, String],
-    context: Operation.Context): List[SubProjectOperation] = {
+    parameters: Map[String, String]): List[SubProjectOperation] = {
 
-    stepsFromJSON(substituteJSONParameters(jsonTemplate, parameters, context))
+    stepsFromJSON(substituteUserParameters(jsonTemplate, parameters))
   }
 }
 case class WorkflowOperation(
@@ -616,28 +601,27 @@ case class WorkflowOperation(
 
   val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsJSON)
 
-  val (systemReferences, customReferences) = parameterReferences.partition(_.startsWith("!"))
-
-  private val unknownSystemReferences = systemReferences &~ Set("!project")
-  assert(
-    unknownSystemReferences.isEmpty,
-    "Unknown system parameter(s): " + unknownSystemReferences)
-
   def parameters =
-    customReferences
+    parameterReferences
       .toList
       .sorted
       .map(paramName => OperationParams.Param(paramName, paramName))
 
   def enabled = FEStatus.enabled
   def apply(params: Map[String, String]): Unit = {
-    ???
-    /*var stepsAsJSON = workflow.stepsAsJSON
-    val steps = WorkflowOperation.workflowSteps(stepsAsJSON, params, context)
+    var stepsAsJSON = workflow.stepsAsJSON
+    val steps = WorkflowOperation.workflowSteps(stepsAsJSON, params)
     for (step <- steps) {
-      val op = operationRepository.operationOnSubproject(context.project, step, context.user)
+      // We create a local context from the current state in this workflow operation's
+      // own ProjectEditor.
+      val subEditor = project.offspringEditor(step.path)
+      val localContext = Operation.Context(context.user, subEditor.viewer)
+      // We execute the sub-operation.
+      val op = operationRepository.opById(localContext, step.op.id)
       op.validateAndApply(step.op.parameters)
-    }*/
+      // Then we copy back the state created by the sub-operation.
+      subEditor.state = op.project.state
+    }
   }
 }
 

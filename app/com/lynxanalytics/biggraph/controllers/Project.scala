@@ -393,6 +393,10 @@ sealed trait ProjectEditor {
   def segmentation(name: String) = new SegmentationEditor(this, name)
   def segmentationNames = viewer.segmentationViewers.keys
 
+  def offspringEditor(path: Seq[String]): ProjectEditor =
+    if (path.isEmpty) this
+    else segmentation(path.head).offspringEditor(path.tail)
+
   def isSegmentation = isInstanceOf[SegmentationEditor]
   def asSegmentation = asInstanceOf[SegmentationEditor]
 
