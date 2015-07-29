@@ -1534,7 +1534,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       s"Discard segmentation: $name"
     }
     def apply(params: Map[String, String]) = {
-      ??? //project.segmentation(params("name")).remove
+      project.deleteSegmentation(params("name"))
     }
   })
 
@@ -1601,11 +1601,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       s"Rename segmentation $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      /* !!!
-      assert(!project.segmentations.contains(params("to")),
+      assert(
+        !project.segmentationNames.contains(params("to")),
         s"""A segmentation named '${params("to")}' already exists,
             please discard it or choose another name""")
-      project.segmentation(params("from")).rename(params("to"))*/
+      project.segmentation(params("to")).segmentationState =
+        project.segmentation(params("from")).segmentationState
+      project.deleteSegmentation(params("from"))
     }
   })
 
@@ -1792,9 +1794,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       s"Union with $other"
     }
 
-    def checkTypeCollision(other: Project) = {
+    def checkTypeCollision(other: ProjectViewer) = {
       val commonAttributeNames =
-        project.vertexAttributeNames.toSet & other.vertexAttributeNames.toSet
+        project.vertexAttributes.keySet & other.vertexAttributes.keySet
 
       for (name <- commonAttributeNames) {
         val a1 = project.vertexAttributes(name)
@@ -1808,7 +1810,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]): Unit = {
       val otherName = params("other")
       assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
-      val other = Project.fromName(otherName)
+      val other = ProjectFrame.fromName(otherName).viewer
       if (other.vertexSet == null) {
         // Nothing to do
         return
