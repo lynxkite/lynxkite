@@ -109,9 +109,9 @@ class CleanerController(environment: BigGraphEnvironment) {
   }
 
   def markFilesDeleted(user: serving.User, req: MarkDeletedRequest): Unit = synchronized {
-    assert(user.isAdmin, "Only administrators can delete orphan files.")
+    assert(user.isAdmin, "Only administrators can mark files deleted.")
     assert(methods.map { m => m.id } contains req.method,
-      s"Unkown orphan file deletion method: ${req.method}")
+      s"Unkown orphan file marking method: ${req.method}")
     log.info(s"${user.email} attempting to mark orphan files deleted using '${req.method}'.")
     val files = getAllFiles()
     val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
@@ -126,5 +126,22 @@ class CleanerController(environment: BigGraphEnvironment) {
       (hadoopFileDir / file).renameTo(hadoopFileDir / (file + DataManager.deletedSfx))
     }
     log.info(s"${files.size} files marked deleted in ${hadoopFileDir.path}.")
+  }
+
+  def deleteOrphanFiles(user: serving.User, req: serving.Empty): Unit = synchronized {
+    assert(user.isAdmin, "Only administrators can delete orphan files.")
+    log.info(s"${user.email} attempting to delete orphan files.")
+    deleteFilesInDir(DataManager.entityDir)
+    deleteFilesInDir(DataManager.operationDir)
+    deleteFilesInDir(DataManager.scalarDir)
+  }
+
+  private def deleteFilesInDir(dir: String): Unit = {
+    val hadoopFileDir = environment.dataManager.repositoryPath / dir
+    hadoopFileDir.listStatus.filter {
+      subDir => subDir.getPath().toString contains DataManager.deletedSfx
+    }.map { subDir =>
+      (hadoopFileDir / subDir.getPath().getName()).delete()
+    }
   }
 }

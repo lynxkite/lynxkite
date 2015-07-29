@@ -341,6 +341,7 @@ object ProductionJsonServer extends JsonServer {
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
   def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
+  def deleteOrphanFiles = jsonPost(cleanerController.deleteOrphanFiles)
 
   def getGlobalSettings = jsonPublicGet(GlobalSettings(hasAuth = productionMode))
 }
