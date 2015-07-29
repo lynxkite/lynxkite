@@ -33,7 +33,7 @@ trait StaticDirEnvironment extends BigGraphEnvironment {
 
   override lazy val metaGraphManager = graph_api.MetaRepositoryManager(repositoryDirs.graphDir)
   override lazy val dataManager = new graph_api.DataManager(
-    sparkContext, repositoryDirs.dataDir)
+    sparkContext, repositoryDirs.dataDir, repositoryDirs.ephemeralDataDir)
 }
 
 trait RepositoryDirs {
@@ -44,14 +44,29 @@ trait RepositoryDirs {
     PrefixRepository.registerPrefix(dataDirSymbolicName, dataDirResolvedName)
     HadoopFile(dataDirSymbolicName)
   }
+  lazy val ephemeralDataDir: Option[HadoopFile] = None
   def forcePrefixRegistration(): Unit = {
     dataDir
+    ephemeralDataDir
   }
 }
 
-class RegularRepositoryDirs(bigGraphDir: String, bigDataDir: String, val dataDirSymbolicName: String) extends RepositoryDirs {
-  val graphDir = bigGraphDir
-  val dataDirResolvedName = bigDataDir
+class RegularRepositoryDirs(
+  val graphDir: String,
+  val dataDirResolvedName: String,
+  val dataDirSymbolicName: String) extends RepositoryDirs
+
+class RegularRepositoryDirsWithEphemeral(
+    val graphDir: String,
+    val dataDirResolvedName: String,
+    val dataDirSymbolicName: String,
+    ephemeralDirResolvedName: String) extends RepositoryDirs {
+
+  val ephemeralDirSymbolicName = "EPHEMERAL_" + dataDirSymbolicName
+  override lazy val ephemeralDataDir: Option[HadoopFile] = {
+    PrefixRepository.registerPrefix(ephemeralDirSymbolicName, ephemeralDirResolvedName)
+    Some(HadoopFile(ephemeralDirSymbolicName))
+  }
 }
 
 class TemporaryRepositoryDirs(val dataDirSymbolicName: String) extends RepositoryDirs {
