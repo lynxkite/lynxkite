@@ -96,8 +96,8 @@ object RDDUtils {
    * we had to process to get the filtered sample we needed. This is necessary to be able to
    * estimate totals from the filtered numbers.
    */
-  private def unfilteredCounts[T, X](
-    full: SortedRDD[ID, X], restricted: SortedRDD[ID, T]): RDD[(ID, (T, Int))] = {
+  private def unfilteredCounts[T](
+    full: SortedRDD[ID, _], restricted: SortedRDD[ID, T]): RDD[(ID, (T, Int))] = {
     full.zipPartitions(restricted, true) { (fit, rit) =>
       new Iterator[(ID, (T, Int))] {
         def hasNext = rit.hasNext
