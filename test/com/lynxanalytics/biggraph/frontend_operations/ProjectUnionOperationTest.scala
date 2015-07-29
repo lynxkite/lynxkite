@@ -6,8 +6,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
     run("Example Graph")
-    val other = Project.fromPath("ExampleGraph2")
-    project.copy(other)
+    val other = ProjectFrame.fromName("ExampleGraph2")
+    projectFrame.copy(other)
     run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = other)
     run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = other)
     run("Union with another project", Map("other" -> "ExampleGraph2", "id-attr" -> "new_id"))
@@ -37,8 +37,8 @@ class ProjectUnionOperationTest extends OperationsTestBase {
 
   test("Project union on vertex sets") {
     run("New vertex set", Map("size" -> "10"))
-    val other = Project.fromPath("Copy")
-    project.copy(other)
+    val other = ProjectFrame.fromName("Copy")
+    projectFrame.copy(other)
     run("Union with another project", Map("other" -> "Copy", "id-attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 20)
@@ -47,8 +47,8 @@ class ProjectUnionOperationTest extends OperationsTestBase {
 
   test("Project union - useful error message (#1611)") {
     run("Example Graph")
-    val other = Project.fromPath("ExampleGraph2")
-    project.copy(other)
+    val other = ProjectFrame.fromName("ExampleGraph2")
+    projectFrame.copy(other)
     run("Rename vertex attribute",
       Map("from" -> "age", "to" -> "newage"), on = other)
     run("Add constant vertex attribute",

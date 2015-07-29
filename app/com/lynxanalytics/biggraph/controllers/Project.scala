@@ -32,7 +32,7 @@ case class CommonProjectState(
   segmentations: Map[String, SegmentationState],
   notes: String)
 object CommonProjectState {
-  def emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "")
+  val emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "")
 }
 
 case class RootProjectState(
@@ -44,14 +44,14 @@ case class RootProjectState(
 }
 
 object RootProjectState {
-  def emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None)
+  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None)
 }
 
 case class SegmentationState(
   state: CommonProjectState,
   belongsToGUID: Option[UUID])
 object SegmentationState {
-  def emptyState = SegmentationState(CommonProjectState.emptyState, None)
+  val emptyState = SegmentationState(CommonProjectState.emptyState, None)
 }
 
 sealed trait ProjectViewer {
