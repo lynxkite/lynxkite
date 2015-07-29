@@ -81,24 +81,18 @@ class CleanerController(environment: BigGraphEnvironment) {
   }
 
   private def metaGraphContents(): Set[String] = {
-    allFilesFromSourceOperation(environment.metaGraphManager.getEntities().values)
+    allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
   }
 
   // Returns the set of ID strings of all the entities and scalars created by
-  // the parent operations of the baseEntities, plus the ID strings of the
-  // operations themselves. Note that these ID strings are the base names of
-  // the corresponding data directories.
+  // the operations, plus the ID strings of the operations themselves.
+  // Note that these ID strings are the base names of the corresponding
+  // data directories.
   private def allFilesFromSourceOperation(
-    baseEntities: Iterable[MetaGraphEntity]): Set[String] = {
+    operations: Map[UUID, MetaGraphOperationInstance]): Set[String] = {
     val files = new HashSet[String]
-    val operations = new HashMap[String, MetaGraphOperationInstance]
-    // Collecting the set of unique operations first to avoid duplications.
-    for (baseEntity <- baseEntities) {
-      val operation = baseEntity.source
-      operations += (operation.gUID.toString -> operation)
-    }
     for ((id, operation) <- operations) {
-      files += id
+      files += id.toString
       files ++= operation.outputs.all.values.map { e => e.gUID.toString }
     }
     files.toSet
