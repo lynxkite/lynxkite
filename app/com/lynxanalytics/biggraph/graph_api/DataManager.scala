@@ -16,6 +16,88 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+abstract class EntityIOWrapperBase[ET <: MetaGraphEntity, DT <: EntityData](repositoryPath: HadoopFile,
+                                   entity: ET) {
+  def basePath: HadoopFile
+  def exists: Boolean
+
+  def existsAtRoot = (basePath / "_SUCCESS").exists
+
+  def read: DT
+}
+
+class ScalarIOWrapper[T](repositoryPath: HadoopFile, entity: Scalar[T])
+    extends EntityIOWrapperBase[Scalar[T], ScalarData[T]](repositoryPath, entity) {
+
+  def basePath = repositoryPath / "scalars" / entity.gUID.toString
+  def exists = existsAtRoot
+
+  def read: ScalarData[T] = ???
+}
+
+abstract class PartitionableDataIOWrapper[ET <: MetaGraphEntity, DT <: EntityRDDData](repositoryPath: HadoopFile, entity: ET)
+    extends EntityIOWrapperBase(repositoryPath, entity) {
+
+  lazy val availablePartitions = collectAvailablePartitions
+
+  private def collectAvailablePartitions = {
+    val availablePartitions = scala.collection.mutable.Map[Int, HadoopFile]()
+
+    if (existsAtRoot) {
+      availablePartitions(-1) = basePath
+    }
+
+    //    val subDirs = (basePath / ".*").list
+    //    val number = "[123456789][0-9]*".r
+    //    val subdirCandidates = subDirs.filter(x => number.pattern.matcher(x.path.getName).matches)
+    //    println(subdirCandidates)
+    //    for (v <- subdirCandidates) {
+    //      val successFile = v / "_SUCCESS"
+    //      if (successFile.exists) {
+    //        val numParts = v.path.getName.toInt
+    //        availablePartitions(numParts) = v
+    //      }
+    //    }
+    println(availablePartitions)
+    availablePartitions
+  }
+
+  def selectPartitionNumber: Int
+
+  def finalRead(path: HadoopFile): DT
+
+  def repartitionTo(pn: Int): Unit = ???
+
+  def read: DT = {
+    val pn = selectPartitionNumber
+    if (!availablePartitions.contains(pn)) {
+      repartitionTo(pn)
+    }
+    finalRead(availablePartitions(pn))
+  }
+
+  def basePath = repositoryPath / "entities" / entity.gUID.toString
+  def exists: Boolean = availablePartitions.nonEmpty
+
+}
+
+class VertexIOWrapper(repositoryPath: HadoopFile, entity: VertexSet)
+    extends PartitionableDataIOWrapper[VertexSet, VertexSetData](repositoryPath, entity) {
+  def selectPartitionNumber: Int = 8
+
+  def finalRead(path: HadoopFile): VertexSetData = ???
+}
+
+class EdgeBundleIOWrapper(repositoryPath: HadoopFile, entity: MetaGraphEntity)
+    extends PartitionableDataIOWrapper(repositoryPath, entity) {
+
+}
+
+class AttributeIOWrapper(repositoryPath: HadoopFile, entity: MetaGraphEntity)
+    extends PartitionableDataIOWrapper(repositoryPath, entity) {
+
+}
+
 object DataManager {
   val maxParallelSparkStages =
     scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
@@ -48,7 +130,17 @@ class DataManager(sc: spark.SparkContext,
   private def instancePath(instance: MetaGraphOperationInstance) =
     repositoryPath / "operations" / instance.gUID.toString
 
+  def entityWrapperFactory(entity: MetaGraphEntity): EntityIOWrapperBase = {
+    entity match {
+      case vs: VertexSet => new VertexIOWrapper(repositoryPath, entity)
+      case eb: EdgeBundle => new EdgeBundleIOWrapper(repositoryPath, entity)
+      case va: Attribute[_] => new AttributeIOWrapper(repositoryPath, entity)
+      case sc: Scalar[_] => new ScalarIOWrapper(repositoryPath, entity)
+    }
+  }
+
   private def entityPath(entity: MetaGraphEntity) = {
+    println(entity.gUID)
     if (entity.isInstanceOf[Scalar[_]]) {
       repositoryPath / "scalars" / entity.gUID.toString
     } else {
@@ -79,7 +171,7 @@ class DataManager(sc: spark.SparkContext,
       possiblySavedEntities.contains(entity.gUID) &&
       // Slow check for _SUCCESS file.
       successPath(instancePath(entity.source)).exists &&
-      successPath(entityPath(entity)).exists
+      entityWrapperFactory(entity).exists
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
@@ -234,6 +326,7 @@ class DataManager(sc: spark.SparkContext,
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {
+
       if (hasEntityOnDisk(entity)) {
         // If on disk already, we just load it.
         set(entity, load(entity))
@@ -321,7 +414,8 @@ class DataManager(sc: spark.SparkContext,
     data match {
       case rddData: EntityRDDData =>
         log.info(s"PERF Instantiating entity $entity on disk")
-        entityPath(entity).saveEntityRDD(rddData.rdd)
+        val rdd = rddData.rdd
+        entityPath(entity, rdd.partitions.size).saveEntityRDD(rdd)
         log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
         log.info(s"PERF Writing scalar $entity to disk")
