@@ -9,73 +9,82 @@ import com.lynxanalytics.biggraph.serving.User
 class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
-    val request = CreateProjectRequest(name = name, notes = name, privacy = "public-write")
+    val request = CreateProjectRequest(name = name, notes = "", privacy = "public-write")
     controller.createProject(null, request)
-    Project.fromName(name)
+    ProjectFrame.fromName(name)
   }
-  val project = createProject("Test_Project")
+  val projectFrame = createProject("Test_Project")
 
-  def undoRedo(p: Project) = (p.toFE.undoOp, p.toFE.redoOp)
+  def undoRedo(frame: ProjectFrame) = {
+    val p = SubProject(frame, Seq())
+    (p.toFE.undoOp, p.toFE.redoOp)
+  }
+
+  def dodo(p: ProjectFrame, x: String) =
+    p.dodo(RootProjectState.emptyState.copy(lastOperationDesc = x, checkpoint = None))
 
   test("Undo/redo") {
-    assert(undoRedo(project) == ("", ""))
-    project.checkpointAfter("A")
-    assert(undoRedo(project) == ("A", ""))
-    project.checkpointAfter("B")
-    assert(undoRedo(project) == ("B", ""))
-    project.undo()
-    assert(undoRedo(project) == ("A", "B"))
-    project.undo()
-    assert(undoRedo(project) == ("", "A"))
-    project.redo()
-    assert(undoRedo(project) == ("A", "B"))
-    project.checkpointAfter("C")
-    assert(undoRedo(project) == ("C", ""))
-    project.undo()
-    assert(undoRedo(project) == ("A", "C"))
-    val copy = Project.fromPath("Test_Project_Copy")
-    project.copy(copy)
+    assert(undoRedo(projectFrame) == ("", ""))
+    dodo(projectFrame, "A")
+    assert(undoRedo(projectFrame) == ("A", ""))
+    dodo(projectFrame, "B")
+    assert(undoRedo(projectFrame) == ("B", ""))
+    projectFrame.undo()
+    assert(undoRedo(projectFrame) == ("A", "B"))
+    projectFrame.undo()
+    assert(undoRedo(projectFrame) == ("", "A"))
+    projectFrame.redo()
+    assert(undoRedo(projectFrame) == ("A", "B"))
+    dodo(projectFrame, "C")
+    assert(undoRedo(projectFrame) == ("C", ""))
+    projectFrame.undo()
+    assert(undoRedo(projectFrame) == ("A", "C"))
+    val copy = ProjectFrame.fromName("Test_Project_Copy")
+    projectFrame.copy(copy)
     assert(undoRedo(copy) == ("A", "C"))
-    project.checkpointAfter("D")
-    assert(undoRedo(project) == ("D", ""))
+    dodo(projectFrame, "D")
+    assert(undoRedo(projectFrame) == ("D", ""))
+    assert(undoRedo(copy) == ("A", "C"))
     copy.redo()
     assert(undoRedo(copy) == ("C", ""))
-    copy.checkpointAfter("E")
+    dodo(copy, "E")
     assert(undoRedo(copy) == ("E", ""))
-    assert(undoRedo(project) == ("D", ""))
+    assert(undoRedo(projectFrame) == ("D", ""))
   }
 
   test("Segmentations") {
-    val p1 = Project.fromPath("1")
-    val p2 = p1.segmentation("2").project
-    val p3 = p2.segmentation("3").project
+    val frame = ProjectFrame.fromName("1")
+    frame.initialize
+    val p1 = frame.viewer.editor
+    val p2 = p1.segmentation("2")
+    val p3 = p2.segmentation("3")
     p1.notes = "1"; p2.notes = "2"; p3.notes = "3"
     assert(!p1.isSegmentation)
     assert(p2.isSegmentation)
     assert(p3.isSegmentation)
-    assert(p2.asSegmentation.parent == p1)
-    assert(p3.asSegmentation.parent == p2)
-    assert(p1.segmentations == Seq(p2.asSegmentation))
-    assert(p2.segmentations == Seq(p3.asSegmentation))
+    assert(p2.parent eq p1)
+    assert(p3.parent eq p2)
+    assert(p1.segmentationNames.toSet == Set("2"))
+    assert(p2.segmentationNames.toSet == Set("3"))
   }
 
   def user(email: String) = User(email, isAdmin = false)
 
   def assertReaders(yes: String*)(no: String*) = {
     for (email <- yes) {
-      assert(project.readAllowedFrom(user(email)))
+      assert(projectFrame.readAllowedFrom(user(email)))
     }
     for (email <- no) {
-      assert(!project.readAllowedFrom(user(email)))
+      assert(!projectFrame.readAllowedFrom(user(email)))
     }
   }
 
   def assertWriters(yes: String*)(no: String*) = {
     for (email <- yes) {
-      assert(project.writeAllowedFrom(user(email)))
+      assert(projectFrame.writeAllowedFrom(user(email)))
     }
     for (email <- no) {
-      assert(!project.writeAllowedFrom(user(email)))
+      assert(!projectFrame.writeAllowedFrom(user(email)))
     }
   }
 
@@ -83,23 +92,23 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     assertWriters("darabos@lynx", "xandrew@lynx", "forevian@andersen")()
     assertReaders("darabos@lynx", "xandrew@lynx", "forevian@andersen")()
 
-    project.checkpointAfter("A")
-    project.writeACL = "*@lynx"
+    dodo(projectFrame, "A")
+    projectFrame.writeACL = "*@lynx"
     assertWriters("darabos@lynx", "xandrew@lynx")("forevian@andersen")
     assertReaders("darabos@lynx", "xandrew@lynx", "forevian@andersen")()
 
-    project.checkpointAfter("B")
-    project.readACL = ""
+    dodo(projectFrame, "B")
+    projectFrame.readACL = ""
     assertWriters("darabos@lynx", "xandrew@lynx")("forevian@andersen")
     assertReaders("darabos@lynx", "xandrew@lynx")("forevian@andersen")
 
-    project.checkpointAfter("C")
-    project.writeACL = "darabos@lynx"
+    dodo(projectFrame, "C")
+    projectFrame.writeACL = "darabos@lynx"
     assertWriters("darabos@lynx")("xandrew@lynx", "forevian@andersen")
     assertReaders("darabos@lynx")("xandrew@lynx", "forevian@andersen")
 
-    project.checkpointAfter("D")
-    project.readACL = "xandrew@*"
+    dodo(projectFrame, "D")
+    projectFrame.readACL = "xandrew@*"
     def lastAssert() = {
       assertWriters("darabos@lynx")("xandrew@lynx", "forevian@andersen")
       assertReaders("darabos@lynx", "xandrew@lynx")("forevian@andersen")
@@ -107,17 +116,15 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     lastAssert()
 
     // Undo/redo does not change the settings.
-    project.undo()
+    projectFrame.undo()
     lastAssert()
-    project.undo()
+    projectFrame.undo()
     lastAssert()
-    project.undo()
+    projectFrame.undo()
     lastAssert()
-    project.undo()
+    projectFrame.undo()
     lastAssert()
-    project.redo()
-    lastAssert()
-    project.reloadCurrentCheckpoint()
+    projectFrame.redo()
     lastAssert()
   }
 }

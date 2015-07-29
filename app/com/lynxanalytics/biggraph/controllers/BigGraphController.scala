@@ -622,6 +622,7 @@ case class WorkflowOperation(
       // We execute the sub-operation.
       val op = operationRepository.appliedOp(localContext, step.op)
       // Then we copy back the state created by the sub-operation.
+      // !!! This may be wrong, as an operation may change the sate of a parent. :(
       subEditor.state = op.project.state
     }
   }
