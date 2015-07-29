@@ -3,8 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.google.cloud.hadoop.fs.gcs
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
+import org.apache.spark
 import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -144,12 +143,12 @@ object BigGraphSparkContext {
     useKryo: Boolean = true,
     debugKryo: Boolean = false,
     useJars: Boolean = true,
-    master: String = ""): SparkContext = {
+    master: String = ""): spark.SparkContext = {
     val versionFound = org.apache.spark.SPARK_VERSION
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
     assert(versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
-    var sparkConf = new SparkConf()
+    var sparkConf = new spark.SparkConf()
       .setAppName(appName)
       .set("spark.executor.memory",
         scala.util.Properties.envOrElse("EXECUTOR_MEMORY", "1700m"))
@@ -192,6 +191,32 @@ object BigGraphSparkContext {
       sparkConf = sparkConf.setMaster(master)
     }
     log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
-    return new SparkContext(sparkConf)
+    val sc = new spark.SparkContext(sparkConf)
+    sc.addSparkListener(new BigGraphSparkListener(sc))
+    sc
+  }
+}
+
+class BigGraphSparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
+  val maxStageFailures = System.getProperty("biggraph.stage.failures.max", "4").toInt
+  val stageFailures = collection.mutable.Map[Int, Int]()
+
+  override def onStageCompleted(
+    stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
+    val stage = stageCompleted.stageInfo
+    if (stage.failureReason.nonEmpty) {
+      stageFailures(stage.stageId) = stageFailures.getOrElse(stage.stageId, 0) + 1
+    }
+  }
+
+  override def onStageSubmitted(
+    stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
+    val stage = stageSubmitted.stageInfo
+    val failures = stageFailures.getOrElse(stage.stageId, 0)
+    if (failures >= maxStageFailures) {
+      log.warn(s"Stage ${stage.stageId} has failed $failures times." +
+        " Cancelling all jobs to prevent infinite retries. (#2001)")
+      sc.cancelAllJobs()
+    }
   }
 }

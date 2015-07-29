@@ -101,7 +101,8 @@ class DataManager(sc: spark.SparkContext,
   private def load(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
     getFuture(edgeBundle.idSet).map { idSet =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
-      val idsRDD = idSet.rdd.cache
+      val idsRDD = idSet.rdd
+      idsRDD.cacheBackingArray()
       val rawRDD = entityPath(edgeBundle).loadEntityRDD[Edge](sc, idsRDD.partitioner)
       new EdgeBundleData(
         edgeBundle,
@@ -113,7 +114,8 @@ class DataManager(sc: spark.SparkContext,
     implicit val ct = attribute.classTag
     getFuture(attribute.vertexSet).map { vs =>
       // We do our best to colocate partitions to corresponding vertex set partitions.
-      val vsRDD = vs.rdd.cache
+      val vsRDD = vs.rdd
+      vsRDD.cacheBackingArray()
       val rawRDD = entityPath(attribute).loadEntityRDD[T](sc, vsRDD.partitioner)
       new AttributeData[T](
         attribute,

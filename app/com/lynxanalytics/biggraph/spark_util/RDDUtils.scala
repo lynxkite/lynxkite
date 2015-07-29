@@ -97,32 +97,31 @@ object RDDUtils {
    * estimate totals from the filtered numbers.
    */
   private def unfilteredCounts[T](
-    full: SortedRDD[ID, _], restricted: SortedRDD[ID, T]): SortedRDD[ID, (T, Int)] =
-    new BiDerivedSortedRDD(
-      full,
-      restricted,
-      (fullRDD: SortedRDD[ID, _], restrictedRDD: SortedRDD[ID, T]) =>
-        fullRDD.zipPartitions(restrictedRDD, true) { (fit, rit) =>
-          new Iterator[(ID, (T, Int))] {
-            def hasNext = rit.hasNext
-            def next() = {
-              val nxt = rit.next
-              var c = 1
-              while (fit.next._1 < nxt._1) c += 1
-              (nxt._1, (nxt._2, c))
-            }
-          }
-        })
+    full: SortedRDD[ID, _], restricted: SortedRDD[ID, T]): RDD[(ID, (T, Int))] = {
+    full.zipPartitions(restricted, true) { (fit, rit) =>
+      new Iterator[(ID, (T, Int))] {
+        def hasNext = rit.hasNext
+        def next() = {
+          val nxt = rit.next
+          var c = 1
+          while (fit.next._1 < nxt._1) c += 1
+          (nxt._1, (nxt._2, c))
+        }
+      }
+    }
+  }
 
   def estimateValueCounts[T](
     fullRDD: SortedRDD[ID, _],
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
-    requiredPositiveSamples: Int): IDBuckets[T] = {
+    requiredPositiveSamples: Int,
+    rc: RuntimeContext): IDBuckets[T] = {
 
-    val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
-    val withCounts = unfilteredCounts(fullRDD, dataUsed)
-    val (valueBuckets, unfilteredCount, filteredCount) = withCounts
+    import Implicits._
+    val withCounts = unfilteredCounts(fullRDD, data)
+    val sampleWithCounts = withCounts.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
+    val (valueBuckets, unfilteredCount, filteredCount) = sampleWithCounts
       .aggregate((
         new IDBuckets[T]() /* observed value counts */ ,
         0 /* estimated total count corresponding to the observed filtered sample */ ,
@@ -159,10 +158,14 @@ object RDDUtils {
     weightsRDD: SortedRDD[ID, Double],
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
-    requiredPositiveSamples: Int): Map[T, Double] = {
+    requiredPositiveSamples: Int,
+    rc: RuntimeContext): Map[T, Double] = {
 
-    val dataUsed = data.takeFirstNValuesOrSo(requiredPositiveSamples)
-    val withWeightsAndCounts = unfilteredCounts(fullRDD, dataUsed.sortedJoin(weightsRDD))
+    import Implicits._
+    val withWeights = data.sortedJoin(weightsRDD)
+    val withWeightsAndCounts = unfilteredCounts(fullRDD, withWeights)
+    val sampleWithWeightsAndCounts =
+      withWeightsAndCounts.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
     val (valueWeights, unfilteredCount, filteredCount) = withWeightsAndCounts
       .values
       .aggregate((
@@ -336,6 +339,23 @@ object Implicits {
       for (dep <- self.dependencies) {
         dep.rdd.printDetails(indent + 1)
       }
+    }
+
+    // Returns an RDD that only contains as many partitions as there are available cores.
+    def coalesce(rc: RuntimeContext): RDD[T] =
+      self.coalesce(rc.numAvailableCores)
+
+    // Take a sample of approximately the given size.
+    def takeFirstNValuesOrSo(n: Int): RDD[T] = {
+      val numPartitions = self.partitions.size
+      val div = n / numPartitions
+      val mod = n % numPartitions
+      self.mapPartitionsWithIndex(
+        { (pid, it) =>
+          val elementsFromThisPartition = if (pid < mod) (div + 1) else div
+          it.take(elementsFromThisPartition)
+        },
+        preservesPartitioning = true)
     }
   }
 
