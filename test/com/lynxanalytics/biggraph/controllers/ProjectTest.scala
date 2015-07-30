@@ -21,7 +21,9 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   }
 
   def dodo(p: ProjectFrame, x: String) =
-    p.dodo(RootProjectState.emptyState.copy(lastOperationDesc = x, checkpoint = None))
+    p.setCheckpoint(metaGraphManager.stateRepo.checkpointState(
+      RootProjectState.emptyState.copy(lastOperationDesc = x, checkpoint = None),
+      p.checkpoint).checkpoint.get)
 
   test("Undo/redo") {
     assert(undoRedo(projectFrame) == ("", ""))

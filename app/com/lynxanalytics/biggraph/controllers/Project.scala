@@ -55,6 +55,7 @@ object SegmentationState {
 }
 
 sealed trait ProjectViewer {
+  val rootState: RootProjectState
   val state: CommonProjectState
   implicit val manager: MetaGraphManager
 
@@ -167,6 +168,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
     extends ProjectViewer {
 
   implicit val manager = parent.manager
+  val rootState = parent.rootState
   val segmentationState: SegmentationState = parent.state.segmentations(segmentationName)
   val state = segmentationState.state
 
@@ -240,18 +242,22 @@ class ProjectStateRepository(val baseDir: String) {
   def checkpointFileName(checkpoint: String): File =
     new File(baseDirFile, s"save-$checkpoint")
 
-  def checkpoint(state: RootProjectState): String = {
-    state.checkpoint.getOrElse({
+  def checkpointState(state: RootProjectState, prevCheckpoint: String): RootProjectState = {
+    if (state.checkpoint.nonEmpty) {
+      // Already checkpointed.
+      state
+    } else {
+      val withPrev = state.copy(previousCheckpoint = Some(prevCheckpoint))
       val checkpoint = Timestamp.toString
       val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
       val finalFile = checkpointFileName(checkpoint)
       FileUtils.writeStringToFile(
         dumpFile,
-        Json.prettyPrint(Json.toJson(state)),
+        Json.prettyPrint(Json.toJson(withPrev)),
         "utf8")
       dumpFile.renameTo(finalFile)
-      checkpoint
-    })
+      withPrev.copy(checkpoint = Some(checkpoint))
+    }
   }
 
   def readCheckpoint(checkpoint: String): RootProjectState = {
@@ -335,6 +341,8 @@ sealed trait ProjectEditor {
       assert(e == null || e.srcVertexSet == vertexSet, s"Edge bundle does not match vertex set")
       assert(e == null || e.dstVertexSet == vertexSet, s"Edge bundle does not match vertex set")
       edgeAttributes = Map()
+    }
+    if (e != null) {
       state = state.copy(edgeBundleGUID = Some(e.gUID))
       scalars("edge_count") = graph_operations.Count.run(e)
     } else {
@@ -399,6 +407,8 @@ sealed trait ProjectEditor {
   def offspringEditor(path: Seq[String]): ProjectEditor =
     if (path.isEmpty) this
     else segmentation(path.head).offspringEditor(path.tail)
+
+  def rootEditor: RootProjectEditor
 
   def isSegmentation = isInstanceOf[SegmentationEditor]
   def asSegmentation = asInstanceOf[SegmentationEditor]
@@ -491,6 +501,12 @@ class RootProjectEditor(
 
   def viewer = new RootProjectViewer(rootState)
 
+  def rootEditor: RootProjectEditor = this
+
+  def checkpoint = rootState.checkpoint
+  def checkpoint_=(n: Option[String]) =
+    rootState = rootState.copy(checkpoint = n)
+
   def lastOperationDesc = rootState.lastOperationDesc
   def lastOperationDesc_=(n: String) =
     rootState = rootState.copy(lastOperationDesc = n)
@@ -530,6 +546,8 @@ class SegmentationEditor(
   def viewer = parent.viewer.segmentationViewers(segmentationName)
 
   def rootState = parent.rootState
+
+  def rootEditor = parent.rootEditor
 
   def belongsTo = viewer.belongsTo
   def belongsTo_=(e: EdgeBundle): Unit = {
@@ -579,21 +597,6 @@ class ProjectFrame(val projectPath: SymbolPath)(
   private def nextCheckpoint_=(x: Option[String]): Unit =
     set(rootDir / "nextCheckpoint", x.getOrElse(""))
 
-  /*private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
-    case "" => Seq()
-    case x => x.split(ProjectFrame.quotedSeparator, -1)
-  }
-
-  private def checkpoints_=(cs: Seq[String]): Unit =
-    set(rootDir / "checkpoints", cs.mkString(ProjectFrame.separator))
-  private def checkpointIndex = get(rootDir / "checkpointIndex") match {
-    case "" => 0
-    case x => x.toInt
-  }
-  private def checkpointIndex_=(x: Int): Unit =
-    set(rootDir / "checkpointIndex", x.toString)
-  def checkpointCount = if (checkpoints.nonEmpty) checkpointIndex + 1 else 0*/
-
   def exists = manager.tagExists(rootDir)
 
   def undo(): Unit = manager.synchronized {
@@ -608,11 +611,6 @@ class ProjectFrame(val projectPath: SymbolPath)(
       next => checkpointState(next).previousCheckpoint.get
     }
     nextCheckpoint = reverseCheckpoints.takeWhile(_ != next).lastOption
-  }
-
-  def dodo(newState: RootProjectState): Unit = manager.synchronized {
-    setCheckpoint(manager.stateRepo.checkpoint(
-      newState.copy(previousCheckpoint = Some(checkpoint))))
   }
 
   def setCheckpoint(cp: String): Unit = manager.synchronized {

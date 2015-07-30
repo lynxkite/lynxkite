@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class FingerprintingBetweenProjectAndSegmentationOperationTest extends OperationsTestBase {
   test("Fingerprinting between project and segmentation") {
     run("Example Graph")
+    saveAsFrame("ExampleGraph2")
     run("Import project as segmentation", Map(
       "them" -> "ExampleGraph2"))
     val seg = project.segmentation("ExampleGraph2")
@@ -65,8 +66,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "aggregate-dst" -> "",
       "aggregate-src" -> ""))
     run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
-    val other = ProjectFrame.fromName("other")
-    projectFrame.copy(other)
+    saveAsFrame("other")
     run("Import vertices and edges from single CSV fileset", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-edges-1.csv",
       "header" -> "src,dst",
@@ -82,7 +82,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "base-id-attr" -> "stringID",
       "seg-id-attr" -> "link"),
       on = seg)
-    def belongsTo = project.segmentation("other").belongsTo.toPairSeq
+    def belongsTo = seg.belongsTo.toPairSeq
     assert(belongsTo.size == 6)
     run("Fingerprinting between project and segmentation", Map(
       "mrew" -> "0",
