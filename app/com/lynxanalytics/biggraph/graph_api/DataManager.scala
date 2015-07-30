@@ -339,7 +339,7 @@ class DataManager(sc: spark.SparkContext,
     log.info("Work fraction: " + workFraction)
     log.info("Cache fraction: " + cacheFraction)
     log.info("WM per core: " + (workMemory / totalCores).toLong)
-    val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / "broadcasts"
+    val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
       sparkContext = sc,
       broadcastDirectory = broadcastDirectory,
