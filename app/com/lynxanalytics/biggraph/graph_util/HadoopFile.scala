@@ -179,7 +179,6 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
     import hadoop.mapreduce.lib.input.SequenceFileInputFormat
 
-    println(s"loadEntityRDD: file: $resolvedNameWithNoCredentials")
     val file = sc.newAPIHadoopFile(
       resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.NullWritable],
@@ -232,14 +231,13 @@ private[graph_util] class WholeSequenceFileInputFormat[K, V]
     context: hadoop.mapreduce.JobContext, file: hadoop.fs.Path): Boolean = false
 
   // Read files in order.
-  override protected def listStatus(job: hadoop.mapreduce.JobContext): java.util.List[hadoop.fs.FileStatus] = {
-    import scala.collection.JavaConversions._
-    val origList = super.listStatus(job)
-    val scalaList = origList.toList.filter(_.isDirectory)
-    java.util.Collections.sort(scalaList, new java.util.Comparator[hadoop.fs.FileStatus] {
+  override protected def listStatus(
+    job: hadoop.mapreduce.JobContext): java.util.List[hadoop.fs.FileStatus] = {
+    val l = super.listStatus(job)
+    java.util.Collections.sort(l, new java.util.Comparator[hadoop.fs.FileStatus] {
       def compare(a: hadoop.fs.FileStatus, b: hadoop.fs.FileStatus) =
         a.getPath.getName compare b.getPath.getName
     })
-    scalaList
+    l
   }
 }
