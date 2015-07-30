@@ -80,14 +80,14 @@ sealed trait ProjectViewer {
 
   def editor: ProjectEditor
 
-  def isSegmentation = isInstanceOf[SegmentationViewer]
+  val isSegmentation = false
 
-  def asSegmentation = asInstanceOf[SegmentationViewer]
+  def asSegmentation: SegmentationViewer = ???
 
-  // Methods for convertion to FE objects.
+  // Methods for conversion to FE objects.
   private def feScalar(name: String): Option[FEAttribute] = {
     if (scalars.contains(name)) {
-      Some(ProjectViewer.feAttr(scalars(name), name))
+      Some(ProjectViewer.feEntity(scalars(name), name))
     } else {
       None
     }
@@ -118,7 +118,7 @@ sealed trait ProjectViewer {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(things: Iterable[(String, TypedEntity[_])]) = {
-      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feAttr(e, name) }.toList
+      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feEntity(e, name) }.toList
     }
 
     FEProject(
@@ -142,7 +142,7 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+  def feEntity[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
@@ -172,6 +172,10 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   val segmentationState: SegmentationState = parent.state.segmentations(segmentationName)
   val state = segmentationState.state
 
+  override val isSegmentation = true
+
+  override val asSegmentation = this
+
   def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
 
   def belongsTo: EdgeBundle =
@@ -191,7 +195,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   override protected def getFEMembers: Option[FEAttribute] =
-    Some(ProjectViewer.feAttr(membersAttribute, "#members", isInternal = true))
+    Some(ProjectViewer.feEntity(membersAttribute, "#members", isInternal = true))
 
   def equivalentUIAttribute = {
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
@@ -410,8 +414,8 @@ sealed trait ProjectEditor {
 
   def rootEditor: RootProjectEditor
 
-  def isSegmentation = isInstanceOf[SegmentationEditor]
-  def asSegmentation = asInstanceOf[SegmentationEditor]
+  val isSegmentation = false
+  def asSegmentation: SegmentationEditor = ???
 
   def notes = state.notes
   def notes_=(n: String) = state = state.copy(notes = n)
@@ -548,6 +552,9 @@ class SegmentationEditor(
   def rootState = parent.rootState
 
   def rootEditor = parent.rootEditor
+
+  override val isSegmentation = true
+  override val asSegmentation: SegmentationEditor = this
 
   def belongsTo = viewer.belongsTo
   def belongsTo_=(e: EdgeBundle): Unit = {
