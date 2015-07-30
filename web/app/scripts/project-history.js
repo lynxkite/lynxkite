@@ -84,7 +84,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         for (var i = 0; i < steps.length; ++i) {
           var s = steps[i];
           if (s.checkpoint !== undefined) {
-            startingPoint = s.checkpoint
+            startingPoint = s.checkpoint;
           } else {
             requests.push(s.request);
           }
@@ -127,14 +127,6 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           // On completion, regardless of success.
           scope.saving = false;
         });
-      };
-
-      // Returns "on <segmentation name>" if the project is a segmentation.
-      scope.onProject = function(name) {
-        var path = util.projectPath(name);
-        // The project name is already at the top.
-        path.shift();
-        return path.length === 0 ? '' : 'on ' + path.join('&raquo;');
       };
 
       scope.reportError = function() {
@@ -227,9 +219,8 @@ angular.module('biggraph').directive('projectHistory', function(util) {
 
       // Returns the short name of the segmentation if the step affects a segmentation.
       scope.segmentationName = function(step) {
-        var p = step.request.project;
-        var path = util.projectPath(p);
-        if (path.length === 1) { // This is the top-level project.
+        var path = step.request.path;
+        if (path.length === 0) { // This is the top-level project.
           return undefined;
         } else {
           return path[path.length - 1];
