@@ -183,7 +183,9 @@ angular
       },
       projectPath: function(projectName) {
         if (!projectName) { return []; }
-        return projectName.split('|');
+        return projectName.split('|').map(function(name) {
+          return util.spaced(name);
+        });
       }
     };
     util.globals = util.get('/ajax/getGlobalSettings');
