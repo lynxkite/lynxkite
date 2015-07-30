@@ -46,6 +46,17 @@ GetMasterHostName() {
     | grep PublicDnsName | grep ec2 | cut -d'"' -f 4 | head -1
 }
 
+function ConfirmDataLoss {
+  read -p "Data not saved with the 's3copy' command will be lost. Are you sure? [Y/n] " answer
+  case ${answer:0:1} in
+    y|Y|'' )
+      ;;
+    * )
+      exit 1
+      ;;
+  esac
+}
+
 if [ ! -f "${SSH_KEY}" ]; then
   echo "${SSH_KEY} does not exist."
   exit 1
@@ -72,9 +83,13 @@ start)
   MASTER=`GetMasterHostName`
   # Prepare a config file.
   CONFIG_FILE=/tmp/${CLUSTER_NAME}.kiterc
-  KITE_DATA_DIR="s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}"
-  KITE_EPHEMERAL_DATA_DIR="hdfs://$MASTER:9000/data"
-
+  if [ -n "${S3_DATAREPO:-}" ]; then
+    KITE_DATA_DIR="s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}"
+    KITE_EPHEMERAL_DATA_DIR="hdfs://$MASTER:9000/data"
+  else
+    KITE_DATA_DIR="hdfs://$MASTER:9000/data"
+    KITE_EPHEMERAL_DATA_DIR=
+  fi
   cat > ${CONFIG_FILE} <<EOF
 # !!!Warning!!! Some values are overriden at the end of the file.
 
@@ -121,12 +136,7 @@ kite)
     root@${HOST}:biggraphstage
 
   echo "Starting..."
-  ssh \
-    -i "${SSH_KEY}" \
-    -o UserKnownHostsFile=/dev/null \
-    -o CheckHostIP=no \
-    -o StrictHostKeyChecking=no \
-    -t -t \
+  $SSH -t -t \
     root@${HOST} <<EOF
 biggraphstage/bin/biggraph restart
 exit
@@ -137,6 +147,7 @@ EOF
 
 # ======
 stop)
+  ConfirmDataLoss
   ${SPARK_HOME}/ec2/./spark-ec2 \
     -k ${SSH_ID} \
     -i "${SSH_KEY}" \
@@ -159,10 +170,24 @@ resume)
 
 # ======
 destroy)
+  ConfirmDataLoss
   ${SPARK_HOME}/ec2/./spark-ec2 \
     --region=${REGION} \
     destroy \
     ${CLUSTER_NAME}
+  ;;
+
+# ======
+s3copy)
+  KITE_EPHEMERAL_DATA_DIR="hdfs://$MASTER:9000/data"
+  $SSH -t -t \
+    root@${HOST} <<EOF
+/root/ephemeral-hdfs/bin/hadoop fs \
+  -D fs.s3n.awsAccessKeyId=$AWS_ACCESS_KEY_ID \
+  -D fs.s3n.awsSecretAccessKey=$AWS_SECRET_ACCESS_KEY \
+  -cp $KITE_EPHEMERAL_DATA_DIR s3n://$S3_DATAREPO
+exit
+EOF
   ;;
 
 # ======
