@@ -9,10 +9,6 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import com.lynxanalytics.biggraph.controllers._
 
-trait RunTarget {
-  def run(op: String, params: Map[String, String]): Unit
-}
-
 trait OperationsTestBase extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
