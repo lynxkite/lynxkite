@@ -402,9 +402,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.tagBatch {
     // See first that we can deal with this history.
-    def historyExtension = extendedHistory(
+    val startingPoint = request.history.startingPoint
+    val historyExtension = extendedHistory(
       user,
-      metaManager.stateRepo.readCheckpoint(request.history.startingPoint),
+      metaManager.stateRepo.readCheckpoint(startingPoint),
       request.history.requests)
     assert(historyExtension.map(_._2).forall(_.status.enabled), "Trying to save invalid history")
 
@@ -425,8 +426,13 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
 
     // Set the new history.
-    p.setCheckpoint(request.history.startingPoint)
-    historyExtension.map(_._1).foreach(p.dodo(_))
+    val finalCheckpoint = historyExtension
+      .map(_._1)
+      .foldLeft(startingPoint) {
+        case (prevCp, state) =>
+          metaManager.stateRepo.checkpointState(state, prevCp).checkpoint.get
+      }
+    p.setCheckpoint(finalCheckpoint)
   }
 
   def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
@@ -621,9 +627,9 @@ case class WorkflowOperation(
       val localContext = Operation.Context(context.user, subEditor.viewer)
       // We execute the sub-operation.
       val op = operationRepository.appliedOp(localContext, step.op)
-      // Then we copy back the state created by the sub-operation.
-      // !!! This may be wrong, as an operation may change the sate of a parent. :(
-      subEditor.state = op.project.state
+      // Then we copy back the state created by the sub-operation. We have to copy at
+      // root level, as operations might reach up an modify parent state as well.
+      project.state = op.project.rootEditor.state
     }
   }
 }
@@ -678,12 +684,17 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  // Applies the operation specified by op in the given context and returnes the
+  // Applies the operation specified by op in the given context and returns the
   // applied operation.
   def appliedOp(context: Operation.Context, opSpec: FEOperationSpec): Operation = {
     val op = opById(context, opSpec.id)
     op.validateAndApply(opSpec.parameters)
     op
+  }
+
+  def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
+    val opResult = appliedOp(context, opSpec).project.rootState
+    manager.stateRepo.checkpointState(opResult, context.project.rootState.checkpoint.get)
   }
 
   def apply(
@@ -692,6 +703,6 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     op: FEOperationSpec): Unit = manager.tagBatch {
 
     val context = Operation.Context(user, subProject.viewer)
-    subProject.frame.dodo(appliedOp(context, op).project.rootState)
+    subProject.frame.setCheckpoint(applyAndCheckpoint(context, op).checkpoint.get)
   }
 }
