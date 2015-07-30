@@ -33,14 +33,14 @@ object BatchMain {
   def getScalarMeta(
     projectName: String, scalarName: String)(
       implicit metaManager: MetaGraphManager): Scalar[_] = {
-    val project = ProjectFrame.fromName(projectName)
-    project.viewer.scalars(scalarName)
+    val project = SubProject.parsePath(projectName).viewer
+    project.scalars(scalarName)
   }
 
   def getAttributeMeta(
     projectName: String, attributeName: String)(
       implicit metaManager: MetaGraphManager): Attribute[_] = {
-    val project = ProjectFrame.fromName(projectName).viewer
+    val project = SubProject.parsePath(projectName).viewer
     if (project.vertexAttributes.contains(attributeName))
       project.vertexAttributes(attributeName)
     else

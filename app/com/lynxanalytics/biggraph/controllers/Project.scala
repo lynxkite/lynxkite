@@ -1,9 +1,25 @@
 // Projects are the top-level entities on the UI.
 //
 // A project has a vertex set, an edge bundle, and any number of attributes,
-// scalars and segmentations. It represents data stored in the tag system.
-// The Project instances are short-lived, they are just a rich interface for
-// querying and manipulating the tags.
+// scalars and segmentations. A segmentation itself can also be looked at as a project.
+// It has its own vertex set, edge bundle, attributes, scalars and is connected to the
+// base project via belongsTo edge bundle.
+//
+// The complete state of a root project - a project which is not a segmentation of a base project -
+// is completly represented by the immutable RootProjectState class.
+//
+// We can optionally store a RootProjectState as a checkpoint. Checkpoints are globally unique
+// (within a Kite instance) identifiers that can be used to recall a project state. Checkpointed
+// project states also encapsulate the full operation history of the state as they have references
+// to their parent state checkpoint and the operation that was used to get from the parent to the
+// child. Thus checkpoints form a directed tree.
+//
+// Project frames represent named project states. Basically each project on the UI is
+// represented via a project frame. A project frame is uniquely identified by a project name
+// and contains informations like the checkpoint representing the current state of the project and
+// high level state independent meta information like access control. Project frames are persisted
+// using tags. ProjectFrame instances are short-lived, they are just a rich interface for
+// querying and manipulating the underlying tag tree.
 
 package com.lynxanalytics.biggraph.controllers
 
@@ -23,6 +39,7 @@ import scala.collection
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
+// Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
   vertexSetGUID: Option[UUID],
   vertexAttributeGUIDs: Map[String, UUID],
@@ -35,6 +52,7 @@ object CommonProjectState {
   val emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "")
 }
 
+// Complete state of a root project.
 case class RootProjectState(
     state: CommonProjectState,
     checkpoint: Option[String],
@@ -42,11 +60,11 @@ case class RootProjectState(
     lastOperationDesc: String,
     lastOperationRequest: Option[SubProjectOperation]) {
 }
-
 object RootProjectState {
   val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None)
 }
 
+// Complete state of segmentation.
 case class SegmentationState(
   state: CommonProjectState,
   belongsToGUID: Option[UUID])
@@ -54,29 +72,31 @@ object SegmentationState {
   val emptyState = SegmentationState(CommonProjectState.emptyState, None)
 }
 
+// Rich interface for looking at project states.
 sealed trait ProjectViewer {
   val rootState: RootProjectState
   val state: CommonProjectState
   implicit val manager: MetaGraphManager
 
-  def vertexSet: VertexSet =
+  lazy val vertexSet: VertexSet =
     state.vertexSetGUID.map(manager.vertexSet(_)).getOrElse(null)
-  def vertexAttributes: Map[String, Attribute[_]] =
+  lazy val vertexAttributes: Map[String, Attribute[_]] =
     state.vertexAttributeGUIDs.mapValues(manager.attribute(_))
-  def edgeBundle: EdgeBundle =
+  lazy val edgeBundle: EdgeBundle =
     state.edgeBundleGUID.map(manager.edgeBundle(_)).getOrElse(null)
-  def edgeAttributes: Map[String, Attribute[_]] =
+  lazy val edgeAttributes: Map[String, Attribute[_]] =
     state.edgeAttributeGUIDs.mapValues(manager.attribute(_))
-  def scalars: Map[String, Scalar[_]] =
+  lazy val scalars: Map[String, Scalar[_]] =
     state.scalarGUIDs.mapValues(manager.scalar(_))
 
-  def segmentationViewers: Map[String, SegmentationViewer] =
+  lazy val segmentationMap: Map[String, SegmentationViewer] =
     state.segmentations
       .map { case (name, state) => name -> new SegmentationViewer(this, name) }
+  def segmentation(name: String) = segmentationMap(name)
 
   def offspringViewer(path: Seq[String]): ProjectViewer =
     if (path.isEmpty) this
-    else segmentationViewers(path.head).offspringViewer(path.tail)
+    else segmentation(path.head).offspringViewer(path.tail)
 
   def editor: ProjectEditor
 
@@ -87,7 +107,7 @@ sealed trait ProjectViewer {
   // Methods for conversion to FE objects.
   private def feScalar(name: String): Option[FEAttribute] = {
     if (scalars.contains(name)) {
-      Some(ProjectViewer.feEntity(scalars(name), name))
+      Some(ProjectViewer.feAttr(scalars(name), name))
     } else {
       None
     }
@@ -111,14 +131,14 @@ sealed trait ProjectViewer {
     }
   }
 
-  protected def getFEMembers: Option[FEAttribute] = None
+  protected lazy val getFEMembers: Option[FEAttribute] = None
 
   // May raise an exception.
   private def unsafeToFE(projectName: String): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(things: Iterable[(String, TypedEntity[_])]) = {
-      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feEntity(e, name) }.toList
+      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feAttr(e, name) }.toList
     }
 
     FEProject(
@@ -129,7 +149,7 @@ sealed trait ProjectViewer {
       scalars = feList(scalars),
       vertexAttributes = feList(vertexAttributes) ++ getFEMembers,
       edgeAttributes = feList(edgeAttributes),
-      segmentations = segmentationViewers
+      segmentations = segmentationMap
         .toSeq
         .sortBy(_._1)
         .map { case (name, segm) => segm.toFESegmentation(projectName) }
@@ -142,7 +162,7 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feEntity[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+  def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
@@ -158,12 +178,14 @@ object ProjectViewer {
   }
 }
 
+// Specialized ProjectViewer for RootProjectStates.
 class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: MetaGraphManager)
     extends ProjectViewer {
   val state = rootState.state
   def editor: RootProjectEditor = new RootProjectEditor(rootState)
 }
 
+// Specialized ProjectViewer for SegmentationStates.
 class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String)
     extends ProjectViewer {
 
@@ -178,26 +200,26 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 
   def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
 
-  def belongsTo: EdgeBundle =
+  lazy val belongsTo: EdgeBundle =
     segmentationState.belongsToGUID.map(manager.edgeBundle(_)).getOrElse(null)
 
-  def belongsToAttribute: Attribute[Vector[ID]] = {
+  lazy val belongsToAttribute: Attribute[Vector[ID]] = {
     val segmentationIds = graph_operations.IdAsAttribute.run(vertexSet)
     val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
   }
 
-  def membersAttribute: Attribute[Vector[ID]] = {
+  lazy val membersAttribute: Attribute[Vector[ID]] = {
     val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr
   }
 
-  override protected def getFEMembers: Option[FEAttribute] =
-    Some(ProjectViewer.feEntity(membersAttribute, "#members", isInternal = true))
+  override protected lazy val getFEMembers: Option[FEAttribute] =
+    Some(ProjectViewer.feAttr(membersAttribute, "#members", isInternal = true))
 
-  def equivalentUIAttribute = {
+  lazy val equivalentUIAttribute = {
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
     UIValue(id = bta, title = s"segmentation[$segmentationName]")
   }
@@ -212,6 +234,9 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 }
 
+// The ProjectStateRepository's job is to persist project states to checkpoints.
+// There is one special checkpoint, "", which is the root of the checkpoint tree.
+// It corresponds to an empty project state with no parent state.
 object ProjectStateRepository {
   implicit val fFEOperationSpec = Json.format[FEOperationSpec]
   implicit val fSubProjectOperation = Json.format[SubProjectOperation]
@@ -306,6 +331,11 @@ abstract class StateMapHolder[T <: MetaGraphEntity] extends collection.Map[Strin
   def -(key: String) = getMap - key
 }
 
+// A mutable wrapper around a CommonProjectState. A ProjectEditor can be editing the state
+// of a particular segmentation or a root project. The actual state is always stored and modified
+// on the root level. E.g. if you take a RootProjectEditor, get a particular SegmentationEditor
+// from it and then do some modifications using the SegmentationEditor then the state of the
+// original RootProjectEditor will change as well.
 sealed trait ProjectEditor {
   implicit val manager: MetaGraphManager
   def state: CommonProjectState
@@ -493,6 +523,7 @@ sealed trait ProjectEditor {
   def setLastOperationRequest(n: SubProjectOperation): Unit
 }
 
+// Specialized project editor for a RootProjectState.
 class RootProjectEditor(
     initialState: RootProjectState)(
         implicit val manager: MetaGraphManager) extends ProjectEditor {
@@ -522,6 +553,7 @@ class RootProjectEditor(
   def setLastOperationRequest(n: SubProjectOperation) = lastOperationRequest = n
 }
 
+// Specialized editor for a SegmentationState.
 class SegmentationEditor(
     val parent: ProjectEditor,
     val segmentationName: String) extends ProjectEditor {
@@ -547,7 +579,7 @@ class SegmentationEditor(
     segmentationState = segmentationState.copy(state = newState)
   }
 
-  def viewer = parent.viewer.segmentationViewers(segmentationName)
+  def viewer = parent.viewer.segmentation(segmentationName)
 
   def rootState = parent.rootState
 
@@ -576,6 +608,7 @@ class SegmentationEditor(
     parent.setLastOperationRequest(n.copy(path = segmentationName +: n.path))
 }
 
+// Represents a mutable, named project. State is stored using tags.
 class ProjectFrame(val projectPath: SymbolPath)(
     implicit manager: MetaGraphManager) {
   val projectName = projectPath.toString
@@ -632,7 +665,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
     farthestCheckpoint = ""
   }
 
-  def checkpointState(checkpoint: String): RootProjectState =
+  private def checkpointState(checkpoint: String): RootProjectState =
     manager.stateRepo.readCheckpoint(checkpoint)
 
   def currentState: RootProjectState = checkpointState(checkpoint)
@@ -688,10 +721,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
   }
   def copy(to: ProjectFrame): Unit = cp(rootDir, to.rootDir)
 }
-
 object ProjectFrame {
-  val x: Stream[Int] = 0 #:: x.map(_ + 1)
-
   val separator = "|"
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
 
@@ -708,6 +738,11 @@ object ProjectFrame {
   }
 }
 
+// Represents a named but not necessarily root project. A SubProject is identifed by a ProjectFrame
+// representing the named root project and a sequence of segmentation names which show how one
+// should climb down the project tree.
+// When referring to SubProjects via a single string, we use the format:
+//   RootProjectName|Seg1Name|Seg2Name|...
 case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
   def fullName = (frame.projectName +: path).mkString(ProjectFrame.separator)

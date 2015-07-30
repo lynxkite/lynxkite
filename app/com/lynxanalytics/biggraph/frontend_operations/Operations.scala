@@ -2637,14 +2637,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     val re = ".*\\b" + java.util.regex.Pattern.quote(identifier) + "\\b.*"
     expr.matches(re)
   }
-
-  def addNotesOperation(notes: String): SubProjectOperation = {
-    SubProjectOperation(
-      path = Seq(),
-      op = FEOperationSpec(
-        id = "Change-project-notes",
-        parameters = Map("notes" -> notes)))
-  }
 }
 
 object Operations {

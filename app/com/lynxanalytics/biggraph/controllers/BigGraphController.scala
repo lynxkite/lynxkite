@@ -143,7 +143,7 @@ case class ProjectSettingsRequest(project: String, readACL: String, writeACL: St
 
 case class HistoryRequest(project: String)
 case class AlternateHistory(
-  startingPoint: String, // The checkpoint where to start to apply request below.
+  startingPoint: String, // The checkpoint where to start to apply requests below.
   requests: List[SubProjectOperation])
 case class SaveHistoryRequest(
   oldProject: String, // Old project is used to copy ProjectFrame level metadata.
@@ -326,6 +326,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     (startingState, steps)
   }
 
+  // Simulates an operation sequence starting from a given state. Returns the list of
+  // states reached by the operations and the corresponding ProjectHistorySteps.
   private def extendedHistory(
     user: serving.User,
     start: RootProjectState,
@@ -338,7 +340,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   // Tries to execute the requested operation on the project.
-  // Returns the ProjectHistoryStep to be displayed in the history, or None if it should be hidden.
+  // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
+  // the operation.
+  // Won't ever execute dirty operation, for those it set's a special error status.
   private def historyStep(
     user: serving.User,
     startState: RootProjectState,
@@ -396,8 +400,13 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
     val (startingState, checkpointHistory) = reversedCheckpointHistory(user, request.startingPoint)
     val historyExtension = extendedHistory(user, startingState, request.requests)
+    val cleanCheckpointHistory =
+      checkpointHistory
+        .reverse
+        .filter(step => step.status.enabled ||
+          (step.status.disabledReason != BigGraphController.dirtyOperationError))
     ProjectHistory(
-      checkpointHistory.reverse.filter(_.status.enabled) ++ historyExtension.map(_._2))
+      cleanCheckpointHistory ++ historyExtension.map(_._2))
   }
 
   def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.tagBatch {
