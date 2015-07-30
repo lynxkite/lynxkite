@@ -3,7 +3,7 @@
 // The code in this file defines the operation parameters to be offered on the UI,
 // and also takes care of parsing the parameters given by the user and creating
 // the "backend" operations and updating the projects.
-package com.lynxanalytics.biggraph.controllers
+package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.JavaScript
@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
 
 object OperationParams {
@@ -149,6 +150,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   abstract class PropagationOperation(t: String, c: Context)
     extends Operation(t, c, Category("Propagation operations", "green", icon = "fullscreen"))
+
+  abstract class HiddenOperation(t: String, c: Context)
+    extends Operation(t, c, Category("Hidden operations", "black", visible = false))
 
   abstract class CreateSegmentationOperation(t: String, c: Context)
     extends Operation(t, c, Category(
@@ -933,6 +937,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasNoVertexSet
     def apply(params: Map[String, String]) = {
       val g = graph_operations.ExampleGraph()().result
+      project.vertexSet = g.vertices
+      project.edgeBundle = g.edges
+      project.vertexAttributes = g.vertexAttributes.mapValues(_.entity)
+      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
+    }
+  })
+
+  register("Enhanced Example Graph", new HiddenOperation(_, _) {
+    def parameters = List()
+    def enabled = hasNoVertexSet
+    def apply(params: Map[String, String]) = {
+      val g = graph_operations.EnhancedExampleGraph()().result
       project.vertexSet = g.vertices
       project.edgeBundle = g.edges
       project.vertexAttributes = g.vertexAttributes.mapValues(_.entity)
@@ -2245,8 +2262,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     def apply(params: Map[String, String]) = {
       import UIStatusSerialization._
-      val uiStatusJson = json.Json.parse(params("uiStatusJson"))
-      val uiStatus = json.Json.fromJson[UIStatus](uiStatusJson).get
+      val j = json.Json.parse(params("uiStatusJson"))
+      val uiStatus = j.as[UIStatus]
       project.scalars(params("scalarName")) =
         graph_operations.CreateUIStatusScalar(uiStatus).result.created
     }

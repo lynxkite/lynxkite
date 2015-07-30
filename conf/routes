@@ -32,6 +32,10 @@ GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonSe
 GET  /ajax/getUsers    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
 POST /ajax/createUser  com.lynxanalytics.biggraph.serving.ProductionJsonServer.createUser
 
+GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
+POST /ajax/markFilesDeleted      com.lynxanalytics.biggraph.serving.ProductionJsonServer.markFilesDeleted
+POST /ajax/deleteMarkedFiles     com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteMarkedFiles
+
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
 
