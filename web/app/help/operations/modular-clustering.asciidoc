@@ -5,7 +5,8 @@ http://en.wikipedia.org/wiki/Modularity_(networks)[modularity].
 
 Edges that go between vertices in the same segment increase modularity, while edges that go from
 one segment to the other decrease modularity. The algorithm iteratively merges and splits segments
-until it cannot find changes that would significantly improve the modularity score.
+and moves vertices between segments until it cannot find changes that would significantly improve
+the modularity score.
 
 ====
 [[name]] Segmentation name::
