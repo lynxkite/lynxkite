@@ -47,8 +47,9 @@ angular.module('biggraph').directive('projectHistory', function(util) {
 
             // If all what happened is defining some previously undefined parameters then
             // we don't take this as a change. This kind of change is always done by
-            // operation.js based on the defaults provided by the backend and we assume
-            // undefined and having the default value is equivalent for these operations.
+            // operation.js (not by the user). It basically sets the defaults provided by the
+            // backend for all undefined values. We assume having the default value is equivalent
+            // with not having the parameters defined for these operations.
             // For why this is necessary, see: https://github.com/biggraph/biggraph/issues/1985
             var beforeAllDefined = angular.copy(before);
             var beforeParams = beforeAllDefined.op.parameters;
