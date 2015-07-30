@@ -3,7 +3,7 @@
 Operations('random')
 [
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "New-vertex-set",
       "parameters": {
@@ -12,7 +12,7 @@ Operations('random')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Add-gaussian-vertex-attribute",
       "parameters": {
@@ -22,7 +22,7 @@ Operations('random')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Aggregate-vertex-attribute-globally",
       "parameters": {

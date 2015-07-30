@@ -1,7 +1,7 @@
 Operations('${project}')
 [
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "New-vertex-set",
       "parameters": {
@@ -10,7 +10,7 @@ Operations('${project}')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Create-random-edge-bundle",
       "parameters": {
@@ -20,7 +20,7 @@ Operations('${project}')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Maximal-cliques",
       "parameters": {
@@ -31,7 +31,7 @@ Operations('${project}')
     }
   },
   {
-    "project": "!project/checkpointed/segmentations/maximal_cliques/project",
+    "path": ["maximal_cliques"],
     "op": {
       "id": "Aggregate-from-segmentation",
       "parameters": {
@@ -42,7 +42,7 @@ Operations('${project}')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Aggregate-vertex-attribute-globally",
       "parameters": {
