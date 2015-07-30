@@ -52,8 +52,6 @@ class DataManager(sc: spark.SparkContext,
     else mainRoot
   }
 
-  private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
-
   private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
@@ -172,7 +170,7 @@ class DataManager(sc: spark.SparkContext,
     // Mark the operation as complete. Entities may not be loaded from incomplete operations.
     // The reason for this is that an operation may give different results if the number of
     // partitions is different. So for consistency, all outputs must be from the same run.
-    successPath(ephemeralRoot.instancePath(instance)).createFromStrings("")
+    (ephemeralRoot.instancePath(instance) / io.Success).createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,
@@ -314,7 +312,7 @@ class DataManager(sc: spark.SparkContext,
         val oos = new java.io.ObjectOutputStream(serializedScalarFileName(path).create())
         oos.writeObject(scalarData.value)
         oos.close()
-        successPath(path).createFromStrings("")
+        (path / io.Success).createFromStrings("")
         log.info(s"PERF Written scalar $entity to disk")
       }
     }
