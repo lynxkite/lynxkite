@@ -125,16 +125,16 @@ fi
 
 
 #Install wget and Openjdk 7
-if type apt-get > /dev/null 2>%1; then
+if type apt-get > /dev/null 2>&1; then
     echo "apt-get found. Installing wget and OpenJDK-7"
     apt-get -y update
     apt-get -y install openjdk-7-jre
     apt-get -y install wget
-elif type yum > /dev/null 2>%1; then
+elif type yum > /dev/null 2>&1; then
     echo "yum found. Installing wget and OpenJDK-7"
     yum -y install java-1.7.0-openjdk.x86_64
     yum -y install wget
-elif type zypper > /dev/null 2>%1; then
+elif type zypper > /dev/null 2>&1; then
     echo "zypper found. Installing wget and OpenJDK-7"
     zypper --non-interactive install wget
     zypper --non-interactive install java-1_7_0-openjdk
@@ -238,7 +238,7 @@ echo "Setting up LynxKite as server"
 
 #Create /etc/init/lynxkite.conf
 
-if type initctl > /dev/null 2>%1; then
+if type initctl > /dev/null 2>&1; then
     echo "Creating upstart configuration file for initctl"
     cat <<EOM > /etc/init/lynxkite.conf
 #Lynxkite
@@ -262,7 +262,7 @@ EOM
 
 #Create /usr/lib/systemd/system/lynxkite.service
 
-elif type systemctl > /dev/null 2>%1; then
+elif type systemctl > /dev/null 2>&1; then
 ################
 # Temporary patch for cat /dev/urandom  
 # We can remove this later, but wanted to have a working script with the older releases

@@ -37,6 +37,10 @@ angular
         templateUrl: 'views/users.html',
         controller: 'UsersCtrl',
       })
+      .when('/cleaner', {
+        templateUrl: 'views/cleaner.html',
+        controller: 'CleanerCtrl',
+      })
       .when('/help', {
         templateUrl: 'views/help.html',
       })
