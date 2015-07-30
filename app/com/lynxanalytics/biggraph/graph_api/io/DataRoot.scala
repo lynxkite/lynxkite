@@ -18,38 +18,35 @@ trait DataRootLike {
 
 class DataRoot(repositoryPath: HadoopFile) extends DataRootLike {
   def instancePath(instance: MetaGraphOperationInstance) =
-    repositoryPath / "operations" / instance.gUID.toString
+    repositoryPath / OperationsDir / instance.gUID.toString
 
   def entityPath(entity: MetaGraphEntity) = {
     if (entity.isInstanceOf[Scalar[_]]) {
-      repositoryPath / "scalars" / entity.gUID.toString
+      repositoryPath / ScalarsDir / entity.gUID.toString
     } else {
-      repositoryPath / "entities" / entity.gUID.toString
+      repositoryPath / EntitiesDir / entity.gUID.toString
     }
   }
 
   // Things saved during previous runs. Checking for the _SUCCESS files is slow so we use the
   // list of directories instead. The results are thus somewhat optimistic.
-  private val possiblySavedInstances: Set[UUID] = {
-    val instances = (repositoryPath / "operations" / "*").list
-    instances.map(_.path.getName.asUUID).toSet
+  private def contents(dir: String): Set[UUID] = {
+    (repositoryPath / dir / "*").list
+      .map(_.path.getName)
+      .filterNot(_.endsWith(DeletedSfx))
+      .map(_.asUUID).toSet
   }
-  private val possiblySavedEntities: Set[UUID] = {
-    val scalars = (repositoryPath / "scalars" / "*").list
-    val entities = (repositoryPath / "entities" / "*").list
-    (scalars ++ entities).map(_.path.getName.asUUID).toSet
-  }
+  private val possiblySavedInstances: Set[UUID] = contents(OperationsDir)
+  private val possiblySavedEntities: Set[UUID] = contents(ScalarsDir) ++ contents(EntitiesDir)
 
   def fastHasInstance(i: MetaGraphOperationInstance) =
     possiblySavedInstances.contains(i.gUID)
   def fastHasEntity(e: MetaGraphEntity) =
     possiblySavedEntities.contains(e.gUID)
   def hasInstance(i: MetaGraphOperationInstance) =
-    fastHasInstance(i) && successPath(instancePath(i)).exists
+    fastHasInstance(i) && (instancePath(i) / Success).exists
   def hasEntity(e: MetaGraphEntity) =
-    fastHasEntity(e) && successPath(entityPath(e)).exists
-
-  private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
+    fastHasEntity(e) && (entityPath(e) / Success).exists
 }
 
 class CombinedRoot(a: DataRoot, b: DataRoot) extends DataRootLike {
