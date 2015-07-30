@@ -45,7 +45,13 @@ class CleanerController(environment: BigGraphEnvironment) {
       "Files which do not exist in the MetaGraph",
       """Truly orphan files. These are created e.g. when the kite meta directory
       is deleted. Deleting these should not have any side effects.""",
-      metaGraphContents))
+      metaGraphContents),
+    Method(
+      "notReferredFromProject",
+      "Files which are not referred directly from a Project",
+      """The immediate dependencies of the existing Projects. Deleting these may
+      affect Project History.""",
+      referredFromProject))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
@@ -82,6 +88,28 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   private def metaGraphContents(): Set[String] = {
     allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
+  }
+
+  private def referredFromProject(): Set[String] = {
+    implicit val manager = environment.metaGraphManager
+    val operations = new HashMap[UUID, MetaGraphOperationInstance]
+    for (project <- Operation.projects) {
+      if (project.vertexSet != null) {
+        operations += operationWithID(project.vertexSet.source)
+      }
+      if (project.edgeBundle != null) {
+        operations += operationWithID(project.edgeBundle.source)
+      }
+      operations ++= project.scalars.map { case (_, s) => operationWithID(s.source) }
+      operations ++= project.vertexAttributes.map { case (_, a) => operationWithID(a.source) }
+      operations ++= project.edgeAttributes.map { case (_, a) => operationWithID(a.source) }
+    }
+    allFilesFromSourceOperation(operations.toMap)
+  }
+
+  private def operationWithID(
+    operation: MetaGraphOperationInstance): (UUID, MetaGraphOperationInstance) = {
+    (operation.gUID, operation)
   }
 
   // Returns the set of ID strings of all the entities and scalars created by
