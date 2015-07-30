@@ -2207,10 +2207,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         attr => Param(s"filterva-${attr.id}", attr.id, mandatory = false)
       } ++
         project.segmentations.toList.map {
-          seg => Param(
-            s"filterva-${seg.viwer.equivalentUIAttribute.title}",
-            seg.segmentationName,
-            mandatory = false)
+          seg =>
+            Param(
+              s"filterva-${seg.viewer.equivalentUIAttribute.title}",
+              seg.segmentationName,
+              mandatory = false)
         } ++
         edgeAttributes.toList.map {
           attr => Param(s"filterea-${attr.id}", attr.id, mandatory = false)
