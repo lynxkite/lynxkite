@@ -6,7 +6,7 @@
 // base project via belongsTo edge bundle.
 //
 // The complete state of a root project - a project which is not a segmentation of a base project -
-// is completly represented by the immutable RootProjectState class.
+// is completely represented by the immutable RootProjectState class.
 //
 // We can optionally store a RootProjectState as a checkpoint. Checkpoints are globally unique
 // (within a Kite instance) identifiers that can be used to recall a project state. Checkpointed
@@ -35,7 +35,6 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
-import scala.collection
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
@@ -58,6 +57,7 @@ case class RootProjectState(
     checkpoint: Option[String],
     previousCheckpoint: Option[String],
     lastOperationDesc: String,
+    // This will be set exactly when previousCheckpoint is set.
     lastOperationRequest: Option[SubProjectOperation]) {
 }
 object RootProjectState {
@@ -100,14 +100,13 @@ sealed trait ProjectViewer {
 
   def editor: ProjectEditor
 
-  val isSegmentation = false
-
-  def asSegmentation: SegmentationViewer = ???
+  val isSegmentation: Boolean
+  def asSegmentation: SegmentationViewer
 
   // Methods for conversion to FE objects.
   private def feScalar(name: String): Option[FEAttribute] = {
     if (scalars.contains(name)) {
-      Some(ProjectViewer.feAttr(scalars(name), name))
+      Some(ProjectViewer.feEntity(scalars(name), name))
     } else {
       None
     }
@@ -131,14 +130,16 @@ sealed trait ProjectViewer {
     }
   }
 
-  protected lazy val getFEMembers: Option[FEAttribute] = None
+  // Returns the FE attribute representing the seq of members for
+  // each segment in a segmentation. None in root projects.
+  protected def getFEMembers: Option[FEAttribute]
 
   // May raise an exception.
   private def unsafeToFE(projectName: String): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(things: Iterable[(String, TypedEntity[_])]) = {
-      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feAttr(e, name) }.toList
+      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feEntity(e, name) }.toList
     }
 
     FEProject(
@@ -162,7 +163,7 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feAttr[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+  def feEntity[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
@@ -183,6 +184,11 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
     extends ProjectViewer {
   val state = rootState.state
   def editor: RootProjectEditor = new RootProjectEditor(rootState)
+
+  val isSegmentation = false
+  def asSegmentation: SegmentationViewer = ???
+
+  protected lazy val getFEMembers: Option[FEAttribute] = None
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -195,7 +201,6 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   val state = segmentationState.state
 
   override val isSegmentation = true
-
   override val asSegmentation = this
 
   def editor: SegmentationEditor = parent.editor.segmentation(segmentationName)
@@ -217,7 +222,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   override protected lazy val getFEMembers: Option[FEAttribute] =
-    Some(ProjectViewer.feAttr(membersAttribute, "#members", isInternal = true))
+    Some(ProjectViewer.feEntity(membersAttribute, "#members", isInternal = true))
 
   lazy val equivalentUIAttribute = {
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
@@ -444,8 +449,8 @@ sealed trait ProjectEditor {
 
   def rootEditor: RootProjectEditor
 
-  val isSegmentation = false
-  def asSegmentation: SegmentationEditor = ???
+  val isSegmentation: Boolean
+  def asSegmentation: SegmentationEditor
 
   def notes = state.notes
   def notes_=(n: String) = state = state.copy(notes = n)
@@ -551,6 +556,9 @@ class RootProjectEditor(
   def lastOperationRequest_=(n: SubProjectOperation) =
     rootState = rootState.copy(lastOperationRequest = Option(n))
   def setLastOperationRequest(n: SubProjectOperation) = lastOperationRequest = n
+
+  val isSegmentation = false
+  def asSegmentation: SegmentationEditor = ???
 }
 
 // Specialized editor for a SegmentationState.
@@ -648,7 +656,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
     val next = nextCheckpoint.get
     checkpoint = next
     lazy val reverseCheckpoints: Stream[String] = farthestCheckpoint #:: reverseCheckpoints.map {
-      next => checkpointState(next).previousCheckpoint.get
+      next => getCheckpointState(next).previousCheckpoint.get
     }
     nextCheckpoint = reverseCheckpoints.takeWhile(_ != next).lastOption
   }
@@ -665,12 +673,12 @@ class ProjectFrame(val projectPath: SymbolPath)(
     farthestCheckpoint = ""
   }
 
-  private def checkpointState(checkpoint: String): RootProjectState =
+  private def getCheckpointState(checkpoint: String): RootProjectState =
     manager.stateRepo.readCheckpoint(checkpoint)
 
-  def currentState: RootProjectState = checkpointState(checkpoint)
+  def currentState: RootProjectState = getCheckpointState(checkpoint)
 
-  def nextState: Option[RootProjectState] = nextCheckpoint.map(checkpointState(_))
+  def nextState: Option[RootProjectState] = nextCheckpoint.map(getCheckpointState(_))
 
   def viewer = new RootProjectViewer(currentState)
 

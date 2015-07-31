@@ -315,7 +315,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     validateHistory(user, AlternateHistory(checkpoint, List()))
   }
 
-  // Returns in the history of a state appended with a given history suffix.
+  // Returns the history of a state appended with a given history suffix.
   @tailrec
   private def stateHistory(
     user: serving.User,
@@ -337,11 +337,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
   private def extendedHistory(
     user: serving.User,
     start: RootProjectState,
-    operations: List[SubProjectOperation]): List[(RootProjectState, ProjectHistoryStep)] = {
-    if (operations.isEmpty) List()
+    operations: List[SubProjectOperation]): Stream[(RootProjectState, ProjectHistoryStep)] = {
+    if (operations.isEmpty) Stream()
     else {
       val (nextState, step) = historyStep(user, start, operations.head, None)
-      (nextState, step) :: extendedHistory(user, nextState, operations.tail)
+      (nextState, step) #:: extendedHistory(user, nextState, operations.tail)
     }
   }
 
@@ -423,12 +423,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
       request.history.requests)
     assert(historyExtension.map(_._2).forall(_.status.enabled), "Trying to save invalid history")
 
-    val finalCheckpoint = historyExtension
-      .map(_._1)
-      .foldLeft(startingPoint) {
-        case (prevCp, state) =>
-          metaManager.stateRepo.checkpointState(state, prevCp).checkpoint.get
-      }
+    var finalCheckpoint = startingPoint
+    for (state <- historyExtension.map(_._1)) {
+      finalCheckpoint = metaManager.stateRepo.checkpointState(state, finalCheckpoint).checkpoint.get
+    }
 
     metaManager.tagBatch {
       // Create/check target project.
@@ -644,7 +642,7 @@ case class WorkflowOperation(
       // We execute the sub-operation.
       val op = operationRepository.appliedOp(localContext, step.op)
       // Then we copy back the state created by the sub-operation. We have to copy at
-      // root level, as operations might reach up an modify parent state as well.
+      // root level, as operations might reach up and modify parent state as well.
       project.state = op.project.rootEditor.state
     }
   }
