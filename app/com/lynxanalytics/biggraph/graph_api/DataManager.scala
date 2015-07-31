@@ -15,45 +15,37 @@ import scala.collection.concurrent.TrieMap
 import scala.concurrent._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-case class DMParam(repoPath: HadoopFile, sparkContext: spark.SparkContext)
+case class DMParam(dataRoot: io.DataRootLike, sparkContext: spark.SparkContext)
 
 case class EntityMetadata(lines: Int)
 
 abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
-  val repositoryPath = dmParam.repoPath
+  val dataRoot = dmParam.dataRoot
   val sc = dmParam.sparkContext
   val newDirectoryName = "new_entries"
-  def legacyPath: HadoopFile
+  def legacyPath: io.HadoopFileLike
   def existsAtLegacy = (legacyPath / "_SUCCESS").exists
   def exists: Boolean
 
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
-
-  val possiblySavedEntities: Set[UUID] = {
-    val scalars = (repositoryPath / "scalars" / "*").list
-    val entities = (repositoryPath / "entities" / "*").list
-    val newEntities = (repositoryPath / newDirectoryName / "*").list
-    (scalars ++ entities ++ newEntities).map(_.path.getName.asUUID).toSet
-  }
 }
 
 class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
     extends EntityIOWrapper(entity, dMParam) {
 
-  def legacyPath = repositoryPath / "scalars" / entity.gUID.toString
+  def legacyPath = dataRoot / "scalars" / entity.gUID.toString
   def exists = existsAtLegacy
-  private def serializedScalarFileName: HadoopFile = legacyPath / "serialized_data"
-  private def successPath: HadoopFile = legacyPath / "_SUCCESS"
+  private def serializedScalarFileName: io.HadoopFileLike = legacyPath / "serialized_data"
+  private def successPath: io.HadoopFileLike = legacyPath / "_SUCCESS"
 
   override def read(parent: Option[VertexSetData] = None): ScalarData[T] = {
     val scalar = entity
     log.info(s"PERF Loading scalar $scalar from disk")
-    val ois = new java.io.ObjectInputStream(serializedScalarFileName.open())
+    val ois = new java.io.ObjectInputStream(serializedScalarFileName.forReading.open())
     val value = try ois.readObject.asInstanceOf[T] finally ois.close()
     log.info(s"PERF Loaded scalar $scalar from disk")
     new ScalarData[T](scalar, value)
@@ -61,12 +53,12 @@ class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
   override def write(data: EntityData): Unit = {
     val scalarData = data.asInstanceOf[ScalarData[T]]
     log.info(s"PERF Writing scalar $entity to disk")
-    val targetDir = legacyPath
+    val targetDir = legacyPath.forWriting
     targetDir.mkdirs
-    val oos = new java.io.ObjectOutputStream(serializedScalarFileName.create())
+    val oos = new java.io.ObjectOutputStream(serializedScalarFileName.forWriting.create())
     oos.writeObject(scalarData.value)
     oos.close()
-    successPath.createFromStrings("")
+    successPath.forWriting.createFromStrings("")
     log.info(s"PERF Written scalar $entity to disk")
   }
 }
@@ -76,8 +68,9 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
   protected lazy val availablePartitions = collectAvailablePartitions
 
-  val targetRootDir = repositoryPath / newDirectoryName / entity.gUID.toString
-  val metaFile = targetRootDir / "metadata"
+  val rootDir = dataRoot / newDirectoryName / entity.gUID.toString
+  val targetRootDir = rootDir.forWriting
+  val metaFile = rootDir / "metadata"
 
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
 
@@ -88,13 +81,13 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
   def readMetadata: EntityMetadata = {
     // TODO: What happens if the file is not there?
-    val j = json.Json.parse(metaFile.readAsString)
+    val j = json.Json.parse(metaFile.forReading.readAsString)
     j.as[EntityMetadata]
   }
 
   def writeMetadata(metaData: EntityMetadata) = {
     val j = json.Json.toJson(metaData)
-    metaFile.createFromStrings(json.Json.prettyPrint(j))
+    metaFile.forWriting.createFromStrings(json.Json.prettyPrint(j))
   }
 
   def write(data: EntityData): Unit = {
@@ -113,7 +106,7 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
     val availablePartitions = scala.collection.mutable.Map[Int, HadoopFile]()
 
     if (existsAtLegacy) {
-      availablePartitions(-1) = legacyPath
+      availablePartitions(-1) = legacyPath.forReading
     }
 
     val subDirs = (newPath / ".*").list
@@ -155,8 +148,8 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
     finalRead(availablePartitions(pn), parent)
   }
 
-  def legacyPath = repositoryPath / "entities" / entity.gUID.toString
-  def newPath = repositoryPath / "new_entities" / entity.gUID.toString
+  def legacyPath = dataRoot / "entities" / entity.gUID.toString
+  def newPath = dataRoot / "new_entities" / entity.gUID.toString
   def exists: Boolean = availablePartitions.nonEmpty
 
 }
@@ -223,7 +216,8 @@ object DataManager {
     scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
 }
 class DataManager(sc: spark.SparkContext,
-                  val repositoryPath: HadoopFile) {
+                  val repositoryPath: HadoopFile,
+                  val ephemeralPath: Option[HadoopFile] = None) {
   // Limit parallelism to maxParallelSparkStages.
   implicit val executionContext =
     ExecutionContext.fromExecutorService(
@@ -248,10 +242,10 @@ class DataManager(sc: spark.SparkContext,
   var computationAllowed = true
 
   private def instancePath(instance: MetaGraphOperationInstance) =
-    repositoryPath / "operations" / instance.gUID.toString
+    dataRoot / "operations" / instance.gUID.toString
 
   def entityWrapperFactory(entity: MetaGraphEntity): EntityIOWrapper = {
-    val param = DMParam(repositoryPath, sc)
+    val param = DMParam(dataRoot, sc)
     entity match {
       case vs: VertexSet => new VertexIOWrapper(vs, param)
       case eb: EdgeBundle => new EdgeBundleIOWrapper(eb, param)
@@ -260,24 +254,23 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  // Things saved during previous runs. Checking for the _SUCCESS files is slow so we use the
-  // list of directories instead. The results are thus somewhat optimistic.
-  val possiblySavedInstances: Set[UUID] = {
-    val instances = (repositoryPath / "operations" / "*").list
-    instances.map(_.path.getName.asUUID).toSet
+  private val dataRoot = {
+    val mainRoot = new io.DataRoot(repositoryPath)
+    ephemeralPath.map { ephemeralPath =>
+      val ephemeralRoot = new io.DataRoot(ephemeralPath)
+      new io.CombinedRoot(ephemeralRoot, mainRoot)
+    }.getOrElse(mainRoot)
   }
-
-  private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
 
   private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
 
   private def hasEntityOnDisk(wrapper: EntityIOWrapper): Boolean =
     (wrapper.entity.source.operation.isHeavy || wrapper.entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
-      possiblySavedInstances.contains(wrapper.entity.source.gUID) &&
-      wrapper.possiblySavedEntities.contains(wrapper.entity.gUID) &&
+      (dataRoot / io.OperationsDir / wrapper.entity.source.gUID.toString).fastExists &&
+      (dataRoot / io.NewEntitiesDir / wrapper.entity.gUID.toString).fastExists &&
       // Slow check for _SUCCESS file.
-      successPath(instancePath(wrapper.entity.source)).exists &&
+      (dataRoot / io.OperationsDir / wrapper.entity.source.gUID.toString / io.Success).exists &&
       wrapper.exists
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
@@ -367,7 +360,7 @@ class DataManager(sc: spark.SparkContext,
     // Mark the operation as complete. Entities may not be loaded from incomplete operations.
     // The reason for this is that an operation may give different results if the number of
     // partitions is different. So for consistency, all outputs must be from the same run.
-    successPath(instancePath(instance)).createFromStrings("")
+    (dataRoot / io.OperationsDir / instance.gUID.toString / io.Success).forWriting.createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,
@@ -503,8 +496,8 @@ class DataManager(sc: spark.SparkContext,
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
     val wrapper = entityWrapperFactory(entity)
-    val entityPath = wrapper.legacyPath
-    val doesNotExist = !entityPath.exists() || entityPath.delete()
+    val entityPath = wrapper.legacyPath.forWriting
+    val doesNotExist = !entityPath.exists || entityPath.delete()
     assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
     data match {
@@ -541,9 +534,10 @@ class DataManager(sc: spark.SparkContext,
     log.info("Work fraction: " + workFraction)
     log.info("Cache fraction: " + cacheFraction)
     log.info("WM per core: " + (workMemory / totalCores).toLong)
+    val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
       sparkContext = sc,
-      broadcastDirectory = repositoryPath / "broadcasts",
+      broadcastDirectory = broadcastDirectory,
       numExecutors = numExecutors,
       numAvailableCores = totalCores,
       workMemoryPerCore = (workMemory / totalCores).toLong)

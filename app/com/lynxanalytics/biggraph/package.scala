@@ -18,8 +18,8 @@ package object biggraph {
   printType[Double]
   printType[Array[Long]]
 
-  // static<big_graph_dir,graph_data_dir>
-  private val staticRepoPattern = "static<(.+),(.+)>".r
+  // static<meta_dir,data_dir,ephemeral_data_dir>
+  private val staticRepoPattern = "static<(.+),(.+),(.+)>".r
 
   val standardDataPrefix = "DATA$"
 
@@ -50,10 +50,13 @@ package object biggraph {
     frameworkPackages.add("org.apache.spark.Logging")
 
     val repoDirs =
-      scala.util.Properties.envOrElse("REPOSITORY_MODE", "local_random") match {
-        case staticRepoPattern(bigGraphDir, graphDataDir) =>
-          new RegularRepositoryDirs(bigGraphDir, graphDataDir, standardDataPrefix)
-        case "local_random" => new TemporaryRepositoryDirs(standardDataPrefix)
+      scala.util.Properties.envOrNone("REPOSITORY_MODE") match {
+        case Some(staticRepoPattern(metaDir, dataDir, "")) =>
+          new RepositoryDirs(metaDir, standardDataPrefix, dataDir)
+        case Some(staticRepoPattern(metaDir, dataDir, ephemeralDataDir)) =>
+          new RepositoryDirs(metaDir, standardDataPrefix, dataDir, Some(ephemeralDataDir))
+        case _ =>
+          throw new AssertionError("REPOSITORY_MODE is not defined")
       }
     repoDirs.forcePrefixRegistration()
     registerStandardPrefixes()

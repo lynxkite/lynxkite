@@ -43,7 +43,7 @@ case class TripletMapping(sampleSize: Int = -1)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges =
-      if (sampleSize >= 0) inputs.edges.rdd.takeFirstNValuesOrSo(sampleSize)
+      if (sampleSize >= 0) inputs.edges.rdd.coalesce(rc).takeFirstNValuesOrSo(sampleSize)
       else inputs.edges.rdd
     val src = inputs.src.rdd
     val bySrc = edges
