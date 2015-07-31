@@ -16,18 +16,18 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-case class DMParam(repoPath: HadoopFile, sparkContext: spark.SparkContext, executionContext: ExecutionContextExecutorService) {
+case class DMParam(repoPath: HadoopFile, sparkContext: spark.SparkContext) {
 }
 
 abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
-  implicit val executionContext: ExecutionContextExecutorService = dmParam.executionContext
   val repositoryPath = dmParam.repoPath
   val sc = dmParam.sparkContext
-  protected def legacyPath: HadoopFile
-  protected def existsAtLegacy = (legacyPath / "_SUCCESS").exists
+  def legacyPath: HadoopFile
+  def existsAtLegacy = (legacyPath / "_SUCCESS").exists
   def exists: Boolean
 
   def read(parent: Option[EntityData] = None): EntityData
+  def write(data: EntityData): Unit
 
   val possiblySavedEntities: Set[UUID] = {
     val scalars = (repositoryPath / "scalars" / "*").list
@@ -40,9 +40,10 @@ abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
 class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
     extends EntityIOWrapper(entity, dMParam) {
 
-  protected def legacyPath = repositoryPath / "scalars" / entity.gUID.toString
+  def legacyPath = repositoryPath / "scalars" / entity.gUID.toString
   def exists = existsAtLegacy
   private def serializedScalarFileName: HadoopFile = legacyPath / "serialized_data"
+  private def successPath: HadoopFile = legacyPath / "_SUCCESS"
   override def read(parent: Option[EntityData] = None): ScalarData[T] = {
     val scalar = entity
     log.info(s"PERF Loading scalar $scalar from disk")
@@ -51,13 +52,25 @@ class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
     log.info(s"PERF Loaded scalar $scalar from disk")
     new ScalarData[T](scalar, value)
   }
-
+  override def write(data: EntityData): Unit = {
+    val scalarData = data.asInstanceOf[ScalarData[T]]
+    log.info(s"PERF Writing scalar $entity to disk")
+    val targetDir = legacyPath
+    targetDir.mkdirs
+    val oos = new java.io.ObjectOutputStream(serializedScalarFileName.create())
+    oos.writeObject(scalarData.value)
+    oos.close()
+    successPath.createFromStrings("")
+    log.info(s"PERF Written scalar $entity to disk")
+  }
 }
 
 abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraphEntity, dMParam: DMParam)
     extends EntityIOWrapper(entity, dMParam) {
 
   protected lazy val availablePartitions = collectAvailablePartitions
+
+  def write(data: EntityData): Unit = {}
 
   private def collectAvailablePartitions = {
     val availablePartitions = scala.collection.mutable.Map[Int, HadoopFile]()
@@ -84,9 +97,10 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
   def finalRead(path: HadoopFile, parent: Option[EntityData] = None): DT
 
-  def repartitionTo(pn: Int): Unit = ???
+  def repartitionTo(pn: Int): Unit = {}
 
   override def read(parent: Option[EntityData] = None): DT = {
+    println(s"read: parent: $parent")
     val pn = selectPartitionNumber
     if (!availablePartitions.contains(pn)) {
       repartitionTo(pn)
@@ -102,8 +116,8 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
 class VertexIOWrapper(entity: VertexSet, dMParam: DMParam)
     extends PartitionableDataIOWrapper[VertexSetData](entity, dMParam) {
-  def selectPartitionNumber: Int = 8
-  def finalRead(path: HadoopFile, parent: Option[EntityData]): VertexSetData = {
+  def selectPartitionNumber: Int = -1
+  def finalRead(path: HadoopFile, parent: Option[EntityData] = None): VertexSetData = {
     val fn = availablePartitions(-1)
     val rdd = fn.loadEntityRDD[Unit](sc)
     new VertexSetData(entity, rdd)
@@ -112,7 +126,7 @@ class VertexIOWrapper(entity: VertexSet, dMParam: DMParam)
 
 class EdgeBundleIOWrapper(entity: EdgeBundle, dMParam: DMParam)
     extends PartitionableDataIOWrapper[EdgeBundleData](entity, dMParam) {
-  def selectPartitionNumber: Int = 8
+  def selectPartitionNumber: Int = -1
   def edgeBundle = entity
   def finalRead(path: HadoopFile, parent: Option[EntityData]): EdgeBundleData = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
@@ -128,17 +142,18 @@ class EdgeBundleIOWrapper(entity: EdgeBundle, dMParam: DMParam)
 
 class AttributeIOWrapper[T](entity: Attribute[T], dMParam: DMParam)
     extends PartitionableDataIOWrapper[AttributeData[T]](entity, dMParam) {
-  def selectPartitionNumber: Int = 8
-  def vertexSet = entity
+  def selectPartitionNumber: Int = -1
+  def vertexSet = entity.vertexSet
   def finalRead(path: HadoopFile, parent: Option[EntityData]): AttributeData[T] = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
+    println("AttributeIOWrapper: finalRead")
     val p = parent.get
     val vsRDD = p.asInstanceOf[VertexSetData].rdd
     vsRDD.cacheBackingArray()
     implicit val ct = entity.classTag
     val rawRDD = availablePartitions(-1).loadEntityRDD[T](sc, vsRDD.partitioner)
     new AttributeData[T](
-      vertexSet,
+      entity,
       // This join does nothing except enforcing colocation.
       vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
   }
@@ -177,12 +192,20 @@ class DataManager(sc: spark.SparkContext,
     repositoryPath / "operations" / instance.gUID.toString
 
   def entityWrapperFactory(entity: MetaGraphEntity): EntityIOWrapper = {
-    val param = DMParam(repositoryPath, sc, executionContext)
+    val param = DMParam(repositoryPath, sc)
     entity match {
-      case vs: VertexSet => new VertexIOWrapper(vs, param)
-      case eb: EdgeBundle => new EdgeBundleIOWrapper(eb, param)
-      case va: Attribute[_] => new AttributeIOWrapper(va, param)
-      case sc: Scalar[_] => new ScalarIOWrapper(sc, param)
+      case vs: VertexSet =>
+        println(s"VertexSet: $entity")
+        new VertexIOWrapper(vs, param)
+      case eb: EdgeBundle =>
+        println(s"Eb: $entity")
+        new EdgeBundleIOWrapper(eb, param)
+      case va: Attribute[_] =>
+        println(s"Attribute: $entity")
+        new AttributeIOWrapper(va, param)
+      case sc: Scalar[_] =>
+        println(s"Scalar: $entity")
+        new ScalarIOWrapper(sc, param)
     }
   }
 
@@ -227,8 +250,11 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def load[T](wrapper: AttributeIOWrapper[T]): Future[AttributeData[T]] = {
-    implicit val ct = wrapper.vertexSet.classTag
-    getFuture(wrapper.vertexSet).map { vs => wrapper.read(Option[EntityData](vs))
+    //    implicit val ct = wrapper.entity.vertexSet.classTag
+    println("load[T](wrapper: AttributeIOWrapper[T])")
+    getFuture(wrapper.vertexSet).map { vs =>
+      println("hello")
+      wrapper.read(Option[EntityData](vs))
       //      // We do our best to colocate partitions to corresponding vertex set partitions.
       //      val vsRDD = vs.rdd
       //      vsRDD.cacheBackingArray()
@@ -441,24 +467,27 @@ class DataManager(sc: spark.SparkContext,
 
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
-    val doesNotExist = !entityPath(entity).exists() || entityPath(entity).delete()
+    val wrapper = entityWrapperFactory(entity)
+    val entityPath = wrapper.legacyPath
+    val doesNotExist = !entityPath.exists() || entityPath.delete()
     assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>
         log.info(s"PERF Instantiating entity $entity on disk")
         val rdd = rddData.rdd
-        entityPath(entity).saveEntityRDD(rdd)
+        entityPath.saveEntityRDD(rdd)
         log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
-        log.info(s"PERF Writing scalar $entity to disk")
-        val targetDir = entityPath(entity)
-        targetDir.mkdirs
-        val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
-        oos.writeObject(scalarData.value)
-        oos.close()
-        successPath(targetDir).createFromStrings("")
-        log.info(s"PERF Written scalar $entity to disk")
+        //        log.info(s"PERF Writing scalar $entity to disk")
+        //        val targetDir = entityPath(entity)
+        //        targetDir.mkdirs
+        //        val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
+        //        oos.writeObject(scalarData.value)
+        //        oos.close()
+        //        successPath(targetDir).createFromStrings("")
+        //        log.info(s"PERF Written scalar $entity to disk")
+        wrapper.write(data)
       }
     }
     log.info(s"Entity $entity saved.")
