@@ -72,7 +72,6 @@ case $1 in
 start)
   # Launch the cluster.
   ${SPARK_HOME}/ec2/spark-ec2 \
-    --hadoop-major-version 2 \
     -k ${SSH_ID} \
     -i "${SSH_KEY}" \
     -s ${NUM_INSTANCES} \
@@ -160,7 +159,6 @@ stop)
 # ======
 resume)
   ${SPARK_HOME}/ec2/./spark-ec2 \
-    --hadoop-major-version 2 \
     -k ${SSH_ID} \
     -i "${SSH_KEY}" \
     --instance-type ${TYPE} \
