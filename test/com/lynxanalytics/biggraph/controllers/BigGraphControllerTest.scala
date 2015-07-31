@@ -12,7 +12,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
   val controller = new BigGraphController(this)
   val projectName = "Test_Project"
   val projectFrame = ProjectFrame.fromName(projectName)
-  val subProject = SubProject(projectFrame, Seq())
+  val subProject = projectFrame.subproject
   val user = com.lynxanalytics.biggraph.serving.User.fake
 
   def run(op: String, params: Map[String, String] = Map(), on: String = projectName) =

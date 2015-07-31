@@ -16,7 +16,7 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   val projectFrame = createProject("Test_Project")
 
   def undoRedo(frame: ProjectFrame) = {
-    val p = SubProject(frame, Seq())
+    val p = frame.subproject
     (p.toFE.undoOp, p.toFE.redoOp)
   }
 
