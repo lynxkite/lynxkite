@@ -42,10 +42,18 @@ class CleanerController(environment: BigGraphEnvironment) {
   private val methods = List(
     Method(
       "notMetaGraphContents",
-      "Files which do not exist in the MetaGraph",
+      "Files which do not exist in the meta-graph",
       """Truly orphan files. These are created e.g. when the kite meta directory
       is deleted. Deleting these should not have any side effects.""",
-      metaGraphContents))
+      metaGraphContents),
+    Method(
+      "notReferredFromProject",
+      "Files not associated with the current state of any project.",
+      """Everything except the immediate dependencies of the existing projects.
+      Deleting these may cause recalculations or errors when using undo or editing
+      the project history. It can cause re-imports which may lead to unexpected
+      data changes or errors.""",
+      referredFromProject))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
@@ -82,6 +90,46 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   private def metaGraphContents(): Set[String] = {
     allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
+  }
+
+  private def referredFromProject(): Set[String] = {
+    implicit val manager = environment.metaGraphManager
+    val operations = new HashMap[UUID, MetaGraphOperationInstance]
+    for (project <- Operation.projects) {
+      operations ++= operationsFromProject(project)
+      for (segmentation <- project.segmentations) {
+        operations ++= operationsFromProject(segmentation.project)
+      }
+    }
+    allFilesFromSourceOperation(operations.toMap)
+  }
+
+  // Returns the operations mapped by their ID strings which created
+  // the vertices, edges, attributes and scalars of this project.
+  private def operationsFromProject(
+    project: Project): Map[UUID, MetaGraphOperationInstance] = {
+    val operations = new HashMap[UUID, MetaGraphOperationInstance]
+    if (project.vertexSet != null) {
+      operations += operationWithID(project.vertexSet.source)
+    }
+    if (project.edgeBundle != null) {
+      operations += operationWithID(project.edgeBundle.source)
+    }
+    operations ++= project.scalars.map {
+      case (_, s) => operationWithID(s.source)
+    }
+    operations ++= project.vertexAttributes.map {
+      case (_, a) => operationWithID(a.source)
+    }
+    operations ++= project.edgeAttributes.map {
+      case (_, a) => operationWithID(a.source)
+    }
+    operations.toMap
+  }
+
+  private def operationWithID(
+    operation: MetaGraphOperationInstance): (UUID, MetaGraphOperationInstance) = {
+    (operation.gUID, operation)
   }
 
   // Returns the set of ID strings of all the entities and scalars created by
