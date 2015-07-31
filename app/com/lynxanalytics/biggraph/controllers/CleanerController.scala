@@ -49,9 +49,9 @@ class CleanerController(environment: BigGraphEnvironment) {
     Method(
       "notReferredFromProject",
       "Files not associated with the current state of any project.",
-      """The immediate dependencies of the existing projects. Deleting these
-      may cause recalculations or errors when using undo or editing the
-      project history. It can cause re-imports which may lead to unexpected
+      """Everything except the immediate dependencies of the existing projects.
+      Deleting these may cause recalculations or errors when using undo or editing
+      the project history. It can cause re-imports which may lead to unexpected
       data changes or errors.""",
       referredFromProject))
 
