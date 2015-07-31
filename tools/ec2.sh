@@ -136,7 +136,7 @@ kite)
     root@${HOST}:biggraphstage
 
   echo "Starting..."
-  $SSH -t -t \
+  eval $SSH -t -t \
     root@${HOST} <<EOF
 biggraphstage/bin/biggraph restart
 exit
@@ -179,8 +179,8 @@ destroy)
 # ======
 s3copy)
   HDFS_DATA='hdfs://$(curl http://instance-data.ec2.internal/latest/meta-data/public-hostname):9000/data'
-  $SSH -t -t \
-    root@${HOST} <<EOF
+  eval $SSH -t -t \
+    root@$(GetMasterHostName) <<EOF
 /root/ephemeral-hdfs/bin/hadoop fs \
   -D fs.s3n.awsAccessKeyId=$AWS_ACCESS_KEY_ID \
   -D fs.s3n.awsSecretAccessKey=$AWS_SECRET_ACCESS_KEY \
