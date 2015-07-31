@@ -55,7 +55,9 @@ package object biggraph {
           new RepositoryDirs(metaDir, standardDataPrefix, dataDir)
         case Some(staticRepoPattern(metaDir, dataDir, ephemeralDataDir)) =>
           new RepositoryDirs(metaDir, standardDataPrefix, dataDir, Some(ephemeralDataDir))
-        case _ =>
+        case Some(rm) =>
+          throw new AssertionError(s"Could not parse REPOSITORY_MODE ($rm)")
+        case None =>
           throw new AssertionError("REPOSITORY_MODE is not defined")
       }
     repoDirs.forcePrefixRegistration()
