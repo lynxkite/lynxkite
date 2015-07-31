@@ -184,7 +184,7 @@ s3copy)
 /root/ephemeral-hdfs/bin/hadoop fs \
   -D fs.s3n.awsAccessKeyId=$AWS_ACCESS_KEY_ID \
   -D fs.s3n.awsSecretAccessKey=$AWS_SECRET_ACCESS_KEY \
-  -cp $HDFS_DATA s3n://$S3_DATAREPO
+  -cp $HDFS_DATA/* s3n://$S3_DATAREPO/
 exit
 EOF
   ;;
