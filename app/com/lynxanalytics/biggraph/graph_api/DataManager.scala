@@ -26,7 +26,7 @@ case class EntityMetadata(lines: Int)
 abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
   val repositoryPath = dmParam.repoPath
   val sc = dmParam.sparkContext
-  val newDirectoryName = "new_entries"
+  val newDirectoryName = "new_entities"
   def legacyPath: HadoopFile
   def existsAtLegacy = (legacyPath / "_SUCCESS").exists
   def exists: Boolean
@@ -34,10 +34,14 @@ abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
 
+  override def toString = s"exists: $exists legacy path: $legacyPath"
+
   val possiblySavedEntities: Set[UUID] = {
     val scalars = (repositoryPath / "scalars" / "*").list
     val entities = (repositoryPath / "entities" / "*").list
     val newEntities = (repositoryPath / newDirectoryName / "*").list
+    println((repositoryPath / newDirectoryName).path.getName)
+    newEntities.foreach(println)
     (scalars ++ entities ++ newEntities).map(_.path.getName.asUUID).toSet
   }
 }
@@ -76,6 +80,8 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
   protected lazy val availablePartitions = collectAvailablePartitions
 
+  override def toString = s"exists: $exists  legacy path: $legacyPath  available: $availablePartitions  targetdir: $targetRootDir"
+
   val targetRootDir = repositoryPath / newDirectoryName / entity.gUID.toString
   val metaFile = targetRootDir / "metadata"
 
@@ -98,7 +104,6 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
   }
 
   def write(data: EntityData): Unit = {
-    println(s"Write: available partitions: $availablePartitions  data: $data")
     val rddData = data.asInstanceOf[EntityRDDData]
     log.info(s"PERF Instantiating entity $entity on disk")
     val rdd = rddData.rdd
@@ -116,10 +121,11 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
       availablePartitions(-1) = legacyPath
     }
 
-    val subDirs = (newPath / ".*").list
+    val subDirs = (newPath / "*").list
     val number = "[123456789][0-9]*".r
     val subdirCandidates = subDirs.filter(x => number.pattern.matcher(x.path.getName).matches)
-
+    val a = subdirCandidates.map(_.path.getName).toSet
+    val b = subDirs.map(_.path.getName).toSet
     for (v <- subdirCandidates) {
       val successFile = v / "_SUCCESS"
       if (successFile.exists) {
@@ -152,11 +158,12 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
     if (!availablePartitions.contains(pn)) {
       repartitionTo(pn)
     }
+    println(s"read: pn: $pn, ${availablePartitions(pn)}}")
     finalRead(availablePartitions(pn), parent)
   }
 
   def legacyPath = repositoryPath / "entities" / entity.gUID.toString
-  def newPath = repositoryPath / "new_entities" / entity.gUID.toString
+  def newPath = repositoryPath / newDirectoryName / entity.gUID.toString
   def exists: Boolean = availablePartitions.nonEmpty
 
 }
@@ -168,20 +175,25 @@ class VertexIOWrapper(entity: VertexSet, dMParam: DMParam)
     val numVertices = readMetadata.lines
     val verticesPerPartition = System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
     val tolerance = System.getProperty("biggraph.vertices.partition.tolerance", "2.0").toDouble
-    val desired = Math.ceil(numVertices / verticesPerPartition)
+    val desired = Math.ceil(numVertices.toDouble / verticesPerPartition.toDouble)
+    println(s"numVertices: $numVertices verticesPerPartition: $verticesPerPartition desired: $desired tolerance: $tolerance")
 
     def fun(a: Int) = {
       val aa = a.toDouble
       if (aa > desired) aa / desired
       else desired / aa
     }
+
     val bestCandidate =
       availablePartitions.map { case (p, h) => (p, h, fun(p)) }.toSeq.sortBy(_._3).headOption
+    println(s"selectPartitionNumber:")
+    bestCandidate.foreach(println)
+    println()
     bestCandidate.filter(_._3 < tolerance).map(_._1).getOrElse(desired.toInt)
   }
 
   def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): VertexSetData = {
-    val fn = availablePartitions(-1)
+    val fn = path
     val rdd = fn.loadEntityRDD[Unit](sc)
     new VertexSetData(entity, rdd)
   }
@@ -210,7 +222,7 @@ class AttributeIOWrapper[T](entity: Attribute[T], dMParam: DMParam)
     val vsRDD = parent.get.rdd
     vsRDD.cacheBackingArray()
     implicit val ct = entity.classTag
-    val rawRDD = availablePartitions(-1).loadEntityRDD[T](sc, vsRDD.partitioner)
+    val rawRDD = path.loadEntityRDD[T](sc, vsRDD.partitioner)
     new AttributeData[T](
       entity,
       // This join does nothing except enforcing colocation.
@@ -271,7 +283,9 @@ class DataManager(sc: spark.SparkContext,
 
   private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
 
-  private def hasEntityOnDisk(wrapper: EntityIOWrapper): Boolean =
+  private def hasEntityOnDisk(wrapper: EntityIOWrapper): Boolean = {
+    println(s"hasEntityOnDisk: $wrapper")
+    println(s"${wrapper.exists}")
     (wrapper.entity.source.operation.isHeavy || wrapper.entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       possiblySavedInstances.contains(wrapper.entity.source.gUID) &&
@@ -279,7 +293,7 @@ class DataManager(sc: spark.SparkContext,
       // Slow check for _SUCCESS file.
       successPath(instancePath(wrapper.entity.source)).exists &&
       wrapper.exists
-
+  }
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
   private def load(wrapper: VertexIOWrapper): Future[VertexSetData] = {
