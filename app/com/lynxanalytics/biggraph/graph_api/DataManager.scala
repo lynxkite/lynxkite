@@ -8,20 +8,25 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import org.apache.spark
+import org.apache.spark.HashPartitioner
 import org.apache.spark.sql.SQLContext
+import play.api.libs.json
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-case class DMParam(repoPath: HadoopFile, sparkContext: spark.SparkContext) {
-}
+case class DMParam(repoPath: HadoopFile, sparkContext: spark.SparkContext)
+
+case class EntityMetadata(lines: Int)
 
 abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
   val repositoryPath = dmParam.repoPath
   val sc = dmParam.sparkContext
+  val newDirectoryName = "new_entries"
   def legacyPath: HadoopFile
   def existsAtLegacy = (legacyPath / "_SUCCESS").exists
   def exists: Boolean
@@ -32,7 +37,7 @@ abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
   val possiblySavedEntities: Set[UUID] = {
     val scalars = (repositoryPath / "scalars" / "*").list
     val entities = (repositoryPath / "entities" / "*").list
-    val newEntities = (repositoryPath / "new_entities" / "*").list
+    val newEntities = (repositoryPath / newDirectoryName / "*").list
     (scalars ++ entities ++ newEntities).map(_.path.getName.asUUID).toSet
   }
 }
@@ -44,6 +49,7 @@ class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
   def exists = existsAtLegacy
   private def serializedScalarFileName: HadoopFile = legacyPath / "serialized_data"
   private def successPath: HadoopFile = legacyPath / "_SUCCESS"
+
   override def read(parent: Option[VertexSetData] = None): ScalarData[T] = {
     val scalar = entity
     log.info(s"PERF Loading scalar $scalar from disk")
@@ -70,7 +76,38 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
   protected lazy val availablePartitions = collectAvailablePartitions
 
-  def write(data: EntityData): Unit = {}
+  val targetRootDir = repositoryPath / newDirectoryName / entity.gUID.toString
+  val metaFile = targetRootDir / "metadata"
+
+  implicit val fEntityMetadata = json.Json.format[EntityMetadata]
+
+  def targetDir(numPartitions: Int) = {
+    val subdir = numPartitions.toString
+    targetRootDir / subdir
+  }
+
+  def readMetadata: EntityMetadata = {
+    // TODO: What happens if the file is not there?
+    val j = json.Json.parse(metaFile.readAsString)
+    j.as[EntityMetadata]
+  }
+
+  def writeMetadata(metaData: EntityMetadata) = {
+    val j = json.Json.toJson(metaData)
+    metaFile.createFromStrings(json.Json.prettyPrint(j))
+  }
+
+  def write(data: EntityData): Unit = {
+    println(s"Write: available partitions: $availablePartitions  data: $data")
+    val rddData = data.asInstanceOf[EntityRDDData]
+    log.info(s"PERF Instantiating entity $entity on disk")
+    val rdd = rddData.rdd
+    val partitions = rdd.partitions.size
+    val lines = targetDir(partitions).saveEntityRDD(rdd)
+    val metadata = EntityMetadata(lines)
+    writeMetadata(metadata)
+    log.info(s"PERF Instantiated entity $entity on disk")
+  }
 
   private def collectAvailablePartitions = {
     val availablePartitions = scala.collection.mutable.Map[Int, HadoopFile]()
@@ -93,15 +130,25 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
     availablePartitions
   }
 
-  def selectPartitionNumber: Int
-
   def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): DT
 
-  def repartitionTo(pn: Int): Unit = {}
+  def repartitionTo(pn: Int): Unit = {
+    assert(availablePartitions.nonEmpty)
+    val from = availablePartitions.head._2
+    val rawRDD = from.loadEntityRDD[Int](sc)
+    val newRDD = rawRDD.toSortedRDD(new HashPartitioner(pn))
+    val newFile = targetDir(pn)
+    val lines = newFile.saveEntityRDD(newRDD)
+    writeMetadata(EntityMetadata(lines))
+    availablePartitions(pn) = newFile
+  }
+
+  def selectPartitionNumber(parent: Option[VertexSetData] = None): Int = {
+    parent.get.rdd.partitions.size
+  }
 
   override def read(parent: Option[VertexSetData] = None): DT = {
-    println(s"read: parent: $parent")
-    val pn = selectPartitionNumber
+    val pn = selectPartitionNumber(parent)
     if (!availablePartitions.contains(pn)) {
       repartitionTo(pn)
     }
@@ -116,7 +163,23 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
 class VertexIOWrapper(entity: VertexSet, dMParam: DMParam)
     extends PartitionableDataIOWrapper[VertexSetData](entity, dMParam) {
-  def selectPartitionNumber: Int = -1
+
+  override def selectPartitionNumber(parent: Option[VertexSetData] = None): Int = {
+    val numVertices = readMetadata.lines
+    val verticesPerPartition = System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
+    val tolerance = System.getProperty("biggraph.vertices.partition.tolerance", "2.0").toDouble
+    val desired = Math.ceil(numVertices / verticesPerPartition)
+
+    def fun(a: Int) = {
+      val aa = a.toDouble
+      if (aa > desired) aa / desired
+      else desired / aa
+    }
+    val bestCandidate =
+      availablePartitions.map { case (p, h) => (p, h, fun(p)) }.toSeq.sortBy(_._3).headOption
+    bestCandidate.filter(_._3 < tolerance).map(_._1).getOrElse(desired.toInt)
+  }
+
   def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): VertexSetData = {
     val fn = availablePartitions(-1)
     val rdd = fn.loadEntityRDD[Unit](sc)
@@ -126,13 +189,13 @@ class VertexIOWrapper(entity: VertexSet, dMParam: DMParam)
 
 class EdgeBundleIOWrapper(entity: EdgeBundle, dMParam: DMParam)
     extends PartitionableDataIOWrapper[EdgeBundleData](entity, dMParam) {
-  def selectPartitionNumber: Int = -1
+
   def edgeBundle = entity
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): EdgeBundleData = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
     val idsRDD = parent.get.rdd
     idsRDD.cacheBackingArray()
-    val rawRDD = availablePartitions(-1).loadEntityRDD[Edge](sc, idsRDD.partitioner)
+    val rawRDD = path.loadEntityRDD[Edge](sc, idsRDD.partitioner)
     new EdgeBundleData(
       edgeBundle,
       idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
@@ -141,11 +204,9 @@ class EdgeBundleIOWrapper(entity: EdgeBundle, dMParam: DMParam)
 
 class AttributeIOWrapper[T](entity: Attribute[T], dMParam: DMParam)
     extends PartitionableDataIOWrapper[AttributeData[T]](entity, dMParam) {
-  def selectPartitionNumber: Int = -1
   def vertexSet = entity.vertexSet
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): AttributeData[T] = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
-    println("AttributeIOWrapper: finalRead")
     val vsRDD = parent.get.rdd
     vsRDD.cacheBackingArray()
     implicit val ct = entity.classTag
@@ -192,18 +253,10 @@ class DataManager(sc: spark.SparkContext,
   def entityWrapperFactory(entity: MetaGraphEntity): EntityIOWrapper = {
     val param = DMParam(repositoryPath, sc)
     entity match {
-      case vs: VertexSet =>
-        println(s"VertexSet: $entity")
-        new VertexIOWrapper(vs, param)
-      case eb: EdgeBundle =>
-        println(s"Eb: $entity")
-        new EdgeBundleIOWrapper(eb, param)
-      case va: Attribute[_] =>
-        println(s"Attribute: $entity")
-        new AttributeIOWrapper(va, param)
-      case sc: Scalar[_] =>
-        println(s"Scalar: $entity")
-        new ScalarIOWrapper(sc, param)
+      case vs: VertexSet => new VertexIOWrapper(vs, param)
+      case eb: EdgeBundle => new EdgeBundleIOWrapper(eb, param)
+      case va: Attribute[_] => new AttributeIOWrapper(va, param)
+      case sc: Scalar[_] => new ScalarIOWrapper(sc, param)
     }
   }
 
@@ -236,31 +289,14 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def load(wrapper: EdgeBundleIOWrapper): Future[EdgeBundleData] = {
-    getFuture(wrapper.edgeBundle.idSet).map { idSet => wrapper.read(Option[VertexSetData](idSet))
-      //      // We do our best to colocate partitions to corresponding vertex set partitions.
-      //      val idsRDD = idSet.rdd
-      //      idsRDD.cacheBackingArray()
-      //      val rawRDD = entityPath(edgeBundle).loadEntityRDD[Edge](sc, idsRDD.partitioner)
-      //      new EdgeBundleData(
-      //        edgeBundle,
-      //        idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
+    getFuture(wrapper.edgeBundle.idSet).map {
+      idSet => wrapper.read(Some(idSet))
     }
   }
 
   private def load[T](wrapper: AttributeIOWrapper[T]): Future[AttributeData[T]] = {
-    //    implicit val ct = wrapper.entity.vertexSet.classTag
-    println("load[T](wrapper: AttributeIOWrapper[T])")
-    getFuture(wrapper.vertexSet).map { vs =>
-      println("hello")
-      wrapper.read(Option[VertexSetData](vs))
-      //      // We do our best to colocate partitions to corresponding vertex set partitions.
-      //      val vsRDD = vs.rdd
-      //      vsRDD.cacheBackingArray()
-      //      val rawRDD = entityPath(wrapper).loadEntityRDD[T](sc, vsRDD.partitioner)
-      //      new AttributeData[T](
-      //        wrapper,
-      //        // This join does nothing except enforcing colocation.
-      //        vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
+    getFuture(wrapper.vertexSet).map {
+      vs => wrapper.read(Some(vs))
     }
   }
 
@@ -393,11 +429,12 @@ class DataManager(sc: spark.SparkContext,
         val instance = entity.source
         val instanceFuture = getInstanceFuture(instance)
         for (output <- instance.outputs.all.values) {
+          val wrapper2 = entityWrapperFactory(output)
           set(
             output,
             // And the entity will have to wait until its full completion (including saves).
             if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
-              instanceFuture.flatMap(_ => load(wrapper))
+              instanceFuture.flatMap(_ => load(wrapper2))
             } else {
               instanceFuture.map(_(output.gUID))
             })
@@ -472,19 +509,12 @@ class DataManager(sc: spark.SparkContext,
     log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>
-        log.info(s"PERF Instantiating entity $entity on disk")
-        val rdd = rddData.rdd
-        entityPath.saveEntityRDD(rdd)
-        log.info(s"PERF Instantiated entity $entity on disk")
+        wrapper.write(data)
+      //        log.info(s"PERF Instantiating entity $entity on disk")
+      //        val rdd = rddData.rdd
+      //        entityPath.saveEntityRDD(rdd)
+      //        log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
-        //        log.info(s"PERF Writing scalar $entity to disk")
-        //        val targetDir = entityPath(entity)
-        //        targetDir.mkdirs
-        //        val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
-        //        oos.writeObject(scalarData.value)
-        //        oos.close()
-        //        successPath(targetDir).createFromStrings("")
-        //        log.info(s"PERF Written scalar $entity to disk")
         wrapper.write(data)
       }
     }

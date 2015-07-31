@@ -192,10 +192,12 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   // Saves a Long-keyed SortedRDD.
-  def saveEntityRDD[T](data: SortedRDD[Long, T]): Unit = {
+  def saveEntityRDD[T](data: SortedRDD[Long, T]): Int = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
+    val lines = data.context.accumulator(0, "Line count")
     val hadoopData = data.map { x =>
+      lines += 1
       hadoop.io.NullWritable.get() ->
         new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(x))
     }
@@ -211,6 +213,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       outputFormatClass =
         classOf[SequenceFileOutputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
+    lines.value
   }
 
   def +(suffix: String): HadoopFile = {
