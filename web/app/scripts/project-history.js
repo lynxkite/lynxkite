@@ -248,7 +248,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         }
         return {
           request: {
-            project: project,
+            path: [],
             op: {
               id: 'No-operation',
               parameters: {},
