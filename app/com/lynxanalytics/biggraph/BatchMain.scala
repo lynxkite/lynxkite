@@ -121,7 +121,7 @@ For example:
             project.initialize
             opRepo.apply(
               user,
-              SubProject(project, Seq()),
+              project.subproject,
               Operations.addNotesOperation(
                 s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
           }

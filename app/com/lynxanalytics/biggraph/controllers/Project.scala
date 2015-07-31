@@ -720,6 +720,8 @@ class ProjectFrame(val projectPath: SymbolPath)(
     manager.cpTag(from, to)
   }
   def copy(to: ProjectFrame): Unit = cp(rootDir, to.rootDir)
+
+  def subproject = SubProject(this, Seq())
 }
 object ProjectFrame {
   val separator = "|"

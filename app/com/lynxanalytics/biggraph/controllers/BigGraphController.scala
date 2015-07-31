@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationPar
 
 import java.util.regex.Pattern
 import play.api.libs.json
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.matching.Regex
@@ -233,7 +234,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
     p.initialize
     if (request.notes != "") {
-      ops.apply(user, SubProject(p, Seq()), Operations.addNotesOperation(request.notes))
+      ops.apply(user, p.subproject, Operations.addNotesOperation(request.notes))
     }
   }
 
@@ -306,24 +307,29 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = {
-    val p = ProjectFrame.fromName(request.project)
-    p.assertReadAllowedFrom(user)
-    validateHistory(user, AlternateHistory(p.checkpoint, List()))
+    val checkpoint = metaManager.synchronized {
+      val p = ProjectFrame.fromName(request.project)
+      p.assertReadAllowedFrom(user)
+      p.checkpoint
+    }
+    validateHistory(user, AlternateHistory(checkpoint, List()))
   }
 
-  // Returns in reversed order the history of a checkpoint and the state at the checkpoint.
-  private def reversedCheckpointHistory(
+  // Returns in the history of a state appended with a given history suffix.
+  @tailrec
+  private def stateHistory(
     user: serving.User,
-    startingPoint: String): (RootProjectState, List[ProjectHistoryStep]) = {
-    val startingState = metaManager.stateRepo.readCheckpoint(startingPoint)
-    val steps = startingState.previousCheckpoint.map { prevCheckpoint =>
-      val (prevState, untilPrev) = reversedCheckpointHistory(user, prevCheckpoint)
-      val (prevNextState, step) =
-        historyStep(user, prevState, startingState.lastOperationRequest.get, Some(startingState))
-      step :: untilPrev
+    lastState: RootProjectState,
+    historyAfter: List[ProjectHistoryStep] = List()): List[ProjectHistoryStep] = {
+    val prevCheckpointOpt = lastState.previousCheckpoint
+    if (prevCheckpointOpt.isEmpty) historyAfter
+    else {
+      val prevState = metaManager.stateRepo.readCheckpoint(prevCheckpointOpt.get)
+      val step =
+        historyStep(
+          user, prevState, lastState.lastOperationRequest.get, Some(lastState))._2
+      stateHistory(user, prevState, step :: historyAfter)
     }
-      .getOrElse(List())
-    (startingState, steps)
   }
 
   // Simulates an operation sequence starting from a given state. Returns the list of
@@ -342,17 +348,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
   // Tries to execute the requested operation on the project.
   // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
   // the operation.
-  // Won't ever execute dirty operation, for those it set's a special error status.
+  // Won't ever execute dirty operation, for those it sets a special error status.
   private def historyStep(
     user: serving.User,
     startState: RootProjectState,
     request: SubProjectOperation,
     nextStateOpt: Option[RootProjectState]): (RootProjectState, ProjectHistoryStep) = {
 
-    val startStateViewer = new RootProjectViewer(startState)
-    val context = Operation.Context(user, startStateViewer)
+    val startStateRootViewer = new RootProjectViewer(startState)
+    val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
     val opCategoriesBefore = ops.categories(context)
-    val segmentationsBefore = startStateViewer.toFE("dummy").segmentations
+    val segmentationsBefore = startStateRootViewer.toFE("dummy").segmentations
     val op = ops.opById(context, request.op.id)
     // If it's a deprecated workflow operation, display it in a special category.
     val opCategoriesBeforeWithOp =
@@ -385,8 +391,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val nextState = nextStateOpt.getOrElse(
       if (status.enabled) op.project.rootState
       else startState)
-    val nextStateViewer = new RootProjectViewer(nextState)
-    val segmentationsAfter = nextStateViewer.toFE("dummy").segmentations
+    val nextStateRootViewer = new RootProjectViewer(nextState)
+    val segmentationsAfter = nextStateRootViewer.toFE("dummy").segmentations
     (nextState,
       ProjectHistoryStep(
         request,
@@ -398,18 +404,17 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
-    val (startingState, checkpointHistory) = reversedCheckpointHistory(user, request.startingPoint)
+    val startingState = metaManager.stateRepo.readCheckpoint(request.startingPoint)
+    val checkpointHistory = stateHistory(user, startingState)
     val historyExtension = extendedHistory(user, startingState, request.requests)
     val cleanCheckpointHistory =
       checkpointHistory
-        .reverse
-        .filter(step => step.status.enabled ||
-          (step.status.disabledReason != BigGraphController.dirtyOperationError))
+        .filter(step => step.status.disabledReason != BigGraphController.dirtyOperationError)
     ProjectHistory(
       cleanCheckpointHistory ++ historyExtension.map(_._2))
   }
 
-  def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.tagBatch {
+  def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = {
     // See first that we can deal with this history.
     val startingPoint = request.history.startingPoint
     val historyExtension = extendedHistory(
@@ -418,30 +423,32 @@ class BigGraphController(val env: BigGraphEnvironment) {
       request.history.requests)
     assert(historyExtension.map(_._2).forall(_.status.enabled), "Trying to save invalid history")
 
-    // Create/check target project.
-    ProjectFrame.validateName(request.newProject, "Project name")
-    val p = ProjectFrame.fromName(request.newProject)
-    if (request.newProject != request.oldProject) {
-      // Saving under a new name.
-      assertProjectNotExists(request.newProject)
-      // Copying old ProjectFrame level data.
-      ProjectFrame.fromName(request.oldProject).copy(p)
-      // But adding user as writer if necessary.
-      if (!p.writeAllowedFrom(user)) {
-        p.writeACL += "," + user.email
-      }
-    } else {
-      p.assertWriteAllowedFrom(user)
-    }
-
-    // Set the new history.
     val finalCheckpoint = historyExtension
       .map(_._1)
       .foldLeft(startingPoint) {
         case (prevCp, state) =>
           metaManager.stateRepo.checkpointState(state, prevCp).checkpoint.get
       }
-    p.setCheckpoint(finalCheckpoint)
+
+    metaManager.tagBatch {
+      // Create/check target project.
+      ProjectFrame.validateName(request.newProject, "Project name")
+      val p = ProjectFrame.fromName(request.newProject)
+      if (request.newProject != request.oldProject) {
+        // Saving under a new name.
+        assertProjectNotExists(request.newProject)
+        // Copying old ProjectFrame level data.
+        ProjectFrame.fromName(request.oldProject).copy(p)
+        // But adding user as writer if necessary.
+        if (!p.writeAllowedFrom(user)) {
+          p.writeACL += "," + user.email
+        }
+      } else {
+        p.assertWriteAllowedFrom(user)
+      }
+      // Set the new history.
+      p.setCheckpoint(finalCheckpoint)
+    }
   }
 
   def saveWorkflow(user: serving.User, request: SaveWorkflowRequest): Unit = metaManager.synchronized {
