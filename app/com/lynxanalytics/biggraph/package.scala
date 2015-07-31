@@ -52,9 +52,9 @@ package object biggraph {
     val repoDirs =
       scala.util.Properties.envOrNone("REPOSITORY_MODE") match {
         case Some(staticRepoPattern(metaDir, dataDir, "")) =>
-          new RepositoryDirs(metaDir, dataDir, standardDataPrefix)
+          new RepositoryDirs(metaDir, standardDataPrefix, dataDir)
         case Some(staticRepoPattern(metaDir, dataDir, ephemeralDataDir)) =>
-          new RepositoryDirs(metaDir, dataDir, standardDataPrefix, Some(ephemeralDataDir))
+          new RepositoryDirs(metaDir, standardDataPrefix, dataDir, Some(ephemeralDataDir))
         case _ =>
           throw new AssertionError("REPOSITORY_MODE is not defined")
       }
