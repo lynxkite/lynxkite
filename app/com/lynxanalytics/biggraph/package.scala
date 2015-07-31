@@ -19,7 +19,7 @@ package object biggraph {
   printType[Array[Long]]
 
   // static<meta_dir,data_dir,ephemeral_data_dir>
-  private val staticRepoPattern = "static<(.+),(.+),(.+)>".r
+  private val staticRepoPattern = "static<(.+),(.+),(.*)>".r
 
   val standardDataPrefix = "DATA$"
 
