@@ -199,4 +199,46 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     Await.ready(allDone, Duration(10, SECONDS))
     assert(CountingListener.maxActiveStages == DataManager.maxParallelSparkStages)
   }
+
+  test("Ephemeral repo can read main repo") {
+    val metaManager = cleanMetaManager
+    val dataManager1 = cleanDataManager
+    val operation = ExampleGraph()
+    val instance = metaManager.apply(operation)
+    val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+    val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
+    val data1: AttributeData[String] = dataManager1.get(names)
+    val scalarData1: ScalarData[String] = dataManager1.get(greeting)
+    val dataManager2 = {
+      val tmpDM = cleanDataManager
+      new DataManager(
+        sparkContext, dataManager1.repositoryPath,
+        ephemeralPath = Some(tmpDM.repositoryPath))
+    }
+    assert(dataManager2.isCalculated(names))
+    assert(dataManager2.isCalculated(greeting))
+  }
+
+  test("Ephemeral repo writes to ephemeral directory") {
+    val metaManager = cleanMetaManager
+    val dataManager1 = {
+      val dm1 = cleanDataManager
+      val dm2 = cleanDataManager
+      new DataManager(
+        sparkContext, dm1.repositoryPath,
+        ephemeralPath = Some(dm2.repositoryPath))
+    }
+    val operation = ExampleGraph()
+    val instance = metaManager.apply(operation)
+    val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+    val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
+    val data1: AttributeData[String] = dataManager1.get(names)
+    val scalarData1: ScalarData[String] = dataManager1.get(greeting)
+    val dataManagerMain = new DataManager(sparkContext, dataManager1.repositoryPath)
+    assert(!dataManagerMain.isCalculated(names))
+    assert(!dataManagerMain.isCalculated(greeting))
+    val dataManagerEphemeral = new DataManager(sparkContext, dataManager1.ephemeralPath.get)
+    assert(dataManagerEphemeral.isCalculated(names))
+    assert(dataManagerEphemeral.isCalculated(greeting))
+  }
 }

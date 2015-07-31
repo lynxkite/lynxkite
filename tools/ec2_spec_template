@@ -22,11 +22,8 @@ RAM_GB=30
 LOCAL_TMP_DIR=/mnt/tmp
 
 # The S3 directory to store graph data in without the s3:// prefix. It must use the same credentials
-# as the user starting the cluster.
-#
-# If not specified, the ephemeral HDFS will be used instead. This is about twice as fast, but
-# everything will be lost when you stop/start the cluster.
-#S3_DATAREPO=lynx-bnw-data/${USER}-cluster
+# as the user starting the cluster. Used as the backup location with the "s3copy" command.
+# S3_DATAREPO=lynx-bnw-data/${USER}-cluster
 
 # Spark installation to use for this cluster.
 SPARK_HOME=$HOME/spark-`cat ${KITE_BASE}/conf/SPARK_VERSION`

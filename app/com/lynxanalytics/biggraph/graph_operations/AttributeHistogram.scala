@@ -44,6 +44,7 @@ case class AttributeHistogram[T](bucketer: Bucketer[T])
         inputs.original.rdd,
         bucketedAttr,
         inputs.originalCount.value,
-        50000).counts.toMap)
+        50000,
+        rc).counts.toMap)
   }
 }

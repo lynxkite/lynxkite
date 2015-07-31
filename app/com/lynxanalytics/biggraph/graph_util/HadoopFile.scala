@@ -110,6 +110,9 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   def length = fs.getFileStatus(path).getLen
   def globLength = globStatus.map(_.getLen).sum
 
+  def listStatus = fs.listStatus(path)
+  def getContentSummary = fs.getContentSummary(path)
+
   def loadTextFile(sc: spark.SparkContext): spark.rdd.RDD[String] = {
     val conf = hadoopConfiguration
     // Make sure we get many small splits.
