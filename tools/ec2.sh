@@ -82,12 +82,13 @@ start)
 
   MASTER=`GetMasterHostName`
   # Prepare a config file.
-  CONFIG_FILE=/tmp/${CLUSTER_NAME}.kiterc
+  CONFIG_FILE="/tmp/${CLUSTER_NAME}.kiterc"
+  HDFS_DATA='hdfs://$(curl http://instance-data.ec2.internal/latest/meta-data/public-hostname):9000/data'
   if [ -n "${S3_DATAREPO:-}" ]; then
     KITE_DATA_DIR="s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}"
-    KITE_EPHEMERAL_DATA_DIR="hdfs://$MASTER:9000/data"
+    KITE_EPHEMERAL_DATA_DIR="$HDFS_DATA"
   else
-    KITE_DATA_DIR="hdfs://$MASTER:9000/data"
+    KITE_DATA_DIR="$HDFS_DATA"
     KITE_EPHEMERAL_DATA_DIR=
   fi
   cat > ${CONFIG_FILE} <<EOF
@@ -179,13 +180,13 @@ destroy)
 
 # ======
 s3copy)
-  KITE_EPHEMERAL_DATA_DIR="hdfs://$MASTER:9000/data"
+  HDFS_DATA='hdfs://$(curl http://instance-data.ec2.internal/latest/meta-data/public-hostname):9000/data'
   $SSH -t -t \
     root@${HOST} <<EOF
 /root/ephemeral-hdfs/bin/hadoop fs \
   -D fs.s3n.awsAccessKeyId=$AWS_ACCESS_KEY_ID \
   -D fs.s3n.awsSecretAccessKey=$AWS_SECRET_ACCESS_KEY \
-  -cp $KITE_EPHEMERAL_DATA_DIR s3n://$S3_DATAREPO
+  -cp $HDFS_DATA s3n://$S3_DATAREPO
 exit
 EOF
   ;;
