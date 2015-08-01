@@ -71,7 +71,7 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
   override def toString = s"exists: $exists  legacy path: $legacyPath  available: $availablePartitions  targetdir: $targetRootDir"
 
-  val rootDir = dataRoot / NewEntitiesDir / entity.gUID.toString
+  val rootDir = dataRoot / PartitionedDir / entity.gUID.toString
   val targetRootDir = rootDir.forWriting
   val metaFile = rootDir / "metadata"
 
@@ -152,7 +152,7 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
   }
 
   def legacyPath = dataRoot / EntitiesDir / entity.gUID.toString
-  def newPath = dataRoot / NewEntitiesDir / entity.gUID.toString
+  def newPath = dataRoot / PartitionedDir / entity.gUID.toString
   def exists: Boolean = availablePartitions.nonEmpty
   def fastExists = legacyPath.fastExists || newPath.fastExists
 
