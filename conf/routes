@@ -30,6 +30,7 @@ GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonSe
 GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonServer.exitDemoMode
 
 GET  /ajax/getUsers    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
+POST /ajax/changeUserPassword  com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUserPassword
 POST /ajax/createUser  com.lynxanalytics.biggraph.serving.ProductionJsonServer.createUser
 
 GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
