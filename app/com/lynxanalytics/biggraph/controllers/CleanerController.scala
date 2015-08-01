@@ -47,8 +47,13 @@ class CleanerController(environment: BigGraphEnvironment) {
       is deleted. Deleting these should not have any side effects.""",
       metaGraphContents),
     Method(
+      "notReferredFromProjectTransitively",
+      "Files not associated with any project",
+      """Everything except the transitive dependencies of the existing projects.""",
+      transitivelyReferredFromProject),
+    Method(
       "notReferredFromProject",
-      "Files not associated with the current state of any project.",
+      "Files not associated with the current state of any project",
       """Everything except the immediate dependencies of the existing projects.
       Deleting these may cause recalculations or errors when using undo or editing
       the project history. It can cause re-imports which may lead to unexpected
@@ -94,6 +99,30 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   private def referredFromProject(): Set[String] = {
     implicit val manager = environment.metaGraphManager
+    val operations = operationsFromAllProjects()
+    allFilesFromSourceOperation(operations)
+  }
+
+  private def transitivelyReferredFromProject(): Set[String] = {
+    implicit val manager = environment.metaGraphManager
+    var dependentOperations = operationsFromAllProjects()
+    var operations = dependentOperations
+    // Collect the dependencies of the dependencies until there is none.
+    do {
+      // Expanding the dependencies of 'dependentOperations', minus 'operations' to avoid
+      // expanding the same operation twice.
+      dependentOperations = (dependentOperations.map {
+        case (_, o) => o.inputs.all.map {
+          case (_, i) => (i.source.gUID -> i.source)
+        }
+      }.foldLeft(Map[UUID, MetaGraphOperationInstance]())((a, b) => a ++ b)) -- operations.keys
+      operations = operations ++ dependentOperations
+    } while (dependentOperations.size > 0)
+    allFilesFromSourceOperation(operations.toMap)
+  }
+
+  private def operationsFromAllProjects()(
+    implicit manager: MetaGraphManager): Map[UUID, MetaGraphOperationInstance] = {
     val operations = new HashMap[UUID, MetaGraphOperationInstance]
     for (project <- Operation.projects) {
       operations ++= operationsFromProject(project)
@@ -101,7 +130,7 @@ class CleanerController(environment: BigGraphEnvironment) {
         operations ++= operationsFromProject(segmentation.project)
       }
     }
-    allFilesFromSourceOperation(operations.toMap)
+    operations.toMap
   }
 
   // Returns the operations mapped by their ID strings which created
