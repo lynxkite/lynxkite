@@ -29,6 +29,7 @@ abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
   def legacyPath: io.HadoopFileLike
   def existsAtLegacy = (legacyPath / "_SUCCESS").exists
   def exists: Boolean
+  def fastExists: Boolean // May be outdated or incorrectly true.
 
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
@@ -41,6 +42,7 @@ class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
 
   def legacyPath = dataRoot / "scalars" / entity.gUID.toString
   def exists = existsAtLegacy
+  def fastExists = legacyPath.fastExists
   private def serializedScalarFileName: io.HadoopFileLike = legacyPath / "serialized_data"
   private def successPath: io.HadoopFileLike = legacyPath / "_SUCCESS"
 
@@ -156,6 +158,7 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
   def legacyPath = dataRoot / "entities" / entity.gUID.toString
   def newPath = dataRoot / newDirectoryName / entity.gUID.toString
   def exists: Boolean = availablePartitions.nonEmpty
+  def fastExists = legacyPath.fastExists || newPath.fastExists
 
 }
 
@@ -280,7 +283,7 @@ class DataManager(sc: spark.SparkContext,
     (wrapper.entity.source.operation.isHeavy || wrapper.entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       (dataRoot / io.OperationsDir / wrapper.entity.source.gUID.toString).fastExists &&
-      (dataRoot / io.NewEntitiesDir / wrapper.entity.gUID.toString).fastExists &&
+      wrapper.fastExists &&
       // Slow check for _SUCCESS file.
       (dataRoot / io.OperationsDir / wrapper.entity.source.gUID.toString / io.Success).exists &&
       wrapper.exists
