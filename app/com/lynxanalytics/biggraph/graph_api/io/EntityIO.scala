@@ -20,7 +20,7 @@ case class DMParam(dataRoot: DataRootLike, sparkContext: spark.SparkContext)
 
 case class EntityMetadata(lines: Int)
 
-abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
+abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
   val dataRoot = dmParam.dataRoot
   val sc = dmParam.sparkContext
   def legacyPath: HadoopFileLike
@@ -34,8 +34,8 @@ abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
   override def toString = s"exists: $exists legacy path: $legacyPath"
 }
 
-class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
-    extends EntityIOWrapper(entity, dMParam) {
+class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
+    extends EntityIO(entity, dMParam) {
 
   def legacyPath = dataRoot / ScalarsDir / entity.gUID.toString
   def exists = existsAtLegacy
@@ -64,8 +64,8 @@ class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
   }
 }
 
-abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraphEntity, dMParam: DMParam)
-    extends EntityIOWrapper(entity, dMParam) {
+abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity, dMParam: DMParam)
+    extends EntityIO(entity, dMParam) {
 
   protected lazy val availablePartitions = collectAvailablePartitions
 
@@ -158,8 +158,8 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
 }
 
-class VertexIOWrapper(entity: VertexSet, dMParam: DMParam)
-    extends PartitionableDataIOWrapper[VertexSetData](entity, dMParam) {
+class VertexIO(entity: VertexSet, dMParam: DMParam)
+    extends PartitionableDataIO[VertexSetData](entity, dMParam) {
 
   override def selectPartitionNumber(parent: Option[VertexSetData] = None): Int = {
     val numVertices = readMetadata.lines
@@ -185,8 +185,8 @@ class VertexIOWrapper(entity: VertexSet, dMParam: DMParam)
   }
 }
 
-class EdgeBundleIOWrapper(entity: EdgeBundle, dMParam: DMParam)
-    extends PartitionableDataIOWrapper[EdgeBundleData](entity, dMParam) {
+class EdgeBundleIO(entity: EdgeBundle, dMParam: DMParam)
+    extends PartitionableDataIO[EdgeBundleData](entity, dMParam) {
 
   def edgeBundle = entity
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): EdgeBundleData = {
@@ -200,8 +200,8 @@ class EdgeBundleIOWrapper(entity: EdgeBundle, dMParam: DMParam)
   }
 }
 
-class AttributeIOWrapper[T](entity: Attribute[T], dMParam: DMParam)
-    extends PartitionableDataIOWrapper[AttributeData[T]](entity, dMParam) {
+class AttributeIO[T](entity: Attribute[T], dMParam: DMParam)
+    extends PartitionableDataIO[AttributeData[T]](entity, dMParam) {
   def vertexSet = entity.vertexSet
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): AttributeData[T] = {
     // We do our best to colocate partitions to corresponding vertex set partitions.

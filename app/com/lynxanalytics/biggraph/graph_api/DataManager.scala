@@ -51,13 +51,13 @@ class DataManager(sc: spark.SparkContext,
   private def instancePath(instance: MetaGraphOperationInstance) =
     dataRoot / "operations" / instance.gUID.toString
 
-  def entityWrapperFactory(entity: MetaGraphEntity): io.EntityIOWrapper = {
+  def entityIO(entity: MetaGraphEntity): io.EntityIO = {
     val param = io.DMParam(dataRoot, sc)
     entity match {
-      case vs: VertexSet => new io.VertexIOWrapper(vs, param)
-      case eb: EdgeBundle => new io.EdgeBundleIOWrapper(eb, param)
-      case va: Attribute[_] => new io.AttributeIOWrapper(va, param)
-      case sc: Scalar[_] => new io.ScalarIOWrapper(sc, param)
+      case vs: VertexSet => new io.VertexIO(vs, param)
+      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
+      case va: Attribute[_] => new io.AttributeIO(va, param)
+      case sc: Scalar[_] => new io.ScalarIO(sc, param)
     }
   }
 
@@ -71,50 +71,50 @@ class DataManager(sc: spark.SparkContext,
 
   private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
 
-  private def hasEntityOnDisk(wrapper: io.EntityIOWrapper): Boolean = {
-    (wrapper.entity.source.operation.isHeavy || wrapper.entity.isInstanceOf[Scalar[_]]) &&
+  private def hasEntityOnDisk(eio: io.EntityIO): Boolean = {
+    (eio.entity.source.operation.isHeavy || eio.entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
-      (dataRoot / io.OperationsDir / wrapper.entity.source.gUID.toString).fastExists &&
-      wrapper.fastExists &&
+      (dataRoot / io.OperationsDir / eio.entity.source.gUID.toString).fastExists &&
+      eio.fastExists &&
       // Slow check for _SUCCESS file.
-      (dataRoot / io.OperationsDir / wrapper.entity.source.gUID.toString / io.Success).exists &&
-      wrapper.exists
+      (dataRoot / io.OperationsDir / eio.entity.source.gUID.toString / io.Success).exists &&
+      eio.exists
   }
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
-  private def load(wrapper: io.VertexIOWrapper): Future[VertexSetData] = {
+  private def load(eio: io.VertexIO): Future[VertexSetData] = {
     future {
-      wrapper.read()
+      eio.read()
     }
   }
 
-  private def load(wrapper: io.EdgeBundleIOWrapper): Future[EdgeBundleData] = {
-    getFuture(wrapper.edgeBundle.idSet).map {
-      idSet => wrapper.read(Some(idSet))
+  private def load(eio: io.EdgeBundleIO): Future[EdgeBundleData] = {
+    getFuture(eio.edgeBundle.idSet).map {
+      idSet => eio.read(Some(idSet))
     }
   }
 
-  private def load[T](wrapper: io.AttributeIOWrapper[T]): Future[AttributeData[T]] = {
-    getFuture(wrapper.vertexSet).map {
-      vs => wrapper.read(Some(vs))
+  private def load[T](eio: io.AttributeIO[T]): Future[AttributeData[T]] = {
+    getFuture(eio.vertexSet).map {
+      vs => eio.read(Some(vs))
     }
   }
 
-  private def load[T](wrapper: io.ScalarIOWrapper[T]): Future[ScalarData[T]] = {
+  private def load[T](eio: io.ScalarIO[T]): Future[ScalarData[T]] = {
     future {
       blocking {
-        wrapper.read()
+        eio.read()
       }
     }
   }
 
-  private def load(entity: io.EntityIOWrapper): Future[EntityData] = {
+  private def load(entity: io.EntityIO): Future[EntityData] = {
     log.info(s"PERF Found entity $entity on disk")
     entity match {
-      case vs: io.VertexIOWrapper => load(vs)
-      case eb: io.EdgeBundleIOWrapper => load(eb)
-      case va: io.AttributeIOWrapper[_] => load(va)
-      case sc: io.ScalarIOWrapper[_] => load(sc)
+      case vs: io.VertexIO => load(vs)
+      case eb: io.EdgeBundleIO => load(eb)
+      case va: io.AttributeIO[_] => load(va)
+      case sc: io.ScalarIO[_] => load(sc)
     }
   }
 
@@ -212,29 +212,29 @@ class DataManager(sc: spark.SparkContext,
   def isCalculated(entity: MetaGraphEntity): Boolean = {
     if (hasEntity(entity)) true
     else {
-      val wrapper = entityWrapperFactory(entity)
-      hasEntityOnDisk(wrapper)
+      val eio = entityIO(entity)
+      hasEntityOnDisk(eio)
     }
   }
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {
-      val wrapper = entityWrapperFactory(entity)
-      if (hasEntityOnDisk(wrapper)) {
+      val eio = entityIO(entity)
+      if (hasEntityOnDisk(eio)) {
         // If on disk already, we just load it.
-        set(entity, load(wrapper))
+        set(entity, load(eio))
       } else {
         assert(computationAllowed, "DEMO MODE, you cannot start new computations")
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
         val instanceFuture = getInstanceFuture(instance)
         for (output <- instance.outputs.all.values) {
-          val wrapper2 = entityWrapperFactory(output)
+          val eio2 = entityIO(output)
           set(
             output,
             // And the entity will have to wait until its full completion (including saves).
             if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
-              instanceFuture.flatMap(_ => load(wrapper2))
+              instanceFuture.flatMap(_ => load(eio2))
             } else {
               instanceFuture.map(_(output.gUID))
             })
@@ -302,20 +302,20 @@ class DataManager(sc: spark.SparkContext,
 
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
-    val wrapper = entityWrapperFactory(entity)
-    val entityPath = wrapper.legacyPath.forWriting
+    val eio = entityIO(entity)
+    val entityPath = eio.legacyPath.forWriting
     val doesNotExist = !entityPath.exists || entityPath.delete()
     assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
     data match {
       case rddData: EntityRDDData =>
-        wrapper.write(data)
+        eio.write(data)
       //        log.info(s"PERF Instantiating entity $entity on disk")
       //        val rdd = rddData.rdd
       //        entityPath.saveEntityRDD(rdd)
       //        log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
-        wrapper.write(data)
+        eio.write(data)
       }
     }
     log.info(s"Entity $entity saved.")
