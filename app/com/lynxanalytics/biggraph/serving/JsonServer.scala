@@ -213,6 +213,7 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
+  implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
   implicit val wUser = json.Json.writes[User]
   implicit val wUserList = json.Json.writes[UserList]
@@ -336,6 +337,7 @@ object ProductionJsonServer extends JsonServer {
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 
   def getUsers = jsonGet(UserProvider.getUsers)
+  def changeUserPassword = jsonPost(UserProvider.changeUserPassword, logRequest = false)
   def createUser = jsonPost(UserProvider.createUser, logRequest = false)
 
   val cleanerController = new CleanerController(BigGraphProductionEnvironment)
