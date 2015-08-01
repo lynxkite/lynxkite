@@ -23,9 +23,8 @@ case class EntityMetadata(lines: Int)
 abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
   val dataRoot = dmParam.dataRoot
   val sc = dmParam.sparkContext
-  val newDirectoryName = "new_entities"
   def legacyPath: HadoopFileLike
-  def existsAtLegacy = (legacyPath / "_SUCCESS").exists
+  def existsAtLegacy = (legacyPath / Success).exists
   def exists: Boolean
   def fastExists: Boolean // May be outdated or incorrectly true.
 
@@ -38,11 +37,11 @@ abstract class EntityIOWrapper(val entity: MetaGraphEntity, dmParam: DMParam) {
 class ScalarIOWrapper[T](entity: Scalar[T], dMParam: DMParam)
     extends EntityIOWrapper(entity, dMParam) {
 
-  def legacyPath = dataRoot / "scalars" / entity.gUID.toString
+  def legacyPath = dataRoot / ScalarsDir / entity.gUID.toString
   def exists = existsAtLegacy
   def fastExists = legacyPath.fastExists
   private def serializedScalarFileName: HadoopFileLike = legacyPath / "serialized_data"
-  private def successPath: HadoopFileLike = legacyPath / "_SUCCESS"
+  private def successPath: HadoopFileLike = legacyPath / Success
 
   override def read(parent: Option[VertexSetData] = None): ScalarData[T] = {
     val scalar = entity
@@ -72,7 +71,7 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
 
   override def toString = s"exists: $exists  legacy path: $legacyPath  available: $availablePartitions  targetdir: $targetRootDir"
 
-  val rootDir = dataRoot / newDirectoryName / entity.gUID.toString
+  val rootDir = dataRoot / NewEntitiesDir / entity.gUID.toString
   val targetRootDir = rootDir.forWriting
   val metaFile = rootDir / "metadata"
 
@@ -118,7 +117,7 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
     val a = subdirCandidates.map(_.path.getName).toSet
     val b = subDirs.map(_.path.getName).toSet
     for (v <- subdirCandidates) {
-      val successFile = v / "_SUCCESS"
+      val successFile = v / Success
       if (successFile.exists) {
         val numParts = v.path.getName.toInt
         availablePartitions(numParts) = v
@@ -152,8 +151,8 @@ abstract class PartitionableDataIOWrapper[DT <: EntityRDDData](entity: MetaGraph
     finalRead(availablePartitions(pn), parent)
   }
 
-  def legacyPath = dataRoot / "entities" / entity.gUID.toString
-  def newPath = dataRoot / newDirectoryName / entity.gUID.toString
+  def legacyPath = dataRoot / EntitiesDir / entity.gUID.toString
+  def newPath = dataRoot / NewEntitiesDir / entity.gUID.toString
   def exists: Boolean = availablePartitions.nonEmpty
   def fastExists = legacyPath.fastExists || newPath.fastExists
 
