@@ -84,58 +84,6 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       "(3,2.0)")
   }
 
-  test("No infinite recursion even when there is recursive dependency between operations") {
-    // In a previous implementation we've seen an infinite recursion in the data manager
-    // due to a kind of circular dependency between the operations ImportEdgeList and the
-    // implicitly created EdgeBundleAsVertexSet operation. This is how the circular dependency
-    // goes:
-    //  - EdgeBundleAsVertexSet takes as input the edge bundle output of ImportEdgeList
-    //  - ImportEdgeList outputs edge attributes. When loading those, we depend on the id set
-    //    of those attributes, which in this case is the output of EdgeBundleAsVertexSet
-    // This DataManager got into an infinite recursion trying to provide alternatingly the inputs
-    // for these two operations.
-    //
-    // To actually trigger this bug for sure, you need to be in a special case where the edge
-    // attribute is already saved to disk but the edge bundle is not. If nothing is on disk,
-    // the operation will run, save everything and load back results one by one. If it loads
-    // the edge bundle before the edge attribute, then no problem happens.
-    // On the other hand, if everything is already on disk, then the ImportEdgeList operation
-    // never even triggers, so again, no problem happens.
-    //
-    // Anyways, this test was able to reproduce the issue and is here to ensure that this daemon
-    // does not ever come back.
-    implicit val metaManager = cleanMetaManager
-    val dataManager = cleanDataManager
-    import Scripting._
-    val testCSVFile = HadoopFile(myTempDirPrefix) / "almakorte.csv"
-    testCSVFile.createFromStrings("alma,korte,barack\n3,4,5\n")
-    val operation = graph_operations.ImportEdgeList(
-      graph_operations.CSV(testCSVFile, ",", "alma,korte,barack"),
-      "alma",
-      "korte")
-    val imported = operation().result
-    val barack = imported.attrs("barack").entity
-
-    // Fake barack being on disk.
-    val entityPath = dataManager.repositoryPath / "new_entities" / barack.gUID.toString / "1"
-    val instancePath = dataManager.repositoryPath / "operations" / barack.source.gUID.toString
-    def fakeSuccess(path: HadoopFile): Unit = {
-      val successPath = path / "_SUCCESS"
-      path.mkdirs
-      successPath.createFromStrings("")
-      println(s"fake success path: ${successPath.path}")
-    }
-    fakeSuccess(entityPath)
-    fakeSuccess(instancePath)
-
-    // Check that we managed to fake.
-    val dataManager2 = new DataManager(sparkContext, dataManager.repositoryPath)
-    assert(dataManager2.isCalculated(barack))
-
-    // And now we get the future for it, this should not stack overflow or anything evil.
-    dataManager2.get(barack)
-  }
-
   test("Failed operation can be retried") {
     implicit val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
