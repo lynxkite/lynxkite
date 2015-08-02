@@ -182,7 +182,7 @@ object UserProvider extends mvc.Controller {
   def changeUserPassword(user: User, req: ChangeUserPasswordRequest): Unit = synchronized {
     assert(BCrypt.checkpw(req.oldPassword, users(user.email).hash), "Incorrect old password.")
     assert(req.newPassword == req.newPassword2, "The two new passwords do not match.")
-    assert(req.newPassword.nonEmpty, "The ew password cannot be empty.")
+    assert(req.newPassword.nonEmpty, "The new password cannot be empty.")
     assert(req.newPassword != req.oldPassword, "The new password cannot be the same as the old one.")
     users(user.email) = UserOnDisk(user.email, hash(req.newPassword), user.isAdmin)
     saveUsers()
