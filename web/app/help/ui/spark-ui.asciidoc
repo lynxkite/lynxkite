@@ -9,7 +9,8 @@ Note that it's not possible to interrupt the processing of a certain unit
 of work. What the button does is abort all the outstanding units. So once
 the units that are already being worked on complete, the calculation will
 come to a halt. Also note that the button cancels all out outstanding
-units, not just the ones initiated by the user pressing the button.
+units, not just the ones initiated by the user pressing the button. The
+button only works for admin users.
 
 The little colorful rectangles correspond to the the previously mentioned
 units of work. The height of the rectangle indicates the completeness of the
