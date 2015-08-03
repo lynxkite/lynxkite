@@ -31,40 +31,33 @@ trait BigGraphEnvironment extends SparkContextProvider {
 trait StaticDirEnvironment extends BigGraphEnvironment {
   val repositoryDirs: RepositoryDirs
 
-  override lazy val metaGraphManager = graph_api.MetaRepositoryManager(repositoryDirs.graphDir)
+  override lazy val metaGraphManager = graph_api.MetaRepositoryManager(repositoryDirs.metaDir)
   override lazy val dataManager = new graph_api.DataManager(
-    sparkContext, repositoryDirs.dataDir)
+    sparkContext, repositoryDirs.dataDir, repositoryDirs.ephemeralDataDir)
 }
 
-trait RepositoryDirs {
-  val graphDir: String
-  val dataDirSymbolicName: String
-  val dataDirResolvedName: String
+class RepositoryDirs(
+    val metaDir: String,
+    dataDirSymbolicName: String,
+    dataDirResolvedName: String,
+    ephemeralDirResolvedName: Option[String] = None) {
+
   lazy val dataDir: HadoopFile = {
     PrefixRepository.registerPrefix(dataDirSymbolicName, dataDirResolvedName)
     HadoopFile(dataDirSymbolicName)
   }
+
+  lazy val ephemeralDataDir: Option[HadoopFile] = {
+    ephemeralDirResolvedName.map {
+      ephemeralDirResolvedName =>
+        val ephemeralDirSymbolicName = "EPHEMERAL_" + dataDirSymbolicName
+        PrefixRepository.registerPrefix(ephemeralDirSymbolicName, ephemeralDirResolvedName)
+        HadoopFile(ephemeralDirSymbolicName)
+    }
+  }
+
   def forcePrefixRegistration(): Unit = {
     dataDir
+    ephemeralDataDir
   }
-}
-
-class RegularRepositoryDirs(bigGraphDir: String, bigDataDir: String, val dataDirSymbolicName: String) extends RepositoryDirs {
-  val graphDir = bigGraphDir
-  val dataDirResolvedName = bigDataDir
-}
-
-class TemporaryRepositoryDirs(val dataDirSymbolicName: String) extends RepositoryDirs {
-  private val sysTempDir = System.getProperty("java.io.tmpdir")
-  private val myTempDir = new File(
-    "%s/%s-%d".format(sysTempDir, getClass.getName, scala.compat.Platform.currentTime))
-  myTempDir.mkdir
-  private val graphDirFile = new File(myTempDir, "graph")
-  graphDirFile.mkdir
-
-  private val dataDirFile = new File(myTempDir, "data")
-  dataDirFile.mkdir
-
-  val graphDir = graphDirFile.toString
-  val dataDirResolvedName = dataDirFile.toString
 }

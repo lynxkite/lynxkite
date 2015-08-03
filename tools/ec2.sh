@@ -46,6 +46,17 @@ GetMasterHostName() {
     | grep PublicDnsName | grep ec2 | cut -d'"' -f 4 | head -1
 }
 
+function ConfirmDataLoss {
+  read -p "Data not saved with the 's3copy' command will be lost. Are you sure? [Y/n] " answer
+  case ${answer:0:1} in
+    y|Y|'' )
+      ;;
+    * )
+      exit 1
+      ;;
+  esac
+}
+
 if [ ! -f "${SSH_KEY}" ]; then
   echo "${SSH_KEY} does not exist."
   exit 1
@@ -61,7 +72,6 @@ case $1 in
 start)
   # Launch the cluster.
   ${SPARK_HOME}/ec2/spark-ec2 \
-    --hadoop-major-version yarn \
     -k ${SSH_ID} \
     -i "${SSH_KEY}" \
     -s ${NUM_INSTANCES} \
@@ -71,13 +81,15 @@ start)
 
   MASTER=`GetMasterHostName`
   # Prepare a config file.
-  CONFIG_FILE=/tmp/${CLUSTER_NAME}.kiterc
+  CONFIG_FILE="/tmp/${CLUSTER_NAME}.kiterc"
+  HDFS_DATA='hdfs://$(curl http://instance-data.ec2.internal/latest/meta-data/public-hostname):9000/data'
   if [ -n "${S3_DATAREPO:-}" ]; then
     KITE_DATA_DIR="s3n://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@${S3_DATAREPO}"
+    KITE_EPHEMERAL_DATA_DIR="$HDFS_DATA"
   else
-    KITE_DATA_DIR="hdfs://$MASTER:9000/data"
+    KITE_DATA_DIR="$HDFS_DATA"
+    KITE_EPHEMERAL_DATA_DIR=
   fi
-
   cat > ${CONFIG_FILE} <<EOF
 # !!!Warning!!! Some values are overriden at the end of the file.
 
@@ -89,6 +101,7 @@ start)
 export SPARK_HOME=/root/spark
 export SPARK_MASTER="spark://\`curl http://169.254.169.254/latest/meta-data/public-hostname\`:7077"
 export KITE_DATA_DIR=$KITE_DATA_DIR
+export KITE_EPHEMERAL_DATA_DIR=$KITE_EPHEMERAL_DATA_DIR
 export EXECUTOR_MEMORY=$((RAM_GB - 5))g
 export NUM_CORES_PER_EXECUTOR=${CORES}
 export KITE_MASTER_MEMORY_MB=$((1024 * (RAM_GB - 5)))
@@ -123,12 +136,7 @@ kite)
     root@${HOST}:biggraphstage
 
   echo "Starting..."
-  ssh \
-    -i "${SSH_KEY}" \
-    -o UserKnownHostsFile=/dev/null \
-    -o CheckHostIP=no \
-    -o StrictHostKeyChecking=no \
-    -t -t \
+  eval $SSH -t -t \
     root@${HOST} <<EOF
 biggraphstage/bin/biggraph restart
 exit
@@ -139,6 +147,7 @@ EOF
 
 # ======
 stop)
+  ConfirmDataLoss
   ${SPARK_HOME}/ec2/./spark-ec2 \
     -k ${SSH_ID} \
     -i "${SSH_KEY}" \
@@ -150,7 +159,6 @@ stop)
 # ======
 resume)
   ${SPARK_HOME}/ec2/./spark-ec2 \
-    --hadoop-major-version yarn \
     -k ${SSH_ID} \
     -i "${SSH_KEY}" \
     --instance-type ${TYPE} \
@@ -161,10 +169,24 @@ resume)
 
 # ======
 destroy)
+  ConfirmDataLoss
   ${SPARK_HOME}/ec2/./spark-ec2 \
     --region=${REGION} \
     destroy \
     ${CLUSTER_NAME}
+  ;;
+
+# ======
+s3copy)
+  HDFS_DATA='hdfs://$(curl http://instance-data.ec2.internal/latest/meta-data/public-hostname):9000/data'
+  eval $SSH -t -t \
+    root@$(GetMasterHostName) <<EOF
+/root/ephemeral-hdfs/bin/hadoop fs \
+  -D fs.s3n.awsAccessKeyId=$AWS_ACCESS_KEY_ID \
+  -D fs.s3n.awsSecretAccessKey=$AWS_SECRET_ACCESS_KEY \
+  -cp $HDFS_DATA/* s3n://$S3_DATAREPO/
+exit
+EOF
   ;;
 
 # ======
