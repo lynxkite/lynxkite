@@ -123,9 +123,16 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   protected def loadRDD(path: HadoopFile): SortedRDD[Long, _]
 
+  private def closestSource(desiredPartitionNumber: Int) = {
+    def distanceFromDesired(a: Int) = Math.abs(a - desiredPartitionNumber)
+    val s = availablePartitions.toSeq.map {
+      case (n, f) => (f, distanceFromDesired(n))
+    }.sortBy(_._2).map(_._1).head
+  }
+
   def repartitionTo(pn: Int): Unit = {
     assert(availablePartitions.nonEmpty)
-    val from = availablePartitions.head._2
+    val from = closestSource(pn)
     val rawRDD = loadRDD(from)
     val newRDD = rawRDD.toSortedRDD(new HashPartitioner(pn))
     val newFile = targetDir(pn)
