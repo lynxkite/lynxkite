@@ -243,6 +243,8 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 // There is one special checkpoint, "", which is the root of the checkpoint tree.
 // It corresponds to an empty project state with no parent state.
 object ProjectStateRepository {
+  private val checkpointFilePrefix = "save-"
+
   implicit val fFEOperationSpec = Json.format[FEOperationSpec]
   implicit val fSubProjectOperation = Json.format[SubProjectOperation]
 
@@ -269,12 +271,31 @@ object ProjectStateRepository {
 }
 class ProjectStateRepository(val baseDir: String) {
   import ProjectStateRepository.fRootProjectState
+  import ProjectStateRepository.checkpointFilePrefix
 
   val baseDirFile = new File(baseDir)
   baseDirFile.mkdirs
 
   def checkpointFileName(checkpoint: String): File =
-    new File(baseDirFile, s"save-$checkpoint")
+    new File(baseDirFile, s"${checkpointFilePrefix}${checkpoint}")
+
+  def allCheckpoints: Map[String, RootProjectState] =
+    baseDirFile
+      .list
+      .filter(_.startsWith(checkpointFilePrefix))
+      .map(fileName => fileName.drop(checkpointFilePrefix.length))
+      .map(cp => cp -> readCheckpoint(cp))
+      .toMap
+
+  def saveCheckpointedState(checkpoint: String, state: RootProjectState): Unit = {
+    val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
+    val finalFile = checkpointFileName(checkpoint)
+    FileUtils.writeStringToFile(
+      dumpFile,
+      Json.prettyPrint(Json.toJson(state)),
+      "utf8")
+    dumpFile.renameTo(finalFile)
+  }
 
   def checkpointState(state: RootProjectState, prevCheckpoint: String): RootProjectState = {
     if (state.checkpoint.nonEmpty) {
@@ -283,13 +304,7 @@ class ProjectStateRepository(val baseDir: String) {
     } else {
       val withPrev = state.copy(previousCheckpoint = Some(prevCheckpoint))
       val checkpoint = Timestamp.toString
-      val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
-      val finalFile = checkpointFileName(checkpoint)
-      FileUtils.writeStringToFile(
-        dumpFile,
-        Json.prettyPrint(Json.toJson(withPrev)),
-        "utf8")
-      dumpFile.renameTo(finalFile)
+      saveCheckpointedState(checkpoint, withPrev)
       withPrev.copy(checkpoint = Some(checkpoint))
     }
   }
