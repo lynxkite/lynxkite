@@ -44,9 +44,6 @@ class DataManager(sc: spark.SparkContext,
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
-  private def instancePath(instance: MetaGraphOperationInstance) =
-    dataRoot / "operations" / instance.gUID.toString
-
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
     val param = io.DMParam(dataRoot, sc)
     entity match {
