@@ -126,12 +126,14 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     availablePartitions
   }
 
-  def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): DT
+  protected def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): DT
+
+  protected def loadRDD(path: HadoopFile): SortedRDD[Long, _]
 
   def repartitionTo(pn: Int): Unit = {
     assert(availablePartitions.nonEmpty)
     val from = availablePartitions.head._2
-    val rawRDD = from.loadEntityRDD[Int](sc)
+    val rawRDD = loadRDD(from)
     val newRDD = rawRDD.toSortedRDD(new HashPartitioner(pn))
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
@@ -155,6 +157,13 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   def newPath = dataRoot / PartitionedDir / entity.gUID.toString
   def exists: Boolean = availablePartitions.nonEmpty
   def fastExists = legacyPath.fastExists || newPath.fastExists
+  
+  def joinedRDD[T](rawRDD: SortedRDD[Long, T], parent: VertexSetData) = {
+    val vsRDD = parent.rdd
+    vsRDD.cacheBackingArray()
+    // This join does nothing except enforcing colocation.
+    vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value }
+  }
 
 }
 
@@ -178,10 +187,12 @@ class VertexIO(entity: VertexSet, dMParam: DMParam)
     bestCandidate.filter(_._3 < tolerance).map(_._1).getOrElse(desired.toInt)
   }
 
+  def loadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
+    path.loadEntityRDD[Unit](sc)
+  }
+
   def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): VertexSetData = {
-    val fn = path
-    val rdd = fn.loadEntityRDD[Unit](sc)
-    new VertexSetData(entity, rdd)
+    new VertexSetData(entity, loadRDD(path))
   }
 }
 
@@ -189,29 +200,28 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: DMParam)
     extends PartitionableDataIO[EdgeBundleData](entity, dMParam) {
 
   def edgeBundle = entity
+  def loadRDD(path: HadoopFile): SortedRDD[Long, Edge] = {
+    path.loadEntityRDD[Edge](sc)
+  }
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): EdgeBundleData = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
-    val idsRDD = parent.get.rdd
-    idsRDD.cacheBackingArray()
-    val rawRDD = path.loadEntityRDD[Edge](sc, idsRDD.partitioner)
     new EdgeBundleData(
-      edgeBundle,
-      idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
+      entity,
+      joinedRDD(loadRDD(path), parent.get))
   }
 }
 
 class AttributeIO[T](entity: Attribute[T], dMParam: DMParam)
     extends PartitionableDataIO[AttributeData[T]](entity, dMParam) {
   def vertexSet = entity.vertexSet
+  def loadRDD(path: HadoopFile): SortedRDD[Long, T] = {
+    implicit val ct = entity.classTag
+    path.loadEntityRDD[T](sc)
+  }
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): AttributeData[T] = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
-    val vsRDD = parent.get.rdd
-    vsRDD.cacheBackingArray()
-    implicit val ct = entity.classTag
-    val rawRDD = path.loadEntityRDD[T](sc, vsRDD.partitioner)
     new AttributeData[T](
       entity,
-      // This join does nothing except enforcing colocation.
-      vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
+      joinedRDD(loadRDD(path), parent.get))
   }
 }
