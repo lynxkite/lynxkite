@@ -191,6 +191,9 @@ object MetaRepositoryManager {
     for ((checkpoint, state) <- oldRepo.allCheckpoints) {
       mm.stateRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
     }
+
+    // Copy old tags.
+    mm.setTags(TagRoot.loadFromRepo(src))
   }
 
   // Applies the operation from JSON, performing the required migrations.
