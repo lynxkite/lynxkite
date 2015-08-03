@@ -8,6 +8,10 @@ Please add changes to "master". When releasing a version add a new header for th
 
  - Reorganized operation categories. We hope you find them more logical.
  - Richer progress indicator.
+ - LynxKite on S3 will now always use ephemeral HDFS to store data. This data is lost if you `stop`
+   or `destroy` the cluster. Use the new `s3copy` command if you want to save the data to S3.
+   (The data does not have to be restored from S3 to HDFS. It will be read directly from S3.)
+   This also means a significant performance improvements for S3 clusters.
 
 ### 1.4.4
 

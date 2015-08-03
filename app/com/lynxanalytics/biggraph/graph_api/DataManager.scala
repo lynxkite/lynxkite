@@ -11,7 +11,6 @@ import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
 
-import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -19,13 +18,10 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object DataManager {
   val maxParallelSparkStages =
     scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
-  val scalarDir = "scalars"
-  val entityDir = "entities"
-  val operationDir = "operations"
-  val deletedSfx = ".deleted"
 }
 class DataManager(sc: spark.SparkContext,
-                  val repositoryPath: HadoopFile) {
+                  val repositoryPath: HadoopFile,
+                  val ephemeralPath: Option[HadoopFile] = None) {
   // Limit parallelism to maxParallelSparkStages.
   implicit val executionContext =
     ExecutionContext.fromExecutorService(
@@ -49,50 +45,29 @@ class DataManager(sc: spark.SparkContext,
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
-  private def instancePath(instance: MetaGraphOperationInstance) =
-    repositoryPath / DataManager.operationDir / instance.gUID.toString
-
-  private def entityPath(entity: MetaGraphEntity) = {
-    if (entity.isInstanceOf[Scalar[_]]) {
-      repositoryPath / DataManager.scalarDir / entity.gUID.toString
-    } else {
-      repositoryPath / DataManager.entityDir / entity.gUID.toString
-    }
+  private val ephemeralRoot = new io.DataRoot(ephemeralPath.getOrElse(repositoryPath))
+  private val combinedRoot: io.DataRootLike = {
+    val mainRoot = new io.DataRoot(repositoryPath)
+    if (ephemeralPath.nonEmpty) new io.CombinedRoot(ephemeralRoot, mainRoot)
+    else mainRoot
   }
-
-  // Things saved during previous runs. Checking for the _SUCCESS files is slow so we use the
-  // list of directories instead. The results are thus somewhat optimistic.
-  val possiblySavedInstances: Set[UUID] = {
-    val instances = (repositoryPath / DataManager.operationDir / "*").list
-      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
-    instances.map(_.path.getName.asUUID).toSet
-  }
-  val possiblySavedEntities: Set[UUID] = {
-    val scalars = (repositoryPath / DataManager.scalarDir / "*").list
-      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
-    val entities = (repositoryPath / DataManager.entityDir / "*").list
-      .filterNot(f => f.path.toString contains DataManager.deletedSfx)
-    (scalars ++ entities).map(_.path.getName.asUUID).toSet
-  }
-
-  private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
 
   private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
 
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
-      possiblySavedInstances.contains(entity.source.gUID) &&
-      possiblySavedEntities.contains(entity.gUID) &&
+      combinedRoot.fastHasInstance(entity.source) &&
+      combinedRoot.fastHasEntity(entity) &&
       // Slow check for _SUCCESS file.
-      successPath(instancePath(entity.source)).exists &&
-      successPath(entityPath(entity)).exists
+      combinedRoot.hasInstance(entity.source) &&
+      combinedRoot.hasEntity(entity)
 
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
   private def load(vertexSet: VertexSet): Future[VertexSetData] = {
     future {
-      val fn = entityPath(vertexSet)
+      val fn = combinedRoot.entityPath(vertexSet)
       val rdd = fn.loadEntityRDD[Unit](sc)
       new VertexSetData(vertexSet, rdd)
     }
@@ -103,7 +78,7 @@ class DataManager(sc: spark.SparkContext,
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val idsRDD = idSet.rdd
       idsRDD.cacheBackingArray()
-      val rawRDD = entityPath(edgeBundle).loadEntityRDD[Edge](sc, idsRDD.partitioner)
+      val rawRDD = combinedRoot.entityPath(edgeBundle).loadEntityRDD[Edge](sc, idsRDD.partitioner)
       new EdgeBundleData(
         edgeBundle,
         idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
@@ -116,7 +91,7 @@ class DataManager(sc: spark.SparkContext,
       // We do our best to colocate partitions to corresponding vertex set partitions.
       val vsRDD = vs.rdd
       vsRDD.cacheBackingArray()
-      val rawRDD = entityPath(attribute).loadEntityRDD[T](sc, vsRDD.partitioner)
+      val rawRDD = combinedRoot.entityPath(attribute).loadEntityRDD[T](sc, vsRDD.partitioner)
       new AttributeData[T](
         attribute,
         // This join does nothing except enforcing colocation.
@@ -128,7 +103,7 @@ class DataManager(sc: spark.SparkContext,
     future {
       blocking {
         log.info(s"PERF Loading scalar $scalar from disk")
-        val ois = new java.io.ObjectInputStream(serializedScalarFileName(entityPath(scalar)).open())
+        val ois = new java.io.ObjectInputStream(serializedScalarFileName(combinedRoot.entityPath(scalar)).open())
         val value = try ois.readObject.asInstanceOf[T] finally ois.close()
         log.info(s"PERF Loaded scalar $scalar from disk")
         new ScalarData[T](scalar, value)
@@ -195,7 +170,7 @@ class DataManager(sc: spark.SparkContext,
     // Mark the operation as complete. Entities may not be loaded from incomplete operations.
     // The reason for this is that an operation may give different results if the number of
     // partitions is different. So for consistency, all outputs must be from the same run.
-    successPath(instancePath(instance)).createFromStrings("")
+    (ephemeralRoot.instancePath(instance) / io.Success).createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,
@@ -322,22 +297,22 @@ class DataManager(sc: spark.SparkContext,
 
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
-    val doesNotExist = !entityPath(entity).exists() || entityPath(entity).delete()
-    assert(doesNotExist, s"Cannot delete directory of entity $entity")
-    log.info(s"Saving entity $entity ...")
+    val path = ephemeralRoot.entityPath(entity)
+    val doesNotExist = !path.exists() || path.delete()
+    assert(doesNotExist, s"Cannot delete directory of entity $entity ($path)")
+    log.info(s"Saving entity $entity to $path...")
     data match {
       case rddData: EntityRDDData =>
         log.info(s"PERF Instantiating entity $entity on disk")
-        entityPath(entity).saveEntityRDD(rddData.rdd)
+        path.saveEntityRDD(rddData.rdd)
         log.info(s"PERF Instantiated entity $entity on disk")
       case scalarData: ScalarData[_] => {
         log.info(s"PERF Writing scalar $entity to disk")
-        val targetDir = entityPath(entity)
-        targetDir.mkdirs
-        val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
+        path.mkdirs
+        val oos = new java.io.ObjectOutputStream(serializedScalarFileName(path).create())
         oos.writeObject(scalarData.value)
         oos.close()
-        successPath(targetDir).createFromStrings("")
+        (path / io.Success).createFromStrings("")
         log.info(s"PERF Written scalar $entity to disk")
       }
     }
@@ -364,9 +339,10 @@ class DataManager(sc: spark.SparkContext,
     log.info("Work fraction: " + workFraction)
     log.info("Cache fraction: " + cacheFraction)
     log.info("WM per core: " + (workMemory / totalCores).toLong)
+    val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
       sparkContext = sc,
-      broadcastDirectory = repositoryPath / "broadcasts",
+      broadcastDirectory = broadcastDirectory,
       numExecutors = numExecutors,
       numAvailableCores = totalCores,
       workMemoryPerCore = (workMemory / totalCores).toLong)

@@ -16,6 +16,14 @@ export KITE_META_DIR=$HOME/kite_meta
 # is now mandatory.
 export KITE_DATA_DIR=file:$HOME/kite_data/
 
+# LynxKite can use a faster ephemeral file system for data storage, with reading from the main
+# file system specified by KITE_DATA_DIR as a fallback. The primary use case for this is using
+# SSD-backed HDFS on EC2 while using S3 for the permanent storage.
+#
+# If KITE_EPHEMERAL_DATA_DIR is set, all data writes go to this directory. KITE_DATA_DIR will be
+# used only for uploaded files.
+# export KITE_EPHEMERAL_DATA_DIR=
+
 # Configuration file to specify what file paths users are allowed to access using
 # what prefixes. If you need to define custom prefix definitions, you need to
 # set this. Use kite_???/conf/prefix_definitions_template.txt as a template when

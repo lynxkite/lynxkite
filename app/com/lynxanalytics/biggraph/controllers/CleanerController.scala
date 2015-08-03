@@ -42,10 +42,18 @@ class CleanerController(environment: BigGraphEnvironment) {
   private val methods = List(
     Method(
       "notMetaGraphContents",
-      "Files which do not exist in the MetaGraph",
+      "Files which do not exist in the meta-graph",
       """Truly orphan files. These are created e.g. when the kite meta directory
       is deleted. Deleting these should not have any side effects.""",
-      metaGraphContents))
+      metaGraphContents),
+    Method(
+      "notReferredFromProject",
+      "Files not associated with the current state of any project.",
+      """Everything except the immediate dependencies of the existing projects.
+      Deleting these may cause recalculations or errors when using undo or editing
+      the project history. It can cause re-imports which may lead to unexpected
+      data changes or errors.""",
+      referredFromProject))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
@@ -63,9 +71,9 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   private def getAllFiles(): AllFiles = {
     AllFiles(
-      getAllFilesInDir(DataManager.entityDir),
-      getAllFilesInDir(DataManager.operationDir),
-      getAllFilesInDir(DataManager.scalarDir))
+      getAllFilesInDir(io.EntitiesDir),
+      getAllFilesInDir(io.OperationsDir),
+      getAllFilesInDir(io.ScalarsDir))
   }
 
   // Return all files and dirs and their respective sizes in bytes in a
@@ -73,7 +81,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   private def getAllFilesInDir(dir: String): Map[String, Long] = {
     val hadoopFileDir = environment.dataManager.repositoryPath / dir
     hadoopFileDir.listStatus.filterNot {
-      subDir => subDir.getPath().toString contains DataManager.deletedSfx
+      subDir => subDir.getPath().toString contains io.DeletedSfx
     }.map { subDir =>
       val baseName = subDir.getPath().getName()
       baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed
@@ -82,6 +90,46 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   private def metaGraphContents(): Set[String] = {
     allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
+  }
+
+  private def referredFromProject(): Set[String] = {
+    implicit val manager = environment.metaGraphManager
+    val operations = new HashMap[UUID, MetaGraphOperationInstance]
+    for (project <- Operation.projects) {
+      operations ++= operationsFromProject(project)
+      for (segmentation <- project.segmentations) {
+        operations ++= operationsFromProject(segmentation.project)
+      }
+    }
+    allFilesFromSourceOperation(operations.toMap)
+  }
+
+  // Returns the operations mapped by their ID strings which created
+  // the vertices, edges, attributes and scalars of this project.
+  private def operationsFromProject(
+    project: Project): Map[UUID, MetaGraphOperationInstance] = {
+    val operations = new HashMap[UUID, MetaGraphOperationInstance]
+    if (project.vertexSet != null) {
+      operations += operationWithID(project.vertexSet.source)
+    }
+    if (project.edgeBundle != null) {
+      operations += operationWithID(project.edgeBundle.source)
+    }
+    operations ++= project.scalars.map {
+      case (_, s) => operationWithID(s.source)
+    }
+    operations ++= project.vertexAttributes.map {
+      case (_, a) => operationWithID(a.source)
+    }
+    operations ++= project.edgeAttributes.map {
+      case (_, a) => operationWithID(a.source)
+    }
+    operations.toMap
+  }
+
+  private def operationWithID(
+    operation: MetaGraphOperationInstance): (UUID, MetaGraphOperationInstance) = {
+    (operation.gUID, operation)
   }
 
   // Returns the set of ID strings of all the entities and scalars created by
@@ -115,15 +163,15 @@ class CleanerController(environment: BigGraphEnvironment) {
     log.info(s"${user.email} attempting to mark orphan files deleted using '${req.method}'.")
     val files = getAllFiles()
     val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
-    markDeleted(DataManager.entityDir, files.entities.keys.toSet -- filesToKeep)
-    markDeleted(DataManager.operationDir, files.operations.keys.toSet -- filesToKeep)
-    markDeleted(DataManager.scalarDir, files.scalars.keys.toSet -- filesToKeep)
+    markDeleted(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
+    markDeleted(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
+    markDeleted(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
   }
 
   private def markDeleted(dir: String, files: Set[String]): Unit = {
     val hadoopFileDir = environment.dataManager.repositoryPath / dir
     for (file <- files) {
-      (hadoopFileDir / file).renameTo(hadoopFileDir / (file + DataManager.deletedSfx))
+      (hadoopFileDir / file).renameTo(hadoopFileDir / (file + io.DeletedSfx))
     }
     log.info(s"${files.size} files marked deleted in ${hadoopFileDir.path}.")
   }
@@ -131,15 +179,15 @@ class CleanerController(environment: BigGraphEnvironment) {
   def deleteMarkedFiles(user: serving.User, req: serving.Empty): Unit = synchronized {
     assert(user.isAdmin, "Only administrators can delete marked files.")
     log.info(s"${user.email} attempting to delete marked files.")
-    deleteMarkedFilesInDir(DataManager.entityDir)
-    deleteMarkedFilesInDir(DataManager.operationDir)
-    deleteMarkedFilesInDir(DataManager.scalarDir)
+    deleteMarkedFilesInDir(io.EntitiesDir)
+    deleteMarkedFilesInDir(io.OperationsDir)
+    deleteMarkedFilesInDir(io.ScalarsDir)
   }
 
   private def deleteMarkedFilesInDir(dir: String): Unit = {
     val hadoopFileDir = environment.dataManager.repositoryPath / dir
     hadoopFileDir.listStatus.filter {
-      subDir => subDir.getPath().toString contains DataManager.deletedSfx
+      subDir => subDir.getPath().toString contains io.DeletedSfx
     }.map { subDir =>
       (hadoopFileDir / subDir.getPath().getName()).delete()
     }
