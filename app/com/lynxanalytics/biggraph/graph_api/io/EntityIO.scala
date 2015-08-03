@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-case class DMParam(dataRoot: DataRootLike, sparkContext: spark.SparkContext)
+case class DMParam(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 
 case class EntityMetadata(lines: Int)
 

@@ -55,9 +55,9 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private val dataRoot = {
-    val mainRoot = new io.DataRoot(repositoryPath)
+    val mainRoot = new io.SingleDataRoot(repositoryPath)
     ephemeralPath.map { ephemeralPath =>
-      val ephemeralRoot = new io.DataRoot(ephemeralPath)
+      val ephemeralRoot = new io.SingleDataRoot(ephemeralPath)
       new io.CombinedRoot(ephemeralRoot, mainRoot)
     }.getOrElse(mainRoot)
   }
