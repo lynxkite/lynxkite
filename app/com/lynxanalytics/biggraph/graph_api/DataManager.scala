@@ -62,8 +62,6 @@ class DataManager(sc: spark.SparkContext,
     }.getOrElse(mainRoot)
   }
 
-  private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
-
   private def hasEntityOnDisk(eio: io.EntityIO): Boolean = {
     (eio.entity.source.operation.isHeavy || eio.entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
