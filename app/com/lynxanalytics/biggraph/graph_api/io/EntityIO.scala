@@ -157,7 +157,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   def newPath = dataRoot / PartitionedDir / entity.gUID.toString
   def exists: Boolean = availablePartitions.nonEmpty
   def fastExists = legacyPath.fastExists || newPath.fastExists
-  
+
   def joinedRDD[T](rawRDD: SortedRDD[Long, T], parent: VertexSetData) = {
     val vsRDD = parent.rdd
     vsRDD.cacheBackingArray()

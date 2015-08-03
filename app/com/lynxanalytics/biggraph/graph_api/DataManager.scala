@@ -307,17 +307,7 @@ class DataManager(sc: spark.SparkContext,
     val doesNotExist = !entityPath.exists || entityPath.delete()
     assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
-    data match {
-      case rddData: EntityRDDData =>
-        eio.write(data)
-      //        log.info(s"PERF Instantiating entity $entity on disk")
-      //        val rdd = rddData.rdd
-      //        entityPath.saveEntityRDD(rdd)
-      //        log.info(s"PERF Instantiated entity $entity on disk")
-      case scalarData: ScalarData[_] => {
-        eio.write(data)
-      }
-    }
+    eio.write(data)
     log.info(s"Entity $entity saved.")
   }
 
