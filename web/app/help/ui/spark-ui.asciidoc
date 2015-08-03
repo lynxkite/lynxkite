@@ -12,5 +12,5 @@ come to a halt. Also note that the button cancels all out outstanding
 units, not just the ones initiated by the user pressing the button.
 
 The little colorful rectangles correspond to the the previously mentioned
-units of work. The hight of the rectangle indicates the completeness of the
+units of work. The height of the rectangle indicates the completeness of the
 unit, the color corresponds to the type of work it does.
