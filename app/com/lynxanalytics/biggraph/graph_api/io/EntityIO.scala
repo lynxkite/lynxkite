@@ -16,9 +16,8 @@ case class DMParam(dataRoot: DataRootLike, sparkContext: spark.SparkContext)
 
 case class EntityMetadata(lines: Int)
 
-abstract class EntityIO(val entity: MetaGraphEntity,
-                        dmParam: DMParam,
-                        val correspondingVertexSet: Option[VertexSet]) {
+abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
+  def correspondingVertexSet: Option[VertexSet] = None
   val dataRoot = dmParam.dataRoot
   val sc = dmParam.sparkContext
   def legacyPath: HadoopFileLike
@@ -32,7 +31,7 @@ abstract class EntityIO(val entity: MetaGraphEntity,
 }
 
 class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
-    extends EntityIO(entity, dMParam, None) {
+    extends EntityIO(entity, dMParam) {
 
   def legacyPath = dataRoot / ScalarsDir / entity.gUID.toString
   def exists = existsAtLegacy
@@ -62,9 +61,8 @@ class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
 }
 
 abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
-                                                        dMParam: DMParam,
-                                                        correspondingVertexSet: Option[VertexSet])
-    extends EntityIO(entity, dMParam, correspondingVertexSet) {
+                                                        dMParam: DMParam)
+    extends EntityIO(entity, dMParam) {
 
   protected lazy val availablePartitions = collectAvailablePartitions
 
@@ -111,8 +109,6 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     val subDirs = (newPath / "*").list
     val number = "[123456789][0-9]*".r
     val subdirCandidates = subDirs.filter(x => number.pattern.matcher(x.path.getName).matches)
-    val a = subdirCandidates.map(_.path.getName).toSet
-    val b = subDirs.map(_.path.getName).toSet
     for (v <- subdirCandidates) {
       val successFile = v / Success
       if (successFile.exists) {
@@ -165,7 +161,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 }
 
 class VertexIO(entity: VertexSet, dMParam: DMParam)
-    extends PartitionableDataIO[VertexSetData](entity, dMParam, None) {
+    extends PartitionableDataIO[VertexSetData](entity, dMParam) {
 
   override def selectPartitionNumber(parent: Option[VertexSetData] = None): Int = {
     val numVertices = readMetadata.lines
@@ -193,9 +189,10 @@ class VertexIO(entity: VertexSet, dMParam: DMParam)
   }
 }
 
-class EdgeBundleIO(entity: EdgeBundle, dMParam: DMParam, correspondingVertexSet: Option[VertexSet])
-    extends PartitionableDataIO[EdgeBundleData](entity, dMParam, correspondingVertexSet) {
+class EdgeBundleIO(entity: EdgeBundle, dMParam: DMParam)
+    extends PartitionableDataIO[EdgeBundleData](entity, dMParam) {
 
+  override def correspondingVertexSet = Some(entity.idSet)
   def edgeBundle = entity
   def loadRDD(path: HadoopFile): SortedRDD[Long, Edge] = {
     path.loadEntityRDD[Edge](sc)
@@ -208,8 +205,9 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: DMParam, correspondingVertexSet:
   }
 }
 
-class AttributeIO[T](entity: Attribute[T], dMParam: DMParam, correspondingVertexSet: Option[VertexSet])
-    extends PartitionableDataIO[AttributeData[T]](entity, dMParam, correspondingVertexSet) {
+class AttributeIO[T](entity: Attribute[T], dMParam: DMParam)
+    extends PartitionableDataIO[AttributeData[T]](entity, dMParam) {
+  override def correspondingVertexSet = Some(entity.vertexSet)
   def vertexSet = entity.vertexSet
   def loadRDD(path: HadoopFile): SortedRDD[Long, T] = {
     implicit val ct = entity.classTag

@@ -48,8 +48,8 @@ class DataManager(sc: spark.SparkContext,
     val param = io.DMParam(dataRoot, sc)
     entity match {
       case vs: VertexSet => new io.VertexIO(vs, param)
-      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param, Some(eb.idSet))
-      case va: Attribute[_] => new io.AttributeIO(va, param, Some(va.vertexSet))
+      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
+      case va: Attribute[_] => new io.AttributeIO(va, param)
       case sc: Scalar[_] => new io.ScalarIO(sc, param)
     }
   }
@@ -269,7 +269,7 @@ class DataManager(sc: spark.SparkContext,
     val eio = entityIO(entity)
     val entityPath = eio.legacyPath.forWriting
     val doesNotExist = !entityPath.exists || entityPath.delete()
-    assert(doesNotExist, s"Cannot delete directory of entity $entity")
+    assert(doesNotExist, s"Cannot delete directory $entityPath of entity $entity")
     log.info(s"Saving entity $entity ...")
     eio.write(data)
     log.info(s"Entity $entity saved.")
