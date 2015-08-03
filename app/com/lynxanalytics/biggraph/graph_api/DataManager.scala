@@ -51,8 +51,8 @@ class DataManager(sc: spark.SparkContext,
     val param = io.DMParam(dataRoot, sc)
     entity match {
       case vs: VertexSet => new io.VertexIO(vs, param)
-      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
-      case va: Attribute[_] => new io.AttributeIO(va, param)
+      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param, Some(eb.idSet))
+      case va: Attribute[_] => new io.AttributeIO(va, param, Some(va.vertexSet))
       case sc: Scalar[_] => new io.ScalarIO(sc, param)
     }
   }
@@ -78,40 +78,11 @@ class DataManager(sc: spark.SparkContext,
   }
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
-  private def load(eio: io.VertexIO): Future[VertexSetData] = {
-    future {
-      eio.read()
-    }
-  }
-
-  private def load(eio: io.EdgeBundleIO): Future[EdgeBundleData] = {
-    getFuture(eio.edgeBundle.idSet).map {
-      idSet => eio.read(Some(idSet))
-    }
-  }
-
-  private def load[T](eio: io.AttributeIO[T]): Future[AttributeData[T]] = {
-    getFuture(eio.vertexSet).map {
-      vs => eio.read(Some(vs))
-    }
-  }
-
-  private def load[T](eio: io.ScalarIO[T]): Future[ScalarData[T]] = {
-    future {
-      blocking {
-        eio.read()
-      }
-    }
-  }
-
   private def load(entity: io.EntityIO): Future[EntityData] = {
     log.info(s"PERF Found entity $entity on disk")
-    entity match {
-      case vs: io.VertexIO => load(vs)
-      case eb: io.EdgeBundleIO => load(eb)
-      case va: io.AttributeIO[_] => load(va)
-      case sc: io.ScalarIO[_] => load(sc)
-    }
+    val vsOpt: Option[VertexSet] = entity.correspondingVertexSet
+    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(future { None })
+    baseFuture.map(bf => entity.read(bf))
   }
 
   private def set(entity: MetaGraphEntity, data: Future[EntityData]) = synchronized {
