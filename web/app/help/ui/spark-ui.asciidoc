@@ -1,0 +1,16 @@
+## Spark UI
+
+The Spark UI elements are in the right bottom corner of the browser.
+
+The rotating gear indicates that Spark is calculating something.
+
+The 'Stop calculation' button sends an interruption signal to Spark.
+Note that it's not possible to interrupt the processing of a certain unit
+of work. What the button does is abort all the outstanding units. So once
+the units that are already being worked on complete, the calculation will
+come to a halt. Also note that the button cancels all out outstanding
+units, not just the ones initiated by the user pressing the button.
+
+The little colorful rectangles correspond to the the previously mentioned
+units of work. The hight of the rectangle indicates the completeness of the
+unit, the color corresponds to the type of work it does.
