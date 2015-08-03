@@ -2,11 +2,15 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
+import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.controllers.CommonProjectState
+import com.lynxanalytics.biggraph.controllers.RootProjectState
+import com.lynxanalytics.biggraph.controllers.SegmentationState
 
 // This file is responsible for the metadata compatibility between versions.
 //
@@ -155,10 +159,38 @@ object MetaRepositoryManager {
       }
     }
 
-    // Tags.
-    val oldTags = TagRoot.loadFromRepo(src)
-    val newTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
-    mm.setTags(newTags)
+    // Checkpoints.
+    val finalGuidMapping = guidMapping.map {
+      case (key, value) =>
+        UUID.fromString(key) -> UUID.fromString(value)
+    }
+    def newGUID(old: UUID): UUID = finalGuidMapping.getOrElse(old, old)
+    def updatedProject(state: CommonProjectState): CommonProjectState =
+      CommonProjectState(
+        state.vertexSetGUID.map(newGUID),
+        state.vertexAttributeGUIDs.mapValues(newGUID),
+        state.edgeBundleGUID.map(newGUID),
+        state.edgeAttributeGUIDs.mapValues(newGUID),
+        state.scalarGUIDs.mapValues(newGUID),
+        state.segmentations.mapValues(updatedSegmentation),
+        state.notes)
+    def updatedSegmentation(segmentation: SegmentationState): SegmentationState =
+      SegmentationState(
+        updatedProject(segmentation.state),
+        segmentation.belongsToGUID.map(newGUID))
+
+    def updatedRootProject(rootState: RootProjectState) =
+      RootProjectState(
+        updatedProject(rootState.state),
+        rootState.checkpoint,
+        rootState.previousCheckpoint,
+        rootState.lastOperationDesc,
+        rootState.lastOperationRequest)
+
+    val oldRepo = MetaGraphManager.checkpointsRepo(src)
+    for ((checkpoint, state) <- oldRepo.allCheckpoints) {
+      mm.stateRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
+    }
   }
 
   // Applies the operation from JSON, performing the required migrations.
