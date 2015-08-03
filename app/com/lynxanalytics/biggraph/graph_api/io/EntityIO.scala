@@ -2,16 +2,12 @@
 
 package com.lynxanalytics.biggraph.graph_api.io
 
-import java.util.UUID
-import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import org.apache.spark
 import org.apache.spark.HashPartitioner
-import org.apache.spark.sql.SQLContext
 import play.api.libs.json
-import scala.collection.concurrent.TrieMap
-import scala.concurrent._
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
