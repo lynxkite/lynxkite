@@ -280,7 +280,8 @@ object ObsolateProject {
     frame.writeACL = source.writeACL
   }
 
-  def migrateV1ToV2(v1TagRoot: TagRoot, targetManager: MetaGraphManager): Unit = {
+  def migrateV1ToV2(
+    v1TagRoot: TagRoot, targetManager: MetaGraphManager): Unit = targetManager.tagBatch {
     projects(v1TagRoot).foreach { project =>
       migrateOneProject(project, targetManager)
     }

@@ -210,6 +210,7 @@ object MetaRepositoryManager {
       val guidsFixedTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
       val v1TagRoot = TagRoot.temporaryRoot
       v1TagRoot.setTags(guidsFixedTags)
+      mm.setTag(versionTag, "2")
       ObsolateProject.migrateV1ToV2(v1TagRoot, mm)
     } else {
       assert(false, "Unkown tags version $version")
