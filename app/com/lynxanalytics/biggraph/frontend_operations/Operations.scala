@@ -2275,6 +2275,61 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Metagraph", new StructureOperation(_, _) {
+    def parameters = List()
+    def enabled =
+      FEStatus.assert(user.isAdmin, "Requires administrator privileges") && hasNoVertexSet
+    private def shortClass(o: Any) = o.getClass.getName.split('.').last
+    def apply(params: Map[String, String]) = {
+      val tmpDir =
+        env.dataManager.repositoryPath / "tmp" / "metagraph" / graph_util.Timestamp.toString
+      val ops = env.metaGraphManager.getOperationInstances
+      val vertices = {
+        val file = tmpDir / "vertices"
+        val lines = ops.flatMap {
+          case (guid, inst) =>
+            val op = s"$guid,Operation,${shortClass(inst.operation)}"
+            val outputs = inst.outputs.all.map {
+              case (name, entity) => s"${entity.gUID},${shortClass(entity)},${name.name}"
+            }
+            op +: outputs.toSeq
+        }
+        file.createFromStrings(lines.mkString("\n"))
+        val csv = graph_operations.CSV(
+          file,
+          delimiter = ",",
+          header = "guid,kind,name")
+        graph_operations.ImportVertexList(csv)().result
+      }
+      project.vertexSet = vertices.vertices
+      project.vertexAttributes = vertices.attrs.mapValues(_.entity)
+      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
+      val edges = {
+        val file = tmpDir / "edges"
+        val lines = ops.flatMap {
+          case (guid, inst) =>
+            val inputs = inst.inputs.all.map {
+              case (name, entity) => s"${entity.gUID},$guid,${name.name}"
+            }
+            val outputs = inst.outputs.all.map {
+              case (name, entity) => s"$guid,${entity.gUID},${name.name}"
+            }
+            inputs ++ outputs
+        }
+        file.createFromStrings(lines.mkString("\n"))
+        val csv = graph_operations.CSV(
+          file,
+          delimiter = ",",
+          header = "src,dst,name")
+        val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, "src", "dst")
+        op(op.srcVidAttr, guids)(op.dstVidAttr, guids).result
+      }
+      project.edgeBundle = edges.edges
+      project.edgeAttributes = edges.attrs.mapValues(_.entity)
+    }
+  })
+
   { // "Dirty operations", that is operations that use a data manager. Think twice if you really
     // need this before putting an operation here.
     implicit lazy val dataManager = env.dataManager

@@ -168,6 +168,8 @@ include::merge-two-edge-attributes.asciidoc[]
 
 include::merge-vertices-by-attribute.asciidoc[]
 
+include::metagraph.asciidoc[]
+
 include::modular-clustering.asciidoc[]
 
 include::new-vertex-set.asciidoc[]
