@@ -65,10 +65,8 @@ class DataManager(sc: spark.SparkContext,
   private def hasEntityOnDisk(eio: io.EntityIO): Boolean = {
     (eio.entity.source.operation.isHeavy || eio.entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
-      (dataRoot / io.OperationsDir / eio.entity.source.gUID.toString).fastExists &&
       eio.fastExists &&
       // Slow check for _SUCCESS file.
-      (dataRoot / io.OperationsDir / eio.entity.source.gUID.toString / io.Success).exists &&
       eio.exists
   }
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
