@@ -239,10 +239,10 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 }
 
-// The ProjectStateRepository's job is to persist project states to checkpoints.
+// The CheckpointRepository's job is to persist project states to checkpoints.
 // There is one special checkpoint, "", which is the root of the checkpoint tree.
 // It corresponds to an empty project state with no parent state.
-object ProjectStateRepository {
+object CheckpointRepository {
   private val checkpointFilePrefix = "save-"
 
   implicit val fFEOperationSpec = Json.format[FEOperationSpec]
@@ -269,9 +269,9 @@ object ProjectStateRepository {
 
   val startingState = RootProjectState.emptyState
 }
-class ProjectStateRepository(val baseDir: String) {
-  import ProjectStateRepository.fRootProjectState
-  import ProjectStateRepository.checkpointFilePrefix
+class CheckpointRepository(val baseDir: String) {
+  import CheckpointRepository.fRootProjectState
+  import CheckpointRepository.checkpointFilePrefix
 
   val baseDirFile = new File(baseDir)
   baseDirFile.mkdirs
@@ -311,7 +311,7 @@ class ProjectStateRepository(val baseDir: String) {
 
   def readCheckpoint(checkpoint: String): RootProjectState = {
     if (checkpoint == "") {
-      ProjectStateRepository.startingState
+      CheckpointRepository.startingState
     } else {
       Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
         .as[RootProjectState].copy(checkpoint = Some(checkpoint))
@@ -694,7 +694,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
   }
 
   private def getCheckpointState(checkpoint: String): RootProjectState =
-    manager.stateRepo.readCheckpoint(checkpoint)
+    manager.checkpointRepo.readCheckpoint(checkpoint)
 
   def currentState: RootProjectState = getCheckpointState(checkpoint)
 
