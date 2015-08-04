@@ -8,6 +8,7 @@ import scala.collection.immutable.Set
 import scala.collection.immutable.Map
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.Queue
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -39,6 +40,8 @@ case class AllFiles(
   scalars: Map[String, Long])
 
 class CleanerController(environment: BigGraphEnvironment) {
+  implicit val manager = environment.metaGraphManager
+
   private val methods = List(
     Method(
       "notMetaGraphContents",
@@ -49,7 +52,8 @@ class CleanerController(environment: BigGraphEnvironment) {
     Method(
       "notReferredFromProjectTransitively",
       "Files not associated with any project",
-      """Everything except the transitive dependencies of the existing projects.""",
+      """Keep cached the results of all computations that lead to the current
+      project state, e.g. the converted input CSV files.""",
       transitivelyReferredFromProject),
     Method(
       "notReferredFromProject",
@@ -98,26 +102,24 @@ class CleanerController(environment: BigGraphEnvironment) {
   }
 
   private def referredFromProject(): Set[String] = {
-    implicit val manager = environment.metaGraphManager
     val operations = operationsFromAllProjects()
     allFilesFromSourceOperation(operations)
   }
 
   private def transitivelyReferredFromProject(): Set[String] = {
-    implicit val manager = environment.metaGraphManager
-    var dependentOperations = operationsFromAllProjects()
-    var operations = dependentOperations
-    // Collect the dependencies of the dependencies until there is none.
-    do {
-      // Expanding the dependencies of 'dependentOperations', minus 'operations' to avoid
-      // expanding the same operation twice.
-      dependentOperations = (dependentOperations.map {
-        case (_, o) => o.inputs.all.map {
-          case (_, i) => (i.source.gUID -> i.source)
+    var operations = operationsFromAllProjects()
+    val toExpand = new Queue[UUID] ++ operations.keys
+    while (!toExpand.isEmpty) {
+      val op = manager.getOperationInstances()(toExpand.dequeue)
+      for (input <- op.inputs.all.values) {
+        val dependentOp = input.source
+        val dependentID = dependentOp.gUID
+        if (!(operations isDefinedAt dependentID)) {
+          operations += (dependentID -> dependentOp)
+          toExpand.enqueue(dependentID)
         }
-      }.foldLeft(Map[UUID, MetaGraphOperationInstance]())((a, b) => a ++ b)) -- operations.keys
-      operations = operations ++ dependentOperations
-    } while (dependentOperations.size > 0)
+      }
+    }
     allFilesFromSourceOperation(operations.toMap)
   }
 
