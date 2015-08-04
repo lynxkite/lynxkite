@@ -16,11 +16,13 @@ trait SparkContextProvider {
 }
 
 class StaticSparkContextProvider() extends SparkContextProvider {
+  bigGraphLogger.info("Initializing spark...")
   val sparkContext = spark_util.BigGraphSparkContext("LynxKite")
   if (!sparkContext.isLocal) {
     bigGraphLogger.info("Wait 10 seconds for the workers to log in to the master...")
     Thread.sleep(10000)
   }
+  bigGraphLogger.info("Spark initialized.")
 }
 
 trait BigGraphEnvironment extends SparkContextProvider {
@@ -31,9 +33,19 @@ trait BigGraphEnvironment extends SparkContextProvider {
 trait StaticDirEnvironment extends BigGraphEnvironment {
   val repositoryDirs: RepositoryDirs
 
-  override lazy val metaGraphManager = graph_api.MetaRepositoryManager(repositoryDirs.metaDir)
-  override lazy val dataManager = new graph_api.DataManager(
-    sparkContext, repositoryDirs.dataDir, repositoryDirs.ephemeralDataDir)
+  override lazy val metaGraphManager = {
+    bigGraphLogger.info("Initializing meta graph manager...")
+    val res = graph_api.MetaRepositoryManager(repositoryDirs.metaDir)
+    bigGraphLogger.info("Meta graph manager initialized.")
+    res
+  }
+  override lazy val dataManager = {
+    bigGraphLogger.info("Initializing data manager...")
+    val res = new graph_api.DataManager(
+      sparkContext, repositoryDirs.dataDir, repositoryDirs.ephemeralDataDir)
+    bigGraphLogger.info("Data manager initialized.")
+    res
+  }
 }
 
 class RepositoryDirs(

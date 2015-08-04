@@ -142,7 +142,12 @@ class MetaGraphManager(val repositoryPath: String) {
   // All tagRoot access must be synchronized on this MetaGraphManager object.
   // This allows users of MetaGraphManager to safely conduct transactions over
   // multiple tags.
-  private val tagRoot = TagRoot(repositoryPath)
+  private val tagRoot = {
+    log.info("Reading tags...")
+    val res = TagRoot(repositoryPath)
+    log.info("Tags read...")
+    res
+  }
 
   private val outgoingBundlesMap =
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
@@ -201,6 +206,7 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def initializeFromDisk(): Unit = synchronized {
+    log.info("Loading meta graph from disk...")
     for ((file, j) <- MetaGraphManager.loadOperations(repositoryPath)) {
       try {
         val inst = deserializeOperation(j)
@@ -217,6 +223,7 @@ class MetaGraphManager(val repositoryPath: String) {
         case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
     }
+    log.info("Meta graph loaded from disk.")
   }
 
   def serializeOperation(inst: MetaGraphOperationInstance): json.JsObject = {
