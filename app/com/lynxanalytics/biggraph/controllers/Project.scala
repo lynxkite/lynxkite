@@ -239,10 +239,10 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 }
 
-// The ProjectStateRepository's job is to persist project states to checkpoints.
+// The CheckpointRepository's job is to persist project states to checkpoints.
 // There is one special checkpoint, "", which is the root of the checkpoint tree.
 // It corresponds to an empty project state with no parent state.
-object ProjectStateRepository {
+object CheckpointRepository {
   private val checkpointFilePrefix = "save-"
 
   implicit val fFEOperationSpec = Json.format[FEOperationSpec]
@@ -269,9 +269,9 @@ object ProjectStateRepository {
 
   val startingState = RootProjectState.emptyState
 }
-class ProjectStateRepository(val baseDir: String) {
-  import ProjectStateRepository.fRootProjectState
-  import ProjectStateRepository.checkpointFilePrefix
+class CheckpointRepository(val baseDir: String) {
+  import CheckpointRepository.fRootProjectState
+  import CheckpointRepository.checkpointFilePrefix
 
   val baseDirFile = new File(baseDir)
   baseDirFile.mkdirs
@@ -311,7 +311,7 @@ class ProjectStateRepository(val baseDir: String) {
 
   def readCheckpoint(checkpoint: String): RootProjectState = {
     if (checkpoint == "") {
-      ProjectStateRepository.startingState
+      CheckpointRepository.startingState
     } else {
       Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
         .as[RootProjectState].copy(checkpoint = Some(checkpoint))
@@ -584,6 +584,8 @@ class SegmentationEditor(
   implicit val manager = parent.manager
 
   {
+    // If this segmentation editor is called with new segmentationName then we
+    // create the corresponding SegmentationState in the project state's segmentations field.
     val oldSegs = parent.state.segmentations
     if (!oldSegs.contains(segmentationName)) {
       parent.state = parent.state.copy(
@@ -631,7 +633,8 @@ class SegmentationEditor(
     parent.setLastOperationRequest(n.copy(path = segmentationName +: n.path))
 }
 
-// Represents a mutable, named project. State is stored using tags.
+// Represents a mutable, named project. It can be seen as a modifiable pointer into the
+// checkpoint tree with some additional metadata. ProjectFrame's data is persisted using tags.
 class ProjectFrame(val projectPath: SymbolPath)(
     implicit manager: MetaGraphManager) {
   val projectName = projectPath.toString
@@ -670,7 +673,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
   def redo(): Unit = manager.synchronized {
     val next = nextCheckpoint.get
     checkpoint = next
-    lazy val reverseCheckpoints: Stream[String] = farthestCheckpoint #:: reverseCheckpoints.map {
+    val reverseCheckpoints = Stream.iterate(farthestCheckpoint) {
       next => getCheckpointState(next).previousCheckpoint.get
     }
     nextCheckpoint = reverseCheckpoints.takeWhile(_ != next).lastOption
@@ -682,6 +685,8 @@ class ProjectFrame(val projectPath: SymbolPath)(
     nextCheckpoint = None
   }
 
+  // Initializes a new project. One needs to call this to make the initial preparations
+  // for a project in the tag tree.
   def initialize: Unit = manager.synchronized {
     checkpoint = ""
     nextCheckpoint = None
@@ -689,7 +694,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
   }
 
   private def getCheckpointState(checkpoint: String): RootProjectState =
-    manager.stateRepo.readCheckpoint(checkpoint)
+    manager.checkpointRepo.readCheckpoint(checkpoint)
 
   def currentState: RootProjectState = getCheckpointState(checkpoint)
 

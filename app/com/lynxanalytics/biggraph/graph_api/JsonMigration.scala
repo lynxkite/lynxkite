@@ -193,7 +193,7 @@ object MetaRepositoryManager {
 
     val oldRepo = MetaGraphManager.checkpointsRepo(src)
     for ((checkpoint, state) <- oldRepo.allCheckpoints) {
-      mm.stateRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
+      mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
     }
 
     // Tags.
