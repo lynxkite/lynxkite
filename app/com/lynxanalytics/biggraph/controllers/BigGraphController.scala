@@ -324,7 +324,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val prevCheckpointOpt = lastState.previousCheckpoint
     if (prevCheckpointOpt.isEmpty) historyAfter
     else {
-      val prevState = metaManager.stateRepo.readCheckpoint(prevCheckpointOpt.get)
+      val prevState = metaManager.checkpointRepo.readCheckpoint(prevCheckpointOpt.get)
       val step =
         historyStep(
           user, prevState, lastState.lastOperationRequest.get, Some(lastState))._2
@@ -404,7 +404,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
-    val startingState = metaManager.stateRepo.readCheckpoint(request.startingPoint)
+    val startingState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
     val checkpointHistory = stateHistory(user, startingState)
     val historyExtension = extendedHistory(user, startingState, request.requests)
     val cleanCheckpointHistory =
@@ -419,13 +419,14 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val startingPoint = request.history.startingPoint
     val historyExtension = extendedHistory(
       user,
-      metaManager.stateRepo.readCheckpoint(startingPoint),
+      metaManager.checkpointRepo.readCheckpoint(startingPoint),
       request.history.requests)
     assert(historyExtension.map(_._2).forall(_.status.enabled), "Trying to save invalid history")
 
     var finalCheckpoint = startingPoint
     for (state <- historyExtension.map(_._1)) {
-      finalCheckpoint = metaManager.stateRepo.checkpointState(state, finalCheckpoint).checkpoint.get
+      finalCheckpoint =
+        metaManager.checkpointRepo.checkpointState(state, finalCheckpoint).checkpoint.get
     }
 
     metaManager.tagBatch {
@@ -708,7 +709,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
 
   def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
     val opResult = appliedOp(context, opSpec).project.rootState
-    manager.stateRepo.checkpointState(opResult, context.project.rootState.checkpoint.get)
+    manager.checkpointRepo.checkpointState(opResult, context.project.rootState.checkpoint.get)
   }
 
   def apply(
