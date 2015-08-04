@@ -20,16 +20,16 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     (p.toFE.undoOp, p.toFE.redoOp)
   }
 
-  def dodo(p: ProjectFrame, x: String) =
+  def addFakeCheckpoint(p: ProjectFrame, x: String) =
     p.setCheckpoint(metaGraphManager.checkpointRepo.checkpointState(
       RootProjectState.emptyState.copy(lastOperationDesc = x, checkpoint = None),
       p.checkpoint).checkpoint.get)
 
   test("Undo/redo") {
     assert(undoRedo(projectFrame) == ("", ""))
-    dodo(projectFrame, "A")
+    addFakeCheckpoint(projectFrame, "A")
     assert(undoRedo(projectFrame) == ("A", ""))
-    dodo(projectFrame, "B")
+    addFakeCheckpoint(projectFrame, "B")
     assert(undoRedo(projectFrame) == ("B", ""))
     projectFrame.undo()
     assert(undoRedo(projectFrame) == ("A", "B"))
@@ -37,19 +37,19 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     assert(undoRedo(projectFrame) == ("", "A"))
     projectFrame.redo()
     assert(undoRedo(projectFrame) == ("A", "B"))
-    dodo(projectFrame, "C")
+    addFakeCheckpoint(projectFrame, "C")
     assert(undoRedo(projectFrame) == ("C", ""))
     projectFrame.undo()
     assert(undoRedo(projectFrame) == ("A", "C"))
     val copy = ProjectFrame.fromName("Test_Project_Copy")
     projectFrame.copy(copy)
     assert(undoRedo(copy) == ("A", "C"))
-    dodo(projectFrame, "D")
+    addFakeCheckpoint(projectFrame, "D")
     assert(undoRedo(projectFrame) == ("D", ""))
     assert(undoRedo(copy) == ("A", "C"))
     copy.redo()
     assert(undoRedo(copy) == ("C", ""))
-    dodo(copy, "E")
+    addFakeCheckpoint(copy, "E")
     assert(undoRedo(copy) == ("E", ""))
     assert(undoRedo(projectFrame) == ("D", ""))
   }
@@ -94,22 +94,22 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
     assertWriters("darabos@lynx", "xandrew@lynx", "forevian@andersen")()
     assertReaders("darabos@lynx", "xandrew@lynx", "forevian@andersen")()
 
-    dodo(projectFrame, "A")
+    addFakeCheckpoint(projectFrame, "A")
     projectFrame.writeACL = "*@lynx"
     assertWriters("darabos@lynx", "xandrew@lynx")("forevian@andersen")
     assertReaders("darabos@lynx", "xandrew@lynx", "forevian@andersen")()
 
-    dodo(projectFrame, "B")
+    addFakeCheckpoint(projectFrame, "B")
     projectFrame.readACL = ""
     assertWriters("darabos@lynx", "xandrew@lynx")("forevian@andersen")
     assertReaders("darabos@lynx", "xandrew@lynx")("forevian@andersen")
 
-    dodo(projectFrame, "C")
+    addFakeCheckpoint(projectFrame, "C")
     projectFrame.writeACL = "darabos@lynx"
     assertWriters("darabos@lynx")("xandrew@lynx", "forevian@andersen")
     assertReaders("darabos@lynx")("xandrew@lynx", "forevian@andersen")
 
-    dodo(projectFrame, "D")
+    addFakeCheckpoint(projectFrame, "D")
     projectFrame.readACL = "xandrew@*"
     def lastAssert() = {
       assertWriters("darabos@lynx")("xandrew@lynx", "forevian@andersen")
