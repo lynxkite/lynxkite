@@ -5,6 +5,8 @@ import java.io.File
 import java.util.UUID
 import scala.collection.mutable
 
+import com.lynxanalytics.biggraph.graph_util.Timestamp
+
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
   override def equals(p: Any) = {
     p.isInstanceOf[SymbolPath] && path == p.asInstanceOf[SymbolPath].path
@@ -221,7 +223,14 @@ object TagRoot {
     }
   }
 
-  def apply(repo: String) = {
+  // Creates an empty root backed in a tmp directory.
+  def temporaryRoot: TagRoot = {
+    val tmpRootDir = scala.util.Properties.envOrElse("KITE_LOCAL_TMP", "/tmp")
+    val currentRepo = s"${tmpRootDir}/${Timestamp.toString}"
+    apply(currentRepo)
+  }
+
+  def apply(repo: String): TagRoot = {
     val oldStore = storeFromRepo(repo) // May be from earlier versions.
     val tagsJournal = new File(repo, journalFilename)
     val newStore = new JournalKeyValueStore(tagsJournal.toString)

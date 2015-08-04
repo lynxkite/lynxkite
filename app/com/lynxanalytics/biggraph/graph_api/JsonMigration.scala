@@ -9,6 +9,7 @@ import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.CommonProjectState
+import com.lynxanalytics.biggraph.controllers.ObsolateProject
 import com.lynxanalytics.biggraph.controllers.RootProjectState
 import com.lynxanalytics.biggraph.controllers.SegmentationState
 
@@ -50,7 +51,9 @@ class JsonMigration {
     "com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
-    "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1)
+    "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1,
+    // Forces a migration due to switch to v2 tags.
+    "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
@@ -67,7 +70,8 @@ class JsonMigration {
     },
     ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity)
+    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_util.ProjectFrame", 0) -> identity)
 }
 
 object MetaRepositoryManager {
@@ -192,8 +196,22 @@ object MetaRepositoryManager {
       mm.stateRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
     }
 
-    // Copy old tags.
-    mm.setTags(TagRoot.loadFromRepo(src))
+    // Tags.
+    val oldTags = TagRoot.loadFromRepo(src)
+    val versionTag = SymbolPath('tagmeta, 'version)
+    val version = oldTags.getOrElse(versionTag, "1")
+    if (version == "2") {
+      // We already use version 2 tags that are GUID agnostic. All we need to do is copy the tags.
+      mm.setTags(oldTags)
+    } else if (version == "1") {
+      // First we upgrade guids
+      val guidsFixedTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
+      val v1TagRoot = TagRoot.temporaryRoot
+      v1TagRoot.setTags(guidsFixedTags)
+      ObsolateProject.migrateV1ToV2(v1TagRoot, mm)
+    } else {
+      assert(false, "Unkown tags version $version")
+    }
   }
 
   // Applies the operation from JSON, performing the required migrations.

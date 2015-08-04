@@ -19,7 +19,7 @@ import play.api.libs.json.Json
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
-class ObsolateProject(val projectPath: SymbolPath)(implicit tagRoot: TagRoot) {
+class ObsolateProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot) {
   val projectName = projectPath.toString
   override def toString = projectName
   override def equals(p: Any) =
@@ -184,6 +184,105 @@ object ObsolateProject {
         log.error(message, e)
         None
       }
+    }
+  }
+
+  private def projects(tagRoot: TagRoot): Seq[ObsolateProject] = {
+    val dirs = {
+      val projectsRoot = SymbolPath("projects")
+      if (tagRoot.exists(projectsRoot))
+        (tagRoot / projectsRoot).ls.map(_.fullName)
+      else
+        Nil
+    }
+    // Do not list internal project names (starting with "!").
+    dirs
+      .map(p => ObsolateProject.fromName(p.path.last.name)(tagRoot))
+      .filterNot(_.projectName.startsWith("!"))
+  }
+
+  private def getProjectState(project: ObsolateProject): CommonProjectState = {
+    CommonProjectState(
+      vertexSetGUID = Option(project.vertexSet),
+      vertexAttributeGUIDs = project.vertexAttributes.toMap,
+      edgeBundleGUID = Option(project.edgeBundle),
+      edgeAttributeGUIDs = project.edgeAttributes.toMap,
+      scalarGUIDs = project.scalars.toMap,
+      segmentations =
+        project.segmentationNames.map(
+          name => name -> getSegmentationState(project.segmentation(name))).toMap,
+      notes = project.notes)
+  }
+
+  private def getSegmentationState(seg: ObsolateSegmentation): SegmentationState = {
+    SegmentationState(
+      getProjectState(seg.project),
+      Option(seg.belongsTo))
+  }
+
+  private def getSegmentationPath(oldFullName: String): Seq[String] = {
+    getSegmentationPath(SymbolPath.parse(oldFullName).toList)
+  }
+
+  private def getSegmentationPath(oldFullPath: List[scala.Symbol]): List[String] = {
+    oldFullPath match {
+      case List(name) => List()
+      case rootName :: 'checkpointed :: 'segmentations :: segName :: rest =>
+        segName.name :: getSegmentationPath(rest)
+    }
+  }
+
+  private def getRootState(
+    project: ObsolateProject): RootProjectState = {
+
+    RootProjectState(
+      getProjectState(project),
+      None,
+      None,
+      project.lastOperation,
+      Some(
+        project.lastOperationRequest
+          .map {
+            projectOperationRequest =>
+              SubProjectOperation(
+                getSegmentationPath(projectOperationRequest.project),
+                projectOperationRequest.op)
+          }
+          .getOrElse(SubProjectOperation(Seq(), FEOperationSpec("No-operation", Map())))))
+
+  }
+  private def oldCheckpoints(p: ObsolateProject): Seq[ObsolateProject] = {
+    val tmpDir = s"!tmp-$Timestamp"
+    (0 until p.checkpointCount).map { i =>
+      val tmp = ObsolateProject.fromName(s"$tmpDir-$i")(p.tagRoot)
+      p.copyCheckpoint(i, tmp)
+      tmp
+    }
+  }
+
+  private def lastNewCheckpoint(
+    oldCheckpoints: Seq[ObsolateProject], repo: ProjectStateRepository): String = {
+    oldCheckpoints.foldLeft("") {
+      case (previousCheckpoint, project) =>
+        val state = getRootState(project)
+        repo.checkpointState(state, previousCheckpoint).checkpoint.get
+    }
+  }
+
+  private def migrateOneProject(source: ObsolateProject, targetManager: MetaGraphManager): Unit = {
+    val lastCp = lastNewCheckpoint(oldCheckpoints(source), targetManager.stateRepo)
+    val frame = ProjectFrame.fromName(source.projectName)(targetManager)
+    frame.setCheckpoint(lastCp)
+    (0 until (source.checkpointCount - source.checkpointIndex - 1)).foreach {
+      i => frame.undo()
+    }
+    frame.readACL = source.readACL
+    frame.writeACL = source.writeACL
+  }
+
+  def migrateV1ToV2(v1TagRoot: TagRoot, targetManager: MetaGraphManager): Unit = {
+    projects(v1TagRoot).foreach { project =>
+      migrateOneProject(project, targetManager)
     }
   }
 }
