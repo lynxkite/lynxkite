@@ -89,6 +89,7 @@ object MetaRepositoryManager {
   // If the newest repo belongs to an older version, it performs migration.
   // If the newest repo belongs to a newer version, an exception is raised.
   private def findCurrentRepository(repo: File, current: JsonMigration): File = {
+    log.info("Exploring meta graph directory versions...")
     val dirs = Option(repo.listFiles).getOrElse(Array())
     import JsonMigration.versionOrdering
     import JsonMigration.versionOrdering.mkOrderingOps
@@ -97,6 +98,7 @@ object MetaRepositoryManager {
       dirs
         .flatMap(dir => readVersion(dir).map(v => DV(dir, v)))
         .sortBy(_.dir.getName.toInt).reverse
+    log.info("Meta graph directory versions mapped out.")
     if (versions.isEmpty) {
       val currentDir = new File(repo, "1")
       writeVersion(currentDir, current.version)
@@ -191,7 +193,7 @@ object MetaRepositoryManager {
         rootState.lastOperationDesc,
         rootState.lastOperationRequest)
 
-    val oldRepo = MetaGraphManager.checkpointsRepo(src)
+    val oldRepo = MetaGraphManager.getCheckpointRepo(src)
     for ((checkpoint, state) <- oldRepo.allCheckpoints) {
       mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
     }
