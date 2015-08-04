@@ -31,7 +31,6 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
 
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
-
 }
 
 class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
@@ -82,7 +81,6 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   }
 
   def readMetadata: EntityMetadata = {
-    // TODO: What happens if the file is not there?
     val j = json.Json.parse(metaFile.forReading.readAsString)
     j.as[EntityMetadata]
   }
@@ -111,7 +109,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     }
 
     val subDirs = (newPath / "*").list
-    val number = "[123456789][0-9]*".r
+    val number = "[1-9][0-9]*".r
     val subdirCandidates = subDirs.filter(x => number.pattern.matcher(x.path.getName).matches)
     for (v <- subdirCandidates) {
       val successFile = v / Success
@@ -145,12 +143,25 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     availablePartitions(pn) = newFile
   }
 
-  def selectPartitionNumber(parent: Option[VertexSetData] = None): Int = {
-    parent.get.rdd.partitions.size
+  def selectPartitionNumber: Int = {
+    val numVertices = readMetadata.lines
+    val verticesPerPartition = System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
+    val tolerance = System.getProperty("biggraph.vertices.partition.tolerance", "2.0").toDouble
+    val desired = Math.ceil(numVertices.toDouble / verticesPerPartition.toDouble)
+
+    def fun(a: Int) = {
+      val aa = a.toDouble
+      if (aa > desired) aa / desired
+      else desired / aa
+    }
+
+    val bestCandidate =
+      availablePartitions.map { case (p, h) => (p, h, fun(p)) }.toSeq.sortBy(_._3).headOption
+    bestCandidate.filter(_._3 < tolerance).map(_._1).getOrElse(desired.toInt)
   }
 
   override def read(parent: Option[VertexSetData] = None): DT = {
-    val pn = selectPartitionNumber(parent)
+    val pn = parent.map(_.rdd.partitions.size).getOrElse(selectPartitionNumber)
     if (!availablePartitions.contains(pn)) {
       repartitionTo(pn)
     }
@@ -173,23 +184,6 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
 class VertexIO(entity: VertexSet, dMParam: DMParam)
     extends PartitionableDataIO[VertexSetData](entity, dMParam) {
-
-  override def selectPartitionNumber(parent: Option[VertexSetData] = None): Int = {
-    val numVertices = readMetadata.lines
-    val verticesPerPartition = System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
-    val tolerance = System.getProperty("biggraph.vertices.partition.tolerance", "2.0").toDouble
-    val desired = Math.ceil(numVertices.toDouble / verticesPerPartition.toDouble)
-
-    def fun(a: Int) = {
-      val aa = a.toDouble
-      if (aa > desired) aa / desired
-      else desired / aa
-    }
-
-    val bestCandidate =
-      availablePartitions.map { case (p, h) => (p, h, fun(p)) }.toSeq.sortBy(_._3).headOption
-    bestCandidate.filter(_._3 < tolerance).map(_._1).getOrElse(desired.toInt)
-  }
 
   def loadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
     path.loadEntityRDD[Unit](sc)
