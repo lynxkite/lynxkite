@@ -193,13 +193,15 @@ final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
     }
   }
 
+  def gUID(path: SymbolPath): UUID = (this / path).gUID
+
   // Create tags from the key-value store.
   store.writesCanBeIgnored {
     setTags(TagRoot.loadFromStore(store))
   }
 }
 object TagRoot {
-  val journalFilename = "tags.journal"
+  val journalFilename = "tags2.journal"
 
   def loadFromRepo(repo: String): Map[SymbolPath, String] =
     loadFromStore(storeFromRepo(repo))
