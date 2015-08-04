@@ -25,6 +25,14 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
   def exists: Boolean
   def fastExists: Boolean // May be outdated or incorrectly true.
 
+  private def operationPath = dataRoot / io.OperationsDir / entity.source.gUID.toString
+  protected def operationFastExists = {
+    operationPath.fastExists
+  }
+  protected def operationExists = {
+    operationPath.exists
+  }
+
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
 
@@ -34,8 +42,8 @@ class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
     extends EntityIO(entity, dMParam) {
 
   def legacyPath = dataRoot / ScalarsDir / entity.gUID.toString
-  def exists = existsAtLegacy
-  def fastExists = legacyPath.fastExists
+  def exists = operationExists && existsAtLegacy
+  def fastExists = operationFastExists && legacyPath.fastExists
   private def serializedScalarFileName: HadoopFileLike = legacyPath / "serialized_data"
   private def successPath: HadoopFileLike = legacyPath / Success
 
@@ -155,8 +163,8 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   def legacyPath = dataRoot / EntitiesDir / entity.gUID.toString
   def newPath = dataRoot / PartitionedDir / entity.gUID.toString
-  def exists: Boolean = availablePartitions.nonEmpty
-  def fastExists = legacyPath.fastExists || newPath.fastExists
+  def exists = operationExists && availablePartitions.nonEmpty
+  def fastExists = operationFastExists && (newPath.fastExists || legacyPath.fastExists)
 
   def joinedRDD[T](rawRDD: SortedRDD[Long, T], parent: VertexSetData) = {
     val vsRDD = parent.rdd
