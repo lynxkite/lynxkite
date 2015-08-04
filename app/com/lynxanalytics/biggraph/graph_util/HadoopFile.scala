@@ -30,8 +30,8 @@ object HadoopFile {
   }
 
   lazy val defaultFs = hadoop.fs.FileSystem.get(new hadoop.conf.Configuration())
-  lazy val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
-  lazy val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
+  private val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
+  private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
 }
 
 case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: String) {
