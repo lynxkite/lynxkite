@@ -261,7 +261,7 @@ object ObsolateProject {
   }
 
   private def lastNewCheckpoint(
-    oldCheckpoints: Seq[ObsolateProject], repo: ProjectStateRepository): String = {
+    oldCheckpoints: Seq[ObsolateProject], repo: CheckpointRepository): String = {
     oldCheckpoints.foldLeft("") {
       case (previousCheckpoint, project) =>
         val state = getRootState(project)
@@ -270,7 +270,7 @@ object ObsolateProject {
   }
 
   private def migrateOneProject(source: ObsolateProject, targetManager: MetaGraphManager): Unit = {
-    val lastCp = lastNewCheckpoint(oldCheckpoints(source), targetManager.stateRepo)
+    val lastCp = lastNewCheckpoint(oldCheckpoints(source), targetManager.checkpointRepo)
     val frame = ProjectFrame.fromName(source.projectName)(targetManager)
     frame.setCheckpoint(lastCp)
     (0 until (source.checkpointCount - source.checkpointIndex - 1)).foreach {
