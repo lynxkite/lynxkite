@@ -191,16 +191,24 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(dataManagerEphemeral.isCalculated(greeting))
   }
 
+  def enhancedExampleGraphData() = {
+    val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+    val operation = EnhancedExampleGraph()
+    val instance = metaManager.apply(operation)
+    (dataManager, instance)
+  }
+
   test("Re-partitioning works") {
     def repart(verticesPerPartition: Int, tolerance: Double, expectedPartition: Int) = {
-      val metaManager = cleanMetaManager
-      val dataManager = cleanDataManager
-      val operation = EnhancedExampleGraph() // 8 vertices (i.e., 8 lines)
+      val (dataManager, instance) = enhancedExampleGraphData() // 8 vertices, i.e., 8 lines
+
       System.setProperty("biggraph.vertices.per.partition", verticesPerPartition.toString)
       System.setProperty("biggraph.vertices.partition.tolerance", tolerance.toString)
-      val instance = metaManager.apply(operation)
+
       val names = instance.outputs.attributes('name).runtimeSafeCast[String]
       dataManager.get(names)
+
       val path = dataManager.repositoryPath / "partitioned" / names.gUID.toString
 
       assert((path / "1" / io.Success).exists)
@@ -226,14 +234,10 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
   }
 
   test("We can migrate data from entities") {
-
-    val metaManager = cleanMetaManager
-    val dataManager = cleanDataManager
-    val operation = EnhancedExampleGraph()
-    val instance = metaManager.apply(operation)
+    val (dataManager, instance) = enhancedExampleGraphData()
+    val path = dataManager.repositoryPath
     val names = instance.outputs.attributes('name).runtimeSafeCast[String]
     dataManager.get(names)
-    val path = dataManager.repositoryPath
 
     val partitionedPath = path / "partitioned" / names.gUID.toString / "1"
     val legacyPath = path / "entities" / names.gUID.toString
@@ -250,6 +254,18 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     dataManager2.get(names)
     assert(partitionedPath.exists) // Was recalculated
 
+  }
+
+  test("We're safe against missing metadata") {
+    val (dataManager, instance) = enhancedExampleGraphData()
+    val path = dataManager.repositoryPath
+    val vertices = instance.outputs.vertexSets('vertices)
+    dataManager.get(vertices)
+
+    val metaDataPath = path / "partitioned" / vertices.gUID.toString / io.Metadata
+    metaDataPath.delete()
+    val dataManager2 = new DataManager(sparkContext, path)
+    assert(dataManager2.get(vertices).rdd.count() == 8)
   }
 
 }

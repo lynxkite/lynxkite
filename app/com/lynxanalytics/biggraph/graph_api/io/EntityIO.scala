@@ -26,12 +26,8 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
   def fastExists: Boolean // May be outdated or incorrectly true.
 
   private def operationPath = dataRoot / io.OperationsDir / entity.source.gUID.toString
-  protected def operationFastExists = {
-    operationPath.fastExists
-  }
-  protected def operationExists = {
-    operationPath.exists
-  }
+  protected def operationFastExists = operationPath.fastExists
+  protected def operationExists = operationPath.exists
 
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
@@ -163,7 +159,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   def legacyPath = dataRoot / EntitiesDir / entity.gUID.toString
   def newPath = dataRoot / PartitionedDir / entity.gUID.toString
-  def exists = operationExists && availablePartitions.nonEmpty
+  def exists = operationExists && availablePartitions.nonEmpty && metaFile.exists
   def fastExists = operationFastExists && (newPath.fastExists || legacyPath.fastExists)
 
   def joinedRDD[T](rawRDD: SortedRDD[Long, T], parent: VertexSetData) = {
