@@ -21,7 +21,7 @@ class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
   }
 
   def dodo(p: ProjectFrame, x: String) =
-    p.setCheckpoint(metaGraphManager.stateRepo.checkpointState(
+    p.setCheckpoint(metaGraphManager.checkpointRepo.checkpointState(
       RootProjectState.emptyState.copy(lastOperationDesc = x, checkpoint = None),
       p.checkpoint).checkpoint.get)
 
