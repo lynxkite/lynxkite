@@ -16,7 +16,7 @@ trait SparkContextProvider {
 }
 
 class StaticSparkContextProvider() extends SparkContextProvider {
-  bigGraphLogger.info("Initializing spark...")
+  bigGraphLogger.info("Initializing Spark...")
   val sparkContext = spark_util.BigGraphSparkContext("LynxKite")
   if (!sparkContext.isLocal) {
     bigGraphLogger.info("Wait 10 seconds for the workers to log in to the master...")
