@@ -195,10 +195,10 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   }
 
   // Saves a Long-keyed SortedRDD.
-  def saveEntityRDD[T](data: SortedRDD[Long, T]): Int = {
+  def saveEntityRDD[T](data: SortedRDD[Long, T]): Long = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
-    val lines = data.context.accumulator(0, "Line count")
+    val lines = data.context.accumulator[Long](0L, "Line count")
     val hadoopData = data.map { x =>
       lines += 1
       hadoop.io.NullWritable.get() ->

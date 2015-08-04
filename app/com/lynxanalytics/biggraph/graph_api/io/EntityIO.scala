@@ -14,7 +14,7 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 case class DMParam(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 
-case class EntityMetadata(lines: Int)
+case class EntityMetadata(lines: Long)
 
 abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
   def correspondingVertexSet: Option[VertexSet] = None
