@@ -145,7 +145,7 @@ class MetaGraphManager(val repositoryPath: String) {
   private val tagRoot = {
     log.info("Reading tags...")
     val res = TagRoot(repositoryPath)
-    log.info("Tags read...")
+    log.info("Tags read.")
     res
   }
 
