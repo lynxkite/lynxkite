@@ -20,7 +20,6 @@ class CopyController(environment: BigGraphEnvironment) {
       if (dirs.isEmpty) Stream.empty
       else {
         val statuses = fs.listStatus(dirs.toArray)
-        println(s"found ${statuses.size} files")
         val (ds, files) = statuses.partition(s => Deprecated.isDir(s))
         files.map(_.getPath) #:: ls(ds.map(_.getPath))
       }
@@ -35,7 +34,6 @@ class CopyController(environment: BigGraphEnvironment) {
     for (ephemeralPath <- dm.ephemeralPath) {
       log.info(s"Listing contents of $ephemeralPath...")
       val srcFiles = lsRec(ephemeralPath)
-      println(s"found ${srcFiles.size} files")
       val copies = srcFiles.map { src =>
         val relative = {
           assert(src.symbolicName.startsWith(ephemeralPath.symbolicName),
@@ -50,7 +48,6 @@ class CopyController(environment: BigGraphEnvironment) {
       val rdd = rc.sparkContext.parallelize(copies, rc.numAvailableCores)
       rdd.foreach {
         case (src, dst) =>
-          println(s"copying $src to $dst...")
           hadoop.fs.FileUtil.copy(
             src.fs, src.path,
             dst.fs, dst.path,
