@@ -31,12 +31,15 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
 
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
+  def targetRootDir: HadoopFile
+  def delete() = targetRootDir.delete()
 }
 
 class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
     extends EntityIO(entity, dMParam) {
 
   def legacyPath = dataRoot / ScalarsDir / entity.gUID.toString
+  def targetRootDir = legacyPath.forWriting
   def exists = operationExists && existsAtLegacy
   def fastExists = operationFastExists && legacyPath.fastExists
   private def serializedScalarFileName: HadoopFileLike = legacyPath / "serialized_data"
@@ -70,7 +73,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   protected lazy val availablePartitions = collectAvailablePartitions
 
   val rootDir = dataRoot / PartitionedDir / entity.gUID.toString
-  val targetRootDir = rootDir.forWriting
+  def targetRootDir = rootDir.forWriting
   val metaFile = rootDir / io.Metadata
 
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]

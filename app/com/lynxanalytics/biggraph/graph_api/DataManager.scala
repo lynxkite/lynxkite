@@ -263,9 +263,8 @@ class DataManager(sc: spark.SparkContext,
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
     val eio = entityIO(entity)
-    val entityPath = eio.legacyPath.forWriting
-    val doesNotExist = !entityPath.exists || entityPath.delete()
-    assert(doesNotExist, s"Cannot delete directory $entityPath of entity $entity")
+    val doesNotExist = !eio.exists || eio.delete()
+    assert(doesNotExist, s"Cannot delete directory ${eio.targetRootDir} of entity $entity")
     log.info(s"Saving entity $entity ...")
     eio.write(data)
     log.info(s"Entity $entity saved.")
