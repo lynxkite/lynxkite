@@ -33,14 +33,14 @@ object HadoopFile {
 }
 
 case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: String) {
-  private val s3nWithCreadentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
+  private val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
 
   val symbolicName = prefixSymbol + normalizedRelativePath
   val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
   val (resolvedNameWithNoCredentials, awsID, awsSecret) = resolvedName match {
-    case s3nWithCreadentialsPattern(scheme, key, secret, relPath) =>
+    case s3nWithCredentialsPattern(scheme, key, secret, relPath) =>
       (scheme + "://" + relPath, key, secret)
     case _ =>
       (resolvedName, "", "")

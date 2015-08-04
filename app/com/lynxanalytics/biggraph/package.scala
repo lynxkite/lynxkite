@@ -42,13 +42,13 @@ package object biggraph {
   private val newGCEPattern = "newGCE<(.+)>".r
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
-
     // Make sure play and spark logs contain the proper context.
     val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     val frameworkPackages = ctx.getFrameworkPackages
     frameworkPackages.add("play.api.Logger")
     frameworkPackages.add("org.apache.spark.Logging")
 
+    bigGraphLogger.info("Staring to initialize production Kite environment")
     val repoDirs =
       scala.util.Properties.envOrNone("REPOSITORY_MODE") match {
         case Some(staticRepoPattern(metaDir, dataDir, "")) =>
@@ -63,7 +63,7 @@ package object biggraph {
     repoDirs.forcePrefixRegistration()
     registerStandardPrefixes()
 
-    scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
+    val res = scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
       case staticPattern(master) =>
         new StaticSparkContextProvider() with StaticDirEnvironment {
           val repositoryDirs = repoDirs
@@ -77,5 +77,10 @@ package object biggraph {
           val repositoryDirs = repoDirs
         }
     }
+    // Force initialization of the managers.
+    res.metaGraphManager
+    res.dataManager
+    bigGraphLogger.info("Production Kite environment initialized")
+    res
   }
 }
