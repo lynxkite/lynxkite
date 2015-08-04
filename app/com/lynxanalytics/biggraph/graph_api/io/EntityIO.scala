@@ -125,7 +125,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   private def closestSource(desiredPartitionNumber: Int) = {
     def distanceFromDesired(a: Int) = Math.abs(a - desiredPartitionNumber)
-    val s = availablePartitions.toSeq.map {
+    availablePartitions.toSeq.map {
       case (n, f) => (f, distanceFromDesired(n))
     }.sortBy(_._2).map(_._1).head
   }
