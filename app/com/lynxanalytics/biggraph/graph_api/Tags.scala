@@ -201,7 +201,7 @@ final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
   }
 }
 object TagRoot {
-  val journalFilename = "tags2.journal"
+  val journalFilename = "tags.journal"
 
   def loadFromRepo(repo: String): Map[SymbolPath, String] =
     loadFromStore(storeFromRepo(repo))
