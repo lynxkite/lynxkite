@@ -189,7 +189,7 @@ object MetaRepositoryManager {
         rootState.lastOperationDesc,
         rootState.lastOperationRequest)
 
-    val oldRepo = MetaGraphManager.checkpointsRepo(src)
+    val oldRepo = MetaGraphManager.getCheckpointRepo(src)
     for ((checkpoint, state) <- oldRepo.allCheckpoints) {
       mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
     }
