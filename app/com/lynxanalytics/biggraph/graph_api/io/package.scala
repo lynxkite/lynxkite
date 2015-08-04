@@ -9,4 +9,5 @@ package object io {
   val OperationsDir = "operations"
   val DeletedSfx = ".deleted"
   val Success = "_SUCCESS"
+  val Metadata = "metadata"
 }

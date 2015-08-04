@@ -76,7 +76,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   val rootDir = dataRoot / PartitionedDir / entity.gUID.toString
   val targetRootDir = rootDir.forWriting
-  val metaFile = rootDir / "metadata"
+  val metaFile = rootDir / io.Metadata
 
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
 
