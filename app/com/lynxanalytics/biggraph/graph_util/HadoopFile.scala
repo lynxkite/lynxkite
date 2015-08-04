@@ -30,17 +30,16 @@ object HadoopFile {
   }
 
   lazy val defaultFs = hadoop.fs.FileSystem.get(new hadoop.conf.Configuration())
+  lazy val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
+  lazy val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
 }
 
 case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: String) {
-  private val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
-  private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
-
   val symbolicName = prefixSymbol + normalizedRelativePath
   val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
   val (resolvedNameWithNoCredentials, awsID, awsSecret) = resolvedName match {
-    case s3nWithCredentialsPattern(scheme, key, secret, relPath) =>
+    case HadoopFile.s3nWithCredentialsPattern(scheme, key, secret, relPath) =>
       (scheme + "://" + relPath, key, secret)
     case _ =>
       (resolvedName, "", "")
@@ -62,7 +61,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
   private def reinstateCredentialsIfNeeded(hadoopOutput: String): String = {
     if (hasCredentials) {
       hadoopOutput match {
-        case s3nNoCredentialsPattern(scheme, path) =>
+        case HadoopFile.s3nNoCredentialsPattern(scheme, path) =>
           scheme + "://" + awsID + ":" + awsSecret + "@" + path
       }
     } else {
