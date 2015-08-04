@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_operations
-import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
+import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph, ExampleGraph }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
@@ -190,4 +190,66 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(dataManagerEphemeral.isCalculated(names))
     assert(dataManagerEphemeral.isCalculated(greeting))
   }
+
+  test("Re-partitioning works") {
+    def repart(verticesPerPartition: Int, tolerance: Double, expectedPartition: Int) = {
+      val metaManager = cleanMetaManager
+      val dataManager = cleanDataManager
+      val operation = EnhancedExampleGraph() // 8 vertices (i.e., 8 lines)
+      System.setProperty("biggraph.vertices.per.partition", verticesPerPartition.toString)
+      System.setProperty("biggraph.vertices.partition.tolerance", tolerance.toString)
+      val instance = metaManager.apply(operation)
+      val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+      dataManager.get(names)
+      val path = dataManager.repositoryPath / "partitioned" / names.gUID.toString
+
+      assert((path / "1" / io.Success).exists)
+      assert((path / io.Metadata).exists)
+      assert((path / expectedPartition.toString).exists)
+
+      val numFiles = if (expectedPartition == 1) 2 else 3
+      assert((path / "*").list.size == numFiles)
+    }
+
+    val savedVerticesPerPartition = System.getProperty("biggraph.vertices.per.partition", "1000000")
+    val savedTolerance = System.getProperty("biggraph.vertices.partition.tolerance", "2.0")
+
+    repart(8, 2.0, 1)
+    repart(4, 2.1, 1)
+    repart(4, 2.0, 2)
+    repart(1, 2.0, 8)
+    repart(1, 16.0, 1)
+    repart(3, 1.0, 3)
+
+    System.setProperty("biggraph.vertices.per.partition", savedVerticesPerPartition)
+    System.setProperty("biggraph.vertices.partition.tolerance", savedTolerance)
+  }
+
+  test("We can migrate data from entities") {
+
+    val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+    val operation = EnhancedExampleGraph()
+    val instance = metaManager.apply(operation)
+    val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+    dataManager.get(names)
+    val path = dataManager.repositoryPath
+
+    val partitionedPath = path / "partitioned" / names.gUID.toString / "1"
+    val legacyPath = path / "entities" / names.gUID.toString
+    assert(partitionedPath.exists)
+    assert(!legacyPath.exists)
+
+    partitionedPath.renameTo(legacyPath)
+    assert(!partitionedPath.exists)
+    assert(legacyPath.exists)
+
+    val dataManager2 = new DataManager(sparkContext, path)
+    assert(!partitionedPath.exists) // Still not done
+
+    dataManager2.get(names)
+    assert(partitionedPath.exists) // Was recalculated
+
+  }
+
 }
