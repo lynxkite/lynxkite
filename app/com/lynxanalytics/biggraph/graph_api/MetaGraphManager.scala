@@ -17,7 +17,7 @@ import com.lynxanalytics.biggraph.controllers.CheckpointRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
-  val checkpointRepo = MetaGraphManager.checkpointsRepo(repositoryPath)
+  val checkpointRepo = MetaGraphManager.getCheckpointRepo(repositoryPath)
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
@@ -275,6 +275,6 @@ object MetaGraphManager {
     }
   }
 
-  def checkpointsRepo(repositoryPath: String): CheckpointRepository =
+  def getCheckpointRepo(repositoryPath: String): CheckpointRepository =
     new CheckpointRepository(repositoryPath + "/checkpoints")
 }
