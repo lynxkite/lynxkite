@@ -2318,10 +2318,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           val lines = ops.flatMap {
             case (guid, inst) =>
               val inputs = inst.inputs.all.map {
-                case (name, entity) => s"${entity.gUID},$guid,${name.name}"
+                case (name, entity) => s"${entity.gUID},$guid,Input,${name.name}"
               }
               val outputs = inst.outputs.all.map {
-                case (name, entity) => s"$guid,${entity.gUID},${name.name}"
+                case (name, entity) => s"$guid,${entity.gUID},Output,${name.name}"
               }
               inputs ++ outputs
           }
@@ -2331,7 +2331,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val csv = graph_operations.CSV(
           file,
           delimiter = ",",
-          header = "src,dst,name")
+          header = "src,dst,kind,name")
         val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, "src", "dst")
         op(op.srcVidAttr, guids)(op.dstVidAttr, guids).result
       }
