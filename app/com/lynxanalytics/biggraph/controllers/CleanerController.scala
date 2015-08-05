@@ -96,10 +96,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     implicit val manager = environment.metaGraphManager
     val operations = new HashMap[UUID, MetaGraphOperationInstance]
     for (project <- Operation.projects) {
-      operations ++= operationsFromProject(project)
-      for (segmentation <- project.segmentations) {
-        operations ++= operationsFromProject(segmentation.project)
-      }
+      operations ++= operationsFromProject(project.viewer)
     }
     allFilesFromSourceOperation(operations.toMap)
   }
@@ -107,7 +104,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   // Returns the operations mapped by their ID strings which created
   // the vertices, edges, attributes and scalars of this project.
   private def operationsFromProject(
-    project: Project): Map[UUID, MetaGraphOperationInstance] = {
+    project: ProjectViewer): Map[UUID, MetaGraphOperationInstance] = {
     val operations = new HashMap[UUID, MetaGraphOperationInstance]
     if (project.vertexSet != null) {
       operations += operationWithID(project.vertexSet.source)
@@ -123,6 +120,9 @@ class CleanerController(environment: BigGraphEnvironment) {
     }
     operations ++= project.edgeAttributes.map {
       case (_, a) => operationWithID(a.source)
+    }
+    for (segmentation <- project.segmentationMap.values) {
+      operations ++= operationsFromProject(segmentation)
     }
     operations.toMap
   }

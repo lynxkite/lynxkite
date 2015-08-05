@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
@@ -419,10 +420,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.FindMaxCliques(params("min").toInt, params("bothdir").toBoolean)
       val result = op(op.es, project.edgeBundle).result
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(result.segments, idAttr = "id")
-      segmentation.project.notes = title
+      segmentation.setVertexSet(result.segments, idAttr = "id")
+      segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.project.vertexAttributes("size") = computeSegmentSizes(segmentation)
+      segmentation.vertexAttributes("size") = computeSegmentSizes(segmentation)
     }
   })
 
@@ -457,10 +458,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val op = graph_operations.ConnectedComponents()
       val result = op(op.es, symmetric).result
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(result.segments, idAttr = "id")
-      segmentation.project.notes = title
+      segmentation.setVertexSet(result.segments, idAttr = "id")
+      segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.project.vertexAttributes("size") = computeSegmentSizes(segmentation)
+      segmentation.vertexAttributes("size") = computeSegmentSizes(segmentation)
     }
   })
 
@@ -482,10 +483,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
 
       val cliquesSegmentation = project.segmentation(params("cliques_name"))
-      cliquesSegmentation.project.setVertexSet(cliquesResult.segments, idAttr = "id")
-      cliquesSegmentation.project.notes = "Maximal cliques"
+      cliquesSegmentation.setVertexSet(cliquesResult.segments, idAttr = "id")
+      cliquesSegmentation.notes = "Maximal cliques"
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
-      cliquesSegmentation.project.vertexAttributes("size") =
+      cliquesSegmentation.vertexAttributes("size") =
         computeSegmentSizes(cliquesSegmentation)
 
       val cedges = {
@@ -511,10 +512,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
 
       val communitiesSegmentation = project.segmentation(params("communities_name"))
-      communitiesSegmentation.project.setVertexSet(ccResult.segments, idAttr = "id")
-      communitiesSegmentation.project.notes = "Infocom Communities"
+      communitiesSegmentation.setVertexSet(ccResult.segments, idAttr = "id")
+      communitiesSegmentation.notes = "Infocom Communities"
       communitiesSegmentation.belongsTo = vertexToCommunity
-      communitiesSegmentation.project.vertexAttributes("size") =
+      communitiesSegmentation.vertexAttributes("size") =
         computeSegmentSizes(communitiesSegmentation)
     }
   })
@@ -536,10 +537,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.edges, edgeBundle)(op.weights, weights).result
       }
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(result.clusters, idAttr = "id")
-      segmentation.project.notes = title
+      segmentation.setVertexSet(result.clusters, idAttr = "id")
+      segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.project.vertexAttributes("size") =
+      segmentation.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
 
       val symmetricDirection = Direction("all edges", project.edgeBundle)
@@ -550,7 +551,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.edges, symmetricEdges)(op.weights, symmetricWeights)(op.belongsTo, result.belongsTo)
           .result.modularity
       }
-      segmentation.project.scalars("modularity") = modularity
+      segmentation.scalars("modularity") = modularity
     }
   })
 
@@ -577,13 +578,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.attr, attr).result
       }
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(bucketing.segments, idAttr = "id")
-      segmentation.project.notes = summary(params)
+      segmentation.setVertexSet(bucketing.segments, idAttr = "id")
+      segmentation.notes = summary(params)
       segmentation.belongsTo = bucketing.belongsTo
-      segmentation.project.vertexAttributes("size") =
+      segmentation.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
-      segmentation.project.vertexAttributes("bottom") = bucketing.bottom
-      segmentation.project.vertexAttributes("top") = bucketing.top
+      segmentation.vertexAttributes("bottom") = bucketing.bottom
+      segmentation.vertexAttributes("top") = bucketing.top
     }
   })
 
@@ -605,12 +606,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.attr, attr).result
       }
       val segmentation = project.segmentation(params("name"))
-      segmentation.project.setVertexSet(bucketing.segments, idAttr = "id")
-      segmentation.project.notes = summary(params)
+      segmentation.setVertexSet(bucketing.segments, idAttr = "id")
+      segmentation.notes = summary(params)
       segmentation.belongsTo = bucketing.belongsTo
-      segmentation.project.vertexAttributes("size") =
+      segmentation.vertexAttributes("size") =
         computeSegmentSizes(segmentation)
-      segmentation.project.vertexAttributes(attrName) = bucketing.label
+      segmentation.vertexAttributes(attrName) = bucketing.label
     }
   })
 
@@ -630,11 +631,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val result = project.segmentation(params("name"))
       // Start by copying the first segmentation.
       val first = segmentations.head
-      result.project.setVertexSet(first.project.vertexSet, idAttr = "id")
-      result.project.notes = summary(params)
+      result.setVertexSet(first.vertexSet, idAttr = "id")
+      result.notes = summary(params)
       result.belongsTo = first.belongsTo
-      for ((name, attr) <- first.project.vertexAttributes) {
-        result.project.vertexAttributes(s"${first.name}_$name") = attr
+      for ((name, attr) <- first.vertexAttributes) {
+        result.vertexAttributes(s"${first.segmentationName}_$name") = attr
       }
       // Then combine the other segmentations one by one.
       for (seg <- segmentations.tail) {
@@ -642,24 +643,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           val op = graph_operations.CombineSegmentations()
           op(op.belongsTo1, result.belongsTo)(op.belongsTo2, seg.belongsTo).result
         }
-        val attrs = result.project.vertexAttributes.toMap
-        result.project.setVertexSet(combination.segments, idAttr = "id")
+        val attrs = result.vertexAttributes.toMap
+        result.setVertexSet(combination.segments, idAttr = "id")
         result.belongsTo = combination.belongsTo
         for ((name, attr) <- attrs) {
           // These names are already prefixed.
-          result.project.vertexAttributes(name) =
+          result.vertexAttributes(name) =
             graph_operations.PulledOverVertexAttribute.pullAttributeVia(
               attr, combination.origin1)
         }
-        for ((name, attr) <- seg.project.vertexAttributes) {
+        for ((name, attr) <- seg.vertexAttributes) {
           // Add prefix for the new attributes.
-          result.project.vertexAttributes(s"${seg.name}_$name") =
+          result.vertexAttributes(s"${seg.segmentationName}_$name") =
             graph_operations.PulledOverVertexAttribute.pullAttributeVia(
               attr, combination.origin2)
         }
       }
       // Calculate sizes at the end.
-      result.project.vertexAttributes("size") =
+      result.vertexAttributes("size") =
         computeSegmentSizes(result)
     }
   })
@@ -1143,7 +1144,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Aggregate from segmentation", new PropagationOperation(_, _) with SegOp {
     def segmentationParameters = List(
       Param("prefix", "Generated name prefix",
-        defaultValue = project.asSegmentation.name)) ++
+        defaultValue = project.asSegmentation.segmentationName)) ++
       aggregateParams(project.vertexAttributes)
     def enabled =
       isSegmentation &&
@@ -1162,7 +1163,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Weighted aggregate from segmentation", new PropagationOperation(_, _) with SegOp {
     def segmentationParameters = List(
       Param("prefix", "Generated name prefix",
-        defaultValue = project.asSegmentation.name),
+        defaultValue = project.asSegmentation.segmentationName),
       Choice("weight", "Weight", options = vertexAttributes[Double])) ++
       aggregateParams(project.vertexAttributes, weighted = true)
     def enabled =
@@ -1205,7 +1206,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val result = op(op.belongsTo, seg.belongsTo).result
       parent.edgeBundle = result.es
       for ((name, attr) <- project.vertexAttributes) {
-        parent.edgeAttributes(s"${seg.name}_$name") =
+        parent.edgeAttributes(s"${seg.segmentationName}_$name") =
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
             attr, result.origin)
       }
@@ -1309,7 +1310,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   }
   // Common code for operations "merge parallel edges" and "merge parallel edges by key"
 
-  private def applyMergeParallelEdgesByKey(project: Project, params: Map[String, String]) = {
+  private def applyMergeParallelEdgesByKey(project: ProjectEditor, params: Map[String, String]) = {
 
     val edgesAsAttr = {
       val op = graph_operations.EdgeBundleAsAttribute()
@@ -1550,7 +1551,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       s"Discard segmentation: $name"
     }
     def apply(params: Map[String, String]) = {
-      project.segmentation(params("name")).remove
+      project.deleteSegmentation(params("name"))
     }
   })
 
@@ -1617,10 +1618,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       s"Rename segmentation $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      assert(!project.segmentations.contains(params("to")),
+      assert(
+        !project.segmentationNames.contains(params("to")),
         s"""A segmentation named '${params("to")}' already exists,
             please discard it or choose another name""")
-      project.segmentation(params("from")).rename(params("to"))
+      project.segmentation(params("to")).segmentationState =
+        project.segmentation(params("from")).segmentationState
+      project.deleteSegmentation(params("from"))
     }
   })
 
@@ -1687,8 +1691,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val from = project.segmentation(params("from"))
       val to = project.segmentation(params("to"))
-      from.project.copy(to.project)
-      to.belongsTo = from.belongsTo
+      to.segmentationState = from.segmentationState
     }
   })
 
@@ -1714,7 +1717,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
     def apply(params: Map[String, String]) = {
       val segmentation = project.segmentation(params("name"))
-      project.copyToSegmentation(segmentation)
+      segmentation.state = project.state
 
       val op = graph_operations.LoopEdgeBundle()
       segmentation.belongsTo = op(op.vs, project.vertexSet).result.eb
@@ -1732,10 +1735,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val themName = params("them")
       assert(readableProjects.map(_.id).contains(themName), s"Unknown project: $themName")
-      val them = Project.fromName(themName)
+      val them = ProjectFrame.fromName(themName).viewer
       assert(them.vertexSet != null, s"No vertex set in $them")
       val segmentation = project.segmentation(params("them"))
-      them.copyToSegmentation(segmentation)
+      segmentation.state = them.state
       val op = graph_operations.EmptyEdgeBundle()
       segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
     }
@@ -1808,9 +1811,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       s"Union with $other"
     }
 
-    def checkTypeCollision(other: Project) = {
+    def checkTypeCollision(other: ProjectViewer) = {
       val commonAttributeNames =
-        project.vertexAttributeNames.toSet & other.vertexAttributeNames.toSet
+        project.vertexAttributes.keySet & other.vertexAttributes.keySet
 
       for (name <- commonAttributeNames) {
         val a1 = project.vertexAttributes(name)
@@ -1824,7 +1827,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]): Unit = {
       val otherName = params("other")
       assert(readableProjects.map(_.id).contains(otherName), s"Unknown project: $otherName")
-      val other = Project.fromName(otherName)
+      val other = ProjectFrame.fromName(otherName).viewer
       if (other.vertexSet == null) {
         // Nothing to do
         return
@@ -1971,7 +1974,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Copy vertex attributes from segmentation", new PropagationOperation(_, _) with SegOp {
     def segmentationParameters = List(
-      Param("prefix", "Attribute name prefix", defaultValue = seg.name))
+      Param("prefix", "Attribute name prefix", defaultValue = seg.segmentationName))
     def enabled =
       isSegmentation &&
         FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
@@ -2205,7 +2208,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         attr => Param(s"filterva-${attr.id}", attr.id, mandatory = false)
       } ++
         project.segmentations.toList.map {
-          seg => Param(s"filterva-${seg.equivalentUIAttribute.title}", seg.name, mandatory = false)
+          seg =>
+            Param(
+              s"filterva-${seg.viewer.equivalentUIAttribute.title}",
+              seg.segmentationName,
+              mandatory = false)
         } ++
         edgeAttributes.toList.map {
           attr => Param(s"filterea-${attr.id}", attr.id, mandatory = false)
@@ -2227,7 +2234,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val vertexFilters = params.collect {
         case (vaFilter(name), filter) if filter.nonEmpty =>
           // The filter may be for a segmentation's equivalent attribute or for a vertex attribute.
-          val segAttrs = project.segmentations.map(_.equivalentUIAttribute)
+          val segAttrs = project.segmentations.map(_.viewer.equivalentUIAttribute)
           val segGUIDOpt = segAttrs.find(_.title == name).map(_.id)
           val gUID = segGUIDOpt.getOrElse(project.vertexAttributes(name).gUID)
           FEVertexAttributeFilter(gUID.toString, filter)
@@ -2269,6 +2276,70 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Metagraph", new StructureOperation(_, _) {
+    def parameters = List(
+      Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString))
+    def enabled =
+      FEStatus.assert(user.isAdmin, "Requires administrator privileges") && hasNoVertexSet
+    private def shortClass(o: Any) = o.getClass.getName.split('.').last
+    def apply(params: Map[String, String]) = {
+      val t = params("timestamp")
+      val directory = HadoopFile("UPLOAD$") / s"metagraph-$t"
+      val ops = env.metaGraphManager.getOperationInstances
+      val vertices = {
+        val file = directory / "vertices"
+        if (!file.exists) {
+          val lines = ops.flatMap {
+            case (guid, inst) =>
+              val op = s"$guid,Operation,${shortClass(inst.operation)},"
+              val outputs = inst.outputs.all.map {
+                case (name, entity) =>
+                  val calc = env.dataManager.isCalculated(entity)
+                  s"${entity.gUID},${shortClass(entity)},${name.name},$calc"
+              }
+              op +: outputs.toSeq
+          }
+          log.info(s"Writing metagraph vertices to $file.")
+          file.createFromStrings(lines.mkString("\n"))
+        }
+        val csv = graph_operations.CSV(
+          file,
+          delimiter = ",",
+          header = "guid,kind,name,is_calculated")
+        graph_operations.ImportVertexList(csv)().result
+      }
+      project.vertexSet = vertices.vertices
+      project.vertexAttributes = vertices.attrs.mapValues(_.entity)
+      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
+      val edges = {
+        val file = directory / "edges"
+        if (!file.exists) {
+          val lines = ops.flatMap {
+            case (guid, inst) =>
+              val inputs = inst.inputs.all.map {
+                case (name, entity) => s"${entity.gUID},$guid,Input,${name.name}"
+              }
+              val outputs = inst.outputs.all.map {
+                case (name, entity) => s"$guid,${entity.gUID},Output,${name.name}"
+              }
+              inputs ++ outputs
+          }
+          log.info(s"Writing metagraph edges to $file.")
+          file.createFromStrings(lines.mkString("\n"))
+        }
+        val csv = graph_operations.CSV(
+          file,
+          delimiter = ",",
+          header = "src,dst,kind,name")
+        val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, "src", "dst")
+        op(op.srcVidAttr, guids)(op.dstVidAttr, guids).result
+      }
+      project.edgeBundle = edges.edges
+      project.edgeAttributes = edges.attrs.mapValues(_.entity)
+    }
+  })
+
   { // "Dirty operations", that is operations that use a data manager. Think twice if you really
     // need this before putting an operation here.
     implicit lazy val dataManager = env.dataManager
@@ -2294,7 +2365,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
-          downloadLink(path, project.projectName + "_" + params("link"))
+          downloadLink(path, "export_" + params("link"))
       }
     })
 
@@ -2349,7 +2420,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
-          downloadLink(path, project.projectName + "_" + params("link"))
+          downloadLink(path, "export_" + params("link"))
       }
     })
 
@@ -2383,7 +2454,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def enabled = isSegmentation && FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val path = getExportFilename(params("path"))
-        val name = project.asSegmentation.name
+        val name = project.asSegmentation.segmentationName
         params("format") match {
           case "CSV" =>
             val csv = graph_util.CSVExport.exportEdgeAttributes(
@@ -2392,7 +2463,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
-          downloadLink(path, project.projectName + "_" + params("link"))
+          downloadLink(path, "export_" + params("link"))
       }
     })
 
@@ -2416,7 +2487,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     graph_operations.JoinAttributes.run(a, b)
   }
 
-  def computeSegmentSizes(segmentation: Segmentation): Attribute[Double] = {
+  def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()
     op(op.es, reverse(segmentation.belongsTo)).result.outDegree
   }
@@ -2630,5 +2701,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   def containsIdentifierJS(expr: String, identifier: String): Boolean = {
     val re = ".*\\b" + java.util.regex.Pattern.quote(identifier) + "\\b.*"
     expr.matches(re)
+  }
+}
+
+object Operations {
+  def addNotesOperation(notes: String): FEOperationSpec = {
+    FEOperationSpec("Change-project-notes", Map("notes" -> notes))
   }
 }

@@ -13,18 +13,26 @@ trait OperationsTestBase extends FunSuite with TestGraphOp with BigGraphEnvironm
   val res = getClass.getResource("/controllers/OperationsTest/").toString
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
-  def createProject(name: String) = {
-    val controller = new BigGraphController(this)
-    val request = CreateProjectRequest(name = name, notes = name, privacy = "public-write")
-    controller.createProject(null, request)
-    Project(SymbolPath(name))
+  def saveAsFrame(name: String, editor: RootProjectEditor = project): ProjectFrame = {
+    val frame = ProjectFrame.fromName(name)
+    frame.initialize
+    frame.setCheckpoint(editor.rootState.checkpoint.get)
+    frame
   }
-  val project = createProject("Test_Project")
+  def clone(original: RootProjectEditor): RootProjectEditor = {
+    val res = original.viewer.editor
+    res.checkpoint = original.checkpoint
+    res
+  }
 
-  def run(op: String, params: Map[String, String] = Map(), on: Project = project) =
-    ops.apply(
-      serving.User.fake,
-      ProjectOperationRequest(on.projectName, FEOperationSpec(Operation.titleToID(op), params)))
+  val project = new RootProjectEditor(RootProjectState.emptyState)
+  project.checkpoint = Some("")
+
+  def run(opId: String, params: Map[String, String] = Map(), on: ProjectEditor = project) = {
+    val context = Operation.Context(serving.User.fake, on.viewer)
+    val result = ops.applyAndCheckpoint(context, FEOperationSpec(Operation.titleToID(opId), params))
+    on.rootEditor.rootState = result
+  }
 
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
