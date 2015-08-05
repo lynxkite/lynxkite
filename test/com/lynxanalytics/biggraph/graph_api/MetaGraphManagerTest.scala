@@ -5,6 +5,8 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 
+import com.lynxanalytics.biggraph.controllers.ProjectFrame
+
 class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   test("Basic application flow works as expected.") {
     val manager = cleanMetaManager
@@ -129,10 +131,19 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // The new directory exists.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
-    // The old tags point to the successfully migrated entities.
-    assert(m.vertexSet(SymbolPath("one")).toStringStruct.toString ==
+    // The old projects point to the successfully migrated entities.
+    val p = ProjectFrame.fromName("alma")(m).viewer
+    assert(p.vertexSet.toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(m.edgeBundle(SymbolPath("two")).toStringStruct.toString ==
+    assert(p.edgeBundle.toStringStruct.toString ==
+      "edges of (CreateSomeGraph of arg=migrated)")
+    assert(p.vertexAttributes("vvv").toStringStruct.toString ==
+      "vattr of (CreateSomeGraph of arg=migrated)")
+    assert(p.edgeAttributes("eee").toStringStruct.toString ==
+      "eattr of (CreateSomeGraph of arg=migrated)")
+    assert(p.segmentation("ms").vertexSet.toStringStruct.toString ==
+      "attrValues of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
+    assert(p.segmentation("ms").belongsTo.toStringStruct.toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
 
@@ -173,9 +184,11 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // The migration succeeded.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
-    assert(m.vertexSet(SymbolPath("one")).toStringStruct.toString ==
+    // The old projects point to the successfully migrated entities.
+    val p = ProjectFrame.fromName("alma")(m).viewer
+    assert(p.vertexSet.toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(m.edgeBundle(SymbolPath("two")).toStringStruct.toString ==
+    assert(p.segmentation("ms").belongsTo.toStringStruct.toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
 

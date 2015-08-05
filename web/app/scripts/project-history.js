@@ -27,7 +27,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             var step = history.steps[i];
             step.localChanges = false;
             step.editable = scope.valid;
-            if (!step.hasCheckpoint && !step.status.enabled) {
+            if ((step.checkpoint === undefined) && !step.status.enabled) {
               scope.valid = false;
             }
             watchStep(i, step);
@@ -67,7 +67,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             // This is visually communicated as well.
             var steps = scope.history.steps;
             for (var i = index; i < steps.length; ++i) {
-              steps[i].hasCheckpoint = false;
+              steps[i].checkpoint = undefined;
             }
             for (i = 0; i < steps.length; ++i) {
               if (i !== index) {
@@ -80,18 +80,17 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       function alternateHistory() {
         var requests = [];
         var steps = scope.history.steps;
-        var skips = 0;
+        var startingPoint = '';
         for (var i = 0; i < steps.length; ++i) {
           var s = steps[i];
-          if (s.hasCheckpoint) {
-            skips += 1;
+          if (s.checkpoint !== undefined) {
+            startingPoint = s.checkpoint;
           } else {
             requests.push(s.request);
           }
         }
         return {
-          project: scope.side.state.projectName,
-          skips: skips,
+          startingPoint: startingPoint,
           requests: requests,
         };
       }
@@ -113,6 +112,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       scope.saveAs = function(newName) {
         scope.saving = true;
         util.post('/ajax/saveHistory', {
+          oldProject: scope.side.state.projectName,
           newProject: newName,
           history: alternateHistory(),
         }, function() {
@@ -127,14 +127,6 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           // On completion, regardless of success.
           scope.saving = false;
         });
-      };
-
-      // Returns "on <segmentation name>" if the project is a segmentation.
-      scope.onProject = function(name) {
-        var path = util.projectPath(name);
-        // The project name is already at the top.
-        path.shift();
-        return path.length === 0 ? '' : 'on ' + path.join('&raquo;');
       };
 
       scope.reportError = function() {
@@ -227,9 +219,8 @@ angular.module('biggraph').directive('projectHistory', function(util) {
 
       // Returns the short name of the segmentation if the step affects a segmentation.
       scope.segmentationName = function(step) {
-        var p = step.request.project;
-        var path = util.projectPath(p);
-        if (path.length === 1) { // This is the top-level project.
+        var path = step.request.path;
+        if (path.length === 0) { // This is the top-level project.
           return undefined;
         } else {
           return path[path.length - 1];
@@ -241,13 +232,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         var history = scope.history;
         if (history && history.$resolved && !history.$error) {
           var requests = history.steps.map(function(step) {
-            var request = angular.copy(step.request);
-            var absoluteName = request.project;
-            // Replace the root project name with "!project" so that the
-            // workflow can be executed on other projects as well.
-            var relativeName = absoluteName.replace(/^[^/]*/, '!project');
-            request.project = relativeName;
-            return request;
+            return step.request;
           });
           scope.code = JSON.stringify(requests, null, 2);
         } else {
@@ -263,7 +248,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
         }
         return {
           request: {
-            project: project,
+            path: [],
             op: {
               id: 'No-operation',
               parameters: {},

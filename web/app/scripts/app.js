@@ -182,21 +182,10 @@ angular
         });
       },
       projectPath: function(projectName) {
-        // A segmentation path looks like this:
-        //   <parent>/checkpointed/segmentations/<segmentation>/project
         if (!projectName) { return []; }
-        var parts = projectName.split('/');
-        var path = [util.spaced(parts.shift())];  // Root project name.
-        while (parts.length > 0) {
-          if (parts[0] !== 'checkpointed') { console.error('Cannot parse', projectName); }
-          parts.shift();  // "checkpointed"
-          if (parts[0] !== 'segmentations') { console.error('Cannot parse', projectName); }
-          parts.shift();  // "segmentations"
-          path.push(util.spaced(parts.shift()));  // segmentation name
-          if (parts[0] !== 'project') { console.error('Cannot parse', projectName); }
-          parts.shift();  // "project"
-        }
-        return path;
+        return projectName.split('|').map(function(name) {
+          return util.spaced(name);
+        });
       }
     };
     util.globals = util.get('/ajax/getGlobalSettings');

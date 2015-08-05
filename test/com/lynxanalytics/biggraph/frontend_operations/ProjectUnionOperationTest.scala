@@ -6,10 +6,10 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
     run("Example Graph")
-    val other = Project.fromPath("ExampleGraph2")
-    project.copy(other)
-    run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = other)
-    run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = other)
+    val otherEditor = clone(project)
+    run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = otherEditor)
+    run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = otherEditor)
+    saveAsFrame("ExampleGraph2", otherEditor)
     run("Union with another project", Map("other" -> "ExampleGraph2", "id-attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 8)
@@ -37,8 +37,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
 
   test("Project union on vertex sets") {
     run("New vertex set", Map("size" -> "10"))
-    val other = Project.fromPath("Copy")
-    project.copy(other)
+    saveAsFrame("Copy")
     run("Union with another project", Map("other" -> "Copy", "id-attr" -> "new_id"))
 
     assert(project.vertexSet.rdd.count == 20)
@@ -47,12 +46,12 @@ class ProjectUnionOperationTest extends OperationsTestBase {
 
   test("Project union - useful error message (#1611)") {
     run("Example Graph")
-    val other = Project.fromPath("ExampleGraph2")
-    project.copy(other)
+    val otherEditor = clone(project)
     run("Rename vertex attribute",
-      Map("from" -> "age", "to" -> "newage"), on = other)
+      Map("from" -> "age", "to" -> "newage"), on = otherEditor)
     run("Add constant vertex attribute",
-      Map("name" -> "age", "value" -> "dummy", "type" -> "String"), on = other)
+      Map("name" -> "age", "value" -> "dummy", "type" -> "String"), on = otherEditor)
+    saveAsFrame("ExampleGraph2", otherEditor)
 
     val ex = intercept[java.lang.AssertionError] {
       run("Union with another project",
