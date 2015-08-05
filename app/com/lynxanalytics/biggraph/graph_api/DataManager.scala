@@ -63,9 +63,12 @@ class DataManager(sc: spark.SparkContext,
   }
 
   private def hasEntityOnDisk(eio: io.EntityIO): Boolean = {
+    // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
+    // the entity in this session, so we need this assertion.
+    assert(!hasEntity(eio.entity))
     (eio.entity.source.operation.isHeavy || eio.entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
-      eio.fastExists &&
+      eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
       eio.exists
   }

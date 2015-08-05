@@ -10,24 +10,24 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 trait DataRoot {
   def /(p: String) = HadoopFileLike(this, Seq(p))
   def /(p: Seq[String]) = HadoopFileLike(this, p)
-  def fastExists(path: Seq[String]): Boolean // May be out of date or incorrectly true.
+  def mayHaveExisted(path: Seq[String]): Boolean // May be out of date or incorrectly true.
   def forReading(path: Seq[String]): HadoopFile
   def forWriting(path: Seq[String]): HadoopFile
   def list(path: Seq[String]): Seq[HadoopFile]
 }
 case class HadoopFileLike(root: DataRoot, path: Seq[String]) {
   def /(p: String) = HadoopFileLike(root, path :+ p)
-  def fastExists = root.fastExists(path)
+  def mayHaveExisted = root.mayHaveExisted(path)
   def forReading = root.forReading(path)
   def forWriting = root.forWriting(path)
   def list = root.list(path)
-  def exists = fastExists && forReading.exists
+  def exists = forReading.exists
 }
 
 class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
   // Contents of the top-level directories are cached.
   val contents = collection.mutable.Map[String, Set[String]]()
-  def fastExists(path: Seq[String]) = {
+  def mayHaveExisted(path: Seq[String]) = {
     if (path.size < 2) true // Being incorrectly true is okay.
     else synchronized {
       val files = contents.getOrElseUpdate(path.head,
@@ -45,7 +45,7 @@ class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
 
 // All writes go to "a".
 class CombinedRoot(a: SingleDataRoot, b: SingleDataRoot) extends DataRoot {
-  def fastExists(path: Seq[String]) = a.fastExists(path) || b.fastExists(path)
+  def mayHaveExisted(path: Seq[String]) = a.mayHaveExisted(path) || b.mayHaveExisted(path)
   def forReading(path: Seq[String]) =
     if ((a / path).exists || !(b / path).exists) a.forReading(path) else b.forReading(path)
   def forWriting(path: Seq[String]) = a.forWriting(path)
