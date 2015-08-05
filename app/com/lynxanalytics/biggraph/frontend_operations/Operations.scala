@@ -2291,9 +2291,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         if (!file.exists) {
           val lines = ops.flatMap {
             case (guid, inst) =>
-              val op = s"$guid,Operation,${shortClass(inst.operation)}"
+              val op = s"$guid,Operation,${shortClass(inst.operation)},"
               val outputs = inst.outputs.all.map {
-                case (name, entity) => s"${entity.gUID},${shortClass(entity)},${name.name}"
+                case (name, entity) =>
+                  val calc = env.dataManager.isCalculated(entity)
+                  s"${entity.gUID},${shortClass(entity)},${name.name},$calc"
               }
               op +: outputs.toSeq
           }
@@ -2303,7 +2305,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val csv = graph_operations.CSV(
           file,
           delimiter = ",",
-          header = "guid,kind,name")
+          header = "guid,kind,name,is_calculated")
         graph_operations.ImportVertexList(csv)().result
       }
       project.vertexSet = vertices.vertices
