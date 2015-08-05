@@ -254,6 +254,9 @@ angular.module('biggraph')
       path.pop();  // Discard project name.
       return path;
     };
+    Side.prototype.isSegmentation = function() {
+      return this.parentProjects().length !== 0;
+    };
 
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the project name changes, or when the project
