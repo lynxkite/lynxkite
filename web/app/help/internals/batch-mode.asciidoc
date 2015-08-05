@@ -6,6 +6,11 @@ user interface. (This is documented in the rest of this guide.) The other is *ba
 LynxKite executes a script and terminates when it is finished. This is useful for running periodic
 tasks and for integrating with other systems.
 
+The batch mode cannot be run at the same time as interactive mode. The two modes operate on the
+same data. So a batch script could apply changes to a graph created in interactive mode, or
+conversely interactive mode could be used to explore a graph created in batch mode, simply by
+using the same project names.
+
 Usage:
 
 [subs=normal]
