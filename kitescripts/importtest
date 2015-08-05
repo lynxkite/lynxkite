@@ -1,7 +1,7 @@
 Operations('loadrandom')
 [
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Import-vertices-and-edges-from-single-CSV-fileset",
       "parameters": {
@@ -16,7 +16,7 @@ Operations('loadrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Aggregate-vertex-attribute-globally",
       "parameters": {

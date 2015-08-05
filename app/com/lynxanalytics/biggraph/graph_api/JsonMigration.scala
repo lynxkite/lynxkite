@@ -2,11 +2,15 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
+import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.controllers.CommonProjectState
+import com.lynxanalytics.biggraph.controllers.RootProjectState
+import com.lynxanalytics.biggraph.controllers.SegmentationState
 
 // This file is responsible for the metadata compatibility between versions.
 //
@@ -81,6 +85,7 @@ object MetaRepositoryManager {
   // If the newest repo belongs to an older version, it performs migration.
   // If the newest repo belongs to a newer version, an exception is raised.
   private def findCurrentRepository(repo: File, current: JsonMigration): File = {
+    log.info("Exploring meta graph directory versions...")
     val dirs = Option(repo.listFiles).getOrElse(Array())
     import JsonMigration.versionOrdering
     import JsonMigration.versionOrdering.mkOrderingOps
@@ -89,6 +94,7 @@ object MetaRepositoryManager {
       dirs
         .flatMap(dir => readVersion(dir).map(v => DV(dir, v)))
         .sortBy(_.dir.getName.toInt).reverse
+    log.info("Meta graph directory versions mapped out.")
     if (versions.isEmpty) {
       val currentDir = new File(repo, "1")
       writeVersion(currentDir, current.version)
@@ -155,10 +161,41 @@ object MetaRepositoryManager {
       }
     }
 
-    // Tags.
-    val oldTags = TagRoot.loadFromRepo(src)
-    val newTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
-    mm.setTags(newTags)
+    // Checkpoints.
+    val finalGuidMapping = guidMapping.map {
+      case (key, value) =>
+        UUID.fromString(key) -> UUID.fromString(value)
+    }
+    def newGUID(old: UUID): UUID = finalGuidMapping.getOrElse(old, old)
+    def updatedProject(state: CommonProjectState): CommonProjectState =
+      CommonProjectState(
+        state.vertexSetGUID.map(newGUID),
+        state.vertexAttributeGUIDs.mapValues(newGUID),
+        state.edgeBundleGUID.map(newGUID),
+        state.edgeAttributeGUIDs.mapValues(newGUID),
+        state.scalarGUIDs.mapValues(newGUID),
+        state.segmentations.mapValues(updatedSegmentation),
+        state.notes)
+    def updatedSegmentation(segmentation: SegmentationState): SegmentationState =
+      SegmentationState(
+        updatedProject(segmentation.state),
+        segmentation.belongsToGUID.map(newGUID))
+
+    def updatedRootProject(rootState: RootProjectState) =
+      RootProjectState(
+        updatedProject(rootState.state),
+        rootState.checkpoint,
+        rootState.previousCheckpoint,
+        rootState.lastOperationDesc,
+        rootState.lastOperationRequest)
+
+    val oldRepo = MetaGraphManager.getCheckpointRepo(src)
+    for ((checkpoint, state) <- oldRepo.allCheckpoints) {
+      mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
+    }
+
+    // Copy old tags.
+    mm.setTags(TagRoot.loadFromRepo(src))
   }
 
   // Applies the operation from JSON, performing the required migrations.

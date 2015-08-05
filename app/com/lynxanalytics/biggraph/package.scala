@@ -19,7 +19,7 @@ package object biggraph {
   printType[Array[Long]]
 
   // static<meta_dir,data_dir,ephemeral_data_dir>
-  private val staticRepoPattern = "static<(.+),(.+),(.+)>".r
+  private val staticRepoPattern = "static<(.+),(.+),(.*)>".r
 
   val standardDataPrefix = "DATA$"
 
@@ -42,26 +42,28 @@ package object biggraph {
   private val newGCEPattern = "newGCE<(.+)>".r
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
-
     // Make sure play and spark logs contain the proper context.
     val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     val frameworkPackages = ctx.getFrameworkPackages
     frameworkPackages.add("play.api.Logger")
     frameworkPackages.add("org.apache.spark.Logging")
 
+    bigGraphLogger.info("Staring to initialize production Kite environment")
     val repoDirs =
       scala.util.Properties.envOrNone("REPOSITORY_MODE") match {
         case Some(staticRepoPattern(metaDir, dataDir, "")) =>
           new RepositoryDirs(metaDir, standardDataPrefix, dataDir)
         case Some(staticRepoPattern(metaDir, dataDir, ephemeralDataDir)) =>
           new RepositoryDirs(metaDir, standardDataPrefix, dataDir, Some(ephemeralDataDir))
-        case _ =>
+        case Some(rm) =>
+          throw new AssertionError(s"Could not parse REPOSITORY_MODE ($rm)")
+        case None =>
           throw new AssertionError("REPOSITORY_MODE is not defined")
       }
     repoDirs.forcePrefixRegistration()
     registerStandardPrefixes()
 
-    scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
+    val res = scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
       case staticPattern(master) =>
         new StaticSparkContextProvider() with StaticDirEnvironment {
           val repositoryDirs = repoDirs
@@ -75,5 +77,10 @@ package object biggraph {
           val repositoryDirs = repoDirs
         }
     }
+    // Force initialization of the managers.
+    res.metaGraphManager
+    res.dataManager
+    bigGraphLogger.info("Production Kite environment initialized")
+    res
   }
 }
