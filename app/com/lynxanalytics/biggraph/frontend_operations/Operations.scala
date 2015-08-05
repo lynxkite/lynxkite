@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
@@ -2296,6 +2297,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               }
               op +: outputs.toSeq
           }
+          log.info(s"Writing metagraph vertices to $file.")
           file.createFromStrings(lines.mkString("\n"))
         }
         val csv = graph_operations.CSV(
@@ -2321,6 +2323,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               }
               inputs ++ outputs
           }
+          log.info(s"Writing metagraph edges to $file.")
           file.createFromStrings(lines.mkString("\n"))
         }
         val csv = graph_operations.CSV(
