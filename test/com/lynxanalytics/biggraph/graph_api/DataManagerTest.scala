@@ -196,12 +196,12 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val dataManager = cleanDataManager
     val operation = EnhancedExampleGraph()
     val instance = metaManager.apply(operation)
-    (dataManager, instance)
+    (dataManager, instance, operation)
   }
 
   test("Re-partitioning works") {
     def repart(verticesPerPartition: Int, tolerance: Double, expectedPartition: Int) = {
-      val (dataManager, instance) = enhancedExampleGraphData() // 8 vertices, i.e., 8 lines
+      val (dataManager, instance, _) = enhancedExampleGraphData() // 8 vertices, i.e., 8 lines
 
       System.setProperty("biggraph.vertices.per.partition", verticesPerPartition.toString)
       System.setProperty("biggraph.vertices.partition.tolerance", tolerance.toString)
@@ -234,30 +234,34 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
   }
 
   test("We can migrate data from entities") {
-    val (dataManager, instance) = enhancedExampleGraphData()
+    val (dataManager, instance, operation) = enhancedExampleGraphData()
     val path = dataManager.repositoryPath
     val names = instance.outputs.attributes('name).runtimeSafeCast[String]
     dataManager.get(names)
 
-    val partitionedPath = path / "partitioned" / names.gUID.toString / "1"
+    val partitionedRoot = path / "partitioned" / names.gUID.toString
+    val partitionedPath = partitionedRoot / "1"
     val legacyPath = path / "entities" / names.gUID.toString
     assert(partitionedPath.exists)
     assert(!legacyPath.exists)
 
     partitionedPath.renameTo(legacyPath)
-    assert(!partitionedPath.exists)
+    partitionedRoot.delete()
+    assert(!partitionedRoot.exists)
     assert(legacyPath.exists)
 
     val dataManager2 = new DataManager(sparkContext, path)
     assert(!partitionedPath.exists) // Still not done
 
+    assert(operation.executionCounter == 1)
     dataManager2.get(names)
+    assert(operation.executionCounter == 1)
     assert(partitionedPath.exists) // Was recalculated
 
   }
 
   test("We're safe against missing metadata") {
-    val (dataManager, instance) = enhancedExampleGraphData()
+    val (dataManager, instance, _) = enhancedExampleGraphData()
     val path = dataManager.repositoryPath
     val vertices = instance.outputs.vertexSets('vertices)
     dataManager.get(vertices)
@@ -266,6 +270,25 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     metaDataPath.delete()
     val dataManager2 = new DataManager(sparkContext, path)
     assert(dataManager2.get(vertices).rdd.count() == 8)
+  }
+
+  test("Test ratio sorter") {
+    import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
+
+    val m = scala.collection.mutable.Map[Int, Int]()
+
+    val emptySorter = RatioSorter(m, 13)
+    assert(emptySorter.getBest == None)
+    assert(emptySorter.getBestWithinTolerance(2.0) == None)
+    assert(emptySorter.getBestWithinTolerance(1.0) == None)
+
+    for (v <- 1 until 21 by 2) {
+      m(v) = v
+    }
+    val bestItemInMap = RatioSorter[Int](m, 12)
+    assert(bestItemInMap.getBest == Some(13))
+    assert(bestItemInMap.getBestWithinTolerance(1.09) == Some(13))
+    assert(bestItemInMap.getBestWithinTolerance(1.01) == None)
   }
 
 }
