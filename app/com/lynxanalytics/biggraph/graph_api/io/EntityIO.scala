@@ -12,11 +12,11 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-case class DMParam(dataRoot: DataRoot, sparkContext: spark.SparkContext)
+case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 
 case class EntityMetadata(lines: Long)
 
-abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
+abstract class EntityIO(val entity: MetaGraphEntity, dmParam: IOContext) {
   def correspondingVertexSet: Option[VertexSet] = None
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
@@ -27,12 +27,12 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
   protected val dataRoot = dmParam.dataRoot
   protected val sc = dmParam.sparkContext
   protected def operationMayHaveExisted = operationPath.mayHaveExisted
-  protected def operationExists = operationPath.exists
+  protected def operationExists = (operationPath / io.Success).exists
 
   private def operationPath = dataRoot / io.OperationsDir / entity.source.gUID.toString
 }
 
-class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
+class ScalarIO[T](entity: Scalar[T], dMParam: IOContext)
     extends EntityIO(entity, dMParam) {
 
   def read(parent: Option[VertexSetData] = None): ScalarData[T] = {
@@ -86,7 +86,7 @@ case class RatioSorter[T](elements: scala.collection.mutable.Map[Int, T], desire
 }
 
 abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
-                                                        dMParam: DMParam)
+                                                        dMParam: IOContext)
     extends EntityIO(entity, dMParam) {
 
   // This class reflects the current state of the disk during the read operation
@@ -228,7 +228,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
 }
 
-class VertexIO(entity: VertexSet, dMParam: DMParam)
+class VertexIO(entity: VertexSet, dMParam: IOContext)
     extends PartitionableDataIO[VertexSetData](entity, dMParam) {
 
   def loadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
@@ -240,7 +240,7 @@ class VertexIO(entity: VertexSet, dMParam: DMParam)
   }
 }
 
-class EdgeBundleIO(entity: EdgeBundle, dMParam: DMParam)
+class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
     extends PartitionableDataIO[EdgeBundleData](entity, dMParam) {
 
   override def correspondingVertexSet = Some(entity.idSet)
@@ -255,7 +255,7 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: DMParam)
   }
 }
 
-class AttributeIO[T](entity: Attribute[T], dMParam: DMParam)
+class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
     extends PartitionableDataIO[AttributeData[T]](entity, dMParam) {
   override def correspondingVertexSet = Some(entity.vertexSet)
 

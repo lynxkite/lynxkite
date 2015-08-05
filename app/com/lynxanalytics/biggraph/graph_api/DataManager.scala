@@ -45,7 +45,7 @@ class DataManager(sc: spark.SparkContext,
   var computationAllowed = true
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val param = io.DMParam(dataRoot, sc)
+    val param = io.IOContext(dataRoot, sc)
     entity match {
       case vs: VertexSet => new io.VertexIO(vs, param)
       case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
@@ -192,12 +192,12 @@ class DataManager(sc: spark.SparkContext,
         val instance = entity.source
         val instanceFuture = getInstanceFuture(instance)
         for (output <- instance.outputs.all.values) {
-          val eio2 = entityIO(output)
+          val outputIO = entityIO(output)
           set(
             output,
             // And the entity will have to wait until its full completion (including saves).
             if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
-              instanceFuture.flatMap(_ => load(eio2))
+              instanceFuture.flatMap(_ => load(outputIO))
             } else {
               instanceFuture.map(_(output.gUID))
             })
