@@ -52,8 +52,9 @@ class CleanerController(environment: BigGraphEnvironment) {
     Method(
       "notReferredFromProjectTransitively",
       "Files not associated with any project",
-      """Keep cached the results of all computations that lead to the current
-      project state, e.g. the converted input CSV files.""",
+      """Keep entities (scalars, operations) directly referred to from the actual
+      state of a project and all ancestor entities of the above (that is entities
+      that have a path to the directly referenced entities in the metagraph).""",
       transitivelyReferredFromProject),
     Method(
       "notReferredFromProject",
