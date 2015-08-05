@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_api._
@@ -2272,6 +2273,70 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val uiStatus = j.as[UIStatus]
       project.scalars(params("scalarName")) =
         graph_operations.CreateUIStatusScalar(uiStatus).result.created
+    }
+  })
+
+  register("Metagraph", new StructureOperation(_, _) {
+    def parameters = List(
+      Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString))
+    def enabled =
+      FEStatus.assert(user.isAdmin, "Requires administrator privileges") && hasNoVertexSet
+    private def shortClass(o: Any) = o.getClass.getName.split('.').last
+    def apply(params: Map[String, String]) = {
+      val t = params("timestamp")
+      val directory = HadoopFile("UPLOAD$") / s"metagraph-$t"
+      val ops = env.metaGraphManager.getOperationInstances
+      val vertices = {
+        val file = directory / "vertices"
+        if (!file.exists) {
+          val lines = ops.flatMap {
+            case (guid, inst) =>
+              val op = s"$guid,Operation,${shortClass(inst.operation)},"
+              val outputs = inst.outputs.all.map {
+                case (name, entity) =>
+                  val calc = env.dataManager.isCalculated(entity)
+                  s"${entity.gUID},${shortClass(entity)},${name.name},$calc"
+              }
+              op +: outputs.toSeq
+          }
+          log.info(s"Writing metagraph vertices to $file.")
+          file.createFromStrings(lines.mkString("\n"))
+        }
+        val csv = graph_operations.CSV(
+          file,
+          delimiter = ",",
+          header = "guid,kind,name,is_calculated")
+        graph_operations.ImportVertexList(csv)().result
+      }
+      project.vertexSet = vertices.vertices
+      project.vertexAttributes = vertices.attrs.mapValues(_.entity)
+      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
+      val edges = {
+        val file = directory / "edges"
+        if (!file.exists) {
+          val lines = ops.flatMap {
+            case (guid, inst) =>
+              val inputs = inst.inputs.all.map {
+                case (name, entity) => s"${entity.gUID},$guid,Input,${name.name}"
+              }
+              val outputs = inst.outputs.all.map {
+                case (name, entity) => s"$guid,${entity.gUID},Output,${name.name}"
+              }
+              inputs ++ outputs
+          }
+          log.info(s"Writing metagraph edges to $file.")
+          file.createFromStrings(lines.mkString("\n"))
+        }
+        val csv = graph_operations.CSV(
+          file,
+          delimiter = ",",
+          header = "src,dst,kind,name")
+        val op = graph_operations.ImportEdgeListForExistingVertexSet(csv, "src", "dst")
+        op(op.srcVidAttr, guids)(op.dstVidAttr, guids).result
+      }
+      project.edgeBundle = edges.edges
+      project.edgeAttributes = edges.attrs.mapValues(_.entity)
     }
   })
 

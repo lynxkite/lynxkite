@@ -71,7 +71,10 @@ object PrefixRepository {
     }
   }
 
-  def getPrefixInfo(prefixSymbol: String) = pathResolutions(prefixSymbol)
+  def getPrefixInfo(prefixSymbol: String) = {
+    assert(pathResolutions.contains(prefixSymbol), s"Unknown prefix symbol: $prefixSymbol")
+    pathResolutions(prefixSymbol)
+  }
 
   // This is only used by the testing module
   def dropResolutions() = {
