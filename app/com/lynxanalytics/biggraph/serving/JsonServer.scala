@@ -190,6 +190,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rRenameProjectRequest = json.Json.reads[RenameProjectRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
+  implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
   implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
   implicit val rForkProjectRequest = json.Json.reads[ForkProjectRequest]
@@ -207,7 +208,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val wFEProjectListElement = json.Json.writes[FEProjectListElement]
   implicit val wSplash = json.Json.writes[Splash]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
-  implicit val wProjectOperationRequest = json.Json.writes[ProjectOperationRequest]
+  implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
 

@@ -13,9 +13,12 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.controllers.CheckpointRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
+  val checkpointRepo = MetaGraphManager.getCheckpointRepo(repositoryPath)
+
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
@@ -271,4 +274,7 @@ object MetaGraphManager {
       f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
     }
   }
+
+  def getCheckpointRepo(repositoryPath: String): CheckpointRepository =
+    new CheckpointRepository(repositoryPath + "/checkpoints")
 }

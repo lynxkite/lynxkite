@@ -10,6 +10,10 @@ import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
+import com.lynxanalytics.biggraph.controllers.ProjectFrame
+import com.lynxanalytics.biggraph.controllers.RootProjectState
+import com.lynxanalytics.biggraph.controllers.SubProject
+import com.lynxanalytics.biggraph.controllers.WorkflowOperation
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving.ProductionJsonServer._
@@ -29,16 +33,14 @@ object BatchMain {
   def getScalarMeta(
     projectName: String, scalarName: String)(
       implicit metaManager: MetaGraphManager): Scalar[_] = {
-    Project.validateName(projectName)
-    val project = Project.fromName(projectName)
+    val project = SubProject.parsePath(projectName).viewer
     project.scalars(scalarName)
   }
 
   def getAttributeMeta(
     projectName: String, attributeName: String)(
       implicit metaManager: MetaGraphManager): Attribute[_] = {
-    Project.validateName(projectName)
-    val project = Project.fromName(projectName)
+    val project = SubProject.parsePath(projectName).viewer
     if (project.vertexAttributes.contains(attributeName))
       project.vertexAttributes(attributeName)
     else
@@ -110,18 +112,19 @@ For example:
           println(outRow.mkString(","))
         case opsRE(projectNameSpec) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          Project.validateName(projectName)
-          val project = Project.fromName(projectName)
-
-          if (!Operation.projects.contains(project)) {
+          val project = ProjectFrame.fromName(projectName)
+          val opRepo = new Operations(env)
+          if (!project.exists) {
             // Create project if doesn't yet exist.
             project.writeACL = user.email
             project.readACL = user.email
-            project.notes = s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"
-            project.checkpointAfter("")
+            project.initialize
+            opRepo.apply(
+              user,
+              project.subproject,
+              Operations.addNotesOperation(
+                s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
           }
-
-          val context = Operation.Context(user, project)
 
           var opJson = ""
           var line = ""
@@ -131,13 +134,9 @@ For example:
             line = lit.next
           }
 
-          val opRepo = new Operations(env)
-
-          for (step <- WorkflowOperation.workflowSteps(opJson, params, context)) {
-            val op = opRepo.operationOnSubproject(context.project, step, context.user)
-            project.checkpoint(op.summary(step.op.parameters), step) {
-              op.validateAndApply(step.op.parameters)
-            }
+          for (step <- WorkflowOperation.workflowSteps(opJson, params)) {
+            val sp = SubProject(project, step.path)
+            opRepo.apply(user, sp, step.op)
           }
         case histogramRE(project, attr) =>
           val req = HistogramSpec(

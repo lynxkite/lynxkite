@@ -7,7 +7,7 @@ class AggregateToSegmentationOperationTest extends OperationsTestBase {
   test("Aggregate to segmentation") {
     run("Example Graph")
     run("Connected components", Map("name" -> "cc", "directions" -> "require both directions"))
-    val seg = project.segmentation("cc").project
+    val seg = project.segmentation("cc")
     run("Aggregate to segmentation",
       Map("aggregate-age" -> "average", "aggregate-name" -> "count", "aggregate-gender" -> "majority_100",
         "aggregate-id" -> "", "aggregate-location" -> "", "aggregate-income" -> ""),
