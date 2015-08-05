@@ -756,7 +756,7 @@ object ProjectFrame {
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
 
   def fromName(rootProjectName: String)(implicit metaManager: MetaGraphManager): ProjectFrame = {
-    validateName(rootProjectName)
+    validateName(rootProjectName, "Project name")
     new ProjectFrame(SymbolPath(rootProjectName))
   }
 
