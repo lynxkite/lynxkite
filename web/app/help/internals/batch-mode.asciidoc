@@ -1,0 +1,104 @@
+[[batch-mode]]
+## Batch processing API
+
+LynxKite can be run in two modes. The first is a long-running server that offers an interactive
+user interface. (This is documented in the rest of this guide.) The other is *batch mode* wherein
+LynxKite executes a script and terminates when it is finished. This is useful for running periodic
+tasks and for integrating with other systems.
+
+Usage:
+
+[subs=normal]
+ ./run-kite.sh batch _script_file_ [_parameters_]
+
+Where `_parameters_` is a list of `key:value` pairs.
+
+### Script file syntax
+
+Lines starting with `#` are _comments_. They are ignored. Empty lines are also ignored.
+
+`GetScalar('_project_', '_scalar_')` will calculate and print a scalar value from a project.
+
+`BenchmarkScalar('_project_', '_scalar_')` is the same as `GetScalar` but outputs extra performance
+metrics.
+
+`Operations('_project_')` executes a sequence of operations on a project. `Operations` starts
+a code block that is closed by `EndOperations`. This block contains operation descriptions in the
+same format as a <<saving-a-workflow,user-defined workflow>>. In fact the recommended way to
+create a batch script is to copy the sequence of operations from a workflow. The operations
+can use command-line parameters by referring to them as `${key}`.
+
+`WaitForever` can be used to end processing without terminating. This allows a review of the
+Apache Spark UI for debugging.
+
+`ResetTimer` prints the time elapsed since the last reset (or the start of the program) and resets
+the timer. It is useful for evaluating performance.
+
+`Histogram('_project_', '_attribute_')` prints a 10-bucket histogram of an attribute in a project.
+
+### Full example
+
+In this example we create a script that reads edges from a CSV file, calculates PageRank, exports
+PageRank to another CSV, and prints the number of vertices and the time the whole script took.
+
+----
+# Import input, calculate PageRank, export output.
+Operations('Batch PageRank')
+[
+  {
+    "path": [],
+    "op": {
+      "id": "Import-vertices-and-edges-from-single-CSV-fileset",
+      "parameters": {
+        "files": "${input}",
+        "header": "<read first line>",
+        "delimiter": ",",
+        "src": "src",
+        "dst": "dst",
+        "filter": "",
+        "omitted": ""
+      }
+    }
+  },
+  {
+    "path": [],
+    "op": {
+      "id": "PageRank",
+      "parameters": {
+        "name": "page_rank",
+        "weights": "!no weight",
+        "iterations": "5",
+        "damping": "0.85"
+      }
+    }
+  },
+  {
+    "path": [],
+    "op": {
+      "id": "Export-vertex-attributes-to-file",
+      "parameters": {
+        "path": "${output}",
+        "link": "exported_csv",
+        "attrs": "stringID,page_rank",
+        "format": "CSV",
+      }
+    }
+  }
+]
+EndOperations
+
+# Print number of vertices.
+GetScalar('Batch PageRank', 'vertex_count')
+
+# Log the time it took for all this.
+ResetTimer
+----
+
+When running the script we must still use <<prefixed-paths>> for the file names. For example:
+
+ ./run-kite.sh batch pagerank input:UPLOAD$/data-2015.csv output:UPLOAD$/pagerank-2015.csv
+
+It will print:
+
+ Batch PageRank|vertex_count|1234567
+ Time elapsed: 1.234 s
