@@ -60,11 +60,13 @@
         </label>
         <!-- "Save as" is closed. The floppy reveals the input box. -->
         <label class="btn btn-default" ng-click="showSaveAs = true; saveAsName = ''" ng-hide="showSaveAs"
+          ng-if="!side.isSegmentation()"
           tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
         <!-- "Save as" is open. The floppy sends the request (if something was entered) and hides the input box. -->
         <label class="btn btn-default" ng-show="showSaveAs"
+          ng-if="!side.isSegmentation()"
           ng-click="side.maybeSaveAs(saveAsName); showSaveAs = false;"
           tooltip="{{saveAsName === '' ? 'Enter new name' : 'Click the icon to save as ' + saveAsName}}"
           tooltip-append-to-body="true" tooltip-placement="bottom">
@@ -74,6 +76,7 @@
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
         <label class="btn btn-{{ showSettings ? 'primary' : 'default' }}" ng-click="showSettings = !showSettings"
+          ng-if="!side.isSegmentation()"
           tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom"
           ng-show="util.globals.hasAuth">
           <i class="glyphicon glyphicon-cog"></i>
