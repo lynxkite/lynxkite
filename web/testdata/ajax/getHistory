@@ -1,5 +1,5 @@
 {
-  "project": "Project_Strawberry",
+  "path": [],
   "steps": [
     {
       "status": {
@@ -7,7 +7,7 @@
         "enabled": true
       },
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "Example-Graph",
           "parameters": {}
@@ -3092,7 +3092,7 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": true,
+      "checkpoint": 1,
       "segmentationsAfter": [],
       "segmentationsBefore": []
     },
@@ -3102,7 +3102,7 @@
         "enabled": true
       },
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "Derived-edge-attribute",
           "parameters": {
@@ -8021,7 +8021,7 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": true,
+      "checkpoint": 2,
       "segmentationsAfter": [],
       "segmentationsBefore": []
     },
@@ -8031,7 +8031,7 @@
         "enabled": true
       },
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "PageRank",
           "parameters": {
@@ -13241,7 +13241,7 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": true,
+      "checkpoint": 3,
       "segmentationsAfter": [],
       "segmentationsBefore": []
     },
@@ -13251,7 +13251,7 @@
         "enabled": true
       },
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "Correlate-two-attributes",
           "parameters": {
@@ -18724,7 +18724,7 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": true,
+      "checkpoint": 4,
       "segmentationsAfter": [],
       "segmentationsBefore": []
     },
@@ -18734,7 +18734,7 @@
         "enabled": true
       },
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "Connected-components",
           "parameters": {
@@ -24219,7 +24219,7 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": true,
+      "checkpoint": 5,
       "segmentationsAfter": [
         {
           "fullName": "!tmp-1433842831592-4/checkpointed/segmentations/connected_components/project",
@@ -24242,7 +24242,9 @@
         "enabled": true
       },
       "request": {
-        "project": "Project_Strawberry/checkpointed/segmentations/connected_components/project",
+        "path": [
+          "connected_components"
+        ],
         "op": {
           "id": "Aggregate-to-segmentation",
           "parameters": {
@@ -24250,6 +24252,7 @@
             "aggregate-name": "",
             "aggregate-gender": "",
             "aggregate-age": "average",
+            "aggregate-id": "",
             "aggregate-page_rank": "",
             "aggregate-income": ""
           }
@@ -28984,7 +28987,7 @@
           "title": "Segmentation utility operations"
         }
       ],
-      "hasCheckpoint": true,
+      "checkpoint": 6,
       "segmentationsAfter": [
         {
           "fullName": "!tmp-1433842831592-5/checkpointed/segmentations/connected_components/project",
@@ -29020,7 +29023,9 @@
         "enabled": true
       },
       "request": {
-        "project": "Project_Strawberry/checkpointed/segmentations/connected_components/project",
+        "path": [
+          "connected_components"
+        ],
         "op": {
           "id": "Aggregate-from-segmentation",
           "parameters": {
@@ -34103,7 +34108,7 @@
           "title": "Segmentation utility operations"
         }
       ],
-      "hasCheckpoint": true,
+      "checkpoint": 7,
       "segmentationsAfter": [
         {
           "fullName": "!tmp-1433842831592-6/checkpointed/segmentations/connected_components/project",

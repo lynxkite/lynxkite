@@ -1,5 +1,4 @@
 {
-  "project": "Project_Strawberry",
   "steps": [
     {
       "status": {
@@ -7,7 +6,7 @@
         "enabled": true
       },
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "Example-Graph",
           "parameters": {}
@@ -3092,7 +3091,7 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": true,
+      "checkpoint": 1,
       "segmentationsAfter": [],
       "segmentationsBefore": []
     },
@@ -3101,8 +3100,9 @@
         "disabledReason": "",
         "enabled": true
       },
+      "segmentationsAfter": [],
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "Derived-edge-attribute",
           "parameters": {
@@ -8021,8 +8021,6 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": false,
-      "segmentationsAfter": [],
       "segmentationsBefore": []
     },
     {
@@ -8030,8 +8028,9 @@
         "disabledReason": "assertion failed: w2 does not exist in projects/!tmp-1433854632842-1/checkpointed/edgeAttributes",
         "enabled": false
       },
+      "segmentationsAfter": [],
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "PageRank",
           "parameters": {
@@ -13241,8 +13240,6 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": false,
-      "segmentationsAfter": [],
       "segmentationsBefore": []
     },
     {
@@ -13250,8 +13247,9 @@
         "disabledReason": "assertion failed: page_rank does not exist in projects/!tmp-1433854632842-1/checkpointed/vertexAttributes",
         "enabled": false
       },
+      "segmentationsAfter": [],
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "Correlate-two-attributes",
           "parameters": {
@@ -18459,8 +18457,6 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": false,
-      "segmentationsAfter": [],
       "segmentationsBefore": []
     },
     {
@@ -18468,8 +18464,22 @@
         "disabledReason": "",
         "enabled": true
       },
+      "segmentationsAfter": [
+        {
+          "fullName": "!tmp-1433854632842-1/checkpointed/segmentations/connected_components/project",
+          "equivalentAttribute": {
+            "id": "7ec7f8b5-1a9a-3f10-bbf6-9836aad976f4",
+            "title": "segmentation[connected_components]"
+          },
+          "name": "connected_components",
+          "belongsTo": {
+            "id": "0a3b84c3-99f8-36d5-87ef-5b008fdc4b8e",
+            "title": "belongsTo of (ConnectedComponents of es=(esPlus of (AddReversedEdges of es=(edges of ExampleGraph))) maxEdgesProcessedLocally=20000000)"
+          }
+        }
+      ],
       "request": {
-        "project": "Project_Strawberry",
+        "path": [],
         "op": {
           "id": "Connected-components",
           "parameters": {
@@ -23677,7 +23687,13 @@
           "title": "Utility operations"
         }
       ],
-      "hasCheckpoint": false,
+      "segmentationsBefore": []
+    },
+    {
+      "status": {
+        "disabledReason": "assertion failed: Extra parameters found: aggregate-page_rank",
+        "enabled": false
+      },
       "segmentationsAfter": [
         {
           "fullName": "!tmp-1433854632842-1/checkpointed/segmentations/connected_components/project",
@@ -23692,15 +23708,10 @@
           }
         }
       ],
-      "segmentationsBefore": []
-    },
-    {
-      "status": {
-        "disabledReason": "assertion failed: Extra parameters found: aggregate-page_rank",
-        "enabled": false
-      },
       "request": {
-        "project": "Project_Strawberry/checkpointed/segmentations/connected_components/project",
+        "path": [
+          "connected_components"
+        ],
         "op": {
           "id": "Aggregate-to-segmentation",
           "parameters": {
@@ -28369,21 +28380,6 @@
           "title": "Segmentation utility operations"
         }
       ],
-      "hasCheckpoint": false,
-      "segmentationsAfter": [
-        {
-          "fullName": "!tmp-1433854632842-1/checkpointed/segmentations/connected_components/project",
-          "equivalentAttribute": {
-            "id": "7ec7f8b5-1a9a-3f10-bbf6-9836aad976f4",
-            "title": "segmentation[connected_components]"
-          },
-          "name": "connected_components",
-          "belongsTo": {
-            "id": "0a3b84c3-99f8-36d5-87ef-5b008fdc4b8e",
-            "title": "belongsTo of (ConnectedComponents of es=(esPlus of (AddReversedEdges of es=(edges of ExampleGraph))) maxEdgesProcessedLocally=20000000)"
-          }
-        }
-      ],
       "segmentationsBefore": [
         {
           "fullName": "!tmp-1433854632842-1/checkpointed/segmentations/connected_components/project",
@@ -28404,8 +28400,24 @@
         "disabledReason": "assertion failed: Extra parameters found: aggregate-age_average",
         "enabled": false
       },
+      "segmentationsAfter": [
+        {
+          "fullName": "!tmp-1433854632842-1/checkpointed/segmentations/connected_components/project",
+          "equivalentAttribute": {
+            "id": "7ec7f8b5-1a9a-3f10-bbf6-9836aad976f4",
+            "title": "segmentation[connected_components]"
+          },
+          "name": "connected_components",
+          "belongsTo": {
+            "id": "0a3b84c3-99f8-36d5-87ef-5b008fdc4b8e",
+            "title": "belongsTo of (ConnectedComponents of es=(esPlus of (AddReversedEdges of es=(edges of ExampleGraph))) maxEdgesProcessedLocally=20000000)"
+          }
+        }
+      ],
       "request": {
-        "project": "Project_Strawberry/checkpointed/segmentations/connected_components/project",
+        "path": [
+          "connected_components"
+        ],
         "op": {
           "id": "Aggregate-from-segmentation",
           "parameters": {
@@ -33069,21 +33081,6 @@
           ],
           "icon": "wrench",
           "title": "Segmentation utility operations"
-        }
-      ],
-      "hasCheckpoint": false,
-      "segmentationsAfter": [
-        {
-          "fullName": "!tmp-1433854632842-1/checkpointed/segmentations/connected_components/project",
-          "equivalentAttribute": {
-            "id": "7ec7f8b5-1a9a-3f10-bbf6-9836aad976f4",
-            "title": "segmentation[connected_components]"
-          },
-          "name": "connected_components",
-          "belongsTo": {
-            "id": "0a3b84c3-99f8-36d5-87ef-5b008fdc4b8e",
-            "title": "belongsTo of (ConnectedComponents of es=(esPlus of (AddReversedEdges of es=(edges of ExampleGraph))) maxEdgesProcessedLocally=20000000)"
-          }
         }
       ],
       "segmentationsBefore": [
