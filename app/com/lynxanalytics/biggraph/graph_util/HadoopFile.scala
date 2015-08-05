@@ -102,6 +102,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     try r.readLine finally r.close()
   }
   def delete() = fs.delete(path, true)
+  def deleteIfExists() = !exists() || delete()
   def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())

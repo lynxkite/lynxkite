@@ -20,8 +20,6 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
   def correspondingVertexSet: Option[VertexSet] = None
   val dataRoot = dmParam.dataRoot
   val sc = dmParam.sparkContext
-  def legacyPath: HadoopFileLike
-  def existsAtLegacy = (legacyPath / Success).exists
   def exists: Boolean
   def fastExists: Boolean // May be outdated or incorrectly true.
 
@@ -31,19 +29,17 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: DMParam) {
 
   def read(parent: Option[VertexSetData] = None): EntityData
   def write(data: EntityData): Unit
-  def targetRootDir: HadoopFile
-  def delete() = targetRootDir.delete()
+  def delete(): Boolean
 }
 
 class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
     extends EntityIO(entity, dMParam) {
 
-  def legacyPath = dataRoot / ScalarsDir / entity.gUID.toString
-  def targetRootDir = legacyPath.forWriting
-  def exists = operationExists && existsAtLegacy
-  def fastExists = operationFastExists && legacyPath.fastExists
-  private def serializedScalarFileName: HadoopFileLike = legacyPath / "serialized_data"
-  private def successPath: HadoopFileLike = legacyPath / Success
+  def path = dataRoot / ScalarsDir / entity.gUID.toString
+  def exists = operationExists && (path / Success).exists
+  def fastExists = operationFastExists && path.fastExists
+  private def serializedScalarFileName: HadoopFileLike = path / "serialized_data"
+  private def successPath: HadoopFileLike = path / Success
 
   override def read(parent: Option[VertexSetData] = None): ScalarData[T] = {
     val scalar = entity
@@ -56,7 +52,7 @@ class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
   override def write(data: EntityData): Unit = {
     val scalarData = data.asInstanceOf[ScalarData[T]]
     log.info(s"PERF Writing scalar $entity to disk")
-    val targetDir = legacyPath.forWriting
+    val targetDir = path.forWriting
     targetDir.mkdirs
     val oos = new java.io.ObjectOutputStream(serializedScalarFileName.forWriting.create())
     oos.writeObject(scalarData.value)
@@ -64,6 +60,7 @@ class ScalarIO[T](entity: Scalar[T], dMParam: DMParam)
     successPath.forWriting.createFromStrings("")
     log.info(s"PERF Written scalar $entity to disk")
   }
+  def delete() = path.forWriting.deleteIfExists()
 }
 
 abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
@@ -72,9 +69,9 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   protected lazy val availablePartitions = collectAvailablePartitions
 
-  val rootDir = dataRoot / PartitionedDir / entity.gUID.toString
-  def targetRootDir = rootDir.forWriting
-  val metaFile = rootDir / io.Metadata
+  val partitionedPath = dataRoot / PartitionedDir / entity.gUID.toString
+  def targetRootDir = partitionedPath.forWriting
+  val metaFile = partitionedPath / io.Metadata
 
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
 
@@ -172,6 +169,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   }
 
   def legacyPath = dataRoot / EntitiesDir / entity.gUID.toString
+  def existsAtLegacy = (legacyPath / Success).exists
   def newPath = dataRoot / PartitionedDir / entity.gUID.toString
   def exists = operationExists && availablePartitions.nonEmpty && metaFile.exists
   def fastExists = operationFastExists && (newPath.fastExists || legacyPath.fastExists)
@@ -181,6 +179,10 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     vsRDD.cacheBackingArray()
     // This join does nothing except enforcing colocation.
     vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value }
+  }
+
+  def delete(): Boolean = {
+    legacyPath.forWriting.deleteIfExists() && partitionedPath.forWriting.deleteIfExists()
   }
 
 }
