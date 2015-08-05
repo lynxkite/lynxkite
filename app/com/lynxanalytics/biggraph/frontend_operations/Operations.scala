@@ -2276,25 +2276,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   })
 
   register("Metagraph", new StructureOperation(_, _) {
-    def parameters = List()
+    def parameters = List(
+      Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString))
     def enabled =
       FEStatus.assert(user.isAdmin, "Requires administrator privileges") && hasNoVertexSet
     private def shortClass(o: Any) = o.getClass.getName.split('.').last
     def apply(params: Map[String, String]) = {
-      val tmpDir =
-        env.dataManager.repositoryPath / "tmp" / "metagraph" / graph_util.Timestamp.toString
+      val t = params("timestamp")
+      val directory = HadoopFile("UPLOAD$") / s"metagraph-$t"
       val ops = env.metaGraphManager.getOperationInstances
       val vertices = {
-        val file = tmpDir / "vertices"
-        val lines = ops.flatMap {
-          case (guid, inst) =>
-            val op = s"$guid,Operation,${shortClass(inst.operation)}"
-            val outputs = inst.outputs.all.map {
-              case (name, entity) => s"${entity.gUID},${shortClass(entity)},${name.name}"
-            }
-            op +: outputs.toSeq
+        val file = directory / "vertices"
+        if (!file.exists) {
+          val lines = ops.flatMap {
+            case (guid, inst) =>
+              val op = s"$guid,Operation,${shortClass(inst.operation)}"
+              val outputs = inst.outputs.all.map {
+                case (name, entity) => s"${entity.gUID},${shortClass(entity)},${name.name}"
+              }
+              op +: outputs.toSeq
+          }
+          file.createFromStrings(lines.mkString("\n"))
         }
-        file.createFromStrings(lines.mkString("\n"))
         val csv = graph_operations.CSV(
           file,
           delimiter = ",",
@@ -2306,18 +2309,20 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
       val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
       val edges = {
-        val file = tmpDir / "edges"
-        val lines = ops.flatMap {
-          case (guid, inst) =>
-            val inputs = inst.inputs.all.map {
-              case (name, entity) => s"${entity.gUID},$guid,${name.name}"
-            }
-            val outputs = inst.outputs.all.map {
-              case (name, entity) => s"$guid,${entity.gUID},${name.name}"
-            }
-            inputs ++ outputs
+        val file = directory / "edges"
+        if (!file.exists) {
+          val lines = ops.flatMap {
+            case (guid, inst) =>
+              val inputs = inst.inputs.all.map {
+                case (name, entity) => s"${entity.gUID},$guid,${name.name}"
+              }
+              val outputs = inst.outputs.all.map {
+                case (name, entity) => s"$guid,${entity.gUID},${name.name}"
+              }
+              inputs ++ outputs
+          }
+          file.createFromStrings(lines.mkString("\n"))
         }
-        file.createFromStrings(lines.mkString("\n"))
         val csv = graph_operations.CSV(
           file,
           delimiter = ",",
