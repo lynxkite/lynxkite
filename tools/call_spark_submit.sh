@@ -80,8 +80,8 @@ if [ -z "${NUM_CORES_PER_EXECUTOR}" ]; then
 fi
 
 if [ "${SPARK_MASTER}" == "yarn-client" ]; then
-  if [ -z "${YARN_NUM_EXECUTORS}" ]; then
-    >&2 echo "Please define YARN_NUM_EXECUTORS in the kite config file ${KITE_SITE_CONFIG}."
+  if [ -z "${NUM_EXECUTORS}" ]; then
+    >&2 echo "Please define NUM_EXECUTORS in the kite config file ${KITE_SITE_CONFIG}."
     exit 1
   fi
   if [ -z "${YARN_CONF_DIR}" ]; then
@@ -89,7 +89,22 @@ if [ "${SPARK_MASTER}" == "yarn-client" ]; then
     exit 1
   fi
 
-  YARN_SETTINGS="--num-executors ${YARN_NUM_EXECUTORS} --executor-cores ${NUM_CORES_PER_EXECUTOR}"
+  # TODO: we may not actually need this as we set spark.executor.cores in BiggraphSparkContext.
+  YARN_SETTINGS="--executor-cores ${NUM_CORES_PER_EXECUTOR}"
+fi
+
+if [ -n "${NUM_EXECUTORS}" ]; then
+  if [ "${SPARK_MASTER}" == "yarn-client" ]; then
+    # YARN mode
+    EXTRA_OPTIONS="${EXTRA_OPTIONS} --num-executors ${NUM_EXECUTORS}"
+  elif [[ "${SPARK_MASTER}" == spark* ]]; then
+    # Standalone mode
+    TOTAL_CORES=$((NUM_EXECUTORS * NUM_CORES_PER_EXECUTOR))
+    EXTRA_OPTIONS="${EXTRA_OPTIONS} --total-executor-cores ${TOTAL_CORES}"
+  else
+    >&2 echo "Num executors is not supported for master: ${SPARK_MASTER}"
+    exit 1
+  fi
 fi
 
 if [ "${SPARK_MASTER}" == "local" ]; then
@@ -117,6 +132,7 @@ command=(
     --deploy-mode client \
     --driver-java-options "${final_java_opts}" \
     --driver-memory ${final_app_mem}m \
+    ${EXTRA_OPTIONS} \
     ${YARN_SETTINGS} \
     "${fake_application_jar}" \
     "${app_commands[@]}" \
