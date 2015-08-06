@@ -35,13 +35,13 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: IOContext) {
 class ScalarIO[T](entity: Scalar[T], dMParam: IOContext)
     extends EntityIO(entity, dMParam) {
 
-  def read(parent: Option[VertexSetData] = None): ScalarData[T] = {
-    val scalar = entity
-    log.info(s"PERF Loading scalar $scalar from disk")
+  def read(parent: Option[VertexSetData]): ScalarData[T] = {
+    assert(parent == None)
+    log.info(s"PERF Loading scalar $entity from disk")
     val ois = new java.io.ObjectInputStream(serializedScalarFileName.forReading.open())
     val value = try ois.readObject.asInstanceOf[T] finally ois.close()
-    log.info(s"PERF Loaded scalar $scalar from disk")
-    new ScalarData[T](scalar, value)
+    log.info(s"PERF Loaded scalar $entity from disk")
+    new ScalarData[T](entity, value)
   }
 
   def write(data: EntityData): Unit = {
@@ -64,17 +64,9 @@ class ScalarIO[T](entity: Scalar[T], dMParam: IOContext)
   private def successPath: HadoopFileLike = path / Success
 }
 
-case class RatioSorter[T](elements: scala.collection.mutable.Map[Int, T], desired: Int) {
+case class RatioSorter[T](elements: Map[Int, T], desired: Int) {
   assert(desired != 0)
-
-  def getBest: Option[Int] = {
-    getAll.map(_._1).headOption
-  }
-  def getBestWithinTolerance(tolerance: Double): Option[Int] = {
-    getAll.filter(_._3 < tolerance).map(_._1).headOption
-  }
-
-  def getAll = {
+  val sorted = {
     def fun(a: Int) = {
       val aa = a.toDouble
       if (aa > desired) aa / desired
@@ -83,6 +75,14 @@ case class RatioSorter[T](elements: scala.collection.mutable.Map[Int, T], desire
     elements.map { case (p, h) => (p, h, fun(p)) }
       .toSeq.sortBy(_._3)
   }
+
+  def getBest: Option[Int] = {
+    sorted.map(_._1).headOption
+  }
+  def getBestWithinTolerance(tolerance: Double): Option[Int] = {
+    sorted.filter(_._3 < tolerance).map(_._1).headOption
+  }
+
 }
 
 abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
@@ -90,10 +90,10 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     extends EntityIO(entity, dMParam) {
 
   // This class reflects the current state of the disk during the read operation
-  case class EntityLocation(availablePartitions: scala.collection.mutable.Map[Int, HadoopFile],
+  case class EntityLocation(availablePartitions: Map[Int, HadoopFile],
                             metaPath: HadoopFileLike,
                             legacyPath: HadoopFileLike) {
-    def hasPartitionedDirs = availablePartitions.nonEmpty
+    val hasPartitionedDirs = availablePartitions.nonEmpty
     val metaPathExists = metaPath.forReading.exists
     val hasPartitionedData = hasPartitionedDirs && metaPathExists
 
@@ -152,19 +152,12 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   }
 
   private def computeAvailablePartitions = {
-    val partitions = scala.collection.mutable.Map[Int, HadoopFile]()
-
     val subDirs = (partitionedPath / "*").list
     val number = "[1-9][0-9]*".r
-    val subdirCandidates = subDirs.filter(x => number.pattern.matcher(x.path.getName).matches)
-    for (v <- subdirCandidates) {
-      val successFile = v / Success
-      if (successFile.exists) {
-        val numParts = v.path.getName.toInt
-        partitions(numParts) = v
-      }
-    }
-    partitions
+    val numericSubdirs = subDirs.filter(x => number.pattern.matcher(x.path.getName).matches)
+    val existingCandidates = numericSubdirs.filter(x => (x / Success).exists)
+    val resultList = existingCandidates.map { x => (x.path.getName.toInt, x) }
+    resultList.toMap
   }
 
   protected def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): DT
@@ -173,8 +166,7 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   private def bestPartitionedSource(entityLocation: EntityLocation, desiredPartitionNumber: Int) = {
     assert(entityLocation.availablePartitions.nonEmpty)
-    val desired = desiredPartitions(entityLocation)
-    val ratioSorter = RatioSorter(entityLocation.availablePartitions, desired)
+    val ratioSorter = RatioSorter(entityLocation.availablePartitions, desiredPartitionNumber)
     entityLocation.availablePartitions(ratioSorter.getBest.get)
   }
 
