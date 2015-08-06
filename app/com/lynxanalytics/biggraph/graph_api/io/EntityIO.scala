@@ -64,9 +64,9 @@ class ScalarIO[T](entity: Scalar[T], dMParam: IOContext)
   private def successPath: HadoopFileLike = path / Success
 }
 
-case class RatioSorter[T](elements: Map[Int, T], desired: Int) {
+case class RatioSorter(elements: Map[Int, _], desired: Int) {
   assert(desired != 0)
-  val sorted = {
+  private val sorted = {
     def fun(a: Int) = {
       val aa = a.toDouble
       if (aa > desired) aa / desired
@@ -76,9 +76,8 @@ case class RatioSorter[T](elements: Map[Int, T], desired: Int) {
       .toSeq.sortBy(_._3)
   }
 
-  def getBest: Option[Int] = {
-    sorted.map(_._1).headOption
-  }
+  val best: Option[Int] = sorted.map(_._1).headOption
+
   def getBestWithinTolerance(tolerance: Double): Option[Int] = {
     sorted.filter(_._3 < tolerance).map(_._1).headOption
   }
@@ -90,20 +89,31 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     extends EntityIO(entity, dMParam) {
 
   // This class reflects the current state of the disk during the read operation
-  case class EntityLocation(availablePartitions: Map[Int, HadoopFile],
-                            metaPath: HadoopFileLike,
-                            legacyPath: HadoopFileLike) {
+  case class EntityLocationSnapshot(availablePartitions: Map[Int, HadoopFile]) {
     val hasPartitionedDirs = availablePartitions.nonEmpty
-    val metaPathExists = metaPath.forReading.exists
+    val metaPathExists = metaFile.forReading.exists
     val hasPartitionedData = hasPartitionedDirs && metaPathExists
 
     val legacyPathExists = (legacyPath / io.Success).forReading.exists
     assert(hasPartitionedData || legacyPathExists)
+
+    private def readMetadata: EntityMetadata = {
+      val j = json.Json.parse(metaFile.forReading.readAsString)
+      j.as[EntityMetadata]
+    }
+
+    val numVertices =
+      if (hasPartitionedData) readMetadata.lines
+      else {
+        assert(existsAtLegacy) // I dare not take this out yet
+        legacyRDD.count
+      }
+
   }
 
   def read(parent: Option[VertexSetData] = None): DT = {
 
-    val entityLocation = EntityLocation(computeAvailablePartitions, metaFile, legacyPath)
+    val entityLocation = EntityLocationSnapshot(computeAvailablePartitions)
     val pn = parent.map(_.rdd.partitions.size).getOrElse(selectPartitionNumber(entityLocation))
     val file =
       if (entityLocation.availablePartitions.contains(pn)) entityLocation.availablePartitions(pn)
@@ -141,20 +151,10 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     partitionedPath.forWriting / subdir
   }
 
-  private def readMetadata: EntityMetadata = {
-    val j = json.Json.parse(metaFile.forReading.readAsString)
-    j.as[EntityMetadata]
-  }
-
   private def writeMetadata(metaData: EntityMetadata) = {
-    def doWrite = {
-      val j = json.Json.toJson(metaData)
-      metaFile.forWriting.createFromStrings(json.Json.prettyPrint(j))
-    }
-    if (metaFile.forWriting.exists) {
-      val oldMetaData = readMetadata
-      if (oldMetaData != metaData) doWrite
-    } else doWrite
+    assert(!metaFile.forWriting.exists)
+    val j = json.Json.toJson(metaData)
+    metaFile.forWriting.createFromStrings(json.Json.prettyPrint(j))
   }
 
   private def computeAvailablePartitions = {
@@ -170,13 +170,13 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   protected def loadRDD(path: HadoopFile): SortedRDD[Long, _]
 
-  private def bestPartitionedSource(entityLocation: EntityLocation, desiredPartitionNumber: Int) = {
+  private def bestPartitionedSource(entityLocation: EntityLocationSnapshot, desiredPartitionNumber: Int) = {
     assert(entityLocation.availablePartitions.nonEmpty)
     val ratioSorter = RatioSorter(entityLocation.availablePartitions, desiredPartitionNumber)
-    entityLocation.availablePartitions(ratioSorter.getBest.get)
+    entityLocation.availablePartitions(ratioSorter.best.get)
   }
 
-  private def repartitionTo(entityLocation: EntityLocation, pn: Int): HadoopFile = {
+  private def repartitionTo(entityLocation: EntityLocationSnapshot, pn: Int): HadoopFile = {
     val rawRDD =
       if (entityLocation.hasPartitionedData) {
         val from = bestPartitionedSource(entityLocation, pn)
@@ -188,25 +188,21 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     val newRDD = rawRDD.toSortedRDD(new HashPartitioner(pn))
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
-    writeMetadata(EntityMetadata(lines))
+    assert(entityLocation.numVertices == lines)
+    if (!entityLocation.hasPartitionedData)
+      writeMetadata(EntityMetadata(lines))
     newFile
   }
 
   private def legacyRDD = loadRDD(legacyPath.forReading)
 
-  private def numVertices(entityLocation: EntityLocation) =
-    if (entityLocation.hasPartitionedData) readMetadata.lines
-    else {
-      assert(existsAtLegacy) // I dare not take this out yet
-      legacyRDD.count
-    }
-  private def desiredPartitions(entityLocation: EntityLocation) = {
-    val v = numVertices(entityLocation)
+  private def desiredPartitions(entityLocation: EntityLocationSnapshot) = {
+    val v = entityLocation.numVertices
     val vertices = if (v > 0) v else 1
     Math.ceil(vertices.toDouble / System.getProperty("biggraph.vertices.per.partition", "1000000").toInt).toInt
   }
 
-  private def selectPartitionNumber(entityLocation: EntityLocation): Int = {
+  private def selectPartitionNumber(entityLocation: EntityLocationSnapshot): Int = {
     val desired = desiredPartitions(entityLocation)
     val ratioSorter = RatioSorter(entityLocation.availablePartitions, desired)
     val tolerance = System.getProperty("biggraph.vertices.partition.tolerance", "2.0").toDouble
