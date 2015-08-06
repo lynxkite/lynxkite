@@ -16,15 +16,15 @@ class CopyController(environment: BigGraphEnvironment) {
 
   private def lsRec(root: HadoopFile): Seq[HadoopFile] = {
     val fs = root.fs
-    def ls(dirs: Seq[hadoop.fs.Path]): Stream[Seq[hadoop.fs.Path]] = {
+    def ls(dirs: Seq[hadoop.fs.Path]): Stream[hadoop.fs.Path] = {
       if (dirs.isEmpty) Stream.empty
       else {
         val statuses = fs.listStatus(dirs.toArray)
         val (ds, files) = statuses.partition(s => Deprecated.isDir(s))
-        files.map(_.getPath) #:: ls(ds.map(_.getPath))
+        files.map(_.getPath).toStream #::: ls(ds.map(_.getPath))
       }
     }
-    ls(Seq(root.path)).flatten.map {
+    ls(Seq(root.path)).map {
       file => root.hadoopFileForGlobOutput(file.toString)
     }
   }
