@@ -213,7 +213,7 @@ object MetaRepositoryManager {
       mm.setTag(versionTag, "2")
       ObsolateProject.migrateV1ToV2(v1TagRoot, mm)
     } else {
-      assert(false, "Unkown tags version $version")
+      assert(false, "Unknown tags version $version")
     }
   }
 
