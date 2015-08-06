@@ -272,22 +272,4 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(dataManager2.get(vertices).rdd.count() == 8)
   }
 
-  test("Test ratio sorter") {
-    import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
-
-    val emptyMap = Map[Int, Int]()
-
-    val emptySorter = RatioSorter(emptyMap, 13)
-    assert(emptySorter.getBest == None)
-    assert(emptySorter.getBestWithinTolerance(2.0) == None)
-    assert(emptySorter.getBestWithinTolerance(1.0) == None)
-
-    val nonEmptyMap = (1 until 21 by 2).map { x => (x, x) }.toMap
-
-    val bestItemInMap = RatioSorter[Int](nonEmptyMap, 12)
-    assert(bestItemInMap.getBest == Some(13))
-    assert(bestItemInMap.getBestWithinTolerance(1.09) == Some(13))
-    assert(bestItemInMap.getBestWithinTolerance(1.01) == None)
-  }
-
 }
