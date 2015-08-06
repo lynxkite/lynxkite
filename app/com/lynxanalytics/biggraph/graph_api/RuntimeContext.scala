@@ -14,7 +14,9 @@ case class Broadcast[T](filename: HadoopFile) {
 
 object RuntimeContext {
   def getVerticesPerPartition: Int =
-    System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
+    scala.util.Properties.envOrElse(
+      "KITE_VERTICES_PER_PARTITION",
+      System.getProperty("biggraph.vertices.per.partition", "1000000")).toInt
 }
 case class RuntimeContext(sparkContext: spark.SparkContext,
                           broadcastDirectory: HadoopFile,
