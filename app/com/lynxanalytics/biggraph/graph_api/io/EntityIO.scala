@@ -17,6 +17,7 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 case class EntityMetadata(lines: Long)
 
 object EntityIO {
+  implicit val fEntityMetadata = json.Json.format[EntityMetadata]
   def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
     dataRoot / io.OperationsDir / instance.gUID.toString
 }
@@ -101,6 +102,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
       s"Legacy path $legacyPath does not exist, and there seems to be no valid data in $partitionedPath")
 
     private def readMetadata: EntityMetadata = {
+      import EntityIO.fEntityMetadata
       val j = json.Json.parse(metaFile.forReading.readAsString)
       j.as[EntityMetadata]
     }
@@ -145,14 +147,13 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   private val metaFile = partitionedPath / io.Metadata
   private val metaFileCreated = partitionedPath / io.MetadataCreate
 
-  private implicit val fEntityMetadata = json.Json.format[EntityMetadata]
-
   private def targetDir(numPartitions: Int) = {
     val subdir = numPartitions.toString
     partitionedPath.forWriting / subdir
   }
 
   private def writeMetadata(metaData: EntityMetadata) = {
+    import EntityIO.fEntityMetadata
     assert(!metaFile.forWriting.exists, s"Metafile $metaFile should not exist before we write it.")
     metaFileCreated.forWriting.deleteIfExists()
     val j = json.Json.toJson(metaData)
