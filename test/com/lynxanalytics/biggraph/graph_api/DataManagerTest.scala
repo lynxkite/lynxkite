@@ -1,10 +1,11 @@
 package com.lynxanalytics.biggraph.graph_api
 
+import org.apache.spark
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_operations
-import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
+import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph, ExampleGraph }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
@@ -50,13 +51,13 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
   test("We can reload a graph from disk without recomputing it") {
     val metaManager = cleanMetaManager
     val dataManager1 = cleanDataManager
-    val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
     val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
     val names = instance.outputs.attributes('name).runtimeSafeCast[String]
     val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
     val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
+    val dataManager2 = new DataManager(sparkContext, dataManager1.repositoryPath)
     val data2 = dataManager2.get(names)
     val scalarData2 = dataManager2.get(greeting)
     assert(data1 ne data2)
@@ -83,56 +84,6 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       "(3,2.0)")
   }
 
-  test("No infinite recursion even when there is recursive dependency between operations") {
-    // In a previous implementation we've seen an infinite recursion in the data manager
-    // due to a kind of circular dependency between the operations ImportEdgeList and the
-    // implicitly created EdgeBundleAsVertexSet operation. This is how the circular dependency
-    // goes:
-    //  - EdgeBundleAsVertexSet takes as input the edge bundle output of ImportEdgeList
-    //  - ImportEdgeList outputs edge attributes. When loading those, we depend on the id set
-    //    of those attributes, which in this case is the output of EdgeBundleAsVertexSet
-    // This DataManager got into an infinite recursion trying to provide alternatingly the inputs
-    // for these two operations.
-    //
-    // To actually trigger this bug for sure, you need to be in a special case where the edge
-    // attribute is already saved to disk but the edge bundle is not. If nothing is on disk,
-    // the operation will run, save everything and load back results one by one. If it loads
-    // the edge bundle before the edge attribute, then no problem happens.
-    // On the other hand, if everything is already on disk, then the ImportEdgeList operation
-    // never even triggers, so again, no problem happens.
-    //
-    // Anyways, this test was able to reproduce the issue and is here to ensure that this daemon
-    // does not ever come back.
-    implicit val metaManager = cleanMetaManager
-    val dataManager = cleanDataManager
-    import Scripting._
-    val testCSVFile = HadoopFile(myTempDirPrefix) / "almakorte.csv"
-    testCSVFile.createFromStrings("alma,korte,barack\n3,4,5\n")
-    val operation = graph_operations.ImportEdgeList(
-      graph_operations.CSV(testCSVFile, ",", "alma,korte,barack"),
-      "alma",
-      "korte")
-    val imported = operation().result
-    val barack = imported.attrs("barack").entity
-
-    // Fake barack being on disk.
-    val entityPath = dataManager.repositoryPath / "entities" / barack.gUID.toString
-    val instancePath = dataManager.repositoryPath / "operations" / barack.source.gUID.toString
-    def fakeSuccess(path: HadoopFile): Unit = {
-      val successPath = path / "_SUCCESS"
-      path.mkdirs
-      successPath.createFromStrings("")
-    }
-    fakeSuccess(entityPath)
-    fakeSuccess(instancePath)
-
-    // Check that we managed to fake.
-    assert(dataManager.isCalculated(barack))
-
-    // And now we get the future for it, this should not stack overflow or anything evil.
-    dataManager.get(barack)
-  }
-
   test("Failed operation can be retried") {
     implicit val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
@@ -156,4 +107,169 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(TestUtils.RDDToSortedString(
       dataManager.get(imported.stringID).rdd.values) == "1\n2")
   }
+
+  test("We don't start too many spark jobs") {
+    implicit val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+
+    object CountingListener extends spark.scheduler.SparkListener {
+      var activeStages = 0
+      var maxActiveStages = 0
+      override def onStageCompleted(
+        stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
+
+        activeStages -= 1
+      }
+
+      override def onStageSubmitted(
+        stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
+
+        activeStages += 1
+        if (activeStages > maxActiveStages) {
+          maxActiveStages = activeStages
+        }
+      }
+    }
+
+    dataManager.runtimeContext.sparkContext.addSparkListener(CountingListener)
+
+    import Scripting._
+    import scala.concurrent._
+    import scala.concurrent.duration._
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val futureSeq = (0 until (DataManager.maxParallelSparkStages * 2)).map { i =>
+      val vs = graph_operations.CreateVertexSet(i + 100)().result.vs
+      val count = graph_operations.Count.run(vs)
+      dataManager.getFuture(count)
+    }
+
+    val allDone = Future.sequence(futureSeq)
+    Await.ready(allDone, Duration(10, SECONDS))
+    assert(CountingListener.maxActiveStages == DataManager.maxParallelSparkStages)
+  }
+
+  test("Ephemeral repo can read main repo") {
+    val metaManager = cleanMetaManager
+    val dataManager1 = cleanDataManager
+    val operation = ExampleGraph()
+    val instance = metaManager.apply(operation)
+    val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+    val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
+    val data1: AttributeData[String] = dataManager1.get(names)
+    val scalarData1: ScalarData[String] = dataManager1.get(greeting)
+    val dataManager2 = {
+      val tmpDM = cleanDataManager
+      new DataManager(
+        sparkContext, dataManager1.repositoryPath,
+        ephemeralPath = Some(tmpDM.repositoryPath))
+    }
+    assert(dataManager2.isCalculated(names))
+    assert(dataManager2.isCalculated(greeting))
+  }
+
+  test("Ephemeral repo writes to ephemeral directory") {
+    val metaManager = cleanMetaManager
+    val dataManager1 = {
+      val dm1 = cleanDataManager
+      val dm2 = cleanDataManager
+      new DataManager(
+        sparkContext, dm1.repositoryPath,
+        ephemeralPath = Some(dm2.repositoryPath))
+    }
+    val operation = ExampleGraph()
+    val instance = metaManager.apply(operation)
+    val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+    val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
+    val data1: AttributeData[String] = dataManager1.get(names)
+    val scalarData1: ScalarData[String] = dataManager1.get(greeting)
+    val dataManagerMain = new DataManager(sparkContext, dataManager1.repositoryPath)
+    assert(!dataManagerMain.isCalculated(names))
+    assert(!dataManagerMain.isCalculated(greeting))
+    val dataManagerEphemeral = new DataManager(sparkContext, dataManager1.ephemeralPath.get)
+    assert(dataManagerEphemeral.isCalculated(names))
+    assert(dataManagerEphemeral.isCalculated(greeting))
+  }
+
+  def enhancedExampleGraphData() = {
+    val metaManager = cleanMetaManager
+    val dataManager = cleanDataManager
+    val operation = EnhancedExampleGraph()
+    val instance = metaManager.apply(operation)
+    (dataManager, instance, operation)
+  }
+
+  test("Re-partitioning works") {
+    def repart(verticesPerPartition: Int, tolerance: Double, expectedPartition: Int) = {
+      val (dataManager, instance, _) = enhancedExampleGraphData() // 8 vertices, i.e., 8 lines
+
+      System.setProperty("biggraph.vertices.per.partition", verticesPerPartition.toString)
+      System.setProperty("biggraph.vertices.partition.tolerance", tolerance.toString)
+
+      val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+      dataManager.get(names)
+
+      val path = dataManager.repositoryPath / "partitioned" / names.gUID.toString
+
+      assert((path / "1" / io.Success).exists)
+      assert((path / io.Metadata).exists)
+      assert((path / expectedPartition.toString).exists)
+
+      val numFiles = if (expectedPartition == 1) 2 else 3
+      assert((path / "*").list.size == numFiles)
+    }
+
+    val savedVerticesPerPartition = System.getProperty("biggraph.vertices.per.partition", "1000000")
+    val savedTolerance = System.getProperty("biggraph.vertices.partition.tolerance", "2.0")
+
+    repart(8, 2.0, 1)
+    repart(4, 2.1, 1)
+    repart(4, 2.0, 2)
+    repart(1, 2.0, 8)
+    repart(1, 16.0, 1)
+    repart(3, 1.0, 3)
+
+    System.setProperty("biggraph.vertices.per.partition", savedVerticesPerPartition)
+    System.setProperty("biggraph.vertices.partition.tolerance", savedTolerance)
+  }
+
+  test("We can migrate data from entities") {
+    val (dataManager, instance, operation) = enhancedExampleGraphData()
+    val path = dataManager.repositoryPath
+    val names = instance.outputs.attributes('name).runtimeSafeCast[String]
+    dataManager.get(names)
+
+    val partitionedRoot = path / "partitioned" / names.gUID.toString
+    val partitionedPath = partitionedRoot / "1"
+    val legacyPath = path / "entities" / names.gUID.toString
+    assert(partitionedPath.exists)
+    assert(!legacyPath.exists)
+
+    partitionedPath.renameTo(legacyPath)
+    partitionedRoot.delete()
+    assert(!partitionedRoot.exists)
+    assert(legacyPath.exists)
+
+    val dataManager2 = new DataManager(sparkContext, path)
+    assert(!partitionedPath.exists) // Still not done
+
+    assert(operation.executionCounter == 1)
+    dataManager2.get(names)
+    assert(operation.executionCounter == 1)
+    assert(partitionedPath.exists) // Was recalculated
+
+  }
+
+  test("We're safe against missing metadata") {
+    val (dataManager, instance, _) = enhancedExampleGraphData()
+    val path = dataManager.repositoryPath
+    val vertices = instance.outputs.vertexSets('vertices)
+    dataManager.get(vertices)
+
+    val metaDataPath = path / "partitioned" / vertices.gUID.toString / io.Metadata
+    metaDataPath.delete()
+    val dataManager2 = new DataManager(sparkContext, path)
+    assert(dataManager2.get(vertices).rdd.count() == 8)
+  }
+
 }

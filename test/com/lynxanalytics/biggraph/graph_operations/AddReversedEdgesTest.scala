@@ -7,10 +7,12 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class AddReversedEdgesTest extends FunSuite with TestGraphOp {
-  test("example graph") {
-    val g = ExampleGraph()().result
+  test("Enhanced example graph") {
+    val g = EnhancedExampleGraph()().result
     val op = AddReversedEdges()
     val out = op(op.es, g.edges).result
-    assert(out.esPlus.toPairSeq.toSet == Set(0 -> 1, 1 -> 0, 0 -> 2, 2 -> 0, 1 -> 2, 2 -> 1))
+    val reversedEdges = g.edges.toPairSeq.map { case (a, b) => (b, a) }
+    val expected = g.edges.toPairSeq ++ reversedEdges
+    assert(out.esPlus.toPairSeq == expected.sorted)
   }
 }

@@ -13,6 +13,37 @@ angular.module('biggraph')
       scope.kill = function() {
         util.post('/ajax/spark-cancel-jobs', { fake: 1 });
       };
+
+      scope.stages = function(status) {
+        for (var i = 0; i < status.activeStages.length; ++i) {
+          status.activeStages[i].active = true;
+        }
+        return status.activeStages.concat(status.pastStages);
+      };
+
+      scope.hashToColor = function(active, hash) {
+        hash = Math.abs(hash);
+        /* global tinycolor */
+        var color = tinycolor({ h: hash % 360, s: 1.0, l: active ? 0.5 : 0.9 } );
+        return color.toString();
+      };
+
+      scope.height = function(stage) {
+        return (20 * stage.tasksCompleted / stage.size).toFixed(1) + 'px';
+      };
+
+      scope.message = function(status) {
+        var last = 0;
+        for (var i = 0; i < status.activeStages.length; ++i) {
+          var stage = status.activeStages[i];
+          // Correct against client/server clock offset using status.received.
+          var t = Date.now() - stage.lastTaskTime + status.timestamp - status.received;
+          if (t > last) {
+            last = t;
+          }
+        }
+        return 'Last progress ' + (last / 1000).toFixed() + ' seconds ago.';
+      };
     },
   };
 })
@@ -20,7 +51,7 @@ angular.module('biggraph')
 // there is an update. It is implemented in a service so that tests can mock it out.
 .service('sparkStatusUpdater', function($timeout, util) {
   this.bind = function(scope, name) {
-    scope[name] = { timestamp: 0 };
+    scope[name] = { timestamp: 0, activeStages: [], pastStages: [] };
     var update;
     function load() {
       update = util.nocache('/ajax/spark-status', { syncedUntil: scope[name].timestamp });
@@ -30,6 +61,7 @@ angular.module('biggraph')
         if (update.$error) {
           $timeout(load, 10000);  // Try again in a bit.
         } else {
+          update.received = Date.now();
           scope[name] = update;
           load();
         }

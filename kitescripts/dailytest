@@ -1,7 +1,7 @@
 Operations('createrandom')
 [
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "New-vertex-set",
       "parameters": {
@@ -10,7 +10,7 @@ Operations('createrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Create-scale-free-random-edge-bundle",
       "parameters": {
@@ -21,7 +21,7 @@ Operations('createrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Add-constant-edge-attribute",
       "parameters": {
@@ -32,7 +32,7 @@ Operations('createrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Export-edge-attributes-to-file",
       "parameters": {
@@ -49,7 +49,7 @@ EndOperations
 Operations('loadandprocessrandom')
 [
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Import-vertices-and-edges-from-single-CSV-fileset",
       "parameters": {
@@ -64,7 +64,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Degree",
       "parameters": {
@@ -74,7 +74,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Filter-by-attributes",
       "parameters": {
@@ -88,7 +88,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Find-infocom-communities",
       "parameters": {
@@ -101,7 +101,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project/checkpointed/segmentations/communities/project",
+    "path": ["communities"],
     "op": {
       "id": "Aggregate-to-segmentation",
       "parameters": {
@@ -112,7 +112,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project/checkpointed/segmentations/communities/project",
+    "path": ["communities"],
     "op": {
       "id": "Aggregate-from-segmentation",
       "parameters": {
@@ -124,7 +124,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Derived-edge-attribute",
       "parameters": {
@@ -135,7 +135,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Aggregate-edge-attribute-globally",
       "parameters": {
@@ -148,7 +148,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Edge-attribute-to-double",
       "parameters": {
@@ -157,7 +157,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Aggregate-edge-attribute-globally",
       "parameters": {
@@ -170,7 +170,7 @@ Operations('loadandprocessrandom')
     }
   },
   {
-    "project": "!project",
+    "path": [],
     "op": {
       "id": "Aggregate-vertex-attribute-globally",
       "parameters": {
@@ -185,6 +185,8 @@ Operations('loadandprocessrandom')
 ]
 EndOperations
 
+GetScalar('loadandprocessrandom', 'vertex_count')
 GetScalar('loadandprocessrandom', 'communities_degree_average_max_std_deviation')
 GetScalar('loadandprocessrandom', 'highest_degree_sum')
 GetScalar('loadandprocessrandom', 'weight_sum')
+ResetTimer

@@ -21,12 +21,11 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           workMemoryPerCore: Long,
                           // Memory per core available for caching.
                           cacheMemoryPerCore: Long) {
-  val workerMemoryMult = scala.util.Properties.envOrElse("WORKER_MEMORY_MULT", "0.5").toDouble
-  val bytesPerPartition = (workMemoryPerCore * workerMemoryMult).toLong
-  val defaultPartitions = numAvailableCores
-  // A suitable partitioner for N bytes.
-  def partitionerForNBytes(n: Long): spark.Partitioner =
-    new spark.HashPartitioner((n / bytesPerPartition).toInt max defaultPartitions)
+  private lazy val verticesPerPartition =
+    System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
+  // A suitable partitioner for an RDD of N rows.
+  def partitionerForNRows(n: Long): spark.Partitioner =
+    new spark.HashPartitioner((n / verticesPerPartition).ceil.toInt max 1)
   lazy val onePartitionPartitioner: spark.Partitioner =
     new spark.HashPartitioner(1)
 

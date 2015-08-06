@@ -8,6 +8,23 @@ Please add changes to "master". When releasing a version add a new header for th
 
  - Kite configuration setting YARN_NUM_EXECUTORS is replaced by the more general NUM_EXECUTORS
    which applies to the standalone spark cluster setup as well.
+ - Reorganized operation categories. We hope you find them more logical.
+ - The _Batch processing API_ is now ready for use. It allows you to run a sequence of operations
+   from the command line. For more details see the _Batch processing API_ section in the manual.
+ - Richer progress indicator.
+ - LynxKite on S3 will now always use ephemeral HDFS to store data. This data is lost if you `stop`
+   or `destroy` the cluster. Use the new `s3copy` command if you want to save the data to S3.
+   (The data does not have to be restored from S3 to HDFS. It will be read directly from S3.)
+   This also means a significant performance improvements for S3 clusters.
+ - User passwords can now be changed.
+ - New operation _Metagraph_ is useful for debugging and perhaps also for demos.
+ - Added an experimental tool for cleaning up old data. It is accessible as `/#/cleaner`.
+ - A large number of stability and performance improvements.
+
+### 1.4.4
+
+ - Faster loading of the project list page.
+ - Fixed missing CSS.
 
 ### 1.4.3
 
@@ -15,6 +32,9 @@ Please add changes to "master". When releasing a version add a new header for th
    longer exists) can be edited now. Long histories can now be edited without problem. The
    UI has been revised a bit. (The _Validate_ button has been removed.)
  - Switching to Spark 1.4.0.
+ - New operation _Copy graph into a segmentation_ can import the project as its own
+   segmentation and create edges between the original vertices and
+   their corresponding vertices in the segmentation.
  - Operations _Degree_, _Aggregate on neighbors_, and _Weighted aggregate on neighbors_ can
    now also make calculations directly on unique neighboring vertices (that is, regardless of the
    number of edges between the vertices).

@@ -52,6 +52,8 @@ include::convert-vertices-into-edges.asciidoc[]
 
 include::copy-edge-attribute.asciidoc[]
 
+include::copy-graph-into-a-segmentation.asciidoc[]
+
 include::copy-scalar.asciidoc[]
 
 include::copy-segmentation.asciidoc[]
@@ -165,6 +167,8 @@ include::merge-two-attributes.asciidoc[]
 include::merge-two-edge-attributes.asciidoc[]
 
 include::merge-vertices-by-attribute.asciidoc[]
+
+include::metagraph.asciidoc[]
 
 include::modular-clustering.asciidoc[]
 

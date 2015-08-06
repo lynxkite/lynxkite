@@ -7,11 +7,12 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class MakeEdgeBundleSymmetricTest extends FunSuite with TestGraphOp {
-  test("example graph") {
-    val g = ExampleGraph()().result
+  test("Enhanced example graph") {
+    val g = EnhancedExampleGraph()().result
     val op = MakeEdgeBundleSymmetric()
     val out = op(op.es, g.edges).result
-    assert(out.symmetric.toPairSeq == Seq(0 -> 1, 1 -> 0))
+    assert(out.symmetric.toPairSeq ==
+      Seq((0, 1), (1, 0), (2, 2), (2, 4), (2, 5), (2, 5), (4, 2), (4, 5), (5, 2), (5, 2), (5, 4)))
   }
 
   test("A bit more complex graph") {

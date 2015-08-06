@@ -5,9 +5,11 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
 
 import java.util.regex.Pattern
 import play.api.libs.json
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
 import scala.util.matching.Regex
@@ -80,6 +82,12 @@ case class FEAttribute(
   isNumeric: Boolean,
   isInternal: Boolean)
 
+case class FEProjectListElement(
+  name: String,
+  notes: String = "",
+  vertexCount: Option[FEAttribute], // Whether the project has vertices defined.
+  edgeCount: Option[FEAttribute]) // Whether the project has edges defined.
+
 case class FEProject(
   name: String,
   error: String = "", // If this is non-empty the project is broken and cannot be opened.
@@ -105,14 +113,24 @@ case class FESegmentation(
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
-case class Splash(version: String, projects: List[FEProject])
+case class Splash(version: String, projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class DiscardProjectRequest(name: String)
+
+// A request for the execution of a FE operation on a specific project. The project might be
+// a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
+// project. In this case, the project parameter has the format:
+// rootProjectName|childSegmentationName|grandChildSegmentationName|...
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
+// Represents an operation executed on a subproject. It is only meaningful in the context of
+// a root project. path specifies the offspring project in question, e.g. it could be sg like:
+// Seq(childSegmentationName, grandChildSegmentationName, ...)
+case class SubProjectOperation(path: Seq[String], op: FEOperationSpec)
+
 case class ProjectAttributeFilter(attributeName: String, valueSpec: String)
 case class ProjectFilterRequest(
   project: String,
@@ -126,31 +144,26 @@ case class ProjectSettingsRequest(project: String, readACL: String, writeACL: St
 
 case class HistoryRequest(project: String)
 case class AlternateHistory(
-  project: String,
-  skips: Int, // Number of unmodified operations.
-  requests: List[ProjectOperationRequest])
+  startingPoint: String, // The checkpoint where to start to apply requests below.
+  requests: List[SubProjectOperation])
 case class SaveHistoryRequest(
+  oldProject: String, // Old project is used to copy ProjectFrame level metadata.
   newProject: String,
   history: AlternateHistory)
-case class ProjectHistory(
-    project: String,
-    steps: List[ProjectHistoryStep]) {
-  def valid = steps.forall(step => step.hasCheckpoint || step.status.enabled)
-}
+case class ProjectHistory(steps: List[ProjectHistoryStep])
 case class ProjectHistoryStep(
-  request: ProjectOperationRequest,
+  request: SubProjectOperation,
   status: FEStatus,
   segmentationsBefore: List[FESegmentation],
   segmentationsAfter: List[FESegmentation],
   opCategoriesBefore: List[OperationCategory],
-  hasCheckpoint: Boolean)
+  checkpoint: Option[String])
 
 case class SaveWorkflowRequest(
   workflowName: String,
-  // This may contain parameter references in the format ${param-name}. There is a special
-  // reference, ${!project} which is automatically replaced with the project name the workflow
-  // should run on. After parameter substitution we parse the string as a JSON form of
-  // List[ProjectOperationRequest] and then we try to apply these operations in sequence.
+  // This may contain parameter references in the format ${param-name}. After parameter
+  // substitution we parse the string as a JSON form of List[SubProjectOperation] and then we try
+  // to apply these operations in sequence.
   stepsAsJSON: String,
   description: String)
 
@@ -161,18 +174,15 @@ case class SavedWorkflow(
   @transient lazy val prettyJson: String = SavedWorkflow.asPrettyJson(this)
 }
 object SavedWorkflow {
-  implicit val wUIValue = json.Json.writes[UIValue]
-  implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
-  implicit val wSavedWorkflow = json.Json.writes[SavedWorkflow]
-  implicit val rUIValue = json.Json.reads[UIValue]
-  implicit val rFEOperationParameterMeta = json.Json.reads[FEOperationParameterMeta]
-  implicit val rSavedWorkflow = json.Json.reads[SavedWorkflow]
+  implicit val fSavedWorkflow = json.Json.format[SavedWorkflow]
   def asPrettyJson(wf: SavedWorkflow): String = json.Json.prettyPrint(json.Json.toJson(wf))
   def fromJson(js: String): SavedWorkflow = json.Json.parse(js).as[SavedWorkflow]
 }
 
 object BigGraphController {
   val workflowsRoot: SymbolPath = SymbolPath("workflows")
+
+  val dirtyOperationError = "Dirty operations are not allowed in history"
 }
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -186,25 +196,31 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
-    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toFE)
+    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toListElementFE)
     return Splash(version, projects.toList)
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
-    val p = Project.fromPath(request.name)
-    p.assertReadAllowedFrom(user)
-    val categories = ops.categories(user, p)
+    val p = SubProject.parsePath(request.name)
+    p.frame.assertReadAllowedFrom(user)
+    val context = Operation.Context(user, p.viewer)
+    val categories = ops.categories(context)
     // Utility operations are made available through dedicated UI elements.
     // Let's hide them from the project operation toolbox to avoid confusion.
     val nonUtilities = categories.filter(_.icon != "wrench")
     p.toFE.copy(opCategories = nonUtilities)
   }
 
+  private def projectExists(name: String): Boolean = {
+    Operation.projects.map(_.projectName).contains(name)
+  }
+  private def assertProjectNotExists(name: String) = {
+    assert(!projectExists(name), s"Project $name already exists.")
+  }
+
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
-    Project.validateName(request.name, "Project name")
-    val p = Project.fromName(request.name)
-    assert(!Operation.projects.contains(p), s"Project ${request.name} already exists.")
-    p.notes = request.notes
+    assertProjectNotExists(request.name)
+    val p = ProjectFrame.fromName(request.name)
     request.privacy match {
       case "private" =>
         p.writeACL = user.email
@@ -216,34 +232,33 @@ class BigGraphController(val env: BigGraphEnvironment) {
         p.writeACL = "*"
         p.readACL = "*"
     }
-    p.checkpointAfter("") // Initial checkpoint.
+    p.initialize
+    if (request.notes != "") {
+      ops.apply(user, p.subproject, Operations.addNotesOperation(request.notes))
+    }
   }
 
   def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
-    val p = Project.fromName(request.name)
+    val p = ProjectFrame.fromName(request.name)
     p.assertWriteAllowedFrom(user)
     p.remove()
   }
 
   def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
-    Project.validateName(request.to, "Project name")
-    val p = Project.fromName(request.from)
+    val p = ProjectFrame.fromName(request.from)
     p.assertWriteAllowedFrom(user)
-    p.copy(Project.fromName(request.to))
+    assertProjectNotExists(request.to)
+    p.copy(ProjectFrame.fromName(request.to))
     p.remove()
   }
 
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
-    val p = Project.fromPath(request.project)
-    p.assertWriteAllowedFrom(user)
-    ops.apply(user, request)
+    val p = SubProject.parsePath(request.project)
+    p.frame.assertWriteAllowedFrom(user)
+    ops.apply(user, p, request.op)
   }
 
   def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
-    // Historical bridge.
-    val c = Operation.Context(user, Project.fromPath(request.project))
-    val op = ops.opById(c, "Filter-by-attributes")
-    val emptyParams = op.parameters.map(_.id -> "")
     val vertexParams = request.vertexFilters.map {
       f => s"filterva-${f.attributeName}" -> f.valueSpec
     }
@@ -254,15 +269,15 @@ class BigGraphController(val env: BigGraphEnvironment) {
       project = request.project,
       op = FEOperationSpec(
         id = "Filter-by-attributes",
-        parameters = (emptyParams ++ vertexParams ++ edgeParams).toMap)))
+        parameters = (vertexParams ++ edgeParams).toMap)))
   }
 
   def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
-    Project.validateName(request.to, "Project name")
-    val p1 = Project.fromName(request.from)
-    val p2 = Project.fromName(request.to)
+    ProjectFrame.validateName(request.to, "Project name")
+    val p1 = ProjectFrame.fromName(request.from)
     p1.assertReadAllowedFrom(user)
-    assert(!Operation.projects.contains(p2), s"Project $p2 already exists.")
+    assertProjectNotExists(request.to)
+    val p2 = ProjectFrame.fromName(request.to)
     p1.copy(p2)
     if (!p2.writeAllowedFrom(user)) {
       p2.writeACL += "," + user.email
@@ -270,19 +285,19 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   def undoProject(user: serving.User, request: UndoProjectRequest): Unit = metaManager.synchronized {
-    val p = Project.fromName(request.project)
+    val p = ProjectFrame.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     p.undo()
   }
 
   def redoProject(user: serving.User, request: RedoProjectRequest): Unit = metaManager.synchronized {
-    val p = Project.fromName(request.project)
+    val p = ProjectFrame.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     p.redo()
   }
 
   def changeProjectSettings(user: serving.User, request: ProjectSettingsRequest): Unit = metaManager.synchronized {
-    val p = Project.fromName(request.project)
+    val p = ProjectFrame.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
     assert(user.isAdmin || p.aclContains(request.writeACL, user),
@@ -291,76 +306,60 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.writeACL = request.writeACL
   }
 
-  def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = metaManager.synchronized {
-    val p = Project.fromName(request.project)
-    p.assertReadAllowedFrom(user)
-    assert(p.checkpointCount > 0, s"No history for $p. Try the parent project.")
-    validateHistory(user, AlternateHistory(request.project, p.checkpointCount, List()))
+  def getHistory(user: serving.User, request: HistoryRequest): ProjectHistory = {
+    val checkpoint = metaManager.synchronized {
+      val p = ProjectFrame.fromName(request.project)
+      p.assertReadAllowedFrom(user)
+      p.checkpoint
+    }
+    validateHistory(user, AlternateHistory(checkpoint, List()))
   }
 
-  // Expand each checkpoint of a project to a separate project, run the code, then clean up.
-  private def withCheckpoints[T](p: Project)(code: Seq[Project] => T): T = metaManager.tagBatch {
-    val tmpDir = s"!tmp-$Timestamp"
-    val ps = (0 until p.checkpointCount).map { i =>
-      val tmp = Project.fromName(s"$tmpDir-$i")
-      assert(!Operation.projects.contains(tmp), s"Project $tmp already exists.")
-      p.copyCheckpoint(i, tmp)
-      tmp
-    }
-    try {
-      code(ps)
-    } finally {
-      for (p <- ps) {
-        p.remove
-      }
-    }
-  }
-
-  // Returns the evaluated alternate history, and optionally
-  // copies the resulting state into a new project.
-  private def alternateHistory(
+  // Returns the history of a state appended with a given history suffix.
+  @tailrec
+  private def stateHistory(
     user: serving.User,
-    request: AlternateHistory,
-    copyTo: Option[Project]): ProjectHistory = metaManager.synchronized {
-    val p = Project.fromName(request.project)
-    p.assertReadAllowedFrom(user)
-    withCheckpoints(p) { checkpoints =>
-      val beforeAfter = checkpoints.zip(checkpoints.tail)
-      // Operate on a lazy "view" because historyStep() is slow.
-      val skippedStepsAndStates = beforeAfter.view.flatMap {
-        case (before, after) =>
-          val request = after.lastOperationRequest
-          val stepOpt = request.flatMap(historyStep(user, before, _, nextCheckpoint = Some(after)))
-          stepOpt.map(_ -> after)
-      }.take(request.skips).toIndexedSeq
-      val (skippedSteps, skippedStates) = skippedStepsAndStates.unzip
-      // The state to be mutated by the modified steps.
-      // Starts from the state after the last skipped step
-      // or (if there are none) from the first checkpoint.
-      val state = skippedStates.lastOption.getOrElse(checkpoints.head)
-      val modifiedSteps = request.requests.flatMap(historyStep(user, state, _))
-      val steps = skippedSteps ++ modifiedSteps
-      val history = ProjectHistory(p.projectName, steps.toList)
-      if (copyTo.nonEmpty) {
-        assert(history.valid, s"Tried to copy invalid history for project $p.")
-        state.copy(copyTo.get)
-      }
-      history
+    lastState: RootProjectState,
+    historyAfter: List[ProjectHistoryStep] = List()): List[ProjectHistoryStep] = {
+    val prevCheckpointOpt = lastState.previousCheckpoint
+    if (prevCheckpointOpt.isEmpty) historyAfter
+    else {
+      val prevState = metaManager.checkpointRepo.readCheckpoint(prevCheckpointOpt.get)
+      val step =
+        historyStep(
+          user, prevState, lastState.lastOperationRequest.get, Some(lastState))._2
+      stateHistory(user, prevState, step :: historyAfter)
+    }
+  }
+
+  // Simulates an operation sequence starting from a given state. Returns the list of
+  // states reached by the operations and the corresponding ProjectHistorySteps.
+  private def extendedHistory(
+    user: serving.User,
+    start: RootProjectState,
+    operations: List[SubProjectOperation]): Stream[(RootProjectState, ProjectHistoryStep)] = {
+    if (operations.isEmpty) Stream()
+    else {
+      val (nextState, step) = historyStep(user, start, operations.head, None)
+      (nextState, step) #:: extendedHistory(user, nextState, operations.tail)
     }
   }
 
   // Tries to execute the requested operation on the project.
-  // Returns the ProjectHistoryStep to be displayed in the history, or None if it should be hidden.
+  // Returns the ProjectHistoryStep to be displayed in the history and the state reached by
+  // the operation.
+  // Won't ever execute dirty operation, for those it sets a special error status.
   private def historyStep(
     user: serving.User,
-    state: Project,
-    request: ProjectOperationRequest,
-    nextCheckpoint: Option[Project] = None): Option[ProjectHistoryStep] = {
-    val op = ops.operationOnSubproject(state, request, user)
-    val recipient = op.project
+    startState: RootProjectState,
+    request: SubProjectOperation,
+    nextStateOpt: Option[RootProjectState]): (RootProjectState, ProjectHistoryStep) = {
 
-    val segmentationsBefore = state.toFE.segmentations
-    val opCategoriesBefore = ops.categories(user, recipient)
+    val startStateRootViewer = new RootProjectViewer(startState)
+    val context = Operation.Context(user, startStateRootViewer.offspringViewer(request.path))
+    val opCategoriesBefore = ops.categories(context)
+    val segmentationsBefore = startStateRootViewer.toFE("dummy").segmentations
+    val op = ops.opById(context, request.op.id)
     // If it's a deprecated workflow operation, display it in a special category.
     val opCategoriesBeforeWithOp =
       if (opCategoriesBefore.find(_.containsOperation(op)).isEmpty &&
@@ -371,47 +370,83 @@ class BigGraphController(val env: BigGraphEnvironment) {
       } else {
         opCategoriesBefore
       }
-    def newStep(status: FEStatus) = {
-      val segmentationsAfter = nextCheckpoint.getOrElse(state).toFE.segmentations
-      Some(ProjectHistoryStep(
-        request, status, segmentationsBefore, segmentationsAfter, opCategoriesBeforeWithOp,
-        hasCheckpoint = nextCheckpoint.nonEmpty))
-    }
-    if (op.enabled.enabled && !op.dirty) {
-      try {
-        recipient.checkpoint(op.summary(request.op.parameters), request) {
+
+    val status =
+      if (op.enabled.enabled && !op.dirty) {
+        try {
           op.validateAndApply(request.op.parameters)
+          FEStatus.enabled
+        } catch {
+          case t: Throwable =>
+            FEStatus.disabled(t.getMessage)
         }
-        newStep(FEStatus.enabled)
-      } catch {
-        case t: Throwable =>
-          newStep(FEStatus.disabled(t.getMessage))
+      } else if (op.dirty) {
+        FEStatus.disabled(BigGraphController.dirtyOperationError)
+      } else {
+        op.enabled
       }
-    } else if (op.dirty) {
-      None // Dirty operations are hidden from the history.
-    } else {
-      newStep(op.enabled)
+
+    // For the next state, we take it if it's given, otherwise take the end result of the
+    // operation if it succeeded or we fall back to the state before the operation.
+    val nextState = nextStateOpt.getOrElse(
+      if (status.enabled) op.project.rootState
+      else startState)
+    val nextStateRootViewer = new RootProjectViewer(nextState)
+    val segmentationsAfter = nextStateRootViewer.toFE("dummy").segmentations
+    (nextState,
+      ProjectHistoryStep(
+        request,
+        status,
+        segmentationsBefore,
+        segmentationsAfter,
+        opCategoriesBeforeWithOp,
+        nextState.checkpoint))
+  }
+
+  def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
+    val startingState = metaManager.checkpointRepo.readCheckpoint(request.startingPoint)
+    val checkpointHistory = stateHistory(user, startingState)
+    val historyExtension = extendedHistory(user, startingState, request.requests)
+    val cleanCheckpointHistory =
+      checkpointHistory
+        .filter(step => step.status.disabledReason != BigGraphController.dirtyOperationError)
+    ProjectHistory(
+      cleanCheckpointHistory ++ historyExtension.map(_._2))
+  }
+
+  def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = {
+    // See first that we can deal with this history.
+    val startingPoint = request.history.startingPoint
+    val historyExtension = extendedHistory(
+      user,
+      metaManager.checkpointRepo.readCheckpoint(startingPoint),
+      request.history.requests)
+    assert(historyExtension.map(_._2).forall(_.status.enabled), "Trying to save invalid history")
+
+    var finalCheckpoint = startingPoint
+    for (state <- historyExtension.map(_._1)) {
+      finalCheckpoint =
+        metaManager.checkpointRepo.checkpointState(state, finalCheckpoint).checkpoint.get
     }
-  }
 
-  def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = metaManager.synchronized {
-    alternateHistory(user, request, None)
-  }
-
-  def saveHistory(user: serving.User, request: SaveHistoryRequest): Unit = metaManager.synchronized {
-    Project.validateName(request.newProject, "Project name")
-    val p = Project.fromName(request.newProject)
-    if (request.newProject != request.history.project) {
-      // Saving under a new name.
-      assert(!Operation.projects.contains(p), s"Project $p already exists.")
-      alternateHistory(user, request.history, Some(p))
-      if (!p.writeAllowedFrom(user)) {
-        p.writeACL += "," + user.email
+    metaManager.tagBatch {
+      // Create/check target project.
+      ProjectFrame.validateName(request.newProject, "Project name")
+      val p = ProjectFrame.fromName(request.newProject)
+      if (request.newProject != request.oldProject) {
+        // Saving under a new name.
+        assertProjectNotExists(request.newProject)
+        // Copying old ProjectFrame level data.
+        ProjectFrame.fromName(request.oldProject).copy(p)
+        // But adding user as writer if necessary.
+        if (!p.writeAllowedFrom(user)) {
+          p.writeACL += "," + user.email
+        }
+      } else {
+        p.assertWriteAllowedFrom(user)
       }
-    } else {
-      // Overwriting the original project.
-      p.assertWriteAllowedFrom(user)
-      alternateHistory(user, request.history, Some(p))
+      // Set the new history.
+      p.setCheckpoint(finalCheckpoint)
     }
   }
 
@@ -425,11 +460,10 @@ class BigGraphController(val env: BigGraphEnvironment) {
       request.stepsAsJSON,
       user.email,
       description)
-    Project.validateName(request.workflowName, "Workflow name")
+    ProjectFrame.validateName(request.workflowName, "Workflow name")
     val tagName = BigGraphController.workflowsRoot / request.workflowName / Timestamp.toString
     metaManager.setTag(tagName, savedWorkflow.prettyJson)
   }
-
 }
 
 abstract class OperationParameterMeta {
@@ -447,7 +481,7 @@ abstract class OperationParameterMeta {
 }
 
 abstract class Operation(originalTitle: String, context: Operation.Context, val category: Operation.Category) {
-  val project = context.project
+  val project = context.project.editor
   val user = context.user
   def id = Operation.titleToID(originalTitle)
   def title = originalTitle // Override this to change the display title while keeping the original ID.
@@ -456,6 +490,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def enabled: FEStatus
   // A summary of the operation, to be displayed on the UI.
   def summary(params: Map[String, String]): String = title
+
   protected def apply(params: Map[String, String]): Unit
 
   def validateParameters(values: Map[String, String]): Unit = {
@@ -476,6 +511,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def validateAndApply(params: Map[String, String]): Unit = {
     validateParameters(params)
     apply(params)
+    project.setLastOperationDesc(summary(params))
+    project.setLastOperationRequest(SubProjectOperation(Seq(), FEOperationSpec(id, params)))
   }
 
   // "Dirty" operations have side-effects, such as writing files. (See #1564.)
@@ -496,6 +533,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   protected def hasNoEdgeBundle = FEStatus.assert(project.edgeBundle == null, "Edges already exist.")
   protected def isNotSegmentation = FEStatus.assert(!project.isSegmentation,
     "This operation is not available with segmentations.")
+  protected def isSegmentation = FEStatus.assert(project.isSegmentation,
+    "This operation is only available for segmentations.")
   // All projects that the user has read access to.
   protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
     UIValue.list(Operation.projects
@@ -519,9 +558,9 @@ object Operation {
       OperationCategory(title, icon, color, ops)
   }
 
-  case class Context(user: serving.User, project: Project)
+  case class Context(user: serving.User, project: ProjectViewer)
 
-  def projects(implicit manager: MetaGraphManager): Seq[Project] = {
+  def projects(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
     val dirs = {
       if (manager.tagExists(SymbolPath("projects")))
         manager.lsTag(SymbolPath("projects"))
@@ -529,7 +568,7 @@ object Operation {
         Nil
     }
     // Do not list internal project names (starting with "!").
-    dirs.map(p => Project.fromName(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
+    dirs.map(p => ProjectFrame.fromName(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
   }
 }
 
@@ -548,9 +587,9 @@ object WorkflowOperation {
   val deprecatedCategory = Operation.Category("Deprecated User Defined Workflows", "red")
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
-  implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
-  private def stepsFromJSON(stepsAsJSON: String): List[ProjectOperationRequest] = {
-    json.Json.parse(stepsAsJSON).as[List[ProjectOperationRequest]]
+  implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
+  private def stepsFromJSON(stepsAsJSON: String): List[SubProjectOperation] = {
+    json.Json.parse(stepsAsJSON).as[List[SubProjectOperation]]
   }
   def substituteUserParameters(jsonTemplate: String, parameters: Map[String, String]): String = {
     var completeJSON = jsonTemplate
@@ -563,20 +602,11 @@ object WorkflowOperation {
     completeJSON
   }
 
-  private def substituteJSONParameters(
-    jsonTemplate: String, parameters: Map[String, String], context: Operation.Context): String = {
-
-    var withUserParams = substituteUserParameters(jsonTemplate, parameters)
-
-    workflowConcreteParameterRegex("!project")
-      .replaceAllIn(withUserParams, Regex.quoteReplacement(context.project.projectName))
-  }
   def workflowSteps(
     jsonTemplate: String,
-    parameters: Map[String, String],
-    context: Operation.Context): List[ProjectOperationRequest] = {
+    parameters: Map[String, String]): List[SubProjectOperation] = {
 
-    stepsFromJSON(substituteJSONParameters(jsonTemplate, parameters, context))
+    stepsFromJSON(substituteUserParameters(jsonTemplate, parameters))
   }
 }
 case class WorkflowOperation(
@@ -595,15 +625,8 @@ case class WorkflowOperation(
 
   val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsJSON)
 
-  val (systemReferences, customReferences) = parameterReferences.partition(_.startsWith("!"))
-
-  private val unknownSystemReferences = systemReferences &~ Set("!project")
-  assert(
-    unknownSystemReferences.isEmpty,
-    "Unknown system parameter(s): " + unknownSystemReferences)
-
   def parameters =
-    customReferences
+    parameterReferences
       .toList
       .sorted
       .map(paramName => OperationParams.Param(paramName, paramName))
@@ -611,10 +634,17 @@ case class WorkflowOperation(
   def enabled = FEStatus.enabled
   def apply(params: Map[String, String]): Unit = {
     var stepsAsJSON = workflow.stepsAsJSON
-    val steps = WorkflowOperation.workflowSteps(stepsAsJSON, params, context)
+    val steps = WorkflowOperation.workflowSteps(stepsAsJSON, params)
     for (step <- steps) {
-      val op = operationRepository.operationOnSubproject(context.project, step, context.user)
-      op.validateAndApply(step.op.parameters)
+      // We create a local context from the current state in this workflow operation's
+      // own ProjectEditor.
+      val subEditor = project.offspringEditor(step.path)
+      val localContext = Operation.Context(context.user, subEditor.viewer)
+      // We execute the sub-operation.
+      val op = operationRepository.appliedOp(localContext, step.op)
+      // Then we copy back the state created by the sub-operation. We have to copy at
+      // root level, as operations might reach up and modify parent state as well.
+      project.state = op.project.rootEditor.state
     }
   }
 }
@@ -647,8 +677,7 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
       Seq()
     }
 
-  def categories(user: serving.User, project: Project): List[OperationCategory] = {
-    val context = Operation.Context(user, project)
+  def categories(context: Operation.Context): List[OperationCategory] = {
     val allOps = opsForContext(context) ++ workflowOperations(context)
     val cats = allOps.groupBy(_.category).toList
     cats.filter(_._1.visible).sortBy(_._1).map {
@@ -670,26 +699,25 @@ abstract class OperationRepository(env: BigGraphEnvironment) {
     }
   }
 
-  def operationOnSubproject(
-    mainProject: Project,
-    request: ProjectOperationRequest,
-    user: serving.User): Operation = {
-    val subProjectPath = SymbolPath.parse(request.project)
-    val mainProjectSymbol = Symbol(mainProject.projectName)
-    val relativePath = subProjectPath.tail
-    val fullPath = mainProjectSymbol :: relativePath.toList
-    val recipient = Project(SymbolPath.fromIterable(fullPath))
-    val ctx = Operation.Context(user, recipient)
-    opById(ctx, request.op.id)
+  // Applies the operation specified by op in the given context and returns the
+  // applied operation.
+  def appliedOp(context: Operation.Context, opSpec: FEOperationSpec): Operation = {
+    val op = opById(context, opSpec.id)
+    op.validateAndApply(opSpec.parameters)
+    op
+  }
+
+  def applyAndCheckpoint(context: Operation.Context, opSpec: FEOperationSpec): RootProjectState = {
+    val opResult = appliedOp(context, opSpec).project.rootState
+    manager.checkpointRepo.checkpointState(opResult, context.project.rootState.checkpoint.get)
   }
 
   def apply(
-    user: serving.User, req: ProjectOperationRequest): Unit = manager.tagBatch {
-    val p = Project.fromPath(req.project)
-    val context = Operation.Context(user, p)
-    val op = opById(context, req.op.id)
-    p.checkpoint(op.summary(req.op.parameters), req) {
-      op.validateAndApply(req.op.parameters)
-    }
+    user: serving.User,
+    subProject: SubProject,
+    op: FEOperationSpec): Unit = manager.tagBatch {
+
+    val context = Operation.Context(user, subProject.viewer)
+    subProject.frame.setCheckpoint(applyAndCheckpoint(context, op).checkpoint.get)
   }
 }

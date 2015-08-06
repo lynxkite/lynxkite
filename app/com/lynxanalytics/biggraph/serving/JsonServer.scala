@@ -156,6 +156,7 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rSparkStatusRequest = json.Json.reads[SparkStatusRequest]
   implicit val rSetClusterNumInstanceRequest = json.Json.reads[SetClusterNumInstanceRequest]
+  implicit val wStageInfo = json.Json.writes[StageInfo]
   implicit val wSparkStatusResponse = json.Json.writes[SparkStatusResponse]
   implicit val wSparkClusterStatusResponse = json.Json.writes[SparkClusterStatusResponse]
 
@@ -189,6 +190,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rRenameProjectRequest = json.Json.reads[RenameProjectRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
+  implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
   implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
   implicit val rForkProjectRequest = json.Json.reads[ForkProjectRequest]
@@ -203,19 +205,25 @@ object ProductionJsonServer extends JsonServer {
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
   implicit val wFEProject = json.Json.writes[FEProject]
+  implicit val wFEProjectListElement = json.Json.writes[FEProjectListElement]
   implicit val wSplash = json.Json.writes[Splash]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
-  implicit val wProjectOperationRequest = json.Json.writes[ProjectOperationRequest]
+  implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
   implicit val wProjectHistory = json.Json.writes[ProjectHistory]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
+  implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
   implicit val wUser = json.Json.writes[User]
   implicit val wUserList = json.Json.writes[UserList]
 
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
+
+  implicit val rMarkDeletedRequest = json.Json.reads[MarkDeletedRequest]
+  implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
+  implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
 
   // File upload.
   def upload = {
@@ -330,9 +338,18 @@ object ProductionJsonServer extends JsonServer {
   def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 
   def getUsers = jsonGet(UserProvider.getUsers)
+  def changeUserPassword = jsonPost(UserProvider.changeUserPassword, logRequest = false)
   def createUser = jsonPost(UserProvider.createUser, logRequest = false)
 
+  val cleanerController = new CleanerController(BigGraphProductionEnvironment)
+  def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
+  def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
+  def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
+
   def getGlobalSettings = jsonPublicGet(GlobalSettings(hasAuth = productionMode))
+
+  val copyController = new CopyController(BigGraphProductionEnvironment)
+  def copyEphemeral = jsonPost(copyController.copyEphemeral)
 }
 
 // Throw FlyingResult anywhere to generate non-200 HTTP responses.

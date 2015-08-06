@@ -3,3 +3,5 @@
 include::prefixed-paths.asciidoc[]
 
 include::access-control.asciidoc[]
+
+include::batch-mode.asciidoc[]

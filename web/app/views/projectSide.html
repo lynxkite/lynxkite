@@ -44,24 +44,29 @@
 
       <div class="btn-group pull-right">
         <label class="btn btn-default" ng-disabled="!side.project.undoOp" ng-click="side.undo()"
+          ng-if="!side.isSegmentation()"
           tooltip="Undo {{side.project.undoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-backward"></i>
         </label>
         <label class="btn btn-default" ng-click="side.showHistory = !side.showHistory"
+          ng-if="!side.isSegmentation()"
           tooltip="History" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-time"></i>
         </label>
         <label class="btn btn-default" ng-disabled="!side.project.redoOp" ng-click="side.redo()"
+          ng-if="!side.isSegmentation()"
           tooltip="Redo {{side.project.redoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-forward"></i>
         </label>
         <!-- "Save as" is closed. The floppy reveals the input box. -->
         <label class="btn btn-default" ng-click="showSaveAs = true; saveAsName = ''" ng-hide="showSaveAs"
+          ng-if="!side.isSegmentation()"
           tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
         <!-- "Save as" is open. The floppy sends the request (if something was entered) and hides the input box. -->
         <label class="btn btn-default" ng-show="showSaveAs"
+          ng-if="!side.isSegmentation()"
           ng-click="side.maybeSaveAs(saveAsName); showSaveAs = false;"
           tooltip="{{saveAsName === '' ? 'Enter new name' : 'Click the icon to save as ' + saveAsName}}"
           tooltip-append-to-body="true" tooltip-placement="bottom">
@@ -71,6 +76,7 @@
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
         <label class="btn btn-{{ showSettings ? 'primary' : 'default' }}" ng-click="showSettings = !showSettings"
+          ng-if="!side.isSegmentation()"
           tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom"
           ng-show="util.globals.hasAuth">
           <i class="glyphicon glyphicon-cog"></i>
@@ -188,9 +194,9 @@
                 <select ng-disabled="!side.state.animate.enabled"
                         ng-model="side.state.animate.style"
                         class="form-control">
+                  <option value="neutral" title="Vertices with large degrees act as centers themselves.">Neutral</option>
                   <option value="centralize" title="Vertices with large degrees tend to be in the middle.">Centralize</option>
                   <option value="decentralize" title="Vertices with large degrees tend to be on the periphery.">Decentralize</option>
-                  <option value="neutral" title="Vertices with large degrees act as centers themselves.">Neutral</option>
                 </select>
               </td>
             </tr>
