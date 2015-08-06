@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+'''Simple script to generate a shell script that does many one-run.sh calls.'''
+
 def gen_runs(globs, exec_mems, exec_coress, vs_per_partitions, caches):
   for glob in globs:
     for exec_mem in exec_mems:
@@ -20,7 +22,7 @@ gen_runs(
   ['S3$kite-benchmark/inputs/scale-free-random-1M-10M/data/part-*'],
   ['10g', '20g'],
   [1,8],
-  [100000, 10000, 1000],
-  ['false'])
+  [1000000, 100000, 10000],
+  ['false', 'true'])
 
 

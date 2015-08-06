@@ -6,7 +6,7 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
- - Kite configuration setting YARN_NUM_EXECUTORS is replaced by the more general NUM_EXECUTORS
+ - Kite configuration setting `YARN_NUM_EXECUTORS` is replaced by the more general `NUM_EXECUTORS`
    which applies to the standalone spark cluster setup as well.
  - Reorganized operation categories. We hope you find them more logical.
  - The _Batch processing API_ is now ready for use. It allows you to run a sequence of operations
