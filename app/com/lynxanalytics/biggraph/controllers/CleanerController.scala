@@ -46,21 +46,21 @@ class CleanerController(environment: BigGraphEnvironment) {
     Method(
       "notMetaGraphContents",
       "Entities which do not exist in the meta-graph",
-      "Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory " +
-        "is deleted or during a Kite version upgrade. Deleting these should not have any side " +
-        "effects.",
+      "Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory" +
+        " is deleted or during a Kite version upgrade. Deleting these should not have any side" +
+        " effects.",
       metaGraphContents),
     Method(
       "notReferredFromProjectTransitively",
       "Entities not associated with any project",
-      "We consider an entity associated with a project if it's either directly referred to from " +
-        "the project or it is used as an input to calculate another assoicated entity",
+      "We consider an entity associated with a project if it's either directly referred to from" +
+        " the project or it is used as an input to calculate another assoicated entity",
       transitivelyReferredFromProject),
     Method(
       "notReferredFromProject",
       "Entities not referenced by any project",
       "All entities except those that are vertex sets, edge bundles, attributes or scalars of" +
-        "a current project or segmentation",
+        " a current project or segmentation",
       referredFromProject))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
