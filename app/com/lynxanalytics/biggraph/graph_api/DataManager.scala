@@ -329,6 +329,7 @@ class DataManager(sc: spark.SparkContext,
       broadcastDirectory = repositoryPath / "broadcasts",
       numExecutors = numExecutors,
       numAvailableCores = totalCores,
-      workMemoryPerCore = (workMemory / totalCores).toLong)
+      workMemoryPerCore = (workMemory / totalCores).toLong,
+      cacheMemoryPerCore = (cacheMemory / totalCores).toLong)
   }
 }

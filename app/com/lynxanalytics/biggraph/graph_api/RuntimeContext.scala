@@ -18,7 +18,9 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           // The number of cores available for computations.
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.
-                          workMemoryPerCore: Long) {
+                          workMemoryPerCore: Long,
+                          // Memory per core available for caching.
+                          cacheMemoryPerCore: Long) {
   val workerMemoryMult = scala.util.Properties.envOrElse("WORKER_MEMORY_MULT", "0.5").toDouble
   val bytesPerPartition = (workMemoryPerCore * workerMemoryMult).toLong
   val defaultPartitions = numAvailableCores
