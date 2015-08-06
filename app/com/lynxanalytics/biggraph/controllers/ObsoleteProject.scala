@@ -19,22 +19,22 @@ import play.api.libs.json.Json
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
-class ObsolateProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot) {
+class ObsoleteProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot) {
   val projectName = projectPath.toString
   override def toString = projectName
   override def equals(p: Any) =
-    p.isInstanceOf[ObsolateProject] && projectName == p.asInstanceOf[ObsolateProject].projectName
+    p.isInstanceOf[ObsoleteProject] && projectName == p.asInstanceOf[ObsoleteProject].projectName
   override def hashCode = projectName.hashCode
 
   assert(projectName.nonEmpty, "Invalid project name: <empty string>")
-  assert(!projectName.contains(ObsolateProject.separator), s"Invalid project name: $projectName")
+  assert(!projectName.contains(ObsoleteProject.separator), s"Invalid project name: $projectName")
   val rootDir: SymbolPath = SymbolPath("projects") / projectPath
   // Part of the state that needs to be checkpointed.
   val checkpointedDir: SymbolPath = rootDir / "checkpointed"
 
   private def checkpoints: Seq[String] = get(rootDir / "checkpoints") match {
     case "" => Seq()
-    case x => x.split(java.util.regex.Pattern.quote(ObsolateProject.separator), -1)
+    case x => x.split(java.util.regex.Pattern.quote(ObsoleteProject.separator), -1)
   }
   private def checkpointIndex = get(rootDir / "checkpointIndex") match {
     case "" => 0
@@ -52,7 +52,7 @@ class ObsolateProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
     rootDir / "checkpoint" / relative
   }
 
-  def copyCheckpoint(i: Int, destination: ObsolateProject): Unit = tagRoot.synchronized {
+  def copyCheckpoint(i: Int, destination: ObsoleteProject): Unit = tagRoot.synchronized {
     assert(0 <= i && i < checkpointCount, s"Requested checkpoint $i out of $checkpointCount.")
     copy(destination)
     while (destination.checkpointCount > i + 1) {
@@ -103,7 +103,7 @@ class ObsolateProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
   def vertexSet = tagRoot.synchronized {
     existing(checkpointedDir / "vertexSet")
       .flatMap(vsPath =>
-        ObsolateProject.withErrorLogging(s"Couldn't resolve vertex set of project $this") {
+        ObsoleteProject.withErrorLogging(s"Couldn't resolve vertex set of project $this") {
           tagRoot.gUID(vsPath)
         })
       .getOrElse(null)
@@ -111,7 +111,7 @@ class ObsolateProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
   def edgeBundle = tagRoot.synchronized {
     existing(checkpointedDir / "edgeBundle")
       .flatMap(ebPath =>
-        ObsolateProject.withErrorLogging(s"Couldn't resolve edge bundle of project $this") {
+        ObsoleteProject.withErrorLogging(s"Couldn't resolve edge bundle of project $this") {
           tagRoot.gUID(ebPath)
         })
       .getOrElse(null)
@@ -124,7 +124,7 @@ class ObsolateProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
   def segmentation(name: String) = ObsolateSegmentation(projectPath, name)
   def segmentationNames = ls(checkpointedDir / "segmentations").map(_.last.name)
 
-  def copy(to: ObsolateProject): Unit = cp(rootDir, to.rootDir)
+  def copy(to: ObsoleteProject): Unit = cp(rootDir, to.rootDir)
 
   private def cp(from: SymbolPath, to: SymbolPath) = tagRoot.synchronized {
     existing(to).foreach(tagRoot.rm(_))
@@ -151,7 +151,7 @@ class ObsolateProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
       ls(dir)
         .flatMap { path =>
           val name = path.last.name
-          ObsolateProject.withErrorLogging(s"Couldn't resolve $path") { apply(name) }
+          ObsoleteProject.withErrorLogging(s"Couldn't resolve $path") { apply(name) }
             .map(name -> _)
         }
         .iterator
@@ -164,17 +164,17 @@ class ObsolateProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
   class EdgeAttributeHolder extends Holder(checkpointedDir / "edgeAttributes")
 }
 
-object ObsolateProject {
+object ObsoleteProject {
   val separator = "|"
 
-  def apply(projectPath: SymbolPath)(implicit tagRoot: TagRoot): ObsolateProject =
-    new ObsolateProject(projectPath)
+  def apply(projectPath: SymbolPath)(implicit tagRoot: TagRoot): ObsoleteProject =
+    new ObsoleteProject(projectPath)
 
-  def fromPath(stringPath: String)(implicit tagRoot: TagRoot): ObsolateProject =
-    new ObsolateProject(SymbolPath.parse(stringPath))
+  def fromPath(stringPath: String)(implicit tagRoot: TagRoot): ObsoleteProject =
+    new ObsoleteProject(SymbolPath.parse(stringPath))
 
-  def fromName(name: String)(implicit tagRoot: TagRoot): ObsolateProject =
-    new ObsolateProject(SymbolPath(name))
+  def fromName(name: String)(implicit tagRoot: TagRoot): ObsoleteProject =
+    new ObsoleteProject(SymbolPath(name))
 
   def withErrorLogging[T](message: String)(op: => T): Option[T] = {
     try {
@@ -187,7 +187,7 @@ object ObsolateProject {
     }
   }
 
-  private def projects(tagRoot: TagRoot): Seq[ObsolateProject] = {
+  private def projects(tagRoot: TagRoot): Seq[ObsoleteProject] = {
     val dirs = {
       val projectsRoot = SymbolPath("projects")
       if (tagRoot.exists(projectsRoot))
@@ -197,11 +197,11 @@ object ObsolateProject {
     }
     // Do not list internal project names (starting with "!").
     dirs
-      .map(p => ObsolateProject.fromName(p.path.last.name)(tagRoot))
+      .map(p => ObsoleteProject.fromName(p.path.last.name)(tagRoot))
       .filterNot(_.projectName.startsWith("!"))
   }
 
-  private def getProjectState(project: ObsolateProject): CommonProjectState = {
+  private def getProjectState(project: ObsoleteProject): CommonProjectState = {
     CommonProjectState(
       vertexSetGUID = Option(project.vertexSet),
       vertexAttributeGUIDs = project.vertexAttributes.toMap,
@@ -233,7 +233,7 @@ object ObsolateProject {
   }
 
   private def getRootState(
-    project: ObsolateProject): RootProjectState = {
+    project: ObsoleteProject): RootProjectState = {
 
     RootProjectState(
       state = getProjectState(project),
@@ -251,17 +251,17 @@ object ObsolateProject {
           .getOrElse(SubProjectOperation(Seq(), FEOperationSpec("No-operation", Map())))))
 
   }
-  private def oldCheckpoints(p: ObsolateProject): Seq[ObsolateProject] = {
+  private def oldCheckpoints(p: ObsoleteProject): Seq[ObsoleteProject] = {
     val tmpDir = s"!tmp-$Timestamp"
     (0 until p.checkpointCount).map { i =>
-      val tmp = ObsolateProject.fromName(s"$tmpDir-$i")(p.tagRoot)
+      val tmp = ObsoleteProject.fromName(s"$tmpDir-$i")(p.tagRoot)
       p.copyCheckpoint(i, tmp)
       tmp
     }
   }
 
   private def lastNewCheckpoint(
-    oldCheckpoints: Seq[ObsolateProject], repo: CheckpointRepository): String = {
+    oldCheckpoints: Seq[ObsoleteProject], repo: CheckpointRepository): String = {
     oldCheckpoints.foldLeft("") {
       case (previousCheckpoint, project) =>
         val state = getRootState(project)
@@ -269,7 +269,7 @@ object ObsolateProject {
     }
   }
 
-  private def migrateOneProject(source: ObsolateProject, targetManager: MetaGraphManager): Unit = {
+  private def migrateOneProject(source: ObsoleteProject, targetManager: MetaGraphManager): Unit = {
     val lastCp = lastNewCheckpoint(oldCheckpoints(source), targetManager.checkpointRepo)
     val frame = ProjectFrame.fromName(source.projectName)(targetManager)
     frame.setCheckpoint(lastCp)
@@ -290,13 +290,13 @@ object ObsolateProject {
 
 case class ObsolateSegmentation(parentPath: SymbolPath, name: String)(
     implicit tagRoot: TagRoot) {
-  def parent = ObsolateProject(parentPath)
+  def parent = ObsoleteProject(parentPath)
   val parentName = parent.projectName
   val path = SymbolPath("projects") / parentPath / "checkpointed" / "segmentations" / name
-  def project = ObsolateProject(parentPath / "checkpointed" / "segmentations" / name / "project")
+  def project = ObsoleteProject(parentPath / "checkpointed" / "segmentations" / name / "project")
 
   def belongsTo = {
-    ObsolateProject.withErrorLogging(s"Cannot get 'belongsTo' for $this") {
+    ObsoleteProject.withErrorLogging(s"Cannot get 'belongsTo' for $this") {
       tagRoot.gUID(path / "belongsTo")
     }.getOrElse(null)
   }
