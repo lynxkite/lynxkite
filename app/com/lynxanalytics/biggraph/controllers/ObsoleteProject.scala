@@ -87,7 +87,7 @@ class ObsoleteProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
     //   project/parentName/checkpointed/segmentations/segmentationName/project
     val parentName = new SymbolPath(rootDir.drop(1).dropRight(4))
     val segmentationName = rootDir.dropRight(1).last.name
-    ObsolateSegmentation(parentName, segmentationName)
+    ObsoleteSegmentation(parentName, segmentationName)
   }
 
   def notes = get(checkpointedDir / "notes")
@@ -121,7 +121,7 @@ class ObsoleteProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
   def vertexAttributes = new VertexAttributeHolder
   def edgeAttributes = new EdgeAttributeHolder
   def segmentations = segmentationNames.map(segmentation(_))
-  def segmentation(name: String) = ObsolateSegmentation(projectPath, name)
+  def segmentation(name: String) = ObsoleteSegmentation(projectPath, name)
   def segmentationNames = ls(checkpointedDir / "segmentations").map(_.last.name)
 
   def copy(to: ObsoleteProject): Unit = cp(rootDir, to.rootDir)
@@ -214,7 +214,7 @@ object ObsoleteProject {
       notes = project.notes)
   }
 
-  private def getSegmentationState(seg: ObsolateSegmentation): SegmentationState = {
+  private def getSegmentationState(seg: ObsoleteSegmentation): SegmentationState = {
     SegmentationState(
       state = getProjectState(seg.project),
       belongsToGUID = Option(seg.belongsTo))
@@ -288,7 +288,7 @@ object ObsoleteProject {
   }
 }
 
-case class ObsolateSegmentation(parentPath: SymbolPath, name: String)(
+case class ObsoleteSegmentation(parentPath: SymbolPath, name: String)(
     implicit tagRoot: TagRoot) {
   def parent = ObsoleteProject(parentPath)
   val parentName = parent.projectName
