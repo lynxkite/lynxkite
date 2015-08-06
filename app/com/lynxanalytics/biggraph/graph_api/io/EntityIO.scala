@@ -208,7 +208,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   private def desiredPartitions(entityLocation: EntityLocationSnapshot) = {
     val v = entityLocation.numVertices
     val vertices = if (v > 0) v else 1
-    Math.ceil(vertices.toDouble / System.getProperty("biggraph.vertices.per.partition", "1000000").toInt).toInt
+    Math.ceil(vertices.toDouble / RuntimeContext.getVerticesPerPartition).toInt
   }
 
   private def selectPartitionNumber(entityLocation: EntityLocationSnapshot): Int = {
