@@ -216,8 +216,8 @@ object ObsolateProject {
 
   private def getSegmentationState(seg: ObsolateSegmentation): SegmentationState = {
     SegmentationState(
-      getProjectState(seg.project),
-      Option(seg.belongsTo))
+      state = getProjectState(seg.project),
+      belongsToGUID = Option(seg.belongsTo))
   }
 
   private def getSegmentationPath(oldFullName: String): Seq[String] = {
@@ -236,11 +236,11 @@ object ObsolateProject {
     project: ObsolateProject): RootProjectState = {
 
     RootProjectState(
-      getProjectState(project),
-      None,
-      None,
-      project.lastOperation,
-      Some(
+      state = getProjectState(project),
+      checkpoint = None,
+      previousCheckpoint = None,
+      lastOperationDesc = project.lastOperation,
+      lastOperationRequest = Some(
         project.lastOperationRequest
           .map {
             projectOperationRequest =>
