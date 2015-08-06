@@ -19,6 +19,7 @@ case class User(email: String, isAdmin: Boolean) {
 case class UserList(users: List[User])
 case class UserOnDisk(email: String, hash: String, isAdmin: Boolean)
 case class CreateUserRequest(email: String, password: String, isAdmin: Boolean)
+case class ChangeUserPasswordRequest(oldPassword: String, newPassword: String, newPassword2: String)
 
 class SignedToken private (signature: String, timestamp: Long, val token: String) {
   override def toString = s"$signature $timestamp $token"
@@ -175,6 +176,17 @@ object UserProvider extends mvc.Controller {
     val data = json.Json.prettyPrint(json.Json.toJson(users.values))
     FileUtils.writeStringToFile(usersFile, data, "utf8")
     log.info(s"User data saved to $usersFile.")
+  }
+
+  // Change password 
+  def changeUserPassword(user: User, req: ChangeUserPasswordRequest): Unit = synchronized {
+    assert(BCrypt.checkpw(req.oldPassword, users(user.email).hash), "Incorrect old password.")
+    assert(req.newPassword == req.newPassword2, "The two new passwords do not match.")
+    assert(req.newPassword.nonEmpty, "The new password cannot be empty.")
+    assert(req.newPassword != req.oldPassword, "The new password cannot be the same as the old one.")
+    users(user.email) = UserOnDisk(user.email, hash(req.newPassword), user.isAdmin)
+    saveUsers()
+    log.info(s"Successfully changed password for user ${user.email}.")
   }
 
   // List user names.
