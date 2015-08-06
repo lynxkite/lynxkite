@@ -16,6 +16,11 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 
 case class EntityMetadata(lines: Long)
 
+object EntityIO {
+  def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
+    dataRoot / io.OperationsDir / instance.gUID.toString
+}
+
 abstract class EntityIO(val entity: MetaGraphEntity, dmParam: IOContext) {
   def correspondingVertexSet: Option[VertexSet] = None
   def read(parent: Option[VertexSetData] = None): EntityData
@@ -26,10 +31,8 @@ abstract class EntityIO(val entity: MetaGraphEntity, dmParam: IOContext) {
 
   protected val dataRoot = dmParam.dataRoot
   protected val sc = dmParam.sparkContext
-  protected def operationMayHaveExisted = operationPath.mayHaveExisted
-  protected def operationExists = (operationPath / io.Success).exists
-
-  private def operationPath = dataRoot / io.OperationsDir / entity.source.gUID.toString
+  protected def operationMayHaveExisted = EntityIO.operationPath(dataRoot, entity.source).mayHaveExisted
+  protected def operationExists = (EntityIO.operationPath(dataRoot, entity.source) / io.Success).exists
 }
 
 class ScalarIO[T](entity: Scalar[T], dMParam: IOContext)
