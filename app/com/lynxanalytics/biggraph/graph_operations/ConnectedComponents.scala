@@ -1,5 +1,6 @@
 // Finds connected components in a graph.
 // Uses the algorithm from "A Model of Computation for MapReduce" by Karloff et al.
+// The edges in the input graph must all be symmetric.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.collection.mutable
