@@ -178,15 +178,9 @@ destroy)
 
 # ======
 s3copy)
-  HDFS_DATA='hdfs://$(curl http://instance-data.ec2.internal/latest/meta-data/public-hostname):9000/data'
-  eval $SSH -t -t \
-    root@$(GetMasterHostName) <<EOF
-/root/ephemeral-hdfs/bin/hadoop fs \
-  -D fs.s3n.awsAccessKeyId=$AWS_ACCESS_KEY_ID \
-  -D fs.s3n.awsSecretAccessKey=$AWS_SECRET_ACCESS_KEY \
-  -cp $HDFS_DATA/* s3n://$S3_DATAREPO/
-exit
-EOF
+  HOST=`GetMasterHostName`
+  curl -d '{"fake": 0}' -H "Content-Type: application/json" "http://$HOST:4044/ajax/copyEphemeral"
+  echo "Copy successful."
   ;;
 
 # ======
