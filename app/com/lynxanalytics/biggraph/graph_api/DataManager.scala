@@ -66,7 +66,7 @@ class DataManager(sc: spark.SparkContext,
   private def hasEntityOnDisk(eio: io.EntityIO): Boolean = {
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
-    assert(!hasEntity(eio.entity))
+    assert(!hasEntity(eio.entity), s"${eio}")
     (eio.entity.source.operation.isHeavy || eio.entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       eio.mayHaveExisted &&
@@ -75,10 +75,11 @@ class DataManager(sc: spark.SparkContext,
   }
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
+  // For edge bundles and attributes we need to load the base vertex set first
   private def load(entity: io.EntityIO): Future[EntityData] = {
     log.info(s"PERF Found entity $entity on disk")
     val vsOpt: Option[VertexSet] = entity.correspondingVertexSet
-    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(future { None })
+    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(Future.successful(None))
     baseFuture.map(bf => entity.read(bf))
   }
 
