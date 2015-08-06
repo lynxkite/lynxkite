@@ -7,56 +7,47 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-trait DataRootLike {
-  def instancePath(i: MetaGraphOperationInstance): HadoopFile
-  def entityPath(e: MetaGraphEntity): HadoopFile
-  def fastHasInstance(i: MetaGraphOperationInstance): Boolean // May be incorrectly true.
-  def fastHasEntity(e: MetaGraphEntity): Boolean // May be incorrectly true.
-  def hasInstance(i: MetaGraphOperationInstance): Boolean
-  def hasEntity(e: MetaGraphEntity): Boolean
+trait DataRoot {
+  def /(p: String) = HadoopFileLike(this, Seq(p))
+  def /(p: Seq[String]) = HadoopFileLike(this, p)
+  def mayHaveExisted(path: Seq[String]): Boolean // May be out of date or incorrectly true.
+  def forReading(path: Seq[String]): HadoopFile
+  def forWriting(path: Seq[String]): HadoopFile
+  def list(path: Seq[String]): Seq[HadoopFile]
+}
+case class HadoopFileLike(root: DataRoot, path: Seq[String]) {
+  def /(p: String) = HadoopFileLike(root, path :+ p)
+  def mayHaveExisted = root.mayHaveExisted(path)
+  def forReading = root.forReading(path)
+  def forWriting = root.forWriting(path)
+  def list = root.list(path)
+  def exists = forReading.exists
 }
 
-class DataRoot(repositoryPath: HadoopFile) extends DataRootLike {
-  def instancePath(instance: MetaGraphOperationInstance) =
-    repositoryPath / OperationsDir / instance.gUID.toString
-
-  def entityPath(entity: MetaGraphEntity) = {
-    if (entity.isInstanceOf[Scalar[_]]) {
-      repositoryPath / ScalarsDir / entity.gUID.toString
-    } else {
-      repositoryPath / EntitiesDir / entity.gUID.toString
+class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
+  // Contents of the top-level directories are cached.
+  val contents = collection.mutable.Map[String, Set[String]]()
+  def mayHaveExisted(path: Seq[String]) = {
+    if (path.size < 2) true // Being incorrectly true is okay.
+    else synchronized {
+      val files = contents.getOrElseUpdate(path.head,
+        (repositoryPath / path(0) / "*").list
+          .map(_.path.getName)
+          .toSet)
+      files.contains(path(1))
     }
   }
 
-  // Things saved during previous runs. Checking for the _SUCCESS files is slow so we use the
-  // list of directories instead. The results are thus somewhat optimistic.
-  private def contents(dir: String): Set[UUID] = {
-    (repositoryPath / dir / "*").list
-      .map(_.path.getName)
-      .filterNot(_.endsWith(DeletedSfx))
-      .map(_.asUUID).toSet
-  }
-  private val possiblySavedInstances: Set[UUID] = contents(OperationsDir)
-  private val possiblySavedEntities: Set[UUID] = contents(ScalarsDir) ++ contents(EntitiesDir)
-
-  def fastHasInstance(i: MetaGraphOperationInstance) =
-    possiblySavedInstances.contains(i.gUID)
-  def fastHasEntity(e: MetaGraphEntity) =
-    possiblySavedEntities.contains(e.gUID)
-  def hasInstance(i: MetaGraphOperationInstance) =
-    fastHasInstance(i) && (instancePath(i) / Success).exists
-  def hasEntity(e: MetaGraphEntity) =
-    fastHasEntity(e) && (entityPath(e) / Success).exists
+  def forReading(path: Seq[String]) = forWriting(path)
+  def forWriting(path: Seq[String]) = repositoryPath / path.mkString("/")
+  def list(path: Seq[String]) = forReading(path).list
 }
 
-class CombinedRoot(a: DataRoot, b: DataRoot) extends DataRootLike {
-  def instancePath(i: MetaGraphOperationInstance) =
-    if (a.hasInstance(i) || !b.hasInstance(i)) a.instancePath(i) else b.instancePath(i)
-  def entityPath(e: MetaGraphEntity) =
-    if (a.hasEntity(e) || !b.hasEntity(e)) a.entityPath(e) else b.entityPath(e)
-  def fastHasInstance(i: MetaGraphOperationInstance) = a.fastHasInstance(i) || b.fastHasInstance(i)
-  def fastHasEntity(e: MetaGraphEntity) = a.fastHasEntity(e) || b.fastHasEntity(e)
-  def hasInstance(i: MetaGraphOperationInstance) = a.hasInstance(i) || b.hasInstance(i)
-  def hasEntity(e: MetaGraphEntity) = a.hasEntity(e) || b.hasEntity(e)
+// All writes go to "a".
+class CombinedRoot(a: SingleDataRoot, b: SingleDataRoot) extends DataRoot {
+  def mayHaveExisted(path: Seq[String]) = a.mayHaveExisted(path) || b.mayHaveExisted(path)
+  def forReading(path: Seq[String]) =
+    if ((a / path).exists || !(b / path).exists) a.forReading(path) else b.forReading(path)
+  def forWriting(path: Seq[String]) = a.forWriting(path)
+  def list(path: Seq[String]) = (a / path).list ++ (b / path).list
 }
-

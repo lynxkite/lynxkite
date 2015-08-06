@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+import com.lynxanalytics.biggraph.graph_api.io.{ DataRoot, EntityIO }
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
@@ -13,7 +14,6 @@ import scala.concurrent._
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object DataManager {
   val maxParallelSparkStages =
@@ -45,80 +45,44 @@ class DataManager(sc: spark.SparkContext,
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
-  private val ephemeralRoot = new io.DataRoot(ephemeralPath.getOrElse(repositoryPath))
-  private val combinedRoot: io.DataRootLike = {
-    val mainRoot = new io.DataRoot(repositoryPath)
-    if (ephemeralPath.nonEmpty) new io.CombinedRoot(ephemeralRoot, mainRoot)
-    else mainRoot
+  def entityIO(entity: MetaGraphEntity): io.EntityIO = {
+    val param = io.IOContext(dataRoot, sc)
+    entity match {
+      case vs: VertexSet => new io.VertexIO(vs, param)
+      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
+      case va: Attribute[_] => new io.AttributeIO(va, param)
+      case sc: Scalar[_] => new io.ScalarIO(sc, param)
+    }
   }
 
-  private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
+  private val dataRoot: DataRoot = {
+    val mainRoot = new io.SingleDataRoot(repositoryPath)
+    ephemeralPath.map { ephemeralPath =>
+      val ephemeralRoot = new io.SingleDataRoot(ephemeralPath)
+      new io.CombinedRoot(ephemeralRoot, mainRoot)
+    }.getOrElse(mainRoot)
+  }
 
-  private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
+  private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean = {
+    val eio = entityIO(entity)
+    // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
+    // the entity in this session, so we need this assertion.
+    assert(!hasEntity(eio.entity), s"${eio}")
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
-      combinedRoot.fastHasInstance(entity.source) &&
-      combinedRoot.fastHasEntity(entity) &&
+      eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
-      combinedRoot.hasInstance(entity.source) &&
-      combinedRoot.hasEntity(entity)
-
+      eio.exists
+  }
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
-  private def load(vertexSet: VertexSet): Future[VertexSetData] = {
-    future {
-      val fn = combinedRoot.entityPath(vertexSet)
-      val rdd = fn.loadEntityRDD[Unit](sc)
-      new VertexSetData(vertexSet, rdd)
-    }
-  }
-
-  private def load(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
-    getFuture(edgeBundle.idSet).map { idSet =>
-      // We do our best to colocate partitions to corresponding vertex set partitions.
-      val idsRDD = idSet.rdd
-      idsRDD.cacheBackingArray()
-      val rawRDD = combinedRoot.entityPath(edgeBundle).loadEntityRDD[Edge](sc, idsRDD.partitioner)
-      new EdgeBundleData(
-        edgeBundle,
-        idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
-    }
-  }
-
-  private def load[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
-    implicit val ct = attribute.classTag
-    getFuture(attribute.vertexSet).map { vs =>
-      // We do our best to colocate partitions to corresponding vertex set partitions.
-      val vsRDD = vs.rdd
-      vsRDD.cacheBackingArray()
-      val rawRDD = combinedRoot.entityPath(attribute).loadEntityRDD[T](sc, vsRDD.partitioner)
-      new AttributeData[T](
-        attribute,
-        // This join does nothing except enforcing colocation.
-        vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
-    }
-  }
-
-  private def load[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
-    future {
-      blocking {
-        log.info(s"PERF Loading scalar $scalar from disk")
-        val ois = new java.io.ObjectInputStream(serializedScalarFileName(combinedRoot.entityPath(scalar)).open())
-        val value = try ois.readObject.asInstanceOf[T] finally ois.close()
-        log.info(s"PERF Loaded scalar $scalar from disk")
-        new ScalarData[T](scalar, value)
-      }
-    }
-  }
-
+  // For edge bundles and attributes we need to load the base vertex set first
   private def load(entity: MetaGraphEntity): Future[EntityData] = {
+    val eio = entityIO(entity)
     log.info(s"PERF Found entity $entity on disk")
-    entity match {
-      case vs: VertexSet => load(vs)
-      case eb: EdgeBundle => load(eb)
-      case va: Attribute[_] => load(va)
-      case sc: Scalar[_] => load(sc)
-    }
+    val vsOpt: Option[VertexSet] = eio.correspondingVertexSet
+    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(Future.successful(None))
+    baseFuture.map(bf => eio.read(bf))
   }
 
   private def set(entity: MetaGraphEntity, data: Future[EntityData]) = synchronized {
@@ -170,7 +134,7 @@ class DataManager(sc: spark.SparkContext,
     // Mark the operation as complete. Entities may not be loaded from incomplete operations.
     // The reason for this is that an operation may give different results if the number of
     // partitions is different. So for consistency, all outputs must be from the same run.
-    (ephemeralRoot.instancePath(instance) / io.Success).createFromStrings("")
+    (EntityIO.operationPath(dataRoot, instance) / io.Success).forWriting.createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,
@@ -212,7 +176,8 @@ class DataManager(sc: spark.SparkContext,
     instanceOutputCache(gUID)
   }
 
-  def isCalculated(entity: MetaGraphEntity): Boolean = hasEntity(entity) || hasEntityOnDisk(entity)
+  def isCalculated(entity: MetaGraphEntity): Boolean =
+    hasEntity(entity) || hasEntityOnDisk(entity)
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {
@@ -297,25 +262,11 @@ class DataManager(sc: spark.SparkContext,
 
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
-    val path = ephemeralRoot.entityPath(entity)
-    val doesNotExist = !path.exists() || path.delete()
-    assert(doesNotExist, s"Cannot delete directory of entity $entity ($path)")
-    log.info(s"Saving entity $entity to $path...")
-    data match {
-      case rddData: EntityRDDData =>
-        log.info(s"PERF Instantiating entity $entity on disk")
-        path.saveEntityRDD(rddData.rdd)
-        log.info(s"PERF Instantiated entity $entity on disk")
-      case scalarData: ScalarData[_] => {
-        log.info(s"PERF Writing scalar $entity to disk")
-        path.mkdirs
-        val oos = new java.io.ObjectOutputStream(serializedScalarFileName(path).create())
-        oos.writeObject(scalarData.value)
-        oos.close()
-        (path / io.Success).createFromStrings("")
-        log.info(s"PERF Written scalar $entity to disk")
-      }
-    }
+    val eio = entityIO(entity)
+    val doesNotExist = eio.delete()
+    assert(doesNotExist, s"Cannot delete directory of entity $entity")
+    log.info(s"Saving entity $entity ...")
+    eio.write(data)
     log.info(s"Entity $entity saved.")
   }
 
