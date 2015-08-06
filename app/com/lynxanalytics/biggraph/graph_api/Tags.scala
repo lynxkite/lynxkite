@@ -5,14 +5,17 @@ import java.io.File
 import java.util.UUID
 import scala.collection.mutable
 
+import com.lynxanalytics.biggraph.graph_util.Timestamp
+
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
   override def equals(p: Any) = {
     p.isInstanceOf[SymbolPath] && path == p.asInstanceOf[SymbolPath].path
   }
   override def hashCode = toString.hashCode
   def /(symbol: Symbol): SymbolPath = {
-    SymbolPath.check(symbol)
-    path.toSeq :+ symbol
+    val expanded = path.toSeq :+ symbol
+    SymbolPath.check(symbol, expanded)
+    expanded
   }
   def /(suffixPath: SymbolPath): SymbolPath = path ++ suffixPath
   def /(suffixDir: String): SymbolPath = /(Symbol(suffixDir))
@@ -27,16 +30,17 @@ object SymbolPath {
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
   def parse(str: String): SymbolPath =
     str.split("/", -1).toSeq.map(Symbol(_))
-  def check(symbol: Symbol) = {
+  def check(symbol: Symbol, fullPath: SymbolPath) = {
     val str = symbol.name
-    assert(!str.contains("/"), s"Name $str contains a slash ('/')")
-    assert(str.nonEmpty)
+    assert(!str.contains("/"), s"Name $str in $fullPath contains a slash ('/').")
+    assert(str.nonEmpty, s"$fullPath contains an empty name.")
   }
 
   def apply(first: Symbol, optional: Symbol*): SymbolPath = {
     val path = first +: optional
-    for (name <- path) check(name)
-    new SymbolPath(path)
+    val newPath = new SymbolPath(path)
+    for (name <- path) check(name, newPath)
+    newPath
   }
 
   def apply(first: String, optional: String*): SymbolPath = {
@@ -191,6 +195,8 @@ final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
     }
   }
 
+  def gUID(path: SymbolPath): UUID = (this / path).gUID
+
   // Create tags from the key-value store.
   store.writesCanBeIgnored {
     setTags(TagRoot.loadFromStore(store))
@@ -217,7 +223,14 @@ object TagRoot {
     }
   }
 
-  def apply(repo: String) = {
+  // Creates an empty root backed in a tmp directory.
+  def temporaryRoot: TagRoot = {
+    val tmpRootDir = scala.util.Properties.envOrElse("KITE_LOCAL_TMP", "/tmp")
+    val currentRepo = s"${tmpRootDir}/${Timestamp.toString}"
+    apply(currentRepo)
+  }
+
+  def apply(repo: String): TagRoot = {
     val oldStore = storeFromRepo(repo) // May be from earlier versions.
     val tagsJournal = new File(repo, journalFilename)
     val newStore = new JournalKeyValueStore(tagsJournal.toString)

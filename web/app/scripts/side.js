@@ -21,7 +21,7 @@ angular.module('biggraph')
         animate: {
           enabled: false,
           labelAttraction: '0',
-          style: 'centralize',
+          style: 'neutral',
         },
         attributeTitles: {},
         centers: undefined,
@@ -253,6 +253,9 @@ angular.module('biggraph')
       var path = util.projectPath(this.state.projectName);
       path.pop();  // Discard project name.
       return path;
+    };
+    Side.prototype.isSegmentation = function() {
+      return this.parentProjects().length !== 0;
     };
 
     // Side.reload makes an unconditional, uncached Ajax request.

@@ -2,11 +2,16 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
+import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.controllers.CommonProjectState
+import com.lynxanalytics.biggraph.controllers.ObsoleteProject
+import com.lynxanalytics.biggraph.controllers.RootProjectState
+import com.lynxanalytics.biggraph.controllers.SegmentationState
 
 // This file is responsible for the metadata compatibility between versions.
 //
@@ -32,7 +37,8 @@ object JsonMigration {
   val current = new JsonMigration
 
   // Replaces fields in a JsObject.
-  def replaceJson(j: json.JsObject, replacements: (String, json.JsValue)*): json.JsObject = {
+  def replaceJson(jv: json.JsValue, replacements: (String, json.JsValue)*): json.JsObject = {
+    val j = jv.as[json.JsObject] // For more convenient invocation.
     val oldValues = j.fields.toMap
     val newValues = replacements.toMap
     new json.JsObject((oldValues ++ newValues).toSeq.sortBy(_._1))
@@ -41,20 +47,31 @@ object JsonMigration {
 import JsonMigration._
 class JsonMigration {
   val version: VersionMap = Map(
-    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
-    "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1,
-    "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1)
+    "com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
+    "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1,
+    // Forces a migration due to switch to v2 tags.
+    "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1)
     .withDefaultValue(0)
   // Upgrader functions keyed by class name and starting version.
   // They take the JsObject from version X to version X + 1.
   val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
-    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
-    ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets", 0) -> {
       j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
     },
-    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity)
+    ("com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar", 0) -> {
+      j =>
+        val default = json.JsString("neutral")
+        val animate = JsonMigration.replaceJson(j \ "value" \ "animate", "style" -> default)
+        val value = JsonMigration.replaceJson(j \ "value", "animate" -> animate)
+        JsonMigration.replaceJson(j, "value" -> value)
+    },
+    ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_util.ProjectFrame", 0) -> identity)
 }
 
 object MetaRepositoryManager {
@@ -72,6 +89,7 @@ object MetaRepositoryManager {
   // If the newest repo belongs to an older version, it performs migration.
   // If the newest repo belongs to a newer version, an exception is raised.
   private def findCurrentRepository(repo: File, current: JsonMigration): File = {
+    log.info("Exploring meta graph directory versions...")
     val dirs = Option(repo.listFiles).getOrElse(Array())
     import JsonMigration.versionOrdering
     import JsonMigration.versionOrdering.mkOrderingOps
@@ -80,6 +98,7 @@ object MetaRepositoryManager {
       dirs
         .flatMap(dir => readVersion(dir).map(v => DV(dir, v)))
         .sortBy(_.dir.getName.toInt).reverse
+    log.info("Meta graph directory versions mapped out.")
     if (versions.isEmpty) {
       val currentDir = new File(repo, "1")
       writeVersion(currentDir, current.version)
@@ -146,10 +165,56 @@ object MetaRepositoryManager {
       }
     }
 
+    // Checkpoints.
+    val finalGuidMapping = guidMapping.map {
+      case (key, value) =>
+        UUID.fromString(key) -> UUID.fromString(value)
+    }
+    def newGUID(old: UUID): UUID = finalGuidMapping.getOrElse(old, old)
+    def updatedProject(state: CommonProjectState): CommonProjectState =
+      CommonProjectState(
+        state.vertexSetGUID.map(newGUID),
+        state.vertexAttributeGUIDs.mapValues(newGUID),
+        state.edgeBundleGUID.map(newGUID),
+        state.edgeAttributeGUIDs.mapValues(newGUID),
+        state.scalarGUIDs.mapValues(newGUID),
+        state.segmentations.mapValues(updatedSegmentation),
+        state.notes)
+    def updatedSegmentation(segmentation: SegmentationState): SegmentationState =
+      SegmentationState(
+        updatedProject(segmentation.state),
+        segmentation.belongsToGUID.map(newGUID))
+
+    def updatedRootProject(rootState: RootProjectState) =
+      RootProjectState(
+        updatedProject(rootState.state),
+        rootState.checkpoint,
+        rootState.previousCheckpoint,
+        rootState.lastOperationDesc,
+        rootState.lastOperationRequest)
+
+    val oldRepo = MetaGraphManager.getCheckpointRepo(src)
+    for ((checkpoint, state) <- oldRepo.allCheckpoints) {
+      mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
+    }
+
     // Tags.
     val oldTags = TagRoot.loadFromRepo(src)
-    val newTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
-    mm.setTags(newTags)
+    val versionTag = SymbolPath('tagmeta, 'version)
+    val version = oldTags.getOrElse(versionTag, "1")
+    if (version == "2") {
+      // We already use version 2 tags that are GUID agnostic. All we need to do is copy the tags.
+      mm.setTags(oldTags)
+    } else if (version == "1") {
+      // First we upgrade guids
+      val guidsFixedTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
+      val v1TagRoot = TagRoot.temporaryRoot
+      v1TagRoot.setTags(guidsFixedTags)
+      mm.setTag(versionTag, "2")
+      ObsoleteProject.migrateV1ToV2(v1TagRoot, mm)
+    } else {
+      assert(false, "Unknown tags version $version")
+    }
   }
 
   // Applies the operation from JSON, performing the required migrations.

@@ -8,13 +8,17 @@ import java.io.File
 import java.util.UUID
 import play.api.libs.json
 import play.api.libs.json.Json
+import scala.collection.immutable
 import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.controllers.CheckpointRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
+  val checkpointRepo = MetaGraphManager.getCheckpointRepo(repositoryPath)
+
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
     inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
@@ -132,12 +136,21 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private val operationInstances = mutable.Map[UUID, MetaGraphOperationInstance]()
 
+  def getOperationInstances(): immutable.Map[UUID, MetaGraphOperationInstance] = {
+    operationInstances.toMap
+  }
+
   private val entities = mutable.Map[UUID, MetaGraphEntity]()
 
   // All tagRoot access must be synchronized on this MetaGraphManager object.
   // This allows users of MetaGraphManager to safely conduct transactions over
   // multiple tags.
-  private val tagRoot = TagRoot(repositoryPath)
+  private val tagRoot = {
+    log.info("Reading tags...")
+    val res = TagRoot(repositoryPath)
+    log.info("Tags read.")
+    res
+  }
 
   private val outgoingBundlesMap =
     mutable.Map[UUID, List[EdgeBundle]]().withDefaultValue(List())
@@ -173,7 +186,7 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
-    log.info(s"Saving $inst to disk.")
+    log.info(s"Saving operation $inst to disk.")
     val j = serializeOperation(inst)
     // Validate the serialized operation by trying to reload it.
     val i = deserializeOperation(j)
@@ -196,6 +209,7 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def initializeFromDisk(): Unit = synchronized {
+    log.info("Loading meta graph from disk...")
     for ((file, j) <- MetaGraphManager.loadOperations(repositoryPath)) {
       try {
         val inst = deserializeOperation(j)
@@ -212,6 +226,7 @@ class MetaGraphManager(val repositoryPath: String) {
         case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
     }
+    log.info("Meta graph loaded from disk.")
   }
 
   def serializeOperation(inst: MetaGraphOperationInstance): json.JsObject = {
@@ -259,4 +274,7 @@ object MetaGraphManager {
       f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
     }
   }
+
+  def getCheckpointRepo(repositoryPath: String): CheckpointRepository =
+    new CheckpointRepository(repositoryPath + "/checkpoints")
 }

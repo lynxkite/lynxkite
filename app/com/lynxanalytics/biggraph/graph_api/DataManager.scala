@@ -6,18 +6,38 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+import com.lynxanalytics.biggraph.graph_api.io.{ DataRoot, EntityIO }
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
-import ExecutionContext.Implicits.global
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+object DataManager {
+  val maxParallelSparkStages =
+    scala.util.Properties.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt
+}
 class DataManager(sc: spark.SparkContext,
-                  val repositoryPath: HadoopFile) {
+                  val repositoryPath: HadoopFile,
+                  val ephemeralPath: Option[HadoopFile] = None) {
+  // Limit parallelism to maxParallelSparkStages.
+  implicit val executionContext =
+    ExecutionContext.fromExecutorService(
+      java.util.concurrent.Executors.newFixedThreadPool(
+        DataManager.maxParallelSparkStages,
+        new java.util.concurrent.ThreadFactory() {
+          private var nextIndex = 1
+          def newThread(r: Runnable) = synchronized {
+            val t = new Thread(r)
+            t.setDaemon(true)
+            t.setName(s"DataManager-$nextIndex")
+            nextIndex += 1
+            t
+          }
+        }
+      ))
   private val instanceOutputCache = TrieMap[UUID, Future[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, Future[EntityData]]()
   val sqlContext = new SQLContext(sc)
@@ -25,91 +45,44 @@ class DataManager(sc: spark.SparkContext,
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
-  private def instancePath(instance: MetaGraphOperationInstance) =
-    repositoryPath / "operations" / instance.gUID.toString
-
-  private def entityPath(entity: MetaGraphEntity) =
-    if (entity.isInstanceOf[Scalar[_]]) {
-      repositoryPath / "scalars" / entity.gUID.toString
-    } else {
-      repositoryPath / "entities" / entity.gUID.toString
+  def entityIO(entity: MetaGraphEntity): io.EntityIO = {
+    val param = io.IOContext(dataRoot, sc)
+    entity match {
+      case vs: VertexSet => new io.VertexIO(vs, param)
+      case eb: EdgeBundle => new io.EdgeBundleIO(eb, param)
+      case va: Attribute[_] => new io.AttributeIO(va, param)
+      case sc: Scalar[_] => new io.ScalarIO(sc, param)
     }
+  }
 
-  private def successPath(basePath: HadoopFile): HadoopFile = basePath / "_SUCCESS"
+  private val dataRoot: DataRoot = {
+    val mainRoot = new io.SingleDataRoot(repositoryPath)
+    ephemeralPath.map { ephemeralPath =>
+      val ephemeralRoot = new io.SingleDataRoot(ephemeralPath)
+      new io.CombinedRoot(ephemeralRoot, mainRoot)
+    }.getOrElse(mainRoot)
+  }
 
-  private def serializedScalarFileName(basePath: HadoopFile): HadoopFile = basePath / "serialized_data"
-
-  private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean =
+  private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean = {
+    val eio = entityIO(entity)
+    // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
+    // the entity in this session, so we need this assertion.
+    assert(!hasEntity(eio.entity), s"${eio}")
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
-      successPath(instancePath(entity.source)).exists &&
-      successPath(entityPath(entity)).exists
-
+      // Fast check for directory.
+      eio.mayHaveExisted &&
+      // Slow check for _SUCCESS file.
+      eio.exists
+  }
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
-  // How much bigger the in-memory representation is, compared to the serialized file size.
-  private lazy val kryoExplosion =
-    System.getProperty("biggraph.kryo.explosion", "70").toInt
-  private def load(vertexSet: VertexSet): Future[VertexSetData] = {
-    future {
-      val fn = entityPath(vertexSet)
-      val bytes = (fn / "*").globLength
-      // Repartition for optimal processing performance.
-      val partitioner = runtimeContext.partitionerForNBytes(bytes * kryoExplosion)
-      val rdd = fn
-        .loadObjectFile[(ID, Unit)](sc)
-        .toSortedRDD(partitioner)
-      new VertexSetData(vertexSet, rdd)
-    }
-  }
-
-  private def load(edgeBundle: EdgeBundle): Future[EdgeBundleData] = {
-    getFuture(edgeBundle.idSet).map { idSet =>
-      // We do our best to colocate partitions to corresponding vertex set partitions.
-      val idsRDD = idSet.rdd.cache
-      val rawRDD = entityPath(edgeBundle)
-        .loadObjectFile[(ID, Edge)](sc)
-        .toSortedRDD(idsRDD.partitioner.get)
-      new EdgeBundleData(
-        edgeBundle,
-        idsRDD.sortedJoin(rawRDD).mapValues { case (_, edge) => edge })
-    }
-  }
-
-  private def load[T](attribute: Attribute[T]): Future[AttributeData[T]] = {
-    implicit val ct = attribute.classTag
-    getFuture(attribute.vertexSet).map { vs =>
-      // We do our best to colocate partitions to corresponding vertex set partitions.
-      val vsRDD = vs.rdd.cache
-      val rawRDD = entityPath(attribute)
-        .loadObjectFile[(ID, T)](sc)
-        .toSortedRDD(vsRDD.partitioner.get)
-      new AttributeData[T](
-        attribute,
-        // This join does nothing except enforcing colocation.
-        vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value })
-    }
-  }
-
-  private def load[T](scalar: Scalar[T]): Future[ScalarData[T]] = {
-    future {
-      blocking {
-        log.info(s"PERF Loading scalar $scalar from disk")
-        val ois = new java.io.ObjectInputStream(serializedScalarFileName(entityPath(scalar)).open())
-        val value = try ois.readObject.asInstanceOf[T] finally ois.close()
-        log.info(s"PERF Loaded scalar $scalar from disk")
-        new ScalarData[T](scalar, value)
-      }
-    }
-  }
-
+  // For edge bundles and attributes we need to load the base vertex set first
   private def load(entity: MetaGraphEntity): Future[EntityData] = {
+    val eio = entityIO(entity)
     log.info(s"PERF Found entity $entity on disk")
-    entity match {
-      case vs: VertexSet => load(vs)
-      case eb: EdgeBundle => load(eb)
-      case va: Attribute[_] => load(va)
-      case sc: Scalar[_] => load(sc)
-    }
+    val vsOpt: Option[VertexSet] = eio.correspondingVertexSet
+    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(Future.successful(None))
+    baseFuture.map(bf => eio.read(bf))
   }
 
   private def set(entity: MetaGraphEntity, data: Future[EntityData]) = synchronized {
@@ -137,25 +110,31 @@ class DataManager(sc: spark.SparkContext,
       validateOutput(instance, outputDatas)
       blocking {
         if (instance.operation.isHeavy) {
-          for (entityData <- outputDatas.values) {
-            saveToDisk(entityData)
-          }
+          saveOutputs(instance, outputDatas.values)
         } else {
           // We still save all scalars even for non-heavy operations.
-          for (entityData <- outputDatas.values) {
-            if (entityData.isInstanceOf[ScalarData[_]]) saveToDisk(entityData)
+          // This can happen asynchronously though.
+          future {
+            saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
           }
         }
-        // Mark the operation as complete. Entities may not be loaded from incomplete operations.
-        // The reason for this is that an operation may give different results if the number of
-        // partitions is different. So for consistency, all outputs must be from the same run.
-        successPath(instancePath(instance)).createFromStrings("")
       }
       for (scalar <- instance.outputs.scalars.values) {
         log.info(s"PERF Computed scalar $scalar")
       }
       outputDatas
     }
+  }
+
+  private def saveOutputs(instance: MetaGraphOperationInstance,
+                          outputs: Iterable[EntityData]): Unit = {
+    for (output <- outputs) {
+      saveToDisk(output)
+    }
+    // Mark the operation as complete. Entities may not be loaded from incomplete operations.
+    // The reason for this is that an operation may give different results if the number of
+    // partitions is different. So for consistency, all outputs must be from the same run.
+    (EntityIO.operationPath(dataRoot, instance) / io.Success).forWriting.createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,
@@ -197,7 +176,8 @@ class DataManager(sc: spark.SparkContext,
     instanceOutputCache(gUID)
   }
 
-  def isCalculated(entity: MetaGraphEntity): Boolean = hasEntity(entity) || hasEntityOnDisk(entity)
+  def isCalculated(entity: MetaGraphEntity): Boolean =
+    hasEntity(entity) || hasEntityOnDisk(entity)
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {
@@ -282,25 +262,11 @@ class DataManager(sc: spark.SparkContext,
 
   private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
-    val doesNotExist = !entityPath(entity).exists() || entityPath(entity).delete()
+    val eio = entityIO(entity)
+    val doesNotExist = eio.delete()
     assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
-    data match {
-      case rddData: EntityRDDData =>
-        log.info(s"PERF Instantiating entity $entity on disk")
-        entityPath(entity).saveAsObjectFile(rddData.rdd)
-        log.info(s"PERF Instantiated entity $entity on disk")
-      case scalarData: ScalarData[_] => {
-        log.info(s"PERF Writing scalar $entity to disk")
-        val targetDir = entityPath(entity)
-        targetDir.mkdirs
-        val oos = new java.io.ObjectOutputStream(serializedScalarFileName(targetDir).create())
-        oos.writeObject(scalarData.value)
-        oos.close()
-        successPath(targetDir).createFromStrings("")
-        log.info(s"PERF Written scalar $entity to disk")
-      }
-    }
+    eio.write(data)
     log.info(s"Entity $entity saved.")
   }
 
@@ -324,9 +290,10 @@ class DataManager(sc: spark.SparkContext,
     log.info("Work fraction: " + workFraction)
     log.info("Cache fraction: " + cacheFraction)
     log.info("WM per core: " + (workMemory / totalCores).toLong)
+    val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
       sparkContext = sc,
-      broadcastDirectory = repositoryPath / "broadcasts",
+      broadcastDirectory = broadcastDirectory,
       numExecutors = numExecutors,
       numAvailableCores = totalCores,
       workMemoryPerCore = (workMemory / totalCores).toLong,

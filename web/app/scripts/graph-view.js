@@ -428,7 +428,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         } else if (this.gv.hasIcon(label) && label !== 'circle') {
           mapping[label] = label;
           dropNeutral(label);
-        } else {
+        } else if (unassigned.indexOf(label) === -1) {
           unassigned.push(label);
         }
       }

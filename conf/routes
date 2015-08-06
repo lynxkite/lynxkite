@@ -30,7 +30,12 @@ GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonSe
 GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonServer.exitDemoMode
 
 GET  /ajax/getUsers    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
+POST /ajax/changeUserPassword  com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUserPassword
 POST /ajax/createUser  com.lynxanalytics.biggraph.serving.ProductionJsonServer.createUser
+
+GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
+POST /ajax/markFilesDeleted      com.lynxanalytics.biggraph.serving.ProductionJsonServer.markFilesDeleted
+POST /ajax/deleteMarkedFiles     com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteMarkedFiles
 
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.download
@@ -44,6 +49,7 @@ POST /logout           com.lynxanalytics.biggraph.serving.UserProvider.logout
 GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck
 
 GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getGlobalSettings
+POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer.copyEphemeral
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
 GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)

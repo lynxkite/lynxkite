@@ -3,33 +3,48 @@
 
 package com.lynxanalytics.biggraph
 
+import scala.io.Source
+import play.api.libs.json
+
 import com.lynxanalytics.biggraph.graph_api.SymbolPath
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.controllers.Operation
-import com.lynxanalytics.biggraph.controllers.Operations
-import com.lynxanalytics.biggraph.controllers.Project
+import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.frontend_operations.Operations
+import com.lynxanalytics.biggraph.controllers.ProjectFrame
+import com.lynxanalytics.biggraph.controllers.RootProjectState
+import com.lynxanalytics.biggraph.controllers.SubProject
 import com.lynxanalytics.biggraph.controllers.WorkflowOperation
-import com.lynxanalytics.biggraph.graph_api.MetaGraphManager
-import com.lynxanalytics.biggraph.graph_api.Scalar
+import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.serving.ProductionJsonServer._
 import com.lynxanalytics.biggraph.serving.User
-
-import scala.io.Source
 
 object BatchMain {
   private val commentRE = "#.*".r
-  private val scalarArgPtrn = raw"\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)"
-  private val scalarRE = ("GetScalar" + scalarArgPtrn).r
-  private val scalarBenchRE = ("BenchmarkScalar" + scalarArgPtrn).r
+  private val twoArgPtrn = raw"\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)"
+  private val scalarRE = ("GetScalar" + twoArgPtrn).r
+  private val scalarBenchRE = ("BenchmarkScalar" + twoArgPtrn).r
   private val opsRE = raw"Operations\s*\(\s*'([^']+)'\s*\)".r
   private val opsEnd = "EndOperations"
+  private val waitForever = "WaitForever"
+  private val resetTimer = "ResetTimer"
+  private val histogramRE = ("Histogram" + twoArgPtrn).r
 
   def getScalarMeta(
-    projectName: String, scalarName: String, params: Map[String, String])(
+    projectName: String, scalarName: String)(
       implicit metaManager: MetaGraphManager): Scalar[_] = {
-    Project.validateName(projectName)
-    val project = Project.fromName(projectName)
+    val project = SubProject.parsePath(projectName).viewer
     project.scalars(scalarName)
+  }
+
+  def getAttributeMeta(
+    projectName: String, attributeName: String)(
+      implicit metaManager: MetaGraphManager): Attribute[_] = {
+    val project = SubProject.parsePath(projectName).viewer
+    if (project.vertexAttributes.contains(attributeName))
+      project.vertexAttributes(attributeName)
+    else
+      project.edgeAttributes(attributeName)
   }
 
   def main(args: Array[String]) {
@@ -45,7 +60,7 @@ Usage:
 parameter_values is list of items in the format parameter_name:parameter_value
 
 For example:
-./run-kite.sh batch my_script.json seed:42 input_file_name:data1.csv
+./run-kite.sh batch my_script seed:42 input_file_name:data1.csv
 """)
       System.exit(-1)
     }
@@ -61,7 +76,10 @@ For example:
       }
       .toMap
 
+    val drawing = new GraphDrawingController(env)
+    val user = User("Batch User", isAdmin = true)
     val lit = Source.fromFile(scriptFileName).getLines()
+    var timer = System.currentTimeMillis
     while (lit.hasNext) {
       val line = lit.next()
       val trimmed = line.trim
@@ -70,12 +88,12 @@ For example:
         case "" => ()
         case scalarRE(projectNameSpec, scalarName) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          val scalar = getScalarMeta(projectName, scalarName, params)
+          val scalar = getScalarMeta(projectName, scalarName)
           log.info(s"Value of scalar ${scalarName} on project ${projectName}: ${scalar.value}")
           println(s"${projectName}|${scalarName}|${scalar.value}")
         case scalarBenchRE(projectNameSpec, scalarName) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          val scalar = getScalarMeta(projectName, scalarName, params)
+          val scalar = getScalarMeta(projectName, scalarName)
           val rc0 = dataManager.runtimeContext
           val t0 = System.nanoTime
           val (value, duration) = try {
@@ -93,7 +111,6 @@ For example:
             rc0.numAvailableCores,
             rc0.workMemoryPerCore,
             rc0.cacheMemoryPerCore,
-            rc0.bytesPerPartition,
             graph_operations.ImportUtil.cacheLines,
             duration,
             projectName,
@@ -102,19 +119,19 @@ For example:
           println(outRow.mkString(","))
         case opsRE(projectNameSpec) =>
           val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          Project.validateName(projectName)
-          val user = User("Batch User", isAdmin = true)
-          val project = Project.fromName(projectName)
-
-          if (!Operation.projects.contains(project)) {
+          val project = ProjectFrame.fromName(projectName)
+          val opRepo = new Operations(env)
+          if (!project.exists) {
             // Create project if doesn't yet exist.
             project.writeACL = user.email
             project.readACL = user.email
-            project.notes = s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"
-            project.checkpointAfter("")
+            project.initialize
+            opRepo.apply(
+              user,
+              project.subproject,
+              Operations.addNotesOperation(
+                s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
           }
-
-          val context = Operation.Context(user, project)
 
           var opJson = ""
           var line = ""
@@ -124,14 +141,27 @@ For example:
             line = lit.next
           }
 
-          val opRepo = new Operations(env)
-
-          for (step <- WorkflowOperation.workflowSteps(opJson, params, context)) {
-            val op = opRepo.operationOnSubproject(context.project, step, context.user)
-            project.checkpoint(op.summary(step.op.parameters), step) {
-              op.validateAndApply(step.op.parameters)
-            }
+          for (step <- WorkflowOperation.workflowSteps(opJson, params)) {
+            val sp = SubProject(project, step.path)
+            opRepo.apply(user, sp, step.op)
           }
+        case histogramRE(project, attr) =>
+          val req = HistogramSpec(
+            attributeId = getAttributeMeta(project, attr).gUID.toString,
+            vertexFilters = Seq(),
+            numBuckets = 10,
+            axisOptions = AxisOptions(logarithmic = false))
+          val res = drawing.getHistogram(user, req)
+          val j = json.Json.toJson(res).toString
+          log.info(s"Histogram for $attr on project $project: $j")
+          println(s"$project|$attr|$j")
+        case `waitForever` =>
+          println("Waiting indefinitely...")
+          this.synchronized { this.wait() }
+        case `resetTimer` =>
+          val t = System.currentTimeMillis
+          println(f"Time elapsed: ${0.001 * (t - timer)}%.3f s")
+          timer = t
         case _ =>
           System.err.println(s"Cannot parse line: ${line}")
           System.exit(1)

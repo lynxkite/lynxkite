@@ -26,7 +26,7 @@ case class CreateVertexSet(size: Long) extends TypedMetaGraphOp[NoInput, Output]
     // NumericRanges are special-cased in parallelize so that only the range bounds are transmitted
     // for each partition.
     // https://github.com/apache/spark/blob/v1.3.0/core/src/main/scala/org/apache/spark/rdd/ParallelCollectionRDD.scala#L142
-    val partitioner = rc.partitionerForNBytes(size * 8)
+    val partitioner = rc.partitionerForNRows(size)
     val ordinals = rc.sparkContext.parallelize(0L until size, partitioner.numPartitions)
     val attr = ordinals.randomNumbered(partitioner)
     output(o.vs, attr.mapValues(_ => ()))
