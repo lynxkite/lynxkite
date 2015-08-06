@@ -9,7 +9,7 @@ import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.CommonProjectState
-import com.lynxanalytics.biggraph.controllers.ObsolateProject
+import com.lynxanalytics.biggraph.controllers.ObsoleteProject
 import com.lynxanalytics.biggraph.controllers.RootProjectState
 import com.lynxanalytics.biggraph.controllers.SegmentationState
 
@@ -211,7 +211,7 @@ object MetaRepositoryManager {
       val v1TagRoot = TagRoot.temporaryRoot
       v1TagRoot.setTags(guidsFixedTags)
       mm.setTag(versionTag, "2")
-      ObsolateProject.migrateV1ToV2(v1TagRoot, mm)
+      ObsoleteProject.migrateV1ToV2(v1TagRoot, mm)
     } else {
       assert(false, "Unknown tags version $version")
     }
