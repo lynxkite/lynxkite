@@ -6,7 +6,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
-import com.lynxanalytics.biggraph.graph_api.io.EntityIO
+import com.lynxanalytics.biggraph.graph_api.io.{ DataRoot, EntityIO }
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
@@ -55,7 +55,7 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  private val dataRoot = {
+  private val dataRoot: DataRoot = {
     val mainRoot = new io.SingleDataRoot(repositoryPath)
     ephemeralPath.map { ephemeralPath =>
       val ephemeralRoot = new io.SingleDataRoot(ephemeralPath)
@@ -63,11 +63,12 @@ class DataManager(sc: spark.SparkContext,
     }.getOrElse(mainRoot)
   }
 
-  private def hasEntityOnDisk(eio: io.EntityIO): Boolean = {
+  private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean = {
+    val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
     assert(!hasEntity(eio.entity), s"${eio}")
-    (eio.entity.source.operation.isHeavy || eio.entity.isInstanceOf[Scalar[_]]) &&
+    (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
@@ -76,11 +77,12 @@ class DataManager(sc: spark.SparkContext,
   private def hasEntity(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
   // For edge bundles and attributes we need to load the base vertex set first
-  private def load(entity: io.EntityIO): Future[EntityData] = {
+  private def load(entity: MetaGraphEntity): Future[EntityData] = {
+    val eio = entityIO(entity)
     log.info(s"PERF Found entity $entity on disk")
-    val vsOpt: Option[VertexSet] = entity.correspondingVertexSet
+    val vsOpt: Option[VertexSet] = eio.correspondingVertexSet
     val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(Future.successful(None))
-    baseFuture.map(bf => entity.read(bf))
+    baseFuture.map(bf => eio.read(bf))
   }
 
   private def set(entity: MetaGraphEntity, data: Future[EntityData]) = synchronized {
@@ -175,26 +177,24 @@ class DataManager(sc: spark.SparkContext,
   }
 
   def isCalculated(entity: MetaGraphEntity): Boolean =
-    hasEntity(entity) || hasEntityOnDisk(entityIO(entity))
+    hasEntity(entity) || hasEntityOnDisk(entity)
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {
-      val eio = entityIO(entity)
-      if (hasEntityOnDisk(eio)) {
+      if (hasEntityOnDisk(entity)) {
         // If on disk already, we just load it.
-        set(entity, load(eio))
+        set(entity, load(entity))
       } else {
         assert(computationAllowed, "DEMO MODE, you cannot start new computations")
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
         val instanceFuture = getInstanceFuture(instance)
         for (output <- instance.outputs.all.values) {
-          val outputIO = entityIO(output)
           set(
             output,
             // And the entity will have to wait until its full completion (including saves).
             if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
-              instanceFuture.flatMap(_ => load(outputIO))
+              instanceFuture.flatMap(_ => load(output))
             } else {
               instanceFuture.map(_(output.gUID))
             })

@@ -195,7 +195,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       .asSortedRDD(p)
   }
 
-  // Saves a Long-keyed SortedRDD.
+  // Saves a Long-keyed SortedRDD, and returns the number of lines written
   def saveEntityRDD[T](data: SortedRDD[Long, T]): Long = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
