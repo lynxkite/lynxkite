@@ -147,8 +147,14 @@ abstract class PartitionableDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   }
 
   private def writeMetadata(metaData: EntityMetadata) = {
-    val j = json.Json.toJson(metaData)
-    metaFile.forWriting.createFromStrings(json.Json.prettyPrint(j))
+    def doWrite = {
+      val j = json.Json.toJson(metaData)
+      metaFile.forWriting.createFromStrings(json.Json.prettyPrint(j))
+    }
+    if (metaFile.forWriting.exists) {
+      val oldMetaData = readMetadata
+      if (oldMetaData != metaData) doWrite
+    } else doWrite
   }
 
   private def computeAvailablePartitions = {
