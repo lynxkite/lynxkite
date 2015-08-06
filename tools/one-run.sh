@@ -3,14 +3,15 @@
 # Simple script to do an independent Kite test run on EC2 for benchmarking purposes.
 # We will run Kite using a clean meta and data directory.
 #
-# The user is expected to export environment variables to controll the details of the run. In
+# The user is expected to export environment variables to control the details of the run. In
 # additional to optionally changing Kite configuration via standard env variables, one needs to
 # at least set up the following:
 #   NUM_CORES_PER_EXECUTOR,EXECUTOR_MEMORY,GLOB
 #
 # GLOB is a glob specifying the csv files we should import as part of the test.
 
-RANDOM_ID=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1`
+RANDOM_ID=$(python -c \
+  'import random, string; print "".join(random.choice(string.letters) for i in range(8))')
 
 set -ueo pipefail
 
