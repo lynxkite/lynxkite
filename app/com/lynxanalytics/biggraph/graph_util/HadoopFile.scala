@@ -101,6 +101,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     try r.readLine finally r.close()
   }
   def delete() = fs.delete(path, true)
+  def deleteIfExists() = !exists() || delete()
   def renameTo(fn: HadoopFile) = fs.rename(path, fn.path)
   // globStatus() returns null instead of an empty array when there are no matches.
   private def globStatus = Option(fs.globStatus(path)).getOrElse(Array())
@@ -193,11 +194,13 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       .asSortedRDD(p)
   }
 
-  // Saves a Long-keyed SortedRDD.
-  def saveEntityRDD[T](data: SortedRDD[Long, T]): Unit = {
+  // Saves a Long-keyed SortedRDD, and returns the number of lines written
+  def saveEntityRDD[T](data: SortedRDD[Long, T]): Long = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
+    val lines = data.context.accumulator[Long](0L, "Line count")
     val hadoopData = data.map { x =>
+      lines += 1
       hadoop.io.NullWritable.get() ->
         new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(x))
     }
@@ -213,6 +216,7 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       outputFormatClass =
         classOf[SequenceFileOutputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
+    lines.value
   }
 
   def +(suffix: String): HadoopFile = {
