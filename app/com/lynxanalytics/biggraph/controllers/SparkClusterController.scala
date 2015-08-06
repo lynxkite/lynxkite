@@ -41,14 +41,16 @@ class SparkListener extends spark.scheduler.SparkListener {
   override def onStageCompleted(
     stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
     val id = stageCompleted.stageInfo.stageId
-    val stage = activeStages(id)
-    activeStages -= id
-    stage.failed = stageCompleted.stageInfo.failureReason.nonEmpty
-    pastStages.enqueue(stage)
-    while (pastStages.size > 10) {
-      pastStages.dequeue()
+    if (activeStages.contains(id)) {
+      val stage = activeStages(id)
+      activeStages -= id
+      stage.failed = stageCompleted.stageInfo.failureReason.nonEmpty
+      pastStages.enqueue(stage)
+      while (pastStages.size > 10) {
+        pastStages.dequeue()
+      }
+      send()
     }
-    send()
   }
 
   override def onTaskEnd(taskEnd: spark.scheduler.SparkListenerTaskEnd): Unit = synchronized {
@@ -72,8 +74,10 @@ class SparkListener extends spark.scheduler.SparkListener {
     val hash = stage.details.hashCode
     val size = stage.numTasks
     val time = stage.submissionTime.getOrElse(System.currentTimeMillis)
-    activeStages += id -> StageInfo(id, hash, size, lastTaskTime = time)
-    send()
+    if (!stage.details.contains("checkSparkOperational")) { // Ignore health checks.
+      activeStages += id -> StageInfo(id, hash, size, lastTaskTime = time)
+      send()
+    }
   }
 
   private def send(): Unit = synchronized {
