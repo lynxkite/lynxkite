@@ -33,6 +33,10 @@ angular
         templateUrl: 'views/login.html',
         controller: 'LoginCtrl',
       })
+      .when('/changepassword', {
+        templateUrl: 'views/changepassword.html',
+        controller: 'ChangePasswordCtrl',
+      })
       .when('/users', {
         templateUrl: 'views/users.html',
         controller: 'UsersCtrl',
