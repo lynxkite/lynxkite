@@ -117,7 +117,9 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
       if (entityLocation.availablePartitions.contains(pn)) entityLocation.availablePartitions(pn)
       else repartitionTo(entityLocation, pn)
 
-    finalRead(file, parent)
+    val dataRead = finalRead(file, parent)
+    assert(dataRead.rdd.partitions.size == pn)
+    dataRead
   }
 
   def write(data: EntityData): Unit = {
@@ -167,6 +169,9 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     resultList.toMap
   }
 
+  // This method performs the actual reading of the rdddata, from a path/
+  // The parent VertexSetData is given for EdgeBundleData and AttributeData[T] so that
+  // the corresponding data will be co-located.
   protected def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): DT
 
   protected def loadRDD(path: HadoopFile): SortedRDD[Long, _]
@@ -232,7 +237,8 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
     path.loadEntityRDD[Unit](sc)
   }
 
-  def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): VertexSetData = {
+  def finalRead(path: HadoopFile, parent: Option[VertexSetData]): VertexSetData = {
+    assert(parent == None, s"finalRead for $entity should not take a parent option")
     new VertexSetData(entity, loadRDD(path))
   }
 }
