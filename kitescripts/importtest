@@ -18,15 +18,14 @@ Operations('loadrandom')
   {
     "project": "!project",
     "op": {
-      "id": "Aggregate-vertex-attribute-globally",
+      "id": "Aggregate-edge-attribute-globally",
       "parameters": {
-        "aggregate-id": "count",
-        "prefix": "",
-        "aggregate-stringID": ""
+        "aggregate-weight": "count",
+        "prefix": ""
       }
     }
   }
 ]
 EndOperations
 
-BenchmarkScalar('loadrandom', 'id_count')
+BenchmarkScalar('loadrandom', 'weight_count')
