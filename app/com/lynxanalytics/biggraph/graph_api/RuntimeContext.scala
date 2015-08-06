@@ -12,6 +12,10 @@ case class Broadcast[T](filename: HadoopFile) {
   def get: T = FileBasedObjectCache.get[T](filename)
 }
 
+object RuntimeContext {
+  def getVerticesPerPartition: Int =
+    System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
+}
 case class RuntimeContext(sparkContext: spark.SparkContext,
                           broadcastDirectory: HadoopFile,
                           numExecutors: Int,
@@ -21,8 +25,7 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           workMemoryPerCore: Long,
                           // Memory per core available for caching.
                           cacheMemoryPerCore: Long) {
-  private lazy val verticesPerPartition =
-    System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
+  val verticesPerPartition = RuntimeContext.getVerticesPerPartition
   // A suitable partitioner for an RDD of N rows.
   def partitionerForNRows(n: Long): spark.Partitioner =
     new spark.HashPartitioner((n / verticesPerPartition).ceil.toInt max 1)
