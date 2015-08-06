@@ -7,11 +7,16 @@ Please add changes to "master". When releasing a version add a new header for th
 ### master
 
  - Reorganized operation categories. We hope you find them more logical.
+ - The _Batch processing API_ is now ready for use. It allows you to run a sequence of operations
+   from the command line. For more details see the _Batch processing API_ section in the manual.
  - Richer progress indicator.
  - LynxKite on S3 will now always use ephemeral HDFS to store data. This data is lost if you `stop`
    or `destroy` the cluster. Use the new `s3copy` command if you want to save the data to S3.
    (The data does not have to be restored from S3 to HDFS. It will be read directly from S3.)
    This also means a significant performance improvements for S3 clusters.
+ - New operation _Metagraph_ is useful for debugging and perhaps also for demos.
+ - Added an experimental tool for cleaning up old data. It is accessible as `/#/cleaner`.
+ - A large number of stability and performance improvements.
 
 ### 1.4.4
 
