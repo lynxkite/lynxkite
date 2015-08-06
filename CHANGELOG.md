@@ -6,6 +6,9 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Kite configuration setting YARN_NUM_EXECUTORS is replaced by the more general NUM_EXECUTORS
+   which applies to the standalone spark cluster setup as well.
+
 ### 1.4.3
 
  - History editing improvements. Operations with problems (such as importing a file that no
