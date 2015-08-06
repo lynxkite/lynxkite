@@ -345,6 +345,9 @@ object ProductionJsonServer extends JsonServer {
   def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
 
   def getGlobalSettings = jsonPublicGet(GlobalSettings(hasAuth = productionMode))
+
+  val copyController = new CopyController(BigGraphProductionEnvironment)
+  def copyEphemeral = jsonPost(copyController.copyEphemeral)
 }
 
 // Throw FlyingResult anywhere to generate non-200 HTTP responses.
