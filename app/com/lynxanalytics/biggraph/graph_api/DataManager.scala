@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
+import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
@@ -130,7 +131,7 @@ class DataManager(sc: spark.SparkContext,
     // Mark the operation as complete. Entities may not be loaded from incomplete operations.
     // The reason for this is that an operation may give different results if the number of
     // partitions is different. So for consistency, all outputs must be from the same run.
-    (dataRoot / io.OperationsDir / instance.gUID.toString / io.Success).forWriting.createFromStrings("")
+    (EntityIO.operationPath(dataRoot, instance) / io.Success).forWriting.createFromStrings("")
   }
 
   private def validateOutput(instance: MetaGraphOperationInstance,
