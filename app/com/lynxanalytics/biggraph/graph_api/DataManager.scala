@@ -172,13 +172,8 @@ class DataManager(sc: spark.SparkContext,
     instanceOutputCache(gUID)
   }
 
-  def isCalculated(entity: MetaGraphEntity): Boolean = {
-    if (hasEntity(entity)) true
-    else {
-      val eio = entityIO(entity)
-      hasEntityOnDisk(eio)
-    }
-  }
+  def isCalculated(entity: MetaGraphEntity): Boolean =
+    hasEntity(entity) || hasEntityOnDisk(entityIO(entity))
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!hasEntity(entity)) {
