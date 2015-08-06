@@ -45,24 +45,22 @@ class CleanerController(environment: BigGraphEnvironment) {
   private val methods = List(
     Method(
       "notMetaGraphContents",
-      "Files which do not exist in the meta-graph",
-      """Truly orphan files. These are created e.g. when the kite meta directory
-      is deleted. Deleting these should not have any side effects.""",
+      "Entities which do not exist in the meta-graph",
+      "Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory " +
+        "is deleted or during a Kite version upgrade. Deleting these should not have any side " +
+        "effects.",
       metaGraphContents),
     Method(
       "notReferredFromProjectTransitively",
-      "Files not associated with any project",
-      """Keep entities (scalars, operations) directly referred to from the actual
-      state of a project and all ancestor entities of the above (that is entities
-      that have a path to the directly referenced entities in the metagraph).""",
+      "Entities not associated with any project",
+      "We consider an entity associated with a project if it's either directly referred to from " +
+        "the project or it is used as an input to calculate another assoicated entity",
       transitivelyReferredFromProject),
     Method(
       "notReferredFromProject",
-      "Files not associated with the current state of any project",
-      """Everything except the immediate dependencies of the existing projects.
-      Deleting these may cause recalculations or errors when using undo or editing
-      the project history. It can cause re-imports which may lead to unexpected
-      data changes or errors.""",
+      "Entities not referenced by any project",
+      "All entities except those that are vertex sets, edge bundles, attributes or scalars of" +
+        "a current project or segmentation",
       referredFromProject))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
