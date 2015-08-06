@@ -31,30 +31,32 @@ class CopyController(environment: BigGraphEnvironment) {
 
   def copyEphemeral(user: serving.User, req: serving.Empty): Unit = {
     val dm = environment.dataManager
-    for (ephemeralPath <- dm.ephemeralPath) {
-      log.info(s"Listing contents of $ephemeralPath...")
-      val srcFiles = lsRec(ephemeralPath)
-      val copies = srcFiles.map { src =>
-        val relative = {
-          assert(src.symbolicName.startsWith(ephemeralPath.symbolicName),
-            s"$src is not in $ephemeralPath")
-          src.symbolicName.drop(ephemeralPath.symbolicName.size)
+    dm.synchronized {
+      for (ephemeralPath <- dm.ephemeralPath) {
+        log.info(s"Listing contents of $ephemeralPath...")
+        val srcFiles = lsRec(ephemeralPath)
+        val copies = srcFiles.map { src =>
+          val relative = {
+            assert(src.symbolicName.startsWith(ephemeralPath.symbolicName),
+              s"$src is not in $ephemeralPath")
+            src.symbolicName.drop(ephemeralPath.symbolicName.size)
+          }
+          val dst = dm.repositoryPath + relative
+          src -> dst
         }
-        val dst = dm.repositoryPath + relative
-        src -> dst
+        log.info(s"Copying ${copies.size} files from $ephemeralPath to ${dm.repositoryPath}...")
+        val rc = dm.runtimeContext
+        val rdd = rc.sparkContext.parallelize(copies, rc.numAvailableCores)
+        rdd.foreach {
+          case (src, dst) =>
+            hadoop.fs.FileUtil.copy(
+              src.fs, src.path,
+              dst.fs, dst.path,
+              /* deleteSource = */ false, /* overwrite = */ true,
+              dst.hadoopConfiguration)
+        }
+        log.info(s"Copied ${copies.size} files.")
       }
-      log.info(s"Copying ${copies.size} files from $ephemeralPath to ${dm.repositoryPath}...")
-      val rc = dm.runtimeContext
-      val rdd = rc.sparkContext.parallelize(copies, rc.numAvailableCores)
-      rdd.foreach {
-        case (src, dst) =>
-          hadoop.fs.FileUtil.copy(
-            src.fs, src.path,
-            dst.fs, dst.path,
-            /* deleteSource = */ false, /* overwrite = */ true,
-            dst.hadoopConfiguration)
-      }
-      log.info(s"Copied ${copies.size} files.")
     }
   }
 }
