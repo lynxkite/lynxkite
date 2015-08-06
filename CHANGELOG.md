@@ -14,6 +14,7 @@ Please add changes to "master". When releasing a version add a new header for th
    or `destroy` the cluster. Use the new `s3copy` command if you want to save the data to S3.
    (The data does not have to be restored from S3 to HDFS. It will be read directly from S3.)
    This also means a significant performance improvements for S3 clusters.
+ - User passwords can now be changed.
  - New operation _Metagraph_ is useful for debugging and perhaps also for demos.
  - Added an experimental tool for cleaning up old data. It is accessible as `/#/cleaner`.
  - A large number of stability and performance improvements.
