@@ -1076,7 +1076,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
       val name = params("output")
-      s"Derived vertex attribute ($name)"
+      s"Derived edge attribute ($name)"
     }
     def apply(params: Map[String, String]) = {
       val expr = params("expr")
