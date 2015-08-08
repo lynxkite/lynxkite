@@ -136,7 +136,8 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val partitionsToCreate =
       partitionedConfig.filterNot(_._2 == EntityDirStatus.NONEXISTENT)
         .keys.toSet ++ Set(numPartitions)
-    val (path, genesisVertexSetData, genesisVertexSet) = createMultiPartitionedFileStructure(partitionsToCreate.toSeq)
+    val (path, genesisVertexSetData, genesisVertexSet) =
+      createMultiPartitionedFileStructure(partitionsToCreate.toSeq)
     val gUID = genesisVertexSetData.entity.gUID.toString
     val partitionedPath = path.get / io.PartitionedDir / gUID
     val legacyPath = path.get / io.EntitiesDir / gUID
