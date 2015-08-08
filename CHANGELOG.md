@@ -19,6 +19,8 @@ Please add changes to "master". When releasing a version add a new header for th
  - User passwords can now be changed.
  - New operation _Metagraph_ is useful for debugging and perhaps also for demos.
  - Added an experimental tool for cleaning up old data. It is accessible as `/#/cleaner`.
+ - The title and tagline on the splash page can be customized through the `KITE_TITLE` and
+   `KITE_TAGLINE` variables in `.kiterc`.
  - A large number of stability and performance improvements.
 
 ### 1.4.4
