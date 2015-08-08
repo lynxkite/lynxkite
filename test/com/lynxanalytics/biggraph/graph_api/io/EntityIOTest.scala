@@ -305,10 +305,4 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     assert(pfiles == Set(io.Metadata, "1", "8"))
   }
 
-  test("We're safe against missing metadata") {
-    val es = EntityScenario(Map(
-      1 -> EntityDirStatus.VALID),
-      metaPresent = false)
-    assert(es.executionCounter == 1)
-  }
 }
