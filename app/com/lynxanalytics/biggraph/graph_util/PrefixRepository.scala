@@ -100,6 +100,8 @@ object PrefixRepository {
     prefixDef match {
       case pattern(prefixSymbolNoDollar, path) =>
         prefixSymbolNoDollar -> path
+      case _ =>
+        throw new AssertionError(s"Could not parse $prefixDef")
     }
   }
 
