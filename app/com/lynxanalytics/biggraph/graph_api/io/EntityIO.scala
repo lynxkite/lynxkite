@@ -17,6 +17,25 @@ case class IOContext(dataRoot: DataRoot, sparkContext: spark.SparkContext)
 case class EntityMetadata(lines: Long)
 
 object EntityIO {
+  val defaultVerticesPerPartition = 1000000
+  val defaultTolerance = 2.0
+
+  def setVerticesPerPartition(verticesPerPartition: Int): Unit = {
+    System.setProperty("biggraph.vertices.per.partition", verticesPerPartition.toString)
+  }
+  def getVerticesPerPartition: Int = {
+    System.getProperty("biggraph.vertices.per.partition",
+      EntityIO.defaultVerticesPerPartition.toString).toInt
+  }
+
+  def setTolerance(tolerance: Double): Unit = {
+    System.setProperty("biggraph.vertices.partition.tolerance", tolerance.toString)
+  }
+  def getTolerance: Double = {
+    System.getProperty("biggraph.vertices.partition.tolerance",
+      EntityIO.defaultTolerance.toString).toDouble
+  }
+
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
   def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
     dataRoot / io.OperationsDir / instance.gUID.toString
@@ -120,7 +139,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
       else repartitionTo(entityLocation, pn)
 
     val dataRead = finalRead(file, parent)
-    assert(dataRead.rdd.partitions.size == pn)
+    assert(dataRead.rdd.partitions.size == pn, s"finalRead mismatch: ${dataRead.rdd.partitions.size} != $pn")
     dataRead
   }
 
@@ -208,13 +227,13 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   private def desiredPartitions(entityLocation: EntityLocationSnapshot) = {
     val v = entityLocation.numVertices
     val vertices = if (v > 0) v else 1
-    Math.ceil(vertices.toDouble / System.getProperty("biggraph.vertices.per.partition", "1000000").toInt).toInt
+    Math.ceil(vertices.toDouble / EntityIO.getVerticesPerPartition).toInt
   }
 
   private def selectPartitionNumber(entityLocation: EntityLocationSnapshot): Int = {
     val desired = desiredPartitions(entityLocation)
     val ratioSorter = RatioSorter(entityLocation.availablePartitions.map(_._1).toSeq, desired)
-    val tolerance = System.getProperty("biggraph.vertices.partition.tolerance", "2.0").toDouble
+    val tolerance = EntityIO.getTolerance
     ratioSorter.getBestWithinTolerance(tolerance).getOrElse(desired)
   }
 
