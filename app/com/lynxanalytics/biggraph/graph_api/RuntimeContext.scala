@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.spark
 import scala.util.Random
 
+import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
@@ -19,8 +20,8 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.
                           workMemoryPerCore: Long) {
-  private lazy val verticesPerPartition =
-    System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
+  private lazy val verticesPerPartition = EntityIO.getVerticesPerPartition
+
   // A suitable partitioner for an RDD of N rows.
   def partitionerForNRows(n: Long): spark.Partitioner =
     new spark.HashPartitioner((n / verticesPerPartition).ceil.toInt max 1)
