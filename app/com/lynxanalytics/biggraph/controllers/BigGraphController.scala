@@ -85,12 +85,12 @@ case class FEAttribute(
 case class FEProjectListElement(
   name: String,
   notes: String = "",
-  vertexCount: Option[FEAttribute], // Whether the project has vertices defined.
-  edgeCount: Option[FEAttribute]) // Whether the project has edges defined.
+  vertexCount: Option[FEAttribute] = None, // Whether the project has vertices defined.
+  edgeCount: Option[FEAttribute] = None, // Whether the project has edges defined.
+  error: Option[String] = None) // If set the project could not be opened.
 
 case class FEProject(
   name: String,
-  error: String = "", // If this is non-empty the project is broken and cannot be opened.
   undoOp: String = "", // Name of last operation. Empty if there is nothing to undo.
   redoOp: String = "", // Name of next operation. Empty if there is nothing to redo.
   readACL: String = "",
