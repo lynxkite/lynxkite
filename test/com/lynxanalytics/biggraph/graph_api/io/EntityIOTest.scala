@@ -32,18 +32,6 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     = Value
   }
 
-  def lsDebug(hadoopFile: HadoopFile, pattern: String = ""): Unit = {
-    lsDebugRec(hadoopFile, pattern)
-    println("")
-  }
-
-  def lsDebugRec(hadoopFile: HadoopFile, pattern: String): Unit = {
-    if (hadoopFile.resolvedName.contains(pattern)) println(hadoopFile)
-    val l = (hadoopFile / "*").list
-    def fun(x: HadoopFile) = lsDebugRec(x, pattern)
-    l.foreach(fun)
-  }
-
   def cp(src: HadoopFile, dst: HadoopFile) = {
     assert(src.exists)
     val s = src.path
@@ -142,8 +130,6 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val legacyPath = path.get / io.EntitiesDir / gUID
     val onePartitionedPath = partitionedPath / "1"
 
-    //    lsDebug(path.get, gUID)
-
     // Setup legacy path first
     // It has one partition, so we initialize it from onePartitionedPath, ...
     assert(onePartitionedPath.exists) // which surely exists
@@ -152,8 +138,6 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       cp(onePartitionedPath, legacyPath)
       modifyEntityDir(legacyPath, legacyConfig)
     }
-
-    //    lsDebug(path.get, gUID)
 
     // Now we can delete any superfluous directories, even
     // onePartitionedPath, if its creation was not requested explicitly.
@@ -164,15 +148,11 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       }
     }
 
-    //    lsDebug(path.get, gUID)
-
     // Configure the requested partition directories:
     for ((partitionNum, task) <- partitionedConfig) {
       val entityDir = partitionedPath / partitionNum.toString
       modifyEntityDir(entityDir, task)
     }
-
-    //    lsDebug(path.get, gUID)
 
     // Deal with metafile:
     if (!metaPresent || partitionedConfig.filterNot(_._2 == EntityDirStatus.NONEXISTENT).isEmpty) {
@@ -185,16 +165,12 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       partitionedPath.deleteIfExists()
     }
 
-    //    lsDebug(path.get, gUID)
-
     // Operation exist scenario:
     if (!opExists) {
       val opGUID = genesisVertexSetData.entity.source.gUID.toString
       val opPath = path.get / io.OperationsDir / opGUID
       opPath.delete()
     }
-
-    //    lsDebug(path.get, gUID)
 
     val (operation, dataManager, vertexSetData, vertices) =
       withRestoreGlobals(
