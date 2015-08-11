@@ -212,9 +212,10 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   private def legacyRDD = loadRDD(legacyPath.forReading)
 
   private def desiredPartitions(entityLocation: EntityLocationSnapshot) = {
-    val v = entityLocation.numVertices
-    val vertices = if (v > 0) v else 1
-    Math.ceil(vertices.toDouble / EntityIO.verticesPerPartition).toInt
+    val vertices = entityLocation.numVertices
+    val p = Math.ceil(vertices.toDouble / EntityIO.verticesPerPartition).toInt
+    // Always have at least 1 partition.
+    p max 1
   }
 
   private def selectPartitionNumber(entityLocation: EntityLocationSnapshot): Int = {
