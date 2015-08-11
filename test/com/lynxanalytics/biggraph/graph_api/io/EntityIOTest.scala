@@ -55,7 +55,6 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
   // A data repository with a vertex set partitioned in multiple ways.
   class MultiPartitionedFileStructure(partitions: Seq[Int]) {
-    assert(partitions.nonEmpty)
     import Scripting._
     implicit val metaManager = cleanMetaManager
     val operation = EnhancedExampleGraph()
@@ -99,9 +98,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
                             numPartitions: Int = 1,
                             parentPartitionDir: Int = 1,
                             tolerance: Double = 2.0) {
-    val partitionsToCreate =
-      partitionedConfig.filterNot(_._2 == EntityDirStatus.NONEXISTENT)
-        .keys.toSet ++ Set(numPartitions)
+    val partitionsToCreate = partitionedConfig.keySet + 1 // Always create 1-partition version.
     val mpfs = new MultiPartitionedFileStructure(partitionsToCreate.toSeq)
     val repo = mpfs.repo
     val gUID = mpfs.vertices.gUID.toString
