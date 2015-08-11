@@ -75,7 +75,8 @@
           </form>
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
-        <label class="btn btn-{{ showSettings ? 'primary' : 'default' }}" ng-click="showSettings = !showSettings"
+        <label class="btn btn-{{ side.showSettings ? 'primary' : 'default' }}"
+          ng-click="side.showSettings = !side.showSettings"
           ng-if="!side.isSegmentation()"
           tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom"
           ng-show="util.globals.hasAuth">
@@ -125,7 +126,7 @@
     <div class="list-group">
 
       <!-- Project settings. -->
-      <div class="list-group-item project-settings" ng-if="showSettings">
+      <div class="list-group-item project-settings" ng-if="side.showSettings">
         <project-settings side="side"></project-settings>
       </div>
 
