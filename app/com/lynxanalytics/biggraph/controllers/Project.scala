@@ -120,22 +120,11 @@ sealed trait ProjectViewer {
       feScalar("edge_count"))
   }
 
-  def toFE(projectName: String): FEProject = {
-    Try(unsafeToFE(projectName)) match {
-      case Success(fe) => fe
-      case Failure(ex) => FEProject(
-        name = projectName,
-        error = ex.getMessage
-      )
-    }
-  }
-
   // Returns the FE attribute representing the seq of members for
   // each segment in a segmentation. None in root projects.
   protected def getFEMembers: Option[FEAttribute]
 
-  // May raise an exception.
-  private def unsafeToFE(projectName: String): FEProject = {
+  def toFE(projectName: String): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(things: Iterable[(String, TypedEntity[_])]) = {
@@ -702,7 +691,17 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   def viewer = new RootProjectViewer(currentState)
 
-  def toListElementFE = viewer.toListElementFE(projectName)
+  def toListElementFE = {
+    Try {
+      viewer.toListElementFE(projectName)
+    } match {
+      case Success(fe) => fe
+      case Failure(ex) => FEProjectListElement(
+        name = projectName,
+        error = Some(ex.getMessage)
+      )
+    }
+  }
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
