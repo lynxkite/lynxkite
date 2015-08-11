@@ -19,7 +19,9 @@ case class EntityMetadata(lines: Long)
 object EntityIO {
   // These "constants" are mutable for the sake of testing.
   var verticesPerPartition =
-    System.getProperty("biggraph.vertices.per.partition", "1000000").toInt
+    scala.util.Properties.envOrElse(
+      "KITE_VERTICES_PER_PARTITION",
+      System.getProperty("biggraph.vertices.per.partition", "1000000")).toInt
   var tolerance =
     System.getProperty("biggraph.vertices.partition.tolerance", "2.0").toDouble
 

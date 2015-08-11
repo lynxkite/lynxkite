@@ -42,12 +42,14 @@ export KITE_USERS_FILE=$HOME/kite_users
 # Needed if you want to run against yarn.
 # The directory with the YARN configuration.
 # export YARN_CONF_DIR=/etc/hadoop/...
-# Number of executors.
-# export YARN_NUM_EXECUTORS=2
 
 # Specify how much memory is available for Kite on a single worker machine.
 # Ignored for single machine installs, see KITE_MASTER_MEMORY_MB for that case.
 export EXECUTOR_MEMORY=1g
+
+# Number of executors. For standalone cluster it defaults to as many as possible. For YARN
+# cluster, this options is mandatory.
+# export NUM_EXECUTORS=5
 
 # Number of cores per executor Kite should use. (For a YARN deployment, use this instead of
 # the YARN_CORES_PER_EXECUTOR option that was available in pre-1.2 versions.)

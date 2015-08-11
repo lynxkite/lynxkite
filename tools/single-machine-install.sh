@@ -165,7 +165,7 @@ cd ${LYNXKITE_BASE_TEMP}
 echo "Running lynxkite installer"
 ${INSTALL_SCRIPTS_DIR}/install-kite-${KITE_TOINSTALL}.sh
 KITE_DIST_FOLDER_TEMP=$(ls -d ${LYNXKITE_BASE_TEMP}/kite*)
-LYNXKITE_VERSION=$(cat ${KITE_DIST_FOLDER_TEMP}/version | grep release | awk -F'release ' '{print $2}' | awk -F' ' '{print $1}')
+LYNXKITE_VERSION="${KITE_TOINSTALL}"
 LYNXKITE_BASE="${TARGET_HOME}/lynxkite-${LYNXKITE_VERSION}"
 SPARK_VERSION=$(cat ${KITE_DIST_FOLDER_TEMP}/conf/SPARK_VERSION)
 if [ -e  ${LYNXKITE_BASE} ]; then

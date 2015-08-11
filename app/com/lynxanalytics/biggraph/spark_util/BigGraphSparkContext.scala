@@ -173,6 +173,9 @@ object BigGraphSparkContext {
       // on ext3 with >8 cores, so I think we can enable this for our usecases.
       .set("spark.shuffle.consolidateFiles", "true")
       .set(
+        "spark.executor.cores",
+        scala.util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
+      .set(
         "spark.scheduler.allocation.file",
         scala.util.Properties.envOrElse("KITE_SCHEDULER_POOLS_CONFIG", "conf/scheduler-pools.xml"))
     if (useKryo) {
