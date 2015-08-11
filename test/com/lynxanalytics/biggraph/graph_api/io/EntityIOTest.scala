@@ -54,16 +54,16 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
   val numVerticesInExampleGraph = 8
 
-  def withRestoreGlobals[T](fn: => T, verticesPerPart: Int = 0, tolerance: Double = 0.0): T = {
-    val savedVerticesPerPartition = EntityIO.getVerticesPerPartition
-    val savedTolerance = EntityIO.getTolerance
-    if (verticesPerPart > 0) EntityIO.setVerticesPerPartition(verticesPerPart)
-    if (tolerance > 0.0) EntityIO.setTolerance(tolerance)
+  def withRestoreGlobals[T](verticesPerPartition: Int, tolerance: Double)(fn: => T): T = {
+    val savedVerticesPerPartition = EntityIO.verticesPerPartition
+    val savedTolerance = EntityIO.tolerance
     try {
+      EntityIO.verticesPerPartition = verticesPerPartition
+      EntityIO.tolerance = tolerance
       fn
     } finally {
-      EntityIO.setVerticesPerPartition(savedVerticesPerPartition)
-      EntityIO.setTolerance(savedTolerance)
+      EntityIO.verticesPerPartition = savedVerticesPerPartition
+      EntityIO.tolerance = savedTolerance
     }
   }
 
@@ -89,11 +89,10 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
   def wrapper(partNum: Int, path: Option[HadoopFile]): GenesisDataType = {
     withRestoreGlobals(
-      {
-        createVertexSetData(path)
-      },
       tolerance = 1.0,
-      verticesPerPart = numVerticesInExampleGraph / partNum)
+      verticesPerPartition = numVerticesInExampleGraph / partNum) {
+        createVertexSetData(path)
+      }
   }
 
   def createMultiPartitionedFileStructure(partitions: Seq[Int]): GenesisDataType = {
@@ -198,17 +197,17 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     //    lsDebug(path.get, gUID)
 
     val (operation, dataManager, vertexSetData, vertices) =
-      withRestoreGlobals({
-        val metaManager = cleanMetaManager
-        val operation = EnhancedExampleGraph()
-        val instance = metaManager.apply(operation)
-        val vertices = instance.outputs.vertexSets('vertices)
-        val dataManager = new DataManager(sparkContext, path.get)
-        val vertexSetData = dataManager.get(vertices)
-        (operation, dataManager, vertexSetData, vertices)
-      },
+      withRestoreGlobals(
         tolerance = tolerance,
-        verticesPerPart = numVerticesInExampleGraph / numPartitions)
+        verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
+          val metaManager = cleanMetaManager
+          val operation = EnhancedExampleGraph()
+          val instance = metaManager.apply(operation)
+          val vertices = instance.outputs.vertexSets('vertices)
+          val dataManager = new DataManager(sparkContext, path.get)
+          val vertexSetData = dataManager.get(vertices)
+          (operation, dataManager, vertexSetData, vertices)
+        }
 
     val executionCounter = operation.executionCounter
   }

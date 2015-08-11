@@ -20,11 +20,10 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.
                           workMemoryPerCore: Long) {
-  private lazy val verticesPerPartition = EntityIO.getVerticesPerPartition
 
   // A suitable partitioner for an RDD of N rows.
   def partitionerForNRows(n: Long): spark.Partitioner =
-    new spark.HashPartitioner((n / verticesPerPartition).ceil.toInt max 1)
+    new spark.HashPartitioner((n / EntityIO.verticesPerPartition).ceil.toInt max 1)
   lazy val onePartitionPartitioner: spark.Partitioner =
     new spark.HashPartitioner(1)
 
