@@ -67,6 +67,8 @@ object ImportUtil {
     }
     return splitters(delimiter)(line)
   }
+
+  val cacheLines = scala.util.Properties.envOrElse("CACHE_IN_IMPORT", "true").toBoolean
 }
 
 trait RowInput extends ToJson {
@@ -145,7 +147,7 @@ case class CSV private (file: HadoopFile,
     val partitioner = rc.partitionerForNRows(globLength / rowLength)
     val lines = file.loadTextFile(rc.sparkContext)
     // Only repartition if we need more partitions.
-    val numPartitions = lines.partitions.size max partitioner.numPartitions
+    val numPartitions = partitioner.numPartitions
     log.info(s"Reading $file ($globLength bytes) into $numPartitions partitions.")
     val fullRows = lines
       .filter(_ != header)
@@ -221,7 +223,7 @@ trait ImportCommon {
     input: RowInput,
     requiredFields: Set[String] = Set()): Columns = {
     val numbered = input.lines(rc)
-    numbered.cacheBackingArray()
+    if (ImportUtil.cacheLines) numbered.cacheBackingArray()
     val maxLines = Limitations.maxImportedLines
     if (maxLines >= 0) {
       val numLines = numbered.count
@@ -452,7 +454,7 @@ case class ImportAttributesForExistingVertexSet(input: RowInput, idField: String
       linesByExternalId.sortedJoin(externalIdToInternalId)
         .map { case (external, (line, internal)) => (internal, line) }
         .toSortedRDD(partitioner)
-    linesByInternalId.cacheBackingArray()
+    if (ImportUtil.cacheLines) linesByInternalId.cacheBackingArray()
     for ((field, idx) <- input.fields.zipWithIndex) {
       if (idx != idFieldIdx) {
         output(o.attrs(field), linesByInternalId.mapValues(line => line(idx)))

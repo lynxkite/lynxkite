@@ -19,8 +19,9 @@ case class RuntimeContext(sparkContext: spark.SparkContext,
                           // The number of cores available for computations.
                           numAvailableCores: Int,
                           // Memory per core that can be used for RDD work.
-                          workMemoryPerCore: Long) {
-
+                          workMemoryPerCore: Long,
+                          // Memory per core available for caching.
+                          cacheMemoryPerCore: Long) {
   // A suitable partitioner for an RDD of N rows.
   def partitionerForNRows(n: Long): spark.Partitioner =
     new spark.HashPartitioner((n / EntityIO.verticesPerPartition).ceil.toInt max 1)

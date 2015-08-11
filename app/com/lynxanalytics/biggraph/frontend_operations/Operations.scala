@@ -1047,6 +1047,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
       Param("expr", "Value", defaultValue = "1"))
     def enabled = hasVertexSet
+    override def summary(params: Map[String, String]) = {
+      val name = params("output")
+      s"Derived vertex attribute ($name)"
+    }
     def apply(params: Map[String, String]) = {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
@@ -1070,6 +1074,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
       Param("expr", "Value", defaultValue = "1"))
     def enabled = hasEdgeBundle
+    override def summary(params: Map[String, String]) = {
+      val name = params("output")
+      s"Derived edge attribute ($name)"
+    }
     def apply(params: Map[String, String]) = {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
