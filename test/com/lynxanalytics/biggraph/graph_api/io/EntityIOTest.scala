@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_api.io
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph }
+import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager {
@@ -55,41 +55,21 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     }
   }
 
-  // This type that should come back from where we prepare the
-  // file structure
-  type GenesisDataType = (Option[HadoopFile], // The repositoryPath for the DataManager
-  VertexSetData, // The vertex set data created
-  VertexSet // // Metaset
-  )
-
-  def createVertexSetData(sourcePath: Option[HadoopFile] = None): GenesisDataType = {
-    val metaManager = cleanMetaManager
-    val operation = EnhancedExampleGraph()
-    val instance = metaManager.apply(operation)
-    val vertices = instance.outputs.vertexSets('vertices)
-    val dataManager = sourcePath match {
-      case None => cleanDataManager
-      case x => new DataManager(sparkContext, x.get)
-    }
-    val vertexSetData = dataManager.get(vertices)
-    (Option(dataManager.repositoryPath), vertexSetData, vertices)
-  }
-
-  def wrapper(partNum: Int, path: Option[HadoopFile]): GenesisDataType = {
-    withRestoreGlobals(
-      tolerance = 1.0,
-      verticesPerPartition = numVerticesInExampleGraph / partNum) {
-        createVertexSetData(path)
-      }
-  }
-
-  def createMultiPartitionedFileStructure(partitions: Seq[Int]): GenesisDataType = {
+  class MultiPartitionedFileStructure(partitions: Seq[Int]) {
     assert(partitions.nonEmpty)
-    val (path, vertexSetData, vertices) = wrapper(partitions.head, None)
-    for (v <- partitions.tail) {
-      wrapper(v, path)
+    import Scripting._
+    implicit val metaManager = cleanMetaManager
+    val operation = EnhancedExampleGraph()
+    val vertices = operation().result.vertices
+    val repo = cleanDataManager.repositoryPath
+    for (p <- partitions) {
+      val dataManager = new DataManager(sparkContext, repo)
+      withRestoreGlobals(
+        tolerance = 1.0,
+        verticesPerPartition = numVerticesInExampleGraph / p) {
+          dataManager.get(vertices)
+        }
     }
-    (path, vertexSetData, vertices)
   }
 
   def collectNumericSubdirs(path: HadoopFile) = {
@@ -123,11 +103,11 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val partitionsToCreate =
       partitionedConfig.filterNot(_._2 == EntityDirStatus.NONEXISTENT)
         .keys.toSet ++ Set(numPartitions)
-    val (path, genesisVertexSetData, genesisVertexSet) =
-      createMultiPartitionedFileStructure(partitionsToCreate.toSeq)
-    val gUID = genesisVertexSetData.entity.gUID.toString
-    val partitionedPath = path.get / io.PartitionedDir / gUID
-    val legacyPath = path.get / io.EntitiesDir / gUID
+    val mpfs = new MultiPartitionedFileStructure(partitionsToCreate.toSeq)
+    val repo = mpfs.repo
+    val gUID = mpfs.vertices.gUID.toString
+    val partitionedPath = repo / io.PartitionedDir / gUID
+    val legacyPath = repo / io.EntitiesDir / gUID
     val onePartitionedPath = partitionedPath / "1"
 
     // Setup legacy path first
@@ -167,25 +147,19 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
     // Operation exist scenario:
     if (!opExists) {
-      val opGUID = genesisVertexSetData.entity.source.gUID.toString
-      val opPath = path.get / io.OperationsDir / opGUID
+      val opGUID = mpfs.vertices.source.gUID.toString
+      val opPath = repo / io.OperationsDir / opGUID
       opPath.delete()
     }
 
-    val (operation, dataManager, vertexSetData, vertices) =
-      withRestoreGlobals(
-        tolerance = tolerance,
-        verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
-          val metaManager = cleanMetaManager
-          val operation = EnhancedExampleGraph()
-          val instance = metaManager.apply(operation)
-          val vertices = instance.outputs.vertexSets('vertices)
-          val dataManager = new DataManager(sparkContext, path.get)
-          val vertexSetData = dataManager.get(vertices)
-          (operation, dataManager, vertexSetData, vertices)
-        }
-
-    val executionCounter = operation.executionCounter
+    mpfs.operation.executionCounter = 0
+    withRestoreGlobals(
+      tolerance = tolerance,
+      verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
+        val dataManager = new DataManager(sparkContext, repo)
+        dataManager.get(mpfs.vertices)
+      }
+    val executionCounter = mpfs.operation.executionCounter
   }
 
   test("Meta test: corruption hack works") {
