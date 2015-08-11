@@ -370,7 +370,7 @@ object Implicits {
     }
     // Sorts each partition of the RDD in isolation.
     def toSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
-      toSortedRDD(self.partitioner.get)
+      toSortedRDD(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
     def toSortedRDD(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
       self match {
