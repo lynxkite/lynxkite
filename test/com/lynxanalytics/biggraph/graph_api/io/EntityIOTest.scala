@@ -28,16 +28,14 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val VALID, // Everything is OK
     NOSUCCESS, // The directory is there, but the success file is missing
     NONEXISTENT, // The directory is not there
-    CORRUPT // Everything is there, but we want to make sure that we never read the file
+    CORRUPT // Reading should cause an exception
     = Value
   }
 
   def cp(src: HadoopFile, dst: HadoopFile) = {
-    assert(src.exists)
     val s = src.path
     val d = dst.path
-    // It seems to work locally, and these tests are local
-    src.fs.copyFromLocalFile(false, true, s, d)
+    src.fs.copyFromLocalFile( /* delSrc = */ false, /* overwrite = */ true, s, d)
   }
 
   val numVerticesInExampleGraph = 8
@@ -55,6 +53,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     }
   }
 
+  // A data repository with a vertex set partitioned in multiple ways.
   class MultiPartitionedFileStructure(partitions: Seq[Int]) {
     assert(partitions.nonEmpty)
     import Scripting._
@@ -88,13 +87,13 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
         success.deleteIfExists()
       case EntityDirStatus.CORRUPT =>
         val corrupt = entityDir / "corruption"
-        corrupt.mkdirs() // This makes hadoop raise an exception
+        corrupt.mkdirs() // The unexpected directory will cause the read to fail.
     }
   }
 
   case class EntityScenario(partitionedConfig: Map[Int, EntityDirStatus.Value],
                             legacyConfig: EntityDirStatus.Value = EntityDirStatus.NONEXISTENT,
-                            metaPresent: Boolean = true,
+                            metaExists: Boolean = true,
                             partitionedExists: Boolean = true,
                             opExists: Boolean = true,
                             numPartitions: Int = 1,
@@ -110,10 +109,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val legacyPath = repo / io.EntitiesDir / gUID
     val onePartitionedPath = partitionedPath / "1"
 
-    // Setup legacy path first
-    // It has one partition, so we initialize it from onePartitionedPath, ...
-    assert(onePartitionedPath.exists) // which surely exists
-
+    // Setup legacy path based on onePartitionedPath.
     if (legacyConfig != EntityDirStatus.NONEXISTENT) {
       cp(onePartitionedPath, legacyPath)
       modifyEntityDir(legacyPath, legacyConfig)
@@ -135,7 +131,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     }
 
     // Deal with metafile:
-    if (!metaPresent || partitionedConfig.filterNot(_._2 == EntityDirStatus.NONEXISTENT).isEmpty) {
+    if (!metaExists || partitionedConfig.filterNot(_._2 == EntityDirStatus.NONEXISTENT).isEmpty) {
       val metaFile = partitionedPath / io.Metadata
       metaFile.deleteIfExists()
     }
@@ -145,13 +141,14 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       partitionedPath.deleteIfExists()
     }
 
-    // Operation exist scenario:
+    // Make the source operation unsuccessful if requested.
     if (!opExists) {
       val opGUID = mpfs.vertices.source.gUID.toString
       val opPath = repo / io.OperationsDir / opGUID
       opPath.delete()
     }
 
+    // See what happens when we try to load the vertex set.
     mpfs.operation.executionCounter = 0
     withRestoreGlobals(
       tolerance = tolerance,
@@ -223,7 +220,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
   test("Missing metafile triggers recalculation") {
     val es = EntityScenario(Map(
       1 -> EntityDirStatus.VALID),
-      metaPresent = false)
+      metaExists = false)
     assert(es.executionCounter == 1)
   }
 
