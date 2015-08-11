@@ -264,15 +264,18 @@ object RDDUtils {
     val tops = countsTable
       .top(numTops)(ordering)
       .sorted(ordering)
-    val biggest = tops.last
-    if (biggest._2 > maxValuesPerKey) {
-      val largeKeysMap = largeKeysMapFn(tops.map(_._1))
-      val larges = smallTableLookup(sourceRDD, largeKeysMap)
-      val smalls = joinLookup(
-        sourceRDD.filter { case (key, _) => !largeKeysMap.contains(key) }, lookupTable)
-      (smalls ++ larges).coalesce(sourceRDD.partitions.size)
-    } else {
-      joinLookup(sourceRDD, lookupTable)
+    if (tops.isEmpty) sourceRDD.context.emptyRDD
+    else {
+      val biggest = tops.last
+      if (biggest._2 > maxValuesPerKey) {
+        val largeKeysMap = largeKeysMapFn(tops.map(_._1))
+        val larges = smallTableLookup(sourceRDD, largeKeysMap)
+        val smalls = joinLookup(
+          sourceRDD.filter { case (key, _) => !largeKeysMap.contains(key) }, lookupTable)
+        (smalls ++ larges).coalesce(sourceRDD.partitions.size)
+      } else {
+        joinLookup(sourceRDD, lookupTable)
+      }
     }
   }
 }
