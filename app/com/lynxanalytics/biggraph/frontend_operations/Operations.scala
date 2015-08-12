@@ -1065,6 +1065,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet)
       }
       project.vertexAttributes(params("output")) = result.attr
+      project.vertexAttributeNotes(params("output")) = expr
     }
   })
 

@@ -204,7 +204,7 @@ object ObsoleteProject {
   private def getProjectState(project: ObsoleteProject): CommonProjectState = {
     CommonProjectState(
       vertexSetGUID = Option(project.vertexSet),
-      vertexAttributeGUIDs = project.vertexAttributes.toMap,
+      vertexAttributes = project.vertexAttributes.toMap.mapValues(uuid => UUIDWithNote(uuid, "")),
       edgeBundleGUID = Option(project.edgeBundle),
       edgeAttributeGUIDs = project.edgeAttributes.toMap,
       scalarGUIDs = project.scalars.toMap,

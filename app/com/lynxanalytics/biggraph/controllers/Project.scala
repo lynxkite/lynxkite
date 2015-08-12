@@ -38,10 +38,12 @@ import play.api.libs.json.Json
 import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
+case class UUIDWithNote(uuid: UUID, note: String)
+
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
   vertexSetGUID: Option[UUID],
-  vertexAttributeGUIDs: Map[String, UUID],
+  vertexAttributes: Map[String, UUIDWithNote],
   edgeBundleGUID: Option[UUID],
   edgeAttributeGUIDs: Map[String, UUID],
   scalarGUIDs: Map[String, UUID],
@@ -81,7 +83,9 @@ sealed trait ProjectViewer {
   lazy val vertexSet: VertexSet =
     state.vertexSetGUID.map(manager.vertexSet(_)).getOrElse(null)
   lazy val vertexAttributes: Map[String, Attribute[_]] =
-    state.vertexAttributeGUIDs.mapValues(manager.attribute(_))
+    state.vertexAttributes.mapValues(attr => manager.attribute(attr.uuid))
+  lazy val vertexAttributeNotes: Map[String, String] =
+    state.vertexAttributes.mapValues(_.note)
   lazy val edgeBundle: EdgeBundle =
     state.edgeBundleGUID.map(manager.edgeBundle(_)).getOrElse(null)
   lazy val edgeAttributes: Map[String, Attribute[_]] =
@@ -106,7 +110,7 @@ sealed trait ProjectViewer {
   // Methods for conversion to FE objects.
   private def feScalar(name: String): Option[FEAttribute] = {
     if (scalars.contains(name)) {
-      Some(ProjectViewer.feEntity(scalars(name), name))
+      Some(ProjectViewer.feEntity(scalars(name), name, note = ""))
     } else {
       None
     }
@@ -138,8 +142,12 @@ sealed trait ProjectViewer {
   private def unsafeToFE(projectName: String): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    def feList(things: Iterable[(String, TypedEntity[_])]) = {
-      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feEntity(e, name) }.toList
+    def feList(
+      things: Iterable[(String, TypedEntity[_])],
+      notes: Map[String, String] = Map()) = {
+      things.toSeq.sortBy(_._1).map {
+        case (name, e) => ProjectViewer.feEntity(e, name, notes.getOrElse(name, ""))
+      }.toList
     }
 
     FEProject(
@@ -148,7 +156,7 @@ sealed trait ProjectViewer {
       edgeBundle = eb,
       notes = state.notes,
       scalars = feList(scalars),
-      vertexAttributes = feList(vertexAttributes) ++ getFEMembers,
+      vertexAttributes = feList(vertexAttributes, vertexAttributeNotes) ++ getFEMembers,
       edgeAttributes = feList(edgeAttributes),
       segmentations = segmentationMap
         .toSeq
@@ -163,7 +171,7 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feEntity[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+  def feEntity[T](e: TypedEntity[T], name: String, note: String, isInternal: Boolean = false) = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
@@ -172,6 +180,7 @@ object ProjectViewer {
       e.gUID.toString,
       name,
       e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      note,
       canBucket,
       canFilter,
       isNumeric,
@@ -222,7 +231,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   override protected lazy val getFEMembers: Option[FEAttribute] =
-    Some(ProjectViewer.feEntity(membersAttribute, "#members", isInternal = true))
+    Some(ProjectViewer.feEntity(membersAttribute, "#members", note = "", isInternal = true))
 
   lazy val equivalentUIAttribute = {
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
@@ -260,6 +269,7 @@ object CheckpointRepository {
         "state" -> commonProjectStateToJSon(o.state),
         "belongsToGUID" -> o.belongsToGUID)
   }
+  implicit val fUUIDWithNote = Json.format[UUIDWithNote]
   implicit val fCommonProjectState = Json.format[CommonProjectState]
   implicit val fRootProjectState = Json.format[RootProjectState]
 
@@ -351,6 +361,23 @@ abstract class StateMapHolder[T <: MetaGraphEntity] extends collection.Map[Strin
   def -(key: String) = getMap - key
 }
 
+abstract class StateNoteHolder extends collection.Map[String, String] {
+  protected def getMap: Map[String, String]
+  protected def updateMap(newMap: Map[String, String]): Unit
+
+  def update(name: String, note: String) = {
+    val m = getMap
+    assert(m.contains(name), s"Cannot add note for non-existent name: $name")
+    updateMap(m + (name -> note))
+  }
+
+  // Implementing the map interface
+  def get(key: String) = getMap.get(key)
+  def iterator = getMap.iterator
+  def +[T1 >: String](kv: (String, T1)) = getMap + kv
+  def -(key: String) = getMap - key
+}
+
 // A mutable wrapper around a CommonProjectState. A ProjectEditor can be editing the state
 // of a particular segmentation or a root project. The actual state is always stored and modified
 // on the root level. E.g. if you take a RootProjectEditor, get a particular SegmentationEditor
@@ -408,8 +435,12 @@ sealed trait ProjectEditor {
   def vertexAttributes =
     new StateMapHolder[Attribute[_]] {
       protected def getMap = viewer.vertexAttributes
-      protected def updateMap(newMap: Map[String, UUID]) =
-        state = state.copy(vertexAttributeGUIDs = newMap)
+      protected def updateMap(newMap: Map[String, UUID]) = {
+        val notes = viewer.vertexAttributeNotes
+        state = state.copy(vertexAttributes = newMap.map {
+          case (name, uuid) => name -> UUIDWithNote(uuid, notes.getOrElse(name, ""))
+        })
+      }
       def validate(name: String, attr: Attribute[_]): Unit = {
         assert(
           attr.vertexSet == viewer.vertexSet,
@@ -421,6 +452,15 @@ sealed trait ProjectEditor {
   def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
   }.toSeq
+  def vertexAttributeNotes =
+    new StateNoteHolder {
+      protected def getMap = viewer.vertexAttributeNotes
+      protected def updateMap(newMap: Map[String, String]) = {
+        state = state.copy(vertexAttributes = state.vertexAttributes.map {
+          case (name, attr) => name -> UUIDWithNote(attr.uuid, newMap(name))
+        })
+      }
+    }
 
   def edgeAttributes =
     new StateMapHolder[Attribute[_]] {
