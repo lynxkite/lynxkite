@@ -494,6 +494,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def summary(params: Map[String, String]): String = title
 
   protected def apply(params: Map[String, String]): Unit
+  protected def help = "<help-popup href=\"" + id + "\"></help-popup>" // Add to notes for help link.
 
   def validateParameters(values: Map[String, String]): Unit = {
     val paramIds = parameters.map { param => param.id }.toSet
