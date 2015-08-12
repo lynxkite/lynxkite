@@ -828,6 +828,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.ClusteringCoefficient()
       project.vertexAttributes(params("name")) = op(op.es, project.edgeBundle).result.clustering
+      project.vertexAttributeNotes(params("name")) = help
     }
   })
 
@@ -907,10 +908,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("algorithm", "Centrality type", options = UIValue.list(List("Harmonic", "Lin"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      assert(params("name").nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt, params("algorithm"))
-      project.vertexAttributes(params("name")) =
-        op(op.es, project.edgeBundle).result.centrality
+      val name = params("name")
+      val algorithm = params("algorithm")
+      assert(name.nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt, algorithm)
+      project.vertexAttributes(name) = op(op.es, project.edgeBundle).result.centrality
+      project.vertexAttributeNotes(name) = s"$algorithm $help"
     }
   })
 
