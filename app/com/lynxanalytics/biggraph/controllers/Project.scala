@@ -543,6 +543,7 @@ sealed trait ProjectEditor {
       s"Wrong destination: $pullBundle")
     val origVS = vertexSet
     val origVAttrs = vertexAttributes.toIndexedSeq
+    val origVAttrNotes = vertexAttributeNotes.toIndexedSeq.toMap
     val origEB = edgeBundle
     val origEAttrs = edgeAttributes.toIndexedSeq
     val origBelongsTo: Option[EdgeBundle] =
@@ -552,6 +553,7 @@ sealed trait ProjectEditor {
     for ((name, attr) <- origVAttrs) {
       vertexAttributes(name) =
         graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
+      vertexAttributeNotes(name) = origVAttrNotes(name)
     }
 
     if (origEB != null) {

@@ -1915,8 +1915,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 otherEbInjection)
           })
 
+      val oldVANotes = project.vertexAttributeNotes.toIndexedSeq.toMap
       project.vertexSet = vsUnion.union
       project.vertexAttributes = newVertexAttributes
+      for ((name, note) <- oldVANotes) {
+        project.vertexAttributeNotes(name) = note // Restore notes.
+      }
       val idAttr = params("id-attr")
       assert(
         !project.vertexAttributes.contains(idAttr),
