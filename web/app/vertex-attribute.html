@@ -80,6 +80,9 @@
   <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
 </label>
 
-<span class="type-name">{{attr.typeName}}</span>
+<div class="entry-bottom">
+  <span class="type-name">{{attr.typeName}}</span>
+  <span class="pull-right" trusted-html="attr.note"></span>
+</div>
 <div class="clearfix"></div>
 <histogram ng-show="histogram" model="histogram"></histogram>
