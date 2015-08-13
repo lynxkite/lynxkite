@@ -1,3 +1,5 @@
 {
-  "hasAuth": true
+  "hasAuth": true,
+  "title": "GruntKite",
+  "tagline": "Live the frontend, fake the backend"
 }
