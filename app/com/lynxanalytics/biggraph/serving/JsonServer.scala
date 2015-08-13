@@ -122,7 +122,9 @@ case class Empty(
   fake: Int = 0) // Needs fake field as JSON inception doesn't work otherwise.
 
 case class GlobalSettings(
-  hasAuth: Boolean)
+  hasAuth: Boolean,
+  title: String,
+  tagline: String)
 
 object ProductionJsonServer extends JsonServer {
   // We check if licence is still valid.
@@ -346,7 +348,12 @@ object ProductionJsonServer extends JsonServer {
   def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
   def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
 
-  def getGlobalSettings = jsonPublicGet(GlobalSettings(hasAuth = productionMode))
+  def getGlobalSettings = jsonPublicGet {
+    GlobalSettings(
+      hasAuth = productionMode,
+      title = util.Properties.envOrElse("KITE_TITLE", "LynxKite"),
+      tagline = util.Properties.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"))
+  }
 
   val copyController = new CopyController(BigGraphProductionEnvironment)
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
