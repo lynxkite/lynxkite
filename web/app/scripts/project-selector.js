@@ -53,6 +53,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.createProject = function() {
         scope.newProject.sending = true;
         var name = scope.newProject.name.replace(/ /g, '_');
+        if (scope.path) {
+          name = scope.path + '/' + name;
+        }
         var notes = scope.newProject.notes;
         util.post('/ajax/createProject',
           {

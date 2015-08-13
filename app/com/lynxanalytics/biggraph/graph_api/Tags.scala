@@ -28,8 +28,10 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Order
 object SymbolPath {
   import scala.language.implicitConversions
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
-  def parse(str: String): SymbolPath =
-    str.split("/", -1).toSeq.map(Symbol(_))
+  def parse(str: String): SymbolPath = {
+    if (str.isEmpty) Nil
+    else str.split("/", -1).toSeq.map(Symbol(_))
+  }
   def check(symbol: Symbol, fullPath: SymbolPath) = {
     val str = symbol.name
     assert(!str.contains("/"), s"Name $str in $fullPath contains a slash ('/').")

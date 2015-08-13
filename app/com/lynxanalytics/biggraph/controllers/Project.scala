@@ -756,15 +756,15 @@ object ProjectFrame {
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
 
   def fromName(rootProjectName: String)(implicit metaManager: MetaGraphManager): ProjectFrame = {
-    validateName(rootProjectName, "Project name")
-    new ProjectFrame(SymbolPath(rootProjectName))
+    validateName(rootProjectName, "Project name", allowSlash = true)
+    new ProjectFrame(SymbolPath.parse(rootProjectName))
   }
 
-  def validateName(name: String, what: String = "Name"): Unit = {
+  def validateName(name: String, what: String = "Name", allowSlash: Boolean = false): Unit = {
     assert(name.nonEmpty, s"$what cannot be empty.")
     assert(!name.startsWith("!"), s"$what cannot start with '!'.")
     assert(!name.contains(separator), s"$what cannot contain '$separator'.")
-    assert(!name.contains("/"), s"$what cannot contain '/'.")
+    assert(allowSlash || !name.contains("/"), s"$what cannot contain '/'.")
   }
 }
 

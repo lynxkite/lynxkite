@@ -351,7 +351,7 @@ object ProductionJsonServer extends JsonServer {
   def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
 
   lazy val version = try {
-    io.Source.fromFile(util.Properties.userDir + "/version").mkString
+    scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString
   } catch {
     case e: java.io.IOException => ""
   }

@@ -191,8 +191,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
-    val root = "projects"
-    val dir = if (request.path.nonEmpty) root / SymbolPath.parse(request.path) else root
+    val dir = SymbolPath.parse(request.path)
     val (dirs, projects) = Operation.listProjects(dir)
     val visible = projects.filter(_.readAllowedFrom(user))
     ProjectList(
@@ -561,12 +560,10 @@ object Operation {
   case class Context(user: serving.User, project: ProjectViewer)
 
   def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
-    val root = SymbolPath("projects")
-    if (manager.tagExists(root)) {
-      val readable = listProjectsRecursively(root).filter(_.readAllowedFrom(user))
-      // Do not list internal project names (starting with "!").
-      readable.filterNot(_.projectName.startsWith("!"))
-    } else Nil
+    val root = new SymbolPath(Nil)
+    val readable = listProjectsRecursively(root).filter(_.readAllowedFrom(user))
+    // Do not list internal project names (starting with "!").
+    readable.filterNot(_.projectName.startsWith("!"))
   }
 
   private def listProjectsRecursively(dir: SymbolPath)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
@@ -576,9 +573,13 @@ object Operation {
 
   // Lists directories and projects inside a directory.
   def listProjects(dir: SymbolPath)(implicit manager: MetaGraphManager): (Seq[SymbolPath], Seq[ProjectFrame]) = {
-    val tags = manager.lsTag(dir)
-    val (projects, dirs) = tags.partition(tag => new ProjectFrame(tag).exists)
-    (dirs, projects.map(new ProjectFrame(_)))
+    val root = SymbolPath("projects")
+    val rooted = root / dir
+    if (manager.tagExists(rooted)) {
+      val tags = manager.lsTag(rooted).map(path => new SymbolPath(path.tail))
+      val (projects, dirs) = tags.partition(tag => new ProjectFrame(tag).exists)
+      (dirs, projects.map(new ProjectFrame(_)))
+    } else (Nil, Nil)
   }
 }
 

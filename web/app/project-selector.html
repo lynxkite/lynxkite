@@ -1,7 +1,7 @@
 <div class="row">
   <div class="col-xs-12 text-center project-list">
     <div class="entry" ng-click="expandNewProject = true">
-      <span class="lead" ng-hide="expandNewProject">A new project</span>
+      <span class="lead" ng-hide="expandNewProject">Create a new project</span>
       <form ng-show="expandNewProject" class="form-inline" role="form">
         <div class="form-group"><input id="new-project-name" placeholder="Project name" ng-model="newProject.name" class="form-control"></div>
         <div class="form-group">about</div>
@@ -39,12 +39,12 @@
     </p>
 
     <div ng-repeat="directory in data.directories"
-      class="entry directory" href ng-click="enterDirectory(directory)">
+      class="entry directory-entry" href ng-click="enterDirectory(directory)">
       <span class="icon glyphicon glyphicon-folder-open"></span>
       {{ directory }}
     </div>
     <div ng-repeat="project in data.projects"
-      class="entry project clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
+      class="entry project-entry clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
       <span class="icon glyphicon glyphicon-file pull-left"></span>
       <item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu>
       <div ng-if="project.error">
