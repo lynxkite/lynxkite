@@ -113,7 +113,8 @@ case class FESegmentation(
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
-case class Splash(version: String, projects: List[FEProjectListElement])
+case class ProjectListRequest(path: String)
+case class ProjectList(path: String, directories: List[String], projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
@@ -187,17 +188,15 @@ object BigGraphController {
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
 
-  lazy val version = try {
-    scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString
-  } catch {
-    case e: java.io.IOException => ""
-  }
-
   val ops = new Operations(env)
 
-  def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
-    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toListElementFE)
-    return Splash(version, projects.toList)
+  def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
+    val (dirs, projects) = Operation.listProjects(SymbolPath.parse(request.path))
+    val visible = projects.filter(_.readAllowedFrom(user))
+    ProjectList(
+      request.path,
+      dirs.map(_.toString).toList,
+      visible.map(_.toListElementFE).toList)
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
@@ -212,7 +211,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   }
 
   private def projectExists(name: String): Boolean = {
-    Operation.projects.map(_.projectName).contains(name)
+    ProjectFrame.fromName(name).exists
   }
   private def assertProjectNotExists(name: String) = {
     assert(!projectExists(name), s"Project $name already exists.")
@@ -537,8 +536,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     "This operation is only available for segmentations.")
   // All projects that the user has read access to.
   protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
-    UIValue.list(Operation.projects
-      .filter(_.readAllowedFrom(user))
+    UIValue.list(Operation.allProjects(user)
       .map(_.projectName)
       .toList)
   }
@@ -560,15 +558,25 @@ object Operation {
 
   case class Context(user: serving.User, project: ProjectViewer)
 
-  def projects(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
-    val dirs = {
-      if (manager.tagExists(SymbolPath("projects")))
-        manager.lsTag(SymbolPath("projects"))
-      else
-        Nil
-    }
-    // Do not list internal project names (starting with "!").
-    dirs.map(p => ProjectFrame.fromName(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
+  def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
+    val root = SymbolPath("projects")
+    if (manager.tagExists(root)) {
+      val readable = listProjectsRecursively(root).filter(_.readAllowedFrom(user))
+      // Do not list internal project names (starting with "!").
+      readable.filterNot(_.projectName.startsWith("!"))
+    } else Nil
+  }
+
+  private def listProjectsRecursively(dir: SymbolPath)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
+    val (dirs, projects) = listProjects(dir)
+    projects ++ dirs.flatMap(listProjectsRecursively(_))
+  }
+
+  // Lists directories and projects inside a directory.
+  def listProjects(dir: SymbolPath)(implicit manager: MetaGraphManager): (Seq[SymbolPath], Seq[ProjectFrame]) = {
+    val tags = manager.lsTag(dir)
+    val (projects, dirs) = tags.partition(tag => new ProjectFrame(tag).exists)
+    (dirs, projects.map(new ProjectFrame(_)))
   }
 }
 

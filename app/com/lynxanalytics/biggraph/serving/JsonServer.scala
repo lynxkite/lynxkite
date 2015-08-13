@@ -124,7 +124,8 @@ case class Empty(
 case class GlobalSettings(
   hasAuth: Boolean,
   title: String,
-  tagline: String)
+  tagline: String,
+  version: String)
 
 object ProductionJsonServer extends JsonServer {
   // We check if licence is still valid.
@@ -203,12 +204,13 @@ object ProductionJsonServer extends JsonServer {
   implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
   implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
   implicit val rSaveWorkflowRequest = json.Json.reads[SaveWorkflowRequest]
+  implicit val rProjectListRequest = json.Json.reads[ProjectListRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
   implicit val wFEProject = json.Json.writes[FEProject]
   implicit val wFEProjectListElement = json.Json.writes[FEProjectListElement]
-  implicit val wSplash = json.Json.writes[Splash]
+  implicit val wProjectList = json.Json.writes[ProjectList]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
   implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
@@ -310,7 +312,7 @@ object ProductionJsonServer extends JsonServer {
   def renameProject = jsonPost(bigGraphController.renameProject)
   def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
-  def splash = jsonGet(bigGraphController.splash)
+  def projectList = jsonGet(bigGraphController.projectList)
   def filterProject = jsonPost(bigGraphController.filterProject)
   def forkProject = jsonPost(bigGraphController.forkProject)
   def undoProject = jsonPost(bigGraphController.undoProject)
@@ -348,11 +350,17 @@ object ProductionJsonServer extends JsonServer {
   def markFilesDeleted = jsonPost(cleanerController.markFilesDeleted)
   def deleteMarkedFiles = jsonPost(cleanerController.deleteMarkedFiles)
 
+  lazy val version = try {
+    io.Source.fromFile(util.Properties.userDir + "/version").mkString
+  } catch {
+    case e: java.io.IOException => ""
+  }
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
       hasAuth = productionMode,
       title = util.Properties.envOrElse("KITE_TITLE", "LynxKite"),
-      tagline = util.Properties.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"))
+      tagline = util.Properties.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
+      version = version)
   }
 
   val copyController = new CopyController(BigGraphProductionEnvironment)
