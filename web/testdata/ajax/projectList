@@ -1,5 +1,6 @@
 {
-  "version": "Static Ajax Test",
+  "path": "Static Ajax Test",
+  "directories": ["My Subdirectory"],
   "projects": [
     { "name": "Project_Strawberry", "notes": "Subscribers and calls.", "vertexSet": "x", "edgeBundle": "x", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] },
     { "name": "Project_Melon", "notes": "Phone numbers and texts.", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] },

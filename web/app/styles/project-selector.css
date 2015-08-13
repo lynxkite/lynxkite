@@ -4,11 +4,36 @@
   padding: 10px;
   width: 100%;
 }
+
 .project-list {
   padding: 0;
 }
+
+.project-list .path {
+  padding: 10px;
+  text-align: left;
+  background: whitesmoke;
+}
+
+.project-list .directory {
+  text-align: left;
+}
+
+.project-list > div.entry > .icon {
+  position: absolute;
+  padding: 10px;
+  margin-left: -40px;
+}
+
+.project-list > div.entry.project > .icon {
+  margin-top: 10px;
+}
+
 .project-list > div.entry {
-  padding: 20px;
+  position: relative;
+  padding: 10px;
+  padding-left: 40px;
+  text-align: left;
   border-bottom: 1px solid whitesmoke;
   color: #428BCA;
   cursor: pointer;
