@@ -107,6 +107,10 @@ class MetaGraphManager(val repositoryPath: String) {
     (tagRoot / tag).ls.map(_.fullName)
   }
 
+  def mkDirTag(tag: SymbolPath): Unit = synchronized {
+    tagRoot.mkDirs(tag)
+  }
+
   // Defers tag writes until after "fn". Improves performance for large tag transactions.
   def tagBatch[T](fn: => T) = synchronized {
     tagRoot.batch { fn }

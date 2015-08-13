@@ -14,9 +14,10 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       hotkeys.bindTo(scope)
         .add({
           combo: 'c', description: 'Create new project',
-          callback: function(e) { e.preventDefault(); scope.expandNewProject = true; },
+          callback: function(e) { e.preventDefault(); scope.newProject = { expanded: true }; },
         });
-      scope.$watch('expandNewProject', function(ex) {
+
+      scope.$watch('newProject.expanded', function(ex) {
         if (ex) {
           $timeout(
             function() {
@@ -26,10 +27,23 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             false); // Do not invoke apply as we don't change the scope.
         }
       });
+
+      scope.$watch('newDirectory.expanded', function(ex) {
+        if (ex) {
+          $timeout(
+            function() {
+              element.find('#new-directory-name')[0].focus();
+            },
+            0,
+            false); // Do not invoke apply as we don't change the scope.
+        }
+      });
+
       scope.util = util;
       function refresh() {
         scope.data = util.nocache('/ajax/projectList', { path: scope.path });
       }
+
       scope.$watch('path', refresh);
       function getScalar(title, scalar) {
         var res = util.get('/ajax/scalarValue', {
@@ -38,6 +52,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         res.details = { project: title, scalar: scalar };
         return res;
       }
+
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved || scope.data.$error) { return; }
         scope.vertexCounts = {};
@@ -50,6 +65,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             p.edgeCount ? getScalar(p.title, p.edgeCount) : { string: 'no' };
         }
       });
+
       scope.createProject = function() {
         scope.newProject.sending = true;
         var name = scope.newProject.name.replace(/ /g, '_');
@@ -66,6 +82,23 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             scope.name = name;
           }).$status.then(function() {
             scope.newProject.sending = false;
+          });
+      };
+
+      scope.createDirectory = function() {
+        scope.newDirectory.sending = true;
+        var name = scope.newDirectory.name.replace(/ /g, '_');
+        if (scope.path) {
+          name = scope.path + '/' + name;
+        }
+        util.post('/ajax/createDirectory',
+          {
+            name: name,
+          }, function() {
+            scope.path = name;
+            scope.newDirectory = {};
+          }).$status.then(function() {
+            scope.newDirectory.sending = false;
           });
       };
 
