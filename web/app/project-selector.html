@@ -1,9 +1,4 @@
 <div class="row">
-  <div class="col-xs-12 text-center top-search">
-    <input autofocus placeholder="type to search" ng-model="searchString" type="search">
-  </div>
-</div>
-<div class="row">
   <div class="col-xs-12 text-center project-list">
     <div class="entry" ng-click="expandNewProject = true">
       <span class="lead" ng-hide="expandNewProject">A new project</span>
@@ -21,12 +16,17 @@
               <option value="public-read">everyone can see</option>
               <option value="public-write">everyone can modify</option>
           </select></div>
+          <button type="submit" class="btn btn-default" ng-click="createProject()"
+            ng-disabled="newProject.sending || !newProject.name">
+            {{newProject.sending && '...' || 'Create'}}
+          </button>
         </div>
-        <button type="submit" class="btn btn-default" ng-click="createProject()"
-          ng-disabled="newProject.sending || !newProject.name">
-          {{newProject.sending && '...' || 'Create'}}
-        </button>
       </form>
+    </div>
+
+    <div class="path" ng-show="path">
+      <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()"></span>
+      {{ path }}
     </div>
 
     <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
@@ -38,18 +38,24 @@
       <i class="pull-right"><a href ng-click="reportListError()">report problem</a></i>
     </p>
 
-    <div ng-repeat="project in data.projects | selectFields:'name':'notes' | filter:{ $selection: searchString }"
-      class="entry" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
-      <h1><item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu></h1>
-      <span ng-if="project.error">
+    <div ng-repeat="directory in data.directories"
+      class="entry directory" href ng-click="enterDirectory(directory)">
+      <span class="icon glyphicon glyphicon-folder-open"></span>
+      {{ directory }}
+    </div>
+    <div ng-repeat="project in data.projects"
+      class="entry project clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
+      <span class="icon glyphicon glyphicon-file pull-left"></span>
+      <item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu>
+      <div ng-if="project.error">
         {{project.error}}
         <i class="pull-right"><a ng-click="reportProjectError(project)">report problem</a></i>
-      </span>
-      <span ng-if="!project.error">
+      </div>
+      <div ng-if="!project.error">
         <value ref="vertexCounts[project.name]"></value> vertices,
         <value ref="edgeCounts[project.name]"></value> edges.
         {{project.notes}}
-      </span>
+      </div>
     </div>
   </div>
 </div>

@@ -6,9 +6,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
     restrict: 'E',
     scope: {
       name: '=', // Exposes the name of the selected project.
+      path: '=?', // Starting path.
     },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
+      scope.path = scope.path || '';
       hotkeys.bindTo(scope)
         .add({
           combo: 'c', description: 'Create new project',
@@ -26,9 +28,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       });
       scope.util = util;
       function refresh() {
-        scope.data = util.nocache('/ajax/splash');
+        scope.data = util.nocache('/ajax/projectList', { path: scope.path });
       }
-      refresh();
+      scope.$watch('path', refresh);
       function getScalar(title, scalar) {
         var res = util.get('/ajax/scalarValue', {
           scalarId: scalar.id, calculate: false
@@ -70,6 +72,18 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         // Ignore clicks on errored projects.
         if (p.error) { return; }
         scope.name = p.name;
+      };
+
+      scope.enterDirectory = function(d) {
+        if (scope.path) {
+          scope.path += '/' + d;
+        } else {
+          scope.path = d;
+        }
+      };
+
+      scope.popDirectory = function() {
+        scope.path = scope.path.split('/').slice(0, -1).join('/');
       };
 
       scope.reportListError = function() {
