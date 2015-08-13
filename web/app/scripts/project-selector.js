@@ -6,7 +6,6 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
     restrict: 'E',
     scope: {
       name: '=', // Exposes the name of the selected project.
-      version: '=?',  // Exposes the version string.
     },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
@@ -30,7 +29,6 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         scope.data = util.nocache('/ajax/splash');
       }
       refresh();
-      scope.$watch('data.version', function(v) { scope.version = v; });
       function getScalar(title, scalar) {
         var res = util.get('/ajax/scalarValue', {
           scalarId: scalar.id, calculate: false
