@@ -1,5 +1,5 @@
 {
-  "path": "Static Ajax Test",
+  "path": "",
   "directories": ["My Subdirectory"],
   "projects": [
     { "name": "Project_Strawberry", "notes": "Subscribers and calls.", "vertexSet": "x", "edgeBundle": "x", "scalars": [{ "id": "x", "title": "vertex_count" }, { "id": "x", "title": "edge_count" }] },
