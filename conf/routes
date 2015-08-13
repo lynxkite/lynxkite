@@ -5,6 +5,7 @@ POST /ajax/spark-cancel-jobs com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.jsError
 
 POST /ajax/createProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.createProject
+POST /ajax/createDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.createDirectory
 POST /ajax/discardProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardProject
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
 GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project

@@ -645,7 +645,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   assert(projectName.nonEmpty, "Invalid project name: <empty string>")
   assert(!projectName.contains(ProjectFrame.separator), s"Invalid project name: $projectName")
-  val rootDir: SymbolPath = SymbolPath("projects") / projectPath
+  val rootDir: SymbolPath = ProjectFrame.root / projectPath
 
   // Current checkpoint of the project
   def checkpoint: String = get(rootDir / "checkpoint")
@@ -754,6 +754,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
 object ProjectFrame {
   val separator = "|"
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
+  val root = SymbolPath("projects")
 
   def fromName(rootProjectName: String)(implicit metaManager: MetaGraphManager): ProjectFrame = {
     validateName(rootProjectName, "Project name", allowSlash = true)

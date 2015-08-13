@@ -120,6 +120,7 @@ case class OperationCategory(
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
+case class CreateDirectoryRequest(name: String)
 case class DiscardProjectRequest(name: String)
 
 // A request for the execution of a FE operation on a specific project. The project might be
@@ -214,12 +215,16 @@ class BigGraphController(val env: BigGraphEnvironment) {
   private def projectExists(name: String): Boolean = {
     ProjectFrame.fromName(name).exists
   }
-  private def assertProjectNotExists(name: String) = {
+  private def directoryExists(name: String): Boolean = {
+    metaManager.tagExists(ProjectFrame.root / SymbolPath.parse(name))
+  }
+  private def assertNameNotExists(name: String) = {
     assert(!projectExists(name), s"Project $name already exists.")
+    assert(!directoryExists(name), s"Directory $name already exists.")
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
-    assertProjectNotExists(request.name)
+    assertNameNotExists(request.name)
     val p = ProjectFrame.fromName(request.name)
     request.privacy match {
       case "private" =>
@@ -238,6 +243,12 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
+  def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
+    assertNameNotExists(request.name)
+    val p = ProjectFrame.root / SymbolPath.parse(request.name)
+    metaManager.mkDirTag(p)
+  }
+
   def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
     val p = ProjectFrame.fromName(request.name)
     p.assertWriteAllowedFrom(user)
@@ -247,7 +258,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
     val p = ProjectFrame.fromName(request.from)
     p.assertWriteAllowedFrom(user)
-    assertProjectNotExists(request.to)
+    assertNameNotExists(request.to)
     p.copy(ProjectFrame.fromName(request.to))
     p.remove()
   }
@@ -276,7 +287,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     ProjectFrame.validateName(request.to, "Project name")
     val p1 = ProjectFrame.fromName(request.from)
     p1.assertReadAllowedFrom(user)
-    assertProjectNotExists(request.to)
+    assertNameNotExists(request.to)
     val p2 = ProjectFrame.fromName(request.to)
     p1.copy(p2)
     if (!p2.writeAllowedFrom(user)) {
@@ -435,7 +446,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       val p = ProjectFrame.fromName(request.newProject)
       if (request.newProject != request.oldProject) {
         // Saving under a new name.
-        assertProjectNotExists(request.newProject)
+        assertNameNotExists(request.newProject)
         // Copying old ProjectFrame level data.
         ProjectFrame.fromName(request.oldProject).copy(p)
         // But adding user as writer if necessary.
@@ -573,8 +584,7 @@ object Operation {
 
   // Lists directories and projects inside a directory.
   def listProjects(dir: SymbolPath)(implicit manager: MetaGraphManager): (Seq[SymbolPath], Seq[ProjectFrame]) = {
-    val root = SymbolPath("projects")
-    val rooted = root / dir
+    val rooted = ProjectFrame.root / dir
     if (manager.tagExists(rooted)) {
       val tags = manager.lsTag(rooted).map(path => new SymbolPath(path.tail))
       val (projects, dirs) = tags.partition(tag => new ProjectFrame(tag).exists)

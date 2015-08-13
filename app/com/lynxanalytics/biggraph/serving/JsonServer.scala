@@ -189,6 +189,7 @@ object ProductionJsonServer extends JsonServer {
   implicit val rScalarValueRequest = json.Json.reads[ScalarValueRequest]
 
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
+  implicit val rCreateDirectoryRequest = json.Json.reads[CreateDirectoryRequest]
   implicit val rDiscardProjectRequest = json.Json.reads[DiscardProjectRequest]
   implicit val rRenameProjectRequest = json.Json.reads[RenameProjectRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
@@ -308,6 +309,7 @@ object ProductionJsonServer extends JsonServer {
 
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
   def createProject = jsonPost(bigGraphController.createProject)
+  def createDirectory = jsonPost(bigGraphController.createDirectory)
   def discardProject = jsonPost(bigGraphController.discardProject)
   def renameProject = jsonPost(bigGraphController.renameProject)
   def projectOp = jsonPost(bigGraphController.projectOp)

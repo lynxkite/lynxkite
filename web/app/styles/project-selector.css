@@ -23,10 +23,7 @@
   position: absolute;
   padding: 10px;
   margin-left: -40px;
-}
-
-.project-list > div.project-entry > .icon {
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .project-list > div.entry {
