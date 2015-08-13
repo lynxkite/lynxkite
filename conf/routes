@@ -12,7 +12,7 @@ GET  /ajax/getHistory    com.lynxanalytics.biggraph.serving.ProductionJsonServer
 POST /ajax/validateHistory com.lynxanalytics.biggraph.serving.ProductionJsonServer.validateHistory
 POST /ajax/saveHistory   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveHistory
 POST /ajax/saveWorkflow   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveWorkflow
-GET  /ajax/splash        com.lynxanalytics.biggraph.serving.ProductionJsonServer.splash
+GET  /ajax/projectList   com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectList
 POST /ajax/filterProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.filterProject
 POST /ajax/forkProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkProject
 POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoProject

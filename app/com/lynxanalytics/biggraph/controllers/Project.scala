@@ -663,7 +663,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
   private def nextCheckpoint_=(x: Option[String]): Unit =
     set(rootDir / "nextCheckpoint", x.getOrElse(""))
 
-  def exists = manager.tagExists(rootDir)
+  def exists = manager.tagExists(rootDir / "checkpoint")
 
   def undo(): Unit = manager.synchronized {
     nextCheckpoint = Some(checkpoint)
