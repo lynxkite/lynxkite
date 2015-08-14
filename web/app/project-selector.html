@@ -52,9 +52,11 @@
     </p>
 
     <div ng-repeat="directory in data.directories"
-      class="entry directory-entry" href ng-click="enterDirectory(directory)">
+      class="entry directory-entry" href ng-click="enterDirectory($event, directory)">
       <span class="icon glyphicon glyphicon-folder-open"></span>
-      <span class="lead">{{ directory }}</span>
+      <span class="lead">
+        <item-name-and-menu menu="menu" name="{{directory}}" spaced type="directory"></item-name-and-menu>
+      </span>
     </div>
     <div ng-repeat="project in data.projects"
       class="entry project-entry clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
