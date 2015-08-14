@@ -35,7 +35,6 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
-import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
 // Captures the part of the state that is common for segmentations and root projects.
@@ -692,11 +691,10 @@ class ProjectFrame(val projectPath: SymbolPath)(
   def viewer = new RootProjectViewer(currentState)
 
   def toListElementFE = {
-    Try {
+    try {
       viewer.toListElementFE(projectName)
-    } match {
-      case Success(fe) => fe
-      case Failure(ex) => FEProjectListElement(
+    } catch {
+      case ex: Throwable => FEProjectListElement(
         name = projectName,
         error = Some(ex.getMessage)
       )
