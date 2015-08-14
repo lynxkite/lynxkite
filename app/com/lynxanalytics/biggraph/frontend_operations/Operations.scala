@@ -621,7 +621,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("segmentations", "Segmentations", options = segmentations, multipleChoice = true))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     override def summary(params: Map[String, String]) = {
-      val segmentations = params("segmentations").split(",").mkString(", ")
+      val segmentations = params("segmentations").replace(",", ", ")
       s"Combination of $segmentations"
     }
 
@@ -1524,29 +1524,35 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {}
   })
 
-  register("Discard edge attribute", new UtilityOperation(_, _) {
+  register("Discard edge attribute", new EdgeAttributesOperation(_, _) {
     def parameters = List(
-      Choice("name", "Name", options = edgeAttributes))
+      Choice("name", "Name", options = edgeAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    override def title = "Discard edge attributes"
     override def summary(params: Map[String, String]) = {
-      val name = params("name")
-      s"Discard edge attribute: $name"
+      val names = params("name").replace(",", ", ")
+      s"Discard edge attributes: $names"
     }
     def apply(params: Map[String, String]) = {
-      project.edgeAttributes(params("name")) = null
+      for (param <- params("name").split(",", -1)) {
+        project.edgeAttributes(param) = null
+      }
     }
   })
 
-  register("Discard vertex attribute", new UtilityOperation(_, _) {
+  register("Discard vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
-      Choice("name", "Name", options = vertexAttributes))
+      Choice("name", "Name", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def title = "Discard vertex attributes"
     override def summary(params: Map[String, String]) = {
-      val name = params("name")
-      s"Discard vertex attribute: $name"
+      val names = params("name").replace(",", ", ")
+      s"Discard vertex attributes: $names"
     }
     def apply(params: Map[String, String]) = {
-      project.vertexAttributes(params("name")) = null
+      for (param <- params("name").split(",", -1)) {
+        project.vertexAttributes(param) = null
+      }
     }
   })
 
@@ -1563,16 +1569,19 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Discard scalar", new UtilityOperation(_, _) {
+  register("Discard scalar", new GlobalOperation(_, _) {
     def parameters = List(
-      Choice("name", "Name", options = scalars))
+      Choice("name", "Name", options = scalars, multipleChoice = true))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def title = "Discard scalars"
     override def summary(params: Map[String, String]) = {
-      val name = params("name")
-      s"Discard scalar: $name"
+      val names = params("name").replace(",", ", ")
+      s"Discard scalars: $names"
     }
     def apply(params: Map[String, String]) = {
-      project.scalars(params("name")) = null
+      for (param <- params("name").split(",", -1)) {
+        project.scalars(param) = null
+      }
     }
   })
 
