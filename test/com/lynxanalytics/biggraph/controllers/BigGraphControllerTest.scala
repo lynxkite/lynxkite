@@ -65,28 +65,28 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
   }
 
   test("project list") {
-    val splash = controller.splash(user, null)
-    assert(splash.projects.size == 1)
-    assert(splash.projects(0).name == "Test_Project")
-    assert(splash.projects(0).vertexCount.isEmpty)
-    assert(splash.projects(0).edgeCount.isEmpty)
+    val pl = controller.projectList(user, ProjectListRequest(""))
+    assert(pl.projects.size == 1)
+    assert(pl.projects(0).name == "Test_Project")
+    assert(pl.projects(0).vertexCount.isEmpty)
+    assert(pl.projects(0).edgeCount.isEmpty)
   }
 
   test("project list with scalars") {
     run("Example Graph")
     controller.forkProject(user, ForkProjectRequest(from = projectName, to = "new_project"))
-    val splash = controller.splash(user, null)
-    assert(splash.projects.size == 2)
-    assert(splash.projects(1).name == "new_project")
-    assert(!splash.projects(1).vertexCount.isEmpty)
-    assert(!splash.projects(1).edgeCount.isEmpty)
+    val pl = controller.projectList(user, ProjectListRequest(""))
+    assert(pl.projects.size == 2)
+    assert(pl.projects(1).name == "new_project")
+    assert(!pl.projects(1).vertexCount.isEmpty)
+    assert(!pl.projects(1).edgeCount.isEmpty)
   }
 
   test("fork project") {
     run("Example Graph")
     controller.forkProject(user, ForkProjectRequest(from = projectName, to = "forked"))
-    val splash = controller.splash(user, null)
-    assert(splash.projects.size == 2)
+    val pl = controller.projectList(user, ProjectListRequest(""))
+    assert(pl.projects.size == 2)
   }
 
   override def beforeEach() = {
