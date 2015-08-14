@@ -1539,7 +1539,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
-  register("Discard vertex attributes", new VertexAttributesOperation(_, _) {
+  register("Discard vertex attribute", new VertexAttributesOperation(_, _) {
     def parameters = List(
       Choice("name", "Name", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
