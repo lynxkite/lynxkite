@@ -221,5 +221,6 @@ class CleanerController(environment: BigGraphEnvironment) {
     }.map { subDir =>
       (hadoopFileDir / subDir.getPath().getName()).delete()
     }
+    log.info(s"Marked files deleted in ${hadoopFileDir.path}.")
   }
 }
