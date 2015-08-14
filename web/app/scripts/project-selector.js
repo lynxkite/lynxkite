@@ -110,7 +110,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         scope.name = p.name;
       };
 
-      scope.enterDirectory = function(d) {
+      scope.enterDirectory = function(event, d) {
+        // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
+        if (event.originalEvent.alreadyHandled) { return; }
         if (scope.path) {
           scope.path += '/' + d;
         } else {
@@ -133,16 +135,16 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.menu = {
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
-          util.post('/ajax/renameProject', { from: oldName, to: newName }, refresh);
+          util.post('/ajax/renameDirectory', { from: oldName, to: newName }, refresh);
         },
         duplicate: function(kind, p) {
-          util.post('/ajax/forkProject', { from: p, to: 'Copy of ' + p }, refresh);
+          util.post('/ajax/forkDirectory', { from: p, to: 'Copy of ' + p }, refresh);
         },
         discard: function(kind, p) {
-          var message = 'Permanently delete project ' + util.spaced(p) + '?';
-          message += ' (If it is a shared project, it will be deleted for everyone.)';
+          var message = 'Permanently delete ' + kind + ' ' + util.spaced(p) + '?';
+          message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
-            util.post('/ajax/discardProject', { name: p }, refresh);
+            util.post('/ajax/discardDirectory', { name: p }, refresh);
           }
         }
       };

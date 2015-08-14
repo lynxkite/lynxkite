@@ -121,7 +121,7 @@ case class OperationCategory(
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class CreateDirectoryRequest(name: String)
-case class DiscardProjectRequest(name: String)
+case class DiscardDirectoryRequest(name: String)
 
 // A request for the execution of a FE operation on a specific project. The project might be
 // a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
@@ -138,8 +138,8 @@ case class ProjectFilterRequest(
   project: String,
   vertexFilters: List[ProjectAttributeFilter],
   edgeFilters: List[ProjectAttributeFilter])
-case class ForkProjectRequest(from: String, to: String)
-case class RenameProjectRequest(from: String, to: String)
+case class ForkDirectoryRequest(from: String, to: String)
+case class RenameDirectoryRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
 case class ProjectSettingsRequest(project: String, readACL: String, writeACL: String)
@@ -212,15 +212,8 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.toFE.copy(opCategories = nonUtilities)
   }
 
-  private def projectExists(name: String): Boolean = {
-    ProjectFrame.fromName(name).exists
-  }
-  private def directoryExists(name: String): Boolean = {
-    metaManager.tagExists(ProjectFrame.root / SymbolPath.parse(name))
-  }
   private def assertNameNotExists(name: String) = {
-    assert(!projectExists(name), s"Project $name already exists.")
-    assert(!directoryExists(name), s"Directory $name already exists.")
+    assert(!ProjectDirectory.fromName(name).exists, s"Project $name already exists.")
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
@@ -245,21 +238,22 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
-    val p = ProjectFrame.root / SymbolPath.parse(request.name)
-    metaManager.mkDirTag(p)
+    val d = ProjectDirectory.fromName(request.name)
+    d.readACL = "*"
+    d.writeACL = "*"
   }
 
-  def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.name)
+  def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
+    val p = ProjectDirectory.fromName(request.name)
     p.assertWriteAllowedFrom(user)
     p.remove()
   }
 
-  def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.from)
+  def renameDirectory(user: serving.User, request: RenameDirectoryRequest): Unit = metaManager.synchronized {
+    val p = ProjectDirectory.fromName(request.from)
     p.assertWriteAllowedFrom(user)
     assertNameNotExists(request.to)
-    p.copy(ProjectFrame.fromName(request.to))
+    p.copy(ProjectDirectory.fromName(request.to))
     p.remove()
   }
 
@@ -283,12 +277,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
         parameters = (vertexParams ++ edgeParams).toMap)))
   }
 
-  def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
-    ProjectFrame.validateName(request.to, "Project name")
-    val p1 = ProjectFrame.fromName(request.from)
+  def forkDirectory(user: serving.User, request: ForkDirectoryRequest): Unit = metaManager.synchronized {
+    val p1 = ProjectDirectory.fromName(request.from)
     p1.assertReadAllowedFrom(user)
     assertNameNotExists(request.to)
-    val p2 = ProjectFrame.fromName(request.to)
+    val p2 = ProjectDirectory.fromName(request.to)
     p1.copy(p2)
     if (!p2.writeAllowedFrom(user)) {
       p2.writeACL += "," + user.email
@@ -584,7 +577,7 @@ object Operation {
 
   // Lists directories and projects inside a directory.
   def listProjects(dir: SymbolPath)(implicit manager: MetaGraphManager): (Seq[SymbolPath], Seq[ProjectFrame]) = {
-    val rooted = ProjectFrame.root / dir
+    val rooted = ProjectDirectory.root / dir
     if (manager.tagExists(rooted)) {
       val tags = manager.lsTag(rooted).map(path => new SymbolPath(path.tail))
       val (projects, dirs) = tags.partition(tag => new ProjectFrame(tag).exists)

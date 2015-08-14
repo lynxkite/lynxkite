@@ -190,14 +190,14 @@ object ProductionJsonServer extends JsonServer {
 
   implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rCreateDirectoryRequest = json.Json.reads[CreateDirectoryRequest]
-  implicit val rDiscardProjectRequest = json.Json.reads[DiscardProjectRequest]
-  implicit val rRenameProjectRequest = json.Json.reads[RenameProjectRequest]
+  implicit val rDiscardDirectoryRequest = json.Json.reads[DiscardDirectoryRequest]
+  implicit val rRenameDirectoryRequest = json.Json.reads[RenameDirectoryRequest]
   implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
   implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
-  implicit val rForkProjectRequest = json.Json.reads[ForkProjectRequest]
+  implicit val rForkDirectoryRequest = json.Json.reads[ForkDirectoryRequest]
   implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
   implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
   implicit val rProjectSettingsRequest = json.Json.reads[ProjectSettingsRequest]
@@ -310,13 +310,13 @@ object ProductionJsonServer extends JsonServer {
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
   def createProject = jsonPost(bigGraphController.createProject)
   def createDirectory = jsonPost(bigGraphController.createDirectory)
-  def discardProject = jsonPost(bigGraphController.discardProject)
-  def renameProject = jsonPost(bigGraphController.renameProject)
+  def discardDirectory = jsonPost(bigGraphController.discardDirectory)
+  def renameDirectory = jsonPost(bigGraphController.renameDirectory)
   def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
   def projectList = jsonGet(bigGraphController.projectList)
   def filterProject = jsonPost(bigGraphController.filterProject)
-  def forkProject = jsonPost(bigGraphController.forkProject)
+  def forkDirectory = jsonPost(bigGraphController.forkDirectory)
   def undoProject = jsonPost(bigGraphController.undoProject)
   def redoProject = jsonPost(bigGraphController.redoProject)
   def changeProjectSettings = jsonPost(bigGraphController.changeProjectSettings)
