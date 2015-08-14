@@ -74,7 +74,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
 
   test("project list with scalars") {
     run("Example Graph")
-    controller.forkProject(user, ForkProjectRequest(from = projectName, to = "new_project"))
+    controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "new_project"))
     val pl = controller.projectList(user, ProjectListRequest(""))
     assert(pl.projects.size == 2)
     assert(pl.projects(1).name == "new_project")
@@ -84,7 +84,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
 
   test("fork project") {
     run("Example Graph")
-    controller.forkProject(user, ForkProjectRequest(from = projectName, to = "forked"))
+    controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "forked"))
     val pl = controller.projectList(user, ProjectListRequest(""))
     assert(pl.projects.size == 2)
   }
