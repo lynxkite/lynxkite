@@ -621,7 +621,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("segmentations", "Segmentations", options = segmentations, multipleChoice = true))
     def enabled = FEStatus.assert(segmentations.nonEmpty, "No segmentations")
     override def summary(params: Map[String, String]) = {
-      val segmentations = params("segmentations").split(",").mkString(", ")
+      val segmentations = params("segmentations").replace(",", ", ")
       s"Combination of $segmentations"
     }
 
@@ -1528,8 +1528,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Choice("name", "Name", options = edgeAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes")
+    override def title = "Discard edge attributes"
     override def summary(params: Map[String, String]) = {
-      val names = params("name").split(",", -1).mkString(", ")
+      val names = params("name").replace(",", ", ")
       s"Discard edge attributes: $names"
     }
     def apply(params: Map[String, String]) = {
@@ -1543,8 +1544,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Choice("name", "Name", options = vertexAttributes, multipleChoice = true))
     def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
+    override def title = "Discard vertex attributes"
     override def summary(params: Map[String, String]) = {
-      val names = params("name").split(",", -1).mkString(", ")
+      val names = params("name").replace(",", ", ")
       s"Discard vertex attributes: $names"
     }
     def apply(params: Map[String, String]) = {
@@ -1571,8 +1573,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Choice("name", "Name", options = scalars, multipleChoice = true))
     def enabled = FEStatus.assert(scalars.nonEmpty, "No scalars")
+    override def title = "Discard scalars"
     override def summary(params: Map[String, String]) = {
-      val names = params("name").split(",", -1).mkString(", ")
+      val names = params("name").replace(",", ", ")
       s"Discard scalars: $names"
     }
     def apply(params: Map[String, String]) = {
