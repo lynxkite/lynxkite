@@ -35,7 +35,6 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
-import scala.util.{ Failure, Success, Try }
 import scala.reflect.runtime.universe._
 
 // Captures the part of the state that is common for segmentations and root projects.
@@ -120,22 +119,11 @@ sealed trait ProjectViewer {
       feScalar("edge_count"))
   }
 
-  def toFE(projectName: String): FEProject = {
-    Try(unsafeToFE(projectName)) match {
-      case Success(fe) => fe
-      case Failure(ex) => FEProject(
-        name = projectName,
-        error = ex.getMessage
-      )
-    }
-  }
-
   // Returns the FE attribute representing the seq of members for
   // each segment in a segmentation. None in root projects.
   protected def getFEMembers: Option[FEAttribute]
 
-  // May raise an exception.
-  private def unsafeToFE(projectName: String): FEProject = {
+  def toFE(projectName: String): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(things: Iterable[(String, TypedEntity[_])]) = {
@@ -702,7 +690,16 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   def viewer = new RootProjectViewer(currentState)
 
-  def toListElementFE = viewer.toListElementFE(projectName)
+  def toListElementFE = {
+    try {
+      viewer.toListElementFE(projectName)
+    } catch {
+      case ex: Throwable => FEProjectListElement(
+        name = projectName,
+        error = Some(ex.getMessage)
+      )
+    }
+  }
 
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (manager.tagExists(tag)) Some(tag) else None
