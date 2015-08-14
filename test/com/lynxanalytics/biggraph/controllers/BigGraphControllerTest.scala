@@ -64,8 +64,10 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
     assert(subProject.toFE.undoOp == "Filter weight >2")
   }
 
+  def list(dir: String) = controller.projectList(user, ProjectListRequest(dir))
+
   test("project list") {
-    val pl = controller.projectList(user, ProjectListRequest(""))
+    val pl = list("")
     assert(pl.projects.size == 1)
     assert(pl.projects(0).name == "Test_Project")
     assert(pl.projects(0).vertexCount.isEmpty)
@@ -75,7 +77,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
   test("project list with scalars") {
     run("Example Graph")
     controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "new_project"))
-    val pl = controller.projectList(user, ProjectListRequest(""))
+    val pl = list("")
     assert(pl.projects.size == 2)
     assert(pl.projects(1).name == "new_project")
     assert(!pl.projects(1).vertexCount.isEmpty)
@@ -85,8 +87,23 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
   test("fork project") {
     run("Example Graph")
     controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "forked"))
-    val pl = controller.projectList(user, ProjectListRequest(""))
-    assert(pl.projects.size == 2)
+    assert(list("").projects.size == 2)
+  }
+
+  test("create directory") {
+    controller.createDirectory(user, CreateDirectoryRequest(name = "foo/bar"))
+    assert(list("").directories == Seq("foo"))
+    assert(list("foo").projects.isEmpty)
+    assert(list("foo").directories == Seq("foo/bar"))
+    controller.discardDirectory(user, DiscardDirectoryRequest(name = "foo"))
+    assert(list("").directories.isEmpty)
+  }
+
+  test("create directory inside project") {
+    run("Example Graph")
+    intercept[AssertionError] {
+      controller.createDirectory(user, CreateDirectoryRequest(name = projectName + "/bar"))
+    }
   }
 
   override def beforeEach() = {
