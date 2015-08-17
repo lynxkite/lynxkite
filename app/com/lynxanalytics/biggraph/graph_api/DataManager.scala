@@ -168,7 +168,20 @@ class DataManager(sc: spark.SparkContext,
 
     val gUID = instance.gUID
     if (!instanceOutputCache.contains(gUID)) {
-      instanceOutputCache(gUID) = execute(instance)
+      instanceOutputCache(gUID) = {
+        val output = execute(instance)
+        if (instance.operation.isHeavy) {
+          // For heavy operations we want to avoid caching the RDDs. The RDD data will be reloaded
+          // from disk anyway to break the lineage. These RDDs need to be GC'd to clean up the
+          // shuffle files on the executors. See #2098.
+          val nonRDD = output.map {
+            _.filterNot { case (guid, entityData) => entityData.isInstanceOf[EntityRDDData] }
+          }
+          // A GC is helpful here to avoid filling up the disk on the executors. See comment above.
+          nonRDD.foreach { _ => System.gc() }
+          nonRDD
+        } else output
+      }
       instanceOutputCache(gUID).onFailure {
         case _ => synchronized { instanceOutputCache.remove(gUID) }
       }
