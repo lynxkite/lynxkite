@@ -80,17 +80,17 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       function alternateHistory() {
         var requests = [];
         var steps = scope.history.steps;
-        var startingPoint = '';
+        var lastCheckpoint = '';
         for (var i = 0; i < steps.length; ++i) {
           var s = steps[i];
-          if (s.checkpoint !== undefined) {
-            startingPoint = s.checkpoint;
+          if (requests.length === 0 && s.checkpoint !== undefined) {
+            lastCheckpoint = s.checkpoint;
           } else {
             requests.push(s.request);
           }
         }
         return {
-          startingPoint: startingPoint,
+          startingPoint: lastCheckpoint,
           requests: requests,
         };
       }
