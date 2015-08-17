@@ -23,16 +23,8 @@ describe('splash page', function() {
   });
 
   describe('project selector', function() {
-    it('can search', function() {
-      var list = element.all(by.css('.project-list h1'));
-      expect(list.count()).toBe(4);
-      element(by.css('[placeholder="type to search"]')).sendKeys('v');
-      expect(list.count()).toBe(1);
-      expect(list.first().getText()).toBe('Project Avocado');
-    });
-
     it('opens a project when clicked', function() {
-      var melon = element.all(by.css('.project-list > div')).get(2);
+      var melon = element.all(by.css('.project-list > .project-entry')).get(1);
       melon.click();
       expect(browser.getCurrentUrl()).toContain('/#/project/Project_Melon');
     });
