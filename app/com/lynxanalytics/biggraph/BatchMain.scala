@@ -111,6 +111,7 @@ For example:
             rc0.numAvailableCores,
             rc0.workMemoryPerCore,
             rc0.cacheMemoryPerCore,
+            graph_api.io.EntityIO.verticesPerPartition,
             graph_operations.ImportUtil.cacheLines,
             duration,
             projectName,
