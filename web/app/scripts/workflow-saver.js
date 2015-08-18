@@ -25,6 +25,20 @@ angular.module('biggraph').directive('workflowSaver', function(util) {
             scope.side.reloadAllProjects();
           });
       };
+      scope.getParams = function() {
+        if (!scope.code) { return []; }
+        var params = scope.code.match(/\$\{(.*?)\}/g);
+        if (!params) { return []; }
+        var uniques = [];
+        for (var i = 0; i < params.length; ++i) {
+          var p = params[i].slice(2, -1);
+          if (uniques.indexOf(p) === -1) {
+            uniques.push(p);
+          }
+        }
+        uniques.sort();
+        return uniques;
+      };
     }
   };
 });
