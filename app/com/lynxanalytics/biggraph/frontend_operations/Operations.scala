@@ -1274,23 +1274,22 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       op(op.attr, attr).result
     }
     def apply(params: Map[String, String]) = {
-      val m = merge(project.vertexAttributes(params("key")))
+      val key = params("key")
+      val m = merge(project.vertexAttributes(key))
       val oldVAttrs = project.vertexAttributes.toMap
       val oldEdges = project.edgeBundle
       val oldEAttrs = project.edgeAttributes.toMap
       project.setVertexSet(m.segments, idAttr = "id")
-      // Always use most_common for the key attribute.
-      val hack = "aggregate-" + params("key") -> "most_common"
-      for ((attr, choice) <- parseAggregateParams(params + hack)) {
+      for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           m.belongsTo,
           AttributeWithLocalAggregator(oldVAttrs(attr), choice))
-        if (attr == params("key")) { // Don't actually add "_most_common" for the key.
-          project.vertexAttributes(attr) = result
-        } else {
-          project.vertexAttributes(s"${attr}_${choice}") = result
-        }
+        project.vertexAttributes(s"${attr}_${choice}") = result
       }
+      // Automatically keep the key attribute.
+      project.vertexAttributes(key) = aggregateViaConnection(
+        m.belongsTo,
+        AttributeWithLocalAggregator(oldVAttrs(key), "most_common"))
       if (oldEdges != null) {
         val edgeInduction = {
           val op = graph_operations.InducedEdgeBundle()
