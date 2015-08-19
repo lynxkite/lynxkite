@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+### 1.5.0
+
  - Kite configuration setting `YARN_NUM_EXECUTORS` is replaced by the more general `NUM_EXECUTORS`
    which applies to the standalone spark cluster setup as well.
  - Reorganized operation categories. We hope you find them more logical.
