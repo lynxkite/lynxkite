@@ -178,6 +178,8 @@ object BigGraphSparkContext {
       .set(
         "spark.scheduler.allocation.file",
         scala.util.Properties.envOrElse("KITE_SCHEDULER_POOLS_CONFIG", "conf/scheduler-pools.xml"))
+      .setIfMissing(
+        "spark.akka.frameSize", "100")
     if (useKryo) {
       sparkConf = sparkConf
         .set(
