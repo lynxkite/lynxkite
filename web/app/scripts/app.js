@@ -10,6 +10,7 @@ angular
     'cfp.hotkeys',
     'jmdobry.angular-cache',
   ])
+
   .config(function ($routeProvider) {
     $routeProvider
       .when('/', {
@@ -52,6 +53,7 @@ angular
         redirectTo: '/',
       });
   })
+
   .factory('$exceptionHandler', function($log, $injector) {
     return function(error) {
       // Log as usual.
@@ -64,6 +66,7 @@ angular
       });
     };
   })
+
   .factory('util', function utilFactory(
         $location, $window, $resource, $rootScope, $angularCacheFactory, $modal) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
@@ -150,6 +153,8 @@ angular
             return resp.data.error;
           }
           return resp.data;
+        } else if (resp.status === 0) {
+          return 'The server (' + window.location.hostname + ') cannot be reached.';
         }
         return resp.config.url + ' ' + (resp.statusText || 'failed');
       },
@@ -195,6 +200,7 @@ angular
     util.globals = util.get('/ajax/getGlobalSettings');
     return util;
   })
+
   // selectFields adds a new $selection attribute to the objects, that is a newline-delimited
   // concatenation of the selected fields. This can be used to filter by searching in multiple
   // fields. For example to search in p.name and p.notes at the same time:
@@ -212,9 +218,11 @@ angular
       return input;
     };
   })
+
   .filter('trustAsHtml', function($sce) {
     return $sce.trustAsHtml;
   })
+
   .filter('decimal', function() {
     return function(x) {
       if (x === undefined) { return x; }
