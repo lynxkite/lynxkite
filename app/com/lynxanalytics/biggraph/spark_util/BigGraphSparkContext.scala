@@ -178,6 +178,8 @@ object BigGraphSparkContext {
       .set(
         "spark.scheduler.allocation.file",
         scala.util.Properties.envOrElse("KITE_SCHEDULER_POOLS_CONFIG", "conf/scheduler-pools.xml"))
+      // We need a higher akka.frameSize (the Spark default is 10) as when the number of
+      // partitions get into the thousands the map output statuses exeeds this limit.
       .setIfMissing(
         "spark.akka.frameSize", "100")
     if (useKryo) {
