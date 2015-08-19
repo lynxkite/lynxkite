@@ -697,10 +697,12 @@ class ProjectFrame(val projectPath: SymbolPath)(
     try {
       viewer.toListElementFE(projectName)
     } catch {
-      case ex: Throwable => FEProjectListElement(
-        name = projectName,
-        error = Some(ex.getMessage)
-      )
+      case ex: Throwable =>
+        log.warn(s"Could not list $projectName:", ex)
+        FEProjectListElement(
+          name = projectName,
+          error = Some(ex.getMessage)
+        )
     }
   }
 
