@@ -1765,20 +1765,20 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def segmentationParameters = sourceParameters ++ List(
       Choice(
         "base-id-attr",
-        s"Identifying vertex attribute in $parent",
+        s"Identifying vertex attribute in base project",
         options = UIValue.list(parent.vertexAttributeNames[String].toList)),
-      Param("base-id-field", s"Identifying field for $parent"),
+      Param("base-id-field", s"Identifying field for base project"),
       Choice(
         "seg-id-attr",
-        s"Identifying vertex attribute in $project",
+        s"Identifying vertex attribute in segmentation",
         options = vertexAttributes[String]),
-      Param("seg-id-field", s"Identifying field for $project"))
+      Param("seg-id-field", s"Identifying field for segmentation"))
     def enabled =
       isSegmentation &&
         FEStatus.assert(
           vertexAttributes[String].nonEmpty, "No string vertex attributes in this segmentation") &&
           FEStatus.assert(
-            parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in parent")
+            parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in base project")
     def apply(params: Map[String, String]) = {
       val baseIdAttr = parent.vertexAttributes(params("base-id-attr")).runtimeSafeCast[String]
       val segIdAttr = project.vertexAttributes(params("seg-id-attr")).runtimeSafeCast[String]
@@ -1797,18 +1797,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def segmentationParameters = List(
         Choice(
           "base-id-attr",
-          s"Identifying vertex attribute in $parent",
+          s"Identifying vertex attribute in base project",
           options = UIValue.list(parent.vertexAttributeNames[String].toList)),
         Choice(
           "seg-id-attr",
-          s"Identifying vertex attribute in $project",
+          s"Identifying vertex attribute in segmentation",
           options = vertexAttributes[String]))
       def enabled =
         isSegmentation &&
           FEStatus.assert(
             vertexAttributes[String].nonEmpty, "No string vertex attributes in this segmentation") &&
             FEStatus.assert(
-              parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in parent")
+              parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in base project")
       def apply(params: Map[String, String]) = {
         val baseIdAttr = parent.vertexAttributes(params("base-id-attr")).runtimeSafeCast[String]
         val segIdAttr = project.vertexAttributes(params("seg-id-attr")).runtimeSafeCast[String]
