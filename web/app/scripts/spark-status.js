@@ -59,6 +59,7 @@ angular.module('biggraph')
     function onUpdate() {
       if (update && update.$resolved) {
         if (update.$error) {
+          scope[name].error = update.$error;
           $timeout(load, 10000);  // Try again in a bit.
         } else {
           update.received = Date.now();
