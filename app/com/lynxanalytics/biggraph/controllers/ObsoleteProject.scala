@@ -253,10 +253,16 @@ object ObsoleteProject {
   }
   private def oldCheckpoints(p: ObsoleteProject): Seq[ObsoleteProject] = {
     val tmpDir = s"!tmp-$Timestamp"
-    (0 until p.checkpointCount).map { i =>
+    (0 until p.checkpointCount).flatMap { i =>
       val tmp = ObsoleteProject.fromName(s"$tmpDir-$i")(p.tagRoot)
-      p.copyCheckpoint(i, tmp)
-      tmp
+      try {
+        p.copyCheckpoint(i, tmp)
+        Some(tmp)
+      } catch {
+        case t: Throwable =>
+          log.error(s"Could not migrate checkpoint $i of project $p.", t)
+          None
+      }
     }
   }
 
