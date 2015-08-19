@@ -604,6 +604,9 @@ class SegmentationEditor(
   def belongsTo = viewer.belongsTo
   def belongsTo_=(e: EdgeBundle): Unit = {
     segmentationState = segmentationState.copy(belongsToGUID = Some(e.gUID))
+    scalars.set("!coverage", graph_operations.Coverage.run(e).srcCoverage)
+    scalars.set("!nonEmpty", graph_operations.Coverage.run(e).dstCoverage)
+    scalars.set("!belongsToEdges", graph_operations.Count.run(e))
   }
 
   override protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
