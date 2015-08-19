@@ -17,7 +17,7 @@ Please add changes to "master". When releasing a version add a new header for th
  - LynxKite on EC2 will now always use ephemeral HDFS to store data. This data is lost if you `stop`
    or `destroy` the cluster. Use the new `s3copy` command if you want to save the data to S3.
    (The data does not have to be restored from S3 to HDFS. It will be read directly from S3.)
-   This also means significant performance improvements for S3 clusters.
+   This also means significant performance improvements for EC2 clusters.
  - User passwords can now be changed.
  - New operation _Metagraph_ is useful for debugging and perhaps also for demos.
  - Added an experimental tool for cleaning up old data. It is accessible as `/#/cleaner`.
