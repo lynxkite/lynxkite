@@ -943,6 +943,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.vertexAttributes = g.vertexAttributes.mapValues(_.entity)
       project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
       project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
+      for ((name, s) <- g.scalars) {
+        project.scalars(name) = s.entity
+      }
     }
   })
 
