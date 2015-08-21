@@ -17,14 +17,14 @@ The filtering syntax depends on the type of the attribute.
 For example `medium,high` would be a String filter to match these two values only, e.g. it would
 exclude "low" values.
 
-* For `String` attributes, regex filters can also be applied. The following examples and tips
-cover some frequent use cases:
-** The syntax is `regex(xyz)` for example for finding strings that contain `xyz`.
-** `regex(^Abc)` for strings that start with `Ab`.
-** `regex(Abc$)` for strings that end with `Ab`.
+* For `String` attributes, regex filters can also be applied. The following tips and examples
+can be useful:
+** `regex(xyz)` for finding strings that contain `xyz`.
+** `regex(^Abc)` for strings that start with `Abc`.
+** `regex(Abc$)` for strings that end with `Abc`.
 ** `regex((.)\1)` for strings with double letters, like `abbc`.
-** `regex([\d])` or `regex([0-9])` for strings with a digit in it, like `a2c`.
-** `regex(A|B)` for strings that either contain `A` or `B`. 
+** `regex(\d)` or `regex([0-9])` for strings that contain a digit, like `a2c`.
+** `regex(A|B)` for strings that contain either `A` or `B`. 
 ** Regex is case sensitive.
 ** For a more detailed explanation see https://en.wikipedia.org/wiki/Regular_expression
 
