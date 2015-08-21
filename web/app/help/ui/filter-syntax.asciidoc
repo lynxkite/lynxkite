@@ -24,6 +24,7 @@ can be useful:
 ** `regex(Abc$)` for strings that end with `Abc`.
 ** `regex((.)\1)` for strings with double letters, like `abbc`.
 ** `regex(\d)` or `regex([0-9])` for strings that contain a digit, like `a2c`.
+** `regex(^\d+$)` for strings that are valid integer numbers, like `123`.
 ** `regex(A|B)` for strings that contain either `A` or `B`. 
 ** Regex is case sensitive.
 ** For a more detailed explanation see https://en.wikipedia.org/wiki/Regular_expression
