@@ -691,7 +691,10 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   def nextState: Option[RootProjectState] = nextCheckpoint.map(getCheckpointState(_))
 
-  def viewer = new RootProjectViewer(currentState)
+  def viewer = {
+    assert(exists, s"$this does not exist.")
+    new RootProjectViewer(currentState)
+  }
 
   def toListElementFE = {
     try {
