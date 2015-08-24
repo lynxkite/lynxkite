@@ -1,6 +1,5 @@
 // A general benchmark script with a general mix of operations.
 start_time = System.currentTimeMillis()
-print "hello $user"
 
 p = new Project('createrandom')
 p.newVertexSet(size: 1000000)
