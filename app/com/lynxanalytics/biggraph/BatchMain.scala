@@ -3,6 +3,8 @@
 
 package com.lynxanalytics.biggraph
 
+import play.api.libs.json
+
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
@@ -67,6 +69,8 @@ abstract class GroovyProject extends groovy.lang.GroovyObjectSupport {
     import scala.collection.JavaConversions.mapAsJavaMap
     name match {
       case "scalars" => mapAsJavaMap(getScalars)
+      case "vertexAttributes" => mapAsJavaMap(getVertexAttributes)
+      case "edgeAttributes" => mapAsJavaMap(getEdgeAttributes)
       case "segmentations" => mapAsJavaMap(getSegmentations)
       case _ => getMetaClass().getProperty(this, name)
     }
@@ -95,6 +99,14 @@ abstract class GroovyProject extends groovy.lang.GroovyObjectSupport {
     subproject.viewer.scalars.mapValues(new GroovyScalar(_))
   }
 
+  private def getVertexAttributes: Map[String, GroovyAttribute] = {
+    subproject.viewer.vertexAttributes.mapValues(new GroovyAttribute(_))
+  }
+
+  private def getEdgeAttributes: Map[String, GroovyAttribute] = {
+    subproject.viewer.edgeAttributes.mapValues(new GroovyAttribute(_))
+  }
+
   private def getSegmentations: Map[String, GroovyProject] = {
     subproject.viewer.segmentationMap.keys.map { seg =>
       seg -> new GroovySubProject(new SubProject(subproject.frame, subproject.path :+ seg))
@@ -105,6 +117,19 @@ abstract class GroovyProject extends groovy.lang.GroovyObjectSupport {
 class GroovyScalar(scalar: Scalar[_]) {
   import BatchMain.dataManager
   override def toString = scalar.value.toString
+}
+
+class GroovyAttribute(attr: Attribute[_]) {
+  def histogram: String = {
+    val req = HistogramSpec(
+      attributeId = attr.gUID.toString,
+      vertexFilters = Seq(),
+      numBuckets = 10,
+      axisOptions = AxisOptions(logarithmic = false))
+    val res = BatchMain.drawing.getHistogram(BatchMain.user, req)
+    import com.lynxanalytics.biggraph.serving.ProductionJsonServer._
+    json.Json.toJson(res).toString
+  }
 }
 
 class GroovyRootProject(name: String) extends GroovyProject {
