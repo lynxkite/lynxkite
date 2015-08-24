@@ -3,40 +3,13 @@
 
 package com.lynxanalytics.biggraph
 
-import scala.io.Source
-import play.api.libs.json
-
-import com.lynxanalytics.biggraph.graph_api.SymbolPath
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
-import com.lynxanalytics.biggraph.controllers.ProjectFrame
-import com.lynxanalytics.biggraph.controllers.RootProjectState
-import com.lynxanalytics.biggraph.controllers.SubProject
-import com.lynxanalytics.biggraph.controllers.WorkflowOperation
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.serving.ProductionJsonServer._
 import com.lynxanalytics.biggraph.serving.User
 
 object BatchMain extends App {
-
-  def getScalarMeta(
-    projectName: String, scalarName: String)(
-      implicit metaManager: MetaGraphManager): Scalar[_] = {
-    val project = SubProject.parsePath(projectName).viewer
-    project.scalars(scalarName)
-  }
-
-  def getAttributeMeta(
-    projectName: String, attributeName: String)(
-      implicit metaManager: MetaGraphManager): Attribute[_] = {
-    val project = SubProject.parsePath(projectName).viewer
-    if (project.vertexAttributes.contains(attributeName))
-      project.vertexAttributes(attributeName)
-    else
-      project.edgeAttributes(attributeName)
-  }
 
   val commandLine = s"run-kite.sh batch ${args.mkString(" ")}"
   val env = BigGraphProductionEnvironment
@@ -51,7 +24,7 @@ Usage:
 parameter_values is list of items in the format parameter_name:parameter_value
 
 For example:
-./run-kite.sh batch my_script seed:42 input_file_name:data1.csv
+./run-kite.sh batch my_script.groovy seed:42 input_file_name:data1.csv
 """)
     System.exit(-1)
   }
@@ -73,14 +46,16 @@ For example:
   def normalize(name: String) = name.replace("-", "").toLowerCase
   val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
 
-  val imports = new org.codehaus.groovy.control.customizers.ImportCustomizer()
-  imports.addImport("Project", classOf[GroovyRootProject].getName)
-  val cfg = new org.codehaus.groovy.control.CompilerConfiguration()
-  cfg.addCompilationCustomizers(imports)
-  val binding = new groovy.lang.Binding()
-  val shell = new groovy.lang.GroovyShell(binding, cfg)
-  for ((k, v) <- params) {
-    binding.setProperty(k, v)
+  val shell = {
+    val imports = new org.codehaus.groovy.control.customizers.ImportCustomizer()
+    imports.addImport("Project", classOf[GroovyRootProject].getName)
+    val cfg = new org.codehaus.groovy.control.CompilerConfiguration()
+    cfg.addCompilationCustomizers(imports)
+    val binding = new groovy.lang.Binding()
+    for ((k, v) <- params) {
+      binding.setProperty(k, v)
+    }
+    new groovy.lang.GroovyShell(binding, cfg)
   }
   shell.evaluate(new java.io.File(scriptFileName))
 }
