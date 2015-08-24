@@ -6,6 +6,8 @@
 # export TMP_BACKUP_DIR=/tmp/kite_meta_backup
 # export HDFS_BACKUP_DIR=/user/$USER/backup
 
+set -e
+
 # Loading $KITE_META_DIR from .kiterc.
 source $KITERC_FILE
 export KITE_META=$(basename $KITE_META_DIR)
