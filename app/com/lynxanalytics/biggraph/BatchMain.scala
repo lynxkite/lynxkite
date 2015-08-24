@@ -91,8 +91,8 @@ abstract class GroovyProject extends groovy.lang.GroovyObjectSupport {
   override def getProperty(name: String): AnyRef = {
     import scala.collection.JavaConversions.mapAsJavaMap
     name match {
-      case "scalars" => mapAsJavaMap(Map())
-      case "segmentations" => mapAsJavaMap(Map())
+      case "scalars" => mapAsJavaMap(getScalars)
+      case "segmentations" => mapAsJavaMap(getSegmentations)
       case _ => getMetaClass().getProperty(this, name)
     }
   }
@@ -115,6 +115,21 @@ abstract class GroovyProject extends groovy.lang.GroovyObjectSupport {
   private def applyOperation(id: String, params: Map[String, String]): Unit = {
     BatchMain.ops.apply(BatchMain.user, subproject, FEOperationSpec(id, params))
   }
+
+  private def getScalars: Map[String, GroovyScalar] = {
+    subproject.viewer.scalars.mapValues(new GroovyScalar(_))
+  }
+
+  private def getSegmentations: Map[String, GroovyProject] = {
+    subproject.viewer.segmentationMap.keys.map { seg =>
+      seg -> new GroovySubProject(new SubProject(subproject.frame, subproject.path :+ seg))
+    }.toMap
+  }
+}
+
+class GroovyScalar(scalar: Scalar[_]) {
+  import BatchMain.dataManager
+  override def toString = scalar.value.toString
 }
 
 class GroovyRootProject(name: String) extends GroovyProject {
