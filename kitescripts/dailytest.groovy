@@ -1,8 +1,8 @@
-// A general benchmark script with a general mix of operations.
+// A benchmark/test script with a wide mix of operations.
 start_time = System.currentTimeMillis()
 
 project = new Project('createrandom')
-project.newVertexSet(size: 100)
+project.newVertexSet(size: 1000000)
 project.createScaleFreeRandomEdgeBundle(iterations: 5, perIterationMultiplier: 1.6, seed: 1571682864)
 project.addConstantEdgeAttribute(name: 'weight', value: 1, type: 'Double')
 project.exportEdgeAttributesToFile(
