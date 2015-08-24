@@ -19,16 +19,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.serving.ProductionJsonServer._
 import com.lynxanalytics.biggraph.serving.User
 
-object BatchMain {
-  private val commentRE = "#.*".r
-  private val twoArgPtrn = raw"\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)"
-  private val scalarRE = ("GetScalar" + twoArgPtrn).r
-  private val scalarBenchRE = ("BenchmarkScalar" + twoArgPtrn).r
-  private val opsRE = raw"Operations\s*\(\s*'([^']+)'\s*\)".r
-  private val opsEnd = "EndOperations"
-  private val waitForever = "WaitForever"
-  private val resetTimer = "ResetTimer"
-  private val histogramRE = ("Histogram" + twoArgPtrn).r
+object BatchMain extends App {
 
   def getScalarMeta(
     projectName: String, scalarName: String)(
@@ -47,13 +38,13 @@ object BatchMain {
       project.edgeAttributes(attributeName)
   }
 
-  def main(args: Array[String]) {
-    val env = BigGraphProductionEnvironment
-    implicit val metaManager = env.metaGraphManager
-    implicit val dataManager = env.dataManager
+  val commandLine = s"run-kite.sh batch ${args.mkString(" ")}"
+  val env = BigGraphProductionEnvironment
+  implicit val metaManager = env.metaGraphManager
+  implicit val dataManager = env.dataManager
 
-    if (args.size < 1) {
-      System.err.println("""
+  if (args.size < 1) {
+    System.err.println("""
 Usage:
 ./run-kite.sh batch name_of_script_file [parameter_values]
 
@@ -62,111 +53,84 @@ parameter_values is list of items in the format parameter_name:parameter_value
 For example:
 ./run-kite.sh batch my_script seed:42 input_file_name:data1.csv
 """)
-      System.exit(-1)
+    System.exit(-1)
+  }
+  val scriptFileName :: paramSpecs = args.toList
+  val params = paramSpecs
+    .map { paramSpec =>
+      val colonIdx = paramSpec.indexOf(':')
+      assert(
+        colonIdx > 0,
+        s"Invalid parameter value spec: $paramSpec. " +
+          "Parameter values should be specified as name:value")
+      (paramSpec.take(colonIdx), paramSpec.drop(colonIdx + 1))
     }
-    val scriptFileName :: paramSpecs = args.toList
-    val params = paramSpecs
-      .map { paramSpec =>
-        val colonIdx = paramSpec.indexOf(':')
-        assert(
-          colonIdx > 0,
-          s"Invalid parameter value spec: $paramSpec. " +
-            "Parameter values should be specified as name:value")
-        (paramSpec.take(colonIdx), paramSpec.drop(colonIdx + 1))
-      }
-      .toMap
+    .toMap
 
-    val drawing = new GraphDrawingController(env)
-    val user = User("Batch User", isAdmin = true)
-    val lit = Source.fromFile(scriptFileName).getLines()
-    var timer = System.currentTimeMillis
-    while (lit.hasNext) {
-      val line = lit.next()
-      val trimmed = line.trim
-      trimmed match {
-        case commentRE() => ()
-        case "" => ()
-        case scalarRE(projectNameSpec, scalarName) =>
-          val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          val scalar = getScalarMeta(projectName, scalarName)
-          log.info(s"Value of scalar ${scalarName} on project ${projectName}: ${scalar.value}")
-          println(s"${projectName}|${scalarName}|${scalar.value}")
-        case scalarBenchRE(projectNameSpec, scalarName) =>
-          val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          val scalar = getScalarMeta(projectName, scalarName)
-          val rc0 = dataManager.runtimeContext
-          val t0 = System.nanoTime
-          val (value, duration) = try {
-            (scalar.value.toString, (System.nanoTime - t0).toString)
-          } catch {
-            case _: Exception => ("ERROR", "ERROR")
-          }
-          val rc1 = dataManager.runtimeContext
-          assert(
-            (rc0 == rc1) || duration == "ERROR",
-            "Runtime context changed while running, benchmark is invalid.\n" +
-              s"Before: $rc0\nAfter: $rc1")
-          val outRow = Seq(
-            rc0.numExecutors,
-            rc0.numAvailableCores,
-            rc0.workMemoryPerCore,
-            rc0.cacheMemoryPerCore,
-            graph_api.io.EntityIO.verticesPerPartition,
-            graph_operations.ImportUtil.cacheLines,
-            duration,
-            projectName,
-            scalarName,
-            value)
-          println(outRow.mkString(","))
-        case opsRE(projectNameSpec) =>
-          val projectName = WorkflowOperation.substituteUserParameters(projectNameSpec, params)
-          val project = ProjectFrame.fromName(projectName)
-          val opRepo = new Operations(env)
-          if (!project.exists) {
-            // Create project if doesn't yet exist.
-            project.writeACL = user.email
-            project.readACL = user.email
-            project.initialize
-            opRepo.apply(
-              user,
-              project.subproject,
-              Operations.addNotesOperation(
-                s"Created by batch job: run-kite.sh batch ${args.mkString(" ")}"))
-          }
+  val drawing = new GraphDrawingController(env)
+  val user = User("Batch User", isAdmin = true)
+  val ops = new Operations(env)
+  def normalize(name: String) = name.replace("-", "").toLowerCase
+  val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
 
-          var opJson = ""
-          var line = ""
-          while (line != opsEnd) {
-            if (line.nonEmpty) opJson += line + "\n"
-            assert(lit.hasNext, "Unexpected end of script file, was looking for ${opsEnd}")
-            line = lit.next
-          }
+  val imports = new org.codehaus.groovy.control.customizers.ImportCustomizer()
+  imports.addImport("Project", classOf[GroovyRootProject].getName)
+  val cfg = new org.codehaus.groovy.control.CompilerConfiguration()
+  cfg.addCompilationCustomizers(imports)
+  val binding = new groovy.lang.Binding()
+  val shell = new groovy.lang.GroovyShell(binding, cfg)
+  for ((k, v) <- params) {
+    binding.setProperty(k, v)
+  }
+  shell.evaluate(new java.io.File(scriptFileName))
+}
 
-          for (step <- WorkflowOperation.workflowSteps(opJson, params)) {
-            val sp = SubProject(project, step.path)
-            opRepo.apply(user, sp, step.op)
-          }
-        case histogramRE(project, attr) =>
-          val req = HistogramSpec(
-            attributeId = getAttributeMeta(project, attr).gUID.toString,
-            vertexFilters = Seq(),
-            numBuckets = 10,
-            axisOptions = AxisOptions(logarithmic = false))
-          val res = drawing.getHistogram(user, req)
-          val j = json.Json.toJson(res).toString
-          log.info(s"Histogram for $attr on project $project: $j")
-          println(s"$project|$attr|$j")
-        case `waitForever` =>
-          println("Waiting indefinitely...")
-          this.synchronized { this.wait() }
-        case `resetTimer` =>
-          val t = System.currentTimeMillis
-          println(f"Time elapsed: ${0.001 * (t - timer)}%.3f s")
-          timer = t
-        case _ =>
-          System.err.println(s"Cannot parse line: ${line}")
-          System.exit(1)
-      }
+abstract class GroovyProject extends groovy.lang.GroovyObjectSupport {
+  val subproject: SubProject
+
+  override def getProperty(name: String): AnyRef = {
+    import scala.collection.JavaConversions.mapAsJavaMap
+    name match {
+      case "scalars" => mapAsJavaMap(Map())
+      case "segmentations" => mapAsJavaMap(Map())
+      case _ => getMetaClass().getProperty(this, name)
     }
   }
+
+  override def invokeMethod(name: String, args: AnyRef): AnyRef = {
+    val params = {
+      import scala.collection.JavaConversions.mapAsScalaMap
+      val javaParams = args.asInstanceOf[Array[_]].head.asInstanceOf[java.util.Map[String, AnyRef]]
+      mapAsScalaMap(javaParams).mapValues(_.toString).toMap
+    }
+    val id = {
+      val normalized = BatchMain.normalize(name)
+      assert(BatchMain.normalizedIds.contains(normalized), s"No such operation: $name")
+      BatchMain.normalizedIds(normalized)
+    }
+    applyOperation(id, params)
+    null
+  }
+
+  private def applyOperation(id: String, params: Map[String, String]): Unit = {
+    BatchMain.ops.apply(BatchMain.user, subproject, FEOperationSpec(id, params))
+  }
 }
+
+class GroovyRootProject(name: String) extends GroovyProject {
+  import BatchMain.metaManager
+  val project = ProjectFrame.fromName(name)
+  val subproject = project.subproject
+
+  if (!project.exists) {
+    project.writeACL = BatchMain.user.email
+    project.readACL = BatchMain.user.email
+    project.initialize
+    BatchMain.ops.apply(
+      BatchMain.user,
+      project.subproject,
+      Operations.addNotesOperation(s"Created by batch job: ${BatchMain.commandLine}"))
+  }
+}
+
+class GroovySubProject(val subproject: SubProject) extends GroovyProject
