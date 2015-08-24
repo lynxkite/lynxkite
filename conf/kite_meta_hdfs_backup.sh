@@ -5,6 +5,7 @@
 # export KITE_META=kite_meta
 # export TMP_BACKUP_DIR=/tmp/kite_meta_backup
 # export KITE_META_PARENT_DIR=$HOME
+# export KITERC_FILE=$HOME/.kiterc
 # export HDFS_BACKUP_DIR=/user/$USER/backup
 
 # Copy the kite meta dir to a temporary location for cleansing.
@@ -22,6 +23,8 @@ done
 
 # Copy a backup to HDFS.
 export CURRENT_DATE=$(date +"%y%m%d")
-hadoop fs -mkdir -p $HDFS_BACKUP_DIR/$CURRENT_DATE
-hadoop fs -put  $TMP_BACKUP_DIR/$KITE_META $HDFS_BACKUP_DIR/$CURRENT_DATE/
+export HDFS_BACKUP_DIR=$HDFS_BACKUP_DIR/$CURRENT_DATE
+hadoop fs -mkdir -p $HDFS_BACKUP_DIR
+hadoop fs -put  $KITERC_FILE $HDFS_BACKUP_DIR/
+hadoop fs -put  $TMP_BACKUP_DIR/$KITE_META $HDFS_BACKUP_DIR/
 
