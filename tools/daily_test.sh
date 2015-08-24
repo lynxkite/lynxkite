@@ -32,4 +32,4 @@ export KITE_DATA_DIR=\${KITE_DATA_DIR}/${TEST_NAME}
 EOF
 
 KITE_SITE_CONFIG_OVERRIDES=${OVERRIDES_FILE} \
-  ${KITE_BASE}/bin/biggraph batch ${KITE_BASE}/kitescripts/dailytest
+  ${KITE_BASE}/bin/biggraph batch ${KITE_BASE}/kitescripts/dailytest.groovy

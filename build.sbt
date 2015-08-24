@@ -37,7 +37,8 @@ libraryDependencies ++= Seq(
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
-  "org.xerial" % "sqlite-jdbc" % "3.8.7")
+  "org.xerial" % "sqlite-jdbc" % "3.8.7",
+  "org.codehaus.groovy" % "groovy-all" % "2.4.4")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
