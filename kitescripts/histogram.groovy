@@ -6,5 +6,5 @@ project.aggregateVertexAttributeGlobally(prefix: '', 'aggregate-random': 'averag
 
 println "vertex_count: ${ project.scalars['vertex_count'] }"
 start_time = System.currentTimeMillis()
-println "histogram: ${ project.vertexAttributes['random'].histogram }"
+println "histogram: ${ project.vertexAttributes['random'].histogram() }"
 println "time: ${ (System.currentTimeMillis() - start_time) / 1000 } seconds"
