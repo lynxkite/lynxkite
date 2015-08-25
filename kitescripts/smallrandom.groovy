@@ -1,5 +1,5 @@
 // Finds cliques in a small random graph.
-project = new Project(params['project'])
+project = lynx.project(params['project'])
 project.newVertexSet(size: 10)
 project.createRandomEdgeBundle(degree: 5, seed: params['seed'])
 project.maximalCliques(name: 'maximal_cliques', bothdir: false, min: 2)

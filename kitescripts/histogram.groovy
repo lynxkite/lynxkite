@@ -1,5 +1,5 @@
 // Benchmark for a large histogram calculation.
-project = new Project('random')
+project = lynx.project('random')
 project.newVertexSet(size: 10000000)
 project.addGaussianVertexAttribute(name: 'random', seed: 1571682864)
 project.aggregateVertexAttributeGlobally(prefix: '', 'aggregate-random': 'average')

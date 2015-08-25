@@ -1,5 +1,5 @@
 // Simple import test.
-project = new Project('loadcsv')
+project = lynx.project('loadcsv')
 project.importVerticesAndEdgesFromSingleCSVFileset(
   dst: 'dstVertexId",
   files: params['glob'],
