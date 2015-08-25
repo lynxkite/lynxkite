@@ -1,7 +1,7 @@
 // A benchmark/test script with a wide mix of operations.
 start_time = System.currentTimeMillis()
 
-project = new Project('createrandom')
+project = lynx.project('createrandom')
 project.newVertexSet(size: 1000000)
 project.createScaleFreeRandomEdgeBundle(iterations: 5, perIterationMultiplier: 1.6, seed: 1571682864)
 project.addConstantEdgeAttribute(name: 'weight', value: 1, type: 'Double')
@@ -11,7 +11,7 @@ project.exportEdgeAttributesToFile(
   attrs: 'weight',
   format: 'CSV')
 
-project = new Project('loadandprocessrandom')
+project = lynx.project('loadandprocessrandom')
 project.importVerticesAndEdgesFromSingleCSVFileset(
   dst: 'dstVertexId',
   files: 'UPLOAD$/randomgraph/data/part*',
