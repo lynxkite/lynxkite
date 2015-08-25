@@ -146,17 +146,20 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
 }
 
 // No checkpointing or entity access in workflow mode.
-class GroovyWorkflowProject(ctx: GroovyContext, project: ProjectEditor) extends GroovyProject(ctx) {
+class GroovyWorkflowProject(ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
+  def viewer = rootProject.offspringEditor(path).viewer
   override protected def applyOperation(id: String, params: Map[String, String]): Unit = {
-    val opctx = Operation.Context(ctx.user, project.viewer)
+    val opctx = Operation.Context(ctx.user, viewer)
     // Execute the operation.
     val op = ctx.ops.appliedOp(opctx, FEOperationSpec(id, params))
     // Then copy back the state created by the operation. We have to copy at
     // root level, as operations might reach up and modify parent state as well.
-    project.rootEditor.state = op.project.rootEditor.state
+    rootProject.state = op.project.rootEditor.state
   }
 
   override protected def getSegmentations: Map[String, GroovyProject] = {
-    project.viewer.segmentationMap.mapValues(v => new GroovyWorkflowProject(ctx, v.editor))
+    viewer.segmentationMap.keys.map { seg =>
+      seg -> new GroovyWorkflowProject(ctx, rootProject, path :+ seg)
+    }.toMap
   }
 }
