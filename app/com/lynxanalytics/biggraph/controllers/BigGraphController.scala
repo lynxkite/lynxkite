@@ -571,7 +571,7 @@ object Operation {
 }
 
 object WorkflowOperation {
-  private val WorkflowParameterRegex = "params\\['([-A-Za-z0-9_ ]+')\\]".r
+  private val WorkflowParameterRegex = "params\\['([-A-Za-z0-9_ ]+)'\\]".r
   private def findParameterReferences(source: String): Set[String] = {
     WorkflowParameterRegex
       .findAllMatchIn(source)
@@ -610,7 +610,8 @@ case class WorkflowOperation(
   def apply(params: Map[String, String]): Unit = {
     val ctx = groovy.GroovyContext(context.user, operationRepository)
     val shell = ctx.untrustedShell(
-      "project" -> new groovy.GroovyWorkflowProject(ctx, project))
+      "params" -> scala.collection.JavaConversions.mapAsJavaMap(params),
+      "project" -> new groovy.GroovyWorkflowProject(ctx, project, Seq()))
     shell.evaluate(workflow.stepsAsGroovy, title)
   }
 }
