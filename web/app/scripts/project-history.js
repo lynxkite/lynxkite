@@ -234,7 +234,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           var requests = history.steps.map(function(step) {
             return step.request;
           });
-          scope.code = JSON.stringify(requests, null, 2);
+          scope.code = toGroovy(requests);
         } else {
           scope.code = '';
         }
@@ -262,6 +262,43 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           segmentationsAfter: [],
           opCategoriesBefore: [],
         };
+      }
+
+      function toGroovyId(name) {
+        return name
+          .replace(/^./, function(first) { return first.toLowerCase(); })
+          .replace(/-./g, function(dashed) { return dashed[1].toUpperCase(); });
+      }
+
+      function toGroovy(requests) {
+        var lines = [];
+        for (var i = 0; i < requests.length; ++i) {
+          var request = requests[i];
+          var line = [];
+          line.push('project');
+          for (var j = 0; j < request.path.length; ++j) {
+            var seg = request.path[j];
+            line.push('.segmentations[\'' + seg + '\']');
+          }
+          line.push('.' + toGroovyId(request.op.id) + '(');
+          var params = Object.keys(request.op.parameters);
+          params.sort();
+          for (j = 0; j < params.length; ++j) {
+            var k = params[j];
+            var v = request.op.parameters[k];
+            if (!k.match(/^[a-zA-Z]+$/)) {
+              k = JSON.stringify(k);
+            }
+            v = JSON.stringify(v);
+            line.push(k + ': ' + v);
+            if (j !== params.length - 1) {
+              line.push(', ');
+            }
+          }
+          line.push(')');
+          lines.push(line.join(''));
+        }
+        return lines.join('\n');
       }
     },
   };

@@ -4,21 +4,10 @@
 package com.lynxanalytics.biggraph
 
 import scala.collection.JavaConversions
-import play.api.libs.json
 
-import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.frontend_operations.Operations
-import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.serving.User
 
 object BatchMain extends App {
-
-  val commandLine = s"run-kite.sh batch ${args.mkString(" ")}"
-  val env = BigGraphProductionEnvironment
-  implicit val metaManager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
-
   if (args.size < 1) {
     System.err.println("""
 Usage:
@@ -43,105 +32,11 @@ For example:
     }
     .toMap
 
-  val drawing = new GraphDrawingController(env)
-  val user = User("Batch User", isAdmin = true)
+  val env = BigGraphProductionEnvironment
   val ops = new Operations(env)
-  def normalize(name: String) = name.replace("-", "").toLowerCase
-  val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
-
-  val shell = {
-    val imports = new org.codehaus.groovy.control.customizers.ImportCustomizer()
-    imports.addImport("Project", classOf[GroovyRootProject].getName)
-    val cfg = new org.codehaus.groovy.control.CompilerConfiguration()
-    cfg.addCompilationCustomizers(imports)
-    val binding = new groovy.lang.Binding()
-    binding.setProperty("params", JavaConversions.mapAsJavaMap(params))
-    new groovy.lang.GroovyShell(binding, cfg)
-  }
+  val user = serving.User("Batch User", isAdmin = true)
+  val commandLine = s"run-kite.sh batch ${args.mkString(" ")}"
+  val ctx = groovy.GroovyContext(user, ops, Some(env), Some(commandLine))
+  val shell = ctx.trustedShell("params" -> JavaConversions.mapAsJavaMap(params))
   shell.evaluate(new java.io.File(scriptFileName))
 }
-
-abstract class GroovyProject extends groovy.lang.GroovyObjectSupport {
-  val subproject: SubProject
-
-  override def getProperty(name: String): AnyRef = {
-    name match {
-      case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
-      case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
-      case "segmentations" => JavaConversions.mapAsJavaMap(getSegmentations)
-      case _ => getMetaClass().getProperty(this, name)
-    }
-  }
-
-  override def invokeMethod(name: String, args: AnyRef): AnyRef = {
-    val params = {
-      val javaParams = args.asInstanceOf[Array[_]].head.asInstanceOf[java.util.Map[String, AnyRef]]
-      JavaConversions.mapAsScalaMap(javaParams).mapValues(_.toString).toMap
-    }
-    val id = {
-      val normalized = BatchMain.normalize(name)
-      assert(BatchMain.normalizedIds.contains(normalized), s"No such operation: $name")
-      BatchMain.normalizedIds(normalized)
-    }
-    applyOperation(id, params)
-    null
-  }
-
-  private def applyOperation(id: String, params: Map[String, String]): Unit = {
-    BatchMain.ops.apply(BatchMain.user, subproject, FEOperationSpec(id, params))
-  }
-
-  private def getScalars: Map[String, GroovyScalar] = {
-    subproject.viewer.scalars.mapValues(new GroovyScalar(_))
-  }
-
-  private def getVertexAttributes: Map[String, GroovyAttribute] = {
-    subproject.viewer.vertexAttributes.mapValues(new GroovyAttribute(_))
-  }
-
-  private def getEdgeAttributes: Map[String, GroovyAttribute] = {
-    subproject.viewer.edgeAttributes.mapValues(new GroovyAttribute(_))
-  }
-
-  private def getSegmentations: Map[String, GroovyProject] = {
-    subproject.viewer.segmentationMap.keys.map { seg =>
-      seg -> new GroovySubProject(new SubProject(subproject.frame, subproject.path :+ seg))
-    }.toMap
-  }
-}
-
-class GroovyScalar(scalar: Scalar[_]) {
-  import BatchMain.dataManager
-  override def toString = scalar.value.toString
-}
-
-class GroovyAttribute(attr: Attribute[_]) {
-  def histogram: String = {
-    val req = HistogramSpec(
-      attributeId = attr.gUID.toString,
-      vertexFilters = Seq(),
-      numBuckets = 10,
-      axisOptions = AxisOptions(logarithmic = false))
-    val res = BatchMain.drawing.getHistogram(BatchMain.user, req)
-    import com.lynxanalytics.biggraph.serving.ProductionJsonServer._
-    json.Json.toJson(res).toString
-  }
-}
-
-class GroovyRootProject(name: String) extends GroovyProject {
-  import BatchMain.metaManager
-  val project = ProjectFrame.fromName(name)
-  val subproject = project.subproject
-
-  if (!project.exists) {
-    project.writeACL = BatchMain.user.email
-    project.readACL = BatchMain.user.email
-    project.initialize
-    BatchMain.ops.apply(
-      BatchMain.user,
-      project.subproject,
-      Operations.addNotesOperation(s"Created by batch job: ${BatchMain.commandLine}"))
-  }
-}
-
-class GroovySubProject(val subproject: SubProject) extends GroovyProject

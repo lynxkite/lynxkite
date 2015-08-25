@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.groovy
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.frontend_operations.{ Operations, OperationParams }
 
@@ -161,14 +162,11 @@ case class ProjectHistoryStep(
 
 case class SaveWorkflowRequest(
   workflowName: String,
-  // This may contain parameter references in the format ${param-name}. After parameter
-  // substitution we parse the string as a JSON form of List[SubProjectOperation] and then we try
-  // to apply these operations in sequence.
-  stepsAsJSON: String,
+  stepsAsGroovy: String,
   description: String)
 
 case class SavedWorkflow(
-    stepsAsJSON: String,
+    stepsAsGroovy: String,
     author: String,
     description: String) {
   @transient lazy val prettyJson: String = SavedWorkflow.asPrettyJson(this)
@@ -457,7 +455,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       s"<p>User defined workflow saved by ${user.email} at $dateString<p>${request.description}"
 
     val savedWorkflow = SavedWorkflow(
-      request.stepsAsJSON,
+      request.stepsAsGroovy,
       user.email,
       description)
     ProjectFrame.validateName(request.workflowName, "Workflow name")
@@ -573,10 +571,7 @@ object Operation {
 }
 
 object WorkflowOperation {
-  private val WorkflowParameterRegex = "\\$\\{([-A-Za-z0-9_ ]+)\\}".r
-  private def workflowConcreteParameterRegex(parameterName: String): Regex = {
-    ("\\$\\{" + Pattern.quote(parameterName) + "\\}").r
-  }
+  private val WorkflowParameterRegex = "params\\['([-A-Za-z0-9_ ]+')\\]".r
   private def findParameterReferences(source: String): Set[String] = {
     WorkflowParameterRegex
       .findAllMatchIn(source)
@@ -588,26 +583,6 @@ object WorkflowOperation {
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
   implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
-  private def stepsFromJSON(stepsAsJSON: String): List[SubProjectOperation] = {
-    json.Json.parse(stepsAsJSON).as[List[SubProjectOperation]]
-  }
-  def substituteUserParameters(jsonTemplate: String, parameters: Map[String, String]): String = {
-    var completeJSON = jsonTemplate
-
-    for ((paramName, paramValue) <- parameters) {
-      completeJSON = workflowConcreteParameterRegex(paramName)
-        .replaceAllIn(completeJSON, Regex.quoteReplacement(paramValue))
-    }
-
-    completeJSON
-  }
-
-  def workflowSteps(
-    jsonTemplate: String,
-    parameters: Map[String, String]): List[SubProjectOperation] = {
-
-    stepsFromJSON(substituteUserParameters(jsonTemplate, parameters))
-  }
 }
 case class WorkflowOperation(
   fullName: SymbolPath,
@@ -623,7 +598,7 @@ case class WorkflowOperation(
 
   override val description = workflow.description
 
-  val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsJSON)
+  val parameterReferences = WorkflowOperation.findParameterReferences(workflow.stepsAsGroovy)
 
   def parameters =
     parameterReferences
@@ -633,19 +608,10 @@ case class WorkflowOperation(
 
   def enabled = FEStatus.enabled
   def apply(params: Map[String, String]): Unit = {
-    var stepsAsJSON = workflow.stepsAsJSON
-    val steps = WorkflowOperation.workflowSteps(stepsAsJSON, params)
-    for (step <- steps) {
-      // We create a local context from the current state in this workflow operation's
-      // own ProjectEditor.
-      val subEditor = project.offspringEditor(step.path)
-      val localContext = Operation.Context(context.user, subEditor.viewer)
-      // We execute the sub-operation.
-      val op = operationRepository.appliedOp(localContext, step.op)
-      // Then we copy back the state created by the sub-operation. We have to copy at
-      // root level, as operations might reach up and modify parent state as well.
-      project.state = op.project.rootEditor.state
-    }
+    val ctx = groovy.GroovyContext(context.user, operationRepository)
+    val shell = ctx.untrustedShell(
+      "project" -> new groovy.GroovyWorkflowProject(ctx, project))
+    shell.evaluate(workflow.stepsAsGroovy, title)
   }
 }
 

@@ -694,7 +694,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
 
   def nextState: Option[RootProjectState] = nextCheckpoint.map(getCheckpointState(_))
 
-  def viewer: ProjectViewer = subproject.viewer
+  def viewer = new RootProjectViewer(currentState)
 
   def toListElementFE = {
     try {
