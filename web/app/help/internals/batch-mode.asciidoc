@@ -20,26 +20,31 @@ Where `_parameters_` is a list of `key:value` pairs.
 
 ### Script file syntax
 
-Lines starting with `#` are _comments_. They are ignored. Empty lines are also ignored.
+Batch script files are written in the http://www.groovy-lang.org/[Groovy] programming language.
 
-`GetScalar('_project_', '_scalar_')` will calculate and print a scalar value from a project.
+The script will receive the command line arguments in the `params` map that is injected into its
+namespace.
 
-`BenchmarkScalar('_project_', '_scalar_')` is the same as `GetScalar` but outputs extra performance
-metrics.
+The script can interact with LynxKite through the `lynx` object that is injected into its
+namespace.
 
-`Operations('_project_')` executes a sequence of operations on a project. `Operations` starts
-a code block that is closed by `EndOperations`. This block contains operation descriptions in the
-same format as a <<saving-a-workflow,user-defined workflow>>. In fact the recommended way to
-create a batch script is to copy the sequence of operations from a workflow. The operations
-can use command-line parameters by referring to them as `${key}`.
+ - `GroovyProject lynx.project(String name)` will return the given project, creating it if it
+   does not yet exist.
 
-`WaitForever` can be used to end processing without terminating. This allows a review of the
-Apache Spark UI for debugging.
+The properties of `GroovyProject` are:
 
-`ResetTimer` prints the time elapsed since the last reset (or the start of the program) and resets
-the timer. It is useful for evaluating performance.
+ - `Map<String, GroovyProject> segmentations` is the list of segmentations for the project.
+ - `Map<String, GroovyScalar> scalars` is the list of scalars. `GroovyScalar` has a `toString()`
+   method that returns its value as a string.
+ - `Map<String, GroovyAttribute> vertexAttributes` and `Map<String, GroovyAttribute> edgeAttributes`
+   are the vertex and edge attributes. `GroovyAttribute` has a `histogram()` method that returns
+   a histogram of the attribute.
 
-`Histogram('_project_', '_attribute_')` prints a 10-bucket histogram of an attribute in a project.
+`GroovyProject` has a method for every operation. These methods take named arguments for each
+operation parameter. Rather than documenting these methods in detail, the recommended approach is
+to run the operations in interactive mode, enter the <<project-history, history editor>> and the
+<<saving-a-workflow, workflow editor>> within. The correct Groovy code can then be copied from the
+workflow editor.
 
 ### Full example
 
@@ -47,63 +52,36 @@ In this example we create a script that reads edges from a CSV file, calculates 
 PageRank to another CSV, and prints the number of vertices and the time the whole script took.
 
 ----
-# Import input, calculate PageRank, export output.
-Operations('Batch PageRank')
-[
-  {
-    "path": [],
-    "op": {
-      "id": "Import-vertices-and-edges-from-single-CSV-fileset",
-      "parameters": {
-        "files": "${input}",
-        "header": "<read first line>",
-        "delimiter": ",",
-        "src": "src",
-        "dst": "dst",
-        "filter": "",
-        "omitted": ""
-      }
-    }
-  },
-  {
-    "path": [],
-    "op": {
-      "id": "PageRank",
-      "parameters": {
-        "name": "page_rank",
-        "weights": "!no weight",
-        "iterations": "5",
-        "damping": "0.85"
-      }
-    }
-  },
-  {
-    "path": [],
-    "op": {
-      "id": "Export-vertex-attributes-to-file",
-      "parameters": {
-        "path": "${output}",
-        "link": "exported_csv",
-        "attrs": "stringID,page_rank",
-        "format": "CSV",
-      }
-    }
-  }
-]
-EndOperations
+start_time = System.currentTimeMillis()
+// Import input, calculate PageRank, export output.
+project = lynx.project('Batch PageRank')
+project.importVerticesAndEdgesFromSingleCSVFileset(
+  files: params['input'],
+  header: '<read first line>',
+  delimiter: ',',
+  src: 'src',
+  dst: 'dst',
+  filter: '',
+  omitted: '')
+project.pageRank(
+  name: 'page_rank',
+  weights: '!no weight',
+  iterations: '5',
+  damping: '0.85')
+project.exportVertexAttributesToFile(
+  path: params['output'],
+  link: 'exported_csv',
+  attrs: 'stringID,page_rank',
+  format: 'CSV')
 
-# Print number of vertices.
-GetScalar('Batch PageRank', 'vertex_count')
-
-# Log the time it took for all this.
-ResetTimer
+// Print metrics.
+count = project.scalars['vertex_count']
+time = (System.currentTimeMillis() - start_time) / 1000
+println "$count vertices processed in $time seconds."
 ----
 
-When running the script we must still use <<prefixed-paths>> for the file names. For example:
+When running the script we must use <<prefixed-paths>> for the file names. For example:
 
- ./run-kite.sh batch pagerank input:UPLOAD$/data-2015.csv output:UPLOAD$/pagerank-2015.csv
+ ./run-kite.sh batch pagerank.groovy input:UPLOAD$/data-2015.csv output:UPLOAD$/pagerank-2015.csv
 
-It will print:
-
- Batch PageRank|vertex_count|1234567
- Time elapsed: 1.234 s
+See the `kitescripts` directory in the LynxKite installation for more complex example scripts.
