@@ -2,7 +2,7 @@
 project = new Project('loadcsv')
 project.importVerticesAndEdgesFromSingleCSVFileset(
   dst: 'dstVertexId",
-  files: glob,
+  files: params['glob'],
   filter: '',
   src: 'srcVertexId',
   header: 'srcVertexId,dstVertexId,weight',

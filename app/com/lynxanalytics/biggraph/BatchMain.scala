@@ -3,6 +3,7 @@
 
 package com.lynxanalytics.biggraph
 
+import scala.collection.JavaConversions
 import play.api.libs.json
 
 import com.lynxanalytics.biggraph.controllers._
@@ -54,9 +55,7 @@ For example:
     val cfg = new org.codehaus.groovy.control.CompilerConfiguration()
     cfg.addCompilationCustomizers(imports)
     val binding = new groovy.lang.Binding()
-    for ((k, v) <- params) {
-      binding.setProperty(k, v)
-    }
+    binding.setProperty("params", JavaConversions.mapAsJavaMap(params))
     new groovy.lang.GroovyShell(binding, cfg)
   }
   shell.evaluate(new java.io.File(scriptFileName))
@@ -66,21 +65,18 @@ abstract class GroovyProject extends groovy.lang.GroovyObjectSupport {
   val subproject: SubProject
 
   override def getProperty(name: String): AnyRef = {
-    import scala.collection.JavaConversions.mapAsJavaMap
     name match {
-      case "scalars" => mapAsJavaMap(getScalars)
-      case "vertexAttributes" => mapAsJavaMap(getVertexAttributes)
-      case "edgeAttributes" => mapAsJavaMap(getEdgeAttributes)
-      case "segmentations" => mapAsJavaMap(getSegmentations)
+      case "scalars" => JavaConversions.mapAsJavaMap(getScalars)
+      case "edgeAttributes" => JavaConversions.mapAsJavaMap(getEdgeAttributes)
+      case "segmentations" => JavaConversions.mapAsJavaMap(getSegmentations)
       case _ => getMetaClass().getProperty(this, name)
     }
   }
 
   override def invokeMethod(name: String, args: AnyRef): AnyRef = {
     val params = {
-      import scala.collection.JavaConversions.mapAsScalaMap
       val javaParams = args.asInstanceOf[Array[_]].head.asInstanceOf[java.util.Map[String, AnyRef]]
-      mapAsScalaMap(javaParams).mapValues(_.toString).toMap
+      JavaConversions.mapAsScalaMap(javaParams).mapValues(_.toString).toMap
     }
     val id = {
       val normalized = BatchMain.normalize(name)
