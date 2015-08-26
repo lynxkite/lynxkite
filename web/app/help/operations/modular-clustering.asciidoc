@@ -14,4 +14,11 @@ The new segmentation will be saved under this name.
 
 [[weights]] Weight attribute::
 The attribute to use as edge weights.
+
+[[max-iterations]] Maximum number of iterations to do::
+After this number of iterations we stop regardless of modularity increment. Use -1 for unlimited.
+
+[[min-increment-per-iteration]] Minimal modularity increment in an iteration to keep going::
+If the average modularity increment in the last few iterations goes below this then we stop
+the algorithm and settle with the clustering found.
 ====
