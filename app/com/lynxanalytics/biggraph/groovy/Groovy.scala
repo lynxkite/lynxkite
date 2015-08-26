@@ -34,9 +34,9 @@ case class GroovyContext(
     new GroovyShell(binding)
   }
 
-  // untrustedShell has to unregister the thread-local sandbox after evaluations,
+  // withUntrustedShell has to unregister the thread-local sandbox after evaluations,
   // so the shell is only accessible within a block.
-  def untrustedShell(bindings: (String, AnyRef)*)(fn: GroovyShell => Unit): Unit = {
+  def withUntrustedShell(bindings: (String, AnyRef)*)(fn: GroovyShell => Unit): Unit = {
     val binding = new Binding()
     for ((k, v) <- bindings) {
       binding.setProperty(k, v)
@@ -51,7 +51,7 @@ case class GroovyContext(
   }
 }
 
-// The sandbox used in untrustedShell.
+// The sandbox used in withUntrustedShell.
 class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
   override def filter(receiver: AnyRef): AnyRef = {
     // Make all operations not explicitly allowed below fail.
