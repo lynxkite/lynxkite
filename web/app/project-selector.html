@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="col-xs-12 text-center project-list">
+  <div class="col-xs-12 project-list">
     <div class="entry" ng-click="newProject.expanded = true">
       <span class="icon glyphicon glyphicon-plus"></span>
       <span class="lead" ng-hide="newProject.expanded">New project</span>
@@ -38,8 +38,12 @@
     </div>
 
     <div class="path" ng-show="path">
+      <span class="lead">
+        <!-- Make sure there is no whitespace around the slash, so it can still be copied. -->
+        <span ng-repeat="dir in pathElements() track by $index"
+          >{{ dir }}<span ng-hide="$last" class="slash">/</span></span>
+      </span>
       <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()"></span>
-      {{ path }}
     </div>
 
     <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
@@ -52,7 +56,7 @@
     </p>
 
     <div ng-repeat="directory in data.directories"
-      class="entry directory-entry" href ng-click="enterDirectory($event, directory)">
+      class="entry" href ng-click="enterDirectory($event, directory)">
       <span class="icon glyphicon glyphicon-folder-open"></span>
       <span class="lead">
         <item-name-and-menu menu="menu" name="{{directory}}" spaced type="directory"></item-name-and-menu>
