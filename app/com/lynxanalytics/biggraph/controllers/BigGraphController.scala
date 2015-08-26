@@ -611,8 +611,9 @@ case class WorkflowOperation(
     val ctx = groovy.GroovyContext(context.user, operationRepository)
     val shell = ctx.untrustedShell(
       "params" -> scala.collection.JavaConversions.mapAsJavaMap(params),
-      "project" -> new groovy.GroovyWorkflowProject(ctx, project, Seq()))
-    shell.evaluate(workflow.stepsAsGroovy, title)
+      "project" -> new groovy.GroovyWorkflowProject(ctx, project, Seq())) {
+        shell => shell.evaluate(workflow.stepsAsGroovy, title)
+      }
   }
 }
 

@@ -2,8 +2,10 @@
 
 package com.lynxanalytics.biggraph.groovy
 
-import scala.collection.JavaConversions
+import groovy.lang.{ Binding, GroovyShell }
+import org.kohsuke.groovy.sandbox
 import play.api.libs.json
+import scala.collection.JavaConversions
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.controllers._
@@ -21,23 +23,72 @@ case class GroovyContext(
   implicit lazy val metaManager = env.get.metaGraphManager
   implicit lazy val dataManager = env.get.dataManager
   def normalize(name: String) = name.replace("-", "").toLowerCase
-  val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
+  lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
 
   def trustedShell(bindings: (String, AnyRef)*) = {
-    val binding = new groovy.lang.Binding()
+    val binding = new Binding()
     binding.setProperty("lynx", new GroovyInterface(this))
     for ((k, v) <- bindings) {
       binding.setProperty(k, v)
     }
-    new groovy.lang.GroovyShell(binding)
+    new GroovyShell(binding)
   }
 
-  def untrustedShell(bindings: (String, AnyRef)*) = {
-    val binding = new groovy.lang.Binding()
+  // untrustedShell has to unregister the thread-local sandbox after evaluations,
+  // so the shell is only accessible within a block.
+  def untrustedShell(bindings: (String, AnyRef)*)(fn: GroovyShell => Unit): Unit = {
+    val binding = new Binding()
     for ((k, v) <- bindings) {
       binding.setProperty(k, v)
     }
-    new groovy.lang.GroovyShell(binding)
+    val cc = new org.codehaus.groovy.control.CompilerConfiguration()
+    cc.addCompilationCustomizers(new sandbox.SandboxTransformer())
+    val shell = new GroovyShell(binding, cc)
+    val gs = new GroovySandbox(bindings.toMap.keySet)
+    gs.register()
+    try fn(shell)
+    finally gs.unregister()
+  }
+}
+
+// The sandbox used in untrustedShell.
+class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
+  override def filter(receiver: AnyRef): AnyRef = {
+    throw new SecurityException(s"Script tried to execute disallowed operation ($receiver)")
+  }
+
+  override def onMethodCall(
+    invoker: sandbox.GroovyInterceptor.Invoker,
+    receiver: Any, method: String, args: Object*): Object = {
+    // Method calls are only allowed on GroovyWorkflowProject.
+    if (receiver.isInstanceOf[GroovyWorkflowProject]) {
+      invoker.call(receiver, method, args: _*)
+    } else {
+      throw new SecurityException(s"Script tried to execute disallowed operation ($receiver)")
+    }
+  }
+
+  override def onGetProperty(
+    invoker: sandbox.GroovyInterceptor.Invoker,
+    receiver: Any, property: String): Object = {
+    // The bindings can be accessed on the Script object plus any property on GroovyWorkflowProject.
+    if (receiver.isInstanceOf[groovy.lang.Script] && bindings.contains(property) ||
+      receiver.isInstanceOf[GroovyWorkflowProject]) {
+      invoker.call(receiver, property)
+    } else {
+      throw new SecurityException(s"Script tried to execute disallowed operation ($property)")
+    }
+  }
+
+  override def onGetArray(
+    invoker: sandbox.GroovyInterceptor.Invoker,
+    receiver: Any, index: Any): Object = {
+    // Allow map lookup to make segmentations accessible.
+    if (receiver.isInstanceOf[java.util.Map[_, _]]) {
+      invoker.call(receiver, null, index)
+    } else {
+      throw new SecurityException(s"Script tried to execute disallowed operation ($receiver)")
+    }
   }
 }
 
