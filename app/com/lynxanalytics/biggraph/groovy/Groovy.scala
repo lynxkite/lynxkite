@@ -203,6 +203,7 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
 }
 
 // No checkpointing or entity access in workflow mode.
+// This class is exposed to untrusted scripts. Make sure its public API is properly restricted!
 class GroovyWorkflowProject(ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
   protected def viewer = rootProject.offspringEditor(path).viewer
   override protected def applyOperation(id: String, params: Map[String, String]): Unit = {
