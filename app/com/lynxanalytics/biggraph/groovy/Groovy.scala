@@ -204,7 +204,7 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
 
 // No checkpointing or entity access in workflow mode.
 class GroovyWorkflowProject(ctx: GroovyContext, rootProject: ProjectEditor, path: Seq[String]) extends GroovyProject(ctx) {
-  def viewer = rootProject.offspringEditor(path).viewer
+  protected def viewer = rootProject.offspringEditor(path).viewer
   override protected def applyOperation(id: String, params: Map[String, String]): Unit = {
     val opctx = Operation.Context(ctx.user, viewer)
     // Execute the operation.
