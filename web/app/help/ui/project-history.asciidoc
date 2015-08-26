@@ -68,14 +68,15 @@ Workflows can be created in history mode from the history of the existing projec
 Press +++<label class="btn btn-default"><i class="glyphicon glyphicon-film"></i></label>+++ to turn the history
 into a workflow. The source code of the workflow can then be edited.
 
-The source code of workflows is a JSON list of the operations performed, complete with parameters.
-Creating workflows from project histories has the benefit that the sequence of operations will always be
+The source code of a workflow is in the http://www.groovy-lang.org/[Groovy] programming language.
+Workflows are restricted to executing operations on the project. (They cannot, for example, read files.)
+Creating a workflow from a project history has the benefit that the sequence of operations will always be
 consistent, and you never have to look up the exact syntax for the workflow definition.
 
 The history typically includes some setup steps that should not be part of the workflow. Simply delete these
 steps from the workflow source code.
 
-Workflows can have parameters too. Simply replace strings in the source code with `+${my parameter}+`, and
+Workflows can have parameters too. Use `params['my parameter']` in the source, and
 the workflow will have a parameter called _"my parameter"_.
 
-// TODO: Workflow source code example with parameter.
+See the <<batch-mode>> section for a more powerful alternative to workflows.
