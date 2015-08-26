@@ -54,6 +54,8 @@ case class GroovyContext(
 // The sandbox used in untrustedShell.
 class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
   override def filter(receiver: AnyRef): AnyRef = {
+    // Make all operations not explicitly allowed below fail.
+    // (This includes instance creation and setting properties for example.)
     throw new SecurityException(s"Script tried to execute disallowed operation ($receiver)")
   }
 
