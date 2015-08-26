@@ -270,7 +270,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           .replace(/-./g, function(dashed) { return dashed[1].toUpperCase(); });
       }
 
-      function groovyEscape(str) {
+      function groovyQuote(str) {
         return '\'' + str.replace('\\', '\\\\').replace('\n', '\\n').replace('\'', '\\\'') + '\'';
       }
 
@@ -291,9 +291,9 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             var k = params[j];
             var v = request.op.parameters[k];
             if (!k.match(/^[a-zA-Z]+$/)) {
-              k = groovyEscape(k);
+              k = groovyQuote(k);
             }
-            v = groovyEscape(v);
+            v = groovyQuote(v);
             line.push(k + ': ' + v);
             if (j !== params.length - 1) {
               line.push(', ');
