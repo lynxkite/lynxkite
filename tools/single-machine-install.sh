@@ -248,8 +248,13 @@ start on runlevel [2345]
 stop on runlevel [!2345]
 
 respawn
-
+pre-start script
+    rm -f ${TARGET_HOME}/kite.pid
+end script
 exec su ${TARGET_USER} ${KITE_RUN_SCRIPT} interactive
+post-stop script
+    rm -f ${TARGET_HOME}/kite.pid
+end script
 EOM
     if  initctl start lynxkite; then
 	echo "Installation complete."
@@ -279,8 +284,9 @@ elif type systemctl > /dev/null 2>&1; then
 Description=LynxKite Server
 
 [Service]
-
+ExecStartPre=-rm -f ${TARGET_HOME}/kite.pid
 ExecStart=${KITE_RUN_SCRIPT} interactive
+ExecStopPost=-rm -f ${TARGET_HOME}/kite.pid
 WorkingDirectory=${LYNXKITE_BASE}
 User=${TARGET_USER}
 Restart=always

@@ -6,6 +6,10 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Users can now configure better the stopping condition for modular clustering.
+
+### 1.5.0
+
  - Kite configuration setting `YARN_NUM_EXECUTORS` is replaced by the more general `NUM_EXECUTORS`
    which applies to the standalone spark cluster setup as well.
  - Reorganized operation categories. We hope you find them more logical.
@@ -13,16 +17,17 @@ Please add changes to "master". When releasing a version add a new header for th
  - The _Batch processing API_ is now ready for use. It allows you to run a sequence of operations
    from the command line. For more details see the _Batch processing API_ section in the manual.
  - Richer progress indicator.
- - LynxKite on S3 will now always use ephemeral HDFS to store data. This data is lost if you `stop`
+ - LynxKite on EC2 will now always use ephemeral HDFS to store data. This data is lost if you `stop`
    or `destroy` the cluster. Use the new `s3copy` command if you want to save the data to S3.
    (The data does not have to be restored from S3 to HDFS. It will be read directly from S3.)
-   This also means a significant performance improvements for S3 clusters.
+   This also means significant performance improvements for EC2 clusters.
  - User passwords can now be changed.
  - New operation _Metagraph_ is useful for debugging and perhaps also for demos.
  - Added an experimental tool for cleaning up old data. It is accessible as `/#/cleaner`.
  - The title and tagline on the splash page can be customized through the `KITE_TITLE` and
    `KITE_TAGLINE` variables in `.kiterc`.
  - A large number of stability and performance improvements.
+ - tags.journal files will not grow large anymore.
 
 ### 1.4.4
 

@@ -59,23 +59,24 @@
           <i class="glyphicon glyphicon-forward"></i>
         </label>
         <!-- "Save as" is closed. The floppy reveals the input box. -->
-        <label class="btn btn-default" ng-click="showSaveAs = true; saveAsName = ''" ng-hide="showSaveAs"
-          ng-if="!side.isSegmentation()"
+        <label class="btn btn-default" ng-click="side.showSaveAs = true; side.saveAsName = ''"
+          ng-if="!side.showSaveAs && !side.isSegmentation()"
           tooltip="Save&nbsp;as..." tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
         <!-- "Save as" is open. The floppy sends the request (if something was entered) and hides the input box. -->
-        <label class="btn btn-default" ng-show="showSaveAs"
-          ng-if="!side.isSegmentation()"
-          ng-click="side.maybeSaveAs(saveAsName); showSaveAs = false;"
-          tooltip="{{saveAsName === '' ? 'Enter new name' : 'Click the icon to save as ' + saveAsName}}"
+        <label class="btn btn-default"
+          ng-if="side.showSaveAs && !side.isSegmentation()"
+          ng-click="side.maybeSaveAs(side.saveAsName); side.showSaveAs = false;"
+          tooltip="{{side.saveAsName === '' ? 'Enter new name' : 'Click the icon to save as ' + side.saveAsName}}"
           tooltip-append-to-body="true" tooltip-placement="bottom">
-          <form ng-submit="side.saveAs(saveAsName)" style="display: inline;">
-            <input class="form-control save-as" ng-model="saveAsName" ng-click="$event.stopPropagation();">
+          <form ng-submit="side.saveAs(side.saveAsName)" style="display: inline;">
+            <input class="form-control save-as" ng-model="side.saveAsName" ng-click="$event.stopPropagation();">
           </form>
           <i class="glyphicon glyphicon-floppy-disk"></i>
         </label>
-        <label class="btn btn-{{ showSettings ? 'primary' : 'default' }}" ng-click="showSettings = !showSettings"
+        <label class="btn btn-{{ side.showSettings ? 'primary' : 'default' }}"
+          ng-click="side.showSettings = !side.showSettings"
           ng-if="!side.isSegmentation()"
           tooltip="Project&nbsp;settings" tooltip-append-to-body="true" tooltip-placement="bottom"
           ng-show="util.globals.hasAuth">
@@ -125,7 +126,7 @@
     <div class="list-group">
 
       <!-- Project settings. -->
-      <div class="list-group-item project-settings" ng-if="showSettings">
+      <div class="list-group-item project-settings" ng-if="side.showSettings">
         <project-settings side="side"></project-settings>
       </div>
 

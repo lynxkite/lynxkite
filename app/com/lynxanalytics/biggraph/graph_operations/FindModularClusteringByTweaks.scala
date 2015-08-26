@@ -27,7 +27,10 @@ object FindModularClusteringByTweaks extends OpFromJson {
     val belongsTo = edgeBundle(
       inputs.vs.entity, clusters, properties = EdgeBundleProperties.partialFunction)
   }
-  def fromJson(j: JsValue) = FindModularClusteringByTweaks()
+  def fromJson(j: JsValue) =
+    FindModularClusteringByTweaks(
+      (j \ "maxIterations").asOpt[Int].getOrElse(-1),
+      (j \ "minIncrementPerIteration").asOpt[Double].getOrElse(0.001))
 
   case class ClusterData(
       // The sum of degrees of all nodes in this cluster. Note, if an edge goes within the cluster
@@ -498,13 +501,31 @@ object FindModularClusteringByTweaks extends OpFromJson {
     increase += localIncrease
     end += clusters.values.map(_.modularity(totalDegreeSum)).sum
   }
+
+  // We do at least smoothingLength iterations and then we exit if the total modularity increase
+  // in the last smoothingLength iterations were small. We don't use only one iteration's score as
+  // due to the randomness of the algorithm it's possible to have significant improvements after
+  // some non-fruitful iterations. The actual number 5 is a result of some very deep theoretical
+  // arguments which this comment is too narrow to contain.
+  val smoothingLength = 5
 }
 
 import FindModularClusteringByTweaks._
-case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Output] {
+case class FindModularClusteringByTweaks(
+    maxIterations: Int,
+    minIncrementPerIteration: Double) extends TypedMetaGraphOp[Input, Output] {
+
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  override def toJson =
+    if ((maxIterations == -1) && (minIncrementPerIteration == 0.001))
+      // Legacy values, we return empty json for backward compatibility.
+      Json.obj()
+    else
+      Json.obj(
+        "maxIterations" -> maxIterations, "minIncrementPerIteration" -> minIncrementPerIteration)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -535,6 +556,7 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
     // We keep the last few modularity increment values to decide whether we want to
     // continue with the iterations or not.
     var lastIncrements = List[Double]()
+    import FindModularClusteringByTweaks.smoothingLength
     do {
       val start = rc.sparkContext.accumulator(0.0)
       val end = rc.sparkContext.accumulator(0.0)
@@ -579,14 +601,11 @@ case class FindModularClusteringByTweaks() extends TypedMetaGraphOp[Input, Outpu
         s"Modularity in iteration $i increased by ${increase.value} " +
           s"from ${start.value} to ${end.value}")
       assert(Math.abs(start.value + increase.value - end.value) < 0.0000001, "Increase mismatch")
-      lastIncrements = (increase.value +: lastIncrements).take(5)
+      lastIncrements = (increase.value +: lastIncrements).take(smoothingLength)
       i += 1
-      // We do at least 5 iterations and then we exit if the total modularity increase in the last
-      // five iterations were small. We don't use only one iteration's score as due to the
-      // randomness of the algorithm it's possible to have significant improvements after some
-      // non-fruitful iterations. The actual number 5 is a result of some very deep theoretical
-      // arguments which this comment is too narrow to contain.
-    } while ((lastIncrements.size < 5) || (lastIncrements.sum > 0.005))
+    } while (((lastIncrements.size < smoothingLength) ||
+      (lastIncrements.sum > minIncrementPerIteration * smoothingLength)) &&
+      ((i < maxIterations) || (maxIterations < 0)))
 
     val belongsToFromEdges = members
       .flatMap { case (cid, vids) => vids.map(_ -> cid) }
