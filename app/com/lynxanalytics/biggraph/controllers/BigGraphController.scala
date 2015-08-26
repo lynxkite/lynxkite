@@ -194,10 +194,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
     val dir = SymbolPath.parse(request.path)
     val (dirs, projects) = Operation.listProjects(dir)
+    val visibleDirs = dirs.filter(_.readAllowedFrom(user))
     val visible = projects.filter(_.readAllowedFrom(user))
     ProjectList(
       request.path,
-      dirs.map(_.toString).toList,
+      visibleDirs.map(_.toString).toList,
       visible.map(_.toListElementFE).toList)
   }
 
@@ -572,16 +573,17 @@ object Operation {
 
   private def listProjectsRecursively(dir: SymbolPath)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
     val (dirs, projects) = listProjects(dir)
-    projects ++ dirs.flatMap(listProjectsRecursively(_))
+    projects ++ dirs.flatMap(dir => listProjectsRecursively(dir.path))
   }
 
   // Lists directories and projects inside a directory.
-  def listProjects(dir: SymbolPath)(implicit manager: MetaGraphManager): (Seq[SymbolPath], Seq[ProjectFrame]) = {
+  def listProjects(dir: SymbolPath)(
+    implicit manager: MetaGraphManager): (Seq[ProjectDirectory], Seq[ProjectFrame]) = {
     val rooted = ProjectDirectory.root / dir
     if (manager.tagExists(rooted)) {
       val tags = manager.lsTag(rooted).map(path => new SymbolPath(path.tail))
       val (projects, dirs) = tags.partition(tag => new ProjectFrame(tag).exists)
-      (dirs, projects.map(new ProjectFrame(_)))
+      (dirs.map(new ProjectDirectory(_)), projects.map(new ProjectFrame(_)))
     } else (Nil, Nil)
   }
 }
