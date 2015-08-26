@@ -82,6 +82,7 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
     }
   }
 
+  // This is called for all foo[bar] lookups.
   override def onGetArray(
     invoker: sandbox.GroovyInterceptor.Invoker,
     receiver: Any, index: Any): Object = {
