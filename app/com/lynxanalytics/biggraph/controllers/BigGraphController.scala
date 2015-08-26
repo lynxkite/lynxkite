@@ -199,7 +199,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
     val visible = projects.filter(_.readAllowedFrom(user))
     ProjectList(
       request.path,
-      visibleDirs.map(_.toString).toList,
+      visibleDirs.map(_.path.last.name).toList,
       visible.map(_.toListElementFE).toList)
   }
 
