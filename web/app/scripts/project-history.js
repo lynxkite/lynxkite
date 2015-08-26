@@ -270,6 +270,10 @@ angular.module('biggraph').directive('projectHistory', function(util) {
           .replace(/-./g, function(dashed) { return dashed[1].toUpperCase(); });
       }
 
+      function groovyEscape(str) {
+        return '\'' + str.replace('\\', '\\\\').replace('\n', '\\n').replace('\'', '\\\'') + '\'';
+      }
+
       function toGroovy(requests) {
         var lines = [];
         for (var i = 0; i < requests.length; ++i) {
@@ -287,9 +291,9 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             var k = params[j];
             var v = request.op.parameters[k];
             if (!k.match(/^[a-zA-Z]+$/)) {
-              k = JSON.stringify(k);
+              k = groovyEscape(k);
             }
-            v = JSON.stringify(v);
+            v = groovyEscape(v);
             line.push(k + ': ' + v);
             if (j !== params.length - 1) {
               line.push(', ');
