@@ -609,7 +609,7 @@ case class WorkflowOperation(
   def enabled = FEStatus.enabled
   def apply(params: Map[String, String]): Unit = {
     val ctx = groovy.GroovyContext(context.user, operationRepository)
-    val shell = ctx.untrustedShell(
+    ctx.withUntrustedShell(
       "params" -> scala.collection.JavaConversions.mapAsJavaMap(params),
       "project" -> new groovy.GroovyWorkflowProject(ctx, project, Seq())) {
         shell => shell.evaluate(workflow.stepsAsGroovy, title)
