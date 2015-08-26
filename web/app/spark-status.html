@@ -1,7 +1,10 @@
 <div class="spark-status">
-  <div ng-show="status.activeStages.length > 0" class="text-right">
+  <div ng-show="!status.error && status.activeStages.length > 0" class="text-right">
     <span class="glyphicon glyphicon-cog spinner" tooltip="{{ message(status) }}"></span>
     <span class="glyphicon glyphicon-remove kill" tooltip="Stop&nbsp;calculation" ng-click="kill()"></span>
+  </div>
+  <div ng-show="status.error" class="text-right spark-status-error">
+    <span class="glyphicon glyphicon-warning-sign" tooltip="{{ status.error }}"></span>
   </div>
   <div class="spark-status-stages">
     <div class="spark-status-stage" ng-repeat="stage in stages(status) track by stage.id"
