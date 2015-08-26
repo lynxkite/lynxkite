@@ -56,7 +56,7 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
   override def filter(receiver: AnyRef): AnyRef = {
     // Make all operations not explicitly allowed below fail.
     // (This includes instance creation and setting properties for example.)
-    throw new SecurityException(s"Script tried to execute disallowed operation ($receiver)")
+    throw new SecurityException(s"Script tried to execute a disallowed operation ($receiver)")
   }
 
   override def onMethodCall(
@@ -66,7 +66,8 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
     if (receiver.isInstanceOf[GroovyWorkflowProject]) {
       invoker.call(receiver, method, args: _*)
     } else {
-      throw new SecurityException(s"Script tried to execute disallowed operation ($receiver)")
+      throw new SecurityException(
+        s"Script tried to execute a disallowed operation ($receiver.$method)")
     }
   }
 
@@ -78,7 +79,8 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
       receiver.isInstanceOf[GroovyWorkflowProject]) {
       invoker.call(receiver, property)
     } else {
-      throw new SecurityException(s"Script tried to execute disallowed operation ($property)")
+      throw new SecurityException(
+        s"Script tried to execute a disallowed operation ($property.$method)")
     }
   }
 
@@ -90,7 +92,8 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
     if (receiver.isInstanceOf[java.util.Map[_, _]]) {
       invoker.call(receiver, null, index)
     } else {
-      throw new SecurityException(s"Script tried to execute disallowed operation ($receiver)")
+      throw new SecurityException(
+        s"Script tried to execute a disallowed operation ($receiver[$index])")
     }
   }
 }
