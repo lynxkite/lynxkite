@@ -67,7 +67,7 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
       invoker.call(receiver, method, args: _*)
     } else {
       throw new SecurityException(
-        s"Script tried to execute a disallowed operation ($receiver.$method)")
+        s"Script tried to execute a disallowed operation ($receiver.$method())")
     }
   }
 
@@ -80,7 +80,7 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
       invoker.call(receiver, property)
     } else {
       throw new SecurityException(
-        s"Script tried to execute a disallowed operation ($property.$method)")
+        s"Script tried to execute a disallowed operation ($property.$property)")
     }
   }
 
