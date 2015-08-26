@@ -193,6 +193,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
     val dir = SymbolPath.parse(request.path)
+    new ProjectDirectory(dir).assertReadAllowedFrom(user)
     val (dirs, projects) = Operation.listProjects(dir)
     val visibleDirs = dirs.filter(_.readAllowedFrom(user))
     val visible = projects.filter(_.readAllowedFrom(user))
