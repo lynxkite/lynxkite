@@ -124,6 +124,11 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         scope.path = scope.path.split('/').slice(0, -1).join('/');
       };
 
+      scope.pathElements = function() {
+        console.log(scope.path.split('/'));
+        return scope.path.split('/');
+      };
+
       scope.reportListError = function() {
         util.reportRequestError(scope.data, 'Project list could not be loaded.');
       };
