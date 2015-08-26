@@ -103,6 +103,10 @@ class MetaGraphManager(val repositoryPath: String) {
     tagRoot.exists(tag)
   }
 
+  def tagIsDir(tag: SymbolPath): Boolean = synchronized {
+    (tagRoot / tag).isDir
+  }
+
   def lsTag(tag: SymbolPath): Seq[SymbolPath] = synchronized {
     (tagRoot / tag).ls.map(_.fullName)
   }

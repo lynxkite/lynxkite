@@ -582,8 +582,9 @@ object Operation {
     implicit manager: MetaGraphManager): (Seq[ProjectDirectory], Seq[ProjectFrame]) = {
     val rooted = ProjectDirectory.root / dir
     if (manager.tagExists(rooted)) {
-      val tags = manager.lsTag(rooted).map(path => new SymbolPath(path.tail))
-      val (projects, dirs) = tags.partition(tag => new ProjectFrame(tag).exists)
+      val tags = manager.lsTag(rooted).filter(manager.tagIsDir(_))
+      val unrooted = tags.map(path => new SymbolPath(path.tail))
+      val (projects, dirs) = unrooted.partition(tag => new ProjectFrame(tag).exists)
       (dirs.map(new ProjectDirectory(_)), projects.map(new ProjectFrame(_)))
     } else (Nil, Nil)
   }

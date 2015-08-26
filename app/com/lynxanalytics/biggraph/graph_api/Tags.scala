@@ -70,6 +70,8 @@ sealed trait TagPath extends Serializable with Ordered[TagPath] {
 
   def allTags: Iterable[Tag]
 
+  def isDir = false
+
   // A string snapshot of the full directory structure. Mostly for debugging.
   def lsRec(indent: Int = 0): String
 }
@@ -96,6 +98,8 @@ trait TagDir extends TagPath {
     assert(p.nonEmpty, s"$subPath not found in $this")
     p.get
   }
+
+  override def isDir = true
 
   def exists(subPath: SymbolPath) = followPath(subPath).nonEmpty
   def existsDir(subPath: SymbolPath) = followPath(subPath).exists(_.isInstanceOf[TagDir])
