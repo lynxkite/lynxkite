@@ -8,6 +8,7 @@ Please add changes to "master". When releasing a version add a new header for th
 
  - Workflow and batch API scripts now use Groovy instead of JSON. This makes them easier to read
    and the batch API gets more flexible too.
+ - Users can now configure better the stopping condition for modular clustering.
 
 ### 1.5.0
 

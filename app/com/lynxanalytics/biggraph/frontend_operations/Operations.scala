@@ -525,7 +525,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
       Choice("weights", "Weight attribute", options =
-        UIValue("!no weight", "no weight") +: edgeAttributes[Double]))
+        UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
+      Param(
+        "max-iterations",
+        "Maximum number of iterations to do",
+        defaultValue = "30"),
+      Param(
+        "min-increment-per-iteration",
+        "Minimal modularity increment in an iteration to keep going",
+        defaultValue = "0.001"))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val edgeBundle = project.edgeBundle
@@ -534,7 +542,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         if (weightsName == "!no weight") const(edgeBundle)
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
-        val op = graph_operations.FindModularClusteringByTweaks()
+        val op = graph_operations.FindModularClusteringByTweaks(
+          params("max-iterations").toInt, params("min-increment-per-iteration").toDouble)
         op(op.edges, edgeBundle)(op.weights, weights).result
       }
       val segmentation = project.segmentation(params("name"))
