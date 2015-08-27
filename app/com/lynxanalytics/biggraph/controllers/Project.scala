@@ -629,7 +629,6 @@ class SegmentationEditor(
 class ProjectFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ProjectDirectory(path) {
   val projectName = path.toString
-  assert(projectName.nonEmpty, "Invalid project name: <empty string>")
   assert(!projectName.contains(ProjectFrame.separator), s"Invalid project name: $projectName")
 
   // Current checkpoint of the project
@@ -711,8 +710,9 @@ object ProjectFrame {
     new ProjectFrame(SymbolPath.parse(rootProjectName))
   }
 
-  def validateName(name: String, what: String = "Name", allowSlash: Boolean = false): Unit = {
-    assert(name.nonEmpty, s"$what cannot be empty.")
+  def validateName(name: String, what: String = "Name",
+                   allowSlash: Boolean = false, allowEmpty: Boolean = false): Unit = {
+    assert(allowEmpty || name.nonEmpty, s"$what cannot be empty.")
     assert(!name.startsWith("!"), s"$what cannot start with '!'.")
     assert(!name.contains(separator), s"$what cannot contain '$separator'.")
     assert(allowSlash || !name.contains("/"), s"$what cannot contain '/'.")
@@ -804,12 +804,31 @@ class ProjectDirectory(val path: SymbolPath)(
   def parent = if (path.size > 1) Some(new ProjectDirectory(path.init)) else None
   def parents: Iterable[ProjectDirectory] = parent ++ parent.toSeq.flatMap(_.parents)
   def isProject = new ProjectFrame(path).exists
+
+  // Returns the list of all projects contained in this directory.
+  def listProjectsRecursively: Seq[ProjectFrame] = {
+    assert(!isProject, s"$this is not a directory.")
+    val (dirs, projects) = listDirectoriesAndProjects
+    projects ++ dirs.flatMap(_.listProjectsRecursively)
+  }
+
+  // Lists directories and projects inside this directory.
+  def listDirectoriesAndProjects: (Seq[ProjectDirectory], Seq[ProjectFrame]) = {
+    assert(!isProject, s"$this is not a directory.")
+    val rooted = ProjectDirectory.root / path
+    if (manager.tagExists(rooted)) {
+      val tags = manager.lsTag(rooted).filter(manager.tagIsDir(_))
+      val unrooted = tags.map(path => new SymbolPath(path.drop(ProjectDirectory.root.size)))
+      val (projects, dirs) = unrooted.partition(tag => new ProjectFrame(tag).exists)
+      (dirs.map(new ProjectDirectory(_)), projects.map(new ProjectFrame(_)))
+    } else (Nil, Nil)
+  }
 }
 object ProjectDirectory {
   val root = SymbolPath("projects")
 
   def fromName(path: String)(implicit metaManager: MetaGraphManager): ProjectDirectory = {
-    ProjectFrame.validateName(path, "Name", allowSlash = true)
+    ProjectFrame.validateName(path, "Name", allowSlash = true, allowEmpty = true)
     val dir = new ProjectDirectory(SymbolPath.parse(path))
     assert(!dir.parents.exists(_.isProject), s"Cannot create directories inside projects: $path")
     dir
