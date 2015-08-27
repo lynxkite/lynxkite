@@ -43,7 +43,18 @@ case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
     implicit val id = inputDatas
     val intersection = {
       val intersection = inputs.vss.map(_.rdd)
-        .reduce((rdd1, rdd2) => rdd1.sortedJoin(rdd2).mapValues(_ => ()))
+        .reduce((rdd1, rdd2) => {
+          val solutionHack = false
+          val r =
+            if (rdd1.partitions.size == rdd2.partitions.size) {
+              rdd2
+            } else if (solutionHack) {
+              rdd2.toSortedRDD(rdd1.partitioner.get)
+            } else {
+              rdd2
+            }
+          rdd1.sortedJoin(r).mapValues(_ => ())
+        })
       // Repartition if heavy.
       if (heavy) {
         intersection.cache()
