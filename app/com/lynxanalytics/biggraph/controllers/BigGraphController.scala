@@ -192,9 +192,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
   val ops = new Operations(env)
 
   def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
-    val dir = SymbolPath.parse(request.path)
-    new ProjectDirectory(dir).assertReadAllowedFrom(user)
-    val (dirs, projects) = Operation.listProjects(dir)
+    val dir = ProjectDirectory.fromName(request.path)
+    dir.assertReadAllowedFrom(user)
+    val (dirs, projects) = dir.listDirectoriesAndProjects
     val visibleDirs = dirs.filter(_.readAllowedFrom(user))
     val visible = projects.filter(_.readAllowedFrom(user))
     ProjectList(
@@ -567,26 +567,10 @@ object Operation {
 
   def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
     val root = new SymbolPath(Nil)
-    val readable = listProjectsRecursively(root).filter(_.readAllowedFrom(user))
+    val projects = new ProjectDirectory(root).listProjectsRecursively
+    val readable = projects.filter(_.readAllowedFrom(user))
     // Do not list internal project names (starting with "!").
     readable.filterNot(_.projectName.startsWith("!"))
-  }
-
-  private def listProjectsRecursively(dir: SymbolPath)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
-    val (dirs, projects) = listProjects(dir)
-    projects ++ dirs.flatMap(dir => listProjectsRecursively(dir.path))
-  }
-
-  // Lists directories and projects inside a directory.
-  def listProjects(dir: SymbolPath)(
-    implicit manager: MetaGraphManager): (Seq[ProjectDirectory], Seq[ProjectFrame]) = {
-    val rooted = ProjectDirectory.root / dir
-    if (manager.tagExists(rooted)) {
-      val tags = manager.lsTag(rooted).filter(manager.tagIsDir(_))
-      val unrooted = tags.map(path => new SymbolPath(path.drop(ProjectDirectory.root.size))
-      val (projects, dirs) = unrooted.partition(tag => new ProjectFrame(tag).exists)
-      (dirs.map(new ProjectDirectory(_)), projects.map(new ProjectFrame(_)))
-    } else (Nil, Nil)
   }
 }
 
