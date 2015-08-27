@@ -100,8 +100,11 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[com.twitter.algebird.SparseHLL])
     kryo.register(classOf[com.twitter.algebird.DenseHLL])
     kryo.register(classOf[com.twitter.algebird.Max[_]])
-    // The next three are required by some operations after the Spark 1.3.0 updgrade. (SPARK-6497)
+    // These are required by some operations after the Spark 1.3.0 upgrade. (SPARK-6497)
+    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$8])
+    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$9])
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$10])
+    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$12])
     kryo.register(classOf[scala.reflect.ClassTag$$anon$1])
     kryo.register(classOf[Class[_]])
     // === #1518 / SPARK-5949 ===
