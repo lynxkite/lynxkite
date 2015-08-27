@@ -125,7 +125,6 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       };
 
       scope.pathElements = function() {
-        console.log(scope.path.split('/'));
         return scope.path.split('/');
       };
 
