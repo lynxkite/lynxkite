@@ -583,7 +583,7 @@ object Operation {
     val rooted = ProjectDirectory.root / dir
     if (manager.tagExists(rooted)) {
       val tags = manager.lsTag(rooted).filter(manager.tagIsDir(_))
-      val unrooted = tags.map(path => new SymbolPath(path.tail))
+      val unrooted = tags.map(path => new SymbolPath(path.drop(ProjectDirectory.root.size))
       val (projects, dirs) = unrooted.partition(tag => new ProjectFrame(tag).exists)
       (dirs.map(new ProjectDirectory(_)), projects.map(new ProjectFrame(_)))
     } else (Nil, Nil)
