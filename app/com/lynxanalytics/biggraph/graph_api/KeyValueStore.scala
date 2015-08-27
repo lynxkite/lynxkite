@@ -48,7 +48,9 @@ case class JournalKeyValueStore(file: String) extends KeyValueStore {
         if (line.nonEmpty) {
           try {
             val j = Json.parse(line).as[Seq[String]]
-            f(j(0), j(1), j(2))
+            if (!j(1).contains("!tmp")) {
+              f(j(0), j(1), j(2))
+            }
           } catch {
             case e: JsonProcessingException =>
               log.warn(s"Bad input line: '$line' in file: '$file' " +
