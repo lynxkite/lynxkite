@@ -14,6 +14,10 @@
   background: whitesmoke;
 }
 
+.project-list .path .description {
+  opacity: 0.5;
+}
+
 .project-list .slash {
   padding: 0 5px;
 }

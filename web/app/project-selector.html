@@ -38,6 +38,7 @@
     </div>
 
     <div class="path" ng-show="path">
+      <div class="description">Current folder:</div>
       <span class="lead">
         <!-- Make sure there is no whitespace around the slash, so it can still be copied. -->
         <span ng-repeat="dir in pathElements() track by $index"
