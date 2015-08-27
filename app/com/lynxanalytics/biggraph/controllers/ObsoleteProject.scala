@@ -99,6 +99,10 @@ class ObsoleteProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
       tag => Json.parse(get(tag)).as[ProjectOperationRequest]
     }
   }
+  def lastOperationRequest_=(spec: ProjectOperationRequest) = tagRoot.synchronized {
+    val json = Json.prettyPrint(Json.toJson(spec))
+    set(checkpointedDir / "lastOperationRequest", json)
+  }
 
   def vertexSet = tagRoot.synchronized {
     existing(checkpointedDir / "vertexSet")
@@ -268,6 +272,14 @@ object ObsoleteProject {
 
   private def lastNewCheckpoint(
     oldCheckpoints: Seq[ObsoleteProject], repo: CheckpointRepository): String = {
+    oldCheckpoints.headOption.foreach { firstCheckpoint =>
+      if (firstCheckpoint.lastOperationRequest.isEmpty) {
+        firstCheckpoint.lastOperationRequest =
+          ProjectOperationRequest(
+            project = "fake",
+            op = FEOperationSpec("Change-project-notes", Map("notes" -> firstCheckpoint.notes)))
+      }
+    }
     oldCheckpoints.foldLeft("") {
       case (previousCheckpoint, project) =>
         val state = getRootState(project)
