@@ -38,8 +38,9 @@ object OperationParams {
     def validate(value: String): Unit = {
       val possibleValues = options.map { x => x.id }.toSet
       val givenValues = value.split(",", -1).toSet
-      assert(givenValues subsetOf possibleValues,
-        s"Unknown option(s): ${givenValues -- possibleValues} (Possibilities: $possibleValues)")
+      val unknown = givenValues -- possibleValues
+      assert(unknown.isEmpty,
+        s"Unknown option: ${unknown.mkString(", ")} (Possibilities: ${possibleValues.mkString(", ")})")
     }
   }
   case class TagList(
