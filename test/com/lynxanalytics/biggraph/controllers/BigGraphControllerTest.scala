@@ -94,7 +94,7 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
     controller.createDirectory(user, CreateDirectoryRequest(name = "foo/bar"))
     assert(list("").directories == Seq("foo"))
     assert(list("foo").projects.isEmpty)
-    assert(list("foo").directories == Seq("foo/bar"))
+    assert(list("foo").directories == Seq("bar"))
     controller.discardDirectory(user, DiscardDirectoryRequest(name = "foo"))
     assert(list("").directories.isEmpty)
   }
