@@ -714,7 +714,8 @@ object ProjectFrame {
   }
 
   def validateName(name: String, what: String = "Name",
-                   allowSlash: Boolean = false, allowEmpty: Boolean = false): Unit = {
+                   allowSlash: Boolean = false,
+                   allowEmpty: Boolean = false): Unit = {
     assert(allowEmpty || name.nonEmpty, s"$what cannot be empty.")
     assert(!name.startsWith("!"), s"$what cannot start with '!'.")
     assert(!name.contains(separator), s"$what cannot contain '$separator'.")
