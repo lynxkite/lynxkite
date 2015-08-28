@@ -105,6 +105,7 @@ object OperationParams {
     }
   }
 }
+
 class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   import Operation.Category
   import Operation.Context

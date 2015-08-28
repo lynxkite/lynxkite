@@ -639,7 +639,10 @@ class ProjectFrame(val projectPath: SymbolPath)(
   val rootDir: SymbolPath = SymbolPath("projects") / projectPath
 
   // Current checkpoint of the project
-  def checkpoint: String = get(rootDir / "checkpoint")
+  def checkpoint: String = {
+    assert(exists, s"$this does not exist.")
+    get(rootDir / "checkpoint")
+  }
   private def checkpoint_=(x: String): Unit = set(rootDir / "checkpoint", x)
 
   // The farthest checkpoint available in the current redo sequence

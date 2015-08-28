@@ -17,7 +17,7 @@ angular.module('biggraph').directive('workflowSaver', function(util) {
           '/ajax/saveWorkflow',
           {
             workflowName: scope.name,
-            stepsAsJSON: scope.code,
+            stepsAsGroovy: scope.code,
             description: scope.description,
           },
           function() {
@@ -27,11 +27,11 @@ angular.module('biggraph').directive('workflowSaver', function(util) {
       };
       scope.getParams = function() {
         if (!scope.code) { return []; }
-        var params = scope.code.match(/\$\{(.*?)\}/g);
+        var params = scope.code.match(/params\[['"](.*?)['"]\]/g);
         if (!params) { return []; }
         var uniques = [];
         for (var i = 0; i < params.length; ++i) {
-          var p = params[i].slice(2, -1);
+          var p = params[i].slice(8, -2);
           if (uniques.indexOf(p) === -1) {
             uniques.push(p);
           }
