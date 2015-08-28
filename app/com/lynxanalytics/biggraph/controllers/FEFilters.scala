@@ -73,6 +73,9 @@ object FEFilters {
   def embedFilteredVerticesFA(
     base: VertexSet, filters: Seq[FilteredAttribute[_]], heavy: Boolean = false)(
       implicit metaManager: MetaGraphManager): EdgeBundle = {
+    for (v <- filters) {
+      assert(v.attribute.vertexSet == base, s"Filter mismatch: ${v.attribute} and $base")
+    }
     intersectionEmbedding(base +: filters.map(applyFilter(_)), heavy)
   }
 

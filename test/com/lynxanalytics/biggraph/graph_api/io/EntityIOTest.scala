@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api.io
 
+import com.lynxanalytics.biggraph.TestUtils
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -40,19 +41,6 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
   val numVerticesInExampleGraph = 8
 
-  def withRestoreGlobals[T](verticesPerPartition: Int, tolerance: Double)(fn: => T): T = {
-    val savedVerticesPerPartition = EntityIO.verticesPerPartition
-    val savedTolerance = EntityIO.tolerance
-    try {
-      EntityIO.verticesPerPartition = verticesPerPartition
-      EntityIO.tolerance = tolerance
-      fn
-    } finally {
-      EntityIO.verticesPerPartition = savedVerticesPerPartition
-      EntityIO.tolerance = savedTolerance
-    }
-  }
-
   // A data repository with a vertex set partitioned in multiple ways.
   class MultiPartitionedFileStructure(partitions: Seq[Int]) {
     import Scripting._
@@ -62,7 +50,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val repo = cleanDataManager.repositoryPath
     for (p <- partitions) {
       val dataManager = new DataManager(sparkContext, repo)
-      withRestoreGlobals(
+      TestUtils.withRestoreGlobals(
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
           dataManager.get(vertices)
@@ -147,7 +135,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
     // See what happens when we try to load the vertex set.
     mpfs.operation.executionCounter = 0
-    withRestoreGlobals(
+    TestUtils.withRestoreGlobals(
       tolerance = tolerance,
       verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
         val dataManager = new DataManager(sparkContext, repo)
