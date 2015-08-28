@@ -39,12 +39,9 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
   def copyDirContents(srcDir: HadoopFile, dstDir: HadoopFile) = {
     val files = (srcDir / "*").list
     for (f <- files) {
-      val srcName = f.path.getName
-      val dstName =
-        if (srcName.startsWith("dot")) "." + srcName.drop(3)
-        else srcName
+      val name = f.path.getName
       val s = f.path
-      val d = (dstDir / dstName).path
+      val d = (dstDir / name).path
       srcDir.fs.copyFromLocalFile( /* delSrc = */ false, /* overwrite = */ true, s, d)
     }
 
