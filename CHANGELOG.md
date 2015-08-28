@@ -13,7 +13,7 @@ Please add changes to "master". When releasing a version add a new header for th
  - Users can now configure better the stopping condition for modular clustering.
  - Improved format for the graph storage. Note that this breaks compatibility of the data directory with 1.5.0.
    Compatibility is retained with all version before 1.5. One way to fix a data directory created/touched by Kite 
-   1.5.0 is to delete the directory $KITE_DATA_DIR/partitioned.
+   1.5.0 is to delete the directory `$KITE_DATA_DIR/partitioned`.
 
 ### 1.5.0
 
