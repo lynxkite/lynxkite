@@ -32,6 +32,11 @@ name.) Inconsistent operations will have a red background and an error message d
 Operations below an inconsistent operation will be uneditable -- the inconsistency must be fixed before
 proceeding.
 
+Operations with a grey background have already been executed. It is possible to have an error message on a
+grey operation -- this can happen as a result of upgrading LynxKite, for example if a new parameter is added.
+An error message on a grey operation does not need to be fixed as long as the operations before it remain
+unchanged.
+
 The modified history can be saved with the
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-floppy-disk"></i></label>+++ button.
 The modified history can be saved over the original project, or can be saved under a new name.
