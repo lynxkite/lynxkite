@@ -184,6 +184,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   protected def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): DT
 
   protected def loadRDD(path: HadoopFile): SortedRDD[Long, _]
+  protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, _]
 
   private def bestPartitionedSource(entityLocation: EntityLocationSnapshot, desiredPartitionNumber: Int) = {
     assert(entityLocation.availablePartitions.nonEmpty,
@@ -211,7 +212,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     newFile
   }
 
-  private def legacyRDD = loadRDD(legacyPath.forReading)
+  private def legacyRDD = legacyLoadRDD(legacyPath.forReading)
 
   private def desiredPartitions(entityLocation: EntityLocationSnapshot) = {
     val vertices = entityLocation.numVertices
@@ -246,6 +247,10 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
     path.loadEntityRDD[Unit](sc)
   }
 
+  def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
+    path.loadLegacyEntityRDD[Unit](sc)
+  }
+
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
     new VertexSetData(entity, loadRDD(path))
@@ -259,6 +264,10 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
   def loadRDD(path: HadoopFile): SortedRDD[Long, Edge] = {
     path.loadEntityRDD[Edge](sc)
   }
+  def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Edge] = {
+    path.loadLegacyEntityRDD[Edge](sc)
+  }
+
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): EdgeBundleData = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
     new EdgeBundleData(
@@ -275,6 +284,11 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
     implicit val ct = entity.classTag
     path.loadEntityRDD[T](sc)
   }
+  def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T] = {
+    implicit val ct = entity.classTag
+    path.loadLegacyEntityRDD[T](sc)
+  }
+
   def finalRead(path: HadoopFile, parent: Option[VertexSetData]): AttributeData[T] = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
     new AttributeData[T](
