@@ -42,19 +42,9 @@ case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val intersection = {
-      val intersection = inputs.vss.map(_.rdd)
-        .reduce((rdd1, rdd2) => {
-          val solutionHack = false
-          val r =
-            if (rdd1.partitions.size == rdd2.partitions.size) {
-              rdd2
-            } else if (solutionHack) {
-              rdd2.toSortedRDD(rdd1.partitioner.get)
-            } else {
-              rdd2
-            }
-          rdd1.sortedJoin(r).mapValues(_ => ())
-        })
+      val intersection = inputs.vss.map(_.rdd) // All the rdds here must have the same number of
+        // partitions; we do assert this in sortedJoin.
+        .reduce((rdd1, rdd2) => rdd1.sortedJoin(rdd2).mapValues(_ => ()))
       // Repartition if heavy.
       if (heavy) {
         intersection.cache()
