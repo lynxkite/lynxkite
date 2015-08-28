@@ -119,7 +119,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // More classes for SPARK-6497.
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$8])
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$9])
-    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$11])
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$12])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
