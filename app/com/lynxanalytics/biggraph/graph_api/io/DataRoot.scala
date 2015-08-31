@@ -2,9 +2,6 @@
 
 package com.lynxanalytics.biggraph.graph_api.io
 
-import java.util.UUID
-import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 trait DataRoot {
