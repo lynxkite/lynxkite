@@ -12,7 +12,7 @@ class FindModularClusteringByTweaksTest extends FunSuite with ShouldMatchers wit
   test("example graph") {
     val eg = ExampleGraph()().result
     val clusters = {
-      val op = FindModularClusteringByTweaks()
+      val op = FindModularClusteringByTweaks(-1, 0.001)
       op(op.edges, eg.edges)(op.weights, eg.weight).result
     }
     val clusterMap = clusters.belongsTo.toPairSeq.toMap
@@ -51,7 +51,7 @@ class FindModularClusteringByTweaksTest extends FunSuite with ShouldMatchers wit
     }
     val symmetricWeights = AddConstantAttribute.run(symmetricEs.idSet, 1.0)
     val clusters = {
-      val op = FindModularClusteringByTweaks()
+      val op = FindModularClusteringByTweaks(-1, 0.001)
       op(op.edges, es)(op.weights, weights).result
     }
     val modularity = {

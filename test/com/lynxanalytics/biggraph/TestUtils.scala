@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph
 
 import java.io.File
+import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import org.apache.spark
 import org.scalatest.Tag
@@ -14,6 +15,19 @@ object Benchmark extends Tag("Benchmark")
 object TestUtils {
   def RDDToSortedString(rdd: spark.rdd.RDD[_]): String = {
     rdd.collect.toSeq.map(_.toString).sorted.mkString("\n")
+  }
+
+  def withRestoreGlobals[T](verticesPerPartition: Int, tolerance: Double)(fn: => T): T = {
+    val savedVerticesPerPartition = EntityIO.verticesPerPartition
+    val savedTolerance = EntityIO.tolerance
+    try {
+      EntityIO.verticesPerPartition = verticesPerPartition
+      EntityIO.tolerance = tolerance
+      fn
+    } finally {
+      EntityIO.verticesPerPartition = savedVerticesPerPartition
+      EntityIO.tolerance = savedTolerance
+    }
   }
 
   /*

@@ -72,4 +72,14 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     checkGood(RDDUtils.hybridLookupUsingCounts(sourceRDD, lookupRDDWihtCounts, 200))
     checkGood(RDDUtils.hybridLookupUsingCounts(sourceRDD, lookupRDDWihtCounts, 0))
   }
+
+  test("lookup on empty RDD") {
+    import Implicits._
+    val sourceRDD = sparkContext.emptyRDD[(Int, Long)]
+    val lookupRDD = sparkContext.emptyRDD[(Int, Double)].toSortedRDD
+    assert(RDDUtils.joinLookup(sourceRDD, lookupRDD).collect.isEmpty)
+    assert(RDDUtils.smallTableLookup(sourceRDD, Map()).collect.isEmpty)
+    assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 200).collect.isEmpty)
+    assert(RDDUtils.hybridLookup(sourceRDD, lookupRDD, 0).collect.isEmpty)
+  }
 }

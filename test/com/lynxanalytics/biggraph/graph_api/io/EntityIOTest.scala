@@ -1,12 +1,17 @@
 package com.lynxanalytics.biggraph.graph_api.io
 
+import com.lynxanalytics.biggraph.TestUtils
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
 
 class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager {
+
+  val resDir = "/graph_api/io/EntityIOTest/"
+  val res = getClass.getResource(resDir).toString
+  PrefixRepository.registerPrefix("ENTITYIOTEST$", res)
 
   test("Test ratio sorter") {
     val emptySeq = Seq[Int]()
@@ -32,26 +37,18 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     = Value
   }
 
-  def cp(src: HadoopFile, dst: HadoopFile) = {
-    val s = src.path
-    val d = dst.path
-    src.fs.copyFromLocalFile( /* delSrc = */ false, /* overwrite = */ true, s, d)
+  def copyDirContents(srcDir: HadoopFile, dstDir: HadoopFile) = {
+    val files = (srcDir / "*").list
+    for (f <- files) {
+      val name = f.path.getName
+      val s = f.path
+      val d = (dstDir / name).path
+      srcDir.fs.copyFromLocalFile( /* delSrc = */ false, /* overwrite = */ true, s, d)
+    }
+
   }
 
   val numVerticesInExampleGraph = 8
-
-  def withRestoreGlobals[T](verticesPerPartition: Int, tolerance: Double)(fn: => T): T = {
-    val savedVerticesPerPartition = EntityIO.verticesPerPartition
-    val savedTolerance = EntityIO.tolerance
-    try {
-      EntityIO.verticesPerPartition = verticesPerPartition
-      EntityIO.tolerance = tolerance
-      fn
-    } finally {
-      EntityIO.verticesPerPartition = savedVerticesPerPartition
-      EntityIO.tolerance = savedTolerance
-    }
-  }
 
   // A data repository with a vertex set partitioned in multiple ways.
   class MultiPartitionedFileStructure(partitions: Seq[Int]) {
@@ -62,7 +59,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val repo = cleanDataManager.repositoryPath
     for (p <- partitions) {
       val dataManager = new DataManager(sparkContext, repo)
-      withRestoreGlobals(
+      TestUtils.withRestoreGlobals(
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
           dataManager.get(vertices)
@@ -98,17 +95,18 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
                             numPartitions: Int = 1,
                             parentPartitionDir: Int = 1,
                             tolerance: Double = 2.0) {
-    val partitionsToCreate = partitionedConfig.keySet + 1 // Always create 1-partition version.
+    // Create at least one partition so that we would have an operation.
+    val partitionsToCreate = partitionedConfig.keySet + 1
     val mpfs = new MultiPartitionedFileStructure(partitionsToCreate.toSeq)
     val repo = mpfs.repo
     val gUID = mpfs.vertices.gUID.toString
     val partitionedPath = repo / io.PartitionedDir / gUID
     val legacyPath = repo / io.EntitiesDir / gUID
-    val onePartitionedPath = partitionedPath / "1"
 
-    // Setup legacy path based on onePartitionedPath.
     if (legacyConfig != EntityDirStatus.NONEXISTENT) {
-      cp(onePartitionedPath, legacyPath)
+      val legacyData = HadoopFile("ENTITYIOTEST$") / gUID
+      assert(legacyData.exists)
+      copyDirContents(legacyData, legacyPath)
       modifyEntityDir(legacyPath, legacyConfig)
     }
 
@@ -147,7 +145,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
     // See what happens when we try to load the vertex set.
     mpfs.operation.executionCounter = 0
-    withRestoreGlobals(
+    TestUtils.withRestoreGlobals(
       tolerance = tolerance,
       verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
         val dataManager = new DataManager(sparkContext, repo)

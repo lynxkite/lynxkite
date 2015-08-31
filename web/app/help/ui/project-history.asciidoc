@@ -26,37 +26,35 @@ to return to the regular project view.
 The parameters of the operations are all editable in history mode. The operation category icons can be used
 to pick a different operation to run in the same place.
 
-A modified operation is marked by a striped background. The changes have to be validated first before the
-altered history can be saved.
-Press +++<label class="btn btn-default"><i class="glyphicon glyphicon-ok"></i></label>+++ to perform validation.
-Validation can result in some operations marked as inconsistent.
-+++<label class="btn btn-warning"><i class="glyphicon glyphicon-exclamation-sign"></i></label>+++
-Inconsistent operations will have a red
-background and an error message describing the problem.
+Once you are happy with the changes to an operation press _OK_. The changes may make some later steps in
+the history inconsistent. (For example if you changed the name of an attribute and later steps refer to the old
+name.) Inconsistent operations will have a red background and an error message describing the problem.
+Operations below an inconsistent operation will be uneditable -- the inconsistency must be fixed before
+proceeding.
 
-Note that changing one operation may cause another one to become inconsistent. For example if you change the
-name of the output attribute in a <<derived-vertex-attribute>> operation when this output attribute is used by
-a later operation, that later operation will become inconsistent, since it is now referring to a non-existent
-attribute.
+Operations with a grey background have already been executed. It is possible to have an error message on a
+grey operation -- this can happen as a result of upgrading LynxKite, for example if a new parameter is added.
+An error message on a grey operation does not need to be fixed as long as the operations before it remain
+unchanged.
 
-When performing a complex history change you may have to do multiple rounds of changes and validations.
-When you eventually arrive at a new, consistent history, the validation button will be replaced by the save button.
-+++<label class="btn btn-default"><i class="glyphicon glyphicon-floppy-disk"></i></label>+++
+The modified history can be saved with the
++++<label class="btn btn-default"><i class="glyphicon glyphicon-floppy-disk"></i></label>+++ button.
 The modified history can be saved over the original project, or can be saved under a new name.
+If the history is inconsistent this button is replaced with the
++++<label class="btn btn-warning"><i class="glyphicon glyphicon-exclamation-sign"></i></label>+++ icon.
 
 ### Deleting an operation
 
 Select _Discard operation_ from the drop-down menu
 (+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
-on the bottom right of the operation. Deleting an operation automatically triggers validation.
+on the bottom right of the operation.
 
 ### Adding a new operation
 
 Select _Insert operation above_ or _Insert operation below_ from the drop-down menu
 (+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
-on the bottom right of the operation. A <<no-operation>> placeholder will be inserted at the selected point
-and a validation pass will be performed. After the validation the placeholder can be replaced with the
-desired operation.
+on the bottom right of the operation. A <<no-operation>> placeholder will be inserted at the selected point.
+The placeholder can be replaced with the desired operation.
 
 If the project has segmentations at that point in its history, the dropdown will also offer to insert new operations
 on the available segmentations instead of the base project.
@@ -68,14 +66,25 @@ Workflows can be created in history mode from the history of the existing projec
 Press +++<label class="btn btn-default"><i class="glyphicon glyphicon-film"></i></label>+++ to turn the history
 into a workflow. The source code of the workflow can then be edited.
 
-The source code of workflows is a JSON list of the operations performed, complete with parameters.
-Creating workflows from project histories has the benefit that the sequence of operations will always be
+The source code of a workflow is in the http://www.groovy-lang.org/[Groovy] programming language.
+Workflows are restricted to executing operations on the project. (They cannot, for example, read files.)
+Creating a workflow from a project history has the benefit that the sequence of operations will always be
 consistent, and you never have to look up the exact syntax for the workflow definition.
 
 The history typically includes some setup steps that should not be part of the workflow. Simply delete these
 steps from the workflow source code.
 
-Workflows can have parameters too. Simply replace strings in the source code with `+${my parameter}+`, and
+Workflows can have parameters too. Use `params['my parameter']` in the source, and
 the workflow will have a parameter called _"my parameter"_.
 
-// TODO: Workflow source code example with parameter.
+.Example workflow with a parameter:
+----
+// Generates a random graph of a given size.
+project.newVertexSet(size: params['size'])
+project.createScaleFreeRandomEdgeBundle(
+  iterations: 5,
+  perIterationMultiplier: 1.6,
+  seed: 0)
+----
+
+See the <<batch-mode>> for a fully scriptable interface to LynxKite.

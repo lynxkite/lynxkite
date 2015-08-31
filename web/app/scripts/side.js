@@ -246,8 +246,13 @@ angular.module('biggraph')
     };
 
     Side.prototype.shortName = function() {
+      if (this.state.projectName === undefined) {
+        return undefined;
+      }
       var path = util.projectPath(this.state.projectName);
-      return path[path.length - 1];
+      var last = path[path.length - 1];
+      var directories = last.split('/');
+      return directories[directories.length - 1];
     };
     Side.prototype.parentProjects = function() {
       var path = util.projectPath(this.state.projectName);
@@ -359,7 +364,7 @@ angular.module('biggraph')
 
     Side.prototype.saveAs = function(newName) {
       var that = this;
-      util.post('/ajax/forkProject',
+      util.post('/ajax/forkDirectory',
         {
           from: this.state.projectName,
           to: newName,

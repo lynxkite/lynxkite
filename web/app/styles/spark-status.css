@@ -41,3 +41,13 @@
 .spark-status-stage.failed {
   border-color: red;
 }
+
+@keyframes red-blink {
+  from { color: black; }
+  to { color: red; }
+}
+.spark-status-error {
+  animation: red-blink 1s infinite alternate;
+  font-size: 30px;
+  margin-right: 30px; /* Same place as the cogwheel. */
+}

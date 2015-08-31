@@ -1,8 +1,8 @@
 ### Discard scalar
 
-Throws away a scalar value.
+Throws away scalar values.
 
 ====
 [[name]] Name::
-The scalar to discard.
+The scalars to discard.
 ====

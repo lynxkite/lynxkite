@@ -264,15 +264,18 @@ object RDDUtils {
     val tops = countsTable
       .top(numTops)(ordering)
       .sorted(ordering)
-    val biggest = tops.last
-    if (biggest._2 > maxValuesPerKey) {
-      val largeKeysMap = largeKeysMapFn(tops.map(_._1))
-      val larges = smallTableLookup(sourceRDD, largeKeysMap)
-      val smalls = joinLookup(
-        sourceRDD.filter { case (key, _) => !largeKeysMap.contains(key) }, lookupTable)
-      (smalls ++ larges).coalesce(sourceRDD.partitions.size)
-    } else {
-      joinLookup(sourceRDD, lookupTable)
+    if (tops.isEmpty) sourceRDD.context.emptyRDD
+    else {
+      val biggest = tops.last
+      if (biggest._2 > maxValuesPerKey) {
+        val largeKeysMap = largeKeysMapFn(tops.map(_._1))
+        val larges = smallTableLookup(sourceRDD, largeKeysMap)
+        val smalls = joinLookup(
+          sourceRDD.filter { case (key, _) => !largeKeysMap.contains(key) }, lookupTable)
+        (smalls ++ larges).coalesce(sourceRDD.partitions.size)
+      } else {
+        joinLookup(sourceRDD, lookupTable)
+      }
     }
   }
 }
@@ -370,7 +373,7 @@ object Implicits {
     }
     // Sorts each partition of the RDD in isolation.
     def toSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] =
-      toSortedRDD(self.partitioner.get)
+      toSortedRDD(self.partitioner.getOrElse(new spark.HashPartitioner(self.partitions.size)))
     def toSortedRDD(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
       self match {

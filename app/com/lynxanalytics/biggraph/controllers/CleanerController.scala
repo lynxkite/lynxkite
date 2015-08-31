@@ -125,7 +125,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   private def operationsFromAllProjects()(
     implicit manager: MetaGraphManager): Map[UUID, MetaGraphOperationInstance] = {
     val operations = new HashMap[UUID, MetaGraphOperationInstance]
-    for (project <- Operation.projects) {
+    for (project <- Operation.allProjects(serving.User.fake)) {
       operations ++= operationsFromProject(project.viewer)
     }
     operations.toMap
@@ -221,5 +221,6 @@ class CleanerController(environment: BigGraphEnvironment) {
     }.map { subDir =>
       (hadoopFileDir / subDir.getPath().getName()).delete()
     }
+    log.info(s"Deleted the marked files in ${hadoopFileDir.path}.")
   }
 }
