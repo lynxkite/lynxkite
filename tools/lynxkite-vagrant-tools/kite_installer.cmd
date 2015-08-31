@@ -26,15 +26,15 @@ SET VM_MEMORY=512
 SET VM_CPUS=1
 )
 IF [%KITE_SIZE%] == [small] (
-SET VM_MEMORY=1256
+SET VM_MEMORY=1512
 SET VM_CPUS=1
 )
 IF [%KITE_SIZE%] == [medium] (
-SET VM_MEMORY=3328
+SET VM_MEMORY=3584
 SET VM_CPUS=2
 )
 IF [%KITE_SIZE%] == [large] (
-SET VM_MEMORY=6400
+SET VM_MEMORY=6912
 SET VM_CPUS=3
 )
 IF [%MODE%] == [install] (
@@ -61,6 +61,11 @@ echo Machine settings: %VM_CPUS% CPUs with %VM_MEMORY%Mb RAM  >> %LOGFILE%
 ( echo   end) >> Vagrantfile
 ( echo $script = ^<^<SCRIPT) >> Vagrantfile
 ( echo    chown -R vagrant /home/vagrant/kite_data) >> Vagrantfile
+( echo    sudo fallocate -l 8192M /swapfile) >> Vagrantfile
+( echo    sudo chmod 600 /swapfile) >> Vagrantfile
+( echo    sudo mkswap /swapfile) >> Vagrantfile
+( echo    sudo swapon /swapfile) >> Vagrantfile
+( echo    sudo bash -c "echo '/swapfile none swap defaults 0 0' >> /etc/fstab" ) >> Vagrantfile
 ( echo    cp /vagrant/install_scripts.tgz ~vagrant) >> Vagrantfile
 ( echo    cd ~vagrant) >> Vagrantfile
 ( echo    tar xzf install_scripts.tgz) >> Vagrantfile
@@ -78,6 +83,7 @@ echo Machine settings: %VM_CPUS% CPUs with %VM_MEMORY%Mb RAM  >> %LOGFILE%
 color E
 
 IF [%MODE%] == [install] (
+    vagrant box update
 	vagrant up
 	IF ERRORLEVEL 1 (
 		color C
