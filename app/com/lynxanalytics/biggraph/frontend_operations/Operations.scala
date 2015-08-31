@@ -38,8 +38,9 @@ object OperationParams {
     def validate(value: String): Unit = {
       val possibleValues = options.map { x => x.id }.toSet
       val givenValues = value.split(",", -1).toSet
-      assert(givenValues subsetOf possibleValues,
-        s"Unknown option(s): ${givenValues -- possibleValues} (Possibilities: $possibleValues)")
+      val unknown = givenValues -- possibleValues
+      assert(unknown.isEmpty,
+        s"Unknown option: ${unknown.mkString(", ")} (Possibilities: ${possibleValues.mkString(", ")})")
     }
   }
   case class TagList(
@@ -2268,18 +2269,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           val gUID = segGUIDOpt.getOrElse(project.vertexAttributes(name).gUID)
           FEVertexAttributeFilter(gUID.toString, filter)
       }.toSeq
-      val edgeFilters = params.collect {
-        case (eaFilter(name), filter) if filter.nonEmpty =>
-          val attr = project.edgeAttributes(name)
-          FEVertexAttributeFilter(attr.gUID.toString, filter)
-      }.toSeq
-      assert(vertexFilters.nonEmpty || edgeFilters.nonEmpty, "No filters specified.")
 
       if (vertexFilters.nonEmpty) {
         val vertexEmbedding = FEFilters.embedFilteredVertices(
           project.vertexSet, vertexFilters, heavy = true)
         project.pullBack(vertexEmbedding)
       }
+      val edgeFilters = params.collect {
+        case (eaFilter(name), filter) if filter.nonEmpty =>
+          val attr = project.edgeAttributes(name)
+          FEVertexAttributeFilter(attr.gUID.toString, filter)
+      }.toSeq
+      assert(vertexFilters.nonEmpty || edgeFilters.nonEmpty, "No filters specified.")
       if (edgeFilters.nonEmpty) {
         val edgeEmbedding = FEFilters.embedFilteredVertices(
           project.edgeBundle.idSet, edgeFilters, heavy = true)
