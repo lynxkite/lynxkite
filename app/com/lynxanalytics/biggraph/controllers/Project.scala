@@ -126,7 +126,7 @@ sealed trait ProjectViewer {
   // Methods for conversion to FE objects.
   private def feScalar(name: String): Option[FEAttribute] = {
     if (scalars.contains(name)) {
-      Some(ProjectViewer.feEntity(scalars(name), name, note = ""))
+      Some(ProjectViewer.feEntity(scalars(name), name, getScalarNote(name)))
     } else {
       None
     }
@@ -427,7 +427,7 @@ sealed trait ProjectEditor {
     edgeAttributes(name) = attr
     setElementNote(ElementName.EdgeAttribute, name, note)
   }
-  def newScalar(name: String, scalar: Scalar[_], note: String) = {
+  def newScalar(name: String, scalar: Scalar[_], note: String = null) = {
     scalars(name) = scalar
     setElementNote(ElementName.Scalar, name, note)
   }
