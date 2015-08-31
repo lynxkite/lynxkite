@@ -63,6 +63,10 @@ class DataManager(sc: spark.SparkContext,
     }.getOrElse(mainRoot)
   }
 
+  val writablePath: HadoopFile = {
+    ephemeralPath.getOrElse(repositoryPath)
+  }
+
   private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean = {
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
