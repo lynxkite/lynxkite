@@ -5,19 +5,20 @@ POST /ajax/spark-cancel-jobs com.lynxanalytics.biggraph.serving.ProductionJsonSe
 POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.jsError
 
 POST /ajax/createProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.createProject
-POST /ajax/discardProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardProject
+POST /ajax/createDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.createDirectory
+POST /ajax/discardDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardDirectory
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
 GET  /ajax/project       com.lynxanalytics.biggraph.serving.ProductionJsonServer.project
 GET  /ajax/getHistory    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getHistory
 POST /ajax/validateHistory com.lynxanalytics.biggraph.serving.ProductionJsonServer.validateHistory
 POST /ajax/saveHistory   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveHistory
 POST /ajax/saveWorkflow   com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveWorkflow
-GET  /ajax/splash        com.lynxanalytics.biggraph.serving.ProductionJsonServer.splash
+GET  /ajax/projectList   com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectList
 POST /ajax/filterProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.filterProject
-POST /ajax/forkProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkProject
+POST /ajax/forkDirectory   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkDirectory
 POST /ajax/undoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoProject
 POST /ajax/redoProject   com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoProject
-POST /ajax/renameProject com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameProject
+POST /ajax/renameDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameDirectory
 POST /ajax/changeProjectSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeProjectSettings
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
