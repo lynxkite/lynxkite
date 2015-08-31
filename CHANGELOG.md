@@ -7,6 +7,8 @@ Please add changes to "master". When releasing a version add a new header for th
 ### master
 
  - Projects can be organized into folders now.
+ - Summary information of how things were created is presented on the UI. For example, the formula
+   used to create a derived attribute will accompany it.
 
 ### 1.5.1
 
