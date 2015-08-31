@@ -30,7 +30,25 @@ object InducedEdgeBundle extends OpFromJson {
     val induced = {
       val src = if (induceSrc) inputs.srcImage else inputs.src
       val dst = if (induceDst) inputs.dstImage else inputs.dst
-      edgeBundle(src.entity, dst.entity)
+      val srcMappingProp =
+        if (induceSrc) inputs.srcMapping.entity.properties
+        else EdgeBundleProperties.identity
+      val dstMappingProp =
+        if (induceDst) inputs.dstMapping.entity.properties
+        else EdgeBundleProperties.identity
+      val origProp = inputs.edges.entity.properties
+      val inducedProp = EdgeBundleProperties(
+        isFunction =
+          origProp.isFunction && srcMappingProp.isReversedFunction,
+        isReversedFunction =
+          origProp.isReversedFunction && dstMappingProp.isReversedFunction,
+        isEverywhereDefined =
+          origProp.isEverywhereDefined && srcMappingProp.isReverseEverywhereDefined,
+        isReverseEverywhereDefined =
+          origProp.isReverseEverywhereDefined && dstMappingProp.isReverseEverywhereDefined,
+        isIdPreserving =
+          origProp.isIdPreserving && srcMappingProp.isIdPreserving && dstMappingProp.isIdPreserving)
+      edgeBundle(src.entity, dst.entity, inducedProp)
     }
     val embedding = edgeBundle(
       induced.idSet, inputs.edges.idSet, EdgeBundleProperties.embedding)
