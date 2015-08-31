@@ -283,33 +283,10 @@ class DataManager(sc: spark.SparkContext,
     log.info(s"Entity $entity saved.")
   }
 
-  // No way to find cores per executor programmatically. SPARK-2095
-  private val numCoresPerExecutor = scala.util.Properties.envOrElse(
-    "NUM_CORES_PER_EXECUTOR", "4").toInt
   def runtimeContext = {
-    val numExecutors = (sc.getExecutorStorageStatus.size - 1) max 1
-    val totalCores = numExecutors * numCoresPerExecutor
-    val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
-    val conf = sc.getConf
-    // Unfortunately the defaults are hard-coded in Spark and not available.
-    val cacheFraction = conf.getDouble("spark.storage.memoryFraction", 0.6)
-    val shuffleFraction = conf.getDouble("spark.shuffle.memoryFraction", 0.2)
-    val workFraction = 1.0 - cacheFraction - shuffleFraction
-    val workMemory = workFraction * cacheMemory / cacheFraction
-    log.info("Creating runtime context")
-    log.info("Work memory: " + workMemory)
-    log.info("Total cores: " + totalCores)
-    log.info("Cache memory: " + cacheMemory)
-    log.info("Work fraction: " + workFraction)
-    log.info("Cache fraction: " + cacheFraction)
-    log.info("WM per core: " + (workMemory / totalCores).toLong)
     val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
     RuntimeContext(
       sparkContext = sc,
-      broadcastDirectory = broadcastDirectory,
-      numExecutors = numExecutors,
-      numAvailableCores = totalCores,
-      workMemoryPerCore = (workMemory / totalCores).toLong,
-      cacheMemoryPerCore = (cacheMemory / totalCores).toLong)
+      broadcastDirectory = broadcastDirectory)
   }
 }
