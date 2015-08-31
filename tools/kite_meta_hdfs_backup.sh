@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Add the script to the crontab e.g. like this:
 # 59 22 * * * $LOCATION_TO_SCRIPT
 # Make sure you edit the crontab with the same user which has Kite.
