@@ -839,7 +839,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.ClusteringCoefficient()
       project.vertexAttributes(params("name")) = op(op.es, project.edgeBundle).result.clustering
-      project.vertexAttributeNotes(params("name")) = help
+      project.setVertexAttributeNote(params("name"), help)
     }
   })
 
@@ -924,7 +924,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(name.nonEmpty, "Please set an attribute name.")
       val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt, algorithm)
       project.vertexAttributes(name) = op(op.es, project.edgeBundle).result.centrality
-      project.vertexAttributeNotes(name) = s"$algorithm $help"
+      project.setVertexAttributeNote(name, s"$algorithm $help")
     }
   })
 
@@ -1082,7 +1082,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet)
       }
       project.vertexAttributes(params("output")) = result.attr
-      project.vertexAttributeNotes(params("output")) = expr
+      project.setVertexAttributeNote(params("output"), expr)
     }
   })
 
@@ -1940,12 +1940,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
                 otherEbInjection)
           })
 
-      val oldVANotes = project.vertexAttributeNotes.toIndexedSeq.toMap
       project.vertexSet = vsUnion.union
       project.vertexAttributes = newVertexAttributes
-      for ((name, note) <- oldVANotes) {
-        project.vertexAttributeNotes(name) = note // Restore notes.
-      }
       val idAttr = params("id-attr")
       assert(
         !project.vertexAttributes.contains(idAttr),

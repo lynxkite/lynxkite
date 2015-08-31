@@ -208,14 +208,15 @@ object ObsoleteProject {
   private def getProjectState(project: ObsoleteProject): CommonProjectState = {
     CommonProjectState(
       vertexSetGUID = Option(project.vertexSet),
-      vertexAttributes = project.vertexAttributes.toMap.mapValues(uuid => UUIDWithNote(uuid, "")),
+      vertexAttributeGUIDs = project.vertexAttributes.toMap,
       edgeBundleGUID = Option(project.edgeBundle),
       edgeAttributeGUIDs = project.edgeAttributes.toMap,
       scalarGUIDs = project.scalars.toMap,
       segmentations =
         project.segmentationNames.map(
           name => name -> getSegmentationState(project.segmentation(name))).toMap,
-      notes = project.notes)
+      notes = project.notes,
+      elementNotes = Some(Map()))
   }
 
   private def getSegmentationState(seg: ObsoleteSegmentation): SegmentationState = {

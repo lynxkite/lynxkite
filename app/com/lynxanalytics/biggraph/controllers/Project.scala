@@ -37,19 +37,32 @@ import play.api.libs.json
 import play.api.libs.json.Json
 import scala.reflect.runtime.universe._
 
-case class UUIDWithNote(uuid: UUID, note: String)
+object ElementName {
+  type ElementKind = String
+  val VertexAttribute = "vertex attribute"
+  val EdgeAttribute = "edge attribute"
+  val Scalar = "scalar"
+  val Segmentation = "segmentation"
+  val Kinds = Set(VertexAttribute, EdgeAttribute, Scalar, Segmentation)
+  def apply(kind: ElementKind, name: String): String = {
+    assert(Kinds.contains(kind), s"Unrecognized kind: $kind")
+    s"$kind/$name"
+  }
+}
+import ElementName.ElementKind
 
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
   vertexSetGUID: Option[UUID],
-  vertexAttributes: Map[String, UUIDWithNote],
+  vertexAttributeGUIDs: Map[String, UUID],
   edgeBundleGUID: Option[UUID],
   edgeAttributeGUIDs: Map[String, UUID],
   scalarGUIDs: Map[String, UUID],
   segmentations: Map[String, SegmentationState],
-  notes: String)
+  notes: String,
+  elementNotes: Option[Map[String, String]]) // Option for compatibility.
 object CommonProjectState {
-  val emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "")
+  val emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "", Some(Map()))
 }
 
 // Complete state of a root project.
@@ -82,9 +95,7 @@ sealed trait ProjectViewer {
   lazy val vertexSet: VertexSet =
     state.vertexSetGUID.map(manager.vertexSet(_)).getOrElse(null)
   lazy val vertexAttributes: Map[String, Attribute[_]] =
-    state.vertexAttributes.mapValues(attr => manager.attribute(attr.uuid))
-  lazy val vertexAttributeNotes: Map[String, String] =
-    state.vertexAttributes.mapValues(_.note)
+    state.vertexAttributeGUIDs.mapValues(manager.attribute(_))
   lazy val edgeBundle: EdgeBundle =
     state.edgeBundleGUID.map(manager.edgeBundle(_)).getOrElse(null)
   lazy val edgeAttributes: Map[String, Attribute[_]] =
@@ -96,6 +107,9 @@ sealed trait ProjectViewer {
     state.segmentations
       .map { case (name, state) => name -> new SegmentationViewer(this, name) }
   def segmentation(name: String) = segmentationMap(name)
+
+  def getElementNote(kind: ElementKind, name: String) =
+    state.elementNotes.getOrElse(Map()).getOrElse(ElementName(kind, name), "")
 
   def offspringViewer(path: Seq[String]): ProjectViewer =
     if (path.isEmpty) this
@@ -132,9 +146,9 @@ sealed trait ProjectViewer {
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
     def feList(
       things: Iterable[(String, TypedEntity[_])],
-      notes: Map[String, String] = Map()) = {
+      kind: ElementKind) = {
       things.toSeq.sortBy(_._1).map {
-        case (name, e) => ProjectViewer.feEntity(e, name, notes.getOrElse(name, ""))
+        case (name, e) => ProjectViewer.feEntity(e, name, getElementNote(kind, name))
       }.toList
     }
 
@@ -143,9 +157,9 @@ sealed trait ProjectViewer {
       vertexSet = vs,
       edgeBundle = eb,
       notes = state.notes,
-      scalars = feList(scalars),
-      vertexAttributes = feList(vertexAttributes, vertexAttributeNotes) ++ getFEMembers,
-      edgeAttributes = feList(edgeAttributes),
+      scalars = feList(scalars, ElementName.Scalar),
+      vertexAttributes = feList(vertexAttributes, ElementName.VertexAttribute) ++ getFEMembers,
+      edgeAttributes = feList(edgeAttributes, ElementName.EdgeAttribute),
       segmentations = segmentationMap
         .toSeq
         .sortBy(_._1)
@@ -257,7 +271,6 @@ object CheckpointRepository {
         "state" -> commonProjectStateToJSon(o.state),
         "belongsToGUID" -> o.belongsToGUID)
   }
-  implicit val fUUIDWithNote = Json.format[UUIDWithNote]
   implicit val fCommonProjectState = Json.format[CommonProjectState]
   implicit val fRootProjectState = Json.format[RootProjectState]
 
@@ -349,23 +362,6 @@ abstract class StateMapHolder[T <: MetaGraphEntity] extends collection.Map[Strin
   def -(key: String) = getMap - key
 }
 
-abstract class StateNoteHolder extends collection.Map[String, String] {
-  protected def getMap: Map[String, String]
-  protected def updateMap(newMap: Map[String, String]): Unit
-
-  def update(name: String, note: String) = {
-    val m = getMap
-    assert(m.contains(name), s"Cannot add note for non-existent name: $name")
-    updateMap(m + (name -> note))
-  }
-
-  // Implementing the map interface
-  def get(key: String) = getMap.get(key)
-  def iterator = getMap.iterator
-  def +[T1 >: String](kv: (String, T1)) = getMap + kv
-  def -(key: String) = getMap - key
-}
-
 // A mutable wrapper around a CommonProjectState. A ProjectEditor can be editing the state
 // of a particular segmentation or a root project. The actual state is always stored and modified
 // on the root level. E.g. if you take a RootProjectEditor, get a particular SegmentationEditor
@@ -423,12 +419,8 @@ sealed trait ProjectEditor {
   def vertexAttributes =
     new StateMapHolder[Attribute[_]] {
       protected def getMap = viewer.vertexAttributes
-      protected def updateMap(newMap: Map[String, UUID]) = {
-        val notes = viewer.vertexAttributeNotes
-        state = state.copy(vertexAttributes = newMap.map {
-          case (name, uuid) => name -> UUIDWithNote(uuid, notes.getOrElse(name, ""))
-        })
-      }
+      protected def updateMap(newMap: Map[String, UUID]) =
+        state = state.copy(vertexAttributeGUIDs = newMap)
       def validate(name: String, attr: Attribute[_]): Unit = {
         assert(
           attr.vertexSet == viewer.vertexSet,
@@ -440,15 +432,21 @@ sealed trait ProjectEditor {
   def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
   }.toSeq
-  def vertexAttributeNotes =
-    new StateNoteHolder {
-      protected def getMap = viewer.vertexAttributeNotes
-      protected def updateMap(newMap: Map[String, String]) = {
-        state = state.copy(vertexAttributes = state.vertexAttributes.map {
-          case (name, attr) => name -> UUIDWithNote(attr.uuid, newMap(name))
-        })
-      }
+
+  def setVertexAttributeNote(name: String, note: String) =
+    setElementNote(ElementName.VertexAttribute, name, note)
+  def setEdgeAttributeNote(name: String, note: String) =
+    setElementNote(ElementName.EdgeAttribute, name, note)
+  def setScalarNote(name: String, note: String) =
+    setElementNote(ElementName.Scalar, name, note)
+  def setElementNote(kind: ElementKind, name: String, note: String) = {
+    val notes = state.elementNotes.getOrElse(Map())
+    if (note == null) {
+      state = state.copy(elementNotes = Some(notes - ElementName(kind, name)))
+    } else {
+      state = state.copy(elementNotes = Some(notes + (ElementName(kind, name) -> note)))
     }
+  }
 
   def edgeAttributes =
     new StateMapHolder[Attribute[_]] {
@@ -531,7 +529,6 @@ sealed trait ProjectEditor {
       s"Wrong destination: $pullBundle")
     val origVS = vertexSet
     val origVAttrs = vertexAttributes.toIndexedSeq
-    val origVAttrNotes = vertexAttributeNotes.toIndexedSeq.toMap
     val origEB = edgeBundle
     val origEAttrs = edgeAttributes.toIndexedSeq
     val origBelongsTo: Option[EdgeBundle] =
@@ -541,7 +538,6 @@ sealed trait ProjectEditor {
     for ((name, attr) <- origVAttrs) {
       vertexAttributes(name) =
         graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
-      vertexAttributeNotes(name) = origVAttrNotes(name)
     }
 
     if (origEB != null) {
