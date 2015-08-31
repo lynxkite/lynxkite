@@ -2010,7 +2010,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
         FEStatus.assert(parent.vertexSet != null, s"No vertices on $parent") &&
         FEStatus.assert(seg.belongsTo.properties.isFunction,
-          s"Vertices of $parent are not guaranteed to have only one edge to this segmentation")
+          s"Vertices in base project are not guaranteed to be contained in only one segment")
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- project.vertexAttributes.toMap) {
@@ -2029,7 +2029,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         hasVertexSet &&
         FEStatus.assert(parent.vertexAttributes.size > 0, "No vertex attributes on $parent") &&
         FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
-          s"Vertices of this segmentation are not guaranteed to have only one edge from $parent")
+          "Segments are not guaranteed to contain only one vertex")
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- parent.vertexAttributes.toMap) {
