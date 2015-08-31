@@ -12,7 +12,6 @@ import com.lynxanalytics.biggraph.controllers.CommonProjectState
 import com.lynxanalytics.biggraph.controllers.ObsoleteProject
 import com.lynxanalytics.biggraph.controllers.RootProjectState
 import com.lynxanalytics.biggraph.controllers.SegmentationState
-import com.lynxanalytics.biggraph.controllers.UUIDWithNote
 
 // This file is responsible for the metadata compatibility between versions.
 //
@@ -172,16 +171,16 @@ object MetaRepositoryManager {
         UUID.fromString(key) -> UUID.fromString(value)
     }
     def newGUID(old: UUID): UUID = finalGuidMapping.getOrElse(old, old)
-    def newAttr(old: UUIDWithNote) = UUIDWithNote(newGUID(old.uuid), old.note)
     def updatedProject(state: CommonProjectState): CommonProjectState =
       CommonProjectState(
         state.vertexSetGUID.map(newGUID),
-        state.vertexAttributes.mapValues(newAttr),
+        state.vertexAttributeGUIDs.mapValues(newGUID),
         state.edgeBundleGUID.map(newGUID),
         state.edgeAttributeGUIDs.mapValues(newGUID),
         state.scalarGUIDs.mapValues(newGUID),
         state.segmentations.mapValues(updatedSegmentation),
-        state.notes)
+        state.notes,
+        state.elementNotes)
     def updatedSegmentation(segmentation: SegmentationState): SegmentationState =
       SegmentationState(
         updatedProject(segmentation.state),
