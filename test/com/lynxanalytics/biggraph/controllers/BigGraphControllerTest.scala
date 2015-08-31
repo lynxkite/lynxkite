@@ -64,29 +64,46 @@ class BigGraphControllerTest extends FunSuite with TestGraphOp with BigGraphEnvi
     assert(subProject.toFE.undoOp == "Filter weight >2")
   }
 
+  def list(dir: String) = controller.projectList(user, ProjectListRequest(dir))
+
   test("project list") {
-    val splash = controller.splash(user, null)
-    assert(splash.projects.size == 1)
-    assert(splash.projects(0).name == "Test_Project")
-    assert(splash.projects(0).vertexCount.isEmpty)
-    assert(splash.projects(0).edgeCount.isEmpty)
+    val pl = list("")
+    assert(pl.projects.size == 1)
+    assert(pl.projects(0).name == "Test_Project")
+    assert(pl.projects(0).vertexCount.isEmpty)
+    assert(pl.projects(0).edgeCount.isEmpty)
   }
 
   test("project list with scalars") {
     run("Example Graph")
-    controller.forkProject(user, ForkProjectRequest(from = projectName, to = "new_project"))
-    val splash = controller.splash(user, null)
-    assert(splash.projects.size == 2)
-    assert(splash.projects(1).name == "new_project")
-    assert(!splash.projects(1).vertexCount.isEmpty)
-    assert(!splash.projects(1).edgeCount.isEmpty)
+    controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "new_project"))
+    val pl = list("")
+    assert(pl.projects.size == 2)
+    assert(pl.projects(1).name == "new_project")
+    assert(!pl.projects(1).vertexCount.isEmpty)
+    assert(!pl.projects(1).edgeCount.isEmpty)
   }
 
   test("fork project") {
     run("Example Graph")
-    controller.forkProject(user, ForkProjectRequest(from = projectName, to = "forked"))
-    val splash = controller.splash(user, null)
-    assert(splash.projects.size == 2)
+    controller.forkDirectory(user, ForkDirectoryRequest(from = projectName, to = "forked"))
+    assert(list("").projects.size == 2)
+  }
+
+  test("create directory") {
+    controller.createDirectory(user, CreateDirectoryRequest(name = "foo/bar"))
+    assert(list("").directories == Seq("foo"))
+    assert(list("foo").projects.isEmpty)
+    assert(list("foo").directories == Seq("bar"))
+    controller.discardDirectory(user, DiscardDirectoryRequest(name = "foo"))
+    assert(list("").directories.isEmpty)
+  }
+
+  test("create directory inside project") {
+    run("Example Graph")
+    intercept[AssertionError] {
+      controller.createDirectory(user, CreateDirectoryRequest(name = projectName + "/bar"))
+    }
   }
 
   override def beforeEach() = {

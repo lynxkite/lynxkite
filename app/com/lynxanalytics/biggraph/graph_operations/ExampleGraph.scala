@@ -18,7 +18,8 @@ object ExampleGraph extends OpFromJson {
     val comment = edgeAttribute[String](edges)
     val weight = edgeAttribute[Double](edges)
     val greeting = scalar[String]
-    // For wholesale attribute access.
+    // For wholesale access.
+    val scalars = Map("greeting" -> greeting)
     val edgeAttributes = Map("comment" -> comment, "weight" -> weight)
     val vertexAttributes = Map(
       "name" -> name,

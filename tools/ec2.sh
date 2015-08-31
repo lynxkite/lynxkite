@@ -76,6 +76,7 @@ start)
     -i "${SSH_KEY}" \
     -s ${NUM_INSTANCES} \
     --instance-type ${TYPE} \
+    --ebs-vol-type gp2 \
     --no-ganglia \
     --region=${REGION} launch ${CLUSTER_NAME}
 

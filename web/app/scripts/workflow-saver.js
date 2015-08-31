@@ -17,13 +17,27 @@ angular.module('biggraph').directive('workflowSaver', function(util) {
           '/ajax/saveWorkflow',
           {
             workflowName: scope.name,
-            stepsAsJSON: scope.code,
+            stepsAsGroovy: scope.code,
             description: scope.description,
           },
           function() {
             scope.mode.enabled = false;
             scope.side.reloadAllProjects();
           });
+      };
+      scope.getParams = function() {
+        if (!scope.code) { return []; }
+        var params = scope.code.match(/params\[['"](.*?)['"]\]/g);
+        if (!params) { return []; }
+        var uniques = [];
+        for (var i = 0; i < params.length; ++i) {
+          var p = params[i].slice(8, -2);
+          if (uniques.indexOf(p) === -1) {
+            uniques.push(p);
+          }
+        }
+        uniques.sort();
+        return uniques;
       };
     }
   };

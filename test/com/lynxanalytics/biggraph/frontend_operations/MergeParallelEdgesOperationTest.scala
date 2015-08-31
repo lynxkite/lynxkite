@@ -3,15 +3,20 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class MergeParallelEdgesOperationTest extends OperationsTestBase {
-  test("merge parallel edges by attribute works for String") {
+
+  def load(filename: String) = {
     run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
+      "files" -> ("OPERATIONSTEST$/" + filename),
       "header" -> "src,dst,call",
       "delimiter" -> ",",
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
       "filter" -> ""))
+  }
+
+  test("merge parallel edges by attribute works for String") {
+    load("merge-parallel-edges.csv")
     run("Merge parallel edges by attribute", Map(
       "key" -> "call",
       "aggregate-src" -> "",
@@ -32,14 +37,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
   }
 
   test("merge parallel edges by attribute works for Double") {
-    run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "OPERATIONSTEST$/merge-parallel-edges-double.csv",
-      "header" -> "src,dst,call",
-      "delimiter" -> ",",
-      "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "filter" -> ""))
+    load("merge-parallel-edges-double.csv")
     run("Edge attribute to double", Map("attr" -> "call"))
     run("Merge parallel edges by attribute", Map(
       "key" -> "call",
@@ -56,20 +54,12 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
       3.0, // Mary->John, 3.0
       3.0, // John->Mary, 3.0
       6.0 // Mary->John, 6.0
-    // ,6.0 // Mary->John, 6.0 - duplicate
-
+    // 6.0 // Mary->John, 6.0 - duplicate
     ))
   }
 
   test("Merge parallel edges works") {
-    run("Import vertices and edges from single CSV fileset", Map(
-      "files" -> "OPERATIONSTEST$/merge-parallel-edges.csv",
-      "header" -> "src,dst,call",
-      "delimiter" -> ",",
-      "src" -> "src",
-      "dst" -> "dst",
-      "omitted" -> "",
-      "filter" -> ""))
+    load("merge-parallel-edges.csv")
     run("Merge parallel edges", Map(
       "aggregate-src" -> "",
       "aggregate-dst" -> "",
@@ -79,4 +69,19 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
     assert(call.rdd.values.collect.toSeq.sorted == Seq(3.0, 5.0))
   }
 
+  test("Merge parallel edges with undefined values keeps the defined values") {
+    load("merge-parallel-edges-double.csv")
+    run("Edge attribute to double", Map("attr" -> "call"))
+    run("Derived edge attribute", Map(
+      "output" -> "call",
+      "type" -> "double",
+      "expr" -> "call == 6.0 ? call : undefined"))
+    run("Merge parallel edges", Map(
+      "aggregate-src" -> "most_common",
+      "aggregate-dst" -> "most_common",
+      "aggregate-call" -> "max"
+    ))
+    val call = project.edgeAttributes("call_max").runtimeSafeCast[Double]
+    assert(call.rdd.values.collect.toSeq.sorted == Seq(6.0))
+  }
 }

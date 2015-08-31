@@ -6,16 +6,18 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
     restrict: 'E',
     scope: {
       name: '=', // Exposes the name of the selected project.
-      version: '=?',  // Exposes the version string.
+      path: '=?', // Starting path.
     },
     templateUrl: 'project-selector.html',
     link: function(scope, element) {
+      scope.path = scope.path || '';
       hotkeys.bindTo(scope)
         .add({
           combo: 'c', description: 'Create new project',
-          callback: function(e) { e.preventDefault(); scope.expandNewProject = true; },
+          callback: function(e) { e.preventDefault(); scope.newProject = { expanded: true }; },
         });
-      scope.$watch('expandNewProject', function(ex) {
+
+      scope.$watch('newProject.expanded', function(ex) {
         if (ex) {
           $timeout(
             function() {
@@ -25,12 +27,24 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             false); // Do not invoke apply as we don't change the scope.
         }
       });
+
+      scope.$watch('newDirectory.expanded', function(ex) {
+        if (ex) {
+          $timeout(
+            function() {
+              element.find('#new-directory-name')[0].focus();
+            },
+            0,
+            false); // Do not invoke apply as we don't change the scope.
+        }
+      });
+
       scope.util = util;
       function refresh() {
-        scope.data = util.nocache('/ajax/splash');
+        scope.data = util.nocache('/ajax/projectList', { path: scope.path });
       }
-      refresh();
-      scope.$watch('data.version', function(v) { scope.version = v; });
+
+      scope.$watch('path', refresh);
       function getScalar(title, scalar) {
         var res = util.get('/ajax/scalarValue', {
           scalarId: scalar.id, calculate: false
@@ -38,6 +52,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         res.details = { project: title, scalar: scalar };
         return res;
       }
+
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved || scope.data.$error) { return; }
         scope.vertexCounts = {};
@@ -50,9 +65,13 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             p.edgeCount ? getScalar(p.title, p.edgeCount) : { string: 'no' };
         }
       });
+
       scope.createProject = function() {
         scope.newProject.sending = true;
         var name = scope.newProject.name.replace(/ /g, '_');
+        if (scope.path) {
+          name = scope.path + '/' + name;
+        }
         var notes = scope.newProject.notes;
         util.post('/ajax/createProject',
           {
@@ -66,12 +85,47 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           });
       };
 
+      scope.createDirectory = function() {
+        scope.newDirectory.sending = true;
+        var name = scope.newDirectory.name.replace(/ /g, '_');
+        if (scope.path) {
+          name = scope.path + '/' + name;
+        }
+        util.post('/ajax/createDirectory',
+          {
+            name: name,
+          }, function() {
+            scope.path = name;
+            scope.newDirectory = {};
+          }).$status.then(function() {
+            scope.newDirectory.sending = false;
+          });
+      };
+
       scope.projectClick = function(event, p) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
         if (p.error) { return; }
         scope.name = p.name;
+      };
+
+      scope.enterDirectory = function(event, d) {
+        // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
+        if (event.originalEvent.alreadyHandled) { return; }
+        if (scope.path) {
+          scope.path += '/' + d;
+        } else {
+          scope.path = d;
+        }
+      };
+
+      scope.popDirectory = function() {
+        scope.path = scope.path.split('/').slice(0, -1).join('/');
+      };
+
+      scope.pathElements = function() {
+        return scope.path.split('/');
       };
 
       scope.reportListError = function() {
@@ -85,16 +139,16 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.menu = {
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
-          util.post('/ajax/renameProject', { from: oldName, to: newName }, refresh);
+          util.post('/ajax/renameDirectory', { from: oldName, to: newName }, refresh);
         },
         duplicate: function(kind, p) {
-          util.post('/ajax/forkProject', { from: p, to: 'Copy of ' + p }, refresh);
+          util.post('/ajax/forkDirectory', { from: p, to: 'Copy of ' + p }, refresh);
         },
         discard: function(kind, p) {
-          var message = 'Permanently delete project ' + util.spaced(p) + '?';
-          message += ' (If it is a shared project, it will be deleted for everyone.)';
+          var message = 'Permanently delete ' + kind + ' ' + util.spaced(p) + '?';
+          message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
-            util.post('/ajax/discardProject', { name: p }, refresh);
+            util.post('/ajax/discardDirectory', { name: p }, refresh);
           }
         }
       };

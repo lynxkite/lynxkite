@@ -52,7 +52,7 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |for file in `find . -type f | LC_COLLATE=C sort | grep -v crc`; do
          |  echo $file
          |  echo '========'
-         |  cat $file | sort
+         |  cat $file | LC_COLLATE=C sort
          |  echo '********'
          |done""".stripMargin.format(targetDir.toString))
     assert(dirSnapshot ==
@@ -62,8 +62,8 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |./data/part-r-00000
          |========
          |18.2,"Eve",1
-         |20.3,"Adam",0
          |2.0,"Isolated Joe",3
+         |20.3,"Adam",0
          |50.3,"Bob",2
          |********
          |./header

@@ -144,8 +144,9 @@ case class CSV private (file: HadoopFile,
     val globLength = file.globLength
     // Estimate row count by the CSV file size. Underestimating results in more partitions.
     val rowLength = System.getProperty("biggraph.csv.row.length", "20").toLong
-    val partitioner = rc.partitionerForNRows(globLength / rowLength)
     val lines = file.loadTextFile(rc.sparkContext)
+    val numRows = lines.count()
+    val partitioner = rc.partitionerForNRows(numRows)
     // Only repartition if we need more partitions.
     val numPartitions = partitioner.numPartitions
     log.info(s"Reading $file ($globLength bytes) into $numPartitions partitions.")
@@ -321,15 +322,18 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     val columns = readColumns(rc, input, Set(src, dst))
-    val partitioner = columns(src).partitioner.get
+    val edgePartitioner = columns(src).partitioner.get
     putEdgeAttributes(columns, o.attrs, output)
     val namesWithCounts = columns.columnPair(src, dst).values.flatMap(sd => Iterator(sd._1, sd._2))
       .map(x => x -> 1L)
-      .reduceByKey(partitioner, _ + _)
-    val idToNameWithCount = namesWithCounts.randomNumbered(partitioner)
+      .reduceByKey(edgePartitioner, _ + _)
+      .cache()
+    val vertexPartitioner = rc.partitionerForNRows(namesWithCounts.count())
+    val idToNameWithCount = namesWithCounts.randomNumbered(vertexPartitioner)
     val nameToIdWithCount = idToNameWithCount
       .map { case (id, (name, count)) => (name, (id, count)) }
-      .toSortedRDD(partitioner)
+      // This is going to be joined with edges, so we use the edge partitioner.
+      .toSortedRDD(edgePartitioner)
     val srcResolvedByDst = RDDUtils.hybridLookupUsingCounts(
       edgeSrcDst(columns).map {
         case (edgeId, (src, dst)) => src -> (edgeId, dst)
@@ -339,7 +343,7 @@ case class ImportEdgeList(input: RowInput, src: String, dst: String)
 
     val edges = RDDUtils.hybridLookupUsingCounts(srcResolvedByDst, nameToIdWithCount)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
-      .toSortedRDD(partitioner)
+      .toSortedRDD(edgePartitioner)
 
     output(o.edges, edges)
     output(o.vertices, idToNameWithCount.mapValues(_ => ()))
