@@ -1,9 +1,14 @@
+#!/bin/bash
+
 # Add the script to the crontab e.g. like this:
 # 59 22 * * * $LOCATION_TO_SCRIPT
 # Make sure you edit the crontab with the same user which has Kite.
 
 set -eu
 
+BASEDIR="$(dirname "$(readlink -f "$0")")"
+# .kiterc needs SPARK_VERSION
+SPARK_VERSION=$(cat "$BASEDIR/../conf/SPARK_VERSION")
 USER=$(whoami)
 KITERC_FILE=$HOME/.kiterc
 
