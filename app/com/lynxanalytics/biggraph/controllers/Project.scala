@@ -108,6 +108,9 @@ sealed trait ProjectViewer {
       .map { case (name, state) => name -> new SegmentationViewer(this, name) }
   def segmentation(name: String) = segmentationMap(name)
 
+  def getVertexAttributeNote(name: String) = getElementNote(ElementName.VertexAttribute, name)
+  def getEdgeAttributeNote(name: String) = getElementNote(ElementName.EdgeAttribute, name)
+  def getScalarNote(name: String) = getElementNote(ElementName.Scalar, name)
   def getElementNote(kind: ElementKind, name: String) =
     state.elementNotes.getOrElse(Map()).getOrElse(ElementName(kind, name), "")
 
