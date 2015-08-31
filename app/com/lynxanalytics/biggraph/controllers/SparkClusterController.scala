@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.apache.spark
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
 
@@ -126,7 +127,32 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     return getClusterStatus(user, serving.Empty())
   }
 
+  def logSparkClusterInfo: Unit = {
+    // No way to find cores per executor programmatically. SPARK-2095
+    // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch spark
+    // in a way that this is probably mostly reliable.
+    val numCoresPerExecutor =
+      scala.util.Properties.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
+    val numExecutors = (sc.getExecutorStorageStatus.size - 1) max 1
+    val totalCores = numExecutors * numCoresPerExecutor
+    val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
+    val conf = sc.getConf
+    // Unfortunately the defaults are hard-coded in Spark and not available.
+    val cacheFraction = conf.getDouble("spark.storage.memoryFraction", 0.6)
+    val shuffleFraction = conf.getDouble("spark.shuffle.memoryFraction", 0.2)
+    val workFraction = 1.0 - cacheFraction - shuffleFraction
+    val workMemory = workFraction * cacheMemory / cacheFraction
+    log.info("Spark cluster status report")
+    log.info("Work memory: " + workMemory)
+    log.info("Total cores: " + totalCores)
+    log.info("Cache memory: " + cacheMemory)
+    log.info("Work fraction: " + workFraction)
+    log.info("Cache fraction: " + cacheFraction)
+    log.info("WM per core: " + (workMemory / totalCores).toLong)
+  }
+
   def checkSparkOperational(): Unit = {
+    logSparkClusterInfo
     val sc = environment.sparkContext
     // This pool's properties are defined at /conf/scheduler-pools.xml.
     sc.setLocalProperty("spark.scheduler.pool", "sparkcheck")
