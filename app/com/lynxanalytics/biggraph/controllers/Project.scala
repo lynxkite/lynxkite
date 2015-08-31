@@ -419,6 +419,27 @@ sealed trait ProjectEditor {
     }
   }
 
+  def newVertexAttribute(name: String, attr: Attribute[_], note: String = null) = {
+    vertexAttributes(name) = attr
+    setElementNote(ElementName.VertexAttribute, name, note)
+  }
+  def newEdgeAttribute(name: String, attr: Attribute[_], note: String = null) = {
+    edgeAttributes(name) = attr
+    setElementNote(ElementName.EdgeAttribute, name, note)
+  }
+  def newScalar(name: String, scalar: Scalar[_], note: String) = {
+    scalars(name) = scalar
+    setElementNote(ElementName.Scalar, name, note)
+  }
+  def setElementNote(kind: ElementKind, name: String, note: String) = {
+    val notes = state.elementNotes.getOrElse(Map())
+    if (note == null) {
+      state = state.copy(elementNotes = Some(notes - ElementName(kind, name)))
+    } else {
+      state = state.copy(elementNotes = Some(notes + (ElementName(kind, name) -> note)))
+    }
+  }
+
   def vertexAttributes =
     new StateMapHolder[Attribute[_]] {
       protected def getMap = viewer.vertexAttributes
@@ -435,21 +456,6 @@ sealed trait ProjectEditor {
   def vertexAttributeNames[T: TypeTag] = vertexAttributes.collect {
     case (name, attr) if typeOf[T] =:= typeOf[Nothing] || attr.is[T] => name
   }.toSeq
-
-  def setVertexAttributeNote(name: String, note: String) =
-    setElementNote(ElementName.VertexAttribute, name, note)
-  def setEdgeAttributeNote(name: String, note: String) =
-    setElementNote(ElementName.EdgeAttribute, name, note)
-  def setScalarNote(name: String, note: String) =
-    setElementNote(ElementName.Scalar, name, note)
-  def setElementNote(kind: ElementKind, name: String, note: String) = {
-    val notes = state.elementNotes.getOrElse(Map())
-    if (note == null) {
-      state = state.copy(elementNotes = Some(notes - ElementName(kind, name)))
-    } else {
-      state = state.copy(elementNotes = Some(notes + (ElementName(kind, name) -> note)))
-    }
-  }
 
   def edgeAttributes =
     new StateMapHolder[Attribute[_]] {
