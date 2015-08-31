@@ -102,7 +102,6 @@ case class FEProject(
   notes: String = "",
   scalars: List[FEAttribute] = List(),
   vertexAttributes: List[FEAttribute] = List(),
-  vertexAttributeNotes: Map[String, String] = Map(),
   edgeAttributes: List[FEAttribute] = List(),
   segmentations: List[FESegmentation] = List(),
   opCategories: List[OperationCategory] = List())
