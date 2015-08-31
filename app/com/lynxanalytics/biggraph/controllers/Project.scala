@@ -626,17 +626,10 @@ class SegmentationEditor(
 
 // Represents a mutable, named project. It can be seen as a modifiable pointer into the
 // checkpoint tree with some additional metadata. ProjectFrame's data is persisted using tags.
-class ProjectFrame(val projectPath: SymbolPath)(
-    implicit manager: MetaGraphManager) {
-  val projectName = projectPath.toString
-  override def toString = projectName
-  override def equals(p: Any) =
-    p.isInstanceOf[ProjectFrame] && projectName == p.asInstanceOf[ProjectFrame].projectName
-  override def hashCode = projectName.hashCode
-
-  assert(projectName.nonEmpty, "Invalid project name: <empty string>")
+class ProjectFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ProjectDirectory(path) {
+  val projectName = path.toString
   assert(!projectName.contains(ProjectFrame.separator), s"Invalid project name: $projectName")
-  val rootDir: SymbolPath = SymbolPath("projects") / projectPath
 
   // Current checkpoint of the project
   def checkpoint: String = {
@@ -657,7 +650,7 @@ class ProjectFrame(val projectPath: SymbolPath)(
   private def nextCheckpoint_=(x: Option[String]): Unit =
     set(rootDir / "nextCheckpoint", x.getOrElse(""))
 
-  def exists = manager.tagExists(rootDir)
+  override def exists = manager.tagExists(rootDir / "checkpoint")
 
   def undo(): Unit = manager.synchronized {
     nextCheckpoint = Some(checkpoint)
@@ -709,51 +702,6 @@ class ProjectFrame(val projectPath: SymbolPath)(
     }
   }
 
-  private def existing(tag: SymbolPath): Option[SymbolPath] =
-    if (manager.tagExists(tag)) Some(tag) else None
-  private def set(tag: SymbolPath, content: String): Unit = manager.setTag(tag, content)
-  private def get(tag: SymbolPath): String = manager.synchronized {
-    existing(tag).map(manager.getTag(_)).get
-  }
-
-  def readACL: String = get(rootDir / "readACL")
-  def readACL_=(x: String): Unit = set(rootDir / "readACL", x)
-
-  def writeACL: String = get(rootDir / "writeACL")
-  def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
-
-  def assertReadAllowedFrom(user: User): Unit = {
-    assert(readAllowedFrom(user), s"User $user does not have read access to project $projectName.")
-  }
-  def assertWriteAllowedFrom(user: User): Unit = {
-    assert(writeAllowedFrom(user), s"User $user does not have write access to project $projectName.")
-  }
-  def readAllowedFrom(user: User): Boolean = {
-    // Write access also implies read access.
-    user.isAdmin || writeAllowedFrom(user) || aclContains(readACL, user)
-  }
-  def writeAllowedFrom(user: User): Boolean = {
-    user.isAdmin || aclContains(writeACL, user)
-  }
-
-  def aclContains(acl: String, user: User): Boolean = {
-    // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
-    // We translate this to a regex for checking.
-    val regex = acl.replace(" ", "").replace(".", "\\.").replace(",", "|").replace("*", ".*")
-    user.email.matches(regex)
-  }
-
-  def remove(): Unit = manager.synchronized {
-    existing(rootDir).foreach(manager.rmTag(_))
-    log.info(s"A project has been discarded: $rootDir")
-  }
-
-  private def cp(from: SymbolPath, to: SymbolPath) = manager.synchronized {
-    existing(to).foreach(manager.rmTag(_))
-    manager.cpTag(from, to)
-  }
-  def copy(to: ProjectFrame): Unit = cp(rootDir, to.rootDir)
-
   def subproject = SubProject(this, Seq())
 }
 object ProjectFrame {
@@ -761,15 +709,17 @@ object ProjectFrame {
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
 
   def fromName(rootProjectName: String)(implicit metaManager: MetaGraphManager): ProjectFrame = {
-    validateName(rootProjectName, "Project name")
-    new ProjectFrame(SymbolPath(rootProjectName))
+    validateName(rootProjectName, "Project name", allowSlash = true)
+    new ProjectFrame(SymbolPath.parse(rootProjectName))
   }
 
-  def validateName(name: String, what: String = "Name"): Unit = {
-    assert(name.nonEmpty, s"$what cannot be empty.")
+  def validateName(name: String, what: String = "Name",
+                   allowSlash: Boolean = false,
+                   allowEmpty: Boolean = false): Unit = {
+    assert(allowEmpty || name.nonEmpty, s"$what cannot be empty.")
     assert(!name.startsWith("!"), s"$what cannot start with '!'.")
     assert(!name.contains(separator), s"$what cannot contain '$separator'.")
-    assert(!name.contains("/"), s"$what cannot contain '/'.")
+    assert(allowSlash || !name.contains("/"), s"$what cannot contain '/'.")
   }
 }
 
@@ -796,5 +746,95 @@ object SubProject {
   def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
     val nameElements = projectName.split(ProjectFrame.quotedSeparator, -1)
     new SubProject(ProjectFrame.fromName(nameElements.head), nameElements.tail)
+  }
+}
+
+// May be a directory or a project frame.
+class ProjectDirectory(val path: SymbolPath)(
+    implicit manager: MetaGraphManager) {
+  override def toString = path.toString
+  override def equals(p: Any) =
+    p.isInstanceOf[ProjectDirectory] && toString == p.asInstanceOf[ProjectDirectory].toString
+  override def hashCode = toString.hashCode
+  val rootDir: SymbolPath = ProjectDirectory.root / path
+
+  def exists = manager.tagExists(rootDir)
+
+  protected def existing(tag: SymbolPath): Option[SymbolPath] =
+    if (manager.tagExists(tag)) Some(tag) else None
+  protected def set(tag: SymbolPath, content: String): Unit = manager.setTag(tag, content)
+  protected def get(tag: SymbolPath): String = manager.synchronized {
+    existing(tag).map(manager.getTag(_)).get
+  }
+
+  def readACL: String = get(rootDir / "readACL")
+  def readACL_=(x: String): Unit = set(rootDir / "readACL", x)
+
+  def writeACL: String = get(rootDir / "writeACL")
+  def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
+
+  def assertReadAllowedFrom(user: User): Unit = {
+    assert(readAllowedFrom(user), s"User $user does not have read access to $this.")
+  }
+  def assertWriteAllowedFrom(user: User): Unit = {
+    assert(writeAllowedFrom(user), s"User $user does not have write access to $this.")
+  }
+  def readAllowedFrom(user: User): Boolean = {
+    // Write access also implies read access.
+    user.isAdmin || writeAllowedFrom(user) || aclContains(readACL, user)
+  }
+  def writeAllowedFrom(user: User): Boolean = {
+    user.isAdmin || aclContains(writeACL, user)
+  }
+
+  def aclContains(acl: String, user: User): Boolean = {
+    // The ACL is a comma-separated list of email addresses with '*' used as a wildcard.
+    // We translate this to a regex for checking.
+    val regex = acl.replace(" ", "").replace(".", "\\.").replace(",", "|").replace("*", ".*")
+    user.email.matches(regex)
+  }
+
+  def remove(): Unit = manager.synchronized {
+    existing(rootDir).foreach(manager.rmTag(_))
+    log.info(s"A project has been discarded: $rootDir")
+  }
+
+  private def cp(from: SymbolPath, to: SymbolPath) = manager.synchronized {
+    existing(to).foreach(manager.rmTag(_))
+    manager.cpTag(from, to)
+  }
+  def copy(to: ProjectDirectory): Unit = cp(rootDir, to.rootDir)
+
+  def parent = if (path.size > 1) Some(new ProjectDirectory(path.init)) else None
+  def parents: Iterable[ProjectDirectory] = parent ++ parent.toSeq.flatMap(_.parents)
+  def isProject = new ProjectFrame(path).exists
+
+  // Returns the list of all projects contained in this directory.
+  def listProjectsRecursively: Seq[ProjectFrame] = {
+    assert(!isProject, s"$this is not a directory.")
+    val (dirs, projects) = listDirectoriesAndProjects
+    projects ++ dirs.flatMap(_.listProjectsRecursively)
+  }
+
+  // Lists directories and projects inside this directory.
+  def listDirectoriesAndProjects: (Seq[ProjectDirectory], Seq[ProjectFrame]) = {
+    assert(!isProject, s"$this is not a directory.")
+    val rooted = ProjectDirectory.root / path
+    if (manager.tagExists(rooted)) {
+      val tags = manager.lsTag(rooted).filter(manager.tagIsDir(_))
+      val unrooted = tags.map(path => new SymbolPath(path.drop(ProjectDirectory.root.size)))
+      val (projects, dirs) = unrooted.partition(tag => new ProjectFrame(tag).exists)
+      (dirs.map(new ProjectDirectory(_)), projects.map(new ProjectFrame(_)))
+    } else (Nil, Nil)
+  }
+}
+object ProjectDirectory {
+  val root = SymbolPath("projects")
+
+  def fromName(path: String)(implicit metaManager: MetaGraphManager): ProjectDirectory = {
+    ProjectFrame.validateName(path, "Name", allowSlash = true, allowEmpty = true)
+    val dir = new ProjectDirectory(SymbolPath.parse(path))
+    assert(!dir.parents.exists(_.isProject), s"Cannot create directories inside projects: $path")
+    dir
   }
 }

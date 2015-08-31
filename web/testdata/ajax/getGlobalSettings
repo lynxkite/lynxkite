@@ -1,5 +1,6 @@
 {
   "hasAuth": true,
   "title": "GruntKite",
-  "tagline": "Live the frontend, fake the backend"
+  "tagline": "Live the frontend, fake the backend",
+  "version": "Static Ajax Test"
 }

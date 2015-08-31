@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Projects can be organized into folders now.
+
 ### 1.5.1
 
  - Workflow and batch API scripts now use Groovy instead of JSON. This makes them easier to read

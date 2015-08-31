@@ -114,13 +114,15 @@ case class FESegmentation(
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: UIValue)
 case class ProjectRequest(name: String)
-case class Splash(version: String, projects: List[FEProjectListElement])
+case class ProjectListRequest(path: String)
+case class ProjectList(path: String, directories: List[String], projects: List[FEProjectListElement])
 case class OperationCategory(
     title: String, icon: String, color: String, ops: List[FEOperationMeta]) {
   def containsOperation(op: Operation): Boolean = ops.find(_.id == op.id).nonEmpty
 }
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
-case class DiscardProjectRequest(name: String)
+case class CreateDirectoryRequest(name: String)
+case class DiscardDirectoryRequest(name: String)
 
 // A request for the execution of a FE operation on a specific project. The project might be
 // a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
@@ -137,8 +139,8 @@ case class ProjectFilterRequest(
   project: String,
   vertexFilters: List[ProjectAttributeFilter],
   edgeFilters: List[ProjectAttributeFilter])
-case class ForkProjectRequest(from: String, to: String)
-case class RenameProjectRequest(from: String, to: String)
+case class ForkDirectoryRequest(from: String, to: String)
+case class RenameDirectoryRequest(from: String, to: String)
 case class UndoProjectRequest(project: String)
 case class RedoProjectRequest(project: String)
 case class ProjectSettingsRequest(project: String, readACL: String, writeACL: String)
@@ -185,17 +187,18 @@ object BigGraphController {
 class BigGraphController(val env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
 
-  lazy val version = try {
-    scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString
-  } catch {
-    case e: java.io.IOException => ""
-  }
-
   val ops = new Operations(env)
 
-  def splash(user: serving.User, request: serving.Empty): Splash = metaManager.synchronized {
-    val projects = Operation.projects.filter(_.readAllowedFrom(user)).map(_.toListElementFE)
-    return Splash(version, projects.toList)
+  def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
+    val dir = ProjectDirectory.fromName(request.path)
+    dir.assertReadAllowedFrom(user)
+    val (dirs, projects) = dir.listDirectoriesAndProjects
+    val visibleDirs = dirs.filter(_.readAllowedFrom(user))
+    val visible = projects.filter(_.readAllowedFrom(user))
+    ProjectList(
+      request.path,
+      visibleDirs.map(_.path.last.name).toList,
+      visible.map(_.toListElementFE).toList)
   }
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
@@ -209,15 +212,12 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.toFE.copy(opCategories = nonUtilities)
   }
 
-  private def projectExists(name: String): Boolean = {
-    Operation.projects.map(_.projectName).contains(name)
-  }
-  private def assertProjectNotExists(name: String) = {
-    assert(!projectExists(name), s"Project $name already exists.")
+  private def assertNameNotExists(name: String) = {
+    assert(!ProjectDirectory.fromName(name).exists, s"Project $name already exists.")
   }
 
   def createProject(user: serving.User, request: CreateProjectRequest): Unit = metaManager.synchronized {
-    assertProjectNotExists(request.name)
+    assertNameNotExists(request.name)
     val p = ProjectFrame.fromName(request.name)
     request.privacy match {
       case "private" =>
@@ -236,17 +236,24 @@ class BigGraphController(val env: BigGraphEnvironment) {
     }
   }
 
-  def discardProject(user: serving.User, request: DiscardProjectRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.name)
+  def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
+    assertNameNotExists(request.name)
+    val d = ProjectDirectory.fromName(request.name)
+    d.readACL = "*"
+    d.writeACL = "*"
+  }
+
+  def discardDirectory(user: serving.User, request: DiscardDirectoryRequest): Unit = metaManager.synchronized {
+    val p = ProjectDirectory.fromName(request.name)
     p.assertWriteAllowedFrom(user)
     p.remove()
   }
 
-  def renameProject(user: serving.User, request: RenameProjectRequest): Unit = metaManager.synchronized {
-    val p = ProjectFrame.fromName(request.from)
+  def renameDirectory(user: serving.User, request: RenameDirectoryRequest): Unit = metaManager.synchronized {
+    val p = ProjectDirectory.fromName(request.from)
     p.assertWriteAllowedFrom(user)
-    assertProjectNotExists(request.to)
-    p.copy(ProjectFrame.fromName(request.to))
+    assertNameNotExists(request.to)
+    p.copy(ProjectDirectory.fromName(request.to))
     p.remove()
   }
 
@@ -270,12 +277,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
         parameters = (vertexParams ++ edgeParams).toMap)))
   }
 
-  def forkProject(user: serving.User, request: ForkProjectRequest): Unit = metaManager.synchronized {
-    ProjectFrame.validateName(request.to, "Project name")
-    val p1 = ProjectFrame.fromName(request.from)
+  def forkDirectory(user: serving.User, request: ForkDirectoryRequest): Unit = metaManager.synchronized {
+    val p1 = ProjectDirectory.fromName(request.from)
     p1.assertReadAllowedFrom(user)
-    assertProjectNotExists(request.to)
-    val p2 = ProjectFrame.fromName(request.to)
+    assertNameNotExists(request.to)
+    val p2 = ProjectDirectory.fromName(request.to)
     p1.copy(p2)
     if (!p2.writeAllowedFrom(user)) {
       p2.writeACL += "," + user.email
@@ -433,7 +439,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
       val p = ProjectFrame.fromName(request.newProject)
       if (request.newProject != request.oldProject) {
         // Saving under a new name.
-        assertProjectNotExists(request.newProject)
+        assertNameNotExists(request.newProject)
         // Copying old ProjectFrame level data.
         ProjectFrame.fromName(request.oldProject).copy(p)
         // But adding user as writer if necessary.
@@ -535,8 +541,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
     "This operation is only available for segmentations.")
   // All projects that the user has read access to.
   protected def readableProjects(implicit manager: MetaGraphManager): List[UIValue] = {
-    UIValue.list(Operation.projects
-      .filter(_.readAllowedFrom(user))
+    UIValue.list(Operation.allProjects(user)
       .map(_.projectName)
       .toList)
   }
@@ -558,15 +563,12 @@ object Operation {
 
   case class Context(user: serving.User, project: ProjectViewer)
 
-  def projects(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
-    val dirs = {
-      if (manager.tagExists(SymbolPath("projects")))
-        manager.lsTag(SymbolPath("projects"))
-      else
-        Nil
-    }
+  def allProjects(user: serving.User)(implicit manager: MetaGraphManager): Seq[ProjectFrame] = {
+    val root = new SymbolPath(Nil)
+    val projects = new ProjectDirectory(root).listProjectsRecursively
+    val readable = projects.filter(_.readAllowedFrom(user))
     // Do not list internal project names (starting with "!").
-    dirs.map(p => ProjectFrame.fromName(p.path.last.name)).filterNot(_.projectName.startsWith("!"))
+    readable.filterNot(_.projectName.startsWith("!"))
   }
 }
 

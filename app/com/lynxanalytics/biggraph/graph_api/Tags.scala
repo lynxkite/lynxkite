@@ -28,8 +28,10 @@ class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Order
 object SymbolPath {
   import scala.language.implicitConversions
   implicit def fromIterable(sp: Iterable[Symbol]): SymbolPath = new SymbolPath(sp)
-  def parse(str: String): SymbolPath =
-    str.split("/", -1).toSeq.map(Symbol(_))
+  def parse(str: String): SymbolPath = {
+    if (str.isEmpty) Nil
+    else str.split("/", -1).toSeq.map(Symbol(_))
+  }
   def check(symbol: Symbol, fullPath: SymbolPath) = {
     val str = symbol.name
     assert(!str.contains("/"), s"Name $str in $fullPath contains a slash ('/').")
@@ -68,6 +70,8 @@ sealed trait TagPath extends Serializable with Ordered[TagPath] {
 
   def allTags: Iterable[Tag]
 
+  def isDir = false
+
   // A string snapshot of the full directory structure. Mostly for debugging.
   def lsRec(indent: Int = 0): String
 }
@@ -94,6 +98,8 @@ trait TagDir extends TagPath {
     assert(p.nonEmpty, s"$subPath not found in $this")
     p.get
   }
+
+  override def isDir = true
 
   def exists(subPath: SymbolPath) = followPath(subPath).nonEmpty
   def existsDir(subPath: SymbolPath) = followPath(subPath).exists(_.isInstanceOf[TagDir])
