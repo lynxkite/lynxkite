@@ -7,7 +7,7 @@ DVD_ROOT="$(dirname $0)"
 echo "Installing Java..."
 sudo mkdir -p /usr/java
 sudo tar -xf $DVD_ROOT/server-jre-7u80-linux-x64.tar.gz -C /usr/java
-sudo sh -c "echo JAVA_HOME=/usr/java/jdk1.7.0_80/ > /etc/profile.d/lynx.sh"
+sudo sh -c "echo export JAVA_HOME=/usr/java/jdk1.7.0_80/ > /etc/profile.d/lynx.sh"
 echo "Java installed successfully."
 
 # Install Cloudera
