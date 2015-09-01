@@ -346,7 +346,7 @@ object Implicits {
 
     // Returns an RDD that only contains as many partitions as there are available cores.
     def coalesce(rc: RuntimeContext): RDD[T] =
-      self.coalesce(rc.numAvailableCores)
+      self.coalesce(rc.sparkContext.defaultParallelism)
 
     // Take a sample of approximately the given size.
     def takeFirstNValuesOrSo(n: Int): RDD[T] = {
