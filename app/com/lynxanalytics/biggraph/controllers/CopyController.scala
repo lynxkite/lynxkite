@@ -46,7 +46,7 @@ class CopyController(environment: BigGraphEnvironment) {
         }
         log.info(s"Copying ${copies.size} files from $ephemeralPath to ${dm.repositoryPath}...")
         val rc = dm.runtimeContext
-        val rdd = rc.sparkContext.parallelize(copies, rc.numAvailableCores)
+        val rdd = rc.sparkContext.parallelize(copies)
         rdd.foreach {
           case (src, dst) =>
             hadoop.fs.FileUtil.copy(
