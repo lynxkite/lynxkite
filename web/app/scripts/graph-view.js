@@ -32,19 +32,27 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
         util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
         util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
-        var timer;
-        var eventName = 'resize.graph-view-' + scope.$id;
-        var window = angular.element($window);
-        window.bind(eventName, function() {
-          $timeout.cancel(timer);
-          timer = $timeout(scope.updateGraph, 100);
-        });
-        scope.$on('$destroy', function() {
-          $timeout.cancel(timer);
-          window.unbind(eventName);
-        });
+        handleResizeEvents(scope);
       },
     };
+
+  function handleResizeEvents(scope) {
+    var timer;
+    function update() {
+      $timeout.cancel(timer);
+      timer = $timeout(scope.updateGraph, 100);
+    }
+
+    var eventName = 'resize.graph-view-' + scope.$id;
+    var window = angular.element($window);
+    window.bind(eventName, update);
+    scope.$on('ui.layout.toggle', update);
+    scope.$on('ui.layout.resize', update);
+    scope.$on('$destroy', function() {
+      $timeout.cancel(timer);
+      window.unbind(eventName);
+    });
+  }
 
   function Offsetter(xOff, yOff, zoom, thickness, menu) {
     this.xOff = xOff;
