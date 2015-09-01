@@ -25,9 +25,7 @@ Install Spark:
          tar xf Downloads/spark-1.3.0-bin-hadoop2.4.tgz
          ln -s spark-1.3.0-bin-hadoop2.4/ spark-1.3.0
 
-Install Python (for various tools) and Ruby (for AWS CLI and Sass). Then:
-
-    sudo gem install sass
+For various tools you will require Python and AWS CLI.
 
 
 ## Per repository setup
