@@ -226,7 +226,7 @@ angular.module('biggraph')
 
     function wiggleChannel(channel) {
       // Write a random string to almost certainly trigger a storage event.
-      localStorage.setItem(channel, Date() + Math.random().toString(36));
+      localStorage.setItem(channel, Date.now() + Math.random().toString(36));
     }
 
     function sendReloadNotification() {
