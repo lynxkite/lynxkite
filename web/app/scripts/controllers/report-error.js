@@ -6,7 +6,7 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modal
   $scope.details = alert.details ? JSON.stringify(alert.details, null, '  ') : undefined;
 
   var support = 'support@lynxanalytics.freshdesk.com';
-  var time = alert.time || Date();
+  var time = alert.time || (new Date().toString());
   var body = 'Happened at ' + window.location.href + ' on ' + time;
   body += '\n\nPlease advise.';
   body += '\n\nError message:';
