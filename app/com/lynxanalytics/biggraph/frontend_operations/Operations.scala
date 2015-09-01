@@ -427,7 +427,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(result.segments, idAttr = "id")
       segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation), help)
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
     }
   })
 
@@ -465,7 +465,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(result.segments, idAttr = "id")
       segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation), help)
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
     }
   })
 
@@ -490,7 +490,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       cliquesSegmentation.setVertexSet(cliquesResult.segments, idAttr = "id")
       cliquesSegmentation.notes = "Maximal cliques"
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
-      cliquesSegmentation.newVertexAttribute("size", computeSegmentSizes(cliquesSegmentation), help)
+      cliquesSegmentation.newVertexAttribute("size", computeSegmentSizes(cliquesSegmentation))
 
       val cedges = {
         val op = graph_operations.InfocomOverlapForCC(params("adjacency_threshold").toDouble)
@@ -519,7 +519,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       communitiesSegmentation.notes = "Infocom Communities"
       communitiesSegmentation.belongsTo = vertexToCommunity
       communitiesSegmentation.newVertexAttribute(
-        "size", computeSegmentSizes(communitiesSegmentation), help)
+        "size", computeSegmentSizes(communitiesSegmentation))
     }
   })
 
@@ -552,7 +552,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(result.clusters, idAttr = "id")
       segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation), help)
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
 
       val symmetricDirection = Direction("all edges", project.edgeBundle)
       val symmetricEdges = symmetricDirection.edgeBundle
@@ -592,7 +592,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(bucketing.segments, idAttr = "id")
       segmentation.notes = summary(params)
       segmentation.belongsTo = bucketing.belongsTo
-      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation), help)
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
       segmentation.newVertexAttribute("bottom", bucketing.bottom, help)
       segmentation.newVertexAttribute("top", bucketing.top, help)
     }
@@ -619,7 +619,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(bucketing.segments, idAttr = "id")
       segmentation.notes = summary(params)
       segmentation.belongsTo = bucketing.belongsTo
-      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation), help)
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
       segmentation.newVertexAttribute(attrName, bucketing.label, help)
     }
   })
@@ -673,7 +673,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
       }
       // Calculate sizes at the end.
-      result.newVertexAttribute("size", computeSegmentSizes(result), help)
+      result.newVertexAttribute("size", computeSegmentSizes(result))
     }
   })
   register("Internal vertex ID as attribute", new VertexAttributesOperation(_, _) {
@@ -2147,7 +2147,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       parent.newVertexAttribute(s"${prefix}_${targetName}_test", parted.test, help)
       var train = parted.train.entity
       val segSizes = computeSegmentSizes(seg)
-      project.newVertexAttribute("size", segSizes, help)
+      project.newVertexAttribute("size", segSizes)
       val maxDeviation = params("max_deviation")
 
       val coverage = {
