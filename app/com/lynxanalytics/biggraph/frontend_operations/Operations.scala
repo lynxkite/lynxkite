@@ -2036,8 +2036,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         parent.newVertexAttribute(
           prefix + name,
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, seg.belongsTo),
-          project.viewer.getVertexAttributeNote(name))
+            attr, seg.belongsTo))
       }
     }
   })
@@ -2057,8 +2056,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         project.newVertexAttribute(
           prefix + name,
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, reverse(seg.belongsTo)),
-          parent.viewer.getVertexAttributeNote(name))
+            attr, reverse(seg.belongsTo)))
       }
     }
   })
