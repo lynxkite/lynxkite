@@ -784,8 +784,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val attr2 = project.vertexAttributes(params("attr2"))
       assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
-      project.newVertexAttribute(
-        name, unifyAttribute(attr1, attr2), params("attr1") + " or " + params("attr2"))
+      project.newVertexAttribute(name, unifyAttribute(attr1, attr2))
     }
   })
 
