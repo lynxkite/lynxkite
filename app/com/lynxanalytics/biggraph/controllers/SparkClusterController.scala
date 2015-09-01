@@ -127,7 +127,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     return getClusterStatus(user, serving.Empty())
   }
 
-  def logSparkClusterInfo: Unit = {
+  def logSparkClusterInfo(): Unit = {
     // No way to find cores per executor programmatically. SPARK-2095
     // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch spark
     // in a way that this is probably mostly reliable.
@@ -142,7 +142,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     val shuffleFraction = conf.getDouble("spark.shuffle.memoryFraction", 0.2)
     val workFraction = 1.0 - cacheFraction - shuffleFraction
     val workMemory = workFraction * cacheMemory / cacheFraction
-    log.info("Spark cluster status report")
+    log.info("Spark cluster status report. See estimated cluster parameters below.")
     log.info("Work memory: " + workMemory)
     log.info("Total cores: " + totalCores)
     log.info("Cache memory: " + cacheMemory)
@@ -152,7 +152,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def checkSparkOperational(): Unit = {
-    logSparkClusterInfo
+    logSparkClusterInfo()
     val sc = environment.sparkContext
     // This pool's properties are defined at /conf/scheduler-pools.xml.
     sc.setLocalProperty("spark.scheduler.pool", "sparkcheck")
