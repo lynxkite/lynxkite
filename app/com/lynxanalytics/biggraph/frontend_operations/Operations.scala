@@ -645,8 +645,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       result.belongsTo = first.belongsTo
       for ((name, attr) <- first.vertexAttributes) {
         result.newVertexAttribute(
-          s"${first.segmentationName}_$name", attr,
-          first.viewer.getVertexAttributeNote(name))
+          s"${first.segmentationName}_$name", attr)
       }
       // Then combine the other segmentations one by one.
       for (seg <- segmentations.tail) {
@@ -668,8 +667,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           result.newVertexAttribute(
             s"${seg.segmentationName}_$name",
             graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-              attr, combination.origin2),
-            seg.viewer.getVertexAttributeNote(name))
+              attr, combination.origin2))
         }
       }
       // Calculate sizes at the end.
