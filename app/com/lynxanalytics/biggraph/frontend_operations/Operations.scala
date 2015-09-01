@@ -2193,10 +2193,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
         project.newVertexAttribute(
           s"${prefix}_${targetName}_standard_deviation_after_iteration_$i",
-          segStdDev, help)
+          segStdDev,
+          help)
         project.newVertexAttribute(
           s"${prefix}_${targetName}_average_after_iteration_$i",
-          segTargetAvg, help)
+          segTargetAvg,
+          help)
         val predicted = {
           aggregateViaConnection(
             reverse(seg.belongsTo),
