@@ -283,6 +283,7 @@ angular.module('biggraph')
         }
         this.project = newProject;
       } else {
+        this.state = defaultSideState();
         this.project = undefined;
       }
       $rootScope.$broadcast('project reloaded');
