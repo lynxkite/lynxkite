@@ -23,6 +23,7 @@ class BasicStatsTest extends FunSuite with TestGraphOp {
     val out = op(op.attribute, g.age).result
     assert(out.min.value === 2.0)
     assert(out.max.value === 50.3)
+    assert(out.minPositive.value === 2.0)
   }
   test("compute basic stats - top values") {
     val op = ComputeTopValues[String](2)

@@ -110,6 +110,8 @@ object ComputeMinMax {
     implicit val tt = inputs.attribute.typeTag
     val min = scalar[T]
     val max = scalar[T]
+    // minPositive may be an arbitrary non-positive value if there are no positive values.
+    val minPositive = scalar[T]
   }
 }
 abstract class ComputeMinMax[T: Numeric]
@@ -120,6 +122,14 @@ abstract class ComputeMinMax[T: Numeric]
   def outputMeta(instance: MetaGraphOperationInstance) =
     new ComputeMinMax.Output()(instance, inputs)
 
+  private def smallerPositive(a: T, b: T): T = {
+    val num = implicitly[Numeric[T]]
+    import num.mkOrderingOps
+    if (a > num.zero && b > num.zero) num.min(a, b)
+    else if (a > num.zero) a
+    else b
+  }
+
   def execute(inputDatas: DataSet,
               o: ComputeMinMax.Output[T],
               output: OutputBuilder,
@@ -129,24 +139,23 @@ abstract class ComputeMinMax[T: Numeric]
     implicit val ct = inputs.attribute.data.classTag
     val num = implicitly[Numeric[T]]
     val resOpt = inputs.attribute.rdd.values
-      .aggregate(None: Option[(T, T)])(
-        (minmax, next) => {
-          val min = minmax.fold(next)(a => num.min(a._1, next))
-          val max = minmax.fold(next)(a => num.max(a._2, next))
-          Some(min, max)
+      .aggregate(None: Option[(T, T, T)])(
+        {
+          case (Some((min, max, minpos)), next) =>
+            Some((num.min(min, next), num.max(max, next), smallerPositive(minpos, next)))
+          case (None, next) =>
+            Some((next, next, next))
         },
-        (minmax1, minmax2) => {
-          if (minmax1.isEmpty) minmax2
-          else if (minmax2.isEmpty) minmax1
-          else {
-            val min = num.min(minmax1.get._1, minmax2.get._1)
-            val max = num.max(minmax1.get._2, minmax2.get._2)
-            Some(min, max)
-          }
+        {
+          case (None, minmax2) => minmax2
+          case (minmax1, None) => minmax1
+          case (Some((min1, max1, minpos1)), Some((min2, max2, minpos2))) =>
+            Some((num.min(min1, min2), num.max(max1, max2), smallerPositive(minpos1, minpos2)))
         })
-    val res = resOpt.getOrElse(num.zero, num.zero)
-    output(o.min, res._1)
-    output(o.max, res._2)
+    val (min, max, minpos) = resOpt.getOrElse(num.zero, num.zero, num.zero)
+    output(o.min, min)
+    output(o.max, max)
+    output(o.minPositive, minpos)
   }
 }
 
