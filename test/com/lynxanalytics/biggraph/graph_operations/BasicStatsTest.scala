@@ -19,7 +19,7 @@ class BasicStatsTest extends FunSuite with TestGraphOp {
     assert(out.count.value === 4)
   }
   test("compute basic stats - min max values") {
-    val op = ComputeMinMaxDouble()
+    val op = ComputeMinMaxMinPositiveDouble()
     val out = op(op.attribute, g.age).result
     assert(out.min.value === Some(2.0))
     assert(out.max.value === Some(50.3))
