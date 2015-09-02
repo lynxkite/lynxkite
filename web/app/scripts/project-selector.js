@@ -1,7 +1,7 @@
 // The list of projects.
 'use strict';
 
-angular.module('biggraph').directive('projectSelector', function(util, hotkeys, $timeout, $window) {
+angular.module('biggraph').directive('projectSelector', function(util, hotkeys, $timeout) {
   return {
     restrict: 'E',
     scope: {
@@ -107,11 +107,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
         if (p.error) { return; }
-        if (event.ctrlKey) {
-          $window.open('#/project/' + p.name, '_blank');
-        } else {
-          scope.name = p.name;
-        }
+        scope.name = p.name;
       };
 
       scope.enterDirectory = function(event, d) {
