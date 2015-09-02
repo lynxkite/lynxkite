@@ -425,6 +425,11 @@ module.exports = function (grunt) {
           configFile: 'test/protractor-on-grunt-serve.conf.js',
         },
       },
+      onRealBackend: {
+        options: {
+          configFile: 'test/protractor-on-real-backend.conf.js',
+        },
+      },
     },
 
   });
@@ -455,7 +460,11 @@ module.exports = function (grunt) {
     'autoprefixer',
     'asciidoctor',
     'connect:test',
-    'protractor'
+    'protractor:onGruntServe'
+  ]);
+
+  grunt.registerTask('test_e2e', [
+    'protractor:onRealBackend'
   ]);
 
   grunt.registerTask('build', [

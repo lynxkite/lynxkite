@@ -9,13 +9,13 @@
 <div class="btn-group pull-right" ng-click="captureClick($event)" dropdown>
   <a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>
   <ul class="dropdown-menu">
-    <li><a href ng-click="toggleRenaming()">
+    <li><a href id="menu-rename" ng-click="toggleRenaming()">
       <i class="glyphicon glyphicon-pencil"></i> Rename...
     </a></li>
-    <li><a href ng-click="discard()">
+    <li><a href id="menu-discard" ng-click="discard()">
       <i class="glyphicon glyphicon-trash"></i> Discard
     </a></li>
-    <li><a href ng-click="duplicate()">
+    <li><a href id="menu-duplicate" ng-click="duplicate()">
       <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
     </a></li>
   </ul>

@@ -9,7 +9,7 @@ angular.module('biggraph').directive('sideOperationToolbox', function($rootScope
     templateUrl: 'side-operation-toolbox.html',
     link: function(scope) {
       scope.box = {};
-      if (scope.side.primary) {  // Set up hotkeys on the primary project only.
+      if (scope.side.direction === 'left') {  // Set up hotkeys for the left side only.
         var hk = hotkeys.bindTo(scope);
         hk.add({ combo: '/', description: 'Find operation', callback: function(e) {
           e.preventDefault();  // Do not type "/".

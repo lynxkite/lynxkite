@@ -1,5 +1,5 @@
 exports.config = {
   directConnect: true,
   baseUrl: 'http://localhost:9002/',
-  specs: ['*-test.js'],
+  specs: ['grunt-serve/*-test.js'],
 };
