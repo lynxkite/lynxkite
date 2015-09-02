@@ -29,7 +29,7 @@ object FEBucketers {
         .asInstanceOf[Bucketer[T]]
     } else if (typeOf[T] =:= typeOf[Double]) {
       val stats = {
-        val op = ComputeMinMaxDouble()
+        val op = ComputeMinMaxMinPositiveDouble()
         op(op.attribute, attr.runtimeSafeCast[Double]).result
       }
       val min = if (axisOptions.logarithmic) stats.minPositive.value.get else stats.min.value.get

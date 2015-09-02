@@ -100,7 +100,7 @@ case class CountAttributes[T]()
   }
 }
 
-object ComputeMinMax {
+object ComputeMinMaxMinPositive {
   class Input[T] extends MagicInputSignature {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
@@ -113,14 +113,14 @@ object ComputeMinMax {
     val minPositive = scalar[Option[T]]
   }
 }
-abstract class ComputeMinMax[T: Numeric]
-    extends TypedMetaGraphOp[ComputeMinMax.Input[T], ComputeMinMax.Output[T]] {
+abstract class ComputeMinMaxMinPositive[T: Numeric]
+    extends TypedMetaGraphOp[ComputeMinMaxMinPositive.Input[T], ComputeMinMaxMinPositive.Output[T]] {
   override val isHeavy = true
-  @transient override lazy val inputs = new ComputeMinMax.Input[T]
+  @transient override lazy val inputs = new ComputeMinMaxMinPositive.Input[T]
   private lazy val num = implicitly[Numeric[T]]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
-    new ComputeMinMax.Output()(instance, inputs)
+    new ComputeMinMaxMinPositive.Output()(instance, inputs)
 
   private def smaller(a: Option[T], b: Option[T]): Option[T] = {
     (a, b) match {
@@ -137,7 +137,7 @@ abstract class ComputeMinMax[T: Numeric]
   }
 
   def execute(inputDatas: DataSet,
-              o: ComputeMinMax.Output[T],
+              o: ComputeMinMaxMinPositive.Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
@@ -164,10 +164,36 @@ abstract class ComputeMinMax[T: Numeric]
   }
 }
 
+// Kept for compatibility.
+@deprecated("Use ComputeMinMaxMinPositive instead.", since = "1.6.0")
 object ComputeMinMaxDouble extends OpFromJson {
   def fromJson(j: JsValue) = ComputeMinMaxDouble()
+  class Input extends MagicInputSignature {
+    val vertices = vertexSet
+    val attribute = vertexAttribute[Double](vertices)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    implicit val tt = inputs.attribute.typeTag
+    val min = scalar[Double]
+    val max = scalar[Double]
+  }
 }
-case class ComputeMinMaxDouble() extends ComputeMinMax[Double]
+case class ComputeMinMaxDouble()
+    extends TypedMetaGraphOp[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output] {
+  @transient override lazy val inputs = new ComputeMinMaxDouble.Input
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new ComputeMinMaxDouble.Output()(instance, inputs)
+  def execute(inputDatas: DataSet,
+              o: ComputeMinMaxDouble.Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = ???
+}
+
+object ComputeMinMaxMinPositiveDouble extends OpFromJson {
+  def fromJson(j: JsValue) = ComputeMinMaxMinPositiveDouble()
+}
+case class ComputeMinMaxMinPositiveDouble() extends ComputeMinMaxMinPositive[Double]
 
 object ComputeTopValues extends OpFromJson {
   class Input[T] extends MagicInputSignature {
