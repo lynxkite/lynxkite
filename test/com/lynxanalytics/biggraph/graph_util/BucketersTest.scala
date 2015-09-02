@@ -29,19 +29,20 @@ class VertexBucketerTest extends FunSuite {
   }
 
   test("Double logarithmic bucketer works as expected") {
-    var fb = DoubleLogBucketer(1, 1000, 3)
+    var fb = DoubleLogBucketer(-1, 1000, 1, 3)
     // This is not exactly true, thanks to inaccuracies in the arithmetic.
-    // assert(fb.bounds == Seq(10, 100))
+    // assert(fb.bounds == Seq(1, 10, 100))
     // But when rounded for string formatting, we get the expected result.
-    assert(fb.bucketLabels == Seq("1.0", "10.0", "100.0", "1000.0"))
+    assert(fb.bucketLabels == Seq("-1.0", "1.0", "10.0", "100.0", "1000.0"))
     // And numbers generally end up in the right bucket.
+    assert(fb.whichBucket(-1).get == 0)
     assert(fb.whichBucket(0).get == 0)
-    assert(fb.whichBucket(1).get == 0)
-    assert(fb.whichBucket(9).get == 0)
-    assert(fb.whichBucket(10).get == 1)
-    assert(fb.whichBucket(99).get == 1)
-    assert(fb.whichBucket(100).get == 2)
-    assert(fb.whichBucket(1000).get == 2)
+    assert(fb.whichBucket(1).get == 1)
+    assert(fb.whichBucket(9).get == 1)
+    assert(fb.whichBucket(10).get == 2)
+    assert(fb.whichBucket(99).get == 2)
+    assert(fb.whichBucket(100).get == 3)
+    assert(fb.whichBucket(1000).get == 3)
   }
 
   test("Unexpected strings are ignored") {
@@ -91,7 +92,7 @@ class VertexBucketerTest extends FunSuite {
       == Seq("<20.0", ">=20.0"))
     assert(DoubleLinearBucketer(10, 40, 3).bucketFilters
       == Seq("<20.0", "[20.0,30.0)", ">=30.0"))
-    assert(DoubleLogBucketer(1, 10000, 4).bucketFilters
+    assert(DoubleLogBucketer(1, 10000, 1, 4).bucketFilters
       == Seq(
         "<10.000000000000002",
         "[10.000000000000002,100.00000000000004)",
