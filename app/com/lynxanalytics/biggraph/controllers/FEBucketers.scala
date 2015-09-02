@@ -34,9 +34,9 @@ object FEBucketers {
       }
       val min = stats.min.value.getOrElse(0.0)
       val max = stats.max.value.getOrElse(0.0)
-      val minPositive = stats.minPositive.value.getOrElse(1.0)
-      if (axisOptions.logarithmic)
-        DoubleLogBucketer(min, max, minPositive, numBuckets).asInstanceOf[Bucketer[T]]
+      val minPositive = stats.minPositive.value
+      if (axisOptions.logarithmic && minPositive.nonEmpty)
+        DoubleLogBucketer(min, max, minPositive.get, numBuckets).asInstanceOf[Bucketer[T]]
       else
         DoubleLinearBucketer(min, max, numBuckets).asInstanceOf[Bucketer[T]]
     } else ???
