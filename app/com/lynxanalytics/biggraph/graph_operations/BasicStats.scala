@@ -108,26 +108,32 @@ object ComputeMinMax {
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: Input[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attribute.typeTag
-    val min = scalar[T]
-    val max = scalar[T]
-    // minPositive may be an arbitrary non-positive value if there are no positive values.
-    val minPositive = scalar[T]
+    val min = scalar[Option[T]]
+    val max = scalar[Option[T]]
+    val minPositive = scalar[Option[T]]
   }
 }
 abstract class ComputeMinMax[T: Numeric]
     extends TypedMetaGraphOp[ComputeMinMax.Input[T], ComputeMinMax.Output[T]] {
   override val isHeavy = true
   @transient override lazy val inputs = new ComputeMinMax.Input[T]
+  private lazy val num = implicitly[Numeric[T]]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new ComputeMinMax.Output()(instance, inputs)
 
-  private def smallerPositive(a: T, b: T): T = {
-    val num = implicitly[Numeric[T]]
-    import num.mkOrderingOps
-    if (a > num.zero && b > num.zero) num.min(a, b)
-    else if (a > num.zero) a
-    else b
+  private def smaller(a: Option[T], b: Option[T]): Option[T] = {
+    (a, b) match {
+      case (Some(a), Some(b)) => Some(num.min(a, b))
+      case (a, b) => a.orElse(b)
+    }
+  }
+
+  private def bigger(a: Option[T], b: Option[T]): Option[T] = {
+    (a, b) match {
+      case (Some(a), Some(b)) => Some(num.max(a, b))
+      case (a, b) => a.orElse(b)
+    }
   }
 
   def execute(inputDatas: DataSet,
@@ -137,22 +143,21 @@ abstract class ComputeMinMax[T: Numeric]
     implicit val id = inputDatas
     implicit val tt = inputs.attribute.data.typeTag
     implicit val ct = inputs.attribute.data.classTag
-    val num = implicitly[Numeric[T]]
-    val resOpt = inputs.attribute.rdd.values
-      .aggregate(None: Option[(T, T, T)])(
+    import num.mkOrderingOps
+    val (min, max, minpos) = inputs.attribute.rdd.values
+      .aggregate((None: Option[T], None: Option[T], None: Option[T]))(
         {
-          case (Some((min, max, minpos)), next) =>
-            Some((num.min(min, next), num.max(max, next), smallerPositive(minpos, next)))
-          case (None, next) =>
-            Some((next, next, next))
+          case ((min, max, minpos), next) =>
+            (smaller(min, Some(next)),
+              bigger(max, Some(next)),
+              if (next > num.zero) smaller(minpos, Some(next)) else None)
         },
         {
-          case (None, minmax2) => minmax2
-          case (minmax1, None) => minmax1
-          case (Some((min1, max1, minpos1)), Some((min2, max2, minpos2))) =>
-            Some((num.min(min1, min2), num.max(max1, max2), smallerPositive(minpos1, minpos2)))
+          case ((min1, max1, minpos1), (min2, max2, minpos2)) =>
+            (smaller(min1, min2),
+              bigger(max1, max2),
+              smaller(minpos1, minpos2))
         })
-    val (min, max, minpos) = resOpt.getOrElse(num.zero, num.zero, num.zero)
     output(o.min, min)
     output(o.max, max)
     output(o.minPositive, minpos)
