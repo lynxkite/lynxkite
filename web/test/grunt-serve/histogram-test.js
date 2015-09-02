@@ -1,4 +1,4 @@
-var mocks = require('./mocks.js');
+var mocks = require('../mocks.js');
 describe('a histogram', function() {
   beforeEach(function() {
     mocks.addTo(browser);
