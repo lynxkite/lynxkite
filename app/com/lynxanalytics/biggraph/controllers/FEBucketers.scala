@@ -32,8 +32,8 @@ object FEBucketers {
         val op = ComputeMinMaxDouble()
         op(op.attribute, attr.runtimeSafeCast[Double]).result
       }
-      val min = if (axisOptions.logarithmic) stats.minPositive.value else stats.min.value
-      val max = stats.max.value
+      val min = if (axisOptions.logarithmic) stats.minPositive.value.get else stats.min.value.get
+      val max = stats.max.value.get
       val actualNumBuckets = if (min == max) 1 else numBuckets
       if (axisOptions.logarithmic)
         DoubleLogBucketer(min, max, actualNumBuckets).asInstanceOf[Bucketer[T]]
