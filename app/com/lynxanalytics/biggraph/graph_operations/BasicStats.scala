@@ -150,7 +150,7 @@ abstract class ComputeMinMaxMinPositive[T: Numeric]
           case ((min, max, minpos), next) =>
             (smaller(min, Some(next)),
               bigger(max, Some(next)),
-              if (next > num.zero) smaller(minpos, Some(next)) else None)
+              if (next > num.zero) smaller(minpos, Some(next)) else minpos)
         },
         {
           case ((min1, max1, minpos1), (min2, max2, minpos2)) =>
