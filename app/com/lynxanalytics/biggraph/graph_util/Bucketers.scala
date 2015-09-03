@@ -27,7 +27,7 @@ object EmptyBucketer extends FromJson[EmptyBucketer] {
 case class EmptyBucketer() extends Bucketer[Nothing] {
   def whichBucket(value: Nothing) = ???
   def bucketLabels: Seq[String] = Seq("")
-  def labelType = "between"
+  def labelType = "bucket"
   override def isEmpty = true
 }
 
