@@ -140,31 +140,46 @@ case class DoubleLinearBucketer(min: Double, max: Double, desiredBuckets: Int)
 object DoubleLogBucketer extends FromJson[DoubleLogBucketer] {
   def fromJson(j: JsValue) = {
     val min = (j \ "min").as[Double]
+    val minPositive = (j \ "minPositive").as[Option[Double]]
+    val version = (j \ "version").as[Option[Int]].getOrElse(0)
     DoubleLogBucketer(
       min,
       (j \ "max").as[Double],
-      (j \ "minPositive").as[Option[Double]].getOrElse(min), // Compatibility.
+      if (version >= 1) minPositive else Some(min), // Compatibility.
       (j \ "numBuckets").as[Int])
   }
 }
-case class DoubleLogBucketer(min: Double, max: Double, minPositive: Double, desiredBuckets: Int)
+case class DoubleLogBucketer(
+  min: Double, max: Double, minPositive: Option[Double], desiredBuckets: Int)
     extends DoubleBucketer(min, max, desiredBuckets) {
-  assert(minPositive > 0, s"Cannot take the logarithm of $minPositive.")
+  for (minPositive <- minPositive) {
+    assert(minPositive > 0, s"Cannot take the logarithm of $minPositive.")
+  }
   override def toJson = {
     val original = Json.obj("min" -> min, "max" -> max, "numBuckets" -> desiredBuckets)
-    if (minPositive == min) original // Compatibility.
-    else original ++ Json.obj("minPositive" -> minPositive)
+    minPositive match {
+      case Some(minPositive) =>
+        if (minPositive == min) original // Compatibility.
+        else original ++ Json.obj("version" -> 1, "minPositive" -> minPositive)
+      case None =>
+        original ++ Json.obj("version" -> 1)
+    }
   }
   @transient override lazy val bounds: Seq[Double] = {
-    val positiveBounds = if (minPositive == max) Seq() else {
-      val logMin = math.log(minPositive)
-      val logMax = math.log(max)
-      val logBucketSize = (logMax - logMin) / desiredBuckets
-      val logBounds = (1 until desiredBuckets).map(idx => logMin + idx * logBucketSize)
-      logBounds.map(x => math.exp(x))
+    minPositive match {
+      case Some(minPositive) =>
+        val positiveBounds = if (minPositive == max) Seq() else {
+          val logMin = math.log(minPositive)
+          val logMax = math.log(max)
+          val logBucketSize = (logMax - logMin) / desiredBuckets
+          val logBounds = (1 until desiredBuckets).map(idx => logMin + idx * logBucketSize)
+          logBounds.map(x => math.exp(x))
+        }
+        if (min == minPositive) positiveBounds
+        else minPositive +: positiveBounds // Extra bucket for non-positive values.
+      // No positive values, put everything in one bucket.
+      case None => Seq()
     }
-    if (min == minPositive) positiveBounds
-    else minPositive +: positiveBounds // Extra bucket for non-positive values.
   }
 }
 
