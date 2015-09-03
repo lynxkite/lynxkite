@@ -156,15 +156,15 @@ case class DoubleLogBucketer(min: Double, max: Double, minPositive: Double, desi
     else original ++ Json.obj("minPositive" -> minPositive)
   }
   @transient override lazy val bounds: Seq[Double] = {
-    val bounds = if (minPositive == max) Seq() else {
+    val positiveBounds = if (minPositive == max) Seq() else {
       val logMin = math.log(minPositive)
       val logMax = math.log(max)
       val logBucketSize = (logMax - logMin) / desiredBuckets
       val logBounds = (1 until desiredBuckets).map(idx => logMin + idx * logBucketSize)
       logBounds.map(x => math.exp(x))
     }
-    if (min == minPositive) bounds
-    else minPositive +: bounds // Extra bucket for non-positive values.
+    if (min == minPositive) positiveBounds
+    else minPositive +: positiveBounds // Extra bucket for non-positive values.
   }
 }
 
