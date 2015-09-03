@@ -29,6 +29,11 @@
   margin-top: 6px;
 }
 
+.project-list > div.entry .glyphicon-new-window {
+  font-size: 60%;
+  vertical-align: super;
+}
+
 .project-list > div.entry {
   position: relative;
   padding: 10px;

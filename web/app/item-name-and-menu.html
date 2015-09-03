@@ -2,7 +2,7 @@
   {{ spaced ? util.spaced(name) : name }}
 </span>
 
-<form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming">
+<form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming" ng-click="captureClick($event)">
   <input id="renameBox" class="form-control" style="display: inline; width: 200px;" ng-model="newName">
 </form>
 
