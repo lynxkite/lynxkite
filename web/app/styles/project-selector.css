@@ -34,6 +34,11 @@
   vertical-align: super;
 }
 
+.project-list > div.entry:hover .glyphicon-new-window,
+.project-list > div.entry:focus .glyphicon-new-window {
+  color: white;
+}
+
 .project-list > div.entry {
   position: relative;
   padding: 10px;
