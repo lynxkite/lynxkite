@@ -110,10 +110,6 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         scope.name = p.name;
       };
 
-      scope.captureClick = function(event) {
-        event.originalEvent.alreadyHandled = true;
-      };
-
       scope.enterDirectory = function(event, d) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
