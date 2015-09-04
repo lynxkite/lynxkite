@@ -43,10 +43,17 @@ angular.module('biggraph').directive('helpId',
     restrict: 'A',
     scope: { helpId: '@', removeHeader: '@' },
     link: function(scope, element) {
+      function isValidId(id) {
+        return !id.match('/');  // Return false in case of invalid chars.
+      }
       element.addClass('help');
 
       helpContent.then(function(helpContent) {
         var id = scope.helpId.toLowerCase();
+        if (!isValidId(id)) {
+          console.warn('Invalid help ID', id);
+          return;
+        }
         var content = helpContent.find('#' + id).first();
         if (content.length === 0) {
           console.warn('Could not find help ID', id);
