@@ -78,10 +78,11 @@ trait RowInput extends ToJson {
 }
 
 object CSV extends FromJson[CSV] {
+  val omitFieldsParameter = NewParameter("omitFields", Set[String]())
   def fromJson(j: JsValue): CSV = {
     val header = (j \ "header").as[String]
     val delimiter = (j \ "delimiter").as[String]
-    val omitFields = (j \ "omitFields").asOpt[Set[String]].getOrElse(Set[String]())
+    val omitFields = omitFieldsParameter.fromJson(j)
     val fields = getFields(delimiter, header)
     new CSV(
       HadoopFile((j \ "file").as[String], true),
@@ -128,16 +129,12 @@ case class CSV private (file: HadoopFile,
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   val fields = allFields.filter(field => !omitFields.contains(field))
   override def toJson = {
-    val withoutOmits = Json.obj(
+    Json.obj(
       "file" -> file.symbolicName,
       "delimiter" -> delimiter,
       "header" -> header,
-      "filter" -> filter.expression)
-    if (omitFields.isEmpty) {
-      withoutOmits
-    } else {
-      withoutOmits + ("omitFields" -> Json.toJson(omitFields))
-    }
+      "filter" -> filter.expression) ++
+      CSV.omitFieldsParameter.toJson(omitFields)
   }
 
   def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]] = {
