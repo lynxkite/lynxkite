@@ -8,11 +8,19 @@ angular.module('biggraph').directive('pickOptions', function() {
     link: function(scope) {
       scope.reset = function() {
         scope.count = '1';
-        if (scope.side.state.lastCentersRequest && scope.side.state.lastCentersRequest.filters) {
-          scope.filters = scope.side.state.lastCentersRequest.filters;
-        } else {
-          scope.filters = scope.side.nonEmptyVertexFilterNames();
+        scope.filters = [];
+        var lastCentersRequest = scope.side.state.lastCentersRequest;
+        if (lastCentersRequest) {
+          if (lastCentersRequest.filters) {
+            scope.filters = lastCentersRequest.filters;
+          }
+          if (lastCentersRequest.count) {
+            scope.count = lastCentersRequest.count.toString();
+          }
         }
+      };
+      scope.copyRestrictionsFromFilters = function() {
+        scope.filters = scope.side.nonEmptyVertexFilterNames();
       };
       scope.requestNewCenters = function() {
         scope.side.requestNewCentersWithFilters(
