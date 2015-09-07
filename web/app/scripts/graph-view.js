@@ -274,6 +274,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           var offsetter;
           if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
             offsetter = oldVertices[i].offsetter.inherit();
+            if (oldVertices[i].halfColumnWidth !== halfColumnWidth) {
+              offsetter.xOff = xOff;
+            }
           } else {
             offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu);
           }
