@@ -127,7 +127,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
       if (entityLocation.availablePartitions.contains(pn)) entityLocation.availablePartitions(pn)
       else repartitionTo(entityLocation, pn)
 
-    val dataRead = finalRead(file, parent)
+    val dataRead = finalRead(file, entityLocation.numVertices, parent)
     assert(dataRead.rdd.partitions.size == pn, s"finalRead mismatch: ${dataRead.rdd.partitions.size} != $pn")
     dataRead
   }
@@ -181,7 +181,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   // This method performs the actual reading of the rdddata, from a path/
   // The parent VertexSetData is given for EdgeBundleData and AttributeData[T] so that
   // the corresponding data will be co-located.
-  protected def finalRead(path: HadoopFile, parent: Option[VertexSetData] = None): DT
+  protected def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData] = None): DT
 
   protected def loadRDD(path: HadoopFile): SortedRDD[Long, _]
   protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, _]
@@ -251,9 +251,9 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
     path.loadLegacyEntityRDD[Unit](sc)
   }
 
-  def finalRead(path: HadoopFile, parent: Option[VertexSetData]): VertexSetData = {
+  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
-    new VertexSetData(entity, loadRDD(path))
+    new VertexSetData(entity, loadRDD(path), Some(count))
   }
 }
 
@@ -268,11 +268,12 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
     path.loadLegacyEntityRDD[Edge](sc)
   }
 
-  def finalRead(path: HadoopFile, parent: Option[VertexSetData]): EdgeBundleData = {
+  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): EdgeBundleData = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
     new EdgeBundleData(
       entity,
-      joinedRDD(loadRDD(path), parent.get))
+      joinedRDD(loadRDD(path), parent.get),
+      Some(count))
   }
 }
 
@@ -289,10 +290,11 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
     path.loadLegacyEntityRDD[T](sc)
   }
 
-  def finalRead(path: HadoopFile, parent: Option[VertexSetData]): AttributeData[T] = {
+  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): AttributeData[T] = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
     new AttributeData[T](
       entity,
-      joinedRDD(loadRDD(path), parent.get))
+      joinedRDD(loadRDD(path), parent.get),
+      Some(count))
   }
 }

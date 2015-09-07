@@ -39,7 +39,8 @@ case class CountVertices()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    output(o.count, inputs.vertices.rdd.count)
+    val vs = inputs.vertices.data
+    output(o.count, vs.count.getOrElse(vs.rdd.count))
   }
 }
 
@@ -69,7 +70,8 @@ case class CountEdges()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    output(o.count, inputs.edges.rdd.count)
+    val es = inputs.edges.data
+    output(o.count, es.count.getOrElse(es.rdd.count))
   }
 }
 
@@ -96,7 +98,8 @@ case class CountAttributes[T]()
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    output(o.count, inputs.attribute.rdd.count)
+    val attr = inputs.attribute.data
+    output(o.count, attr.count.getOrElse(attr.rdd.count))
   }
 }
 
