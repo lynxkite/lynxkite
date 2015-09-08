@@ -2,11 +2,11 @@
   {{ spaced ? util.spaced(name) : name }}
 </span>
 
-<form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming">
+<form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming" ng-click="util.captureClick($event)">
   <input id="renameBox" class="form-control" style="display: inline; width: 200px;" ng-model="newName">
 </form>
 
-<div class="btn-group pull-right" ng-click="captureClick($event)" dropdown>
+<div class="btn-group pull-right" ng-click="util.captureClick($event)" dropdown>
   <a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>
   <ul class="dropdown-menu">
     <li><a href ng-click="toggleRenaming()">

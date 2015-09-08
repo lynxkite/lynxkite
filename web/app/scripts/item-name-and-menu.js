@@ -17,12 +17,6 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
         $timeout(function() { element.find('#renameBox').focus(); });
       };
 
-      scope.captureClick = function(event) {
-        if (event) {
-          event.originalEvent.alreadyHandled = true;
-        }
-      };
-
       scope.applyRenaming = function() {
         scope.renaming = false;
         scope.menu.rename(scope.type, scope.name, scope.newName);
