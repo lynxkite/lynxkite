@@ -145,14 +145,13 @@ case class CSV private (file: HadoopFile,
 
   def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]] = {
     val globLength = file.globLength
-    // Estimate row count by the CSV file size. Underestimating results in more partitions.
-    val rowLength = System.getProperty("biggraph.csv.row.length", "20").toLong
+
     val lines = file.loadTextFile(rc.sparkContext)
     val numRows = lines.count()
     val partitioner = rc.partitionerForNRows(numRows)
     // Only repartition if we need more partitions.
     val numPartitions = partitioner.numPartitions
-    log.info(s"Reading $file ($globLength bytes) into $numPartitions partitions.")
+    log.info(s"Reading $file ($globLength bytes) ($numRows lines) into $numPartitions partitions.")
     val fullRows = lines
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
@@ -163,7 +162,7 @@ case class CSV private (file: HadoopFile,
     } else {
       fullRows
     }
-    keptFields.randomNumbered(numPartitions)
+    keptFields.randomNumbered(partitioner)
   }
 
   val mayHaveNulls = false
