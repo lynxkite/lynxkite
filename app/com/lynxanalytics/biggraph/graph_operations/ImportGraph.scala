@@ -78,8 +78,8 @@ trait RowInput extends ToJson {
 }
 
 object CSV extends FromJson[CSV] {
-  val omitFieldsParameter = NewParameter("omitFields", Set[String]())
-  val allowCorruptLinesParameter = NewParameter("allowCorruptLines", true)
+  private val omitFieldsParameter = NewParameter("omitFields", Set[String]())
+  private val allowCorruptLinesParameter = NewParameter("allowCorruptLines", true)
   def fromJson(j: JsValue): CSV = {
     val header = (j \ "header").as[String]
     val delimiter = (j \ "delimiter").as[String]
@@ -144,13 +144,11 @@ case class CSV private (file: HadoopFile,
   }
 
   def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]] = {
-    val globLength = file.globLength
-
     val lines = file.loadTextFile(rc.sparkContext)
     val numRows = lines.count()
     val partitioner = rc.partitionerForNRows(numRows)
     val numPartitions = partitioner.numPartitions
-    log.info(s"Reading $file ($globLength bytes) ($numRows lines) into $numPartitions partitions.")
+    log.info(s"Reading $file ($numRows lines) into $numPartitions partitions.")
 
     val fullRows = lines
       .filter(_ != header)
@@ -178,7 +176,8 @@ case class CSV private (file: HadoopFile,
         s"Input cannot be parsed: $line (contains ${line.length} fields, " +
           s"should be: ${allFields.length})"
       log.info(msg)
-      assert(allowCorruptLines, msg)
+      assert(allowCorruptLines, msg +
+        " You can set parameter 'Tolerate ill-formed lines' to 'yes' to skip all such lines.")
       return false;
     }
     return true;

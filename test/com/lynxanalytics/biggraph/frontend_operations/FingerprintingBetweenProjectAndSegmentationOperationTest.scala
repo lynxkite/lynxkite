@@ -18,7 +18,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "delimiter" -> ",",
       "omitted" -> "",
       "filter" -> "",
-      "allow-corrupt-lines" -> "yes",
+      "allow-corrupt-lines" -> "no",
       "base-id-attr" -> "name",
       "base-id-field" -> "src",
       "seg-id-attr" -> "name",
@@ -59,7 +59,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
-      "allow-corrupt-lines" -> "yes",
+      "allow-corrupt-lines" -> "no",
       "filter" -> ""))
     run("Aggregate edge attribute to vertices", Map(
       "prefix" -> "",
@@ -76,7 +76,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
-      "allow-corrupt-lines" -> "yes",
+      "allow-corrupt-lines" -> "no",
       "filter" -> ""))
     run("Import project as segmentation", Map(
       "them" -> "other"))

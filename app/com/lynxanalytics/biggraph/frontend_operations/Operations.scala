@@ -270,7 +270,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("omitted", "(optional) Comma separated list of columns to omit"),
       Param("filter", "(optional) Filtering expression"),
       Choice("allow-corrupt-lines", "Tolerate ill-formed lines",
-        options = UIValue.list(List("yes", "no"))))
+        options = UIValue.list(List("no", "yes"))))
 
     def source(params: Map[String, String]) = {
       val files = HadoopFile(params("files"))

@@ -17,8 +17,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object FindModularClusteringByTweaks extends OpFromJson {
-  val maxIterationsParameter = NewParameter("maxIterations", -1)
-  val minIncrementPerIterationParameter = NewParameter("minIncrementPerIteration", 0.001)
+  private val maxIterationsParameter = NewParameter("maxIterations", -1)
+  private val minIncrementPerIterationParameter = NewParameter("minIncrementPerIteration", 0.001)
   class Input extends MagicInputSignature {
     val (vs, edges) = graph
     val weights = edgeAttribute[Double](edges)

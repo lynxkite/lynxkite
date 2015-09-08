@@ -18,7 +18,7 @@ import com.twitter.algebird.HLL
 import com.twitter.algebird.HyperLogLog._
 
 object HyperBallCentrality extends OpFromJson {
-  val algorithmParameter = NewParameter("algorithm", "Harmonic")
+  private val algorithmParameter = NewParameter("algorithm", "Harmonic")
 
   class Input extends MagicInputSignature {
     val (vs, es) = graph
