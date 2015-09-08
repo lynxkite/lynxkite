@@ -11,7 +11,7 @@ class DiscardLoopEdgesOperationTest extends OperationsTestBase {
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
-      "allowCorruptLines" -> "yes",
+      "allow-corrupt-lines" -> "yes",
       "filter" -> ""))
     def colors =
       project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
