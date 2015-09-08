@@ -12,6 +12,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
+      "allowCorruptLines" -> "yes",
       "filter" -> ""))
   }
 
