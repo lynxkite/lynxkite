@@ -60,7 +60,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       "delimiter" -> ",",
       "filter" -> "",
       "omitted" -> "",
-      "allowCorruptLines" -> "yes",
+      "allow-corrupt-lines" -> "yes",
       "id-attr" -> "x"))
     val name = project.vertexAttributes("name").runtimeSafeCast[String]
     val income = project.vertexAttributes("income").runtimeSafeCast[String]
@@ -68,7 +68,6 @@ class ExportImportOperationTest extends OperationsTestBase {
     assert(income.rdd.values.collect.toSeq.sorted == Seq("", "", "1000.0", "2000.0"))
   }
 
-  
   def runImport(allowCorruptLines: Boolean) = {
     val allow =
       if (allowCorruptLines) "yes"
@@ -80,7 +79,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
-      "allowCorruptLines" -> allow,
+      "allow-corrupt-lines" -> allow,
       "filter" -> ""))
 
     project.edgeAttributes("attr").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
