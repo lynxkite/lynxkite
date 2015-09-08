@@ -149,12 +149,13 @@ case class CSV private (file: HadoopFile,
     val lines = file.loadTextFile(rc.sparkContext)
     val numRows = lines.count()
     val partitioner = rc.partitionerForNRows(numRows)
-    // Only repartition if we need more partitions.
     val numPartitions = partitioner.numPartitions
     log.info(s"Reading $file ($globLength bytes) ($numRows lines) into $numPartitions partitions.")
+
     val fullRows = lines
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
+      .filter(checkNumberOfFields(_))
       .filter(jsFilter(_))
     val keptFields = if (omitFields.nonEmpty) {
       val keptIndices = allFields.zipWithIndex.filter(x => !omitFields.contains(x._1)).map(_._2)
@@ -167,12 +168,18 @@ case class CSV private (file: HadoopFile,
 
   val mayHaveNulls = false
 
-  def jsFilter(line: Seq[String]): Boolean = {
-    if (line.length != allFields.length) {
-      log.info(s"Input line cannot be parsed: $line")
-      return false
-    }
+  private def jsFilter(line: Seq[String]): Boolean = {
     return filter.isTrue(allFields.zip(line).toMap)
+  }
+
+  private def checkNumberOfFields(line: Seq[String]): Boolean = {
+    if (line.length != allFields.length) {
+      val msg = s"Input line cannot be parsed: $line"
+      log.info(msg)
+      assert(allowCorruptLines, msg)
+      return false;
+    }
+    return true;
   }
 }
 
