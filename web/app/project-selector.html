@@ -64,13 +64,19 @@
         <item-name-and-menu menu="menu" name="{{directory}}" spaced type="directory"></item-name-and-menu>
       </span>
     </div>
+
     <div ng-repeat="project in data.projects"
       id="project-{{project.name}}"
       class="entry project-entry clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
       <span class="icon glyphicon glyphicon-file pull-left"></span>
       <span class="lead">
         <item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu>
+        <a href="#/project/{{project.name}}" target="_blank" ng-hide="project.error"
+            ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
+          <span class="icon glyphicon glyphicon-new-window"></span>
+        </a>
       </span>
+
       <div ng-if="project.error">
         {{project.error}}
         <i class="pull-right"><a ng-click="reportProjectError(project)">report problem</a></i>
