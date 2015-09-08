@@ -1,9 +1,12 @@
 var mocks = require('../mocks.js');
 describe('We can', function() {
-  // These tests are run in a sequence, building on the previous steps.
-  mocks.addTo(browser);
-  browser.get('/');
   var K = protractor.Key;  // Short alias.
+  mocks.addTo(browser);
+
+  // These tests are run in a sequence, building on the previous steps.
+  it('open LynxKite', function() {
+    browser.get('/');
+  });
 
   function discardDirectory(dir) {
     element(by.css('#directory-' + dir + ' .btn-dropdown')).click();
