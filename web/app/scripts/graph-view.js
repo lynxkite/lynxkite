@@ -254,7 +254,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
     this.crossEdgeGroup = this.addGroup('edges');
     for (i = 0; i < visibleSides.length; ++i) {
-      this.vertexGroups.push(this.addGroup('nodes', clippers[i]));
+      this.vertexGroups.push(this.addGroup('nodes side' + i, clippers[i]));
     }
     this.legend = svg.create('g', {'class': 'legend'});
     this.root.append(this.legend);
