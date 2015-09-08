@@ -79,10 +79,12 @@ trait RowInput extends ToJson {
 
 object CSV extends FromJson[CSV] {
   val omitFieldsParameter = NewParameter("omitFields", Set[String]())
+  val allowCorruptLinesParameter = NewParameter("allowCorruptLines", true)
   def fromJson(j: JsValue): CSV = {
     val header = (j \ "header").as[String]
     val delimiter = (j \ "delimiter").as[String]
     val omitFields = omitFieldsParameter.fromJson(j)
+    val allowCorruptLines = allowCorruptLinesParameter.fromJson(j)
     val fields = getFields(delimiter, header)
     new CSV(
       HadoopFile((j \ "file").as[String], true),
@@ -90,7 +92,8 @@ object CSV extends FromJson[CSV] {
       header,
       fields,
       omitFields,
-      JavaScript((j \ "filter").as[String]))
+      JavaScript((j \ "filter").as[String]),
+      allowCorruptLines)
   }
 
   def getFields(delimiter: String, header: String): Seq[String] = {
@@ -102,7 +105,8 @@ object CSV extends FromJson[CSV] {
             delimiter: String,
             header: String,
             omitFields: Set[String] = Set(),
-            filter: JavaScript = JavaScript("")): CSV = {
+            filter: JavaScript = JavaScript(""),
+            allowCorruptLines: Boolean = true): CSV = {
     val fields = getFields(delimiter, header)
     assert(
       fields.forall(_.nonEmpty),
@@ -117,7 +121,7 @@ object CSV extends FromJson[CSV] {
         val missingColumns = omitFields.filter(!fields.contains(_)).mkString(", ")
         s"Column(s) $missingColumns that you asked to omit are not actually columns."
       })
-    new CSV(file, delimiter, header, fields, omitFields, filter)
+    new CSV(file, delimiter, header, fields, omitFields, filter, allowCorruptLines)
   }
 }
 case class CSV private (file: HadoopFile,
@@ -125,7 +129,8 @@ case class CSV private (file: HadoopFile,
                         header: String,
                         allFields: Seq[String],
                         omitFields: Set[String],
-                        filter: JavaScript) extends RowInput {
+                        filter: JavaScript,
+                        allowCorruptLines: Boolean) extends RowInput {
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   val fields = allFields.filter(field => !omitFields.contains(field))
   override def toJson = {
@@ -134,7 +139,8 @@ case class CSV private (file: HadoopFile,
       "delimiter" -> delimiter,
       "header" -> header,
       "filter" -> filter.expression) ++
-      CSV.omitFieldsParameter.toJson(omitFields)
+      CSV.omitFieldsParameter.toJson(omitFields) ++
+      CSV.allowCorruptLinesParameter.toJson(allowCorruptLines)
   }
 
   def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]] = {
