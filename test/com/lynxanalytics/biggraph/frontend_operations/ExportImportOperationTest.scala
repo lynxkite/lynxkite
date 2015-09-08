@@ -60,7 +60,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       "delimiter" -> ",",
       "filter" -> "",
       "omitted" -> "",
-      "allow-corrupt-lines" -> "yes",
+      "allow-corrupt-lines" -> "no",
       "id-attr" -> "x"))
     val name = project.vertexAttributes("name").runtimeSafeCast[String]
     val income = project.vertexAttributes("income").runtimeSafeCast[String]
