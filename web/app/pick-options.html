@@ -17,9 +17,14 @@
       <span class="glyphicon glyphicon-remove"></span>
     </button>
   </div>
-  <button class="btn btn-default" ng-click="addFilter()">
-    <span class="glyphicon glyphicon-plus"></span>&nbsp;Add Restriction
-  </button>
+  <div class="btn-group pull-left">
+    <button class="btn btn-default" ng-click="addFilter()">
+      <span class="glyphicon glyphicon-plus"></span>&nbsp;Add Restriction
+    </button>
+    <button class="btn btn-default" ng-click="copyRestrictionsFromFilters()">
+      Restrictions From Filters
+    </button>
+  </div>
   <div class="btn-group pull-right">
     <button class="btn btn-default" ng-click="shown = false">
       Close
