@@ -11,6 +11,7 @@ fi
 ./dev_stage.sh
 
 # Start backend.
+KITE_SITE_CONFIG="conf/kiterc_template" \
 KITE_SITE_CONFIG_OVERRIDES=$(tools/clean_kite_overrides.sh kite_e2e_test/) \
   stage/bin/biggraph interactive &
 KITE_PID=$!
