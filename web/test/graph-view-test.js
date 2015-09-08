@@ -44,6 +44,8 @@ describe('the graph view', function() {
         rightSideButton.click();
         var positions = element.all(by.css('.nodes.side0 .vertex.sampled circle')).map(getPos);
         expect(positions.then(getLength)).toBe(6);  // The demo on the left after the right side was opened.
+        var rightPositions = element.all(by.css('.nodes.side1 .vertex.sampled circle')).map(getPos);
+        expect(rightPositions.then(getLength)).toBeGreaterThan(0);  // There was at least something opened on the right side.
         positions.then(function(positionsAfter) {
           normalizePositionsX(positionsBefore); roundCoordinates(positionsBefore);
           normalizePositionsX(positionsAfter); roundCoordinates(positionsAfter);
