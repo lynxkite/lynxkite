@@ -35,7 +35,8 @@ describe('the graph view', function() {
       }
     }
 
-    it('keeps the layout for the left side (apart from horizontal shifting) when opening the right side', function() {
+    it('keeps the layout for the left side (apart from horizontal shifting) when opening the right side',
+        function() {
       browser.get('/#/project/Project_Strawberry?q=%7B%22left%22:%7B%22projectName%22:%22Project_Strawberry%22,%22filters%22:%7B%22edge%22:%7B%7D,%22vertex%22:%7B%7D%7D,%22axisOptions%22:%7B%22edge%22:%7B%7D,%22vertex%22:%7B%7D%7D,%22graphMode%22:%22sampled%22,%22bucketCount%22:4,%22sampleRadius%22:1,%22animate%22:%7B%22enabled%22:false,%22labelAttraction%22:0%7D,%22attributeTitles%22:%7B%7D,%22centers%22:%5B%223333333%22,%224444444%22%5D%7D,%22right%22:%7B%22filters%22:%7B%22edge%22:%7B%7D,%22vertex%22:%7B%7D%7D,%22axisOptions%22:%7B%22edge%22:%7B%7D,%22vertex%22:%7B%7D%7D,%22graphMode%22:null,%22bucketCount%22:4,%22sampleRadius%22:1,%22animate%22:%7B%22enabled%22:false,%22labelAttraction%22:0%7D,%22attributeTitles%22:%7B%7D,%22centers%22:%5B%223333333%22,%224444444%22%5D,%22projectName%22:%22Project_Melon%22%7D%7D');
       var rightSideButton = sampledViewButtons.last();
       var positions = element.all(by.css('.vertex.sampled circle')).map(getPos);
@@ -43,9 +44,11 @@ describe('the graph view', function() {
       positions.then(function(positionsBefore) {
         rightSideButton.click();
         var positions = element.all(by.css('.nodes.side0 .vertex.sampled circle')).map(getPos);
-        expect(positions.then(getLength)).toBe(6);  // The demo on the left after the right side was opened.
+        // The demo on the left after the right side was opened:
+        expect(positions.then(getLength)).toBe(6);
         var rightPositions = element.all(by.css('.nodes.side1 .vertex.sampled circle')).map(getPos);
-        expect(rightPositions.then(getLength)).toBeGreaterThan(0);  // There was at least something opened on the right side.
+        // Sanity check: there was at least something opened on the right side:
+        expect(rightPositions.then(getLength)).toBeGreaterThan(0);
         positions.then(function(positionsAfter) {
           normalizePositionsX(positionsBefore); roundCoordinates(positionsBefore);
           normalizePositionsX(positionsAfter); roundCoordinates(positionsAfter);
