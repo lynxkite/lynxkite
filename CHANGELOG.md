@@ -6,6 +6,7 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Dispersion computation made significantly faster.
  - Projects can be organized into folders now.
 
 ### 1.5.1
