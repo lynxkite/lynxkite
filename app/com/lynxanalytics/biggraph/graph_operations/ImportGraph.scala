@@ -174,7 +174,9 @@ case class CSV private (file: HadoopFile,
 
   private def checkNumberOfFields(line: Seq[String]): Boolean = {
     if (line.length != allFields.length) {
-      val msg = s"Input line cannot be parsed: $line"
+      val msg =
+        s"Input cannot be parsed: $line (contains ${line.length} fields, " +
+          s"should be: ${allFields.length})"
       log.info(msg)
       assert(allowCorruptLines, msg)
       return false;
