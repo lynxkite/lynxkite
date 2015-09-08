@@ -663,9 +663,21 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   GraphView.prototype.sampledVertexMouseBindings = function(vertices, vertex, vertexGroup) {
     var scope = this.scope;
     var svgElement = this.svg;
+    var offsetter = vertex.offsetter;
+    function modelX(pageX) {
+      return (pageX - svgElement.offset().left - offsetter.xOff) / offsetter.zoom;
+    }
+    function modelY(pageY) {
+      return (pageY - svgElement.offset().top - offsetter.yOff) / offsetter.zoom;
+    }
     vertex.dom.on('mousedown touchstart', function(evStart) {
       evStart.stopPropagation();
+      translateTouchToMouseEvent(evStart);
       vertex.hold();
+      vertex.xDragStart = modelX(evStart.pageX);
+      vertex.yDragStart = modelY(evStart.pageY);
+      vertex.xBeforeDrag = vertex.x;
+      vertex.yBeforeDrag = vertex.y;
       vertex.dragged = false;
       vertexGroup.append(vertex.dom);  // Bring to top.
       angular.element(window).on('mouseup touchend', function() {
@@ -675,7 +687,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         }
         vertex.release();
         if (vertex.dragged) {  // It was a drag.
-          vertex.dragged = false;
           vertices.animate();
         } else {  // It was a click.
           scope.$apply(function() {
@@ -769,13 +780,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       angular.element(window).on('mousemove touchmove', function(ev) {
         if (vertex.positioned) { return; }
         translateTouchToMouseEvent(ev);
-        var offsetter = vertex.offsetter;
-        var x = (ev.pageX - svgElement.offset().left - offsetter.xOff) / offsetter.zoom;
-        var y = (ev.pageY - svgElement.offset().top - offsetter.yOff) / offsetter.zoom;
+        var ex = modelX(ev.pageX);
+        var ey = modelY(ev.pageY);
+        vertex.dragged = ex !== vertex.xDragStart || ey !== vertex.yDragStart;
+        var x = vertex.xBeforeDrag + ex - vertex.xDragStart;
+        var y = vertex.yBeforeDrag + ey - vertex.yDragStart;
         vertex.moveTo(x, y);
         vertex.forceOX = x;
         vertex.forceOY = y;
-        vertex.dragged = true;
         vertices.animate();
       });
     });
