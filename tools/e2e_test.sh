@@ -12,9 +12,11 @@ fi
 
 # Create config.
 TMP=$(mktemp -d)
+PORT=$[ 9100 + RANDOM % 100 ]
 cat > "$TMP/overrides"  <<EOF
 export KITE_META_DIR="$TMP/meta"
 export KITE_DATA_DIR="file:$TMP/data"
+export KITE_HTTP_PORT=$PORT
 EOF
 
 # Start backend.
@@ -27,7 +29,7 @@ cd web
 # Make sure the webdriver is installed.
 node node_modules/protractor/bin/webdriver-manager update
 # Run test against backend.
-grunt test_e2e || true # Kill backend even if test fails.
+grunt test_e2e --port=$PORT || true # Kill backend even if test fails.
 
 # Kill backend.
 kill $!

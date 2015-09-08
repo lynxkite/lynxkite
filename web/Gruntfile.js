@@ -428,6 +428,9 @@ module.exports = function (grunt) {
       onRealBackend: {
         options: {
           configFile: 'test/protractor-on-real-backend.conf.js',
+          args: {
+            baseUrl: 'http://localhost:' + getPort() + '/',
+          },
         },
       },
     },
@@ -466,6 +469,9 @@ module.exports = function (grunt) {
   grunt.registerTask('test_e2e', [
     'protractor:onRealBackend'
   ]);
+  function getPort() {
+    return grunt.option('port') || 9000;
+  }
 
   grunt.registerTask('build', [
     'clean:dist',
