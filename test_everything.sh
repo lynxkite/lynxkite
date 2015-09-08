@@ -3,7 +3,7 @@
 cd `dirname $0`
 
 mkdir logs || true
-sbt test
+sbt -Dsbt.log.noformat=true test
 
 cd web
 bower install --silent --config.interactive=false
