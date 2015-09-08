@@ -21,8 +21,9 @@ describe('a histogram', function() {
     this.button.click();  // Open.
     expect(this.histogram.isDisplayed()).toBe(true);
     var total = this.attr.element(by.css('.histogram-total'));
+    var td = this.histogram.all(by.css('td')).first();
     expect(total.isDisplayed()).toBe(false);
-    browser.actions().mouseMove(this.histogram).perform();
+    browser.actions().mouseMove(td).perform();
     expect(total.isDisplayed()).toBe(true);
     expect(total.getText()).toBe('total: 3,330');
   });
