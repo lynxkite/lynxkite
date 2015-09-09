@@ -102,6 +102,9 @@ input.save-as {
   background-size: 40px 40px;
   animation: progress-bar-stripes 2s linear infinite;
 }
+#sample-center.loading * {
+  visibility: hidden;
+}
 
 .split-screen > .ui-splitbar {
   background: black;
