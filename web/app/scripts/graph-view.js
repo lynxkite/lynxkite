@@ -1581,11 +1581,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   }
   Edge.prototype.setVisible = function(visible) {
     if (visible) {
-      this.first.attr({'visibility': 'inherit'});
-      this.second.attr({'visibility': 'inherit'});
+      svg.removeClass(this.dom, 'invisible-edge');
     } else {
-      this.first.attr({'visibility': 'hidden'});
-      this.second.attr({'visibility': 'hidden'});
+      svg.addClass(this.dom, 'invisible-edge');
     }
   };
   Edge.prototype.toFront = function() {
