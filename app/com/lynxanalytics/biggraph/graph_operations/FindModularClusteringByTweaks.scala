@@ -17,6 +17,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object FindModularClusteringByTweaks extends OpFromJson {
+  private val maxIterationsParameter = NewParameter("maxIterations", -1)
+  private val minIncrementPerIterationParameter = NewParameter("minIncrementPerIteration", 0.001)
   class Input extends MagicInputSignature {
     val (vs, edges) = graph
     val weights = edgeAttribute[Double](edges)
@@ -29,8 +31,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
   }
   def fromJson(j: JsValue) =
     FindModularClusteringByTweaks(
-      (j \ "maxIterations").asOpt[Int].getOrElse(-1),
-      (j \ "minIncrementPerIteration").asOpt[Double].getOrElse(0.001))
+      maxIterationsParameter.fromJson(j),
+      minIncrementPerIterationParameter.fromJson(j))
 
   case class ClusterData(
       // The sum of degrees of all nodes in this cluster. Note, if an edge goes within the cluster
@@ -520,12 +522,8 @@ case class FindModularClusteringByTweaks(
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   override def toJson =
-    if ((maxIterations == -1) && (minIncrementPerIteration == 0.001))
-      // Legacy values, we return empty json for backward compatibility.
-      Json.obj()
-    else
-      Json.obj(
-        "maxIterations" -> maxIterations, "minIncrementPerIteration" -> minIncrementPerIteration)
+    maxIterationsParameter.toJson(maxIterations) ++
+      minIncrementPerIterationParameter.toJson(minIncrementPerIteration)
 
   def execute(inputDatas: DataSet,
               o: Output,
