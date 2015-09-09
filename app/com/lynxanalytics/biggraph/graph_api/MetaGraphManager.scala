@@ -219,12 +219,11 @@ class MetaGraphManager(val repositoryPath: String) {
         val inst = deserializeOperation(j)
         // Verify outputs.
         val expected = (j \ "outputs").as[Map[String, String]]
-        val found = inst.outputs.toJson.as[Map[String, String]]
-        for ((k, v) <- expected) {
-          assert(v == expected.getOrElse(k, v),
-            s"Output mismatch on $k in $inst." +
-              s" Expected: $v, found: ${expected(k)}")
-        }
+        val found = inst.outputs.asStringMap
+        assert(
+          expected == found,
+          s"Output mismatch on $inst. JSON file says: $expected" +
+            s" Recreated operation reports: $found")
         internalApply(inst)
       } catch {
         case e: Throwable => throw new Exception(s"Failed to load $file.", e)

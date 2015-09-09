@@ -4,12 +4,12 @@
 <span ng-if="side.state.graphMode === 'bucketed' && attr.canBucket" class="de-emph">
   Graph on
   <div class="btn-group">
-    <button class="btn btn-default"
+    <button class="btn btn-default" id="axis-x-{{attr.title}}"
         ng-class="{ active: side.state.attributeTitles.x === attr.title }"
         ng-click="side.toggleAttributeTitle('x', attr.title)">
       X
     </button>
-    <button class="btn btn-default"
+    <button class="btn btn-default" id="axis-y-{{attr.title}}"
         ng-class="{ active: side.state.attributeTitles.y === attr.title }"
         ng-click="side.toggleAttributeTitle('y', attr.title)">
       Y

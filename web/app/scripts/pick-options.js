@@ -8,6 +8,18 @@ angular.module('biggraph').directive('pickOptions', function() {
     link: function(scope) {
       scope.reset = function() {
         scope.count = '1';
+        scope.filters = [];
+        var lastCentersRequest = scope.side.state.lastCentersRequest;
+        if (lastCentersRequest) {
+          if (lastCentersRequest.filters) {
+            scope.filters = lastCentersRequest.filters;
+          }
+          if (lastCentersRequest.count) {
+            scope.count = lastCentersRequest.count.toString();
+          }
+        }
+      };
+      scope.copyRestrictionsFromFilters = function() {
         scope.filters = scope.side.nonEmptyVertexFilterNames();
       };
       scope.requestNewCenters = function() {
@@ -24,7 +36,7 @@ angular.module('biggraph').directive('pickOptions', function() {
       scope.removeFilter = function(idx) {
         scope.filters.splice(idx, 1);
       };
-        
+
       scope.$watch('shown', function(shown) {
         if (shown) {
           scope.reset();

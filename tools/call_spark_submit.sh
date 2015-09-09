@@ -56,6 +56,7 @@ addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECR
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
 addJPropIfNonEmpty pidfile.path "${KITE_PID_FILE}"
 addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
+addJPropIfNonEmpty jdk.tls.ephemeralDHKeySize 2048
 
 mode=${residual_args[0]}
 

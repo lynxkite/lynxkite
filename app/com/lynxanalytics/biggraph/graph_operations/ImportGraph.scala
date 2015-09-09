@@ -78,10 +78,13 @@ trait RowInput extends ToJson {
 }
 
 object CSV extends FromJson[CSV] {
+  private val omitFieldsParameter = NewParameter("omitFields", Set[String]())
+  private val allowCorruptLinesParameter = NewParameter("allowCorruptLines", true)
   def fromJson(j: JsValue): CSV = {
     val header = (j \ "header").as[String]
     val delimiter = (j \ "delimiter").as[String]
-    val omitFields = (j \ "omitFields").asOpt[Set[String]].getOrElse(Set[String]())
+    val omitFields = omitFieldsParameter.fromJson(j)
+    val allowCorruptLines = allowCorruptLinesParameter.fromJson(j)
     val fields = getFields(delimiter, header)
     new CSV(
       HadoopFile((j \ "file").as[String], true),
@@ -89,7 +92,8 @@ object CSV extends FromJson[CSV] {
       header,
       fields,
       omitFields,
-      JavaScript((j \ "filter").as[String]))
+      JavaScript((j \ "filter").as[String]),
+      allowCorruptLines)
   }
 
   def getFields(delimiter: String, header: String): Seq[String] = {
@@ -101,7 +105,8 @@ object CSV extends FromJson[CSV] {
             delimiter: String,
             header: String,
             omitFields: Set[String] = Set(),
-            filter: JavaScript = JavaScript("")): CSV = {
+            filter: JavaScript = JavaScript(""),
+            allowCorruptLines: Boolean = true): CSV = {
     val fields = getFields(delimiter, header)
     assert(
       fields.forall(_.nonEmpty),
@@ -116,7 +121,7 @@ object CSV extends FromJson[CSV] {
         val missingColumns = omitFields.filter(!fields.contains(_)).mkString(", ")
         s"Column(s) $missingColumns that you asked to omit are not actually columns."
       })
-    new CSV(file, delimiter, header, fields, omitFields, filter)
+    new CSV(file, delimiter, header, fields, omitFields, filter, allowCorruptLines)
   }
 }
 case class CSV private (file: HadoopFile,
@@ -124,35 +129,31 @@ case class CSV private (file: HadoopFile,
                         header: String,
                         allFields: Seq[String],
                         omitFields: Set[String],
-                        filter: JavaScript) extends RowInput {
+                        filter: JavaScript,
+                        allowCorruptLines: Boolean) extends RowInput {
   val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
   val fields = allFields.filter(field => !omitFields.contains(field))
   override def toJson = {
-    val withoutOmits = Json.obj(
+    Json.obj(
       "file" -> file.symbolicName,
       "delimiter" -> delimiter,
       "header" -> header,
-      "filter" -> filter.expression)
-    if (omitFields.isEmpty) {
-      withoutOmits
-    } else {
-      withoutOmits + ("omitFields" -> Json.toJson(omitFields))
-    }
+      "filter" -> filter.expression) ++
+      CSV.omitFieldsParameter.toJson(omitFields) ++
+      CSV.allowCorruptLinesParameter.toJson(allowCorruptLines)
   }
 
   def lines(rc: RuntimeContext): SortedRDD[ID, Seq[String]] = {
-    val globLength = file.globLength
-    // Estimate row count by the CSV file size. Underestimating results in more partitions.
-    val rowLength = System.getProperty("biggraph.csv.row.length", "20").toLong
     val lines = file.loadTextFile(rc.sparkContext)
     val numRows = lines.count()
     val partitioner = rc.partitionerForNRows(numRows)
-    // Only repartition if we need more partitions.
     val numPartitions = partitioner.numPartitions
-    log.info(s"Reading $file ($globLength bytes) into $numPartitions partitions.")
+    log.info(s"Reading $file ($numRows lines) into $numPartitions partitions.")
+
     val fullRows = lines
       .filter(_ != header)
       .map(ImportUtil.split(_, unescapedDelimiter))
+      .filter(checkNumberOfFields(_))
       .filter(jsFilter(_))
     val keptFields = if (omitFields.nonEmpty) {
       val keptIndices = allFields.zipWithIndex.filter(x => !omitFields.contains(x._1)).map(_._2)
@@ -160,17 +161,26 @@ case class CSV private (file: HadoopFile,
     } else {
       fullRows
     }
-    keptFields.randomNumbered(numPartitions)
+    keptFields.randomNumbered(partitioner)
   }
 
   val mayHaveNulls = false
 
-  def jsFilter(line: Seq[String]): Boolean = {
-    if (line.length != allFields.length) {
-      log.info(s"Input line cannot be parsed: $line")
-      return false
-    }
+  private def jsFilter(line: Seq[String]): Boolean = {
     return filter.isTrue(allFields.zip(line).toMap)
+  }
+
+  private def checkNumberOfFields(line: Seq[String]): Boolean = {
+    if (line.length != allFields.length) {
+      val msg =
+        s"Input cannot be parsed: $line (contains ${line.length} fields, " +
+          s"should be: ${allFields.length})"
+      log.info(msg)
+      assert(allowCorruptLines, msg +
+        " You can set parameter 'Tolerate ill-formed lines' to 'yes' to skip all such lines.")
+      return false;
+    }
+    return true;
   }
 }
 

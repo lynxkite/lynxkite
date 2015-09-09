@@ -1,4 +1,4 @@
-<div class="col-sm-6 side">
+<div class="col-sm-6 side" id="side-{{side.direction}}">
 
   <div ng-if="side.state.projectName === undefined">
     <button ng-hide="showProjectSelector" style="width: 100%;"
@@ -18,7 +18,7 @@
       {{side.state.projectName}}
 
       <div class="btn-group pull-right">
-        <label class="btn btn-default" ng-click="side.close()"
+        <label class="btn btn-default" ng-click="side.close()" id="close-project"
           tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-remove"></i>
         </label>
@@ -82,19 +82,20 @@
           ng-show="util.globals.hasAuth">
           <i class="glyphicon glyphicon-cog"></i>
         </label>
-        <label class="btn btn-default" ng-click="side.close()"
+        <label class="btn btn-default" ng-click="side.close()" id="close-project"
           tooltip="Close&nbsp;project" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-remove"></i>
         </label>
       </div>
 
       <div class="btn-group pull-right" ng-if="side.project.vertexSet">
-        <label class="btn btn-default" ng-model="side.state.graphMode" btn-radio="'bucketed'"
+        <label class="btn btn-default" id="bucketed-mode-button"
+          ng-model="side.state.graphMode" btn-radio="'bucketed'"
           uncheckable tooltip="Bucketed&nbsp;graph" tooltip-append-to-body="true"
           tooltip-placement="bottom">
           <i class="glyphicon glyphicon-th"></i>
         </label>
-        <label class="btn btn-default"
+        <label class="btn btn-default" id="sampled-mode-button"
           ng-model="side.state.graphMode" btn-radio="'sampled'" uncheckable
           tooltip="Concrete&nbsp;vertices" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-eye-open"></i>
@@ -206,7 +207,7 @@
               <td>
                 <div id="sample-center"
                      ng-class="{ loading: side.centerRequest && !side.centerRequest.$resolved }">
-                  <input class="form-control" ng-model="side.state.centers" ng-model-options="{ updateOn: 'change blur' }" ng-list>
+                  <input class="form-control" id="centers" ng-model="side.state.centers" ng-model-options="{ updateOn: 'change blur' }" ng-list>
                 </div>
               </td>
             </tr>
@@ -266,7 +267,7 @@
       </div>
 
       <!-- Summary. -->
-      <li class="list-group-item de-emph">
+      <li class="list-group-item de-emph" id="side-summary">
         <span ng-if="side.scalars['!belongsToEdges'] === undefined" class="lead">
           <!-- Project summary -->
           <value class="emph" ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']"></value>

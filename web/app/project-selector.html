@@ -1,6 +1,6 @@
 <div class="row">
   <div class="col-xs-12 project-list">
-    <div class="entry" ng-click="newProject.expanded = true">
+    <div class="entry" id="new-project" ng-click="newProject.expanded = true">
       <span class="icon glyphicon glyphicon-plus"></span>
       <span class="lead" ng-hide="newProject.expanded">New project</span>
       <form ng-show="newProject.expanded" class="form-inline" role="form">
@@ -25,7 +25,7 @@
       </form>
     </div>
 
-    <div class="entry" ng-click="newDirectory.expanded = true">
+    <div class="entry" id="new-directory" ng-click="newDirectory.expanded = true">
       <span class="icon glyphicon glyphicon-plus"></span>
       <span class="lead" ng-hide="newDirectory.expanded">New folder</span>
       <form ng-show="newDirectory.expanded" class="form-inline" role="form">
@@ -37,7 +37,7 @@
       </form>
     </div>
 
-    <div class="path" ng-show="path">
+    <div id="current-directory" class="path" ng-show="path">
       <div class="description">Current folder:</div>
       <span class="lead">
         <!-- Make sure there is no whitespace around the slash, so it can still be copied. -->
@@ -57,18 +57,26 @@
     </p>
 
     <div ng-repeat="directory in data.directories"
+      id="directory-{{directory}}"
       class="entry" href ng-click="enterDirectory($event, directory)">
       <span class="icon glyphicon glyphicon-folder-open"></span>
       <span class="lead">
         <item-name-and-menu menu="menu" name="{{directory}}" spaced type="directory"></item-name-and-menu>
       </span>
     </div>
+
     <div ng-repeat="project in data.projects"
+      id="project-{{project.name}}"
       class="entry project-entry clearfix" href ng-click="projectClick($event, project)" ng-class="{ error: project.error }">
       <span class="icon glyphicon glyphicon-file pull-left"></span>
       <span class="lead">
         <item-name-and-menu menu="menu" name="{{project.name}}" spaced type="project"></item-name-and-menu>
+        <a href="#/project/{{project.name}}" target="_blank" ng-hide="project.error"
+            ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
+          <span class="icon glyphicon glyphicon-new-window"></span>
+        </a>
       </span>
+
       <div ng-if="project.error">
         {{project.error}}
         <i class="pull-right"><a ng-click="reportProjectError(project)">report problem</a></i>
