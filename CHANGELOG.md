@@ -7,7 +7,7 @@ Please add changes to "master". When releasing a version add a new header for th
 ### master
 
  - Projects can be organized into folders now.
- - Logarithmic histograms automatically exclude non-positive values.
+ - Logarithmic histograms support non-positive values.
 
 ### 1.5.1
 
