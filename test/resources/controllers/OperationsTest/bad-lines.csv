@@ -1,0 +1,5 @@
+src,dst,attr
+0,bad
+0,0,good
+1,2,good
+2,0,good

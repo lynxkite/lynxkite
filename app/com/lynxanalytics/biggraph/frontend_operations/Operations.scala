@@ -268,17 +268,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("omitted", "(optional) Comma separated list of columns to omit"),
-      Param("filter", "(optional) Filtering expression"))
+      Param("filter", "(optional) Filtering expression"),
+      Choice("allow-corrupt-lines", "Tolerate ill-formed lines",
+        options = UIValue.list(List("no", "yes"))))
+
     def source(params: Map[String, String]) = {
       val files = HadoopFile(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
+
+      val allowCorruptLines = params("allow-corrupt-lines") == "yes"
+
       graph_operations.CSV(
         files,
         params("delimiter"),
         header,
         params("omitted").split(",").map(_.trim).filter(_.nonEmpty).toSet,
-        JavaScript(params("filter")))
+        JavaScript(params("filter")),
+        allowCorruptLines)
     }
   }
 
@@ -2029,7 +2036,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         FEStatus.assert(vertexAttributes.size > 0, "No vertex attributes") &&
         FEStatus.assert(parent.vertexSet != null, s"No vertices on $parent") &&
         FEStatus.assert(seg.belongsTo.properties.isFunction,
-          s"Vertices of $parent are not guaranteed to have only one edge to this segmentation")
+          s"Vertices in base project are not guaranteed to be contained in only one segment")
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- project.vertexAttributes.toMap) {
@@ -2049,7 +2056,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         hasVertexSet &&
         FEStatus.assert(parent.vertexAttributes.size > 0, "No vertex attributes on $parent") &&
         FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
-          s"Vertices of this segmentation are not guaranteed to have only one edge from $parent")
+          "Segments are not guaranteed to contain only one vertex")
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- parent.vertexAttributes.toMap) {

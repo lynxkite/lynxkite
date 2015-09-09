@@ -32,27 +32,38 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
         util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
         util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
-        var timer;
-        var eventName = 'resize.graph-view-' + scope.$id;
-        var window = angular.element($window);
-        window.bind(eventName, function() {
-          $timeout.cancel(timer);
-          timer = $timeout(scope.updateGraph, 100);
-        });
-        scope.$on('$destroy', function() {
-          $timeout.cancel(timer);
-          window.unbind(eventName);
-        });
+        handleResizeEvents(scope);
       },
     };
 
-  function Offsetter(xOff, yOff, zoom, thickness, menu) {
+  function handleResizeEvents(scope) {
+    var timer;
+    function update() {
+      $timeout.cancel(timer);
+      timer = $timeout(scope.updateGraph, 100);
+    }
+
+    var eventName = 'resize.graph-view-' + scope.$id;
+    var window = angular.element($window);
+    window.bind(eventName, update);
+    scope.$on('ui.layout.toggle', update);
+    scope.$on('ui.layout.resize', update);
+    scope.$on('$destroy', function() {
+      $timeout.cancel(timer);
+      window.unbind(eventName);
+    });
+  }
+
+  function Offsetter(xOff, yOff, zoom, thickness, menu, xMin, xMax, side) {
     this.xOff = xOff;
     this.yOff = yOff;
     this.zoom = zoom;  // Zoom for positions.
     this.thickness = thickness;  // Zoom for radius/width.
     this.menu = menu;
     this.elements = [];
+    this.xMin = xMin;
+    this.xMax = xMax;
+    this.side = side;
   }
   Offsetter.prototype.rule = function(element) {
     this.elements.push(element);
@@ -91,7 +102,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   };
   Offsetter.prototype.inherit = function() {
-    var offsetter = new Offsetter(this.xOff, this.yOff, this.zoom, this.thickness, this.menu);
+    var offsetter = new Offsetter(
+        this.xOff, this.yOff, this.zoom, this.thickness, this.menu,
+        this.xMin, this.xMax, this.side);
     offsetter.inherited = true;
     return offsetter;
   };
@@ -246,7 +259,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
     this.crossEdgeGroup = this.addGroup('edges');
     for (i = 0; i < visibleSides.length; ++i) {
-      this.vertexGroups.push(this.addGroup('nodes', clippers[i]));
+      this.vertexGroups.push(this.addGroup('nodes side' + i, clippers[i]));
     }
     this.legend = svg.create('g', {'class': 'legend'});
     this.root.append(this.legend);
@@ -266,8 +279,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           var offsetter;
           if (oldVertices[i] && oldVertices[i].mode === dataVs.mode) {
             offsetter = oldVertices[i].offsetter.inherit();
+            if (oldVertices[i].halfColumnWidth !== halfColumnWidth) {
+              offsetter.xOff = xOff;
+            }
           } else {
-            offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu);
+            offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu, xMin, xMax, i);
           }
           if (dataVs.mode === 'sampled') {
             vs = this.addSampledVertices(dataVs, offsetter, sides[i], this.vertexGroups[vsi]);
@@ -1563,11 +1579,24 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     src.addOpaqueListener(opaqueListener);
     dst.addOpaqueListener(opaqueListener);
   }
+  Edge.prototype.setVisible = function(visible) {
+    if (visible) {
+      svg.removeClass(this.dom, 'invisible-edge');
+    } else {
+      svg.addClass(this.dom, 'invisible-edge');
+    }
+  };
   Edge.prototype.toFront = function() {
     this.dom.parent().append(this.dom);
   };
   Edge.prototype.reposition = function() {
+    function isInside(vertex) {
+      return vertex.screenX() >= vertex.offsetter.xMin &&
+          vertex.screenX() <= vertex.offsetter.xMax;
+    }
     var src = this.src, dst = this.dst;
+    this.setVisible(
+        src.offsetter.side === dst.offsetter.side || (isInside(src) && isInside(dst)));
     var avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
     var arrows = svg.arrows(src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
     this.first[0].setAttribute('d', arrows[0]);

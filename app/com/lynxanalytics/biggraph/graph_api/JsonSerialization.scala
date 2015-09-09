@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import play.api.libs.json
+import play.api.libs.json.{ Writes, Reads }
 
 // TypedJson is a JSON object with a string "class" and an object "data" field:
 //   { "class": "my.little.ClassName", "data": { ... } }
@@ -63,3 +64,25 @@ trait FromJson[+T] {
 
 // Operation companion objects should extend OpFromJson.
 trait OpFromJson extends FromJson[TypedMetaGraphOp.Type]
+
+// Class to support json reads and writes for newly introduced
+// parameters. In these cases, we want to preserve compatibility,
+// so we don't serialize the default value,
+// and the lack of the relevant field is interpreted as the
+// default value at deserialization. As a result, deserialization
+// will work for legacy data (the default value will be used), as well
+// as for new data.
+case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
+
+  def toJson(valueToSave: T): json.JsObject = {
+    if (defaultValue == valueToSave) {
+      json.Json.obj()
+    } else {
+      json.Json.obj(paramName -> valueToSave)
+    }
+  }
+
+  def fromJson(j: json.JsValue): T = {
+    (j \ paramName).asOpt[T].getOrElse(defaultValue)
+  }
+}

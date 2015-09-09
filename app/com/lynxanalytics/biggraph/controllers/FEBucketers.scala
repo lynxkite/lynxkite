@@ -28,15 +28,17 @@ object FEBucketers {
       else StringBucketer(topVals, false))
         .asInstanceOf[Bucketer[T]]
     } else if (typeOf[T] =:= typeOf[Double]) {
-      val op = ComputeMinMaxDouble()
-      val res = op(op.attribute, attr.runtimeSafeCast[Double]).result
-      val min = res.min.value
-      val max = res.max.value
-      val actualNumBuckets = if (min == max) 1 else numBuckets
+      val stats = {
+        val op = ComputeMinMaxMinPositiveDouble()
+        op(op.attribute, attr.runtimeSafeCast[Double]).result
+      }
+      val min = stats.min.value.getOrElse(0.0)
+      val max = stats.max.value.getOrElse(0.0)
+      val minPositive = stats.minPositive.value
       if (axisOptions.logarithmic)
-        DoubleLogBucketer(min, max, actualNumBuckets).asInstanceOf[Bucketer[T]]
+        DoubleLogBucketer(min, max, minPositive, numBuckets).asInstanceOf[Bucketer[T]]
       else
-        DoubleLinearBucketer(min, max, actualNumBuckets).asInstanceOf[Bucketer[T]]
+        DoubleLinearBucketer(min, max, numBuckets).asInstanceOf[Bucketer[T]]
     } else ???
 
     BucketedAttribute(attr, bucketer)

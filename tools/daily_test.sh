@@ -1,35 +1,11 @@
-#!/bin/bash
-
-set -ue
-
-TESTS_NAME_PREFIX="kite_daily_tests/"
+#!/bin/bash -ue
 
 DIR=$(dirname $0)
-
-pushd $DIR/.. > /dev/null
-KITE_BASE=`pwd`
-popd > /dev/null
-
-if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
+cd $DIR/..
+if [ ! -f "bin/biggraph" ]; then
   echo "You must run this script from inside a stage, not from the source tree!"
   exit 1
 fi
 
-RANDOM_SUFFIX=$(python -c \
-  'import random, string; print "".join(random.choice(string.letters) for i in range(6))')
-TODAY=`date "+%Y%m%d"`
-
-TEST_NAME="${TESTS_NAME_PREFIX}${TODAY}_${RANDOM_SUFFIX}"
-
-echo "Running kite daily test: ${TEST_NAME}"
-
-# Prepare the overrides file.
-OVERRIDES_FILE="/tmp/$(basename $TEST_NAME).overrides"
-
-cat > ${OVERRIDES_FILE} <<EOF
-export KITE_META_DIR=\${KITE_META_DIR}/${TEST_NAME}
-export KITE_DATA_DIR=\${KITE_DATA_DIR}/${TEST_NAME}
-EOF
-
-KITE_SITE_CONFIG_OVERRIDES=${OVERRIDES_FILE} \
-  ${KITE_BASE}/bin/biggraph batch ${KITE_BASE}/kitescripts/dailytest.groovy
+KITE_SITE_CONFIG_OVERRIDES=$(tools/clean_kite_overrides.sh kite_daily_test/) \
+  bin/biggraph batch `pwd`/kitescripts/dailytest.groovy

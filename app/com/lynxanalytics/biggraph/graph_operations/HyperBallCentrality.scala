@@ -18,6 +18,8 @@ import com.twitter.algebird.HLL
 import com.twitter.algebird.HyperLogLog._
 
 object HyperBallCentrality extends OpFromJson {
+  private val algorithmParameter = NewParameter("algorithm", "Harmonic")
+
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
@@ -27,7 +29,7 @@ object HyperBallCentrality extends OpFromJson {
   }
   def fromJson(j: JsValue) = HyperBallCentrality(
     (j \ "maxDiameter").as[Int],
-    (j \ "algorithm").asOpt[String].getOrElse("Harmonic"))
+    algorithmParameter.fromJson(j))
 }
 import HyperBallCentrality._
 case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
@@ -36,10 +38,8 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String)
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("maxDiameter" -> maxDiameter) ++ (algorithm match {
-    case "Harmonic" => Json.obj() // Compatibility.
-    case _ => Json.obj("algorithm" -> algorithm)
-  })
+  override def toJson = Json.obj("maxDiameter" -> maxDiameter) ++
+    algorithmParameter.toJson(algorithm)
 
   def execute(inputDatas: DataSet,
               o: Output,

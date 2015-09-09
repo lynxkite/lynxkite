@@ -548,11 +548,13 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
     "Cross type collision %s %s %s".format(
       vertexSets, edgeBundles, attributes))
 
+  def asStringMap: Map[String, String] =
+    all.toSeq.sortBy(_._1.name).map {
+      case (name, entity) => name.name -> entity.gUID.toString
+    }.toMap
   override def toJson = {
     import play.api.libs.json.{ JsObject, JsString }
-    new JsObject(all.toSeq.sortBy(_._1.name).map {
-      case (name, entity) => name.name -> JsString(entity.gUID.toString)
-    })
+    new JsObject(asStringMap.mapValues(JsString(_)).toSeq)
   }
 
   def apply(name: Symbol) = all(name)

@@ -8,7 +8,6 @@ angular
     'ui.bootstrap',
     'ui.layout',
     'cfp.hotkeys',
-    'jmdobry.angular-cache',
   ])
 
   .config(function ($routeProvider) {
@@ -68,15 +67,8 @@ angular
   })
 
   .factory('util', function utilFactory(
-        $location, $window, $resource, $rootScope, $angularCacheFactory, $modal) {
+        $location, $window, $resource, $rootScope, $modal) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
-    // A persistent cache. Requests made through util.get() will not be repeated
-    // even if the browser is restarted.
-    var localCache = $angularCacheFactory('localCache', {
-      maxAge: 24 * 3600,
-      // TODO: Temporarily disabled, because this makes testing confusing during development.
-      // storageMode: 'localStorage',
-    });
     function ajax(url, params, cache) {
       if (params === undefined) { params = { fake: 1 }; }
       var res = $resource(url, {}, { get: { method: 'GET', cache: cache } });
@@ -104,9 +96,9 @@ angular
         return scope.$watch(expr, fun, true);
       },
       // Json GET with caching and parameter wrapping.
-      get: function(url, params) { return ajax(url, params, localCache); },
+      get: function(url, params) { return ajax(url, params, /* cache = */ true); },
       // Json GET with parameter wrapping and no caching.
-      nocache: function(url, params) { return ajax(url, params, false); },
+      nocache: function(url, params) { return ajax(url, params, /* cache = */ false); },
       // Json POST with simple error handling.
       post: function(url, params, onSuccess) {
         var resource = $resource(url).save({}, params, onSuccess, function(failure) {
@@ -195,6 +187,11 @@ angular
         return projectName.split('|').map(function(name) {
           return util.spaced(name);
         });
+      },
+      captureClick: function(event) {
+        if (event) {
+          event.originalEvent.alreadyHandled = true;
+        }
       }
     };
     util.globals = util.get('/ajax/getGlobalSettings');
