@@ -556,9 +556,23 @@ angular.module('biggraph')
       return undefined;
     };
 
+    Side.prototype.swapWithSide = function(otherSide) {
+      var tmp;
+      tmp = this.project; this.project = otherSide.project; otherSide.project = tmp;
+      tmp = this.state; this.state = otherSide.state; otherSide.state = tmp;
+      tmp = this.viewData; this.viewData = otherSide.viewData; otherSide.viewData = tmp;
+    };
+
     Side.prototype.openSegmentation = function(seg) {
-      // For now segmentations always open on the right.
+      // Move this side to the left if its not on the left.
+      if (this.direction !== 'left') {
+        // Swap sides 0 and this.
+        this.sides[0].close();
+        this.sides[0].swapWithSide(this);
+      }
+      // Segmentations always open on the right.
       this.sides[1].state.projectName = seg.fullName;
+      this.sides[1].state.graphMode = undefined;
     };
 
     Side.prototype.loadScalars = function() {
