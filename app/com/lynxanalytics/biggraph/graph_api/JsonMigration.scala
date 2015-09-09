@@ -51,6 +51,8 @@ class JsonMigration {
     "com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.SampledView" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.VertexBucketGrid" -> 1,
     "com.lynxanalytics.biggraph.graph_util.HadoopFile" -> 1,
     // Forces a migration due to switch to v2 tags.
     "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1)
@@ -70,6 +72,8 @@ class JsonMigration {
     },
     ("com.lynxanalytics.biggraph.graph_operations.CreateVertexSet", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_operations.SampledView", 0) -> identity,
+    ("com.lynxanalytics.biggraph.graph_operations.VertexBucketGrid", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_util.HadoopFile", 0) -> identity,
     ("com.lynxanalytics.biggraph.graph_util.ProjectFrame", 0) -> identity)
 }
