@@ -6,12 +6,13 @@ package com.lynxanalytics.biggraph.graph_operations
 import java.util.UUID
 
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
 
-trait AttributeFromGUID[T] extends Serializable {
+trait AttributeFromGUID[T] {
   protected val attributeGUID: UUID
   def attribute(implicit manager: MetaGraphManager) =
     manager.attribute(attributeGUID).asInstanceOf[Attribute[T]]
@@ -21,7 +22,10 @@ trait AttributeFromGUID[T] extends Serializable {
 
 class BucketedAttribute[T] private (
     protected val attributeGUID: UUID,
-    val bucketer: Bucketer[T]) extends AttributeFromGUID[T] {
+    val bucketer: Bucketer[T]) extends AttributeFromGUID[T] with Serializable with ToJson {
+
+  @throws(classOf[java.io.ObjectStreamException])
+  def writeReplace(): AnyRef = new BucketedAttributeSerialized(toJson.toString)
 
   def toHistogram(
     filtered: VertexSet)(
@@ -30,12 +34,26 @@ class BucketedAttribute[T] private (
     val op = graph_operations.AttributeHistogram[T](bucketer)
     op(op.attr, attribute)(op.filtered, filtered)(op.originalCount, originalCount).result
   }
+
+  override def toJson = Json.obj(
+    "attributeGUID" -> attributeGUID.toString,
+    "bucketer" -> bucketer.toTypedJson)
 }
-object BucketedAttribute {
+object BucketedAttribute extends FromJson[BucketedAttribute[_]] {
   def apply[T](attribute: Attribute[T], bucketer: Bucketer[T]): BucketedAttribute[T] =
     new BucketedAttribute(attribute.gUID, bucketer)
   def emptyBucketedAttribute: BucketedAttribute[Nothing] =
     new BucketedAttribute[Nothing](null, EmptyBucketer())
+  def fromJson(j: JsValue) = new BucketedAttribute(
+    (j \ "attributeGUID").as[String].asUUID,
+    TypedJson.read[Bucketer[_]](j \ "bucketer"))
+}
+
+// Serializing through this class enables the evolution of BucketedAttribute and Bucketer by
+// saving their JSON representations.
+private class BucketedAttributeSerialized(json: String) extends Serializable {
+  @throws(classOf[java.io.ObjectStreamException])
+  def readResolve(): AnyRef = BucketedAttribute.fromJson(play.api.libs.json.Json.parse(json))
 }
 
 class FilteredAttribute[T] private (
