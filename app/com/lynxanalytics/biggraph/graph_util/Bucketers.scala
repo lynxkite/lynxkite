@@ -140,8 +140,8 @@ case class DoubleLinearBucketer(min: Double, max: Double, desiredBuckets: Int)
 object DoubleLogBucketer extends FromJson[DoubleLogBucketer] {
   def fromJson(j: JsValue) = {
     val min = (j \ "min").as[Double]
-    val minPositive = (j \ "minPositive").as[Option[Double]]
-    val version = (j \ "version").as[Option[Int]].getOrElse(0)
+    val minPositive = (j \ "minPositive").asOpt[Double]
+    val version = (j \ "version").asOpt[Int].getOrElse(0)
     DoubleLogBucketer(
       min,
       (j \ "max").as[Double],
