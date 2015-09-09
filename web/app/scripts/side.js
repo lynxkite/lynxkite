@@ -27,6 +27,7 @@ angular.module('biggraph')
         centers: undefined,
         lastCentersRequest: undefined,
         lastCentersResponse: undefined,
+        sliderPos: 50,
       };
     }
 
