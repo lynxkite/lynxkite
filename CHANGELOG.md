@@ -6,8 +6,12 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Dispersion computation made significantly faster.
  - Projects can be organized into folders now.
  - Logarithmic histograms support non-positive values.
+ - New parameter for CSV import operations: `Tolerate ill-formed lines`. It controls
+   whether or not non-conforming lines in the csv file should be skipped silently
+   or cause an error immediately.
 
 ### 1.5.1
 

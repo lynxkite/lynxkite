@@ -36,6 +36,10 @@ svg text.clicky {
 svg .edge {
   fill: none;
   stroke: #444;
+  transition: opacity 0.25s;
+}
+svg .edge.invisible-edge {
+ opacity: 0;
 }
 svg #arrow {
   fill: #444;

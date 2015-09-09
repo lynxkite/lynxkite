@@ -29,6 +29,16 @@
   margin-top: 6px;
 }
 
+.project-list > div.entry .open-in-new-tab-icon {
+  font-size: 60%;
+  vertical-align: super;
+}
+
+.project-list > div.entry:hover .open-in-new-tab-icon,
+.project-list > div.entry:focus .open-in-new-tab-icon {
+  color: white;
+}
+
 .project-list > div.entry {
   position: relative;
   padding: 10px;

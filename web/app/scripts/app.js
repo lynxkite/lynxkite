@@ -187,6 +187,11 @@ angular
         return projectName.split('|').map(function(name) {
           return util.spaced(name);
         });
+      },
+      captureClick: function(event) {
+        if (event) {
+          event.originalEvent.alreadyHandled = true;
+        }
       }
     };
     util.globals = util.get('/ajax/getGlobalSettings');
