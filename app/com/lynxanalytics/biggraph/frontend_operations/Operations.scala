@@ -268,17 +268,24 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("header", "Header", defaultValue = "<read first line>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("omitted", "(optional) Comma separated list of columns to omit"),
-      Param("filter", "(optional) Filtering expression"))
+      Param("filter", "(optional) Filtering expression"),
+      Choice("allow-corrupt-lines", "Tolerate ill-formed lines",
+        options = UIValue.list(List("no", "yes"))))
+
     def source(params: Map[String, String]) = {
       val files = HadoopFile(params("files"))
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
+
+      val allowCorruptLines = params("allow-corrupt-lines") == "yes"
+
       graph_operations.CSV(
         files,
         params("delimiter"),
         header,
         params("omitted").split(",").map(_.trim).filter(_.nonEmpty).toSet,
-        JavaScript(params("filter")))
+        JavaScript(params("filter")),
+        allowCorruptLines)
     }
   }
 

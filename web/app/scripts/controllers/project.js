@@ -93,10 +93,9 @@ angular.module('biggraph')
     });
 
     $scope.sides = [];
-    $scope.sides.push(new side.Side($scope.sides));
-    $scope.sides.push(new side.Side($scope.sides));
+    $scope.sides.push(new side.Side($scope.sides, 'left'));
+    $scope.sides.push(new side.Side($scope.sides, 'right'));
     $scope.left = $scope.sides[0];
-    $scope.left.primary = true; // Used by side-operation-toolbox.
     $scope.right = $scope.sides[1];
 
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });

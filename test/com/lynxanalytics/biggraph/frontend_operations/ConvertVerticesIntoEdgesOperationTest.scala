@@ -10,6 +10,7 @@ class ConvertVerticesIntoEdgesOperationTest extends OperationsTestBase {
       "delimiter" -> ",",
       "id-attr" -> "id",
       "omitted" -> "",
+      "allow-corrupt-lines" -> "no",
       "filter" -> ""))
     var colors =
       project.vertexAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted

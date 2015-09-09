@@ -30,9 +30,11 @@ angular.module('biggraph')
       };
     }
 
-    function Side(sides) {
+    function Side(sides, direction) {
       // The list of all sides.
       this.sides = sides;
+      // Left or right?
+      this.direction = direction;
       // The state of controls. E.g. bucket count.
       this.state = defaultSideState();
       // Everything needed for a view (state included).
@@ -283,6 +285,7 @@ angular.module('biggraph')
         }
         this.project = newProject;
       } else {
+        this.state = defaultSideState();
         this.project = undefined;
       }
       $rootScope.$broadcast('project reloaded');

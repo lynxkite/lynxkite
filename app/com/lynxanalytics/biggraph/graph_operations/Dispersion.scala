@@ -28,6 +28,21 @@ object Dispersion extends OpFromJson {
     }
     builder.result()
   }
+  private def sortedHasCommon(a: Seq[ID], b: Seq[ID]): Boolean = {
+    val ait = a.iterator.buffered
+    val bit = b.iterator.buffered
+    while (ait.hasNext && bit.hasNext) {
+      if (ait.head == bit.head) {
+        return true
+      }
+      if (ait.head > bit.head) {
+        bit.next
+      } else {
+        ait.next
+      }
+    }
+    return false
+  }
   def fromJson(j: JsValue) = Dispersion()
 }
 import Dispersion._
@@ -48,21 +63,20 @@ case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {
     val fullGraph = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections = false)
     val dispersion = nonLoopEdges.mapValues {
       case (edge) =>
-        val srcNeighbors = fullGraph.getNeighbors(edge.src)
+        val srcNeighbors = fullGraph.getNeighbors(edge.src).filter(_ != edge.dst)
         val dstNeighbors = fullGraph.getNeighbors(edge.dst)
         val commonNeighbors = sortedIntersection(srcNeighbors, dstNeighbors)
+        val commonNeighborsNeighbors = commonNeighbors
+          .map(n => n -> sortedIntersection(fullGraph.getNeighbors(n), srcNeighbors))
+          .toMap
         commonNeighbors.combinations(2).map {
           case Seq(a, b) =>
-            val aNeighbors = fullGraph.getNeighbors(a)
-            val bNeighbors = fullGraph.getNeighbors(b)
-            if (aNeighbors.contains(b) || bNeighbors.contains(a)) {
+            val aNeighbors = commonNeighborsNeighbors(a)
+            val bNeighbors = commonNeighborsNeighbors(b)
+            if (aNeighbors.contains(b) || sortedHasCommon(aNeighbors, bNeighbors)) {
               0.0
             } else {
-              val neighborIntersection =
-                sortedIntersection(
-                  sortedIntersection(aNeighbors, bNeighbors),
-                  srcNeighbors)
-              if (neighborIntersection.count(_ != edge.dst) == 0) 1.0 else 0.0
+              1.0
             }
           case _ => 0.0
         }.sum
