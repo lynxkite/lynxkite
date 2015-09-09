@@ -39,7 +39,10 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  override def toJson = Json.obj("xBucketer" -> xBucketer.toTypedJson, "yBucketer" -> yBucketer.toTypedJson)
+  override def toJson = Json.obj(
+    "xBucketer" -> xBucketer.toTypedJson,
+    "yBucketer" -> yBucketer.toTypedJson,
+    "version" -> 1) // Force GUID change.
 
   def execute(inputDatas: DataSet,
               o: Output[S, T],
