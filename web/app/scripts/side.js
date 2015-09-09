@@ -564,7 +564,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.openSegmentation = function(seg) {
-      // Move this side to the left if its not on the left.
+      // Move this side to the left if it's not on the left.
       if (this.direction !== 'left') {
         // Swap sides 0 and this.
         this.sides[0].close();
