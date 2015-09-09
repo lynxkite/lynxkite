@@ -37,19 +37,15 @@ import play.api.libs.json
 import play.api.libs.json.Json
 import scala.reflect.runtime.universe._
 
-object ElementName {
-  type ElementKind = String
-  val VertexAttribute = "vertex attribute"
-  val EdgeAttribute = "edge attribute"
-  val Scalar = "scalar"
-  val Segmentation = "segmentation"
-  val Kinds = Set(VertexAttribute, EdgeAttribute, Scalar, Segmentation)
-  def apply(kind: ElementKind, name: String): String = {
-    assert(Kinds.contains(kind), s"Unrecognized kind: $kind")
-    s"$kind/$name"
+sealed abstract class ElementKind(kindName: String) {
+  def /(name: String): String = {
+    s"$kindName/$name"
   }
 }
-import ElementName.ElementKind
+object VertexAttributeKind extends ElementKind("vertex attribute")
+object EdgeAttributeKind extends ElementKind("edge attribute")
+object ScalarKind extends ElementKind("scalar")
+object SegmentationKind extends ElementKind("segmentation")
 
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
@@ -108,11 +104,11 @@ sealed trait ProjectViewer {
       .map { case (name, state) => name -> new SegmentationViewer(this, name) }
   def segmentation(name: String) = segmentationMap(name)
 
-  def getVertexAttributeNote(name: String) = getElementNote(ElementName.VertexAttribute, name)
-  def getEdgeAttributeNote(name: String) = getElementNote(ElementName.EdgeAttribute, name)
-  def getScalarNote(name: String) = getElementNote(ElementName.Scalar, name)
+  def getVertexAttributeNote(name: String) = getElementNote(VertexAttributeKind, name)
+  def getEdgeAttributeNote(name: String) = getElementNote(EdgeAttributeKind, name)
+  def getScalarNote(name: String) = getElementNote(ScalarKind, name)
   def getElementNote(kind: ElementKind, name: String) =
-    state.elementNotes.getOrElse(Map()).getOrElse(ElementName(kind, name), "")
+    state.elementNotes.getOrElse(Map()).getOrElse(kind / name, "")
 
   def offspringViewer(path: Seq[String]): ProjectViewer =
     if (path.isEmpty) this
@@ -160,9 +156,9 @@ sealed trait ProjectViewer {
       vertexSet = vs,
       edgeBundle = eb,
       notes = state.notes,
-      scalars = feList(scalars, ElementName.Scalar),
-      vertexAttributes = feList(vertexAttributes, ElementName.VertexAttribute) ++ getFEMembers,
-      edgeAttributes = feList(edgeAttributes, ElementName.EdgeAttribute),
+      scalars = feList(scalars, ScalarKind),
+      vertexAttributes = feList(vertexAttributes, VertexAttributeKind) ++ getFEMembers,
+      edgeAttributes = feList(edgeAttributes, EdgeAttributeKind),
       segmentations = segmentationMap
         .toSeq
         .sortBy(_._1)
@@ -421,22 +417,22 @@ sealed trait ProjectEditor {
 
   def newVertexAttribute(name: String, attr: Attribute[_], note: String = null) = {
     vertexAttributes(name) = attr
-    setElementNote(ElementName.VertexAttribute, name, note)
+    setElementNote(VertexAttributeKind, name, note)
   }
   def newEdgeAttribute(name: String, attr: Attribute[_], note: String = null) = {
     edgeAttributes(name) = attr
-    setElementNote(ElementName.EdgeAttribute, name, note)
+    setElementNote(EdgeAttributeKind, name, note)
   }
   def newScalar(name: String, scalar: Scalar[_], note: String = null) = {
     scalars(name) = scalar
-    setElementNote(ElementName.Scalar, name, note)
+    setElementNote(ScalarKind, name, note)
   }
   def setElementNote(kind: ElementKind, name: String, note: String) = {
     val notes = state.elementNotes.getOrElse(Map())
     if (note == null) {
-      state = state.copy(elementNotes = Some(notes - ElementName(kind, name)))
+      state = state.copy(elementNotes = Some(notes - kind / name))
     } else {
-      state = state.copy(elementNotes = Some(notes + (ElementName(kind, name) -> note)))
+      state = state.copy(elementNotes = Some(notes + (kind / name -> note)))
     }
   }
 
