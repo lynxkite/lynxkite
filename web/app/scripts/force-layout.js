@@ -84,7 +84,7 @@ var FORCE_LAYOUT = (function() {
     var totalChange = 0;
     for (i = 0; i < vertices.vs.length; ++i) {
       var v = vertices.vs[i];
-      if (v.dragged || v.frozen || v.positioned) {
+      if (v.held || v.frozen || v.positioned) {
         // Cancel movement.
         v.x = v.forceOX;
         v.y = v.forceOY;
