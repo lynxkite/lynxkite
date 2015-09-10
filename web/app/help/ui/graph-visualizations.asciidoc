@@ -84,10 +84,9 @@ You can access more advanced Pick settings by clicking at
 Center count:: The number of vertices placed in the Show vertices box (default: 1).
 Add Restriction:: Restrictions narrow down the potential set of candidates that will be
 placed in the Show vertices box when you click on the Pick button. They have the same syntax as
-filters (see  <<attribute-filter-syntax>>); futhermore, the default set of restrictions will
-be based on the currently set filters. But this restriction set can be freely modified here.
-Get Restrictions From Filters:: Discards current restrictions and creates new restrictions
-based on the vertex filters defined below.
+filters (see  <<attribute-filter-syntax>>).
+Restrictions From Filters:: Discards current restrictions and replaces them with a copy of the
+currently set vertex filters. Afterwards, the restrcitions can be freely modified here.
 
 
 #### Context menu
