@@ -204,6 +204,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
         legacyRDD
       }
     val newRDD = rawRDD.toSortedRDD(new HashPartitioner(pn))
+    newRDD.setName("NewRDD")
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
     assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
