@@ -7,7 +7,7 @@ project.importVerticesAndEdgesFromSingleCSVFileset(
   src: 'srcVertexId',
   header: 'srcVertexId,dstVertexId,weight',
   omitted: '',
-  allow-corrupt-lines: 'no',
+  allow_corrupt_lines: 'no',
   delimiter: ',')
 project.aggregateEdgeAttributeGlobally(prefix: '', 'aggregate-weight': 'count')
 

@@ -10,7 +10,7 @@ class ViralModelingOperationTest extends OperationsTestBase {
       "delimiter" -> ",",
       "id-attr" -> "internalID",
       "omitted" -> "",
-      "allow-corrupt-lines" -> "no",
+      "allow_corrupt_lines" -> "no",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
       "files" -> "OPERATIONSTEST$/viral-edges-1.csv",
@@ -20,7 +20,7 @@ class ViralModelingOperationTest extends OperationsTestBase {
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
-      "allow-corrupt-lines" -> "no",
+      "allow_corrupt_lines" -> "no",
       "filter" -> ""))
     run("Maximal cliques", Map(
       "name" -> "cliques",

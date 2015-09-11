@@ -10,7 +10,7 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
       "delimiter" -> ",",
       "id-attr" -> "delete me",
       "omitted" -> "",
-      "allow-corrupt-lines" -> "no",
+      "allow_corrupt_lines" -> "no",
       "filter" -> ""))
     run("Import edges for existing vertices from CSV files", Map(
       "files" -> "OPERATIONSTEST$/fingerprint-100-edges.csv",
@@ -20,7 +20,7 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
-      "allow-corrupt-lines" -> "no",
+      "allow_corrupt_lines" -> "no",
       "filter" -> ""))
     // Turn empty strings into "undefined".
     run("Derived vertex attribute", Map(
