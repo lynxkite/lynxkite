@@ -1,3 +1,8 @@
+<form ng-submit="applyMoving()" style="display: inline;" ng-show="moving" ng-click="util.captureClick($event)">
+  <input id="moveBox" class="form-control" style="display: inline; width: 200px;" ng-model="newDirectory">
+  /
+</form>
+
 <span ng-hide="renaming">
   {{ spaced ? util.spaced(name) : name }}
 </span>
@@ -9,14 +14,17 @@
 <div class="btn-group pull-right" ng-click="util.captureClick($event)" dropdown>
   <a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>
   <ul class="dropdown-menu">
-    <li><a href id="menu-rename" ng-click="toggleRenaming()">
+    <li ng-show="menu.rename"><a href id="menu-rename" ng-click="toggleRenaming()">
       <i class="glyphicon glyphicon-pencil"></i> Rename...
     </a></li>
-    <li><a href id="menu-discard" ng-click="discard()">
+    <li ng-show="menu.discard"><a href id="menu-discard" ng-click="discard()">
       <i class="glyphicon glyphicon-trash"></i> Discard
     </a></li>
-    <li><a href id="menu-duplicate" ng-click="duplicate()">
+    <li ng-show="menu.duplicate"><a href id="menu-duplicate" ng-click="duplicate()">
       <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
+    </a></li>
+    <li ng-show="menu.move"><a href id="menu-move" ng-click="toggleMoving()">
+      <i class="glyphicon glyphicon-folder-open"></i> Move...
     </a></li>
   </ul>
 </div>
