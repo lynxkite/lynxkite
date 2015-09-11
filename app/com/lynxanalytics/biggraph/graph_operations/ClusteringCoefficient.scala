@@ -1,6 +1,7 @@
 // Calculates for each vertex how close its neighborhood is to a clique.
 package com.lynxanalytics.biggraph.graph_operations
 
+import org.apache.spark
 import scala.collection.SortedSet
 import scala.collection.mutable
 
@@ -52,23 +53,29 @@ object ClusteringCoefficient extends OpFromJson {
     result
   }
 
-  private[graph_operations] case class Neighbors(vertices: VertexSetRDD, nonLoopEdges: EdgeBundleRDD) {
-    val vertexPartitioner = vertices.partitioner.get
-
+  private[graph_operations] case class Neighbors(
+      nonLoopEdges: EdgeBundleRDD,
+      partitioner: spark.Partitioner) {
     val in = nonLoopEdges
       .map { case (_, e) => e.dst -> e.src }
-      .groupBySortedKey(vertexPartitioner)
+      .groupBySortedKey(partitioner)
       .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
     val out = nonLoopEdges
       .map { case (_, e) => e.src -> e.dst }
-      .groupBySortedKey(vertexPartitioner)
+      .groupBySortedKey(partitioner)
       .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
-    val all = vertices.sortedLeftOuterJoin(out).sortedLeftOuterJoin(in)
+    val allNoIsolated = out.fullOuterJoin(in)
       .mapValues {
-        case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
+        case (outs, ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
       }
+
+    def allWithIsolated(vertices: VertexSetRDD) =
+      vertices.sortedLeftOuterJoin(out).sortedLeftOuterJoin(in)
+        .mapValues {
+          case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
+        }
   }
   def fromJson(j: JsValue) = ClusteringCoefficient()
 }
@@ -88,26 +95,27 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
     val nonLoopEdges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val neighbors = Neighbors(vertices, nonLoopEdges)
+    val neighbors = Neighbors(nonLoopEdges, vertexPartitioner)
 
-    val outNeighborsOfNeighbors = neighbors.all.sortedJoin(neighbors.out).flatMap {
+    val outNeighborsOfNeighbors = neighbors.allNoIsolated.sortedJoin(neighbors.out).flatMap {
       case (vid, (all, outs)) => all.map((_, outs))
     }.groupBySortedKey(vertexPartitioner)
 
-    val clusteringCoeff = neighbors.all.sortedLeftOuterJoin(outNeighborsOfNeighbors).mapValues {
-      case (mine, theirs) =>
-        val numNeighbors = mine.size
-        if (numNeighbors > 1) {
-          theirs match {
-            case Some(ns) =>
-              val edgesInNeighborhood = ns.map(his => sortedIntersectionSize(his, mine)).sum
-              edgesInNeighborhood * 1.0 / numNeighbors / (numNeighbors - 1)
-            case None => 0.0
+    val clusteringCoeff =
+      neighbors.allWithIsolated(vertices).sortedLeftOuterJoin(outNeighborsOfNeighbors).mapValues {
+        case (mine, theirs) =>
+          val numNeighbors = mine.size
+          if (numNeighbors > 1) {
+            theirs match {
+              case Some(ns) =>
+                val edgesInNeighborhood = ns.map(his => sortedIntersectionSize(his, mine)).sum
+                edgesInNeighborhood * 1.0 / numNeighbors / (numNeighbors - 1)
+              case None => 0.0
+            }
+          } else {
+            1.0
           }
-        } else {
-          1.0
-        }
-    }
+      }
 
     output(o.clustering, clusteringCoeff)
   }
