@@ -26,7 +26,7 @@ case class Embeddedness() extends TypedMetaGraphOp[GraphInput, Output] {
     val nonLoopEdges = edges.filter { case (_, e) => e.src != e.dst }
     val edgePartitioner = edges.partitioner.get
     val neighbors =
-      ClusteringCoefficient.Neighbors(null, nonLoopEdges, Some(edgePartitioner)).allNoIsolated
+      ClusteringCoefficient.Neighbors(nonLoopEdges, edgePartitioner).allNoIsolated
 
     val bySrc = edges.map {
       case (eid, e) => e.src -> (eid, e)
