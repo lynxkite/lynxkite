@@ -12,6 +12,8 @@ Please add changes to "master". When releasing a version add a new header for th
  - New parameter for CSV import operations: `Tolerate ill-formed lines`. It controls
    whether or not non-conforming lines in the csv file should be skipped silently
    or cause an error immediately.
+ - If the user requests a visualization that's too large (and would probably kill the browser)
+   we return an error instead of trying to display the large visualization.
 
 ### 1.5.1
 
