@@ -135,6 +135,10 @@ class ObsoleteProject(val projectPath: SymbolPath)(implicit val tagRoot: TagRoot
     tagRoot.cp(from, to)
   }
 
+  def remove(): Unit = tagRoot.synchronized {
+    existing(rootDir).foreach(tagRoot.rm(_))
+  }
+
   private def existing(tag: SymbolPath): Option[SymbolPath] =
     if (tagRoot.exists(tag)) Some(tag) else None
   private def set(tag: SymbolPath, content: String): Unit = tagRoot.setTag(tag, content)
@@ -288,7 +292,9 @@ object ObsoleteProject {
   }
 
   private def migrateOneProject(source: ObsoleteProject, targetManager: MetaGraphManager): Unit = {
-    val lastCp = lastNewCheckpoint(oldCheckpoints(source), targetManager.checkpointRepo)
+    val oldCps = oldCheckpoints(source)
+    val lastCp = lastNewCheckpoint(oldCps, targetManager.checkpointRepo)
+    oldCps.foreach(_.remove())
     val frame = ProjectFrame.fromName(source.projectName)(targetManager)
     frame.setCheckpoint(lastCp)
     (0 until (source.checkpointCount - source.checkpointIndex - 1)).foreach {
@@ -300,8 +306,10 @@ object ObsoleteProject {
 
   def migrateV1ToV2(
     v1TagRoot: TagRoot, targetManager: MetaGraphManager): Unit = targetManager.tagBatch {
-    projects(v1TagRoot).foreach { project =>
-      migrateOneProject(project, targetManager)
+    v1TagRoot.writesCanBeIgnored {
+      projects(v1TagRoot).foreach { project =>
+        migrateOneProject(project, targetManager)
+      }
     }
   }
 }
