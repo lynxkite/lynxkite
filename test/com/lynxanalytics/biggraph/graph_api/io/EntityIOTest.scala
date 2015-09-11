@@ -7,6 +7,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
 import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => logg }
+
 class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager {
 
   val resDir = "/graph_api/io/EntityIOTest/"
@@ -50,19 +52,43 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
   val numVerticesInExampleGraph = 8
 
+  def ensureFinished(dataManager: DataManager, output: EnhancedExampleGraph.Output) = {
+    import scala.concurrent._
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    def getFutureEntities(dataManager: DataManager, entities: Map[Symbol, MetaGraphEntity]) = {
+      entities.values.map {
+        dataManager.getFuture(_)
+      }
+    }
+
+    val vertices = output.vertices
+
+    val done = Future.sequence(
+      getFutureEntities(dataManager, vertices.entity.source.entities.vertexSets) ++
+        getFutureEntities(dataManager, vertices.entity.source.entities.attributes) ++
+        getFutureEntities(dataManager, vertices.entity.source.entities.scalars) ++
+        getFutureEntities(dataManager, vertices.entity.source.entities.edgeBundles))
+
+    Await.ready(done, duration.Duration.Inf)
+  }
+
   // A data repository with a vertex set partitioned in multiple ways.
   class MultiPartitionedFileStructure(partitions: Seq[Int]) {
     import Scripting._
     implicit val metaManager = cleanMetaManager
     val operation = EnhancedExampleGraph()
-    val vertices = operation().result.vertices
+    val output = operation().result
+    val vertices = output.vertices
+
     val repo = cleanDataManager.repositoryPath
+
     for (p <- partitions) {
       val dataManager = new DataManager(sparkContext, repo)
       TestUtils.withRestoreGlobals(
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
-          dataManager.get(vertices)
+          ensureFinished(dataManager, output)
         }
     }
   }
@@ -149,8 +175,10 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       tolerance = tolerance,
       verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
         val dataManager = new DataManager(sparkContext, repo)
-        val data = dataManager.get(mpfs.vertices)
+        val output = mpfs.output
+        val data = dataManager.get(output.vertices)
         assert(data.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> ()))
+        ensureFinished(dataManager, output)
       }
     val executionCounter = mpfs.operation.executionCounter
   }
