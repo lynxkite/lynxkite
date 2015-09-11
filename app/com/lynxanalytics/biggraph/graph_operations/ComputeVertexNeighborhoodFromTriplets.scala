@@ -24,6 +24,8 @@ import ComputeVertexNeighborhoodFromTriplets._
 case class ComputeVertexNeighborhoodFromTriplets(
     centers: Seq[ID],
     radius: Int,
+    // Maximal number of vertices to return. If the specified neighborhood is larget then this, then
+    // the output will be empty set to signal this outcome.
     maxCount: Int) extends TypedMetaGraphOp[Input, Output] {
 
   @transient override lazy val inputs = new Input
@@ -36,21 +38,31 @@ case class ComputeVertexNeighborhoodFromTriplets(
     val edges = inputs.edges.rdd
     val all = inputs.srcTripletMapping.rdd.fullOuterJoin(inputs.dstTripletMapping.rdd)
     var neighborhood = centers.toArray
+    var tooMuch = false
     for (i <- 0 until radius) {
-      Sorting.quickSort(neighborhood)
-      val neighborEdges = all
-        .restrictToIdSet(neighborhood)
-        .flatMap { case (id, (srcEdge, dstEdge)) => (srcEdge ++ dstEdge).flatten }
-        .distinct.collect
-      Sorting.quickSort(neighborEdges)
-      neighborhood = edges.restrictToIdSet(neighborEdges)
-        .flatMap { case (id, edge) => Iterator(edge.src, edge.dst) }
-        .distinct
-        .take(maxCount)
+      if (!tooMuch) {
+        Sorting.quickSort(neighborhood)
+        val neighborEdges = all
+          .restrictToIdSet(neighborhood)
+          .flatMap { case (id, (srcEdge, dstEdge)) => (srcEdge ++ dstEdge).flatten }
+          .distinct.collect
+        Sorting.quickSort(neighborEdges)
+        neighborhood = edges.restrictToIdSet(neighborEdges)
+          .flatMap { case (id, edge) => Iterator(edge.src, edge.dst) }
+          .distinct
+          .take(maxCount + 1)
+        if (neighborhood.size > maxCount) {
+          tooMuch = true
+          neighborhood = Array()
+        }
+      }
     }
     // Isolated points are lost in the above loop. Add back centers to make sure they are present.
-    val nonCenters = neighborhood.toSet -- centers
-    val trimmed = nonCenters.take(maxCount - centers.size)
-    output(o.neighborhood, trimmed ++ centers)
+    val res = neighborhood.toSet ++ centers
+    if (tooMuch || res.size > maxCount) {
+      output(o.neighborhood, Set[ID]())
+    } else {
+      output(o.neighborhood, res)
+    }
   }
 }

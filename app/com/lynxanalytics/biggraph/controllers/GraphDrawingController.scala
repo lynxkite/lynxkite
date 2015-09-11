@@ -49,17 +49,20 @@ case class FEVertex(
   attrs: Map[String, DynamicValue] = Map())
 
 case class VertexDiagramResponse(
-  val diagramId: String,
-  val vertices: Seq[FEVertex],
-  val mode: String, // as specified in the request
+    val diagramId: String,
+    val vertices: Seq[FEVertex],
+    val mode: String, // as specified in the request
 
-  // ** Only set for bucketed view **
-  val xLabelType: String = "",
-  val yLabelType: String = "",
-  val xLabels: Seq[String] = Seq(),
-  val yLabels: Seq[String] = Seq(),
-  val xFilters: Seq[String] = Seq(),
-  val yFilters: Seq[String] = Seq())
+    // ** Only set for bucketed view **
+    val xLabelType: String = "",
+    val yLabelType: String = "",
+    val xLabels: Seq[String] = Seq(),
+    val yLabels: Seq[String] = Seq(),
+    val xFilters: Seq[String] = Seq(),
+    val yFilters: Seq[String] = Seq()) {
+
+  def size = vertices.size
+}
 
 case class AggregatedAttribute(
   // The GUID of the attribute.
@@ -102,25 +105,31 @@ case class FEEdge(
 case class FE3DPosition(x: Double, y: Double, z: Double)
 
 case class EdgeDiagramResponse(
-  srcDiagramId: String,
-  dstDiagramId: String,
+    srcDiagramId: String,
+    dstDiagramId: String,
 
-  // Copied from the request.
-  srcIdx: Int,
-  dstIdx: Int,
+    // Copied from the request.
+    srcIdx: Int,
+    dstIdx: Int,
 
-  edges: Seq[FEEdge],
+    edges: Seq[FEEdge],
 
-  // The vertex coordinates, if "layout3D" was true in the request.
-  layout3D: Map[String, FE3DPosition])
+    // The vertex coordinates, if "layout3D" was true in the request.
+    layout3D: Map[String, FE3DPosition]) {
+
+  def size = edges.size
+}
 
 case class FEGraphRequest(
   vertexSets: Seq[VertexDiagramSpec],
   edgeBundles: Seq[EdgeDiagramSpec])
 
 case class FEGraphResponse(
-  vertexSets: Seq[VertexDiagramResponse],
-  edgeBundles: Seq[EdgeDiagramResponse])
+    vertexSets: Seq[VertexDiagramResponse],
+    edgeBundles: Seq[EdgeDiagramResponse]) {
+
+  def fullSize: Long = vertexSets.map(_.size).sum + edgeBundles.map(_.size).sum
+}
 
 case class AxisOptions(
   logarithmic: Boolean = false)
@@ -180,8 +189,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val centers = if (request.centralVertexIds == Seq("*")) {
       // Try to show the whole graph.
-      val op = graph_operations.SampleVertices(SampleSizeMax)
-      op(op.vs, filtered).result.sample.value
+      val op = graph_operations.SampleVertices(SampleSizeMax + 1)
+      val sample = op(op.vs, filtered).result.sample.value
+      assert(
+        sample.size <= SampleSizeMax,
+        s"The full graph is too large to display (larger than $SampleSizeMax)")
+      sample
     } else {
       request.centralVertexIds.map(_.toLong)
     }
@@ -196,7 +209,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
           nop.edges, smearBundle)(
             nop.srcTripletMapping, triplets.srcEdges)(
               nop.dstTripletMapping, triplets.dstEdges).result
-      nopres.neighborhood.value
+      val neighborhood = nopres.neighborhood.value
+      assert(
+        centers.isEmpty || neighborhood.nonEmpty,
+        s"Neigborhood is too large to display (larger than $SampleSizeMax)")
+      neighborhood
     } else {
       centers.toSet
     }
@@ -522,7 +539,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
     val edgeDiagrams = modifiedEdgeSpecs.map(getEdgeDiagram(user, _))
     spark_util.Counters.printAll
-    return FEGraphResponse(vertexDiagrams, edgeDiagrams)
+    val res = FEGraphResponse(vertexDiagrams, edgeDiagrams)
+    assert(
+      res.fullSize <= SampleSizeMax,
+      s"Visualization too large to display (larger than $SampleSizeMax vertices + edges)")
+    res
   }
 
   private def getFilteredVSByFA(
