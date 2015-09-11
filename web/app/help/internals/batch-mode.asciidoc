@@ -62,7 +62,7 @@ project.importVerticesAndEdgesFromSingleCSVFileset(
   src: 'src',
   dst: 'dst',
   filter: '',
-  allowCorruptLines: 'no',
+  allow_corrupt_lines: 'no',
   omitted: '')
 project.pageRank(
   name: 'page_rank',
