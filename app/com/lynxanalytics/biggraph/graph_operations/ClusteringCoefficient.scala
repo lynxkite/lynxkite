@@ -54,19 +54,16 @@ object ClusteringCoefficient extends OpFromJson {
   }
 
   private[graph_operations] case class Neighbors(
-      vertices: VertexSetRDD,
       nonLoopEdges: EdgeBundleRDD,
-      customPartitioner: Option[spark.Partitioner] = None) {
-    val vertexPartitioner = customPartitioner.getOrElse(vertices.partitioner.get)
-
+      partitioner: spark.Partitioner) {
     val in = nonLoopEdges
       .map { case (_, e) => e.dst -> e.src }
-      .groupBySortedKey(vertexPartitioner)
+      .groupBySortedKey(partitioner)
       .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
     val out = nonLoopEdges
       .map { case (_, e) => e.src -> e.dst }
-      .groupBySortedKey(vertexPartitioner)
+      .groupBySortedKey(partitioner)
       .mapValues(it => SortedSet(it.toSeq: _*).toArray)
 
     val allNoIsolated = out.fullOuterJoin(in)
@@ -74,10 +71,11 @@ object ClusteringCoefficient extends OpFromJson {
         case (outs, ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
       }
 
-    lazy val allWithIsolated = vertices.sortedLeftOuterJoin(out).sortedLeftOuterJoin(in)
-      .mapValues {
-        case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
-      }
+    def allWithIsolated(vertices: VertexSetRDD) =
+      vertices.sortedLeftOuterJoin(out).sortedLeftOuterJoin(in)
+        .mapValues {
+          case ((_, outs), ins) => sortedUnion(outs.getOrElse(Array()), ins.getOrElse(Array()))
+        }
   }
   def fromJson(j: JsValue) = ClusteringCoefficient()
 }
@@ -97,14 +95,14 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
     val nonLoopEdges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
     val vertices = inputs.vs.rdd
     val vertexPartitioner = vertices.partitioner.get
-    val neighbors = Neighbors(vertices, nonLoopEdges)
+    val neighbors = Neighbors(nonLoopEdges, vertexPartitioner)
 
     val outNeighborsOfNeighbors = neighbors.allNoIsolated.sortedJoin(neighbors.out).flatMap {
       case (vid, (all, outs)) => all.map((_, outs))
     }.groupBySortedKey(vertexPartitioner)
 
     val clusteringCoeff =
-      neighbors.allWithIsolated.sortedLeftOuterJoin(outNeighborsOfNeighbors).mapValues {
+      neighbors.allWithIsolated(vertices).sortedLeftOuterJoin(outNeighborsOfNeighbors).mapValues {
         case (mine, theirs) =>
           val numNeighbors = mine.size
           if (numNeighbors > 1) {
