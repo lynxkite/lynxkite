@@ -100,8 +100,8 @@ angular.module('biggraph')
 
     util.deepWatch($scope, 'left.state', function() { $scope.left.updateViewData(); });
     util.deepWatch($scope, 'right.state', function() { $scope.right.updateViewData(); });
-    $scope.$watch('left.state.graphMode', function() { $scope.left.maybeRequestNewCenter(); });
-    $scope.$watch('right.state.graphMode', function() { $scope.right.maybeRequestNewCenter(); });
+    $scope.$watch('left.state.graphMode', function() { $scope.left.onGraphModeChange(); });
+    $scope.$watch('right.state.graphMode', function() { $scope.right.onGraphModeChange(); });
 
     // This watcher copies the state from the URL into $scope.
     // It is an important part of initialization. Less importantly it makes
