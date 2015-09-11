@@ -193,6 +193,8 @@ final case class TagRoot(protected val store: KeyValueStore) extends TagDir {
 
   def batch[T](fn: => T): T = store.batch(fn)
 
+  def writesCanBeIgnored[T](fn: => T): T = store.writesCanBeIgnored(fn)
+
   def setTags(tags: Map[SymbolPath, String]): Unit = synchronized {
     batch {
       for ((k, v) <- tags) {
