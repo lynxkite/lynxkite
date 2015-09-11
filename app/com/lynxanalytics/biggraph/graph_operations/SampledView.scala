@@ -25,9 +25,7 @@ case class SampledView(
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = Json.obj(
-    "idSet" -> idSet,
-    "version" -> 1) // Force GUID change.
+  override def toJson = Json.obj("idSet" -> idSet)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
