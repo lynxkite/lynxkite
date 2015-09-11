@@ -691,7 +691,7 @@ class ProjectFrame(path: SymbolPath)(
 
   def toListElementFE = {
     try {
-      viewer.toListElementFE(projectName)
+      viewer.toListElementFE(path.last.name)
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $projectName:", ex)
