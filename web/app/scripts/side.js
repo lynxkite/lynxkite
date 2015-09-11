@@ -216,6 +216,14 @@ angular.module('biggraph')
       return this.state.axisOptions[type][attr] || defaultAxisOptions;
     };
 
+    Side.prototype.onGraphModeChange = function() {
+      if (this.state.graphMode === 'bucketed') {
+        if (this.state.display !== 'svg') {
+          this.state.display = 'svg';
+        }
+      }
+      this.maybeRequestNewCenter();
+    };
     Side.prototype.maybeRequestNewCenter = function() {
       if (this.state.graphMode === 'sampled' && this.state.centers === undefined) {
         this.requestNewCenters(1);
