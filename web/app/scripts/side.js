@@ -89,6 +89,14 @@ angular.module('biggraph')
         this.viewData = undefined;
         return;
       }
+      if (this.state.graphMode === 'bucketed') {
+        if (this.state.display !== 'svg') {
+          this.state.display = 'svg';
+          // This function will be called again in this digest cycle because state
+          // is deepwatched. Therefore we don't need to execute here.
+          return;
+        }
+      }
 
       vd.vertexSet = { id: this.project.vertexSet };
       if (this.project.edgeBundle) {
