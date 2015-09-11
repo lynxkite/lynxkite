@@ -60,7 +60,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       "delimiter" -> ",",
       "filter" -> "",
       "omitted" -> "",
-      "allow-corrupt-lines" -> "no",
+      "allow_corrupt_lines" -> "no",
       "id-attr" -> "x"))
     val name = project.vertexAttributes("name").runtimeSafeCast[String]
     val income = project.vertexAttributes("income").runtimeSafeCast[String]
@@ -79,7 +79,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       "src" -> "src",
       "dst" -> "dst",
       "omitted" -> "",
-      "allow-corrupt-lines" -> allow,
+      "allow_corrupt_lines" -> allow,
       "filter" -> ""))
 
     project.edgeAttributes("attr").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted

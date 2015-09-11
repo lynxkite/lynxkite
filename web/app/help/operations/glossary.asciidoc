@@ -81,7 +81,7 @@ If you don't want to read all columns of your CSV, list here the name of columns
 A JavaScript expression can be provided here to restrict the import to lines that match a
 condition. For example `id != ''` would ignore lines where the `id` column is empty.
 
-[[allow-corrupt-lines]] Tolerate ill-formed lines::
+[[allow_corrupt_lines]] Tolerate ill-formed lines::
 When set to `no`, the import process will stop with an error as soon as it encounters
 a line that does not match the header. When set to `yes`, erroneous lines will be
 silently skipped.
