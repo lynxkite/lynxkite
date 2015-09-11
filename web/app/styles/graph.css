@@ -17,7 +17,7 @@
     overflow: visible;
   }
 
-  .graph-sidebar {
+  .graph-sidebar, .spark-status {
     display: none;
   }
 }
