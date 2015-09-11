@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
 import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => logg }
 
 class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManager {
 
