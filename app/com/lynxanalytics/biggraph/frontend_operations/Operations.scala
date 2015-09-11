@@ -403,7 +403,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("id-attr", "Vertex ID attribute", options = vertexAttributes[String]),
       Param("id-field", "ID field"),
       Param("prefix", "Name prefix for the imported vertex attributes"))
-    def enabled = hasVertexSet
+    def enabled =
+      hasVertexSet &&
+        FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
       val idAttr = project.vertexAttributes(params("id-attr")).runtimeSafeCast[String]
       val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-field"))
@@ -418,6 +420,30 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     new ImportVertexAttributesOperation(_, _) with CSVRowReader)
   register("Import vertex attributes from a database",
     new ImportVertexAttributesOperation(_, _) with SQLRowReader)
+
+  abstract class ImportEdgeAttributesOperation(t: String, c: Context)
+      extends ImportOperation(t, c) with RowReader {
+    def parameters = sourceParameters ++ List(
+      Choice("id-attr", "Edge ID attribute", options = edgeAttributes[String]),
+      Param("id-field", "ID field"),
+      Param("prefix", "Name prefix for the imported edge attributes"))
+    def enabled =
+      hasEdgeBundle &&
+        FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
+    def apply(params: Map[String, String]) = {
+      val idAttr = project.edgeAttributes(params("id-attr")).runtimeSafeCast[String]
+      val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-field"))
+      val res = op(op.idAttr, idAttr).result
+      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+      for ((name, attr) <- res.attrs) {
+        project.edgeAttributes(prefix + name) = attr
+      }
+    }
+  }
+  register("Import edge attributes from CSV files",
+    new ImportEdgeAttributesOperation(_, _) with CSVRowReader)
+  register("Import edge attributes from a database",
+    new ImportEdgeAttributesOperation(_, _) with SQLRowReader)
 
   register("Maximal cliques", new CreateSegmentationOperation(_, _) {
     def parameters = List(
