@@ -1753,8 +1753,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet
 
     def apply(params: Map[String, String]) = {
+      val oldProjectState = project.state
       val segmentation = project.segmentation(params("name"))
-      segmentation.state = project.state
+      segmentation.state = oldProjectState
 
       val op = graph_operations.LoopEdgeBundle()
       segmentation.belongsTo = op(op.vs, project.vertexSet).result.eb
