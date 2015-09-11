@@ -19,7 +19,7 @@ project.importVerticesAndEdgesFromSingleCSVFileset(
   src: 'srcVertexId',
   header: 'srcVertexId,dstVertexId,weight',
   omitted: '',
-  allow-corrupt-lines: 'no',
+  allow_corrupt_lines: 'no',
   delimiter: ',')
 project.degree(name: 'degree', direction: 'all edges')
 project.filterByAttributes('filterva-degree': '<500')

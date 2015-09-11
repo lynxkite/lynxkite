@@ -269,7 +269,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("omitted", "(optional) Comma separated list of columns to omit"),
       Param("filter", "(optional) Filtering expression"),
-      Choice("allow-corrupt-lines", "Tolerate ill-formed lines",
+      Choice("allow_corrupt_lines", "Tolerate ill-formed lines",
         options = UIValue.list(List("no", "yes"))))
 
     def source(params: Map[String, String]) = {
@@ -277,7 +277,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val header = if (params("header") == "<read first line>")
         graph_operations.ImportUtil.header(files) else params("header")
 
-      val allowCorruptLines = params("allow-corrupt-lines") == "yes"
+      val allowCorruptLines = params("allow_corrupt_lines") == "yes"
 
       graph_operations.CSV(
         files,
