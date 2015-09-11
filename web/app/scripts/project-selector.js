@@ -102,22 +102,30 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           });
       };
 
+      // The full path of a project, given its name within the current directory.
+      function fullPath(p) {
+        return pathInside(scope.path) + p;
+      }
+      function pathInside(directory) {
+        if (directory) {
+          return directory + '/';
+        } else {
+          return '';
+        }
+      }
+
       scope.projectClick = function(event, p) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
         // Ignore clicks on errored projects.
         if (p.error) { return; }
-        scope.name = p.name;
+        scope.name = fullPath(p.name);
       };
 
       scope.enterDirectory = function(event, d) {
         // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
         if (event.originalEvent.alreadyHandled) { return; }
-        if (scope.path) {
-          scope.path += '/' + d;
-        } else {
-          scope.path = d;
-        }
+        scope.path = fullPath(d);
       };
 
       scope.popDirectory = function() {
@@ -139,16 +147,19 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
       scope.menu = {
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
-          util.post('/ajax/renameDirectory', { from: oldName, to: newName }, refresh);
+          util.post('/ajax/renameDirectory',
+              { from: fullPath(oldName), to: fullPath(newName) }, refresh);
         },
         duplicate: function(kind, p) {
-          util.post('/ajax/forkDirectory', { from: p, to: 'Copy of ' + p }, refresh);
+          util.post('/ajax/forkDirectory',
+              { from: fullPath(p), to: fullPath('Copy of ' + p) },
+              refresh);
         },
         discard: function(kind, p) {
           var message = 'Permanently delete ' + kind + ' ' + util.spaced(p) + '?';
           message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
-            util.post('/ajax/discardDirectory', { name: p }, refresh);
+            util.post('/ajax/discardDirectory', { name: fullPath(p) }, refresh);
           }
         }
       };
