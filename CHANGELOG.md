@@ -12,6 +12,8 @@ Please add changes to "master". When releasing a version add a new header for th
  - New parameter for CSV import operations: `Tolerate ill-formed lines`. It controls
    whether or not non-conforming lines in the csv file should be skipped silently
    or cause an error immediately.
+ - Further sample vertices can be picked by clicking _"Pick"_ and then _"Next"_ in the advanced
+   pick options.
  - If the user requests a visualization that's too large (and would probably kill the browser)
    we return an error instead of trying to display the large visualization.
  - Users can now import additional attributes from CSV/SQL for edges as well (until now, it was
