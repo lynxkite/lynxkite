@@ -14,6 +14,8 @@ Please add changes to "master". When releasing a version add a new header for th
    or cause an error immediately.
  - If the user requests a visualization that's too large (and would probably kill the browser)
    we return an error instead of trying to display the large visualization.
+ - Users can now import additional attributes from CSV/SQL for edges as well (until now, it was
+   only possible for vertices).
 
 ### 1.5.1
 

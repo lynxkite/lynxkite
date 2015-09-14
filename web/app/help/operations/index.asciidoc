@@ -142,6 +142,10 @@ include::import-vertex-attributes-from-a-database.asciidoc[]
 
 include::import-vertex-attributes-from-csv-files.asciidoc[]
 
+include::import-edge-attributes-from-a-database.asciidoc[]
+
+include::import-edge-attributes-from-csv-files.asciidoc[]
+
 include::import-vertices-and-edges-from-a-single-csv-fileset.asciidoc[]
 
 include::import-vertices-and-edges-from-a-single-database-table.asciidoc[]
