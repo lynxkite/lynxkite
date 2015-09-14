@@ -109,7 +109,12 @@ object MetaRepositoryManager {
       currentDir
     } else {
       val newest = versions.head
-      if (newest.version == current.version) newest.dir
+      val forcedMigration =
+        scala.util.Properties.envOrNone("KITE_FORCED_MIGRATION").map(_.toBoolean).getOrElse(false)
+      if (forcedMigration) {
+        log.info("Forced migration requested.")
+      }
+      if ((newest.version == current.version) && !forcedMigration) newest.dir
       else {
         val supported = versions.find(_.version <= current.version)
         assert(newest.version < current.version,
