@@ -161,7 +161,14 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           if (window.confirm(message)) {
             util.post('/ajax/discardDirectory', { name: fullPath(p) }, refresh);
           }
-        }
+        },
+        move: function(kind, name, newDirectory) {
+          // Drop starting slash.
+          if (newDirectory[0] === '/') { newDirectory = newDirectory.slice(1); }
+          if (newDirectory === scope.path) { return; }
+          util.post('/ajax/renameDirectory',
+              { from: fullPath(name), to: pathInside(newDirectory) + name }, refresh);
+        },
       };
     },
   };
