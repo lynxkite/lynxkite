@@ -387,6 +387,9 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   lazy val metaDataSet = MetaDataSet(placeholders.map(_.entity).map(e => (e.name, e)).toMap)
 }
 
+object MetaGraphOp {
+  val UTF8 = java.nio.charset.Charset.forName("UTF-8")
+}
 trait MetaGraphOp extends Serializable with ToJson {
   val isHeavy: Boolean = false
   def inputSig: InputSignature
@@ -395,7 +398,7 @@ trait MetaGraphOp extends Serializable with ToJson {
   val gUID = {
     val contents = this.toTypedJson.toString
     val version = JsonMigration.current.version(getClass.getName)
-    UUID.nameUUIDFromBytes((contents + version).getBytes)
+    UUID.nameUUIDFromBytes((contents + version).getBytes(MetaGraphOp.UTF8))
   }
 
   def toStringStruct = ReflectionMutex.synchronized {
