@@ -1,5 +1,4 @@
 
-["Put","tagmeta/version","2"]
 ["Put","projects/alma/writeACL","fake"]
 ["Put","projects/alma/readACL","fake"]
 ["Put","projects/alma/checkpoint",""]
