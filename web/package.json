@@ -44,6 +44,6 @@
   },
   "scripts": {
     "pretest": "node node_modules/protractor/bin/webdriver-manager update",
-    "test": "grunt test"
+    "test": "grunt test --no-color"
   }
 }
