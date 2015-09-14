@@ -12,9 +12,11 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
 
       scope.toggleRenaming = function() {
         scope.renaming = !scope.renaming;
-        scope.newName = scope.name;
-        // Focus #renameBox once it has appeared.
-        $timeout(function() { element.find('#renameBox').focus(); });
+        if (scope.renaming) {
+          scope.newName = scope.name;
+          // Focus #renameBox once it has appeared.
+          $timeout(function() { element.find('#renameBox').focus(); });
+        }
       };
 
       scope.applyRenaming = function() {
@@ -32,9 +34,11 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
 
       scope.toggleMoving = function() {
         scope.moving = !scope.moving;
-        scope.newDirectory = '';
-        // Focus #moveBox once it has appeared.
-        $timeout(function() { element.find('#moveBox').focus(); });
+        if (scope.moving) {
+          scope.newDirectory = '';
+          // Focus #moveBox once it has appeared.
+          $timeout(function() { element.find('#moveBox').focus(); });
+        }
       };
 
       scope.applyMoving = function() {
