@@ -1,0 +1,19 @@
+### Import edge attributes from CSV files
+
+Imports edge attributes for existing edges from a CSV file. This is
+useful when you already have edges and just want to import one or more attributes.
+
+====
+include::{g}[tag=csv-import]
+
+[[id-attr]] Edge ID attribute::
+The edge attribute which is used in the CSV's ID field.
+
+[[id-field]] ID field::
+The ID field name in the CSV. This should be a string field that uses the same IDs as
+the chosen edge ID attribute.
+
+[[prefix]] Name prefix for the imported edge attributes::
+Prepend this prefix string to the new edge attribute names. This can be used to avoid
+accidentally overwriting existing attributes.
+====
