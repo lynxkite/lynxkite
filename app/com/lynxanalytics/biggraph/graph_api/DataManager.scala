@@ -11,6 +11,7 @@ import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
 import scala.concurrent._
+import scala.concurrent.duration.Duration
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -249,6 +250,10 @@ class DataManager(sc: spark.SparkContext,
       case va: Attribute[_] => getFuture(va)
       case sc: Scalar[_] => getFuture(sc)
     }
+  }
+
+  def waitAllFutures: Unit = {
+    Await.ready(Future.sequence(entityCache.values.toSeq), Duration.Inf)
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
