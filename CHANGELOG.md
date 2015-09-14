@@ -16,6 +16,14 @@ Please add changes to "master". When releasing a version add a new header for th
    we return an error instead of trying to display the large visualization.
  - Users can now import additional attributes from CSV/SQL for edges as well (until now, it was
    only possible for vertices).
+ - The internal identification of Kite meta graph entities depended on Java's default character
+   encodig which in turn depended on the terminal setting of the user starting Kite. This resulted
+   in Kite failure if a user with different settings restarted the server. Now this is fixed by
+   alwasy using UTF-8 encoding. But this will cause problems if your kite instane uses something
+   different (UTF-8 seems to be the typical, though). If Kite fails with cannot load project list
+   and you see and error in the logs starting with "Output mismatch on ...", then try to force a
+   migration: `KITE_FORCED_MIGRATION=true  ./run-kite-....sh restart`. Do this only once, not for
+   all restarts in the future!
 
 ### 1.5.1
 
