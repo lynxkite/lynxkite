@@ -11,7 +11,7 @@ object HelpInventory extends App {
   val fos = new java.io.FileOutputStream(args.head)
   for (op <- ops.operationIds.map(_.toLowerCase).sorted) {
     if (!hiddenOps.contains(op)) {
-      fos.write(op.getBytes)
+      fos.write(op.getBytes("UTF-8"))
       fos.write('\n')
     }
   }
