@@ -19,10 +19,10 @@
   </div>
   <div class="btn-group pull-left">
     <button class="btn btn-default" ng-click="addFilter()">
-      <span class="glyphicon glyphicon-plus"></span>&nbsp;Add Restriction
+      <span class="glyphicon glyphicon-plus"></span>&nbsp;Add restriction
     </button>
     <button class="btn btn-default" ng-click="copyRestrictionsFromFilters()">
-      Restrictions From Filters
+      Restrictions from filters
     </button>
   </div>
   <div class="btn-group pull-right">
@@ -30,7 +30,7 @@
       Close
     </button>
     <button class="btn btn-default" ng-click="requestNewCenters()">
-      Pick
+      {{ unchanged() ? 'Next' : 'Pick' }}
     </button>
   </div>
 </div>

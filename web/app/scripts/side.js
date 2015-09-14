@@ -229,18 +229,16 @@ angular.module('biggraph')
         this.requestNewCenters(1);
       }
     };
-    Side.prototype.requestNewCentersWithFilters = function(count, filters) {
-      var params = {
-        filters: filters,
-        count: count,
-      };
-      this.sendCenterRequest(params);
-    };
-    Side.prototype.sendCenterRequest = function(params) {
-      var that = this;
+
+    Side.prototype.resolveCenterRequestParams = function(params) {
       var resolvedParams = angular.copy(params);
       resolvedParams.filters = this.resolveVertexFilters(params.filters);
       resolvedParams.vertexSetId = this.project.vertexSet;
+      return resolvedParams;
+    };
+    Side.prototype.sendCenterRequest = function(params) {
+      var that = this;
+      var resolvedParams = this.resolveCenterRequestParams(params);
       this.centerRequest = util.get('/ajax/center', resolvedParams);
       return this.centerRequest.$promise.then(
         function(result) {
@@ -252,7 +250,7 @@ angular.module('biggraph')
       );
     };
     Side.prototype.requestNewCenters = function(count) {
-      this.requestNewCentersWithFilters(count, this.nonEmptyVertexFilterNames());
+      this.sendCenterRequest({ count: count,  filters: this.nonEmptyVertexFilterNames() });
     };
 
     Side.prototype.shortName = function() {
