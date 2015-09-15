@@ -56,9 +56,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     implicit val metaManager = cleanMetaManager
     val operation = EnhancedExampleGraph()
     val vertices = operation().result.vertices
-
     val repo = cleanDataManager.repositoryPath
-
     for (p <- partitions) {
       val dataManager = new DataManager(sparkContext, repo)
       TestUtils.withRestoreGlobals(
