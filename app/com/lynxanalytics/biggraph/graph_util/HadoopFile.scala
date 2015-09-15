@@ -9,6 +9,7 @@ import java.io.InputStreamReader
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import org.apache.spark.rdd.RDD
 
 object HadoopFile {
 
@@ -192,6 +193,40 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
     file
       .map { case (k, v) => RDDUtils.kryoDeserialize[(Long, T)](v.getBytes) }
       .asSortedRDD(p)
+  }
+
+  def loadEntityRawRDD(sc: spark.SparkContext): RDD[(Long, Array[Byte])] = {
+    val file = sc.newAPIHadoopFile(
+      resolvedNameWithNoCredentials,
+      kClass = classOf[hadoop.io.LongWritable],
+      vClass = classOf[hadoop.io.BytesWritable],
+      fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
+      conf = hadoopConfiguration)
+    file.map { case (k, v) => k.get -> v.getBytes }
+  }
+
+  def saveEntityRawRDD(data: RDD[(Long, Array[Byte])]): Long = {
+    import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
+
+    val lines = data.context.accumulator[Long](0L, "Line count")
+    val hadoopData = data.map {
+      case (k, v) =>
+        lines += 1
+        new hadoop.io.LongWritable(k) -> new hadoop.io.BytesWritable(v)
+    }
+    if (fs.exists(path)) {
+      log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
+      fs.delete(path, true)
+    }
+    log.info(s"saving ${data.name} as object file to ${symbolicName}")
+    hadoopData.saveAsNewAPIHadoopFile(
+      resolvedNameWithNoCredentials,
+      keyClass = classOf[hadoop.io.LongWritable],
+      valueClass = classOf[hadoop.io.BytesWritable],
+      outputFormatClass =
+        classOf[SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
+      conf = new hadoop.mapred.JobConf(hadoopConfiguration))
+    lines.value
   }
 
   // Loads a Long-keyed SortedRDD, optionally with a specific partitioner.

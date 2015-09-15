@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_api.io
 
 import org.apache.spark
 import org.apache.spark.HashPartitioner
+import org.apache.spark.rdd.RDD
 import play.api.libs.json
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -208,10 +209,10 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 
   private def repartitionFromPartitionedRDD(entityLocation: EntityLocationSnapshot, pn: Int): HadoopFile = {
     val from = bestPartitionedSource(entityLocation, pn)
-    val oldRDD = loadRDD(from)
+    val oldRDD = from.loadEntityRawRDD(sc)
     val newRDD = oldRDD.toSortedRDD(new HashPartitioner(pn))
     val newFile = targetDir(pn)
-    val lines = newFile.saveEntityRDD(newRDD)
+    val lines = newFile.saveEntityRawRDD(newRDD)
     assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
     newFile
   }
