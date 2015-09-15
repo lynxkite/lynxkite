@@ -7,11 +7,9 @@
   <div class="col-sm-8">
     <input ng-if="param.kind === 'default'"
       class="form-control" ng-model="output[param.id]" ng-disabled="!editable">
-
     <div ui-ace="{ mode: 'javascript', showGutter: false, rendererOptions: {fontSize: '16px'} }"
       style="height: 60px;" class="form-control" ng-if="param.kind === 'code'"
       ng-model="output[param.id]" ng-disabled="!editable"></div>
-
     <file-parameter ng-if="param.kind === 'file'" editable="editable"
       model="output[param.id]" file-uploads="fileUploads.count">
     </file-parameter>
