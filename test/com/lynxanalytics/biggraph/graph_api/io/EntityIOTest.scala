@@ -55,8 +55,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     import Scripting._
     implicit val metaManager = cleanMetaManager
     val operation = EnhancedExampleGraph()
-    val output = operation().result
-    val vertices = output.vertices
+    val vertices = operation().result.vertices
 
     val repo = cleanDataManager.repositoryPath
 
@@ -153,8 +152,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       tolerance = tolerance,
       verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
         val dataManager = new DataManager(sparkContext, repo)
-        val output = mpfs.output
-        val data = dataManager.get(output.vertices)
+        val data = dataManager.get(mpfs.vertices)
         assert(data.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> ()))
         dataManager.waitAllFutures()
       }
