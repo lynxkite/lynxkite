@@ -1956,11 +1956,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val newEdgeAttributes = unifyAttributes(
         project.edgeAttributes
           .map {
-            case (name, attr) => {
+            case (name, attr) =>
               name -> graph_operations.PulledOverVertexAttribute.pullAttributeVia(
                 attr,
                 myEbInjection)
-            }
           },
         other.edgeAttributes
           .map {
@@ -2401,6 +2400,23 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
       project.edgeBundle = edges.edges
       project.edgeAttributes = edges.attrs.mapValues(_.entity)
+    }
+  })
+
+  register("Copy edges to segmentation", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+    def enabled = isSegmentation && hasNoEdgeBundle &&
+      FEStatus.assert(parent.edgeBundle != null, "No edges on base project")
+    def apply(params: Map[String, String]) = {
+      val induction = {
+        val op = graph_operations.InducedEdgeBundle()
+        op(op.srcMapping, seg.belongsTo)(op.dstMapping, seg.belongsTo)(op.edges, parent.edgeBundle).result
+      }
+      project.edgeBundle = induction.induced
+      for ((name, attr) <- parent.edgeAttributes) {
+        project.edgeAttributes(name) =
+          graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, induction.embedding)
+      }
     }
   })
 
