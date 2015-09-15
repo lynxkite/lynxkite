@@ -63,6 +63,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
           dataManager.get(vertices)
+          dataManager.waitAllFutures()
         }
     }
   }
@@ -151,6 +152,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
         val dataManager = new DataManager(sparkContext, repo)
         val data = dataManager.get(mpfs.vertices)
         assert(data.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> ()))
+        dataManager.waitAllFutures()
       }
     val executionCounter = mpfs.operation.executionCounter
   }
