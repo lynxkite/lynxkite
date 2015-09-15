@@ -252,7 +252,7 @@ class DataManager(sc: spark.SparkContext,
     }
   }
 
-  def waitAllFutures: Unit = {
+  def waitAllFutures(): Unit = {
     Await.ready(Future.sequence(entityCache.values.toSeq), Duration.Inf)
   }
 
