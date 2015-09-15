@@ -193,23 +193,34 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     entityLocation.availablePartitions(ratioSorter.best.get)
   }
 
-  private def repartitionTo(entityLocation: EntityLocationSnapshot, pn: Int): HadoopFile = {
-    val rawRDD =
-      if (entityLocation.hasPartitionedData) {
-        val from = bestPartitionedSource(entityLocation, pn)
-        loadRDD(from)
-      } else {
-        assert(entityLocation.legacyPathExists,
-          s"There should be a valid legacy path at $legacyPath")
-        legacyRDD
-      }
-    val newRDD = rawRDD.toSortedRDD(new HashPartitioner(pn))
+  private def repartitionFromLegacyRDD(entityLocation: EntityLocationSnapshot, pn: Int): HadoopFile = {
+    assert(entityLocation.legacyPathExists,
+      s"There should be a valid legacy path at $legacyPath")
+    val oldRDD = legacyRDD
+    val newFile = targetDir(pn)
+    val p = new HashPartitioner(pn)
+    val newRDD = oldRDD.toSortedRDD(p)
+    val lines = newFile.saveEntityRDD(newRDD)
+    assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
+    writeMetadata(EntityMetadata(lines))
+    newFile
+  }
+
+  private def repartitionFromPartitionedRDD(entityLocation: EntityLocationSnapshot, pn: Int): HadoopFile = {
+    val from = bestPartitionedSource(entityLocation, pn)
+    val oldRDD = loadRDD(from)
+    val newRDD = oldRDD.toSortedRDD(new HashPartitioner(pn))
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
     assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
-    if (!entityLocation.hasPartitionedData)
-      writeMetadata(EntityMetadata(lines))
     newFile
+  }
+
+  private def repartitionTo(entityLocation: EntityLocationSnapshot, pn: Int): HadoopFile = {
+    if (entityLocation.hasPartitionedData)
+      repartitionFromPartitionedRDD(entityLocation, pn)
+    else
+      repartitionFromLegacyRDD(entityLocation, pn)
   }
 
   private def legacyRDD = legacyLoadRDD(legacyPath.forReading)
