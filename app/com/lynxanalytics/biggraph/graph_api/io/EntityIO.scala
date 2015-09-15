@@ -234,8 +234,10 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   protected def joinedRDD[T](rawRDD: SortedRDD[Long, T], parent: VertexSetData) = {
     val vsRDD = parent.rdd
     vsRDD.cacheBackingArray()
-    // This join does nothing except enforcing colocation.
-    vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value }
+    // Enforcing colocation:
+    vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
+      (it1, it2) => it2
+    }
   }
 
 }
@@ -272,7 +274,7 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
     // We do our best to colocate partitions to corresponding vertex set partitions.
     new EdgeBundleData(
       entity,
-      joinedRDD(loadRDD(path), parent.get),
+      joinedRDD(loadRDD(path), parent.get).asSortedRDD(parent.get.rdd.partitioner.get),
       Some(count))
   }
 }
@@ -292,9 +294,10 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
 
   def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): AttributeData[T] = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
+    implicit val ct = entity.classTag
     new AttributeData[T](
       entity,
-      joinedRDD(loadRDD(path), parent.get),
+      joinedRDD(loadRDD(path), parent.get).asSortedRDD(parent.get.rdd.partitioner.get),
       Some(count))
   }
 }
