@@ -3,22 +3,23 @@
   "version": "0.0.0",
   "dependencies": {
     "angular": "1.4.4",
-    "json3": "3.3.2",
-    "es5-shim": "4.1.11",
-    "jquery": "2.1.4",
-    "bootstrap": "3.3.4",
-    "angular-resource": "1.4.4",
-    "angular-cookies": "1.4.4",
-    "angular-sanitize": "1.4.4",
-    "angular-route": "1.4.4",
     "angular-bootstrap": "0.13.3",
+    "angular-cookies": "1.4.4",
     "angular-hotkeys": "chieffancypants/angular-hotkeys#1.5.0",
+    "angular-resource": "1.4.4",
+    "angular-route": "1.4.4",
+    "angular-sanitize": "1.4.4",
+    "angular-ui-ace": "0.2.3",
     "angular-ui-layout": "1.1.1",
-    "zeroclipboard": "2.2.0",
+    "bootstrap": "3.3.4",
+    "es5-shim": "4.1.11",
+    "es6-shim": "0.33.3",
+    "jquery": "2.1.4",
+    "json3": "3.3.2",
     "threejs": "jiyinyiyong/three.js#0.71.0",
     "threestrap": "0.0.10",
-    "es6-shim": "0.33.3",
-    "tinycolor": "1.2.1"
+    "tinycolor": "1.2.1",
+    "zeroclipboard": "2.2.0"
   },
   "devDependencies": {
     "angular-mocks": "1.4.4",
@@ -26,5 +27,14 @@
   },
   "resolutions": {
     "angular": "1.4.4"
+  },
+  "overrides": {
+    "ace-builds": {
+      "main": [
+        "src-min-noconflict/ace.js",
+        "src-min-noconflict/mode-groovy.js",
+        "src-min-noconflict/mode-javascript.js"
+      ]
+    }
   }
 }

@@ -93,6 +93,16 @@ object OperationParams {
       assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
     }
   }
+  case class Code(
+      id: String,
+      title: String,
+      defaultValue: String = "",
+      mandatory: Boolean = true) extends OperationParameterMeta {
+    val kind = "code"
+    val options = List()
+    val multipleChoice = false
+    def validate(value: String): Unit = {}
+  }
 
   // A random number to be used as default value for random seed parameters.
   case class RandomSeed(id: String, title: String) extends OperationParameterMeta {
@@ -1092,7 +1102,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
-      Param("expr", "Value", defaultValue = "1"))
+      Code("expr", "Value", defaultValue = "1"))
     def enabled = hasVertexSet
     override def summary(params: Map[String, String]) = {
       val name = params("output")
@@ -1119,7 +1129,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = UIValue.list(List("double", "string"))),
-      Param("expr", "Value", defaultValue = "1"))
+      Code("expr", "Value", defaultValue = "1"))
     def enabled = hasEdgeBundle
     override def summary(params: Map[String, String]) = {
       val name = params("output")
