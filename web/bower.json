@@ -2,7 +2,6 @@
   "name": "web",
   "version": "0.0.0",
   "dependencies": {
-    "ace": "https://raw.githubusercontent.com/ajaxorg/ace-builds/v1.2.0/src-min-noconflict/ace.js",
     "angular": "1.4.4",
     "angular-bootstrap": "0.13.3",
     "angular-cookies": "1.4.4",
@@ -17,8 +16,6 @@
     "es6-shim": "0.33.3",
     "jquery": "2.1.4",
     "json3": "3.3.2",
-    "mode-groovy": "https://raw.githubusercontent.com/ajaxorg/ace-builds/v1.2.0/src-min-noconflict/mode-groovy.js",
-    "mode-javascript": "https://raw.githubusercontent.com/ajaxorg/ace-builds/v1.2.0/src-min-noconflict/mode-javascript.js",
     "threejs": "jiyinyiyong/three.js#0.71.0",
     "threestrap": "0.0.10",
     "tinycolor": "1.2.1",
@@ -30,5 +27,14 @@
   },
   "resolutions": {
     "angular": "1.4.4"
+  },
+  "overrides": {
+    "ace-builds": {
+      "main": [
+        "src-min-noconflict/ace.js",
+        "src-min-noconflict/mode-groovy.js",
+        "src-min-noconflict/mode-javascript.js"
+      ]
+    }
   }
 }
