@@ -138,7 +138,7 @@
           { "id": "21", "title": "Iterations", "defaultValue": "5", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "38", "title": "Duplicate attribute", "parameters": [
-          { "id": "39", "title": "Existing attribute", "options": [], "kind": "default" },
+          { "id": "39", "title": "Existing attribute", "options": [{"title": "A", "id": "A"}, {"title": "B", "id": "B"}], "kind": "choice" },
           { "id": "40", "title": "New attribute", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "29a", "title": "Discard date", "parameters": [
