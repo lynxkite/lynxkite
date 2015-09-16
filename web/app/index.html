@@ -38,14 +38,11 @@
     <div ng-view></div>
     <top-alerts></top-alerts>
 
-    <!-- We need this because Ace doesn't have a proper bower config. See:
-    https://github.com/angular-ui/ui-ace/issues/43 -->
-    <script src="bower_components/ace-builds/src-min-noconflict/ace.js"></script>
-
     <!-- build:js scripts/vendor.js -->
     <!-- bower:js -->
     <script src="bower_components/es5-shim/es5-shim.js"></script>
     <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/ace/index.js"></script>
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
     <script src="bower_components/angular-cookies/angular-cookies.js"></script>
@@ -58,6 +55,8 @@
     <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
     <script src="bower_components/es6-shim/es6-shim.js"></script>
     <script src="bower_components/json3/lib/json3.js"></script>
+    <script src="bower_components/mode-groovy/index.js"></script>
+    <script src="bower_components/mode-javascript/index.js"></script>
     <script src="bower_components/threejs/three.min.js"></script>
     <script src="bower_components/threestrap/build/threestrap.js"></script>
     <script src="bower_components/tinycolor/tinycolor.js"></script>
