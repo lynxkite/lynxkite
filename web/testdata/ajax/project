@@ -91,6 +91,25 @@
             "disabledReason":""
           },
           "description":"Creates a new vertex set with no edges and no attributes."
+        },
+        {
+          "id":"Derived-vertex-attribute",
+          "title":"Derived vertex attribute",
+          "parameters":[
+            {
+              "id":"code",
+              "title":"JavaScript Code",
+              "kind":"code",
+              "defaultValue":"1",
+              "options":[],
+              "multipleChoice":false
+            }
+          ],
+          "category":"Vertex operations",
+          "status":{
+            "enabled":true,
+            "disabledReason":""
+          }
         }
       ]
     },
