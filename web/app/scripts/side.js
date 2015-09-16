@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .factory('side', function (util, $rootScope) {
+  .factory('side', function (util, $rootScope, getCenter) {
     function defaultSideState() {
       return {
         projectName: undefined,
@@ -236,18 +236,16 @@ angular.module('biggraph')
       resolvedParams.vertexSetId = this.project.vertexSet;
       return resolvedParams;
     };
-    Side.prototype.sendCenterRequest = function(params) {
+    Side.prototype.sendCenterRequest = function(params, offset) {
       var that = this;
       var resolvedParams = this.resolveCenterRequestParams(params);
-      this.centerRequest = util.get('/ajax/center', resolvedParams);
-      return this.centerRequest.$promise.then(
-        function(result) {
-          that.state.centers = result.centers;
+      this.centerRequest = getCenter(resolvedParams, offset);
+      this.centerRequest.$promise.then(
+        function(centers) {
+          that.state.centers = centers;
           that.state.lastCentersRequest = params;
-          that.state.lastCentersResponse = result.centers;
-        },
-        function(response) { util.ajaxError(response); }
-      );
+          that.state.lastCentersResponse = centers;
+        });
     };
     Side.prototype.requestNewCenters = function(count) {
       this.sendCenterRequest({ count: count,  filters: this.nonEmptyVertexFilterNames() });
