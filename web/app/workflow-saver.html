@@ -38,7 +38,8 @@
     </div>
     <div class="form-group">
       <label class="control-label">Code</label>
-      <textarea class="form-control" placeholder="" rows="30" ng-model="code"></textarea>
+      <div ui-ace="{ mode: 'groovy', rendererOptions: {fontSize: '14px'} }" class="form-control"
+        style="height: 300px;" placeholder="" ng-model="code"></textarea>
     </div>
   </div>
 </div>
