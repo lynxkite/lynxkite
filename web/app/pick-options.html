@@ -1,36 +1,52 @@
-<div ng-show="shown">
-  <div class="form-group">
-    <div>Center count</div>
-    <input class="form-control" ng-model="count">
-  </div>
-  <div ng-if="filters.length !== 0">Attribute restrictions</div>
-  <div class="pick-attr-restrict btn-group pull-left" ng-repeat="filter in filters">
-    <select
-       class="btn btn-default"
-       ng-model="filter.attributeName"
-       ng-options="attr.title as attr.title for attr in side.filterableVertexAttributes()">
-    </select>
-    <input
-       class="btn btn-default"
-       ng-model="filter.valueSpec">
-    <button class="btn btn-default" ng-click="removeFilter($index)" tooltip="Remove restriction">
-      <span class="glyphicon glyphicon-remove"></span>
-    </button>
-  </div>
-  <div class="btn-group pull-left">
-    <button class="btn btn-default" ng-click="addFilter()">
-      <span class="glyphicon glyphicon-plus"></span>&nbsp;Add restriction
-    </button>
-    <button class="btn btn-default" ng-click="copyRestrictionsFromFilters()">
-      Restrictions from filters
-    </button>
-  </div>
-  <div class="btn-group pull-right">
-    <button class="btn btn-default" ng-click="shown = false">
-      Close
-    </button>
+<div>
+  <div class="btn-group pick-buttons" ng-hide="advanced">
     <button class="btn btn-default" ng-click="requestNewCenters()">
       {{ unchanged() ? 'Next' : 'Pick' }}
     </button>
+    <button
+       class="btn btn-default"
+       ng-click="advanced = true"
+       tooltip="Advanced pick options">
+      ...
+    </button>
+  </div>
+
+  <help-popup href="pick-button" class="pull-right"></help-popup>
+
+  <div ng-show="advanced">
+    <div class="form-group">
+      <div>Center count</div>
+      <input class="form-control" ng-model="count">
+    </div>
+    <div ng-if="filters.length !== 0">Attribute restrictions</div>
+    <div class="pick-attr-restrict btn-group pull-left" ng-repeat="filter in filters">
+      <select
+         class="btn btn-default"
+         ng-model="filter.attributeName"
+         ng-options="attr.title as attr.title for attr in side.filterableVertexAttributes()">
+      </select>
+      <input
+         class="btn btn-default"
+         ng-model="filter.valueSpec">
+      <button class="btn btn-default" ng-click="removeFilter($index)" tooltip="Remove restriction">
+        <span class="glyphicon glyphicon-remove"></span>
+      </button>
+    </div>
+    <div class="btn-group pull-left">
+      <button class="btn btn-default" ng-click="addFilter()">
+        <span class="glyphicon glyphicon-plus"></span>&nbsp;Add restriction
+      </button>
+      <button class="btn btn-default" ng-click="copyRestrictionsFromFilters()">
+        Restrictions from filters
+      </button>
+    </div>
+    <div class="btn-group pull-right">
+      <button class="btn btn-default" ng-click="advanced = false">
+        Close
+      </button>
+      <button class="btn btn-default" ng-click="requestNewCenters()">
+        {{ unchanged() ? 'Next' : 'Pick' }}
+      </button>
+    </div>
   </div>
 </div>

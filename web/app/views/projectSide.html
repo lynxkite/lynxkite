@@ -214,19 +214,7 @@
             <tr>
               <td></td>
               <td>
-                <div class="btn-group pick-buttons" ng-show="!side.showPickOptions">
-                  <button class="btn btn-default" ng-click="side.requestNewCenters(1)">
-                    Pick
-                  </button>
-                  <button
-                     class="btn btn-default"
-                     ng-click="side.showPickOptions = !side.showPickOptions"
-                     tooltip="Advanced pick options">
-                    ...
-                  </button>
-                </div>
-                <help-popup href="pick-button" class="pull-right"></help-popup>
-                <pick-options shown="side.showPickOptions" side="side"></pick-options>
+                <pick-options side="side"></pick-options>
               </td>
             </tr>
             <tr>

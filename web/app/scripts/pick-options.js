@@ -3,7 +3,7 @@
 
 angular.module('biggraph').directive('pickOptions', function() {
   return {
-    scope: { side: '=', shown: '=' },
+    scope: { side: '=' },
     templateUrl: 'pick-options.html',
     link: function(scope) {
       scope.reset = function() {
@@ -26,12 +26,16 @@ angular.module('biggraph').directive('pickOptions', function() {
       };
 
       function centerRequestParams() {
-        var filters = scope.filters.filter(function (filter) {
-          return filter.attributeName !== '';
-        });
-        return {
-          count: parseInt(scope.count),
-          filters: filters };
+        if (scope.advanced) {
+          var filters = scope.filters.filter(function (filter) {
+            return filter.attributeName !== '';
+          });
+          return {
+            count: parseInt(scope.count),
+            filters: filters };
+        } else {
+          return { count: 1, filters: [] };
+        }
       }
 
       scope.unchanged = function() {
