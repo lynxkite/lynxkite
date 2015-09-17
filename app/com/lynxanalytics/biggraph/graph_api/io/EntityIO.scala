@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_api.io
 
 import org.apache.spark
 import org.apache.spark.HashPartitioner
+import org.apache.spark.rdd.RDD
 import play.api.libs.json
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -123,11 +124,15 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   def read(parent: Option[VertexSetData] = None): DT = {
     val entityLocation = EntityLocationSnapshot(computeAvailablePartitions)
     val pn = parent.map(_.rdd.partitions.size).getOrElse(selectPartitionNumber(entityLocation))
-    val file =
-      if (entityLocation.availablePartitions.contains(pn)) entityLocation.availablePartitions(pn)
-      else repartitionTo(entityLocation, pn)
+    val partitioner = parent.map(_.rdd.partitioner.get).getOrElse(new HashPartitioner(pn))
 
-    val dataRead = finalRead(file, entityLocation.numVertices, parent)
+    val file =
+      if (entityLocation.availablePartitions.contains(pn))
+        entityLocation.availablePartitions(pn)
+      else
+        repartitionTo(entityLocation, partitioner)
+
+    val dataRead = finalRead(file, entityLocation.numVertices, partitioner, parent)
     assert(dataRead.rdd.partitions.size == pn, s"finalRead mismatch: ${dataRead.rdd.partitions.size} != $pn")
     dataRead
   }
@@ -178,12 +183,15 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     resultList.toMap
   }
 
-  // This method performs the actual reading of the rdddata, from a path/
+  // This method performs the actual reading of the rdddata, from a path
   // The parent VertexSetData is given for EdgeBundleData and AttributeData[T] so that
   // the corresponding data will be co-located.
-  protected def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData] = None): DT
+  // A partitioner is also passed, because we don't want to create another one for VertexSetData
+  protected def finalRead(path: HadoopFile,
+                          count: Long,
+                          partitioner: org.apache.spark.Partitioner,
+                          parent: Option[VertexSetData] = None): DT
 
-  protected def loadRDD(path: HadoopFile): SortedRDD[Long, _]
   protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, _]
 
   private def bestPartitionedSource(entityLocation: EntityLocationSnapshot, desiredPartitionNumber: Int) = {
@@ -193,22 +201,37 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     entityLocation.availablePartitions(ratioSorter.best.get)
   }
 
-  private def repartitionTo(entityLocation: EntityLocationSnapshot, pn: Int): HadoopFile = {
-    val rawRDD =
-      if (entityLocation.hasPartitionedData) {
-        val from = bestPartitionedSource(entityLocation, pn)
-        loadRDD(from)
-      } else {
-        assert(entityLocation.legacyPathExists,
-          s"There should be a valid legacy path at $legacyPath")
-        legacyRDD
-      }
-    val newRDD = rawRDD.toSortedRDD(new HashPartitioner(pn))
+  private def repartitionTo(entityLocation: EntityLocationSnapshot,
+                            partitioner: org.apache.spark.Partitioner): HadoopFile = {
+    if (entityLocation.hasPartitionedData)
+      repartitionFromPartitionedRDD(entityLocation, partitioner)
+    else
+      repartitionFromLegacyRDD(entityLocation, partitioner)
+  }
+
+  private def repartitionFromPartitionedRDD(entityLocation: EntityLocationSnapshot,
+                                            partitioner: org.apache.spark.Partitioner): HadoopFile = {
+    val pn = partitioner.numPartitions
+    val from = bestPartitionedSource(entityLocation, pn)
+    val oldRDD = from.loadEntityRawRDD(sc)
+    val newRDD = oldRDD.toSortedRDD(partitioner)
+    val newFile = targetDir(pn)
+    val lines = newFile.saveEntityRawRDD(newRDD)
+    assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
+    newFile
+  }
+
+  private def repartitionFromLegacyRDD(entityLocation: EntityLocationSnapshot,
+                                       partitioner: org.apache.spark.Partitioner): HadoopFile = {
+    assert(entityLocation.legacyPathExists,
+      s"There should be a valid legacy path at $legacyPath")
+    val pn = partitioner.numPartitions
+    val oldRDD = legacyRDD
+    val newRDD = oldRDD.toSortedRDD(partitioner)
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
     assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
-    if (!entityLocation.hasPartitionedData)
-      writeMetadata(EntityMetadata(lines))
+    writeMetadata(EntityMetadata(lines))
     newFile
   }
 
@@ -231,29 +254,34 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   private def existsAtLegacy = (legacyPath / Success).exists
   private def existsPartitioned = computeAvailablePartitions.nonEmpty && metaFile.exists
 
-  protected def joinedRDD[T](rawRDD: SortedRDD[Long, T], parent: VertexSetData) = {
+  protected def enforceCoLocationWithParent[T](rawRDD: RDD[(Long, T)],
+                                               parent: VertexSetData): RDD[(Long, T)] = {
     val vsRDD = parent.rdd
     vsRDD.cacheBackingArray()
-    // This join does nothing except enforcing colocation.
-    vsRDD.sortedJoin(rawRDD).mapValues { case (_, value) => value }
+    // Enforcing colocation:
+    assert(vsRDD.partitions.size == rawRDD.partitions.size,
+      s"$vsRDD and $rawRDD should have the same number of partitions, " +
+        s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}")
+    vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
+      (it1, it2) => it2
+    }
   }
-
 }
 
 class VertexIO(entity: VertexSet, dMParam: IOContext)
     extends PartitionedDataIO[VertexSetData](entity, dMParam) {
 
-  def loadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
-    path.loadEntityRDD[Unit](sc)
-  }
-
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
     path.loadLegacyEntityRDD[Unit](sc)
   }
 
-  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): VertexSetData = {
+  def finalRead(path: HadoopFile,
+                count: Long,
+                partitioner: org.apache.spark.Partitioner,
+                parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
-    new VertexSetData(entity, loadRDD(path), Some(count))
+    val rdd = path.loadEntityRDD[Unit](sc)
+    new VertexSetData(entity, rdd.asSortedRDD(partitioner), Some(count))
   }
 }
 
@@ -261,18 +289,21 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
     extends PartitionedDataIO[EdgeBundleData](entity, dMParam) {
 
   override def correspondingVertexSet = Some(entity.idSet)
-  def loadRDD(path: HadoopFile): SortedRDD[Long, Edge] = {
-    path.loadEntityRDD[Edge](sc)
-  }
+
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Edge] = {
     path.loadLegacyEntityRDD[Edge](sc)
   }
 
-  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): EdgeBundleData = {
-    // We do our best to colocate partitions to corresponding vertex set partitions.
+  def finalRead(path: HadoopFile,
+                count: Long,
+                partitioner: org.apache.spark.Partitioner,
+                parent: Option[VertexSetData]): EdgeBundleData = {
+    assert(partitioner eq parent.get.rdd.partitioner.get)
+    val rdd = path.loadEntityRDD[Edge](sc)
+    val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new EdgeBundleData(
       entity,
-      joinedRDD(loadRDD(path), parent.get),
+      coLocated.asSortedRDD(partitioner),
       Some(count))
   }
 }
@@ -281,20 +312,22 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
     extends PartitionedDataIO[AttributeData[T]](entity, dMParam) {
   override def correspondingVertexSet = Some(entity.vertexSet)
 
-  def loadRDD(path: HadoopFile): SortedRDD[Long, T] = {
-    implicit val ct = entity.classTag
-    path.loadEntityRDD[T](sc)
-  }
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T] = {
     implicit val ct = entity.classTag
     path.loadLegacyEntityRDD[T](sc)
   }
 
-  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): AttributeData[T] = {
-    // We do our best to colocate partitions to corresponding vertex set partitions.
+  def finalRead(path: HadoopFile,
+                count: Long,
+                partitioner: org.apache.spark.Partitioner,
+                parent: Option[VertexSetData]): AttributeData[T] = {
+    assert(partitioner eq parent.get.rdd.partitioner.get)
+    implicit val ct = entity.classTag
+    val rdd = path.loadEntityRDD[T](sc)
+    val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new AttributeData[T](
       entity,
-      joinedRDD(loadRDD(path), parent.get),
+      coLocated.asSortedRDD(partitioner),
       Some(count))
   }
 }

@@ -9,6 +9,7 @@ import java.io.InputStreamReader
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
+import org.apache.spark.rdd.RDD
 
 object HadoopFile {
 
@@ -178,6 +179,8 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
 
   // Loads a Long-keyed SortedRDD, optionally with a specific partitioner.
   // This can load the legacy format (see issue #2018).
+  // Note that this method returns a sortedRDD, as opposed to the
+  // new load methods, which return simple RDDs
   def loadLegacyEntityRDD[T: scala.reflect.ClassTag](
     sc: spark.SparkContext,
     partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
@@ -194,32 +197,34 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
       .asSortedRDD(p)
   }
 
-  // Loads a Long-keyed SortedRDD, optionally with a specific partitioner.
-  def loadEntityRDD[T: scala.reflect.ClassTag](
-    sc: spark.SparkContext,
-    partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
-
+  // Loads a Long-keyed rdd where the values are just raw bytes
+  def loadEntityRawRDD(sc: spark.SparkContext): RDD[(Long, Array[Byte])] = {
     val file = sc.newAPIHadoopFile(
       resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
       conf = hadoopConfiguration)
-    val p = partitioner.getOrElse(new spark.HashPartitioner(file.partitions.size))
-    file
-      .map { case (k, v) => k.get -> RDDUtils.kryoDeserialize[T](v.getBytes) }
-      .asSortedRDD(p)
+    file.map { case (k, v) => k.get -> v.getBytes }
   }
 
-  // Saves a Long-keyed SortedRDD, and returns the number of lines written
-  def saveEntityRDD[T](data: SortedRDD[Long, T]): Long = {
+  // Loads a Long-keyed rdd with deserialized values
+  def loadEntityRDD[T: scala.reflect.ClassTag](sc: spark.SparkContext): RDD[(Long, T)] = {
+    loadEntityRawRDD(sc).map {
+      case (k, v) => k -> RDDUtils.kryoDeserialize[T](v)
+    }
+  }
+
+  // Saves a Long-keyed rdd where the values are just raw bytes;
+  // Returns the number of lines written
+  def saveEntityRawRDD(data: RDD[(Long, Array[Byte])]): Long = {
     import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
     val lines = data.context.accumulator[Long](0L, "Line count")
     val hadoopData = data.map {
       case (k, v) =>
         lines += 1
-        new hadoop.io.LongWritable(k) -> new hadoop.io.BytesWritable(RDDUtils.kryoSerialize(v))
+        new hadoop.io.LongWritable(k) -> new hadoop.io.BytesWritable(v)
     }
     if (fs.exists(path)) {
       log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
@@ -234,6 +239,15 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
         classOf[SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
       conf = new hadoop.mapred.JobConf(hadoopConfiguration))
     lines.value
+  }
+
+  // Saves a Long-keyed RDD, and returns the number of lines written.
+  def saveEntityRDD[T](data: RDD[(Long, T)]): Long = {
+    val rawData = data.map {
+      case (k, v) =>
+        k -> RDDUtils.kryoSerialize(v)
+    }
+    saveEntityRawRDD(rawData)
   }
 
   def +(suffix: String): HadoopFile = {
