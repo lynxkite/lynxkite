@@ -13,7 +13,6 @@ var fw = (function UIDescription() {
   };
 
   var mocks = require('../mocks.js');
-  var lib = require('./test-lib.js');
   mocks.addTo(browser);
   
   return {
@@ -28,9 +27,9 @@ var fw = (function UIDescription() {
 
       function runStatePreservingTest(currentTest) {
         it(currentTest.name, function() {
-          currentTest.runTest(lib);
+          currentTest.runTest();
           // Checking that it was indeed statePreserving.
-          checks(lib);
+          checks();
         });
       }
 
@@ -39,8 +38,8 @@ var fw = (function UIDescription() {
           states[previousStateName].reachAndTest();
           describe(stateName, function() {
             it('can be reached', function() {
-              transitionFunction(lib);
-              checks(lib);
+              transitionFunction();
+              checks();
             });
             if (!testingDone) {
               var statePreservingTests = allStatePreservingTests[stateName] || [];

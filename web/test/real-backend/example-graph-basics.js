@@ -1,19 +1,21 @@
 'use strict';
 
+var lib = require('./test-lib.js');
+
 module.exports = function(fw) {
   fw.transitionTest(
     'empty splash',
     'empty test-example project',
-    function(lib) {
+    function() {
       lib.openNewProject('test-example');
     },
-    function(lib) {
+    function() {
       lib.expectCurrentProjectIs('test-example');
     });
   fw.transitionTest(
     'empty test-example project',
     'test-example project with example graph',
-    function(lib) {
+    function() {
       lib.runLeftOperation('example graph');
     },
     function() {
@@ -21,7 +23,7 @@ module.exports = function(fw) {
   fw.statePreservingTest(
     'test-example project with example graph',
     'has the proper vertex count',
-    function(lib) {
+    function() {
       expect(lib.leftVertexCount()).toEqual(4);
     });
 };
