@@ -242,7 +242,7 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   private def existsAtLegacy = (legacyPath / Success).exists
   private def existsPartitioned = computeAvailablePartitions.nonEmpty && metaFile.exists
 
-  protected def joinedRDD[T](rawRDD: RDD[(Long, T)], parent: VertexSetData) = {
+  protected def enforceCoLocationWithParent[T](rawRDD: RDD[(Long, T)], parent: VertexSetData) = {
     val vsRDD = parent.rdd
     vsRDD.cacheBackingArray()
     // Enforcing colocation:
@@ -279,11 +279,11 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
   }
 
   def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): EdgeBundleData = {
-    // We do our best to colocate partitions to corresponding vertex set partitions.
     val rdd = path.loadEntityRDD[Edge](sc)
+    val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new EdgeBundleData(
       entity,
-      joinedRDD(rdd, parent.get).asSortedRDD(parent.get.rdd.partitioner.get),
+      coLocated.asSortedRDD(parent.get.rdd.partitioner.get),
       Some(count))
   }
 }
@@ -298,12 +298,12 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
   }
 
   def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): AttributeData[T] = {
-    // We do our best to colocate partitions to corresponding vertex set partitions.
     implicit val ct = entity.classTag
     val rdd = path.loadEntityRDD[T](sc)
+    val coLocated = enforceCoLocationWithParent(rdd, parent.get)
     new AttributeData[T](
       entity,
-      joinedRDD(rdd, parent.get).asSortedRDD(parent.get.rdd.partitioner.get),
+      coLocated.asSortedRDD(parent.get.rdd.partitioner.get),
       Some(count))
   }
 }
