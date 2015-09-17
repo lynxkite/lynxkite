@@ -19,8 +19,8 @@ var fw = (function UIDescription() {
   return {
     transitionTest: function(
       previousStateName,  // Name of the state on which this transition should be applied.
-      transitionFunction,  // JS function that goes to this state from prev state.
       stateName,  // Name of the target state of this transition.
+      transitionFunction,  // JS function that goes to this state from prev state.
       checks) {  // Tests confirming we are indeed in this state. Should be very fast stuff only,
                  // like looking at the DOM.
       var testingDone = false;
