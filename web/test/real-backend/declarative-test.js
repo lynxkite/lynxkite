@@ -62,12 +62,12 @@ var fw = (function UIDescription() {
       allIdempotentTests[stateToRunAt].push({name: name, runTest: body});
     },
     runAll: function() {
-      for (var stateName in states) {
-        if (states.hasOwnProperty(stateName)) {
-          var state = states[stateName];
-          if (!hasChild[stateName] && !state.done()) {
-            state.goToState();
-          }
+      var stateNames = Object.keys(states);
+      for (var i = 0; i < stateNames.length; i++) {
+        var stateName = stateNames[i];
+        var state = states[stateName];
+        if (!hasChild[stateName] && !state.done()) {
+          state.goToState();
         }
       }
     },
