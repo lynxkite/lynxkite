@@ -312,7 +312,7 @@ object ProductionJsonServer extends JsonServer {
   def createDirectory = jsonPost(bigGraphController.createDirectory)
   def discardDirectory = jsonPost(bigGraphController.discardDirectory)
   def renameDirectory = jsonPost(bigGraphController.renameDirectory)
-  def discardAll = jsonGet(bigGraphController.discardAll)
+  def discardAll = jsonPost(bigGraphController.discardAll)
   def projectOp = jsonPost(bigGraphController.projectOp)
   def project = jsonGet(bigGraphController.project)
   def projectList = jsonGet(bigGraphController.projectList)

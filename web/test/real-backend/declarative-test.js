@@ -5,20 +5,9 @@ var fw = (function UIDescription() {
   var allStatePreservingTests = {};
   var hasChild = {};
 
-  states['empty splash'] = {
-    reachAndTest: function() {
-      describe('empty splash', function() {
-        it('can be reached', function() {
-          browser.driver.get(browser.baseUrl + 'ajax/discardAllReallyIMeanIt?q=%7B"fake"%3A1%7D');
-          browser.get('/');
-        });
-      });
-    },
-  };
-
   var mocks = require('../mocks.js');
   mocks.addTo(browser);
-  
+
   return {
     transitionTest: function(
       previousStateName,  // Name of the state on which this transition should be applied.
@@ -39,7 +28,9 @@ var fw = (function UIDescription() {
 
       states[stateName] = {
         reachAndTest: function() {
-          states[previousStateName].reachAndTest();
+          if (previousStateName !== undefined) {
+            states[previousStateName].reachAndTest();
+          }
           describe(stateName, function() {
             it('can be reached', function() {
               transitionFunction();
@@ -56,6 +47,7 @@ var fw = (function UIDescription() {
         },
       };
     },
+
     // These tests need to preserve the UI state or restore it when they are finished.
     statePreservingTest: function(stateToRunAt, name, body) {
       if (allStatePreservingTests[stateToRunAt] === undefined) {
@@ -63,6 +55,7 @@ var fw = (function UIDescription() {
       }
       allStatePreservingTests[stateToRunAt].push({name: name, runTest: body});
     },
+
     runAll: function() {
       var stateNames = Object.keys(states);
       for (var i = 0; i < stateNames.length; i++) {
@@ -78,11 +71,6 @@ var fw = (function UIDescription() {
   };
 })();
 
-
 require('./example-graph-basics.js')(fw);
 
 fw.runAll();
-
-
-
-
