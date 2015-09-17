@@ -57,7 +57,8 @@ case class FEOperationParameterMeta(
     "default", // A simple textbox.
     "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
-    "tag-list") // A variation of "multipleChoice" with a more concise, horizontal design.
+    "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
+    "code") // code
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
@@ -78,6 +79,7 @@ case class FEAttribute(
   id: String,
   title: String,
   typeName: String,
+  note: String,
   canBucket: Boolean,
   canFilter: Boolean,
   isNumeric: Boolean,
@@ -255,6 +257,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assertNameNotExists(request.to)
     p.copy(ProjectDirectory.fromName(request.to))
     p.remove()
+  }
+
+  def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
+    assert(user.isAdmin, "Only admins can delete all projects and directories")
+    ProjectDirectory.rootDirectory.remove()
   }
 
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
@@ -496,6 +503,7 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def summary(params: Map[String, String]): String = title
 
   protected def apply(params: Map[String, String]): Unit
+  protected def help = "<help-popup href=\"" + id + "\"></help-popup>" // Add to notes for help link.
 
   def validateParameters(values: Map[String, String]): Unit = {
     val paramIds = parameters.map { param => param.id }.toSet

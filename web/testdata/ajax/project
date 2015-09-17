@@ -14,7 +14,7 @@
   ],
 
   "vertexAttributes": [
-    { "id": "5", "title": "age", "typeName": "Double", "canBucket": true, "canFilter": true, "isNumeric": true },
+    { "id": "5", "title": "age", "typeName": "Double", "note": "a note <help-popup href=\"pick-button\">", "canBucket": true, "canFilter": true, "isNumeric": true },
     { "id": "6", "title": "income", "typeName": "Double", "canBucket": true, "canFilter": true, "isNumeric": true },
     { "id": "7", "title": "gender", "typeName": "String", "canBucket": true, "canFilter": true },
     { "id": "8", "title": "favorite_color", "typeName": "String", "canBucket": true, "canFilter": true },
@@ -91,6 +91,25 @@
             "disabledReason":""
           },
           "description":"Creates a new vertex set with no edges and no attributes."
+        },
+        {
+          "id":"Derived-vertex-attribute",
+          "title":"Derived vertex attribute",
+          "parameters":[
+            {
+              "id":"code",
+              "title":"JavaScript Code",
+              "kind":"code",
+              "defaultValue":"1",
+              "options":[],
+              "multipleChoice":false
+            }
+          ],
+          "category":"Vertex operations",
+          "status":{
+            "enabled":true,
+            "disabledReason":""
+          }
         }
       ]
     },
@@ -138,7 +157,7 @@
           { "id": "21", "title": "Iterations", "defaultValue": "5", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "38", "title": "Duplicate attribute", "parameters": [
-          { "id": "39", "title": "Existing attribute", "options": [], "kind": "default" },
+          { "id": "39", "title": "Existing attribute", "options": [{"title": "A", "id": "A"}, {"title": "B", "id": "B"}], "kind": "choice" },
           { "id": "40", "title": "New attribute", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "29a", "title": "Discard date", "parameters": [

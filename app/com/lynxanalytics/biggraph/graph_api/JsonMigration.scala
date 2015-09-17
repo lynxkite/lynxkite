@@ -188,7 +188,8 @@ object MetaRepositoryManager {
         state.edgeAttributeGUIDs.mapValues(newGUID),
         state.scalarGUIDs.mapValues(newGUID),
         state.segmentations.mapValues(updatedSegmentation),
-        state.notes)
+        state.notes,
+        state.elementNotes)
     def updatedSegmentation(segmentation: SegmentationState): SegmentationState =
       SegmentationState(
         updatedProject(segmentation.state),
@@ -209,20 +210,19 @@ object MetaRepositoryManager {
 
     // Tags.
     val oldTags = TagRoot.loadFromRepo(src)
-    val versionTag = SymbolPath('tagmeta, 'version)
-    val version = oldTags.getOrElse(versionTag, "1")
-    if (version == "2") {
-      // We already use version 2 tags that are GUID agnostic. All we need to do is copy the tags.
-      mm.setTags(oldTags)
-    } else if (version == "1") {
-      // First we upgrade guids
-      val guidsFixedTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
-      val v1TagRoot = TagRoot.temporaryRoot
-      v1TagRoot.setTags(guidsFixedTags)
-      mm.setTag(versionTag, "2")
-      ObsoleteProject.migrateV1ToV2(v1TagRoot, mm)
-    } else {
-      assert(false, "Unknown tags version $version")
+    val projectVersion = srcVersion("com.lynxanalytics.biggraph.graph_api.ProjectFrame")
+    projectVersion match {
+      case 1 =>
+        // We already use version 1 tags that are GUID agnostic. All we need to do is copy the tags.
+        mm.setTags(oldTags)
+      case 0 =>
+        // First we upgrade guids
+        val guidsFixedTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
+        val v1TagRoot = TagRoot.temporaryRoot
+        v1TagRoot.setTags(guidsFixedTags)
+        ObsoleteProject.migrateV1ToV2(v1TagRoot, mm)
+      case _ =>
+        assert(false, "Unknown project version $projectVersion")
     }
   }
 

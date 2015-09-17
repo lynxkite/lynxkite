@@ -258,7 +258,7 @@
       <li class="list-group-item de-emph" id="side-summary">
         <span ng-if="side.scalars['!belongsToEdges'] === undefined" class="lead">
           <!-- Project summary -->
-          <value class="emph" ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']"></value>
+          <value class="emph vertex-count" ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']"></value>
           <span class="emph" ng-if="side.project.vertexSet === ''">no</span>
           vertices with
           <value class="emph" ng-if="side.project.edgeBundle !== ''" ref="side.scalars['edge_count']"></value>

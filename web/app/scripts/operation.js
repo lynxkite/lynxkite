@@ -45,8 +45,12 @@ angular.module('biggraph').directive('operation', function(util, hotkeys) {
         // Have to watch for the parameters to finish rendering.
         return element.find('input, select')[0];
       }, function(firstInput) {
-        if (firstInput && firstInput.select) {
-          firstInput.select();
+        if (firstInput) {
+          if (firstInput.select) {
+            firstInput.select();
+          } else {
+            firstInput.focus();
+          }
         } else {
           // No parameters? Focus on the OK button.
           element.find('.ok-button').focus();
