@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = function(fw) {
   fw.newUIState(
     'empty test-example project',
@@ -14,7 +16,7 @@ module.exports = function(fw) {
     function(lib) {
       lib.runOperation('example graph');
     },
-    function(lib) {
+    function() {
     });
   fw.newIdempotentTest(
     'test-example project with example graph',

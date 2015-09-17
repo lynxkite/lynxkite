@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = (function() {
   var mocks = require('../mocks.js');
   var K = protractor.Key;  // Short alias.
