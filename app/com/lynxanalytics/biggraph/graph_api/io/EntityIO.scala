@@ -124,16 +124,15 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   def read(parent: Option[VertexSetData] = None): DT = {
     val entityLocation = EntityLocationSnapshot(computeAvailablePartitions)
     val pn = parent.map(_.rdd.partitions.size).getOrElse(selectPartitionNumber(entityLocation))
+    val partitioner = parent.map(_.rdd.partitioner.get).getOrElse(new HashPartitioner(pn))
 
     val file =
       if (entityLocation.availablePartitions.contains(pn))
         entityLocation.availablePartitions(pn)
-      else {
-        val partitioner = parent.map(_.rdd.partitioner.get).getOrElse(new HashPartitioner(pn))
+      else
         repartitionTo(entityLocation, partitioner)
-      }
 
-    val dataRead = finalRead(file, entityLocation.numVertices, parent)
+    val dataRead = finalRead(file, entityLocation.numVertices, partitioner, parent)
     assert(dataRead.rdd.partitions.size == pn, s"finalRead mismatch: ${dataRead.rdd.partitions.size} != $pn")
     dataRead
   }
@@ -187,7 +186,11 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   // This method performs the actual reading of the rdddata, from a path/
   // The parent VertexSetData is given for EdgeBundleData and AttributeData[T] so that
   // the corresponding data will be co-located.
-  protected def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData] = None): DT
+  // A partitioner is also passed, because we don't want to create another one
+  protected def finalRead(path: HadoopFile,
+                          count: Long,
+                          partitioner: org.apache.spark.Partitioner,
+                          parent: Option[VertexSetData] = None): DT
 
   protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, _]
 
@@ -270,11 +273,13 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
     path.loadLegacyEntityRDD[Unit](sc)
   }
 
-  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): VertexSetData = {
+  def finalRead(path: HadoopFile,
+                count: Long,
+                partitioner: org.apache.spark.Partitioner,
+                parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
     val rdd = path.loadEntityRDD[Unit](sc)
-    val p = new HashPartitioner(rdd.partitions.size)
-    new VertexSetData(entity, rdd.asSortedRDD(p), Some(count))
+    new VertexSetData(entity, rdd.asSortedRDD(partitioner), Some(count))
   }
 }
 
@@ -287,12 +292,16 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
     path.loadLegacyEntityRDD[Edge](sc)
   }
 
-  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): EdgeBundleData = {
+  def finalRead(path: HadoopFile,
+                count: Long,
+                partitioner: org.apache.spark.Partitioner,
+                parent: Option[VertexSetData]): EdgeBundleData = {
     val rdd = path.loadEntityRDD[Edge](sc)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
+    assert(partitioner eq parent.get.rdd.partitioner.get)
     new EdgeBundleData(
       entity,
-      coLocated.asSortedRDD(parent.get.rdd.partitioner.get),
+      coLocated.asSortedRDD(partitioner),
       Some(count))
   }
 }
@@ -306,13 +315,17 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
     path.loadLegacyEntityRDD[T](sc)
   }
 
-  def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): AttributeData[T] = {
+  def finalRead(path: HadoopFile,
+                count: Long,
+                partitioner: org.apache.spark.Partitioner,
+                parent: Option[VertexSetData]): AttributeData[T] = {
     implicit val ct = entity.classTag
     val rdd = path.loadEntityRDD[T](sc)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
+    assert(partitioner eq parent.get.rdd.partitioner.get)
     new AttributeData[T](
       entity,
-      coLocated.asSortedRDD(parent.get.rdd.partitioner.get),
+      coLocated.asSortedRDD(partitioner),
       Some(count))
   }
 }
