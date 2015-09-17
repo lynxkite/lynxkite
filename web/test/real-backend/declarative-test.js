@@ -28,6 +28,15 @@ var fw = (function UIDescription() {
                  // like looking at the DOM.
       var testingDone = false;
       hasChild[previousStateName] = true;
+
+      function runIdempotentTest(currentTest) {
+        it(currentTest.name, function() {
+          currentTest.runTest(lib);
+          // Checking that it was indeed idempotent.
+          checks(lib);
+        });
+      }
+
       states[stateName] = {
         goToState: function() {
           states[previousStateName].goToState();
@@ -39,12 +48,7 @@ var fw = (function UIDescription() {
             if (!testingDone) {
               var idempotentTests = allIdempotentTests[stateName] || [];
               for (var i = 0; i < idempotentTests.length; i++) {
-                var currentTest = idempotentTests[i];
-                it(currentTest.name, function() {
-                  currentTest.runTest(lib);
-                  // Checking that it was indeed idempotent.
-                  checks(lib);
-                });
+                runIdempotentTest(idempotentTests[i]);
               }
               testingDone = true;
             }
