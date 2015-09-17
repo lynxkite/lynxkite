@@ -1,7 +1,10 @@
 'use strict';
 
+/* global element */
+/* global by */
+/* global protractor */
+
 module.exports = (function() {
-  var mocks = require('../mocks.js');
   var K = protractor.Key;  // Short alias.
   return {
     openNewProject: function(name) {
