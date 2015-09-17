@@ -5,6 +5,7 @@ angular
   .module('biggraph', [
     'ngResource',
     'ngRoute',
+    'ui.ace',
     'ui.bootstrap',
     'ui.layout',
     'cfp.hotkeys',

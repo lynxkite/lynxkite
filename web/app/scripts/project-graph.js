@@ -41,7 +41,7 @@ angular.module('biggraph').directive('projectGraph', function (util, loadGraph) 
           }
         }
         for (i = 0; i < gv.edgeBundles.length; ++i) {
-          scope.tsv += edgeBundleToTSV(gv.edgeBundles[i]);
+          scope.tsv += edgeBundleToTSV(gv.edgeBundles[i], sides);
         }
       }
 
@@ -60,7 +60,8 @@ angular.module('biggraph').directive('projectGraph', function (util, loadGraph) 
           tsv += 'Vertices of ' + name + ':\n';
           tsv += 'id';
           var attrs = [];
-          angular.forEach(side.attrs, function(attr) { if (attr) { attrs.push(attr); } });
+          // Turn the object into an array;
+          angular.forEach(side.vertexAttrs, function(attr) { if (attr) { attrs.push(attr); } });
           for (i = 0; i < attrs.length; ++i) {
             tsv += '\t' + attrs[i].title;
           }
@@ -115,14 +116,29 @@ angular.module('biggraph').directive('projectGraph', function (util, loadGraph) 
         return tsv;
       }
 
-      function edgeBundleToTSV(eb) {
+      function edgeBundleToTSV(eb, sides) {
+        var i, j;
         var tsv = '\n';
         tsv += 'Edges from ' + graphName(eb.srcIdx);
         tsv += ' to ' + graphName(eb.dstIdx) + ':\n';
-        tsv += 'src\tdst\tsize\n';
-        for (var i = 0; i < eb.edges.length; ++i) {
+        tsv += 'src\tdst\tsize';
+        var attrs = [];
+        if (eb.srcIdx === eb.dstIdx) {
+          // Turn the object into an array;
+          angular.forEach(
+              sides[eb.srcIdx].edgeAttrs, function(attr) { if (attr) { attrs.push(attr); } });
+        }
+        for (i = 0; i < attrs.length; ++i) {
+          tsv += '\t' + attrs[i].title;
+        }
+        tsv += '\n';
+        for (i = 0; i < eb.edges.length; ++i) {
           var e = eb.edges[i];
-          tsv += e.a + '\t' + e.b + '\t' + e.size + '\n';
+          tsv += e.a + '\t' + e.b + '\t' + e.size;
+          for (j = 0; j < attrs.length; ++j) {
+            tsv += '\t' + e.attrs[attrs[j].id + ':' + attrs[j].aggregator].string;
+          }
+          tsv += '\n';
         }
         return tsv;
       }
