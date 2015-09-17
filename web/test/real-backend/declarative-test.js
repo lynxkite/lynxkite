@@ -1,17 +1,19 @@
+'use strict';
+
 var fw = (function UIDescription() {
   var states = {};
   var allIdempotentTests = {};
   var hasChild = {};
 
   states['empty splash'] = {
-    goToState: function(lib) {
+    goToState: function() {
       browser.driver.get('http://localhost:9000/ajax/discardAllReallyIMeanIt?q=%7B"fake"%3A1%7D');
       browser.get('/');
     },
     done: function() {
       return true;
     },
-  }
+  };
 
   var mocks = require('../mocks.js');
   var lib = require('./test-lib.js');
@@ -35,9 +37,9 @@ var fw = (function UIDescription() {
               checks(lib);
             });
             if (!testingDone) {
-              idempotentTests = allIdempotentTests[stateName] || [];
-              for (i = 0; i < idempotentTests.length; i++) {
-                var currentTest = idempotentTests[i]
+              var idempotentTests = allIdempotentTests[stateName] || [];
+              for (var i = 0; i < idempotentTests.length; i++) {
+                var currentTest = idempotentTests[i];
                 it(currentTest.name, function() {
                   currentTest.runTest(lib);
                   // Checking that it was indeed idempotent.
@@ -51,7 +53,7 @@ var fw = (function UIDescription() {
         done: function() {
           return testingDone;
         },
-      }
+      };
     },
     newIdempotentTest: function(stateToRunAt, name, body) {
       if (allIdempotentTests[stateToRunAt] === undefined) {
