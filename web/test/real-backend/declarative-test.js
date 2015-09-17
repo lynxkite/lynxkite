@@ -2,7 +2,7 @@
 
 var fw = (function UIDescription() {
   var states = {};
-  var allIdempotentTests = {};
+  var allStatePreservingTests = {};
   var hasChild = {};
 
   states['empty splash'] = {
@@ -17,19 +17,19 @@ var fw = (function UIDescription() {
   mocks.addTo(browser);
   
   return {
-    newUIState: function(
-      stateName,  // Name of the state being defined.
-      previousStateName,  // Name of the state from which this can be reached.
+    transitionTest: function(
+      previousStateName,  // Name of the state on which this transition should be applied.
       transitionFunction,  // JS function that goes to this state from prev state.
+      stateName,  // Name of the target state of this transition.
       checks) {  // Tests confirming we are indeed in this state. Should be very fast stuff only,
                  // like looking at the DOM.
       var testingDone = false;
       hasChild[previousStateName] = true;
 
-      function runIdempotentTest(currentTest) {
+      function runStatePreservingTest(currentTest) {
         it(currentTest.name, function() {
           currentTest.runTest(lib);
-          // Checking that it was indeed idempotent.
+          // Checking that it was indeed statePreserving.
           checks(lib);
         });
       }
@@ -43,9 +43,9 @@ var fw = (function UIDescription() {
               checks(lib);
             });
             if (!testingDone) {
-              var idempotentTests = allIdempotentTests[stateName] || [];
-              for (var i = 0; i < idempotentTests.length; i++) {
-                runIdempotentTest(idempotentTests[i]);
+              var statePreservingTests = allStatePreservingTests[stateName] || [];
+              for (var i = 0; i < statePreservingTests.length; i++) {
+                runStatePreservingTest(statePreservingTests[i]);
               }
               testingDone = true;
             }
@@ -53,11 +53,12 @@ var fw = (function UIDescription() {
         },
       };
     },
-    newIdempotentTest: function(stateToRunAt, name, body) {
-      if (allIdempotentTests[stateToRunAt] === undefined) {
-        allIdempotentTests[stateToRunAt] = [];
+    // These tests need to preserve the UI state or restore it when they are finished.
+    statePreservingTest: function(stateToRunAt, name, body) {
+      if (allStatePreservingTests[stateToRunAt] === undefined) {
+        allStatePreservingTests[stateToRunAt] = [];
       }
-      allIdempotentTests[stateToRunAt].push({name: name, runTest: body});
+      allStatePreservingTests[stateToRunAt].push({name: name, runTest: body});
     },
     runAll: function() {
       var stateNames = Object.keys(states);
