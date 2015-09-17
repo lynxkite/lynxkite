@@ -22,7 +22,7 @@ angular.module('biggraph').factory('getCenter', function(util) {
           // Use them all.
         } else if (centers.length < offset + count) {
           // Turn around.
-          centers = centers.slice(offset).concat(centers).slice(0, count);
+          centers = centers.concat(centers).slice(offset, offset + count);
         } else {
           // Normal case.
           centers = centers.slice(offset, offset + count);
