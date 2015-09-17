@@ -3,19 +3,19 @@
 module.exports = function(fw) {
   fw.transitionTest(
     'empty splash',
+    'empty test-example project',
     function(lib) {
       lib.openNewProject('test-example');
     },
-    'empty test-example project',
     function(lib) {
       lib.expectCurrentProjectIs('test-example');
     });
   fw.transitionTest(
     'empty test-example project',
+    'test-example project with example graph',
     function(lib) {
       lib.runLeftOperation('example graph');
     },
-    'test-example project with example graph',
     function() {
     });
   fw.statePreservingTest(
