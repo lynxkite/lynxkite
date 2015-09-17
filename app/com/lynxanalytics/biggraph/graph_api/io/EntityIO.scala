@@ -197,9 +197,9 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     assert(entityLocation.legacyPathExists,
       s"There should be a valid legacy path at $legacyPath")
     val oldRDD = legacyRDD
-    val newFile = targetDir(pn)
     val p = new HashPartitioner(pn)
     val newRDD = oldRDD.toSortedRDD(p)
+    val newFile = targetDir(pn)
     val lines = newFile.saveEntityRDD(newRDD)
     assert(entityLocation.numVertices == lines, s"${entityLocation.numVertices} != $lines")
     writeMetadata(EntityMetadata(lines))
@@ -242,10 +242,11 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   private def existsAtLegacy = (legacyPath / Success).exists
   private def existsPartitioned = computeAvailablePartitions.nonEmpty && metaFile.exists
 
-  protected def joinedRDD[T](rawRDD: SortedRDD[Long, T], parent: VertexSetData) = {
+  protected def joinedRDD[T](rawRDD: RDD[(Long, T)], parent: VertexSetData) = {
     val vsRDD = parent.rdd
     vsRDD.cacheBackingArray()
     // Enforcing colocation:
+    assert(vsRDD.partitions.size == rawRDD.partitions.size)
     vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
       (it1, it2) => it2
     }
@@ -263,7 +264,8 @@ class VertexIO(entity: VertexSet, dMParam: IOContext)
   def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
     val rdd = path.loadEntityRDD[Unit](sc)
-    new VertexSetData(entity, rdd, Some(count))
+    val p = new HashPartitioner(rdd.partitions.size)
+    new VertexSetData(entity, rdd.asSortedRDD(p), Some(count))
   }
 }
 
