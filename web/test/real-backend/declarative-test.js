@@ -7,7 +7,7 @@ var fw = (function UIDescription() {
 
   states['empty splash'] = {
     reachAndTest: function() {
-      browser.driver.get('http://localhost:9000/ajax/discardAllReallyIMeanIt?q=%7B"fake"%3A1%7D');
+      browser.driver.get(browser.baseUrl + 'ajax/discardAllReallyIMeanIt?q=%7B"fake"%3A1%7D');
       browser.get('/');
     },
   };
