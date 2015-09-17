@@ -24,7 +24,8 @@ case class UIAttributeFilter(
   val valueSpec: String)
 case class UICenterRequest(
   count: Int,
-  filters: Seq[UIAttributeFilter])
+  filters: Seq[UIAttributeFilter],
+  offset: Option[Int])
 case class UIStatus(
   graphMode: String,
   display: String,

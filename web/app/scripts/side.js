@@ -236,10 +236,10 @@ angular.module('biggraph')
       resolvedParams.vertexSetId = this.project.vertexSet;
       return resolvedParams;
     };
-    Side.prototype.sendCenterRequest = function(params, offset) {
+    Side.prototype.sendCenterRequest = function(params) {
       var that = this;
       var resolvedParams = this.resolveCenterRequestParams(params);
-      this.centerRequest = getCenter(resolvedParams, offset);
+      this.centerRequest = getCenter(resolvedParams);
       this.centerRequest.$promise.then(
         function(centers) {
           that.state.centers = centers;

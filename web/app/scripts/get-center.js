@@ -2,8 +2,9 @@
 'use strict';
 
 angular.module('biggraph').factory('getCenter', function(util) {
-  function getCenter(resolvedParams, offset) {
-    offset = offset || 0; // Default value.
+  function getCenter(resolvedParams) {
+    var offset = resolvedParams.offset || 0; // Default value.
+    delete resolvedParams.offset; // This parameter is just for getCenter.
     var count = resolvedParams.count;
 
     if (offset) {
