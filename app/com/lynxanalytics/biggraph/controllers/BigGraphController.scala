@@ -258,6 +258,11 @@ class BigGraphController(val env: BigGraphEnvironment) {
     p.remove()
   }
 
+  def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
+    assert(user.isAdmin, "Only admins can delete all projects and directories")
+    ProjectDirectory.rootDirectory.remove()
+  }
+
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
     val p = SubProject.parsePath(request.project)
     p.frame.assertWriteAllowedFrom(user)
