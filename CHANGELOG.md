@@ -24,6 +24,7 @@ Please add changes to "master". When releasing a version add a new header for th
    and you see and error in the logs starting with "Output mismatch on ...", then try to force a
    migration: `KITE_FORCED_MIGRATION=true  ./run-kite-....sh restart`. Do this only once, not for
    all restarts in the future!
+ - Edge attributes are included when copying visualizations to the clipboard.
 
 ### 1.5.1
 

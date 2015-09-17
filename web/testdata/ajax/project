@@ -91,6 +91,25 @@
             "disabledReason":""
           },
           "description":"Creates a new vertex set with no edges and no attributes."
+        },
+        {
+          "id":"Derived-vertex-attribute",
+          "title":"Derived vertex attribute",
+          "parameters":[
+            {
+              "id":"code",
+              "title":"JavaScript Code",
+              "kind":"code",
+              "defaultValue":"1",
+              "options":[],
+              "multipleChoice":false
+            }
+          ],
+          "category":"Vertex operations",
+          "status":{
+            "enabled":true,
+            "disabledReason":""
+          }
         }
       ]
     },
@@ -138,7 +157,7 @@
           { "id": "21", "title": "Iterations", "defaultValue": "5", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "38", "title": "Duplicate attribute", "parameters": [
-          { "id": "39", "title": "Existing attribute", "options": [], "kind": "default" },
+          { "id": "39", "title": "Existing attribute", "options": [{"title": "A", "id": "A"}, {"title": "B", "id": "B"}], "kind": "choice" },
           { "id": "40", "title": "New attribute", "options": [], "kind": "default" }
         ], "status": { "enabled": true, "disabledReason": "" } },
         { "id": "29a", "title": "Discard date", "parameters": [
