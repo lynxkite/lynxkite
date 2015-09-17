@@ -49,6 +49,9 @@ object SymbolPath {
     apply(Symbol(first), optional.map(Symbol(_)): _*)
   }
 
+  def apply(): SymbolPath = {
+    new SymbolPath(Seq())
+  }
 }
 
 sealed trait TagPath extends Serializable with Ordered[TagPath] {
