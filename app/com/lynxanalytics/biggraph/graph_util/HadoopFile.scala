@@ -179,6 +179,8 @@ case class HadoopFile private (prefixSymbol: String, normalizedRelativePath: Str
 
   // Loads a Long-keyed SortedRDD, optionally with a specific partitioner.
   // This can load the legacy format (see issue #2018).
+  // Note that this method returns a sortedRDD, as opposed to the
+  // new load methods, which return raw RDDs.
   def loadLegacyEntityRDD[T: scala.reflect.ClassTag](
     sc: spark.SparkContext,
     partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
