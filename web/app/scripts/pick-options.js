@@ -67,8 +67,8 @@ angular.module('biggraph').directive('pickOptions', function() {
         scope.filters.splice(idx, 1);
       };
 
-      scope.$watch('shown', function(shown) {
-        if (shown) {
+      scope.$watch('advanced', function(advanced) {
+        if (advanced) {
           scope.reset();
         }
       });
