@@ -1566,7 +1566,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       for (param <- params("name").split(",", -1)) {
-        project.edgeAttributes(param) = null
+        project.deleteEdgeAttribute(param)
       }
     }
   })
@@ -1582,7 +1582,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       for (param <- params("name").split(",", -1)) {
-        project.vertexAttributes(param) = null
+        project.deleteVertexAttribute(param)
       }
     }
   })
@@ -1611,7 +1611,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       for (param <- params("name").split(",", -1)) {
-        project.scalars(param) = null
+        project.deleteScalar(param)
       }
     }
   })

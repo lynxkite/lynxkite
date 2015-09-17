@@ -419,14 +419,29 @@ sealed trait ProjectEditor {
     vertexAttributes(name) = attr
     setElementNote(VertexAttributeKind, name, note)
   }
+  def deleteVertexAttribute(name: String) = {
+    vertexAttributes(name) = null
+    setElementNote(VertexAttributeKind, name, null)
+  }
+
   def newEdgeAttribute(name: String, attr: Attribute[_], note: String = null) = {
     edgeAttributes(name) = attr
     setElementNote(EdgeAttributeKind, name, note)
   }
+  def deleteEdgeAttribute(name: String) = {
+    edgeAttributes(name) = null
+    setElementNote(EdgeAttributeKind, name, null)
+  }
+
   def newScalar(name: String, scalar: Scalar[_], note: String = null) = {
     scalars(name) = scalar
     setElementNote(ScalarKind, name, note)
   }
+  def deleteScalar(name: String) = {
+    scalars(name) = null
+    setElementNote(ScalarKind, name, null)
+  }
+
   def setElementNote(kind: ElementKind, name: String, note: String) = {
     val notes = state.elementNotes.getOrElse(Map())
     if (note == null) {
@@ -486,8 +501,10 @@ sealed trait ProjectEditor {
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
   def segmentationNames = state.segmentations.keys.toSeq
-  def deleteSegmentation(name: String) =
+  def deleteSegmentation(name: String) = {
     state = state.copy(segmentations = state.segmentations - name)
+    setElementNote(SegmentationKind, name, null)
+  }
 
   def offspringEditor(path: Seq[String]): ProjectEditor =
     if (path.isEmpty) this
