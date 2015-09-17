@@ -10,9 +10,6 @@ var fw = (function UIDescription() {
       browser.driver.get('http://localhost:9000/ajax/discardAllReallyIMeanIt?q=%7B"fake"%3A1%7D');
       browser.get('/');
     },
-    done: function() {
-      return true;
-    },
   };
 
   var mocks = require('../mocks.js');
@@ -54,9 +51,6 @@ var fw = (function UIDescription() {
             }
           });
         },
-        done: function() {
-          return testingDone;
-        },
       };
     },
     newIdempotentTest: function(stateToRunAt, name, body) {
@@ -70,7 +64,9 @@ var fw = (function UIDescription() {
       for (var i = 0; i < stateNames.length; i++) {
         var stateName = stateNames[i];
         var state = states[stateName];
-        if (!hasChild[stateName] && !state.done()) {
+        // We only need to directly trigger testing for leaf nodes of the dependency trees as
+        // states with children will be triggered by their children.
+        if (!hasChild[stateName]) {
           state.reachAndTest();
         }
       }
