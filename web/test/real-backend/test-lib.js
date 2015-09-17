@@ -11,6 +11,8 @@ module.exports = (function() {
     openNewProject: function(name) {
       element(by.id('new-project')).click();
       element(by.id('new-project-name')).sendKeys(name, K.ENTER);
+    },
+    expectCurrentProjectIs: function(name) {
       expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
     },
     runOperation: function(name) {
