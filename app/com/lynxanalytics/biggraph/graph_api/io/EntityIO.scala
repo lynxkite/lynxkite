@@ -184,7 +184,6 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   // the corresponding data will be co-located.
   protected def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData] = None): DT
 
-  protected def loadRDD(path: HadoopFile): SortedRDD[Long, _]
   protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, _]
 
   private def bestPartitionedSource(entityLocation: EntityLocationSnapshot, desiredPartitionNumber: Int) = {
@@ -257,17 +256,14 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
 class VertexIO(entity: VertexSet, dMParam: IOContext)
     extends PartitionedDataIO[VertexSetData](entity, dMParam) {
 
-  def loadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
-    path.loadEntityRDD[Unit](sc)
-  }
-
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
     path.loadLegacyEntityRDD[Unit](sc)
   }
 
   def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
-    new VertexSetData(entity, loadRDD(path), Some(count))
+    val rdd = path.loadEntityRDD[Unit](sc)
+    new VertexSetData(entity, rdd, Some(count))
   }
 }
 
@@ -275,18 +271,17 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
     extends PartitionedDataIO[EdgeBundleData](entity, dMParam) {
 
   override def correspondingVertexSet = Some(entity.idSet)
-  def loadRDD(path: HadoopFile): SortedRDD[Long, Edge] = {
-    path.loadEntityRDD[Edge](sc)
-  }
+
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Edge] = {
     path.loadLegacyEntityRDD[Edge](sc)
   }
 
   def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): EdgeBundleData = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
+    val rdd = path.loadEntityRDD[Edge](sc)
     new EdgeBundleData(
       entity,
-      joinedRDD(loadRDD(path), parent.get).asSortedRDD(parent.get.rdd.partitioner.get),
+      joinedRDD(rdd, parent.get).asSortedRDD(parent.get.rdd.partitioner.get),
       Some(count))
   }
 }
@@ -295,10 +290,6 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
     extends PartitionedDataIO[AttributeData[T]](entity, dMParam) {
   override def correspondingVertexSet = Some(entity.vertexSet)
 
-  def loadRDD(path: HadoopFile): SortedRDD[Long, T] = {
-    implicit val ct = entity.classTag
-    path.loadEntityRDD[T](sc)
-  }
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T] = {
     implicit val ct = entity.classTag
     path.loadLegacyEntityRDD[T](sc)
@@ -307,9 +298,10 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
   def finalRead(path: HadoopFile, count: Long, parent: Option[VertexSetData]): AttributeData[T] = {
     // We do our best to colocate partitions to corresponding vertex set partitions.
     implicit val ct = entity.classTag
+    val rdd = path.loadEntityRDD[T](sc)
     new AttributeData[T](
       entity,
-      joinedRDD(loadRDD(path), parent.get).asSortedRDD(parent.get.rdd.partitioner.get),
+      joinedRDD(rdd, parent.get).asSortedRDD(parent.get.rdd.partitioner.get),
       Some(count))
   }
 }
