@@ -25,6 +25,8 @@ KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" \
   stage/bin/biggraph interactive &
 KITE_PID=$!
 
+echo "Kite running on port: $PORT"
+
 cd web
 # Make sure the webdriver is installed.
 node node_modules/protractor/bin/webdriver-manager update
@@ -32,5 +34,5 @@ node node_modules/protractor/bin/webdriver-manager update
 grunt test_e2e --port=$PORT || true # Kill backend even if test fails.
 
 # Kill backend.
-kill $!
+kill ${KITE_PID}
 rm -rf "$TMP"

@@ -116,6 +116,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // Load the test data using a fake JsonMigration class.
     val m = MetaRepositoryManager(dir, new JsonMigration {
       override val version = Map(
+        "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0)
       override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
         // From version 1 to version 2 we added the "arg" argument.
@@ -159,6 +160,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val ex = intercept[Exception] {
       MetaRepositoryManager(dir, new JsonMigration {
         override val version = Map(
+          "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
           "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0)
         override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
           // Bad migration from version 1 to version 2.
@@ -174,6 +176,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // Try again with a corrected upgrader.
     val m = MetaRepositoryManager(dir, new JsonMigration {
       override val version = Map(
+        "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0)
       override val upgraders = Map[(String, Int), Function[json.JsObject, json.JsObject]](
         // Correct migration from version 1 to version 2.
