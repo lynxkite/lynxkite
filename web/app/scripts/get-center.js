@@ -7,11 +7,8 @@ angular.module('biggraph').factory('getCenter', function(util) {
     var count = resolvedParams.count;
 
     if (offset) {
-      var amount = 1;
-      while (amount < offset + count) {
-        amount *= 10; // Fetch 10 examples, then 100, then 1000...
-      }
-      resolvedParams.count = amount;
+      // Round up to multiples of 100.
+      resolvedParams.count = 100 * Math.ceil((offset + count) / 100);
     }
 
     // We rely on the browser's cache to avoid re-sending requests for pagination.
