@@ -831,6 +831,8 @@ class ProjectDirectory(val path: SymbolPath)(
 object ProjectDirectory {
   val root = SymbolPath("projects")
 
+  def rootDirectory(implicit metaManager: MetaGraphManager) = new ProjectDirectory(SymbolPath())
+
   def fromName(path: String)(implicit metaManager: MetaGraphManager): ProjectDirectory = {
     ProjectFrame.validateName(path, "Name", allowSlash = true, allowEmpty = true)
     val dir = new ProjectDirectory(SymbolPath.parse(path))
