@@ -254,16 +254,18 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
   private def existsAtLegacy = (legacyPath / Success).exists
   private def existsPartitioned = computeAvailablePartitions.nonEmpty && metaFile.exists
 
-  protected def enforceCoLocationWithParent[T](rawRDD: RDD[(Long, T)], parent: VertexSetData) = {
+  protected def enforceCoLocationWithParent[T](rawRDD: RDD[(Long, T)],
+                                               parent: VertexSetData): RDD[(Long, T)] = {
     val vsRDD = parent.rdd
     vsRDD.cacheBackingArray()
     // Enforcing colocation:
-    assert(vsRDD.partitions.size == rawRDD.partitions.size)
+    assert(vsRDD.partitions.size == rawRDD.partitions.size,
+      s"$vsRDD and $rawRDD should have the same number of partitions, " +
+        s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}")
     vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
       (it1, it2) => it2
     }
   }
-
 }
 
 class VertexIO(entity: VertexSet, dMParam: IOContext)
