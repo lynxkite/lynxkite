@@ -46,14 +46,13 @@ angular.module('biggraph').directive('pickOptions', function() {
       scope.requestNewCenters = function() {
         var params = centerRequestParams();
         if (scope.unchanged()) { // "Next"
-          var count = params.count;
-          scope.offset += count;
-          scope.side.sendCenterRequest(params, scope.offset);
+          scope.offset += params.count;
+          params.offset = scope.offset;
         } else { // "Pick"
           scope.offset = 0;
-          scope.side.sendCenterRequest(params);
           scope.lastCenterRequestParameters = scope.side.resolveCenterRequestParams(params);
         }
+        scope.side.sendCenterRequest(params);
       };
 
       scope.addFilter = function() {
