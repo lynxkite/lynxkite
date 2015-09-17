@@ -14,7 +14,7 @@
   ],
 
   "vertexAttributes": [
-    { "id": "5", "title": "age", "typeName": "Double", "canBucket": true, "canFilter": true, "isNumeric": true },
+    { "id": "5", "title": "age", "typeName": "Double", "note": "a note <help-popup href=\"pick-button\">", "canBucket": true, "canFilter": true, "isNumeric": true },
     { "id": "6", "title": "income", "typeName": "Double", "canBucket": true, "canFilter": true, "isNumeric": true },
     { "id": "7", "title": "gender", "typeName": "String", "canBucket": true, "canFilter": true },
     { "id": "8", "title": "favorite_color", "typeName": "String", "canBucket": true, "canFilter": true },

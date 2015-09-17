@@ -202,7 +202,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val result = graph_operations.CreateVertexSet(params("size").toLong)().result
       project.setVertexSet(result.vs, idAttr = "id")
-      project.vertexAttributes("ordinal") = result.ordinal
+      project.newVertexAttribute("ordinal", result.ordinal)
     }
   })
 
@@ -323,12 +323,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val imp = graph_operations.ImportVertexList(source(params))().result
       project.vertexSet = imp.vertices
-      project.vertexAttributes = imp.attrs.mapValues(_.entity)
+      for ((name, attr) <- imp.attrs) {
+        project.newVertexAttribute(name, attr.entity, "imported")
+      }
       val idAttr = params("id-attr")
       assert(
         !project.vertexAttributes.contains(idAttr),
         s"The input also contains a field called '$idAttr'. Please pick a different name.")
-      project.vertexAttributes(idAttr) = idAsAttribute(project.vertexSet)
+      project.newVertexAttribute(idAttr, idAsAttribute(project.vertexSet), "internal")
     }
   }
   register("Import vertices from CSV files",
@@ -372,7 +374,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val dst = params("dst")
       val imp = graph_operations.ImportEdgeList(source(params), src, dst)().result
       project.setVertexSet(imp.vertices, idAttr = "id")
-      project.vertexAttributes("stringID") = imp.stringID
+      project.newVertexAttribute("stringID", imp.stringID)
       project.edgeBundle = imp.edges
       project.edgeAttributes = imp.attrs.mapValues(_.entity)
     }
@@ -398,7 +400,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val oldAttrs = project.vertexAttributes.toMap
       project.vertexSet = newGraph.vs
       project.edgeBundle = newGraph.es
-      project.vertexAttributes("stringID") = newGraph.stringID
+      project.newVertexAttribute("stringID", newGraph.stringID)
       for ((name, attr) <- oldAttrs) {
         project.edgeAttributes(name) =
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
@@ -422,7 +424,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val res = op(op.idAttr, idAttr).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- res.attrs) {
-        project.vertexAttributes(prefix + name) = attr
+        project.newVertexAttribute(prefix + name, attr, "imported")
       }
     }
   }
@@ -468,7 +470,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(result.segments, idAttr = "id")
       segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.vertexAttributes("size") = computeSegmentSizes(segmentation)
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
     }
   })
 
@@ -506,7 +508,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(result.segments, idAttr = "id")
       segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.vertexAttributes("size") = computeSegmentSizes(segmentation)
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
     }
   })
 
@@ -531,8 +533,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       cliquesSegmentation.setVertexSet(cliquesResult.segments, idAttr = "id")
       cliquesSegmentation.notes = "Maximal cliques"
       cliquesSegmentation.belongsTo = cliquesResult.belongsTo
-      cliquesSegmentation.vertexAttributes("size") =
-        computeSegmentSizes(cliquesSegmentation)
+      cliquesSegmentation.newVertexAttribute("size", computeSegmentSizes(cliquesSegmentation))
 
       val cedges = {
         val op = graph_operations.InfocomOverlapForCC(params("adjacency_threshold").toDouble)
@@ -560,8 +561,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       communitiesSegmentation.setVertexSet(ccResult.segments, idAttr = "id")
       communitiesSegmentation.notes = "Infocom Communities"
       communitiesSegmentation.belongsTo = vertexToCommunity
-      communitiesSegmentation.vertexAttributes("size") =
-        computeSegmentSizes(communitiesSegmentation)
+      communitiesSegmentation.newVertexAttribute(
+        "size", computeSegmentSizes(communitiesSegmentation))
     }
   })
 
@@ -594,8 +595,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(result.clusters, idAttr = "id")
       segmentation.notes = title
       segmentation.belongsTo = result.belongsTo
-      segmentation.vertexAttributes("size") =
-        computeSegmentSizes(segmentation)
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
 
       val symmetricDirection = Direction("all edges", project.edgeBundle)
       val symmetricEdges = symmetricDirection.edgeBundle
@@ -635,10 +635,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(bucketing.segments, idAttr = "id")
       segmentation.notes = summary(params)
       segmentation.belongsTo = bucketing.belongsTo
-      segmentation.vertexAttributes("size") =
-        computeSegmentSizes(segmentation)
-      segmentation.vertexAttributes("bottom") = bucketing.bottom
-      segmentation.vertexAttributes("top") = bucketing.top
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
+      segmentation.newVertexAttribute("bottom", bucketing.bottom)
+      segmentation.newVertexAttribute("top", bucketing.top)
     }
   })
 
@@ -663,9 +662,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       segmentation.setVertexSet(bucketing.segments, idAttr = "id")
       segmentation.notes = summary(params)
       segmentation.belongsTo = bucketing.belongsTo
-      segmentation.vertexAttributes("size") =
-        computeSegmentSizes(segmentation)
-      segmentation.vertexAttributes(attrName) = bucketing.label
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
+      segmentation.newVertexAttribute(attrName, bucketing.label)
     }
   })
 
@@ -689,7 +687,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       result.notes = summary(params)
       result.belongsTo = first.belongsTo
       for ((name, attr) <- first.vertexAttributes) {
-        result.vertexAttributes(s"${first.segmentationName}_$name") = attr
+        result.newVertexAttribute(
+          s"${first.segmentationName}_$name", attr)
       }
       // Then combine the other segmentations one by one.
       for (seg <- segmentations.tail) {
@@ -708,14 +707,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
         for ((name, attr) <- seg.vertexAttributes) {
           // Add prefix for the new attributes.
-          result.vertexAttributes(s"${seg.segmentationName}_$name") =
+          result.newVertexAttribute(
+            s"${seg.segmentationName}_$name",
             graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-              attr, combination.origin2)
+              attr, combination.origin2))
         }
       }
       // Calculate sizes at the end.
-      result.vertexAttributes("size") =
-        computeSegmentSizes(result)
+      result.newVertexAttribute("size", computeSegmentSizes(result))
     }
   })
   register("Internal vertex ID as attribute", new VertexAttributesOperation(_, _) {
@@ -724,7 +723,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      project.vertexAttributes(params("name")) = idAsAttribute(project.vertexSet)
+      project.newVertexAttribute(params("name"), idAsAttribute(project.vertexSet), help)
     }
   })
 
@@ -740,7 +739,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.AddGaussianVertexAttribute(params("seed").toInt)
-      project.vertexAttributes(params("name")) = op(op.vertices, project.vertexSet).result.attr
+      project.newVertexAttribute(
+        params("name"), op(op.vertices, project.vertexSet).result.attr, help)
     }
   })
 
@@ -770,10 +770,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def enabled = hasVertexSet
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
+      val value = params("value")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = (params("type") == "Double"), params("value"))
-      project.vertexAttributes(params("name")) = op(op.vs, project.vertexSet).result.attr
+          isDouble = (params("type") == "Double"), value)
+      project.newVertexAttribute(
+        params("name"), op(op.vs, project.vertexSet).result.attr, s"constant $value")
     }
   })
 
@@ -825,7 +827,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val attr2 = project.vertexAttributes(params("attr2"))
       assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
-      project.vertexAttributes(name) = unifyAttribute(attr1, attr2)
+      project.newVertexAttribute(name, unifyAttribute(attr1, attr2))
     }
   })
 
@@ -881,7 +883,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.ClusteringCoefficient()
-      project.vertexAttributes(params("name")) = op(op.es, project.edgeBundle).result.clustering
+      project.newVertexAttribute(
+        params("name"), op(op.es, project.edgeBundle).result.clustering, help)
     }
   })
 
@@ -931,7 +934,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val es = Direction(params("direction"), project.edgeBundle, reversed = true).edgeBundle
       val op = graph_operations.OutDegree()
-      project.vertexAttributes(params("name")) = op(op.es, es).result.outDegree
+      project.newVertexAttribute(
+        params("name"), op(op.es, es).result.outDegree, params("direction") + help)
     }
   })
 
@@ -949,8 +953,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val weights =
         if (params("weights") == "!no weight") const(project.edgeBundle)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-      project.vertexAttributes(params("name")) =
-        op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank
+      project.newVertexAttribute(
+        params("name"), op(op.es, project.edgeBundle)(op.weights, weights).result.pagerank, help)
     }
   })
 
@@ -961,10 +965,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("algorithm", "Centrality type", options = UIValue.list(List("Harmonic", "Lin"))))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
-      assert(params("name").nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt, params("algorithm"))
-      project.vertexAttributes(params("name")) =
-        op(op.es, project.edgeBundle).result.centrality
+      val name = params("name")
+      val algorithm = params("algorithm")
+      assert(name.nonEmpty, "Please set an attribute name.")
+      val op = graph_operations.HyperBallCentrality(params("maxDiameter").toInt, algorithm)
+      project.newVertexAttribute(
+        name, op(op.es, project.edgeBundle).result.centrality, algorithm + help)
     }
   })
 
@@ -983,7 +989,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
       val op = graph_operations.AddRankingAttributeDouble(ascending)
       val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
-      project.vertexAttributes(rankAttr) = toDouble(op(op.sortKey, sortKey).result.ordinal)
+      project.newVertexAttribute(
+        rankAttr, toDouble(op(op.sortKey, sortKey).result.ordinal), s"rank by $keyAttr" + help)
     }
   })
 
@@ -994,8 +1001,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val g = graph_operations.ExampleGraph()().result
       project.vertexSet = g.vertices
       project.edgeBundle = g.edges
-      project.vertexAttributes = g.vertexAttributes.mapValues(_.entity)
-      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      for ((name, attr) <- g.vertexAttributes) {
+        project.newVertexAttribute(name, attr)
+      }
+      project.newVertexAttribute("id", idAsAttribute(project.vertexSet))
       project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
@@ -1010,8 +1019,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val g = graph_operations.EnhancedExampleGraph()().result
       project.vertexSet = g.vertices
       project.edgeBundle = g.edges
-      project.vertexAttributes = g.vertexAttributes.mapValues(_.entity)
-      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      for ((name, attr) <- g.vertexAttributes) {
+        project.newVertexAttribute(name, attr)
+      }
+      project.newVertexAttribute("id", idAsAttribute(project.vertexSet))
       project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
     }
   })
@@ -1121,7 +1132,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](expr, namedAttributes, vertexSet)
       }
-      project.vertexAttributes(params("output")) = result.attr
+      project.newVertexAttribute(params("output"), result.attr, expr + help)
     }
   })
 
@@ -1181,7 +1192,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           seg.belongsTo,
           AttributeWithLocalAggregator(parent.vertexAttributes(attr), choice))
-        project.vertexAttributes(s"${attr}_${choice}") = result
+        project.newVertexAttribute(s"${attr}_${choice}", result)
       }
     }
   })
@@ -1201,7 +1212,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           seg.belongsTo,
           AttributeWithWeightedAggregator(weight, parent.vertexAttributes(attr), choice))
-        project.vertexAttributes(s"${attr}_${choice}_by_${weightName}") = result
+        project.newVertexAttribute(s"${attr}_${choice}_by_${weightName}", result)
       }
     }
   })
@@ -1220,7 +1231,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           reverse(seg.belongsTo),
           AttributeWithLocalAggregator(project.vertexAttributes(attr), choice))
-        seg.parent.vertexAttributes(s"${prefix}${attr}_${choice}") = result
+        seg.parent.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
       }
     }
   })
@@ -1242,7 +1253,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           reverse(seg.belongsTo),
           AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
-        seg.parent.vertexAttributes(s"${prefix}${attr}_${choice}_by_${weightName}") = result
+        seg.parent.newVertexAttribute(s"${prefix}${attr}_${choice}_by_${weightName}", result)
       }
     }
   })
@@ -1292,7 +1303,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           edges,
           AttributeWithLocalAggregator(project.vertexAttributes(attr), choice))
-        project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
+        project.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
       }
     }
   })
@@ -1315,7 +1326,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           edges,
           AttributeWithWeightedAggregator(weight, attr, choice))
-        project.vertexAttributes(s"${prefix}${name}_${choice}_by_${weightName}") = result
+        project.newVertexAttribute(s"${prefix}${name}_${choice}_by_${weightName}", result)
       }
     }
   })
@@ -1341,7 +1352,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val result = aggregateViaConnection(
           m.belongsTo,
           AttributeWithLocalAggregator(oldVAttrs(attr), choice))
-        project.vertexAttributes(s"${attr}_${choice}") = result
+        project.newVertexAttribute(s"${attr}_${choice}", result)
       }
       // Automatically keep the key attribute.
       project.vertexAttributes(key) = aggregateViaConnection(
@@ -1542,7 +1553,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           AttributeWithLocalAggregator(
             direction.pull(project.edgeAttributes(attr)),
             choice))
-        project.vertexAttributes(s"${prefix}${attr}_${choice}") = result
+        project.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
       }
     }
   })
@@ -1569,7 +1580,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             direction.pull(weight),
             direction.pull(project.edgeAttributes(attr)),
             choice))
-        project.vertexAttributes(s"${prefix}${attr}_${choice}_by_${weightName}") = result
+        project.newVertexAttribute(s"${prefix}${attr}_${choice}_by_${weightName}", result)
       }
     }
   })
@@ -1591,7 +1602,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       for (param <- params("name").split(",", -1)) {
-        project.edgeAttributes(param) = null
+        project.deleteEdgeAttribute(param)
       }
     }
   })
@@ -1607,7 +1618,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       for (param <- params("name").split(",", -1)) {
-        project.vertexAttributes(param) = null
+        project.deleteVertexAttribute(param)
       }
     }
   })
@@ -1636,7 +1647,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       for (param <- params("name").split(",", -1)) {
-        project.scalars(param) = null
+        project.deleteScalar(param)
       }
     }
   })
@@ -1675,7 +1686,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         s"""A vertex-attribute named '${params("to")}' already exists,
             please discard it or choose another name""")
       assert(params("to").nonEmpty, "Please set the new attribute name.")
-      project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
+      project.newVertexAttribute(
+        params("to"), project.vertexAttributes(params("from")),
+        project.viewer.getVertexAttributeNote(params("from")))
       project.vertexAttributes(params("from")) = null
     }
   })
@@ -1747,7 +1760,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
     def apply(params: Map[String, String]) = {
       assert(params("to").nonEmpty, "Please set the new attribute name.")
-      project.vertexAttributes(params("to")) = project.vertexAttributes(params("from"))
+      project.newVertexAttribute(
+        params("to"), project.vertexAttributes(params("from")),
+        project.viewer.getVertexAttributeNote(params("from")))
     }
   })
 
@@ -1981,12 +1996,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           })
 
       project.vertexSet = vsUnion.union
-      project.vertexAttributes = newVertexAttributes
+      for ((name, attr) <- newVertexAttributes) {
+        project.newVertexAttribute(name, attr) // Clear notes.
+      }
       val idAttr = params("id-attr")
       assert(
         !project.vertexAttributes.contains(idAttr),
         s"The project already contains a field called '$idAttr'. Please pick a different name.")
-      project.vertexAttributes(idAttr) = idAsAttribute(project.vertexSet)
+      project.newVertexAttribute(idAttr, idAsAttribute(project.vertexSet))
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
     }
@@ -2041,8 +2058,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       project.scalars("fingerprinting matches found") = count(fingerprinting.matching)
       project.vertexAttributes(params("leftName")) = unifyAttribute(newLeftName, leftName)
       project.vertexAttributes(params("rightName")) = unifyAttribute(newRightName, rightName)
-      project.vertexAttributes(params("leftName") + " similarity score") = fingerprinting.leftSimilarities
-      project.vertexAttributes(params("rightName") + " similarity score") = fingerprinting.rightSimilarities
+      project.newVertexAttribute(
+        params("leftName") + " similarity score", fingerprinting.leftSimilarities)
+      project.newVertexAttribute(
+        params("rightName") + " similarity score", fingerprinting.rightSimilarities)
     }
   })
 
@@ -2058,9 +2077,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- project.vertexAttributes.toMap) {
-        parent.vertexAttributes(prefix + name) =
+        parent.newVertexAttribute(
+          prefix + name,
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, seg.belongsTo)
+            attr, seg.belongsTo))
       }
     }
   })
@@ -2077,9 +2097,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]): Unit = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- parent.vertexAttributes.toMap) {
-        project.vertexAttributes(prefix + name) =
+        project.newVertexAttribute(
+          prefix + name,
           graph_operations.PulledOverVertexAttribute.pullAttributeVia(
-            attr, reverse(seg.belongsTo))
+            attr, reverse(seg.belongsTo)))
       }
     }
   })
@@ -2115,8 +2136,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
       project.scalars("fingerprinting matches found") = count(fingerprinting.matching)
       seg.belongsTo = fingerprinting.matching
-      parent.vertexAttributes("fingerprinting_similarity_score") = fingerprinting.leftSimilarities
-      project.vertexAttributes("fingerprinting_similarity_score") = fingerprinting.rightSimilarities
+      parent.newVertexAttribute(
+        "fingerprinting_similarity_score", fingerprinting.leftSimilarities)
+      project.newVertexAttribute(
+        "fingerprinting_similarity_score", fingerprinting.rightSimilarities)
     }
   })
 
@@ -2159,18 +2182,18 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         op(op.attr, target)(op.role, roles).result
       }
       val prefix = params("prefix")
-      parent.vertexAttributes(s"${prefix}_roles") = roles
-      parent.vertexAttributes(s"${prefix}_${targetName}_test") = parted.test
+      parent.newVertexAttribute(s"${prefix}_roles", roles)
+      parent.newVertexAttribute(s"${prefix}_${targetName}_test", parted.test)
       var train = parted.train.entity
       val segSizes = computeSegmentSizes(seg)
-      project.vertexAttributes("size") = segSizes
+      project.newVertexAttribute("size", segSizes)
       val maxDeviation = params("max_deviation")
 
       val coverage = {
         val op = graph_operations.CountAttributes[Double]()
         op(op.attribute, train).result.count
       }
-      parent.vertexAttributes(s"${prefix}_${targetName}_train") = train
+      parent.newVertexAttribute(s"${prefix}_${targetName}_train", train)
       parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
       var timeOfDefinition = {
@@ -2212,10 +2235,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
             graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
             .result.attr
         }
-        project.vertexAttributes(s"${prefix}_${targetName}_standard_deviation_after_iteration_$i") =
-          segStdDev
-        project.vertexAttributes(s"${prefix}_${targetName}_average_after_iteration_$i") =
-          segTargetAvg // TODO: use median
+        project.newVertexAttribute(
+          s"${prefix}_${targetName}_standard_deviation_after_iteration_$i",
+          segStdDev)
+        project.newVertexAttribute(
+          s"${prefix}_${targetName}_average_after_iteration_$i",
+          segTargetAvg)
         val predicted = {
           aggregateViaConnection(
             reverse(seg.belongsTo),
@@ -2241,7 +2266,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           op(op.attribute, partedTrain.train).result.count
         }
         // the attribute we use for iteration can be defined on the test set as well
-        parent.vertexAttributes(s"${prefix}_${targetName}_after_iteration_$i") = train
+        parent.newVertexAttribute(s"${prefix}_${targetName}_after_iteration_$i", train)
         parent.scalars(s"$prefix $targetName coverage after iteration $i") = coverage
         parent.scalars(s"$prefix $targetName mean absolute prediction error after iteration $i") =
           error
@@ -2254,7 +2279,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           unifyAttributeT(timeOfDefinition, newDefinitions)
         }
       }
-      parent.vertexAttributes(s"${prefix}_${targetName}_spread_over_iterations") = timeOfDefinition
+      parent.newVertexAttribute(s"${prefix}_${targetName}_spread_over_iterations", timeOfDefinition)
       // TODO: in the end we should calculate with the fact that the real error where the
       // original attribute is defined is 0.0
     }
@@ -2383,8 +2408,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         graph_operations.ImportVertexList(csv)().result
       }
       project.vertexSet = vertices.vertices
-      project.vertexAttributes = vertices.attrs.mapValues(_.entity)
-      project.vertexAttributes("id") = idAsAttribute(project.vertexSet)
+      for ((name, attr) <- vertices.attrs) {
+        project.newVertexAttribute(name, attr)
+      }
+      project.newVertexAttribute("id", idAsAttribute(project.vertexSet))
       val guids = project.vertexAttributes("guid").runtimeSafeCast[String]
       val edges = {
         val file = directory / "edges"

@@ -37,6 +37,16 @@ import play.api.libs.json
 import play.api.libs.json.Json
 import scala.reflect.runtime.universe._
 
+sealed abstract class ElementKind(kindName: String) {
+  def /(name: String): String = {
+    s"$kindName/$name"
+  }
+}
+object VertexAttributeKind extends ElementKind("vertex attribute")
+object EdgeAttributeKind extends ElementKind("edge attribute")
+object ScalarKind extends ElementKind("scalar")
+object SegmentationKind extends ElementKind("segmentation")
+
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
   vertexSetGUID: Option[UUID],
@@ -45,9 +55,10 @@ case class CommonProjectState(
   edgeAttributeGUIDs: Map[String, UUID],
   scalarGUIDs: Map[String, UUID],
   segmentations: Map[String, SegmentationState],
-  notes: String)
+  notes: String,
+  elementNotes: Option[Map[String, String]]) // Option for compatibility.
 object CommonProjectState {
-  val emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "")
+  val emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "", Some(Map()))
 }
 
 // Complete state of a root project.
@@ -93,6 +104,12 @@ sealed trait ProjectViewer {
       .map { case (name, state) => name -> new SegmentationViewer(this, name) }
   def segmentation(name: String) = segmentationMap(name)
 
+  def getVertexAttributeNote(name: String) = getElementNote(VertexAttributeKind, name)
+  def getEdgeAttributeNote(name: String) = getElementNote(EdgeAttributeKind, name)
+  def getScalarNote(name: String) = getElementNote(ScalarKind, name)
+  def getElementNote(kind: ElementKind, name: String) =
+    state.elementNotes.getOrElse(Map()).getOrElse(kind / name, "")
+
   def offspringViewer(path: Seq[String]): ProjectViewer =
     if (path.isEmpty) this
     else segmentation(path.head).offspringViewer(path.tail)
@@ -105,7 +122,7 @@ sealed trait ProjectViewer {
   // Methods for conversion to FE objects.
   private def feScalar(name: String): Option[FEAttribute] = {
     if (scalars.contains(name)) {
-      Some(ProjectViewer.feEntity(scalars(name), name))
+      Some(ProjectViewer.feEntity(scalars(name), name, getScalarNote(name)))
     } else {
       None
     }
@@ -126,8 +143,12 @@ sealed trait ProjectViewer {
   def toFE(projectName: String): FEProject = {
     val vs = Option(vertexSet).map(_.gUID.toString).getOrElse("")
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
-    def feList(things: Iterable[(String, TypedEntity[_])]) = {
-      things.toSeq.sortBy(_._1).map { case (name, e) => ProjectViewer.feEntity(e, name) }.toList
+    def feList(
+      things: Iterable[(String, TypedEntity[_])],
+      kind: ElementKind) = {
+      things.toSeq.sortBy(_._1).map {
+        case (name, e) => ProjectViewer.feEntity(e, name, getElementNote(kind, name))
+      }.toList
     }
 
     FEProject(
@@ -135,9 +156,9 @@ sealed trait ProjectViewer {
       vertexSet = vs,
       edgeBundle = eb,
       notes = state.notes,
-      scalars = feList(scalars),
-      vertexAttributes = feList(vertexAttributes) ++ getFEMembers,
-      edgeAttributes = feList(edgeAttributes),
+      scalars = feList(scalars, ScalarKind),
+      vertexAttributes = feList(vertexAttributes, VertexAttributeKind) ++ getFEMembers,
+      edgeAttributes = feList(edgeAttributes, EdgeAttributeKind),
       segmentations = segmentationMap
         .toSeq
         .sortBy(_._1)
@@ -151,7 +172,7 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
-  def feEntity[T](e: TypedEntity[T], name: String, isInternal: Boolean = false) = {
+  def feEntity[T](e: TypedEntity[T], name: String, note: String, isInternal: Boolean = false) = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
       .exists(e.typeTag.tpe <:< _)
@@ -160,6 +181,7 @@ object ProjectViewer {
       e.gUID.toString,
       name,
       e.typeTag.tpe.toString.replace("com.lynxanalytics.biggraph.graph_api.", ""),
+      note,
       canBucket,
       canFilter,
       isNumeric,
@@ -210,7 +232,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   override protected lazy val getFEMembers: Option[FEAttribute] =
-    Some(ProjectViewer.feEntity(membersAttribute, "#members", isInternal = true))
+    Some(ProjectViewer.feEntity(membersAttribute, "#members", note = "", isInternal = true))
 
   lazy val equivalentUIAttribute = {
     val bta = Option(belongsToAttribute).map(_.gUID.toString).getOrElse("")
@@ -393,6 +415,42 @@ sealed trait ProjectEditor {
     }
   }
 
+  def newVertexAttribute(name: String, attr: Attribute[_], note: String = null) = {
+    vertexAttributes(name) = attr
+    setElementNote(VertexAttributeKind, name, note)
+  }
+  def deleteVertexAttribute(name: String) = {
+    vertexAttributes(name) = null
+    setElementNote(VertexAttributeKind, name, null)
+  }
+
+  def newEdgeAttribute(name: String, attr: Attribute[_], note: String = null) = {
+    edgeAttributes(name) = attr
+    setElementNote(EdgeAttributeKind, name, note)
+  }
+  def deleteEdgeAttribute(name: String) = {
+    edgeAttributes(name) = null
+    setElementNote(EdgeAttributeKind, name, null)
+  }
+
+  def newScalar(name: String, scalar: Scalar[_], note: String = null) = {
+    scalars(name) = scalar
+    setElementNote(ScalarKind, name, note)
+  }
+  def deleteScalar(name: String) = {
+    scalars(name) = null
+    setElementNote(ScalarKind, name, null)
+  }
+
+  def setElementNote(kind: ElementKind, name: String, note: String) = {
+    val notes = state.elementNotes.getOrElse(Map())
+    if (note == null) {
+      state = state.copy(elementNotes = Some(notes - kind / name))
+    } else {
+      state = state.copy(elementNotes = Some(notes + (kind / name -> note)))
+    }
+  }
+
   def vertexAttributes =
     new StateMapHolder[Attribute[_]] {
       protected def getMap = viewer.vertexAttributes
@@ -443,8 +501,10 @@ sealed trait ProjectEditor {
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
   def segmentationNames = state.segmentations.keys.toSeq
-  def deleteSegmentation(name: String) =
+  def deleteSegmentation(name: String) = {
     state = state.copy(segmentations = state.segmentations - name)
+    setElementNote(SegmentationKind, name, null)
+  }
 
   def offspringEditor(path: Seq[String]): ProjectEditor =
     if (path.isEmpty) this
