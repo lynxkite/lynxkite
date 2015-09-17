@@ -13,7 +13,7 @@ module.exports = function(fw) {
   fw.transitionTest(
     'empty test-example project',
     function(lib) {
-      lib.runOperation('example graph');
+      lib.runLeftOperation('example graph');
     },
     'test-example project with example graph',
     function() {
@@ -22,6 +22,6 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'has the proper vertex count',
     function(lib) {
-      expect(lib.currentVertexCount()).toEqual(4);
+      expect(lib.leftVertexCount()).toEqual(4);
     });
 };

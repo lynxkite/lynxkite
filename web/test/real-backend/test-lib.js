@@ -4,12 +4,6 @@ module.exports = (function() {
   var mocks = require('../mocks.js');
   var K = protractor.Key;  // Short alias.
   return {
-    initTest: function() {
-      mocks.addTo(browser);
-    },
-    startPage: function() {
-      browser.get('/');
-    },
     openNewProject: function(name) {
       element(by.id('new-project')).click();
       element(by.id('new-project-name')).sendKeys(name, K.ENTER);
@@ -17,13 +11,13 @@ module.exports = (function() {
     expectCurrentProjectIs: function(name) {
       expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
     },
-    runOperation: function(name) {
-      element(by.id('operation-search')).click();
-      element(by.css('operation-toolbox #filter')).sendKeys(name, K.ENTER);
-      element(by.css('operation-toolbox .ok-button')).click();
+    runLeftOperation: function(name) {
+      element(by.css('#operation-toolbox-left #operation-search')).click();
+      element(by.css('#operation-toolbox-left #filter')).sendKeys(name, K.ENTER);
+      element(by.css('#operation-toolbox-left .ok-button')).click();
     },
-    currentVertexCount: function() {
-      var asStr = element(by.css('value.vertex-count span.value')).getText();
+    leftVertexCount: function() {
+      var asStr = element(by.css('#side-left value.vertex-count span.value')).getText();
       return asStr.then(function(asS) { return parseInt(asS); });
     },
   };
