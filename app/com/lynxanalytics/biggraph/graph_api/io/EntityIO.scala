@@ -183,10 +183,10 @@ abstract class PartitionedDataIO[DT <: EntityRDDData](entity: MetaGraphEntity,
     resultList.toMap
   }
 
-  // This method performs the actual reading of the rdddata, from a path/
+  // This method performs the actual reading of the rdddata, from a path
   // The parent VertexSetData is given for EdgeBundleData and AttributeData[T] so that
   // the corresponding data will be co-located.
-  // A partitioner is also passed, because we don't want to create another one
+  // A partitioner is also passed, because we don't want to create another one for VertexSetData
   protected def finalRead(path: HadoopFile,
                           count: Long,
                           partitioner: org.apache.spark.Partitioner,
@@ -296,9 +296,9 @@ class EdgeBundleIO(entity: EdgeBundle, dMParam: IOContext)
                 count: Long,
                 partitioner: org.apache.spark.Partitioner,
                 parent: Option[VertexSetData]): EdgeBundleData = {
+    assert(partitioner eq parent.get.rdd.partitioner.get)
     val rdd = path.loadEntityRDD[Edge](sc)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
-    assert(partitioner eq parent.get.rdd.partitioner.get)
     new EdgeBundleData(
       entity,
       coLocated.asSortedRDD(partitioner),
@@ -319,10 +319,10 @@ class AttributeIO[T](entity: Attribute[T], dMParam: IOContext)
                 count: Long,
                 partitioner: org.apache.spark.Partitioner,
                 parent: Option[VertexSetData]): AttributeData[T] = {
+    assert(partitioner eq parent.get.rdd.partitioner.get)
     implicit val ct = entity.classTag
     val rdd = path.loadEntityRDD[T](sc)
     val coLocated = enforceCoLocationWithParent(rdd, parent.get)
-    assert(partitioner eq parent.get.rdd.partitioner.get)
     new AttributeData[T](
       entity,
       coLocated.asSortedRDD(partitioner),
