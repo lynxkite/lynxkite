@@ -6,7 +6,7 @@ var fw = (function UIDescription() {
   var hasChild = {};
 
   states['empty splash'] = {
-    goToState: function() {
+    reachAndTest: function() {
       browser.driver.get('http://localhost:9000/ajax/discardAllReallyIMeanIt?q=%7B"fake"%3A1%7D');
       browser.get('/');
     },
@@ -38,8 +38,8 @@ var fw = (function UIDescription() {
       }
 
       states[stateName] = {
-        goToState: function() {
-          states[previousStateName].goToState();
+        reachAndTest: function() {
+          states[previousStateName].reachAndTest();
           describe(stateName, function() {
             it('can be reached', function() {
               transitionFunction(lib);
@@ -71,7 +71,7 @@ var fw = (function UIDescription() {
         var stateName = stateNames[i];
         var state = states[stateName];
         if (!hasChild[stateName] && !state.done()) {
-          state.goToState();
+          state.reachAndTest();
         }
       }
     },
