@@ -59,10 +59,8 @@ module.exports = (function() {
     },
 
     setLeftAttributeFilter: function(attributeName, filterValue) {
-      var sel = '#side-left .attribute input[name="' + attributeName + '"]' ;
-      console.log(sel);
       var filterBox = element(
-        by.css(sel));
+        by.css('#side-left .attribute input[name="' + attributeName + '"]'));
       filterBox.sendKeys(filterValue, K.ENTER);    
     },
   };
