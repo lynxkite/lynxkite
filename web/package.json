@@ -1,7 +1,6 @@
 {
   "name": "web",
-  "version": "0.0.0",
-  "repository": {},
+  "private": true,
   "dependencies": {},
   "devDependencies": {
     "asciidoctor.js": "1.5.2",
@@ -25,6 +24,7 @@
     "grunt-ng-annotate": "0.10.0",
     "grunt-protractor-runner": "2.1.0",
     "grunt-rev": "0.1.0",
+    "grunt-sass": "1.0.0",
     "grunt-svgmin": "0.2.0",
     "grunt-usemin": "2.0.0",
     "grunt-wiredep": "2.0.0",
@@ -36,8 +36,8 @@
     "karma-phantomjs-launcher": "0.1.4",
     "load-grunt-tasks": "0.4.0",
     "protractor": "2.2.0",
-    "time-grunt": "1.2.1",
-    "grunt-sass": "1.0.0"
+    "request": "2.62.0",
+    "time-grunt": "1.2.1"
   },
   "engines": {
     "node": "0.10.0"
