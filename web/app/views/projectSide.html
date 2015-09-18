@@ -107,7 +107,8 @@
                ng-click="side.applyFilters()"
                tooltip="Apply&nbsp;current&nbsp;filters: {{side.filterSummary()}}"
                tooltip-append-to-body="true"
-               tooltip-placement="bottom">
+               tooltip-placement="bottom"
+               id="apply-filters-button">
           <i class="glyphicon glyphicon-filter"></i>
         </label>
         <label class="btn btn-default"
@@ -214,19 +215,7 @@
             <tr>
               <td></td>
               <td>
-                <div class="btn-group pick-buttons" ng-show="!side.showPickOptions">
-                  <button class="btn btn-default" ng-click="side.requestNewCenters(1)">
-                    Pick
-                  </button>
-                  <button
-                     class="btn btn-default"
-                     ng-click="side.showPickOptions = !side.showPickOptions"
-                     tooltip="Advanced pick options">
-                    ...
-                  </button>
-                </div>
-                <help-popup href="pick-button" class="pull-right"></help-popup>
-                <pick-options shown="side.showPickOptions" side="side"></pick-options>
+                <pick-options side="side"></pick-options>
               </td>
             </tr>
             <tr>
@@ -270,27 +259,41 @@
       <li class="list-group-item de-emph" id="side-summary">
         <span ng-if="side.scalars['!belongsToEdges'] === undefined" class="lead">
           <!-- Project summary -->
-          <value class="emph vertex-count" ng-if="side.project.vertexSet !== ''" ref="side.scalars['vertex_count']"></value>
+          <value
+              id="vertex-count"
+              class="emph"
+              ng-if="side.project.vertexSet !== ''"
+              ref="side.scalars['vertex_count']">
+          </value>
           <span class="emph" ng-if="side.project.vertexSet === ''">no</span>
           vertices with
-          <value class="emph" ng-if="side.project.edgeBundle !== ''" ref="side.scalars['edge_count']"></value>
+          <value
+              class="emph"
+              ng-if="side.project.edgeBundle !== ''"
+              ref="side.scalars['edge_count']"
+              id="edge-count">
+          </value>
           <span class="emph" ng-if="side.project.edgeBundle === ''">no</span>
           edges
         </span>
 
         <span ng-if="side.scalars['!belongsToEdges'] !== undefined" class="lead">
           <!-- Segmentation summary -->
-          <value class="emph" ref="side.scalars['vertex_count']"></value>
+          <value
+              class="emph"
+              ref="side.scalars['vertex_count']"
+              id="segment-count">
+          </value>
           <span ng-if="side.scalars['!nonEmpty'].double === side.scalars['vertex_count'].double">
             non-empty segments
           </span>
           <span ng-if="side.scalars['!nonEmpty'].double !== side.scalars['vertex_count'].double">
-            segments (of which <value class="emph" ref="side.scalars['!nonEmpty']"></value> are non-empty)
+            segments (of which <value id="non-empty-segment-count" class="emph" ref="side.scalars['!nonEmpty']"></value> are non-empty)
           </span>
-          with total size of <value class="emph" ref="side.scalars['!belongsToEdges']"></value>
-          covering <value class="emph" ref="side.scalars['!coverage']"></value> base vertices
+          with total size of <value id="total-segment-size" class="emph" ref="side.scalars['!belongsToEdges']"></value>
+          covering <value id="total-segment-coverage" class="emph" ref="side.scalars['!coverage']"></value> base vertices
           <span ng-if="side.project.edgeBundle !== ''">
-            with <value class="emph" ref="side.scalars['edge_count']"></value> edges
+            with <value id="segmentation-edge-count" class="emph" ref="side.scalars['edge_count']"></value> edges
           </span>
         </span>
       </li>
@@ -319,13 +322,13 @@
         <span class="lead"><span class="de-emph">Attributes of</span> vertices</span>
         <help-popup href="attributes" class="pull-right"></help-popup>
       </li>
-      <li class="sublist list-group-item" ng-repeat="attr in side.project.vertexAttributes" vertex-attribute="attr" side="side"></li>
+      <li class="sublist list-group-item attribute" ng-repeat="attr in side.project.vertexAttributes" vertex-attribute="attr" side="side"></li>
 
       <li class="list-group-item">
         <span class="lead"><span class="de-emph">Attributes of</span> edges</span>
         <help-popup href="attributes" class="pull-right"></help-popup>
       </li>
-      <li class="sublist list-group-item" ng-repeat="attr in side.project.edgeAttributes" edge-attribute="attr" side="side"></li>
+      <li class="sublist list-group-item attribute" ng-repeat="attr in side.project.edgeAttributes" edge-attribute="attr" side="side"></li>
 
       <li class="list-group-item" ng-if="side.project.segmentations.length !== 0">
         <span class="lead de-emph">Segmentations</span>
