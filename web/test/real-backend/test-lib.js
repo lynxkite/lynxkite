@@ -20,7 +20,7 @@ module.exports = (function() {
       element(by.css('#operation-toolbox-left #filter')).sendKeys(name, K.ENTER);
 
       for (var key in params) {
-        var p = '#operation-toolbox-left operation-parameters #' + key + ' > *';
+        var p = '#operation-toolbox-left operation-parameters #' + key + ' input';
         element(by.css(p)).sendKeys(params[key], K.ENTER);
       }
 
