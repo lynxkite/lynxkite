@@ -43,8 +43,14 @@ module.exports = (function() {
       element(by.id('new-project-name')).sendKeys(name, K.ENTER);
     },
 
-    runLeftOperation: function(name) {
+    runLeftOperation: function(name, params) {
+      params = params || {};
       this.openLeftOperation(name);
+      for (var key in params) {
+        var p = '#operation-toolbox-left operation-parameters #' + key + ' input';
+        element(by.css(p)).sendKeys(params[key], K.ENTER);
+      }
+
       element(by.css('#operation-toolbox-left .ok-button')).click();
     },
 
