@@ -33,6 +33,10 @@ module.exports = (function() {
       return asStr.then(function(asS) { return parseInt(asS); });
     },
 
+    openLeftProjectHistory: function() {
+      element(by.css('#side-left label[tooltip="History"] i')).click();
+    },
+
     openLeftOperation: function(name) {
       element(by.css('#operation-toolbox-left #operation-search')).click();
       element(by.css('#operation-toolbox-left #filter')).sendKeys(name, K.ENTER);
@@ -43,12 +47,32 @@ module.exports = (function() {
       element(by.id('new-project-name')).sendKeys(name, K.ENTER);
     },
 
+    sendKeysToElement: function(e, keys) {
+      // ACE editor and non-ace controls need different handling.
+      e.getAttribute('ui-ace').then(
+          function(uiAce) {
+            if (!uiAce) {
+              // Normal input control.
+              e.sendKeys(keys);
+            } else {
+              // ACE editor control.
+              var aceContent = e.element(by.css('div.ace_content'));
+              var aceInput = by.css('textarea.ace_text-input');
+              browser.actions().doubleClick(aceContent).perform();
+              // The \b stands for backspace, to delete the default value
+              // which is one character long. You'll need to update this
+              // is that is changed.
+              e.element(aceInput).sendKeys('\b' + keys);
+            }
+          });
+    },
+
     runLeftOperation: function(name, params) {
       params = params || {};
       this.openLeftOperation(name);
       for (var key in params) {
         var p = '#operation-toolbox-left operation-parameters #' + key + ' .operation-attribute-entry';
-        element(by.css(p)).sendKeys(params[key]);
+        this.sendKeysToElement(element(by.css(p)), params[key]);
       }
 
       element(by.css('#operation-toolbox-left .ok-button')).click();
