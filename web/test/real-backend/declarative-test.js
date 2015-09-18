@@ -74,5 +74,6 @@ var fw = (function UIDescription() {
 require('./example-graph-basics.js')(fw);
 require('./filter-tests.js')(fw);
 require('./help-popups.js')(fw);
+require('./history-editor.js')(fw);
 
 fw.runAll();
