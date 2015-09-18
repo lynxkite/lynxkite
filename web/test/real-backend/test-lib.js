@@ -29,9 +29,20 @@ module.exports = (function() {
       return asStr.then(function(asS) { return parseInt(asS); });
     },
 
+    segmentCount: function() {
+      var asStr = element(by.css('#side-right value#segment-count span.value')).getText();
+      return asStr.then(function(asS) { return parseInt(asS); });
+    },
+
+
     openNewProject: function(name) {
       element(by.id('new-project')).click();
       element(by.id('new-project-name')).sendKeys(name, K.ENTER);
+    },
+
+    openSegmentation: function(segmentationName) {
+      var s = '#side-left .segmentation #segmentation-' + segmentationName;
+      element(by.css(s)).click();
     },
 
     runLeftOperation: function(name, params) {
@@ -40,7 +51,7 @@ module.exports = (function() {
       element(by.css('#operation-toolbox-left #filter')).sendKeys(name, K.ENTER);
 
       for (var key in params) {
-        var p = '#operation-toolbox-left operation-parameters #' + key + ' input';
+        var p = '#operation-toolbox-left operation-parameters #' + key + ' > *';
         element(by.css(p)).sendKeys(params[key], K.ENTER);
       }
 
@@ -48,8 +59,10 @@ module.exports = (function() {
     },
 
     setLeftAttributeFilter: function(attributeName, filterValue) {
+      var sel = '#side-left .attribute input[name="' + attributeName + '"]' ;
+      console.log(sel);
       var filterBox = element(
-        by.css('#side-left .attribute input[name="' + attributeName + '"]'));
+        by.css(sel));
       filterBox.sendKeys(filterValue, K.ENTER);    
     },
   };
