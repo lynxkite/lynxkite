@@ -33,14 +33,18 @@ module.exports = (function() {
       return asStr.then(function(asS) { return parseInt(asS); });
     },
 
+    openLeftOperation: function(name) {
+      element(by.css('#operation-toolbox-left #operation-search')).click();
+      element(by.css('#operation-toolbox-left #filter')).sendKeys(name, K.ENTER);
+    },
+
     openNewProject: function(name) {
       element(by.id('new-project')).click();
       element(by.id('new-project-name')).sendKeys(name, K.ENTER);
     },
 
     runLeftOperation: function(name) {
-      element(by.css('#operation-toolbox-left #operation-search')).click();
-      element(by.css('#operation-toolbox-left #filter')).sendKeys(name, K.ENTER);
+      this.openLeftOperation(name);
       element(by.css('#operation-toolbox-left .ok-button')).click();
     },
 
