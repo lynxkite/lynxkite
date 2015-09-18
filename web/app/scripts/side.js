@@ -222,12 +222,6 @@ angular.module('biggraph')
           this.state.display = 'svg';
         }
       }
-      this.maybeRequestNewCenter();
-    };
-    Side.prototype.maybeRequestNewCenter = function() {
-      if (this.state.graphMode === 'sampled' && this.state.centers === undefined) {
-        this.requestNewCenters(1);
-      }
     };
 
     Side.prototype.resolveCenterRequestParams = function(params) {
@@ -246,9 +240,6 @@ angular.module('biggraph')
           that.state.lastCentersRequest = params;
           that.state.lastCentersResponse = centers;
         });
-    };
-    Side.prototype.requestNewCenters = function(count) {
-      this.sendCenterRequest({ count: count,  filters: this.nonEmptyVertexFilterNames() });
     };
 
     Side.prototype.shortName = function() {
