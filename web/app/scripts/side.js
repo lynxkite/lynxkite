@@ -240,7 +240,7 @@ angular.module('biggraph')
       var that = this;
       var resolvedParams = this.resolveCenterRequestParams(params);
       this.centerRequest = getCenter(resolvedParams);
-      this.centerRequest.$promise.then(
+      this.centerRequest.then(
         function(centers) {
           that.state.centers = centers;
           that.state.lastCentersRequest = params;

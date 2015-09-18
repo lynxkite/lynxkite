@@ -14,7 +14,7 @@ angular.module('biggraph').factory('getCenter', function(util) {
 
     // We rely on the browser's cache to avoid re-sending requests for pagination.
     var req = util.get('/ajax/center', resolvedParams);
-    req.$promise = req.$promise.then(
+    var promise = req.$promise.then(
       function(result) {
         var centers = result.centers;
         offset = offset % centers.length;
@@ -27,13 +27,14 @@ angular.module('biggraph').factory('getCenter', function(util) {
           // Normal case.
           centers = centers.slice(offset, offset + count);
         }
+        promise.$resolved = true; // Pretend ngResource interface for loading animation.
         return centers;
       },
-      function(response) {
-        util.ajaxError(response);
+      function(error) {
+        util.ajaxError(error);
       });
 
-    return req;
+    return promise;
   }
 
   return getCenter;
