@@ -4,7 +4,7 @@
     {{param.title}}
     <help-popup href="{{op.id + '-' + param.id}}"></help-popup>
   </label>
-  <div class="col-sm-8">
+  <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
     <input ng-if="param.kind === 'default'"
       class="form-control" ng-model="output[param.id]" ng-disabled="!editable">
     <div ui-ace="{ mode: 'javascript', showGutter: false, rendererOptions: {fontSize: '16px'} }"
