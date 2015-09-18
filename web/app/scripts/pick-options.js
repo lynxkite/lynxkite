@@ -34,7 +34,9 @@ angular.module('biggraph').directive('pickOptions', function() {
             count: parseInt(scope.count),
             filters: filters };
         } else {
-          return { count: 1, filters: [] };
+          return {
+            count: 1,
+            filters: scope.side.nonEmptyVertexFilterNames() };
         }
       }
 
