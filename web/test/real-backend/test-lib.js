@@ -57,8 +57,8 @@ module.exports = (function() {
       params = params || {};
       this.openLeftOperation(name);
       for (var key in params) {
-        var p = '#operation-toolbox-left operation-parameters #' + key + ' > *';
-        element(by.css(p)).sendKeys(params[key], K.ENTER);
+        var p = '#operation-toolbox-left operation-parameters #' + key + ' .operation-attribute-entry';
+        element(by.css(p)).sendKeys(params[key]);
       }
 
       element(by.css('#operation-toolbox-left .ok-button')).click();
