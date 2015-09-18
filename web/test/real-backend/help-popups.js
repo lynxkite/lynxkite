@@ -50,9 +50,10 @@ module.exports = function(fw) {
           expect(operation.all(by.tagName('help-popup')).count()).toBe(1);
           var helpPopup = operation.element(by.tagName('help-popup'));
           expect(helpPopup.isDisplayed()).toBe(true);
-          // Help id corresponds attribute id. First get a direct div
-          // descendant of the operation which contains the attrbute id.
-          operation.element(by.xpath('./div[@id]')).getAttribute('id').then(
+          // Check that help id corresponds attribute id, that is:
+          // There exists a pair of <div id="<some-operation-id"> and
+          // <help popup="Add-constant-edge-attribute-<some-operation-id>"> tags.
+          operation.element(by.css('div.operation-attribute-input')).getAttribute('id').then(
             function(attributeId) {
               expect(helpPopup.getAttribute('href')).toBe('Add-constant-edge-attribute-' + attributeId);
             }
