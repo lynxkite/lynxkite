@@ -3,48 +3,59 @@
 /* global element */
 /* global by */
 
+var lib = require('./test-lib.js');
+
 module.exports = function(fw) {
   fw.statePreservingTest(
     'empty test-example project',
-    'can open a help popup on the page',
+    'can open a help popup on the page by clicking',
     function() {
-      expect(element(by.xpath('//div[@id="project-header-buttons"]')).isDisplayed()).toBeFalsy();
-      element(by.xpath('//help-popup[@href="project-header-buttons"]')).click();
-      expect(element(by.xpath('//div[@id="project-header-buttons"]')).isDisplayed()).toBeTruthy();
-      element(by.xpath('//help-popup[@href="project-header-buttons"]')).click();
-      browser.actions().mouseMove({x: 100, y: 100}).perform();
-      expect(element(by.xpath('//div[@id="project-header-buttons"]')).isDisplayed()).toBeFalsy();
+      var helpIcon = element(by.css('help-popup[href="project-header-buttons"]'));
+      lib.expectHelpPopupVisible('project-header-buttons', false);
+      helpIcon.click();  // click to show popup
+      lib.expectHelpPopupVisible('project-header-buttons', true);
+      helpIcon.click();  // click to stop showing popup, it still keeps showing :P
+      browser.actions().mouseMove({x: 100, y: 100}).perform();  // move mouse away
+      lib.expectHelpPopupVisible('project-header-buttons', false);
+    });
+  fw.statePreservingTest(
+    'empty test-example project',
+    'can open a help popup on the page by hovering',
+    function() {
+      var helpIcon = element(by.css('help-popup[href="project-header-buttons"]'));
+      lib.expectHelpPopupVisible('project-header-buttons', false);
+      browser.actions().mouseMove(helpIcon).perform();  // hover mouse over icon
+      lib.expectHelpPopupVisible('project-header-buttons', true);
+      browser.actions().mouseMove({x: 100, y: 100}).perform();  // move mouse away
+      lib.expectHelpPopupVisible('project-header-buttons', false);
     });
   fw.transitionTest(
     'test-example project with example graph',
     'test-example project with an opened operation',
     function() {
-      expect(element(by.xpath('//operation')).isPresent()).toBeFalsy();
-      element(by.xpath('//div[@tooltip="Edge attribute operations"]')).click();
-      element(by.xpath('//div[normalize-space(text())="Add constant edge attribute"]')).click();
+      lib.openLeftOperation('Add constant edge attribute');
     },
     function() {
-      expect(element(by.xpath('//operation')).isDisplayed()).toBeTruthy();
+      expect(element(by.tagName('operation')).isDisplayed()).toBe(true);
     });
   fw.statePreservingTest(
     'test-example project with an opened operation',
     'each operation parameter has a help popup icon',
     function() {
-      var list = element.all(by.xpath('//operation//operation-parameters/div'));
-      expect(list.count()).toBeGreaterThan(0);
-      element.all(by.xpath('//operation//operation-parameters/div')).each(
+      var paramList = element.all(by.css('operation operation-parameters > div'));
+      expect(paramList.count()).toBeGreaterThan(0);
+      paramList.each(
         function(operation) {
-          expect(operation.all(by.xpath('.//help-popup')).count()).toBe(1);
-          expect(operation.element(by.xpath('.//help-popup')).isDisplayed()).toBeTruthy();
+          expect(operation.all(by.tagName('help-popup')).count()).toBe(1);
+          expect(operation.element(by.tagName('help-popup')).isDisplayed()).toBe(true);
         });
     });
   fw.statePreservingTest(
     'test-example project with example graph',
     'visualization controls have a help icon',
     function() {
-      var visualizationEyeIcon = element(by.xpath('//label[@btn-radio="\'sampled\'"]'));
-      visualizationEyeIcon.click();
-      expect(element(by.xpath('//help-popup[@href="concrete-view-settings"]')).isDisplayed()).toBeTruthy();
-      visualizationEyeIcon.click();
+      lib.toggleLeftSampledVisualization();
+      expect(element(by.css('help-popup[href="concrete-view-settings"]')).isDisplayed()).toBe(true);
+      lib.toggleLeftSampledVisualization();
     });
 };
