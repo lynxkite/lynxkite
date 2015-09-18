@@ -81,6 +81,7 @@ var fw = (function UIDescription() {
 
 require('./example-graph-basics.js')(fw);
 require('./filter-tests.js')(fw);
+require('./histogram-tests.js')(fw);
 
 fw.runAll();
 

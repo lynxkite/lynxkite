@@ -15,6 +15,33 @@ module.exports = (function() {
       expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
     },
 
+    getLeftHistogram: function(attributeName) {
+      return element(by.css('#side-left histogram[attr-name="' + attributeName + '"]'));
+    },
+
+    getLeftHistogramButton: function(attributeName) {
+      return element(by.css('#side-left #histogram-button[attr-name="' + attributeName + '"]'));
+    },
+    
+    getLeftHistogramValues: function(attributeName) {
+      var button = this.getLeftHistogramButton(attributeName);
+      button.click();
+      var histo = this.getLeftHistogram(attributeName);
+      var tds = histo.all(by.css('td'));
+      console.log('fuck');
+      tds.then(function(alma) {
+        for (var i = 0; i < alma.length; i++) {
+          var egytd = alma[i];
+          console.log('egytdstart');
+          console.log(egytd);
+          console.log('egytdend');
+        }
+        console.log('fuck2');
+      });
+      console.log('fuck3');
+      button.click().then(function() { console.log('fuckx'); });
+    },
+
     leftApplyFilters: function() {
       return element(by.css('#side-left #apply-filters-button')).click();
     },
