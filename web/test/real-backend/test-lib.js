@@ -14,9 +14,16 @@ module.exports = (function() {
     expectCurrentProjectIs: function(name) {
       expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
     },
-    runLeftOperation: function(name) {
+    runLeftOperation: function(name, params) {
+      params = params || {};
       element(by.css('#operation-toolbox-left #operation-search')).click();
       element(by.css('#operation-toolbox-left #filter')).sendKeys(name, K.ENTER);
+
+      for (var key in params) {
+        var p = '#operation-toolbox-left operation-parameters #' + key + ' > *';
+        element(by.css(p)).sendKeys(params[key], K.ENTER);
+      }
+
       element(by.css('#operation-toolbox-left .ok-button')).click();
     },
     leftVertexCount: function() {
