@@ -7,6 +7,22 @@ var request = require('request');
 module.exports = (function() {
   var K = protractor.Key;  // Short alias.
   return {
+    // Deletes all projects and directories.
+    discardAll: function() {
+      var defer = protractor.promise.defer();
+      request.post(
+        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
+        { json: { fake: 1 } },
+        function(error, message) {
+          if (error || message.statusCode >= 400) {
+            defer.reject({ error : error, message : message });
+          } else {
+            defer.fulfill();
+          }
+        });
+      browser.controlFlow().execute(function() { return defer.promise; });
+    },
+
     evaluateOnLeftSide: function(expr) {
       return element(by.css('#side-left')).evaluate(expr);
     },
@@ -47,6 +63,27 @@ module.exports = (function() {
       element(by.id('new-project-name')).sendKeys(name, K.ENTER);
     },
 
+    openSegmentation: function(segmentationName) {
+      var s = '#side-left .segmentation #segmentation-' + segmentationName;
+      element(by.css(s)).click();
+    },
+
+    runLeftOperation: function(name, params) {
+      params = params || {};
+      this.openLeftOperation(name);
+      for (var key in params) {
+        var p = '#operation-toolbox-left operation-parameters #' + key + ' .operation-attribute-entry';
+        this.sendKeysToElement(element(by.css(p)), params[key]);
+      }
+
+      element(by.css('#operation-toolbox-left .ok-button')).click();
+    },
+
+    segmentCount: function() {
+      var asStr = element(by.css('#side-right value#segment-count span.value')).getText();
+      return asStr.then(function(asS) { return parseInt(asS); });
+    },
+
     sendKeysToElement: function(e, keys) {
       // ACE editor and non-ace controls need different handling.
       e.getAttribute('ui-ace').then(
@@ -67,17 +104,6 @@ module.exports = (function() {
           });
     },
 
-    runLeftOperation: function(name, params) {
-      params = params || {};
-      this.openLeftOperation(name);
-      for (var key in params) {
-        var p = '#operation-toolbox-left operation-parameters #' + key + ' .operation-attribute-entry';
-        this.sendKeysToElement(element(by.css(p)), params[key]);
-      }
-
-      element(by.css('#operation-toolbox-left .ok-button')).click();
-    },
-
     setLeftAttributeFilter: function(attributeName, filterValue) {
       var filterBox = element(
         by.css('#side-left .attribute input[name="' + attributeName + '"]'));
@@ -86,22 +112,6 @@ module.exports = (function() {
 
     toggleLeftSampledVisualization: function() {
       element(by.css('#side-left label[btn-radio="\'sampled\'"]')).click();
-    },
-
-    // Deletes all projects and directories.
-    discardAll: function() {
-      var defer = protractor.promise.defer();
-      request.post(
-        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-        { json: { fake: 1 } },
-        function(error, message) {
-          if (error || message.statusCode >= 400) {
-            defer.reject({ error : error, message : message });
-          } else {
-            defer.fulfill();
-          }
-        });
-      browser.controlFlow().execute(function() { return defer.promise; });
     },
   };
 })();
