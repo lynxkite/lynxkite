@@ -23,8 +23,8 @@ statement.
 The comma-separated list of columns to import.
 
 [[key]] Key column::
-This column is used to partition the SQL query. The range from `min(key)` to `max(key)` will be
-split into a sub-range for each Spark worker, so they can each query a part of the data in
+This numerical column is used to partition the SQL query. The range from `min(key)` to `max(key)`
+will be split into a sub-range for each Spark worker, so they can each query a part of the data in
 parallel.
 end::database-import[]
 
