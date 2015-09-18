@@ -25,5 +25,6 @@ module.exports = function(fw) {
     'has the proper vertex count',
     function() {
       expect(lib.leftVertexCount()).toEqual(4);
+      expect(lib.leftEdgeCount()).toEqual(4);      
     });
 };

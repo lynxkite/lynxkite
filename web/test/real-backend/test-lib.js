@@ -20,8 +20,23 @@ module.exports = (function() {
       element(by.css('#operation-toolbox-left .ok-button')).click();
     },
     leftVertexCount: function() {
-      var asStr = element(by.css('#side-left value.vertex-count span.value')).getText();
+      var asStr = element(by.css('#side-left value#vertex-count span.value')).getText();
       return asStr.then(function(asS) { return parseInt(asS); });
+    },
+    leftEdgeCount: function() {
+      var asStr = element(by.css('#side-left value#edge-count span.value')).getText();
+      return asStr.then(function(asS) { return parseInt(asS); });
+    },
+    setLeftAttributeFilter: function(attributeName, filterValue) {
+      var filterBox = element(
+        by.css('#side-left .attribute input[name="' + attributeName + '"]'));
+      filterBox.sendKeys(filterValue, K.ENTER);    
+    },
+    evaluateOnLeftSide: function(expr) {
+      return element(by.css('#side-left')).evaluate(expr);
+    },
+    leftApplyFilters: function() {
+      return element(by.css('#side-left #apply-filters-button')).click();
     },
   };
 })();
