@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .factory('side', function (util, $rootScope) {
+  .factory('side', function (util, $rootScope, getCenter) {
     function defaultSideState() {
       return {
         projectName: undefined,
@@ -222,37 +222,24 @@ angular.module('biggraph')
           this.state.display = 'svg';
         }
       }
-      this.maybeRequestNewCenter();
     };
-    Side.prototype.maybeRequestNewCenter = function() {
-      if (this.state.graphMode === 'sampled' && this.state.centers === undefined) {
-        this.requestNewCenters(1);
-      }
-    };
-    Side.prototype.requestNewCentersWithFilters = function(count, filters) {
-      var params = {
-        filters: filters,
-        count: count,
-      };
-      this.sendCenterRequest(params);
-    };
-    Side.prototype.sendCenterRequest = function(params) {
-      var that = this;
+
+    Side.prototype.resolveCenterRequestParams = function(params) {
       var resolvedParams = angular.copy(params);
       resolvedParams.filters = this.resolveVertexFilters(params.filters);
       resolvedParams.vertexSetId = this.project.vertexSet;
-      this.centerRequest = util.get('/ajax/center', resolvedParams);
-      return this.centerRequest.$promise.then(
-        function(result) {
-          that.state.centers = result.centers;
-          that.state.lastCentersRequest = params;
-          that.state.lastCentersResponse = result.centers;
-        },
-        function(response) { util.ajaxError(response); }
-      );
+      return resolvedParams;
     };
-    Side.prototype.requestNewCenters = function(count) {
-      this.requestNewCentersWithFilters(count, this.nonEmptyVertexFilterNames());
+    Side.prototype.sendCenterRequest = function(params) {
+      var that = this;
+      var resolvedParams = this.resolveCenterRequestParams(params);
+      this.centerRequest = getCenter(resolvedParams);
+      this.centerRequest.then(
+        function(centers) {
+          that.state.centers = centers;
+          that.state.lastCentersRequest = params;
+          that.state.lastCentersResponse = centers;
+        });
     };
 
     Side.prototype.shortName = function() {
