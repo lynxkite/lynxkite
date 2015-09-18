@@ -31,7 +31,7 @@ module.exports = function(fw) {
     });
   fw.transitionTest(
     'test-example project with example graph',
-    'test-example project with an opened operation',
+    'test-example project with the "Add constant edge attribute" opened',
     function() {
       lib.openLeftOperation('Add constant edge attribute');
     },
@@ -39,15 +39,24 @@ module.exports = function(fw) {
       expect(element(by.tagName('operation')).isDisplayed()).toBe(true);
     });
   fw.statePreservingTest(
-    'test-example project with an opened operation',
+    'test-example project with the "Add constant edge attribute" opened',
     'each operation parameter has a help popup icon',
     function() {
       var paramList = element.all(by.css('operation operation-parameters > div'));
       expect(paramList.count()).toBeGreaterThan(0);
       paramList.each(
         function(operation) {
+          // Exactly one help popup is displayed.
           expect(operation.all(by.tagName('help-popup')).count()).toBe(1);
-          expect(operation.element(by.tagName('help-popup')).isDisplayed()).toBe(true);
+          var helpPopup = operation.element(by.tagName('help-popup'));
+          expect(helpPopup.isDisplayed()).toBe(true);
+          // Help id corresponds attribute id. First get a direct div
+          // descendant of the operation which contains the attrbute id.
+          operation.element(by.xpath('./div[@id]')).getAttribute('id').then(
+            function(attributeId) {
+              expect(helpPopup.getAttribute('href')).toBe('Add-constant-edge-attribute-' + attributeId);
+            }
+          );
         });
     });
   fw.statePreservingTest(
