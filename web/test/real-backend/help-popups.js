@@ -18,6 +18,7 @@ module.exports = function(fw) {
       browser.actions().mouseMove({x: 100, y: 100}).perform();  // move mouse away
       lib.expectHelpPopupVisible('project-header-buttons', false);
     });
+
   fw.statePreservingTest(
     'empty test-example project',
     'can open a help popup on the page by hovering',
@@ -29,6 +30,7 @@ module.exports = function(fw) {
       browser.actions().mouseMove({x: 100, y: 100}).perform();  // move mouse away
       lib.expectHelpPopupVisible('project-header-buttons', false);
     });
+
   fw.transitionTest(
     'test-example project with example graph',
     'test-example project with the "Add constant edge attribute" opened',
@@ -38,6 +40,7 @@ module.exports = function(fw) {
     function() {
       expect(element(by.tagName('operation')).isDisplayed()).toBe(true);
     });
+
   fw.statePreservingTest(
     'test-example project with the "Add constant edge attribute" opened',
     'each operation parameter has a help popup icon',
@@ -60,12 +63,21 @@ module.exports = function(fw) {
           );
         });
     });
-  fw.statePreservingTest(
+
+  fw.transitionTest(
     'test-example project with example graph',
-    'visualization controls have a help icon',
+    'test-example project in sampled view',
     function() {
       lib.left.toggleSampledVisualization();
+    },
+    function() {
+      expect(element(by.css('svg.graph-view')).isDisplayed()).toBe(true);
+    });
+
+  fw.statePreservingTest(
+    'test-example project in sampled view',
+    'visualization controls have a help icon',
+    function() {
       expect(element(by.css('help-popup[href="concrete-view-settings"]')).isDisplayed()).toBe(true);
-      lib.left.toggleSampledVisualization();
     });
 };

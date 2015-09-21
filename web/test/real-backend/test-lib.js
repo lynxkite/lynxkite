@@ -28,7 +28,7 @@ Side.prototype = {
   getHistogramButton: function(attributeName) {
     return this.side.element(by.css('#histogram-button[attr-name="' + attributeName + '"]'));
   },
-  
+
   getHistogramTotalElement: function(attributeName) {
     return this.getHistogram(attributeName).element(by.css('.histogram-total'));
   },
@@ -130,6 +130,7 @@ Side.prototype = {
   setAttributeFilter: function(attributeName, filterValue) {
     var filterBox = this.side.element(
       by.css('.attribute input[name="' + attributeName + '"]'));
+    filterBox.clear();
     filterBox.sendKeys(filterValue, K.ENTER);
   },
 
@@ -146,9 +147,27 @@ Side.prototype = {
   },
 };
 
+function Visualization() {
+  this.svg = element(by.css('svg.graph-view'));
+}
+
+Visualization.prototype = {
+  // The visualization response received from the server.
+  graphView: function(fn) {
+    return this.svg.evaluate('graph.view.toJSON()').then(fn);
+  },
+
+  vertexCounts: function(index) {
+    return this.graphView(function(gv) {
+      return gv.vertexSets[index].vertices.length;
+    });
+  },
+};
+
 testLib = {
   left: new Side('left'),
   right: new Side('right'),
+  visualization: new Visualization(),
 
   // Deletes all projects and directories.
   discardAll: function() {
