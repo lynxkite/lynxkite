@@ -36,7 +36,7 @@ Side.prototype = {
     function allFrom(td) {
       var toolTip = td.getAttribute('tooltip');
       var style = td.element(by.css('div.bar')).getAttribute('style');
-      return testLib.flatten({toolTip: toolTip, style: style, alma: 5}).then(function(rawData) {
+      return testLib.flatten({toolTip: toolTip, style: style}).then(function(rawData) {
         var toolTipMatch = rawData.toolTip.match(/^(.*): (\d+)$/);
         var styleMatch = rawData.style.match(/^height: (\d+)%;$/);
         return {
