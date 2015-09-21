@@ -7,7 +7,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'name histogram looks good',
     function() {
-      expect(lib.getLeftHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
+      expect(lib.left.getHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: '100', value: '1' },
         { title: 'Bob', size: '100', value: '1' },
         { title: 'Eve', size: '100', value: '1' },
