@@ -84,7 +84,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       function alternateHistory() {
         var requests = [];
         var steps = scope.history.steps;
-        var lastCheckpoint = '';
+        var lastCheckpoint = ''; // The initial project state.
         for (var i = 0; i < steps.length; ++i) {
           var s = steps[i];
           if (requests.length === 0 && s.checkpoint !== undefined) {
@@ -93,10 +93,12 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             requests.push(s.request);
           }
         }
-        return {
+        var x = {
           startingPoint: lastCheckpoint,
           requests: requests,
         };
+        console.log(x);
+        return x;
       }
 
       function validate() {
