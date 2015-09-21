@@ -29,10 +29,19 @@ Side.prototype = {
     return this.side.element(by.css('#histogram-button[attr-name="' + attributeName + '"]'));
   },
   
+  getHistogramTotalElement: function(attributeName) {
+    return this.getHistogram(attributeName).element(by.css('.histogram-total'));
+  },
+
   getHistogramValues: function(attributeName) {
     var button = this.getHistogramButton(attributeName);
-    button.click();
+    var total = this.getHistogramTotalElement(attributeName);
     var histo = this.getHistogram(attributeName);
+    expect(histo.isDisplayed()).toBe(false);
+    expect(total.isDisplayed()).toBe(false);
+    button.click();
+    expect(histo.isDisplayed()).toBe(true);
+    expect(total.isDisplayed()).toBe(false);
     function allFrom(td) {
       var toolTip = td.getAttribute('tooltip');
       var style = td.element(by.css('div.bar')).getAttribute('style');
@@ -41,19 +50,35 @@ Side.prototype = {
         var styleMatch = rawData.style.match(/^height: (\d+)%;$/);
         return {
           title: toolTipMatch[1],
-          size: styleMatch[1],
-          value: toolTipMatch[2],
+          size: parseInt(styleMatch[1]),
+          value: parseInt(toolTipMatch[2]),
         };
       });
     }
-    var res = histo.all(by.css('td')).then(function(tds) {
+    var tds = histo.all(by.css('td'));
+    var res = tds.then(function(tds) {
       var res = [];
       for (var i = 0; i < tds.length; i++) {
         res.push(allFrom(tds[i]));
       }
       return protractor.promise.all(res);
     });
+
+    browser.actions().mouseMove(tds.first()).perform();
+    expect(total.isDisplayed()).toBe(true);
+    testLib.flatten({totalText: total.getText(), values: res}).then(function(c) {
+      var totalValue = c.totalText.match(/total: ([0-9,]+)/)[1];
+      var total = parseInt(totalValue.replace(/,/g, ''));
+      var sum = 0;
+      for (var j = 0; j < c.values.length; j++) {
+        sum += c.values[j].value;
+      }
+      expect(total).toEqual(sum);
+    });
+
     button.click();
+    expect(histo.isDisplayed()).toBe(false);
+    expect(total.isDisplayed()).toBe(false);
     return res;
   },
 
