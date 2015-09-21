@@ -411,7 +411,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         segmentationsBefore,
         segmentationsAfter,
         opCategoriesBeforeWithOp,
-        nextState.checkpoint))
+        nextStateOpt.flatMap(_.checkpoint)))
   }
 
   def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
