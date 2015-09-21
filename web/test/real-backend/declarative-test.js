@@ -68,6 +68,10 @@ var fw = (function UIDescription() {
         }
       }
     },
+
+    runOne: function(stateName)  {
+      states[stateName].reachAndTest();
+    },
   };
 })();
 
@@ -76,4 +80,5 @@ require('./filter-tests.js')(fw);
 require('./help-popups.js')(fw);
 require('./histogram-tests.js')(fw);
 
-fw.runAll();
+//fw.runAll();
+fw.runOne('test-example project with example graph');

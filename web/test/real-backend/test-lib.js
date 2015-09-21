@@ -6,6 +6,41 @@ var request = require('request');
 
 module.exports = (function() {
   var K = protractor.Key;  // Short alias.
+
+  var ToolTipRE = new RegExp('^(.*): (\\d+)$');
+  var StyleRE = new RegExp('^height: (\\d+)%;$');
+
+  function promiseObj(objOfPromises) {
+    var keys = Object.keys(objOfPromises);
+    var promiseKeys = [];
+    var result = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (typeof objOfPromises[key].then === 'function') {
+        promiseKeys.push(key);
+      } else {
+        // TODO: Consider doing a recursive call here...
+        result[key] = objOfPromises[key];
+      }
+    }
+    var elementsSet = 0;
+    var defer = protractor.promise.defer();
+    function futureSetter(key) {
+      return function(value) {
+        result[key] = value;
+        elementsSet += 1;
+        if (elementsSet === promiseKeys.length) {
+          defer.fulfill(result);
+        }
+      };
+    }
+    for (var j = 0; j < promiseKeys.length; j++) {
+      var promiseKey = promiseKeys[j];
+      objOfPromises[promiseKey].then(futureSetter(promiseKey));
+    }
+    return defer;
+  }
+
   return {
     evaluateOnLeftSide: function(expr) {
       return element(by.css('#side-left')).evaluate(expr);
@@ -31,19 +66,41 @@ module.exports = (function() {
       var button = this.getLeftHistogramButton(attributeName);
       button.click();
       var histo = this.getLeftHistogram(attributeName);
-      var tds = histo.all(by.css('td'));
-      console.log('fuck');
-      tds.then(function(alma) {
-        for (var i = 0; i < alma.length; i++) {
-          var egytd = alma[i];
-          console.log('egytdstart');
-          console.log(egytd);
-          console.log('egytdend');
+      function allFrom(td) {
+        var toolTip = td.getAttribute('tooltip');
+        var style = td.element(by.css('div.bar')).getAttribute('style');
+        return promiseObj({toolTip: toolTip, style: style}).then(function(rawData) {
+          var toolTipMatch = rawData.toolTip.match(ToolTipRE);
+          var styleMatch = rawData.style.match(StyleRE);
+          return {
+            title: toolTipMatch[1],
+            size: styleMatch[1],
+            value: toolTipMatch[2],
+          };
+        });
+      }
+      var res = histo.all(by.css('td')).then(function(tds) {
+        var res = [];
+        for (var i = 0; i < tds.length; i++) {
+          res.push(allFrom(tds[i]));
         }
-        console.log('fuck2');
+        return protractor.promise.all(res);
       });
-      console.log('fuck3');
-      button.click().then(function() { console.log('fuckx'); });
+      button.click();
+      return res;
+    },
+
+    // Warning, this also sorts the given array parameter in place.
+    sortHistogramValues: function(values) {
+      return values.sort(function(b1, b2) {
+        if (b1.title < b2.title) {
+          return -1;
+        } else if (b1.title > b2.title) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
     },
 
     leftApplyFilters: function() {
