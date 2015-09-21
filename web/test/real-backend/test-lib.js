@@ -92,16 +92,19 @@ testLib = {
 
   sendKeysToElement: function(e, keys) {
     // ACE editor and non-ace controls need different handling.
-    e.getAttribute('data-kind').then(
+    e.evaluate('param.kind').then(
         function(dataKind) {
-          expect(['text', 'select', 'text-ace']).toContain(dataKind);
-          if (dataKind === 'text' || dataKind === 'select') {
+          if (dataKind !== 'code') {
             // Normal input control.
             e.sendKeys(keys);
-          } else if (dataKind === 'text-ace') {
+          } else {
             // ACE editor control.
             var aceContent = e.element(by.css('div.ace_content'));
             var aceInput = e.element(by.css('textarea.ace_text-input'));
+            // The triple click on the text area focuses it and selects all its
+            // text content. Therefore the first key sent will clear its current
+            // content. (Caveat: if 'keys' is the empty string then it won't be
+            // cleared.)
             browser.actions().click(aceContent).perform();
             browser.actions().doubleClick(aceContent).perform();
             aceInput.sendKeys(keys);
