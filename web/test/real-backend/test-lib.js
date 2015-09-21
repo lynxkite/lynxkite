@@ -117,6 +117,8 @@ var testLib = {
     expect(element(by.css('div[help-id="' + helpId + '"]')).isDisplayed()).toBe(isVisible);
   },
 
+  // Given an object, finds all promises within it and returns a promise for the completly resolved
+  // object.
   flatten: function(objOfPromises) {
     if (typeof objOfPromises !== 'object') {
       return objOfPromises;
