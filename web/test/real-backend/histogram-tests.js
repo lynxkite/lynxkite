@@ -7,7 +7,11 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'name histogram looks good',
     function() {
-      lib.getLeftHistogramValues('name');
-      console.log('fuck4');
+      expect(lib.getLeftHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
+        { title: 'Adam', size: '100', value: '1' },
+        { title: 'Bob', size: '100', value: '1' },
+        { title: 'Eve', size: '100', value: '1' },
+        { title: 'Isolated Joe', size: '100', value: '1' },
+      ]);
     });
 };
