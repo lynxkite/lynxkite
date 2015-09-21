@@ -7,22 +7,6 @@ var request = require('request');
 module.exports = (function() {
   var K = protractor.Key;  // Short alias.
   return {
-    // Deletes all projects and directories.
-    discardAll: function() {
-      var defer = protractor.promise.defer();
-      request.post(
-        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-        { json: { fake: 1 } },
-        function(error, message) {
-          if (error || message.statusCode >= 400) {
-            defer.reject({ error : error, message : message });
-          } else {
-            defer.fulfill();
-          }
-        });
-      browser.controlFlow().execute(function() { return defer.promise; });
-    },
-
     evaluateOnLeftSide: function(expr) {
       return element(by.css('#side-left')).evaluate(expr);
     },
@@ -50,7 +34,7 @@ module.exports = (function() {
     },
 
     openLeftProjectHistory: function() {
-      element(by.css('#side-left label[tooltip="History"] i')).click();
+      element(by.css('#side-left .history-button')).click();
     },
 
     openLeftOperation: function(name) {
@@ -86,20 +70,19 @@ module.exports = (function() {
 
     sendKeysToElement: function(e, keys) {
       // ACE editor and non-ace controls need different handling.
-      e.getAttribute('ui-ace').then(
-          function(uiAce) {
-            if (!uiAce) {
+      e.getAttribute('data-kind').then(
+          function(dataKind) {
+            expect(['text', 'select', 'text-ace']).toContain(dataKind);
+            if (dataKind === 'text' || dataKind === 'select') {
               // Normal input control.
               e.sendKeys(keys);
-            } else {
+            } else if (dataKind === 'text-ace') {
               // ACE editor control.
               var aceContent = e.element(by.css('div.ace_content'));
-              var aceInput = by.css('textarea.ace_text-input');
+              var aceInput = e.element(by.css('textarea.ace_text-input'));
+              browser.actions().click(aceContent).perform();
               browser.actions().doubleClick(aceContent).perform();
-              // The \b stands for backspace, to delete the default value
-              // which is one character long. You'll need to update this
-              // is that is changed.
-              e.element(aceInput).sendKeys('\b' + keys);
+              aceInput.sendKeys(keys);
             }
           });
     },
@@ -112,6 +95,22 @@ module.exports = (function() {
 
     toggleLeftSampledVisualization: function() {
       element(by.css('#side-left label[btn-radio="\'sampled\'"]')).click();
+    },
+
+    // Deletes all projects and directories.
+    discardAll: function() {
+      var defer = protractor.promise.defer();
+      request.post(
+        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
+        { json: { fake: 1 } },
+        function(error, message) {
+          if (error || message.statusCode >= 400) {
+            defer.reject({ error : error, message : message });
+          } else {
+            defer.fulfill();
+          }
+        });
+      browser.controlFlow().execute(function() { return defer.promise; });
     },
   };
 })();

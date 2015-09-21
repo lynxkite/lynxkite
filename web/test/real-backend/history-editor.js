@@ -1,5 +1,7 @@
 'use strict';
 
+/* global element, by */
+
 var lib = require('./test-lib.js');
 
 module.exports = function(fw) {
@@ -11,23 +13,24 @@ module.exports = function(fw) {
       lib.runLeftOperation(
           'degree',
            {
-            'name': 'deg',
-            'direction': 'incoming edges',
+            name: 'deg',
+            direction: 'incoming edges',
           });
       lib.runLeftOperation(
           'add constant vertex attribute',
           {
-            'name': 'c',
-            'value': '300000',
+            name: 'c',
+            value: '300000',
           });
       lib.runLeftOperation(
           'derived edge attribute',
           {
-            'output': 'foo',
-            'expr': 'src$deg + dst$deg',
+            output: 'foo',
+            expr: 'src$deg + dst$deg',
           });
       lib.openLeftProjectHistory();
     },
     function() {
+      expect(element(by.css('div.project.history')).isDisplayed()).toBe(true);
     });
 };
