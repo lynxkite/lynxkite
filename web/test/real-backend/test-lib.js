@@ -112,6 +112,10 @@ Side.prototype = {
     this.side.element(by.id('segmentation-' + segmentationName)).click();
   },
 
+  redoButton: function() {
+    return this.side.element(by.id('redo-button'));
+  },
+
   runOperation: function(name, params) {
     params = params || {};
     this.openOperation(name);
@@ -131,6 +135,14 @@ Side.prototype = {
 
   toggleSampledVisualization: function() {
     this.side.element(by.css('label[btn-radio="\'sampled\'"]')).click();
+  },
+
+  undoButton: function() {
+    return this.side.element(by.id('undo-button'));
+  },
+
+  attributeCount: function() {
+    return this.side.all(by.css('li.attribute')).count();
   },
 };
 
