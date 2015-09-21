@@ -2,39 +2,9 @@
 
 /* global element, by, protractor */
 
+var testLib; // Forward declaration.
 var request = require('request');
 var K = protractor.Key;  // Short alias.
-
-function promiseObj(objOfPromises) {
-  var keys = Object.keys(objOfPromises);
-  var promiseKeys = [];
-  var result = {};
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i];
-    if (typeof objOfPromises[key].then === 'function') {
-      promiseKeys.push(key);
-    } else {
-      // TODO: Consider doing a recursive call here...
-      result[key] = objOfPromises[key];
-    }
-  }
-  var elementsSet = 0;
-  var defer = protractor.promise.defer();
-  function futureSetter(key) {
-    return function(value) {
-      result[key] = value;
-      elementsSet += 1;
-      if (elementsSet === promiseKeys.length) {
-        defer.fulfill(result);
-      }
-    };
-  }
-  for (var j = 0; j < promiseKeys.length; j++) {
-    var promiseKey = promiseKeys[j];
-    objOfPromises[promiseKey].then(futureSetter(promiseKey));
-  }
-  return defer;
-}
 
 function Side(direction) {
   this.direction = direction;
@@ -66,7 +36,7 @@ Side.prototype = {
     function allFrom(td) {
       var toolTip = td.getAttribute('tooltip');
       var style = td.element(by.css('div.bar')).getAttribute('style');
-      return promiseObj({toolTip: toolTip, style: style}).then(function(rawData) {
+      return testLib.flatten({toolTip: toolTip, style: style, alma: 5}).then(function(rawData) {
         var toolTipMatch = rawData.toolTip.match(/^(.*): (\d+)$/);
         var styleMatch = rawData.style.match(/^height: (\d+)%;$/);
         return {
@@ -135,51 +105,85 @@ Side.prototype = {
   },
 };
 
-module.exports = (function() {
-  return {
-    left: new Side('left'),
-    right: new Side('right'),
+var testLib = {
+  left: new Side('left'),
+  right: new Side('right'),
 
-    expectCurrentProjectIs: function(name) {
-      expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
-    },
+  expectCurrentProjectIs: function(name) {
+    expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
+  },
 
-    expectHelpPopupVisible: function(helpId, isVisible) {
-      expect(element(by.css('div[help-id="' + helpId + '"]')).isDisplayed()).toBe(isVisible);
-    },
+  expectHelpPopupVisible: function(helpId, isVisible) {
+    expect(element(by.css('div[help-id="' + helpId + '"]')).isDisplayed()).toBe(isVisible);
+  },
 
-    openNewProject: function(name) {
-      element(by.id('new-project')).click();
-      element(by.id('new-project-name')).sendKeys(name, K.ENTER);
-    },
+  flatten: function(objOfPromises) {
+    if (typeof objOfPromises !== 'object') {
+      return objOfPromises;
+    }
+    var keys = Object.keys(objOfPromises);
+    var promiseKeys = [];
+    var result = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (typeof objOfPromises[key].then === 'function') {
+        promiseKeys.push(key);
+      } else {
+        result[key] = this.flatten(objOfPromises[key]);
+      }
+    }
 
-    // Deletes all projects and directories.
-    discardAll: function() {
-      var defer = protractor.promise.defer();
-      request.post(
-        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-        { json: { fake: 1 } },
-        function(error, message) {
-          if (error || message.statusCode >= 400) {
-            defer.reject({ error : error, message : message });
-          } else {
-            defer.fulfill();
-          }
-        });
-      browser.controlFlow().execute(function() { return defer.promise; });
-    },
+    var elementsSet = 0;
+    var defer = protractor.promise.defer();
+    function futureSetter(key) {
+      return function(value) {
+        result[key] = value;
+        elementsSet += 1;
+        if (elementsSet === promiseKeys.length) {
+          defer.fulfill(result);
+        }
+      };
+    }
+    for (var j = 0; j < promiseKeys.length; j++) {
+      var promiseKey = promiseKeys[j];
+      objOfPromises[promiseKey].then(futureSetter(promiseKey));
+    }
+    return defer;
+  },
 
-    // Warning, this also sorts the given array parameter in place.
-    sortHistogramValues: function(values) {
-      return values.sort(function(b1, b2) {
-        if (b1.title < b2.title) {
-          return -1;
-        } else if (b1.title > b2.title) {
-          return 1;
+  openNewProject: function(name) {
+    element(by.id('new-project')).click();
+    element(by.id('new-project-name')).sendKeys(name, K.ENTER);
+  },
+
+  // Deletes all projects and directories.
+  discardAll: function() {
+    var defer = protractor.promise.defer();
+    request.post(
+      browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
+      { json: { fake: 1 } },
+      function(error, message) {
+        if (error || message.statusCode >= 400) {
+          defer.reject({ error : error, message : message });
         } else {
-          return 0;
+          defer.fulfill();
         }
       });
-    },
-  };
-})();
+    browser.controlFlow().execute(function() { return defer.promise; });
+  },
+
+  // Warning, this also sorts the given array parameter in place.
+  sortHistogramValues: function(values) {
+    return values.sort(function(b1, b2) {
+      if (b1.title < b2.title) {
+        return -1;
+      } else if (b1.title > b2.title) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+  },
+};
+
+module.exports = testLib;
