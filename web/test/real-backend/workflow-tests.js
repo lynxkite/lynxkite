@@ -13,7 +13,7 @@ module.exports = function(fw) {
     'example graph with filters applied',
     'example graph simple history',
     function() {
-      lib.left.openProjectHistory();
+      lib.left.historyLib.open();
     },
     function() {
       expect(lib.left.getProjectHistory().isDisplayed()).toBe(true);

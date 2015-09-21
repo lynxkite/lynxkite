@@ -6,10 +6,11 @@ var testLib; // Forward declaration.
 var request = require('request');
 var K = protractor.Key;  // Short alias.
 
-function Side(direction) {
+function Side(direction, historyLib) {
   this.direction = direction;
   this.side = element(by.id('side-' + direction));
   this.toolbox = element(by.id('operation-toolbox-' + direction));
+  this.historyLib = historyLib; historyLib.side = this;
 }
 
 Side.prototype = {
@@ -136,10 +137,6 @@ Side.prototype = {
     this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
   },
 
-  openProjectHistory: function() {
-    this.side.element(by.css('.history-button')).click();
-  },
-
   openWorkflowSavingDialog: function() {
     this.side.element(by.id('save-as-workflow-button')).click();
   },
@@ -152,15 +149,22 @@ Side.prototype = {
     return this.side.element(by.id('redo-button'));
   },
 
-  runOperation: function(name, params) {
+  populateOperation: function(parentElement, params, keepEditing) {
     params = params || {};
-    this.openOperation(name);
     for (var key in params) {
       var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
-      testLib.sendKeysToElement(element(by.css(p)), testLib.selectAllKey + params[key]);
+      testLib.sendKeysToElement(
+          parentElement.element(by.css(p)),
+          testLib.selectAllKey + params[key]);
     }
+    if (!keepEditing) {
+      parentElement.element(by.css('.ok-button')).click();
+    }
+  },
 
-    this.toolbox.element(by.css('.ok-button')).click();
+  runOperation: function(name, params) {
+    this.openOperation(name);
+    this.populateOperation(this.toolbox, params);
   },
 
   setAttributeFilter: function(attributeName, filterValue) {
@@ -181,6 +185,85 @@ Side.prototype = {
   attributeCount: function() {
     return this.side.all(by.css('li.attribute')).count();
   },
+
+  openProject: function(name) {
+    element(by.css('item-name-and-menu[name="' + name + '"]')).click();
+  },
+
+  closeProject: function() {
+    element(by.css('#close-project')).click();
+  }
+};
+
+function TestHistoryLib() {
+  this.side = undefined;
+}
+
+TestHistoryLib.prototype = {
+  open: function() {
+    this.side.side.element(by.css('.history-button')).click();
+  },
+
+  close: function(discardChanges) {
+    if (discardChanges) {
+      testLib.expectDialogAndRespond(true);
+    }
+    this.side.side.element(by.id('close-history-button')).click();
+    if (discardChanges) {
+      testLib.checkAndCleanupDialogExpectation();
+    }
+  },
+
+  save: function(name) {
+    this.side.side.element(by.css('.save-history-button')).click();
+    if (name !== undefined) {
+      var inputBox = this.side.side.element(by.css('.save-as-history-box input'));
+      inputBox.sendKeys(testLib.selectAllKey + name);
+    }
+    this.side.side.element(by.css('.save-as-history-box .glyphicon-floppy-disk')).click();
+  },
+
+  expectSaveable: function(saveable) {
+    expect(this.side.side.element(by.css('.save-history-button')).isPresent()).toBe(saveable);
+  },
+
+  // Get an operation from the history. position is a zero-based index.
+  getOperation: function(position) {
+    var list = this.side.side.all(by.css('project-history div.list-group > li'));
+    return list.get(position);
+  },
+
+  openDropdownMenu: function(operation) {
+    var menu = operation.element(by.css('.history-options.dropdown'));
+    menu.element(by.css('a.dropdown-toggle')).click();
+    return menu;
+  },
+
+  deleteOperation: function(position) {
+    var operation = this.getOperation(position);
+    this.openDropdownMenu(operation).element(by.css('ul .glyphicon-trash')).click();
+  },
+
+  addOperation: function(parentPos, above, name, params) {
+    var parentOp = this.getOperation(parentPos);
+    var iconClass = above ? '.glyphicon-chevron-up' : '.glyphicon-chevron-down';
+    this.openDropdownMenu(parentOp).element(by.css('ul ' + iconClass)).click();
+    var newPos = above ? parentPos : parentPos + 1;
+    var newOp = this.getOperation(newPos);
+    newOp.element(by.id('operation-search')).click();
+    newOp.element(by.id('filter')).sendKeys(name, K.ENTER);
+    this.side.populateOperation(newOp, params);
+  },
+
+  numOperations: function() {
+    return this.side.side.all(by.css('project-history div.list-group > li')).count();
+  },
+
+  expectOperationParameter: function(opPosition, paramName, expectedValue) {
+    var param = this.getOperation(opPosition).element(by.css('div#' + paramName + ' input'));
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  }
+
 };
 
 var visualization = {
@@ -210,10 +293,11 @@ var splash = {
 };
 
 testLib = {
-  left: new Side('left'),
-  right: new Side('right'),
+  left: new Side('left', new TestHistoryLib()),
+  right: new Side('right', new TestHistoryLib()),
   visualization: visualization,
   splash: splash,
+  selectAllKey: K.chord(K.CONTROL, 'a'),
 
   // Deletes all projects and directories.
   discardAll: function() {
@@ -280,15 +364,10 @@ testLib = {
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
   },
 
-  selectAllKey: K.chord(K.CONTROL, 'a'),
-
   sendKeysToACE: function(e, keys) {
     var aceContent = e.element(by.css('div.ace_content'));
     var aceInput = e.element(by.css('textarea.ace_text-input'));
-    // The triple click on the text area focuses it and selects all its
-    // text content. Therefore the first key sent will clear its current
-    // content. (Caveat: if 'keys' is the empty string then it won't be
-    // cleared.)
+    // The double click on the text area focuses it properly.
     browser.actions().doubleClick(aceContent).perform();
     aceInput.sendKeys(keys);
   },
@@ -297,14 +376,39 @@ testLib = {
     // ACE editor and non-ace controls need different handling.
     e.evaluate('param.kind').then(
         function(dataKind) {
-          if (dataKind !== 'code') {
-            // Normal input control.
-            e.sendKeys(keys);
-          } else {
-            // ACE editor control.
+          if (dataKind === 'code') {
             testLib.sendKeysToACE(e, keys);
+          } else {
+            e.sendKeys(keys);
           }
         });
+  },
+
+  // Expects a window.confirm call from the client code and overrides the user
+  // response.
+  expectDialogAndRespond: function(responseValue) {
+    // I am not particularly happy with this solution. The problem with the nice
+    // solution is that there is a short delay before the alert actually shows up
+    // and protractor does not wait for it. (Error: NoSuchAlertError: no alert open)
+    // See: https://github.com/angular/protractor/issues/1486
+    // Other possible options:
+    // 1. browser.wait for the alert to appear. This introduces a hard timout
+    // and potential flakiness.
+    // 2. Use Jasmine's spyOn. The difficulty there is in getting hold of a
+    // window object from inside the browser, if at all ppossible.
+    // 3. Use a mockable Angular module for window.confirm from our app.
+    browser.executeScript(
+        'window.confirm0 = window.confirm;' +
+        'window.confirm = function() {' +
+        '  window.confirm = window.confirm0;' +
+        '  return ' + responseValue+ ';' +
+        '}');
+  },
+
+  checkAndCleanupDialogExpectation: function() {
+    // Fail if there was no alert.
+    expect(browser.executeScript('return window.confirm === window.confirm0')).toBe(true);
+    browser.executeScript('window.confirm = window.confirm0;');
   },
 
   // Warning, this also sorts the given array parameter in place.
