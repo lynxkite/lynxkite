@@ -11,7 +11,7 @@ module.exports = function(fw) {
         'attr': 'income',
         'interval-size': '10',
       };
-      lib.runLeftOperation('Segment by double attribute', params);
+      lib.left.runOperation('Segment by double attribute', params);
     },
     function() {
     });
@@ -19,9 +19,9 @@ module.exports = function(fw) {
     'segmentation by double created',
     'segmentation opens',
     function() {
-      lib.openSegmentation('bucketing');      
+      lib.left.openSegmentation('bucketing');
     },
     function() {
-      expect(lib.segmentCount()).toEqual(2);
+      expect(lib.right.segmentCount()).toEqual(2);
     });
 };

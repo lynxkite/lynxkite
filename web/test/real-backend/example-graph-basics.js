@@ -27,7 +27,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'test-example project with example graph',
     function() {
-      lib.runLeftOperation('example graph');
+      lib.left.runOperation('example graph');
     },
     function() {
     });
@@ -36,7 +36,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'has the proper vertex count',
     function() {
-      expect(lib.leftVertexCount()).toEqual(4);
-      expect(lib.leftEdgeCount()).toEqual(4);      
+      expect(lib.left.vertexCount()).toEqual(4);
+      expect(lib.left.edgeCount()).toEqual(4);
     });
 };

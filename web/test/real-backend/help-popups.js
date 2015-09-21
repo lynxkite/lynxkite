@@ -33,7 +33,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'test-example project with the "Add constant edge attribute" opened',
     function() {
-      lib.openLeftOperation('Add constant edge attribute');
+      lib.left.openOperation('Add constant edge attribute');
     },
     function() {
       expect(element(by.tagName('operation')).isDisplayed()).toBe(true);
@@ -64,8 +64,8 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'visualization controls have a help icon',
     function() {
-      lib.toggleLeftSampledVisualization();
+      lib.left.toggleSampledVisualization();
       expect(element(by.css('help-popup[href="concrete-view-settings"]')).isDisplayed()).toBe(true);
-      lib.toggleLeftSampledVisualization();
+      lib.left.toggleSampledVisualization();
     });
 };

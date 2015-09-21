@@ -3,13 +3,75 @@
 /* global element, by, protractor */
 
 var request = require('request');
+var K = protractor.Key;  // Short alias.
+
+function Side(direction) {
+  this.direction = direction;
+  this.side = element(by.id('side-' + direction));
+  this.toolbox = element(by.id('operation-toolbox-' + direction));
+}
+
+Side.prototype = {
+  evaluate: function(expr) {
+    return this.side.evaluate(expr);
+  },
+
+  applyFilters: function() {
+    return this.side.element(by.id('apply-filters-button')).click();
+  },
+
+  getValue: function(id) {
+    var asStr = this.side.element(by.css('value#' + id + ' span.value')).getText();
+    return asStr.then(function(asS) { return parseInt(asS); });
+  },
+
+  edgeCount: function() {
+    return this.getValue('edge-count');
+  },
+
+  vertexCount: function() {
+    return this.getValue('vertex-count');
+  },
+
+  segmentCount: function() {
+    return this.getValue('segment-count');
+  },
+
+  openOperation: function(name) {
+    this.toolbox.element(by.id('operation-search')).click();
+    this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
+  },
+
+  openSegmentation: function(segmentationName) {
+    this.side.element(by.id('segmentation-' + segmentationName)).click();
+  },
+
+  runOperation: function(name, params) {
+    params = params || {};
+    this.openOperation(name);
+    for (var key in params) {
+      var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
+      this.toolbox.element(by.css(p)).sendKeys(params[key]);
+    }
+
+    this.toolbox.element(by.css('.ok-button')).click();
+  },
+
+  setAttributeFilter: function(attributeName, filterValue) {
+    var filterBox = this.side.element(
+      by.css('.attribute input[name="' + attributeName + '"]'));
+    filterBox.sendKeys(filterValue, K.ENTER);
+  },
+
+  toggleSampledVisualization: function() {
+    this.side.element(by.css('label[btn-radio="\'sampled\'"]')).click();
+  },
+};
 
 module.exports = (function() {
-  var K = protractor.Key;  // Short alias.
   return {
-    evaluateOnLeftSide: function(expr) {
-      return element(by.css('#side-left')).evaluate(expr);
-    },
+    left: new Side('left'),
+    right: new Side('right'),
 
     expectCurrentProjectIs: function(name) {
       expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
@@ -19,59 +81,9 @@ module.exports = (function() {
       expect(element(by.css('div[help-id="' + helpId + '"]')).isDisplayed()).toBe(isVisible);
     },
 
-    leftApplyFilters: function() {
-      return element(by.css('#side-left #apply-filters-button')).click();
-    },
-
-    leftEdgeCount: function() {
-      var asStr = element(by.css('#side-left value#edge-count span.value')).getText();
-      return asStr.then(function(asS) { return parseInt(asS); });
-    },
-
-    leftVertexCount: function() {
-      var asStr = element(by.css('#side-left value#vertex-count span.value')).getText();
-      return asStr.then(function(asS) { return parseInt(asS); });
-    },
-
-    segmentCount: function() {
-      var asStr = element(by.css('#side-right value#segment-count span.value')).getText();
-      return asStr.then(function(asS) { return parseInt(asS); });
-    },
-
-    openLeftOperation: function(name) {
-      element(by.css('#operation-toolbox-left #operation-search')).click();
-      element(by.css('#operation-toolbox-left #filter')).sendKeys(name, K.ENTER);
-    },
-
     openNewProject: function(name) {
       element(by.id('new-project')).click();
       element(by.id('new-project-name')).sendKeys(name, K.ENTER);
-    },
-
-    openSegmentation: function(segmentationName) {
-      var s = '#side-left .segmentation #segmentation-' + segmentationName;
-      element(by.css(s)).click();
-    },
-
-    runLeftOperation: function(name, params) {
-      params = params || {};
-      this.openLeftOperation(name);
-      for (var key in params) {
-        var p = '#operation-toolbox-left operation-parameters #' + key + ' .operation-attribute-entry';
-        element(by.css(p)).sendKeys(params[key]);
-      }
-
-      element(by.css('#operation-toolbox-left .ok-button')).click();
-    },
-
-    setLeftAttributeFilter: function(attributeName, filterValue) {
-      var filterBox = element(
-        by.css('#side-left .attribute input[name="' + attributeName + '"]'));
-      filterBox.sendKeys(filterValue, K.ENTER);
-    },
-
-    toggleLeftSampledVisualization: function() {
-      element(by.css('#side-left label[btn-radio="\'sampled\'"]')).click();
     },
 
     // Deletes all projects and directories.
