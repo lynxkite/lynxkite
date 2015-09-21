@@ -63,18 +63,22 @@ angular.module('biggraph').directive('projectHistory', function(util) {
 
             step.localChanges = true;
             scope.localChanges = true;
-            // Steps after a change cannot use checkpoints.
-            // This is visually communicated as well.
-            var steps = scope.history.steps;
-            for (var i = index; i < steps.length; ++i) {
-              steps[i].checkpoint = undefined;
-            }
-            for (i = 0; i < steps.length; ++i) {
-              if (i !== index) {
-                steps[i].editable = false;
-              }
-            }
+            clearCheckpointsAfter(index);
           });
+      }
+
+      function clearCheckpointsAfter(index) {
+        // Steps after a change cannot use checkpoints.
+        // This is visually communicated as well.
+        var steps = scope.history.steps;
+        for (var i = index; i < steps.length; ++i) {
+          steps[i].checkpoint = undefined;
+        }
+        for (i = 0; i < steps.length; ++i) {
+          if (i !== index) {
+            steps[i].editable = false;
+          }
+        }
       }
 
       function alternateHistory() {
@@ -201,6 +205,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       // Discard operation.
       scope.discard = function(step) {
         var pos = scope.history.steps.indexOf(step);
+        clearCheckpointsAfter(pos);
         scope.history.steps.splice(pos, 1);
         validate();
       };
@@ -208,11 +213,13 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       // Insert new operation.
       scope.insertBefore = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
+        clearCheckpointsAfter(pos);
         scope.history.steps.splice(pos, 0, blankStep(seg));
         validate();
       };
       scope.insertAfter = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
+        clearCheckpointsAfter(pos);
         scope.history.steps.splice(pos + 1, 0, blankStep(seg));
         validate();
       };
