@@ -81,5 +81,6 @@ require('./segmentation-opens.js')(fw);
 require('./help-popups.js')(fw);
 require('./histogram-tests.js')(fw);
 require('./history-editor.js')(fw);
+require('./undo-redo.js')(fw);
 
 fw.runAll();
