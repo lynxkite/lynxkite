@@ -5,7 +5,7 @@ var lib = require('./test-lib.js');
 module.exports = function(fw) {
   fw.statePreservingTest(
     'test-example project with example graph',
-    'name histogram looks good',
+    'string vertex histogram looks good',
     function() {
       expect(lib.left.getHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
@@ -16,7 +16,7 @@ module.exports = function(fw) {
     });
   fw.statePreservingTest(
     'test-example project with example graph',
-    'income histogram looks good',
+    'double vertex histogram looks good',
     function() {
       expect(lib.left.getHistogramValues('income')).toEqual([
         { title : '1000.0-1050.0', size : 100, value : 1 },
@@ -43,7 +43,7 @@ module.exports = function(fw) {
     });
   fw.statePreservingTest(
     'test-example project with example graph',
-    'weight histogram looks good',
+    'double edge histogram looks good',
     function() {
       expect(lib.left.getHistogramValues('weight')).toEqual([
         { title : '1.00-1.15', size : 100, value : 1 },
@@ -70,7 +70,7 @@ module.exports = function(fw) {
     });
   fw.statePreservingTest(
     'example graph with filters set',
-    'soft filters are applied to name histogram',
+    'soft filters are applied to string vertex histogram',
     function() {
       expect(lib.left.getHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
@@ -81,7 +81,7 @@ module.exports = function(fw) {
     });
   fw.statePreservingTest(
     'example graph with filters set',
-    'soft filters are applied to weight histogram',
+    'soft filters are applied to double edge histogram',
     function() {
       expect(lib.left.getHistogramValues('weight')).toEqual([
         { title : '1.00-1.15', size : 0, value : 0 },
@@ -108,7 +108,7 @@ module.exports = function(fw) {
     });
   fw.statePreservingTest(
     'example graph with filters applied',
-    'hard filters are applied to name histogram',
+    'hard filters are applied to string vertex histogram',
     function() {
       expect(lib.left.getHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
@@ -117,7 +117,7 @@ module.exports = function(fw) {
     });
   fw.statePreservingTest(
     'example graph with filters applied',
-    'hard filters are applied to weight histogram',
+    'hard filters are applied to double edge histogram',
     function() {
       expect(lib.left.getHistogramValues('weight')).toEqual([
         { title : '2.00-2.00', size : 100, value : 1 },
