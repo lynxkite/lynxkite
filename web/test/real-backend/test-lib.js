@@ -74,6 +74,10 @@ Side.prototype = {
     return this.getValue('segment-count');
   },
 
+  openProjectHistory: function() {
+    this.side.element(by.css('.history-button')).click();
+  },
+
   openOperation: function(name) {
     this.toolbox.element(by.id('operation-search')).click();
     this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
@@ -88,7 +92,7 @@ Side.prototype = {
     this.openOperation(name);
     for (var key in params) {
       var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
-      this.toolbox.element(by.css(p)).sendKeys(params[key]);
+      testLib.sendKeysToElement(element(by.css(p)), params[key]);
     }
 
     this.toolbox.element(by.css('.ok-button')).click();
@@ -105,9 +109,25 @@ Side.prototype = {
   },
 };
 
-var testLib = {
+testLib = {
   left: new Side('left'),
   right: new Side('right'),
+
+  // Deletes all projects and directories.
+  discardAll: function() {
+    var defer = protractor.promise.defer();
+    request.post(
+      browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
+      { json: { fake: 1 } },
+      function(error, message) {
+        if (error || message.statusCode >= 400) {
+          defer.reject({ error : error, message : message });
+        } else {
+          defer.fulfill();
+        }
+      });
+    browser.controlFlow().execute(function() { return defer.promise; });
+  },
 
   expectCurrentProjectIs: function(name) {
     expect(browser.getCurrentUrl()).toContain('/#/project/' + name);
@@ -158,20 +178,26 @@ var testLib = {
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
   },
 
-  // Deletes all projects and directories.
-  discardAll: function() {
-    var defer = protractor.promise.defer();
-    request.post(
-      browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-      { json: { fake: 1 } },
-      function(error, message) {
-        if (error || message.statusCode >= 400) {
-          defer.reject({ error : error, message : message });
-        } else {
-          defer.fulfill();
-        }
-      });
-    browser.controlFlow().execute(function() { return defer.promise; });
+  sendKeysToElement: function(e, keys) {
+    // ACE editor and non-ace controls need different handling.
+    e.evaluate('param.kind').then(
+        function(dataKind) {
+          if (dataKind !== 'code') {
+            // Normal input control.
+            e.sendKeys(keys);
+          } else {
+            // ACE editor control.
+            var aceContent = e.element(by.css('div.ace_content'));
+            var aceInput = e.element(by.css('textarea.ace_text-input'));
+            // The triple click on the text area focuses it and selects all its
+            // text content. Therefore the first key sent will clear its current
+            // content. (Caveat: if 'keys' is the empty string then it won't be
+            // cleared.)
+            browser.actions().click(aceContent).perform();
+            browser.actions().doubleClick(aceContent).perform();
+            aceInput.sendKeys(keys);
+          }
+        });
   },
 
   // Warning, this also sorts the given array parameter in place.

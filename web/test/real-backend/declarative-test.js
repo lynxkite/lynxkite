@@ -80,5 +80,6 @@ require('./filter-tests.js')(fw);
 require('./segmentation-opens.js')(fw);
 require('./help-popups.js')(fw);
 require('./histogram-tests.js')(fw);
+require('./history-editor.js')(fw);
 
 fw.runAll();
