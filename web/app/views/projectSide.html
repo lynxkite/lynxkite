@@ -44,6 +44,7 @@
 
       <div class="btn-group pull-right">
         <label class="btn btn-default" ng-disabled="!side.project.undoOp" ng-click="side.undo()"
+          id="undo-button"
           ng-if="!side.isSegmentation()"
           tooltip="Undo {{side.project.undoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-backward"></i>
@@ -54,6 +55,7 @@
           <i class="glyphicon glyphicon-time"></i>
         </label>
         <label class="btn btn-default" ng-disabled="!side.project.redoOp" ng-click="side.redo()"
+          id="redo-button"
           ng-if="!side.isSegmentation()"
           tooltip="Redo {{side.project.redoOp}}" tooltip-append-to-body="true" tooltip-placement="bottom">
           <i class="glyphicon glyphicon-forward"></i>

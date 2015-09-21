@@ -38,5 +38,6 @@ module.exports = function(fw) {
     function() {
       expect(lib.left.vertexCount()).toEqual(4);
       expect(lib.left.edgeCount()).toEqual(4);
+      expect(lib.left.attributeCount()).toEqual(8);
     });
 };
