@@ -9,26 +9,26 @@ module.exports = function(fw) {
     'empty test-example project',
     'test-example project with history',
     function() {
-      lib.runLeftOperation('example graph');
-      lib.runLeftOperation(
+      lib.left.runOperation('example graph');
+      lib.left.runOperation(
           'degree',
            {
             name: 'deg',
             direction: 'incoming edges',
           });
-      lib.runLeftOperation(
+      lib.left.runOperation(
           'add constant vertex attribute',
           {
             name: 'c',
             value: '300000',
           });
-      lib.runLeftOperation(
+      lib.left.runOperation(
           'derived edge attribute',
           {
             output: 'foo',
             expr: 'src$deg + dst$deg',
           });
-      lib.openLeftProjectHistory();
+      lib.left.openProjectHistory();
     },
     function() {
       expect(element(by.css('div.project.history')).isDisplayed()).toBe(true);
