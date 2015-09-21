@@ -82,5 +82,6 @@ require('./help-popups.js')(fw);
 require('./histogram-tests.js')(fw);
 require('./history-editor.js')(fw);
 require('./undo-redo.js')(fw);
+require('./center-picker.js')(fw);
 
 fw.runAll();
