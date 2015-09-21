@@ -8,10 +8,10 @@ module.exports = function(fw) {
     'name histogram looks good',
     function() {
       expect(lib.left.getHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
-        { title: 'Adam', size: '100', value: '1' },
-        { title: 'Bob', size: '100', value: '1' },
-        { title: 'Eve', size: '100', value: '1' },
-        { title: 'Isolated Joe', size: '100', value: '1' },
+        { title: 'Adam', size: 100, value: 1 },
+        { title: 'Bob', size: 100, value: 1 },
+        { title: 'Eve', size: 100, value: 1 },
+        { title: 'Isolated Joe', size: 100, value: 1 },
       ]);
     });
 };
