@@ -4,7 +4,7 @@
 
 var request = require('request');
 var K = protractor.Key;  // Short alias.
-var testLib;
+var testLib;  // Forward declaration.
 
 function Side(direction) {
   this.direction = direction;
