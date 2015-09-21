@@ -93,12 +93,10 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             requests.push(s.request);
           }
         }
-        var x = {
+        return {
           startingPoint: lastCheckpoint,
           requests: requests,
         };
-        console.log(x);
-        return x;
       }
 
       function validate() {
