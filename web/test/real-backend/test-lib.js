@@ -153,12 +153,12 @@ function Visualization() {
 
 Visualization.prototype = {
   // The visualization response received from the server.
-  graphView: function(fn) {
-    return this.svg.evaluate('graph.view.toJSON()').then(fn);
+  graphView: function() {
+    return this.svg.evaluate('graph.view.toJSON()');
   },
 
   vertexCounts: function(index) {
-    return this.graphView(function(gv) {
+    return this.graphView().then(function(gv) {
       return gv.vertexSets[index].vertices.length;
     });
   },
