@@ -25,6 +25,14 @@ Side.prototype = {
     return this.side.element(by.id('apply-filters-button')).click();
   },
 
+  getCategorySelector: function(categoryTitle) {
+    return this.toolbox.element(by.css('div.category[tooltip="' + categoryTitle + '"]'));
+  },
+
+  getCloseHistoryButton: function() {
+    return this.side.element(by.id('close-history-button'));
+  },
+
   getHistogram: function(attributeName) {
     return this.side.element(by.css('histogram[attr-name="' + attributeName + '"]'));
   },
@@ -86,9 +94,29 @@ Side.prototype = {
     return res;
   },
 
+  getProjectHistory: function() {
+    return this.side.element(by.css('div.project.history'));
+  },
+
   getValue: function(id) {
     var asStr = this.side.element(by.css('value#' + id + ' span.value')).getText();
     return asStr.then(function(asS) { return parseInt(asS); });
+  },
+
+  getWorkflowCodeEditor: function() {
+    return this.side.element(by.id('workflow-code-editor'));
+  },
+
+  getWorkflowDescriptionEditor: function() {
+    return this.side.element(by.id('workflow-description'));
+  },
+
+  getWorkflowNameEditor: function() {
+    return this.side.element(by.id('workflow-name'));
+  },
+
+  getWorkflowSaveButton: function() {
+    return this.side.element(by.id('save-workflow-button'));
   },
 
   edgeCount: function() {
@@ -103,13 +131,17 @@ Side.prototype = {
     return this.getValue('segment-count');
   },
 
+  openOperation: function(name) {
+    this.toolbox.element(by.id('operation-search')).click();
+    this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
+  },
+
   openProjectHistory: function() {
     this.side.element(by.css('.history-button')).click();
   },
 
-  openOperation: function(name) {
-    this.toolbox.element(by.id('operation-search')).click();
-    this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
+  openWorkflowSavingDialog: function() {
+    this.side.element(by.id('save-as-workflow-button')).click();
   },
 
   openSegmentation: function(segmentationName) {
@@ -125,7 +157,7 @@ Side.prototype = {
     this.openOperation(name);
     for (var key in params) {
       var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
-      testLib.sendKeysToElement(element(by.css(p)), params[key]);
+      testLib.sendKeysToElement(element(by.css(p)), testLib.selectAllKey + params[key]);
     }
 
     this.toolbox.element(by.css('.ok-button')).click();
@@ -243,6 +275,24 @@ testLib = {
     return defer;
   },
 
+  openNewProject: function(name) {
+    element(by.id('new-project')).click();
+    element(by.id('new-project-name')).sendKeys(name, K.ENTER);
+  },
+
+  selectAllKey: K.chord(K.CONTROL, 'a'),
+
+  sendKeysToACE: function(e, keys) {
+    var aceContent = e.element(by.css('div.ace_content'));
+    var aceInput = e.element(by.css('textarea.ace_text-input'));
+    // The triple click on the text area focuses it and selects all its
+    // text content. Therefore the first key sent will clear its current
+    // content. (Caveat: if 'keys' is the empty string then it won't be
+    // cleared.)
+    browser.actions().doubleClick(aceContent).perform();
+    aceInput.sendKeys(keys);
+  },
+
   sendKeysToElement: function(e, keys) {
     // ACE editor and non-ace controls need different handling.
     e.evaluate('param.kind').then(
@@ -252,15 +302,7 @@ testLib = {
             e.sendKeys(keys);
           } else {
             // ACE editor control.
-            var aceContent = e.element(by.css('div.ace_content'));
-            var aceInput = e.element(by.css('textarea.ace_text-input'));
-            // The triple click on the text area focuses it and selects all its
-            // text content. Therefore the first key sent will clear its current
-            // content. (Caveat: if 'keys' is the empty string then it won't be
-            // cleared.)
-            browser.actions().click(aceContent).perform();
-            browser.actions().doubleClick(aceContent).perform();
-            aceInput.sendKeys(keys);
+            testLib.sendKeysToACE(e, keys);
           }
         });
   },
