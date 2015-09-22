@@ -1,7 +1,5 @@
 'use strict';
 
-/* global element, by */
-
 var lib = require('./test-lib.js');
 
 module.exports = function(fw) {
@@ -31,6 +29,6 @@ module.exports = function(fw) {
       lib.left.openProjectHistory();
     },
     function() {
-      expect(element(by.css('div.project.history')).isDisplayed()).toBe(true);
+      expect(lib.left.getProjectHistory().isDisplayed()).toBe(true);
     });
 };
