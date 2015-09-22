@@ -64,16 +64,6 @@ module.exports = function(fw) {
         });
     });
 
-  fw.transitionTest(
-    'test-example project with example graph',
-    'test-example project in sampled view',
-    function() {
-      lib.left.toggleSampledVisualization();
-    },
-    function() {
-      expect(element(by.css('svg.graph-view')).isDisplayed()).toBe(true);
-    });
-
   fw.statePreservingTest(
     'test-example project in sampled view',
     'visualization controls have a help icon',
