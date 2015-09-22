@@ -13,6 +13,10 @@ function Side(direction) {
 }
 
 Side.prototype = {
+  close: function() {
+    this.side.element(by.id('close-project')).click();
+  },
+
   evaluate: function(expr) {
     return this.side.evaluate(expr);
   },
@@ -164,10 +168,23 @@ Visualization.prototype = {
   },
 };
 
+function Splash() {}
+Splash.prototype = {
+  openNewProject: function(name) {
+    element(by.id('new-project')).click();
+    element(by.id('new-project-name')).sendKeys(name, K.ENTER);
+  },
+
+  openProject: function(name) {
+    element(by.id('project-' + name)).click();
+  },
+};
+
 testLib = {
   left: new Side('left'),
   right: new Side('right'),
   visualization: new Visualization(),
+  splash: new Splash(),
 
   // Deletes all projects and directories.
   discardAll: function() {
@@ -227,11 +244,6 @@ testLib = {
       objOfPromises[promiseKey].then(futureSetter(promiseKey));
     }
     return defer;
-  },
-
-  openNewProject: function(name) {
-    element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name, K.ENTER);
   },
 
   sendKeysToElement: function(e, keys) {

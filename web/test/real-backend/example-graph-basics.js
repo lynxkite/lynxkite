@@ -18,7 +18,7 @@ module.exports = function(fw) {
     'empty splash',
     'empty test-example project',
     function() {
-      lib.openNewProject('test-example');
+      lib.splash.openNewProject('test-example');
     },
     function() {
       lib.expectCurrentProjectIs('test-example');

@@ -52,8 +52,8 @@ module.exports = function(fw) {
       expect(lib.visualization.vertexCounts(0)).toBe(4);
 
       // Clean up state.
-      centers.clear();
-      centers.sendKeys('0', K.ENTER);
-      expect(lib.visualization.vertexCounts(0)).toBe(3);
+      lib.left.close();
+      lib.splash.openProject('test-example');
+      lib.left.toggleSampledVisualization();
     });
 };
