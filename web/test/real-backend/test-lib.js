@@ -285,10 +285,18 @@ var splash = {
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
+    this.hideSparkStatus();
   },
 
   openProject: function(name) {
     element(by.id('project-' + name)).click();
+    this.hideSparkStatus();
+  },
+
+  hideSparkStatus: function() {
+    // Floating elements can overlap buttons and block clicks.
+    browser.executeScript(
+      'document.styleSheets[0].insertRule(\'.spark-status { position: static !important; }\');');
   },
 };
 
