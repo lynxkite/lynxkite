@@ -2,15 +2,16 @@
 
 /* global element, by, protractor */
 
-var testLib; // Forward declaration.
+var testLib; // Forward declarations.
+var History; // Forward declarations.
 var request = require('request');
 var K = protractor.Key;  // Short alias.
 
-function Side(direction, historyLib) {
+function Side(direction) {
   this.direction = direction;
   this.side = element(by.id('side-' + direction));
   this.toolbox = element(by.id('operation-toolbox-' + direction));
-  this.historyLib = historyLib; historyLib.side = this;
+  this.history = new History(this);
 }
 
 Side.prototype = {
@@ -149,7 +150,7 @@ Side.prototype = {
     return this.side.element(by.id('redo-button'));
   },
 
-  populateOperation: function(parentElement, params, keepEditing) {
+  populateOperation: function(parentElement, params) {
     params = params || {};
     for (var key in params) {
       var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
@@ -157,14 +158,16 @@ Side.prototype = {
           parentElement.element(by.css(p)),
           testLib.selectAllKey + params[key]);
     }
-    if (!keepEditing) {
-      parentElement.element(by.css('.ok-button')).click();
-    }
+  },
+
+  submitOperation: function(parentElement) {
+    parentElement.element(by.css('.ok-button')).click();
   },
 
   runOperation: function(name, params) {
     this.openOperation(name);
     this.populateOperation(this.toolbox, params);
+    this.submitOperation(this.toolbox);
   },
 
   setAttributeFilter: function(attributeName, filterValue) {
@@ -185,21 +188,13 @@ Side.prototype = {
   attributeCount: function() {
     return this.side.all(by.css('li.attribute')).count();
   },
-
-  openProject: function(name) {
-    element(by.css('item-name-and-menu[name="' + name + '"]')).click();
-  },
-
-  closeProject: function() {
-    element(by.css('#close-project')).click();
-  }
 };
 
-function TestHistoryLib() {
-  this.side = undefined;
+function History(side) {
+  this.side = side;
 }
 
-TestHistoryLib.prototype = {
+History.prototype = {
   open: function() {
     this.side.side.element(by.css('.history-button')).click();
   },
@@ -233,6 +228,10 @@ TestHistoryLib.prototype = {
     return list.get(position);
   },
 
+  getOperationName: function(position) {
+    return this.getOperation(position).element(by.css('h1')).getText();
+  },
+
   openDropdownMenu: function(operation) {
     var menu = operation.element(by.css('.history-options.dropdown'));
     menu.element(by.css('a.dropdown-toggle')).click();
@@ -244,15 +243,16 @@ TestHistoryLib.prototype = {
     this.openDropdownMenu(operation).element(by.css('ul .glyphicon-trash')).click();
   },
 
-  addOperation: function(parentPos, above, name, params) {
+  addOperation: function(parentPos, direction, name, params) {
     var parentOp = this.getOperation(parentPos);
-    var iconClass = above ? '.glyphicon-chevron-up' : '.glyphicon-chevron-down';
+    var iconClass = '.glyphicon-chevron-' + direction;
     this.openDropdownMenu(parentOp).element(by.css('ul ' + iconClass)).click();
-    var newPos = above ? parentPos : parentPos + 1;
+    var newPos = direction === 'up' ? parentPos : parentPos + 1;
     var newOp = this.getOperation(newPos);
     newOp.element(by.id('operation-search')).click();
     newOp.element(by.id('filter')).sendKeys(name, K.ENTER);
     this.side.populateOperation(newOp, params);
+    this.side.submitOperation(newOp);
   },
 
   numOperations: function() {
@@ -301,8 +301,8 @@ var splash = {
 };
 
 testLib = {
-  left: new Side('left', new TestHistoryLib()),
-  right: new Side('right', new TestHistoryLib()),
+  left: new Side('left'),
+  right: new Side('right'),
   visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),

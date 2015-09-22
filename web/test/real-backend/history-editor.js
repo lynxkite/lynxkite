@@ -5,6 +5,8 @@
 var lib = require('./test-lib.js');
 
 module.exports = function(fw) {
+  var numOperations = 4;
+
   fw.transitionTest(
     'empty test-example project',
     'test-example project with history',
@@ -30,117 +32,125 @@ module.exports = function(fw) {
           });
     },
     function() {
-      lib.left.historyLib.open();
+      lib.left.history.open();
       expect(lib.left.side.element(by.css('div.project.history')).isDisplayed()).
           toBe(true);
-      expect(lib.left.historyLib.numOperations()).toBe(4);
-      lib.left.historyLib.close();
+      expect(lib.left.history.numOperations()).toBe(numOperations);
+      lib.left.history.close();
     });
 
   fw.statePreservingTest(
     'test-example project with history',
     'valid workflow can be saved (same name)',
     function() {
-      lib.left.historyLib.open();
-      var op = lib.left.historyLib.getOperation(2);
-      lib.left.populateOperation(op, {name: 'new_name'});  // change operation name
-      lib.left.historyLib.save();
+      lib.left.history.open();
+      var op = lib.left.history.getOperation(2);
+      lib.left.populateOperation(op, {name: 'new_name'});  // change output name
+      lib.left.submitOperation(op);
+      lib.left.history.save();
       // Now it is saved and closed. Reopen and check if it's still there.
-      lib.left.historyLib.open();
-      lib.left.historyLib.expectOperationParameter(2, 'name', 'new_name');
+      lib.left.history.open();
+      lib.left.history.expectOperationParameter(2, 'name', 'new_name');
       // Restore original state.
       lib.left.populateOperation(op, {name: 'c'});
-      lib.left.historyLib.save();
+      lib.left.submitOperation(op);
+      lib.left.history.save();
     });
 
   fw.statePreservingTest(
     'test-example project with history',
     'valid workflow can be saved (save as...)',
     function() {
-      lib.left.historyLib.open();
-      var op = lib.left.historyLib.getOperation(2);
-      lib.left.populateOperation(op, {name: 'new_operation_name'});  // change op. name
-      lib.left.historyLib.save('changed_project_name');
+      lib.left.history.open();
+      var op = lib.left.history.getOperation(2);
+      lib.left.populateOperation(op, {name: 'new_output_name'});  // change output name
+      lib.left.submitOperation(op);
+      lib.left.history.save('changed_project_name');
       // Open new project and verify that the name was changed.
-      lib.left.closeProject();
-      lib.left.openProject('changed_project_name');
-      lib.left.historyLib.open();
-      lib.left.historyLib.expectOperationParameter(2, 'name', 'new_operation_name');
+      lib.left.close();
+      lib.splash.openProject('changed_project_name');
+      lib.left.history.open();
+      lib.left.history.expectOperationParameter(2, 'name', 'new_output_name');
       // Go back to the original project and verify that the name was not changed.
-      lib.left.historyLib.close();
-      lib.left.closeProject();
-      lib.left.openProject('test-example');
-      lib.left.historyLib.open();
-      lib.left.historyLib.expectOperationParameter(2, 'name', 'c');
-      lib.left.historyLib.close();
+      lib.left.history.close();
+      lib.left.close();
+      lib.splash.openProject('test-example');
+      lib.left.history.open();
+      lib.left.history.expectOperationParameter(2, 'name', 'c');
+      lib.left.history.close();
+      // TODO(gaborfeher): Delete new project.
     });
 
   fw.statePreservingTest(
     'test-example project with history',
     'save is disabled for unchanged history',
     function() {
-      lib.left.historyLib.open();
-      lib.left.historyLib.expectSaveable(false);
-      lib.left.historyLib.close();
+      lib.left.history.open();
+      lib.left.history.expectSaveable(false);
+      lib.left.history.close();
     });
 
   fw.statePreservingTest(
     'test-example project with history',
     'save is disabled when operations are being edited',
     function() {
-      lib.left.historyLib.open();
-      var op = lib.left.historyLib.getOperation(2);
-      lib.left.populateOperation(op, {name: 'new_operation_name'}, true);
-      lib.left.historyLib.expectSaveable(false);
-      lib.left.historyLib.close(true);
+      lib.left.history.open();
+      var op = lib.left.history.getOperation(2);
+      lib.left.populateOperation(op, {name: 'new_output_name'});
+      lib.left.history.expectSaveable(false);
+      lib.left.history.close(true);
     });
 
   fw.statePreservingTest(
     'test-example project with history',
     'operation can be deleted from history',
     function() {
-      lib.left.historyLib.open();
-      lib.left.historyLib.deleteOperation(2);
-      expect(lib.left.historyLib.numOperations()).toBe(3);
-      lib.left.historyLib.close(true);
+      lib.left.history.open();
+      lib.left.history.deleteOperation(2);
+      expect(lib.left.history.numOperations()).toBe(numOperations - 1);
+      expect(lib.left.history.getOperationName(0)).toBe('Example Graph');
+      expect(lib.left.history.getOperationName(1)).toBe('Degree');
+      expect(lib.left.history.getOperationName(2)).toBe('Derived edge attribute');
+      lib.left.history.close(true);
     });
 
   fw.statePreservingTest(
     'test-example project with history',
     'invalid workflow cannot be saved',
     function() {
-      lib.left.historyLib.open();
-      lib.left.historyLib.deleteOperation(0);
-      expect(lib.left.historyLib.numOperations()).toBe(3);
+      lib.left.history.open();
+      lib.left.history.deleteOperation(0);
+      expect(lib.left.history.numOperations()).toBe(numOperations - 1);
       expect(lib.left.side.element(by.css('.inconsistent-history-sign')).isDisplayed()).toBe(true);
-      lib.left.historyLib.expectSaveable(false);
-      lib.left.historyLib.close(true);
+      lib.left.history.expectSaveable(false);
+      lib.left.history.close(true);
     });
 
+  // TODO(gaborfeher): Also test adding segmentations.
   fw.statePreservingTest(
     'test-example project with history',
     'new operation can be inserted into history (below op)',
     function() {
-      lib.left.historyLib.open();
-      lib.left.historyLib.addOperation(
-          2, false, 'PageRank',
+      lib.left.history.open();
+      lib.left.history.addOperation(
+          2, 'down', 'PageRank',
           {name: 'wow_such_page_rank'});
-      var addedOpNameField = lib.left.historyLib.getOperation(3).element(by.css('div#name input'));
+      var addedOpNameField = lib.left.history.getOperation(3).element(by.css('div#name input'));
       expect(addedOpNameField.getAttribute('value')).toBe('wow_such_page_rank');
-      lib.left.historyLib.close(true);
+      lib.left.history.close(true);
     });
 
   fw.statePreservingTest(
     'test-example project with history',
     'new operation can be inserted into history (above op)',
     function() {
-      lib.left.historyLib.open();
-      lib.left.historyLib.addOperation(
-          2, true, 'PageRank',
+      lib.left.history.open();
+      lib.left.history.addOperation(
+          2, 'up', 'PageRank',
           {name: 'wow_such_page_rank'});
-      var addedOpNameField = lib.left.historyLib.getOperation(2).element(by.css('div#name input'));
+      var addedOpNameField = lib.left.history.getOperation(2).element(by.css('div#name input'));
       expect(addedOpNameField.getAttribute('value')).toBe('wow_such_page_rank');
-      lib.left.historyLib.close(true);
+      lib.left.history.close(true);
     });
 
 };
