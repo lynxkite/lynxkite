@@ -7,9 +7,6 @@ var K = protractor.Key;
 module.exports = function(fw) {
   var centers = lib.left.side.element(by.id('centers'));
   var simplePickButton = lib.left.side.element(by.id('simple-pick-button'));
-  var advancedPickButton = lib.left.side.element(by.id('advanced-pick-button'));
-  var simpleModeButton = lib.left.side.element(by.id('simple-mode-button'));
-  var advancedModeButton = lib.left.side.element(by.id('advanced-mode-button'));
 
   fw.statePreservingTest(
     'test-example project in sampled view',
@@ -58,15 +55,5 @@ module.exports = function(fw) {
       centers.clear();
       centers.sendKeys('0', K.ENTER);
       expect(lib.visualization.vertexCounts(0)).toBe(3);
-    });
-
-  fw.statePreservingTest(
-    'test-example project in sampled view',
-    'advanced center selection',
-    function() {
-      advancedModeButton.click();
-      advancedPickButton.click();
-      // TODO: Advanced test.
-      simpleModeButton.click();
     });
 };
