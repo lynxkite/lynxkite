@@ -7,6 +7,7 @@ var fw = (function UIDescription() {
 
   var mocks = require('../mocks.js');
   mocks.addTo(browser);
+  browser.driver.manage().window().setSize(800, 600);
 
   return {
     transitionTest: function(
