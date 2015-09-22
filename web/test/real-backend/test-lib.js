@@ -151,25 +151,22 @@ Side.prototype = {
   },
 };
 
-function Visualization() {
-  this.svg = element(by.css('svg.graph-view'));
-}
+var visualization = {
+  svg: element(by.css('svg.graph-view')),
 
-Visualization.prototype = {
   // The visualization response received from the server.
   graphView: function() {
-    return this.svg.evaluate('graph.view.toJSON()');
+    return visualization.svg.evaluate('graph.view.toJSON()');
   },
 
   vertexCounts: function(index) {
-    return this.graphView().then(function(gv) {
+    return visualization.graphView().then(function(gv) {
       return gv.vertexSets[index].vertices.length;
     });
   },
 };
 
-function Splash() {}
-Splash.prototype = {
+var splash = {
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
@@ -183,8 +180,8 @@ Splash.prototype = {
 testLib = {
   left: new Side('left'),
   right: new Side('right'),
-  visualization: new Visualization(),
-  splash: new Splash(),
+  visualization: visualization,
+  splash: splash,
 
   // Deletes all projects and directories.
   discardAll: function() {
