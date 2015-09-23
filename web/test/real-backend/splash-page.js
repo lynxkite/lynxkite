@@ -29,37 +29,37 @@ module.exports = function(fw) {
     function() {
       // Go to project list.
       lib.left.close();
-      lib.splash.expectProject('test-example');
+      lib.splash.expectProjectListed('test-example');
 
       // Create directory.
       lib.splash.newDirectory('test-dir');
-      lib.splash.expectNotProject('test-example');
+      lib.splash.expectProjectNotListed('test-example');
 
       // Go back and move the project into the directory.
       lib.splash.popDirectory();
-      lib.splash.expectProject('test-example');
+      lib.splash.expectProjectListed('test-example');
       lib.splash.moveProject('test-example', 'test-dir');
-      lib.splash.expectNotProject('test-example');
+      lib.splash.expectProjectNotListed('test-example');
 
       // Open directory.
       lib.splash.openDirectory('test-dir');
-      lib.splash.expectProject('test-example');
+      lib.splash.expectProjectListed('test-example');
 
       // Rename project.
       lib.splash.renameProject('test-example', 'test-renamed');
-      lib.splash.expectProject('test-renamed');
-      lib.splash.expectNotProject('test-example');
+      lib.splash.expectProjectListed('test-renamed');
+      lib.splash.expectProjectNotListed('test-example');
 
       // Delete project.
       lib.splash.deleteProject('test-renamed');
-      lib.splash.expectNotProject('test-renamed');
+      lib.splash.expectProjectNotListed('test-renamed');
 
       // Go back and delete the directory.
       lib.splash.popDirectory();
-      lib.splash.expectNotProject('test-renamed');
-      lib.splash.expectDirectory('test-dir');
+      lib.splash.expectProjectNotListed('test-renamed');
+      lib.splash.expectDirectoryListed('test-dir');
       lib.splash.deleteDirectory('test-dir');
-      lib.splash.expectNotDirectory('test-dir');
+      lib.splash.expectDirectoryNotListed('test-dir');
     },
     function() {
     });
