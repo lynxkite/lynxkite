@@ -249,13 +249,13 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       };
 
       function blankStep(seg) {
-        var project = scope.side.state.projectName;
+        var path = [];
         if (seg !== undefined) {
-          project = seg.fullName;
+          path = [seg.name];
         }
         return {
           request: {
-            path: [],
+            path: path,
             op: {
               id: 'No-operation',
               parameters: {},
