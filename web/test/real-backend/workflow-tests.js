@@ -40,10 +40,10 @@ module.exports = function(fw) {
     'workflow dialog with simple example graph history',
     'filtered example graph with saved workflow',
     function() {
-      lib.sendKeysToElement(
+      lib.setParameter(
         lib.left.getWorkflowNameEditor(),
         lib.selectAllKey + 'TestDeriveWorkflow');
-      lib.sendKeysToElement(
+      lib.setParameter(
         lib.left.getWorkflowDescriptionEditor(),
         lib.selectAllKey + 'A simple workflow that does a\nsimple derive on\na simple project.');
       lib.sendKeysToACE(
