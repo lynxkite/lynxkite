@@ -138,7 +138,7 @@ module.exports = function(fw) {
     'new operation can be inserted into history (below op)',
     function() {
       lib.left.history.open();
-      lib.left.history.addOperation(
+      lib.left.history.insertOperation(
           2, 'down', 'PageRank',
           {name: 'wow_such_page_rank'});
       var addedOpNameField = lib.left.history.getOperation(3).element(by.css('div#name input'));
@@ -151,7 +151,7 @@ module.exports = function(fw) {
     'new operation can be inserted into history (above op)',
     function() {
       lib.left.history.open();
-      lib.left.history.addOperation(
+      lib.left.history.insertOperation(
           2, 'up', 'PageRank',
           {name: 'wow_such_page_rank'});
       var addedOpNameField = lib.left.history.getOperation(2).element(by.css('div#name input'));
@@ -164,20 +164,31 @@ module.exports = function(fw) {
     'new operation can be inserted into history, under a segmentation',
     function() {
       lib.left.history.open();
+
       // Add segmentation operation below and check:
-      lib.left.history.addOperation(
-          4, 'seg-down', 'Add gaussian vertex attribute', {});
+      lib.left.history.insertOperation(
+          4,
+          'down',
+          'Add gaussian vertex attribute',
+          {},
+          'connected_components_segmentation');
       expect(lib.left.history.numOperations()).toBe(numOperations + 1);
       expect(lib.left.history.getOperationName(5)).toBe('Add gaussian vertex attribute');
       expect(lib.left.history.getOperationSegmentation(5)).toBe('connected_components_segmentation');
+
       // Add segmentation operation above and check:
-      lib.left.history.addOperation(
-          5, 'seg-up', 'Add constant vertex attribute', {name: 'const_attr'}, true);
+      lib.left.history.insertOperation(
+          5,
+          'up',
+          'Add constant vertex attribute',
+          {name: 'const_attr'},
+          'connected_components_segmentation');
       expect(lib.left.history.numOperations()).toBe(numOperations + 2);
       expect(lib.left.history.getOperationName(5)).toBe('Add constant vertex attribute');
       expect(lib.left.history.getOperationSegmentation(5)).toBe('connected_components_segmentation');
       expect(lib.left.history.getOperationName(6)).toBe('Add gaussian vertex attribute');
       expect(lib.left.history.getOperationSegmentation(6)).toBe('connected_components_segmentation');
+
       lib.left.history.close(true);
     });
 

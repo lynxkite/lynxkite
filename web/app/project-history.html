@@ -98,21 +98,21 @@
         ng-hide="localChanges || !step.editable">
         <a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>
         <ul class="dropdown-menu">
-          <li><a href ng-click="discard(step)" class="dropdown-menu-discard">
+          <li><a href ng-click="discard(step)" id="dropdown-menu-discard">
             <i class="glyphicon glyphicon-trash"></i> Discard operation
           </a></li>
-          <li><a href ng-click="insertBefore(step)" class="dropdown-menu-add-up">
+          <li><a href ng-click="insertBefore(step)" id="dropdown-menu-add-up">
             <i class="glyphicon glyphicon-chevron-up"></i> Insert operation above
           </a></li>
           <li ng-repeat="seg in step.segmentationsBefore">
-            <a href ng-click="insertBefore(step, seg)" class="dropdown-menu-add-seg-up">
+            <a href ng-click="insertBefore(step, seg)" id="dropdown-menu-add-up-for-{{seg.name}}">
               <i class="glyphicon glyphicon-chevron-up"></i> Insert operation for {{seg.name}} above
           </a></li>
-          <li><a href ng-click="insertAfter(step)" class="dropdown-menu-add-down">
+          <li><a href ng-click="insertAfter(step)" id="dropdown-menu-add-down">
             <i class="glyphicon glyphicon-chevron-down"></i> Insert operation below
           </a></li>
           <li ng-repeat="seg in step.segmentationsAfter">
-            <a href ng-click="insertAfter(step, seg)" class="dropdown-menu-add-seg-down">
+            <a href ng-click="insertAfter(step, seg)" id="dropdown-menu-add-down-for-{{seg.name}}">
               <i class="glyphicon glyphicon-chevron-down"></i> Insert operation for {{seg.name}} below
           </a></li>
         </ul>
