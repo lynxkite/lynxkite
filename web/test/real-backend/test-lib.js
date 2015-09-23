@@ -33,6 +33,22 @@ Side.prototype = {
     return this.getValue('vertex-count');
   },
 
+  downLoad: function() {
+    var p  = this.side.element(by.css('span a'));
+    p.click();
+  },
+
+  upLoad: function(path) {
+//    var p  = this.toolbox.element(by.css('.glyphicon-cloud-upload'));
+    var fileElem = this.toolbox.element(by.css('input[type="file"]'));
+    // Need to unhide flowjs's secret file uploader
+    browser.executeScript(
+      'arguments[0].style.visibility = \'visible\'; arguments[0].style.height = \'1px\'; arguments[0].style.width = \'1px\'; arguments[0].style.opacity = 1',
+      fileElem.getWebElement());
+
+    fileElem.sendKeys(path);
+  },
+
   segmentCount: function() {
     return this.getValue('segment-count');
   },
@@ -40,6 +56,10 @@ Side.prototype = {
   openOperation: function(name) {
     this.toolbox.element(by.id('operation-search')).click();
     this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
+  },
+
+  clickOperationOk: function() {
+    this.toolbox.element(by.css('.ok-button')).click();
   },
 
   openSegmentation: function(segmentationName) {
@@ -53,8 +73,7 @@ Side.prototype = {
       var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
       this.toolbox.element(by.css(p)).sendKeys(params[key]);
     }
-
-    this.toolbox.element(by.css('.ok-button')).click();
+    this.clickOperationOk();
   },
 
   setAttributeFilter: function(attributeName, filterValue) {
