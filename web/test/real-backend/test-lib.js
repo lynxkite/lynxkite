@@ -245,17 +245,20 @@ History.prototype = {
 
   clickDropDownMenuItem: function(position, itemId) {
     var operation = this.getOperation(position);
-    this.openDropdownMenu(operation).element(by.css('a.dropdown-menu-' + itemId)).click();
+    this.openDropdownMenu(operation).element(by.css('a#dropdown-menu-' + itemId)).click();
   },
 
   deleteOperation: function(position) {
     this.clickDropDownMenuItem(position, 'discard');
   },
 
-  addOperation: function(parentPos, direction, name, params) {
-    this.clickDropDownMenuItem(parentPos, 'add-' + direction);
-    var upDirection = direction === 'up' || direction === 'seg-up';
-    var newPos = upDirection ? parentPos : parentPos + 1;
+  insertOperation: function(parentPos, direction, name, params, segmentation) {
+    var menuItemId = 'add-' + direction;
+    if (segmentation) {
+      menuItemId += '-for-' + segmentation;
+    }
+    this.clickDropDownMenuItem(parentPos, menuItemId);
+    var newPos = direction === 'up' ? parentPos : parentPos + 1;
     var newOp = this.getOperation(newPos);
     newOp.element(by.id('operation-search')).click();
     newOp.element(by.id('filter')).sendKeys(name, K.ENTER);
