@@ -7,11 +7,12 @@
     {{side.shortName()}}
 
     <div class="btn-group pull-right">
-      <label class="btn btn-default" ng-click="enterWorkflowSaving()"
+      <label class="btn btn-default" ng-click="enterWorkflowSaving()" id="save-as-workflow-button"
         tooltip="Save as Workflow" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-film"></i>
       </label>
       <label class="btn btn-default" ng-click="closeHistory()"
+        id="close-history-button"
         tooltip="Back to project" tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-arrow-left"></i>
       </label>
@@ -34,19 +35,19 @@
     </div>
     <div class="btn-group pull-right" ng-show="!localChanges && remoteChanges">
       <!-- Invalid remote changes. -->
-      <label class="btn btn-warning" ng-if="!valid"
+      <label class="btn btn-warning inconsistent-history-sign" ng-if="!valid"
         tooltip="History is inconsitent {{listInvalidSteps()}}"
         tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
       </label>
       <!-- Valid remote changes. "Save as" box is closed. -->
-      <label class="btn btn-default" ng-if="remoteChanges && valid && !showSaveAs"
+      <label class="btn btn-default save-history-button" ng-if="remoteChanges && valid && !showSaveAs"
         ng-click="$parent.showSaveAs = true; $parent.saveAsName = side.state.projectName;"
         tooltip="History is valid. Click to save." tooltip-append-to-body="true" tooltip-placement="bottom">
         <i class="glyphicon glyphicon-floppy-disk"></i>
       </label>
       <!-- Valid remote changes. "Save as" box is open. -->
-      <label class="btn btn-default" ng-if="remoteChanges && valid && showSaveAs"
+      <label class="btn btn-default save-as-history-box" ng-if="remoteChanges && valid && showSaveAs"
         ng-click="saveAs(saveAsName)"
         tooltip="Click the icon to save as {{saveAsName}}" tooltip-append-to-body="true" tooltip-placement="bottom">
         <form ng-submit="saveAs(saveAsName)" style="display: inline;">

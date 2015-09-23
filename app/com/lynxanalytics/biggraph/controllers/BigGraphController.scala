@@ -262,6 +262,9 @@ class BigGraphController(val env: BigGraphEnvironment) {
   def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
     assert(user.isAdmin, "Only admins can delete all projects and directories")
     ProjectDirectory.rootDirectory.remove()
+    if (metaManager.tagExists(BigGraphController.workflowsRoot)) {
+      metaManager.rmTag(BigGraphController.workflowsRoot)
+    }
   }
 
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
@@ -411,7 +414,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         segmentationsBefore,
         segmentationsAfter,
         opCategoriesBeforeWithOp,
-        nextState.checkpoint))
+        nextStateOpt.flatMap(_.checkpoint)))
   }
 
   def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
