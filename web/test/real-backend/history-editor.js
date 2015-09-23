@@ -177,6 +177,7 @@ module.exports = function(fw) {
       expect(lib.left.history.getOperationName(5)).toBe('Add constant vertex attribute');
       expect(lib.left.history.getOperationSegmentation(5)).toBe('connected_components_segmentation');
       expect(lib.left.history.getOperationName(6)).toBe('Add gaussian vertex attribute');
+      expect(lib.left.history.getOperationSegmentation(6)).toBe('connected_components_segmentation');
       lib.left.history.close(true);
     });
 
