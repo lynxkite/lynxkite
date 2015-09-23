@@ -7,6 +7,7 @@ var fw = (function UIDescription() {
 
   var mocks = require('../mocks.js');
   mocks.addTo(browser);
+  browser.driver.manage().window().setSize(800, 600);
 
   return {
     transitionTest: function(
@@ -68,6 +69,10 @@ var fw = (function UIDescription() {
         }
       }
     },
+
+    runOne: function(stateName)  {
+      states[stateName].reachAndTest();
+    },
   };
 })();
 
@@ -77,5 +82,10 @@ require('./upload-test.js')(fw);
 require('./filter-tests.js')(fw);
 require('./segmentation-opens.js')(fw);
 require('./help-popups.js')(fw);
+require('./histogram-tests.js')(fw);
+require('./history-editor.js')(fw);
+require('./undo-redo.js')(fw);
+require('./workflow-tests.js')(fw);
+require('./center-picker.js')(fw);
 
 fw.runAll();
