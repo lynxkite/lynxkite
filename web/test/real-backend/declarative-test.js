@@ -72,6 +72,8 @@ var fw = (function UIDescription() {
 })();
 
 require('./example-graph-basics.js')(fw);
+require('./download-test.js')(fw);
+require('./upload-test.js')(fw);
 require('./filter-tests.js')(fw);
 require('./segmentation-opens.js')(fw);
 require('./help-popups.js')(fw);
