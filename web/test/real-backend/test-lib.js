@@ -134,17 +134,6 @@ Side.prototype = {
     p.click();
   },
 
-  upload: function(path) {
-//    var p  = this.toolbox.element(by.css('.glyphicon-cloud-upload'));
-    var fileElem = this.toolbox.element(by.css('input[type="file"]'));
-    // Need to unhide flowjs's secret file uploader
-    browser.executeScript(
-      'arguments[0].style.visibility = \'visible\'; arguments[0].style.height = \'1px\'; arguments[0].style.width = \'1px\'; arguments[0].style.opacity = 1',
-      fileElem.getWebElement());
-
-    fileElem.sendKeys(path);
-  },
-
   segmentCount: function() {
     return this.getValue('segment-count');
   },
@@ -174,7 +163,7 @@ Side.prototype = {
     params = params || {};
     for (var key in params) {
       var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
-      testLib.sendKeysToElement(
+      testLib.setParameter(
           parentElement.element(by.css(p)),
           testLib.selectAllKey + params[key]);
     }
@@ -400,12 +389,19 @@ testLib = {
     aceInput.sendKeys(keys);
   },
 
-  sendKeysToElement: function(e, keys) {
+  setParameter: function(e, keys) {
     // ACE editor and non-ace controls need different handling.
     e.evaluate('param.kind').then(
         function(dataKind) {
           if (dataKind === 'code') {
             testLib.sendKeysToACE(e, keys);
+          } else if (dataKind === 'file') {
+            // Need to unhide flowjs's secret file uploader
+            browser.executeScript(
+              'arguments[0].style.visibility = \'visible\'; arguments[0].style.height = \'1px\'; arguments[0].style.width = \'1px\'; arguments[0].style.opacity = 1;',
+              e.getWebElement());            
+            e.sendKeys(keys);
+            console.log('hello');
           } else {
             e.sendKeys(keys);
           }

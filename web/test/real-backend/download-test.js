@@ -1,5 +1,6 @@
 'use strict';
 
+/* global element, by  */
 
 module.exports = function(fw) {
   var lib = require('./test-lib.js');
@@ -18,7 +19,8 @@ module.exports = function(fw) {
     function() {
       cleanUp(vertexCSVPathOnDisk);
       lib.left.runOperation('Export vertex attributes to file', {attrs: 'name'});
-      lib.left.download();
+      var e = element(by.css('#scalar-vertex_attributes_csv'));
+      e.click();
     },
     function() {
       browser.driver.wait(function() {
