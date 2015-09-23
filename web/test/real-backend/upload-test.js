@@ -18,7 +18,7 @@ module.exports = function(fw) {
     function() {
       write(importPath);
       lib.left.openOperation('Import vertices from CSV files');
-      lib.left.upLoad(importPath);
+      lib.left.upload(importPath);
       lib.left.clickOperationOk();
     },
     function() {
