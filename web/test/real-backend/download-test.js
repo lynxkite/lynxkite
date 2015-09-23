@@ -18,7 +18,7 @@ module.exports = function(fw) {
     function() {
       cleanUp(vertexCSVPathOnDisk);
       lib.left.runOperation('Export vertex attributes to file', {attrs: 'name'});
-      lib.left.downLoad();
+      lib.left.download();
     },
     function() {
       browser.driver.wait(function() {

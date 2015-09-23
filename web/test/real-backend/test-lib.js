@@ -129,12 +129,12 @@ Side.prototype = {
     return this.getValue('vertex-count');
   },
 
-  downLoad: function() {
+  download: function() {
     var p  = this.side.element(by.css('span a'));
     p.click();
   },
 
-  upLoad: function(path) {
+  upload: function(path) {
 //    var p  = this.toolbox.element(by.css('.glyphicon-cloud-upload'));
     var fileElem = this.toolbox.element(by.css('input[type="file"]'));
     // Need to unhide flowjs's secret file uploader
