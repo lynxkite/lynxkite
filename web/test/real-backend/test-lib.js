@@ -398,7 +398,12 @@ testLib = {
           } else if (dataKind === 'file') {
             // Need to unhide flowjs's secret file uploader
             browser.executeScript(
-              'arguments[0].style.visibility = \'visible\'; arguments[0].style.height = \'1px\'; arguments[0].style.width = \'1px\'; arguments[0].style.opacity = 1;',
+              function() {
+                arguments[0].style.visibility = 'visible';
+                arguments[0].style.height = '1px';
+                arguments[0].style.width = '1px';
+                arguments[0].style.opacity = 1;
+              },
               e.getWebElement());            
             e.sendKeys(keys);
             console.log('hello');
