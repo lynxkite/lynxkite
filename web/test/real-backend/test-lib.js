@@ -242,21 +242,32 @@ History.prototype = {
     return this.getOperation(position).element(by.css('h1')).getText();
   },
 
+  getOperationSegmentation: function(position) {
+    return this.getOperation(position).
+        element(by.css('div.affected-segmentation')).getText();
+  },
+
   openDropdownMenu: function(operation) {
     var menu = operation.element(by.css('.history-options.dropdown'));
     menu.element(by.css('a.dropdown-toggle')).click();
     return menu;
   },
 
-  deleteOperation: function(position) {
+  clickDropDownMenuItem: function(position, itemId) {
     var operation = this.getOperation(position);
-    this.openDropdownMenu(operation).element(by.css('ul .glyphicon-trash')).click();
+    this.openDropdownMenu(operation).element(by.css('a#dropdown-menu-' + itemId)).click();
   },
 
-  addOperation: function(parentPos, direction, name, params) {
-    var parentOp = this.getOperation(parentPos);
-    var iconClass = '.glyphicon-chevron-' + direction;
-    this.openDropdownMenu(parentOp).element(by.css('ul ' + iconClass)).click();
+  deleteOperation: function(position) {
+    this.clickDropDownMenuItem(position, 'discard');
+  },
+
+  insertOperation: function(parentPos, direction, name, params, segmentation) {
+    var menuItemId = 'add-' + direction;
+    if (segmentation) {
+      menuItemId += '-for-' + segmentation;
+    }
+    this.clickDropDownMenuItem(parentPos, menuItemId);
     var newPos = direction === 'up' ? parentPos : parentPos + 1;
     var newOp = this.getOperation(newPos);
     newOp.element(by.id('operation-search')).click();
