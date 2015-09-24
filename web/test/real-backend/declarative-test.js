@@ -85,5 +85,6 @@ require('./history-editor.js')(fw);
 require('./undo-redo.js')(fw);
 require('./workflow-tests.js')(fw);
 require('./center-picker.js')(fw);
+require('./splash-page.js')(fw);
 
 fw.runAll();
