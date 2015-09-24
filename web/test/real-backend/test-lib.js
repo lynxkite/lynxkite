@@ -406,7 +406,6 @@ testLib = {
               },
               e.getWebElement());            
             e.sendKeys(keys);
-            console.log('hello');
           } else {
             e.sendKeys(keys);
           }
