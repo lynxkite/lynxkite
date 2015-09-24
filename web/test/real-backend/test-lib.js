@@ -1,6 +1,7 @@
 'use strict';
 
 /* global element, by, protractor */
+/* jshint bitwise: false */
 
 var testLib; // Forward declarations.
 var History; // Forward declarations.
@@ -450,6 +451,27 @@ testLib = {
         return 0;
       }
     });
+  },
+
+  getRandomStringInner: function() {
+    var crypto = require('crypto');
+    var buf = crypto.randomBytes(16);
+    var sixteenLetters = 'abcdefghijklmnop';
+    var r = '';
+    for (var i = 0; i < buf.length; i++) {
+      var v = buf[i];
+      var lo =  (v & 0xf);
+      var hi = (v >> 4);
+      r += sixteenLetters[lo] + sixteenLetters[hi];
+    }
+    return r;
+  },
+
+  getTheRandomPathPrefix: function () {
+    if (typeof this.getTheRandomPathPrefix.randomString === 'undefined') {
+      this.getTheRandomPathPrefix.randomString = this.getRandomStringInner();
+    }
+    return this.getTheRandomPathPrefix.randomString;
   },
 };
 
