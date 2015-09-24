@@ -293,14 +293,27 @@ var visualization = {
 };
 
 var splash = {
+  project: function(name) {
+    return element(by.id('project-' + name));
+  },
+
+  directory: function(name) {
+    return element(by.id('directory-' + name));
+  },
+
   openNewProject: function(name) {
     element(by.id('new-project')).click();
     element(by.id('new-project-name')).sendKeys(name, K.ENTER);
     this.hideSparkStatus();
   },
 
+  newDirectory: function(name) {
+    element(by.id('new-directory')).click();
+    element(by.id('new-directory-name')).sendKeys(name, K.ENTER);
+  },
+
   openProject: function(name) {
-    element(by.id('project-' + name)).click();
+    this.project(name).click();
     this.hideSparkStatus();
   },
 
@@ -308,6 +321,66 @@ var splash = {
     // Floating elements can overlap buttons and block clicks.
     browser.executeScript(
       'document.styleSheets[0].insertRule(\'.spark-status { position: static !important; }\');');
+  },
+
+  openDirectory: function(name) {
+    this.directory(name).click();
+  },
+
+  popDirectory: function() {
+    element(by.id('pop-directory-icon')).click();
+  },
+
+  menuClick: function(entry, action) {
+    var menu = entry.element(by.css('.dropdown'));
+    menu.element(by.css('a.dropdown-toggle')).click();
+    menu.element(by.id('menu-' + action)).click();
+  },
+
+  moveProject: function(name, destination) {
+    var project = this.project(name);
+    this.menuClick(project, 'move');
+    project.element(by.id('moveBox')).sendKeys(destination, K.ENTER);
+  },
+
+  renameProject: function(name, newName) {
+    var project = this.project(name);
+    this.menuClick(project, 'rename');
+    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName, K.ENTER);
+  },
+
+  deleteProject: function(name) {
+    this.menuClick(this.project(name), 'discard');
+    // We need to give the browser time to display the alert, see angular/protractor#1486.
+    browser.wait(protractor.ExpectedConditions.alertIsPresent(), 3000);
+    var confirmation = browser.switchTo().alert();
+    expect(confirmation.getText()).toContain('delete project ' + name);
+    confirmation.accept();
+  },
+
+  deleteDirectory: function(name) {
+    this.menuClick(this.directory(name), 'discard');
+    // We need to give the browser time to display the alert, see angular/protractor#1486.
+    browser.wait(protractor.ExpectedConditions.alertIsPresent(), 3000);
+    var confirmation = browser.switchTo().alert();
+    expect(confirmation.getText()).toContain('delete directory ' + name);
+    confirmation.accept();
+  },
+
+  expectProjectListed: function(name) {
+    testLib.expectElement(this.project(name));
+  },
+
+  expectProjectNotListed: function(name) {
+    testLib.expectNotElement(this.project(name));
+  },
+
+  expectDirectoryListed: function(name) {
+    testLib.expectElement(this.directory(name));
+  },
+
+  expectDirectoryNotListed: function(name) {
+    testLib.expectNotElement(this.directory(name));
   },
 };
 
@@ -317,6 +390,14 @@ testLib = {
   visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),
+
+  expectElement: function(e) {
+    expect(e.isDisplayed()).toBe(true);
+  },
+
+  expectNotElement: function(e) {
+    expect(e.isPresent()).toBe(false);
+  },
 
   // Deletes all projects and directories.
   discardAll: function() {
