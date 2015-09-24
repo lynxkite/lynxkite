@@ -340,6 +340,8 @@ var splash = {
 
   deleteProject: function(name) {
     this.menuClick(this.project(name), 'discard');
+    // We need to give the browser time to display the alert, see angular/protractor#1486.
+    browser.wait(protractor.ExpectedConditions.alertIsPresent(), 3000);
     var confirmation = browser.switchTo().alert();
     expect(confirmation.getText()).toContain('delete project ' + name);
     confirmation.accept();
@@ -347,6 +349,8 @@ var splash = {
 
   deleteDirectory: function(name) {
     this.menuClick(this.directory(name), 'discard');
+    // We need to give the browser time to display the alert, see angular/protractor#1486.
+    browser.wait(protractor.ExpectedConditions.alertIsPresent(), 3000);
     var confirmation = browser.switchTo().alert();
     expect(confirmation.getText()).toContain('delete directory ' + name);
     confirmation.accept();
