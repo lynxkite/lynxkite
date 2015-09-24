@@ -70,7 +70,7 @@ var fw = (function UIDescription() {
       }
     },
 
-    runOne: function(stateName)  {
+    runOne: function(stateName) {
       states[stateName].reachAndTest();
     },
   };
