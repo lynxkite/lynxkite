@@ -317,7 +317,7 @@ var splash = {
   },
 
   popDirectory: function() {
-    element(by.id('pop-directory')).click();
+    element(by.id('pop-directory-icon')).click();
   },
 
   menuClick: function(entry, action) {
@@ -356,19 +356,19 @@ var splash = {
     confirmation.accept();
   },
 
-  expectProject: function(name) {
+  expectProjectListed: function(name) {
     testLib.expectElement(this.project(name));
   },
 
-  expectNotProject: function(name) {
+  expectProjectNotListed: function(name) {
     testLib.expectNotElement(this.project(name));
   },
 
-  expectDirectory: function(name) {
+  expectDirectoryListed: function(name) {
     testLib.expectElement(this.directory(name));
   },
 
-  expectNotDirectory: function(name) {
+  expectDirectoryNotListed: function(name) {
     testLib.expectNotElement(this.directory(name));
   },
 };
