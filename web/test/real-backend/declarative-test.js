@@ -95,7 +95,7 @@ fw.runAll();
 var deleteTemporaryFiles = function() {
   var lib = require('./test-lib.js');
   var fs = require('fs');
-  var pattern = lib.getTheRandomPathPrefix();
+  var pattern = lib.getTheRandomPathPattern();
 
   fs.readdir('/tmp', function (error, files) {
     if (error) {

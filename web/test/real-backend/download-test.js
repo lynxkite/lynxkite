@@ -4,7 +4,7 @@
 
 module.exports = function(fw) {
   var lib = require('./test-lib.js');
-  var downloadName = lib.getTheRandomPathPrefix() + '_vertex_attributes_csv';
+  var downloadName = lib.getTheRandomPathPattern() + '_vertex_attributes_csv';
   var exportPrefix = 'export_';
   var fullDownloadName = '/tmp/' + exportPrefix + downloadName + '.csv';
   var fs = require('fs');

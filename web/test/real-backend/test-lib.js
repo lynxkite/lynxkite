@@ -545,7 +545,7 @@ testLib = {
     });
   },
 
-  getTheRandomPathPrefix: function () {
+  getTheRandomPathPattern: function () {
 
     var create = function() {
       var crypto = require('crypto');
@@ -561,10 +561,10 @@ testLib = {
       return r;
     };
 
-    if (typeof this.getTheRandomPathPrefix.randomString === 'undefined') {
-      this.getTheRandomPathPrefix.randomString = create();
+    if (typeof this.getTheRandomPathPattern.randomString === 'undefined') {
+      this.getTheRandomPathPattern.randomString = create();
     }
-    return this.getTheRandomPathPrefix.randomString;
+    return this.getTheRandomPathPattern.randomString;
   },
 };
 
