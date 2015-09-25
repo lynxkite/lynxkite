@@ -70,20 +70,20 @@ module.exports = function(fw) {
       var op = lib.left.history.getOperation(2);
       lib.left.populateOperation(op, {name: 'new_output_name'});  // change output name
       lib.left.submitOperation(op);
-      lib.left.history.save('changed_project_name');
+      lib.left.history.save('changedProjectName');
       // Open new project and verify that the name was changed.
       lib.left.close();
-      lib.splash.openProject('changed_project_name');
+      lib.splash.openProject('changedProjectName');
       lib.left.history.open();
       lib.left.history.expectOperationParameter(2, 'name', 'new_output_name');
       // Go back to the original project and verify that the name was not changed.
       lib.left.history.close();
       lib.left.close();
+      lib.splash.deleteProject('changedProjectName');
       lib.splash.openProject('test-example');
       lib.left.history.open();
       lib.left.history.expectOperationParameter(2, 'name', 'c');
       lib.left.history.close();
-      // TODO(gaborfeher): Delete new project.
     });
 
   fw.statePreservingTest(
