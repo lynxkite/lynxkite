@@ -1,8 +1,5 @@
 'use strict';
 
-/* global element, by  */
-
-
 module.exports = function(fw) {
   var lib = require('./test-lib.js');
   var path = require('path');
@@ -12,10 +9,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'example graph vertex set names imported',
     function() {
-      lib.left.openOperation('Import vertices from CSV files');
-      var e = element(by.css('input[type=file]'));
-      lib.setParameter(e, importPath);
-      lib.left.clickOperationOk();
+      lib.left.runOperation('Import vertices from CSV files', {files: importPath});
     },
     function() {
       expect(lib.left.vertexCount()).toEqual(4);

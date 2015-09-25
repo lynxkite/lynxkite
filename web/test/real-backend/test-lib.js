@@ -130,11 +130,6 @@ Side.prototype = {
     return this.getValue('vertex-count');
   },
 
-  download: function() {
-    var p  = this.side.element(by.css('span a'));
-    p.click();
-  },
-
   segmentCount: function() {
     return this.getValue('segment-count');
   },
@@ -166,7 +161,7 @@ Side.prototype = {
       var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
       testLib.setParameter(
           parentElement.element(by.css(p)),
-          testLib.selectAllKey + params[key]);
+          params[key]);
     }
   },
 
@@ -487,8 +482,9 @@ testLib = {
     e.evaluate('param.kind').then(
         function(dataKind) {
           if (dataKind === 'code') {
-            testLib.sendKeysToACE(e, keys);
+            testLib.sendKeysToACE(e, testLib.selectAllKey + keys);
           } else if (dataKind === 'file') {
+            var input = e.element(by.css('input[type=file]'));
             // Need to unhide flowjs's secret file uploader
             browser.executeScript(
               function() {
@@ -497,10 +493,11 @@ testLib = {
                 arguments[0].style.width = '1px';
                 arguments[0].style.opacity = 1;
               },
-              e.getWebElement());            
-            e.sendKeys(keys);
+              input.getWebElement());
+            // testLib.selectAllKey is NOT added here
+            input.sendKeys(keys);
           } else {
-            e.sendKeys(keys);
+            e.sendKeys(testLib.selectAllKey + keys);
           }
         });
   },
