@@ -6,10 +6,13 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Automated end-to-end testing - basically a robot clicking all around on a test Kite instance -
+   made part of the development workflow and lots of tests added.
  - Dispersion computation made significantly faster.
  - Projects can be organized into folders now.
+ - Migration to 1.5.x does not take a lot of memory anymore.
  - Summary information of how things were created is presented on the UI. For example, the formula
-   used to create a derived attribute will accompany it.
+   used to create a derived attribute will accompany it. (No full coverage yet.)
  - Logarithmic histograms support non-positive values.
  - New parameter for CSV import operations: `Tolerate ill-formed lines`. It controls
    whether or not non-conforming lines in the csv file should be skipped silently
@@ -28,6 +31,7 @@ Please add changes to "master". When releasing a version add a new header for th
    and you see and error in the logs starting with "Output mismatch on ...", then try to force a
    migration: `KITE_FORCED_MIGRATION=true  ./run-kite-....sh restart`. Do this only once, not for
    all restarts in the future!
+ - Copy graph into segmentation operation fixed.
  - Edge attributes are included when copying visualizations to the clipboard.
 
 ### 1.5.1
