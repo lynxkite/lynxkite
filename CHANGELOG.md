@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+### 1.5.2
+
  - Automated end-to-end testing - basically a robot clicking all around on a test Kite instance -
    made part of the development workflow and lots of tests added.
  - Dispersion computation made significantly faster.
