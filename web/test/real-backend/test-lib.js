@@ -389,7 +389,23 @@ var splash = {
   },
 };
 
+function randomPattern () {
+  var crypto = require('crypto');
+  var buf = crypto.randomBytes(16);
+  var sixteenLetters = 'abcdefghijklmnop';
+  var r = '';
+  for (var i = 0; i < buf.length; i++) {
+    var v = buf[i];
+    var lo =  (v & 0xf);
+    var hi = (v >> 4);
+    r += sixteenLetters[lo] + sixteenLetters[hi];
+  }
+  return r;
+}
+
+
 testLib = {
+  theRandomPattern: randomPattern(),
   left: new Side('left'),
   right: new Side('right'),
   visualization: visualization,
@@ -540,28 +556,6 @@ testLib = {
         return 0;
       }
     });
-  },
-
-  getTheRandomPathPattern: function () {
-
-    var create = function() {
-      var crypto = require('crypto');
-      var buf = crypto.randomBytes(16);
-      var sixteenLetters = 'abcdefghijklmnop';
-      var r = '';
-      for (var i = 0; i < buf.length; i++) {
-        var v = buf[i];
-        var lo =  (v & 0xf);
-        var hi = (v >> 4);
-        r += sixteenLetters[lo] + sixteenLetters[hi];
-      }
-      return r;
-    };
-
-    if (typeof this.getTheRandomPathPattern.randomString === 'undefined') {
-      this.getTheRandomPathPattern.randomString = create();
-    }
-    return this.getTheRandomPathPattern.randomString;
   },
 };
 
