@@ -77,6 +77,8 @@ var fw = (function UIDescription() {
 })();
 
 require('./example-graph-basics.js')(fw);
+require('./download-test.js')(fw);
+require('./upload-test.js')(fw);
 require('./filter-tests.js')(fw);
 require('./segmentation-opens.js')(fw);
 require('./help-popups.js')(fw);
@@ -88,3 +90,37 @@ require('./center-picker.js')(fw);
 require('./splash-page.js')(fw);
 
 fw.runAll();
+
+
+var deleteTemporaryFiles = function() {
+  var lib = require('./test-lib.js');
+  var fs = require('fs');
+  var pattern = lib.theRandomPattern;
+
+  fs.readdir('/tmp', function (error, files) {
+    if (error) {
+      throw error;
+    }
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      if (f.indexOf(pattern) > -1) {
+        var full = '/tmp/' + f;
+        console.log('Deleting: ' + full);
+        fs.unlink(full);
+      }      
+    }
+  });
+};
+
+//
+// Override the finishCallback so we can add our cleanup function.
+// This is run after all tests have been completed.
+//
+var savedFinishCallback = jasmine.Runner.prototype.finishCallback;
+jasmine.Runner.prototype.finishCallback = function () {
+  // Run the old finishCallback
+  savedFinishCallback.bind(this)();
+
+  console.log('Cleaning up');
+  deleteTemporaryFiles();
+};
