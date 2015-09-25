@@ -42,7 +42,7 @@ var fw = (function UIDescription() {
             runStatePreservingTestInstanceWithParam(
                 currentTest.name + ' /' + i,
                 currentTest.runTest,
-                i);
+                params[i]);
           }
         }
       }

@@ -21,7 +21,6 @@ object AttributeHistogram extends OpFromJson {
     AttributeHistogram(
       TypedJson.read[Bucketer[_]](j \ "bucketer"),
       sampleSizeParameter.fromJson(j))
-
 }
 import AttributeHistogram._
 case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
