@@ -47,12 +47,15 @@
 </span>
 
 
-<histogram-button ng-show="attr.canBucket" attr="attr" side="side"
+<histogram-button ng-show="attr.canBucket" attr="attr" side="side" precise="precise"
   model="histogram" type="edge" tsv="histogramTSV">
 </histogram-button>
 <copy-box ng-show="histogram" description="Copy&nbsp;histogram to&nbsp;clipboard" data="{{histogramTSV}}"></copy-box>
 <label ng-show="histogram && attr.isNumeric">
   <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
+</label>
+<label ng-show="histogram" id="precise-histogram-calculation" attr-name="{{attr.title}}">
+  <input type="checkbox" ng-model="precise"></input> precise
 </label>
 
 <div class="entry-bottom">

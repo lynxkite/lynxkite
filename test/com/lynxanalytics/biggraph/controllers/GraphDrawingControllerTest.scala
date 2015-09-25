@@ -312,90 +312,103 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 117.0)))
   }
 
-  test("histogram for double") {
-    val g = graph_operations.ExampleGraph()().result
-    val req = HistogramSpec(
-      attributeId = g.age.gUID.toString,
-      vertexFilters = Seq(),
-      numBuckets = 4,
-      axisOptions = AxisOptions())
-    val res = controller.getHistogram(user, req)
-    assert(res.labelType == "between")
-    assert(res.labels == Seq("2.0", "14.1", "26.2", "38.2", "50.3"))
-    assert(res.sizes == Seq(1, 2, 0, 1))
+  def histogramTests(sampleSize: => Int) {
+
+    test("histogram for double, sampleSize = " + sampleSize) {
+      val g = graph_operations.ExampleGraph()().result
+      val req = HistogramSpec(
+        attributeId = g.age.gUID.toString,
+        vertexFilters = Seq(),
+        numBuckets = 4,
+        axisOptions = AxisOptions(),
+        sampleSize = sampleSize)
+      val res = controller.getHistogram(user, req)
+      assert(res.labelType == "between")
+      assert(res.labels == Seq("2.0", "14.1", "26.2", "38.2", "50.3"))
+      assert(res.sizes == Seq(1, 2, 0, 1))
+    }
+
+    test("histogram for double (partially defined), sampleSize= " + sampleSize) {
+      val g = graph_operations.ExampleGraph()().result
+      val req = HistogramSpec(
+        attributeId = g.income.gUID.toString,
+        vertexFilters = Seq(),
+        numBuckets = 4,
+        axisOptions = AxisOptions(),
+        sampleSize = sampleSize)
+      val res = controller.getHistogram(user, req)
+      assert(res.labelType == "between")
+      assert(res.labels == Seq("1000.0", "1250.0", "1500.0", "1750.0", "2000.0"))
+      assert(res.sizes == Seq(1, 0, 0, 1))
+    }
+
+    test("histogram for double (logarithmic) sampleSize= " + sampleSize) {
+      val g = graph_operations.ExampleGraph()().result
+      val req = HistogramSpec(
+        attributeId = g.age.gUID.toString,
+        vertexFilters = Seq(),
+        numBuckets = 4,
+        axisOptions = AxisOptions(logarithmic = true),
+        sampleSize = sampleSize)
+      val res = controller.getHistogram(user, req)
+      assert(res.labelType == "between")
+      assert(res.labels == Seq("2.0", "4.5", "10.0", "22.5", "50.3"))
+      assert(res.sizes == Seq(1, 0, 2, 1))
+    }
+
+    test("histogram for string, sampleSize= " + sampleSize) {
+      val g = graph_operations.ExampleGraph()().result
+      val req = HistogramSpec(
+        attributeId = g.gender.gUID.toString,
+        vertexFilters = Seq(),
+        numBuckets = 4,
+        axisOptions = AxisOptions(),
+        sampleSize = sampleSize)
+      val res = controller.getHistogram(user, req)
+      assert(res.labelType == "bucket")
+      assert(res.labels == Seq("Female", "Male"))
+      assert(res.sizes == Seq(1, 3))
+    }
+
+    test("histogram for edges, sampleSize= " + sampleSize) {
+      val g = graph_operations.ExampleGraph()().result
+      val req = HistogramSpec(
+        attributeId = g.weight.gUID.toString,
+        vertexFilters = Seq(),
+        edgeFilters = Seq(),
+        numBuckets = 4,
+        axisOptions = AxisOptions(),
+        edgeBundleId = g.edges.gUID.toString,
+        sampleSize = sampleSize)
+      val res = controller.getHistogram(user, req)
+      assert(res.labelType == "between")
+      assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
+      assert(res.sizes == Seq(1, 1, 1, 1))
+    }
+
+    test("histogram for edges with filter, sampleSize= " + sampleSize) {
+      val g = graph_operations.ExampleGraph()().result
+      val f = FEVertexAttributeFilter(
+        attributeId = g.weight.gUID.toString,
+        valueSpec = ">1")
+      val req = HistogramSpec(
+        attributeId = g.weight.gUID.toString,
+        vertexFilters = Seq(),
+        edgeFilters = Seq(f),
+        numBuckets = 4,
+        axisOptions = AxisOptions(),
+        edgeBundleId = g.edges.gUID.toString,
+        sampleSize = sampleSize)
+      val res = controller.getHistogram(user, req)
+      assert(res.labelType == "between")
+      assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
+      assert(res.sizes == Seq(0, 1, 1, 1))
+    }
+
   }
 
-  test("histogram for double (partially defined)") {
-    val g = graph_operations.ExampleGraph()().result
-    val req = HistogramSpec(
-      attributeId = g.income.gUID.toString,
-      vertexFilters = Seq(),
-      numBuckets = 4,
-      axisOptions = AxisOptions())
-    val res = controller.getHistogram(user, req)
-    assert(res.labelType == "between")
-    assert(res.labels == Seq("1000.0", "1250.0", "1500.0", "1750.0", "2000.0"))
-    assert(res.sizes == Seq(1, 0, 0, 1))
-  }
-
-  test("histogram for double (logarithmic)") {
-    val g = graph_operations.ExampleGraph()().result
-    val req = HistogramSpec(
-      attributeId = g.age.gUID.toString,
-      vertexFilters = Seq(),
-      numBuckets = 4,
-      axisOptions = AxisOptions(logarithmic = true))
-    val res = controller.getHistogram(user, req)
-    assert(res.labelType == "between")
-    assert(res.labels == Seq("2.0", "4.5", "10.0", "22.5", "50.3"))
-    assert(res.sizes == Seq(1, 0, 2, 1))
-  }
-
-  test("histogram for string") {
-    val g = graph_operations.ExampleGraph()().result
-    val req = HistogramSpec(
-      attributeId = g.gender.gUID.toString,
-      vertexFilters = Seq(),
-      numBuckets = 4,
-      axisOptions = AxisOptions())
-    val res = controller.getHistogram(user, req)
-    assert(res.labelType == "bucket")
-    assert(res.labels == Seq("Female", "Male"))
-    assert(res.sizes == Seq(1, 3))
-  }
-
-  test("histogram for edges") {
-    val g = graph_operations.ExampleGraph()().result
-    val req = HistogramSpec(
-      attributeId = g.weight.gUID.toString,
-      vertexFilters = Seq(),
-      edgeFilters = Seq(),
-      numBuckets = 4,
-      axisOptions = AxisOptions(),
-      edgeBundleId = g.edges.gUID.toString)
-    val res = controller.getHistogram(user, req)
-    assert(res.labelType == "between")
-    assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
-    assert(res.sizes == Seq(1, 1, 1, 1))
-  }
-
-  test("histogram for edges with filter") {
-    val g = graph_operations.ExampleGraph()().result
-    val f = FEVertexAttributeFilter(
-      attributeId = g.weight.gUID.toString,
-      valueSpec = ">1")
-    val req = HistogramSpec(
-      attributeId = g.weight.gUID.toString,
-      vertexFilters = Seq(),
-      edgeFilters = Seq(f),
-      numBuckets = 4,
-      axisOptions = AxisOptions(),
-      edgeBundleId = g.edges.gUID.toString)
-    val res = controller.getHistogram(user, req)
-    assert(res.labelType == "between")
-    assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
-    assert(res.sizes == Seq(0, 1, 1, 1))
-  }
+  testsFor(histogramTests(50000))
+  testsFor(histogramTests(-1))
 
   test("scalar") {
     val g = graph_operations.ExampleGraph()().result

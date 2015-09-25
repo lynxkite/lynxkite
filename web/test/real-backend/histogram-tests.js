@@ -6,19 +6,20 @@ module.exports = function(fw) {
   fw.statePreservingTest(
     'test-example project with example graph',
     'string vertex histogram looks good',
-    function() {
-      expect(lib.left.getHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
+    function(precise) {
+      expect(lib.left.getHistogramValues('name', precise).then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
         { title: 'Bob', size: 100, value: 1 },
         { title: 'Eve', size: 100, value: 1 },
         { title: 'Isolated Joe', size: 100, value: 1 },
       ]);
-    });
+    },
+    [false, true]);
   fw.statePreservingTest(
     'test-example project with example graph',
     'double vertex histogram looks good',
-    function() {
-      expect(lib.left.getHistogramValues('income')).toEqual([
+    function(precise) {
+      expect(lib.left.getHistogramValues('income', precise)).toEqual([
         { title : '1000.0-1050.0', size : 100, value : 1 },
         { title : '1050.0-1100.0', size : 0, value : 0 },
         { title : '1100.0-1150.0', size : 0, value : 0 },
@@ -40,12 +41,13 @@ module.exports = function(fw) {
         { title : '1900.0-1950.0', size : 0, value : 0 },
         { title : '1950.0-2000.0', size : 100, value : 1 },
       ]);
-    });
+    },
+    [false, true]);
   fw.statePreservingTest(
     'test-example project with example graph',
     'double edge histogram looks good',
-    function() {
-      expect(lib.left.getHistogramValues('weight')).toEqual([
+    function(precise) {
+      expect(lib.left.getHistogramValues('weight', precise)).toEqual([
         { title : '1.00-1.15', size : 100, value : 1 },
         { title : '1.15-1.30', size : 0, value : 0 },
         { title : '1.30-1.45', size : 0, value : 0 },
@@ -67,23 +69,25 @@ module.exports = function(fw) {
         { title : '3.70-3.85', size : 0, value : 0 },
         { title : '3.85-4.00', size : 100, value : 1 },
       ]);
-    });
+    },
+    [false, true]);
   fw.statePreservingTest(
     'example graph with filters set',
     'soft filters are applied to string vertex histogram',
-    function() {
-      expect(lib.left.getHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
+    function(precise) {
+      expect(lib.left.getHistogramValues('name', precise).then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
         { title: 'Bob', size: 0, value: 0 },
         { title: 'Eve', size: 100, value: 1 },
         { title: 'Isolated Joe', size: 0, value: 0 },
       ]);
-    });
+    },
+    [false, true]);
   fw.statePreservingTest(
     'example graph with filters set',
     'soft filters are applied to double edge histogram',
-    function() {
-      expect(lib.left.getHistogramValues('weight')).toEqual([
+    function(precise) {
+      expect(lib.left.getHistogramValues('weight', precise)).toEqual([
         { title : '1.00-1.15', size : 0, value : 0 },
         { title : '1.15-1.30', size : 0, value : 0 },
         { title : '1.30-1.45', size : 0, value : 0 },
@@ -105,22 +109,25 @@ module.exports = function(fw) {
         { title : '3.70-3.85', size : 0, value : 0 },
         { title : '3.85-4.00', size : 0, value : 0 },
       ]);
-    });
+    },
+    [false, true]);
   fw.statePreservingTest(
     'example graph with filters applied',
     'hard filters are applied to string vertex histogram',
-    function() {
-      expect(lib.left.getHistogramValues('name').then(lib.sortHistogramValues)).toEqual([
+    function(precise) {
+      expect(lib.left.getHistogramValues('name', precise).then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
         { title: 'Eve', size: 100, value: 1 },
       ]);
-    });
+    },
+    [false, true]);
   fw.statePreservingTest(
     'example graph with filters applied',
     'hard filters are applied to double edge histogram',
-    function() {
-      expect(lib.left.getHistogramValues('weight')).toEqual([
+    function(precise) {
+      expect(lib.left.getHistogramValues('weight', precise)).toEqual([
         { title : '2.00-2.00', size : 100, value : 1 },
       ]);
-    });
+    },
+    [false, true]);
 };
