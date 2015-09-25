@@ -279,7 +279,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val attribute = metaManager.attribute(request.yBucketingAttributeId.asUUID)
       dataManager.cache(attribute)
       FEBucketers.bucketedAttribute(
-        metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions);
+        metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions)
     } else {
       graph_operations.BucketedAttribute.emptyBucketedAttribute
     }
