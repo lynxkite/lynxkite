@@ -28,10 +28,11 @@ class BucketedAttribute[T] private (
   def writeReplace(): AnyRef = new BucketedAttributeSerialized(toJson.toString)
 
   def toHistogram(
-    filtered: VertexSet)(
+    filtered: VertexSet,
+    sampleSize: Int)(
       implicit manager: MetaGraphManager): graph_operations.AttributeHistogram.Output = {
     val originalCount = graph_operations.Count.run(attribute.vertexSet)
-    val op = graph_operations.AttributeHistogram[T](bucketer)
+    val op = graph_operations.AttributeHistogram[T](bucketer, sampleSize)
     op(op.attr, attribute)(op.filtered, filtered)(op.originalCount, originalCount).result
   }
 

@@ -19,12 +19,32 @@ var fw = (function UIDescription() {
       var testingDone = false;
       hasChild[previousStateName] = true;
 
-      function runStatePreservingTest(currentTest) {
-        it(currentTest.name, function() {
-          currentTest.runTest();
+      function runStatePreservingTestInstance(name, runner) {
+        it(name, function() {
+          runner();
           // Checking that it was indeed statePreserving.
           checks();
         });
+      }
+
+      function runStatePreservingTestInstanceWithParam(name, runner, param) {
+        runStatePreservingTestInstance(name, function() { runner(param); });
+      }
+
+      function runStatePreservingTest(currentTest) {
+        if (!currentTest.instanceParams) {
+          // Run this test once.
+          runStatePreservingTestInstance(currentTest.name, currentTest.runTest);
+        } else {
+          // Run this test several times with different parameters.
+          var params = currentTest.instanceParams;
+          for (var i = 0; i < params.length; ++i) {
+            runStatePreservingTestInstanceWithParam(
+                currentTest.name + ' /' + i,
+                currentTest.runTest,
+                i);
+          }
+        }
       }
 
       states[stateName] = {
@@ -50,11 +70,14 @@ var fw = (function UIDescription() {
     },
 
     // These tests need to preserve the UI state or restore it when they are finished.
-    statePreservingTest: function(stateToRunAt, name, body) {
+    // instanceParams is an optional parameter which should be a list. If specified,
+    // then the test will be run with each element of the list as a parameter.
+    statePreservingTest: function(stateToRunAt, name, body, instanceParams) {
       if (allStatePreservingTests[stateToRunAt] === undefined) {
         allStatePreservingTests[stateToRunAt] = [];
       }
-      allStatePreservingTests[stateToRunAt].push({name: name, runTest: body});
+      allStatePreservingTests[stateToRunAt].push(
+          {name: name, runTest: body, instanceParams: instanceParams});
     },
 
     runAll: function() {

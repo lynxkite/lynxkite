@@ -6,6 +6,7 @@ angular.module('biggraph').directive('vertexAttribute', function(axisOptions) {
     scope: { attr: '=vertexAttribute', side: '=' },
     templateUrl: 'vertex-attribute.html',
     link: function(scope) {
+      scope.precise = false;
       axisOptions.bind(scope, scope.side, 'vertex', scope.attr.title, 'axisOptions');
       scope.sampledVisualizations = [
         'size', 'label', 'label size',

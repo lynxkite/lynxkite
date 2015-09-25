@@ -142,7 +142,8 @@ case class HistogramSpec(
   // Set only if we ask for an edge attribute histogram and provided vertexFilters should be
   // applied on the end-vertices of edges.
   edgeBundleId: String = "",
-  edgeFilters: Seq[FEVertexAttributeFilter] = Seq())
+  edgeFilters: Seq[FEVertexAttributeFilter] = Seq(),
+  sampleSize: Int)
 
 case class HistogramResponse(
     labelType: String,
@@ -278,7 +279,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val attribute = metaManager.attribute(request.yBucketingAttributeId.asUUID)
       dataManager.cache(attribute)
       FEBucketers.bucketedAttribute(
-        metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions)
+        metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions);
     } else {
       graph_operations.BucketedAttribute.emptyBucketedAttribute
     }
@@ -622,7 +623,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val edgeFilters = request.edgeFilters.map(_.toFilteredAttribute)
       getFilteredEdgeIds(edgeBundle, vertexFilters, vertexFilters, edgeFilters).ids
     }
-    val histogram = bucketedAttr.toHistogram(filteredVS)
+    val histogram = bucketedAttr.toHistogram(filteredVS, request.sampleSize)
     val counts = histogram.counts.value
     spark_util.Counters.printAll
     HistogramResponse(

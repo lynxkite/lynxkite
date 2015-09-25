@@ -6,7 +6,7 @@ angular.module('biggraph').directive('histogramButton', function(util) {
   return {
     restrict: 'E',
     scope: {
-      attr: '=', side: '=',
+      attr: '=', side: '=', precise: '=',
       type: '@', // 'edge' or 'vertex'
       model: '=?', // The Ajax response is exported through this field.
       tsv: '=?', // A tab-separated table is exported through this field.
@@ -26,6 +26,7 @@ angular.module('biggraph').directive('histogramButton', function(util) {
           numBuckets: 20,
           axisOptions: scope.side.axisOptions(scope.type, scope.attr.title),
           edgeBundleId: scope.type === 'edge' ? scope.side.project.edgeBundle : '',
+          sampleSize: scope.precise ? -1 : 50000,
         };
         scope.model = util.get('/ajax/histo', q);
       }
@@ -56,6 +57,7 @@ angular.module('biggraph').directive('histogramButton', function(util) {
       }
       util.deepWatch(scope, 'side.state', update);
       scope.$watch('show', update);
+      scope.$watch('precise', update);
       scope.$watch('model.$resolved', updateTSV);
     },
   };

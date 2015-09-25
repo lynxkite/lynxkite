@@ -43,17 +43,24 @@ Side.prototype = {
     return this.side.element(by.css('#histogram-button[attr-name="' + attributeName + '"]'));
   },
 
+  getHistogramPreciseCheckbox: function(attributeName) {
+    return this.side.element(by.css('#precise-histogram-calculation[attr-name="' + attributeName + '"]'));
+  },
+
   getHistogramTotalElement: function(attributeName) {
     return this.getHistogram(attributeName).element(by.css('.histogram-total'));
   },
 
-  getHistogramValues: function(attributeName) {
+  getHistogramValues: function(attributeName, precise) {
     var button = this.getHistogramButton(attributeName);
     var total = this.getHistogramTotalElement(attributeName);
     var histo = this.getHistogram(attributeName);
     expect(histo.isDisplayed()).toBe(false);
     expect(total.isDisplayed()).toBe(false);
     button.click();
+    if (precise) {
+      this.getHistogramPreciseCheckbox(attributeName).click();
+    }
     expect(histo.isDisplayed()).toBe(true);
     expect(total.isDisplayed()).toBe(false);
     function allFrom(td) {
