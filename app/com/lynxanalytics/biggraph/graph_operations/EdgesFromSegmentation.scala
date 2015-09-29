@@ -36,10 +36,6 @@ case class EdgesFromSegmentation()
     val belongsTo = inputs.belongsTo.rdd
     val p = belongsTo.partitioner.get
     val segToVs = belongsTo.values.map(e => e.dst -> e.src).toSortedRDD(p)
-    val golah = segToVs.groupByKey.flatMap {
-      case (seg, members) =>
-        for (v <- members; w <- members) yield seg -> Edge(v, w)
-    }
     val segAndEdge = segToVs.groupByKey.flatMap {
       case (seg, members) =>
         for (v <- members; w <- members) yield seg -> Edge(v, w)
