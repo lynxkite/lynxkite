@@ -8,12 +8,14 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations._
 
 class CSVExportTest extends FunSuite with TestGraphOp {
+
   test("We can export attributes") {
     val sampleOut = ExampleGraph()().result
+    val ids = IdAsAttribute.run(sampleOut.vertices)
     assert(CSVExport.exportVertexAttributes(
       sampleOut.vertices,
       Map(
-        "vertexId" -> IdAsAttribute.run(sampleOut.vertices),
+        "vertexId" -> ids,
         "name" -> sampleOut.name,
         "age" -> sampleOut.age)).toString ==
       """|"age","name","vertexId"
@@ -25,6 +27,7 @@ class CSVExportTest extends FunSuite with TestGraphOp {
     assert(CSVExport.exportEdgeAttributes(
       sampleOut.edges,
       Map("comment" -> sampleOut.comment),
+      ids, ids,
       srcColumnName = "who",
       dstColumnName = "whom").toString ==
       """|"who","whom","comment"
@@ -33,6 +36,20 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |2,0,"Bob envies Adam"
          |2,1,"Bob loves Eve"
          |""".stripMargin)
+    val names = sampleOut.vertexAttributes("name")
+    val ages = sampleOut.vertexAttributes("age")
+    assert(CSVExport.exportEdgeAttributes(
+      sampleOut.edges,
+      Map("comment" -> sampleOut.comment),
+      names, ages,
+      srcColumnName = "who",
+      dstColumnName = "whom").toString ==
+      """|"who","whom","comment"
+        |Adam,18.2,"Adam loves Eve"
+        |Eve,20.3,"Eve loves Adam"
+        |Bob,20.3,"Bob envies Adam"
+        |Bob,18.2,"Bob loves Eve"
+        |""".stripMargin)
   }
 
   test("We can save a CSV to a dir") {
