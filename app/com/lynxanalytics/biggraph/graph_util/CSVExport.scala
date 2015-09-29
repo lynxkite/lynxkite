@@ -5,10 +5,12 @@ import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import scala.language.existentials
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class CSVData(val header: Seq[String],
                    val data: rdd.RDD[Seq[String]]) {
@@ -44,18 +46,40 @@ object CSVExport {
       attachAttributeData(indexedVertexIds, attrs).values)
   }
 
+  private def computeIndexedEdges(
+    edgeBundle: EdgeBundle,
+    srcAttr: Attribute[_],
+    dstAttr: Attribute[_])(implicit dataManager: DataManager): SortedRDD[ID, Seq[String]] = {
+    val v1 = edgeBundle.rdd.map { // (src, (dst, id)
+      case (id, edge) => (edge.src, (edge.dst, id))
+    }
+    val v2 = srcAttr.rdd.join(v1) // (src, (attr_src, (dst, id)))
+    val v3 = v2.map {
+      case (src, (attr_src, (dst, id))) => (dst, (src, attr_src, id))
+    }
+    val v4 = dstAttr.rdd.join(v3) // (dst, (attr_dst, (src, attr_src, id)))
+    val v5 = v4.map {
+      case (dst, (attr_dst, (src, attr_src, id))) => (id, (attr_src, attr_dst))
+    }
+    val v6 = v5.mapValues {
+      attrs => Seq(attrs._1.toString, attrs._2.toString)
+    }
+    v6.toSortedRDD(edgeBundle.rdd.partitioner.get)
+  }
+
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
     attributes: Map[String, Attribute[_]],
+    srcAttr: Attribute[_],
+    dstAttr: Attribute[_],
     srcColumnName: String = "srcVertexId",
     dstColumnName: String = "dstVertexId")(implicit dataManager: DataManager): CSVData = {
     for ((name, attr) <- attributes) {
       assert(attr.vertexSet == edgeBundle.idSet,
         s"Incorrect vertex set for attribute $name.")
     }
-    val indexedEdges = edgeBundle.rdd.mapValues {
-      edge => Seq(edge.src.toString, edge.dst.toString)
-    }
+    val indexedEdges = computeIndexedEdges(edgeBundle, srcAttr, dstAttr)
+
     val (names, attrs) = attributes.toList.sortBy(_._1).unzip
     CSVData(
       (srcColumnName :: dstColumnName :: names).map(quoteString),
