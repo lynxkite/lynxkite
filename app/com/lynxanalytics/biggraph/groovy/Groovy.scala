@@ -125,10 +125,10 @@ abstract class GroovyProject(ctx: GroovyContext)
 
   override def invokeMethod(name: String, args: AnyRef): AnyRef = {
     val argArray = args.asInstanceOf[Array[_]]
-    val params = if (argArray.nonEmpty) {
-      val javaParams = argArray.head.asInstanceOf[java.util.Map[String, AnyRef]]
-      JavaConversions.mapAsScalaMap(javaParams).mapValues(_.toString).toMap
-    } else Map[String, String]()
+    val params: Map[String, String] = if (argArray.nonEmpty) {
+      val javaParams = argArray.head.asInstanceOf[java.util.Map[AnyRef, AnyRef]]
+      JavaConversions.mapAsScalaMap(javaParams).map { case (k, v) => (k.toString, v.toString) }.toMap
+    } else Map()
     val id = {
       val normalized = ctx.normalize(name)
       assert(ctx.normalizedIds.contains(normalized), s"No such operation: $name")
