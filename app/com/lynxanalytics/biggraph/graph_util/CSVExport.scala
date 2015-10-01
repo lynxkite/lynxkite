@@ -50,21 +50,17 @@ object CSVExport {
     edgeBundle: EdgeBundle,
     srcAttr: Attribute[_],
     dstAttr: Attribute[_])(implicit dataManager: DataManager): SortedRDD[ID, Seq[String]] = {
-    val v1 = edgeBundle.rdd.map { // (src, (dst, id)
+    val bySrc = edgeBundle.rdd.map { // (src, (dst, id)
       case (id, edge) => (edge.src, (edge.dst, id))
     }
-    val v2 = srcAttr.rdd.join(v1) // (src, (attr_src, (dst, id)))
-    val v3 = v2.map {
-      case (src, (attr_src, (dst, id))) => (dst, (src, attr_src, id))
+    val bySrcPlusAttrSrc = srcAttr.rdd.join(bySrc) // (src, (srcAttr, (dst, id)))
+    val byDstPlusAttrSrc = bySrcPlusAttrSrc.map {
+      case (src, (srcAttr, (dst, id))) => (dst, (src, srcAttr, id))
     }
-    val v4 = dstAttr.rdd.join(v3) // (dst, (attr_dst, (src, attr_src, id)))
-    val v5 = v4.map {
-      case (dst, (attr_dst, (src, attr_src, id))) => (id, (attr_src, attr_dst))
-    }
-    val v6 = v5.mapValues {
-      attrs => Seq(attrs._1.toString, attrs._2.toString)
-    }
-    v6.toSortedRDD(edgeBundle.rdd.partitioner.get)
+    val byDstPlusSrcAttrDstAttr = dstAttr.rdd.join(byDstPlusAttrSrc) // (dst, (dstAttr, (src, srcAttr, id)))
+    byDstPlusSrcAttrDstAttr.map {
+      case (dst, (dstAttr, (src, srcAttr, id))) => (id, Seq(srcAttr.toString, dstAttr.toString))
+    }.toSortedRDD(edgeBundle.rdd.partitioner.get)
   }
 
   def exportEdgeAttributes(
