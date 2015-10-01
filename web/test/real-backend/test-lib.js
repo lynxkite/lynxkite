@@ -139,7 +139,10 @@ Side.prototype = {
   },
 
   clickOperationOk: function() {
-    this.toolbox.element(by.css('.ok-button')).click();
+    var button = this.toolbox.element(by.css('.ok-button'));
+    // Wait for uploads or whatever.
+    browser.wait(protractor.until.elementTextMatches(button, /OK/));
+    button.click();
   },
 
   openWorkflowSavingDialog: function() {
