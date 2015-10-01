@@ -1,6 +1,7 @@
 'use strict';
 
 /* global element, by, protractor */
+/* jshint bitwise: false */
 
 var testLib; // Forward declarations.
 var History; // Forward declarations.
@@ -145,6 +146,10 @@ Side.prototype = {
     this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
   },
 
+  clickOperationOk: function() {
+    this.toolbox.element(by.css('.ok-button')).click();
+  },
+
   openWorkflowSavingDialog: function() {
     this.side.element(by.id('save-as-workflow-button')).click();
   },
@@ -161,9 +166,9 @@ Side.prototype = {
     params = params || {};
     for (var key in params) {
       var p = 'operation-parameters #' + key + ' .operation-attribute-entry';
-      testLib.sendKeysToElement(
+      testLib.setParameter(
           parentElement.element(by.css(p)),
-          testLib.selectAllKey + params[key]);
+          params[key]);
     }
   },
 
@@ -391,7 +396,23 @@ var splash = {
   },
 };
 
+function randomPattern () {
+  var crypto = require('crypto');
+  var buf = crypto.randomBytes(16);
+  var sixteenLetters = 'abcdefghijklmnop';
+  var r = '';
+  for (var i = 0; i < buf.length; i++) {
+    var v = buf[i];
+    var lo =  (v & 0xf);
+    var hi = (v >> 4);
+    r += sixteenLetters[lo] + sixteenLetters[hi];
+  }
+  return r;
+}
+
+
 testLib = {
+  theRandomPattern: randomPattern(),
   left: new Side('left'),
   right: new Side('right'),
   visualization: visualization,
@@ -479,14 +500,27 @@ testLib = {
     aceInput.sendKeys(keys);
   },
 
-  sendKeysToElement: function(e, keys) {
+  setParameter: function(e, keys) {
     // ACE editor and non-ace controls need different handling.
     e.evaluate('param.kind').then(
         function(dataKind) {
           if (dataKind === 'code') {
-            testLib.sendKeysToACE(e, keys);
+            testLib.sendKeysToACE(e, testLib.selectAllKey + keys);
+          } else if (dataKind === 'file') {
+            var input = e.element(by.css('input[type=file]'));
+            // Need to unhide flowjs's secret file uploader
+            browser.executeScript(
+              function() {
+                arguments[0].style.visibility = 'visible';
+                arguments[0].style.height = '1px';
+                arguments[0].style.width = '1px';
+                arguments[0].style.opacity = 1;
+              },
+              input.getWebElement());
+            // testLib.selectAllKey is NOT added here
+            input.sendKeys(keys);
           } else {
-            e.sendKeys(keys);
+            e.sendKeys(testLib.selectAllKey + keys);
           }
         });
   },
