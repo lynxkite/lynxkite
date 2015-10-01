@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class FEBucketersTest extends FunSuite with TestGraphOp {
 
-  def histogramTests(sampleSize: => Int) {
+  def histogramTests(sampleSize: Int) {
     test("rare string values are not counted, sampleSize= " + sampleSize) {
       val g = ExampleGraph()().result
       val bucketed = BucketedAttribute(g.name, StringBucketer(Seq("Bob", "Eve"), false))

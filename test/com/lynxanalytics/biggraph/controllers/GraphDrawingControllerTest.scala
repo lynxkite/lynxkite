@@ -312,7 +312,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.edgeBundles(0).edges.toSet == Set(FEEdge(0, 0, 117.0)))
   }
 
-  def histogramTests(sampleSize: => Int) {
+  def histogramTests(sampleSize: Int) {
 
     test("histogram for double, sampleSize = " + sampleSize) {
       val g = graph_operations.ExampleGraph()().result

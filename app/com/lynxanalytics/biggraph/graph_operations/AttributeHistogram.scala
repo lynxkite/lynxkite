@@ -23,6 +23,10 @@ object AttributeHistogram extends OpFromJson {
       sampleSizeParameter.fromJson(j))
 }
 import AttributeHistogram._
+/**
+ * @param sampleSize specifies the number of data points to use for the histogram.
+ * A negative value turns sampling off and all the data points will be used.
+ */
 case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
     extends TypedMetaGraphOp[Input[T], Output] {
   @transient override lazy val inputs = new Input[T]
