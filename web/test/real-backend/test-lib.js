@@ -1,7 +1,6 @@
 'use strict';
 
 /* global element, by, protractor */
-/* jshint bitwise: false */
 
 var testLib; // Forward declarations.
 var History; // Forward declarations.
@@ -390,6 +389,7 @@ var splash = {
 };
 
 function randomPattern () {
+  /* jshint bitwise: false */
   var crypto = require('crypto');
   var buf = crypto.randomBytes(16);
   var sixteenLetters = 'abcdefghijklmnop';
