@@ -65,18 +65,20 @@ object CSVExport {
 
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
-    attributes: Map[String, Attribute[_]],
-    srcAttr: Attribute[_],
-    dstAttr: Attribute[_],
-    srcColumnName: String = "srcVertexId",
-    dstColumnName: String = "dstVertexId")(implicit dataManager: DataManager): CSVData = {
-    for ((name, attr) <- attributes) {
+    attributes: Seq[(String, Attribute[_])])(implicit dataManager: DataManager): CSVData = {
+    assert(attributes.size >= 2, "exportEdgeAttributes needs at least two attributes")
+    val srcColumnName = "src_" + attributes(0)._1
+    val srcAttr = attributes(0)._2
+    val dstColumnName = "dst_" + attributes(1)._1
+    val dstAttr = attributes(1)._2
+    val edgeAttributes = attributes.drop(2)
+    for ((name, attr) <- edgeAttributes) {
       assert(attr.vertexSet == edgeBundle.idSet,
         s"Incorrect vertex set for attribute $name.")
     }
     val indexedEdges = computeIndexedEdges(edgeBundle, srcAttr, dstAttr)
 
-    val (names, attrs) = attributes.toList.sortBy(_._1).unzip
+    val (names, attrs) = edgeAttributes.toList.sortBy(_._1).unzip
     CSVData(
       (srcColumnName :: dstColumnName :: names).map(quoteString),
       attachAttributeData(indexedEdges, attrs).values)
