@@ -23,6 +23,7 @@ sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 libraryDependencies ++= Seq(
   anorm, // Play library for making SQL queries.
   ws, // Play library for making HTTP requests.
+  filters, // Play library for compressing HTTP responses.
   // These jackson deps are needed to resolve some jackson version conflict by forcing to use 2.4.4
   "com.fasterxml.jackson.core" % "jackson-core" % "2.4.4",
   "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4.4",
