@@ -44,7 +44,6 @@ case class EdgesFromSegmentation()
       case (seg, members) =>
         for (v <- members; w <- members) yield seg -> Edge(v, w)
     }.randomNumbered(partitioner)
-    assert(segAndEdge.count() == squareSum.value)
     output(o.es, segAndEdge.mapValues(_._2))
     output(o.origin, segAndEdge.mapValuesWithKeys { case (eid, (seg, edge)) => Edge(eid, seg) })
   }
