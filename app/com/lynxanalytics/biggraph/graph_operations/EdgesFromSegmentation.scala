@@ -36,10 +36,15 @@ case class EdgesFromSegmentation()
     val belongsTo = inputs.belongsTo.rdd
     val p = belongsTo.partitioner.get
     val segToVs = belongsTo.values.map(e => e.dst -> e.src).toSortedRDD(p)
-    val segAndEdge = segToVs.groupByKey.flatMap {
+    val segAndEdgeArray = segToVs.groupByKey
+    val squareSum = segAndEdgeArray.context.accumulator[Long](0L, "Square Sum")
+    segAndEdgeArray.foreach(x => squareSum += (x._2.size) * (x._2.size))
+    val partitioner = rc.partitionerForNRows(squareSum.value)
+    val segAndEdge = segAndEdgeArray.flatMap {
       case (seg, members) =>
         for (v <- members; w <- members) yield seg -> Edge(v, w)
-    }.randomNumbered(p)
+    }.randomNumbered(partitioner)
+    assert(segAndEdge.count() == squareSum.value)
     output(o.es, segAndEdge.mapValues(_._2))
     output(o.origin, segAndEdge.mapValuesWithKeys { case (eid, (seg, edge)) => Edge(eid, seg) })
   }
