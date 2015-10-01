@@ -38,8 +38,5 @@ class EdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       Seq(0 -> 0, 0 -> 1, 0 -> 2, 1 -> 0, 1 -> 1, 1 -> 2, 2 -> 0, 2 -> 1, 2 -> 2, 3 -> 3))
   }
 
-  test("Overlapping example graph - 20") {
-    val g = ExampleGraph()().result
-
-  }
+  // TODO: Add tests with overlapping segments.
 }
