@@ -2,8 +2,9 @@
 import play.api._
 import play.api.mvc._
 import play.api.mvc.Results._
+import play.filters.gzip.GzipFilter
 
-object Global extends GlobalSettings {
+object Global extends WithFilters(new GzipFilter()) with GlobalSettings {
   override def onBadRequest(request: RequestHeader, error: String) = {
     concurrent.Future.successful(BadRequest(error))
   }
