@@ -26,11 +26,8 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |""".stripMargin)
     assert(CSVExport.exportEdgeAttributes(
       sampleOut.edges,
-      Map("comment" -> sampleOut.comment),
-      ids, ids,
-      srcColumnName = "who",
-      dstColumnName = "whom").toString ==
-      """|"who","whom","comment"
+      Seq("id" -> ids, "id" -> ids, "comment" -> sampleOut.comment)).toString ==
+      """|"src_id","dst_id","comment"
          |0,1,"Adam loves Eve"
          |1,0,"Eve loves Adam"
          |2,0,"Bob envies Adam"
@@ -40,11 +37,8 @@ class CSVExportTest extends FunSuite with TestGraphOp {
     val ages = sampleOut.vertexAttributes("age")
     assert(CSVExport.exportEdgeAttributes(
       sampleOut.edges,
-      Map("comment" -> sampleOut.comment),
-      names, ages,
-      srcColumnName = "who",
-      dstColumnName = "whom").toString ==
-      """|"who","whom","comment"
+      Seq("name" -> names, "age" -> ages, "comment" -> sampleOut.comment)).toString ==
+      """|"src_name","dst_age","comment"
         |Adam,18.2,"Adam loves Eve"
         |Eve,20.3,"Eve loves Adam"
         |Bob,20.3,"Bob envies Adam"
