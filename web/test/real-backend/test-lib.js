@@ -493,27 +493,26 @@ testLib = {
     aceInput.sendKeys(keys);
   },
 
-  setParameter: function(e, keys) {
-    // ACE editor and non-ace controls need different handling.
+  setParameter: function(e, value) {
+    // Special parameter types need different handling.
     e.evaluate('param.kind').then(
         function(dataKind) {
           if (dataKind === 'code') {
-            testLib.sendKeysToACE(e, testLib.selectAllKey + keys);
+            testLib.sendKeysToACE(e, testLib.selectAllKey + value);
           } else if (dataKind === 'file') {
-            var input = e.element(by.css('input[type=file]'));
-            // Need to unhide flowjs's secret file uploader
+            var input = e.element(by.id('file'));
+            // Need to unhide flowjs's secret file uploader.
             browser.executeScript(
-              function() {
-                arguments[0].style.visibility = 'visible';
-                arguments[0].style.height = '1px';
-                arguments[0].style.width = '1px';
-                arguments[0].style.opacity = 1;
+              function(input) {
+                input.style.visibility = 'visible';
+                input.style.height = '1px';
+                input.style.width = '1px';
+                input.style.opacity = 1;
               },
               input.getWebElement());
-            // testLib.selectAllKey is NOT added here
-            input.sendKeys(keys);
+            input.sendKeys(value);
           } else {
-            e.sendKeys(testLib.selectAllKey + keys);
+            e.sendKeys(testLib.selectAllKey + value);
           }
         });
   },
