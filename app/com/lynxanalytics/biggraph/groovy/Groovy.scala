@@ -62,7 +62,8 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
   override def onMethodCall(
     invoker: sandbox.GroovyInterceptor.Invoker,
     receiver: Any, method: String, args: Object*): Object = {
-    def isA[T] = receiver.isInstanceOf[T]
+    // Shorthand for "receiver.isInstanceOf[T]".
+    def isA[T: reflect.ClassTag] = reflect.classTag[T].runtimeClass.isInstance(receiver)
     // Method calls are only allowed on GroovyWorkflowProject and primitive types.
     if (isA[GroovyWorkflowProject] || isA[String] || isA[Long] || isA[Double] || isA[Int] || isA[Boolean]) {
       invoker.call(receiver, method, args: _*)
