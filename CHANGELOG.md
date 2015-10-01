@@ -6,6 +6,10 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Precise histogram computations: so far histograms were computed using a sample of the real
+   data, for performance reasons. Now the user has the option to request a computation on all
+   the data.
+
 ### 1.5.2
 
  - Automated end-to-end testing - basically a robot clicking all around on a test Kite instance -

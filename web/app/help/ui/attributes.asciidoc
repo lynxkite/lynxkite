@@ -16,7 +16,9 @@ information/controls.
 a filter for an attribute then all UI visualizations (histograms, graph
 visualization) will only consider vertices/edges that pass your filter.
 See <<attribute-filter-syntax>> for details.
-* A histogram button that allows you to see a histogram of the attribute.
+* A histogram button that allows you to see a histogram of the attribute. By default, for performance
+reasons, histograms are only computed on a sample of all the available data. Click the "precise"
+checkbox to request a computation using all the data.
 * A visualization button that allows you to visualize the attribute on the current graph
 visualization. See details in <<concrete-visualization-options>>.
 (Only available when <<concrete-vertices-view>> is enabled.)
