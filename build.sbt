@@ -6,7 +6,7 @@ javaOptions in Test := Seq(
   "-Dsun.io.serialization.extendedDebugInfo=true",
   "-Dbiggraph.default.partitions.per.core=1")
 
-scalacOptions ++= Seq("-feature", "-deprecation")
+scalacOptions ++= Seq("-feature", "-deprecation", "-unchecked", "-Xfatal-warnings")
 
 version := "0.1-SNAPSHOT"
 
