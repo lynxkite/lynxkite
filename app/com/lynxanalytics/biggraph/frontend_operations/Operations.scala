@@ -2506,7 +2506,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
         Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
-        Choice("vattr", "Source id attribute",
+        Choice("vattr", "Vertex attribute",
           options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
         Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
@@ -2517,13 +2517,13 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           label => label -> project.edgeAttributes(label)
         }.toMap
         val path = getExportFilename(params("path"))
-        val srcAttr: Attribute[_] =
+        val vIdAttr: Attribute[_] =
           if (params("vattr") == "!internal id (default)") idAsAttribute(project.vertexSet)
           else project.vertexAttributes(params("vattr"))
         params("format") match {
           case "CSV" =>
             val csv =
-              graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle, attrs, srcAttr, srcAttr)
+              graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle, attrs, vIdAttr, vIdAttr)
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
@@ -2557,11 +2557,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def segmentationParameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "segmentation_csv"),
-        Choice("segm_vattr", "Segmentation vertex id attribute",
-          options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
-        Choice("parent_vattr", "Project vertex id attribute",
+        Choice("pvattr", "Project vertex id attribute",
           options = UIValue("!internal id (default)", "internal id (default)") +:
             UIValue.list(parent.vertexAttributeNames.toList)),
+        Choice("svattr", "Segmentation vertex id attribute",
+          options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
         Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = isSegmentation && FEStatus.enabled
       def apply(params: Map[String, String]) = {
@@ -2569,11 +2569,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val name = project.asSegmentation.segmentationName
 
         val srcAttr: Attribute[_] =
-          if (params("parent_vattr") == "!internal id (default)") idAsAttribute(parent.vertexSet)
-          else parent.vertexAttributes(params("parent_vattr"))
+          if (params("pvattr") == "!internal id (default)") idAsAttribute(parent.vertexSet)
+          else parent.vertexAttributes(params("pvattr"))
         val dstAttr: Attribute[_] =
-          if (params("segm_vattr") == "!internal id (default)") idAsAttribute(project.vertexSet)
-          else project.vertexAttributes(params("segm_vattr"))
+          if (params("svattr") == "!internal id (default)") idAsAttribute(project.vertexSet)
+          else project.vertexAttributes(params("svattr"))
 
         params("format") match {
           case "CSV" =>
