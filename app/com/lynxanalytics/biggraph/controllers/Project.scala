@@ -826,11 +826,14 @@ class ProjectDirectory(val path: SymbolPath)(
   protected def get(tag: SymbolPath): String = manager.synchronized {
     existing(tag).map(manager.getTag(_)).get
   }
+  protected def get(tag: SymbolPath, default: String): String = manager.synchronized {
+    existing(tag).map(manager.getTag(_)).getOrElse(default)
+  }
 
-  def readACL: String = get(rootDir / "readACL")
+  def readACL: String = get(rootDir / "readACL", "*")
   def readACL_=(x: String): Unit = set(rootDir / "readACL", x)
 
-  def writeACL: String = get(rootDir / "writeACL")
+  def writeACL: String = get(rootDir / "writeACL", "*")
   def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
 
   def assertReadAllowedFrom(user: User): Unit = {

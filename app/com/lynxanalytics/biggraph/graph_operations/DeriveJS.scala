@@ -29,13 +29,7 @@ object DeriveJS {
     op(op.attrs, Seq(x).map(VertexAttributeToJSValue.run[Double])).result.attr
   }
 
-  def deriveFromAttributes[T: TypeTag](
-    exprString: String,
-    namedAttributes: Seq[(String, Attribute[_])],
-    vertexSet: VertexSet)(implicit manager: MetaGraphManager): Output[T] = {
-
-    val js = JavaScript(exprString)
-
+  def validateJS[T: TypeTag](js: JavaScript, namedAttributes: Seq[(String, Attribute[_])]): Unit = {
     // Validate JS using default values for the types of the attributes.
     val testNamedValues =
       namedAttributes
@@ -49,9 +43,18 @@ object DeriveJS {
     // to any reference type. (And we are dealing with a reference type here thanks to the wrap
     // above.)
     classOfT.cast(testResult)
+  }
+
+  def deriveFromAttributes[T: TypeTag](
+    exprString: String,
+    namedAttributes: Seq[(String, Attribute[_])],
+    vertexSet: VertexSet)(implicit manager: MetaGraphManager): Output[T] = {
+
+    val js = JavaScript(exprString)
+    validateJS[T](js, namedAttributes)
 
     // Good to go, let's prepare the attributes for DeriveJS.
-    val jSValueAttributes =
+    val jsValueAttributes =
       namedAttributes.map { case (_, attr) => VertexAttributeToJSValue.run(attr) }
 
     val op: DeriveJS[T] =
@@ -62,7 +65,7 @@ object DeriveJS {
       } else ???
 
     import Scripting._
-    op(op.vs, vertexSet)(op.attrs, jSValueAttributes).result
+    op(op.vs, vertexSet)(op.attrs, jsValueAttributes).result
   }
 }
 import DeriveJS._

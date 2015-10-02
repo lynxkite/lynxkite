@@ -1314,6 +1314,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var info = bounds.span / bounds.max;  // Information content of edge widths. (0 to 1)
     // Go up to 3x thicker lines if they are meaningful.
     var edgeScale = normalWidth * (1 + info * 2) / bounds.max;
+    var color, label;
     for (var i = 0; i < edges.length; ++i) {
       var edge = edges[i];
       var width = edgeWidths[i];
@@ -1323,12 +1324,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var a = srcs.vs[edge.a];
       var b = dsts.vs[edge.b];
 
-      var color;
+      color = undefined;
       if (colorKey && edge.attrs[colorKey].defined) {
         color = (side.edgeAttrs.edgeColor.typeName === 'Double') ?
           colorMap[edge.attrs[colorKey].double] : colorMap[edge.attrs[colorKey].string];
       }
-      var label;
+      label = undefined;
       if (labelKey) {
         label = edge.attrs[labelKey].string;
       }

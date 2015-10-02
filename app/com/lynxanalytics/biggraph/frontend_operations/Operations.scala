@@ -2016,14 +2016,12 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       Choice("rightName", "Second ID attribute", options = vertexAttributes[String]),
       Choice("weights", "Edge weights",
         options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
-      NonNegDouble("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
       NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(vertexAttributes[String].size >= 2, "Two string attributes are needed.")
     def apply(params: Map[String, String]): Unit = {
-      val mrew = params("mrew").toDouble
       val mo = params("mo").toInt
       val ms = params("ms").toDouble
       assert(mo >= 1, "Minimum overlap cannot be less than 1.")
@@ -2032,9 +2030,6 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val weights =
         if (params("weights") == "!no weight") const(project.edgeBundle)
         else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
-
-      // TODO: Calculate relative edge weight, filter the edge bundle and pull over the weights.
-      assert(mrew == 0, "Minimum relative edge weight is not implemented yet.")
 
       val candidates = {
         val op = graph_operations.FingerprintingCandidates()
@@ -2108,19 +2103,14 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Fingerprinting between project and segmentation", new SpecialtyOperation(_, _) with SegOp {
     def segmentationParameters = List(
-      NonNegDouble("mrew", "Minimum relative edge weight", defaultValue = "0.0"),
       NonNegInt("mo", "Minimum overlap", default = 1),
       Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
     def enabled =
       isSegmentation &&
         hasEdgeBundle && FEStatus.assert(parent.edgeBundle != null, s"No edges on $parent")
     def apply(params: Map[String, String]): Unit = {
-      val mrew = params("mrew").toDouble
       val mo = params("mo").toInt
       val ms = params("ms").toDouble
-
-      // TODO: Calculate relative edge weight, filter the edge bundle and pull over the weights.
-      assert(mrew == 0, "Minimum relative edge weight is not implemented yet.")
 
       val candidates = seg.belongsTo
       val segNeighborsInParent = concat(project.edgeBundle, reverse(seg.belongsTo))
