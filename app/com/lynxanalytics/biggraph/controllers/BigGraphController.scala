@@ -511,7 +511,8 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def validateParameters(values: Map[String, String]): Unit = {
     val paramIds = parameters.map { param => param.id }.toSet
     val extraIds = values.keySet &~ paramIds
-    assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
+    assert(extraIds.size == 0,
+      s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
     val mandatoryParamIds =
       parameters.filter(_.mandatory).map { param => param.id }.toSet
     val missingIds = mandatoryParamIds &~ values.keySet

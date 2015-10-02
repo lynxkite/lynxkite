@@ -25,7 +25,6 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       "seg-id-field" -> "dst"),
       on = seg)
     run("Fingerprinting between project and segmentation", Map(
-      "mrew" -> "0.0",
       "mo" -> "1",
       "ms" -> "0.5"),
       on = seg)
@@ -88,7 +87,6 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     def belongsTo = seg.belongsTo.toPairSeq
     assert(belongsTo.size == 6)
     run("Fingerprinting between project and segmentation", Map(
-      "mrew" -> "0",
       "mo" -> "0",
       "ms" -> "0"),
       on = seg)

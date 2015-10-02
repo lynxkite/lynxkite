@@ -2,8 +2,10 @@
 import play.api._
 import play.api.mvc._
 import play.api.mvc.Results._
+import play.filters.gzip.GzipFilter
+import play.filters.headers.SecurityHeadersFilter
 
-object Global extends GlobalSettings {
+object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) with GlobalSettings {
   override def onBadRequest(request: RequestHeader, error: String) = {
     concurrent.Future.successful(BadRequest(error))
   }
