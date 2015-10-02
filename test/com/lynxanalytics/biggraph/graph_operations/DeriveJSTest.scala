@@ -44,6 +44,17 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == Set(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0))
   }
 
+  test("JS integers become Scala doubles") {
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(JavaScript("2"), Seq())
+    val derived = op(op.vs, g.vertices.entity)(op.attrs, Seq()).result.attr
+    assert(derived.rdd.collect.toSet == Set(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 2.0))
+  }
+
+  test("JS integers are accepted as Scala doubles") {
+    DeriveJS.validateJS[Double](JavaScript("2"), Seq())
+  }
+
   test("DeriveJS works with no input attributes (edges)") {
     val expr = "'hallo'"
     val g = ExampleGraph()().result
