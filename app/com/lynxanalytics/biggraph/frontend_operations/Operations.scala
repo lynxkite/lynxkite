@@ -958,6 +958,29 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Shortest path", new MetricsOperation(_, _) {
+    def parameters = List(
+      Param("name", "Attribute name", defaultValue = "distance"),
+      Choice("weights", "Weight attribute",
+        options = UIValue("!no weight", "no weight") +: edgeAttributes[Double]),
+      Choice("seed", "Seed attribute", options = vertexAttributes[Double]),
+      NonNegInt("iterations", "Maximum number of iterations", default = 10)
+    )
+    def enabled = hasEdgeBundle
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+      val seedAttr = params("seed")
+      val seed = project.vertexAttributes(seedAttr).runtimeSafeCast[Double]
+      val op = graph_operations.ShortestPath(params("iterations").toInt)
+      val weights =
+        if (params("weights") == "!no weight") const(project.edgeBundle)
+        else project.edgeAttributes(params("weights")).runtimeSafeCast[Double]
+      project.newVertexAttribute(
+        params("name"),
+        op(op.es, project.edgeBundle)(op.weights, weights)(op.seed, seed).result.distance, help)
+    }
+  })
+
   register("Centrality", new MetricsOperation(_, _) {
     def parameters = List(
       Param("name", "Attribute name", defaultValue = "centrality"),

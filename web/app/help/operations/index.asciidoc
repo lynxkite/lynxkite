@@ -198,6 +198,8 @@ include::segment-by-double-attribute.asciidoc[]
 
 include::segment-by-string-attribute.asciidoc[]
 
+include::shortest-path.asciidoc[]
+
 include::union-with-another-project.asciidoc[]
 
 include::vertex-attributes-to-position.asciidoc[]
