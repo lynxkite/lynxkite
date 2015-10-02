@@ -2559,8 +2559,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
         val path = getExportFilename(params("path"))
         val idNameAndVertexAttr = getNameAndVertexAttr(params("vattr"), project)
-        val srcNameAndEdgeAttr = getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = true)
-        val dstNameAndEdgeAttr = getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = false)
+        val srcNameAndEdgeAttr =
+          getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = true)
+        val dstNameAndEdgeAttr =
+          getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = false)
 
         params("format") match {
           case "CSV" =>
@@ -2613,8 +2615,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
         val srcNameAndVertexAttr = getNameAndVertexAttr(params("pvattr"), parent)
         val dstNameAndVertexAttr = getNameAndVertexAttr(params("svattr"), project)
-        val srcNameAndEdgeAttr = getPrefixedNameAndEdgeAttribute(srcNameAndVertexAttr, seg.belongsTo, isSrc = true)
-        val dstNameAndEdgeAttr = getPrefixedNameAndEdgeAttribute(dstNameAndVertexAttr, seg.belongsTo, isSrc = false)
+        val srcNameAndEdgeAttr =
+          getPrefixedNameAndEdgeAttribute(srcNameAndVertexAttr, seg.belongsTo, isSrc = true)
+        val dstNameAndEdgeAttr =
+          getPrefixedNameAndEdgeAttribute(dstNameAndVertexAttr, seg.belongsTo, isSrc = false)
 
         params("format") match {
           case "CSV" =>
