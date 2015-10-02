@@ -6,6 +6,16 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Fixed bug where the root project directory was not accessible for non-admins.
+ - Slow computations will not lock up the browser anymore. Previously it was possible that if too
+   many slow computations were requested then even fast operations, like opening a project stopped
+   working.
+ - HTTP security and performance improvements.
+ - Kite default port changed from 9000 to 2200. This does not impact you if you already have a
+   .kiterc file with whatever port number set, it just changes the template.
+ - Fixed bug where an edge might have been colored when the color by attribute was not even defined.
+ - Removed not implemented relative edge weight parameter from fingerpringing operations.
+
 ### 1.5.2
 
  - Automated end-to-end testing - basically a robot clicking all around on a test Kite instance -
