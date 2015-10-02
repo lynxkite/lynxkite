@@ -12,9 +12,9 @@ Please add changes to "master". When releasing a version add a new header for th
    working.
  - HTTP security and performance improvements.
  - Kite default port changed from 9000 to 2200. This does not impact you if you already have a
-   .kiterc file with whatever port number set, it just changes the template.
+   `.kiterc` file with whatever port number set, it just changes the template.
  - Fixed bug where an edge might have been colored when the color by attribute was not even defined.
- - Removed not implemented relative edge weight parameter from fingerpringing operations.
+ - Removed not implemented relative edge weight parameter from fingerprinting operations.
 
 ### 1.5.2
 
