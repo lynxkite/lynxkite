@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_util
 
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.TestUtils
+import com.lynxanalytics.biggraph.{ graph_operations, TestUtils }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations._
@@ -24,26 +24,30 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |50.3,"Bob",2
          |2.0,"Isolated Joe",3
          |""".stripMargin)
+    val src = graph_operations.VertexToEdgeAttribute.srcAttribute(ids, sampleOut.edges)
+    val dst = graph_operations.VertexToEdgeAttribute.dstAttribute(ids, sampleOut.edges)
     assert(CSVExport.exportEdgeAttributes(
       sampleOut.edges,
-      Seq("id" -> ids, "id" -> ids, "comment" -> sampleOut.comment)).toString ==
-      """|"src_id","dst_id","comment"
-         |0,1,"Adam loves Eve"
-         |1,0,"Eve loves Adam"
-         |2,0,"Bob envies Adam"
-         |2,1,"Bob loves Eve"
-         |""".stripMargin)
-    val names = sampleOut.vertexAttributes("name")
-    val ages = sampleOut.vertexAttributes("age")
+      Seq("id" -> src, "id" -> dst, "comment" -> sampleOut.comment)).toString ==
+      """|"id","id","comment"
+                 |0,1,"Adam loves Eve"
+                 |1,0,"Eve loves Adam"
+                 |2,0,"Bob envies Adam"
+                 |2,1,"Bob loves Eve"
+                 |""".stripMargin)
+    val names = sampleOut.name
+    val nameAttr = graph_operations.VertexToEdgeAttribute.srcAttribute(names, sampleOut.edges)
+    val ages = sampleOut.age
+    val ageAttr = graph_operations.VertexToEdgeAttribute.dstAttribute(ages, sampleOut.edges)
     assert(CSVExport.exportEdgeAttributes(
       sampleOut.edges,
-      Seq("name" -> names, "age" -> ages, "comment" -> sampleOut.comment)).toString ==
-      """|"src_name","dst_age","comment"
-        |Adam,18.2,"Adam loves Eve"
-        |Eve,20.3,"Eve loves Adam"
-        |Bob,20.3,"Bob envies Adam"
-        |Bob,18.2,"Bob loves Eve"
-        |""".stripMargin)
+      Seq("name" -> nameAttr, "age" -> ageAttr, "comment" -> sampleOut.comment)).toString ==
+      """|"name","age","comment"
+                |"Adam",18.2,"Adam loves Eve"
+                |"Eve",20.3,"Eve loves Adam"
+                |"Bob",20.3,"Bob envies Adam"
+                |"Bob",18.2,"Bob loves Eve"
+                |""".stripMargin)
   }
 
   test("We can save a CSV to a dir") {
