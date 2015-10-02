@@ -1,0 +1,24 @@
+### Shortest path
+
+Calculates the shortest path from a given set of vertices for every vertex.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[weights]] Weight attribute::
+The edge weights. Edges with greater weight correspond to higher distance.
+
+[[seed]] Seed attribute::
+A numeric attribute that specifies the distances already known before starting
+this operation. If you want to compute distances from a given vertex, then
+define this attribute to have the value 0.0 at that vertex, and leave it
+undefined for all the others.
+
+[[iterations]] Maximum number of iterations::
+This is an iterative algorithm. In each iteration, it takes all the vertices with
+known distances and calculates updated distance values for their neighbors.
+This goes on until all the distances have stabilized, or the number of iterations
+has reached this number.
+
+====
