@@ -11,7 +11,7 @@ angular
     'cfp.hotkeys',
   ])
 
-  .config(function ($routeProvider) {
+  .config(function ($routeProvider, $httpProvider) {
     $routeProvider
       .when('/', {
         templateUrl: 'views/splash.html',
@@ -52,6 +52,78 @@ angular
       .otherwise({
         redirectTo: '/',
       });
+
+    $httpProvider.interceptors.push('slowRequestQueue');
+  })
+
+  // Some requests may trigger substantial calculation on the backend. If we
+  // make many slow requests in parallel we can easily exhaust the browser's
+  // parallel connection limit. (The limit depends on the browser. It is 6 for
+  // Chrome 45.) This can block fast requests from getting sent.
+  //
+  // For this reason we queue slow requests in the browser. With the number
+  // of parallel slow requests limited, we expect to have enough connections
+  // left for the fast requests.
+  .factory('slowRequestQueue', function($q) {
+    var queue = [];
+    var MAX_LENGTH = 2; // Maximum number of parallel slow requests.
+    var SLOW_REQUESTS = [
+      '/ajax/complexView',
+      '/ajax/histo',
+      '/ajax/scalarValue',
+      '/ajax/center',
+      '/ajax/getDataFilesStatus',
+      ];
+
+    function isSlow(config) {
+      for (var i = 0; i < SLOW_REQUESTS.length; ++i) {
+        var pattern = SLOW_REQUESTS[i];
+        if (config.url.indexOf(pattern) !== -1) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function done(config) {
+      for (var i = 0; i < queue.length && i < MAX_LENGTH; ++i) {
+        if (queue[i].config === config) {
+          // A slow request has finished. Remove it from the queue and start another one.
+          queue.splice(i, 1);
+          if (queue.length >= MAX_LENGTH) {
+            var next = queue[MAX_LENGTH - 1];
+            next.deferred.resolve(next.config);
+          }
+        }
+      }
+    }
+
+    return {
+      request: function(config) {
+        if (isSlow(config)) {
+          if (queue.length < MAX_LENGTH) {
+            queue.push({ config: config });
+            return config;
+          } else {
+            var deferred = $q.defer();
+            queue.push({ config: config, deferred: deferred });
+            return deferred.promise;
+          }
+        } else {
+          return config; // Pass through.
+        }
+      },
+
+      response: function(response) {
+        done(response.config);
+        return response;
+      },
+
+      responseError: function(error) {
+        done(error.config);
+        return $q.reject(error);
+      },
+    };
   })
 
   .factory('$exceptionHandler', function($log, $injector) {
