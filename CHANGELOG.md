@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+### 1.5.3
+
  - Fixed bug where the root project directory was not accessible for non-admins.
  - Slow computations will not lock up the browser anymore. Previously it was possible that if too
    many slow computations were requested then even fast operations, like opening a project stopped
