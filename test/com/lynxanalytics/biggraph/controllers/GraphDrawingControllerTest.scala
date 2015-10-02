@@ -404,18 +404,20 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
   }
 
   test("histogram with smaller sample size as data size") {
-    val g = graph_operations.ExampleGraph()().result
+    val vs = graph_operations.CreateVertexSet(100)().result.vs
+    val rndVA = {
+      val op = graph_operations.AddGaussianVertexAttribute(1)
+      op(op.vertices, vs).result.attr
+    }
     val req = HistogramSpec(
-      attributeId = g.name.gUID.toString,
+      attributeId = rndVA.gUID.toString,
       vertexFilters = Seq(),
-      numBuckets = 4,
+      numBuckets = 10,
       axisOptions = AxisOptions(),
       sampleSize = 1)
     val res = controller.getHistogram(user, req)
-    assert(res.labelType == "bucket")
-    // Sampling is approximate: this test only ensures that some data
-    // was lost.
-    assert(res.sizes.count(x => x > 0) < 4)
+    assert(res.labelType == "between")
+    assert(res.sizes.count(x => x == 100) == 1)
   }
 
   test("histogram without sampling") {
@@ -442,4 +444,5 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.string == "4")
     assert(res.double == Some(4))
   }
+
 }
