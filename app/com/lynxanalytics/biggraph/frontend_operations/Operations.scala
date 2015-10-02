@@ -6,6 +6,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_operations.VertexToEdgeAttribute
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -2500,16 +2501,43 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     }
 
-    def getVertexNameAndAttribute(
-      params: Map[String, String],
-      paramID: String,
-      pe: ProjectEditor): (String, Attribute[_]) = {
-      if (params(paramID) == "!internal id (default)") {
-        ("id", idAsAttribute(pe.vertexSet))
-      } else {
-        val name = params(paramID)
-        (name, pe.vertexAttributes(name))
+    case class NameAndAttr[T](name: String, attr: Attribute[T]) {
+      def asSeq: Seq[(String, Attribute[_])] = {
+        Seq((name, attr))
       }
+    }
+
+    def getNameAndVertexAttr(
+      paramID: String,
+      pe: ProjectEditor): NameAndAttr[_] = {
+
+      val name: String =
+        if (paramID == "!internal id (default)") {
+          "id"
+        } else {
+          paramID
+        }
+      val attr: Attribute[_] =
+        if (paramID == "!internal id (default)") {
+          idAsAttribute(pe.vertexSet)
+        } else {
+          pe.vertexAttributes(paramID)
+        }
+      NameAndAttr(name, attr)
+    }
+
+    def getPrefixedNameAndEdgeAttribute(
+      nameAndVertexAttr: NameAndAttr[_],
+      targetEb: EdgeBundle,
+      isSrc: Boolean): NameAndAttr[_] = {
+
+      val edgeAttr =
+        if (isSrc) graph_operations.VertexToEdgeAttribute.srcAttribute(nameAndVertexAttr.attr, targetEb)
+        else graph_operations.VertexToEdgeAttribute.dstAttribute(nameAndVertexAttr.attr, targetEb)
+      val name =
+        if (isSrc) "src_" + nameAndVertexAttr.name
+        else "dst_" + nameAndVertexAttr.name
+      NameAndAttr(name, edgeAttr)
     }
 
     register("Export edge attributes to file", new ExportOperation(_, _) {
@@ -2528,13 +2556,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val attrs: Seq[(String, Attribute[_])] = labels.map {
           label => label -> project.edgeAttributes(label)
         }
+
         val path = getExportFilename(params("path"))
-        val idNameAndAttr = getVertexNameAndAttribute(params, "vattr", project)
+        val idNameAndVertexAttr = getNameAndVertexAttr(params("vattr"), project)
+        val srcNameAndEdgeAttr = getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = true)
+        val dstNameAndEdgeAttr = getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = false)
+
         params("format") match {
           case "CSV" =>
             val csv =
               graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle,
-                idNameAndAttr +: idNameAndAttr +: attrs)
+                srcNameAndEdgeAttr.asSeq ++ dstNameAndEdgeAttr.asSeq ++ attrs)
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
@@ -2579,13 +2611,15 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val path = getExportFilename(params("path"))
         val name = project.asSegmentation.segmentationName
 
-        val srcNameAndAttr = getVertexNameAndAttribute(params, "pvattr", parent)
-        val dstNameAndAttr = getVertexNameAndAttribute(params, "svattr", project)
+        val srcNameAndVertexAttr = getNameAndVertexAttr(params("pvattr"), parent)
+        val dstNameAndVertexAttr = getNameAndVertexAttr(params("svattr"), project)
+        val srcNameAndEdgeAttr = getPrefixedNameAndEdgeAttribute(srcNameAndVertexAttr, seg.belongsTo, isSrc = true)
+        val dstNameAndEdgeAttr = getPrefixedNameAndEdgeAttribute(dstNameAndVertexAttr, seg.belongsTo, isSrc = false)
 
         params("format") match {
           case "CSV" =>
             val csv = graph_util.CSVExport.exportEdgeAttributes(
-              seg.belongsTo, Seq(srcNameAndAttr, dstNameAndAttr))
+              seg.belongsTo, srcNameAndEdgeAttr.asSeq ++ dstNameAndEdgeAttr.asSeq)
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
