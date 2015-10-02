@@ -5,12 +5,10 @@ import org.apache.commons.lang.StringEscapeUtils
 import org.apache.spark.rdd
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.language.existentials
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
-import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 case class CSVData(val header: Seq[String],
                    val data: rdd.RDD[Seq[String]]) {
@@ -46,42 +44,29 @@ object CSVExport {
       attachAttributeData(indexedVertexIds, attrs).values)
   }
 
-  private def computeIndexedEdges(
-    edgeBundle: EdgeBundle,
-    srcAttr: Attribute[_],
-    dstAttr: Attribute[_])(implicit dataManager: DataManager): SortedRDD[ID, Seq[String]] = {
-    val bySrc = edgeBundle.rdd.map { // (src, (dst, id)
-      case (id, edge) => (edge.src, (edge.dst, id))
-    }
-    val bySrcPlusAttrSrc = srcAttr.rdd.join(bySrc) // (src, (srcAttr, (dst, id)))
-    val byDstPlusAttrSrc = bySrcPlusAttrSrc.map {
-      case (src, (srcAttr, (dst, id))) => (dst, (src, srcAttr, id))
-    }
-    val byDstPlusSrcAttrDstAttr = dstAttr.rdd.join(byDstPlusAttrSrc) // (dst, (dstAttr, (src, srcAttr, id)))
-    byDstPlusSrcAttrDstAttr.map {
-      case (dst, (dstAttr, (src, srcAttr, id))) => (id, Seq(srcAttr.toString, dstAttr.toString))
-    }.toSortedRDD(edgeBundle.rdd.partitioner.get)
-  }
-
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
     attributes: Seq[(String, Attribute[_])])(implicit dataManager: DataManager): CSVData = {
-    assert(attributes.size >= 2, "exportEdgeAttributes needs at least two attributes")
-    val srcColumnName = "src_" + attributes(0)._1
-    val srcAttr = attributes(0)._2
-    val dstColumnName = "dst_" + attributes(1)._1
-    val dstAttr = attributes(1)._2
-    val edgeAttributes = attributes.drop(2)
-    for ((name, attr) <- edgeAttributes) {
+
+    for ((name, attr) <- attributes) {
       assert(attr.vertexSet == edgeBundle.idSet,
         s"Incorrect vertex set for attribute $name.")
     }
-    val indexedEdges = computeIndexedEdges(edgeBundle, srcAttr, dstAttr)
+    assert(attributes.size >= 2,
+      "exportEdgeAttributes needs at least two attributes (source and destination)")
+    val srcAttr = stringRDDFromAttribute(attributes(0)._2)
+    val dstAttr = stringRDDFromAttribute(attributes(1)._2)
+    val srcName = attributes(0)._1
+    val dstName = attributes(1)._1
 
-    val (names, attrs) = edgeAttributes.toList.sortBy(_._1).unzip
+    val srcDst = srcAttr.sortedJoin(dstAttr).mapValues { case (a, b) => Seq(a, b) }
+    val realEdgeData = attributes.drop(2)
+    val (realEdgeNames, realEdgeAttrs) = realEdgeData.toList.sortBy(_._1).unzip
+    val names = srcName +: dstName +: realEdgeNames
+
     CSVData(
-      (srcColumnName :: dstColumnName :: names).map(quoteString),
-      attachAttributeData(indexedEdges, attrs).values)
+      names.map(quoteString),
+      attachAttributeData(srcDst, realEdgeAttrs).values)
   }
 
   private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
