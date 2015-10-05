@@ -107,7 +107,7 @@ var deleteTemporaryFiles = function() {
         var full = '/tmp/' + f;
         console.log('Deleting: ' + full);
         fs.unlink(full);
-      }      
+      }
     }
   });
 };

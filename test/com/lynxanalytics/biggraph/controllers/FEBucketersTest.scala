@@ -11,7 +11,7 @@ class FEBucketersTest extends FunSuite with TestGraphOp {
   test("rare string values are not counted") {
     val g = ExampleGraph()().result
     val bucketed = BucketedAttribute(g.name, StringBucketer(Seq("Bob", "Eve"), false))
-    val counts = bucketed.toHistogram(g.vertices).counts.value
+    val counts = bucketed.toHistogram(g.vertices, 50000).counts.value
     assert(counts == Map(0 -> 1, 1 -> 1))
   }
 }
