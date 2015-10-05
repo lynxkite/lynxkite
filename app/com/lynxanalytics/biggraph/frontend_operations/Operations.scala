@@ -2544,7 +2544,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val labels = params("attrs").split(",", -1)
         val attrs: Seq[(String, Attribute[_])] = labels.map {
           label => label -> project.edgeAttributes(label)
-        }
+        }.sortBy(_._1)
 
         val path = getExportFilename(params("path"))
         val idNameAndVertexAttr = getNameAndVertexAttr(params("id_attr"), project)
