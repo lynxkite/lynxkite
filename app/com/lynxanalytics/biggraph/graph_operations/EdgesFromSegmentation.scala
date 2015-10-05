@@ -37,9 +37,8 @@ case class EdgesFromSegmentation()
     val p = belongsTo.partitioner.get
     val segToVs = belongsTo.values.map(e => e.dst -> e.src).toSortedRDD(p)
     val segAndEdgeArray = segToVs.groupByKey
-    val squareSum = segAndEdgeArray.context.accumulator[Long](0L, "Square Sum")
-    segAndEdgeArray.foreach(x => squareSum += (x._2.size) * (x._2.size))
-    val partitioner = rc.partitionerForNRows(squareSum.value)
+    val numNewEdges = segAndEdgeArray.values.map(edges => edges.size * edges.size).sum.toLong
+    val partitioner = rc.partitionerForNRows(numNewEdges)
     val segAndEdge = segAndEdgeArray.flatMap {
       case (seg, members) =>
         for (v <- members; w <- members) yield seg -> Edge(v, w)
