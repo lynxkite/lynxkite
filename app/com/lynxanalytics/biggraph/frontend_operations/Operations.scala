@@ -2535,7 +2535,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
         Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
-        Choice("vattr", "Vertex attribute",
+        Choice("id_attr", "Vertex attribute",
           options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
         Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
@@ -2547,7 +2547,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         }
 
         val path = getExportFilename(params("path"))
-        val idNameAndVertexAttr = getNameAndVertexAttr(params("vattr"), project)
+        val idNameAndVertexAttr = getNameAndVertexAttr(params("id_attr"), project)
         val srcNameAndEdgeAttr =
           getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = true)
         val dstNameAndEdgeAttr =
@@ -2591,10 +2591,10 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def segmentationParameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "segmentation_csv"),
-        Choice("pvattr", "Project vertex id attribute",
+        Choice("base_id_attr", "Project vertex id attribute",
           options = UIValue("!internal id (default)", "internal id (default)") +:
             UIValue.list(parent.vertexAttributeNames.toList)),
-        Choice("svattr", "Segmentation vertex id attribute",
+        Choice("seg_id_attr", "Segmentation vertex id attribute",
           options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
         Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = isSegmentation && FEStatus.enabled
@@ -2602,8 +2602,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         val path = getExportFilename(params("path"))
         val name = project.asSegmentation.segmentationName
 
-        val srcNameAndVertexAttr = getNameAndVertexAttr(params("pvattr"), parent)
-        val dstNameAndVertexAttr = getNameAndVertexAttr(params("svattr"), project)
+        val srcNameAndVertexAttr = getNameAndVertexAttr(params("base_id_attr"), parent)
+        val dstNameAndVertexAttr = getNameAndVertexAttr(params("seg_id_attr"), project)
         val srcNameAndEdgeAttr =
           getPrefixedNameAndEdgeAttribute(srcNameAndVertexAttr, seg.belongsTo, isSrc = true)
         val dstNameAndEdgeAttr =
