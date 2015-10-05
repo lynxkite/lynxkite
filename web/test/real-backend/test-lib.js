@@ -145,6 +145,10 @@ Side.prototype = {
     this.side.element(by.id('save-as-workflow-button')).click();
   },
 
+  closeWorkflowSavingDialog: function() {
+    this.side.element(by.id('close-workflow-button')).click();
+  },
+
   openSegmentation: function(segmentationName) {
     this.side.element(by.id('segmentation-' + segmentationName)).click();
   },

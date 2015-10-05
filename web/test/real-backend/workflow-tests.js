@@ -26,6 +26,7 @@ module.exports = function(fw) {
           ' \'filterva-income\': \'\',' +
           ' \'filterva-location\': \'\',' +
           ' \'filterva-name\': \'Adam,Eve,Bob\')');
+      lib.left.closeWorkflowSavingDialog();
       lib.left.history.close();
     });
 
@@ -36,7 +37,7 @@ module.exports = function(fw) {
     function() {},
     function() {
       // Just make sure we return to the main project view.
-      expect(lib.left.getProjectHistory().isDisplayed()).toBe(false);
+      expect(lib.left.getProjectHistory().isPresent()).toBe(false);
     });
 
   function saveWorkflow(name, description, code) {
