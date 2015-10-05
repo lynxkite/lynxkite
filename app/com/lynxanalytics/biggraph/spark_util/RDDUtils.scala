@@ -153,6 +153,22 @@ object RDDUtils {
     return valueBuckets
   }
 
+  def preciseValueCounts[T](
+    data: SortedRDD[ID, T]): IDBuckets[T] = {
+
+    data.aggregate(new IDBuckets[T]())(
+      {
+        case (buckets, (id, value)) =>
+          buckets.add(id, value)
+          buckets
+      },
+      {
+        case (buckets1, buckets2) =>
+          buckets1.absorb(buckets2)
+          buckets1
+      })
+  }
+
   def estimateValueWeights[T](
     fullRDD: SortedRDD[ID, _],
     weightsRDD: SortedRDD[ID, Double],
