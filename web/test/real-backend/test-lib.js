@@ -31,10 +31,6 @@ Side.prototype = {
     return this.toolbox.element(by.css('div.category[tooltip="' + categoryTitle + '"]'));
   },
 
-  getCloseHistoryButton: function() {
-    return this.side.element(by.id('close-history-button'));
-  },
-
   getHistogram: function(attributeName) {
     return this.side.element(by.css('histogram[attr-name="' + attributeName + '"]'));
   },
