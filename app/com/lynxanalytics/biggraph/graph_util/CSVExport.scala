@@ -52,21 +52,12 @@ object CSVExport {
       assert(attr.vertexSet == edgeBundle.idSet,
         s"Incorrect vertex set for attribute $name.")
     }
-    assert(attributes.size >= 2,
-      "exportEdgeAttributes needs at least two attributes (source and destination)")
-    val srcAttr = stringRDDFromAttribute(attributes(0)._2)
-    val dstAttr = stringRDDFromAttribute(attributes(1)._2)
-    val srcName = attributes(0)._1
-    val dstName = attributes(1)._1
-
-    val srcDst = srcAttr.sortedJoin(dstAttr).mapValues { case (a, b) => Seq(a, b) }
-    val realEdgeData = attributes.drop(2)
-    val (realEdgeNames, realEdgeAttrs) = realEdgeData.toList.sortBy(_._1).unzip
-    val names = srcName +: dstName +: realEdgeNames
-
+    val base = edgeBundle.rdd.mapValues(_ => Seq[String]())
+    val (names, data) = attributes.toList.unzip
     CSVData(
       names.map(quoteString),
-      attachAttributeData(srcDst, realEdgeAttrs).values)
+      attachAttributeData(base, data).values
+    )
   }
 
   private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {
