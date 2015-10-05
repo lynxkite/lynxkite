@@ -30,6 +30,11 @@ var fw = (function UIDescription() {
       states[stateName] = {
         reachAndTest: function() {
           if (previousStateName !== undefined) {
+            describe('"' + previousStateName + '"', function() {
+              it('is defined', function() {
+                expect(states[previousStateName]).toBeDefined();
+              });
+            });
             states[previousStateName].reachAndTest();
           }
           describe(stateName, function() {
