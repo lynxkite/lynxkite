@@ -2490,24 +2490,70 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       }
     }
 
+    case class NameAndAttr[T](name: String, attr: Attribute[T]) {
+      def asPair: (String, Attribute[_]) = {
+        (name, attr)
+      }
+    }
+
+    def getNameAndVertexAttr(
+      paramID: String,
+      pe: ProjectEditor): NameAndAttr[_] = {
+
+      if (paramID == "!internal id (default)") {
+        NameAndAttr("id", idAsAttribute(pe.vertexSet))
+      } else {
+        NameAndAttr(paramID, pe.vertexAttributes(paramID))
+      }
+    }
+
+    def getPrefixedNameAndEdgeAttribute(
+      nameAndVertexAttr: NameAndAttr[_],
+      targetEb: EdgeBundle,
+      isSrc: Boolean): NameAndAttr[_] = {
+
+      if (isSrc) {
+        NameAndAttr(
+          "src_" + nameAndVertexAttr.name,
+          graph_operations.VertexToEdgeAttribute.srcAttribute(nameAndVertexAttr.attr, targetEb)
+        )
+      } else {
+        NameAndAttr(
+          "dst_" + nameAndVertexAttr.name,
+          graph_operations.VertexToEdgeAttribute.dstAttribute(nameAndVertexAttr.attr, targetEb)
+        )
+      }
+    }
+
     register("Export edge attributes to file", new ExportOperation(_, _) {
       override val dirty = true
       def parameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
         Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
+        Choice("id_attr", "Vertex id attribute",
+          options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
         Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
       def apply(params: Map[String, String]) = {
         assert(params("attrs").nonEmpty, "No attributes are selected for export.")
         val labels = params("attrs").split(",", -1)
-        val attrs: Map[String, Attribute[_]] = labels.map {
+        val attrs: Seq[(String, Attribute[_])] = labels.map {
           label => label -> project.edgeAttributes(label)
-        }.toMap
+        }.sortBy(_._1)
+
         val path = getExportFilename(params("path"))
+        val idNameAndVertexAttr = getNameAndVertexAttr(params("id_attr"), project)
+        val srcNameAndEdgeAttr =
+          getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = true)
+        val dstNameAndEdgeAttr =
+          getPrefixedNameAndEdgeAttribute(idNameAndVertexAttr, project.edgeBundle, isSrc = false)
+
         params("format") match {
           case "CSV" =>
-            val csv = graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle, attrs)
+            val csv =
+              graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle,
+                srcNameAndEdgeAttr.asPair +: dstNameAndEdgeAttr.asPair +: attrs)
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
@@ -2541,16 +2587,28 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       def segmentationParameters = List(
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "segmentation_csv"),
+        Choice("base_id_attr", "Project vertex id attribute",
+          options = UIValue("!internal id (default)", "internal id (default)") +:
+            UIValue.list(parent.vertexAttributeNames.toList)),
+        Choice("seg_id_attr", "Segmentation vertex id attribute",
+          options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
         Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = isSegmentation && FEStatus.enabled
       def apply(params: Map[String, String]) = {
         val path = getExportFilename(params("path"))
         val name = project.asSegmentation.segmentationName
+
+        val srcNameAndVertexAttr = getNameAndVertexAttr(params("base_id_attr"), parent)
+        val dstNameAndVertexAttr = getNameAndVertexAttr(params("seg_id_attr"), project)
+        val srcNameAndEdgeAttr =
+          getPrefixedNameAndEdgeAttribute(srcNameAndVertexAttr, seg.belongsTo, isSrc = true)
+        val dstNameAndEdgeAttr =
+          getPrefixedNameAndEdgeAttribute(dstNameAndVertexAttr, seg.belongsTo, isSrc = false)
+
         params("format") match {
           case "CSV" =>
             val csv = graph_util.CSVExport.exportEdgeAttributes(
-              seg.belongsTo, attributes = Map(),
-              srcColumnName = "vertex_id", dstColumnName = s"${name}_id")
+              seg.belongsTo, Seq(srcNameAndEdgeAttr.asPair, dstNameAndEdgeAttr.asPair))
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
