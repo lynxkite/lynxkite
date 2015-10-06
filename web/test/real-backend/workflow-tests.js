@@ -1,5 +1,6 @@
 'use strict';
 
+var fs = require('fs');
 var lib = require('./test-lib.js');
 
 module.exports = function(fw) {
@@ -53,12 +54,13 @@ module.exports = function(fw) {
   }
 
   fw.statePreservingTest(
-    'example graph with user-defined workflows',
+    'unspecified project state for testing user-defined workflows',
     'simple derived attribute workflow',
     function() {
       saveWorkflow(
         'TestDeriveWorkflow',
         'A simple workflow that does a\nsimple derive on\na simple project.',
+        'project.exampleGraph()\n' +
         'project.derivedVertexAttribute' +
           '(expr: \'gender == \\\'Male\\\' ? \\\'Mr \\\' + name : \\\'Ms \\\' + name\',' +
           ' output: \'polite\',' +
@@ -73,5 +75,42 @@ module.exports = function(fw) {
         { title: 'Mr Isolated Joe', size: 100, value: 1 },
         { title: 'Ms Eve', size: 100, value: 1 },
       ]);
+    });
+
+  fw.statePreservingTest(
+    'unspecified project state for testing user-defined workflows',
+    'complex workflow with parameters and "if"',
+    function() {
+      saveWorkflow(
+        'ComplexTest',
+        'The workflow example from the help page.',
+        fs.readFileSync('app/help/ui/workflow-example.groovy'));
+      lib.left.runOperation('ComplexTest', { size: 25, degree: 'all edges' });
+      expect(lib.left.vertexCount()).toEqual(25);
+      expect(lib.left.edgeCount()).toEqual(191);
+      expect(lib.left.attributeCount()).toEqual(4);
+      expect(lib.left.getHistogramValues('neighborhood_count of all edges_max')).toEqual([
+         { title : '57.00-57.15', size : 44, value : 4 },
+         { title : '57.15-57.30', size : 0, value : 0 },
+         { title : '57.30-57.45', size : 0, value : 0 },
+         { title : '57.45-57.60', size : 0, value : 0 },
+         { title : '57.60-57.75', size : 0, value : 0 },
+         { title : '57.75-57.90', size : 0, value : 0 },
+         { title : '57.90-58.05', size : 0, value : 0 },
+         { title : '58.05-58.20', size : 0, value : 0 },
+         { title : '58.20-58.35', size : 0, value : 0 },
+         { title : '58.35-58.50', size : 0, value : 0 },
+         { title : '58.50-58.65', size : 0, value : 0 },
+         { title : '58.65-58.80', size : 0, value : 0 },
+         { title : '58.80-58.95', size : 0, value : 0 },
+         { title : '58.95-59.10', size : 0, value : 0 },
+         { title : '59.10-59.25', size : 0, value : 0 },
+         { title : '59.25-59.40', size : 0, value : 0 },
+         { title : '59.40-59.55', size : 0, value : 0 },
+         { title : '59.55-59.70', size : 0, value : 0 },
+         { title : '59.70-59.85', size : 0, value : 0 },
+         { title : '59.85-60.00', size : 100, value : 9 },
+      ]);
+      // TODO: Try loading the saved visualization. (Instead of the histogram maybe?)
     });
 };
