@@ -42,8 +42,14 @@
     </div>
     <div class="form-group">
       <label class="control-label">Code</label>
-      <div ui-ace="{ mode: 'groovy', rendererOptions: {fontSize: '14px'} }" class="form-control"
-        style="height: 300px;" placeholder="" ng-model="code" id="workflow-code-editor"></textarea>
+      <div
+        ui-ace="{
+          mode: 'groovy',
+          rendererOptions: {fontSize: '14px'},
+          advanced: {behavioursEnabled: false}
+        }"
+        class="form-control" style="height: 300px;"
+        ng-model="code" id="workflow-code-editor"></div>
     </div>
   </div>
 </div>
