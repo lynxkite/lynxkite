@@ -240,7 +240,9 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   def toFESegmentation(parentName: String): FESegmentation = {
-    val bt = Option(belongsTo).map(UIValue.fromEntity(_)).getOrElse(null)
+    val bt =
+      if (belongsTo == null) null
+      else UIValue(id = belongsTo.gUID.toString, title = s"belongsTo[$segmentationName]")
     FESegmentation(
       segmentationName,
       parentName + ProjectFrame.separator + segmentationName,

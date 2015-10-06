@@ -31,7 +31,6 @@ case class UIValue(
   id: String,
   title: String)
 object UIValue {
-  def fromEntity(e: MetaGraphEntity): UIValue = UIValue(e.gUID.toString, e.toStringStruct.toString)
   def list(list: List[String]) = list.map(id => UIValue(id, id))
 }
 
