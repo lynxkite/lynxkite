@@ -2491,8 +2491,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     }
 
     case class NameAndAttr[T](name: String, attr: Attribute[T]) {
-      def asSeq: Seq[(String, Attribute[_])] = {
-        Seq((name, attr))
+      def asPair: (String, Attribute[_]) = {
+        (name, attr)
       }
     }
 
@@ -2500,19 +2500,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       paramID: String,
       pe: ProjectEditor): NameAndAttr[_] = {
 
-      val name: String =
-        if (paramID == "!internal id (default)") {
-          "id"
-        } else {
-          paramID
-        }
-      val attr: Attribute[_] =
-        if (paramID == "!internal id (default)") {
-          idAsAttribute(pe.vertexSet)
-        } else {
-          pe.vertexAttributes(paramID)
-        }
-      NameAndAttr(name, attr)
+      if (paramID == "!internal id (default)") {
+        NameAndAttr("id", idAsAttribute(pe.vertexSet))
+      } else {
+        NameAndAttr(paramID, pe.vertexAttributes(paramID))
+      }
     }
 
     def getPrefixedNameAndEdgeAttribute(
@@ -2520,13 +2512,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       targetEb: EdgeBundle,
       isSrc: Boolean): NameAndAttr[_] = {
 
-      val edgeAttr =
-        if (isSrc) graph_operations.VertexToEdgeAttribute.srcAttribute(nameAndVertexAttr.attr, targetEb)
-        else graph_operations.VertexToEdgeAttribute.dstAttribute(nameAndVertexAttr.attr, targetEb)
-      val name =
-        if (isSrc) "src_" + nameAndVertexAttr.name
-        else "dst_" + nameAndVertexAttr.name
-      NameAndAttr(name, edgeAttr)
+      if (isSrc) {
+        NameAndAttr(
+          "src_" + nameAndVertexAttr.name,
+          graph_operations.VertexToEdgeAttribute.srcAttribute(nameAndVertexAttr.attr, targetEb)
+        )
+      } else {
+        NameAndAttr(
+          "dst_" + nameAndVertexAttr.name,
+          graph_operations.VertexToEdgeAttribute.dstAttribute(nameAndVertexAttr.attr, targetEb)
+        )
+      }
     }
 
     register("Export edge attributes to file", new ExportOperation(_, _) {
@@ -2535,7 +2531,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         Param("path", "Destination path", defaultValue = "<auto>"),
         Param("link", "Download link name", defaultValue = "edge_attributes_csv"),
         Choice("attrs", "Attributes", options = edgeAttributes, multipleChoice = true),
-        Choice("id_attr", "Vertex attribute",
+        Choice("id_attr", "Vertex id attribute",
           options = UIValue("!internal id (default)", "internal id (default)") +: vertexAttributes),
         Choice("format", "File format", options = UIValue.list(List("CSV"))))
       def enabled = FEStatus.assert(edgeAttributes.nonEmpty, "No edge attributes.")
@@ -2557,7 +2553,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           case "CSV" =>
             val csv =
               graph_util.CSVExport.exportEdgeAttributes(project.edgeBundle,
-                srcNameAndEdgeAttr.asSeq ++ dstNameAndEdgeAttr.asSeq ++ attrs)
+                srcNameAndEdgeAttr.asPair +: dstNameAndEdgeAttr.asPair +: attrs)
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
@@ -2612,7 +2608,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         params("format") match {
           case "CSV" =>
             val csv = graph_util.CSVExport.exportEdgeAttributes(
-              seg.belongsTo, srcNameAndEdgeAttr.asSeq ++ dstNameAndEdgeAttr.asSeq)
+              seg.belongsTo, Seq(srcNameAndEdgeAttr.asPair, dstNameAndEdgeAttr.asPair))
             csv.saveToDir(path)
         }
         project.scalars(params("link")) =
