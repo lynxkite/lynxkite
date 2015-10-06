@@ -559,6 +559,16 @@ testLib = {
       }
     });
   },
+
+  errors: function() {
+    return element.all(by.css('.top-alert-message')).map(function(e) { return e.getText(); });
+  },
+
+  closeErrors: function() {
+    element.all(by.css('.top-alert')).each(function(e) {
+      e.element(by.id('close-alert-button')).click();
+    });
+  },
 };
 
 module.exports = testLib;

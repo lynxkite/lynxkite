@@ -39,6 +39,7 @@ module.exports = function(fw) {
     function() {
       // Just make sure we return to the main project view.
       expect(lib.left.getProjectHistory().isPresent()).toBe(false);
+      expect(lib.errors()).toEqual([]);
     });
 
   function saveWorkflow(name, description, code) {
@@ -112,5 +113,27 @@ module.exports = function(fw) {
          { title : '59.85-60.00', size : 100, value : 9 },
       ]);
       // TODO: Try loading the saved visualization. (Instead of the histogram maybe?)
+    });
+
+  fw.statePreservingTest(
+    'unspecified project state for testing user-defined workflows',
+    'malicious workflow trying to print to the console',
+    function() {
+      saveWorkflow('MaliciousTest1', '', 'print "hello world"');
+      lib.left.runOperation('MaliciousTest1');
+      expect(lib.errors()).toMatch(
+        ['java.lang.SecurityException: Script tried to execute a disallowed operation']);
+      lib.closeErrors();
+    });
+
+  fw.statePreservingTest(
+    'unspecified project state for testing user-defined workflows',
+    'malicious workflow trying to get a classloader',
+    function() {
+      saveWorkflow('MaliciousTest2', '', '"hello world".getClass().getClassLoader()');
+      lib.left.runOperation('MaliciousTest2');
+      expect(lib.errors()).toMatch(
+        ['java.lang.SecurityException: Script tried to execute a disallowed operation']);
+      lib.closeErrors();
     });
 };
