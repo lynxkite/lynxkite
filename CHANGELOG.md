@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+### 1.5.4
+
  - Operations _Export edge attributes to file_ and _Export segmentation to file_ now support
    vertex attribute parameters with which the user can specify how the vertices connected by
    the edges will be identified in the output file.
