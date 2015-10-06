@@ -6,6 +6,9 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Operations _Export edge attributes to file_ and _Export segmentation to file_ now support
+   vertex attribute parameters with which the user can specify how the vertices connected by
+   the edges will be identified in the output file.
  - Precise histogram computations: so far histograms were computed using a sample of the real
    data, for performance reasons. Now the user has the option to request a computation on all
    the data.
