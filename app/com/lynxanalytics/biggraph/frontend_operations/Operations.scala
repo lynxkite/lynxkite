@@ -446,7 +446,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class ImportEdgeAttributesOperation(t: String, c: Context)
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
-      Choice("id-attr", "Edge ID attribute", options = edgeAttributes[String]),
+      Choice("id-attr", "Edge ID attribute",
+        options = UIValue("!unset", "") +: edgeAttributes[String]),
       Param("id-field", "ID field"),
       Param("prefix", "Name prefix for the imported edge attributes"))
     def enabled =
