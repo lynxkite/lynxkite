@@ -36,10 +36,13 @@ case class EdgesFromSegmentation()
     val belongsTo = inputs.belongsTo.rdd
     val p = belongsTo.partitioner.get
     val segToVs = belongsTo.values.map(e => e.dst -> e.src).toSortedRDD(p)
-    val segAndEdge = segToVs.groupByKey.flatMap {
+    val segAndEdgeArray = segToVs.groupByKey
+    val numNewEdges = segAndEdgeArray.values.map(edges => edges.size * edges.size).sum.toLong
+    val partitioner = rc.partitionerForNRows(numNewEdges)
+    val segAndEdge = segAndEdgeArray.flatMap {
       case (seg, members) =>
         for (v <- members; w <- members) yield seg -> Edge(v, w)
-    }.randomNumbered(p)
+    }.randomNumbered(partitioner)
     output(o.es, segAndEdge.mapValues(_._2))
     output(o.origin, segAndEdge.mapValuesWithKeys { case (eid, (seg, edge)) => Edge(eid, seg) })
   }
