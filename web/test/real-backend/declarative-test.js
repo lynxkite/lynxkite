@@ -17,10 +17,12 @@ var fw = (function UIDescription() {
       checks) {  // Tests confirming we are indeed in this state. Should be very fast stuff only,
                  // like looking at the DOM.
       var testingDone = false;
-      hasChild[previousStateName] = true;
+      if (previousStateName !== undefined) {
+        hasChild[previousStateName] = true;
+      }
 
       function runStatePreservingTest(currentTest) {
-        it(currentTest.name, function() {
+        it(' -- ' + currentTest.name, function() {
           currentTest.runTest();
           // Checking that it was indeed statePreserving.
           checks();
@@ -30,11 +32,6 @@ var fw = (function UIDescription() {
       states[stateName] = {
         reachAndTest: function() {
           if (previousStateName !== undefined) {
-            describe('"' + previousStateName + '"', function() {
-              it('is defined', function() {
-                expect(states[previousStateName]).toBeDefined();
-              });
-            });
             states[previousStateName].reachAndTest();
           }
           describe(stateName, function() {
@@ -64,6 +61,14 @@ var fw = (function UIDescription() {
 
     runAll: function() {
       var stateNames = Object.keys(states);
+      describe('Test setup', function() {
+        it('defines all referenced test states', function() {
+          var references = Object.keys(allStatePreservingTests).concat(Object.keys(hasChild));
+          for (var i = 0; i < references.length; ++i) {
+            expect(stateNames).toContain(references[i]);
+          }
+        });
+      });
       for (var i = 0; i < stateNames.length; i++) {
         var stateName = stateNames[i];
         var state = states[stateName];
@@ -112,7 +117,7 @@ var deleteTemporaryFiles = function() {
         var full = '/tmp/' + f;
         console.log('Deleting: ' + full);
         fs.unlink(full);
-      }      
+      }
     }
   });
 };
