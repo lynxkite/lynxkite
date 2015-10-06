@@ -123,4 +123,15 @@ module.exports = function(fw) {
         { title : '2.00-2.00', size : 100, value : 1 },
       ]);
     });
+  fw.transitionTest(
+    'empty test-example project',
+    'precise mode histogram has precise number for large datasets',
+    function() {
+      lib.left.runOperation('New vertex set', {size: '123456'});
+      lib.left.runOperation('Add constant vertex attribute', {name: 'c'});
+      expect(lib.left.getHistogramValues('c', true)).toEqual([
+        { title : '1.00-1.00', size: 100, value: 123456 },
+      ]);
+    },
+    function() {});
 };
