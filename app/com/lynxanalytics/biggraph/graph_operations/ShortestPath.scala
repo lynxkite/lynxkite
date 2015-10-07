@@ -26,15 +26,8 @@ case class ShortestPath(maxIterations: Double)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("maxIterations" -> maxIterations)
 
-  def minWithStamp(d1: (Double, Int), d2: (Double, Int)): (Double, Int) = {
-    val (distance1, stamp1) = d1
-    val (distance2, stamp2) = d2
-    if (distance1 < distance2 || distance1 == distance2 && stamp1 < stamp2) {
-      d1
-    } else {
-      d2
-    }
-  }
+  private def calculationState(distance: SortedRDD[Long, Double]) =
+    (distance.count(), distance.reduceBySortedKey(distance.partitioner.get, _ + _))
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -44,34 +37,35 @@ case class ShortestPath(maxIterations: Double)
     val edges = inputs.es.rdd
     val edgeDistance = inputs.edgeDistance.rdd
     // distance: vertex -> (distance, iteration id when this was last updated)
-    var distance = inputs.startingDistance.rdd.mapValues { distance => (distance, 0) }
+    var distance = inputs.startingDistance.rdd
     // edges: source vertex -> (dest vertex, edge weight,
     //                          hop: 0 = artifical loop edge/1 = real edge)
-    val loopEdges = inputs.vs.rdd.map { case (id, _) => (id -> (id, 0.0, 0)) }
+    val loopEdges = inputs.vs.rdd.map { case (id, _) => (id -> (id, 0.0)) }
     val edgesWithDistance =
       edges.sortedJoin(edgeDistance)
-        .map { case (id, (edge, weight)) => (edge.src -> (edge.dst, weight, 1)) }
+        .map { case (id, (edge, weight)) => (edge.src -> (edge.dst, weight)) }
         .union(loopEdges)
         .toSortedRDD(distance.partitioner.get)
 
+    distance.cache()
     var iterationId = 1
-    var wasChangedInLastRound = true
-    while (iterationId <= maxIterations && wasChangedInLastRound) {
+    var lastState = calculationState(distance)
+    var unchanged = false
+    while (iterationId <= maxIterations && !unchanged) {
       distance = edgesWithDistance
         .sortedJoin(distance)
         .map {
-          case (src, ((dest, weight, hops), (distance, prevIterationId))) =>
-            dest -> (distance + weight, prevIterationId + hops)
+          case (src, ((dest, weight), distance)) =>
+            dest -> (distance + weight)
         }
-        .reduceBySortedKey(distance.partitioner.get, minWithStamp)
+        .reduceBySortedKey(distance.partitioner.get, Math.min)
       distance.cache()
-      wasChangedInLastRound = distance
-        .mapPartitions(
-          it => Iterator(it.exists { case (_, (_, stamp)) => stamp == iterationId }))
-        .filter(exists => exists)
-        .count() > 0
+
       iterationId += 1
+      val currentState = calculationState(distance)
+      unchanged = lastState == currentState
+      lastState = currentState
     }
-    output(o.distance, distance.mapValues { case (distance, _) => distance })
+    output(o.distance, distance)
   }
 }

@@ -960,9 +960,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
 
   register("Shortest path", new MetricsOperation(_, _) {
     def parameters = List(
-      Param("name", "Attribute name", defaultValue = "shortest_path"),
+      Param("name", "Attribute name", defaultValue = "shortest_distance"),
       Choice("edge_distance", "Edge distance attribute",
-        options = UIValue("!constant distances", "constant distances") +: edgeAttributes[Double]),
+        options = UIValue("!unit distances", "unit distances") +: edgeAttributes[Double]),
       Choice("starting_distance", "Starting distance attribute", options = vertexAttributes[Double]),
       NonNegInt("iterations", "Maximum number of iterations", default = 10)
     )
@@ -975,7 +975,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
         .runtimeSafeCast[Double]
       val op = graph_operations.ShortestPath(params("iterations").toInt)
       val edgeDistance =
-        if (params("edge_distance") == "!constant distance") {
+        if (params("edge_distance") == "!unit distances") {
           const(project.edgeBundle)
         } else {
           project.edgeAttributes(params("edge_distance")).runtimeSafeCast[Double]
