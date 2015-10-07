@@ -5,7 +5,11 @@ Calculates the shortest path from a given set of vertices for every vertex.
 For example, vertices can be cities and edges can be flights with a given
 cost between the cities. Given a set of starting cities, which might as well be
 only one city, this operation can compute the lowest cost for reaching each
-city not in the starting set, with a given maximum number of flights.
+city not in the starting set, with a given maximum number of flights. In addition
+to that, an optional base cost can be specified for each starting city, which will
+be counted into each path starting from that city. For example, that could be the
+price of staying one night at a hotel at the starting city before starting the
+sequence of flights to the destination.
 
 If a city can be reached from more than one of the starting cities, then still only
 one cost value is computed: the one from the starting city where the route has the
@@ -24,7 +28,8 @@ distances is negative.
 [[starting_distance]] Starting distance attribute::
 A numeric attribute that specifies the distances already known before starting
 this operation. (In the above example, set this to zero for the cities of the
-starting set and leave it undefined for the others.)
+starting set and leave it undefined for the others. Oryou can also set set it
+to the non-zero base cost of starting from each starting city.)
 
 [[iterations]] Maximum number of iterations::
 The maximum number of edges considered for a shortest-distance path.
