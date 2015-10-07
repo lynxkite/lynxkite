@@ -100,6 +100,7 @@ angular.module('biggraph')
       vd.display = this.state.display;
 
       vd.bucketCount = this.state.bucketCount;
+      vd.preciseBucketSizes = this.state.preciseBucketSizes;
 
       // "state" uses attribute names, while "viewData" uses attribute UUIDs.
       vd.xAttribute = this.resolveVertexAttribute(this.state.attributeTitles.x);
