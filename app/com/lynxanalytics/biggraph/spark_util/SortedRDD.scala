@@ -34,10 +34,7 @@ object SortedRDD {
 private object SortedRDDUtil {
   def assertMatchingRDDs[K](first: SortedRDD[K, _], second: SortedRDD[K, _]): Unit = {
     assert(
-      first.partitions.size == second.partitions.size,
-      s"Size mismatch between $first and $second")
-    assert(
-      first.partitioner == second.partitioner,
+      first.partitioner.get eq second.partitioner.get,
       s"Partitioner mismatch between $first and $second")
   }
 
