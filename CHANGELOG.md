@@ -12,6 +12,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### 1.5.5
 
+ - Fixed memory issue with history requests.
+
 ### 1.5.4
 
  - Operations _Export edge attributes to file_ and _Export segmentation to file_ now support
