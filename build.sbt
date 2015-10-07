@@ -40,7 +40,6 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "org.xerial" % "sqlite-jdbc" % "3.8.7",
   // Groovy is used for workflows and the batch API.
-  "org.codehaus.groovy" % "groovy-all" % "2.4.4",
   "org.kohsuke" % "groovy-sandbox" % "1.10")
 
 // Runs "stage", then creates the "stage/version" file.
