@@ -293,10 +293,11 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
   }
 
   test("id filter on DerivedRDD") {
+    val partitioner = new HashPartitioner(4)
     val sorted1 = genData(4, 1000, 1).values.map(x => (x, x))
-      .partitionBy(new HashPartitioner(4)).toSortedRDD
+      .partitionBy(partitioner).toSortedRDD
     val sorted2 = genData(4, 1000, 2).values.map(x => (x, x))
-      .partitionBy(new HashPartitioner(4)).toSortedRDD
+      .partitionBy(partitioner).toSortedRDD
     val complex =
       sorted1.mapValues(2 * _).sortedLeftOuterJoin(
         sorted2.distinct.filter(a => a._2 != 'x').filter(a => a._2 != 'a'))
