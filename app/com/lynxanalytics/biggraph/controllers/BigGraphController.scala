@@ -204,7 +204,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
     val p = SubProject.parsePath(request.name)
-    assert(p.frame.exists, s"Project ${request.name} does not exist")
+    assert(p.frame.exists, s"Project ${request.name} does not exist.")
     p.frame.assertReadAllowedFrom(user)
     val context = Operation.Context(user, p.viewer)
     val categories = ops.categories(context)
