@@ -8,6 +8,7 @@ project.addConstantEdgeAttribute(name: 'weight', value: 1, type: 'Double')
 project.exportEdgeAttributesToFile(
   path: 'UPLOAD$/randomgraph',
   link: 'edges_csv',
+  id_attr: '!internal id (default)',
   attrs: 'weight',
   format: 'CSV')
 
