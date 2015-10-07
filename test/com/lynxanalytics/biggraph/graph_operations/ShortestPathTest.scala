@@ -18,7 +18,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
       val op = FastRandomEdgeBundle(0, 6.0)
       op(op.vs, vs).result.es
     }
-    val seed = {
+    val startingDistance = {
       val op = DeriveJSDouble(
         JavaScript("ordinal < 3 ? 1000.0 : undefined"),
         Seq("ordinal"))
@@ -26,10 +26,10 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
         op.attrs,
         VertexAttributeToJSValue.seq(ordinal)).result.attr
     }
-    val weights = AddConstantAttribute.run(es.idSet, 1.0)
+    val edgeDistance = AddConstantAttribute.run(es.idSet, 1.0)
     val distance = {
       val op = ShortestPath(3)
-      op(op.vs, vs)(op.es, es)(op.weights, weights)(op.seed, seed).result.distance
+      op(op.vs, vs)(op.es, es)(op.edgeDistance, edgeDistance)(op.startingDistance, startingDistance).result.distance
     }
     val tooFarAway = distance.rdd.filter { case (_, distance) => distance > 1003.0 }.count()
     val farAway = distance.rdd.filter { case (_, distance) => distance > 1002.0 }.count()
@@ -46,14 +46,14 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
         3 -> Seq(4),
         4 -> Seq(5),
         5 -> Seq())).result
-    val seed = {
+    val startingDistance = {
       val op = AddDoubleVertexAttribute(Map(0 -> 100.0))
       op(op.vs, graph.vs).result.attr
     }
-    val weights = AddConstantAttribute.run(graph.es.idSet, 2.0)
+    val edgeDistance = AddConstantAttribute.run(graph.es.idSet, 2.0)
     val distance = {
       val op = ShortestPath(10)
-      op(op.vs, graph.vs)(op.es, graph.es)(op.weights, weights)(op.seed, seed).result.distance
+      op(op.vs, graph.vs)(op.es, graph.es)(op.edgeDistance, edgeDistance)(op.startingDistance, startingDistance).result.distance
     }.rdd.collect
     assert(distance.toSeq.size == 6)
     assert(distance.toMap == Map(
@@ -74,11 +74,11 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
         3 -> Seq(4),
         5 -> Seq(6),
         6 -> Seq(4))).result
-    val seed = {
+    val startingDistance = {
       val op = AddDoubleVertexAttribute(Map(0 -> 0.0))
       op(op.vs, graph.vs).result.attr
     }
-    val weights = {
+    val edgeDistance = {
       val op = AddDoubleVertexAttribute(Map(
         0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0, 5 -> 10.0, 6 -> 10.0))
       val vertexWeights = op(op.vs, graph.vs).result.attr
@@ -86,7 +86,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
     }
     val distance = {
       val op = ShortestPath(10)
-      op(op.vs, graph.vs)(op.es, graph.es)(op.weights, weights)(op.seed, seed).result.distance
+      op(op.vs, graph.vs)(op.es, graph.es)(op.edgeDistance, edgeDistance)(op.startingDistance, startingDistance).result.distance
     }.rdd.collect
 
     assert(distance.toMap.get(4).get == 4.0)
@@ -98,7 +98,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
     val vs = graph.vertices
     val es = graph.edges
     val name = graph.name
-    val seed = {
+    val startingDistance = {
       val op = DeriveJSDouble(
         JavaScript("name === 'Bob' ? 1000.0 : undefined"),
         Seq("name"))
@@ -108,7 +108,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
     }
     val distance = {
       val op = ShortestPath(10)
-      op(op.vs, vs)(op.es, es)(op.weights, graph.weight)(op.seed, seed).result.distance
+      op(op.vs, vs)(op.es, es)(op.edgeDistance, graph.weight)(op.startingDistance, startingDistance).result.distance
     }
     val nameAndDistance = name.rdd.join(distance.rdd).collect
     assert(nameAndDistance.size == 3)

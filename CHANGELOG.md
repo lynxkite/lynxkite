@@ -6,7 +6,7 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
- - A new operation to compute the shortest path from a given set of vertices.
+ - Added a new operation to compute the shortest path from a given set of vertices.
 
 ### 1.5.5
 

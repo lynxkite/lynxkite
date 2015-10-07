@@ -256,7 +256,7 @@ object AddDoubleVertexAttribute extends OpFromJson {
     val attr = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) =
-    AddDoubleVertexAttribute((j \ "values").as[Map[String, String]].map { case (k, v) => k.toInt -> v.toDouble })
+    AddDoubleVertexAttribute((j \ "values").as[Map[String, Double]].map { case (k, v) => k.toInt -> v })
 }
 case class AddDoubleVertexAttribute(values: Map[Int, Double])
     extends TypedMetaGraphOp[AddDoubleVertexAttribute.Input, AddDoubleVertexAttribute.Output] {
@@ -264,7 +264,7 @@ case class AddDoubleVertexAttribute(values: Map[Int, Double])
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson =
-    Json.obj("values" -> values.map { case (k, v) => k.toString -> v.toString })
+    Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
     val sc = rc.sparkContext
