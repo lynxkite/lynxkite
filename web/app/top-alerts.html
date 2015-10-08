@@ -1,6 +1,9 @@
 <div class="top-alerts col-lg-6">
   <div class="top-alert" ng-repeat="alert in alerts">
-    <div class="pull-right clicky glyphicon glyphicon-remove" ng-click="close($index)"></div>
+    <div
+      id="close-alert-button"
+      class="pull-right clicky glyphicon glyphicon-remove"
+      ng-click="close($index)"></div>
     <div class="top-alert-message">
       {{alert.message}}
     </div>
