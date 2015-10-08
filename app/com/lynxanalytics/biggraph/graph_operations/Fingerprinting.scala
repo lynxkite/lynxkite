@@ -65,7 +65,7 @@ case class Fingerprinting(
       .toSortedRDD(vertexPartitioner)
       .distinct
 
-    // Returns an RDD that maps each source vertex of "es" to a list of their neigbors.
+    // Returns an RDD that maps each source vertex of "es" to a list of their neighbors.
     // With each neighbor the edge weight and the neighbor's in-degree are also included.
     def outNeighbors(
       es: EdgeBundleRDD,
@@ -138,28 +138,29 @@ case class Fingerprinting(
       rdd.map(pair => pair._2 -> pair._1).toSortedRDD(vertexPartitioner)
     val leftToRight =
       if (rights.count < lefts.count)
-        findStableMarriage(rights, lefts, rightSimilarities, leftSimilarities)
+        findStableMarriage(rightSimilarities, leftSimilarities)
       else
-        flipped(findStableMarriage(lefts, rights, leftSimilarities, rightSimilarities))
+        flipped(findStableMarriage(leftSimilarities, rightSimilarities))
     output(o.matching, leftToRight.map {
       case (src, dst) => Edge(src, dst)
     }.randomNumbered(vertexPartitioner))
-    output(o.leftSimilarities, leftSimilarities.sortedJoin(leftToRight).flatMapValues {
-      case ((simID, sim), id) if simID == id => Some(sim)
-      case _ => None
-    })
-    output(o.rightSimilarities, rightSimilarities.sortedJoin(flipped(leftToRight)).flatMapValues {
-      case ((simID, sim), id) if simID == id => Some(sim)
-      case _ => None
-    })
+    output(o.leftSimilarities,
+      leftSimilarities.sortedJoin(leftToRight).toSortedRDD(leftPartitioner).flatMapValues {
+        case ((simID, sim), id) if simID == id => Some(sim)
+        case _ => None
+      })
+    output(o.rightSimilarities,
+      rightSimilarities.sortedJoin(flipped(leftToRight).toSortedRDD(rightPartitioner)).flatMapValues {
+        case ((simID, sim), id) if simID == id => Some(sim)
+        case _ => None
+      })
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
-  def findStableMarriage(ladies: SortedRDD[ID, Unit],
-                         gentlemen: SortedRDD[ID, Unit],
-                         ladiesScores: SortedRDD[ID, (ID, Double)],
+  def findStableMarriage(ladiesScores: SortedRDD[ID, (ID, Double)],
                          gentlemenScores: SortedRDD[ID, (ID, Double)]): SortedRDD[ID, ID] = {
-    val partitioner = ladies.partitioner.get
+    val ladiesPartitioner = ladiesScores.partitioner.get
+    val gentlemenPartitioner = gentlemenScores.partitioner.get
     val gentlemenPreferences = gentlemenScores.groupByKey.mapValues {
       case ladies => ladies.sortBy(-_._2).map(_._1)
     }
@@ -175,13 +176,13 @@ case class Fingerprinting(
         case (gentleman, ladies) =>
           if (ladies.isEmpty) None else Some(ladies.head -> gentleman)
       }
-      val proposalsByLadies = proposals.groupBySortedKey(partitioner)
+      val proposalsByLadies = proposals.groupBySortedKey(ladiesPartitioner)
       val responsesByGentlemen = proposalsByLadies.sortedJoin(ladiesPreferences).map {
         case (lady, (proposals, preferences)) =>
           val ps = proposals.toSet
           // Preferences are symmetrical, so we will always find one here.
           preferences.find(g => ps.contains(g)).get -> lady
-      }.toSortedRDD(partitioner)
+      }.toSortedRDD(gentlemenPartitioner)
       if (proposals.count == responsesByGentlemen.count) {
         // All proposals accepted. Stop iteration.
         responsesByGentlemen
