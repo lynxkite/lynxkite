@@ -25,7 +25,7 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
 
     val count = Count.run(g.vertices)
     val op = VertexBucketGrid(xBucketer, yBucketer, 50000)
-    val out = op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.xAttribute, g.name)(op.yAttribute, g.age)(op.originalCount, count).result
+    val out = (op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.xAttribute, g.name)(op.yAttribute, g.age)(op.originalCount, count)).result
 
     assert(out.buckets.value.counts == Map((0, 0) -> 1, (1, 0) -> 1, (2, 0) -> 1, (2, 1) -> 1))
     assert(out.xBuckets.rdd.collect.toMap == Map((0 -> 0), (1 -> 1), (2 -> 2), (3 -> 2)))
@@ -39,8 +39,20 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
 
     val count = Count.run(g.vertices)
     val op = VertexBucketGrid(xBucketer, yBucketer, -1)
-    val out = op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.xAttribute, g.gender)(op.yAttribute, g.age)(op.originalCount, count).result
+    val out = (op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.xAttribute, g.gender)(op.yAttribute, g.age)(op.originalCount, count)).result
 
     assert(out.buckets.value.counts == Map((1, 0) -> 1, (0, 1) -> 1, (0, 0) -> 2))
+  }
+
+  test("Non-precise bucketing") {
+    val numBuckets = 2
+    val xBucketer = StringBucketer(Seq("Male", "Female"), hasOther = false)
+    val yBucketer = DoubleLinearBucketer(2.0, 50.3, numBuckets)
+
+    val count = Count.run(g.vertices)
+    val op = VertexBucketGrid(xBucketer, yBucketer, 2)
+    val out = (op(op.vertices, g.vertices)(op.filtered, g.vertices)(op.xAttribute, g.gender)(op.yAttribute, g.age)(op.originalCount, count)).result
+
+    out.buckets.value.counts.map { case (key, value) => assert(value == 0) }
   }
 }

@@ -31,13 +31,11 @@ object VertexBucketGrid extends OpFromJson {
     sampleSizeParameter.fromJson(j))
 }
 import VertexBucketGrid._
-/**
- * @param sampleSize specifies the number of data points to use for estimating
- * the number of elements in buckets.
- * A negative value turns sampling off and all the data points will be used.
- */
 case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
                                   yBucketer: Bucketer[T],
+                                  // specifies the number of data points to use for estimating the number of
+                                  // elements in buckets. A negative value turns sampling off and all the
+                                  // data points will be used.
                                   sampleSize: Int)
     extends TypedMetaGraphOp[Input[S, T], Output[S, T]] {
 

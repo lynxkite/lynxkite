@@ -16,6 +16,7 @@ angular.module('biggraph')
         },
         graphMode: undefined,
         bucketCount: '4',
+        preciseBucketSizes: false,
         sampleRadius: '1',
         display: 'svg',
         animate: {
