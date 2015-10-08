@@ -26,8 +26,8 @@ case class ShortestPath(maxIterations: Double)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("maxIterations" -> maxIterations)
 
-  private def calculationState(distance: SortedRDD[Long, Double]) =
-    (distance.count(), distance.reduceBySortedKey(distance.partitioner.get, _ + _))
+  private def calculationState(distance: SortedRDD[Long, Double]): (Long, Double) =
+    (distance.count(), distance.map { case (key, value) => value }.reduce(_ + _))
 
   def execute(inputDatas: DataSet,
               o: Output,
