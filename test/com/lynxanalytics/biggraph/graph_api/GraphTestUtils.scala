@@ -74,6 +74,7 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
 }
 
 object SmallTestGraph extends OpFromJson {
+  lazy val thePartitioner = new spark.HashPartitioner(1)
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val (vs, es) = graph
   }
@@ -83,7 +84,7 @@ object SmallTestGraph extends OpFromJson {
       (j \ "numPartitions").as[Int])
   }
 }
-case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
+case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], partitionSpec: Int = 1)
     extends TypedMetaGraphOp[NoInput, SmallTestGraph.Output] {
   import SmallTestGraph._
   @transient override lazy val inputs = new NoInput()
@@ -92,12 +93,15 @@ case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
     import play.api.libs.json
     Json.obj(
       "edgeLists" -> json.JsObject(edgeLists.toSeq.map { case (k, v) => k.toString -> json.JsArray(v.map(json.JsNumber(_))) }),
-      "numPartitions" -> numPartitions)
+      "numPartitions" -> partitionSpec)
   }
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     val sc = rc.sparkContext
-    val p = new spark.HashPartitioner(numPartitions)
+    val p =
+      if (partitionSpec > 0) new spark.HashPartitioner(partitionSpec)
+      else thePartitioner
+
     output(
       o.vs,
       sc.parallelize(edgeLists.keys.toList.map(i => (i.toLong, ())))

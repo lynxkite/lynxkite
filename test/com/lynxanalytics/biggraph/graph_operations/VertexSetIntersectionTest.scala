@@ -11,9 +11,9 @@ class VertexSetIntersectionTest extends FunSuite with TestGraphOp {
     val aVS = 0 to 50
     val bVS = 5 to 10
     val cVS = 8 to 100
-    val a = SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap).result.vs
-    val b = SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap).result.vs
-    val c = SmallTestGraph(cVS.map(_.toInt -> Seq()).toMap).result.vs
+    val a = SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap, partitionSpec = 0).result.vs
+    val b = SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap, partitionSpec = 0).result.vs
+    val c = SmallTestGraph(cVS.map(_.toInt -> Seq()).toMap, partitionSpec = 0).result.vs
     val op = VertexSetIntersection(3)
     val out = op(op.vss(0), a)(op.vss(1), b)(op.vss(2), c).result
     assert(out.intersection.toSeq == Seq(8, 9, 10))
@@ -22,8 +22,8 @@ class VertexSetIntersectionTest extends FunSuite with TestGraphOp {
   test("empty set") {
     val aVS = 0 to 5
     val bVS = 10 to 12
-    val a = SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap).result.vs
-    val b = SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap).result.vs
+    val a = SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap, partitionSpec = 0).result.vs
+    val b = SmallTestGraph(bVS.map(_.toInt -> Seq()).toMap, partitionSpec = 0).result.vs
     val op = VertexSetIntersection(2)
     val out = op(op.vss(0), a)(op.vss(1), b).result
     assert(out.intersection.toSeq == Seq())

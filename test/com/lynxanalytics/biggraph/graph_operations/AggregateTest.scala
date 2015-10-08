@@ -66,7 +66,7 @@ class AggregateTest extends FunSuite with TestGraphOp {
   test("standard deviation - combine partitions") {
     val g = SmallTestGraph(
       Map(1 -> Seq(1), 2 -> Seq(1, 2), 3 -> Seq(1, 2, 3), 4 -> Seq(1, 2, 3, 4)),
-      numPartitions = 2).result
+      partitionSpec = 2).result
     val attr = {
       val op = OutDegree()
       op(op.es, g.es).result.outDegree
