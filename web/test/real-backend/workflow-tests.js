@@ -32,13 +32,14 @@ module.exports = function(fw) {
     });
 
   fw.transitionTest(
-    'example graph with filters applied',
-    'unspecified project state for testing user-defined workflows',
+    'empty test-example project',
+    'some project is open',
     // It is okay to leak workflows and modify the project in this state.
     function() {},
     function() {
       // Just make sure we return to the main project view.
-      expect(lib.left.getProjectHistory().isPresent()).toBe(false);
+      lib.expectElement(lib.left.side);
+      lib.expectNotElement(lib.left.getProjectHistory());
       expect(lib.errors()).toEqual([]);
     });
 
@@ -55,7 +56,7 @@ module.exports = function(fw) {
   }
 
   fw.statePreservingTest(
-    'unspecified project state for testing user-defined workflows',
+    'some project is open',
     'simple derived attribute workflow',
     function() {
       saveWorkflow(
@@ -79,7 +80,7 @@ module.exports = function(fw) {
     });
 
   fw.statePreservingTest(
-    'unspecified project state for testing user-defined workflows',
+    'some project is open',
     'complex workflow with parameters and "if"',
     function() {
       saveWorkflow(
@@ -116,7 +117,7 @@ module.exports = function(fw) {
     });
 
   fw.statePreservingTest(
-    'unspecified project state for testing user-defined workflows',
+    'some project is open',
     'malicious workflow trying to print to the console',
     function() {
       saveWorkflow('MaliciousTest1', '', 'print "hello world"');
@@ -127,7 +128,7 @@ module.exports = function(fw) {
     });
 
   fw.statePreservingTest(
-    'unspecified project state for testing user-defined workflows',
+    'some project is open',
     'malicious workflow trying to get a classloader',
     function() {
       saveWorkflow('MaliciousTest2', '', '"hello world".getClass().getClassLoader()');
