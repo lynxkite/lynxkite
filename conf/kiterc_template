@@ -82,6 +82,18 @@ export KITE_LOCAL_TMP=/tmp
 # jar file here.
 export KITE_EXTRA_JARS=
 
+# You can enable an interactive Scala interpreter able to access Kite internals by uncommenting
+# the below exports. You can access the interpreter by sshing from the host running kite as:
+#   ssh ${KITE_AMMONITE_USER}@localhost -p ${KITE_AMMONITE_PORT}
+# and use KITE_AMMONITE_PASSWD as password.
+# Once in, type help to get a short intro.
+# If you do this and don't trust all users who can ssh into this machine (the typical case!)
+# then make sure to chown .kiterc to be only readable by the user running kite and
+# change the password below.
+#export KITE_AMMONITE_PORT=2203
+#export KITE_AMMONITE_USER=lynx
+#export KITE_AMMONITE_PASSWD=kite
+
 # Options needed if you want to use authentication and https.
 
 # Just uncomment the lines between the ==== lines for simple, fake certificate setup.
