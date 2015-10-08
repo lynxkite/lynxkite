@@ -28,7 +28,7 @@ the cheaper cost.
 The new attribute will be created under this name.
 
 [[edge_distance]] Edge distance attribute::
-The distance corresponding this edge. (Cost in the above example.)
+The attribute containing the distances corresponding to edges. (Cost in the above example.)
 
 Negative values are allowed but there must be no loops where the sum of
 distances is negative.

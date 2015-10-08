@@ -27,7 +27,7 @@ case class ShortestPath(maxIterations: Double)
   override def toJson = Json.obj("maxIterations" -> maxIterations)
 
   private def calculationState(distance: SortedRDD[Long, Double]): (Long, Double) =
-    (distance.count(), distance.map { case (key, value) => value }.reduce(_ + _))
+    (distance.count(), distance.values.sum)
 
   def execute(inputDatas: DataSet,
               o: Output,
