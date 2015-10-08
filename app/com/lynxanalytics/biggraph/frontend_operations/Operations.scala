@@ -341,7 +341,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class ImportEdgesForExistingVerticesOperation(t: String, c: Context)
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
-      Choice("attr", "Vertex ID attribute", options = vertexAttributes[String]),
+      Choice("attr", "Vertex ID attribute",
+        options = UIValue("!unset", "") +: vertexAttributes[String]),
       Param("src", "Source ID field"),
       Param("dst", "Destination ID field"))
     def enabled =
@@ -351,7 +352,11 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val src = params("src")
       val dst = params("dst")
-      val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
+      assert(src.nonEmpty, "The Source ID field parameter must be set.")
+      assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
+      val attrName = params("attr")
+      assert(attrName != "!unset", "The Vertex ID attribute parameter must be set.")
+      val attr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), src, dst)
       val imp = op(op.srcVidAttr, attr)(op.dstVidAttr, attr).result
       project.edgeBundle = imp.edges
@@ -372,6 +377,8 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
     def apply(params: Map[String, String]) = {
       val src = params("src")
       val dst = params("dst")
+      assert(src.nonEmpty, "The Source ID field parameter must be set.")
+      assert(dst.nonEmpty, "The Destination ID field parameter must be set.")
       val imp = graph_operations.ImportEdgeList(source(params), src, dst)().result
       project.setVertexSet(imp.vertices, idAttr = "id")
       project.newVertexAttribute("stringID", imp.stringID)
@@ -412,14 +419,17 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class ImportVertexAttributesOperation(t: String, c: Context)
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
-      Choice("id-attr", "Vertex ID attribute", options = vertexAttributes[String]),
+      Choice("id-attr", "Vertex ID attribute",
+        options = UIValue("!unset", "") +: vertexAttributes[String]),
       Param("id-field", "ID field"),
       Param("prefix", "Name prefix for the imported vertex attributes"))
     def enabled =
       hasVertexSet &&
         FEStatus.assert(vertexAttributes[String].nonEmpty, "No vertex attributes to use as id.")
     def apply(params: Map[String, String]) = {
-      val idAttr = project.vertexAttributes(params("id-attr")).runtimeSafeCast[String]
+      val attrName = params("id-attr")
+      assert(attrName != "!unset", "The Vertex ID attribute parameter must be set.")
+      val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
       val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-field"))
       val res = op(op.idAttr, idAttr).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -436,15 +446,20 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   abstract class ImportEdgeAttributesOperation(t: String, c: Context)
       extends ImportOperation(t, c) with RowReader {
     def parameters = sourceParameters ++ List(
-      Choice("id-attr", "Edge ID attribute", options = edgeAttributes[String]),
+      Choice("id-attr", "Edge ID attribute",
+        options = UIValue("!unset", "") +: edgeAttributes[String]),
       Param("id-field", "ID field"),
       Param("prefix", "Name prefix for the imported edge attributes"))
     def enabled =
       hasEdgeBundle &&
         FEStatus.assert(edgeAttributes[String].nonEmpty, "No edge attributes to use as id.")
     def apply(params: Map[String, String]) = {
-      val idAttr = project.edgeAttributes(params("id-attr")).runtimeSafeCast[String]
-      val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), params("id-field"))
+      val fieldName = params("id-field")
+      assert(fieldName.nonEmpty, "The ID field parameter must be set.")
+      val attrName = params("attr")
+      assert(attrName != "!unset", "The Edge ID attribute parameter must be set.")
+      val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
+      val op = graph_operations.ImportAttributesForExistingVertexSet(source(params), fieldName)
       val res = op(op.idAttr, idAttr).result
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- res.attrs) {
