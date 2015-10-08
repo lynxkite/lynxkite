@@ -40,7 +40,8 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "org.xerial" % "sqlite-jdbc" % "3.8.7",
   // Groovy is used for workflows and the batch API.
-  "org.kohsuke" % "groovy-sandbox" % "1.10")
+  "org.kohsuke" % "groovy-sandbox" % "1.10",
+  "com.lihaoyi" % "ammonite-sshd" % "0.4.8" cross CrossVersion.full)
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
