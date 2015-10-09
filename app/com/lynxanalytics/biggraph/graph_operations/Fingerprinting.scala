@@ -151,7 +151,8 @@ case class Fingerprinting(
       case ((simID, sim), id) if simID == id => Some(sim)
       case _ => None
     })
-    output(o.rightSimilarities, rightSimilarities.sortedJoin(flipped(leftToRight, rightPartitioner)).flatMapValues {
+    output(o.rightSimilarities, rightSimilarities.sortedJoin(flipped(leftToRight, rightPartitioner))
+      .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
       })
