@@ -136,14 +136,14 @@ case class Fingerprinting(
       leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(rightPartitioner)
 
     // Run findStableMarriage with the smaller side as "ladies".
-    def flipped(rdd: RDD[(ID, ID)], partitioner: Partitioner = vertexPartitioner) = {
+    def flipped(rdd: RDD[(ID, ID)], partitioner: Partitioner) = {
       rdd.map(pair => pair._2 -> pair._1).toSortedRDD(partitioner)
     }
     val leftToRight =
       if (rights.count < lefts.count)
         findStableMarriage(rightSimilarities, leftSimilarities)
       else
-        flipped(findStableMarriage(leftSimilarities, rightSimilarities))
+        flipped(findStableMarriage(leftSimilarities, rightSimilarities), leftPartitioner)
     output(o.matching, leftToRight.map {
       case (src, dst) => Edge(src, dst)
     }.randomNumbered(vertexPartitioner))
