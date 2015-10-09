@@ -370,24 +370,11 @@ object ProductionJsonServer extends JsonServer {
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
 
   // Starting Ammonite if requested.
-  scala.util.Properties.envOrNone("KITE_AMMONITE_PORT").map(_.toInt).foreach { ammonitePort =>
-    import ammonite.repl.Bind
-    val replServer = new ammonite.sshd.SshdRepl(
-      ammonite.sshd.SshServerConfig(
-        // We only listen on the local interface.
-        address = "localhost",
-        port = ammonitePort,
-        username = scala.util.Properties.envOrElse("KITE_AMMONITE_USER", "lynx"),
-        password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
-      predef = "import com.lynxanalytics.biggraph._",
-      replArgs = Seq(
-        Bind("server", this),
-        Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true)),
-        Bind("sc", BigGraphProductionEnvironment.sparkContext),
-        Bind("metaManager", BigGraphProductionEnvironment.metaGraphManager),
-        Bind("dataManager", BigGraphProductionEnvironment.dataManager),
-        Bind("sql", BigGraphProductionEnvironment.dataManager.sqlContext),
-        Bind("help", """Welcome to the bellies of LynxKite! Please don't hurt her...
+  val help = org.apache.commons.lang.StringEscapeUtils.escapeJava(
+    """
+============================================================
+Welcome to the bellies of LynxKite! Please don't hurt her...
+============================================================
 
 This is an Ammonite Scala REPL running in the JVM of the LynxKite server. For generic help
 on Ammonite, look here:
@@ -406,7 +393,28 @@ For convenience, we've set up some Kite specific bindings for you:
  metaManager: The MetaManager instance used by Kite.
 
 Remember, any of the above can be used to easily destroy the running server or even any data.
-Drive responsibly.""")))
+Drive responsibly.""")
+
+  scala.util.Properties.envOrNone("KITE_AMMONITE_PORT").map(_.toInt).foreach { ammonitePort =>
+    import ammonite.repl.Bind
+    val replServer = new ammonite.sshd.SshdRepl(
+      ammonite.sshd.SshServerConfig(
+        // We only listen on the local interface.
+        address = "localhost",
+        port = ammonitePort,
+        username = scala.util.Properties.envOrElse("KITE_AMMONITE_USER", "lynx"),
+        password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
+      predef = s"""
+import com.lynxanalytics.biggraph._
+System.out.println("${help}")
+""",
+      replArgs = Seq(
+        Bind("server", this),
+        Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true)),
+        Bind("sc", BigGraphProductionEnvironment.sparkContext),
+        Bind("metaManager", BigGraphProductionEnvironment.metaGraphManager),
+        Bind("dataManager", BigGraphProductionEnvironment.dataManager),
+        Bind("sql", BigGraphProductionEnvironment.dataManager.sqlContext)))
 
     replServer.start()
     log.info("Ammonite sshd started")
