@@ -84,12 +84,14 @@ object UserProvider extends mvc.Controller {
       // Clear cookie.
       Redirect("/").withCookies(mvc.Cookie(
         "auth", "", secure = true, maxAge = Some(SignedToken.maxAge)))
+      log.info(s"$username logged out successfully.")
     }
   }
 
   val passwordLogin = mvc.Action(parse.json) { request =>
     val username = (request.body \ "username").as[String]
     val password = (request.body \ "password").as[String]
+    log.info(s"User login attempt by $username.")
     val signed = SignedToken()
     synchronized {
       val user = getUser(username, password)
@@ -97,6 +99,7 @@ object UserProvider extends mvc.Controller {
     }
     Redirect("/").withCookies(mvc.Cookie(
       "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+    log.info(s"$username logged in successfully.")
   }
 
   val googleLogin = mvc.Action.async(parse.json) { request =>
@@ -122,6 +125,7 @@ object UserProvider extends mvc.Controller {
           ((response.json \ "emails")(0) \ "value").as[String]
         }
     }
+    log.info(s"User login attempt by $email.")
     // Create signed token for email address.
     email.map { email =>
       val signed = SignedToken()
@@ -131,6 +135,7 @@ object UserProvider extends mvc.Controller {
       }
       Redirect("/").withCookies(mvc.Cookie(
         "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+      log.info(s"$email logged in successfully.")
     }
   }
 
