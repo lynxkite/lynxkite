@@ -1,6 +1,8 @@
 // Operations for "fingerprinting": finding matching vertices by network structure.
 package com.lynxanalytics.biggraph.graph_operations
 
+import org.apache.spark.Partitioner
+
 import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.rdd.RDD
 
@@ -134,8 +136,9 @@ case class Fingerprinting(
       leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(rightPartitioner)
 
     // Run findStableMarriage with the smaller side as "ladies".
-    def flipped(rdd: RDD[(ID, ID)]) =
-      rdd.map(pair => pair._2 -> pair._1).toSortedRDD(vertexPartitioner)
+    def flipped(rdd: RDD[(ID, ID)], partitioner: Partitioner = vertexPartitioner) = {
+      rdd.map(pair => pair._2 -> pair._1).toSortedRDD(partitioner)
+    }
     val leftToRight =
       if (rights.count < lefts.count)
         findStableMarriage(rightSimilarities, leftSimilarities)
@@ -145,12 +148,12 @@ case class Fingerprinting(
       case (src, dst) => Edge(src, dst)
     }.randomNumbered(vertexPartitioner))
     output(o.leftSimilarities,
-      leftSimilarities.sortedJoin(leftToRight).toSortedRDD(leftPartitioner).flatMapValues {
+      leftSimilarities.sortedJoin(leftToRight).flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
       })
     output(o.rightSimilarities,
-      rightSimilarities.sortedJoin(flipped(leftToRight).toSortedRDD(rightPartitioner)).flatMapValues {
+      rightSimilarities.sortedJoin(flipped(leftToRight, rightPartitioner)).flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
       })
