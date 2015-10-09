@@ -148,11 +148,10 @@ case class Fingerprinting(
       case (src, dst) => Edge(src, dst)
     }.randomNumbered(vertexPartitioner))
     output(o.leftSimilarities, leftSimilarities.sortedJoin(leftToRight).flatMapValues {
-        case ((simID, sim), id) if simID == id => Some(sim)
-        case _ => None
-      })
-    output(o.rightSimilarities,
-      rightSimilarities.sortedJoin(flipped(leftToRight, rightPartitioner)).flatMapValues {
+      case ((simID, sim), id) if simID == id => Some(sim)
+      case _ => None
+    })
+    output(o.rightSimilarities, rightSimilarities.sortedJoin(flipped(leftToRight, rightPartitioner)).flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
       })
