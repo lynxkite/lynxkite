@@ -10,6 +10,7 @@ Please add changes to "master". When releasing a version add a new header for th
    running Kite via a Scala interpreter. Among others, this allows one to use sparkSQL for
    arbitrary data processing tasks using the computation resources held by Kite. For details on
    how to set this up, see `conf/kiterc_template`.
+ - Added a new operation to compute the shortest path from a given set of vertices.
 
 ### 1.5.6
 
