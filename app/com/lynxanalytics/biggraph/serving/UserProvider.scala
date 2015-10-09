@@ -84,7 +84,6 @@ object UserProvider extends mvc.Controller {
       // Clear cookie.
       Redirect("/").withCookies(mvc.Cookie(
         "auth", "", secure = true, maxAge = Some(SignedToken.maxAge)))
-      log.info(s"$username logged out successfully.")
     }
   }
 
@@ -97,9 +96,9 @@ object UserProvider extends mvc.Controller {
       val user = getUser(username, password)
       tokens(signed.token) = user
     }
+    log.info(s"$username logged in successfully.")
     Redirect("/").withCookies(mvc.Cookie(
       "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
-    log.info(s"$username logged in successfully.")
   }
 
   val googleLogin = mvc.Action.async(parse.json) { request =>
@@ -133,9 +132,9 @@ object UserProvider extends mvc.Controller {
       synchronized {
         tokens(signed.token) = User(email, isAdmin = false)
       }
+      log.info(s"$email logged in successfully.")
       Redirect("/").withCookies(mvc.Cookie(
         "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
-      log.info(s"$email logged in successfully.")
     }
   }
 
