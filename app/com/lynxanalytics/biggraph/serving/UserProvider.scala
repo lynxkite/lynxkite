@@ -90,11 +90,13 @@ object UserProvider extends mvc.Controller {
   val passwordLogin = mvc.Action(parse.json) { request =>
     val username = (request.body \ "username").as[String]
     val password = (request.body \ "password").as[String]
+    log.info(s"User login attempt by $username.")
     val signed = SignedToken()
     synchronized {
       val user = getUser(username, password)
       tokens(signed.token) = user
     }
+    log.info(s"$username logged in successfully.")
     Redirect("/").withCookies(mvc.Cookie(
       "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
   }
@@ -122,6 +124,7 @@ object UserProvider extends mvc.Controller {
           ((response.json \ "emails")(0) \ "value").as[String]
         }
     }
+    log.info(s"User login attempt by $email.")
     // Create signed token for email address.
     email.map { email =>
       val signed = SignedToken()
@@ -129,6 +132,7 @@ object UserProvider extends mvc.Controller {
       synchronized {
         tokens(signed.token) = User(email, isAdmin = false)
       }
+      log.info(s"$email logged in successfully.")
       Redirect("/").withCookies(mvc.Cookie(
         "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
     }
