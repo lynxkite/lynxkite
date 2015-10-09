@@ -247,3 +247,29 @@ case class AddVertexAttribute(values: Map[Int, String])
     output(o.attr, sc.parallelize(idMap).toSortedRDD(partitioner))
   }
 }
+
+object AddDoubleVertexAttribute extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+  }
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    val attr = vertexAttribute[Double](inputs.vs.entity)
+  }
+  def fromJson(j: JsValue) =
+    AddDoubleVertexAttribute((j \ "values").as[Map[String, Double]].map { case (k, v) => k.toInt -> v })
+}
+case class AddDoubleVertexAttribute(values: Map[Int, Double])
+    extends TypedMetaGraphOp[AddDoubleVertexAttribute.Input, AddDoubleVertexAttribute.Output] {
+  import AddDoubleVertexAttribute._
+  @transient override lazy val inputs = new Input
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson =
+    Json.obj("values" -> values.map { case (k, v) => k.toString -> v })
+  def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
+    implicit val id = inputDatas
+    val sc = rc.sparkContext
+    val idMap = values.toSeq.map { case (k, v) => k.toLong -> v }
+    val partitioner = inputs.vs.rdd.partitioner.get
+    output(o.attr, sc.parallelize(idMap).toSortedRDD(partitioner))
+  }
+}
