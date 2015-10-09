@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util._
 
 object VertexBucketGrid extends OpFromJson {
+  private val sampleSizeParameter = NewParameter("sampleSize", 50000)
   class Input[S, T](xBucketed: Boolean, yBucketed: Boolean) extends MagicInputSignature {
     val vertices = vertexSet
     val xAttribute = if (xBucketed) vertexAttribute[S](vertices) else null
@@ -26,11 +27,16 @@ object VertexBucketGrid extends OpFromJson {
   }
   def fromJson(j: JsValue) = VertexBucketGrid(
     TypedJson.read[Bucketer[_]](j \ "xBucketer"),
-    TypedJson.read[Bucketer[_]](j \ "yBucketer"))
+    TypedJson.read[Bucketer[_]](j \ "yBucketer"),
+    sampleSizeParameter.fromJson(j))
 }
 import VertexBucketGrid._
 case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
-                                  yBucketer: Bucketer[T])
+                                  yBucketer: Bucketer[T],
+                                  // specifies the number of data points to use for estimating the number of
+                                  // elements in buckets. A negative value turns sampling off and all the
+                                  // data points will be used.
+                                  sampleSize: Int)
     extends TypedMetaGraphOp[Input[S, T], Output[S, T]] {
 
   @transient override lazy val inputs = new Input[S, T](
@@ -39,7 +45,10 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  override def toJson = Json.obj("xBucketer" -> xBucketer.toTypedJson, "yBucketer" -> yBucketer.toTypedJson)
+  override def toJson = Json.obj(
+    "xBucketer" -> xBucketer.toTypedJson,
+    "yBucketer" -> yBucketer.toTypedJson) ++
+    sampleSizeParameter.toJson(sampleSize)
 
   def execute(inputDatas: DataSet,
               o: Output[S, T],
@@ -70,7 +79,7 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     val originalCount = inputs.originalCount.value
     output(
       o.buckets,
-      RDDUtils.estimateValueCounts(vertices, xyBuckets, originalCount, 50000, rc))
+      RDDUtils.estimateOrPreciseValueCounts(vertices, xyBuckets, originalCount, sampleSize, rc))
     output(o.indexingSeq, indexingSeq)
   }
 }
