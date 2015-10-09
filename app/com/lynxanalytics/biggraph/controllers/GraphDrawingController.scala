@@ -30,6 +30,7 @@ case class VertexDiagramSpec(
   val yBucketingAttributeId: String = "",
   val yNumBuckets: Int = 1,
   val yAxisOptions: AxisOptions = AxisOptions(),
+  val sampleSize: Int = 50000,
 
   // ** Parameters for sampled view **
   val centralVertexIds: Seq[String] = Seq(),
@@ -247,10 +248,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     original: VertexSet,
     filtered: VertexSet,
     xBucketedAttr: graph_operations.BucketedAttribute[S],
-    yBucketedAttr: graph_operations.BucketedAttribute[T]): Scalar[spark_util.IDBuckets[(Int, Int)]] = {
+    yBucketedAttr: graph_operations.BucketedAttribute[T],
+    sampleSize: Int): Scalar[spark_util.IDBuckets[(Int, Int)]] = {
 
     val originalCount = graph_operations.Count.run(original)
-    val op = graph_operations.VertexBucketGrid(xBucketedAttr.bucketer, yBucketedAttr.bucketer)
+    val op = graph_operations.VertexBucketGrid(xBucketedAttr.bucketer, yBucketedAttr.bucketer, sampleSize)
     var builder = op(op.filtered, filtered)(op.vertices, original)(op.originalCount, originalCount)
     if (xBucketedAttr.nonEmpty) {
       builder = builder(op.xAttribute, xBucketedAttr.attribute)
@@ -285,7 +287,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
 
     val diagramMeta = getDiagramFromBucketedAttributes(
-      vertexSet, filtered, xBucketedAttr, yBucketedAttr)
+      vertexSet, filtered, xBucketedAttr, yBucketedAttr, request.sampleSize)
     val diagram = dataManager.get(diagramMeta).value
 
     val xBucketer = xBucketedAttr.bucketer

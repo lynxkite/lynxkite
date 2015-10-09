@@ -16,7 +16,7 @@ case class SparkStatusResponse(
   pastStages: List[StageInfo])
 
 case class StageInfo(
-  id: Int, // Stage ID.
+  id: String, // Stage ID with attempt ID.
   hash: Long, // Two stages that do the same thing are expected to have the same hash.
   size: Int, // Number of tasks.
   var tasksCompleted: Int = 0, // Number of tasks already done.
@@ -34,14 +34,17 @@ case class SetClusterNumInstanceRequest(
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
 class SparkListener extends spark.scheduler.SparkListener {
-  val activeStages = collection.mutable.Map[Int, StageInfo]()
+  val activeStages = collection.mutable.Map[String, StageInfo]()
   val pastStages = collection.mutable.Queue[StageInfo]()
   val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
   var currentResp = SparkStatusResponse(0, List(), List())
 
+  private def fullId(stage: org.apache.spark.scheduler.StageInfo): String =
+    s"${stage.stageId}.${stage.attemptId}"
+
   override def onStageCompleted(
     stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
-    val id = stageCompleted.stageInfo.stageId
+    val id = fullId(stageCompleted.stageInfo)
     if (activeStages.contains(id)) {
       val stage = activeStages(id)
       activeStages -= id
@@ -55,7 +58,7 @@ class SparkListener extends spark.scheduler.SparkListener {
   }
 
   override def onTaskEnd(taskEnd: spark.scheduler.SparkListenerTaskEnd): Unit = synchronized {
-    val id = taskEnd.stageId
+    val id = s"${taskEnd.stageId}.${taskEnd.stageAttemptId}"
     if (activeStages.contains(id)) {
       val stage = activeStages(id)
       stage.tasksCompleted += 1
@@ -71,7 +74,7 @@ class SparkListener extends spark.scheduler.SparkListener {
   override def onStageSubmitted(
     stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
     val stage = stageSubmitted.stageInfo
-    val id = stage.stageId
+    val id = fullId(stage)
     val hash = stage.details.hashCode
     val size = stage.numTasks
     val time = stage.submissionTime.getOrElse(System.currentTimeMillis)

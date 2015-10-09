@@ -68,6 +68,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
         yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
         xAxisOptions: viewData.xAxisOptions,
         yAxisOptions: viewData.yAxisOptions,
+        sampleSize: viewData.preciseBucketSizes ? -1 : 50000,
         // Sampled view parameters.
         // angular.js/pull/7370
         radius: viewData.edgeBundle ? parseInt(viewData.sampleRadius) : 0,

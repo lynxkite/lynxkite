@@ -6,6 +6,8 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - Added a new operation to compute the shortest path from a given set of vertices.
+
 ### 1.5.6
 
  - Upgraded to Spark 1.5.1.
