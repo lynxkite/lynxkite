@@ -11,7 +11,7 @@ angular.module('biggraph').directive('copyBox', function() {
       var client = new ZeroClipboard(element.find('.clicky'));
       client.on('error', function(event) {
         // No flash, no copy.
-        console.log('error: ' + event.name);
+        console.log('Copy to clipboard is disabled: ' + event.name);
         element.empty();
       });
       scope.$on('$destroy', function() {
