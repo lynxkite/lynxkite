@@ -382,7 +382,7 @@ object ProductionJsonServer extends JsonServer {
       predef = "import com.lynxanalytics.biggraph._",
       replArgs = Seq(
         Bind("server", this),
-        Bind("fakeAdmin", User("fakeAdmin", isAdmin = true)),
+        Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true)),
         Bind("sc", BigGraphProductionEnvironment.sparkContext),
         Bind("metaManager", BigGraphProductionEnvironment.metaGraphManager),
         Bind("dataManager", BigGraphProductionEnvironment.dataManager),
@@ -393,14 +393,14 @@ This is an Ammonite Scala REPL running in the JVM of the LynxKite server. For ge
 on Ammonite, look here:
 https://lihaoyi.github.io/Ammonite/
 
-For convenience, we've setup some Kite specific bindings for you:
+For convenience, we've set up some Kite specific bindings for you:
  sql: The SqlContext used by Kite. Use it if you want to run some SparkSQL computations
    using Kite's resources. See http://spark.apache.org/docs/latest/sql-programming-guide.html
    for SparkSQL documentation.
  sc: The SparkContext used by Kite. Use it if you want to run some arbitrary spark computation
    using Kite's resources. See http://spark.apache.org/docs/latest/programming-guide.html
    for a good Spark intro.
- server: A reference to the ProductionJsonServer used to server http requests.
+ server: A reference to the ProductionJsonServer used to serve http requests.
  fakeAdmin: A fake admin user object. Useful if you want to directly interact with controllers.
  dataManager: The DataManager instance used by Kite.
  metaManager: The MetaManager instance used by Kite.
