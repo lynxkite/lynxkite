@@ -10,13 +10,19 @@
         ng-model="output[param.id]"
         ng-disabled="!editable"
         data-kind="text">
-    <div ui-ace="{ mode: 'javascript', showGutter: false, rendererOptions: {fontSize: '16px'} }"
-        style="height: 60px;"
-        class="form-control operation-attribute-entry"
-        ng-if="param.kind === 'code'"
-        ng-model="output[param.id]"
-        ng-disabled="!editable"
-        data-kind="text-ace"></div>
+    <div
+      ui-ace="{
+        mode: 'javascript',
+        showGutter: false,
+        rendererOptions: {fontSize: '16px'},
+        advanced: {behavioursEnabled: false},
+      }"
+      style="height: 60px;"
+      class="form-control operation-attribute-entry"
+      ng-if="param.kind === 'code'"
+      ng-model="output[param.id]"
+      ng-disabled="!editable"
+      data-kind="text-ace"></div>
     <file-parameter ng-if="param.kind === 'file'"
         editable="editable"
         model="output[param.id]"

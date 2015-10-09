@@ -46,19 +46,13 @@ case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
     val filteredAttr = inputs.attr.rdd.sortedJoin(inputs.filtered.rdd)
       .mapValues { case (value, _) => value }
     val bucketedAttr = filteredAttr.flatMapValues(bucketer.whichBucket(_))
-    if (sampleSize < 0) {
-      output(
-        o.counts,
-        RDDUtils.preciseValueCounts(bucketedAttr).counts.toMap)
-    } else {
-      output(
-        o.counts,
-        RDDUtils.estimateValueCounts(
-          inputs.original.rdd,
-          bucketedAttr,
-          inputs.originalCount.value,
-          sampleSize,
-          rc).counts.toMap)
-    }
+    output(
+      o.counts,
+      RDDUtils.estimateOrPreciseValueCounts(
+        inputs.original.rdd,
+        bucketedAttr,
+        inputs.originalCount.value,
+        sampleSize,
+        rc).counts.toMap)
   }
 }

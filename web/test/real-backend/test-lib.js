@@ -31,10 +31,6 @@ Side.prototype = {
     return this.toolbox.element(by.css('div.category[tooltip="' + categoryTitle + '"]'));
   },
 
-  getCloseHistoryButton: function() {
-    return this.side.element(by.id('close-history-button'));
-  },
-
   getHistogram: function(attributeName) {
     return this.side.element(by.css('histogram[attr-name="' + attributeName + '"]'));
   },
@@ -159,6 +155,10 @@ Side.prototype = {
 
   openWorkflowSavingDialog: function() {
     this.side.element(by.id('save-as-workflow-button')).click();
+  },
+
+  closeWorkflowSavingDialog: function() {
+    this.side.element(by.id('close-workflow-button')).click();
   },
 
   openSegmentation: function(segmentationName) {
@@ -569,6 +569,16 @@ testLib = {
       } else {
         return 0;
       }
+    });
+  },
+
+  errors: function() {
+    return element.all(by.css('.top-alert-message')).map(function(e) { return e.getText(); });
+  },
+
+  closeErrors: function() {
+    element.all(by.css('.top-alert')).each(function(e) {
+      e.element(by.id('close-alert-button')).click();
     });
   },
 };
