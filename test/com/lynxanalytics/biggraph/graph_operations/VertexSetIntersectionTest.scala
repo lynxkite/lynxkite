@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class VertexSetIntersectionTest extends FunSuite with TestGraphOp {
-  test("intersect 3 sets") {
+  ignore("intersect 3 sets") {
     val aVS = 0 to 50
     val bVS = 5 to 10
     val cVS = 8 to 100
@@ -19,7 +19,7 @@ class VertexSetIntersectionTest extends FunSuite with TestGraphOp {
     assert(out.intersection.toSeq == Seq(8, 9, 10))
   }
 
-  test("empty set") {
+  ignore("empty set") {
     val aVS = 0 to 5
     val bVS = 10 to 12
     val a = SmallTestGraph(aVS.map(_.toInt -> Seq()).toMap).result.vs
