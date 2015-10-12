@@ -573,9 +573,17 @@ angular.module('biggraph')
 
     Side.prototype.loadScalars = function() {
       if (!this.loaded()) { return; }
-      var scalars = this.project.scalars;
+      var i, scalars;
+      if (this.scalars !== undefined) {
+        // Abandon outstanding scalar requests.
+        scalars = Object.keys(this.scalars);
+        for (i = 0; i < scalars.length; ++i) {
+          this.scalars[scalars[i]].$abandon();
+        }
+      }
       this.scalars = {};
-      for (var i = 0; i < scalars.length; ++i) {
+      scalars = this.project.scalars;
+      for (i = 0; i < scalars.length; ++i) {
         var s = scalars[i];
         var res = util.get('/ajax/scalarValue', { scalarId: s.id, calculate: true });
         res.details = { project: this.state.projectName, scalar: s };
