@@ -2146,7 +2146,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Fingerprinting between project and segmentation", new SpecialtyOperation(_, _) with SegOp {
     def segmentationParameters = List(
       NonNegInt("mo", "Minimum overlap", default = 1),
-      Ratio("ms", "Minimum similarity", defaultValue = "0.5"))
+      Ratio("ms", "Minimum similarity", defaultValue = "0.0"))
     def enabled =
       isSegmentation &&
         hasEdgeBundle && FEStatus.assert(parent.edgeBundle != null, s"No edges on $parent")
