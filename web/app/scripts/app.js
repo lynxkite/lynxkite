@@ -3,7 +3,6 @@
 
 angular
   .module('biggraph', [
-    'ngResource',
     'ngRoute',
     'ui.ace',
     'ui.bootstrap',
@@ -140,51 +139,63 @@ angular
   })
 
   .factory('util', function utilFactory(
-        $location, $window, $resource, $rootScope, $modal) {
+        $location, $window, $http, $rootScope, $modal) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+
     function ajax(url, params, cache) {
       if (params === undefined) { params = { fake: 1 }; }
-      var res = $resource(url, {}, { get: { method: 'GET', cache: cache } });
-      var req = res.get({ q: params }, function() {}, function(failure) {
-        req.$status = failure.status;
-        if (failure.status === 401) {  // Unauthorized.
-          req.$error = 'Redirecting to login page.';
-          if ($location.protocol() === 'https') {
-            $location.url('/login');
+      var req = $http.get(url, { params: params, cache: cache }).then(
+        function onSuccess(response) {
+          angular.extend(req, response.data);
+          req.$resolved = true;
+        },
+        function onError(failure) {
+          req.$resolved = true;
+          req.$status = failure.status;
+          if (failure.status === 401) {  // Unauthorized.
+            req.$error = 'Redirecting to login page.';
+            if ($location.protocol() === 'https') {
+              $location.url('/login');
+            } else {
+              $window.location.href = 'https://' + $location.host() + '/login';
+            }
           } else {
-            $window.location.href = 'https://' + $location.host() + '/login';
+            req.$error = util.responseToErrorMessage(failure);
           }
-        } else {
-          req.$error = util.responseToErrorMessage(failure);
-        }
-      });
+        });
+      req.$resolved = false;
+      req.$abandon = function() {};
       // Helpful for debugging/error reporting.
       req.$url = url;
       req.$params = params;
       return req;
     }
+
     var util = {
       // This function is for code clarity, so we don't have a mysterious "true" argument.
       deepWatch: function(scope, expr, fun) {
         return scope.$watch(expr, fun, true);
       },
+
       // Json GET with caching and parameter wrapping.
       get: function(url, params) { return ajax(url, params, /* cache = */ true); },
+
       // Json GET with parameter wrapping and no caching.
       nocache: function(url, params) { return ajax(url, params, /* cache = */ false); },
+
       // Json POST with simple error handling.
       post: function(url, params, onSuccess) {
-        var resource = $resource(url).save({}, params, onSuccess, function(failure) {
+        var req = $http.post(url, params).then(onSuccess, function(failure) {
           util.ajaxError(failure);
         });
         // Helpful for debugging/error reporting.
-        resource.$url = url;
-        resource.$params = params;
+        req.$url = url;
+        req.$params = params;
         // A promise of the success state, for flexibility.
-        resource.$status = resource.$promise
-          .then(function() { return true; }, function() { return false; });
-        return resource;
+        req.$status = req.then(function() { return true; }, function() { return false; });
+        return req;
       },
+
       // Easier to read numbers. 1234 -> 1k
       human: function(x) {
         if (x === undefined) { return '?'; }
@@ -197,21 +208,26 @@ angular
           x = Math.round(x / 1000);
         }
       },
+
       // Replaces underscores with spaces.
       spaced: function(s) {
         return s.replace(/_/g, ' ');
       },
+
       ajaxError: function(resp) {
         util.error(
           util.responseToErrorMessage(resp),
           { request: resp.config.url, data: resp.config.data });
       },
+
       error: function(message, details) {
         $rootScope.$broadcast('topAlert', { message: message, details: details });
       },
+
       clearAlerts: function() {
         $rootScope.$broadcast('clear topAlerts');
       },
+
       responseToErrorMessage: function(resp) {
         if (resp.data) {
           if (resp.data.error) {
@@ -223,6 +239,7 @@ angular
         }
         return resp.config.url + ' ' + (resp.statusText || 'failed');
       },
+
       scopeTitle: function(scope, titleExpr) {
         scope.$watch(titleExpr, function(title) {
           angular.element('title').html(title);
@@ -231,6 +248,7 @@ angular
           angular.element('title').html('LynxKite');
         });
       },
+
       reportRequestError: function(request, details) {
         if (request) {
           util.reportError({
@@ -248,6 +266,7 @@ angular
           });
         }
       },
+
       reportError: function(alert) {
         $modal.open({
           templateUrl: 'report-error.html',
@@ -255,12 +274,14 @@ angular
           resolve: { alert: function() { return alert; } },
         });
       },
+
       projectPath: function(projectName) {
         if (!projectName) { return []; }
         return projectName.split('|').map(function(name) {
           return util.spaced(name);
         });
       },
+
       captureClick: function(event) {
         if (event) {
           event.originalEvent.alreadyHandled = true;
