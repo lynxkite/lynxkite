@@ -1,4 +1,4 @@
-// Creates the "biggraph" Angular module, sets the routing table, provides utility functions.
+// Provides utility functions, most importantly the Ajax IO functions.
 'use strict';
 
 angular.module('biggraph').factory('util', function utilFactory(
