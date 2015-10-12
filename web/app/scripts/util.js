@@ -114,7 +114,7 @@ angular.module('biggraph').factory('util', function utilFactory(
   // Sends an HTTP request immediately.
   function sendRequest(config) {
     var canceler = $q.defer();
-    var fullConfig = angular.extend({ timeout: canceler }, config);
+    var fullConfig = angular.extend({ timeout: canceler.promise }, config);
     var req = $http(fullConfig);
     req.$config = fullConfig;  // For debugging.
     req.$abandon = function() { canceler.resolve(); };
