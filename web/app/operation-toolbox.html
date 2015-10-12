@@ -1,15 +1,16 @@
 <div class="operation-toolbox row" ng-class="{ open: category || searching }">
-  <div class="col-sm-1 categories">
+  <div class="col-sm-1 categories" ng-class="{ uneditable: !editable}">
     <div class="category yellow" ng-class="{ active: searching }"
       id="operation-search"
       tooltip-append-to-body="true" tooltip-placement="left" tooltip="Search"
-      ng-click="searchClicked()">
+      tooltip-enable="{{editable}}" ng-click="editable && searchClicked()">
       <i class="glyphicon glyphicon-search"></i>
     </div>
     <div ng-repeat="cat in categories"
       class="category {{cat.color}}" ng-class="{ active: category === cat }"
-      tooltip-append-to-body="true" tooltip-placement="left" tooltip="{{cat.title}}"
-      ng-click="clickedCat(cat)">
+      tooltip-append-to-body="true" tooltip-placement="left"
+      tooltip-enable="{{editable}}" tooltip="{{cat.title}}"
+      ng-click="editable && clickedCat(cat)">
       <span ng-if="cat.icon" class="glyphicon glyphicon-{{cat.icon}}"></span>
       <span ng-if="!cat.icon">{{cat.title[0]}}</span>
     </div>
