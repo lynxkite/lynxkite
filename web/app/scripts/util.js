@@ -12,19 +12,25 @@ angular.module('biggraph').factory('util', function utilFactory(
   }
   RequestQueue.prototype = {
     // Adds a request to the queue, sending it immediately if possible.
-    request: function(url, params, config) {
+    request: function(config) {
       var req;
       if (this.queue.length < this.maxParallel) {
-        req = sendRequest(url, params, config);
+        req = sendRequest(config);
       } else {
         var queuing = $q.defer();
         req = queuing.promise.then(function() {
-          return sendRequest(url, params, config);
+          var next = sendRequest(config);
+          req.$abandon = next.$abandon;  // Abandoning should now try to cancel the request.
+          return next;
         });
-        req.$dequeued = function() { queuing.resolve(); };
+        req.$config = config;  // For debugging.
+        req.$execute = function() { queuing.resolve(); };
+        req.$abandon = function() {
+          queuing.reject({ config: config, statusText: 'Abandoned.' });
+        };
       }
       var that = this;
-      req.then(function() { that.finished(req); });
+      req.finally(function() { that.finished(req); });
       this.queue.push(req);
       return req;
     },
@@ -32,22 +38,23 @@ angular.module('biggraph').factory('util', function utilFactory(
     // A request has finished. Send more requests if available.
     finished: function(request) {
       var q = this.queue;
-      for (var i = 0; i < q.length && i < this.maxParallel; ++i) {
+      for (var i = 0; i < q.length; ++i) {
         if (q[i] === request) {
           q.splice(i, 1);
-          if (q.length >= this.maxParallel) {
+          if (i < this.maxParallel && q.length >= this.maxParallel) {
             var next = q[this.maxParallel - 1];
-            next.$dequeued();
+            next.$execute();
           }
+          return;
         }
       }
+      console.error('Could not find finished request in the queue:', request, q);
     },
   };
 
-  var slowQueue = new RequestQueue(2);
 
   // Sends an HTTP GET, possibly queuing the request.
-  function getRequest(url, params, config) {
+  function getRequest(config) {
     var SLOW_REQUESTS = [
       '/ajax/complexView',
       '/ajax/histo',
@@ -65,17 +72,22 @@ angular.module('biggraph').factory('util', function utilFactory(
     // left for the fast requests.
     for (var i = 0; i < SLOW_REQUESTS.length; ++i) {
       var pattern = SLOW_REQUESTS[i];
-      if (url.indexOf(pattern) !== -1) {
-        return slowQueue.request(url, params, config);
+      if (config.url.indexOf(pattern) !== -1) {
+        return util.slowQueue.request(config);
       }
     }
     // Fast request.
-    return sendRequest(url, params, config);
+    return sendRequest(config);
   }
 
   // Returns a self-populating object, like Angular's ngResource.
   function getResource(url, params, config) {
-    var resource = getRequest(url, params, config);
+    // Create full $http request config.
+    if (params === undefined) { params = { fake: 1 }; }
+    var fullConfig = angular.extend({ method: 'GET', url: url, params: params }, config);
+    // Send request.
+    var resource = getRequest(fullConfig);
+    // Populate the promise object with the result data, update $resolved.
     resource.then(
       function onSuccess(response) {
         angular.extend(resource, response.data);
@@ -100,11 +112,11 @@ angular.module('biggraph').factory('util', function utilFactory(
   }
 
   // Sends an HTTP request immediately.
-  function sendRequest(url, params, config) {
-    if (params === undefined) { params = { fake: 1 }; }
+  function sendRequest(config) {
     var canceler = $q.defer();
-    var fullConfig = angular.extend({ params: params, timeout: canceler }, config);
-    var req = $http.get(url, fullConfig);
+    var fullConfig = angular.extend({ timeout: canceler }, config);
+    var req = $http(fullConfig);
+    req.$config = fullConfig;  // For debugging.
     req.$abandon = function() { canceler.resolve(); };
     return req;
   }
@@ -221,7 +233,9 @@ angular.module('biggraph').factory('util', function utilFactory(
       if (event) {
         event.originalEvent.alreadyHandled = true;
       }
-    }
+    },
+
+    slowQueue: new RequestQueue(2),
   };
   util.globals = util.get('/ajax/getGlobalSettings');
   return util;
