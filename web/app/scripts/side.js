@@ -571,19 +571,22 @@ angular.module('biggraph')
       this.sides[1].state.graphMode = undefined;
     };
 
-    Side.prototype.loadScalars = function() {
-      if (!this.loaded()) { return; }
-      var i, scalars;
+    // Abandon outstanding scalar requests.
+    Side.prototype.abandonScalars = function() {
       if (this.scalars !== undefined) {
-        // Abandon outstanding scalar requests.
-        scalars = Object.keys(this.scalars);
-        for (i = 0; i < scalars.length; ++i) {
+        var scalars = Object.keys(this.scalars);
+        for (var i = 0; i < scalars.length; ++i) {
           this.scalars[scalars[i]].$abandon();
         }
       }
+    };
+
+    Side.prototype.loadScalars = function() {
+      if (!this.loaded()) { return; }
+      this.abandonScalars();
       this.scalars = {};
-      scalars = this.project.scalars;
-      for (i = 0; i < scalars.length; ++i) {
+      var scalars = this.project.scalars;
+      for (var i = 0; i < scalars.length; ++i) {
         var s = scalars[i];
         var res = util.get('/ajax/scalarValue', { scalarId: s.id, calculate: true });
         res.details = { project: this.state.projectName, scalar: s };
