@@ -139,12 +139,13 @@ angular
   })
 
   .factory('util', function utilFactory(
-        $location, $window, $http, $rootScope, $modal) {
+        $location, $window, $http, $rootScope, $modal, $q) {
     var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
 
     function ajax(url, params, cache) {
       if (params === undefined) { params = { fake: 1 }; }
-      var req = $http.get(url, { params: params, cache: cache }).then(
+      var canceler = $q.defer();
+      var req = $http.get(url, { params: params, cache: cache, timeout: canceler }).then(
         function onSuccess(response) {
           angular.extend(req, response.data);
           req.$resolved = true;
@@ -164,7 +165,7 @@ angular
           }
         });
       req.$resolved = false;
-      req.$abandon = function() {};
+      req.$abandon = function() { canceler.resolve(); };
       // Helpful for debugging/error reporting.
       req.$url = url;
       req.$params = params;
