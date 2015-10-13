@@ -301,7 +301,7 @@ var visualization = {
 
   // The visualization response received from the server.
   graphView: function() {
-    return visualization.svg.evaluate('graph.view.toJSON()');
+    return visualization.svg.evaluate('graph.view');
   },
 
   vertexCounts: function(index) {
