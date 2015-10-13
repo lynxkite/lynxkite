@@ -4,29 +4,53 @@
     {{param.title}}
     <help-popup href="{{op.id + '-' + param.id}}"></help-popup>
   </label>
-  <div class="col-sm-8">
+  <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
     <input ng-if="param.kind === 'default'"
-      class="form-control" ng-model="output[param.id]" ng-disabled="!editable">
-    <file-parameter ng-if="param.kind === 'file'" editable="editable"
-      model="output[param.id]" file-uploads="fileUploads.count">
+        class="form-control operation-attribute-entry"
+        ng-model="output[param.id]"
+        ng-disabled="!editable"
+        data-kind="text">
+    <div
+      ui-ace="{
+        mode: 'javascript',
+        showGutter: false,
+        rendererOptions: {fontSize: '16px'},
+        advanced: {behavioursEnabled: false},
+      }"
+      style="height: 60px;"
+      class="form-control operation-attribute-entry"
+      ng-if="param.kind === 'code'"
+      ng-model="output[param.id]"
+      ng-disabled="!editable"
+      data-kind="text-ace"></div>
+    <file-parameter ng-if="param.kind === 'file'"
+        editable="editable"
+        model="output[param.id]"
+        file-uploads="fileUploads.count"
+        class="operation-attribute-entry"
+        data-kind="file">
     </file-parameter>
     <select
       ng-disabled="!editable"
       ng-if="param.kind === 'choice' && !param.multipleChoice"
-      class="form-control"
+      class="form-control operation-attribute-entry"
       ng-model="output[param.id]"
-      ng-options="option.id as option.title for option in param.options"></select>
+      ng-options="option.id as option.title for option in param.options"
+      data-kind="select"></select>
     <select
       ng-disabled="!editable"
       ng-if="param.kind === 'choice' && param.multipleChoice"
       multiple
-      class="form-control"
+      class="form-control operation-attribute-entry"
       ng-model="multiOutput[param.id]"
-      ng-options="option.id as option.title for option in param.options"></select>
+      ng-options="option.id as option.title for option in param.options"
+      data-kind="select"></select>
     <tag-list
       editable="editable"
       ng-if="param.kind === 'tag-list'"
       model="multiOutput[param.id]"
-      options="param.options"></tag-list>
+      options="param.options"
+      class="operation-attribute-entry"
+      data-kind="tag-list"></tag-list>
   </div>
 </div>

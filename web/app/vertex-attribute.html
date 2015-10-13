@@ -21,7 +21,8 @@
 
 <form ng-if="attr.canFilter" style="display: inline;">
   <input class="form-control filter" placeholder="filter" ng-model="side.state.filters.vertex[attr.title]"
-    ng-model-options="{ updateOn: 'change blur' }">
+    ng-model-options="{ updateOn: 'change blur' }"
+    name="{{attr.title}}">
 </form>
 <span ng-if="side.state.graphMode === 'sampled' && side.state.display === 'svg'" class="de-emph sampled-visualizations">
   <span class="visualizations"><selected-visualization
@@ -72,14 +73,20 @@
     </li>
   </ul>
 </span>
-<histogram-button ng-show="attr.canBucket" attr="attr" side="side"
+<histogram-button ng-show="attr.canBucket" attr="attr" side="side" precise="precise"
   model="histogram" type="vertex" tsv="histogramTSV">
 </histogram-button>
 <copy-box ng-show="histogram" description="Copy&nbsp;histogram to&nbsp;clipboard" data="{{histogramTSV}}"></copy-box>
 <label ng-show="showLogCheckbox()">
   <input type="checkbox" ng-model="axisOptions.logarithmic"> logarithmic
 </label>
+<label ng-show="histogram" id="precise-histogram-calculation" attr-name={{attr.title}}>
+  <input type="checkbox" ng-model="precise"></input> precise
+</label>
 
-<span class="type-name">{{attr.typeName}}</span>
+<div class="entry-bottom">
+  <span class="type-name">{{attr.typeName}}</span>
+  <span class="pull-right" trusted-html="attr.note"></span>
+</div>
 <div class="clearfix"></div>
-<histogram ng-show="histogram" model="histogram"></histogram>
+<histogram ng-show="histogram" model="histogram" attr-name="{{attr.title}}"></histogram>

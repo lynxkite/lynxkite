@@ -62,8 +62,10 @@ class GroovySandbox(bindings: Set[String]) extends sandbox.GroovyValueFilter {
   override def onMethodCall(
     invoker: sandbox.GroovyInterceptor.Invoker,
     receiver: Any, method: String, args: Object*): Object = {
-    // Method calls are only allowed on GroovyWorkflowProject.
-    if (receiver.isInstanceOf[GroovyWorkflowProject]) {
+    // Shorthand for "receiver.isInstanceOf[T]".
+    def isA[T: reflect.ClassTag] = reflect.classTag[T].runtimeClass.isInstance(receiver)
+    // Method calls are only allowed on GroovyWorkflowProject and primitive types.
+    if (isA[GroovyWorkflowProject] || isA[String] || isA[Long] || isA[Double] || isA[Int] || isA[Boolean]) {
       invoker.call(receiver, method, args: _*)
     } else {
       throw new SecurityException(
@@ -125,10 +127,10 @@ abstract class GroovyProject(ctx: GroovyContext)
 
   override def invokeMethod(name: String, args: AnyRef): AnyRef = {
     val argArray = args.asInstanceOf[Array[_]]
-    val params = if (argArray.nonEmpty) {
-      val javaParams = argArray.head.asInstanceOf[java.util.Map[String, AnyRef]]
-      JavaConversions.mapAsScalaMap(javaParams).mapValues(_.toString).toMap
-    } else Map[String, String]()
+    val params: Map[String, String] = if (argArray.nonEmpty) {
+      val javaParams = argArray.head.asInstanceOf[java.util.Map[AnyRef, AnyRef]]
+      JavaConversions.mapAsScalaMap(javaParams).map { case (k, v) => (k.toString, v.toString) }.toMap
+    } else Map()
     val id = {
       val normalized = ctx.normalize(name)
       assert(ctx.normalizedIds.contains(normalized), s"No such operation: $name")
@@ -195,7 +197,8 @@ class GroovyAttribute(ctx: GroovyContext, attr: Attribute[_]) {
       attributeId = attr.gUID.toString,
       vertexFilters = Seq(),
       numBuckets = 10,
-      axisOptions = AxisOptions(logarithmic = false))
+      axisOptions = AxisOptions(logarithmic = false),
+      sampleSize = 50000)
     val res = drawing.getHistogram(ctx.user, req)
     import com.lynxanalytics.biggraph.serving.ProductionJsonServer._
     json.Json.toJson(res).toString

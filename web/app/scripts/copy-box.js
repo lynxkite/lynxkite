@@ -9,8 +9,9 @@ angular.module('biggraph').directive('copyBox', function() {
     link: function(scope, element) {
       ZeroClipboard.config({ swfPath: 'bower_components/zeroclipboard/dist/ZeroClipboard.swf' });
       var client = new ZeroClipboard(element.find('.clicky'));
-      client.on('error', function() {
+      client.on('error', function(event) {
         // No flash, no copy.
+        console.log('Copy to clipboard is disabled: ' + event.name);
         element.empty();
       });
       scope.$on('$destroy', function() {

@@ -29,7 +29,7 @@ module.exports = function (grunt) {
     watch: {
       bower: {
         files: ['bower.json'],
-        tasks: ['bowerInstall']
+        tasks: ['wiredep']
       },
       js: {
         files: ['<%= yeoman.app %>/scripts/{,*/}*.js'],
@@ -39,7 +39,7 @@ module.exports = function (grunt) {
         }
       },
       jsTest: {
-        files: ['test/spec/{,*/}*.js'],
+        files: ['test/real-backend/*.js'],
         tasks: ['newer:jshint:test', 'karma']
       },
       styles: {
@@ -153,7 +153,7 @@ module.exports = function (grunt) {
         options: {
           jshintrc: 'test/.jshintrc'
         },
-        src: ['test/spec/{,*/}*.js']
+        src: ['test/real-backend/*.js']
       }
     },
 
@@ -214,10 +214,10 @@ module.exports = function (grunt) {
     },
 
     // Automatically inject Bower components into the app
-    bowerInstall: {
+    wiredep: {
       app: {
         src: ['<%= yeoman.app %>/index.html'],
-        ignorePath: '<%= yeoman.app %>/'
+        ignorePath: '<%= yeoman.app %>/',
       }
     },
 
@@ -385,31 +385,13 @@ module.exports = function (grunt) {
       ]
     },
 
-    // By default, your `index.html`'s <!-- Usemin block --> will take care of
-    // minification. These next options are pre-configured if you do not wish
-    // to use the Usemin blocks.
-    // cssmin: {
-    //   dist: {
-    //     files: {
-    //       '<%= yeoman.dist %>/styles/main.css': [
-    //         '.tmp/styles/{,*/}*.css',
-    //         '<%= yeoman.app %>/styles/{,*/}*.css'
-    //       ]
-    //     }
-    //   }
-    // },
-    // uglify: {
-    //   dist: {
-    //     files: {
-    //       '<%= yeoman.dist %>/scripts/scripts.js': [
-    //         '<%= yeoman.dist %>/scripts/scripts.js'
-    //       ]
-    //     }
-    //   }
-    // },
-    // concat: {
-    //   dist: {}
-    // },
+    uglify: {
+      dist: {
+        files: {
+          '<%= yeoman.dist %>/scripts/vendor.js': '<%= yeoman.dist %>/scripts/vendor.js',
+        },
+      }
+    },
 
     // Test settings
     karma: {
@@ -445,7 +427,7 @@ module.exports = function (grunt) {
 
     grunt.task.run([
       'clean:server',
-      'bowerInstall',
+      'wiredep',
       'concurrent:server',
       'sass',
       'autoprefixer',
@@ -457,7 +439,7 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test', [
     'clean:server',
-    'bowerInstall',
+    'wiredep',
     'copy:styles',
     'sass',
     'autoprefixer',
@@ -475,7 +457,7 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build', [
     'clean:dist',
-    'bowerInstall',
+    'wiredep',
     'useminPrepare',
     'concurrent:dist',
     'sass',
@@ -486,6 +468,7 @@ module.exports = function (grunt) {
     'copy:dist',
     'cdnify',
     'cssmin',
+    'uglify',
     'rev',
     'usemin',
     'htmlmin'
@@ -493,7 +476,7 @@ module.exports = function (grunt) {
 
   grunt.registerTask('quick', [
     'clean:server',
-    'bowerInstall',
+    'wiredep',
     'copy:styles',
     'sass',
     'autoprefixer',

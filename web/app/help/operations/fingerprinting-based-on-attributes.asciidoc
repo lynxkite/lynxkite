@@ -30,11 +30,6 @@ Two identifying attributes have to be selected.
 What `Double` edge attribute to use as edge weight. The edge weights are also considered when
 calculating the similarity between two vertices.
 
-[[mrew]] Minimum relative edge weight::
-The relative edge weight is the edge weight relative to the summed edge weights of the vertex.
-Ignoring low-weight connections can avoid a noise in the similarity score from high-degree
-vertices such as a pizza delivery service.
-
 [[mo]] Minimum overlap::
 The number of common neighbors two vertices must have to be considered for matching.
 It must be at least 1. (If two vertices have no common neighbors their similarity would be zero

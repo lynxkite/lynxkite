@@ -6,6 +6,8 @@ import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 object AttributeHistogram extends OpFromJson {
+  private val sampleSizeParameter = NewParameter("sampleSize", 50000)
+
   class Input[T] extends MagicInputSignature {
     val original = vertexSet
     val filtered = vertexSet
@@ -16,15 +18,22 @@ object AttributeHistogram extends OpFromJson {
     val counts = scalar[Map[Int, Long]]
   }
   def fromJson(j: JsValue): TypedMetaGraphOp.Type =
-    AttributeHistogram(TypedJson.read[Bucketer[_]](j \ "bucketer"))
+    AttributeHistogram(
+      TypedJson.read[Bucketer[_]](j \ "bucketer"),
+      sampleSizeParameter.fromJson(j))
 }
 import AttributeHistogram._
-case class AttributeHistogram[T](bucketer: Bucketer[T])
+/**
+ * @param sampleSize specifies the number of data points to use for the histogram.
+ * A negative value turns sampling off and all the data points will be used.
+ */
+case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
     extends TypedMetaGraphOp[Input[T], Output] {
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = Json.obj("bucketer" -> bucketer.toTypedJson)
+  override def toJson = Json.obj("bucketer" -> bucketer.toTypedJson) ++
+    sampleSizeParameter.toJson(sampleSize)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -37,14 +46,13 @@ case class AttributeHistogram[T](bucketer: Bucketer[T])
     val filteredAttr = inputs.attr.rdd.sortedJoin(inputs.filtered.rdd)
       .mapValues { case (value, _) => value }
     val bucketedAttr = filteredAttr.flatMapValues(bucketer.whichBucket(_))
-
     output(
       o.counts,
-      RDDUtils.estimateValueCounts(
+      RDDUtils.estimateOrPreciseValueCounts(
         inputs.original.rdd,
         bucketedAttr,
         inputs.originalCount.value,
-        50000,
+        sampleSize,
         rc).counts.toMap)
   }
 }

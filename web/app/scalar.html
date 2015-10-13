@@ -1,6 +1,6 @@
 <item-name-and-menu menu="side" name="{{scalar.title}}" type="scalar"></item-name-and-menu>
 
-<value ng-if="asValue" class="scalar-value" ref="value"></value>
+<value ng-if="asValue" class="scalar-value" id="scalar-{{scalar.title}}" ref="value"></value>
 
 <label ng-if="asSavedStatus" class="btn btn-default"
        tooltip="Load UI Status" tooltip-append-to-body="true" tooltip-placement="bottom"
@@ -8,4 +8,6 @@
   <i class="glyphicon glyphicon-eye-open"></i>
 </label>
 
-<span ng-if="asValue" class="type-name">{{scalar.typeName}}</span>
+<div class="entry-bottom" ng-if="asValue">
+  <span class="type-name">{{scalar.typeName}}</span>
+</div>

@@ -63,24 +63,28 @@ angular.module('biggraph').directive('projectHistory', function(util) {
 
             step.localChanges = true;
             scope.localChanges = true;
-            // Steps after a change cannot use checkpoints.
-            // This is visually communicated as well.
-            var steps = scope.history.steps;
-            for (var i = index; i < steps.length; ++i) {
-              steps[i].checkpoint = undefined;
-            }
-            for (i = 0; i < steps.length; ++i) {
-              if (i !== index) {
-                steps[i].editable = false;
-              }
-            }
+            clearCheckpointsFrom(index);
           });
+      }
+
+      function clearCheckpointsFrom(index) {
+        // Steps after a change cannot use checkpoints.
+        // This is visually communicated as well.
+        var steps = scope.history.steps;
+        for (var i = index; i < steps.length; ++i) {
+          steps[i].checkpoint = undefined;
+        }
+        for (i = 0; i < steps.length; ++i) {
+          if (i !== index) {
+            steps[i].editable = false;
+          }
+        }
       }
 
       function alternateHistory() {
         var requests = [];
         var steps = scope.history.steps;
-        var lastCheckpoint = '';
+        var lastCheckpoint = ''; // The initial project state.
         for (var i = 0; i < steps.length; ++i) {
           var s = steps[i];
           if (requests.length === 0 && s.checkpoint !== undefined) {
@@ -201,6 +205,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       // Discard operation.
       scope.discard = function(step) {
         var pos = scope.history.steps.indexOf(step);
+        clearCheckpointsFrom(pos);
         scope.history.steps.splice(pos, 1);
         validate();
       };
@@ -208,11 +213,13 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       // Insert new operation.
       scope.insertBefore = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
+        clearCheckpointsFrom(pos);
         scope.history.steps.splice(pos, 0, blankStep(seg));
         validate();
       };
       scope.insertAfter = function(step, seg) {
         var pos = scope.history.steps.indexOf(step);
+        clearCheckpointsFrom(pos + 1);
         scope.history.steps.splice(pos + 1, 0, blankStep(seg));
         validate();
       };
@@ -242,13 +249,13 @@ angular.module('biggraph').directive('projectHistory', function(util) {
       };
 
       function blankStep(seg) {
-        var project = scope.side.state.projectName;
+        var path = [];
         if (seg !== undefined) {
-          project = seg.fullName;
+          path = [seg.name];
         }
         return {
           request: {
-            path: [],
+            path: path,
             op: {
               id: 'No-operation',
               parameters: {},

@@ -31,7 +31,6 @@ case class UIValue(
   id: String,
   title: String)
 object UIValue {
-  def fromEntity(e: MetaGraphEntity): UIValue = UIValue(e.gUID.toString, e.toStringStruct.toString)
   def list(list: List[String]) = list.map(id => UIValue(id, id))
 }
 
@@ -57,7 +56,8 @@ case class FEOperationParameterMeta(
     "default", // A simple textbox.
     "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
-    "tag-list") // A variation of "multipleChoice" with a more concise, horizontal design.
+    "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
+    "code") // code
   require(kind.isEmpty || validKinds.contains(kind), s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
@@ -78,6 +78,7 @@ case class FEAttribute(
   id: String,
   title: String,
   typeName: String,
+  note: String,
   canBucket: Boolean,
   canFilter: Boolean,
   isNumeric: Boolean,
@@ -203,6 +204,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
 
   def project(user: serving.User, request: ProjectRequest): FEProject = metaManager.synchronized {
     val p = SubProject.parsePath(request.name)
+    assert(p.frame.exists, s"Project ${request.name} does not exist.")
     p.frame.assertReadAllowedFrom(user)
     val context = Operation.Context(user, p.viewer)
     val categories = ops.categories(context)
@@ -255,6 +257,14 @@ class BigGraphController(val env: BigGraphEnvironment) {
     assertNameNotExists(request.to)
     p.copy(ProjectDirectory.fromName(request.to))
     p.remove()
+  }
+
+  def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
+    assert(user.isAdmin, "Only admins can delete all projects and directories")
+    ProjectDirectory.rootDirectory.remove()
+    if (metaManager.tagExists(BigGraphController.workflowsRoot)) {
+      metaManager.rmTag(BigGraphController.workflowsRoot)
+    }
   }
 
   def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
@@ -404,7 +414,7 @@ class BigGraphController(val env: BigGraphEnvironment) {
         segmentationsBefore,
         segmentationsAfter,
         opCategoriesBeforeWithOp,
-        nextState.checkpoint))
+        nextStateOpt.flatMap(_.checkpoint)))
   }
 
   def validateHistory(user: serving.User, request: AlternateHistory): ProjectHistory = {
@@ -496,11 +506,13 @@ abstract class Operation(originalTitle: String, context: Operation.Context, val 
   def summary(params: Map[String, String]): String = title
 
   protected def apply(params: Map[String, String]): Unit
+  protected def help = "<help-popup href=\"" + id + "\"></help-popup>" // Add to notes for help link.
 
   def validateParameters(values: Map[String, String]): Unit = {
     val paramIds = parameters.map { param => param.id }.toSet
     val extraIds = values.keySet &~ paramIds
-    assert(extraIds.size == 0, s"""Extra parameters found: ${extraIds.mkString(", ")}""")
+    assert(extraIds.size == 0,
+      s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
     val mandatoryParamIds =
       parameters.filter(_.mandatory).map { param => param.id }.toSet
     val missingIds = mandatoryParamIds &~ values.keySet

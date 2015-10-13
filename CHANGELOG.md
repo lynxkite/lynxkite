@@ -6,12 +6,56 @@ Please add changes to "master". When releasing a version add a new header for th
 
 ### master
 
+ - You can use Ammonite (https://lihaoyi.github.io/Ammonite/#Ammonite-REPL) to interact with a
+   running Kite via a Scala interpreter. Among others, this allows one to use sparkSQL for
+   arbitrary data processing tasks using the computation resources held by Kite. For details on
+   how to set this up, see `conf/kiterc_template`.
+ - Added a new operation to compute the shortest path from a given set of vertices.
+
+### 1.5.6
+
+ - Upgraded to Spark 1.5.1.
+
+### 1.5.5
+
+ - Fixed memory issue with history requests.
+
+### 1.5.4
+
+ - Operations _Export edge attributes to file_ and _Export segmentation to file_ now support
+   vertex attribute parameters with which the user can specify how the vertices connected by
+   the edges will be identified in the output file.
+ - Precise histogram computations: so far histograms were computed using a sample of the real
+   data, for performance reasons. Now the user has the option to request a computation on all
+   the data.
+
+### 1.5.3
+
+ - Fixed bug where the root project directory was not accessible for non-admins.
+ - Slow computations will not lock up the browser anymore. Previously it was possible that if too
+   many slow computations were requested then even fast operations, like opening a project stopped
+   working.
+ - HTTP security and performance improvements.
+ - Kite default port changed from 9000 to 2200. This does not impact you if you already have a
+   `.kiterc` file with whatever port number set, it just changes the template.
+ - Fixed bug where an edge might have been colored when the color by attribute was not even defined.
+ - Removed not implemented relative edge weight parameter from fingerprinting operations.
+
+### 1.5.2
+
+ - Automated end-to-end testing - basically a robot clicking all around on a test Kite instance -
+   made part of the development workflow and lots of tests added.
  - Dispersion computation made significantly faster.
  - Projects can be organized into folders now.
+ - Migration to 1.5.x does not take a lot of memory anymore.
+ - Summary information of how things were created is presented on the UI. For example, the formula
+   used to create a derived attribute will accompany it. (No full coverage yet.)
  - Logarithmic histograms support non-positive values.
  - New parameter for CSV import operations: `Tolerate ill-formed lines`. It controls
    whether or not non-conforming lines in the csv file should be skipped silently
    or cause an error immediately.
+ - Further sample vertices can be picked by clicking _"Pick"_ and then _"Next"_ in the advanced
+   pick options.
  - If the user requests a visualization that's too large (and would probably kill the browser)
    we return an error instead of trying to display the large visualization.
  - Users can now import additional attributes from CSV/SQL for edges as well (until now, it was
@@ -24,6 +68,8 @@ Please add changes to "master". When releasing a version add a new header for th
    and you see and error in the logs starting with "Output mismatch on ...", then try to force a
    migration: `KITE_FORCED_MIGRATION=true  ./run-kite-....sh restart`. Do this only once, not for
    all restarts in the future!
+ - Copy graph into segmentation operation fixed.
+ - Edge attributes are included when copying visualizations to the clipboard.
 
 ### 1.5.1
 

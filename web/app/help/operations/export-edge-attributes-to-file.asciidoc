@@ -15,6 +15,11 @@ A new scalar will be created under this name. You can download the exported file
 [[attrs]] Attributes::
 Attributes to export.
 
+[[id_attr]] Vertex id attribute::
+The attribute that identifies the source and the destination vertices in the output.
+By default, this will be the internal vertex ID (which is guaranteed to be unique).
+However, you might find it more convenient to use some other vertex attribute, e.g., a phone number.
+
 [[format]] File format::
 Only CSV (comma-separated values) is currently supported.
 ====
