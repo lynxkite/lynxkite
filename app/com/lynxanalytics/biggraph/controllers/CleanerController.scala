@@ -208,7 +208,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   }
 
   private def markDeleted(dir: String, files: Set[String]): Unit = {
-    val hadoopFileDir = environment.dataManager.repositoryPath / dir
+    val hadoopFileDir = environment.dataManager.writablePath / dir
     if (hadoopFileDir.exists()) {
       for (file <- files) {
         (hadoopFileDir / file).renameTo(hadoopFileDir / (file + io.DeletedSfx))
@@ -227,7 +227,7 @@ class CleanerController(environment: BigGraphEnvironment) {
   }
 
   private def deleteMarkedFilesInDir(dir: String): Unit = {
-    val hadoopFileDir = environment.dataManager.repositoryPath / dir
+    val hadoopFileDir = environment.dataManager.writablePath / dir
     if (hadoopFileDir.exists()) {
       hadoopFileDir.listStatus.filter {
         subDir => subDir.getPath().toString contains io.DeletedSfx

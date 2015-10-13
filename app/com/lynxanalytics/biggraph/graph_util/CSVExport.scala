@@ -46,20 +46,18 @@ object CSVExport {
 
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
-    attributes: Map[String, Attribute[_]],
-    srcColumnName: String = "srcVertexId",
-    dstColumnName: String = "dstVertexId")(implicit dataManager: DataManager): CSVData = {
+    attributes: Seq[(String, Attribute[_])])(implicit dataManager: DataManager): CSVData = {
+
     for ((name, attr) <- attributes) {
       assert(attr.vertexSet == edgeBundle.idSet,
         s"Incorrect vertex set for attribute $name.")
     }
-    val indexedEdges = edgeBundle.rdd.mapValues {
-      edge => Seq(edge.src.toString, edge.dst.toString)
-    }
-    val (names, attrs) = attributes.toList.sortBy(_._1).unzip
+    val base = edgeBundle.rdd.mapValues(_ => Seq[String]())
+    val (names, data) = attributes.toList.unzip
     CSVData(
-      (srcColumnName :: dstColumnName :: names).map(quoteString),
-      attachAttributeData(indexedEdges, attrs).values)
+      names.map(quoteString),
+      attachAttributeData(base, data).values
+    )
   }
 
   private def addRDDs(base: SortedRDD[ID, Seq[String]], rdds: Seq[SortedRDD[ID, String]]) = {

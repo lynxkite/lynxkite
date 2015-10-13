@@ -12,4 +12,4 @@ npm test
 
 cd -
 tools/check_documentation.sh
-tools/e2e_test.sh
+tools/e2e_test.sh --no-color

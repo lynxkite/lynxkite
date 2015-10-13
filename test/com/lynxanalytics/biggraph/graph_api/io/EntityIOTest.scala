@@ -56,6 +56,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     implicit val metaManager = cleanMetaManager
     val operation = EnhancedExampleGraph()
     val vertices = operation().result.vertices
+    val weight = operation().result.weight
     val repo = cleanDataManager.repositoryPath
     for (p <- partitions) {
       val dataManager = new DataManager(sparkContext, repo)
@@ -63,6 +64,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
           dataManager.get(vertices)
+          dataManager.get(weight) // This line invokes both EdgeBundle and Attribute[double] loads
           dataManager.waitAllFutures()
         }
     }

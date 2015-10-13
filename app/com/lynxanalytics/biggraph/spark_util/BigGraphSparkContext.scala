@@ -120,6 +120,28 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$8])
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$9])
     kryo.register(classOf[scala.reflect.ManifestFactory$$anon$12])
+
+    kryo.register(classOf[org.apache.spark.sql.types.StructType])
+    kryo.register(classOf[org.apache.spark.sql.types.StructField])
+    kryo.register(classOf[Array[org.apache.spark.sql.types.StructField]])
+    kryo.register(classOf[org.apache.spark.sql.types.Metadata])
+    kryo.register(org.apache.spark.sql.types.BinaryType.getClass)
+    kryo.register(org.apache.spark.sql.types.ByteType.getClass)
+    kryo.register(org.apache.spark.sql.types.DecimalType.getClass)
+    kryo.register(org.apache.spark.sql.types.DoubleType.getClass)
+    kryo.register(org.apache.spark.sql.types.FloatType.getClass)
+    kryo.register(org.apache.spark.sql.types.IntegerType.getClass)
+    kryo.register(org.apache.spark.sql.types.LongType.getClass)
+    kryo.register(org.apache.spark.sql.types.MapType.getClass)
+    kryo.register(org.apache.spark.sql.types.NullType.getClass)
+    kryo.register(org.apache.spark.sql.types.ShortType.getClass)
+    kryo.register(org.apache.spark.sql.types.StringType.getClass)
+    kryo.register(org.apache.spark.sql.types.TimestampType.getClass)
+    kryo.register(scala.collection.immutable.Map().getClass)
+    kryo.register(classOf[Array[org.apache.spark.sql.catalyst.InternalRow]])
+    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.GenericInternalRow])
+    kryo.register(classOf[org.apache.spark.unsafe.types.UTF8String])
+    kryo.register(classOf[Array[scala.collection.immutable.Map[_, _]]])
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

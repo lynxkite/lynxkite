@@ -1,3 +1,7 @@
+item-name-and-menu {
+  word-wrap: break-word;
+}
+
 .btn-dropdown {
   display: inline-block;
   color: rgba(0, 0, 0, 0.3);

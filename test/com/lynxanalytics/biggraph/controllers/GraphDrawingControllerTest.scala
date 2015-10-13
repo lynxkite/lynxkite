@@ -318,7 +318,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       attributeId = g.age.gUID.toString,
       vertexFilters = Seq(),
       numBuckets = 4,
-      axisOptions = AxisOptions())
+      axisOptions = AxisOptions(),
+      sampleSize = 50000)
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("2.0", "14.1", "26.2", "38.2", "50.3"))
@@ -331,7 +332,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       attributeId = g.income.gUID.toString,
       vertexFilters = Seq(),
       numBuckets = 4,
-      axisOptions = AxisOptions())
+      axisOptions = AxisOptions(),
+      sampleSize = 50000)
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1000.0", "1250.0", "1500.0", "1750.0", "2000.0"))
@@ -344,7 +346,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       attributeId = g.age.gUID.toString,
       vertexFilters = Seq(),
       numBuckets = 4,
-      axisOptions = AxisOptions(logarithmic = true))
+      axisOptions = AxisOptions(logarithmic = true),
+      sampleSize = 50000)
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("2.0", "4.5", "10.0", "22.5", "50.3"))
@@ -357,7 +360,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       attributeId = g.gender.gUID.toString,
       vertexFilters = Seq(),
       numBuckets = 4,
-      axisOptions = AxisOptions())
+      axisOptions = AxisOptions(),
+      sampleSize = 50000)
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "bucket")
     assert(res.labels == Seq("Female", "Male"))
@@ -372,7 +376,8 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       edgeFilters = Seq(),
       numBuckets = 4,
       axisOptions = AxisOptions(),
-      edgeBundleId = g.edges.gUID.toString)
+      edgeBundleId = g.edges.gUID.toString,
+      sampleSize = 50000)
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
@@ -390,11 +395,42 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
       edgeFilters = Seq(f),
       numBuckets = 4,
       axisOptions = AxisOptions(),
-      edgeBundleId = g.edges.gUID.toString)
+      edgeBundleId = g.edges.gUID.toString,
+      sampleSize = 50000)
     val res = controller.getHistogram(user, req)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
     assert(res.sizes == Seq(0, 1, 1, 1))
+  }
+
+  test("histogram with smaller sample size as data size") {
+    val vs = graph_operations.CreateVertexSet(100)().result.vs
+    val rndVA = {
+      val op = graph_operations.AddGaussianVertexAttribute(1)
+      op(op.vertices, vs).result.attr
+    }
+    val req = HistogramSpec(
+      attributeId = rndVA.gUID.toString,
+      vertexFilters = Seq(),
+      numBuckets = 10,
+      axisOptions = AxisOptions(),
+      sampleSize = 1)
+    val res = controller.getHistogram(user, req)
+    assert(res.labelType == "between")
+    assert(res.sizes.count(x => x == 100) == 1)
+  }
+
+  test("histogram without sampling") {
+    val g = graph_operations.ExampleGraph()().result
+    val req = HistogramSpec(
+      attributeId = g.name.gUID.toString,
+      vertexFilters = Seq(),
+      numBuckets = 4,
+      axisOptions = AxisOptions(),
+      sampleSize = -1)
+    val res = controller.getHistogram(user, req)
+    assert(res.labelType == "bucket")
+    assert(res.sizes == Seq(1, 1, 1, 1))
   }
 
   test("scalar") {
@@ -408,4 +444,5 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraph
     assert(res.string == "4")
     assert(res.double == Some(4))
   }
+
 }

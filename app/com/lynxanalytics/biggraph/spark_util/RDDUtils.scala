@@ -111,7 +111,7 @@ object RDDUtils {
     }
   }
 
-  def estimateValueCounts[T](
+  private def estimateValueCounts[T](
     fullRDD: SortedRDD[ID, _],
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
@@ -151,6 +151,41 @@ object RDDUtils {
       (value, count) => math.round(count / rounder).toInt * rounder
     }
     return valueBuckets
+  }
+
+  private def preciseValueCounts[T](
+    data: SortedRDD[ID, T]): IDBuckets[T] = {
+
+    data.aggregate(new IDBuckets[T]())(
+      {
+        case (buckets, (id, value)) =>
+          buckets.add(id, value)
+          buckets
+      },
+      {
+        case (buckets1, buckets2) =>
+          buckets1.absorb(buckets2)
+          buckets1
+      })
+  }
+
+  def estimateOrPreciseValueCounts[T](
+    fullRDD: SortedRDD[ID, _],
+    data: SortedRDD[ID, T],
+    totalVertexCount: Long,
+    requiredPositiveSamples: Int,
+    rc: RuntimeContext): IDBuckets[T] = {
+
+    if (requiredPositiveSamples < 0) {
+      preciseValueCounts(data)
+    } else {
+      estimateValueCounts(
+        fullRDD,
+        data,
+        totalVertexCount,
+        requiredPositiveSamples,
+        rc)
+    }
   }
 
   def estimateValueWeights[T](
