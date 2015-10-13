@@ -38,6 +38,7 @@ private object SortedRDDUtil {
       s"Partitioner mismatch between $first and $second")
   }
 
+  // Keys in bi2 must be unique.
   def merge[K, V, W](
     bi1: collection.BufferedIterator[(K, V)],
     bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
@@ -45,7 +46,7 @@ private object SortedRDDUtil {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
       if (ord.equiv(k1, k2)) {
-        bi1.next; //bi2.next; // uncomment to disallow multiple keys on the left side
+        bi1.next;
         (k1, (v1, v2)) #:: merge(bi1, bi2)
       } else if (ord.lt(k1, k2)) {
         bi1.next
@@ -59,6 +60,37 @@ private object SortedRDDUtil {
     }
   }
 
+  private class ValuesForKeyIterator[K, V](k: K, bi: collection.BufferedIterator[(K, V)])
+      extends Iterator[V] {
+    def hasNext = bi.hasNext && bi.head._1 == k
+    def next = bi.next._2
+  }
+
+  // This one supports duplicates on both sides. It is 2-3 times slower.
+  def mergeWithDuplicates[K, V, W](
+    bi1: collection.BufferedIterator[(K, V)],
+    bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
+    if (bi1.hasNext && bi2.hasNext) {
+      val (k1, v1) = bi1.head
+      val (k2, v2) = bi2.head
+      if (ord.equiv(k1, k2)) {
+        val span1 = new ValuesForKeyIterator(k1, bi1).toStream
+        val span2 = new ValuesForKeyIterator(k1, bi2).toStream
+        val cross = for (v1 <- span1; v2 <- span2) yield (k1, (v1, v2))
+        cross #::: mergeWithDuplicates(bi1, bi2)
+      } else if (ord.lt(k1, k2)) {
+        bi1.next
+        mergeWithDuplicates(bi1, bi2)
+      } else {
+        bi2.next
+        mergeWithDuplicates(bi1, bi2)
+      }
+    } else {
+      Stream()
+    }
+  }
+
+  // Keys in bi2 must be unique.
   def leftOuterMerge[K, V, W](
     bi1: collection.BufferedIterator[(K, V)],
     bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, Option[W]))] = {
@@ -66,7 +98,7 @@ private object SortedRDDUtil {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
       if (ord.equiv(k1, k2)) {
-        bi1.next; //bi2.next; // uncomment to disallow multiple keys on the left side
+        bi1.next;
         (k1, (v1, Some(v2))) #:: leftOuterMerge(bi1, bi2)
       } else if (ord.lt(k1, k2)) {
         bi1.next
@@ -82,6 +114,7 @@ private object SortedRDDUtil {
     }
   }
 
+  // Keys in both inputs must be unique.
   def fullOuterMerge[K, V, W](
     bi1: collection.BufferedIterator[(K, V)],
     bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (Option[V], Option[W]))] = {
@@ -130,10 +163,8 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
     derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
     new BiDerivedSortedRDD(this, other, derivation)
 
-  /*
-   * Differs from Spark's join implementation as this allows multiple keys only on the left side
-   * the keys of 'other' must be unique!
-   */
+  // Differs from Spark's join implementation as this allows multiple keys only on the left side.
+  // The keys of 'other' must be unique!
   def sortedJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, W)] =
     biDeriveWith[W, (V, W)](
       other,
@@ -144,10 +175,21 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
         }
       })
 
-  /*
-   * Differs from Spark's join implementation as this allows multiple keys only on the left side
-   * the keys of 'other' must be unique!
-   */
+  // A version of sortedJoin that handles duplicates on both sides. This means the result can be
+  // (much) larger than the input, as all combinations are enumerated for the duplicates.
+  // It is 2-3 times slower than sortedJoin for the same data.
+  def sortedJoinWithDuplicates[W](other: SortedRDD[K, W]): SortedRDD[K, (V, W)] =
+    biDeriveWith[W, (V, W)](
+      other,
+      { (first, second) =>
+        SortedRDDUtil.assertMatchingRDDs(first, second)
+        first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
+          SortedRDDUtil.mergeWithDuplicates(it1.buffered, it2.buffered).iterator
+        }
+      })
+
+  // Differs from Spark's join implementation as this allows multiple keys only on the left side.
+  // The keys of 'other' must be unique!
   def sortedLeftOuterJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (V, Option[W])] =
     biDeriveWith[W, (V, Option[W])](
       other,
@@ -158,12 +200,10 @@ abstract class SortedRDD[K: Ordering, V] private[spark_util] (
         }
       })
 
-  /*
-   * Returns an RDD with the union of the keyset of this and other. For each key it returns two
-   * Options with the value for the key in this and in the other RDD.
-   *
-   * Both RDDs must have unique keys. Otherwise the world might end.
-   */
+  // Returns an RDD with the union of the keyset of this and other. For each key it returns two
+  // Options with the value for the key in this and in the other RDD.
+  //
+  // Both RDDs must have unique keys. Otherwise the world might end.
   def fullOuterJoin[W](other: SortedRDD[K, W]): SortedRDD[K, (Option[V], Option[W])] =
     biDeriveWith[W, (Option[V], Option[W])](
       other,
