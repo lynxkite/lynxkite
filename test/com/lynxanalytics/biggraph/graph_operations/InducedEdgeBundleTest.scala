@@ -52,6 +52,34 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
             op.dstMapping, merge.belongsTo)
         .result.induced
     }
-    assert(induced.toPairCounts == Map((1, 0) -> 1, (0, 1) -> 2, (0, 0) -> 1))
+    assert(induced.toPairCounts == Seq((0, 0) -> 1, (0, 1) -> 2, (1, 0) -> 1))
+  }
+
+  test("induce with non-function mapping") {
+    // Start with a graph that has two strongly connected components of two nodes each.
+    val graph = SmallTestGraph(Map(0 -> Seq(1), 1 -> Seq(0), 2 -> Seq(3), 3 -> Seq(2))).result
+    // Find connected components.
+    val components = {
+      val op = ConnectedComponents()
+      op(op.es, graph.es).result
+    }
+    // Connect the segments.
+    val componentEdges = {
+      val op = EdgesFromAttributeMatches[Double]()
+      op(op.attr, AddConstantAttribute.run(components.segments, 1.0)).result.edges
+    }
+    assert(componentEdges.toPairCounts == Seq((0, 2) -> 1, (2, 0) -> 1))
+    // Propagate back the new edges to the base vertices.
+    val induced = {
+      val op = InducedEdgeBundle()
+      op(
+        op.edges, componentEdges)(
+          op.srcMapping, ReverseEdges.run(components.belongsTo))(
+            op.dstMapping, ReverseEdges.run(components.belongsTo))
+        .result.induced
+    }
+    assert(induced.toPairCounts == Seq(
+      (0, 2) -> 1, (0, 3) -> 1, (1, 2) -> 1, (1, 3) -> 1,
+      (2, 0) -> 1, (2, 1) -> 1, (3, 0) -> 1, (3, 1) -> 1))
   }
 }
