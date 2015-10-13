@@ -3,10 +3,23 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.spark
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
+import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSuite
 
 // Things tested here are unfortunately not trivial due to things not being registered in kryo...
-class SparkSQLTest extends FunSuite with TestDataManager {
+class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
+  var oldOut: java.io.PrintStream = null
+  before {
+    assert(oldOut == null)
+    oldOut = Console.out
+    Console.setOut(com.google.common.io.ByteStreams.nullOutputStream())
+  }
+  after {
+    assert(oldOut != null)
+    Console.setOut(oldOut)
+    oldOut = null
+  }
+
   test("We can run a simple SparkSQL workflow using our internal spark context") {
     val sqlContext = cleanDataManager.sqlContext
     val resDir = getClass.getResource("/graph_api/SparkSQLTest").toString
