@@ -8,7 +8,7 @@ angular.module('biggraph').directive('fileParameter', function(util) {
       // The filename is exported through "model".
       filename: '=model',
       // The number of ongoing uploads. It is incremented by 1 while an upload is in progress.
-      fileUploads: '=',
+      fileUploadCount: '=',
       // Enable/disable the control.
       editable: '=',
     },
@@ -24,8 +24,8 @@ angular.module('biggraph').directive('fileParameter', function(util) {
         scope.$apply(function() {
           var file = input[0].files[0];
           input.val(null);  // Unset the selection, so the same file can be picked again.
-          scope.fileUploads = scope.fileUploads || 0;
-          scope.fileUploads += 1;
+          scope.fileUploadCount = scope.fileUploadCount || 0;
+          scope.fileUploadCount += 1;
           scope.uploading = true;
           scope.progress = 0;
           var xhr = new XMLHttpRequest();
@@ -38,7 +38,7 @@ angular.module('biggraph').directive('fileParameter', function(util) {
                 } else {
                   util.error('File upload failed.', { file: file });
                 }
-                scope.fileUploads -= 1;
+                scope.fileUploadCount -= 1;
                 scope.uploading = false;
               });
             }
