@@ -125,7 +125,7 @@ angular.module('biggraph').factory('util', function utilFactory(
         } else {
           resource.$error = util.responseToErrorMessage(failure);
         }
-        return failure;
+        return $q.reject(failure);
       });
     resource.$resolved = false;
     resource.$abandon = function() { promise.$abandon(); };
@@ -150,7 +150,7 @@ angular.module('biggraph').factory('util', function utilFactory(
     post: function(url, params, onSuccess) {
       var req = $http.post(url, params).catch(function(failure) {
         util.ajaxError(failure);
-        return failure;
+        return $q.reject(failure);
       });
       return toResource(req).then(onSuccess);
     },
