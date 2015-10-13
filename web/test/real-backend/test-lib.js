@@ -146,13 +146,6 @@ Side.prototype = {
     this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
   },
 
-  clickOperationOk: function() {
-    var button = this.toolbox.element(by.css('.ok-button'));
-    // Wait for uploads or whatever.
-    browser.wait(protractor.until.elementTextMatches(button, /OK/));
-    button.click();
-  },
-
   openWorkflowSavingDialog: function() {
     this.side.element(by.id('save-as-workflow-button')).click();
   },
@@ -180,7 +173,10 @@ Side.prototype = {
   },
 
   submitOperation: function(parentElement) {
-    parentElement.element(by.css('.ok-button')).click();
+    var button = parentElement.element(by.css('.ok-button'));
+    // Wait for uploads or whatever.
+    browser.wait(protractor.until.elementTextMatches(button, /OK/));
+    button.click();
   },
 
   runOperation: function(name, params) {
