@@ -34,12 +34,11 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
     assert(sj.count == j.count)
   }
 
-  // at the moment our sortedJoin does not support this feature
-  ignore("join with multiple keys on both sides") {
+  test("join with multiple keys on both sides") {
     val p = new HashPartitioner(4)
     val a = sparkContext.parallelize(Seq(0 -> 1, 10 -> 11, 10 -> 12, 11 -> 10, 20 -> 12)).partitionBy(p).toSortedRDD
     val b = sparkContext.parallelize(Seq(10 -> "A", 10 -> "B")).partitionBy(p).toSortedRDD
-    val sj: SortedRDD[Int, (Int, String)] = a.sortedJoin(b)
+    val sj: SortedRDD[Int, (Int, String)] = a.sortedJoinWithDuplicates(b)
     val j: RDD[(Int, (Int, String))] = a.join(b)
     println(sj.collect.toSeq)
     println(j.collect.toSeq)
@@ -169,10 +168,11 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
 
   test("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
-      val data = genData(parts, rows, 1).toSortedRDD.cache
+      val partitioner = new HashPartitioner(parts)
+      val data = genData(parts, rows, 1).toSortedRDD(partitioner).cache
       data.calculate
       val other = genData(parts, rows, 2).sample(false, 0.5, 0)
-        .partitionBy(data.partitioner.get).toSortedRDD.cache
+        .partitionBy(data.partitioner.get).toSortedRDD(partitioner).cache
       other.calculate
       def oldJoin = getSum(data.join(other))
       def newJoin = getSum(data.sortedJoin(other))
