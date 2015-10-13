@@ -55,6 +55,16 @@ angular.module('biggraph').factory('util', function utilFactory(
   };
 
 
+  // Sends an HTTP request immediately.
+  function sendRequest(config) {
+    var canceler = $q.defer();
+    var fullConfig = angular.extend({ timeout: canceler.promise }, config);
+    var req = $http(fullConfig);
+    req.$config = fullConfig;  // For debugging.
+    req.$abandon = function() { canceler.resolve(); };
+    return req;
+  }
+
   // Sends an HTTP GET, possibly queuing the request.
   function getRequest(config) {
     var SLOW_REQUESTS = [
@@ -122,16 +132,6 @@ angular.module('biggraph').factory('util', function utilFactory(
     // A promise of the success state, for flexibility.
     resource.$status = resource.then(function() { return true; }, function() { return false; });
     return resource;
-  }
-
-  // Sends an HTTP request immediately.
-  function sendRequest(config) {
-    var canceler = $q.defer();
-    var fullConfig = angular.extend({ timeout: canceler.promise }, config);
-    var req = $http(fullConfig);
-    req.$config = fullConfig;  // For debugging.
-    req.$abandon = function() { canceler.resolve(); };
-    return req;
   }
 
   var util = {
