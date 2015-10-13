@@ -127,7 +127,7 @@ angular.module('biggraph').directive('projectHistory', function(util) {
             scope.side.state.projectName = newName; // Will trigger a reload.
           }
           scope.side.showHistory = false;
-        }).$status.then(function() {
+        }).finally(function() {
           // On completion, regardless of success.
           scope.saving = false;
         });

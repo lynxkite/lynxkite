@@ -80,22 +80,29 @@ angular.module('biggraph').factory('util', function utilFactory(
     return sendRequest(config);
   }
 
-  // Returns a self-populating object, like Angular's ngResource.
+  // A GET request wrapped as a Resource.
   function getResource(url, params, config) {
     // Create full $http request config.
     if (params === undefined) { params = { fake: 1 }; }
-    var fullConfig = angular.extend({ method: 'GET', url: url, params: params }, config);
+    var fullConfig = angular.extend({ method: 'GET', url: url, params: { q: params } }, config);
     // Send request.
-    var resource = getRequest(fullConfig);
-    // Populate the promise object with the result data, update $resolved.
-    resource.then(
+    var req = getRequest(fullConfig);
+    // Return Resource.
+    return toResource(req);
+  }
+
+  // Replaces a promise with another promise that behaves like Angular's ngResource.
+  // It will populate itself with the response data and set $resolved and $error.
+  // It can be abandoned with $abandon(). $status is a Boolean promise of the success state.
+  function toResource(promise) {
+    var resource = promise.then(
       function onSuccess(response) {
         angular.extend(resource, response.data);
         resource.$resolved = true;
+        return response.data;
       },
       function onError(failure) {
         resource.$resolved = true;
-        resource.$status = failure.status;
         if (failure.status === 401) {  // Unauthorized.
           resource.$error = 'Redirecting to login page.';
           if ($location.protocol() === 'https') {
@@ -106,8 +113,12 @@ angular.module('biggraph').factory('util', function utilFactory(
         } else {
           resource.$error = util.responseToErrorMessage(failure);
         }
+        return failure;
       });
     resource.$resolved = false;
+    resource.$abandon = function() { promise.$abandon(); };
+    // A promise of the success state, for flexibility.
+    resource.$status = resource.then(function() { return true; }, function() { return false; });
     return resource;
   }
 
@@ -135,12 +146,11 @@ angular.module('biggraph').factory('util', function utilFactory(
 
     // Json POST with simple error handling.
     post: function(url, params, onSuccess) {
-      var req = $http.post(url, params).then(onSuccess, function(failure) {
+      var req = $http.post(url, params).catch(function(failure) {
         util.ajaxError(failure);
+        return failure;
       });
-      // A promise of the success state, for flexibility.
-      req.$status = req.then(function() { return true; }, function() { return false; });
-      return req;
+      return toResource(req).then(onSuccess);
     },
 
     // Easier to read numbers. 1234 -> 1k

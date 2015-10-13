@@ -9,7 +9,7 @@ angular.module('biggraph')
       util
         .post('/ajax/markFilesDeleted', {
           method: $scope.selectedMethod,
-        }).$status.then(function() {
+        }).finally(function() {
           $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
         });
     };
@@ -18,7 +18,7 @@ angular.module('biggraph')
       util
         .post('/ajax/deleteMarkedFiles', {
           fake: 0,
-        }).$status.then(function() {
+        }).finally(function() {
           $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
         });
     };
