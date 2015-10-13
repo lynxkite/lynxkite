@@ -20,7 +20,9 @@ angular.module('biggraph').factory('util', function utilFactory(
         var queuing = $q.defer();
         req = queuing.promise.then(function() {
           var next = sendRequest(config);
-          req.$abandon = next.$abandon;  // Abandoning should now try to cancel the request.
+          req.$abandon = function() {
+            next.$abandon();  // Abandoning should now cancel the request.
+          };
           return next;
         });
         req.$config = config;  // For debugging.
