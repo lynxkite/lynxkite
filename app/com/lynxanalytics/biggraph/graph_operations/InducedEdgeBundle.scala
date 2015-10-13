@@ -21,9 +21,9 @@ object InducedEdgeBundle extends OpFromJson {
     val srcImage = if (induceSrc) vertexSet else null
     val dstImage = if (induceDst) vertexSet else null
     val srcMapping =
-      if (induceSrc) edgeBundle(src, srcImage, EdgeBundleProperties.partialFunction) else null
+      if (induceSrc) edgeBundle(src, srcImage) else null
     val dstMapping =
-      if (induceDst) edgeBundle(dst, dstImage, EdgeBundleProperties.partialFunction) else null
+      if (induceDst) edgeBundle(dst, dstImage) else null
     val edges = edgeBundle(src, dst)
   }
   class Output(induceSrc: Boolean, induceDst: Boolean)(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
@@ -39,9 +39,9 @@ object InducedEdgeBundle extends OpFromJson {
       val origProp = inputs.edges.entity.properties
       val inducedProp = EdgeBundleProperties(
         isFunction =
-          origProp.isFunction && srcMappingProp.isReversedFunction,
+          origProp.isFunction && srcMappingProp.isReversedFunction && dstMappingProp.isFunction,
         isReversedFunction =
-          origProp.isReversedFunction && dstMappingProp.isReversedFunction,
+          origProp.isReversedFunction && srcMappingProp.isFunction && dstMappingProp.isReversedFunction,
         isEverywhereDefined =
           origProp.isEverywhereDefined && srcMappingProp.isReverseEverywhereDefined,
         isReverseEverywhereDefined =
@@ -89,21 +89,31 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       }
     }
 
+    def joinMapping[V](rdd: SortedRDD[ID, V],
+                       mappingInput: MagicInputSignature#EdgeBundleTemplate) = {
+      val props = mappingInput.entity.properties
+      val mapping = getMapping(mappingInput, rdd.partitioner.get)
+      // If the mapping has no duplicates we can use the faster sortedJoin.
+      if (props.isFunction) rdd.sortedJoin(mapping)
+      // If the mapping can have duplicates we need to use the slower sortedJoinWithDuplicates.
+      else rdd.sortedJoinWithDuplicates(mapping)
+    }
+
     val srcInduced = if (!induceSrc) edges else {
       val srcPartitioner = src.partitioner.get
-      val bySrc = edges
+      val byOldSrc = edges
         .map { case (id, edge) => (edge.src, (id, edge)) }
         .toSortedRDD(srcPartitioner)
-        .sortedJoin(getMapping(inputs.srcMapping, srcPartitioner))
+      val bySrc = joinMapping(byOldSrc, inputs.srcMapping)
         .mapValues { case ((id, edge), newSrc) => (id, Edge(newSrc, edge.dst)) }
       bySrc.values
     }
     val dstInduced = if (!induceDst) srcInduced else {
       val dstPartitioner = dst.partitioner.get
-      val byDst = srcInduced
+      val byOldDst = srcInduced
         .map { case (id, edge) => (edge.dst, (id, edge)) }
         .toSortedRDD(dstPartitioner)
-        .sortedJoin(getMapping(inputs.dstMapping, dstPartitioner))
+      val byDst = joinMapping(byOldDst, inputs.dstMapping)
         .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
       byDst.values
     }
