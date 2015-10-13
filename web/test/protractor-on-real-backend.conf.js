@@ -23,5 +23,4 @@ exports.config = {
         },
      },
   },
-  plugins: [{ path: 'queue-waiter.js' }],
 };
