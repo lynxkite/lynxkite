@@ -44,9 +44,9 @@ include::clustering-coefficient.asciidoc[]
 
 include::combine-segmentations.asciidoc[]
 
-include::connected-components.asciidoc[]
-
 include::connect-vertices-on-attribute.asciidoc[]
+
+include::connected-components.asciidoc[]
 
 include::convert-vertices-into-edges.asciidoc[]
 
@@ -132,6 +132,10 @@ include::fingerprinting-based-on-attributes.asciidoc[]
 
 include::fingerprinting-between-project-and-segmentation.asciidoc[]
 
+include::import-edge-attributes-from-a-database.asciidoc[]
+
+include::import-edge-attributes-from-csv-files.asciidoc[]
+
 include::import-edges-for-existing-vertices-from-a-database.asciidoc[]
 
 include::import-edges-for-existing-vertices-from-csv-files.asciidoc[]
@@ -141,10 +145,6 @@ include::import-project-as-segmentation.asciidoc[]
 include::import-vertex-attributes-from-a-database.asciidoc[]
 
 include::import-vertex-attributes-from-csv-files.asciidoc[]
-
-include::import-edge-attributes-from-a-database.asciidoc[]
-
-include::import-edge-attributes-from-csv-files.asciidoc[]
 
 include::import-vertices-and-edges-from-a-single-csv-fileset.asciidoc[]
 
@@ -162,9 +162,9 @@ include::load-segmentation-links-from-csv.asciidoc[]
 
 include::maximal-cliques.asciidoc[]
 
-include::merge-parallel-edges.asciidoc[]
-
 include::merge-parallel-edges-by-attribute.asciidoc[]
+
+include::merge-parallel-edges.asciidoc[]
 
 include::merge-two-attributes.asciidoc[]
 
@@ -202,11 +202,11 @@ include::shortest-path.asciidoc[]
 
 include::union-with-another-project.asciidoc[]
 
-include::vertex-attributes-to-position.asciidoc[]
-
 include::vertex-attribute-to-double.asciidoc[]
 
 include::vertex-attribute-to-string.asciidoc[]
+
+include::vertex-attributes-to-position.asciidoc[]
 
 include::viral-modeling.asciidoc[]
 
