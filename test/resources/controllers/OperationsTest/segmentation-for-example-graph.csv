@@ -1,0 +1,6 @@
+base_name,seg_name,ignored_attr
+Adam,Good,1
+Eve,Naughty,2
+Bob,Good,3
+Isolated Joe,Naughty,4
+Isolated Joe,Retired,5
