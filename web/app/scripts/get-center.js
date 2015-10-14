@@ -14,7 +14,7 @@ angular.module('biggraph').factory('getCenter', function(util) {
 
     // We rely on the browser's cache to avoid re-sending requests for pagination.
     var req = util.get('/ajax/center', resolvedParams);
-    var promise = req.$promise.then(
+    var promise = req.then(
       function(result) {
         var centers = result.centers;
         offset = offset % centers.length;

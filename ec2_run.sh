@@ -11,7 +11,7 @@ if [ "$#" -ne 1 ]; then
   exit 1
 fi
 
-./prod_stage.sh
+./stage.sh
 ./stage/tools/ec2.sh kite $1
 
 popd > /dev/null

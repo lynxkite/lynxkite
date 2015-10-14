@@ -41,6 +41,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
 
       scope.util = util;
       function refresh() {
+        abandonScalars();
         scope.data = util.nocache('/ajax/projectList', { path: scope.path });
       }
 
@@ -53,6 +54,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         return res;
       }
 
+      // Fake scalar for projects with no vertices/edges.
+      var NO = { string: 'no', $abandon: function() {} };
+
       scope.$watch('data.$resolved', function(resolved) {
         if (!resolved || scope.data.$error) { return; }
         scope.vertexCounts = {};
@@ -60,11 +64,22 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         for (var i = 0; i < scope.data.projects.length; ++i) {
           var p = scope.data.projects[i];
           scope.vertexCounts[p.name] =
-            p.vertexCount ? getScalar(p.title, p.vertexCount) : { string: 'no' };
+            p.vertexCount ? getScalar(p.title, p.vertexCount) : NO;
           scope.edgeCounts[p.name] =
-            p.edgeCount ? getScalar(p.title, p.edgeCount) : { string: 'no' };
+            p.edgeCount ? getScalar(p.title, p.edgeCount) : NO;
         }
       });
+
+      function abandonScalars() {
+        if (scope.data && scope.data.$resolved) {
+          for (var i = 0; i < scope.data.projects.length; ++i) {
+            var p = scope.data.projects[i];
+            scope.vertexCounts[p.name].$abandon();
+            scope.edgeCounts[p.name].$abandon();
+          }
+        }
+      }
+      scope.$on('$destroy', abandonScalars);
 
       scope.createProject = function() {
         scope.newProject.sending = true;

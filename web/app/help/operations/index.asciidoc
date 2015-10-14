@@ -138,6 +138,10 @@ include::import-edges-for-existing-vertices-from-csv-files.asciidoc[]
 
 include::import-project-as-segmentation.asciidoc[]
 
+include::import-segmentation-from-a-database.asciidoc[]
+
+include::import-segmentation-from-csv.asciidoc[]
+
 include::import-vertex-attributes-from-a-database.asciidoc[]
 
 include::import-vertex-attributes-from-csv-files.asciidoc[]

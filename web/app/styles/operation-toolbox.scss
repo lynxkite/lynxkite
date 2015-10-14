@@ -71,6 +71,9 @@ side-operation-toolbox .operation-toolbox {
   padding-left: 9px;
   border-left: 1px solid transparent;
 }
+.operation-toolbox .categories.uneditable {
+  cursor: not-allowed;
+}
 
 .operation-toolbox .box .clicky:hover { color: black !important; }
 

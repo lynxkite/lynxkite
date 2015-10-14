@@ -6,7 +6,6 @@
     "angular-bootstrap": "0.13.3",
     "angular-cookies": "1.4.4",
     "angular-hotkeys": "chieffancypants/angular-hotkeys#1.5.0",
-    "angular-resource": "1.4.4",
     "angular-route": "1.4.4",
     "angular-sanitize": "1.4.4",
     "angular-ui-ace": "0.2.3",
