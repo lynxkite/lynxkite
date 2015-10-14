@@ -121,15 +121,17 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
         .mapValues { case ((id, edge), newDst) => (id, Edge(edge.src, newDst)) }
       byDst.values
     }
-    val induced = dstInduced.toSortedRDD(edges.partitioner.get)
     val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
     val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
     if (srcIsFunction && dstIsFunction) {
+      val induced = dstInduced.toSortedRDD(edges.partitioner.get)
       output(o.induced, induced)
       output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
     } else {
+      // We may end up with way more edges than we had originally. We need a new partitioner.
+      val partitioner = rc.partitionerForNRows(dstInduced.count)
       // A non-function mapping can introduce duplicates. We need to generate new IDs.
-      val renumbered = induced.randomNumbered(edges.partitioner.get)
+      val renumbered = dstInduced.randomNumbered(partitioner)
       output(o.induced, renumbered.mapValues { case (oldId, edge) => edge })
       output(o.embedding,
         renumbered.mapValuesWithKeys { case (newId, (oldId, edge)) => Edge(newId, oldId) })
