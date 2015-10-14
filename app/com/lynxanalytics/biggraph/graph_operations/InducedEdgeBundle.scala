@@ -93,8 +93,9 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       }
     }
 
-    def joinMapping[V](rdd: SortedRDD[ID, V],
-                       mappingInput: MagicInputSignature#EdgeBundleTemplate) = {
+    def joinMapping[V](
+      rdd: SortedRDD[ID, V],
+      mappingInput: MagicInputSignature#EdgeBundleTemplate): SortedRDD[ID, (V, ID)] = {
       val props = mappingInput.entity.properties
       val mapping = getMapping(mappingInput, rdd.partitioner.get)
       // If the mapping has no duplicates we can use the faster sortedJoin.
