@@ -78,8 +78,10 @@ class InducedEdgeBundleTest extends FunSuite with TestGraphOp {
             op.dstMapping, ReverseEdges.run(components.belongsTo))
         .result.induced
     }
-    assert(induced.toPairSeq == Seq(
+    val (ids, edges) = induced.toIdPairSeq.unzip
+    assert(edges.sorted == Seq(
       0 -> 2, 0 -> 3, 1 -> 2, 1 -> 3,
       2 -> 0, 2 -> 1, 3 -> 0, 3 -> 1))
+    assert(ids.size == ids.toSet.size) // No duplicate IDs.
   }
 }
