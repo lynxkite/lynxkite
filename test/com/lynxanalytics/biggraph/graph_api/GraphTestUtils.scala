@@ -57,16 +57,17 @@ trait TestMetaGraphManager extends TestTempDir {
 
 trait TestDataManager extends TestTempDir with TestSparkContext {
   def cleanDataManager: DataManager = {
-    val sandboxPrefix = getRegisteredSandboxPrefix()
-    new DataManager(sparkContext, HadoopFile(sandboxPrefix))
+    val dataDir = getDirForDataManager()
+    new DataManager(sparkContext, dataDir)
   }
 }
 
+// A TestDataManager that has an ephemeral path, too.
 trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
   def cleanDataManagerEphemeral: DataManager = {
-    val sandboxPrefix = getRegisteredSandboxPrefix()
-    val ephemeralPrefix = getRegisteredSandboxPrefix()
-    new DataManager(sparkContext, HadoopFile(sandboxPrefix), Some(HadoopFile(ephemeralPrefix)))
+    val permanentDir = getDirForDataManager()
+    val ephemeralDir = getDirForDataManager()
+    new DataManager(sparkContext, permanentDir, Some(ephemeralDir))
   }
 }
 
