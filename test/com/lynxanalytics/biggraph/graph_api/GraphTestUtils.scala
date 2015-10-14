@@ -34,15 +34,6 @@ object GraphTestUtils {
         .toSeq
         .sorted
     }
-    def toPairCounts(): Seq[((ID, ID), Int)] = {
-      eb.rdd
-        .collect
-        .map { case (id, edge) => (edge.src -> edge.dst) }
-        .groupBy(identity)
-        .toSeq
-        .sortBy(_._1)
-        .map { case (pair, edges) => pair -> edges.size }
-    }
   }
 }
 
