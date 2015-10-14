@@ -3,6 +3,6 @@
 set -x
 set -e
 
-./dev_stage.sh
+./stage.sh
 
 stage/bin/biggraph "$@" interactive

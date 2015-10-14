@@ -406,7 +406,8 @@ Drive responsibly.""")
         password = scala.util.Properties.envOrElse("KITE_AMMONITE_PASSWD", "kite")),
       predef = s"""
 import com.lynxanalytics.biggraph._
-System.out.println("${help}")
+Console.setOut(System.out)
+println("${help}")
 """,
       replArgs = Seq(
         Bind("server", this),
