@@ -65,7 +65,7 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
   }
 }
 
-trait TestGraphOp extends TestMetaGraphManager with TestDataManager with TestSparkManager {
+trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
   PrefixRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
