@@ -11,6 +11,7 @@ Please add changes to "master". When releasing a version add a new header for th
    arbitrary data processing tasks using the computation resources held by Kite. For details on
    how to set this up, see `conf/kiterc_template`.
  - Added a new operation to compute the shortest path from a given set of vertices.
+ - Added _"Import segmentation"_ operations.
 
 ### 1.5.6
 
