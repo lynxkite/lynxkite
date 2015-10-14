@@ -53,7 +53,7 @@ object InducedEdgeBundle extends OpFromJson {
     val embedding = {
       val properties =
         if (srcMappingProp.isFunction && dstMappingProp.isFunction) EdgeBundleProperties.embedding
-        else EdgeBundleProperties.injection
+        else EdgeBundleProperties(isFunction = true, isEverywhereDefined = true)
       edgeBundle(induced.idSet, inputs.edges.idSet, properties)
     }
   }
