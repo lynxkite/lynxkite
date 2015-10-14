@@ -8,7 +8,7 @@ import scala.util.Try
 import scala.sys.process._
 
 import com.lynxanalytics.biggraph.bigGraphLogger
-import com.lynxanalytics.biggraph.SparkContextProvider
+import com.lynxanalytics.biggraph.SparkManager
 
 /*
  * Represents a SPARK cluster using Google Compute Engine instances as master and workers.
@@ -24,7 +24,7 @@ case class GCEManagedCluster(clusterName: String,
                              isMasterStarted: Boolean,
                              masterMachineType: String = "n1-standard-2",
                              slaveMachineType: String = "n1-highmem-4")
-    extends SparkContextProvider {
+    extends SparkManager {
   val slaveNamePrefix = clusterName + "-"
   val masterName = clusterName + "-master"
   val clusterURL = "spark://" + masterName + ":7077"
@@ -34,7 +34,7 @@ case class GCEManagedCluster(clusterName: String,
 
   waitUp
 
-  override lazy val sparkContext = BigGraphSparkContext(applicationName)
+  override def createSparkContext = BigGraphSparkContext(applicationName)
 
   override def allowsClusterResize: Boolean = true
 

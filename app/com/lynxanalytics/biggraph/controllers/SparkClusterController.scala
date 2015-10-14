@@ -121,12 +121,12 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def getClusterStatus(user: serving.User, request: serving.Empty): SparkClusterStatusResponse = {
-    SparkClusterStatusResponse(environment.sparkContext.master, environment.numInstances)
+    SparkClusterStatusResponse(environment.sparkContext.master, environment.sparkManager.numInstances)
   }
 
   def setClusterNumInstances(user: serving.User, request: SetClusterNumInstanceRequest): SparkClusterStatusResponse = {
     assert(user.isAdmin, "Only administrators can resize the cluster.")
-    environment.setNumInstances(request.workerInstances)
+    environment.sparkManager.setNumInstances(request.workerInstances)
     return getClusterStatus(user, serving.Empty())
   }
 

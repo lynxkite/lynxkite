@@ -4,8 +4,6 @@ package com.lynxanalytics
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import ch.qos.logback.classic.LoggerContext
 import org.slf4j.LoggerFactory
-import scala.concurrent._
-import scala.concurrent.duration.Duration
 import scala.reflect.runtime.universe._
 
 package object biggraph {
@@ -67,32 +65,18 @@ package object biggraph {
 
     val res = scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
       case staticPattern(master) =>
-        new StaticSparkContextProvider() with StaticDirEnvironment {
-          val repositoryDirs = repoDirs
-        }
+        BigGraphEnvironmentImpl.createStaticDirEnvironment(
+          repoDirs,
+          new StaticSparkManager())
       case standingGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "LynxKite", true) with StaticDirEnvironment {
-          val repositoryDirs = repoDirs
-        }
+        BigGraphEnvironmentImpl.createStaticDirEnvironment(
+          repoDirs,
+          new spark_util.GCEManagedCluster(clusterName, "LynxKite", true))
       case newGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "LynxKite", false) with StaticDirEnvironment {
-          val repositoryDirs = repoDirs
-        }
+        BigGraphEnvironmentImpl.createStaticDirEnvironment(
+          repoDirs,
+          new spark_util.GCEManagedCluster(clusterName, "LynxKite", false))
     }
-
-    // Force initialization of the managers and the SparkContext. Some of the initializers can
-    // be run in parallel. The number of threads is set to the number of futures.
-    implicit val executionContext = ExecutionContext.fromExecutorService(
-      java.util.concurrent.Executors.newFixedThreadPool(3));
-    val initializationFuture = Future.sequence(Seq(
-      Future {
-        res.sparkContext
-        res.dataManager
-      },
-      Future {
-        res.metaGraphManager
-      }))
-    Await.ready(initializationFuture, Duration.Inf)
     bigGraphLogger.info("Production Kite environment initialized")
     res
   }
