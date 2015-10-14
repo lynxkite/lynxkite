@@ -65,17 +65,11 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
   }
 }
 
-trait TestSparkManager {
-  def cleanSparkManager: SparkManager = new SparkManager {
-    val createSparkContext = null // not needed in tests
-  }
-}
-
 trait TestGraphOp extends TestMetaGraphManager with TestDataManager with TestSparkManager {
   PrefixRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
-  implicit val sparkManager = cleanSparkManager
+  implicit lazy val sparkManager: SparkManager = ???
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }
