@@ -237,7 +237,7 @@ class MetaGraphManager(val repositoryPath: String) {
       Json.obj(
         "operation" -> inst.operation.toTypedJson,
         "inputs" -> inst.inputs.toJson,
-        "guid" -> inst.operation.gUID,
+        "guid" -> inst.gUID,
         "outputs" -> inst.outputs.toJson)
     } catch {
       // Put details of "inst" in the exception.
