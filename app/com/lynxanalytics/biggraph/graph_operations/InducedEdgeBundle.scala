@@ -27,15 +27,15 @@ object InducedEdgeBundle extends OpFromJson {
     val edges = edgeBundle(src, dst)
   }
   class Output(induceSrc: Boolean, induceDst: Boolean)(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    private val srcMappingProp =
+      if (induceSrc) inputs.srcMapping.entity.properties
+      else EdgeBundleProperties.identity
+    private val dstMappingProp =
+      if (induceDst) inputs.dstMapping.entity.properties
+      else EdgeBundleProperties.identity
     val induced = {
       val src = if (induceSrc) inputs.srcImage else inputs.src
       val dst = if (induceDst) inputs.dstImage else inputs.dst
-      val srcMappingProp =
-        if (induceSrc) inputs.srcMapping.entity.properties
-        else EdgeBundleProperties.identity
-      val dstMappingProp =
-        if (induceDst) inputs.dstMapping.entity.properties
-        else EdgeBundleProperties.identity
       val origProp = inputs.edges.entity.properties
       val inducedProp = EdgeBundleProperties(
         isFunction =
@@ -50,8 +50,12 @@ object InducedEdgeBundle extends OpFromJson {
           origProp.isIdPreserving && srcMappingProp.isIdPreserving && dstMappingProp.isIdPreserving)
       edgeBundle(src.entity, dst.entity, inducedProp)
     }
-    val embedding = edgeBundle(
-      induced.idSet, inputs.edges.idSet, EdgeBundleProperties.embedding)
+    val embedding = {
+      val properties =
+        if (srcMappingProp.isFunction && dstMappingProp.isFunction) EdgeBundleProperties.embedding
+        else EdgeBundleProperties.injection
+      edgeBundle(induced.idSet, inputs.edges.idSet, properties)
+    }
   }
   def fromJson(j: JsValue) = InducedEdgeBundle((j \ "induceSrc").as[Boolean], (j \ "induceDst").as[Boolean])
 }
@@ -118,14 +122,17 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       byDst.values
     }
     val induced = dstInduced.toSortedRDD(edges.partitioner.get)
-    val renumbered = {
-      val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
-      val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
-      if (srcIsFunction && dstIsFunction) induced
+    val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
+    val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
+    if (srcIsFunction && dstIsFunction) {
+      output(o.induced, induced)
+      output(o.embedding, induced.mapValuesWithKeys { case (id, _) => Edge(id, id) })
+    } else {
       // A non-function mapping can introduce duplicates. We need to generate new IDs.
-      else induced.values.randomNumbered(edges.partitioner.get)
+      val renumbered = induced.randomNumbered(edges.partitioner.get)
+      output(o.induced, renumbered.mapValues { case (oldId, edge) => edge })
+      output(o.embedding,
+        renumbered.mapValuesWithKeys { case (newId, (oldId, edge)) => Edge(newId, oldId) })
     }
-    output(o.induced, renumbered)
-    output(o.embedding, renumbered.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
 }
