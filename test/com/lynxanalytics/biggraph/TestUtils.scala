@@ -58,6 +58,13 @@ trait TestTempDir {
 
   val myTempDirPrefix = TestUtils.getDummyPrefixName(myTempDir.toString)
   def tempDir(dirName: String): File = new File(myTempDir, dirName)
+
+  def getRegisteredSandboxPrefix(): String = {
+    val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
+    val managerDir = tempDir("dataManager." + dirName)
+    managerDir.mkdir
+    TestUtils.getDummyPrefixName(managerDir.toString)
+  }
 }
 
 private object SparkContextContainer {

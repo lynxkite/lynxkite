@@ -57,11 +57,16 @@ trait TestMetaGraphManager extends TestTempDir {
 
 trait TestDataManager extends TestTempDir with TestSparkContext {
   def cleanDataManager: DataManager = {
-    val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
-    val managerDir = tempDir("dataManager." + dirName)
-    managerDir.mkdir
-    val sandboxPrefix = TestUtils.getDummyPrefixName(managerDir.toString)
+    val sandboxPrefix = getRegisteredSandboxPrefix()
     new DataManager(sparkContext, HadoopFile(sandboxPrefix))
+  }
+}
+
+trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
+  def cleanDataManagerEphemeral: DataManager = {
+    val sandboxPrefix = getRegisteredSandboxPrefix()
+    val ephemeralPrefix = getRegisteredSandboxPrefix()
+    new DataManager(sparkContext, HadoopFile(sandboxPrefix), Some(HadoopFile(ephemeralPrefix)))
   }
 }
 
@@ -70,6 +75,15 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
+  registerStandardPrefixes()
+}
+
+trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphemeral {
+  PrefixRepository.dropResolutions()
+  implicit val metaGraphManager = cleanMetaManager
+  implicit val dataManager = cleanDataManagerEphemeral
+  PrefixRepository.registerPrefix(standardDataPrefix, dataManager.writablePath.symbolicName)
+  PrefixRepository.registerPrefix("HDFS_DATA$", dataManager.ephemeralPath.get.symbolicName)
   registerStandardPrefixes()
 }
 
