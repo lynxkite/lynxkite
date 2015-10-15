@@ -1,7 +1,7 @@
 // Creates a new attribute by evaluating a JavaScript expression over other attributes.
 package com.lynxanalytics.biggraph.graph_operations
 
-import com.google.common.primitives.Primitives
+import org.apache.commons.lang.ClassUtils
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.JavaScript
@@ -35,14 +35,10 @@ object DeriveJS {
       namedAttributes
         .map { case (attrName, attr) => (attrName, JSValue.defaultValue(attr.typeTag).value) }
         .toMap
-    val classOfT = Primitives.wrap(
-      RuntimeSafeCastable.classTagFromTypeTag(typeTag[T]).runtimeClass)
-    val testResult = js.evaluate(testNamedValues)
-    // This fails if the result type is of unexpected type. On the other hand, it succeeds
-    // if the result is undefined, as that gets converted to null which casts without problems
-    // to any reference type. (And we are dealing with a reference type here thanks to the wrap
-    // above.)
-    classOfT.cast(testResult)
+    val classOfT = RuntimeSafeCastable.classTagFromTypeTag(typeTag[T]).runtimeClass
+    val testResult = js.evaluate(testNamedValues).asInstanceOf[T]
+    assert(testResult == null || ClassUtils.isAssignable(testResult.getClass, classOfT, true),
+      s"Cannot convert $testResult to $classOfT")
   }
 
   def deriveFromAttributes[T: TypeTag](
