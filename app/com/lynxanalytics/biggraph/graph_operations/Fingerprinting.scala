@@ -1,10 +1,9 @@
 // Operations for "fingerprinting": finding matching vertices by network structure.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.apache.spark.Partitioner
-
-import scala.collection.mutable.ArrayBuffer
+import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
+import scala.collection.mutable.ArrayBuffer
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
@@ -53,46 +52,53 @@ case class Fingerprinting(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val vertexPartitioner = inputs.target.rdd.partitioner.get
     val leftPartitioner = inputs.left.rdd.partitioner.get
     val rightPartitioner = inputs.right.rdd.partitioner.get
+    val candidatesPartitioner = inputs.candidates.rdd.partitioner.get
+    val workingPartitioner = new HashPartitioner(
+      inputs.rightEdges.rdd.partitions.size +
+        inputs.leftEdges.rdd.partitions.size +
+        inputs.candidates.rdd.partitions.size)
 
     // These are the two sides we are trying to connect.
-    val lefts = inputs.candidates.rdd
-      .map { case (_, e) => e.src -> () }
-      .toSortedRDD(vertexPartitioner)
+    val leftCount = inputs.candidates.rdd
+      .map { case (_, e) => e.src }
       .distinct
-    val rights = inputs.candidates.rdd
-      .map { case (_, e) => e.dst -> () }
-      .toSortedRDD(vertexPartitioner)
+      .count
+
+    val rightCount = inputs.candidates.rdd
+      .map { case (_, e) => e.dst }
       .distinct
+      .count
 
     // Returns an RDD that maps each source vertex of "es" to a list of their neighbors.
     // With each neighbor the edge weight and the neighbor's in-degree are also included.
     def outNeighbors(
       es: EdgeBundleRDD,
       weights: AttributeRDD[Double]): AttributeRDD[Iterable[(ID, (Double, Double))]] = {
+      val esPartitioner = es.partitioner.get
       val weightedEdges = es.sortedJoin(weights)
       val inDegrees = weightedEdges
         .map { case (_, (e, w)) => e.dst -> w }
-        .reduceBySortedKey(vertexPartitioner, _ + _)
+        .reduceBySortedKey(esPartitioner, _ + _)
       weightedEdges
         .map { case (_, (e, w)) => e.dst -> (w, e.src) }
-        .join(inDegrees)
+        .toSortedRDD(esPartitioner)
+        .sortedJoin(inDegrees)
         .map { case (dst, ((w, src), dstInDegree)) => src -> (dst, (w, dstInDegree)) }
-        .groupBySortedKey(vertexPartitioner)
+        .groupBySortedKey(workingPartitioner)
     }
 
     // Get the list of neighbors and their degrees for all candidates pairs.
     val candidates = inputs.candidates.rdd
       .map { case (_, e) => (e.dst, e.src) }
-      .toSortedRDD(vertexPartitioner)
+      .toSortedRDD(workingPartitioner)
       .sortedLeftOuterJoin(outNeighbors(inputs.rightEdges.rdd, inputs.rightEdgeWeights.rdd))
       .map {
         case (rightID, (leftID, Some(rightNeighbors))) => (leftID, (rightID, rightNeighbors))
         case (rightID, (leftID, None)) => (leftID, (rightID, Seq()))
       }
-      .toSortedRDD(vertexPartitioner)
+      .toSortedRDD(workingPartitioner)
       .sortedLeftOuterJoin(outNeighbors(inputs.leftEdges.rdd, inputs.leftEdgeWeights.rdd))
       .map {
         case (leftID, ((rightID, rightNeighbors), Some(leftNeighbors))) =>
@@ -122,6 +128,9 @@ case class Fingerprinting(
             // Degrees.
             val ld = ln.mapValues(_._2.toDouble)
             val rd = rn.mapValues(_._2.toDouble)
+            // This is somewhat debetable, but that's what Zubi's paper said: we take the average
+            // of the indegree from left and from right if both are defined, otherwise just take the
+            // one that's defined.
             val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
             val avg = degrees.mapValues(ds => ds.sum / ds.size)
             // Calculate similarity score.
@@ -131,31 +140,35 @@ case class Fingerprinting(
             if (similarity < minimumSimilarity) None
             else Some(leftID -> (rightID, similarity))
           }
-      }.toSortedRDD(leftPartitioner)
+      }.toSortedRDD(candidatesPartitioner)
     val rightSimilarities =
-      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(rightPartitioner)
+      leftSimilarities.map { case (l, (r, s)) => (r, (l, s)) }.toSortedRDD(candidatesPartitioner)
 
     // Run findStableMarriage with the smaller side as "ladies".
-    def flipped(rdd: RDD[(ID, ID)], partitioner: Partitioner) = {
-      rdd.map(pair => pair._2 -> pair._1).toSortedRDD(partitioner)
+    def flipped(rdd: RDD[(ID, ID)]) = {
+      rdd.map(pair => pair._2 -> pair._1).toSortedRDD(candidatesPartitioner)
     }
-    val leftToRight =
-      if (rights.count < lefts.count)
-        findStableMarriage(rightSimilarities, leftSimilarities)
-      else
-        flipped(findStableMarriage(leftSimilarities, rightSimilarities), leftPartitioner)
+    val (leftToRight, rightToLeft) =
+      if (rightCount < leftCount) {
+        val ltr = findStableMarriage(rightSimilarities, leftSimilarities)
+        (ltr, flipped(ltr))
+      } else {
+        val rtl = findStableMarriage(leftSimilarities, rightSimilarities)
+        (flipped(rtl), rtl)
+      }
     output(o.matching, leftToRight.map {
       case (src, dst) => Edge(src, dst)
-    }.randomNumbered(vertexPartitioner))
-    output(o.leftSimilarities, leftSimilarities.sortedJoin(leftToRight).flatMapValues {
-      case ((simID, sim), id) if simID == id => Some(sim)
-      case _ => None
-    })
-    output(o.rightSimilarities, rightSimilarities.sortedJoin(flipped(leftToRight, rightPartitioner))
+    }.randomNumbered(if (rightCount < leftCount) rightPartitioner else leftPartitioner))
+    output(o.leftSimilarities, leftSimilarities.sortedJoin(leftToRight)
       .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
         case _ => None
-      })
+      }.toSortedRDD(leftPartitioner))
+    output(o.rightSimilarities, rightSimilarities.sortedJoin(rightToLeft)
+      .flatMapValues {
+        case ((simID, sim), id) if simID == id => Some(sim)
+        case _ => None
+      }.toSortedRDD(rightPartitioner))
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
