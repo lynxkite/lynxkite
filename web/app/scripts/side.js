@@ -573,10 +573,21 @@ angular.module('biggraph')
       this.sides[1].state.graphMode = undefined;
     };
 
+    // Abandon outstanding scalar requests.
+    Side.prototype.abandonScalars = function() {
+      if (this.scalars !== undefined) {
+        var scalars = Object.keys(this.scalars);
+        for (var i = 0; i < scalars.length; ++i) {
+          this.scalars[scalars[i]].$abandon();
+        }
+      }
+    };
+
     Side.prototype.loadScalars = function() {
       if (!this.loaded()) { return; }
-      var scalars = this.project.scalars;
+      this.abandonScalars();
       this.scalars = {};
+      var scalars = this.project.scalars;
       for (var i = 0; i < scalars.length; ++i) {
         var s = scalars[i];
         var res = util.get('/ajax/scalarValue', { scalarId: s.id, calculate: true });
