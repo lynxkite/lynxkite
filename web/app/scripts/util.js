@@ -104,7 +104,7 @@ angular.module('biggraph').factory('util', function utilFactory(
   }
 
   // Replaces a promise with another promise that behaves like Angular's ngResource.
-  // It will populate itself with the response data and set $resolved and $error.
+  // It will populate itself with the response data and set $resolved, $error, and $statusCode.
   // It can be abandoned with $abandon(). $status is a Boolean promise of the success state.
   function toResource(promise) {
     var resource = promise.then(
@@ -115,6 +115,7 @@ angular.module('biggraph').factory('util', function utilFactory(
       },
       function onError(failure) {
         resource.$resolved = true;
+        resource.$statusCode = failure.status;
         if (failure.status === 401) {  // Unauthorized.
           resource.$error = 'Redirecting to login page.';
           if ($location.protocol() === 'https') {
