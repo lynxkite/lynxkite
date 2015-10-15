@@ -84,7 +84,6 @@ trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphe
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManagerEphemeral
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.writablePath.symbolicName)
-  PrefixRepository.registerPrefix("HDFS_DATA$", dataManager.ephemeralPath.get.symbolicName)
   registerStandardPrefixes()
 }
 
