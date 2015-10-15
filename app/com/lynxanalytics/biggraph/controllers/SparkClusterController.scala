@@ -23,10 +23,6 @@ case class StageInfo(
   var lastTaskTime: Long = 0, // Timestamp of last task completion.
   var failed: Boolean = false)
 
-case class SparkClusterStatusResponse(
-  master: String,
-  workerInstances: Int)
-
 // Request for resizing the cluster. (If supported by the BigGraphEnvironment.)
 case class SetClusterNumInstanceRequest(
   workerInstances: Int)
@@ -118,16 +114,6 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   def sparkCancelJobs(user: serving.User, req: serving.Empty): Unit = {
     assert(user.isAdmin, "Only administrators can cancel jobs.")
     sc.cancelAllJobs()
-  }
-
-  def getClusterStatus(user: serving.User, request: serving.Empty): SparkClusterStatusResponse = {
-    SparkClusterStatusResponse(environment.sparkContext.master, environment.sparkManager.numInstances)
-  }
-
-  def setClusterNumInstances(user: serving.User, request: SetClusterNumInstanceRequest): SparkClusterStatusResponse = {
-    assert(user.isAdmin, "Only administrators can resize the cluster.")
-    environment.sparkManager.setNumInstances(request.workerInstances)
-    return getClusterStatus(user, serving.Empty())
   }
 
   def logSparkClusterInfo(): Unit = {

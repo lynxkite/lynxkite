@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.spark
 import scala.util.Random
 
-import com.lynxanalytics.biggraph.{ SparkManager, TestUtils, TestTempDir, TestSparkContext }
+import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
 import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
@@ -69,7 +69,6 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
   PrefixRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
-  implicit lazy val sparkManager: SparkManager = ???
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }

@@ -22,10 +22,6 @@ angular
         controller: 'ProjectViewCtrl',
         reloadOnSearch: false,
       })
-      .when('/cluster', {
-        templateUrl: 'views/clusterManager.html',
-        controller: 'ClusterManagerCtrl',
-      })
       .when('/demoMode', {
         templateUrl: 'views/demoMode.html',
         controller: 'DemoModeCtrl',
