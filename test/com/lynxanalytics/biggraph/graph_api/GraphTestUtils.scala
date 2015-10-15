@@ -5,6 +5,7 @@ import scala.util.Random
 
 import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
+import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile }
 import com.lynxanalytics.biggraph.registerStandardPrefixes
@@ -65,7 +66,7 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
   }
 }
 
-trait TestGraphOp extends TestMetaGraphManager with TestDataManager {
+trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGraphEnvironment {
   PrefixRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
