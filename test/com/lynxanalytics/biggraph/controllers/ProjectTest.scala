@@ -2,11 +2,10 @@ package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.serving.User
 
-class ProjectTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
+class ProjectTest extends FunSuite with TestGraphOp {
   def createProject(name: String) = {
     val controller = new BigGraphController(this)
     val request = CreateProjectRequest(name = name, notes = "", privacy = "public-write")

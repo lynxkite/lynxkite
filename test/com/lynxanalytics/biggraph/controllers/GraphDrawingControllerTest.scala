@@ -2,13 +2,12 @@ package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 
-class GraphDrawingControllerTest extends FunSuite with TestGraphOp with BigGraphEnvironment {
+class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
   val controller = new GraphDrawingController(this)
   val user = com.lynxanalytics.biggraph.serving.User.fake
 
