@@ -11,6 +11,17 @@ class DerivedAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
   }
 
+  test("Multi-line function") {
+    run("Example Graph")
+    run("Derived vertex attribute",
+      Map("type" -> "double", "output" -> "output", "expr" -> """
+        (function() {
+          return age;
+        })()"""))
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
+  }
+
   test("Derived vertex attribute with substring conflict (#1676)") {
     run("Example Graph")
     run("Rename vertex attribute", Map("from" -> "income", "to" -> "nam"))
