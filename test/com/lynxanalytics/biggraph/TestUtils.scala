@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph
 
 import java.io.File
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
-import com.lynxanalytics.biggraph.graph_util.PrefixRepository
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository }
 import org.apache.spark
 import org.scalatest.Tag
 
@@ -58,6 +58,14 @@ trait TestTempDir {
 
   val myTempDirPrefix = TestUtils.getDummyPrefixName(myTempDir.toString)
   def tempDir(dirName: String): File = new File(myTempDir, dirName)
+
+  // Used to create suitable repository paths for test DataManagers.
+  def getDirForDataManager(): HadoopFile = {
+    val dirName = getClass.getName + "." + Random.alphanumeric.take(5).mkString
+    val managerDir = tempDir("dataManager." + dirName)
+    managerDir.mkdir
+    HadoopFile(TestUtils.getDummyPrefixName(managerDir.toString))
+  }
 }
 
 private object SparkContextContainer {
