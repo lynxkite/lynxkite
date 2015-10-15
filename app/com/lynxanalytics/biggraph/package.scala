@@ -67,15 +67,7 @@ package object biggraph {
       case staticPattern(master) =>
         BigGraphEnvironmentImpl.createStaticDirEnvironment(
           repoDirs,
-          new StaticSparkManager())
-      case standingGCEPattern(clusterName) =>
-        BigGraphEnvironmentImpl.createStaticDirEnvironment(
-          repoDirs,
-          new spark_util.GCEManagedCluster(clusterName, "LynxKite", true))
-      case newGCEPattern(clusterName) =>
-        BigGraphEnvironmentImpl.createStaticDirEnvironment(
-          repoDirs,
-          new spark_util.GCEManagedCluster(clusterName, "LynxKite", false))
+          new StaticSparkContextProvider())
     }
     bigGraphLogger.info("Production Kite environment initialized")
     res

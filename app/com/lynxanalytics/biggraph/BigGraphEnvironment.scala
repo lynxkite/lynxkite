@@ -9,15 +9,11 @@ import scala.concurrent.duration.Duration
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
-trait SparkManager {
+trait SparkContextProvider {
   def createSparkContext: spark.SparkContext
-
-  def allowsClusterResize: Boolean = false
-  def numInstances: Int = ???
-  def setNumInstances(numInstances: Int): Unit = ???
 }
 
-class StaticSparkManager() extends SparkManager {
+class StaticSparkContextProvider() extends SparkContextProvider {
   def createSparkContext = {
     bigGraphLogger.info("Initializing Spark...")
     val sparkContext = spark_util.BigGraphSparkContext("LynxKite")
@@ -31,7 +27,6 @@ class StaticSparkManager() extends SparkManager {
 }
 
 trait BigGraphEnvironment {
-  def sparkManager: SparkManager
   def sparkContext: spark.SparkContext
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
@@ -40,13 +35,13 @@ trait BigGraphEnvironment {
 object BigGraphEnvironmentImpl {
   def createStaticDirEnvironment(
     repositoryDirs: RepositoryDirs,
-    sparkManager: SparkManager): BigGraphEnvironment = {
+    sparkContextProvider: SparkContextProvider): BigGraphEnvironment = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
     // Initialize parts of the environment. Some of them can be initialized
     // in parallel, hence the juggling with futures.
     val metaGraphManagerFuture = Future(createMetaGraphManager(repositoryDirs))
-    val sparkContextFuture = Future(sparkManager.createSparkContext)
+    val sparkContextFuture = Future(sparkContextProvider.createSparkContext)
     val dataManagerFuture = sparkContextFuture.map(
       sparkContext => createDataManager(sparkContext, repositoryDirs))
     Await.ready(Future.sequence(Seq(
@@ -55,7 +50,6 @@ object BigGraphEnvironmentImpl {
       dataManagerFuture)),
       Duration.Inf)
     new BigGraphEnvironmentImpl(
-      sparkManager,
       sparkContextFuture.value.get.get,
       metaGraphManagerFuture.value.get.get,
       dataManagerFuture.value.get.get)
@@ -79,7 +73,6 @@ object BigGraphEnvironmentImpl {
 }
 
 case class BigGraphEnvironmentImpl(
-  sparkManager: SparkManager,
   sparkContext: spark.SparkContext,
   metaGraphManager: graph_api.MetaGraphManager,
   dataManager: graph_api.DataManager) extends BigGraphEnvironment

@@ -161,7 +161,6 @@ object ProductionJsonServer extends JsonServer {
   implicit val rSetClusterNumInstanceRequest = json.Json.reads[SetClusterNumInstanceRequest]
   implicit val wStageInfo = json.Json.writes[StageInfo]
   implicit val wSparkStatusResponse = json.Json.writes[SparkStatusResponse]
-  implicit val wSparkClusterStatusResponse = json.Json.writes[SparkClusterStatusResponse]
 
   implicit val rFEVertexAttributeFilter = json.Json.reads[FEVertexAttributeFilter]
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
@@ -327,8 +326,6 @@ object ProductionJsonServer extends JsonServer {
   def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
-  def getClusterStatus = jsonGet(sparkClusterController.getClusterStatus)
-  def setClusterNumInstances = jsonGet(sparkClusterController.setClusterNumInstances)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
