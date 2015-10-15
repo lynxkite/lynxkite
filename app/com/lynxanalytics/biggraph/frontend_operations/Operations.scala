@@ -1908,6 +1908,53 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
   register("Load segmentation links from a database",
     new LoadSegmentationLinksOperation(_, _) with SQLRowReader)
 
+  abstract class ImportSegmentationOperation(t: String, c: Context)
+      extends ImportOperation(t, c) with RowReader {
+    def parameters = sourceParameters ++ List(
+      Param("name", s"Name of new segmentation"),
+      Choice("attr", "Vertex ID attribute",
+        options = UIValue("!unset", "") +: vertexAttributes[String]),
+      Param("base-id-field", "Vertex ID field"),
+      Param("seg-id-field", "Segment ID field"))
+    def enabled = FEStatus.assert(vertexAttributes[String].nonEmpty, "No string vertex attributes")
+    def apply(params: Map[String, String]) = {
+      val baseAttrName = params("attr")
+      assert(baseAttrName != "!unset", "The Vertex ID attribute parameter must be set.")
+      val baseAttr = project.vertexAttributes(baseAttrName).runtimeSafeCast[String]
+      val baseId = params("base-id-field")
+      assert(baseId.nonEmpty, "The Vertex ID field parameter must be set.")
+      val segId = params("seg-id-field")
+      assert(segId.nonEmpty, "The Segment ID field parameter must be set.")
+
+      // Import belongs-to relationship as vertices.
+      val vertexImport = graph_operations.ImportVertexList(source(params))().result
+      // Merge by segment ID to create the segments.
+      val merge = {
+        val op = graph_operations.MergeVertices[String]()
+        op(op.attr, vertexImport.attrs(segId)).result
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.setVertexSet(merge.segments, idAttr = "id")
+      // Move segment ID to the segments.
+      val segAttr = aggregateViaConnection(
+        merge.belongsTo,
+        AttributeWithLocalAggregator(vertexImport.attrs(segId), "most_common"))
+        .runtimeSafeCast[String]
+      segmentation.newVertexAttribute(segId, segAttr)
+      // Import belongs-to relationship as edges between the base and the segmentation.
+      val edgeImport = {
+        val op = graph_operations.ImportEdgeListForExistingVertexSet(source(params), baseId, segId)
+        op(op.srcVidAttr, baseAttr)(op.dstVidAttr, segAttr).result
+      }
+      segmentation.belongsTo = edgeImport.edges
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
+    }
+  }
+  register("Import segmentation from CSV",
+    new ImportSegmentationOperation(_, _) with CSVRowReader)
+  register("Import segmentation from a database",
+    new ImportSegmentationOperation(_, _) with SQLRowReader)
+
   register("Define segmentation links from matching attributes",
     new StructureOperation(_, _) with SegOp {
       def segmentationParameters = List(

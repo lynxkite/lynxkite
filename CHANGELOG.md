@@ -10,9 +10,10 @@ Please add changes to "master". When releasing a version add a new header for th
    running Kite via a Scala interpreter. Among others, this allows one to use sparkSQL for
    arbitrary data processing tasks using the computation resources held by Kite. For details on
    how to set this up, see `conf/kiterc_template`.
- - Added a new operation to compute the shortest path from a given set of vertices.
+ - Added the _Shortest path_ operation for computing the shortest path from a given set of vertices.
  - Added the _Copy edges to segmentation_ operation for translating the edges of the base project
    into a segmentation.
+ - Added _Import segmentation_ operations.
 
 ### 1.5.6
 
