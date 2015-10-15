@@ -283,6 +283,7 @@ object JSValue {
       else if (typeOf[T] =:= typeOf[Char]) 'a'
       else if (typeOf[T] =:= typeOf[Boolean]) false
       else if (typeOf[T] =:= typeOf[String]) ""
+      else if (typeOf[T] <:< typeOf[Vector[_]]) Array[Nothing]()
       else null)
   }
 }
