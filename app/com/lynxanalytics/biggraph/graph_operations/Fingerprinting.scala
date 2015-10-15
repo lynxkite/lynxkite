@@ -128,7 +128,7 @@ case class Fingerprinting(
             // Degrees.
             val ld = ln.mapValues(_._2.toDouble)
             val rd = rn.mapValues(_._2.toDouble)
-            // This is somewhat debetable, but that's what Zubi's paper said: we take the average
+            // This is somewhat debatable, but that's what Zubi's paper said: we take the average
             // of the indegree from left and from right if both are defined, otherwise just take the
             // one that's defined.
             val degrees = all.map(k => k -> (ld.get(k) ++ rd.get(k))).toMap
@@ -156,9 +156,14 @@ case class Fingerprinting(
         val rtl = findStableMarriage(leftSimilarities, rightSimilarities)
         (flipped(rtl), rtl)
       }
-    output(o.matching, leftToRight.map {
-      case (src, dst) => Edge(src, dst)
-    }.randomNumbered(if (rightCount < leftCount) rightPartitioner else leftPartitioner))
+    output(
+      o.matching,
+      leftToRight
+        .map {
+          case (src, dst) => Edge(src, dst)
+        }
+        // The 1:1 mapping is at most as large as the smaller side.
+        .randomNumbered(if (rightCount < leftCount) rightPartitioner else leftPartitioner))
     output(o.leftSimilarities, leftSimilarities.sortedJoin(leftToRight)
       .flatMapValues {
         case ((simID, sim), id) if simID == id => Some(sim)
