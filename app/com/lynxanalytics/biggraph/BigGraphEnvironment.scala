@@ -3,50 +3,79 @@ package com.lynxanalytics.biggraph
 
 import java.io.File
 import org.apache.spark
+import scala.concurrent._
+import scala.concurrent.duration.Duration
 
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 
 trait SparkContextProvider {
-  val sparkContext: spark.SparkContext
-
-  def allowsClusterResize: Boolean = false
-  def numInstances: Int = ???
-  def setNumInstances(numInstances: Int): Unit = ???
+  def createSparkContext: spark.SparkContext
 }
 
 class StaticSparkContextProvider() extends SparkContextProvider {
-  bigGraphLogger.info("Initializing Spark...")
-  val sparkContext = spark_util.BigGraphSparkContext("LynxKite")
-  if (!sparkContext.isLocal) {
-    bigGraphLogger.info("Wait 10 seconds for the workers to log in to the master...")
-    Thread.sleep(10000)
+  def createSparkContext = {
+    bigGraphLogger.info("Initializing Spark...")
+    val sparkContext = spark_util.BigGraphSparkContext("LynxKite")
+    if (!sparkContext.isLocal) {
+      bigGraphLogger.info("Wait 10 seconds for the workers to log in to the master...")
+      Thread.sleep(10000)
+    }
+    bigGraphLogger.info("Spark initialized.")
+    sparkContext
   }
-  bigGraphLogger.info("Spark initialized.")
 }
 
-trait BigGraphEnvironment extends SparkContextProvider {
-  val metaGraphManager: graph_api.MetaGraphManager
-  val dataManager: graph_api.DataManager
+trait BigGraphEnvironment {
+  def sparkContext: spark.SparkContext
+  def metaGraphManager: graph_api.MetaGraphManager
+  def dataManager: graph_api.DataManager
 }
 
-trait StaticDirEnvironment extends BigGraphEnvironment {
-  val repositoryDirs: RepositoryDirs
+object BigGraphEnvironmentImpl {
+  def createStaticDirEnvironment(
+    repositoryDirs: RepositoryDirs,
+    sparkContextProvider: SparkContextProvider): BigGraphEnvironment = {
 
-  override lazy val metaGraphManager = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    // Initialize parts of the environment. Some of them can be initialized
+    // in parallel, hence the juggling with futures.
+    val metaGraphManagerFuture = Future(createMetaGraphManager(repositoryDirs))
+    val sparkContextFuture = Future(sparkContextProvider.createSparkContext)
+    val dataManagerFuture = sparkContextFuture.map(
+      sparkContext => createDataManager(sparkContext, repositoryDirs))
+    Await.ready(Future.sequence(Seq(
+      metaGraphManagerFuture,
+      sparkContextFuture,
+      dataManagerFuture)),
+      Duration.Inf)
+    new BigGraphEnvironmentImpl(
+      sparkContextFuture.value.get.get,
+      metaGraphManagerFuture.value.get.get,
+      dataManagerFuture.value.get.get)
+  }
+
+  def createMetaGraphManager(repositoryDirs: RepositoryDirs) = {
     bigGraphLogger.info("Initializing meta graph manager...")
     val res = graph_api.MetaRepositoryManager(repositoryDirs.metaDir)
     bigGraphLogger.info("Meta graph manager initialized.")
     res
   }
-  override lazy val dataManager = {
+
+  def createDataManager(sparkContext: spark.SparkContext, repositoryDirs: RepositoryDirs) = {
     bigGraphLogger.info("Initializing data manager...")
     val res = new graph_api.DataManager(
       sparkContext, repositoryDirs.dataDir, repositoryDirs.ephemeralDataDir)
     bigGraphLogger.info("Data manager initialized.")
     res
   }
+
 }
+
+case class BigGraphEnvironmentImpl(
+  sparkContext: spark.SparkContext,
+  metaGraphManager: graph_api.MetaGraphManager,
+  dataManager: graph_api.DataManager) extends BigGraphEnvironment
 
 class RepositoryDirs(
     val metaDir: String,
