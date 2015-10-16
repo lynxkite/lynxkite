@@ -27,20 +27,6 @@ package object biggraph {
     PrefixRepository.registerPrefix("UPLOAD$", standardDataPrefix + "/uploads")
   }
 
-  // static<hostname_of_master>
-  // We just connect to a standing spark cluster, no resize support.
-  private val staticPattern = "static<(.+)>".r
-
-  // standingGCE<name_of_cluster>
-  // We just connect to an already initiated spark cluster running on Google Compute Engine.
-  // Supports resizing.
-  private val standingGCEPattern = "standingGCE<(.+)>".r
-
-  // newGCE<name_of_cluster>
-  // We need to create a new spark cluster running on Google Compute Engine.
-  // Supports resizing.
-  private val newGCEPattern = "newGCE<(.+)>".r
-
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
     // Make sure play and spark logs contain the proper context.
     val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
@@ -63,23 +49,9 @@ package object biggraph {
     repoDirs.forcePrefixRegistration()
     registerStandardPrefixes()
 
-    val res = scala.util.Properties.envOrElse("SPARK_CLUSTER_MODE", "static<local>") match {
-      case staticPattern(master) =>
-        new StaticSparkContextProvider() with StaticDirEnvironment {
-          val repositoryDirs = repoDirs
-        }
-      case standingGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "LynxKite", true) with StaticDirEnvironment {
-          val repositoryDirs = repoDirs
-        }
-      case newGCEPattern(clusterName) =>
-        new spark_util.GCEManagedCluster(clusterName, "LynxKite", false) with StaticDirEnvironment {
-          val repositoryDirs = repoDirs
-        }
-    }
-    // Force initialization of the managers.
-    res.metaGraphManager
-    res.dataManager
+    val res = BigGraphEnvironmentImpl.createStaticDirEnvironment(
+      repoDirs,
+      new StaticSparkContextProvider())
     bigGraphLogger.info("Production Kite environment initialized")
     res
   }
