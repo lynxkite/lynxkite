@@ -23,11 +23,11 @@ var FORCE_LAYOUT = (function() {
     var a, b, dx, dy, i, j;
     var maxDist = 0;  // Max. distance from center along one coordinate.
     var edgeCount = (vertices.edges || []).length;
-    if (vertices.vs.length === 1) {
-      vertices.vs[0].x = 0;
-      vertices.vs[0].y = 0;
-    }
     if (vertices.vs.length <= 1) {
+      if (vertices.vs.length === 1) {
+        vertices.vs[0].x = 0;
+        vertices.vs[0].y = 0;
+      }
       return false;  // No need for further iterations.
     }
     for (i = 0; i < vertices.vs.length; ++i) {
