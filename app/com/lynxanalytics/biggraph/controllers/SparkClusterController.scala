@@ -23,10 +23,6 @@ case class StageInfo(
   var lastTaskTime: Long = 0, // Timestamp of last task completion.
   var failed: Boolean = false)
 
-// Request for resizing the cluster. (If supported by the BigGraphEnvironment.)
-case class SetClusterNumInstanceRequest(
-  workerInstances: Int)
-
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
 class SparkListener extends spark.scheduler.SparkListener {

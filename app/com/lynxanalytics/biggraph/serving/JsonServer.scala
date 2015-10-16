@@ -158,7 +158,6 @@ object ProductionJsonServer extends JsonServer {
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
 
   implicit val rSparkStatusRequest = json.Json.reads[SparkStatusRequest]
-  implicit val rSetClusterNumInstanceRequest = json.Json.reads[SetClusterNumInstanceRequest]
   implicit val wStageInfo = json.Json.writes[StageInfo]
   implicit val wSparkStatusResponse = json.Json.writes[SparkStatusResponse]
 
