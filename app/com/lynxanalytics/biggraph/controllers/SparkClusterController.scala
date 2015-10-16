@@ -5,6 +5,9 @@ import org.apache.spark
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
+import scala.compat.Platform
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 // Long-poll request for changes in the "busy" state of Spark.
 case class SparkStatusRequest(
@@ -25,11 +28,26 @@ case class StageInfo(
 
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
-class SparkListener extends spark.scheduler.SparkListener {
+class KiteListener extends spark.scheduler.SparkListener {
   val activeStages = collection.mutable.Map[String, StageInfo]()
   val pastStages = collection.mutable.Queue[StageInfo]()
   val promises = collection.mutable.Set[concurrent.Promise[SparkStatusResponse]]()
   var currentResp = SparkStatusResponse(0, List(), List())
+  var lastSparkActivity = 0L
+  var stalled = false
+
+  var kiteCoreWorking = true
+  var kiteCoreLastChecked = 0L
+
+  def updateKiteCoreStatus(newKiteCoreWorking: Boolean): Unit = {
+    if (kiteCoreWorking != newKiteCoreWorking) {
+      send()
+    }
+    kiteCoreWorking = newKiteCoreWorking
+    kiteCoreLastChecked = Platform.currentTime
+  }
+
+  def isSparkActive: Boolean = activeStages.nonEmpty
 
   private def fullId(stage: org.apache.spark.scheduler.StageInfo): String =
     s"${stage.stageId}.${stage.attemptId}"
@@ -55,6 +73,7 @@ class SparkListener extends spark.scheduler.SparkListener {
       val stage = activeStages(id)
       stage.tasksCompleted += 1
       val time = taskEnd.taskInfo.finishTime
+      sparkActivity(time)
       // Post at most one update per second.
       if (time - stage.lastTaskTime > 1000) {
         stage.lastTaskTime = time
@@ -70,10 +89,21 @@ class SparkListener extends spark.scheduler.SparkListener {
     val hash = stage.details.hashCode
     val size = stage.numTasks
     val time = stage.submissionTime.getOrElse(System.currentTimeMillis)
+    sparkActivity(time)
     if (!stage.details.contains("checkSparkOperational")) { // Ignore health checks.
       activeStages += id -> StageInfo(id, hash, size, lastTaskTime = time)
       send()
     }
+  }
+
+  def sparkActivity(time: Long): Unit = {
+    lastSparkActivity = time max lastSparkActivity
+    stalled = false
+  }
+
+  def onSparkStalled() {
+    stalled = true
+    send()
   }
 
   private def send(): Unit = synchronized {
@@ -98,9 +128,116 @@ class SparkListener extends spark.scheduler.SparkListener {
   }
 }
 
+class SparkCheckThread(
+    listener: KiteListener,
+    sc: spark.SparkContext) extends Thread("spark-check") {
+
+  var runningCheckStart: Option[Long] = None
+
+  override def run(): Unit = {
+    while (true) {
+      if (runningCheckStart.nonEmpty) {
+        sc.setLocalProperty("spark.scheduler.pool", "sparkcheck")
+        try {
+          assert(sc.parallelize(Seq(1, 2, 3), 1).count == 3)
+        } finally sc.setLocalProperty("spark.scheduler.pool", null)
+        runningCheckStart = None
+      } else {
+        synchronized {
+          try {
+            wait()
+          } catch {
+            case e: InterruptedException => ()
+          }
+        }
+      }
+    }
+  }
+
+  def nudge(): Unit = synchronized {
+    if (runningCheckStart.isEmpty) {
+      runningCheckStart = Some(Platform.currentTime)
+      notify()
+    }
+  }
+
+  def isSparkActive: Boolean = listener.isSparkActive || runningCheckStart.nonEmpty
+
+  def lastSparkActivity: Long = listener.lastSparkActivity max runningCheckStart.getOrElse(0)
+
+  setDaemon(true)
+}
+
+class KiteMonitorThread(
+    listener: KiteListener,
+    environment: BigGraphEnvironment,
+    maxNoSparkProgressMillis: Long,
+    maxSparkIdleMillis: Long,
+    maxCoreUncheckedMillis: Long,
+    coreTimeoutMillis: Long) extends Thread("kite-monitor") {
+
+  val sparkChecker = new SparkCheckThread(listener, environment.sparkContext)
+
+  var disabledUntil = 0L
+
+  private def kiteCoreWorks(): Boolean = {
+    import com.lynxanalytics.biggraph.graph_operations.{ ExampleGraph, CountVertices }
+    import com.lynxanalytics.biggraph.graph_api.Scripting._
+    implicit val metaManager = environment.metaGraphManager
+    implicit val dataManager = environment.dataManager
+
+    val g = ExampleGraph()().result
+    val op = CountVertices()
+    val out = op(op.vertices, g.vertices).result
+    out.count.value == 4
+  }
+
+  override def run(): Unit = {
+    while (true) {
+      val now = Platform.currentTime
+      if (now > disabledUntil) {
+        val nextCoreCheck = listener.kiteCoreLastChecked + maxCoreUncheckedMillis
+        val sparkActive = sparkChecker.isSparkActive
+        val lastSparkActivity = sparkChecker.lastSparkActivity
+        val nextSparkCheck = if (sparkActive) {
+          lastSparkActivity + maxNoSparkProgressMillis
+        } else {
+          lastSparkActivity + maxSparkIdleMillis
+        }
+        if (now > nextCoreCheck) {
+          // do core checks
+          val testsDone = future { kiteCoreWorks() }
+          listener.updateKiteCoreStatus(
+            scala.util.Try(
+              Await.result(testsDone, duration.Duration(coreTimeoutMillis, "millisecond")))
+              .getOrElse(false))
+        }
+        if (now > nextSparkCheck) {
+          if (sparkActive) {
+            // Nothing happened on an active spark for too long. Let's report this.
+            listener.onSparkStalled()
+            // We know we are in a bad state, but we don't want to report this in an infinite loop.
+            // Disable monitoring for 10 minutes.
+            disabledUntil = now + 10 * 60 * 1000
+          } else {
+            sparkChecker.nudge()
+          }
+        }
+        val untilNextCheck = math.max(
+          0,
+          math.min(nextSparkCheck, nextCoreCheck) - Platform.currentTime)
+        Thread.sleep(untilNextCheck)
+      }
+    }
+  }
+
+  setDaemon(true)
+  sparkChecker.start()
+}
+
 class SparkClusterController(environment: BigGraphEnvironment) {
   val sc = environment.sparkContext
-  val listener = new SparkListener
+  val listener = new KiteListener
   sc.addSparkListener(listener)
 
   def sparkStatus(user: serving.User, req: SparkStatusRequest): concurrent.Future[SparkStatusResponse] = {
@@ -143,19 +280,7 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     sc.setLocalProperty("spark.scheduler.pool", "sparkcheck")
     try {
       assert(sc.parallelize(Seq(1, 2, 3), 1).count == 3)
-      exerciseMetaGraph()
+      //exerciseMetaGraph()
     } finally sc.setLocalProperty("spark.scheduler.pool", null)
-  }
-
-  private def exerciseMetaGraph() = {
-    import com.lynxanalytics.biggraph.graph_operations.{ ExampleGraph, CountVertices }
-    import com.lynxanalytics.biggraph.graph_api.Scripting._
-    implicit val metaManager = environment.metaGraphManager
-    implicit val dataManager = environment.dataManager
-
-    val g = ExampleGraph()().result
-    val op = CountVertices()
-    val out = op(op.vertices, g.vertices).result
-    assert(out.count.value == 4)
   }
 }
