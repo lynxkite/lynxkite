@@ -21,8 +21,15 @@ var FORCE_LAYOUT = (function() {
   };
   lib.Engine.prototype.calculate = function(vertices) {
     var a, b, dx, dy, i, j;
-    var maxDist = 0;
+    var maxDist = 0;  // Max. distance from center along one coordinate.
     var edgeCount = (vertices.edges || []).length;
+    if (vertices.vs.length === 1) {
+      vertices.vs[0].x = 0;
+      vertices.vs[0].y = 0;
+    }
+    if (vertices.vs.length <= 1) {
+      return false;  // No need for further iterations.
+    }
     for (i = 0; i < vertices.vs.length; ++i) {
       v = vertices.vs[i];
       if (this.opts.style === 'decentralize') {
