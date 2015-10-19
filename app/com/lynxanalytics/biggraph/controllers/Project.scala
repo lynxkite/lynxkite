@@ -381,7 +381,7 @@ sealed trait ProjectEditor {
   def vertexSet_=(e: VertexSet): Unit = {
     updateVertexSet(e, killSegmentations = true)
   }
-  protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
+  def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
     if (e != vertexSet) {
       edgeBundle = null
       vertexAttributes = Map()
@@ -671,7 +671,7 @@ class SegmentationEditor(
     scalars.set("!belongsToEdges", graph_operations.Count.run(e))
   }
 
-  override protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
+  override def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
     if (e != vertexSet) {
       super.updateVertexSet(e, killSegmentations)
       val op = graph_operations.EmptyEdgeBundle()
