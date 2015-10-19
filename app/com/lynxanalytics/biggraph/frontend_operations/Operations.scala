@@ -728,8 +728,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               attr, combination.origin2))
         }
       }
-      // Calculate sizes at the end.
+      // Calculate sizes and ids at the end.
       result.newVertexAttribute("size", computeSegmentSizes(result))
+      result.newVertexAttribute("id", idAsAttribute(result.vertexSet))
     }
   })
   register("Internal vertex ID as attribute", new VertexAttributesOperation(_, _) {
