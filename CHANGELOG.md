@@ -14,6 +14,7 @@ Please add changes to "master". When releasing a version add a new header for th
  - Added the _Copy edges to segmentation_ operation for translating the edges of the base project
    into a segmentation.
  - Added _Import segmentation_ operations.
+ - _Merge vertices by attribute_ will no longer discard segmentations.
 
 ### 1.5.6
 
