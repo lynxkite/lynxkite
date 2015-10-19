@@ -381,7 +381,7 @@ sealed trait ProjectEditor {
   def vertexSet_=(e: VertexSet): Unit = {
     updateVertexSet(e, killSegmentations = true)
   }
-  def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
+  protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
     if (e != vertexSet) {
       edgeBundle = null
       vertexAttributes = Map()
@@ -500,12 +500,17 @@ sealed trait ProjectEditor {
     case (name, scalar) if typeOf[T] =:= typeOf[Nothing] || scalar.is[T] => name
   }.toSeq
 
+  def segmentationMap = state.segmentations
   def segmentations = segmentationNames.map(segmentation(_))
   def segmentation(name: String) = new SegmentationEditor(this, name)
   def segmentationNames = state.segmentations.keys.toSeq
   def deleteSegmentation(name: String) = {
     state = state.copy(segmentations = state.segmentations - name)
     setElementNote(SegmentationKind, name, null)
+  }
+  def newSegmentation(name: String, seg: SegmentationState) = {
+    state = state.copy(
+      segmentations = state.segmentations + (name -> seg))
   }
 
   def offspringEditor(path: Seq[String]): ProjectEditor =
@@ -671,7 +676,7 @@ class SegmentationEditor(
     scalars.set("!belongsToEdges", graph_operations.Count.run(e))
   }
 
-  override def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
+  override protected def updateVertexSet(e: VertexSet, killSegmentations: Boolean): Unit = {
     if (e != vertexSet) {
       super.updateVertexSet(e, killSegmentations)
       val op = graph_operations.EmptyEdgeBundle()
