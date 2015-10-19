@@ -698,7 +698,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
       val result = project.segmentation(params("name"))
       // Start by copying the first segmentation.
       val first = segmentations.head
-      result.setVertexSet(first.vertexSet, idAttr = "id")
+      result.vertexSet = first.vertexSet;
       result.notes = summary(params)
       result.belongsTo = first.belongsTo
       for ((name, attr) <- first.vertexAttributes) {
@@ -712,7 +712,7 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
           op(op.belongsTo1, result.belongsTo)(op.belongsTo2, seg.belongsTo).result
         }
         val attrs = result.vertexAttributes.toMap
-        result.setVertexSet(combination.segments, idAttr = "id")
+        result.vertexSet = combination.segments
         result.belongsTo = combination.belongsTo
         for ((name, attr) <- attrs) {
           // These names are already prefixed.
@@ -728,8 +728,9 @@ class Operations(env: BigGraphEnvironment) extends OperationRepository(env) {
               attr, combination.origin2))
         }
       }
-      // Calculate sizes at the end.
+      // Calculate sizes and ids at the end.
       result.newVertexAttribute("size", computeSegmentSizes(result))
+      result.newVertexAttribute("id", idAsAttribute(result.vertexSet))
     }
   })
   register("Internal vertex ID as attribute", new VertexAttributesOperation(_, _) {
