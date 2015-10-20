@@ -146,6 +146,10 @@ Side.prototype = {
     this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
   },
 
+  closeOperation: function() {
+    this.toolbox.element(by.css('div.category.active')).click();
+  },
+
   openWorkflowSavingDialog: function() {
     this.side.element(by.id('save-as-workflow-button')).click();
   },
@@ -175,7 +179,7 @@ Side.prototype = {
   submitOperation: function(parentElement) {
     var button = parentElement.element(by.css('.ok-button'));
     // Wait for uploads or whatever.
-    browser.wait(protractor.until.elementTextMatches(button, /OK/));
+    testLib.wait(protractor.until.elementTextMatches(button, /OK/));
     button.click();
   },
 
@@ -367,7 +371,7 @@ var splash = {
   deleteProject: function(name) {
     this.menuClick(this.project(name), 'discard');
     // We need to give the browser time to display the alert, see angular/protractor#1486.
-    browser.wait(protractor.ExpectedConditions.alertIsPresent(), 3000);
+    testLib.wait(protractor.ExpectedConditions.alertIsPresent());
     var confirmation = browser.switchTo().alert();
     expect(confirmation.getText()).toContain('delete project ' + name);
     confirmation.accept();
@@ -376,7 +380,7 @@ var splash = {
   deleteDirectory: function(name) {
     this.menuClick(this.directory(name), 'discard');
     // We need to give the browser time to display the alert, see angular/protractor#1486.
-    browser.wait(protractor.ExpectedConditions.alertIsPresent(), 3000);
+    testLib.wait(protractor.ExpectedConditions.alertIsPresent());
     var confirmation = browser.switchTo().alert();
     expect(confirmation.getText()).toContain('delete directory ' + name);
     confirmation.accept();
@@ -576,6 +580,13 @@ testLib = {
     element.all(by.css('.top-alert')).each(function(e) {
       e.element(by.id('close-alert-button')).click();
     });
+  },
+
+  // Wait indefinitely.
+  // WebDriver 2.45 changed browser.wait() to default to a 0 timeout. This was reverted in 2.46.
+  // But the current Protractor version uses 2.45, so we have this wrapper.
+  wait: function(condition) {
+    browser.wait(condition, 99999999);
   },
 };
 
