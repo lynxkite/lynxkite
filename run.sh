@@ -5,4 +5,4 @@ set -e
 
 ./stage.sh
 
-./run_staged.sh
+./quick_run.sh "$@"
