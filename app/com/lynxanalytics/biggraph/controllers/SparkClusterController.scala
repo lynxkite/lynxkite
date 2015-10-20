@@ -187,6 +187,7 @@ class KiteMonitorThread(
     coreTimeoutMillis: Long) extends Thread("kite-monitor") {
 
   val sparkChecker = new SparkCheckThread(listener, environment.sparkContext)
+  sparkChecker.start()
 
   private def kiteCoreWorks(): Boolean = {
     import com.lynxanalytics.biggraph.graph_operations.{ ExampleGraph, CountVertices }
@@ -273,7 +274,6 @@ class KiteMonitorThread(
   }
 
   setDaemon(true)
-  sparkChecker.start()
 }
 
 class SparkClusterController(environment: BigGraphEnvironment) {
