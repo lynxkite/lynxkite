@@ -59,4 +59,75 @@ class BucketingTest extends FunSuite with TestGraphOp {
     assert(bucketing.top.rdd.values.collect.toSeq.sorted ==
       Seq(-10.0, 0.0, 10.0, 40.0))
   }
+
+  def getSegmentWithSizes(bucketing: IntervalBucketing.Output): Seq[((Double, Double), Int)] = {
+
+    val segmentSizes = bucketing
+      .belongsTo
+      .rdd
+      .map { case (_, edge) => (edge.dst, 1) }
+      .reduceByKey(_ + _)
+    segmentSizes
+      .join(bucketing.bottom.rdd.join(bucketing.top.rdd))
+      .collect
+      .toSeq
+      .map { case (_, (size, (bottom, top))) => ((bottom, top), size) }
+  }
+
+  test("example graph by age intervals") {
+    val g = ExampleGraph()().result
+    val ageTimes1_5 = {
+      val op = DeriveJSDouble(
+        JavaScript("age * 1.5"),
+        Seq("age"))
+      op(
+        op.attrs,
+        VertexAttributeToJSValue.seq(g.age)).result.attr
+    }
+    // intervals should be: [2, 3], [18.2, 27.3], [20.3, 30.45], [50.3, 75.45]
+    val bucketing = {
+      val op = IntervalBucketing(bucketWidth = 10.0, overlap = false)
+      op(op.beginAttr, g.age)(op.endAttr, ageTimes1_5).result
+    }
+    val segmentsWithSizes = getSegmentWithSizes(bucketing)
+    assert(segmentsWithSizes.size == 7)
+    assert(segmentsWithSizes.contains(((0.0, 10.0), 1)))
+    assert(segmentsWithSizes.contains(((10.0, 20.0), 1)))
+    assert(segmentsWithSizes.contains(((20.0, 30.0), 2)))
+    assert(segmentsWithSizes.contains(((30.0, 40.0), 1)))
+    assert(segmentsWithSizes.contains(((50.0, 60.0), 1)))
+    assert(segmentsWithSizes.contains(((60.0, 70.0), 1)))
+    assert(segmentsWithSizes.contains(((70.0, 80.0), 1)))
+  }
+
+  test("example graph by age intervals with overlap") {
+    val g = ExampleGraph()().result
+    val ageTimes1_5 = {
+      val op = DeriveJSDouble(
+        JavaScript("age * 1.5"),
+        Seq("age"))
+      op(
+        op.attrs,
+        VertexAttributeToJSValue.seq(g.age)).result.attr
+    }
+    // intervals should be: [2, 3], [18.2, 27.3], [20.3, 30.45], [50.3, 75.45]
+    val bucketing = {
+      val op = IntervalBucketing(bucketWidth = 10.0, overlap = true)
+      op(op.beginAttr, g.age)(op.endAttr, ageTimes1_5).result
+    }
+    val segmentsWithSizes = getSegmentWithSizes(bucketing)
+    assert(segmentsWithSizes.size == 12)
+    assert(segmentsWithSizes.contains(((-5.0, 5.0), 1)))
+    assert(segmentsWithSizes.contains(((0.0, 10.0), 1)))
+    assert(segmentsWithSizes.contains(((10.0, 20.0), 1)))
+    assert(segmentsWithSizes.contains(((15.0, 25.0), 2)))
+    assert(segmentsWithSizes.contains(((20.0, 30.0), 2)))
+    assert(segmentsWithSizes.contains(((25.0, 35.0), 2)))
+    assert(segmentsWithSizes.contains(((30.0, 40.0), 1)))
+    assert(segmentsWithSizes.contains(((50.0, 60.0), 1)))
+    assert(segmentsWithSizes.contains(((55.0, 65.0), 1)))
+    assert(segmentsWithSizes.contains(((60.0, 70.0), 1)))
+    assert(segmentsWithSizes.contains(((65.0, 75.0), 1)))
+    assert(segmentsWithSizes.contains(((70.0, 80.0), 1)))
+  }
 }
