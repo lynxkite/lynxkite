@@ -21,7 +21,13 @@ private object SparkStageJars {
     classOf[org.sqlite.JDBC],
     classOf[gcs.GoogleHadoopFileSystem],
     classOf[play.api.libs.json.JsValue],
-    classOf[com.twitter.algebird.SparseHLL])
+    classOf[com.twitter.algebird.SparseHLL],
+    classOf[com.databricks.spark.csv.CsvParser],
+    // Dependencies of spark-csv.
+    classOf[com.univocity.parsers.csv.CsvParserSettings],
+    classOf[org.apache.commons.csv.CSVParser],
+    classOf[ch.qos.logback.classic.Logger],
+    classOf[ch.qos.logback.core.spi.AppenderAttachable[_]])
   val extraJarsToBundle =
     scala.util.Properties.envOrElse("KITE_EXTRA_JARS", "")
       .split(":", -1)
