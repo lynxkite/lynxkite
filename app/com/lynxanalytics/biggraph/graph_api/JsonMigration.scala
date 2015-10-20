@@ -50,6 +50,7 @@ class JsonMigration {
     "com.lynxanalytics.biggraph.graph_operations.ComputeVertexNeighborhoodFromTriplets" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.CreateUIStatusScalar" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.CreateVertexSet" -> 1,
+    "com.lynxanalytics.biggraph.graph_operations.DoubleBucketing" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.FastRandomEdgeBundle" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.SampledView" -> 1,
     "com.lynxanalytics.biggraph.graph_operations.VertexBucketGrid" -> 1,
