@@ -51,5 +51,17 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
 
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
+
+  test("Segmentation stays sane after merging vertices") {
+    run("Example Graph")
+    run("Segment by double attribute",
+      Map("name" -> "seg", "attr" -> "age", "interval-size" -> "17", "overlap" -> "no")
+    )
+    val seg = project.segmentation("seg")
+    run("Merge vertices by attribute",
+      Map("key" -> "gender")
+    )
+    assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
+  }
 }
 
