@@ -93,9 +93,9 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
             name: name,
             notes: notes || '',
             privacy: scope.newProject.privacy,
-          }, function() {
+          }).then(function() {
             scope.name = name;
-          }).$status.then(function() {
+          }).finally(function() {
             scope.newProject.sending = false;
           });
       };
@@ -109,10 +109,10 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         util.post('/ajax/createDirectory',
           {
             name: name,
-          }, function() {
+          }).then(function() {
             scope.path = name;
             scope.newDirectory = {};
-          }).$status.then(function() {
+          }).finally(function() {
             scope.newDirectory.sending = false;
           });
       };
@@ -163,18 +163,17 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
         rename: function(kind, oldName, newName) {
           if (oldName === newName) { return; }
           util.post('/ajax/renameDirectory',
-              { from: fullPath(oldName), to: fullPath(newName) }, refresh);
+              { from: fullPath(oldName), to: fullPath(newName) }).then(refresh);
         },
         duplicate: function(kind, p) {
           util.post('/ajax/forkDirectory',
-              { from: fullPath(p), to: fullPath('Copy of ' + p) },
-              refresh);
+              { from: fullPath(p), to: fullPath('Copy of ' + p) }).then(refresh);
         },
         discard: function(kind, p) {
           var message = 'Permanently delete ' + kind + ' ' + util.spaced(p) + '?';
           message += ' (If it is a shared ' + kind + ', it will be deleted for everyone.)';
           if (window.confirm(message)) {
-            util.post('/ajax/discardDirectory', { name: fullPath(p) }, refresh);
+            util.post('/ajax/discardDirectory', { name: fullPath(p) }).then(refresh);
           }
         },
         move: function(kind, name, newDirectory) {
@@ -182,7 +181,7 @@ angular.module('biggraph').directive('projectSelector', function(util, hotkeys, 
           if (newDirectory[0] === '/') { newDirectory = newDirectory.slice(1); }
           if (newDirectory === scope.path) { return; }
           util.post('/ajax/renameDirectory',
-              { from: fullPath(name), to: pathInside(newDirectory) + name }, refresh);
+              { from: fullPath(name), to: pathInside(newDirectory) + name }).then(refresh);
         },
       };
     },

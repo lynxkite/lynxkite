@@ -148,12 +148,12 @@ angular.module('biggraph').factory('util', function utilFactory(
     nocache: function(url, params) { return getResource(url, params, { cache: false }); },
 
     // Json POST with simple error handling.
-    post: function(url, params, onSuccess) {
+    post: function(url, params) {
       var req = $http.post(url, params).catch(function(failure) {
         util.ajaxError(failure);
         return $q.reject(failure);
       });
-      return toResource(req).then(onSuccess);
+      return toResource(req);
     },
 
     // Easier to read numbers. 1234 -> 1k

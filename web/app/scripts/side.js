@@ -78,7 +78,7 @@ angular.module('biggraph')
         {
           scalarName: scalarName,
           uiStatusJson: this.getBackendJson(),
-        }).then(opFinishedCallback);
+        }).finally(opFinishedCallback);
     };
 
 
@@ -369,8 +369,7 @@ angular.module('biggraph')
         {
           from: this.state.projectName,
           to: newName,
-        },
-        function() {
+        }).then(function() {
           that.state.projectName = newName;
         });
     };
@@ -380,8 +379,7 @@ angular.module('biggraph')
       util.post('/ajax/undoProject',
         {
           project: this.state.projectName,
-        },
-        function() {
+        }).then(function() {
           that.reload();
         });
     };
@@ -390,8 +388,7 @@ angular.module('biggraph')
       util.post('/ajax/redoProject',
         {
           project: this.state.projectName,
-        },
-        function() {
+        }).then(function() {
           that.reload();
         });
     };
@@ -403,21 +400,18 @@ angular.module('biggraph')
         {
           project: this.state.projectName,
           op: { id: op, parameters: params },
-        },
-        function() {
+        }).then(function() {
           that.reload();
-        }).$status;
+        });
     };
 
     Side.prototype.saveNotes = function() {
       var that = this;
       this.savingNotes = true;
       this.applyOp('Change-project-notes', { notes: this.project.notes })
-        .then(function(success) {
-          if (success) {
-            that.unsavedNotes = false;
-            that.savingNotes = false;
-          }
+        .then(function() {
+          that.unsavedNotes = false;
+          that.savingNotes = false;
         });
     };
 
@@ -506,8 +500,7 @@ angular.module('biggraph')
           project: this.state.projectName,
           edgeFilters: this.nonEmptyEdgeFilterNames(),
           vertexFilters: this.nonEmptyVertexFilterNames(),
-        },
-        function() {
+        }).then(function() {
           that.clearFilters();
           that.reload();
         });
